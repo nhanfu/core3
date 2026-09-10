@@ -29,6 +29,16 @@ datasources:
         CAST((SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders WHERE state = 'Paid' AND DATE(date_order) = CURRENT_DATE) AS DOUBLE) AS total_paid,
         COALESCE((SELECT state FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC LIMIT 1), 'No active session') AS cashier_state
 
+  - id: pos_cashier_payment_methods
+    single: false
+    permission: pos.read
+    query: |
+      SELECT name AS value, name AS label
+      FROM pos_payment_methods
+      WHERE active = true
+      GROUP BY name
+      ORDER BY CASE WHEN name = 'Cash' THEN 0 ELSE 1 END, name
+
   - id: pos_open_tickets
     single: false
     permission: pos.write
@@ -37,6 +47,8 @@ datasources:
         o.partner_name, o.state,
         CAST(o.amount_total AS DOUBLE) AS amount_total,
         CAST(o.amount_paid AS DOUBLE) AS amount_paid,
+        CAST(CASE WHEN o.amount_total - o.amount_paid > 0
+          THEN o.amount_total - o.amount_paid ELSE 0 END AS DOUBLE) AS amount,
         o.payment_method, o.cashier_id,
         CAST(o.date_order AS VARCHAR) AS date_order
       FROM pos_orders o

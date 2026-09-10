@@ -161,6 +161,18 @@ POS routes. Session open/close controls, product/customer forms, responsive
 desktop/mobile composition, permission-denied behavior, and the touch-selling
 dashboard/session now have implementation and captured browser evidence.
 
+The cashier payment follow-up fixes the row-aware server-form contract: the
+selected ticket and remaining balance are prefilled from the service-owned
+ticket projection, active tender choices come from the POS payment-method
+catalog, Cash is the default, and amount min/decimal validation is visible in
+the dialog. Server guards still reject overpayment and unavailable methods.
+The batch also gives the cashier product list an explicit no-results state.
+Because the existing YAML server-form modal did not resolve object prefill
+maps or expose field-level validation, this batch makes that narrowly scoped
+shared `PageFormModal` change; no ActivityView or other shared primitive is
+included. Browser evidence and remaining validation/empty gaps are recorded
+with the commit handoff.
+
 The product-catalog batch adds the five remaining Odoo product submenu routes:
 Combo Choices, Pricelists, PoS Product Categories, Attributes, and Product Tags.
 Each route is a `ListView` backed by the convention-discovered

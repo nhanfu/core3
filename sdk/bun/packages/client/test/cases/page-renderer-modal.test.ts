@@ -244,6 +244,63 @@ describe('YAML form modal', () => {
 
     expect(container.querySelector('[data-grid-row-action]')).toBeNull();
   });
+
+  it('resolves row-aware prefill maps and shows numeric validation before submit', async () => {
+    vi.spyOn(client, 'query').mockResolvedValue({
+      data: [{ id: 'ticket-1', name: 'Ticket 1', amount: 2.5 }],
+      meta: { total: 1 },
+    });
+    const action = vi.spyOn(client, 'action').mockResolvedValue({ ok: true });
+    window.__CORE3_USER__ = { permissions: ['pos.write'] };
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    await renderPage({
+      page: { id: 'payment-modal-test' },
+      datasources: [{ id: 'tickets', single: false, permission: 'pos.read', query: 'SELECT id, name, amount FROM tickets' }],
+      components: [{
+        type: 'DataGrid',
+        source: 'tickets',
+        columns: [
+          { field: 'name', label: 'Ticket' },
+          { field: 'actions', label: '', actions: [{ id: 'pay', label: 'Payment', permission: 'pos.write' }] },
+        ],
+      }],
+      actions: [{
+        id: 'pay', type: 'server_form', permission: 'pos.write', title: 'Register payment', action: 'pos.cashier.ticket.pay',
+        prefill: { ticket_id: '{row.id}', amount: '{row.amount}' },
+        fields: [
+          { field: 'amount', label: 'Amount to collect', type: 'money', decimals: 2, min: 0.01, required: true },
+          { field: 'method', label: 'Payment method', type: 'select', options: ['Cash'], default: 'Cash', required: true },
+        ],
+      }],
+    }, { container });
+
+    container.querySelector<HTMLButtonElement>('[data-grid-row-action]')?.click();
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    const amount = dialog.querySelector<HTMLInputElement>('.money-input-display')!;
+    expect(amount.value).toBe('2,50');
+
+    amount.value = '';
+    amount.dispatchEvent(new Event('input', { bubbles: true }));
+    dialog.querySelector<HTMLButtonElement>('button.btn-primary')!.click();
+    expect(dialog.querySelector('.form-field-error')?.textContent).toBe('Amount to collect is required.');
+    expect(action).not.toHaveBeenCalled();
+
+    amount.value = '0';
+    amount.dispatchEvent(new Event('input', { bubbles: true }));
+    dialog.querySelector<HTMLButtonElement>('button.btn-primary')!.click();
+    expect(dialog.querySelector('.form-field-error')?.textContent).toBe('Amount to collect must be at least 0.01.');
+    expect(action).not.toHaveBeenCalled();
+
+    amount.value = '2,50';
+    amount.dispatchEvent(new Event('input', { bubbles: true }));
+    dialog.querySelector<HTMLButtonElement>('button.btn-primary')!.click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(action).toHaveBeenCalledWith('pos.cashier.ticket.pay', expect.objectContaining({
+      values: { amount: '2.50', method: 'Cash' },
+    }));
+  });
 });
 
 describe('YAML tab groups', () => {

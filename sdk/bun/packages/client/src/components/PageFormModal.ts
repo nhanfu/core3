@@ -24,7 +24,14 @@ export class PageFormModal extends BaseComponent {
         const sourceRecord = actionDef.prefill === 'source'
           ? dataMap[actionDef.prefill_source || '']?.data
           : undefined;
-        const formRecord = row || sourceRecord || {};
+        const actionContext = { ...ctx, row: row || {} };
+        const mappedPrefill = actionDef.prefill && typeof actionDef.prefill === 'object' && !Array.isArray(actionDef.prefill)
+          ? resolveActionParams(actionDef.prefill, actionContext)
+          : {};
+        const formRecord = {
+          ...(row || sourceRecord || {}),
+          ...Object.fromEntries(Object.entries(mappedPrefill).filter(([, value]) => value !== undefined && value !== null && value !== '')),
+        };
         // Overlay
         const overlay = html.take(document.body).div.className('form-overlay').attr('aria-hidden', 'false').ele() as HTMLDivElement;
 
@@ -48,7 +55,21 @@ export class PageFormModal extends BaseComponent {
 
 
         // Fields
-        const inputs: Record<string, { el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement; fieldDef: any }> = {}; // field -> { el, fieldDef }
+        type InputEntry = { el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement; fieldDef: any; group: HTMLDivElement };
+        const inputs: Record<string, InputEntry> = {}; // field -> { el, fieldDef, group }
+        const setFieldError = (entry: InputEntry, message: string) => {
+          html.take(entry.el).css('borderColor', '#ef4444').attr('aria-invalid', 'true');
+          let error = entry.group.querySelector<HTMLElement>('.form-field-error');
+          if (!error) {
+            error = html.take(entry.group).div.className('form-error form-field-error').attr('role', 'alert').ele() as HTMLElement;
+          }
+          html.take(error).replaceText(message);
+        };
+        const clearFieldError = (entry: InputEntry) => {
+          html.take(entry.el).css('borderColor', '');
+          entry.el.removeAttribute('aria-invalid');
+          entry.group.querySelector('.form-field-error')?.remove();
+        };
         for (const fieldDef of (actionDef.fields || [])) {
           if (fieldDef.show_if && !evalExpr(fieldDef.show_if, { ...ctx, row: row || {} })) continue;
           const group = html.take(dialog).div.className('form-field').ele() as HTMLDivElement;
@@ -61,8 +82,8 @@ export class PageFormModal extends BaseComponent {
           // or a searchable lookup adapter.
           let initialValue = fieldDef.default ?? '';
           const prefillRecord = actionDef.prefill === 'source' ? sourceRecord : row;
-          if ((actionDef.prefill === 'row' || actionDef.prefill === 'source') && prefillRecord) {
-            initialValue = prefillRecord[fieldDef.field] ?? fieldDef.default ?? '';
+          if ((actionDef.prefill === 'row' || actionDef.prefill === 'source' || Object.keys(mappedPrefill).length) && prefillRecord) {
+            initialValue = formRecord[fieldDef.field] ?? fieldDef.default ?? '';
           }
           if (fieldDef.type === 'date' && initialValue && typeof initialValue === 'string') {
             initialValue = initialValue.slice(0, 10);
@@ -106,7 +127,8 @@ export class PageFormModal extends BaseComponent {
               });
             }
           }
-          inputs[fieldDef.field] = { el, fieldDef };
+          inputs[fieldDef.field] = { el, fieldDef, group };
+          html.take(el).event('input', () => clearFieldError(inputs[fieldDef.field])).event('change', () => clearFieldError(inputs[fieldDef.field]));
         }
 
         // Footer
@@ -147,17 +169,33 @@ export class PageFormModal extends BaseComponent {
           // Reset error
           // Validate required fields
           let firstInvalid: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null = null;
-          for (const { el, fieldDef } of Object.values(inputs)) {
+          for (const entry of Object.values(inputs)) {
+            const { el, fieldDef } = entry;
             const v = fieldDef.type === 'multi-select' || fieldDef.type === 'permission-grid'
               ? el.value.split(',').map(value => value.trim()).filter(Boolean)
               : el instanceof HTMLSelectElement && el.multiple
                 ? Array.from(el.selectedOptions).map(option => option.value)
                 : el.value?.trim() ?? '';
+            const label = String(fieldDef.label || fieldDef.field);
             if (fieldDef.required && (Array.isArray(v) ? v.length === 0 : !v)) {
-              html.take(el).css('borderColor', '#ef4444');
+              setFieldError(entry, `${label} is required.`);
               if (!firstInvalid) firstInvalid = el;
+            } else if (['number', 'money'].includes(String(fieldDef.type)) && String(v).trim()) {
+              const numeric = Number(String(v).replace(',', '.'));
+              if (!Number.isFinite(numeric)) {
+                setFieldError(entry, `${label} must be a valid number.`);
+                if (!firstInvalid) firstInvalid = el;
+              } else if (fieldDef.min !== undefined && numeric < Number(fieldDef.min)) {
+                setFieldError(entry, `${label} must be at least ${fieldDef.min}.`);
+                if (!firstInvalid) firstInvalid = el;
+              } else if (fieldDef.max !== undefined && numeric > Number(fieldDef.max)) {
+                setFieldError(entry, `${label} must be at most ${fieldDef.max}.`);
+                if (!firstInvalid) firstInvalid = el;
+              } else {
+                clearFieldError(entry);
+              }
             } else {
-              html.take(el).css('borderColor', '');
+              clearFieldError(entry);
             }
           }
           if (firstInvalid) {

@@ -47,6 +47,9 @@ components:
     page_size: 48
     row_key: id
     row_actions: buttons
+    empty_state:
+      title: No products found
+      description: Adjust your search or add an active product to the POS catalog.
 
   - type: ListView
     variant: odoo
@@ -163,7 +166,7 @@ actions:
     action: pos.cashier.ticket.pay
     handler: yaml_mutation
     operation: pay
-    prefill: { ticket_id: '{row.id}' }
+    prefill: { ticket_id: '{row.id}', amount: '{row.amount}' }
     refresh: [pos_open_tickets, pos_cashier_session_stats]
     mutation:
       generated: [payment_id]
@@ -179,6 +182,9 @@ actions:
               (SELECT amount_total - amount_paid FROM pos_orders WHERE id = :ticket_id)
           status: 400
           message: Payment exceeds remaining balance
+        - query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM pos_payment_methods WHERE active = true AND name = :method)"
+          status: 422
+          message: Payment method is not available in this POS
       steps:
         - query: "INSERT INTO pos_payments(id, order_id, method, amount) VALUES(:payment_id, :ticket_id, COALESCE(:method, 'Cash'), CAST(:amount AS DECIMAL(18,2)))"
         - query: |
@@ -191,8 +197,8 @@ actions:
       result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
     fields:
       - { field: ticket_id, label: Ticket, type: select, options_source: pos_open_ticket_options, required: true }
-      - { field: amount, label: Amount, type: money, decimals: 2, required: true }
-      - { field: method, label: Method, type: select, options: [Cash, Card, Bank, Other], required: true }
+      - { field: amount, label: Amount to collect, type: money, currency: USD, decimals: 2, min: 0.01, placeholder: '0.00', required: true }
+      - { field: method, label: Payment method, type: select, options_source: pos_cashier_payment_methods, default: Cash, required: true }
 
   - id: cancel_cashier_ticket
     type: server
