@@ -1,48 +1,45 @@
 title: Locations
-page: { id: locations, breadcrumb: [Supply Chain, Inventory, Locations], auth: { require: [inventory.read] } }
-datasources:
-  - id: inventory_location_warehouses
-    single: false
-    permission: inventory.read
-    query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM inventory_warehouses WHERE state = 'Active' ORDER BY name"
-  - id: inventory_locations
-    single: false
-    permission: inventory.read
-    query: "SELECT l.id, l.row_version, l.name, l.code, w.name AS warehouse_name, l.usage, l.state FROM inventory_locations l JOIN inventory_warehouses w ON w.id = l.warehouse_id WHERE (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR l.code ILIKE '%' || :q || '%') ORDER BY w.name, l.name"
+page: { id: locations, route: /locations, breadcrumb: [Supply Chain, Inventory, Configuration, Locations], auth: { require: [inventory.read] } }
 components:
   - type: ListView
     variant: odoo
     source: inventory_locations
     create_action: create_inventory_location
-    create_label: New location
-    search: { label: Search locations, placeholder: Search locations or codes... }
-    columns:
-      - { field: name, label: Location, type: PrimaryEntityCell }
-      - { field: code, label: Code }
+    create_label: New
+    search: { label: Stock Locations, placeholder: Search locations... }
+    filters:
+      - { field: usage, label: Location Type, options_source: inventory_location_usage_options }
+      - { field: warehouse_id, label: Warehouse, options_source: inventory_location_warehouses }
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }, { id: all, label: All }] }
+      - { field: is_empty, label: Stock, options: [{ id: empty, label: Empty Locations }, { id: occupied, label: Occupied Locations }] }
+    group_by:
       - { field: warehouse_name, label: Warehouse }
-      - { field: usage, label: Usage }
-      - { field: state, label: Status, type: StatusChip }
-    page_size: 50
+      - { field: usage, label: Location Type }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: usage
+        card: { title: complete_name, subtitle: usage, fields: [{ field: warehouse_name, label: Warehouse }, { field: company_name, label: Company }, { field: active, label: Active }] }
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: complete_name, subtitle: usage, fields: [{ field: warehouse_name, label: Warehouse }, { field: company_name, label: Company }, { field: active, label: Active }] }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/inventory/pages/location-detail.yaml, side_panel: true }
     row_key: id
-actions:
-  - id: create_inventory_location
-    type: server_form
-    permission: inventory.manage
-    title: New inventory location
-    action: inventory.locations.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [inventory_locations]
-    mutation:
-      operation: insert
-      table: inventory_locations
-      fields: [warehouse_id, name, code, usage]
-      required: [warehouse_id, name, code]
-      defaults: { usage: Internal, state: Active }
-      guards: [{ query: "SELECT 1 AS ok FROM inventory_warehouses WHERE id = :warehouse_id AND state = 'Active'", status: 409, message: Warehouse is not active }, { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_locations WHERE warehouse_id = :warehouse_id AND code = :code)", status: 409, message: Location code already exists in this warehouse }]
-      result: { query: "SELECT * FROM inventory_locations WHERE id = :id" }
-    fields:
-      - { field: warehouse_id, label: Warehouse, type: select, options_source: inventory_location_warehouses, required: true }
-      - { field: name, label: Location, type: text, required: true }
-      - { field: code, label: Code, type: text, required: true }
-      - { field: usage, label: Usage, type: select, options: [Internal, Customer, Supplier, Transit, Inventory Loss] }
+    row_open_action: edit_inventory_location
+    row_double_click_action: edit_inventory_location
+    row_actions: menu
+    empty_state: { title: No locations found, description: Add a location or adjust your search and filters. }
+    columns:
+      - { field: complete_name, label: Location, type: PrimaryEntityCell }
+      - { field: usage, label: Location Type, type: StatusChip }
+      - { field: company_name, label: Company }
+      - { field: warehouse_name, label: Warehouse, optional: hide }
+      - { field: is_empty, label: Empty, type: BooleanToggle, optional: hide }
+      - { field: active, label: Active, type: BooleanToggle, optional: hide }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_inventory_location, label: Edit, icon: edit }, { id: archive_inventory_location, label: Archive, icon: archive }, { id: delete_inventory_location, label: Delete, icon: trash, variant: danger }] }

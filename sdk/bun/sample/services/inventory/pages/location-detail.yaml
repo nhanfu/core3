@@ -1,0 +1,27 @@
+title: Stock Location
+page: { id: location-detail, route: /locations/detail, breadcrumb: [Supply Chain, Inventory, Configuration, Locations], auth: { require: [inventory.read] } }
+components:
+  - type: OdooFormView
+    source: inventory_location_detail
+    title_field: complete_name
+    editable: true
+    groups:
+      - title: Stock Location
+        fields:
+          - { field: name, label: Location Name }
+          - { field: parent_location_name, label: Parent Location }
+      - title: Additional Information
+        fields:
+          - { field: usage, label: Location Type }
+          - { field: company_name, label: Company }
+          - { field: replenish_location, label: Replenishments, type: checkbox }
+      - title: Cyclic Counting
+        fields:
+          - { field: cyclic_inventory_frequency, label: Inventory Frequency, suffix: days, type: number }
+          - { field: last_inventory_date, label: Last Inventory }
+          - { field: next_inventory_date, label: Next Expected }
+      - title: Logistics
+        fields:
+          - { field: removal_strategy, label: Removal Strategy, type: radio }
+    stat_buttons: [{ id: view_inventory_location_products, label: Products, icon: list, value_field: product_count }]
+    header_actions: [{ id: save_inventory_location, label: Save, variant: primary }]

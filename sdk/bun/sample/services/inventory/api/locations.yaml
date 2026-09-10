@@ -1,0 +1,107 @@
+page: { id: locations }
+datasources:
+  - id: inventory_location_usage_options
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('all', 'All'), ('Internal', 'Internal'), ('Customer', 'Customer'), ('Inventory Loss', 'Inventory Loss'), ('Production', 'Production'), ('Supplier', 'Vendor'), ('Transit', 'Transit'), ('View', 'Virtual')) AS usages(value, label) ORDER BY CASE WHEN value = 'all' THEN 0 ELSE 1 END, label"
+  - id: inventory_location_warehouses
+    single: false
+    permission: inventory.read
+    query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM inventory_warehouses WHERE state = 'Active' ORDER BY name, id"
+  - id: inventory_locations
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_LOCATIONS_UNAVAILABLE, message: Locations are temporarily unavailable. } }
+    query: "SELECT l.id, l.row_version, l.warehouse_id, l.parent_location_id, l.name, l.code, CASE WHEN parent.name IS NULL THEN l.name ELSE parent.name || '/' || l.name END AS complete_name, COALESCE(parent.name, '') AS parent_location_name, w.name AS warehouse_name, l.usage, l.state, l.active, COALESCE(l.company_name, 'My Company (San Francisco)') AS company_name, l.replenish_location, l.cyclic_inventory_frequency, CAST(l.last_inventory_date AS VARCHAR) AS last_inventory_date, CAST(l.next_inventory_date AS VARCHAR) AS next_inventory_date, COALESCE(l.removal_strategy, '') AS removal_strategy, COALESCE(q.product_count, 0) AS product_count, COALESCE(q.total_quantity, 0) AS total_quantity, CASE WHEN COALESCE(q.total_quantity, 0) <= 0 THEN TRUE ELSE FALSE END AS is_empty FROM inventory_locations l JOIN inventory_warehouses w ON w.id = l.warehouse_id LEFT JOIN inventory_locations parent ON parent.id = l.parent_location_id LEFT JOIN (SELECT location_id, COUNT(DISTINCT product_id) AS product_count, SUM(quantity) AS total_quantity FROM inventory_quants GROUP BY location_id) q ON q.location_id = l.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR l.code ILIKE '%' || :q || '%' OR (CASE WHEN parent.name IS NULL THEN l.name ELSE parent.name || '/' || l.name END) ILIKE '%' || :q || '%') AND (COALESCE(:usage, 'Internal') = 'all' OR l.usage = COALESCE(:usage, 'Internal')) AND (:warehouse_id IS NULL OR l.warehouse_id = :warehouse_id) AND (COALESCE(:active, 'active') = 'all' OR (COALESCE(:active, 'active') = 'active' AND l.active = TRUE) OR (COALESCE(:active, 'active') = 'archived' AND l.active = FALSE)) AND (:is_empty IS NULL OR (:is_empty = 'empty' AND COALESCE(q.total_quantity, 0) <= 0) OR (:is_empty = 'occupied' AND COALESCE(q.total_quantity, 0) > 0)) ORDER BY w.name, complete_name, l.id"
+actions:
+  - id: create_inventory_location
+    type: server_form
+    permission: inventory.manage
+    title: New Location
+    action: inventory.locations.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_locations]
+    mutation:
+      operation: insert
+      table: inventory_locations
+      generated: [id]
+      fields: [warehouse_id, parent_location_id, name, code, usage, company_name, replenish_location, cyclic_inventory_frequency, removal_strategy]
+      required: [warehouse_id, name, code, usage]
+      defaults: { usage: Internal, state: Active, active: true, company_name: 'My Company (San Francisco)', replenish_location: false, cyclic_inventory_frequency: 0, removal_strategy: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) > 0 AND length(trim(:code)) > 0", status: 422, code: INVENTORY_LOCATION_FIELDS_REQUIRED, message: Location name and code are required. }
+        - { query: "SELECT 1 AS ok FROM inventory_warehouses WHERE id = :warehouse_id AND state = 'Active'", status: 409, code: INVENTORY_LOCATION_WAREHOUSE_INACTIVE, message: The selected warehouse is not active. }
+        - { query: "SELECT 1 AS ok WHERE :usage IN ('Internal', 'Customer', 'Inventory Loss', 'Production', 'Supplier', 'Transit', 'View')", status: 422, code: INVENTORY_LOCATION_USAGE_INVALID, message: Select a valid location type. }
+        - { query: "SELECT 1 AS ok WHERE :parent_location_id IS NULL OR EXISTS (SELECT 1 FROM inventory_locations WHERE id = :parent_location_id AND warehouse_id = :warehouse_id AND active = TRUE)", status: 422, code: INVENTORY_LOCATION_PARENT_INVALID, message: Parent location must be an active location in the selected warehouse. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_locations WHERE warehouse_id = :warehouse_id AND code = :code)", status: 409, code: INVENTORY_LOCATION_CODE_EXISTS, message: A location with this code already exists in this warehouse. }
+      result: { query: "SELECT * FROM inventory_locations WHERE id = :id" }
+    fields:
+      - { field: warehouse_id, label: Warehouse, type: select, options_source: inventory_location_warehouses, required: true }
+      - { field: parent_location_id, label: Parent Location, type: select, options_source: inventory_locations }
+      - { field: name, label: Location Name, type: text, required: true, placeholder: 'e.g. Shelf 1' }
+      - { field: code, label: Barcode, type: text, required: true, placeholder: 'e.g. SHELF-1' }
+      - { field: usage, label: Location Type, type: select, options_source: inventory_location_usage_options, required: true }
+      - { field: company_name, label: Company, type: text }
+      - { field: replenish_location, label: Replenishments, type: checkbox }
+      - { field: cyclic_inventory_frequency, label: Inventory Frequency, type: number }
+      - { field: removal_strategy, label: Removal Strategy, type: radio, options: [{ value: '', label: No Removal Strategy }, { value: FIFO, label: First In First Out (FIFO) }, { value: LIFO, label: Last In First Out (LIFO) }, { value: Closest, label: Closest Location }, { value: Least Packages, label: Least Packages }] }
+  - id: edit_inventory_location
+    type: server_form
+    permission: inventory.manage
+    title: Edit Location
+    action: inventory.locations.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [inventory_locations]
+    mutation:
+      operation: update
+      table: inventory_locations
+      fields: [warehouse_id, parent_location_id, name, code, usage, company_name, replenish_location, cyclic_inventory_frequency, removal_strategy]
+      required: [warehouse_id, name, code, usage]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_locations WHERE id = :id AND active = TRUE", status: 404, code: INVENTORY_LOCATION_NOT_FOUND, message: Active location not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_locations WHERE warehouse_id = :warehouse_id AND code = :code AND id <> :id)", status: 409, code: INVENTORY_LOCATION_CODE_EXISTS, message: A location with this code already exists in this warehouse. }
+      result: { query: "SELECT * FROM inventory_locations WHERE id = :id" }
+    fields:
+      - { field: warehouse_id, label: Warehouse, type: select, options_source: inventory_location_warehouses, required: true }
+      - { field: parent_location_id, label: Parent Location, type: select, options_source: inventory_locations }
+      - { field: name, label: Location Name, type: text, required: true }
+      - { field: code, label: Barcode, type: text, required: true }
+      - { field: usage, label: Location Type, type: select, options_source: inventory_location_usage_options, required: true }
+      - { field: company_name, label: Company, type: text }
+      - { field: replenish_location, label: Replenishments, type: checkbox }
+      - { field: cyclic_inventory_frequency, label: Inventory Frequency, type: number }
+      - { field: removal_strategy, label: Removal Strategy, type: radio, options: [{ value: '', label: No Removal Strategy }, { value: FIFO, label: First In First Out (FIFO) }, { value: LIFO, label: Last In First Out (LIFO) }, { value: Closest, label: Closest Location }, { value: Least Packages, label: Least Packages }] }
+  - id: archive_inventory_location
+    type: server
+    permission: inventory.manage
+    action: inventory.locations.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [inventory_locations]
+    mutation:
+      operation: update
+      table: inventory_locations
+      fields: [active, state]
+      defaults: { active: false, state: Archived }
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_locations WHERE id = :id AND active = TRUE", status: 404, code: INVENTORY_LOCATION_NOT_FOUND, message: Active location not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_quants WHERE location_id = :id AND quantity > 0)", status: 409, code: INVENTORY_LOCATION_HAS_STOCK, message: A location with stock cannot be archived. }
+  - id: delete_inventory_location
+    type: server
+    permission: inventory.manage
+    action: inventory.locations.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_locations]
+    mutation:
+      operation: delete
+      table: inventory_locations
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_locations WHERE id = :id", status: 404, code: INVENTORY_LOCATION_NOT_FOUND, message: Location not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_quants WHERE location_id = :id) AND NOT EXISTS (SELECT 1 FROM inventory_locations WHERE parent_location_id = :id)", status: 409, code: INVENTORY_LOCATION_IN_USE, message: A location with stock or child locations cannot be deleted. }

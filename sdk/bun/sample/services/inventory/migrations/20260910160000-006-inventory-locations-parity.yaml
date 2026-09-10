@@ -1,0 +1,39 @@
+version: 0.0.6
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_locations ADD COLUMN IF NOT EXISTS parent_location_id VARCHAR;
+      ALTER TABLE inventory_locations ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE;
+      ALTER TABLE inventory_locations ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE inventory_locations ADD COLUMN IF NOT EXISTS replenish_location BOOLEAN DEFAULT FALSE;
+      ALTER TABLE inventory_locations ADD COLUMN IF NOT EXISTS cyclic_inventory_frequency INTEGER DEFAULT 0;
+      ALTER TABLE inventory_locations ADD COLUMN IF NOT EXISTS last_inventory_date DATE;
+      ALTER TABLE inventory_locations ADD COLUMN IF NOT EXISTS next_inventory_date DATE;
+      ALTER TABLE inventory_locations ADD COLUMN IF NOT EXISTS removal_strategy VARCHAR;
+      UPDATE inventory_locations SET active = CASE WHEN state = 'Archived' THEN FALSE ELSE TRUE END WHERE active IS NULL;
+      UPDATE inventory_locations SET company_name = 'My Company (San Francisco)' WHERE company_name IS NULL;
+      UPDATE inventory_locations SET replenish_location = FALSE WHERE replenish_location IS NULL;
+      UPDATE inventory_locations SET cyclic_inventory_frequency = 0 WHERE cyclic_inventory_frequency IS NULL;
+      INSERT INTO inventory_warehouses(id, name, code, address, state) VALUES
+        ('warehouse-overflow', 'Overflow Warehouse', 'WH-OVERFLOW', 'Binh Duong', 'Active')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_locations(id, warehouse_id, parent_location_id, name, code, usage, state, active, company_name, replenish_location, cyclic_inventory_frequency, removal_strategy) VALUES
+        ('location-input', 'warehouse-main', NULL, 'Input', 'INPUT', 'Internal', 'Active', TRUE, 'My Company (San Francisco)', FALSE, 0, ''),
+        ('location-stock-shelf-1', 'warehouse-main', 'location-stock', 'Shelf 1', 'SHELF-1', 'Internal', 'Active', TRUE, 'My Company (San Francisco)', FALSE, 30, 'FIFO'),
+        ('location-stock-shelf-2', 'warehouse-main', 'location-stock', 'Shelf 2', 'SHELF-2', 'Internal', 'Active', TRUE, 'My Company (San Francisco)', TRUE, 60, 'LIFO'),
+        ('location-stock-small-refrigerator', 'warehouse-main', 'location-stock-shelf-2', 'Small Refrigerator', 'FRIDGE-1', 'Internal', 'Active', TRUE, 'My Company (San Francisco)', FALSE, 0, 'Closest'),
+        ('location-supplier', 'warehouse-main', NULL, 'Vendors', 'VENDOR', 'Supplier', 'Active', TRUE, NULL, FALSE, 0, ''),
+        ('location-loss', 'warehouse-main', NULL, 'Inventory Loss', 'INVENTORY-LOSS', 'Inventory Loss', 'Active', TRUE, NULL, FALSE, 0, ''),
+        ('location-overflow-stock', 'warehouse-overflow', NULL, 'Stock', 'STOCK', 'Internal', 'Active', TRUE, 'My Company (San Francisco)', FALSE, 0, ''),
+        ('location-archived', 'warehouse-overflow', NULL, 'Archived Bin', 'ARCHIVED-BIN', 'Internal', 'Archived', FALSE, 'My Company (San Francisco)', FALSE, 0, '')
+      ON CONFLICT(id) DO NOTHING;
+      UPDATE inventory_locations SET parent_location_id = 'location-input' WHERE id = 'location-stock' AND parent_location_id IS NULL;
+      UPDATE inventory_locations SET parent_location_id = 'location-stock' WHERE id = 'location-customer' AND FALSE;
+    down: |
+      DELETE FROM inventory_locations WHERE id IN ('location-input', 'location-stock-shelf-1', 'location-stock-shelf-2', 'location-stock-small-refrigerator', 'location-supplier', 'location-loss', 'location-overflow-stock', 'location-archived');
+      DELETE FROM inventory_warehouses WHERE id = 'warehouse-overflow';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
