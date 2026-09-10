@@ -10,6 +10,7 @@ type SurveyQuestion = {
 type SurveyPayload = {
   survey: { title: string; name: string; description?: string };
   questions: SurveyQuestion[];
+  answer?: { id: string; access_token: string; state: string; answer_data?: string };
 };
 
 const STYLE_ID = 'core3-public-survey-style';
@@ -40,7 +41,8 @@ function installStyles() {
     .core3-public-survey__option input { accent-color:#714b67; width:17px; height:17px; }
     .core3-public-survey__input { width:100%; box-sizing:border-box; border:0; border-bottom:1px solid #aaa0a8; padding:12px 2px; font:inherit; font-size:17px; outline:0; }
     .core3-public-survey__input:focus { border-bottom:2px solid #714b67; }
-    .core3-public-survey__footer { display:flex; justify-content:flex-start; align-items:center; gap:12px; margin-top:26px; }
+    .core3-public-survey__footer { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:26px; }
+    .core3-public-survey__footer-actions { display:flex; align-items:center; gap:10px; }
     .core3-public-survey__progress { color:#796f78; font-size:13px; }
     .core3-public-survey__button { border:0; border-radius:4px; padding:12px 25px; color:#fff; background:#714b67; font:600 15px inherit; cursor:pointer; }
     .core3-public-survey__button:hover { background:#5d3c55; }
@@ -73,22 +75,23 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
         const checked = currentValues.includes(option) ? ' checked' : '';
         return `<label class="core3-public-survey__option"><input type="${type}" name="question-${escapeHtml(question.id)}" value="${escapeHtml(option)}"${checked}><span>${escapeHtml(option)}</span></label>`;
       }).join('')}</div>`
-      : `<input class="core3-public-survey__input" data-answer type="text" value="${escapeHtml(currentValues[0])}" placeholder="Your answer">`;
+      : `<input class="core3-public-survey__input" data-answer type="${question.question_type === 'Numerical' ? 'number' : 'text'}" value="${escapeHtml(currentValues[0])}" placeholder="Your answer">`;
   container.innerHTML = `
     <div class="core3-public-survey__question">${escapeHtml(question.question_text)}${question.required ? '<span class="core3-public-survey__required">*</span>' : ''}</div>
     ${input}
-    <div class="core3-public-survey__footer"><span class="core3-public-survey__progress">Question ${index + 1} of ${total}</span><button class="core3-public-survey__button" data-next>${index === total - 1 ? 'Submit' : 'Next'}</button></div>
+    <div class="core3-public-survey__footer"><span class="core3-public-survey__progress">Question ${index + 1} of ${total}</span><div class="core3-public-survey__footer-actions">${index > 0 ? '<button class="core3-public-survey__button" data-back type="button">Back</button>' : ''}<button class="core3-public-survey__button" data-next type="button">${index === total - 1 ? 'Submit' : 'Next'}</button></div></div>
   `;
 }
 
-export async function mount(outlet: HTMLElement, token: string) {
+export async function mount(outlet: HTMLElement, token: string, initialAnswerToken = '') {
   installStyles();
   document.body.classList.add('core3-public-survey-body');
   outlet.className = '';
   outlet.innerHTML = '<div class="core3-public-survey"><div class="core3-public-survey__card"><div class="core3-public-survey__body">Loading survey…</div></div></div>';
   let payload: SurveyPayload;
   try {
-    const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}`, { cache: 'no-store' });
+    const answerQuery = initialAnswerToken ? `?answer_token=${encodeURIComponent(initialAnswerToken)}` : '';
+    const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}${answerQuery}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(response.status === 404 ? 'This survey is no longer available.' : `Survey could not be loaded (${response.status}).`);
     payload = await response.json() as SurveyPayload;
   } catch (error) {
@@ -98,15 +101,37 @@ export async function mount(outlet: HTMLElement, token: string) {
 
   const survey = payload.survey;
   const questions = [...payload.questions].sort((left, right) => Number(left.sequence) - Number(right.sequence));
-  let answerToken = '';
+  let answerToken = String(payload.answer?.access_token || initialAnswerToken || '');
   let questionIndex = 0;
   const answers: Record<string, string | string[]> = {};
+  try {
+    const persisted = payload.answer?.answer_data ? JSON.parse(payload.answer.answer_data) : {};
+    if (persisted && typeof persisted === 'object' && !Array.isArray(persisted)) Object.assign(answers, persisted);
+  } catch {
+    // Treat malformed historical answer data as an empty in-progress attempt.
+  }
   const frame = () => `<div class="core3-public-survey"><div class="core3-public-survey__card"><div class="core3-public-survey__top"><div class="core3-public-survey__brand">Core3 Survey</div><div class="core3-public-survey__title">${escapeHtml(survey.title)}</div><div class="core3-public-survey__code">${escapeHtml(survey.name)}</div></div><div class="core3-public-survey__body" data-body></div></div></div>`;
   outlet.innerHTML = frame();
   const body = outlet.querySelector<HTMLElement>('[data-body]')!;
-  body.innerHTML = `<p class="core3-public-survey__description">${escapeHtml(survey.description || 'Please take a moment to complete this survey.')}</p><div class="core3-public-survey__footer"><button class="core3-public-survey__button" data-start>Start Survey</button><span class="core3-public-survey__progress">or press Enter</span></div>`;
+  const renderDone = () => {
+    body.innerHTML = '<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>Thank you for your response</h2><p class="core3-public-survey__description">Your answers have been submitted.</p></div>';
+  };
 
-  body.querySelector<HTMLButtonElement>('[data-start]')!.addEventListener('click', async (event) => {
+  const firstUnanswered = () => questions.findIndex((question) => {
+    const value = answers[question.id];
+    return value === undefined || (Array.isArray(value) ? value.length === 0 : !String(value).trim());
+  });
+
+  if (payload.answer?.state === 'Submitted') {
+    renderDone();
+  } else if (payload.answer) {
+    questionIndex = Math.max(0, firstUnanswered() === -1 ? questions.length - 1 : firstUnanswered());
+    renderCurrentQuestion();
+  } else {
+    body.innerHTML = `<p class="core3-public-survey__description">${escapeHtml(survey.description || 'Please take a moment to complete this survey.')}</p><div class="core3-public-survey__footer"><button class="core3-public-survey__button" data-start type="button">Start Survey</button><span class="core3-public-survey__progress">or press Enter</span></div>`;
+  }
+
+  body.querySelector<HTMLButtonElement>('[data-start]')?.addEventListener('click', async (event) => {
     const button = event.currentTarget as HTMLButtonElement;
     button.disabled = true;
     try {
@@ -115,7 +140,7 @@ export async function mount(outlet: HTMLElement, token: string) {
       const started = await response.json();
       answerToken = String(started.answer?.access_token || '');
       if (!answerToken) throw new Error('The survey did not return an answer token.');
-      window.history.replaceState({}, '', `/survey/${encodeURIComponent(token)}`);
+      window.history.replaceState({}, '', `/survey/${encodeURIComponent(token)}/${encodeURIComponent(answerToken)}`);
       questionIndex = 0;
       renderCurrentQuestion();
     } catch (error) {
@@ -133,6 +158,10 @@ export async function mount(outlet: HTMLElement, token: string) {
       return;
     }
     renderQuestion(body, questions[questionIndex], questionIndex, questions.length, answers[questions[questionIndex].id]);
+    body.querySelector<HTMLButtonElement>('[data-back]')?.addEventListener('click', () => {
+      questionIndex = Math.max(0, questionIndex - 1);
+      renderCurrentQuestion();
+    });
     body.querySelector<HTMLButtonElement>('[data-next]')!.addEventListener('click', async (event) => {
       const question = questions[questionIndex];
       const value = answerValue(body, question);
@@ -146,6 +175,14 @@ export async function mount(outlet: HTMLElement, token: string) {
       }
       answers[question.id] = value;
       if (questionIndex < questions.length - 1) {
+        const progressResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
+        if (!progressResponse.ok) {
+          const message = document.createElement('div');
+          message.className = 'core3-public-survey__error';
+          message.textContent = `Survey progress could not be saved (${progressResponse.status}).`;
+          body.prepend(message);
+          return;
+        }
         questionIndex += 1;
         renderCurrentQuestion();
         return;
@@ -155,7 +192,7 @@ export async function mount(outlet: HTMLElement, token: string) {
       try {
         const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
         if (!response.ok) throw new Error(`Survey could not be submitted (${response.status}).`);
-        body.innerHTML = '<div class="core3-public-survey__done"><div class="core3-public-survey__done-mark">✓</div><h2>Thank you for your response</h2><p class="core3-public-survey__description">Your answers have been submitted.</p></div>';
+        renderDone();
       } catch (error) {
         button.disabled = false;
         const message = document.createElement('div');

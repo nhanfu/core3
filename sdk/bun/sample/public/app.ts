@@ -236,17 +236,22 @@ function currentLocation() {
   return { path: resolveModuleRootPath(cleanPath), langCode: new URLSearchParams(window.location.search).get('lc') || undefined };
 }
 
+function publicSurveyRoute(path: string): { surveyToken: string; answerToken?: string } | null {
+  const match = path.match(/^\/survey\/(?:start\/)?([A-Za-z0-9_-]+)(?:\/([A-Za-z0-9-]+))?$/);
+  if (!match) return null;
+  return { surveyToken: match[1], ...(match[2] ? { answerToken: match[2] } : {}) };
+}
+
 function publicSurveyToken(path: string): string | null {
-  const match = path.match(/^\/survey\/(?:start\/)?([A-Za-z0-9_-]+)$/);
-  return match ? match[1] : null;
+  return publicSurveyRoute(path)?.surveyToken || null;
 }
 
 async function renderPublicSurvey(path: string) {
-  const token = publicSurveyToken(path);
+  const route = publicSurveyRoute(path);
   const outlet = document.getElementById('outlet');
-  if (!token || !outlet) return;
+  if (!route || !outlet) return;
   const mod = await import('./components/PublicSurvey.ts');
-  await mod.mount(outlet, token);
+  await mod.mount(outlet, route.surveyToken, route.answerToken);
 }
 
 async function renderRoute(path: string, langCode?: string) {

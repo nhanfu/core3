@@ -147,6 +147,23 @@ actions:
       - { field: answer_data, label: Answers, type: text, required: true }
       - { field: respondent_name, label: Respondent, type: text }
       - { field: respondent_email, label: Email, type: text }
+  - id: public_survey_progress
+    type: server_form
+    permission: surveys.write
+    title: Save public survey progress
+    action: surveys.public.progress
+    handler: yaml_mutation
+    mutation:
+      operation: update
+      table: survey_responses
+      fields: [answer_data]
+      required: [answer_data]
+      concurrency: false
+      guards:
+        - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, message: This survey response is no longer available for editing }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE id = :id" }
+    fields:
+      - { field: answer_data, label: Answers, type: text, required: true }
   - { id: publish_survey, type: server, permission: surveys.write, action: surveys.records.publish, handler: order_transition, workflow: surveys, operation: publish, refresh: [surveys] }
   - { id: close_survey, type: server, permission: surveys.manage, action: surveys.records.close, handler: order_transition, workflow: surveys, operation: close, refresh: [surveys] }
   - { id: cancel_survey, type: server, permission: surveys.manage, action: surveys.records.cancel, handler: order_transition, workflow: surveys, operation: cancel, refresh: [surveys] }

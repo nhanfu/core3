@@ -170,6 +170,15 @@ This is a bounded first public slice: Odoo's print, image, session-manager,
 multi-page/section, authenticated test/results, and exact question semantics
 remain open acceptance gates.
 
+The public-flow resume follow-up closes the next evidenced acceptance gap:
+Core3 now persists answers after each page, accepts the Odoo-shaped
+`/survey/<survey_token>/<answer_token>` route, resumes an in-progress attempt
+after reload, and exposes Back/Next navigation. The token is still scoped to
+the published survey and progress writes are guarded by the service-owned
+`surveys.public.progress` mutation. Odoo-style cookies, page/section routing,
+print, image assets, live sessions, and exact question-type semantics remain
+outside this bounded slice.
+
 The authenticated results follow-up adds a permissioned `/surveys/results`
 route, a `See results` action from the survey detail form, service-owned
 header/question/choice/text result queries, response counters, answer chart,

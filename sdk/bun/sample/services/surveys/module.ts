@@ -38,21 +38,37 @@ export default class SurveysModule implements ModuleLifecycle {
   }
 
   private async handlePublicRoute(request: Request, url: URL, service: PublicService): Promise<Response | null> {
-    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|submit))?$/);
+    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit))?$/);
     if (!match) return null;
     const token = match[1];
     const operation = match[2];
     const detail = (await service.call('survey.public.detail', { access_token: token }))?.survey?.[0];
     if (!detail) return this.json({ error: 'Survey is unavailable' }, 404);
 
+    const readResponse = async (answerToken: string) => (await service.call('survey.public.response', {
+      access_token: answerToken,
+      survey_id: detail.id,
+    }))?.response?.[0];
+
     if (request.method === 'GET' && !operation) {
       const questions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
-      return this.json({ survey: detail, questions });
+      const answerToken = url.searchParams.get('answer_token') || '';
+      if (answerToken && !this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
+      const answer = answerToken ? await readResponse(answerToken) : undefined;
+      if (answerToken && !answer) return this.json({ error: 'Survey response is unavailable' }, 404);
+      return this.json({ survey: detail, questions, ...(answer ? { answer } : {}) });
     }
     if (request.method !== 'POST' || !operation) return this.json({ error: 'Method not allowed' }, 405);
 
     const body = await request.json().catch(() => ({})) as Record<string, any>;
     if (operation === 'start') {
+      const existingToken = String(body.answer_token || '');
+      if (existingToken) {
+        if (!this.isToken(existingToken)) return this.json({ error: 'A valid answer token is required' }, 400);
+        const answer = await readResponse(existingToken);
+        if (!answer) return this.json({ error: 'Survey response is unavailable' }, 404);
+        return this.json({ survey: detail, answer });
+      }
       const result = await service.call('surveys.public.start', {
         values: {
           survey_id: detail.id,
@@ -65,11 +81,20 @@ export default class SurveysModule implements ModuleLifecycle {
     }
 
     const answerToken = String(body.answer_token || '');
-    if (!/^[A-Za-z0-9-]{16,100}$/.test(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
-    const response = (await service.call('survey.public.response', { access_token: answerToken, survey_id: detail.id }))?.response?.[0];
+    if (!this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
+    const response = await readResponse(answerToken);
     if (!response) return this.json({ error: 'Survey response is unavailable' }, 404);
     if (response.state === 'Submitted') return this.json({ error: 'This survey response is already submitted' }, 409);
     const answers = body.answers && typeof body.answers === 'object' ? body.answers : {};
+    if (operation === 'progress') {
+      const result = await service.call('surveys.public.progress', {
+        id: response.id,
+        survey_id: detail.id,
+        access_token: answerToken,
+        values: { answer_data: JSON.stringify(answers) },
+      });
+      return this.json({ survey: detail, answer: result });
+    }
     const result = await service.call('surveys.public.submit', {
       id: response.id,
       survey_id: response.survey_id,
@@ -80,6 +105,10 @@ export default class SurveysModule implements ModuleLifecycle {
       },
     });
     return this.json({ survey: detail, answer: result });
+  }
+
+  private isToken(value: string): boolean {
+    return /^[A-Za-z0-9-]{16,100}$/.test(value);
   }
 
   private json(data: unknown, status = 200): Response {
