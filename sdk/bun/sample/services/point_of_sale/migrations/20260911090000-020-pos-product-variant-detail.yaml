@@ -1,0 +1,59 @@
+version: 0.0.20
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS cost DECIMAL(18,2);
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS on_hand DECIMAL(18,2);
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS forecasted DECIMAL(18,2);
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS unit VARCHAR;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS product_type VARCHAR;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS invoicing_policy VARCHAR;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS track_inventory BOOLEAN;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS sales_taxes VARCHAR;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS barcode VARCHAR;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS purchase_taxes VARCHAR;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS company VARCHAR;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS internal_notes VARCHAR;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS sales BOOLEAN;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS pos_available BOOLEAN;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS expenses BOOLEAN;
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS purchase BOOLEAN;
+      CREATE TABLE IF NOT EXISTS pos_product_variant_messages (
+        id VARCHAR PRIMARY KEY, variant_id VARCHAR NOT NULL, actor_name VARCHAR NOT NULL,
+        action VARCHAR NOT NULL, action_label VARCHAR NOT NULL, detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      UPDATE pos_product_variants SET cost = CASE id WHEN 'pos-variant-coffee-small' THEN 1.10 WHEN 'pos-variant-coffee-large' THEN 1.35 ELSE COALESCE(cost, 0) END,
+        on_hand = CASE id WHEN 'pos-variant-coffee-small' THEN 26 ELSE COALESCE(on_hand, 0) END,
+        forecasted = CASE id WHEN 'pos-variant-coffee-small' THEN 40 ELSE COALESCE(forecasted, 0) END,
+        barcode = CASE id WHEN 'pos-variant-coffee-small' THEN '890100000001' ELSE barcode END,
+        unit = COALESCE(unit, 'Units'), product_type = COALESCE(product_type, 'Goods'),
+        invoicing_policy = COALESCE(invoicing_policy, 'Ordered quantities'), track_inventory = COALESCE(track_inventory, false),
+        sales_taxes = COALESCE(sales_taxes, '15%'), purchase_taxes = COALESCE(purchase_taxes, '15%'),
+        company = COALESCE(company, 'My Company (San Francisco)'), internal_notes = COALESCE(internal_notes, 'This note is only for internal purposes.'),
+        sales = COALESCE(sales, true), pos_available = COALESCE(pos_available, true), expenses = COALESCE(expenses, false), purchase = COALESCE(purchase, true);
+      INSERT INTO pos_product_variant_messages(id, variant_id, actor_name, action, action_label, detail, created_at)
+      VALUES ('pos-variant-message-coffee-small', 'pos-variant-coffee-small', 'OdooBot', 'pos.product_variant.created', 'Product Variant created', 'Created from the deterministic POS product variant fixture.', TIMESTAMP '2026-09-01 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_product_variant_messages;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS purchase;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS expenses;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS pos_available;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS sales;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS internal_notes;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS company;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS purchase_taxes;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS barcode;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS sales_taxes;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS track_inventory;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS invoicing_policy;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS product_type;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS unit;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS forecasted;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS on_hand;
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS cost;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

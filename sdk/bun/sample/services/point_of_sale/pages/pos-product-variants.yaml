@@ -4,16 +4,33 @@ components:
   - type: ListView
     variant: odoo
     source: pos_product_variants
+    responsive_card: true
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: name
+          subtitle: internal_reference
+          fields:
+            - { field: attributes, label: Variant Values }
+            - { field: sales_price, label: Price }
+    row_open_action: view_pos_product_variant
+    row_double_click_action: view_pos_product_variant
     search: { label: Search variants, placeholder: 'Search variant, reference, or product...' }
     filters:
       - { field: active, label: Status, options_source: pos_variant_active }
     columns:
-      - { field: name, label: Variant, type: PrimaryEntityCell }
       - { field: internal_reference, label: Internal Reference }
-      - { field: product_template, label: Product }
+      - { field: name, label: Name, type: PrimaryEntityCell }
       - { field: attributes, label: Attributes }
-      - { field: category, label: Category }
-      - { field: price, label: Price, align: right }
-      - { field: active, label: Active, type: StatusChip }
+      - { field: sales_price, label: Sales Price, align: right }
+      - { field: cost, label: Cost, align: right }
+      - { field: on_hand, label: On Hand, align: right }
+      - { field: forecasted, label: Forecasted, align: right }
+      - { field: unit, label: Unit }
     page_size: 50
     row_key: id
+    empty_state: { title: No product variants, description: No product variants match the current filters. }

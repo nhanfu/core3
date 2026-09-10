@@ -30,7 +30,9 @@
 .o-form-page .page-breadcrumb-current { color: var(--o-form-text); font-weight: 600; }
 .o-form-page .page-header-actions .btn { min-height: 30px; border-radius: 3px; box-shadow: none; }
 .o-form-view-slot { padding: 24px 24px 0; }
+.o-form-page .o-form-view-slot { padding: 16px 0 0; }
 .o-form-view { max-width: 1480px; min-width: 0; margin: 0 auto; container-name: odoo-form; container-type: inline-size; }
+.o-form-page .o-form-view { max-width: none; }
 .o-form-actionbar { display: flex; min-width: 0; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 6px; }
 .o-form-action { min-height: 30px; padding: 4px 10px; border: 1px solid var(--o-form-border); border-radius: 3px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
 .o-form-action-primary { border-color: var(--o-form-action); background: var(--o-form-action); color: #fff; }.o-form-action-secondary { background: var(--o-form-surface); color: var(--o-form-text); }.o-form-action-danger { border-color: #c0392b; background: #c0392b; color: #fff; }.o-form-action-ghost { border-color: transparent; background: transparent; color: var(--o-form-action); }
@@ -166,6 +168,15 @@
   .o-form-chatter-top { position: static; }
 }
 
+/* The reference form keeps chatter beside the sheet at a 1440px viewport.
+   The application gutter leaves a 1248px form container, so the generic
+   1320px fallback is too early for Odoo-style full-page records. */
+@container odoo-form (min-width: 1101px) {
+  .o-form-layout { grid-template-columns: minmax(0, 1fr) minmax(320px, 390px); gap: 8px; }
+  .o-form-chatter { min-height: 380px; }
+  .o-form-chatter-top { position: sticky; }
+}
+
 @container odoo-form (max-width: 800px) {
   .o-form-groups { grid-template-columns: minmax(0, 1fr); }
   .o-form-groups .o-form-field-group-wide { grid-column: auto; }
@@ -193,6 +204,7 @@
 
 @media (max-width: 768px) {
   .o-form-view-slot { padding: 12px 12px 0; }
+  .o-form-page .o-form-view-slot { padding: 12px 0 0; }
   .o-form-sheet { padding: 24px 20px; }
   .o-form-notebook { margin-right: -20px; margin-bottom: -24px; margin-left: -20px; }.o-form-notebook-tabs { padding-right: 20px; padding-left: 20px; }.o-form-notebook-panel:not(.o-form-notebook-panel-slot) { padding-right: 20px; padding-left: 20px; }
   .o-form-layout, .o-form-fields, .o-form-groups { grid-template-columns: 1fr; gap: 16px; }

@@ -308,6 +308,34 @@ denomination behavior remain deferred.
   overflow, and compare the visible labels, tabs, toolbar, empty state, and
   responsive cards against the Odoo references.
 
+### Product Variants parity handoff (2026-09-10)
+
+Core3 now implements the bounded list-to-detail slice. The list exposes the
+Odoo column contract, responsive mobile cards, explicit no-result messaging,
+and row click/double-click navigation to
+`/point-of-sale/product-variant-detail?id=...`. The detail is a read-only
+`OdooFormView` with the five Odoo notebook tabs, product fields, four stat
+cards, and service-owned chatter actions. The list and detail page/API YAML
+fragments use matching `page.id` values; migration `020` supplies the
+deterministic detail projection and message fixture.
+
+Focused integration coverage passes with 4 tests and 26 assertions. The
+authenticated isolated-runtime audit passes at 1440x900 and 390x844: the
+list, detail, filtered empty state, and `pos.read` denial state were checked
+without unexpected responses or horizontal overflow. Core3 evidence is under
+`/tmp/core3-pos-next-product-variants-{list,detail}-{desktop-final,mobile-final}.png`,
+with empty-state captures under
+`/tmp/core3-pos-next-product-variants-empty-{desktop-final,mobile-final}.png`
+and the denied-state capture at
+`/tmp/core3-pos-next-product-variants-permission-denied.png`. Odoo references
+are the three captures listed above.
+
+The slice intentionally does not implement Odoo's `New`/edit flow, product
+image, header checkboxes, purple Odoo shell styling, or the full 141-row demo
+catalog; Core3 uses four deterministic service-owned variants. Chatter writes
+are guarded by `pos.write`, while the displayed detail remains read-only for
+this batch.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,

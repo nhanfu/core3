@@ -1,0 +1,71 @@
+title: Product Variant
+page: { id: pos-product-variant-detail, route: /point-of-sale/product-variant-detail, breadcrumb: [], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_product_variant_detail
+    title_field: name
+    subtitle_field: internal_reference
+    groups:
+      - title: Product
+        fields:
+          - { field: name, label: Product }
+    stat_buttons:
+      - { id: open_pos_product_variant_documents, label: Documents, value_field: documents_count, permission: pos.read }
+      - { id: open_pos_product_variant_stock, label: In / Out, value_field: stock_in_out, permission: pos.read }
+      - { id: open_pos_product_variant_purchases, label: Purchased, value_field: purchased_qty, permission: pos.read }
+      - { id: open_pos_product_variant_sales, label: Sold, value_field: sold_qty, permission: pos.read }
+    notebook:
+      active: general
+      tabs:
+        - id: general
+          label: General Information
+          groups:
+            - title: General Information
+              fields:
+                - { field: product_type, label: Product Type ? }
+                - { field: invoicing_policy, label: Invoicing Policy ? }
+                - { field: track_inventory, label: Track Inventory ? }
+                - { field: sales_price, label: Sales Price ? }
+                - { field: sales_taxes, label: Sales Taxes ? }
+                - { field: cost, label: Cost ? }
+                - { field: internal_reference, label: Internal Reference }
+                - { field: barcode, label: Barcode ? }
+                - { field: purchase_taxes, label: Purchase Taxes ? }
+                - { field: category, label: Category }
+                - { field: company, label: Company }
+            - title: INTERNAL NOTES
+              fields:
+                - { field: internal_notes, label: Note, type: textarea, wide: true }
+        - id: sales
+          label: Sales
+          fields:
+            - { field: sales_price, label: Sales Price ? }
+            - { field: sales_taxes, label: Sales Taxes ? }
+        - id: point-of-sale
+          label: Point of Sale
+          fields:
+            - { field: pos_available, label: Point of Sale ? }
+            - { field: unit, label: Unit }
+        - id: purchase
+          label: Purchase
+          fields:
+            - { field: purchase, label: Purchase }
+            - { field: purchase_taxes, label: Purchase Taxes ? }
+        - id: inventory
+          label: Inventory
+          fields:
+            - { field: on_hand, label: On Hand }
+            - { field: forecasted, label: Forecasted }
+            - { field: track_inventory, label: Track Inventory ? }
+    message_source: pos_product_variant_messages
+    follower_source: pos_product_variant_followers
+    attachment_source: pos_product_variant_attachments
+    message_action: send_pos_product_variant_message
+    note_action: log_pos_product_variant_note
+    activity_action: schedule_pos_product_variant_activity
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    chatter_label: Chatter
+    chatter_empty: No messages or activities yet

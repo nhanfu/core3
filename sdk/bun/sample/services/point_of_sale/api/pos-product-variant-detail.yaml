@@ -1,0 +1,83 @@
+page: { id: pos-product-variant-detail }
+datasources:
+  - id: pos_product_variant_detail
+    single: true
+    permission: pos.read
+    query: "SELECT id, 1 AS row_version, name, internal_reference, product_template, attributes, category, CAST(price AS DOUBLE) AS sales_price, CAST(cost AS DOUBLE) AS cost, CAST(on_hand AS DOUBLE) AS on_hand, CAST(forecasted AS DOUBLE) AS forecasted, unit, product_type, invoicing_policy, track_inventory, sales_taxes, barcode, purchase_taxes, company, internal_notes, sales, pos_available, expenses, purchase, 0 AS documents_count, '0 / 0' AS stock_in_out, CAST(0 AS DOUBLE) AS purchased_qty, CAST(0 AS DOUBLE) AS sold_qty FROM pos_product_variants WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: pos_product_variant_messages
+    permission: pos.read
+    query: "SELECT id, variant_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM pos_product_variant_messages WHERE variant_id = :id ORDER BY created_at DESC"
+  - id: pos_product_variant_followers
+    permission: pos.read
+    query: "SELECT id, name, email FROM (VALUES ('pos-variant-follower-admin', 'Administrator', 'admin@tms.local')) followers(id, name, email) WHERE 1 = 0"
+  - id: pos_product_variant_attachments
+    permission: pos.read
+    query: "SELECT id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM (VALUES ('pos-variant-attachment-001', 'product-variant-notes.txt', 'text/plain', 96, 'Administrator', TIMESTAMP '2026-09-01 09:00:00')) attachments(id, file_name, mime_type, size_bytes, uploaded_by, created_at) WHERE 1 = 0"
+actions:
+  - id: open_pos_product_variant_documents
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-variants
+  - id: open_pos_product_variant_stock
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-variants
+  - id: open_pos_product_variant_purchases
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-variants
+  - id: open_pos_product_variant_sales
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-variants
+  - id: send_pos_product_variant_message
+    type: server_form
+    permission: pos.write
+    title: Send message
+    action: pos.product_variants.message
+    handler: yaml_mutation
+    operation: message
+    params: { id: '{state.id}' }
+    refresh: [pos_product_variant_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000", status: 422, message: Message content must be between 1 and 4000 characters }
+        - { query: "SELECT id FROM pos_product_variants WHERE id = :id", status: 404, message: Product variant not found }
+      steps:
+        - { query: "INSERT INTO pos_product_variant_messages(id, variant_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'pos.product_variant.message', 'Message', :content)" }
+  - id: log_pos_product_variant_note
+    type: server_form
+    permission: pos.write
+    title: Log note
+    action: pos.product_variants.note
+    handler: yaml_mutation
+    operation: note
+    params: { id: '{state.id}' }
+    refresh: [pos_product_variant_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000", status: 422, message: Note content must be between 1 and 4000 characters }
+        - { query: "SELECT id FROM pos_product_variants WHERE id = :id", status: 404, message: Product variant not found }
+      steps:
+        - { query: "INSERT INTO pos_product_variant_messages(id, variant_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'pos.product_variant.note', 'Internal note', :content)" }
+  - id: schedule_pos_product_variant_activity
+    type: server_form
+    permission: pos.write
+    title: Activity
+    action: pos.product_variants.activity
+    handler: yaml_mutation
+    operation: activity
+    params: { id: '{state.id}' }
+    refresh: [pos_product_variant_messages]
+    fields: [{ field: content, label: Activity, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000", status: 422, message: Activity content must be between 1 and 4000 characters }
+        - { query: "SELECT id FROM pos_product_variants WHERE id = :id", status: 404, message: Product variant not found }
+      steps:
+        - { query: "INSERT INTO pos_product_variant_messages(id, variant_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'pos.product_variant.activity', 'Activity', :content)" }
