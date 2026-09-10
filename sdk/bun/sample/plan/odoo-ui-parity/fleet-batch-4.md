@@ -29,7 +29,7 @@ The installed Fleet external IDs resolve to the following live records:
 
 The live demo currently contains 67 active manufacturers ordered by name. Five
 have models (`Ford`, `Nissan`, `Renault`, `Toyota`, `Volkswagen`); the other
-60 are empty manufacturers. The action's `With Models` context means the
+62 are empty manufacturers. The action's `With Models` context means the
 initial action state is the five-record subset. The `Manufacturers` leaf menu
 has no direct groups of its own; visibility is inherited from its manager-only
 `Models` and `Configuration` parents.
