@@ -1,0 +1,24 @@
+version: 0.0.24
+kind: data
+description: Deterministic all sales lines action fixtures and optimistic line editing
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_order_lines ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      ALTER TABLE pos_order_lines ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT TIMESTAMP '2026-01-15 00:00:00';
+      UPDATE pos_order_lines SET row_version = COALESCE(row_version, 1), created_at = COALESCE(created_at, TIMESTAMP '2026-01-15 00:00:00');
+      INSERT INTO pos_order_lines(id, order_id, product_name, quantity, price_unit, discount, tax_rate, price_subtotal, price_tax, price_total, row_version, created_at)
+      VALUES
+        ('pos-sales-line-demo-001', 'pos-order-demo-001', 'Wall Shelf Unit', 1, 1.98, 0, 0, 1.98, 0, 1.98, 1, TIMESTAMP '2026-01-15 10:15:00'),
+        ('pos-sales-line-demo-002', 'pos-order-demo-001', 'Small Shelf', 2, 2.83, 0, 0, 5.66, 0, 5.66, 1, TIMESTAMP '2026-01-15 10:15:00'),
+        ('pos-sales-line-demo-003', 'pos-order-demo-001', 'Magnetic Board', 1, 1.98, 10, 0, 1.78, 0, 1.78, 1, TIMESTAMP '2026-01-15 10:15:00'),
+        ('pos-sales-line-demo-004', 'pos-order-demo-001', 'Letter Tray', 1, 4.80, 0, 0, 4.80, 0, 4.80, 1, TIMESTAMP '2026-01-15 10:15:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_order_lines WHERE id IN ('pos-sales-line-demo-001', 'pos-sales-line-demo-002', 'pos-sales-line-demo-003', 'pos-sales-line-demo-004');
+      ALTER TABLE pos_order_lines DROP COLUMN IF EXISTS created_at;
+      ALTER TABLE pos_order_lines DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

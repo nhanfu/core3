@@ -80,6 +80,10 @@ menu:
           label: Sales Details (Wizard)
           icon: chart
           permission: pos.read
+        - path: /point-of-sale/sales-lines
+          label: All Sales Lines
+          icon: list
+          permission: pos.read
         - path: /point-of-sale/note-models
           label: Note Models
           icon: document

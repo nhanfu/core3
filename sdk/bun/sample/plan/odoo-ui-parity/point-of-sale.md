@@ -391,6 +391,23 @@ Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,
 service-owned datasource/API fixture; no page-local hard-coded records or
 images are permitted.
 
+## Current batch: All sales lines action 684
+
+The owned Odoo 19 reference exposes the installed `point_of_sale` action 684,
+“All sales lines” (`pos.order.line`, `list,form`). Its authenticated list shows
+Order Ref, Created on, Product, Quantity, and Unit Price with eight seeded demo
+lines; opening a row shows Product, Quantity, Discount (%), Unit Price, Created
+on, and Currency. Core3 adds the disjoint `/point-of-sale/sales-lines` route and
+`/point-of-sale/sales-line-detail` form. The page/API fragments are joined by
+matching `page.id` values and use deterministic January 15, 2026 line fixtures.
+
+The service-owned contract includes `pos.read` list/detail access, `pos.manage`
+create/update/delete mutations, optimistic row-version guards, bounded search,
+missing/stale/invalid-record errors, and an explicit empty state. The route is
+listed as All Sales Lines under Point of Sale Reporting. Authenticated desktop
+and mobile Core3/Odoo captures and focused test/audit evidence are retained
+outside Git; screenshots are never committed.
+
 ## Acceptance
 
 - Every listed Odoo menu has an explicit Core3 route or a documented deliberate

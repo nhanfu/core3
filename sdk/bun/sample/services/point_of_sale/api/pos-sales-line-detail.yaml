@@ -1,0 +1,55 @@
+page: { id: pos-sales-line-detail }
+datasources:
+  - id: pos_sales_line_detail
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_SALES_LINE_DETAIL_UNAVAILABLE, message: Sales line details are temporarily unavailable. } }
+    query: |
+      SELECT l.id, l.row_version, o.name AS order_name, l.product_name,
+        CAST(l.quantity AS DOUBLE) AS quantity, CAST(l.discount AS DOUBLE) AS discount,
+        CAST(l.price_unit AS DOUBLE) AS unit_price, CAST(l.created_at AS VARCHAR) AS created_on,
+        COALESCE(s.currency, 'USD') AS currency
+      FROM pos_order_lines l
+      JOIN pos_orders o ON o.id = l.order_id
+      JOIN pos_sessions s ON s.id = o.session_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND l.id = :id
+actions:
+  - id: edit_pos_sales_line
+    type: server_form
+    permission: pos.manage
+    title: Edit sales line
+    action: pos.sales_lines.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.pos_sales_line_detail
+    refresh: [pos_sales_line_detail, pos_sales_lines]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM pos_order_lines WHERE id = :id", status: 404, code: POS_SALES_LINE_NOT_FOUND, message: Sales line not found. }
+        - { query: "SELECT 1 AS ok FROM pos_order_lines WHERE id = :id AND row_version = :expected_row_version", status: 409, code: POS_SALES_LINE_STALE, message: Sales line changed; reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0 AND CAST(:unit_price AS DECIMAL(18,2)) >= 0 AND CAST(:discount AS DECIMAL(9,4)) BETWEEN 0 AND 100", status: 422, code: POS_SALES_LINE_VALUES, message: Quantity, price, and discount values are invalid. }
+      steps:
+        - { query: "UPDATE pos_order_lines SET product_name = :product_name, quantity = CAST(:quantity AS DECIMAL(18,3)), price_unit = CAST(:unit_price AS DECIMAL(18,2)), discount = CAST(:discount AS DECIMAL(9,4)), price_subtotal = ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:unit_price AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100), 2), price_tax = ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:unit_price AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * tax_rate / 100, 2), price_total = ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:unit_price AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * (1 + tax_rate / 100), 2), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_SALES_LINE_STALE }
+      result: { query: "SELECT * FROM pos_order_lines WHERE id = :id" }
+    fields:
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, required: true, min: 0.001 }
+      - { field: unit_price, label: Unit Price, type: money, required: true, min: 0 }
+      - { field: discount, label: Discount (%), type: number, default: 0, min: 0, max: 100 }
+  - id: delete_pos_sales_line_detail
+    type: server
+    permission: pos.manage
+    action: pos.sales_lines.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete sales line {{state.product_name}}?'
+    params: { id: '{state.id}' }
+    refresh: [pos_sales_line_detail, pos_sales_lines]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM pos_order_lines WHERE id = :id", status: 404, code: POS_SALES_LINE_NOT_FOUND, message: Sales line not found. }
+        - { query: "SELECT 1 AS ok FROM pos_order_lines WHERE id = :id AND row_version = :expected_row_version", status: 409, code: POS_SALES_LINE_STALE, message: Sales line changed; reload before deleting. }
+      steps:
+        - { query: "DELETE FROM pos_order_lines WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_SALES_LINE_STALE }

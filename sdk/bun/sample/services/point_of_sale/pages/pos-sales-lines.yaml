@@ -1,0 +1,23 @@
+title: All Sales Lines
+page: { id: pos-sales-lines, route: /point-of-sale/sales-lines, breadcrumb: [Sales, Point of Sale, Reporting, All Sales Lines], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_sales_lines
+    create_action: create_pos_sales_line
+    create_label: New
+    row_open_action: view_pos_sales_line
+    row_double_click_action: view_pos_sales_line
+    row_actions: menu
+    search: { label: Search sales lines, placeholder: 'Search order, product, or reference...' }
+    columns:
+      - { field: order_name, label: Order Ref, type: PrimaryEntityCell }
+      - { field: created_on, label: Created on }
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_price, label: Unit Price, align: right }
+    actions:
+      - { id: delete_pos_sales_line, label: Delete, permission: pos.manage, variant: danger }
+    empty_state: { title: No sales lines, description: No sales lines match the current search. }
+    page_size: 50
+    row_key: id

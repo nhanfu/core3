@@ -1,0 +1,20 @@
+title: Sales Line
+page: { id: pos-sales-line-detail, route: /point-of-sale/sales-line-detail, breadcrumb: [Sales, Point of Sale, Reporting, All Sales Lines, Sales Line], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_sales_line_detail
+    title_field: product_name
+    editable: true
+    group_columns: 2
+    header_actions:
+      - { id: edit_pos_sales_line, label: Edit, variant: secondary, permission: pos.manage }
+    groups:
+      - title: Sales Line
+        fields:
+          - { field: order_name, label: Order Ref }
+          - { field: product_name, label: Product }
+          - { field: quantity, label: Quantity }
+          - { field: discount, label: Discount (%) }
+          - { field: unit_price, label: Unit Price }
+          - { field: created_on, label: Created on }
+          - { field: currency, label: Currency }
