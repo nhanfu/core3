@@ -10,14 +10,17 @@ components:
     labels: { workflowStatus: Status }
     header_actions:
       - { id: complete_survey_participant, label: Mark completed, permission: surveys.write, variant: primary, show_if: "record.state === 'In Progress'" }
+      - { id: send_survey_invitation_detail, label: Send invitation, permission: surveys.write, variant: secondary, show_if: "record.state === 'New'" }
+      - { id: resend_survey_invitation_detail, label: Resend invitation, permission: surveys.write, variant: secondary, show_if: "record.state === 'In Progress'" }
+      - { id: print_completed_answers, label: Print completed answers, permission: surveys.read, variant: primary, show_if: "record.state === 'Completed' && record.answer_count > 0" }
     statusbar: [{ value: New, label: New }, { value: In Progress, label: In Progress }, { value: Completed, label: Completed }]
     status_colors: { New: neutral, 'In Progress': blue, Completed: green }
     group_columns: 2
     groups:
       - title: Participant
-        fields: [{ field: contact, label: Contact }, { field: email, label: Email }, { field: survey_name, label: Survey }, { field: attempt_no, label: Attempt }, { field: deadline, label: Deadline }, { field: state, label: Status }]
+        fields: [{ field: contact, label: Contact }, { field: email, label: Email }, { field: survey_name, label: Survey }, { field: attempt_no, label: Attempt }, { field: deadline, label: Deadline }, { field: invitation_status, label: Invitation }, { field: invitation_count, label: Invitations sent }, { field: invitation_sent_at, label: Last invitation }, { field: state, label: Status }]
       - title: Result
-        fields: [{ field: quiz_passed, label: Quiz Passed }, { field: score, label: Score (%) }, { field: created_at, label: Created on }]
+        fields: [{ field: quiz_passed, label: Quiz Passed }, { field: score, label: Score (%) }, { field: answer_count, label: Answer lines }, { field: created_at, label: Created on }]
   - type: ContactGrid
     source: participant_answer_lines
     row_key: id

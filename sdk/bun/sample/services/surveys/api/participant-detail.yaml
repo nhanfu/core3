@@ -3,7 +3,57 @@ datasources:
   - id: survey_participant_detail
     single: true
     permission: surveys.read
-    query: "SELECT id, row_version, survey_id, survey_name, contact, email, attempt_no, CAST(deadline AS VARCHAR) AS deadline, CASE WHEN quiz_passed THEN 'Passed' ELSE 'Not Passed' END AS quiz_passed, score, state, CAST(created_at AS VARCHAR) AS created_at FROM survey_participants WHERE id = :id"
+    query: "SELECT id, row_version, survey_id, survey_name, contact, email, attempt_no, CAST(deadline AS VARCHAR) AS deadline, CASE WHEN quiz_passed THEN 'Passed' ELSE 'Not Passed' END AS quiz_passed, score, state, invitation_status, invitation_count, CAST(invitation_sent_at AS VARCHAR) AS invitation_sent_at, (SELECT COUNT(*) FROM survey_detailed_answers a WHERE a.participant_id = survey_participants.id) AS answer_count, CAST(created_at AS VARCHAR) AS created_at FROM survey_participants WHERE id = :id"
   - id: participant_answer_lines
     permission: surveys.read
     query: "SELECT id, question_text, answer_type, answer_value, CASE WHEN skipped THEN 'Skipped' ELSE 'Answered' END AS skipped, score, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_detailed_answers WHERE participant_id = :id ORDER BY submitted_at, id"
+actions:
+  - id: send_survey_invitation_detail
+    type: server
+    permission: surveys.write
+    action: surveys.participants.invite
+    handler: yaml_mutation
+    result: alert
+    refresh: [survey_participant_detail, participant_answer_lines]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM survey_participants WHERE id = :id AND state = 'New' AND row_version = :expected_row_version", status: 409, message: Only new participants can receive an invitation. }
+        - { query: "SELECT id FROM survey_participants WHERE id = :id AND NULLIF(TRIM(COALESCE(email, '')), '') IS NOT NULL", status: 400, message: An email address is required before sending an invitation. }
+      steps:
+        - { query: "UPDATE survey_participants SET invitation_status = 'Sent', invitation_sent_at = CURRENT_TIMESTAMP, invitation_count = COALESCE(invitation_count, 0) + 1, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: The participant changed before the invitation was sent. }
+      result: { query: "SELECT 'Invitation sent to ' || email AS message, invitation_status, invitation_count FROM survey_participants WHERE id = :id" }
+  - id: resend_survey_invitation_detail
+    type: server
+    permission: surveys.write
+    action: surveys.participants.resend
+    handler: yaml_mutation
+    result: alert
+    refresh: [survey_participant_detail, participant_answer_lines]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM survey_participants WHERE id = :id AND state = 'In Progress' AND row_version = :expected_row_version", status: 409, message: Only in-progress participants can receive a reminder. }
+        - { query: "SELECT id FROM survey_participants WHERE id = :id AND NULLIF(TRIM(COALESCE(email, '')), '') IS NOT NULL", status: 400, message: An email address is required before resending an invitation. }
+      steps:
+        - { query: "UPDATE survey_participants SET invitation_status = 'Sent', invitation_sent_at = CURRENT_TIMESTAMP, invitation_count = COALESCE(invitation_count, 0) + 1, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: The participant changed before the invitation was resent. }
+      result: { query: "SELECT 'Invitation resent to ' || email AS message, invitation_status, invitation_count FROM survey_participants WHERE id = :id" }
+  - id: validate_print_completed_answers
+    type: server
+    permission: surveys.read
+    action: surveys.participants.print_completed_answers
+    handler: yaml_mutation
+    mutation:
+      guards:
+        - { query: "SELECT p.id FROM survey_participants p WHERE p.id = :id AND p.state = 'Completed' AND p.row_version = :expected_row_version AND EXISTS (SELECT 1 FROM survey_detailed_answers a WHERE a.participant_id = p.id)", status: 409, message: Only completed participants with answer lines can be printed. }
+      result: { query: "SELECT p.id, p.contact, COUNT(a.id) AS answer_count, 'Completed answers ready to print' AS message FROM survey_participants p JOIN survey_detailed_answers a ON a.participant_id = p.id WHERE p.id = :id GROUP BY p.id, p.contact" }
+  - id: print_completed_answers
+    type: client
+    permission: surveys.read
+    script: |
+      // js
+      async ({ row, request }) => {
+        await request('/api/actions/surveys.participants.print_completed_answers', {
+          method: 'POST',
+          body: { id: row.id, expected_row_version: row.row_version },
+        })
+        window.location.assign(`/surveys/participant-print?id=${encodeURIComponent(String(row.id))}`)
+      }

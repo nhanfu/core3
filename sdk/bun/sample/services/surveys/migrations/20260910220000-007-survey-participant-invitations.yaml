@@ -1,0 +1,37 @@
+version: 0.0.7
+description: Track deterministic participant invitation and print readiness states
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_participants ADD COLUMN IF NOT EXISTS invitation_status VARCHAR NOT NULL DEFAULT 'Not sent';
+      ALTER TABLE survey_participants ADD COLUMN IF NOT EXISTS invitation_count INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE survey_participants ADD COLUMN IF NOT EXISTS invitation_sent_at TIMESTAMP;
+      INSERT INTO survey_participants(id, survey_id, survey_name, contact, email, attempt_no, deadline, quiz_passed, score, state, created_at, invitation_status, invitation_count) VALUES
+        ('participant-burger-no-email', 'survey-demo-001', 'Burger Quiz', 'No Email Contact', NULL, 1, DATE '2026-01-31', NULL, NULL, 'New', TIMESTAMP '2026-01-14 09:00:00', 'Not sent', 0)
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE survey_participants SET invitation_status = 'Sent', invitation_count = 1, invitation_sent_at = TIMESTAMP '2026-01-12 09:01:00' WHERE id = 'participant-feedback-in-progress';
+      UPDATE survey_participants SET invitation_status = COALESCE(invitation_status, 'Not sent'), invitation_count = COALESCE(invitation_count, 0) WHERE invitation_status IS NULL OR invitation_count IS NULL;
+    down: |
+      DELETE FROM survey_participants WHERE id = 'participant-burger-no-email';
+      ALTER TABLE survey_participants DROP COLUMN invitation_sent_at;
+      ALTER TABLE survey_participants DROP COLUMN invitation_count;
+      ALTER TABLE survey_participants DROP COLUMN invitation_status;
+  duckdb:
+    up: |
+      ALTER TABLE survey_participants ADD COLUMN IF NOT EXISTS invitation_status VARCHAR;
+      ALTER TABLE survey_participants ADD COLUMN IF NOT EXISTS invitation_count INTEGER;
+      ALTER TABLE survey_participants ADD COLUMN IF NOT EXISTS invitation_sent_at TIMESTAMP;
+      INSERT INTO survey_participants(id, survey_id, survey_name, contact, email, attempt_no, deadline, quiz_passed, score, state, created_at, invitation_status, invitation_count) VALUES
+        ('participant-burger-no-email', 'survey-demo-001', 'Burger Quiz', 'No Email Contact', NULL, 1, DATE '2026-01-31', NULL, NULL, 'New', TIMESTAMP '2026-01-14 09:00:00', 'Not sent', 0)
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE survey_participants SET invitation_status = COALESCE(invitation_status, 'Not sent'), invitation_count = COALESCE(invitation_count, 0) WHERE invitation_status IS NULL OR invitation_count IS NULL;
+      UPDATE survey_participants SET invitation_status = 'Sent', invitation_count = 1, invitation_sent_at = TIMESTAMP '2026-01-12 09:01:00' WHERE id = 'participant-feedback-in-progress';
+    down: |
+      DELETE FROM survey_participants WHERE id = 'participant-burger-no-email';
+      ALTER TABLE survey_participants DROP COLUMN invitation_sent_at;
+      ALTER TABLE survey_participants DROP COLUMN invitation_count;
+      ALTER TABLE survey_participants DROP COLUMN invitation_status;
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

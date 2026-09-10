@@ -22,6 +22,13 @@ components:
       - { field: quiz_status, label: Quiz Passed, type: StatusChip }
       - { field: score, label: Score (%), align: right }
       - { field: state, label: Status, type: StatusChip }
+      - field: actions
+        label: Actions
+        sortable: false
+        actions:
+          - { id: send_survey_invitation, label: Send invitation, permission: surveys.write, show_if: "row.state === 'New'" }
+          - { id: resend_survey_invitation, label: Resend invitation, permission: surveys.write, show_if: "row.state === 'In Progress'" }
+          - { id: print_completed_answers, label: Print completed answers, permission: surveys.read, show_if: "row.state === 'Completed' && row.answer_count > 0" }
     page_size: 50
     selectable: true
     column_chooser: true

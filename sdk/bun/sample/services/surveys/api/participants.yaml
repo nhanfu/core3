@@ -2,7 +2,48 @@ page: { id: survey-participants }
 datasources:
   - id: survey_participants
     permission: surveys.read
-    query: "SELECT id, row_version, survey_id, survey_name, contact, email, attempt_no, CAST(deadline AS VARCHAR) AS deadline, CASE WHEN quiz_passed THEN 'Passed' ELSE 'Not Passed' END AS quiz_status, score, state FROM survey_participants WHERE (:q IS NULL OR survey_name ILIKE '%' || :q || '%' OR contact ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) AND (:quiz_status IS NULL OR CASE WHEN quiz_passed THEN 'Passed' ELSE 'Not Passed' END = :quiz_status) AND (:survey_id IS NULL OR survey_id = :survey_id) ORDER BY created_at DESC, id"
+    query: "SELECT id, row_version, survey_id, survey_name, contact, email, attempt_no, CAST(deadline AS VARCHAR) AS deadline, CASE WHEN quiz_passed THEN 'Passed' ELSE 'Not Passed' END AS quiz_status, score, state, invitation_status, invitation_count, CAST(invitation_sent_at AS VARCHAR) AS invitation_sent_at, (SELECT COUNT(*) FROM survey_detailed_answers a WHERE a.participant_id = survey_participants.id) AS answer_count FROM survey_participants WHERE (:q IS NULL OR survey_name ILIKE '%' || :q || '%' OR contact ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) AND (:quiz_status IS NULL OR CASE WHEN quiz_passed THEN 'Passed' ELSE 'Not Passed' END = :quiz_status) AND (:survey_id IS NULL OR survey_id = :survey_id) ORDER BY created_at DESC, id"
   - id: participant_states
     permission: surveys.read
     query: "SELECT value, label FROM (VALUES ('New','New'), ('In Progress','In Progress'), ('Completed','Completed')) states(value, label)"
+actions:
+  - id: send_survey_invitation
+    type: server
+    permission: surveys.write
+    action: surveys.participants.invite
+    handler: yaml_mutation
+    result: alert
+    refresh: [survey_participants]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM survey_participants WHERE id = :id AND state = 'New' AND row_version = :expected_row_version", status: 409, message: Only new participants can receive an invitation. }
+        - { query: "SELECT id FROM survey_participants WHERE id = :id AND NULLIF(TRIM(COALESCE(email, '')), '') IS NOT NULL", status: 400, message: An email address is required before sending an invitation. }
+      steps:
+        - { query: "UPDATE survey_participants SET invitation_status = 'Sent', invitation_sent_at = CURRENT_TIMESTAMP, invitation_count = COALESCE(invitation_count, 0) + 1, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: The participant changed before the invitation was sent. }
+      result: { query: "SELECT 'Invitation sent to ' || email AS message, invitation_status, invitation_count FROM survey_participants WHERE id = :id" }
+  - id: resend_survey_invitation
+    type: server
+    permission: surveys.write
+    action: surveys.participants.resend
+    handler: yaml_mutation
+    result: alert
+    refresh: [survey_participants]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM survey_participants WHERE id = :id AND state = 'In Progress' AND row_version = :expected_row_version", status: 409, message: Only in-progress participants can receive a reminder. }
+        - { query: "SELECT id FROM survey_participants WHERE id = :id AND NULLIF(TRIM(COALESCE(email, '')), '') IS NOT NULL", status: 400, message: An email address is required before resending an invitation. }
+      steps:
+        - { query: "UPDATE survey_participants SET invitation_status = 'Sent', invitation_sent_at = CURRENT_TIMESTAMP, invitation_count = COALESCE(invitation_count, 0) + 1, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: The participant changed before the invitation was resent. }
+      result: { query: "SELECT 'Invitation resent to ' || email AS message, invitation_status, invitation_count FROM survey_participants WHERE id = :id" }
+  - id: print_completed_answers
+    type: client
+    permission: surveys.read
+    script: |
+      // js
+      async ({ row, request }) => {
+        await request('/api/actions/surveys.participants.print_completed_answers', {
+          method: 'POST',
+          body: { id: row.id, expected_row_version: row.row_version },
+        })
+        window.location.assign(`/surveys/participant-print?id=${encodeURIComponent(String(row.id))}`)
+      }

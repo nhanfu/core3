@@ -220,6 +220,20 @@ responses. Evidence is `/tmp/core3-surveys-desktop-cards-fix.png` and
 `/tmp/core3-surveys-mobile-cards-fix.png`; the installed Odoo comparison is
 `/tmp/odoo-surveys-{desktop,mobile}-fresh.png`.
 
+The participant invitation/print follow-up adds deterministic invitation state
+(`Not sent`/`Sent`, count, and timestamp) to the participant contract. New
+participants expose a permissioned Send invitation action; in-progress
+participants expose Resend invitation; both validate state, email presence,
+row version, and write permission server-side and return visible success/error
+states. The same actions are present on the participant form. Completed
+participants with answer lines expose Print completed answers, which first
+passes the permissioned `surveys.participants.print_completed_answers` contract
+and then opens `/surveys/participant-print`; the print surface is readonly,
+answer-line based, and has a browser Print action. Direct print access remains
+safe for incomplete/no-answer records through an unavailable/empty state, and
+missing `surveys.read` is denied by the page/API boundary. No live-session work
+is included in this batch.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions

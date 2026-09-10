@@ -1,0 +1,23 @@
+page: { id: survey-participant-print }
+datasources:
+  - id: survey_participant_print
+    single: true
+    permission: surveys.read
+    query: "SELECT p.id, p.contact, p.email, p.survey_name, p.attempt_no, CAST(p.deadline AS VARCHAR) AS deadline, p.state, p.score, CASE WHEN p.state = 'Completed' AND EXISTS (SELECT 1 FROM survey_detailed_answers a WHERE a.participant_id = p.id) THEN 'Ready' ELSE 'Unavailable' END AS print_status, (SELECT COUNT(*) FROM survey_detailed_answers a WHERE a.participant_id = p.id) AS answer_count FROM survey_participants p WHERE p.id = :id"
+  - id: survey_participant_print_answers
+    permission: surveys.read
+    query: "SELECT a.id, a.question_text, a.answer_type, COALESCE(a.answer_value, 'Skipped') AS answer_value, CASE WHEN a.skipped THEN 'Skipped' ELSE 'Answered' END AS answer_state, a.score, CAST(a.submitted_at AS VARCHAR) AS submitted_at FROM survey_detailed_answers a JOIN survey_participants p ON p.id = a.participant_id WHERE a.participant_id = :id AND p.state = 'Completed' ORDER BY a.submitted_at, a.id"
+actions:
+  - id: print_completed_answers_document
+    type: client
+    permission: surveys.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: back_to_survey_participant
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/participant-detail
+    params: { id: '{row.id}' }

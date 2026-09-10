@@ -394,44 +394,49 @@ export class PageRuntime extends BaseComponent {
         break;
       }
       case 'client': {
-        const source = String(actionDef.script || '').trim();
-        // YAML client actions must contain a function source, for example:
-        // `async ({ row, request }) => { ... }`.
+        try {
+          const source = String(actionDef.script || '').trim();
+          // YAML client actions must contain a function source, for example:
+          // `async ({ row, request }) => { ... }`.
 
-        const fn = new Function(`return (${source})`)();
-        if (typeof fn !== 'function') throw new TypeError('Client action script must evaluate to a JavaScript function');
-        const token = (await import(/* @vite-ignore */ ['/app.ts'].join(''))).getToken();
-        const request = async (endpoint: string, options: RequestInit = {}) => {
-          const response = await fetch(endpoint, {
-            ...options,
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-              ...(options.headers || {}),
+          const fn = new Function(`return (${source})`)();
+          if (typeof fn !== 'function') throw new TypeError('Client action script must evaluate to a JavaScript function');
+          const token = (await import(/* @vite-ignore */ ['/app.ts'].join(''))).getToken();
+          const request = async (endpoint: string, options: RequestInit = {}) => {
+            const response = await fetch(endpoint, {
+              ...options,
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                ...(options.headers || {}),
+              },
+              ...(options.body && typeof options.body !== 'string' ? { body: JSON.stringify(options.body) } : {}),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              const fallback = result.error || result.message || i18n.tKey('errors.request_failed', {}, 'Request failed');
+              const messageKey = result.message_key || (response.status >= 500 ? 'errors.internal_error' : undefined);
+              const translated = messageKey ? i18n.tKey(String(messageKey), result.message_params || {}, fallback) : fallback;
+              const message = result.detail ? `${translated} — Dev detail: ${String(result.detail)}` : translated;
+              throw Object.assign(new Error(message), { status: response.status, code: result.code, messageKey, messageParams: result.message_params });
+            }
+            return result;
+          };
+          const { navigate: appNavigate } = await import(/* @vite-ignore */ ['/app.ts'].join(''));
+          await fn({
+            user: ctx.user,
+            row: row || {},
+            state: ctx.state,
+            request,
+            setLanguage: async (language: string) => {
+              await i18n.setLang(String(language));
+              await appNavigate(window.location.pathname, { ...getPageParams(), lc: String(language) });
             },
-            ...(options.body && typeof options.body !== 'string' ? { body: JSON.stringify(options.body) } : {}),
           });
-          const result = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            const fallback = result.error || result.message || i18n.tKey('errors.request_failed', {}, 'Request failed');
-            const messageKey = result.message_key || (response.status >= 500 ? 'errors.internal_error' : undefined);
-            const translated = messageKey ? i18n.tKey(String(messageKey), result.message_params || {}, fallback) : fallback;
-            const message = result.detail ? `${translated} — Dev detail: ${String(result.detail)}` : translated;
-            throw Object.assign(new Error(message), { status: response.status, code: result.code, messageKey, messageParams: result.message_params });
-          }
-          return result;
-        };
-        const { navigate: appNavigate } = await import(/* @vite-ignore */ ['/app.ts'].join(''));
-        await fn({
-          user: ctx.user,
-          row: row || {},
-          state: ctx.state,
-          request,
-          setLanguage: async (language: string) => {
-            await i18n.setLang(String(language));
-            await appNavigate(window.location.pathname, { ...getPageParams(), lc: String(language) });
-          },
-        });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Action failed';
+          showToast(message, toastTypeForError(error));
+        }
         break;
       }
       case 'logout': {

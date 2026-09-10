@@ -1,0 +1,28 @@
+title: Print completed answers
+page: { id: survey-participant-print, route: /surveys/participant-print, breadcrumb: [Marketing, Surveys, Participants, Print completed answers], auth: { require: [surveys.read] } }
+components:
+  - type: OdooFormView
+    source: survey_participant_print
+    title_field: contact
+    subtitle_field: survey_name
+    status_field: state
+    editable: false
+    labels: { workflowStatus: Status }
+    header_actions:
+      - { id: print_completed_answers_document, label: Print, permission: surveys.read, variant: primary, show_if: "record.print_status === 'Ready'" }
+      - { id: back_to_survey_participant, label: Back to participant, permission: surveys.read, variant: secondary }
+    status_colors: { Completed: green, New: neutral, 'In Progress': blue }
+    groups:
+      - title: Completed survey
+        fields: [{ field: contact, label: Contact }, { field: email, label: Email }, { field: survey_name, label: Survey }, { field: attempt_no, label: Attempt }, { field: deadline, label: Deadline }, { field: state, label: Status }, { field: score, label: Score (%) }, { field: answer_count, label: Answer lines }]
+  - type: ContactGrid
+    source: survey_participant_print_answers
+    row_key: id
+    columns:
+      - { field: question_text, label: Question, type: PrimaryEntityCell }
+      - { field: answer_type, label: Answer type }
+      - { field: answer_value, label: Answer }
+      - { field: answer_state, label: State, type: StatusChip }
+      - { field: score, label: Score, align: right }
+      - { field: submitted_at, label: Submitted at }
+    empty_state: { title: No completed answers, description: Only completed participants with submitted answer lines can be printed. }

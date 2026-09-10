@@ -1,5 +1,6 @@
 .surveys-page { min-height: 100%; }
 .surveys-page .o-list-view__toolbar { gap: .65rem; }
+.page:has(.o-list-table-viewport) .o-list-table-viewport { overflow-x: auto; }
 
 // The shared list keeps a content-sized table for wide, Odoo-style lists. On
 // a narrow Surveys no-match result, that makes the single empty-state cell

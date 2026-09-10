@@ -50,6 +50,33 @@ describe('Surveys parity catalog and workflow', () => {
     expect(yaml('migrations/20260910210000-006-survey-participant-workflow-answers.yaml').version).toBe('0.0.6');
   });
 
+  test('exposes permissioned invitation, resend, and completed-answer print contracts', () => {
+    const participants = yaml('api/participants.yaml');
+    const participantPage = yaml('pages/participants.yaml');
+    const detail = yaml('api/participant-detail.yaml');
+    const detailPage = yaml('pages/participant-detail.yaml');
+    const printPage = yaml('pages/participant-print.yaml');
+    const invite = participants.actions.find((candidate: any) => candidate.id === 'send_survey_invitation');
+    const resend = participants.actions.find((candidate: any) => candidate.id === 'resend_survey_invitation');
+    expect(invite).toMatchObject({ type: 'server', permission: 'surveys.write', action: 'surveys.participants.invite', handler: 'yaml_mutation', result: 'alert' });
+    expect(String(invite.mutation.guards[0].query)).toContain("state = 'New'");
+    expect(String(invite.mutation.guards[1].query)).toContain('email');
+    expect(String(resend.mutation.guards[0].query)).toContain("state = 'In Progress'");
+    expect(participantPage.components[0].columns.at(-1).actions.map((action: any) => action.id)).toEqual([
+      'send_survey_invitation', 'resend_survey_invitation', 'print_completed_answers',
+    ]);
+    expect(detailPage.components[0].header_actions.map((action: any) => action.id)).toEqual([
+      'complete_survey_participant', 'send_survey_invitation_detail', 'resend_survey_invitation_detail', 'print_completed_answers',
+    ]);
+    const printContract = detail.actions.find((candidate: any) => candidate.id === 'validate_print_completed_answers');
+    expect(printContract).toMatchObject({ type: 'server', permission: 'surveys.read', action: 'surveys.participants.print_completed_answers', handler: 'yaml_mutation' });
+    expect(String(printContract.mutation.guards[0].query)).toContain("p.state = 'Completed'");
+    expect(String(printContract.mutation.guards[0].query)).toContain('survey_detailed_answers');
+    expect(printPage.page.route).toBe('/surveys/participant-print');
+    expect(printPage.components[0].header_actions[0]).toMatchObject({ id: 'print_completed_answers_document', label: 'Print' });
+    expect(yaml('migrations/20260910220000-007-survey-participant-invitations.yaml').version).toBe('0.0.7');
+  });
+
   test('keeps suggested-value creation service-owned and relation-backed', () => {
     const page = yaml('pages/suggested-values.yaml');
     const action = page.actions.find((candidate: any) => candidate.id === 'create_survey_suggested_value');
