@@ -30,6 +30,7 @@ describe('Time Off Odoo view navigation', () => {
       'accrual-plans.yaml',
       'allocations.yaml',
       'analysis.yaml',
+      'balance.yaml',
       'my-allocations.yaml',
       'my-time-off.yaml',
       'report-by-employee.yaml',

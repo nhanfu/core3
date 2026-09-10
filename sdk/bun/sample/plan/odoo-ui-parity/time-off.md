@@ -328,6 +328,18 @@ transport-error state, and `time_off.read` boundary. Its frontend page and
 service API are joined by `page.id: time-off-report-by-type`; no Odoo frontend
 code or screenshots are committed.
 
+The next reporting slice adds the manager-only installed Odoo server action
+`action_hr_holidays_by_employee_and_type_report` as `Reporting > Balance` at
+`/time-off-reporting/balance`. It is read-only and uses the existing fixed
+2026 employee/type balance fixtures with allocated, taken, planned, remaining,
+days, and hours measures. Core3 exposes Graph, List, Pivot, and Calendar tabs
+for the shared report surface; Odoo's source action itself is pivot-only, so
+the annual Calendar tab is a documented Core3 presentation of the year-window
+balance rather than a claim of an Odoo calendar mode. Search, employee/type
+filters, empty and transport-error states, and the `time_off.manage` boundary
+are service-owned through `page.id: time-off-balance`. Authenticated desktop
+and mobile captures and response/overflow checks are kept outside Git.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
