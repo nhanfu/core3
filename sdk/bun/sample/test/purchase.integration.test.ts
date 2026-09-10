@@ -155,4 +155,28 @@ describe('Purchase Orders list and detail parity', () => {
     expect(yaml('api/purchase-products.yaml').actions.find((action: any) => action.id === 'create_purchase_product')).toMatchObject({ permission: 'purchase.write' });
     expect(yaml('pages/purchase-products.yaml').page.auth.require).toEqual(['purchase.read']);
   });
+
+  test('keeps Product Variants aligned with the source action and deterministic catalog fixtures', async () => {
+    const page = yaml('pages/purchase-product-variants.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    const variants = apiSource('purchase-product-variants.yaml', 'purchase_product_variants');
+    expect(page.page).toMatchObject({ id: 'purchase-product-variants', route: '/purchase/product-variants', auth: { require: ['purchase.read'] } });
+    expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('purchase-product-variants')).toContain('purchase_product_variants');
+    expect(list.views.map((view: any) => view.id)).toEqual(['card', 'list', 'activity']);
+    expect(list.views[0]).toMatchObject({ label: 'Kanban', card: { title: 'name', subtitle: 'default_code' } });
+    expect(variants.permission).toBe('purchase.read');
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_product_variants_test_schema_migrations', ['schema', 'data']);
+    const params = { q: null, active: null, fixture_state: null };
+    const firstPage = await repository.querySource(variants, params, 0, 80);
+    const secondPage = await repository.querySource(variants, params, 80, 80);
+    expect([...firstPage.data, ...secondPage.data]).toHaveLength(105);
+    expect(firstPage.data[0]).toMatchObject({ name: 'Acoustic Bloc Screens / Standard', default_code: 'FURN-001-V1', variant_values: 'Standard' });
+    expect(firstPage.data[0].list_price_display).toBe('$ 295.00');
+    const searched = await repository.querySource(variants, { q: 'Acoustic', active: true, fixture_state: null }, 0, 50);
+    expect(searched.data).toHaveLength(1);
+    expect((await repository.querySource(variants, { q: null, active: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+  });
 });

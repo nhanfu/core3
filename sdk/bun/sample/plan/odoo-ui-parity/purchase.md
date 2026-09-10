@@ -97,6 +97,22 @@ multi-line/section/note order editing, chatter actions, portal routes, or the
 full product/configuration/reporting contracts. Those remain open follow-up
 gates in this sub-plan.
 
+## Product Variants bounded follow-up
+
+Core3 now exposes `/purchase/product-variants` under the Products menu. The
+page/API pair is joined by `page.id`, migration `20260910195000-008` projects
+105 deterministic variants from the purchased product catalog, and the shared
+ListView provides Odoo-shaped Kanban, List, Activity, search, Active/Archived,
+empty, and responsive card states. Authenticated Core3 checks at 1440x900 and
+390x844 reached the route with all 105 records, no failed requests, and no
+horizontal overflow. Captures are local under `/tmp/core3-purchase-variants-*`.
+
+The installed Odoo action 694 was also captured at both target viewports, but
+the reference itself currently fails before rendering with an `active_ids`
+Python-expression evaluation error. Those screenshots remain under
+`/tmp/odoo-purchase-variants/`; they are recorded as an Odoo reference defect,
+not presented as visual parity evidence.
+
 ## Source-defined menu and action inventory
 
 The ordinary authenticated Purchase application is defined by

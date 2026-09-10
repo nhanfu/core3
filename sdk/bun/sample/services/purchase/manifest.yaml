@@ -17,6 +17,7 @@ menu:
         - { path: /purchase, label: Requests for Quotation, icon: purchase, permission: purchase.read }
         - { path: /purchase-orders, label: Purchase Orders, icon: purchase, permission: purchase.read }
         - { path: /purchase/products, label: Products, icon: package, permission: purchase.read }
+        - { path: /purchase/product-variants, label: Product Variants, icon: package, permission: purchase.read }
         - { path: /vendors, label: Vendors, icon: contacts, permission: purchase.read }
     - id: reporting
       label: Reporting

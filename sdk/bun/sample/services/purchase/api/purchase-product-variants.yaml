@@ -1,0 +1,8 @@
+page: { id: purchase-product-variants }
+datasources:
+  - id: purchase_variant_active_states
+    permission: purchase.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"
+  - id: purchase_product_variants
+    permission: purchase.read
+    query: "SELECT id, row_version, product_id, default_code, name, variant_values, barcode, list_price, printf('$ %,.2f', CAST(list_price AS DOUBLE)) AS list_price_display, on_hand, printf('%.2f %s', CAST(on_hand AS DOUBLE), uom) AS on_hand_display, uom, active, CAST(created_at AS VARCHAR) AS created_at, 1 AS activity_count FROM purchase_product_variants WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR default_code ILIKE '%' || :q || '%' OR COALESCE(barcode, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY name"

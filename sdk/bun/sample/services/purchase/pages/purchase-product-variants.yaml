@@ -1,0 +1,24 @@
+title: Product Variants
+page: { id: purchase-product-variants, route: /purchase/product-variants, breadcrumb: [Supply Chain, Purchase, Products, Product Variants], auth: { require: [purchase.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: purchase_product_variants
+    search: { label: Search product variants, placeholder: Search variants by name or internal reference... }
+    filters: [{ field: active, label: Active, options_source: purchase_variant_active_states }]
+    view_navigation: tabs
+    views:
+      - { id: card, label: Kanban, icon: dashboard, card: { title: name, subtitle: default_code, fields: [{ field: variant_values, label: Attributes }, { field: list_price_display, label: Price }] } }
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: activity, label: Activity, icon: activity, mobile: false, title_field: name, subtitle_field: default_code, record_date_field: created_at, activity_types: [{ id: todo, label: To-Do, icon: ✓ }, { id: document, label: Document, icon: ▣ }] }
+    columns:
+      - { field: name, label: Product Variant, type: PrimaryEntityCell, sortable: true }
+      - { field: default_code, label: Internal Reference, sortable: true }
+      - { field: variant_values, label: Attributes }
+      - { field: barcode, label: Barcode }
+      - { field: list_price_display, label: Sales Price, align: right }
+      - { field: on_hand_display, label: On hand, align: right }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 80
+    row_key: id
+    empty_state: { title: No product variants found, description: Product variants will appear here when products have attribute combinations. }

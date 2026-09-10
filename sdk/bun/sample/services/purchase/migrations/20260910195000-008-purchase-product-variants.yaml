@@ -1,0 +1,21 @@
+version: 0.0.8
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_product_variants (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        product_id VARCHAR NOT NULL, default_code VARCHAR UNIQUE, name VARCHAR NOT NULL,
+        variant_values VARCHAR NOT NULL DEFAULT 'Standard', barcode VARCHAR,
+        list_price DECIMAL(18,2) NOT NULL DEFAULT 0, on_hand DECIMAL(18,2) NOT NULL DEFAULT 0,
+        uom VARCHAR NOT NULL DEFAULT 'Units', active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT OR IGNORE INTO purchase_product_variants(id, product_id, default_code, name, variant_values, barcode, list_price, on_hand, uom, active)
+      SELECT 'purchase-variant-' || id, id, default_code || '-V1', name || ' / Standard', 'Standard', barcode || '1', list_price, on_hand, uom, active FROM purchase_products;
+    down: |
+      DROP TABLE IF EXISTS purchase_product_variants;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
