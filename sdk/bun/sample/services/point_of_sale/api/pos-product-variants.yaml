@@ -7,6 +7,11 @@ datasources:
     permission: pos.read
     query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"
 actions:
+  - id: new_pos_product_variant
+    type: navigate
+    permission: pos.manage
+    navigate_to: /point-of-sale/product-variants/new
+
   - id: view_pos_product_variant
     type: navigate
     permission: pos.read

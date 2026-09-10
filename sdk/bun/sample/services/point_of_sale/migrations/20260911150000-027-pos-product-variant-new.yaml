@@ -1,0 +1,12 @@
+version: 0.0.28
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_product_variants ADD COLUMN IF NOT EXISTS row_version INTEGER;
+      UPDATE pos_product_variants SET row_version = COALESCE(row_version, 1);
+    down: |
+      ALTER TABLE pos_product_variants DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

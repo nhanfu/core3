@@ -1,0 +1,72 @@
+title: New
+page: { id: pos-product-variant-new, route: /point-of-sale/product-variants/new, breadcrumb: [Sales, Point of Sale, Products, Product Variants, New], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_product_variant_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_pos_product_variants, label: Product Variants, variant: secondary, permission: pos.read }
+      - { id: create_pos_product_variant, label: Save, variant: primary, permission: pos.manage }
+    stat_buttons:
+      - { id: new_pos_product_variant_documents, label: Documents, value_field: documents_count, permission: pos.read }
+      - { id: new_pos_product_variant_stock, label: In / Out, value_field: stock_in_out, permission: pos.read }
+      - { id: new_pos_product_variant_purchases, label: Purchased, value_field: purchased_qty, permission: pos.read }
+      - { id: new_pos_product_variant_sales, label: Sold, value_field: sold_qty, permission: pos.read }
+    group_columns: 2
+    groups:
+      - title: Product
+        wide: true
+        fields:
+          - { field: name, label: Product, type: text, required: true, placeholder: 'e.g. Cheese Burger' }
+          - { field: sales, label: Sales, type: checkbox, default: true }
+          - { field: expenses, label: Expenses?, type: checkbox, default: false }
+          - { field: pos_available, label: Point of Sale?, type: checkbox, default: true }
+          - { field: purchase, label: Purchase, type: checkbox, default: true }
+    notebook:
+      active: general
+      tabs:
+        - id: general
+          label: General Information
+          groups:
+            - title: General Information
+              fields:
+                - { field: product_type, label: Product Type ?, type: select, options: [Goods, Service, Combo], default: Goods }
+                - { field: invoicing_policy, label: Invoicing Policy ?, type: select, options: [Ordered quantities, Delivered quantities], default: Ordered quantities }
+                - { field: track_inventory, label: Track Inventory ?, type: checkbox, default: false }
+                - { field: price, label: Sales Price ?, type: number, default: 1 }
+                - { field: sales_taxes, label: Sales Taxes ?, type: text, default: '15%' }
+                - { field: cost, label: Cost ?, type: number, default: 0 }
+                - { field: internal_reference, label: Internal Reference, type: text }
+                - { field: barcode, label: Barcode ?, type: text }
+                - { field: purchase_taxes, label: Purchase Taxes ?, type: text, default: '15%' }
+                - { field: category, label: Category, type: text, default: General }
+                - { field: company, label: Company, type: text, default: 'My Company (San Francisco)' }
+            - title: INTERNAL NOTES
+              fields:
+                - { field: internal_notes, label: Note, type: textarea, wide: true }
+        - id: sales
+          label: Sales
+          fields:
+            - { field: price, label: Sales Price ? }
+            - { field: sales_taxes, label: Sales Taxes ? }
+        - id: point-of-sale
+          label: Point of Sale
+          fields:
+            - { field: pos_available, label: Point of Sale ? }
+            - { field: unit, label: Unit, type: text, default: Units }
+        - id: purchase
+          label: Purchase
+          fields:
+            - { field: purchase, label: Purchase }
+            - { field: purchase_taxes, label: Purchase Taxes ? }
+        - id: inventory
+          label: Inventory
+          fields:
+            - { field: on_hand, label: On Hand }
+            - { field: forecasted, label: Forecasted }
+            - { field: track_inventory, label: Track Inventory ? }
+    chatter_label: Chatter
+    chatter_empty: No messages or activities yet

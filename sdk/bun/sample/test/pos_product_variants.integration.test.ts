@@ -67,4 +67,40 @@ describe('POS product variants parity', () => {
       expect(action.mutation.guards).toEqual(expect.arrayContaining([expect.objectContaining({ status: 422 }), expect.objectContaining({ status: 404 })]));
     }
   });
+
+  test('adds the Odoo New action with a page/API pair and service-owned defaults', async () => {
+    const listPage = yaml('pages/pos-product-variants.yaml');
+    const listApi = yaml('api/pos-product-variants.yaml');
+    const newPage = yaml('pages/pos-product-variant-new.yaml');
+    const newApi = yaml('api/pos-product-variant-new.yaml');
+    expect(listPage.components[0]).toMatchObject({ create_action: 'new_pos_product_variant', create_label: 'New' });
+    expect(listApi.actions).toContainEqual(expect.objectContaining({
+      id: 'new_pos_product_variant', permission: 'pos.manage', navigate_to: '/point-of-sale/product-variants/new',
+    }));
+    expect(newApi.page.id).toBe(newPage.page.id);
+    expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('pos-product-variant-new')).toContain('pos_product_variant_new');
+    expect(newPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'pos_product_variant_new', initial_editing: true });
+    expect(newPage.components[0].notebook.tabs.map((tab: any) => tab.label)).toEqual(['General Information', 'Sales', 'Point of Sale', 'Purchase', 'Inventory']);
+    expect(newPage.components[0].groups[0].fields.map((field: any) => field.label)).toEqual(['Product', 'Sales', 'Expenses?', 'Point of Sale?', 'Purchase']);
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'pos_product_variant_new_migrations', ['schema', 'data']);
+    const source = newApi.datasources[0];
+    expect(await repository.querySource(source, { fixture_state: null }, 0, 1)).toMatchObject({
+      data: { name: '', product_template: 'New product', price: 1, product_type: 'Goods', company: 'My Company (San Francisco)' },
+    });
+    expect(source.error_states.transport_error).toMatchObject({ status: 503, code: 'POS_PRODUCT_VARIANT_NEW_UNAVAILABLE' });
+
+    const create = newApi.actions.find((candidate: any) => candidate.id === 'create_pos_product_variant');
+    expect(create).toMatchObject({ type: 'server_form', permission: 'pos.manage', operation: 'insert', handler: 'yaml_mutation' });
+    const created = await repository.executeMutation(create.mutation, {
+      values: { name: 'Seasonal tea / Iced', attributes: 'Temperature: Iced', product_template: 'Seasonal tea', price: 2.75, cost: 0.8 },
+    });
+    expect(created).toMatchObject({ name: 'Seasonal tea / Iced', attributes: 'Temperature: Iced', product_template: 'Seasonal tea', price: 2.75, row_version: 1 });
+    await expect(repository.executeMutation(create.mutation, { values: { name: '   ' } })).rejects.toMatchObject({ status: 422, code: 'POS_PRODUCT_VARIANT_NAME_REQUIRED' });
+    await expect(repository.executeMutation(create.mutation, { values: { name: 'Seasonal tea / Iced', attributes: 'Temperature: Iced' } })).rejects.toMatchObject({ status: 409, code: 'POS_PRODUCT_VARIANT_EXISTS' });
+    await expect(repository.executeMutation(create.mutation, { values: { name: 'Negative price', price: -1 } })).rejects.toMatchObject({ status: 422, code: 'POS_PRODUCT_VARIANT_PRICE_INVALID' });
+    database.close();
+  });
 });

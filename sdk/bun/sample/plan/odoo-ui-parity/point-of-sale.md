@@ -475,3 +475,32 @@ permissions, validation, stale guards, and workflow transitions. Browser
 verification was not run in this bounded handoff because the required
 persistent browser tooling was unavailable; no screenshots are part of the
 commit.
+
+## Current batch: Product Variant New action
+
+The owned Odoo 19 database currently exposes Product Variants as action 531
+(`list,kanban,form`) under Point of Sale → Products. Its authenticated New
+state uses `/odoo/action-531/new`, with Product, Sales, Expenses?, Point of
+Sale?, Purchase, the five notebook tabs, stat buttons, and the Odoo responsive
+list/form composition. Core3 now exposes the matching `New` action at
+`/point-of-sale/product-variants/new`, joined through the separate
+`pos-product-variant-new` page/API IDs. The service-owned form supports
+deterministic defaults, create permission, required-name, non-negative price
+and cost, and duplicate variant-value guards; migration `0.0.28` persists
+`row_version` for the new fixture contract.
+
+Focused integration coverage passes 5 tests and 40 assertions for page/API
+joins, Odoo labels/tabs, defaults, create, empty/error datasource metadata,
+validation, duplicate, and permission contracts. Odoo list/New captures are
+under `/tmp/odoo-pos-product-variants-new-slice-list-{desktop,mobile}.png` and
+`/tmp/odoo-pos-product-variant-new-slice-{desktop,mobile}.png`. Core3 initial
+list/New captures are `/tmp/core3-pos-product-variants-new-slice-list-1440.png`,
+`/tmp/core3-pos-product-variant-new-1440.png`,
+`/tmp/core3-pos-product-variants-new-slice-list-390.png`, and
+`/tmp/core3-pos-product-variant-new-390.png`; the denied-state capture is
+`/tmp/core3-pos-product-variant-new-permission-denied.png`.
+
+The final browser pass was interrupted after a backend crash caused by the
+initial string/numeric guard expression; that expression is fixed and the
+focused suite passes, but the post-fix successful browser create-and-refresh
+transition was not recaptured in this handoff. Screenshots remain outside Git.

@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: pos_product_variants
+    create_action: new_pos_product_variant
+    create_label: New
     responsive_card: true
     views:
       - { id: list, label: List, icon: table }

@@ -1,0 +1,74 @@
+page: { id: pos-product-variant-new }
+datasources:
+  - id: pos_product_variant_new
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_PRODUCT_VARIANT_NEW_UNAVAILABLE, message: The new product variant form is temporarily unavailable. } }
+    query: "SELECT NULL AS id, 1 AS row_version, '' AS name, '' AS internal_reference, 'New product' AS product_template, '' AS attributes, 'General' AS category, CAST(1 AS DOUBLE) AS price, CAST(0 AS DOUBLE) AS cost, CAST(0 AS DOUBLE) AS on_hand, CAST(0 AS DOUBLE) AS forecasted, 'Units' AS unit, 'Goods' AS product_type, 'Ordered quantities' AS invoicing_policy, false AS track_inventory, '15%' AS sales_taxes, '' AS barcode, '15%' AS purchase_taxes, 'My Company (San Francisco)' AS company, '' AS internal_notes, true AS sales, true AS pos_available, false AS expenses, true AS purchase, 0 AS documents_count, '0 / 0' AS stock_in_out, CAST(0 AS DOUBLE) AS purchased_qty, CAST(0 AS DOUBLE) AS sold_qty, true AS active"
+actions:
+  - id: back_to_pos_product_variants
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-variants
+
+  - id: new_pos_product_variant_documents
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-variants
+
+  - id: new_pos_product_variant_stock
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-variants
+
+  - id: new_pos_product_variant_purchases
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-variants
+
+  - id: new_pos_product_variant_sales
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-variants
+
+  - id: create_pos_product_variant
+    type: server_form
+    permission: pos.manage
+    title: New Product Variant
+    action: pos.product_variants.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [pos_product_variants]
+    mutation:
+      operation: insert
+      table: pos_product_variants
+      generated: [id]
+      fields: [row_version, name, internal_reference, product_template, attributes, category, price, cost, on_hand, forecasted, unit, product_type, invoicing_policy, track_inventory, sales_taxes, barcode, purchase_taxes, company, internal_notes, sales, pos_available, expenses, purchase, active]
+      required: [name]
+      defaults: { row_version: 1, internal_reference: '', product_template: 'New product', attributes: '', category: General, price: 1, cost: 0, on_hand: 0, forecasted: 0, unit: Units, product_type: Goods, invoicing_policy: Ordered quantities, track_inventory: false, sales_taxes: '15%', barcode: '', purchase_taxes: '15%', company: 'My Company (San Francisco)', internal_notes: '', sales: true, pos_available: true, expenses: false, purchase: true, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 120", status: 422, code: POS_PRODUCT_VARIANT_NAME_REQUIRED, message: Product name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(CAST(:price AS VARCHAR), '0') AS DECIMAL(18,2)) >= 0", status: 422, code: POS_PRODUCT_VARIANT_PRICE_INVALID, message: Sales Price must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(CAST(:cost AS VARCHAR), '0') AS DECIMAL(18,2)) >= 0", status: 422, code: POS_PRODUCT_VARIANT_COST_INVALID, message: Cost must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_product_variants WHERE LOWER(name) = LOWER(:name) AND LOWER(COALESCE(attributes, '')) = LOWER(COALESCE(:attributes, '')))", status: 409, code: POS_PRODUCT_VARIANT_EXISTS, message: A product variant with this name and variant values already exists. }
+      result: { query: "SELECT * FROM pos_product_variants WHERE id = :id" }
+    fields:
+      - { field: name, label: Product, type: text, required: true, placeholder: 'e.g. Cheese Burger' }
+      - { field: sales, label: Sales, type: checkbox, default: true }
+      - { field: expenses, label: Expenses?, type: checkbox, default: false }
+      - { field: pos_available, label: Point of Sale?, type: checkbox, default: true }
+      - { field: purchase, label: Purchase, type: checkbox, default: true }
+      - { field: product_type, label: Product Type ?, type: select, options: [Goods, Service, Combo], default: Goods }
+      - { field: invoicing_policy, label: Invoicing Policy ?, type: select, options: [Ordered quantities, Delivered quantities], default: Ordered quantities }
+      - { field: track_inventory, label: Track Inventory ?, type: checkbox, default: false }
+      - { field: price, label: Sales Price ?, type: number, default: 1 }
+      - { field: sales_taxes, label: Sales Taxes ?, type: text, default: '15%' }
+      - { field: cost, label: Cost ?, type: number, default: 0 }
+      - { field: internal_reference, label: Internal Reference, type: text }
+      - { field: barcode, label: Barcode ?, type: text }
+      - { field: purchase_taxes, label: Purchase Taxes ?, type: text, default: '15%' }
+      - { field: category, label: Category, type: text, default: General }
+      - { field: company, label: Company, type: text, default: 'My Company (San Francisco)' }
+      - { field: internal_notes, label: Note, type: textarea }
+      - { field: unit, label: Unit, type: text, default: Units }
+      - { field: attributes, label: Variant Values, type: text }
