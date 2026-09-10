@@ -9,8 +9,8 @@ components:
     editable: false
     labels: { workflowStatus: Status }
     header_actions:
-      - { id: mark_attendee_attended_detail, label: Attended, variant: primary, permission: events.write, show_if: "state.event_attendee_detail.state === 'Registered'" }
-      - { id: cancel_event_attendee_detail, label: Cancel Registration, variant: secondary, permission: events.write, show_if: "state.event_attendee_detail.state !== 'Cancelled'" }
+      - { id: mark_attendee_attended_detail, label: Attended, variant: primary, permission: events.write, show_if: "record.state === 'Registered'" }
+      - { id: cancel_event_attendee_detail, label: Cancel Registration, variant: secondary, permission: events.write, show_if: "record.state !== 'Cancelled'" }
     statusbar: [{ value: Registered, label: Registered }, { value: Attended, label: Attended }, { value: Cancelled, label: Cancelled }]
     status_colors: { Registered: blue, Attended: green, Cancelled: red }
     group_columns: 2

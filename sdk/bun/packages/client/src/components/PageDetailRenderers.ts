@@ -1,4 +1,3 @@
-import { evalExpr } from '@core3/client/expr';
 import { hasPermission } from '@core3/client/meta';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
@@ -107,14 +106,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
   }
   formDef.header_actions = (def.header_actions || []).filter((button: any) => {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
-    return action
-      && hasPermission(ctx.user, action.permission)
-      && (!button.show_if || Boolean(evalExpr(button.show_if, {
-        ...ctx,
-        row: sourceResult.data || {},
-        record: sourceResult.data || {},
-        state: { ...(ctx.state || {}), ...(sourceResult.data || {}) },
-      })));
+    return action && hasPermission(ctx.user, action.permission);
   }).map((button: any) => {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
     return { ...button, is_workflow: Boolean(action?.workflow) };

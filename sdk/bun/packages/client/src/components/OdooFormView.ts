@@ -1,4 +1,5 @@
 import { html } from '@core3/client/html';
+import { evalExpr } from '@core3/client/expr';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { OdooChatter } from './OdooChatter.ts';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
@@ -34,6 +35,13 @@ export class OdooFormView extends BaseComponent {
     const record = draft;
     const root = html.take(container).section.className('o-form-view').ele();
     const headerActions = Array.isArray(this.def.header_actions) ? this.def.header_actions : [];
+    const actionState = {
+      [String(this.def.source || 'record')]: record,
+      ...record,
+    };
+    const visibleHeaderActions = headerActions.filter((action: any) =>
+      !action.show_if || Boolean(evalExpr(action.show_if, { row: record, record, state: actionState }))
+    );
     const status = this.def.status_field ? String(record[this.def.status_field] || '—') : '';
     const statusLabel = this.def.status_field
       ? String(record[this.def.status_label_field || this.def.status_field] || status)
@@ -46,7 +54,7 @@ export class OdooFormView extends BaseComponent {
     if (headerActions.length || editing || statusStages.length) {
       const statusbar = html.take(sheetBackground).header.className('o-form-statusbar').ele();
       const actionBar = html.take(statusbar).div.className('o-form-actionbar').ele();
-      for (const action of headerActions.filter((candidate: any) => !editing || (candidate.id !== this.def.edit_action_id && !candidate.is_workflow))) {
+      for (const action of visibleHeaderActions.filter((candidate: any) => !editing || (candidate.id !== this.def.edit_action_id && !candidate.is_workflow))) {
         const button = html.take(actionBar).button
           .className(`o-form-action o-form-action-${action.variant || 'secondary'}`)
           .attr('type', 'button')
