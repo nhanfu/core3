@@ -251,7 +251,8 @@ async function renderPublicSurvey(path: string) {
   const outlet = document.getElementById('outlet');
   if (!route || !outlet) return;
   const mod = await import('./components/PublicSurvey.ts');
-  await mod.mount(outlet, route.surveyToken, route.answerToken);
+  const queryAnswerToken = new URLSearchParams(window.location.search).get('answer_token') || '';
+  await mod.mount(outlet, route.surveyToken, route.answerToken || queryAnswerToken);
 }
 
 async function renderRoute(path: string, langCode?: string) {

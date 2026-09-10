@@ -7,4 +7,4 @@ operations:
     query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :survey_id ORDER BY sequence, id"
   survey.public.response:
     result_key: response
-    query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"
+    query: "SELECT id, access_token, survey_id, state, answer_data, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"

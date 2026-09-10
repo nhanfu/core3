@@ -1,0 +1,37 @@
+title: Test Survey
+page: { id: survey-test, route: /surveys/test, breadcrumb: [Marketing, Surveys, Test], auth: { require: [surveys.read] } }
+components:
+  - type: OdooFormView
+    source: survey_test
+    title_field: title
+    subtitle_field: name
+    status_field: state
+    editable: false
+    labels: { workflowStatus: Status }
+    header_actions:
+      - { id: start_survey_test, label: Start Test, variant: primary, permission: surveys.write, show_if: "record.state !== 'Archived' && record.question_count > 0" }
+      - { id: back_to_survey_detail, label: Back to survey, variant: secondary, permission: surveys.read }
+    statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: Closed, label: Closed }, { value: Archived, label: Archived }]
+    status_colors: { Draft: neutral, Published: blue, Closed: green, Archived: neutral }
+    group_columns: 2
+    groups:
+      - title: Survey
+        fields: [{ field: title, label: Title }, { field: name, label: Survey }, { field: owner, label: Responsible }, { field: state, label: Status }]
+      - title: Test entry
+        fields: [{ field: description, label: Description, wide: true }, { field: question_count, label: Questions }, { field: test_entry_state, label: Entry state }]
+  - type: ContactGrid
+    source: survey_test_questions
+    row_key: id
+    columns:
+      - { field: sequence, label: '#', align: right }
+      - { field: question_text, label: Question, type: PrimaryEntityCell }
+      - { field: question_type, label: Type }
+      - { field: required, label: Required }
+      - { field: answer_options, label: Suggested answers }
+    empty_state: { title: No questions, description: Add at least one question before testing this survey. }
+actions:
+  - id: back_to_survey_detail
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/detail
+    params: { id: '{row.id}' }

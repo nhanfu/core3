@@ -8,9 +8,9 @@ type SurveyQuestion = {
 };
 
 type SurveyPayload = {
-  survey: { title: string; name: string; description?: string };
+  survey: { id?: string; title: string; name: string; description?: string };
   questions: SurveyQuestion[];
-  answer?: { id: string; access_token: string; state: string; answer_data?: string };
+  answer?: { id: string; access_token: string; state: string; test_entry?: boolean; answer_data?: string };
 };
 
 const STYLE_ID = 'core3-public-survey-style';
@@ -48,6 +48,8 @@ function installStyles() {
     .core3-public-survey__button:hover { background:#5d3c55; }
     .core3-public-survey__button:disabled { opacity:.55; cursor:wait; }
     .core3-public-survey__error { padding:12px 14px; border:1px solid #e6b9c0; border-radius:4px; color:#8b3041; background:#fff4f5; }
+    .core3-public-survey__test-banner { margin:0 -12px 24px; padding:10px 14px; color:#5b4c12; background:#fff3cd; border:1px solid #f1df9a; font-size:14px; text-align:center; }
+    .core3-public-survey__test-banner a { margin-left:8px; color:#684c00; font-weight:600; text-decoration:underline; }
     .core3-public-survey__done { text-align:center; padding:32px 0 16px; }
     .core3-public-survey__done-mark { display:inline-grid; place-items:center; width:52px; height:52px; border-radius:50%; color:#fff; background:#55956d; font-size:28px; }
     @media (max-width:520px) { .core3-public-survey { padding:0 12px; } .core3-public-survey__card { min-height:100vh; } .core3-public-survey__top { padding-top:38vh; } .core3-public-survey__footer { align-items:flex-end; } }
@@ -110,7 +112,10 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   } catch {
     // Treat malformed historical answer data as an empty in-progress attempt.
   }
-  const frame = () => `<div class="core3-public-survey"><div class="core3-public-survey__card"><div class="core3-public-survey__top"><div class="core3-public-survey__brand">Core3 Survey</div><div class="core3-public-survey__title">${escapeHtml(survey.title)}</div><div class="core3-public-survey__code">${escapeHtml(survey.name)}</div></div><div class="core3-public-survey__body" data-body></div></div></div>`;
+  const testBanner = payload.answer?.test_entry
+    ? `<div class="core3-public-survey__test-banner">This is a Test Survey Entry.${survey.id ? ` <a href="/surveys/detail?id=${encodeURIComponent(survey.id)}">Go to Survey</a>` : ''}</div>`
+    : '';
+  const frame = () => `<div class="core3-public-survey"><div class="core3-public-survey__card">${testBanner}<div class="core3-public-survey__top"><div class="core3-public-survey__brand">Core3 Survey</div><div class="core3-public-survey__title">${escapeHtml(survey.title)}</div><div class="core3-public-survey__code">${escapeHtml(survey.name)}</div></div><div class="core3-public-survey__body" data-body></div></div></div>`;
   outlet.innerHTML = frame();
   const body = outlet.querySelector<HTMLElement>('[data-body]')!;
   const renderDone = () => {
@@ -124,18 +129,18 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
 
   if (payload.answer?.state === 'Submitted') {
     renderDone();
-  } else if (payload.answer) {
+  } else if (payload.answer && payload.answer.state !== 'New') {
     questionIndex = Math.max(0, firstUnanswered() === -1 ? questions.length - 1 : firstUnanswered());
     renderCurrentQuestion();
   } else {
-    body.innerHTML = `<p class="core3-public-survey__description">${escapeHtml(survey.description || 'Please take a moment to complete this survey.')}</p><div class="core3-public-survey__footer"><button class="core3-public-survey__button" data-start type="button">Start Survey</button><span class="core3-public-survey__progress">or press Enter</span></div>`;
+    body.innerHTML = `<p class="core3-public-survey__description">${escapeHtml(survey.description || 'Please take a moment to complete this survey.')}</p><div class="core3-public-survey__footer"><button class="core3-public-survey__button" data-start type="button">${payload.answer?.test_entry ? 'Start Test' : 'Start Survey'}</button><span class="core3-public-survey__progress">or press Enter</span></div>`;
   }
 
   body.querySelector<HTMLButtonElement>('[data-start]')?.addEventListener('click', async (event) => {
     const button = event.currentTarget as HTMLButtonElement;
     button.disabled = true;
     try {
-      const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(answerToken ? { answer_token: answerToken } : {}) });
       if (!response.ok) throw new Error(`Survey could not be started (${response.status}).`);
       const started = await response.json();
       answerToken = String(started.answer?.access_token || '');

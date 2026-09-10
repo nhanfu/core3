@@ -284,6 +284,17 @@ captures are under `/tmp/core3-surveys-live-session-{desktop,mobile}.png`.
 The Odoo session was closed after capture so `core3_owned` remains in its
 initial no-active-session state.
 
+The authenticated Test action follow-up implements Odoo's `action_test_survey`
+(``/survey/test/<access_token>``). Core3 adds the page/API pair
+`survey-test`, a permissioned deterministic test-entry action, and fixed test
+responses for the four seeded surveys. The test preview shows the survey
+metadata and question catalog before the action hands off to the existing
+token-scoped public form; test entries are labeled `This is a Test Survey
+Entry.` and can return to the authenticated survey form. The action rejects
+archived/empty/unseeded surveys server-side and requires `surveys.write`.
+The deterministic seed date is `2026-01-15`; focused YAML/integration and
+authenticated desktop/mobile browser evidence is retained under `/tmp`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions

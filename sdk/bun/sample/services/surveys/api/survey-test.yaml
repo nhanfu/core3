@@ -1,0 +1,43 @@
+page: { id: survey-test }
+datasources:
+  - id: survey_test
+    single: true
+    permission: surveys.read
+    query: "SELECT s.id, s.name, s.title, s.description, s.owner, s.state, s.access_token, COUNT(q.id) AS question_count, CASE WHEN EXISTS (SELECT 1 FROM survey_responses r WHERE r.id = 'test-response-' || s.id AND r.test_entry = true) THEN 'Ready' ELSE 'Unavailable' END AS test_entry_state FROM surveys s LEFT JOIN survey_questions q ON q.survey_id = s.id WHERE s.id = :survey_id GROUP BY s.id, s.name, s.title, s.description, s.owner, s.state, s.access_token"
+  - id: survey_test_questions
+    permission: surveys.read
+    query: "SELECT id, sequence, question_text, question_type, required, answer_options FROM survey_questions WHERE survey_id = :survey_id ORDER BY sequence, id"
+actions:
+  - id: start_survey_test_action
+    type: server
+    permission: surveys.write
+    action: surveys.test.start
+    handler: yaml_mutation
+    result: alert
+    mutation:
+      operation: update
+      table: survey_responses
+      fields: [state, test_entry, answer_data]
+      concurrency: false
+      guards:
+        - { query: "SELECT s.id FROM surveys s WHERE s.id = :survey_id AND s.state <> 'Archived' AND EXISTS (SELECT 1 FROM survey_questions q WHERE q.survey_id = s.id) AND s.access_token IS NOT NULL", status: 409, message: Only an active survey with questions can be tested. }
+        - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND test_entry = true", status: 409, message: This survey does not have a deterministic test entry. }
+      result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.test_entry FROM survey_responses r WHERE r.id = :id" }
+  - id: start_survey_test
+    type: client
+    permission: surveys.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        const result = await request('/api/actions/surveys.test.start', {
+          method: 'POST',
+          body: {
+            id: `test-response-${String(row.id)}`,
+            survey_id: row.id,
+            values: { state: 'New', test_entry: true, answer_data: '{}' },
+          },
+        });
+        const token = String(result.access_token || '');
+        if (!token) throw new Error('The test entry did not return an access token.');
+        window.location.assign(`/survey/start/${encodeURIComponent(String(row.access_token || ''))}?answer_token=${encodeURIComponent(token)}&test=1`);
+      }

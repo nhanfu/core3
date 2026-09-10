@@ -1,0 +1,19 @@
+version: 0.0.10
+description: Deterministic Odoo-style survey test entries
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS test_entry BOOLEAN DEFAULT false;
+      INSERT INTO survey_responses(id, survey_id, survey_name, respondent_name, answer_data, access_token, state, test_entry, submitted_at) VALUES
+        ('test-response-survey-demo-001', 'survey-demo-001', 'Burger Quiz', 'Test Survey Entry', '{}', 'test-token-burger-2026', 'New', true, TIMESTAMP '2026-01-15 10:00:00'),
+        ('test-response-survey-demo-feedback', 'survey-demo-feedback', 'Feedback Form', 'Test Survey Entry', '{}', 'test-token-feedback-2026', 'New', true, TIMESTAMP '2026-01-15 10:00:00'),
+        ('test-response-survey-demo-certification', 'survey-demo-certification', 'MyCompany Vendor Certification', 'Test Survey Entry', '{}', 'test-token-certification-2026', 'New', true, TIMESTAMP '2026-01-15 10:00:00'),
+        ('test-response-survey-demo-conditional', 'survey-demo-conditional', 'Conditional Questions', 'Test Survey Entry', '{}', 'test-token-conditional-2026', 'New', true, TIMESTAMP '2026-01-15 10:00:00')
+      ON CONFLICT (id) DO UPDATE SET test_entry = true, state = 'New', answer_data = '{}';
+    down: |
+      DELETE FROM survey_responses WHERE id IN ('test-response-survey-demo-001', 'test-response-survey-demo-feedback', 'test-response-survey-demo-certification', 'test-response-survey-demo-conditional');
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS test_entry;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

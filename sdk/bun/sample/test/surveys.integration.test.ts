@@ -169,4 +169,25 @@ describe('Surveys parity catalog and workflow', () => {
     expect(String(end.mutation.guards[0].query)).toContain("state IN ('Ready', 'In Progress')");
     expect(String(end.mutation.steps[0].query)).toContain("state = 'Closed'");
   });
+
+  test('exposes the permissioned Odoo Test action with deterministic entries', () => {
+    const page = yaml('pages/survey-test.yaml');
+    const api = yaml('api/survey-test.yaml');
+    const testAction = page.actions.find((action: any) => action.id === 'back_to_survey_detail');
+    const start = api.actions.find((action: any) => action.id === 'start_survey_test_action');
+    const open = api.actions.find((action: any) => action.id === 'start_survey_test');
+    expect(page.page).toMatchObject({ id: 'survey-test', route: '/surveys/test' });
+    expect(api.page).toEqual({ id: 'survey-test' });
+    expect(api.datasources.map((source: any) => source.id)).toEqual(['survey_test', 'survey_test_questions']);
+    expect(testAction).toMatchObject({ navigate_to: '/surveys/detail', params: { id: '{row.id}' } });
+    expect(start).toMatchObject({ permission: 'surveys.write', action: 'surveys.test.start', handler: 'yaml_mutation' });
+    expect(start.mutation).toMatchObject({ operation: 'update', table: 'survey_responses', concurrency: false });
+    expect(String(start.mutation.guards[0].query)).toContain('EXISTS (SELECT 1 FROM survey_questions');
+    expect(String(start.mutation.guards[1].query)).toContain('test_entry = true');
+    expect(open).toMatchObject({ type: 'client', permission: 'surveys.write' });
+    expect(open.script).toContain('/api/actions/surveys.test.start');
+    expect(open.script).toContain('/survey/start/');
+    expect(yaml('migrations/20260910240000-009-survey-test-entries.yaml').version).toBe('0.0.10');
+    expect(readFileSync(join(import.meta.dir, '../public/components/PublicSurvey.ts'), 'utf8')).toContain('This is a Test Survey Entry.');
+  });
 });

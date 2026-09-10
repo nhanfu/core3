@@ -7,4 +7,4 @@ datasources:
   - id: surveys
     permission: surveys.read
     workflow: surveys
-    query: "SELECT s.id, s.row_version, s.name, s.title, s.owner, s.response_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.title ILIKE '%' || :q || '%') AND (:state IS NULL OR s.state = :state) ORDER BY s.created_at DESC, s.id"
+    query: "SELECT s.id, s.row_version, s.name, s.title, s.owner, s.response_count, s.state, s.access_token, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.title ILIKE '%' || :q || '%') AND (:state IS NULL OR s.state = :state) ORDER BY s.created_at DESC, s.id"
