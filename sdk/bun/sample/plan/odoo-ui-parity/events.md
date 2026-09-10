@@ -1,6 +1,6 @@
 # Events UI parity
 
-Status: ready
+Status: in-progress
 
 This is an implementation gate for the Odoo 19 Community `event` addon. It is
 plan-only: do not add or modify product code, migrations, fixtures, assets, or
@@ -23,18 +23,13 @@ reference captures.
 - The source demo uses relative `DateTime.today()`/`DateTime.now()` values and
   must be translated to a fixed Core3 seed date; source demo availability does
   not imply that the local reference database has demo records.
-- Live authenticated audit: `http://localhost:8069`, database `core3_demo`,
-  date `2026-09-10`, admin credentials from the parent parity plan. The
-  authenticated `ir.module.module.search_read` result is:
-  `name=event`, `state=uninstalled`, `demo=false`, `latest_version=false`,
-  `installed_version=19.0.1.9`.
-- The primary `core3_demo` database still has `event` uninstalled; its
-  authenticated fallback is Discuss at `/odoo/discuss` and is not evidence of
-  an installed Events UI.
-- A disposable `core3_events_demo` database was created without changing
-  `core3_demo`; `event` was installed with `--without-demo=False` on 2026-09-10.
-  The database contains official event demo records and uses the local
-  reference login `admin` / `EventsDemo2026!`.
+- The former Odoo app container and its `core3_demo` reference were stopped for
+  this parity run; they are not used as installed-Events evidence.
+- The current disposable installed reference is Compose project
+  `/home/nhanjs/projects/odoo-core3-personal`, at `http://localhost:8069`,
+  database `core3_personal`, created on 2026-09-10 with official demo data.
+  Its local reference login is `codex@core3.local` / `Core3Odoo2026!`.
+  The account was authenticated successfully and has administrator access.
 
 ## Truthful live screenshots
 
@@ -48,16 +43,20 @@ visual reference.
 | Authenticated Discuss fallback; no Events app | 1440x900 | `/tmp/odoo-events-uninstalled-desktop.png` |
 | Authenticated Discuss fallback; no Events app | 390x844, touch/mobile emulation | `/tmp/odoo-events-uninstalled-mobile.png` |
 
-Installed-reference dashboard captures now exist at
-`/tmp/odoo-events-{desktop,mobile}-dashboard.png`, with no failed requests;
-the desktop and mobile bodies contain seeded event records and the Events menu.
-The authenticated menu audit resolved Attendees to action 177, Event Templates
-to action 180, Event Stages to action 183, Event Tags Categories to action 193,
-Event Questions to action 194, and Settings to action 192. Desktop/mobile
-captures for those actions and the Registration Desk are under
-`/tmp/odoo-events-{desktop,mobile}-{attendees,event-templates,event-stages,event-tags,event-questions,settings,registration-desk}.png`; all captured routes had empty failed-request lists.
-Remaining installed-addon captures, kept under `/tmp` and never committed,
-include desktop and mobile pairs for event detail and Registration statistics.
+Installed-reference dashboard captures exist at
+`/tmp/odoo-events-{desktop,mobile}-dashboard.png`, with no failed requests.
+The current authenticated menu audit resolved Events to action 292, global
+Event registrations to action 286, Reporting/Attendees to action 287,
+Registration statistics to action 288, Registration Desk to action 285, Event
+Templates to action 290, Event Stages to action 293, Settings to action 302,
+Event Tags Categories to action 303, Event Questions to action 304, and Answer
+Breakdown to action 305. The installed Attendees list pair is
+`/tmp/odoo-events-attendees-desktop.png` and
+`/tmp/odoo-events-attendees-mobile-final.png`; the first attendee form pair is
+`/tmp/odoo-events-attendee-detail-desktop.png` and
+`/tmp/odoo-events-attendee-detail-mobile-final.png`. These routes had empty
+failed-request lists. Remaining action captures are retained under `/tmp` and
+must be refreshed when their corresponding Core3 surfaces are implemented.
 Each capture must record the
 database, user/groups, demo flag, source revision, exact action route, viewport,
 and failed-request list; navigate through the authenticated menu/action before
@@ -345,6 +344,28 @@ state, and found no unexpected failed requests; the desktop evidence is
 `/tmp/core3-events-desktop-attendee-attended.png`. A 390x844 mobile check
 rendered all three rows with no horizontal overflow or unexpected failures;
 the evidence is `/tmp/core3-events-mobile-attendees.png`.
+
+The attendee-detail batch adds the explicit `/events/attendees/detail?id=<id>`
+route alias for the planned `/events/attendees/:id` registration form, with
+service-owned detail and answer datasources, Attendee/Event Information groups,
+question-answer rows, statusbar, and guarded Attended/Cancel Registration
+actions. The deterministic fixture now includes the official event names and
+registration contact fields. Authenticated desktop/mobile checks opened Edwin
+Hansen for `OpenWood Collection Online Reveal` at 1440x900 and 390x844,
+asserted both form sections, question state, action availability, zero failed
+requests, and no horizontal overflow. Captures are
+`/tmp/core3-events-desktop-attendee-detail.png` and
+`/tmp/core3-events-mobile-attendee-detail.png`.
+
+The shared form primitive now reevaluates `show_if` against the current record
+on every redraw, and the expression sandbox exposes the documented `record`
+alias alongside `row` and `state`. The authenticated lifecycle probe returned
+HTTP 200 for both mutations and observed Attended/Cancel Registration visible
+before transition, only cancellation visible after attendance, and both
+hidden after cancellation. The focused Events suite passes 3 tests and 19
+expectations; `bun run audit` passes with 293 pages, 297 routes, and 521
+datasources. The existing Events mock-data audit remains an open plan gate for
+the older query-backed pages.
 
 ## Acceptance
 
