@@ -1,0 +1,11 @@
+title: Tag
+page: { id: project-tag-detail, breadcrumb: [Project, Configuration, Tags], auth: { require: [project.manage] } }
+components:
+  - type: OdooFormView
+    source: project_configuration_tag_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Tag
+        fields: [{ field: name, label: Name }, { field: color, label: Color }]
+    header_actions: [{ id: edit_project_tag, label: Edit, variant: primary }]

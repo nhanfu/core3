@@ -1,0 +1,23 @@
+title: Tags
+page: { id: project-tags, route: /task-tags, breadcrumb: [Project, Configuration, Tags], auth: { require: [project.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_configuration_tags
+    create_action: create_project_tag
+    create_label: New
+    search: { label: Search tags, placeholder: 'Search tag...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: form
+        label: Form
+        icon: edit
+    form_view: { page: apps/services/project/pages/project-tag-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: edit_project_tag
+    row_actions: menu
+    empty_state: { title: No tags found. Let's create one!, description: Use tags to categorize your tasks. }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, actions: [{ id: edit_project_tag, label: Edit, icon: edit }, { id: delete_project_tag, label: Delete, icon: trash, variant: danger }] }
+      - { field: color, label: Color, type: StatusChip }

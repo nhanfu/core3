@@ -1,0 +1,11 @@
+title: Project Role
+page: { id: project-role-detail, breadcrumb: [Project, Configuration, Project Roles], auth: { require: [project.manage] } }
+components:
+  - type: OdooFormView
+    source: project_configuration_role_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Project Role
+        fields: [{ field: name, label: Name }, { field: sequence, label: Sequence }, { field: color, label: Color }]
+    header_actions: [{ id: edit_project_role, label: Edit, variant: primary }]

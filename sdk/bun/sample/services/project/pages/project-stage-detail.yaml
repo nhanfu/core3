@@ -1,0 +1,11 @@
+title: Project Stage
+page: { id: project-stage-detail, breadcrumb: [Project, Configuration, Project Stages], auth: { require: [project.manage] } }
+components:
+  - type: OdooFormView
+    source: project_configuration_stage_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Project Stage
+        fields: [{ field: name, label: Name }, { field: sequence, label: Sequence }, { field: fold, label: Folded }, { field: color, label: Color }, { field: company_name, label: Company }]
+    header_actions: [{ id: edit_project_stage, label: Edit, variant: primary }]

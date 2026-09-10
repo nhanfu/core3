@@ -1,0 +1,36 @@
+page: { id: project-tags }
+datasources:
+  - id: project_configuration_tags
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_TAGS_UNAVAILABLE, message: Project tags are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, color FROM project_configuration_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: create_project_tag
+    type: server_form
+    permission: project.manage
+    title: New Tag
+    action: project.tags.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [project_configuration_tags]
+    mutation: { operation: insert, table: project_configuration_tags, generated: [id], fields: [name, color], required: [name], defaults: { color: 0 }, guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_configuration_tags WHERE LOWER(name) = LOWER(:name))", status: 409, code: PROJECT_TAG_NAME_EXISTS, message: A tag with this name already exists. }], result: { query: "SELECT * FROM project_configuration_tags WHERE id = :id" } }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: color, label: Color, type: number }]
+  - id: edit_project_tag
+    type: server_form
+    permission: project.manage
+    title: Edit Tag
+    action: project.tags.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [project_configuration_tags]
+    mutation: { operation: update, table: project_configuration_tags, fields: [name, color], required: [name], guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_configuration_tags WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: PROJECT_TAG_NAME_EXISTS, message: A tag with this name already exists. }], result: { query: "SELECT * FROM project_configuration_tags WHERE id = :id" } }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: color, label: Color, type: number }]
+  - id: delete_project_tag
+    type: server
+    permission: project.manage
+    action: project.tags.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [project_configuration_tags]
+    mutation: { operation: delete, table: project_configuration_tags, concurrency: { required: true } }

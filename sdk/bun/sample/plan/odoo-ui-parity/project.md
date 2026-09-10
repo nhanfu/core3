@@ -179,6 +179,28 @@ not a deterministic seeded-date fixture. The workflow handler is currently
 `order_transition`, which must not be reused as an accidental Project API
 boundary without a verified generic workflow contract.
 
+## Completed bounded slice: Project configuration (2026-09-10)
+
+The next disjoint slice closes the Odoo Project Configuration surfaces for
+Project Stages, Tags, and Project Roles. Source XML and the authenticated
+`core3_reference` database were checked against Odoo 19: Project Stages is
+list/kanban/form with `Name` and `Folded`, Tags is list/form with `Name` and
+`Color`, and Project Roles is list/kanban/form with an `Archived` filter (the
+reference database has no role demo rows). Core3 routes are `/project-stages`,
+`/task-tags`, and `/project-roles`, exposed under the manager-only Project >
+Configuration menu.
+
+The slice adds page-id-bound API fragments and layout-only pages, side-panel
+forms, stable configuration fixtures, idempotent migrations, create/update/
+archive/delete mutations, duplicate-name guards, row-version conflict
+handling, empty/no-match/not-found/error datasource branches, and focused
+integration coverage. Evidence is captured under `/tmp` as
+`odoo-project-next-*` and `core3-project-next-*`; screenshots are not
+committed. The repository-wide `audit-odoo-mock-data.ts` remains a known
+baseline limitation: it reports missing `mock_data` on 324 SQL-backed pages,
+including the pre-existing Project pages; this slice keeps SQL datasources
+live rather than replacing them with browser fixtures.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:

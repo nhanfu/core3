@@ -1,0 +1,28 @@
+title: Project Roles
+page: { id: project-roles, route: /project-roles, breadcrumb: [Project, Configuration, Project Roles], auth: { require: [project.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_configuration_roles
+    create_action: create_project_role
+    create_label: New
+    search: { label: Search roles, placeholder: 'Search role...' }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: active
+        card: { title: name, subtitle: sequence, fields: [{ field: color, label: Color }] }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/project/pages/project-role-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: edit_project_role
+    row_actions: menu
+    empty_state: { title: No project role found. Let's create one!, description: Assign roles to tasks in your project templates. }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Name, type: PrimaryEntityCell, actions: [{ id: edit_project_role, label: Edit, icon: edit }, { id: archive_project_role, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_project_role, label: Unarchive, icon: archive, show_if: 'row.active === false' }, { id: delete_project_role, label: Delete, icon: trash, variant: danger }] }
+      - { field: color, label: Color, type: StatusChip }

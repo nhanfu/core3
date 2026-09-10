@@ -1,0 +1,68 @@
+page: { id: project-stages }
+datasources:
+  - id: project_configuration_stages
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_STAGES_UNAVAILABLE, message: Project stages are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, sequence, active, fold, color, company_name FROM project_configuration_stages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((:active IS NULL AND active = TRUE) OR (:active = 'active' AND active = TRUE) OR (:active = 'archived' AND active = FALSE)) AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name, id"
+actions:
+  - id: create_project_stage
+    type: server_form
+    permission: project.manage
+    title: New Project Stage
+    action: project.stages.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [project_configuration_stages]
+    mutation:
+      operation: insert
+      table: project_configuration_stages
+      generated: [id]
+      fields: [name, sequence, fold, color, company_name, active]
+      required: [name]
+      defaults: { sequence: 50, fold: false, color: 0, active: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_configuration_stages WHERE LOWER(name) = LOWER(:name))", status: 409, code: PROJECT_STAGE_NAME_EXISTS, message: A project stage with this name already exists. }]
+      result: { query: "SELECT * FROM project_configuration_stages WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number, default: 50 }, { field: fold, label: Folded, type: checkbox }, { field: color, label: Color, type: number }, { field: company_name, label: Company, type: text }]
+  - id: edit_project_stage
+    type: server_form
+    permission: project.manage
+    title: Edit Project Stage
+    action: project.stages.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [project_configuration_stages]
+    mutation:
+      operation: update
+      table: project_configuration_stages
+      fields: [name, sequence, fold, color, company_name]
+      required: [name]
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_configuration_stages WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: PROJECT_STAGE_NAME_EXISTS, message: A project stage with this name already exists. }]
+      result: { query: "SELECT * FROM project_configuration_stages WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number }, { field: fold, label: Folded, type: checkbox }, { field: color, label: Color, type: number }, { field: company_name, label: Company, type: text }]
+  - id: archive_project_stage
+    type: server
+    permission: project.manage
+    action: project.stages.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_configuration_stages]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: project_configuration_stages, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM project_configuration_stages WHERE id = :id" } }
+  - id: unarchive_project_stage
+    type: server
+    permission: project.manage
+    action: project.stages.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_configuration_stages]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: project_configuration_stages, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM project_configuration_stages WHERE id = :id" } }
+  - id: delete_project_stage
+    type: server
+    permission: project.manage
+    action: project.stages.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [project_configuration_stages]
+    mutation: { operation: delete, table: project_configuration_stages, concurrency: { required: true } }

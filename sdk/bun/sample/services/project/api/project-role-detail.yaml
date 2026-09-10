@@ -1,0 +1,18 @@
+page: { id: project-role-detail }
+datasources:
+  - id: project_configuration_role_detail
+    single: true
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_ROLE_DETAIL_UNAVAILABLE, message: Project role details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, sequence, active, color FROM project_configuration_roles WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_project_role
+    type: server_form
+    permission: project.manage
+    title: Edit Project Role
+    action: project.roles.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_configuration_role_detail]
+    mutation: { operation: update, table: project_configuration_roles, fields: [name, sequence, color], required: [name], guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_configuration_roles WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: PROJECT_ROLE_NAME_EXISTS, message: A project role with this name already exists. }], result: { query: "SELECT * FROM project_configuration_roles WHERE id = :id" } }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number }, { field: color, label: Color, type: number }]

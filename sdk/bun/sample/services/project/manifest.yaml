@@ -17,3 +17,9 @@ menu:
         - { path: /projects, label: Projects, icon: project, permission: project.read }
         - { path: /tasks, label: My Tasks, icon: checklist, permission: project.read }
         - { path: /project-analysis, label: Project Analysis, icon: chart, permission: project.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /project-stages, label: Project Stages, icon: workflow, permission: project.manage }
+        - { path: /task-tags, label: Tags, icon: tag, permission: project.manage }
+        - { path: /project-roles, label: Project Roles, icon: users, permission: project.manage }

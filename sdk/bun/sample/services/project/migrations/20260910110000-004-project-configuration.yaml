@@ -1,0 +1,58 @@
+version: 0.0.4
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS project_configuration_stages (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT TRUE, fold BOOLEAN NOT NULL DEFAULT FALSE,
+        color INTEGER NOT NULL DEFAULT 0, company_name VARCHAR
+      );
+      CREATE TABLE IF NOT EXISTS project_configuration_tags (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, color INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE TABLE IF NOT EXISTS project_configuration_roles (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT TRUE, color INTEGER NOT NULL DEFAULT 0
+      );
+      INSERT INTO project_configuration_stages(id, name, sequence, active, fold, color) VALUES
+        ('project-config-stage-001', 'To Do', 10, TRUE, FALSE, 0),
+        ('project-config-stage-002', 'In Progress', 15, TRUE, FALSE, 2),
+        ('project-config-stage-003', 'Done', 20, TRUE, TRUE, 10),
+        ('project-config-stage-004', 'Cancelled', 25, TRUE, TRUE, 1)
+        ON CONFLICT (id) DO NOTHING;
+      INSERT INTO project_configuration_tags(id, name, color) VALUES
+        ('project-config-tag-001', 'Architecture', 1),
+        ('project-config-tag-002', 'Bug', 6),
+        ('project-config-tag-003', 'Construction', 3),
+        ('project-config-tag-004', 'Design', 4),
+        ('project-config-tag-005', 'Experiment', 7),
+        ('project-config-tag-006', 'External', 9),
+        ('project-config-tag-007', 'Finance', 11),
+        ('project-config-tag-008', 'Home', 7),
+        ('project-config-tag-009', 'Interior', 3),
+        ('project-config-tag-010', 'Internal', 2),
+        ('project-config-tag-011', 'Meeting', 11),
+        ('project-config-tag-012', 'New Feature', 9),
+        ('project-config-tag-013', 'Office', 9),
+        ('project-config-tag-014', 'Priority', 7),
+        ('project-config-tag-015', 'Social', 9),
+        ('project-config-tag-016', 'Usability', 3),
+        ('project-config-tag-017', 'Work', 10)
+        ON CONFLICT (id) DO NOTHING;
+      INSERT INTO project_configuration_roles(id, name, sequence, active, color) VALUES
+        ('project-config-role-001', 'Project Manager', 10, TRUE, 2),
+        ('project-config-role-002', 'Developer', 20, TRUE, 4),
+        ('project-config-role-003', 'Reviewer', 30, TRUE, 7)
+        ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS project_configuration_roles;
+      DROP TABLE IF EXISTS project_configuration_tags;
+      DROP TABLE IF EXISTS project_configuration_stages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

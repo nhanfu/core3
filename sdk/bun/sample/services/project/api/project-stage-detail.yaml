@@ -1,0 +1,18 @@
+page: { id: project-stage-detail }
+datasources:
+  - id: project_configuration_stage_detail
+    single: true
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_STAGE_DETAIL_UNAVAILABLE, message: Project stage details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, sequence, active, fold, color, company_name FROM project_configuration_stages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_project_stage
+    type: server_form
+    permission: project.manage
+    title: Edit Project Stage
+    action: project.stages.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_configuration_stage_detail]
+    mutation: { operation: update, table: project_configuration_stages, fields: [name, sequence, fold, color, company_name], required: [name], guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_configuration_stages WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: PROJECT_STAGE_NAME_EXISTS, message: A project stage with this name already exists. }], result: { query: "SELECT * FROM project_configuration_stages WHERE id = :id" } }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number }, { field: fold, label: Folded, type: checkbox }, { field: color, label: Color, type: number }, { field: company_name, label: Company, type: text }]

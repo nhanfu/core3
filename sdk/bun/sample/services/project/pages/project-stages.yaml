@@ -1,0 +1,29 @@
+title: Project Stages
+page: { id: project-stages, route: /project-stages, breadcrumb: [Project, Configuration, Project Stages], auth: { require: [project.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_configuration_stages
+    create_action: create_project_stage
+    create_label: New
+    search: { label: Search stages, placeholder: 'Search stage...' }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: fold
+        card: { title: name, subtitle: company_name, fields: [{ field: fold, label: Folded }] }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/project/pages/project-stage-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: edit_project_stage
+    row_actions: menu
+    empty_state: { title: No stages found. Let's create one!, description: Define the steps your projects move through from creation to completion. }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Name, type: PrimaryEntityCell, actions: [{ id: edit_project_stage, label: Edit, icon: edit }, { id: archive_project_stage, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_project_stage, label: Unarchive, icon: archive, show_if: 'row.active === false' }, { id: delete_project_stage, label: Delete, icon: trash, variant: danger }] }
+      - { field: fold, label: Folded, type: StatusChip }
+      - { field: company_name, label: Company, optional: hide }
