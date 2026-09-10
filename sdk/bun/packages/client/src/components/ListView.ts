@@ -418,6 +418,10 @@ export class ListView extends BaseComponent {
         openAction: this.options.openAction,
         rowKey: this.options.rowKey,
         ...(activeView.id === 'pivot' ? { pivotColumns: (this.state.meta as any)?.pivotColumns } : {}),
+        ...(activeView.id === 'graph' && this.options.dateRange ? { dateRange: {
+          from: String(filters[this.options.dateRange.fromField || 'from_date'] || ''),
+          to: String(filters[this.options.dateRange.toField || 'to_date'] || ''),
+        } } : {}),
       };
       const View = activeView.id === 'pivot' ? PivotView : activeView.id === 'graph' ? GraphView : MapView;
       const child = new View(`${activeView.id}-view-${this.id}`, { rows }, {

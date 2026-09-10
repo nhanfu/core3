@@ -6,20 +6,22 @@ export type GraphMeasureDefinition = { field?: string; label?: string; aggregate
 export type GraphSeriesDefinition = { value: string; label: string; color?: string };
 export type GraphViewDefinition = {
   id: 'graph'; label: string; icon?: string; categoryField: string; measureField?: string; measureLabel?: string;
-  type?: 'bar' | 'line'; seriesField?: string; series?: GraphSeriesDefinition[]; measures?: GraphMeasureDefinition[];
+  dateField?: string; type?: 'bar' | 'line'; seriesField?: string; series?: GraphSeriesDefinition[]; measures?: GraphMeasureDefinition[];
 };
+
+type GraphDateRange = { from?: string; to?: string };
 
 type Point = { category: string; value: number };
 const SERIES_COLORS = ['blue', 'red', 'teal', 'amber', 'indigo', 'green'];
 
 export class GraphView extends BaseComponent {
-  constructor(id: string, state: { rows?: Record<string, unknown>[] } = {}, readonly options: { view: GraphViewDefinition; emptyState?: { title?: string; description?: string } }) { super(id, state); }
+  constructor(id: string, state: { rows?: Record<string, unknown>[] } = {}, readonly options: { view: GraphViewDefinition; emptyState?: { title?: string; description?: string }; dateRange?: GraphDateRange }) { super(id, state); }
 
   draw(container: HTMLElement) {
     const rows = (Array.isArray(this.state.rows) ? this.state.rows : []) as Record<string, unknown>[];
     const view = this.options.view;
     const measure = this.selectedMeasure(view);
-    const categories = [...new Set(rows.map(row => String(row[view.categoryField] ?? '—')))];
+    const categories = this.categories(rows, view);
     const series = this.seriesDefinitions(rows, view);
     const values = this.aggregate(rows, categories, series, view, measure);
     const root = html.take(container).div.className('o-graph-view').ele() as HTMLDivElement;
@@ -55,9 +57,30 @@ export class GraphView extends BaseComponent {
     categories.forEach((label, index) => {
       const x = plotLeft + (index + 0.5) * slot;
       const labelNode = html.take(svg).svg(SvgTag.Text).attr('class', 'o-graph-category').attr('x', String(x)).attr('text-anchor', 'middle').text(label);
-      if (isMobile) labelNode.attr('y', String(plotBottom + 28)).attr('transform', `rotate(-55 ${x} ${plotBottom + 28})`);
+      if (isMobile || categories.length > 20) labelNode.attr('y', String(plotBottom + 28)).attr('transform', `rotate(-55 ${x} ${plotBottom + 28})`);
       else labelNode.attr('y', String(plotBottom + 28));
     });
+  }
+
+  private categories(rows: Record<string, unknown>[], view: GraphViewDefinition) {
+    const observed = [...new Set(rows.map(row => String(row[view.categoryField] ?? '—')))];
+    if (!view.dateField || !this.options.dateRange?.from || !this.options.dateRange.to) return observed;
+    const from = this.parseDate(this.options.dateRange.from);
+    const to = this.parseDate(this.options.dateRange.to);
+    if (!from || !to || from > to) return observed;
+    const labels: string[] = [];
+    for (const date = new Date(from); date <= to; date.setUTCDate(date.getUTCDate() + 1)) labels.push(this.formatDate(date));
+    return labels.length ? labels : observed;
+  }
+
+  private parseDate(value: string) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    return match ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))) : undefined;
+  }
+
+  private formatDate(date: Date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${String(date.getUTCDate()).padStart(2, '0')} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
   }
 
   private drawToolbar(root: HTMLElement, view: GraphViewDefinition, measure: GraphMeasureDefinition) {

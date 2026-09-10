@@ -33,6 +33,7 @@ components:
         label: Graph
         icon: graph
         category_field: start_date_label
+        date_field: start_date
         measure_field: session_count
         measure_label: Sessions
         series_field: rating_text

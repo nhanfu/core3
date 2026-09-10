@@ -27,7 +27,7 @@ describe('Live Chat Reporting — Sessions analysis parity', () => {
     expect(list).toMatchObject({ source: 'livechat_report_sessions', variant: 'odoo', view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['graph', 'pivot']);
     expect(list.date_range).toMatchObject({ default_preset: 'last_month', presets: ['last_month', 'week', 'month', 'year'] });
-    expect(list.views[0]).toMatchObject({ label: 'Graph', category_field: 'start_date_label', measure_field: 'session_count', series_field: 'rating_text', type: 'line' });
+    expect(list.views[0]).toMatchObject({ label: 'Graph', category_field: 'start_date_label', date_field: 'start_date', measure_field: 'session_count', series_field: 'rating_text', type: 'line' });
     expect(list.views[0].series).toEqual([
       { value: 'Happy', label: 'Happy', color: 'blue' },
       { value: 'None', label: 'None', color: 'red' },

@@ -53,9 +53,15 @@ export class DateRangeFilterTag {
     const fromField = definition.fromField || 'from_date';
     const toField = definition.toField || 'to_date';
     const details = html.take(container).details.className('o-list-date-range-tag').ele() as HTMLDetailsElement;
+    const activePreset = (definition.presets || []).find(preset => this.isPresetActive(preset, fromField, toField));
+    const activeLabel = activePreset
+      ? definition.presetLabels?.[activePreset] || presetLabels[activePreset]
+      : undefined;
     html.take(details).summary
       .className('o-list-facet o-list-date-range-summary')
-      .text(`${definition.label || 'Date'}: ${this.displayValue(fromField)} - ${this.displayValue(toField)}`)
+      .text(activeLabel?.startsWith(`${definition.label || 'Date'}:`)
+        ? activeLabel
+        : `${definition.label || 'Date'}: ${activeLabel || `${this.displayValue(fromField)} - ${this.displayValue(toField)}`}`)
       .attr('aria-label', `${definition.label || 'Date'} filter`);
 
     const editor = html.take(details).div.className('o-list-date-range-editor').ele() as HTMLDivElement;
