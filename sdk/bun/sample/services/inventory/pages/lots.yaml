@@ -1,0 +1,45 @@
+title: Lots / Serial Numbers
+page: { id: lots, route: /lots, breadcrumb: [Supply Chain, Inventory, Products, Lots / Serial Numbers], auth: { require: [inventory.tracking] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_lots
+    create_action: create_inventory_lot
+    create_label: New
+    default_group_by: location_name
+    search: { label: Search lots and serial numbers, placeholder: 'Search lot/serial number, reference, or product...' }
+    filters:
+      - { field: availability, label: Availability, options: [{ id: at_customer, label: At Customer }, { id: on_hand, label: On Hand }] }
+    group_by:
+      - { field: product_name, label: Product }
+      - { field: location_name, label: Location }
+      - { field: create_date, label: Creation Date }
+      - { field: company_name, label: Company }
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: product_name
+        card: { title: name, subtitle: product_name, fields: [{ field: location_name, label: Location }, { field: product_qty, label: On Hand }, { field: tracking, label: Tracking }] }
+      - { id: form, label: Form, icon: form }
+    columns:
+      - { field: name, label: Lot/Serial Number, type: PrimaryEntityCell, sortable: true }
+      - { field: product_name, label: Product, sortable: true }
+      - { field: ref, label: Reference, optional: hide }
+      - { field: create_date, label: Creation Date, sortable: true }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: partner_name, label: Transfer to, optional: hide }
+      - { field: product_qty, label: On Hand, optional: hide, align: right }
+      - { field: location_name, label: Location }
+      - { field: tracking, label: Tracking }
+    page_size: 50
+    row_key: id
+    row_open_action: view_inventory_lot
+    row_double_click_action: view_inventory_lot
+    row_actions: menu
+    form_view: { page: apps/services/inventory/pages/lot-detail.yaml, side_panel: true }
+    actions:
+      - { id: edit_inventory_lot, label: Edit, permission: inventory.manage, variant: secondary }
+      - { id: delete_inventory_lot, label: Delete, permission: inventory.manage, variant: danger, show_if: "row.product_qty === 0 && row.transfer_count === 0" }
+    empty_state: { title: No lots or serial numbers found, description: Create a lot or serial number to trace products through inventory. }

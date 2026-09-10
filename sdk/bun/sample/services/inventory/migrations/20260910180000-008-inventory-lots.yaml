@@ -1,0 +1,31 @@
+version: 0.0.8
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_lots (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, product_id VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        ref VARCHAR, location_id VARCHAR, product_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        unit_name VARCHAR NOT NULL DEFAULT 'Units', tracking VARCHAR NOT NULL DEFAULT 'lot',
+        company_name VARCHAR, partner_name VARCHAR, note VARCHAR,
+        transfer_count INTEGER NOT NULL DEFAULT 0,
+        create_date TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(product_id, name, company_name)
+      );
+      INSERT INTO inventory_lots(id, name, product_id, product_name, ref, location_id, product_qty, unit_name, tracking, company_name, partner_name, note, transfer_count, create_date) VALUES
+        ('lot-drawer-00029', '0000000000029', 'product-drawer-lot', '[FURN_8855] Drawer', NULL, 'location-stock', 80, 'Units', 'lot', 'My Company (San Francisco)', NULL, 'Drawer lot from the opening stock count.', 2, TIMESTAMP '2026-01-15 08:00:00'),
+        ('lot-cable-00001', 'CM-BOX-00001', 'product-cable-a', '[FURN_5555] Cable Management Box', NULL, 'location-stock-shelf-2', 50, 'Units', 'lot', 'My Company (San Francisco)', NULL, 'Cable box lot stored in Shelf 2.', 3, TIMESTAMP '2026-01-15 08:05:00'),
+        ('lot-cable-00002', 'CM-BOX-00002', 'product-cable-b', '[FURN_5555] Cable Management Box', NULL, 'location-stock-shelf-2', 40, 'Units', 'lot', 'My Company (San Francisco)', NULL, NULL, 1, TIMESTAMP '2026-01-15 08:06:00'),
+        ('lot-cable-empty', 'LOT-000001', 'product-cable-a', '[FURN_5555] Cable Management Box', 'LOT/IMPORT/0001', NULL, 0, 'Units', 'lot', NULL, NULL, 'Imported lot with no current stock.', 0, TIMESTAMP '2026-01-15 08:07:00'),
+        ('serial-table-0001', 'T0001', 'product-table', '[FURN_9666] Table', NULL, 'location-stock', 1, 'Units', 'serial', 'My Company (San Francisco)', NULL, 'Serialized table used for showroom traceability.', 1, TIMESTAMP '2026-01-15 08:10:00'),
+        ('lot-customer-0001', 'CUST-LOT-0001', 'product-storage-box', '[E-COM08] Storage Box', NULL, 'location-customer', 12, 'Units', 'lot', 'My Company (San Francisco)', 'Wood Corner', 'Lot currently held at a customer location.', 1, TIMESTAMP '2026-01-15 08:12:00'),
+        ('serial-unused-0001', 'SN-NEW-0001', 'product-office-chair', '[FURN_0269] Office Chair Black', NULL, NULL, 0, 'Units', 'serial', 'My Company (San Francisco)', NULL, NULL, 0, TIMESTAMP '2026-01-15 08:14:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_lots WHERE id IN ('lot-drawer-00029', 'lot-cable-00001', 'lot-cable-00002', 'lot-cable-empty', 'serial-table-0001', 'lot-customer-0001', 'serial-unused-0001');
+      DROP TABLE IF EXISTS inventory_lots;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

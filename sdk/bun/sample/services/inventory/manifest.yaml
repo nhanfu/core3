@@ -37,6 +37,13 @@ menu:
           label: Moves History
           icon: transfer
           permission: inventory.read
+    - id: products
+      label: Products
+      items:
+        - path: /lots
+          label: Lots / Serial Numbers
+          icon: tag
+          permission: inventory.tracking
     - id: configuration
       label: Configuration
       items:

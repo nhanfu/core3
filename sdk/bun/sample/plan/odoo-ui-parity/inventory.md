@@ -323,6 +323,41 @@ The list-only source action's absent tabs and deferred Odoo-side actions such
 as Relocate, Request a Count, and report/export flows remain documented
 limitations rather than invented routes or controls.
 
+## Bounded batch: Lots / Serial Numbers (2026-09-10)
+
+The owned `core3_owned` Odoo 19 reference was authenticated as
+`codex@core3.local` at `http://localhost:8069` before finalizing this slice.
+The source action is `stock.action_production_lot_form` at `/odoo/lots`, with
+list, kanban, and form views, default grouping by location, and search/filter
+contracts for lot/reference/product, At Customer, and On Hand.
+
+Core3 adds the `/inventory/lots` and `/inventory/lots/detail` routes. The
+presentation-only pages are `pages/lots.yaml` (`lots`) and
+`pages/lot-detail.yaml` (`lot-detail`), bound by `page.id` to
+`api/lots.yaml` and `api/lot-detail.yaml`. Migration `0.0.8` adds the
+service-owned `inventory_lots` table and stable lot/serial fixtures dated
+`2026-01-15`, including on-hand, customer, empty, serial, and moved-product
+cases. List/detail sources provide deterministic search, availability filters,
+empty/not-found results, and explicit 503 transport errors. Manage actions
+enforce duplicate, quantity, location, moved-product, safe-delete, and row
+version guards.
+
+Focused evidence:
+
+- `bun test test/inventory_lots.integration.test.ts`: 3 tests, 46 assertions passed.
+- `git diff --check`: passed before commit.
+- Odoo authenticated JSON-RPC evidence: `/tmp/core3-owned-auth.json`,
+  `/tmp/core3-owned-lot-fields.json`, and `/tmp/core3-owned-lot-data.json`.
+- Requested paired desktop/mobile screenshot capture was attempted against
+  the authenticated Odoo/Core3 runtimes, but the available session did not
+  expose the required persistent Playwright `js_repl`; no screenshot files
+  are included in Git or claimed as completed artifacts.
+
+Known limitations are unchanged from this bounded action: product and partner
+relations are deterministic text contracts, and traceability/report,
+activities/chatter, properties, and full Odoo many2one behavior remain future
+parity work.
+
 ## Acceptance
 
 - The implementation maps every admin-visible menu/action in the table to a

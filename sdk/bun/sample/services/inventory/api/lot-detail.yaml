@@ -1,0 +1,39 @@
+page: { id: lot-detail }
+datasources:
+  - id: inventory_lot_detail
+    single: true
+    permission: inventory.tracking
+    error_states: { transport_error: { status: 503, code: INVENTORY_LOT_DETAIL_UNAVAILABLE, message: Lot or serial number details are temporarily unavailable. } }
+    query: "SELECT l.id, l.row_version, l.name, l.product_id, l.product_name, COALESCE(l.ref, '') AS ref, CAST(l.create_date AS VARCHAR) AS create_date, COALESCE(l.company_name, 'Visible to all companies') AS company_name, l.location_id, COALESCE(loc.name, 'No location') AS location_name, CAST(l.product_qty AS DOUBLE) AS product_qty, l.unit_name, l.tracking, COALESCE(l.partner_name, '') AS partner_name, COALESCE(l.note, '') AS note, COALESCE(l.transfer_count, 0) AS transfer_count FROM inventory_lots l LEFT JOIN inventory_locations loc ON loc.id = l.location_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.id = :id"
+actions:
+  - id: save_inventory_lot
+    type: server_form
+    permission: inventory.manage
+    title: Save lot or serial number
+    action: inventory.lots.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [inventory_lot_detail, inventory_lots]
+    success_message: Lot or serial number updated.
+    mutation:
+      operation: update
+      table: inventory_lots
+      fields: [name, product_id, product_name, ref, location_id, tracking, company_name, partner_name, note]
+      required: [name, product_id, product_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_lots WHERE id = :id", status: 404, code: INVENTORY_LOT_NOT_FOUND, message: Lot or serial number not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_lots WHERE product_id = :product_id AND name = :name AND COALESCE(company_name, '') = COALESCE(:company_name, '') AND id <> :id)", status: 409, code: INVENTORY_LOT_EXISTS, message: This lot or serial number already exists for the product and company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_lots WHERE id = :id AND transfer_count > 0 AND COALESCE(product_id, '') <> COALESCE(:product_id, ''))", status: 409, code: INVENTORY_LOT_PRODUCT_LOCKED, message: The product cannot change after this lot or serial number has been moved. }
+        - { query: "SELECT 1 AS ok WHERE :location_id IS NULL OR EXISTS (SELECT 1 FROM inventory_locations WHERE id = :location_id AND usage <> 'View' AND active = TRUE)", status: 422, code: INVENTORY_LOT_LOCATION_INVALID, message: Select an active non-virtual location. }
+      result: { query: "SELECT * FROM inventory_lots WHERE id = :id" }
+    fields:
+      - { field: name, label: Lot/Serial Number, type: text, required: true }
+      - { field: product_id, label: Product ID, type: text, required: true }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: ref, label: Reference, type: text }
+      - { field: tracking, label: Tracking, type: select, options: [{ value: lot, label: Lot }, { value: serial, label: Serial Number }], required: true }
+      - { field: location_id, label: Location, type: select, options_source: inventory_lot_locations }
+      - { field: company_name, label: Company, type: text }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: note, label: Description, type: textarea }

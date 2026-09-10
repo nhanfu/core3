@@ -1,0 +1,29 @@
+title: Lot / Serial Number
+page: { id: lot-detail, route: /lots/detail, breadcrumb: [Supply Chain, Inventory, Products, Lots / Serial Numbers, Detail], auth: { require: [inventory.tracking] } }
+components:
+  - type: OdooFormView
+    source: inventory_lot_detail
+    title_field: name
+    subtitle_field: product_name
+    editable: true
+    group_columns: 2
+    groups:
+      - title: Information
+        fields:
+          - { field: name, label: Lot/Serial Number }
+          - { field: product_name, label: Product }
+          - { field: product_id, label: Product ID }
+          - { field: ref, label: Reference }
+          - { field: tracking, label: Tracking }
+          - { field: company_name, label: Company }
+      - title: Inventory
+        fields:
+          - { field: product_qty, label: On Hand Quantity, type: number, readonly: true }
+          - { field: unit_name, label: Unit }
+          - { field: location_name, label: Location, readonly: true }
+          - { field: partner_name, label: Customer }
+          - { field: transfer_count, label: Transfers, type: number, readonly: true }
+      - title: Description
+        wide: true
+        fields: [{ field: note, label: Description, type: textarea, wide: true }]
+    header_actions: [{ id: save_inventory_lot, label: Edit, variant: primary, permission: inventory.manage }]
