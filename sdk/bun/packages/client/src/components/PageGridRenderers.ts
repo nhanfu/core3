@@ -871,7 +871,40 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     }
   } : undefined;
   const createDefinition = (config.actions || []).find((action: any) => action.id === def.create_action);
-  const createAction = def.create_action && hasPermission(ctx.user, createDefinition?.permission)
+  const inlineDefinition = def.inline_edit;
+  const inlineCreateDefinition = inlineDefinition?.create_action
+    ? (config.actions || []).find((action: any) => action.id === inlineDefinition.create_action)
+    : undefined;
+  const inlineUpdateDefinition = inlineDefinition?.update_action
+    ? (config.actions || []).find((action: any) => action.id === inlineDefinition.update_action)
+    : undefined;
+  const inlineEdit = inlineDefinition
+    && hasPermission(ctx.user, inlineCreateDefinition?.permission || inlineUpdateDefinition?.permission)
+    ? {
+      createAction: inlineDefinition.create_action,
+      updateAction: inlineDefinition.update_action,
+      fields: (inlineDefinition.fields || []).map((field: any) => ({
+        field: field.field,
+        type: field.type,
+        placeholder: field.placeholder,
+        default: field.default,
+        readonly: field.readonly,
+        options: field.options,
+      })),
+      saveLabel: inlineDefinition.save_label,
+      discardLabel: inlineDefinition.discard_label,
+      onSave: async (actionId: string, row: any, values: Record<string, unknown>) => {
+        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+        if (!actionDef) return;
+        await handleInlineForm(actionDef, {
+          ...values,
+          id: row.__new_record ? undefined : row.id,
+          row_version: row.__new_record ? undefined : row.row_version,
+        });
+      },
+    }
+    : undefined;
+  const createAction = !inlineDefinition && def.create_action && hasPermission(ctx.user, createDefinition?.permission)
     ? { id: def.create_action, label: def.create_label || 'New', modal: createDefinition?.type === 'server_form', mobileOnly: def.create_mobile_only === true }
     : undefined;
   const translatedLabels = def.labels || {};
@@ -897,6 +930,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       scroll: def.scroll === 'body' ? 'body' : 'list',
       breadcrumbs: Array.isArray(def.breadcrumbs) ? def.breadcrumbs : (config.page?.breadcrumb || [config.title].filter(Boolean)),
       createAction,
+      inlineEdit,
       showPager: def.show_pager !== false,
       search: def.search,
       filters,

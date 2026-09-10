@@ -53,6 +53,22 @@ export type ListViewAction = {
   disabled?: boolean;
   params?: Record<string, unknown>;
 };
+export type ListViewInlineEditField = {
+  field: string;
+  type?: 'text' | 'number' | 'select' | 'relation';
+  placeholder?: string;
+  default?: unknown;
+  readonly?: boolean;
+  options?: Array<string | { value: string; label: string }>;
+};
+export type ListViewInlineEdit = {
+  createAction?: string;
+  updateAction?: string;
+  fields: ListViewInlineEditField[];
+  saveLabel?: string;
+  discardLabel?: string;
+  onSave: (action: string, row: ListRow, values: Record<string, unknown>) => Promise<void> | void;
+};
 export type ListViewGroup = ListViewGroupBy;
 export type ListViewFavorite = { id: string; label: string; filters?: Record<string, unknown>; groupBy?: string };
 
@@ -136,6 +152,7 @@ export type ListViewOptions = {
   onPivotChange?: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>; ranges?: Record<string, string> }) => void;
   onGroupByChange?: (field: string | null) => void;
   onFavoriteChange?: (favorite: ListViewFavorite) => void;
+  inlineEdit?: ListViewInlineEdit;
 };
 
 /**
@@ -265,7 +282,7 @@ export class ListView extends BaseComponent {
     if (storedVisible) this.persistColumns(visibleColumnIds);
     const visibleColumns = this.defs.filter(column => visibleColumnIds.has(column.id || column.field)
       && (!this.isSmallScreen() || column.mobile !== false));
-    const root = html.take(container).section.className(`o-list-view${this.options.scroll === 'body' ? ' o-list-view-body-scroll' : ''}`).ele();
+    const root = html.take(container).section.className(`o-list-view${this.options.scroll === 'body' ? ' o-list-view-body-scroll' : ''}${this.options.inlineEdit ? ' o-list-view-inline-edit' : ''}`).ele();
 
     if (this.options.viewNavigation === 'tabs') this.drawViewTabs(root);
 
@@ -517,6 +534,9 @@ export class ListView extends BaseComponent {
         }
       }
     }
+    if (this.options.inlineEdit && this.inlineEditId() === '__new__') {
+      this.drawRow(body, { ...(this.state.inlineEditValues || {}), id: '__new__', __new_record: true }, rows.length, visibleColumns, selected, labels);
+    }
     if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (rows.length || this.state.formRowId === '__new__')) {
       await this.drawFormPanel(content, rows);
       if (version !== this.drawVersion) return;
@@ -563,7 +583,19 @@ export class ListView extends BaseComponent {
 
   private drawPrimaryControls(container: HTMLElement, labels: Required<NonNullable<ListViewOptions['labels']>>) {
     const primary = html.take(container).div.className('o-list-primary-controls').ele();
-    if (this.options.createAction && (!this.options.createAction.mobileOnly || this.isSmallScreen())) {
+    if (this.options.inlineEdit) {
+      const editing = this.inlineEditId() !== undefined;
+      if (editing) {
+        const save = html.take(primary).button.className('o-list-inline-save').dataAttr('list-inline-save', 'true').text(this.options.inlineEdit.saveLabel || 'Save').ele();
+        html.take(save).event('click', () => void this.saveInlineEdit());
+        const discard = html.take(primary).button.className('o-list-inline-discard').dataAttr('list-inline-discard', 'true').text(this.options.inlineEdit!.discardLabel || 'Discard').ele();
+        html.take(discard).event('click', () => this.discardInlineEdit());
+      } else if (this.options.inlineEdit.createAction) {
+        const button = html.take(primary).button.className('o-list-create').dataAttr('list-create', this.options.inlineEdit.createAction).text(labels.new).ele();
+        html.take(button).event('click', () => this.startInlineCreate());
+      }
+    }
+    if (!this.options.inlineEdit && this.options.createAction && (!this.options.createAction.mobileOnly || this.isSmallScreen())) {
       const button = html.take(primary).button.className('o-list-create').dataAttr('list-create', this.options.createAction.id).text(this.options.createAction.label || labels.new).ele();
       html.take(button).event('click', () => {
         if (this.options.formView?.sidePanel && !this.options.createAction?.modal) {
@@ -603,6 +635,20 @@ export class ListView extends BaseComponent {
     const search = html.take(center).div.className('o-list-search').ele();
     const searchIcon = html.take(search).span.className('o-list-search-icon').ele();
     appendIcon(searchIcon, 'search');
+    if (this.isSmallScreen()) {
+      const toggle = html.take(search).button
+        .className('o-list-mobile-search-toggle')
+        .attr('type', 'button')
+        .attr('aria-label', this.options.search?.label || 'Search')
+        .attr('title', this.options.search?.label || 'Search')
+        .ele() as HTMLButtonElement;
+      appendIcon(toggle, 'search');
+      html.take(toggle).event('click', () => {
+        this.setState({ mobileSearchOpen: true });
+        setTimeout(() => container.querySelector<HTMLInputElement>('[data-list-search]')?.focus(), 0);
+      });
+      if (this.state.mobileSearchOpen) html.take(search).toggleClass('is-mobile-open', true);
+    }
     const input = html.take(search).input.attr('type', 'search').dataAttr('list-search', 'true').ele() as HTMLInputElement;
     html.take(input).prop('value', String(this.state.searchDraft || '')).prop('placeholder', this.options.search?.placeholder || 'Search...').attr('aria-label', this.options.search?.label || input.placeholder).event('input', () => this.setState({ searchDraft: input.value }, false)).event('keydown', event => {
       if (event.key !== 'Enter') return;
@@ -848,13 +894,20 @@ export class ListView extends BaseComponent {
 
   private drawRow(container: HTMLElement, row: ListRow, index: number, columns: ListViewColumn[], selected: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>, depth = 0, hasChildren = false) {
     const id = this.rowId(row, index);
+    const inline = this.options.inlineEdit;
+    const editing = Boolean(inline && this.inlineEditId() === id);
     const tr = html.take(container).trow.className('o-list-data-row').dataAttr('row-id', id).ele();
+    if (editing) html.take(tr).toggleClass('o-list-inline-editing', true);
     let openClickTimer: ReturnType<typeof setTimeout> | undefined;
     const openRow = (action: string) => void this.submit(action, { row });
     html.take(tr).event('click', (event: MouseEvent) => {
       if ((event.target as Element | null)?.closest('button,input,a,summary,details,select')) return;
       if (this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden') {
         this.selectFormRow(row);
+        return;
+      }
+      if (inline && !editing) {
+        this.startInlineEdit(row, id);
         return;
       }
       if (!this.options.openAction) return;
@@ -869,6 +922,10 @@ export class ListView extends BaseComponent {
       }, 250);
     });
     html.take(tr).event('dblclick', (event: MouseEvent) => {
+      if (inline && !editing) {
+        this.startInlineEdit(row, id);
+        return;
+      }
       if (!this.options.doubleClickAction || (event.target as Element | null)?.closest('button,input,a,summary,details,select')) return;
       if (openClickTimer) clearTimeout(openClickTimer);
       openClickTimer = undefined;
@@ -910,7 +967,9 @@ export class ListView extends BaseComponent {
           this.selectFormRow(row);
         });
       }
-      if (column.rowActions?.length) {
+      if (editing && inline?.fields.some(field => field.field === column.field)) {
+        this.drawInlineEditor(cell, row, column, inline.fields.find(field => field.field === column.field)!);
+      } else if (column.rowActions?.length) {
         this.drawRowActions(cell, row, id, column.rowActions, labels);
       } else if (column.render) {
         column.render(cell, row[column.field], row);
@@ -936,6 +995,79 @@ export class ListView extends BaseComponent {
       }
     });
 
+  }
+
+  private inlineEditId(): string | undefined {
+    const value = this.state.inlineEditId;
+    return value === undefined || value === null ? undefined : String(value);
+  }
+
+  private startInlineCreate() {
+    const values = Object.fromEntries((this.options.inlineEdit?.fields || []).map(field => [field.field, field.default ?? '']));
+    this.setState({ inlineEditId: '__new__', inlineEditValues: values });
+  }
+
+  private startInlineEdit(row: ListRow, id = String(row.id ?? '')) {
+    if (!this.options.inlineEdit || this.inlineEditId() !== undefined) return;
+    this.setState({
+      inlineEditId: id,
+      inlineEditValues: Object.fromEntries(this.options.inlineEdit.fields.map(field => [field.field, row[field.field] ?? field.default ?? ''])),
+    });
+  }
+
+  private discardInlineEdit() {
+    this.setState({ inlineEditId: undefined, inlineEditValues: undefined });
+  }
+
+  private async saveInlineEdit() {
+    const inline = this.options.inlineEdit;
+    const id = this.inlineEditId();
+    if (!inline || id === undefined) return;
+    const row = id === '__new__'
+      ? ({ id: '__new__', __new_record: true } as ListRow)
+      : (this.rows().find((candidate, index) => this.rowId(candidate, index) === id) || { id });
+    const values = { ...(this.state.inlineEditValues || {}) } as Record<string, unknown>;
+    if (id !== '__new__') values.row_version = row.row_version;
+    const action = id === '__new__' ? inline.createAction : inline.updateAction;
+    if (!action) return;
+    await inline.onSave(action, row, values);
+    this.setState({ inlineEditId: undefined, inlineEditValues: undefined });
+  }
+
+  private drawInlineEditor(cell: HTMLElement, row: ListRow, column: ListViewColumn, field: ListViewInlineEditField) {
+    const values = this.state.inlineEditValues || {};
+    const value = values[field.field] ?? '';
+    const wrap = html.take(cell).div.className('o-list-inline-editor-wrap').ele();
+    if (field.type === 'relation') {
+      const input = html.take(wrap).input.attr('type', 'text').className('o-list-inline-editor').prop('value', String(value ?? '')).attr('placeholder', field.placeholder || '').prop('readOnly', Boolean(field.readonly)).ele() as HTMLInputElement;
+      html.take(input).event('input', () => this.setInlineValue(field.field, input.value));
+      const chevron = html.take(wrap).span.className('o-list-inline-chevron').attr('aria-hidden', 'true').text('⌄').ele();
+      void chevron;
+      return;
+    }
+    if (field.type === 'select') {
+      const select = html.take(wrap).select.className('o-list-inline-editor').ele() as HTMLSelectElement;
+      for (const option of field.options || []) {
+        const optionValue = typeof option === 'string' ? option : option.value;
+        const optionLabel = typeof option === 'string' ? option : option.label;
+        html.take(select).option.attr('value', optionValue).text(optionLabel);
+      }
+      select.value = String(value ?? '');
+      html.take(select).event('change', () => this.setInlineValue(field.field, select.value));
+      return;
+    }
+    const input = html.take(wrap).input.attr('type', 'text').className('o-list-inline-editor').prop('value', String(value ?? '')).attr('placeholder', field.placeholder || '').prop('readOnly', Boolean(field.readonly)).ele() as HTMLInputElement;
+    if (field.type === 'number') html.take(input).attr('inputmode', 'decimal');
+    html.take(input).event('input', () => this.setInlineValue(field.field, input.value));
+    void column;
+  }
+
+  private setInlineValue(field: string, value: unknown) {
+    this.state.inlineEditValues = { ...(this.state.inlineEditValues || {}), [field]: value };
+  }
+
+  private rows(): ListRow[] {
+    return Array.isArray(this.state.rows) ? this.state.rows as ListRow[] : [];
   }
 
   private treeRows(rows: ListRow[]) {

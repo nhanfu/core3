@@ -133,6 +133,49 @@
 .o-list-create:hover,
 .o-list-create:focus-visible { border-color: var(--o-list-action-hover); background: var(--o-list-action-hover); }
 
+.o-list-inline-save,
+.o-list-inline-discard {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border: 1px solid var(--o-list-border);
+  border-radius: 4px;
+  background: var(--o-list-bg);
+  color: var(--o-list-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+}
+
+.o-list-inline-save { border-color: var(--o-list-action); background: var(--o-list-action); color: #fff; font-weight: 600; }
+.o-list-inline-save:hover,
+.o-list-inline-save:focus-visible { border-color: var(--o-list-action-hover); background: var(--o-list-action-hover); }
+.o-list-inline-discard:hover,
+.o-list-inline-discard:focus-visible { border-color: var(--o-list-action); color: var(--o-list-action); }
+
+.o-list-inline-editor-wrap { position: relative; display: flex; min-width: 0; align-items: center; }
+.o-list-inline-editor {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 2px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--o-list-action);
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--o-list-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.o-list-inline-editor:focus { box-shadow: 0 1px 0 var(--o-list-action); }
+.o-list-inline-editor-wrap:has(.o-list-inline-chevron) .o-list-inline-editor { padding-right: 18px; }
+.o-list-inline-chevron { position: absolute; right: 2px; color: var(--o-list-muted); pointer-events: none; }
+.o-list-inline-editing { background: color-mix(in srgb, var(--o-list-action) 4%, var(--o-list-bg)); }
+
 .o-list-breadcrumbs {
   min-width: 0;
   overflow: hidden;
@@ -166,6 +209,13 @@
   font: inherit;
 }
 .o-list-search > input::placeholder { color: var(--o-list-muted); }
+.o-list-mobile-search-toggle { display: none; }
+
+@media (min-width: 601px) {
+  .o-list-view-inline-edit .o-list-table { table-layout: fixed; }
+  .o-list-view-inline-edit .o-list-table [data-column='name'] { width: 32%; }
+  .o-list-view-inline-edit .o-list-table [data-column='value'] { width: 105px; }
+}
 
 .o-list-dropdown { position: relative; }
 .o-list-dropdown > summary { width: 34px; padding: 0; list-style: none; }

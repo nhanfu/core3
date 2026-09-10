@@ -691,6 +691,52 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('.o-list-table')).not.toBeNull();
   });
 
+  it('supports Odoo-style inline row editing and append-row creation', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const component = new ListView('cash-denominations', {
+      rows: [{ id: 'cash-1', name: '0.05', value: '0.0500', point_of_sales: 'For all point of sale.', row_version: 1 }],
+      meta: { total: 1, page: 1, pageSize: 50 },
+    }, [
+      { field: 'name', label: 'Name' },
+      { field: 'value', label: 'Value', align: 'right' },
+      { field: 'point_of_sales', label: 'Point of Sales' },
+    ], {
+      variant: 'odoo',
+      selectable: true,
+      inlineEdit: {
+        createAction: 'create_cash',
+        updateAction: 'update_cash',
+        fields: [
+          { field: 'name', type: 'text' },
+          { field: 'value', type: 'number', default: '0.0000' },
+          { field: 'point_of_sales', type: 'relation', placeholder: 'For all point of sale.' },
+        ],
+        onSave,
+      },
+    });
+    const container = mount(component);
+
+    expect(container.querySelector('[data-list-create="create_cash"]')?.textContent).toBe('New');
+    container.querySelector<HTMLElement>('[data-row-id="cash-1"] [data-column="name"]')!.click();
+    expect(container.querySelector('[data-list-inline-save="true"]')?.textContent).toBe('Save');
+    expect(container.querySelector('[data-list-inline-discard="true"]')?.textContent).toBe('Discard');
+    expect(container.querySelector<HTMLInputElement>('[data-row-id="cash-1"] [data-column="value"] input')?.value).toBe('0.0500');
+
+    const value = container.querySelector<HTMLInputElement>('[data-row-id="cash-1"] [data-column="value"] input')!;
+    value.value = '0.1000';
+    value.dispatchEvent(new Event('input', { bubbles: true }));
+    container.querySelector<HTMLButtonElement>('[data-list-inline-save="true"]')!.click();
+    await Promise.resolve();
+    expect(onSave).toHaveBeenCalledWith('update_cash', expect.objectContaining({ id: 'cash-1' }), expect.objectContaining({ value: '0.1000', row_version: 1 }));
+    expect(container.querySelector('[data-list-inline-save="true"]')).toBeNull();
+
+    container.querySelector<HTMLButtonElement>('[data-list-create="create_cash"]')!.click();
+    expect(container.querySelector('[data-row-id="__new__"]')).not.toBeNull();
+    expect(container.querySelector<HTMLInputElement>('[data-row-id="__new__"] [data-column="value"] input')?.value).toBe('0.0000');
+    container.querySelector<HTMLButtonElement>('[data-list-inline-discard="true"]')!.click();
+    expect(container.querySelector('[data-row-id="__new__"]')).toBeNull();
+  });
+
   it('keeps the legacy card list as the default variant', () => {
     const container = mount(new ListView('legacy', { items: [{ name: 'Legacy item' }] }, [{ field: 'name', label: 'Name' }]));
     expect(container.textContent).toContain('Legacy item');
