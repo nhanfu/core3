@@ -1,0 +1,89 @@
+workflow:
+  id: mrp_workorders
+  entity: mrp_workorders
+  handler: order_transition
+  initial: Waiting
+  permission: manufacturing.write
+  mutable: true
+  status_source: mrp_workorder_states
+  status_query: "SELECT id, state FROM mrp_workorders WHERE id = ?"
+  states:
+    - { id: Waiting, label: Waiting, color: neutral }
+    - { id: Ready, label: Ready, color: blue }
+    - { id: Progress, label: In Progress, color: amber }
+    - { id: Finished, label: Finished, color: green, terminal: true }
+    - { id: Blocked, label: Blocked, color: red }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: plan
+      from: [Waiting, Blocked]
+      to: Ready
+      permission: manufacturing.write
+      mutation:
+        concurrency: { required: true }
+        guards:
+          - { query: "SELECT 1 AS ok WHERE :expected_row_version IS NOT NULL", status: 400, code: MRP_WORKORDER_VERSION_REQUIRED, message: Reload the work order before planning it. }
+          - { query: "SELECT w.id FROM mrp_workorders w JOIN mrp_productions p ON p.id = w.production_id WHERE w.id = :id AND w.row_version = :expected_row_version AND w.state IN ('Waiting', 'Blocked') AND p.state NOT IN ('Done', 'Cancelled')", status: 409, code: MRP_WORKORDER_INVALID_STATE, message: This work order is no longer waiting to be planned. }
+        steps:
+          - { query: "UPDATE mrp_workorders SET state = 'Ready', planned = TRUE, paused = FALSE, blocked_reason = NULL, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: MRP_WORKORDER_STALE, message: Work order was changed by another user. Reload it before planning. }
+        result: { query: "SELECT * FROM mrp_workorders WHERE id = :id" }
+    - id: start
+      from: [Ready]
+      to: Progress
+      permission: manufacturing.write
+      mutation:
+        concurrency: { required: true }
+        guards:
+          - { query: "SELECT 1 AS ok WHERE :expected_row_version IS NOT NULL", status: 400, code: MRP_WORKORDER_VERSION_REQUIRED, message: Reload the work order before starting it. }
+          - { query: "SELECT w.id FROM mrp_workorders w JOIN mrp_productions p ON p.id = w.production_id WHERE w.id = :id AND w.row_version = :expected_row_version AND w.state = 'Ready' AND p.state = 'In Progress' AND w.planned = TRUE", status: 409, code: MRP_WORKORDER_INVALID_STATE, message: Only planned work orders for an in-progress manufacturing order can start. }
+        steps:
+          - { query: "UPDATE mrp_workorders SET state = 'Progress', paused = FALSE, date_start = TIMESTAMP '2026-01-15 09:00:00', date_finished = TIMESTAMP '2026-01-15 10:00:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: MRP_WORKORDER_STALE, message: Work order was changed by another user. Reload it before starting. }
+        result: { query: "SELECT * FROM mrp_workorders WHERE id = :id" }
+    - id: pause
+      from: [Progress]
+      to: Progress
+      permission: manufacturing.write
+      mutation:
+        concurrency: { required: true }
+        guards:
+          - { query: "SELECT 1 AS ok WHERE :expected_row_version IS NOT NULL", status: 400, code: MRP_WORKORDER_VERSION_REQUIRED, message: Reload the work order before pausing it. }
+          - { query: "SELECT id FROM mrp_workorders WHERE id = :id AND row_version = :expected_row_version AND state = 'Progress' AND paused = FALSE", status: 409, code: MRP_WORKORDER_INVALID_STATE, message: Only a running work order can be paused. }
+        steps:
+          - { query: "UPDATE mrp_workorders SET paused = TRUE, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: MRP_WORKORDER_STALE, message: Work order was changed by another user. Reload it before pausing. }
+        result: { query: "SELECT * FROM mrp_workorders WHERE id = :id" }
+    - id: continue
+      from: [Progress, Blocked]
+      to: Ready
+      permission: manufacturing.write
+      mutation:
+        concurrency: { required: true }
+        guards:
+          - { query: "SELECT 1 AS ok WHERE :expected_row_version IS NOT NULL", status: 400, code: MRP_WORKORDER_VERSION_REQUIRED, message: Reload the work order before continuing it. }
+          - { query: "SELECT id FROM mrp_workorders WHERE id = :id AND row_version = :expected_row_version AND ((state = 'Progress' AND paused = TRUE) OR state = 'Blocked')", status: 409, code: MRP_WORKORDER_INVALID_STATE, message: Only a paused or blocked work order can continue. }
+        steps:
+          - { query: "UPDATE mrp_workorders SET state = 'Ready', paused = FALSE, blocked_reason = NULL, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: MRP_WORKORDER_STALE, message: Work order was changed by another user. Reload it before continuing. }
+        result: { query: "SELECT * FROM mrp_workorders WHERE id = :id" }
+    - id: block
+      from: [Ready, Progress]
+      to: Blocked
+      permission: manufacturing.write
+      mutation:
+        concurrency: { required: true }
+        guards:
+          - { query: "SELECT 1 AS ok WHERE :expected_row_version IS NOT NULL", status: 400, code: MRP_WORKORDER_VERSION_REQUIRED, message: Reload the work order before blocking it. }
+          - { query: "SELECT id FROM mrp_workorders WHERE id = :id AND row_version = :expected_row_version AND state IN ('Ready', 'Progress')", status: 409, code: MRP_WORKORDER_INVALID_STATE, message: Only ready or running work orders can be blocked. }
+        steps:
+          - { query: "UPDATE mrp_workorders SET state = 'Blocked', paused = FALSE, blocked_reason = 'Operator blocked', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: MRP_WORKORDER_STALE, message: Work order was changed by another user. Reload it before blocking. }
+        result: { query: "SELECT * FROM mrp_workorders WHERE id = :id" }
+    - id: cancel
+      from: [Waiting, Ready, Progress, Blocked]
+      to: Cancelled
+      permission: manufacturing.write
+      mutation:
+        concurrency: { required: true }
+        guards:
+          - { query: "SELECT 1 AS ok WHERE :expected_row_version IS NOT NULL", status: 400, code: MRP_WORKORDER_VERSION_REQUIRED, message: Reload the work order before cancelling it. }
+          - { query: "SELECT w.id FROM mrp_workorders w JOIN mrp_productions p ON p.id = w.production_id WHERE w.id = :id AND w.row_version = :expected_row_version AND w.state IN ('Waiting', 'Ready', 'Progress', 'Blocked') AND p.state NOT IN ('Done', 'Cancelled')", status: 409, code: MRP_WORKORDER_INVALID_STATE, message: Only open work orders for an open manufacturing order can be cancelled. }
+        steps:
+          - { query: "UPDATE mrp_workorders SET state = 'Cancelled', paused = FALSE, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: MRP_WORKORDER_STALE, message: Work order was changed by another user. Reload it before cancelling. }
+        result: { query: "SELECT * FROM mrp_workorders WHERE id = :id" }

@@ -1,0 +1,61 @@
+title: Work Orders
+page: { id: manufacturing-workorders, route: /workorders, breadcrumb: [Supply Chain, Manufacturing, Operations, Work Orders], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_workorders
+    search: { label: Search work orders, placeholder: 'Search operations, manufacturing orders, or products...' }
+    filters:
+      - { field: state, label: Status, options_source: mrp_workorder_states }
+      - { field: late, label: Late, options: [{ id: 'true', label: Late }, { id: 'false', label: On schedule }] }
+    group_by: [{ field: workcenter, label: Work Center }, { field: production_name, label: Manufacturing Order }, { field: state, label: Status }]
+    default_group_by: workcenter
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: mrp_workorder_states
+        card: { title: operation_name, subtitle: production_name, fields: [{ field: workcenter, label: Work Center }, { field: product_name, label: Product }, { field: expected_duration, label: Expected minutes }, { field: state, label: Status }] }
+      - { id: form, label: Form, icon: form }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_start
+        end_date_field: date_finished
+        card: { title: operation_name, subtitle: production_name }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: workcenter, column: Work Center }, { field: production_name, column: Manufacturing Order }, { field: state, column: Status }, { field: planned_date, column: Planned Date, type: date }, { field: expected_duration, column: Expected minutes }, { field: actual_duration, column: Actual minutes }]
+          default: { rows: [workcenter], columns: [state], measures: [{ field: expected_duration, aggregate: sum, column: Expected minutes }, { field: actual_duration, aggregate: sum, column: Actual minutes }] }
+          date_ranges: { planned_date: month }
+      - { id: graph, label: Graph, icon: graph, category_field: workcenter, measure_field: actual_duration, type: bar }
+    actions:
+      - { id: plan_mrp_workorder, label: Plan, permission: manufacturing.write, variant: secondary, show_if: "row.state === 'Waiting' || row.state === 'Blocked'" }
+      - { id: start_mrp_workorder, label: Start, permission: manufacturing.write, variant: primary, show_if: "row.state === 'Ready'" }
+      - { id: pause_mrp_workorder, label: Pause, permission: manufacturing.write, variant: secondary, show_if: "row.state === 'Progress' && row.paused === false" }
+      - { id: continue_mrp_workorder, label: Continue, permission: manufacturing.write, variant: primary, show_if: "row.state === 'Progress' && row.paused === true || row.state === 'Blocked'" }
+      - { id: block_mrp_workorder, label: Block, permission: manufacturing.write, variant: secondary, show_if: "row.state === 'Ready' || row.state === 'Progress'" }
+      - { id: cancel_mrp_workorder, label: Cancel, permission: manufacturing.write, variant: danger, show_if: "row.state !== 'Finished' && row.state !== 'Cancelled'" }
+    form_view: { page: apps/services/manufacturing/pages/workorder-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_workorder
+    row_double_click_action: view_mrp_workorder
+    row_actions: menu
+    empty_state: { title: No work orders found, description: Work orders appear here after manufacturing operations are planned. }
+    columns:
+      - { field: operation_name, label: Operation, type: PrimaryEntityCell, mobile: true, mobile_secondary: production_name, sortable: true }
+      - { field: workcenter, label: Work Center, mobile: false }
+      - { field: production_name, label: Manufacturing Order, mobile: false }
+      - { field: product_name, label: Product, mobile: false }
+      - { field: expected_duration, label: Expected minutes, align: right, mobile: true }
+      - { field: actual_duration, label: Actual minutes, align: right, mobile: false, optional: hide }
+      - { field: planned_date, label: Planned date, mobile: false }
+      - { field: late, label: Late, type: StatusChip, mobile: false, optional: hide }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_mrp_workorder, label: Open, icon: eye }] }
+    page_size: 50

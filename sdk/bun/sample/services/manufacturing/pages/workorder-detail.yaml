@@ -1,0 +1,54 @@
+title: Work Order
+page: { id: manufacturing-workorder-detail, route: /workorders/detail, breadcrumb: [Supply Chain, Manufacturing, Operations, Work Orders, Detail], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_workorder_detail
+    title_field: operation_name
+    subtitle_field: production_name
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_mrp_workorders, label: Back to Work Orders, icon: arrow-left, permission: manufacturing.read }
+      - { id: plan_mrp_workorder_detail, label: Plan, variant: secondary, permission: manufacturing.write, show_if: "record.state === 'Waiting' || record.state === 'Blocked'" }
+      - { id: start_mrp_workorder_detail, label: Start, variant: primary, permission: manufacturing.write, show_if: "record.state === 'Ready'" }
+      - { id: pause_mrp_workorder_detail, label: Pause, variant: secondary, permission: manufacturing.write, show_if: "record.state === 'Progress' && record.paused === false" }
+      - { id: continue_mrp_workorder_detail, label: Continue, variant: primary, permission: manufacturing.write, show_if: "record.state === 'Progress' && record.paused === true || record.state === 'Blocked'" }
+      - { id: block_mrp_workorder_detail, label: Block, variant: secondary, permission: manufacturing.write, show_if: "record.state === 'Ready' || record.state === 'Progress'" }
+      - { id: cancel_mrp_workorder_detail, label: Cancel, variant: danger, permission: manufacturing.write, show_if: "record.state !== 'Finished' && record.state !== 'Cancelled'" }
+    group_columns: 2
+    groups:
+      - title: Operation
+        fields:
+          - { field: operation_name, label: Operation }
+          - { field: workcenter, label: Work Center }
+          - { field: production_name, label: Manufacturing Order }
+          - { field: product_name, label: Product }
+          - { field: production_state, label: Manufacturing Order Status }
+          - { field: state, label: Status }
+      - title: Planning and time
+        fields:
+          - { field: planned_date, label: Planned date }
+          - { field: date_start, label: Start }
+          - { field: date_finished, label: End }
+          - { field: expected_duration, label: Expected minutes }
+          - { field: actual_duration, label: Actual minutes }
+          - { field: planned, label: Planned, type: checkbox }
+          - { field: late, label: Late, type: checkbox }
+          - { field: blocked_reason, label: Block reason }
+    status_field: state
+    statusbar:
+      - { value: Waiting, label: Waiting }
+      - { value: Ready, label: Ready }
+      - { value: Progress, label: In Progress }
+      - { value: Finished, label: Finished }
+      - { value: Blocked, label: Blocked }
+      - { value: Cancelled, label: Cancelled }
+    status_colors: { Waiting: neutral, Ready: blue, Progress: amber, Finished: green, Blocked: red, Cancelled: red }
+    notebook:
+      active: details
+      tabs:
+        - id: details
+          label: Work Order Details
+          groups:
+            - title: Notes
+              fields: [{ field: blocked_reason, label: Block reason }, { field: row_version, label: Revision }]

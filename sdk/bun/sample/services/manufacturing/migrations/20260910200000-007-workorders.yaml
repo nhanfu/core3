@@ -1,0 +1,52 @@
+version: 0.0.7
+description: Deterministic Work Orders action fixtures and workflow fields
+type:
+  postgres:
+    up: |
+      ALTER TABLE mrp_workorders ADD COLUMN IF NOT EXISTS operation_name VARCHAR;
+      ALTER TABLE mrp_workorders ADD COLUMN IF NOT EXISTS paused BOOLEAN;
+      ALTER TABLE mrp_workorders ADD COLUMN IF NOT EXISTS planned BOOLEAN;
+      ALTER TABLE mrp_workorders ADD COLUMN IF NOT EXISTS late BOOLEAN;
+      ALTER TABLE mrp_workorders ADD COLUMN IF NOT EXISTS blocked_reason VARCHAR;
+      ALTER TABLE mrp_workorders ADD COLUMN IF NOT EXISTS date_start TIMESTAMP;
+      ALTER TABLE mrp_workorders ADD COLUMN IF NOT EXISTS date_finished TIMESTAMP;
+      UPDATE mrp_workorders
+        SET operation_name = COALESCE(operation_name, name),
+            paused = COALESCE(paused, FALSE),
+            planned = COALESCE(planned, FALSE),
+            late = COALESCE(late, FALSE),
+            actual_duration = COALESCE(actual_duration, 0),
+            planned_date = COALESCE(planned_date, DATE '2026-01-15');
+      UPDATE mrp_workorders SET state = 'Progress', operation_name = 'Cut panels', planned = TRUE, late = FALSE,
+        date_start = TIMESTAMP '2026-01-15 08:02:00', date_finished = TIMESTAMP '2026-01-15 08:47:00'
+        WHERE id = 'wo-progress-001';
+      UPDATE mrp_workorders SET state = 'Ready', operation_name = 'Quality check', planned = TRUE, late = FALSE
+        WHERE id = 'wo-progress-002';
+      UPDATE mrp_workorders SET state = 'Waiting', operation_name = 'Table top assembly', planned = FALSE, late = TRUE
+        WHERE id = 'wo-confirmed-001';
+      UPDATE mrp_workorders SET state = 'Finished', operation_name = 'Drawer assembly', planned = TRUE, late = FALSE,
+        date_start = TIMESTAMP '2026-01-15 08:03:00', date_finished = TIMESTAMP '2026-01-15 08:31:00'
+        WHERE id = 'wo-to-close-001';
+      UPDATE mrp_workorders SET state = 'Finished', operation_name = 'Table assembly', planned = TRUE, late = FALSE,
+        date_start = TIMESTAMP '2026-01-15 08:04:00', date_finished = TIMESTAMP '2026-01-15 09:32:00'
+        WHERE id = 'wo-done-001';
+      UPDATE mrp_workorders SET state = 'Cancelled', operation_name = 'Kit preparation', planned = FALSE, late = FALSE
+        WHERE id = 'wo-cancelled-001';
+      INSERT INTO mrp_workorders (id, row_version, production_id, name, operation_name, workcenter, sequence,
+        expected_duration, actual_duration, state, planned_date, planned, late, blocked_reason, paused, created_at)
+      VALUES ('wo-blocked-001', 1, 'mo-progress-001', 'Material replenishment', 'Material replenishment', 'Drill 1', 30,
+        25, 0, 'Blocked', DATE '2026-01-14', TRUE, TRUE, 'Material shortage', FALSE, TIMESTAMP '2026-01-15 08:02:30')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM mrp_workorders WHERE id = 'wo-blocked-001';
+      ALTER TABLE mrp_workorders DROP COLUMN IF EXISTS date_finished;
+      ALTER TABLE mrp_workorders DROP COLUMN IF EXISTS date_start;
+      ALTER TABLE mrp_workorders DROP COLUMN IF EXISTS blocked_reason;
+      ALTER TABLE mrp_workorders DROP COLUMN IF EXISTS late;
+      ALTER TABLE mrp_workorders DROP COLUMN IF EXISTS planned;
+      ALTER TABLE mrp_workorders DROP COLUMN IF EXISTS paused;
+      ALTER TABLE mrp_workorders DROP COLUMN IF EXISTS operation_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,37 @@
+page: { id: manufacturing-workorders }
+datasources:
+  - id: mrp_workorder_states
+    single: false
+    permission: manufacturing.read
+    query: "SELECT * FROM (VALUES ('Waiting', 'Waiting'), ('Ready', 'Ready'), ('Progress', 'In Progress'), ('Finished', 'Finished'), ('Blocked', 'Blocked'), ('Cancelled', 'Cancelled')) AS states(value, label)"
+  - id: mrp_workorders
+    single: false
+    permission: manufacturing.read
+    workflow: mrp_workorders
+    error_states: { transport_error: { status: 503, code: MRP_WORKORDERS_UNAVAILABLE, message: Work Orders are temporarily unavailable. } }
+    query: |
+      SELECT w.id, w.row_version, w.operation_name, w.name, w.workcenter, p.name AS production_name,
+        p.product_name, p.state AS production_state, w.expected_duration, w.actual_duration, w.state,
+        w.paused, w.planned, w.late, w.blocked_reason, CAST(w.planned_date AS VARCHAR) AS planned_date,
+        CAST(w.date_start AS VARCHAR) AS date_start, CAST(w.date_finished AS VARCHAR) AS date_finished
+      FROM mrp_workorders w
+      JOIN mrp_productions p ON p.id = w.production_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR w.operation_name ILIKE '%' || :q || '%' OR w.name ILIKE '%' || :q || '%'
+          OR p.name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR w.state = :state)
+        AND (:workcenter IS NULL OR w.workcenter = :workcenter)
+        AND (:late IS NULL OR w.late = CAST(:late AS BOOLEAN))
+      ORDER BY w.planned_date, w.sequence, w.id
+actions:
+  - id: view_mrp_workorder
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /workorders/detail
+    params: { id: '{row.id}' }
+  - { id: plan_mrp_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.plan, handler: order_transition, workflow: mrp_workorders, operation: plan, params: { id: '{row.id}' }, refresh: [mrp_workorders] }
+  - { id: start_mrp_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.start, handler: order_transition, workflow: mrp_workorders, operation: start, params: { id: '{row.id}' }, refresh: [mrp_workorders] }
+  - { id: pause_mrp_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.pause, handler: order_transition, workflow: mrp_workorders, operation: pause, params: { id: '{row.id}' }, refresh: [mrp_workorders] }
+  - { id: continue_mrp_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.continue, handler: order_transition, workflow: mrp_workorders, operation: continue, params: { id: '{row.id}' }, refresh: [mrp_workorders] }
+  - { id: block_mrp_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.block, handler: order_transition, workflow: mrp_workorders, operation: block, params: { id: '{row.id}' }, refresh: [mrp_workorders] }
+  - { id: cancel_mrp_workorder, type: server, permission: manufacturing.write, action: manufacturing.workorders.cancel, handler: order_transition, workflow: mrp_workorders, operation: cancel, params: { id: '{row.id}' }, refresh: [mrp_workorders] }

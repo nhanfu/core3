@@ -26,6 +26,16 @@ Status: in-progress (live reference addon is available; full parity remains inco
   writes, and invalid transitions. The authenticated browser matrix remains
   incomplete: Odoo desktop list/detail captures exist under `/tmp`, while Core3
   and mobile captures were not completed.
+- The Operations / Work Orders action (`mrp_workorder_todo`, model
+  `mrp.workorder`, `list,kanban,form,calendar,pivot,graph`) is implemented in
+  Core3 as `/workorders` with a page-only six-mode list and a page-only
+  Odoo-style detail form at `/workorders/detail`. Its API fragments are bound
+  by `page.id`, migration `0.0.7` adds seven stable work-order fixtures across
+  waiting, ready, progress, finished, blocked, and cancelled states, and the
+  plan/start/pause/block/continue/cancel actions use permissioned state and
+  row-version compare-and-swap guards. Empty, not-found, and transport-error
+  states are declared and covered by a focused integration test. Browser
+  comparison evidence for this slice is still pending.
 - This is one bounded action only; the full manufacturing readiness gate below
   remains open until the other source actions, view modes, integrations,
   permissions, and paired browser evidence are complete.

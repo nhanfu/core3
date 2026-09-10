@@ -1,0 +1,28 @@
+page: { id: manufacturing-workorder-detail }
+datasources:
+  - id: mrp_workorder_detail
+    single: true
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_WORKORDER_DETAIL_UNAVAILABLE, message: This Work Order is temporarily unavailable. } }
+    query: |
+      SELECT w.id, w.row_version, w.operation_name, w.name, w.workcenter, w.sequence,
+        p.name AS production_name, p.product_name, p.state AS production_state, p.company_name,
+        w.expected_duration, w.actual_duration, w.state, w.paused, w.planned, w.late, w.blocked_reason,
+        CAST(w.planned_date AS VARCHAR) AS planned_date, CAST(w.date_start AS VARCHAR) AS date_start,
+        CAST(w.date_finished AS VARCHAR) AS date_finished
+      FROM mrp_workorders w
+      JOIN mrp_productions p ON p.id = w.production_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND w.id = :id
+actions:
+  - id: back_to_mrp_workorders
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /workorders
+    params: {}
+  - { id: plan_mrp_workorder_detail, type: server, permission: manufacturing.write, action: manufacturing.workorders.plan, handler: order_transition, workflow: mrp_workorders, operation: plan, params: { id: '{state.id}' }, refresh: [mrp_workorder_detail, mrp_workorders] }
+  - { id: start_mrp_workorder_detail, type: server, permission: manufacturing.write, action: manufacturing.workorders.start, handler: order_transition, workflow: mrp_workorders, operation: start, params: { id: '{state.id}' }, refresh: [mrp_workorder_detail, mrp_workorders] }
+  - { id: pause_mrp_workorder_detail, type: server, permission: manufacturing.write, action: manufacturing.workorders.pause, handler: order_transition, workflow: mrp_workorders, operation: pause, params: { id: '{state.id}' }, refresh: [mrp_workorder_detail, mrp_workorders] }
+  - { id: continue_mrp_workorder_detail, type: server, permission: manufacturing.write, action: manufacturing.workorders.continue, handler: order_transition, workflow: mrp_workorders, operation: continue, params: { id: '{state.id}' }, refresh: [mrp_workorder_detail, mrp_workorders] }
+  - { id: block_mrp_workorder_detail, type: server, permission: manufacturing.write, action: manufacturing.workorders.block, handler: order_transition, workflow: mrp_workorders, operation: block, params: { id: '{state.id}' }, refresh: [mrp_workorder_detail, mrp_workorders] }
+  - { id: cancel_mrp_workorder_detail, type: server, permission: manufacturing.write, action: manufacturing.workorders.cancel, handler: order_transition, workflow: mrp_workorders, operation: cancel, params: { id: '{state.id}' }, refresh: [mrp_workorder_detail, mrp_workorders] }

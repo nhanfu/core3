@@ -55,12 +55,12 @@ describe('Manufacturing Orders parity slice', () => {
     const params = { q: null, state: null, priority: null, fixture_state: null };
 
     expect((await repository.querySource(list, params, 0, 50)).data.map((row: any) => row.state)).toEqual(['Cancelled', 'Done', 'To Close', 'In Progress', 'Confirmed', 'Draft']);
-    expect((await repository.querySource(list, { ...params, q: 'Wood Panel' }, 0, 50)).data).toMatchObject([{ id: 'mo-progress-001', workorder_count: 2 }]);
+    expect((await repository.querySource(list, { ...params, q: 'Wood Panel' }, 0, 50)).data).toMatchObject([{ id: 'mo-progress-001', workorder_count: 3 }]);
     expect((await repository.querySource(list, { ...params, state: 'To Close' }, 0, 50)).data).toMatchObject([{ id: 'mo-to-close-001', qty_produced: 8 }]);
     expect((await repository.querySource(list, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(detail, { id: 'mo-progress-001', fixture_state: null }, 0, 1)).data).toMatchObject({ state: 'In Progress', planned_date: '2026-01-15' });
     expect((await repository.querySource(detail, { id: 'missing-mo', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
-    expect((await repository.querySource(workorders, { id: 'mo-progress-001', fixture_state: null }, 0, 50)).data).toHaveLength(2);
+    expect((await repository.querySource(workorders, { id: 'mo-progress-001', fixture_state: null }, 0, 50)).data).toHaveLength(3);
     expect((await repository.querySource(moves, { id: 'mo-progress-001', fixture_state: null }, 0, 50)).data).toHaveLength(2);
     await expect(repository.querySource(list, { ...params, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'MRP_PRODUCTIONS_UNAVAILABLE' });
     database.close();
