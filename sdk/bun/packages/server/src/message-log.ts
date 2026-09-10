@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash, createHmac } from 'node:crypto';
 import { EventStore, type EventEnvelope, type EventSubscription } from '@core3/med';

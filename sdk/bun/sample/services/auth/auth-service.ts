@@ -11,6 +11,12 @@ import { AuthRepository } from './auth-repository.ts';
 import { AuthJwtKeyRing, signAuthJwt, verifyAuthJwt } from '@core3/server/auth/jwt';
 import { RefreshTokenStore } from '@core3/server';
 
+function tokenClaimsFrom(claims: AuthClaims): Record<string, unknown> {
+  const tokenClaims = { ...claims } as Record<string, unknown>;
+  for (const key of ['avatar_url', 'roles', 'branches', 'permissions', 'attributes', 'view_scope', 'company', 'companies', 'company_id']) delete tokenClaims[key];
+  return tokenClaims;
+}
+
 export class AuthService implements AuthServiceProtocol {
   private readonly listeners = new Set<(event: AuthEvent) => void | Promise<void>>();
   private readonly permissionCatalog: string[];
@@ -56,8 +62,8 @@ export class AuthService implements AuthServiceProtocol {
     (claims as any).companies = companies;
     // Keep profile media out of the JWT. Data URLs can be large and make the
     // Authorization header unreliable; avatar_url is loaded from Auth storage.
-    const { avatar_url: _avatarUrl, roles: _roles, branches: _branches, permissions: _permissions, attributes: _attributes, view_scope: _viewScope, company: _company, companies: _companies, company_id: _companyId, ...tokenClaims } = claims;
-    const token = this.keyRing ? await this.keyRing.sign(tokenClaims as any) : await signAuthJwt(tokenClaims as any, this.secret);
+    const tokenClaims = tokenClaimsFrom(claims);
+    const token = this.keyRing ? await this.keyRing.sign(tokenClaims) : await signAuthJwt(tokenClaims, this.secret);
     await this.emit({ type: 'auth.login', user: claims, at: new Date().toISOString() });
     const refresh = this.refreshTokens.create(String(user.id), String(claims.did));
     return { token, user: claims, token_type: 'Bearer', expires_in: 8 * 60 * 60, refresh_token: refresh.token };
@@ -74,8 +80,8 @@ export class AuthService implements AuthServiceProtocol {
     const permissions = await this.repository.permissions(String(user.id));
     const roles = user.roles_csv ? String(user.roles_csv).split(',').filter(Boolean) : [];
     const claims: AuthClaims = { sub: String(user.id), id: String(user.id), email: user.email, name: user.name, avatar_url: user.avatar_url, preferred_lang: user.preferred_lang, branch_id: user.branch_id || null, view_scope: user.view_scope || 'all', roles, branches: user.branch_id ? [String(user.branch_id)] : [], permissions, attributes: { department_id: user.department_id }, token_type: 'client_access', jti: crypto.randomUUID(), sid: rotated.family.familyId, did: rotated.family.deviceId, user_security_revision: 0, session_revision: rotated.family.generation };
-    const { avatar_url: _avatarUrl, roles: _roles, branches: _branches, permissions: _permissions, attributes: _attributes, view_scope: _viewScope, ...tokenClaims } = claims;
-    const token = this.keyRing ? await this.keyRing.sign(tokenClaims as any) : await signAuthJwt(tokenClaims as any, this.secret);
+    const tokenClaims = tokenClaimsFrom(claims);
+    const token = this.keyRing ? await this.keyRing.sign(tokenClaims) : await signAuthJwt(tokenClaims, this.secret);
     return { token, user: claims, token_type: 'Bearer', expires_in: 8 * 60 * 60, refresh_token: rotated.token };
   }
 

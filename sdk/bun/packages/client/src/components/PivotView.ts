@@ -173,10 +173,10 @@ export class PivotView extends BaseComponent {
       });
       if (showLeafRows) parent.children.push({ key: `${parent.key}/leaf-${parent.children.length}`, level: rowFields.length, row, children: [], leaves: [row] });
     }
-    return this.flattenPivotTree(root, rowFields.length);
+    return this.flattenPivotTree(root);
   }
 
-  private flattenPivotTree(root: PivotTreeNode, rowDepth: number) {
+  private flattenPivotTree(root: PivotTreeNode) {
     const visible: Array<{ node: PivotTreeNode; leaf: boolean }> = [];
     const visit = (node: PivotTreeNode) => {
       for (const child of node.children) {

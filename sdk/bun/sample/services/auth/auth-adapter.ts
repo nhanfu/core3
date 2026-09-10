@@ -1,5 +1,4 @@
 import type { AuthClaims, AuthIdentity, AuthServiceProtocol, SecurityContext, User } from './interfaces.ts';
-import { AuthJwtKeyRing, verifyAuthJwt } from '@core3/server/auth/jwt';
 
 export class DirectAuthAdapter implements AuthServiceProtocol {
   constructor(private readonly service: AuthServiceProtocol) {}

@@ -240,7 +240,7 @@ export function createAiAgentApi(options: {
     return options.provider;
   }
 
-  async function execute(request: Request, call: AgentApiCall, operation: AgentOperation, user: any) {
+  async function execute(request: Request, call: AgentApiCall, operation: AgentOperation) {
     const token = tokenFrom(request);
     const url = new URL(operation.route, request.url);
     const values = operation.datasource
@@ -283,7 +283,7 @@ export function createAiAgentApi(options: {
       if (!item || item.actorId !== actorId(user) || Date.now() - item.createdAt > 10 * 60_000) return error(409, 'Preview is missing or expired', 'PREVIEW_EXPIRED');
       pending.delete(id);
       if (!hasPermission(options.authProvider, user, item.operation.permission)) return error(403, `Requires permission: ${item.operation.permission}`, 'OPERATION_PERMISSION_REQUIRED');
-      const result = await execute(request, item.call, item.operation, user);
+      const result = await execute(request, item.call, item.operation);
       const payload = await result.json().catch(() => ({}));
       if (!result.ok) return error(result.status, String(payload?.error || 'Operation failed'), String(payload?.code || 'AI_OPERATION_FAILED'));
       return json({ parts: [{ type: 'result', title: 'Operation completed', summary: payload }] });
@@ -340,7 +340,7 @@ export function createAiAgentApi(options: {
           parts.push({ type: 'result', title: 'YAML file search results', summary: { matches } });
           continue;
         }
-        const result = await execute(request, call, operation, user);
+        const result = await execute(request, call, operation);
         if (!result.ok) return error(result.status, 'Datasource query failed', 'AI_QUERY_FAILED');
         const payload = await result.json().catch(() => ({}));
         parts.push({ type: 'result', title: `${operation.datasource || 'Datasource'} query result`, summary: payload });

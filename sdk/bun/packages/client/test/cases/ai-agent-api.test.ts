@@ -48,7 +48,9 @@ describe('API-only AI agent gateway', () => {
       invoke: async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
     });
     const first = await api(request('/api/ai/agent', { prompt: 'confirm' }), new URL('http://localhost/api/ai/agent'));
-    const previewId = (await first?.json()).parts.find((part: any) => part.type === 'approval').preview_id;
+    if (!first) throw new Error('Expected an AI preview response');
+    const firstPayload = await first.json();
+    const previewId = firstPayload.parts.find((part: any) => part.type === 'approval').preview_id;
     const other = new Request('http://localhost/api/ai/agent/confirm', { method: 'POST', headers: { Authorization: 'Bearer other', 'x-user': 'u2', 'Content-Type': 'application/json' }, body: JSON.stringify({ preview_id: previewId }) });
     const response = await api(other, new URL(other.url));
     expect(response?.status).toBe(409);

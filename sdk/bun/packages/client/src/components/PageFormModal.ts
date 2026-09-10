@@ -17,7 +17,9 @@ export class PageFormModal extends BaseComponent {
 
   private createRenderer(deps: any) {
     const { dataMap, ctx, client, refreshSources, resolveActionParams } = deps;
-    const owner = this;
+    const componentLoader = this.componentLoader;
+    const mountChild = this.mountChild.bind(this);
+    const disposeChildren = this.disposeChildren.bind(this);
 
     async function openFormModal(actionDef: any, row: any) {
       return new Promise<void>(resolve => {
@@ -95,21 +97,20 @@ export class PageFormModal extends BaseComponent {
           const requestedFieldType = `Page${conventionPart}Field`;
           const fieldType = (() => {
             try {
-              owner.componentLoader.resolveSync(requestedFieldType);
+              componentLoader.resolveSync(requestedFieldType);
               return requestedFieldType;
             } catch {
               return 'PageNativeField';
             }
           })();
-          const fieldComponent = owner.componentLoader.createSync(fieldType, fieldId, {
+          const fieldComponent = componentLoader.createSync(fieldType, fieldId, {
             field: fieldDef,
             fieldId,
             initialValue,
             dataMap,
           });
-          owner.mountChild(fieldComponent, group);
+          mountChild(fieldComponent, group);
           const el = fieldComponent.element!;
-          const usesAsyncSelect = fieldComponent.usesAsyncSelect;
 
           if (fieldDef.type === 'richtext' && Array.isArray(fieldDef.tokens) && fieldDef.tokens.length) {
             const textEditor = el as HTMLInputElement | HTMLTextAreaElement;
@@ -149,7 +150,7 @@ export class PageFormModal extends BaseComponent {
         function closeModal() {
           if (closed) return;
           closed = true;
-          owner.disposeChildren();
+                disposeChildren();
           html.take(document).off('keydown', onKeyDown);
           if (document.body.contains(overlay)) html.take(overlay).remove();
           resolve();
