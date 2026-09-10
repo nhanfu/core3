@@ -1,0 +1,21 @@
+title: POS Payment
+page:
+  id: pos-payment-detail
+  route: /point-of-sale/payment-detail
+  breadcrumb: [Sales, Point of Sale, Payments, Payment]
+  auth: { require: [pos.read] }
+components:
+  - type: OdooFormView
+    source: pos_payment_detail
+    title_field: amount
+    group_columns: 2
+    groups:
+      - title: Payment
+        fields:
+          - { field: session_name, label: Session }
+          - { field: order_name, label: Order }
+          - { field: amount, label: Amount }
+          - { field: currency, label: Currency }
+          - { field: method, label: Payment Method }
+          - { field: payment_date, label: Payment Date }
+          - { field: state, label: Status }

@@ -31,3 +31,37 @@ describe('POS session parity batch', () => {
     expect(fixture.type.postgres.up).toContain("'pos-session-demo-closed'");
   });
 });
+
+describe('POS payments list/detail parity', () => {
+  test('keeps the payment list read-only and opens the Odoo payment form', () => {
+    const page = yaml('pages/pos-payments.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    expect(list.default_group_by).toBe('method');
+    expect(list.group_by).toEqual([{ field: 'method', label: 'Payment Method' }]);
+    expect(list.row_open_action).toBe('view_pos_payment');
+    expect(list.row_double_click_action).toBe('view_pos_payment');
+    expect(list.form_view).toEqual({ page: 'apps/services/point_of_sale/pages/pos-payment-detail.yaml', side_panel: false });
+    expect(yaml('api/pos-payments.yaml').actions).toContainEqual(expect.objectContaining({
+      id: 'view_pos_payment',
+      navigate_to: '/point-of-sale/payment-detail',
+    }));
+  });
+
+  test('owns the read-only payment detail fields in a page-id API fragment', () => {
+    const page = yaml('pages/pos-payment-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    expect(page.page.id).toBe('pos-payment-detail');
+    expect(yaml('api/pos-payment-detail.yaml').page.id).toBe(page.page.id);
+    expect(form.groups[0].fields.map((field: any) => field.field)).toEqual([
+      'session_name', 'order_name', 'amount', 'currency', 'method', 'payment_date', 'state',
+    ]);
+    expect(yaml('api/pos-payment-detail.yaml').datasources[0].query).toContain('WHERE p.id = :id');
+  });
+
+  test('seeds a second tender so the default payment-method grouping is visible', () => {
+    const migration = yaml('migrations/20260910190000-018-pos-payment-detail.yaml');
+    expect(migration.kind).toBe('data');
+    expect(migration.type.postgres.up).toContain("'pos-payment-demo-002'");
+    expect(migration.type.postgres.up).toContain("'Cash'");
+  });
+});

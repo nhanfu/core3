@@ -818,6 +818,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   const translatedLabels = def.labels || {};
   const initialFormMode = pageParams.form === 'hidden' ? 'hidden' : 'right';
   const initialFormRowId = pageParams.form_id ? String(pageParams.form_id) : undefined;
+  const defaultGroupBy = typeof def.default_group_by === 'string' ? def.default_group_by : undefined;
   const comp = new ListView(
     `list-view-${sourceId || def.id || Date.now()}`,
     {
@@ -826,6 +827,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       filters: { ...(filterState[sourceId] || {}) },
       selectedIds: [],
       ...(sortState[sourceId] ? { sort: sortState[sourceId] } : {}),
+      ...(defaultGroupBy ? { groupBy: defaultGroupBy } : {}),
       ...(activeView ? { activeView } : {}),
       formPanelMode: initialFormMode,
       ...(initialFormRowId ? { formRowId: initialFormRowId } : {}),

@@ -1,0 +1,18 @@
+version: 0.0.18
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO pos_orders(id, name, session_id, partner_name, state, amount_total, amount_paid, payment_method, date_order)
+      VALUES ('pos-order-payment-demo-002', 'POS/2026/08/17/0002', 'pos-session-demo-001', 'Wayne Industries', 'Paid', 45.25, 45.25, 'Cash', TIMESTAMP '2026-08-17 10:20:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_payments(id, order_id, method, amount, payment_date)
+      VALUES ('pos-payment-demo-002', 'pos-order-payment-demo-002', 'Cash', 45.25, TIMESTAMP '2026-08-17 10:20:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_payments WHERE id = 'pos-payment-demo-002';
+      DELETE FROM pos_orders WHERE id = 'pos-order-payment-demo-002';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

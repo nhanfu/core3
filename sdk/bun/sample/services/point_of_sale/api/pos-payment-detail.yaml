@@ -1,0 +1,13 @@
+page: { id: pos-payment-detail }
+datasources:
+  - id: pos_payment_detail
+    single: true
+    permission: pos.read
+    query: |
+      SELECT p.id, p.amount, p.method, p.state,
+        CAST(p.payment_date AS VARCHAR) AS payment_date,
+        o.name AS order_name, s.name AS session_name, s.currency AS currency
+      FROM pos_payments p
+      JOIN pos_orders o ON o.id = p.order_id
+      JOIN pos_sessions s ON s.id = o.session_id
+      WHERE p.id = :id

@@ -161,6 +161,16 @@ POS routes. Session open/close controls, product/customer forms, responsive
 desktop/mobile composition, permission-denied behavior, and the touch-selling
 dashboard/session now have implementation and captured browser evidence.
 
+The Payments batch adds the Odoo read-only `list,form` surface to Core3. The
+grouped payment list now opens `/point-of-sale/payment-detail` on row click or
+double-click, and the detail form exposes the Odoo-visible session, order,
+amount, currency, payment method, date, and status fields from a separate
+page-id-owned datasource. Its initial Payment Method grouping is represented by
+the shared `default_group_by` ListView contract, and the detail opens as a full
+read-only route rather than an unsolicited side panel. Authenticated Core3 and
+personal-Odoo list/detail captures are retained under `/tmp`; screenshots
+remain outside the repository.
+
 The cashier payment follow-up fixes the row-aware server-form contract: the
 selected ticket and remaining balance are prefilled from the service-owned
 ticket projection, active tender choices come from the POS payment-method

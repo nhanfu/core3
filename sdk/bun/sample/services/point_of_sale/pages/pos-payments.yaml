@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: pos_payments
+    default_group_by: method
+    group_by: [{ field: method, label: Payment Method }]
     columns:
       - { field: order_name, label: Order, type: PrimaryEntityCell }
       - { field: method, label: Payment method }
@@ -12,3 +14,6 @@ components:
       - { field: payment_date, label: Payment date }
     page_size: 50
     row_key: id
+    row_open_action: view_pos_payment
+    row_double_click_action: view_pos_payment
+    form_view: { page: apps/services/point_of_sale/pages/pos-payment-detail.yaml, side_panel: false }

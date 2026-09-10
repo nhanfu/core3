@@ -32,6 +32,30 @@ describe('YAML Odoo ListView renderer', () => {
     expect(container.querySelector('.o-list-view')?.classList.contains('o-list-view-body-scroll')).toBe(true);
   });
 
+  it('renders a declarative default grouping in the initial list state', async () => {
+    vi.spyOn(client, 'query').mockResolvedValue({
+      data: [
+        { id: 'p1', method: 'Card', amount: 12 },
+        { id: 'p2', method: 'Cash', amount: 8 },
+      ],
+      meta: { total: 2, page: 1, pageSize: 50 },
+    });
+    window.__CORE3_USER__ = { permissions: ['pos.read'] };
+    const container = document.createElement('div');
+    await renderPage({
+      page: { id: 'payments' },
+      datasources: [{ id: 'payments', permission: 'pos.read', query: 'SELECT 1' }],
+      components: [{
+        type: 'ListView', variant: 'odoo', source: 'payments',
+        default_group_by: 'method', group_by: [{ field: 'method', label: 'Payment Method' }],
+        columns: [{ field: 'method', label: 'Payment method' }],
+      }],
+    }, { container });
+
+    expect(container.querySelectorAll('[data-list-group]')).toHaveLength(2);
+    expect(container.textContent).toContain('Payment Method: Card');
+  });
+
   it('owns the page control panel and filters row commands by permission and state', async () => {
     vi.spyOn(client, 'query').mockResolvedValue({
       data: [{ id: 'o1', number: 'ORD-001', status: 'Draft' }],
