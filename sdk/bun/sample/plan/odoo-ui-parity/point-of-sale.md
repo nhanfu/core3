@@ -420,3 +420,23 @@ outside Git; screenshots are never committed.
 - `bun run audit` passes with no POS route silently resolving elsewhere.
 - Commits contain YAML/TS/docs only; screenshots remain local evidence and are
   never committed.
+
+## Current batch: PoS Product Category detail
+
+The owned Odoo `point_of_sale` addon exposes `PoS Product Categories` as a
+`list,kanban,form` action. Its form is POS-specific: the category name and
+parent are the primary fields, color is a POS display setting, and the list
+sequence controls touchscreen ordering. Core3 now opens
+`/point-of-sale/product-category-detail?id=...` from the existing category
+list and provides a matching new-category route. The page and API YAML
+fragments use matching `page.id` values and service-owned deterministic
+fixtures.
+
+The detail form includes a Products stat navigation, active/archive state,
+required-name and duplicate guards, self-parent validation, optimistic
+row-version updates, and deletion guards for categories with products or
+children. Create, update, and delete require `pos.manage`; list, detail, and
+product navigation require `pos.read`. Empty, missing, and transport-error
+contracts remain explicit at the datasource boundary. Authenticated Core3 and
+owned-Odoo desktop/mobile captures are retained under `/tmp`; screenshots are
+not committed.
