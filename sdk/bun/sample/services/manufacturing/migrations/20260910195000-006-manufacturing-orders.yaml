@@ -1,0 +1,60 @@
+version: 0.0.6
+description: Deterministic Manufacturing Orders list, detail, stock move, and workflow fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE mrp_productions ADD COLUMN IF NOT EXISTS priority VARCHAR;
+      ALTER TABLE mrp_productions ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE mrp_productions ADD COLUMN IF NOT EXISTS warehouse_name VARCHAR;
+      ALTER TABLE mrp_productions ADD COLUMN IF NOT EXISTS origin VARCHAR;
+      ALTER TABLE mrp_productions ADD COLUMN IF NOT EXISTS availability VARCHAR;
+      ALTER TABLE mrp_productions ADD COLUMN IF NOT EXISTS locked BOOLEAN;
+      UPDATE mrp_productions SET priority = COALESCE(priority, 'Normal'), company_name = COALESCE(company_name, 'My Company (San Francisco)'), warehouse_name = COALESCE(warehouse_name, 'WH/Stock'), availability = COALESCE(availability, 'Waiting'), locked = COALESCE(locked, FALSE);
+      ALTER TABLE mrp_productions ALTER COLUMN priority SET DEFAULT 'Normal';
+      ALTER TABLE mrp_productions ALTER COLUMN company_name SET DEFAULT 'My Company (San Francisco)';
+      ALTER TABLE mrp_productions ALTER COLUMN warehouse_name SET DEFAULT 'WH/Stock';
+      ALTER TABLE mrp_productions ALTER COLUMN availability SET DEFAULT 'Waiting';
+      ALTER TABLE mrp_productions ALTER COLUMN locked SET DEFAULT FALSE;
+      ALTER TABLE mrp_productions ALTER COLUMN planned_date SET DEFAULT DATE '2026-01-15';
+      ALTER TABLE mrp_workorders ADD COLUMN IF NOT EXISTS actual_duration DECIMAL(18,2);
+      ALTER TABLE mrp_workorders ADD COLUMN IF NOT EXISTS planned_date DATE;
+      UPDATE mrp_workorders SET actual_duration = COALESCE(actual_duration, 0), planned_date = COALESCE(planned_date, DATE '2026-01-15');
+      ALTER TABLE mrp_workorders ALTER COLUMN actual_duration SET DEFAULT 0;
+      ALTER TABLE mrp_workorders ALTER COLUMN planned_date SET DEFAULT DATE '2026-01-15';
+      CREATE TABLE IF NOT EXISTS mrp_production_moves (
+        id VARCHAR PRIMARY KEY, production_id VARCHAR NOT NULL, sequence INTEGER NOT NULL DEFAULT 10,
+        move_type VARCHAR NOT NULL, product_name VARCHAR NOT NULL, quantity DECIMAL(18,3) NOT NULL,
+        reserved_quantity DECIMAL(18,3) NOT NULL DEFAULT 0, uom VARCHAR NOT NULL DEFAULT 'Units',
+        lot_name VARCHAR, state VARCHAR NOT NULL DEFAULT 'Waiting'
+      );
+      DELETE FROM mrp_production_moves;
+      DELETE FROM mrp_workorders;
+      DELETE FROM mrp_productions;
+      INSERT INTO mrp_productions (id, row_version, name, product_id, product_name, bom_id, quantity, qty_produced, state, planned_date, reference, priority, company_name, warehouse_name, origin, availability, locked, created_at) VALUES
+        ('mo-draft-001', 1, 'MO/2026/0001', 'product-furn-7800', '[FURN_7800] Desk Combination', 'bom-desk-combination', 5, 0, 'Draft', DATE '2026-01-15', 'SO/2026/0001', 'Normal', 'My Company (San Francisco)', 'WH/Stock', 'SO/2026/0001', 'Waiting', FALSE, TIMESTAMP '2026-01-15 08:00:00'),
+        ('mo-confirmed-001', 1, 'MO/2026/0002', 'product-furn-8522', '[FURN_8522] Table Top', 'bom-table-top-odoo', 12, 0, 'Confirmed', DATE '2026-01-15', 'SO/2026/0002', 'Urgent', 'My Company (San Francisco)', 'WH/Stock', 'SO/2026/0002', 'Waiting', FALSE, TIMESTAMP '2026-01-15 08:01:00'),
+        ('mo-progress-001', 1, 'MO/2026/0003', 'product-furn-7023', '[FURN_7023] Wood Panel', 'bom-table-kit', 20, 6, 'In Progress', DATE '2026-01-15', 'WH/REPL/0003', 'Normal', 'My Company (San Francisco)', 'WH/Stock', 'WH/REPL/0003', 'Available', FALSE, TIMESTAMP '2026-01-15 08:02:00'),
+        ('mo-to-close-001', 1, 'MO/2026/0004', 'product-furn-8855', '[FURN_8855] Drawer', 'bom-drawer-primary', 8, 8, 'To Close', DATE '2026-01-15', 'SO/2026/0004', 'Normal', 'My Company (San Francisco)', 'WH/Stock', 'SO/2026/0004', 'Available', FALSE, TIMESTAMP '2026-01-15 08:03:00'),
+        ('mo-done-001', 1, 'MO/2026/0005', 'product-furn-9666', '[FURN_9666] Table', 'bom-table-odoo', 3, 3, 'Done', DATE '2026-01-15', 'SO/2026/0005', 'Normal', 'My Company (San Francisco)', 'WH/Stock', 'SO/2026/0005', 'Available', TRUE, TIMESTAMP '2026-01-15 08:04:00'),
+        ('mo-cancelled-001', 1, 'MO/2026/0006', 'product-furn-78236', '[FURN_78236] Table Kit', 'bom-table-kit-odoo', 2, 0, 'Cancelled', DATE '2026-01-15', 'SO/2026/0006', 'Urgent', 'My Company (San Francisco)', 'WH/Stock', 'SO/2026/0006', 'Waiting', FALSE, TIMESTAMP '2026-01-15 08:05:00');
+      INSERT INTO mrp_workorders (id, row_version, production_id, name, workcenter, sequence, expected_duration, actual_duration, state, planned_date, created_at) VALUES
+        ('wo-progress-001', 1, 'mo-progress-001', 'Cut panels', 'Assembly 1', 10, 45, 30, 'Progress', DATE '2026-01-15', TIMESTAMP '2026-01-15 08:02:10'),
+        ('wo-progress-002', 1, 'mo-progress-001', 'Quality check', 'Quality', 20, 15, 0, 'Ready', DATE '2026-01-15', TIMESTAMP '2026-01-15 08:02:20'),
+        ('wo-confirmed-001', 1, 'mo-confirmed-001', 'Table top assembly', 'Assembly 2', 10, 60, 0, 'Waiting', DATE '2026-01-15', TIMESTAMP '2026-01-15 08:01:10'),
+        ('wo-to-close-001', 1, 'mo-to-close-001', 'Drawer assembly', 'Assembly 1', 10, 30, 28, 'Finished', DATE '2026-01-15', TIMESTAMP '2026-01-15 08:03:10'),
+        ('wo-done-001', 1, 'mo-done-001', 'Table assembly', 'Assembly 2', 10, 90, 88, 'Finished', DATE '2026-01-15', TIMESTAMP '2026-01-15 08:04:10'),
+        ('wo-cancelled-001', 1, 'mo-cancelled-001', 'Kit preparation', 'Packaging 1', 10, 20, 0, 'Cancelled', DATE '2026-01-15', TIMESTAMP '2026-01-15 08:05:10');
+      INSERT INTO mrp_production_moves (id, production_id, sequence, move_type, product_name, quantity, reserved_quantity, uom, lot_name, state) VALUES
+        ('move-progress-raw', 'mo-progress-001', 10, 'Raw material', 'Wood Panel', 20, 20, 'Units', 'LOT-WOOD-001', 'Reserved'),
+        ('move-progress-finished', 'mo-progress-001', 20, 'Finished product', '[FURN_7023] Wood Panel', 20, 6, 'Units', NULL, 'Waiting'),
+        ('move-done-raw', 'mo-done-001', 10, 'Raw material', 'Table components', 3, 3, 'Units', 'LOT-TABLE-001', 'Done'),
+        ('move-done-finished', 'mo-done-001', 20, 'Finished product', '[FURN_9666] Table', 3, 3, 'Units', 'LOT-TABLE-001', 'Done');
+    down: |
+      DELETE FROM mrp_production_moves WHERE production_id IN ('mo-draft-001', 'mo-confirmed-001', 'mo-progress-001', 'mo-to-close-001', 'mo-done-001', 'mo-cancelled-001');
+      DELETE FROM mrp_workorders WHERE production_id IN ('mo-draft-001', 'mo-confirmed-001', 'mo-progress-001', 'mo-to-close-001', 'mo-done-001', 'mo-cancelled-001');
+      DELETE FROM mrp_productions WHERE id IN ('mo-draft-001', 'mo-confirmed-001', 'mo-progress-001', 'mo-to-close-001', 'mo-done-001', 'mo-cancelled-001');
+      DROP TABLE IF EXISTS mrp_production_moves;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

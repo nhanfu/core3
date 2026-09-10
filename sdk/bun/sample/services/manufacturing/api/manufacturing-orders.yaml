@@ -1,0 +1,71 @@
+page: { id: manufacturing-orders }
+datasources:
+  - id: mrp_production_states
+    single: false
+    permission: manufacturing.read
+    data: [{ value: Draft, label: Draft }, { value: Confirmed, label: Confirmed }, { value: In Progress, label: In Progress }, { value: To Close, label: To Close }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
+  - id: mrp_bom_lookup
+    single: false
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_BOM_LOOKUP_UNAVAILABLE, message: Bills of Materials are temporarily unavailable. } }
+    query: "SELECT id AS value, name || ' - ' || product_name AS label FROM mrp_boms WHERE active = TRUE ORDER BY product_name, name"
+  - id: mrp_productions
+    single: false
+    permission: manufacturing.read
+    workflow: mrp_productions
+    error_states: { transport_error: { status: 503, code: MRP_PRODUCTIONS_UNAVAILABLE, message: Manufacturing Orders are temporarily unavailable. } }
+    query: |
+      SELECT p.id, p.row_version, p.name, p.product_id, p.product_name, b.name AS bom_name,
+        p.quantity, p.qty_produced, p.state, CAST(p.planned_date AS VARCHAR) AS planned_date,
+        p.reference, p.priority, p.company_name, p.warehouse_name, p.availability,
+        COUNT(w.id) AS workorder_count
+      FROM mrp_productions p
+      LEFT JOIN mrp_boms b ON b.id = p.bom_id
+      LEFT JOIN mrp_workorders w ON w.production_id = p.id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%' OR COALESCE(p.reference, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR p.state = :state)
+        AND (:priority IS NULL OR p.priority = :priority)
+      GROUP BY p.id, p.row_version, p.name, p.product_id, p.product_name, b.name, p.quantity,
+        p.qty_produced, p.state, p.planned_date, p.reference, p.priority, p.company_name,
+        p.warehouse_name, p.availability, p.created_at
+      ORDER BY p.planned_date DESC, p.created_at DESC, p.id
+actions:
+  - id: view_mrp_production
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders/detail
+    params: { id: '{row.id}' }
+  - id: create_mrp_production
+    type: server_form
+    permission: manufacturing.write
+    title: New manufacturing order
+    action: manufacturing.productions.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mrp_productions]
+    mutation:
+      operation: insert
+      table: mrp_productions
+      generated: [id]
+      fields: [name, product_id, product_name, bom_id, quantity, planned_date, reference, priority, company_name, warehouse_name, origin, availability, locked]
+      required: [name, product_name, quantity]
+      defaults: { state: Draft, qty_produced: 0, planned_date: '2026-01-15', priority: Normal, company_name: 'My Company (San Francisco)', warehouse_name: WH/Stock, availability: Waiting, locked: false }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0", status: 422, code: MRP_PRODUCTION_QUANTITY_INVALID, message: Production quantity must be positive. }
+        - { query: "SELECT 1 AS ok WHERE (:bom_id IS NULL OR EXISTS (SELECT 1 FROM mrp_boms WHERE id = :bom_id AND active = TRUE))", status: 422, code: MRP_PRODUCTION_BOM_INVALID, message: The selected Bill of Materials must be active. }
+      result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
+    fields:
+      - { field: name, label: Manufacturing order, type: text, required: true }
+      - { field: product_id, label: Product ID, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: bom_id, label: Bill of Materials, type: select, options_source: mrp_bom_lookup }
+      - { field: quantity, label: To produce, type: number, required: true, min: 0.001 }
+      - { field: planned_date, label: Planned date, type: text }
+      - { field: priority, label: Priority, type: select, options: [Normal, Urgent] }
+      - { field: reference, label: Reference, type: text }
+  - { id: confirm_mrp_production, type: server, permission: manufacturing.write, action: manufacturing.productions.confirm, handler: order_transition, workflow: mrp_productions, operation: confirm, params: { id: '{row.id}' }, refresh: [mrp_productions] }
+  - { id: start_mrp_production, type: server, permission: manufacturing.write, action: manufacturing.productions.start, handler: order_transition, workflow: mrp_productions, operation: start, params: { id: '{row.id}' }, refresh: [mrp_productions] }
+  - { id: produce_mrp_production, type: server, permission: manufacturing.write, action: manufacturing.productions.produce, handler: order_transition, workflow: mrp_productions, operation: produce, params: { id: '{row.id}' }, refresh: [mrp_productions] }
+  - { id: close_mrp_production, type: server, permission: manufacturing.write, action: manufacturing.productions.close, handler: order_transition, workflow: mrp_productions, operation: close, params: { id: '{row.id}' }, refresh: [mrp_productions] }
+  - { id: cancel_mrp_production, type: server, permission: manufacturing.write, action: manufacturing.productions.cancel, handler: order_transition, workflow: mrp_productions, operation: cancel, params: { id: '{row.id}' }, refresh: [mrp_productions] }

@@ -1,0 +1,63 @@
+page: { id: manufacturing-detail }
+datasources:
+  - id: mrp_production_detail
+    single: true
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_PRODUCTION_DETAIL_UNAVAILABLE, message: This Manufacturing Order is temporarily unavailable. } }
+    query: |
+      SELECT p.id, p.row_version, p.name, p.product_id, p.product_name, b.name AS bom_name,
+        p.bom_id, p.quantity, p.qty_produced, p.state, CAST(p.planned_date AS VARCHAR) AS planned_date,
+        p.reference, p.priority, p.company_name, p.warehouse_name, p.origin, p.availability, p.locked
+      FROM mrp_productions p
+      LEFT JOIN mrp_boms b ON b.id = p.bom_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id
+  - id: mrp_production_workorders
+    single: false
+    permission: manufacturing.read
+    query: "SELECT id, row_version, name, workcenter, sequence, expected_duration, actual_duration, state, CAST(planned_date AS VARCHAR) AS planned_date FROM mrp_workorders WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND production_id = :id ORDER BY sequence, id"
+  - id: mrp_production_moves
+    single: false
+    permission: manufacturing.read
+    query: "SELECT id, production_id, move_type, product_name, quantity, reserved_quantity, uom, lot_name, state FROM mrp_production_moves WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND production_id = :id ORDER BY sequence, id"
+actions:
+  - id: back_to_mrp_productions
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders
+  - id: edit_mrp_production
+    type: server_form
+    permission: manufacturing.write
+    title: Edit manufacturing order
+    action: manufacturing.productions.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.mrp_production_detail
+    refresh: [mrp_production_detail, mrp_production_workorders, mrp_production_moves, mrp_productions]
+    mutation:
+      operation: update
+      table: mrp_productions
+      fields: [name, product_id, product_name, bom_id, quantity, planned_date, reference, priority, origin, availability, locked]
+      required: [name, product_name, quantity]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_productions WHERE id = :id", status: 404, code: MRP_PRODUCTION_NOT_FOUND, message: Manufacturing Order not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0", status: 422, code: MRP_PRODUCTION_QUANTITY_INVALID, message: Production quantity must be positive. }
+      result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
+    fields:
+      - { field: name, label: Manufacturing order, type: text, required: true }
+      - { field: product_id, label: Product ID, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: bom_id, label: Bill of Materials, type: text }
+      - { field: quantity, label: To produce, type: number, required: true, min: 0.001 }
+      - { field: planned_date, label: Planned date, type: text }
+      - { field: priority, label: Priority, type: select, options: [Normal, Urgent] }
+      - { field: reference, label: Reference, type: text }
+      - { field: origin, label: Source document, type: text }
+      - { field: availability, label: Availability, type: text }
+      - { field: locked, label: Locked, type: checkbox }
+  - { id: confirm_mrp_production_detail, type: server, permission: manufacturing.write, action: manufacturing.productions.confirm, handler: order_transition, workflow: mrp_productions, operation: confirm, params: { id: '{state.id}' }, refresh: [mrp_production_detail, mrp_production_workorders, mrp_production_moves] }
+  - { id: start_mrp_production_detail, type: server, permission: manufacturing.write, action: manufacturing.productions.start, handler: order_transition, workflow: mrp_productions, operation: start, params: { id: '{state.id}' }, refresh: [mrp_production_detail, mrp_production_workorders, mrp_production_moves] }
+  - { id: produce_mrp_production_detail, type: server, permission: manufacturing.write, action: manufacturing.productions.produce, handler: order_transition, workflow: mrp_productions, operation: produce, params: { id: '{state.id}' }, refresh: [mrp_production_detail, mrp_production_workorders, mrp_production_moves] }
+  - { id: close_mrp_production_detail, type: server, permission: manufacturing.write, action: manufacturing.productions.close, handler: order_transition, workflow: mrp_productions, operation: close, params: { id: '{state.id}' }, refresh: [mrp_production_detail, mrp_production_workorders, mrp_production_moves] }
+  - { id: cancel_mrp_production_detail, type: server, permission: manufacturing.write, action: manufacturing.productions.cancel, handler: order_transition, workflow: mrp_productions, operation: cancel, params: { id: '{state.id}' }, refresh: [mrp_production_detail, mrp_production_workorders, mrp_production_moves] }

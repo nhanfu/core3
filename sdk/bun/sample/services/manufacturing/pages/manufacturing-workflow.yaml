@@ -10,6 +10,7 @@ workflow:
     - { id: Draft, label: Draft, color: neutral }
     - { id: Confirmed, label: Confirmed, color: amber }
     - { id: In Progress, label: In Progress, color: blue }
+    - { id: To Close, label: To Close, color: purple }
     - { id: Done, label: Done, color: green, terminal: true }
     - { id: Cancelled, label: Cancelled, color: red, terminal: true }
   transitions:
@@ -18,7 +19,7 @@ workflow:
       to: Confirmed
       permission: manufacturing.write
       mutation:
-        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft manufacturing orders can be confirmed }]
+        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'Draft'", status: 409, code: MRP_PRODUCTION_INVALID_STATE, message: Only draft manufacturing orders can be confirmed. }]
         steps: [{ query: "UPDATE mrp_productions SET state = 'Confirmed', row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
     - id: start
@@ -26,22 +27,30 @@ workflow:
       to: In Progress
       permission: manufacturing.write
       mutation:
-        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'Confirmed'", status: 409, message: Only confirmed manufacturing orders can start }]
-        steps: [{ query: "UPDATE mrp_productions SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'Confirmed' AND quantity > 0", status: 409, code: MRP_PRODUCTION_INVALID_STATE, message: Only confirmed manufacturing orders with a positive quantity can start. }]
+        steps: [{ query: "UPDATE mrp_productions SET state = 'In Progress', availability = 'Available', row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
     - id: produce
       from: [In Progress]
+      to: To Close
+      permission: manufacturing.write
+      mutation:
+        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'In Progress' AND quantity > 0", status: 409, code: MRP_PRODUCTION_INVALID_STATE, message: Only active manufacturing orders with a positive quantity can be produced. }]
+        steps: [{ query: "UPDATE mrp_productions SET state = 'To Close', qty_produced = quantity, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
+    - id: close
+      from: [To Close]
       to: Done
       permission: manufacturing.write
       mutation:
-        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'In Progress' AND quantity > 0", status: 409, message: Only active manufacturing orders with a positive quantity can be produced }]
-        steps: [{ query: "UPDATE mrp_productions SET state = 'Done', qty_produced = quantity, row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'To Close' AND qty_produced >= quantity", status: 409, code: MRP_PRODUCTION_INVALID_STATE, message: An order must be fully produced before it can be closed. }]
+        steps: [{ query: "UPDATE mrp_productions SET state = 'Done', row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
     - id: cancel
-      from: [Draft, Confirmed, In Progress]
+      from: [Draft, Confirmed, In Progress, To Close]
       to: Cancelled
       permission: manufacturing.write
       mutation:
-        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state IN ('Draft', 'Confirmed', 'In Progress')", status: 409, message: Only open manufacturing orders can be cancelled }]
+        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state IN ('Draft', 'Confirmed', 'In Progress', 'To Close')", status: 409, code: MRP_PRODUCTION_INVALID_STATE, message: Only open manufacturing orders can be cancelled. }]
         steps: [{ query: "UPDATE mrp_productions SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }

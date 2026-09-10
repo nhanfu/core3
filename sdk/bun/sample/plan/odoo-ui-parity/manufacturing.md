@@ -17,6 +17,15 @@ Status: in-progress (live reference addon is available; full parity remains inco
   view controls, a page-only form detail route, page-id-bound API fragments,
   eight deterministic fixtures matching the installed Odoo rows, components/
   operations/by-products tabs, and CRUD/archive/restore/duplicate guards.
+- The Operations / Manufacturing Orders action (`menu_mrp_production_action`,
+  model `mrp.production`) is implemented in Core3 as `/manufacturing-orders`
+  with page-only list/detail layouts, page-id-bound API fragments, deterministic
+  six-state fixtures, work-order and stock-move detail rows, and permissioned
+  Confirm → Start → Mark produced → Close / Cancel transitions. Focused tests
+  cover discovery, search/filter/empty/error/detail fixtures, validation, stale
+  writes, and invalid transitions. The authenticated browser matrix remains
+  incomplete: Odoo desktop list/detail captures exist under `/tmp`, while Core3
+  and mobile captures were not completed.
 - This is one bounded action only; the full manufacturing readiness gate below
   remains open until the other source actions, view modes, integrations,
   permissions, and paired browser evidence are complete.
