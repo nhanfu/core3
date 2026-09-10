@@ -1,0 +1,7 @@
+page: { id: event-tag-category-detail }
+datasources:
+  - id: event_tag_category_detail
+    single: true
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_TAG_CATEGORY_DETAIL_UNAVAILABLE, message: Event tag category details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, tags, activity, age, 'Event Tag Category' AS category_label FROM event_tag_categories WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"

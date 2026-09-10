@@ -1,0 +1,61 @@
+title: Event Tag Category
+page: { id: event-tag-category-detail, route: /events/tags/detail, breadcrumb: [Marketing, Events, Configuration, Event Tags Categories], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_tag_category_detail
+    title_field: name
+    subtitle_field: category_label
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_event_tag_categories, label: Back to event tag categories, variant: secondary, permission: events.read }
+      - { id: edit_event_tag_category, label: Edit, variant: primary, permission: events.write }
+      - { id: delete_event_tag_category, label: Delete, variant: danger, permission: events.write, confirm: Delete this event tag category? }
+    groups:
+      - title: Tag Category
+        fields:
+          - { field: name, label: Name }
+          - { field: tags, label: Tags }
+          - { field: activity, label: Activity }
+          - { field: age, label: Age }
+          - { field: row_version, label: Record version }
+actions:
+  - id: back_to_event_tag_categories
+    type: navigate
+    permission: events.read
+    navigate_to: /events/tags
+  - id: edit_event_tag_category
+    type: server_form
+    permission: events.write
+    title: Edit event tag category
+    action: events.tag_categories.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.event_tag_category_detail
+    refresh: [event_tag_category_detail, event_tag_categories]
+    mutation:
+      operation: update
+      table: event_tag_categories
+      fields: [name, tags, activity, age]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM event_tag_categories WHERE id = :id", status: 404, message: Event tag category not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_tag_categories WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: EVENT_TAG_CATEGORY_EXISTS, message: An event tag category with this name already exists. }
+      result: { query: "SELECT * FROM event_tag_categories WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: tags, label: Tags, type: text }
+      - { field: activity, label: Activity, type: text }
+      - { field: age, label: Age, type: text }
+  - id: delete_event_tag_category
+    type: server
+    permission: events.write
+    action: events.tag_categories.delete
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [event_tag_categories]
+    mutation:
+      operation: delete
+      table: event_tag_categories
+      guards: [{ query: "SELECT id FROM event_tag_categories WHERE id = :id", status: 404, message: Event tag category not found. }]

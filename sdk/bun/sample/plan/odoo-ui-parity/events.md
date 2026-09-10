@@ -500,6 +500,17 @@ its list has the same four seeded stages, while the Core3 detail remains a
 bounded three-field form and does not yet reproduce Odoo's richer stage form
 controls.
 
+The bounded Event Tags Categories follow-up adds the missing list-to-form
+workflow at `/events/tags/detail?id=<id>`. Categories now open on row click or
+double-click and expose service-owned edit/delete actions for name, tags,
+activity, and age, with duplicate-name and missing-record guards. Migration
+`20260910231000-012-event-tag-category-detail.yaml` adds deterministic record
+versions. Fresh authenticated Core3 list/detail captures are under
+`/tmp/core3-events-tags-{list,detail}-{desktop,mobile}.png`; the installed Odoo
+reference pair is `/tmp/odoo-events-{desktop,mobile}-event-tags.png`. The
+detail is intentionally bounded and does not yet include Odoo's separate tag
+color editor.
+
 The bounded Event Questions follow-up adds the missing list-to-form workflow at
 `/events/questions/detail?id=<id>`. The list now opens and double-clicks into a
 question, and the service-owned detail form exposes Odoo-shaped Question and

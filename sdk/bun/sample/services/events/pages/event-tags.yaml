@@ -9,8 +9,16 @@ components:
     columns: [{ field: name, label: Name, type: PrimaryEntityCell }, { field: tags, label: Tags }, { field: activity, label: Activity }, { field: age, label: Age }]
     page_size: 50
     row_key: id
+    row_open_action: view_event_tag_category
+    row_double_click_action: view_event_tag_category
     create_action: create_event_tag_category
+    empty_state: { title: No event tag categories, description: Create categories to organize event tags. }
 actions:
+  - id: view_event_tag_category
+    type: navigate
+    permission: events.read
+    navigate_to: /events/tags/detail
+    params: { id: '{row.id}' }
   - id: create_event_tag_category
     type: server_form
     permission: events.write
@@ -19,5 +27,11 @@ actions:
     handler: yaml_mutation
     operation: create
     refresh: [event_tag_categories]
-    mutation: { operation: insert, table: event_tag_categories, fields: [name, tags, activity, age], required: [name], result: { query: "SELECT * FROM event_tag_categories WHERE id = :id" } }
+    mutation:
+      operation: insert
+      table: event_tag_categories
+      fields: [name, tags, activity, age]
+      required: [name]
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_tag_categories WHERE LOWER(name) = LOWER(:name))", status: 409, code: EVENT_TAG_CATEGORY_EXISTS, message: An event tag category with this name already exists. }]
+      result: { query: "SELECT * FROM event_tag_categories WHERE id = :id" }
     fields: [{ field: name, label: Name, type: text, required: true }, { field: tags, label: Tags, type: text }, { field: activity, label: Activity, type: text }, { field: age, label: Age, type: text }]
