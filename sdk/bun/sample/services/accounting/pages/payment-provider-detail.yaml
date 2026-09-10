@@ -1,0 +1,24 @@
+title: Payment Provider
+page: { id: payment-provider-detail, route: /accounting/payment-provider-detail, breadcrumb: [Finance, Configuration, Payment Providers, Detail], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_payment_provider_detail
+    title_field: name
+    subtitle_field: company
+    avatar_field: logo_url
+    status_field: state
+    status_colors: { Enabled: green, Disabled: neutral, Installed: green }
+    editable: true
+    header_actions:
+      - { id: edit_accounting_payment_provider, label: Edit, variant: secondary, permission: accounting.write }
+      - { id: install_accounting_payment_provider, label: Install, variant: primary, permission: accounting.write, show_if: 'state.accounting_payment_provider_detail.installed === false' }
+      - { id: uninstall_accounting_payment_provider, label: Uninstall, variant: secondary, permission: accounting.write, show_if: 'state.accounting_payment_provider_detail.installed === true' }
+      - { id: delete_accounting_payment_provider, label: Delete, variant: danger, permission: accounting.write }
+    groups:
+      - title: Payment Provider
+        fields:
+          - { field: company, label: Company }
+          - { field: state, label: State }
+          - { field: provider_code, label: Provider Code }
+          - { field: description, label: Description }
+          - { field: website, label: Website }

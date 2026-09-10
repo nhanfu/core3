@@ -1,0 +1,37 @@
+version: 0.0.19
+description: Accounting payment provider catalog fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_payment_providers (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)', state VARCHAR NOT NULL DEFAULT 'Disabled', action_label VARCHAR NOT NULL DEFAULT 'Install', description VARCHAR, website VARCHAR, provider_code VARCHAR, logo_abbr VARCHAR NOT NULL DEFAULT 'PP', logo_color VARCHAR NOT NULL DEFAULT '%235b4f9b', installed BOOLEAN NOT NULL DEFAULT FALSE, active BOOLEAN NOT NULL DEFAULT TRUE, sequence INTEGER NOT NULL DEFAULT 999);
+      INSERT INTO accounting_payment_providers (id, name, company, state, action_label, description, website, provider_code, logo_abbr, logo_color, installed, active, sequence) VALUES
+        ('provider-sepa', 'SEPA Direct Debit', 'My Company (San Francisco)', 'Disabled', 'Upgrade', 'SEPA Direct Debit', 'https://www.sepa.eu', 'sepa_direct_debit', 'SE', '%230f4cbd', FALSE, TRUE, 10),
+        ('provider-wire', 'Wire Transfer', 'My Company (San Francisco)', 'Disabled', 'Install', 'Wire Transfer', '', 'custom', 'WT', '%230d8bd8', FALSE, TRUE, 20),
+        ('provider-demo', 'Demo', 'My Company (San Francisco)', 'Disabled', 'Install', 'Demo payment provider', '', 'demo', 'DE', '%23f2a93b', FALSE, TRUE, 30),
+        ('provider-adyen', 'Adyen', 'My Company (San Francisco)', 'Disabled', 'Install', 'Adyen', 'https://www.adyen.com', 'adyen', 'AD', '%232ca64a', FALSE, TRUE, 40),
+        ('provider-amazon', 'Amazon Payment Services', 'My Company (San Francisco)', 'Disabled', 'Install', 'Amazon Payment Services', '', 'amazon_payment_services', 'AM', '%23000000', FALSE, TRUE, 50),
+        ('provider-asiapay', 'Asiapay', 'My Company (San Francisco)', 'Disabled', 'Install', 'Asiapay', '', 'asiapay', 'AP', '%23ef8d24', FALSE, TRUE, 60),
+        ('provider-authorize', 'Authorize.net', 'My Company (San Francisco)', 'Disabled', 'Install', 'Authorize.net', '', 'authorize', 'AN', '%233b82f6', FALSE, TRUE, 70),
+        ('provider-buckaroo', 'Buckaroo', 'My Company (San Francisco)', 'Disabled', 'Install', 'Buckaroo', '', 'buckaroo', 'BU', '%23b8d600', FALSE, TRUE, 80),
+        ('provider-dpo', 'DPO Pay', 'My Company (San Francisco)', 'Disabled', 'Install', 'DPO Pay', '', 'dpo', 'DP', '%23a856a8', FALSE, TRUE, 90),
+        ('provider-ecpay', 'ECPay', 'My Company (San Francisco)', 'Disabled', 'Install', 'ECPay', '', 'ecpay', 'EC', '%230b6aa8', FALSE, TRUE, 100),
+        ('provider-flutterwave', 'Flutterwave', 'My Company (San Francisco)', 'Disabled', 'Install', 'Flutterwave', '', 'flutterwave', 'FW', '%23f08a26', FALSE, TRUE, 110),
+        ('provider-iyzico', 'Iyzico', 'My Company (San Francisco)', 'Disabled', 'Install', 'Iyzico', '', 'iyzico', 'IZ', '%23416cff', FALSE, TRUE, 120),
+        ('provider-mercadopago', 'Mercado Pago', 'My Company (San Francisco)', 'Disabled', 'Install', 'Mercado Pago', '', 'mercado_pago', 'MP', '%232e6fda', FALSE, TRUE, 130),
+        ('provider-mollie', 'Mollie', 'My Company (San Francisco)', 'Disabled', 'Install', 'Mollie', '', 'mollie', 'MO', '%23000000', FALSE, TRUE, 140),
+        ('provider-nuvei', 'Nuvei', 'My Company (San Francisco)', 'Disabled', 'Install', 'Nuvei', '', 'nuvei', 'NU', '%2313212d', FALSE, TRUE, 150),
+        ('provider-paypal', 'PayPal', 'My Company (San Francisco)', 'Disabled', 'Install', 'PayPal', '', 'paypal', 'PP', '%230036c1', FALSE, TRUE, 160),
+        ('provider-payu', 'PayU', 'My Company (San Francisco)', 'Disabled', 'Install', 'PayU', '', 'payu', 'PU', '%23333333', FALSE, TRUE, 170),
+        ('provider-paymob', 'Paymob', 'My Company (San Francisco)', 'Disabled', 'Install', 'Paymob', '', 'paymob', 'PM', '%23316cff', FALSE, TRUE, 180),
+        ('provider-razorpay', 'Razorpay', 'My Company (San Francisco)', 'Disabled', 'Install', 'Razorpay', '', 'razorpay', 'RZ', '%232f80ed', FALSE, TRUE, 190),
+        ('provider-redsys', 'Redsys', 'My Company (San Francisco)', 'Disabled', 'Install', 'Redsys', '', 'redsys', 'RS', '%23f29f2b', FALSE, TRUE, 200),
+        ('provider-stripe', 'Stripe', 'My Company (San Francisco)', 'Disabled', 'Install', 'Stripe', '', 'stripe', 'ST', '%23635bff', FALSE, TRUE, 210),
+        ('provider-toss', 'Toss Payments', 'My Company (San Francisco)', 'Disabled', 'Install', 'Toss Payments', '', 'toss_payments', 'TP', '%232f6bff', FALSE, TRUE, 220),
+        ('provider-worldline', 'Worldline', 'My Company (San Francisco)', 'Disabled', 'Install', 'Worldline', '', 'worldline', 'WL', '%2321b5af', FALSE, TRUE, 230),
+        ('provider-xendit', 'Xendit', 'My Company (San Francisco)', 'Disabled', 'Install', 'Xendit', '', 'xendit', 'XE', '%23d44d70', FALSE, TRUE, 240)
+      ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS accounting_payment_providers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,38 @@
+page: { id: payment-providers }
+datasources:
+  - id: accounting_payment_providers
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_PAYMENT_PROVIDERS_UNAVAILABLE, message: Payment providers are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, company, state, action_label, description, website, provider_code, logo_abbr, logo_color, installed, active, 'http://localhost:8069/web/image/payment.provider/22/image_128' AS logo_url FROM accounting_payment_providers WHERE active = TRUE AND CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR company ILIKE '%' || :q || '%') ORDER BY sequence, name"
+actions:
+  - id: view_accounting_payment_provider
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/payment-provider-detail
+    params: { id: '{row.id}' }
+  - id: create_accounting_payment_provider
+    type: server_form
+    permission: accounting.write
+    title: New Payment Provider
+    action: accounting.payment_providers.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_payment_providers]
+    mutation:
+      operation: insert
+      table: accounting_payment_providers
+      generated: [id]
+      fields: [name, company, state, action_label, description, website, provider_code, logo_abbr, logo_color, installed, active, sequence]
+      required: [name]
+      defaults: { company: 'My Company (San Francisco)', state: Disabled, action_label: Install, description: '', website: '', provider_code: custom, logo_abbr: PP, logo_color: '%235b4f9b', installed: false, active: true, sequence: 999 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PAYMENT_PROVIDER_NAME_REQUIRED, message: A payment provider name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_payment_providers WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND active = TRUE)", status: 409, code: ACCOUNTING_PAYMENT_PROVIDER_EXISTS, message: A payment provider with this name already exists. }
+      result: { query: "SELECT * FROM accounting_payment_providers WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: company, label: Company, type: text, default: 'My Company (San Francisco)' }
+      - { field: provider_code, label: Provider Code, type: text, default: custom }
+      - { field: description, label: Description, type: text }
+      - { field: website, label: Website, type: text }
+      - { field: logo_abbr, label: Logo initials, type: text, default: PP }

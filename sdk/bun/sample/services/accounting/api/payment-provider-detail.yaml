@@ -1,0 +1,64 @@
+page: { id: payment-provider-detail }
+datasources:
+  - id: accounting_payment_provider_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_PAYMENT_PROVIDER_DETAIL_UNAVAILABLE, message: Payment provider detail is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, company, state, action_label, description, website, provider_code, logo_abbr, logo_color, installed, active, 'http://localhost:8069/web/image/payment.provider/22/image_128' AS logo_url FROM accounting_payment_providers WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+actions:
+  - id: edit_accounting_payment_provider
+    type: server_form
+    permission: accounting.write
+    title: Edit Payment Provider
+    action: accounting.payment_providers.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_payment_provider_detail
+    refresh: [accounting_payment_provider_detail, accounting_payment_providers]
+    mutation:
+      operation: update
+      table: accounting_payment_providers
+      fields: [name, company, description, website, provider_code, logo_abbr, logo_color]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_payment_providers WHERE id = :id AND active = TRUE", status: 404, code: ACCOUNTING_PAYMENT_PROVIDER_NOT_FOUND, message: Payment provider not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_payment_providers WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND active = TRUE AND id <> :id)", status: 409, code: ACCOUNTING_PAYMENT_PROVIDER_EXISTS, message: A payment provider with this name already exists. }
+      result: { query: "SELECT * FROM accounting_payment_providers WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: company, label: Company, type: text }
+      - { field: provider_code, label: Provider Code, type: text }
+      - { field: description, label: Description, type: text }
+      - { field: website, label: Website, type: text }
+      - { field: logo_abbr, label: Logo initials, type: text }
+  - id: install_accounting_payment_provider
+    type: server
+    permission: accounting.write
+    action: accounting.payment_providers.install
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_payment_provider_detail, accounting_payment_providers]
+    params: { values: { installed: true, active: true, state: Enabled, action_label: Installed } }
+    mutation: { operation: update, table: accounting_payment_providers, fields: [installed, active, state, action_label], result: { query: "SELECT * FROM accounting_payment_providers WHERE id = :id" } }
+  - id: uninstall_accounting_payment_provider
+    type: server
+    permission: accounting.write
+    action: accounting.payment_providers.uninstall
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_payment_provider_detail, accounting_payment_providers]
+    params: { values: { installed: false, state: Disabled, action_label: Install } }
+    mutation: { operation: update, table: accounting_payment_providers, fields: [installed, state, action_label], result: { query: "SELECT * FROM accounting_payment_providers WHERE id = :id" } }
+  - id: delete_accounting_payment_provider
+    type: server
+    permission: accounting.write
+    action: accounting.payment_providers.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [accounting_payment_providers]
+    mutation:
+      operation: delete
+      table: accounting_payment_providers
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM accounting_payment_providers WHERE id = :id AND active = TRUE", status: 404, code: ACCOUNTING_PAYMENT_PROVIDER_NOT_FOUND, message: Payment provider not found. }]
