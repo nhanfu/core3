@@ -1,0 +1,42 @@
+title: Looking for Help
+page: { id: livechat-help-queue, route: /livechat-sessions/help, breadcrumb: [Website, Live Chat, Sessions, Looking for Help], auth: { require: [livechat.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_help_sessions
+    search: { label: Search conversations, placeholder: 'Search visitors, agents, channels, or tags...' }
+    view_navigation: tabs
+    views:
+      - id: card
+        label: Kanban
+        icon: dashboard
+        card:
+          title: visitor_display
+          subtitle: started_label
+          fields:
+            - { field: country_name, label: Country }
+            - { field: language_name, label: Language }
+            - { field: expertise_name, label: Expertise }
+            - { field: tag_names, label: Tags }
+      - { id: list, label: List, icon: table, mobile: false }
+    page_size: 50
+    row_key: id
+    row_open_action: view_livechat_help_session
+    row_double_click_action: view_livechat_help_session
+    form_view: { page: apps/services/livechat/pages/session-detail.yaml, side_panel: true }
+    row_actions: menu
+    empty_state:
+      title: No conversations found
+      description: Help out by joining requests from teammates, or mark your own conversations as needing help.
+    columns:
+      - { field: started_label, label: Date, sortable: true }
+      - { field: visitor_display, label: Customer, type: PrimaryEntityCell }
+      - { field: agent_names, label: Agents }
+      - { field: country_name, label: Country }
+      - { field: language_name, label: Language }
+      - { field: expertise_name, label: Expertise }
+      - { field: tag_names, label: Tags }
+      - { field: channel_name, label: Channel }
+      - { field: duration_label, label: Duration }
+      - { field: message_count, label: Messages, align: right }

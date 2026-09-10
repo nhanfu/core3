@@ -1,0 +1,33 @@
+version: 0.0.7
+kind: data
+description: Add deterministic Live Chat looking-for-help queue fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE livechat_sessions ADD COLUMN IF NOT EXISTS agent_names VARCHAR;
+      ALTER TABLE livechat_sessions ADD COLUMN IF NOT EXISTS language_name VARCHAR;
+      ALTER TABLE livechat_sessions ADD COLUMN IF NOT EXISTS expertise_name VARCHAR;
+      ALTER TABLE livechat_sessions ADD COLUMN IF NOT EXISTS tag_names VARCHAR;
+      UPDATE livechat_sessions
+      SET agent_names = COALESCE(agent_names, operator_name),
+          language_name = COALESCE(language_name, CASE country_name WHEN 'Belgium' THEN 'French' ELSE 'English' END),
+          expertise_name = COALESCE(expertise_name, CASE id WHEN 'livechat-session-demo-005' THEN 'Technical Support' ELSE NULL END),
+          tag_names = COALESCE(tag_names, CASE id WHEN 'livechat-session-demo-005' THEN 'Urgent' ELSE NULL END)
+      WHERE agent_names IS NULL OR language_name IS NULL OR expertise_name IS NULL OR tag_names IS NULL;
+      INSERT INTO livechat_sessions
+        (id, channel_id, channel_name, visitor_name, operator_name, agent_names, status, duration_minutes, message_count, country_name, language_name, expertise_name, tag_names, avatar_url, started_at)
+      VALUES
+        ('livechat-help-001', 'livechat-channel-demo-001', 'Website Support', 'Visitor #401', 'Maya Chen', 'Maya Chen', 'Looking for Help', 3.25, 5, 'United States', 'English', 'Billing', 'Billing, VIP', '', TIMESTAMP '2026-09-08 09:15:00'),
+        ('livechat-help-002', 'livechat-channel-demo-001', 'Website Support', 'Visiteur #402', 'Lucas Martin', 'Lucas Martin', 'Looking for Help', 7.50, 9, 'France', 'French', 'Technical Support', 'Urgent', '', TIMESTAMP '2026-09-09 14:20:00'),
+        ('livechat-help-003', 'livechat-channel-demo-001', 'Website Support', NULL, 'Maya Chen', 'Maya Chen', 'Looking for Help', 1.00, 2, NULL, 'English', 'Sales', NULL, '', TIMESTAMP '2026-09-10 08:45:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM livechat_sessions WHERE id IN ('livechat-help-001', 'livechat-help-002', 'livechat-help-003');
+      ALTER TABLE livechat_sessions DROP COLUMN IF EXISTS tag_names;
+      ALTER TABLE livechat_sessions DROP COLUMN IF EXISTS expertise_name;
+      ALTER TABLE livechat_sessions DROP COLUMN IF EXISTS language_name;
+      ALTER TABLE livechat_sessions DROP COLUMN IF EXISTS agent_names;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

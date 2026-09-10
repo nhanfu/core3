@@ -1,0 +1,35 @@
+page: { id: livechat-help-queue }
+
+datasources:
+  - id: livechat_help_sessions
+    permission: livechat.read
+    single: false
+    error_states: { transport_error: { status: 503, code: LIVECHAT_HELP_SESSIONS_UNAVAILABLE, message: Live chat help requests are temporarily unavailable. } }
+    workflow: livechat_sessions
+    query: |
+      SELECT id, row_version, channel_id, channel_name, visitor_name,
+        COALESCE(NULLIF(visitor_name, ''), 'Visitor') AS visitor_display,
+        operator_name, COALESCE(NULLIF(agent_names, ''), operator_name, 'No agent yet') AS agent_names,
+        status, outcome, duration_minutes, rating, COALESCE(message_count, 0) AS message_count,
+        country_name, language_name, expertise_name, tag_names, avatar_url,
+        CAST(started_at AS VARCHAR) AS started_label,
+        CAST(duration_minutes AS VARCHAR) AS duration_label,
+        'Looking for Help' AS status_label,
+        CAST(started_at AS VARCHAR) AS started_at, CAST(ended_at AS VARCHAR) AS ended_at
+      FROM livechat_sessions
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND status = 'Looking for Help'
+        AND (:q IS NULL OR visitor_name ILIKE '%' || :q || '%' OR operator_name ILIKE '%' || :q || '%'
+          OR channel_name ILIKE '%' || :q || '%' OR COALESCE(agent_names, '') ILIKE '%' || :q || '%'
+          OR COALESCE(country_name, '') ILIKE '%' || :q || '%' OR COALESCE(language_name, '') ILIKE '%' || :q || '%'
+          OR COALESCE(expertise_name, '') ILIKE '%' || :q || '%' OR COALESCE(tag_names, '') ILIKE '%' || :q || '%')
+      ORDER BY started_at ASC, id
+
+actions:
+  - id: view_livechat_help_session
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat-session-detail
+    params: { id: '{row.id}' }
+  - { id: join_livechat_help_session, type: server, permission: livechat.write, action: livechat.help_sessions.join, handler: order_transition, workflow: livechat_sessions, operation: join, refresh: [livechat_help_sessions, livechat_sessions] }
+  - { id: close_livechat_help_session, type: server, permission: livechat.write, action: livechat.help_sessions.close, handler: order_transition, workflow: livechat_sessions, operation: close, refresh: [livechat_help_sessions, livechat_sessions] }

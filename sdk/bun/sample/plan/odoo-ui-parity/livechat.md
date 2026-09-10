@@ -273,6 +273,41 @@ The overall sub-plan remains `planned` because the remaining Live Chat action,
 conversation, reporting, chatbot, technical, and public-widget surfaces still
 require separate parity slices.
 
+## Bounded implementation slice: Conversations — Looking for Help (2026-09-10)
+
+The owned Odoo reference exposes `menu_livechat_looking_for_help` through
+`discuss_channel_looking_for_help_action` (`discuss.channel`,
+`list,kanban,form`) with the domain `livechat_status = need_help`, create
+disabled, ascending session order, and the empty help copy “No conversations
+found”. This slice adds the disjoint Core3 route `/livechat-sessions/help`
+under Live Chat → Conversations → Looking for Help. The page and backend API
+fragment remain separate and join through `page.id` (`livechat-help-queue`);
+existing session details are opened in the shared side panel.
+
+The queue has fixed-date, idempotent fixtures for three help requests plus the
+existing demo request, including customer fallback, requesting agents,
+countries, languages, expertise, tags, message counts, and durations. It
+supports populated, search no-results, explicit empty/no-results fixture, and
+transport-error states. Queue rows expose read-only navigation and
+`livechat.write`-guarded Join and Close actions. Conversation create/delete is
+not exposed because the Odoo action is an existing-session queue with
+`create=false`; the focused test asserts that boundary. All session workflow
+transitions now require `expected_row_version` in their state guards, and the
+new Join transition only accepts `Looking for Help` sessions.
+
+Focused validation: `test/livechat_looking_for_help.integration.test.ts` covers
+the menu/action route, page/API datasource join, deterministic fixtures,
+search/empty/error states, read/write permission metadata, no-create/delete
+boundary, optimistic state guards, Join, and Close. Authenticated browser
+checks reached the Odoo action 700 and Core3’s published route at desktop and
+mobile sizes. Captures are outside Git at
+`/tmp/odoo-livechat-help-desktop-authenticated.png`,
+`/tmp/core3-livechat-help-desktop-authenticated.png`, and
+`/tmp/core3-livechat-help-mobile-authenticated.png`. Core3 rendered the menu,
+route, and deterministic rows, but its dev frontend did not load the normal
+stylesheet/assets in this environment, so those Core3 images are functional
+route/data evidence rather than a visual-parity sign-off.
+
 ## Bounded implementation slice: Conversations — Sessions (2026-09-10)
 
 The owned reference database exposes Live Chat → Conversations → Sessions as
