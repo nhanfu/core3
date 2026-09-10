@@ -147,6 +147,15 @@ Archived. Workflow captures are retained at
 `/tmp/core3-surveys-detail-archived-desktop.png` and
 `/tmp/core3-surveys-detail-reopened-desktop.png`.
 
+The survey-detail stats batch adds Odoo-style Certified and Participants stat
+buttons to the shared form. A service-owned migration completes the
+certification fixture to 4 participants and 2 certified results, matching the
+installed Odoo reference. Authenticated desktop/mobile checks rendered
+`MyCompany Vendor Certification`, both counters, and stat navigation to
+`/surveys/participants?survey_id=survey-demo-certification` with no failed
+requests or horizontal overflow. Captures are
+`/tmp/core3-surveys-{desktop,mobile}-detail-stats.png`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
