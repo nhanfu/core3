@@ -14,24 +14,31 @@ describe('Project list and task navigation parity', () => {
   test('keeps Project list/detail/task pages layout-only and API-owned by page id', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const screens = [
-      ['pages/projects.yaml', 'projects', 'projects'],
-      ['pages/project-detail.yaml', 'project-detail', 'project_detail'],
-      ['pages/tasks.yaml', 'project-tasks', 'project_tasks_all'],
-      ['pages/task-detail.yaml', 'project-task-detail', 'project_task_detail'],
+      ['pages/projects.yaml', 'projects', 'projects.yaml', 'projects'],
+      ['pages/project-detail.yaml', 'project-detail', 'project-detail.yaml', 'project_detail'],
+      ['pages/tasks.yaml', 'project-tasks', 'tasks.yaml', 'project_tasks_all'],
+      ['pages/project-task-detail.yaml', 'project-task-detail', 'task-detail.yaml', 'project_task_detail'],
     ] as const;
 
-    for (const [pageFile, pageId, sourceId] of screens) {
+    for (const [pageFile, pageId, apiFile, sourceId] of screens) {
       const page = yaml(pageFile);
       expect(page.datasources, pageFile).toBeUndefined();
       expect(page.page.auth.require, pageFile).toEqual(['project.read']);
       expect(discovered.pages.get(pageId)?.config.page.id, pageFile).toBe(pageId);
       expect(discovered.pageDatasources.get(pageId), pageFile).toContain(sourceId);
-      expect(readdirSync(join(serviceRoot, 'api')).some(file => file.replace(/\.ya?ml$/, '') === pageFile.replace(/^pages\//, '').replace(/\.ya?ml$/, '')), pageFile).toBe(true);
+      expect(readdirSync(join(serviceRoot, 'api')).includes(apiFile), pageFile).toBe(true);
     }
 
     const projectList = yaml('pages/projects.yaml').components.find((component: any) => component.type === 'ListView');
     expect(projectList).toMatchObject({ source: 'projects', row_open_action: 'view_project', empty_state: { title: 'No projects' } });
-    expect(projectList.views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
+    expect(projectList.views.map((view: any) => view.id)).toEqual(['list', 'card', 'kanban']);
+    expect(projectList.views.find((view: any) => view.id === 'card')).toMatchObject({ card: { title: 'name', subtitle: 'customer_name' } });
+    expect(projectList.views.filter((view: any) => view.mobile === false).map((view: any) => view.id)).toEqual(['list', 'kanban']);
+
+    const taskPage = yaml('pages/tasks.yaml');
+    const allTasks = taskPage.components.find((component: any) => component.type === 'ListView');
+    expect(allTasks.views.map((view: any) => view.id)).toEqual(['list', 'card', 'kanban']);
+    expect(allTasks.form_view.page).toBe('apps/services/project/pages/project-task-detail.yaml');
 
     const projectDetail = yaml('pages/project-detail.yaml');
     const taskList = projectDetail.components.find((component: any) => component.type === 'ListView');

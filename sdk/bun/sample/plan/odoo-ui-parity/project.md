@@ -160,7 +160,15 @@ The bounded batch moves list/detail/task reads into
 by `page.id`. Queries accept stable `q`, filter, `id`, and `fixture_state`
 parameters so default, search/no-match, empty, and missing-detail behavior can
 be tested without browser fixtures. Project stage filter values match the
-seeded stage names. The current schema only has projects, milestones, and
+seeded stage names. Fresh authenticated Core3 checks now show two Project
+cards and five Task cards at 390x844, with no table, no failed responses, and
+`scrollWidth === 390`; desktop list/detail/task checks also have no failed
+responses. The task side-panel reference was aligned to
+`project-task-detail.yaml`, removing the prior `GET /api/pages/task-detail`
+404. Evidence is `/tmp/core3-project-projects-mobile-cards-verified.png`,
+`/tmp/core3-project-tasks-mobile-cards-verified.png`, and
+`/tmp/core3-project-tasks-desktop-fixed.png`. The current schema only has
+projects, milestones, and
 denormalized project_tasks. It lacks
 project stages, task types/personal stages, tags, roles, users/partners,
 companies, followers/chatter/attachments, activities/plans, ratings, updates,

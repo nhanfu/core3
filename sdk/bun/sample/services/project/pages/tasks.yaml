@@ -9,10 +9,25 @@ components:
     group_by: [{ field: stage, label: Stage }, { field: project_name, label: Project }, { field: assignee, label: Assignee }, { field: state, label: Status }]
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: project_name
+          fields:
+            - { field: assignee, label: Assignee }
+            - { field: priority, label: Priority }
+            - { field: due_date, label: Deadline }
+            - { field: state, label: Status }
       - id: kanban
         label: Kanban
         icon: dashboard
+        mobile: false
         group_by: state
         groups_source: project_task_states
         card: { title: name, subtitle: project_name, fields: [{ field: assignee, label: Assignee }, { field: priority, label: Priority }, { field: due_date, label: Deadline }] }
@@ -22,7 +37,7 @@ components:
     row_key: id
     row_open_action: view_task
     row_double_click_action: view_task
-    form_view: { page: apps/services/project/pages/task-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/project/pages/project-task-detail.yaml, side_panel: true }
     row_actions: menu
     empty_state: { title: No tasks, description: No tasks match the current filters. }
     columns:

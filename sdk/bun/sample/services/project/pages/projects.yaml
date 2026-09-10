@@ -9,10 +9,25 @@ components:
     group_by: [{ field: stage, label: Stage }, { field: state, label: Status }, { field: project_manager, label: Project manager }]
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: customer_name
+          fields:
+            - { field: project_manager, label: Project manager }
+            - { field: task_count, label: Tasks }
+            - { field: progress, label: Progress }
+            - { field: end_date, label: Deadline }
       - id: kanban
         label: Kanban
         icon: dashboard
+        mobile: false
         group_by: stage
         groups_source: project_stages
         card: { title: name, subtitle: customer_name, fields: [{ field: project_manager, label: Project manager }, { field: task_count, label: Tasks }, { field: progress, label: Progress }, { field: end_date, label: Deadline }] }
