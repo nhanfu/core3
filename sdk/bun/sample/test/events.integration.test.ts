@@ -35,5 +35,9 @@ describe('Events attendee parity batch', () => {
     const migration = yaml('migrations/20260910110000-004-attendee-detail.yaml');
     expect(migration.type.postgres.up).toContain('CREATE TABLE IF NOT EXISTS event_registration_answers');
     expect(migration.type.postgres.up).toContain('attendee_phone');
+    const fixtures = yaml('migrations/20260910113000-005-official-event-fixtures.yaml');
+    expect(fixtures.version).toBe('0.0.5');
+    expect(fixtures.type.postgres.up).toContain('Hockey Tournament');
+    expect(fixtures.type.postgres.up).toContain('OpenWood Collection Online Reveal');
   });
 });
