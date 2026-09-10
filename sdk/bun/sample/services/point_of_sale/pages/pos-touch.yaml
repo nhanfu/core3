@@ -23,3 +23,106 @@ actions:
     type: navigate
     permission: pos.read
     navigate_to: /point-of-sale/sessions
+
+  # The touch shell submits these client actions, while the named server
+  # actions below keep all order/payment validation in the service contract.
+  - id: touch_add_product
+    type: client
+    permission: pos.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        await request('/api/actions/pos.touch.add_product', {
+          method: 'POST',
+          body: {
+            ticket_id: row.ticket_id,
+            product_id: row.product_id,
+            quantity: row.quantity || 1,
+          },
+        })
+      }
+
+  - id: touch_submit_payment
+    type: client
+    permission: pos.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        await request('/api/actions/pos.touch.payment', {
+          method: 'POST',
+          body: {
+            ticket_id: row.ticket_id,
+            amount: row.amount,
+            method: row.method,
+          },
+        })
+      }
+
+  - id: touch_add_product_backend
+    type: server
+    permission: pos.write
+    action: pos.touch.add_product
+    handler: yaml_mutation
+    operation: add_product
+    mutation:
+      generated: [line_id]
+      guards:
+        - query: "SELECT o.id FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :ticket_id AND o.state = 'New' AND s.state = 'In Progress'"
+          status: 409
+          message: Select an open ticket before adding products
+        - query: "SELECT id FROM pos_products WHERE id = :product_id AND active = true"
+          status: 404
+          message: Product not found or inactive
+        - query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0"
+          status: 400
+          message: Quantity must be positive
+      steps:
+        - query: |
+            INSERT INTO pos_order_lines(id, order_id, product_name, quantity, price_unit, tax_rate, discount, price_subtotal, price_tax, price_total)
+            SELECT :line_id, :ticket_id, p.name,
+              CAST(:quantity AS DECIMAL(18,3)), CAST(p.price AS DECIMAL(18,2)), CAST(p.tax_rate AS DECIMAL(9,4)), 0,
+              ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(p.price AS DECIMAL(18,2)), 2),
+              ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(p.price AS DECIMAL(18,2)) * CAST(p.tax_rate AS DECIMAL(9,4)) / 100, 2),
+              ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(p.price AS DECIMAL(18,2)) * (1 + CAST(p.tax_rate AS DECIMAL(9,4)) / 100), 2)
+            FROM pos_products p WHERE p.id = :product_id
+        - query: |
+            UPDATE pos_orders SET
+              amount_tax = (SELECT COALESCE(SUM(price_tax), 0) FROM pos_order_lines WHERE order_id = :ticket_id),
+              amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :ticket_id),
+              row_version = row_version + 1
+            WHERE id = :ticket_id
+      result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
+
+  - id: touch_submit_payment_backend
+    type: server
+    permission: pos.write
+    action: pos.touch.payment
+    handler: yaml_mutation
+    operation: pay
+    mutation:
+      generated: [payment_id]
+      guards:
+        - query: "SELECT o.id FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :ticket_id AND o.state = 'New' AND s.state = 'In Progress'"
+          status: 409
+          message: This ticket is no longer available for payment
+        - query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0"
+          status: 400
+          message: Payment amount must be positive
+        - query: |
+            SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) <=
+              (SELECT amount_total - amount_paid FROM pos_orders WHERE id = :ticket_id)
+          status: 400
+          message: Payment exceeds the remaining balance
+        - query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM pos_payment_methods WHERE active = true AND name = :method)"
+          status: 422
+          message: Payment method is not available in this register
+      steps:
+        - query: "INSERT INTO pos_payments(id, order_id, method, amount) VALUES(:payment_id, :ticket_id, :method, CAST(:amount AS DECIMAL(18,2)))"
+        - query: |
+            UPDATE pos_orders SET
+              amount_paid = amount_paid + CAST(:amount AS DECIMAL(18,2)),
+              payment_method = :method,
+              state = CASE WHEN amount_paid + CAST(:amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END,
+              row_version = row_version + 1
+            WHERE id = :ticket_id
+      result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }

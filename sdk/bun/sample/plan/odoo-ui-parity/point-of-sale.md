@@ -191,6 +191,29 @@ and permissioned Open, Start Closing, and Close & Post row actions. Its guarded
 workflow records counted cash, expected cash, discrepancy, and close time; the
 focused integration test covers the session transition contract.
 
+## Current batch: touch tender and payment states
+
+The touch-selling surface now binds its active payment-method catalog and open
+ticket line to service-owned datasources. A deterministic open ticket is seeded
+for the active demo register so the touch flow starts with a real order rather
+than a local-only cart. Product taps submit a guarded service mutation that
+adds a line and recalculates the order total; payment submission uses a second
+guarded mutation for positive amounts, remaining-balance limits, active tender
+methods, open-ticket state, and write permission.
+
+The payment screen is touch-first at desktop and 390px: it shows amount due,
+already paid, tendered amount, change, remaining balance, large active-method
+buttons, exact/$20 shortcuts, a visible validation error region, and a receipt
+state after full payment. The shell also exposes explicit no-register,
+no-order, no-product, no-open-ticket, and read-only permission states. Browser
+captures remain local under `/tmp/core3-pos-touch-payment-*`; no screenshots are
+part of the commit.
+
+Focused client/integration tests cover product submission, tender selection,
+change calculation, receipt transition, permission-boundary taps, datasource
+ownership, server guards, and the deterministic fixture. Final desktop/mobile
+checks are recorded with the commit handoff.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,

@@ -1,1 +1,57 @@
 @use 'styles/tokens';
+
+.pos-shell {
+  .pos-payment-screen {
+    min-height: min(680px, calc(100vh - 170px));
+  }
+
+  .pos-product-card,
+  [data-touch-tender],
+  [data-touch-validate-payment],
+  [data-touch-pay] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  [data-touch-tender-amount] {
+    appearance: textfield;
+  }
+
+  [data-touch-tender-amount]::-webkit-outer-spin-button,
+  [data-touch-tender-amount]::-webkit-inner-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .pos-shell {
+    .pos-shell__header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .pos-product-screen {
+      min-height: calc(100vh - 86px);
+    }
+
+    .pos-catalog {
+      min-height: 340px;
+    }
+
+    .pos-cart-panel {
+      max-height: none;
+      min-height: 250px;
+    }
+
+    .pos-payment-screen {
+      min-height: calc(100vh - 86px);
+      padding-bottom: 24px;
+    }
+
+    .pos-payment-screen [data-touch-tender] {
+      min-height: 58px;
+    }
+  }
+}

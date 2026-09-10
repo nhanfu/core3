@@ -1,20 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showToast } from '@core3/client/components/Toast';
-
-type PosState = {
-  sessionId: string | null;
-  sessionName: string;
-  sessionStatus: string;
-  activeOrderId: string | null;
-  screen: 'product' | 'payment' | 'receipt' | 'ticket';
-  catalog: CatalogProduct[];
-  cart: CartLine[];
-  customer: string | null;
-  paymentsDue: number;
-  change: number;
-  receiptOrder: any | null;
-};
+import { hasPermission } from '@core3/client/meta';
 
 type CatalogProduct = {
   id: string;
@@ -36,6 +23,11 @@ type CartLine = {
   total: number;
 };
 
+type PaymentMethod = {
+  value: string;
+  label: string;
+};
+
 export class PosShell extends BaseComponent {
   def: any;
   private _session: any = null;
@@ -55,6 +47,12 @@ export class PosShell extends BaseComponent {
       paymentsDue: 0,
       change: 0,
       receiptOrder: null,
+      canWrite: false,
+      paymentMethods: [],
+      paidAmount: 0,
+      tenderAmount: '',
+      selectedPaymentMethod: 'Cash',
+      paymentError: '',
       ...state,
     });
     this.def = def;
@@ -65,6 +63,29 @@ export class PosShell extends BaseComponent {
     const value = (id: string) => dataMap[id]?.data;
     const session = value('pos_touch_session') || {};
     const orders = Array.isArray(value('pos_touch_open_orders')) ? value('pos_touch_open_orders') : [];
+    const paymentMethods = (Array.isArray(value('pos_touch_payment_methods')) ? value('pos_touch_payment_methods') : [])
+      .map((method: any) => ({
+        value: String(method.value ?? method.name ?? ''),
+        label: String(method.label ?? method.name ?? method.value ?? ''),
+      }))
+      .filter((method: PaymentMethod) => method.value);
+    const order = orders[0] || {};
+    const lineQuantity = Number(order.line_quantity || 0);
+    const lineUnitPrice = Number(order.line_price_unit || 0);
+    const lineTaxRate = Number(order.line_tax_rate || 0);
+    const lineTotal = Number(order.line_total || 0);
+    const initialCart = order.line_product_id && lineQuantity > 0
+      ? [{
+          lineId: `existing-${order.id}`,
+          productId: String(order.line_product_id),
+          productName: String(order.line_product_name || 'Current item'),
+          qty: lineQuantity,
+          unitPrice: lineUnitPrice,
+          taxRate: lineTaxRate,
+          discount: 0,
+          total: lineTotal || Math.round(lineQuantity * lineUnitPrice * (1 + lineTaxRate / 100) * 100) / 100,
+        }]
+      : [];
     return {
       sessionSource: session,
       bootstrapProducts: Array.isArray(value('pos_touch_products')) ? value('pos_touch_products') : [],
@@ -72,7 +93,12 @@ export class PosShell extends BaseComponent {
       sessionId: session.id || null,
       sessionName: session.name || 'No active session',
       sessionStatus: session.state || 'closed',
-      activeOrderId: orders[0]?.id || null,
+      activeOrderId: order.id || null,
+      cart: initialCart,
+      canWrite: hasPermission(context.user, 'pos.write'),
+      paymentMethods,
+      paidAmount: Number(order.amount_paid || 0),
+      selectedPaymentMethod: paymentMethods[0]?.value || 'Cash',
     };
   }
 
@@ -91,7 +117,9 @@ export class PosShell extends BaseComponent {
     const screen = this.state.screen || 'product';
     const body = html.take(shell).div.className('pos-shell__body flex-1 min-w-0 max-w-full overflow-hidden').ele();
 
-    if (screen === 'payment') {
+    if (!sessionSource.id) {
+      this._drawClosedSession(body);
+    } else if (screen === 'payment') {
       this._drawPaymentScreen(body);
     } else if (screen === 'receipt') {
       this._drawReceiptScreen(body);
@@ -122,6 +150,7 @@ export class PosShell extends BaseComponent {
     for (const [screen, label] of screens) {
       const active = this.state.screen === screen;
       html.take(tabs).button
+        .attr('data-touch-screen', screen)
         .className(`px-3 py-1.5 text-sm rounded-md transition-colors ${active ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`)
         .text(label)
         .event('click', () => this.setState({ screen }))
@@ -139,6 +168,28 @@ export class PosShell extends BaseComponent {
       .text(status).ele();
   }
 
+  private _drawClosedSession(container: HTMLElement) {
+    const panel = html.take(container).div
+      .className('pos-touch-state flex min-h-[360px] items-center justify-center bg-white p-6')
+      .ele();
+    const card = html.take(panel).div.className('w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm').ele();
+    html.take(card).div.className('mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-700').text('!').ele();
+    html.take(card).h2.className('mb-2 text-lg font-semibold text-gray-900').text('No active register').ele();
+    html.take(card).p.className('mb-6 text-sm text-gray-500').text(
+      this.state.canWrite
+        ? 'Open a POS register before starting a touch sale.'
+        : 'You have view-only access. POS write access is required to open a register and accept payments.',
+    ).ele();
+    if (this.state.canWrite) {
+      html.take(card).button
+        .attr('data-touch-open-register', 'true')
+        .className('min-h-12 w-full rounded-lg bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700')
+        .text('Open register')
+        .event('click', () => this.submit('touch_open_cashier'))
+        .ele();
+    }
+  }
+
   private _drawProductScreen(container: HTMLElement, products: CatalogProduct[]) {
     const wrap = html.take(container).div
       .className('pos-product-screen flex flex-col md:flex-row h-full min-w-0 max-w-full')
@@ -150,6 +201,13 @@ export class PosShell extends BaseComponent {
       .ele();
 
     html.take(catalog).h2.className('text-sm font-semibold text-gray-700 mb-3').text('Products').ele();
+    if (!this.state.canWrite) {
+      html.take(catalog).div
+        .attr('role', 'status')
+        .className('mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800')
+        .text('View-only register: POS write access is required to add products or accept payments.')
+        .ele();
+    }
 
     // Search bar
     const searchWrap = html.take(catalog).div.className('relative mb-4').ele();
@@ -170,7 +228,9 @@ export class PosShell extends BaseComponent {
         : products;
       for (const product of filtered) {
         const card = html.take(grid).div
-          .className('pos-product-card p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors select-none')
+          .className(`pos-product-card min-h-24 p-3 border border-gray-200 rounded-lg ${this.state.canWrite ? 'cursor-pointer hover:border-indigo-400 hover:bg-indigo-50' : 'cursor-not-allowed opacity-70'} transition-colors select-none`)
+          .attr('data-touch-product', product.id)
+          .attr('aria-disabled', String(!this.state.canWrite))
           .event('click', () => this._addToCart(product))
           .ele();
         html.take(card).div.className('font-medium text-sm text-gray-900 truncate').text(product.name).ele();
@@ -179,8 +239,8 @@ export class PosShell extends BaseComponent {
           `<span class="text-sm font-semibold text-indigo-700">$${product.price.toFixed(2)}</span><span class="text-xs text-gray-400">${product.tax_rate}% tax</span>`;
       }
       if (!filtered.length) {
-        html.take(grid).div.className('col-span-full text-center text-sm text-gray-400 py-8')
-          .text('No products found').ele();
+        html.take(grid).div.className('col-span-full flex min-h-40 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 px-5 py-8 text-center')
+          .text(products.length ? 'No products match this search' : 'No products are available in this register').ele();
       }
     };
 
@@ -203,7 +263,7 @@ export class PosShell extends BaseComponent {
     const cartHeader = html.take(panel).div
       .className('flex items-center justify-between px-4 py-3 border-b bg-white')
       .ele();
-    html.take(cartHeader).span.className('font-semibold text-gray-800').text('Current ticket').ele();
+    html.take(cartHeader).span.className('font-semibold text-gray-800').text('Current order').ele();
     if (this.state.activeOrderId) {
       html.take(cartHeader).span.className('text-xs text-gray-400').text(`#${this.state.activeOrderId.slice(-6)}`).ele();
     }
@@ -228,45 +288,137 @@ export class PosShell extends BaseComponent {
     html.take(totalRow).span.className('text-lg font-bold text-gray-900').text(`$${cartTotal.toFixed(2)}`).ele();
 
     const payBtn = html.take(footer).button
-      .className(`w-full py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors ${cart.length ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`)
-      .text('Payment')
+      .attr('data-touch-pay', 'true')
+      .className(`min-h-12 w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${cart.length && this.state.canWrite ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`)
+      .text('Pay')
       .ele();
-    if (cart.length) {
+    if (cart.length && this.state.canWrite) {
       payBtn.addEventListener('click', () => this.setState({ screen: 'payment' }));
+    } else if (cart.length && !this.state.canWrite) {
+      payBtn.setAttribute('aria-disabled', 'true');
     }
   }
 
   private _drawPaymentScreen(container: HTMLElement) {
     const cart = this.state.cart || [];
-    const total = cart.reduce((s: number, l: CartLine) => s + l.total, 0);
+    const order = (this.state.openOrders || []).find((candidate: any) => candidate.id === this.state.activeOrderId) || {};
+    const total = Number(order.amount_total || cart.reduce((s: number, l: CartLine) => s + l.total, 0));
+    const paid = Number(this.state.paidAmount || order.amount_paid || 0);
+    const due = Math.max(0, Math.round((total - paid) * 100) / 100);
+    const methods: PaymentMethod[] = this.state.paymentMethods || [];
+    const selectedMethod = this.state.selectedPaymentMethod || methods[0]?.value || '';
+    const initialTender = this.state.tenderAmount || due.toFixed(2);
 
     const wrap = html.take(container).div
-      .className('pos-payment-screen flex flex-col items-center justify-center h-full p-8 bg-white')
+      .className('pos-payment-screen flex min-h-[420px] flex-col bg-white p-4 md:p-6')
       .ele();
 
-    html.take(wrap).h2.className('text-xl font-bold text-gray-900 mb-6').text('Payment').ele();
+    const top = html.take(wrap).div.className('mb-4 flex items-center justify-between gap-3 border-b pb-4').ele();
+    html.take(top).button
+      .attr('data-touch-payment-back', 'true')
+      .className('min-h-11 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50')
+      .text('← Back to order')
+      .event('click', () => this.setState({ screen: 'product', paymentError: '' }))
+      .ele();
+    html.take(top).h2.className('text-lg font-semibold text-gray-900').text('Payment').ele();
 
-    // Total due
-    const dueCard = html.take(wrap).div.className('w-full max-w-sm bg-gray-50 rounded-xl p-6 mb-6 text-center').ele();
-    html.take(dueCard).div.className('text-sm text-gray-500 mb-1').text('Total due').ele();
-    html.take(dueCard).div.className('text-4xl font-bold text-gray-900').text(`$${total.toFixed(2)}`).ele();
+    if (!this.state.activeOrderId || !cart.length) {
+      const empty = html.take(wrap).div.className('flex flex-1 items-center justify-center').ele();
+      const card = html.take(empty).div.className('w-full max-w-md rounded-xl border border-dashed border-gray-300 p-8 text-center').ele();
+      html.take(card).h3.className('mb-2 text-base font-semibold text-gray-900').text('No order to pay').ele();
+      html.take(card).p.className('mb-5 text-sm text-gray-500').text('Add an item to the current order before choosing a tender.').ele();
+      html.take(card).button
+        .className('min-h-11 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700')
+        .text('Return to products')
+        .event('click', () => this.setState({ screen: 'product', paymentError: '' }))
+        .ele();
+      return;
+    }
 
-    // Payment method buttons
-    const methods = html.take(wrap).div.className('w-full max-w-sm grid grid-cols-2 gap-3 mb-6').ele();
-    for (const method of ['Cash', 'Card', 'Bank', 'Other']) {
-      html.take(methods).button
-        .className('py-3 px-4 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-indigo-400 hover:bg-indigo-50 transition-colors')
-        .text(method)
-        .event('click', () => this._submitPayment(method, total))
+    const columns = html.take(wrap).div.className('grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]').ele();
+    const summary = html.take(columns).div.className('rounded-xl border border-gray-200 bg-gray-50 p-5').ele();
+    html.take(summary).div.className('mb-1 text-sm text-gray-500').text('Amount due').ele();
+    html.take(summary).div.className('text-4xl font-bold tracking-tight text-gray-900').text(`$${due.toFixed(2)}`).ele();
+    html.take(summary).div.className('mt-3 flex justify-between border-t border-gray-200 pt-3 text-sm').ele()
+      .innerHTML = `<span class="text-gray-500">Order total</span><strong>$${total.toFixed(2)}</strong>`;
+    html.take(summary).div.className('flex justify-between text-sm').ele()
+      .innerHTML = `<span class="text-gray-500">Already paid</span><strong>$${paid.toFixed(2)}</strong>`;
+
+    const tender = html.take(columns).div.className('rounded-xl border border-gray-200 bg-white p-5 shadow-sm').ele();
+    html.take(tender).h3.className('mb-3 text-base font-semibold text-gray-900').text('Choose a payment method').ele();
+    const methodGrid = html.take(tender).div.className('grid grid-cols-2 gap-3').ele();
+    for (const method of methods) {
+      const active = method.value === selectedMethod;
+      html.take(methodGrid).button
+        .attr('data-touch-tender', method.value)
+        .attr('aria-pressed', String(active))
+        .className(`min-h-14 rounded-lg border-2 px-3 py-3 text-sm font-semibold transition-colors ${active ? 'border-indigo-600 bg-indigo-50 text-indigo-800' : 'border-gray-200 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50'}`)
+        .text(method.label)
+        .event('click', () => this.setState({ selectedPaymentMethod: method.value, paymentError: '' }))
+        .ele();
+    }
+    if (!methods.length) {
+      html.take(tender).div.className('rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500').text('No active payment methods are configured for this register.').ele();
+    }
+
+    const amountLabel = html.take(tender).label.className('mt-5 block text-sm font-medium text-gray-700').text('Amount tendered').ele() as HTMLLabelElement;
+    const amountInput = html.take(tender).input
+      .attr('data-touch-tender-amount', 'true')
+      .attr('type', 'text')
+      .attr('inputmode', 'decimal')
+      .attr('autocomplete', 'off')
+      .className('mt-2 min-h-14 w-full rounded-lg border border-gray-300 px-4 text-right text-2xl font-semibold text-gray-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200')
+      .ele() as HTMLInputElement;
+    amountInput.value = initialTender;
+    amountLabel.htmlFor = amountInput.id = `touch-tender-${Date.now()}`;
+
+    const tenderSummary = html.take(tender).div.className('mt-3 space-y-1 text-sm').ele();
+    const changeRow = html.take(tenderSummary).div.className('flex justify-between').ele();
+    html.take(changeRow).span.className('text-gray-500').text('Change').ele();
+    const changeValue = html.take(changeRow).strong.className('text-gray-900').ele() as HTMLElement;
+    const remainingRow = html.take(tenderSummary).div.className('flex justify-between').ele();
+    html.take(remainingRow).span.className('text-gray-500').text('Remaining').ele();
+    const remainingValue = html.take(remainingRow).strong.className('text-gray-900').ele() as HTMLElement;
+
+    const quickAmounts = html.take(tender).div.className('mt-4 grid grid-cols-2 gap-2').ele();
+    for (const [id, label, value] of [['exact', 'Exact amount', due.toFixed(2)], ['twenty', '$20.00', '20.00']]) {
+      html.take(quickAmounts).button
+        .attr('data-touch-quick-amount', id)
+        .className('min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50')
+        .text(label)
+        .event('click', () => {
+          amountInput.value = value;
+          this.state.tenderAmount = value;
+          updateTenderSummary();
+        })
         .ele();
     }
 
-    // Back button
-    html.take(wrap).button
-      .className('text-sm text-gray-500 hover:text-gray-700 underline')
-      .text('← Back to products')
-      .event('click', () => this.setState({ screen: 'product' }))
+    html.take(tender).div
+      .attr('data-touch-payment-error', 'true')
+      .attr('role', 'alert')
+      .className(`mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 ${this.state.paymentError ? '' : 'hidden'}`)
+      .text(this.state.paymentError || '')
       .ele();
+    const validate = html.take(tender).button
+      .attr('data-touch-validate-payment', 'true')
+      .className('mt-4 min-h-14 w-full rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300')
+      .text('Validate payment')
+      .ele() as HTMLButtonElement;
+    validate.disabled = !methods.length;
+
+    const updateTenderSummary = () => {
+      const tenderAmount = Number(String(amountInput.value).replace(',', '.'));
+      const valid = Number.isFinite(tenderAmount);
+      const change = valid ? Math.max(0, tenderAmount - due) : 0;
+      const remaining = valid ? Math.max(0, due - tenderAmount) : due;
+      changeValue.textContent = `$${change.toFixed(2)}`;
+      remainingValue.textContent = `$${remaining.toFixed(2)}`;
+      this.state.tenderAmount = amountInput.value;
+    };
+    amountInput.addEventListener('input', updateTenderSummary);
+    updateTenderSummary();
+    validate.addEventListener('click', () => this._submitPayment(selectedMethod, Number(String(amountInput.value).replace(',', '.')), due));
   }
 
   private _drawReceiptScreen(container: HTMLElement) {
@@ -284,6 +436,7 @@ export class PosShell extends BaseComponent {
         ['Total', `$${Number(order.amount_total || 0).toFixed(2)}`],
         ['Paid', `$${Number(order.amount_paid || 0).toFixed(2)}`],
         ['Payment', order.payment_method || '—'],
+        ['Change', `$${Number(this.state.change || 0).toFixed(2)}`],
       ];
       const table = html.take(card).div.className('space-y-2 border-t pt-4').ele();
       for (const [label, value] of fields) {
@@ -294,9 +447,10 @@ export class PosShell extends BaseComponent {
     }
 
     html.take(wrap).button
+      .attr('data-touch-new-ticket', 'true')
       .className('mt-6 w-full max-w-sm py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors')
       .text('New ticket')
-      .event('click', () => this.setState({ screen: 'product', cart: [], activeOrderId: null, receiptOrder: null }))
+      .event('click', () => this.setState({ screen: 'product', cart: [], activeOrderId: null, receiptOrder: null, paidAmount: 0, tenderAmount: '', change: 0, paymentError: '' }))
       .ele();
   }
 
@@ -305,7 +459,9 @@ export class PosShell extends BaseComponent {
     html.take(wrap).h2.className('text-lg font-semibold text-gray-900 mb-4').text('Open tickets').ele();
 
     if (!orders.length) {
-      html.take(wrap).div.className('text-center text-gray-400 py-12').text('No open tickets').ele();
+      const empty = html.take(wrap).div.className('flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 px-5 py-12 text-center').ele();
+      html.take(empty).div.className('mb-2 text-base font-semibold text-gray-800').text('No open tickets').ele();
+      html.take(empty).div.className('text-sm text-gray-500').text(this.state.canWrite ? 'Return to the register to start a new order.' : 'POS write access is required to create or pay tickets.').ele();
       return;
     }
 
@@ -324,7 +480,19 @@ export class PosShell extends BaseComponent {
     }
   }
 
-  private _addToCart(product: CatalogProduct) {
+  private async _addToCart(product: CatalogProduct) {
+    if (!this.state.canWrite) {
+      const message = 'POS write access is required to add products or accept payments.';
+      showToast(message, 'warning');
+      this.setState({ paymentError: message });
+      return;
+    }
+    if (!this.state.activeOrderId) {
+      const message = 'No active ticket is available. Open the cashier and start a ticket first.';
+      showToast(message, 'warning');
+      this.setState({ paymentError: message });
+      return;
+    }
     const existing = (this.state.cart || []).find((l: CartLine) => l.productId === product.id);
     let newCart: CartLine[];
     const subtotal = Number(product.price);
@@ -350,24 +518,65 @@ export class PosShell extends BaseComponent {
       };
       newCart = [...(this.state.cart || []), newLine];
     }
-    this.setState({ cart: newCart });
+    try {
+      await this.submit('touch_add_product', {
+        ticket_id: this.state.activeOrderId,
+        product_id: product.id,
+        quantity: 1,
+      });
+      this.setState({ cart: newCart, paymentError: '' });
+    } catch (error: any) {
+      const message = error?.message || 'Unable to add this product to the order.';
+      showToast(message, 'error');
+      this.setState({ paymentError: message });
+    }
   }
 
-  private async _submitPayment(method: string, amount: number) {
+  private async _submitPayment(method: string, amount: number, due: number) {
     if (!this.state.activeOrderId) {
-      showToast({ message: 'No active ticket — create a ticket first', type: 'warning' });
+      showToast('No active ticket — create a ticket first.', 'warning');
       return;
     }
-    // Delegate to YAML action via _onAction
+    if (!Number.isFinite(amount) || amount <= 0) {
+      const message = 'Enter a payment amount greater than zero.';
+      showToast(message, 'warning');
+      this.setState({ paymentError: message });
+      return;
+    }
+    if (!method) {
+      const message = 'Select an active payment method.';
+      showToast(message, 'warning');
+      this.setState({ paymentError: message });
+      return;
+    }
     try {
-      await this._onAction?.('pay_cashier_ticket', {
+      await this.submit('touch_submit_payment', {
         ticket_id: this.state.activeOrderId,
         amount: amount.toFixed(2),
         method,
       });
-      this.setState({ screen: 'receipt' });
-    } catch {
-      showToast({ message: 'Payment failed — please retry', type: 'error' });
+      const newPaid = Math.round((Number(this.state.paidAmount || 0) + amount) * 100) / 100;
+      const change = Math.max(0, Math.round((amount - due) * 100) / 100);
+      const remaining = Math.max(0, Math.round((due - amount) * 100) / 100);
+      if (remaining === 0) {
+        this.setState({
+          screen: 'receipt',
+          change,
+          paymentError: '',
+          receiptOrder: {
+            ...((this.state.openOrders || []).find((order: any) => order.id === this.state.activeOrderId) || {}),
+            amount_total: Number((this.state.openOrders || []).find((order: any) => order.id === this.state.activeOrderId)?.amount_total || due + Number(this.state.paidAmount || 0)),
+            amount_paid: newPaid,
+            payment_method: method,
+          },
+        });
+      } else {
+        this.setState({ paidAmount: newPaid, change, paymentError: '' });
+      }
+    } catch (error: any) {
+      const message = error?.message || 'Payment failed — please retry.';
+      showToast(message, 'error');
+      this.setState({ paymentError: message });
     }
   }
 

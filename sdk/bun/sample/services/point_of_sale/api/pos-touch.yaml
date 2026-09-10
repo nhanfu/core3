@@ -42,8 +42,24 @@ datasources:
     query: |
       SELECT o.id, o.name, o.partner_name, o.state,
         CAST(o.amount_total AS DOUBLE) AS amount_total,
-        CAST(o.amount_paid AS DOUBLE) AS amount_paid
+        CAST(o.amount_paid AS DOUBLE) AS amount_paid,
+        (SELECT l.product_name FROM pos_order_lines l WHERE l.order_id = o.id ORDER BY l.id LIMIT 1) AS line_product_name,
+        (SELECT p.id FROM pos_products p WHERE p.name = (SELECT l.product_name FROM pos_order_lines l WHERE l.order_id = o.id ORDER BY l.id LIMIT 1) LIMIT 1) AS line_product_id,
+        (SELECT CAST(l.quantity AS DOUBLE) FROM pos_order_lines l WHERE l.order_id = o.id ORDER BY l.id LIMIT 1) AS line_quantity,
+        (SELECT CAST(l.price_unit AS DOUBLE) FROM pos_order_lines l WHERE l.order_id = o.id ORDER BY l.id LIMIT 1) AS line_price_unit,
+        (SELECT CAST(COALESCE(l.tax_rate, 0) AS DOUBLE) FROM pos_order_lines l WHERE l.order_id = o.id ORDER BY l.id LIMIT 1) AS line_tax_rate,
+        (SELECT CAST(COALESCE(l.price_total, l.price_subtotal) AS DOUBLE) FROM pos_order_lines l WHERE l.order_id = o.id ORDER BY l.id LIMIT 1) AS line_total
       FROM pos_orders o
       JOIN pos_sessions s ON s.id = o.session_id
       WHERE o.state = 'New' AND s.state = 'In Progress'
       ORDER BY o.date_order DESC
+
+  - id: pos_touch_payment_methods
+    single: false
+    permission: pos.read
+    query: |
+      SELECT name AS value, name AS label
+      FROM pos_payment_methods
+      WHERE active = true
+      GROUP BY name
+      ORDER BY CASE WHEN name = 'Cash' THEN 0 ELSE 1 END, name

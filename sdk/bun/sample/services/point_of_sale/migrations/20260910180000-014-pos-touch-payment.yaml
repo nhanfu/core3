@@ -1,0 +1,19 @@
+version: 0.0.14
+kind: data
+description: Deterministic open touch ticket for tender and payment-state checks
+type:
+  postgres:
+    up: |
+      INSERT INTO pos_orders(id, name, session_id, partner_name, state, amount_total, amount_tax, amount_paid, payment_method)
+      VALUES ('pos-order-touch-demo-001', 'POS/2026/09/10/0001', 'pos-session-demo-001', 'Touch Demo Customer', 'New', 3.85, 0.35, 0, NULL)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_order_lines(id, order_id, product_name, quantity, price_unit, tax_rate, discount, price_subtotal, price_tax, price_total)
+      VALUES ('pos-line-touch-demo-001', 'pos-order-touch-demo-001', 'House coffee', 1, 3.50, 10, 0, 3.50, 0.35, 3.85)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_order_lines WHERE id = 'pos-line-touch-demo-001';
+      DELETE FROM pos_orders WHERE id = 'pos-order-touch-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
