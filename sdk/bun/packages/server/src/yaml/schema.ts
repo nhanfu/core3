@@ -680,14 +680,27 @@ function validateComponents(
             const viewPath = `${path}.views[${viewIndex}]`;
             requireRecord(view, viewPath, issues);
             if (!isRecord(view)) return;
-            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card', 'row_field', 'column_field', 'row_fields', 'column_fields', 'measure_field', 'measure_label', 'measures', 'aggregate', 'category_field', 'type', 'label_field', 'subtitle_field', 'latitude_field', 'longitude_field', 'pivot']), viewPath, issues);
+            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card', 'row_field', 'column_field', 'row_fields', 'column_fields', 'measure_field', 'measure_label', 'measures', 'aggregate', 'category_field', 'type', 'label_field', 'subtitle_field', 'latitude_field', 'longitude_field', 'pivot', 'title_field', 'empty_cell_action', 'schedule_action', 'activity_types']), viewPath, issues);
             requireString(view.id, `${viewPath}.id`, issues);
             requireString(view.label, `${viewPath}.label`, issues);
-            if (!['list', 'kanban', 'calendar', 'card', 'form', 'pivot', 'graph', 'map'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, calendar, card, form, pivot, graph, or map`);
+            if (!['list', 'kanban', 'calendar', 'card', 'form', 'activity', 'pivot', 'graph', 'map'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, calendar, card, form, activity, pivot, graph, or map`);
             if (typeof view.id === 'string' && viewIds.has(view.id)) issues.push(`${viewPath}.id must be unique`);
             if (typeof view.id === 'string') viewIds.add(view.id);
             if (view.id === 'kanban' && typeof view.group_by !== 'string') issues.push(`${viewPath}.group_by is required for kanban`);
             if (view.id === 'calendar' && typeof view.date_field !== 'string') issues.push(`${viewPath}.date_field is required for calendar`);
+            if (view.id === 'activity') {
+              if (typeof view.title_field !== 'string') issues.push(`${viewPath}.title_field is required for activity`);
+              if (!Array.isArray(view.activity_types) || !view.activity_types.length) issues.push(`${viewPath}.activity_types must be a non-empty array for activity`);
+              for (const [typeIndex, type] of (Array.isArray(view.activity_types) ? view.activity_types : []).entries()) {
+                const typePath = `${viewPath}.activity_types[${typeIndex}]`;
+                requireRecord(type, typePath, issues);
+                if (isRecord(type)) {
+                  rejectUnknownKeys(type, new Set(['id', 'label', 'icon', 'type_field', 'summary_field', 'date_field', 'user_field', 'state_field', 'count_field']), typePath, issues);
+                  requireString(type.id, `${typePath}.id`, issues);
+                  requireString(type.label, `${typePath}.label`, issues);
+                }
+              }
+            }
             if (view.id === 'pivot') {
               if (view.pivot !== undefined) {
                 requireRecord(view.pivot, `${viewPath}.pivot`, issues);

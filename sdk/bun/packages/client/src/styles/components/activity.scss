@@ -1,0 +1,56 @@
+.o-activity-view { display: flex; height: 100%; min-height: 0; flex-direction: column; background: var(--o-list-bg, #fff); color: var(--o-list-text, #212529); }
+.o-activity-table-viewport { width: 100%; min-height: 0; flex: 1 1 auto; overflow: auto; }
+.o-activity-table { width: max-content; min-width: 760px; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.o-activity-table th,
+.o-activity-table td { border-right: 1px solid var(--o-list-border, #dee2e6); border-bottom: 1px solid var(--o-list-border, #dee2e6); vertical-align: top; }
+.o-activity-table th:first-child,
+.o-activity-table td:first-child { border-left: 1px solid var(--o-list-border, #dee2e6); }
+.o-activity-record-header,
+.o-activity-record { width: 280px; min-width: 280px; padding: 12px 16px; text-align: left; }
+.o-activity-record-header,
+.o-activity-type-header { position: sticky; top: 0; z-index: 2; background: var(--o-list-panel-bg, #f8f9fa); font-weight: 600; }
+.o-activity-type-header { width: 180px; min-width: 180px; padding: 12px; text-align: left; }
+.o-activity-type-title { display: flex; align-items: center; gap: 6px; }
+.o-activity-type-icon { color: var(--o-list-action, #71639e); font-size: 12px; }
+.o-activity-state-counts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+.o-activity-state-count { border-radius: 999px; padding: 2px 6px; font-size: 10px; font-weight: 500; }
+.o-activity-state-count.is-overdue { background: #f8d7da; color: #842029; }
+.o-activity-state-count.is-today { background: #fff3cd; color: #664d03; }
+.o-activity-state-count.is-planned { background: #d1e7dd; color: #0f5132; }
+.o-activity-state-count.is-done { background: #e2e3e5; color: #41464b; }
+.o-activity-record-link { display: flex; width: 100%; flex-direction: column; gap: 3px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; }
+button.o-activity-record-link { cursor: pointer; }
+button.o-activity-record-link:hover strong { color: var(--o-list-action, #71639e); }
+.o-activity-record-subtitle { color: var(--o-list-muted, #6c757d); font-size: 12px; }
+.o-activity-cell { width: 180px; min-width: 180px; min-height: 82px; padding: 0; }
+.o-activity-cell.is-overdue { background: #f8d7da; color: #842029; }
+.o-activity-cell.is-today { background: #fff3cd; color: #664d03; }
+.o-activity-cell.is-planned { background: #d1e7dd; color: #0f5132; }
+.o-activity-cell.is-done { background: #e2e3e5; color: #41464b; }
+.o-activity-cell.is-empty { background: var(--o-list-bg, #fff); }
+.o-activity-cell-content { display: flex; min-height: 82px; flex-direction: column; gap: 4px; padding: 12px; }
+.o-activity-cell-title { font-weight: 600; }
+.o-activity-cell-date,
+.o-activity-cell-user { font-size: 11px; opacity: .85; }
+.o-activity-cell-count { align-self: flex-start; border-radius: 999px; padding: 1px 6px; background: rgb(0 0 0 / 10%); font-size: 11px; }
+.o-activity-empty-action { display: flex; width: 100%; min-height: 82px; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: transparent; cursor: pointer; font-size: 22px; }
+.o-activity-empty-action:hover,
+.o-activity-empty-action:focus-visible { background: var(--o-list-muted-bg, #e9ecef); color: var(--o-list-muted, #6c757d); }
+.o-activity-row:hover .o-activity-record { background: var(--o-list-panel-bg, #f8f9fa); }
+.o-activity-row-end,
+.o-activity-settings-header { width: 34px; min-width: 34px; background: var(--o-list-panel-bg, #f8f9fa); }
+.o-activity-footer { padding: 10px 16px; background: var(--o-list-panel-bg, #f8f9fa); }
+.o-activity-schedule { padding: 0; border: 0; background: transparent; color: var(--o-list-action, #71639e); cursor: pointer; font: inherit; }
+.o-activity-schedule:hover { text-decoration: underline; }
+.o-activity-no-records { padding: 32px 16px; text-align: center; }
+.o-activity-no-records h3 { margin: 0 0 6px; font-size: 14px; }
+.o-activity-no-records p,
+.o-activity-empty { color: var(--o-list-muted, #6c757d); }
+.o-activity-no-records p { margin: 0; }
+.o-activity-empty { padding: 32px; text-align: center; }
+@media (max-width: 768px) {
+  .o-activity-record-header,
+  .o-activity-record { width: 210px; min-width: 210px; padding: 10px; }
+  .o-activity-type-header,
+  .o-activity-cell { width: 160px; min-width: 160px; }
+}

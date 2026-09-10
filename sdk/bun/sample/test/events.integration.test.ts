@@ -12,8 +12,8 @@ describe('Events attendee parity batch', () => {
     const list = page.components.find((component: any) => component.type === 'ListView');
     expect(page.datasources).toBeUndefined();
     expect(list.view_navigation).toBe('tabs');
-    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'graph']);
-    expect(list.views.map((view: any) => view.label)).toEqual(['List', 'Kanban', 'Calendar', 'Pivot', 'Graph']);
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'graph', 'activity']);
+    expect(list.views.map((view: any) => view.label)).toEqual(['List', 'Kanban', 'Calendar', 'Pivot', 'Graph', 'Activity']);
     expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ group_by: 'state', groups_source: 'event_states' });
     expect(list.views.find((view: any) => view.id === 'calendar')).toMatchObject({ date_field: 'start_at', end_date_field: 'end_at' });
     expect(list.views.find((view: any) => view.id === 'pivot')?.pivot.default).toMatchObject({ rows: ['state'], columns: ['event_type'] });

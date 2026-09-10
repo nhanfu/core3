@@ -8,6 +8,7 @@ import { CardView, type CardViewDefinition } from '@core3/client/components/Card
 import { PivotView, type PivotViewDefinition } from '@core3/client/components/PivotView';
 import { GraphView, type GraphViewDefinition } from '@core3/client/components/GraphView';
 import { MapView, type MapViewDefinition } from '@core3/client/components/MapView';
+import { ActivityView, type ActivityViewDefinition } from '@core3/client/components/ActivityView';
 import { DateRangeFilterTag } from '@core3/client/components/DateRangeFilterTag';
 import { i18n } from '@core3/client/i18n';
 import { drawColumnChooser } from '@core3/client/components/ColumnChooser';
@@ -65,7 +66,7 @@ export type FormViewDefinition = {
   icon?: string;
 };
 export type AnalyticsViewMode = PivotViewDefinition | GraphViewDefinition | MapViewDefinition;
-export type ListViewMode = ListViewDefinition | KanbanViewDefinition | CalendarViewDefinition | CardViewDefinition | FormViewDefinition | AnalyticsViewMode;
+export type ListViewMode = ListViewDefinition | KanbanViewDefinition | CalendarViewDefinition | CardViewDefinition | FormViewDefinition | ActivityViewDefinition | AnalyticsViewMode;
 
 export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
@@ -357,6 +358,27 @@ export class ListView extends BaseComponent {
         await this.drawFormPanel(content, rows);
         if (version !== this.drawVersion) return;
       }
+      return;
+    }
+    if (activeView.id === 'activity') {
+      const activity = new ActivityView(
+        `activity-view-${this.id}`,
+        { rows },
+        {
+          view: activeView,
+          rowKey: this.options.rowKey,
+          openAction: this.options.openAction || this.options.doubleClickAction,
+          emptyCellAction: activeView.emptyCellAction,
+          scheduleAction: activeView.scheduleAction,
+        },
+      );
+      activity.parent = this;
+      activity._transport = this._transport;
+      activity._onAction = this._onAction;
+      this.children.push(activity);
+      const content = html.take(root).div.className('o-list-content').ele();
+      const activityHost = html.take(content).div.className('o-list-activity-host').ele();
+      activity.mount(activityHost);
       return;
     }
     if (activeView.id === 'pivot' || activeView.id === 'graph' || activeView.id === 'map') {

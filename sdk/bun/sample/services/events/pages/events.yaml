@@ -51,6 +51,18 @@ components:
               - { field: registration_count, aggregate: sum, column: Registered }
           date_ranges: { start_at: month }
       - { id: graph, label: Graph, icon: graph, category_field: state, measure_field: registration_count, type: bar }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: event_type
+        schedule_action: schedule_event_activity
+        empty_cell_action: schedule_event_activity
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: call, label: Call, icon: ☎ }
+          - { id: meeting, label: Meeting, icon: ◉ }
     columns:
       - { field: name, label: Event, type: PrimaryEntityCell }
       - { field: event_type, label: Type }
@@ -102,6 +114,7 @@ actions:
   - { id: start_event, type: server, permission: events.write, action: events.records.start, handler: order_transition, workflow: events, operation: start, refresh: [events] }
   - { id: complete_event, type: server, permission: events.manage, action: events.records.complete, handler: order_transition, workflow: events, operation: complete, refresh: [events] }
   - { id: cancel_event, type: server, permission: events.manage, action: events.records.cancel, handler: order_transition, workflow: events, operation: cancel, refresh: [events] }
+  - { id: schedule_event_activity, type: navigate, permission: events.write, navigate_to: /event-detail, params: { id: '{row.id}' } }
   - id: register_event_attendee
     type: server_form
     permission: events.write

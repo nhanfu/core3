@@ -22,6 +22,18 @@ components:
         date_field: date_from
         end_date_field: date_to
         card: { title: name, subtitle: leave_type_name }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: leave_type_name
+        schedule_action: schedule_my_time_off_activity
+        empty_cell_action: schedule_my_time_off_activity
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: call, label: Call, icon: ☎ }
+          - { id: meeting, label: Meeting, icon: ◉ }
     columns:
       - { field: name, label: Time Off, type: PrimaryEntityCell }
       - { field: leave_type_name, label: Time Off Type }
@@ -34,6 +46,7 @@ components:
     row_open_action: my_time_off_open
 actions:
   - { id: my_time_off_new, type: navigate, permission: time_off.write, navigate_to: /leave-requests }
+  - { id: schedule_my_time_off_activity, type: navigate, permission: time_off.write, navigate_to: /leave-requests }
   - id: my_time_off_open
     type: navigate
     permission: time_off.read

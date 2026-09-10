@@ -44,12 +44,9 @@ export class PageGridRenderers extends BaseComponent {
 
   private createRenderers(deps: any) {
   const { config, dataMap, ctx, bindSource, sortState, paginationState, filterState, pageParams, refetchSource, updateBoundComponents, client, createQuery, handleAction, applySourceFilters, refreshSources, handleInlineForm, resolveActionParams, registry } = deps;
-const owner = this;
 const componentLoader = new ComLoader();
 
-function mountOwned<T extends BaseComponent>(component: T, container: HTMLElement): T {
-  return owner.mountChild(component, container);
-}
+const mountOwned = <T extends BaseComponent>(component: T, container: HTMLElement): T => this.mountChild(component, container);
 
 async function renderStatRow(def: any, targetContainer: HTMLElement) {
   const { StatRow } = await import('@core3/client/components/StatRow');
@@ -609,6 +606,20 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     card: view.card,
     groupsSource: view.groups_source,
     form: view.form,
+    titleField: view.title_field,
+    emptyCellAction: view.empty_cell_action,
+    scheduleAction: view.schedule_action,
+    activityTypes: (view.activity_types || []).map((type: any) => ({
+      id: String(type.id),
+      label: String(type.label || type.id),
+      icon: type.icon,
+      typeField: type.type_field,
+      summaryField: type.summary_field,
+      dateField: type.date_field,
+      userField: type.user_field,
+      stateField: type.state_field,
+      countField: type.count_field,
+    })),
   }));
   const requestedView = String(pageParams.view || '');
   // Keep an explicitly selected view stable across viewport sizes. CardView
