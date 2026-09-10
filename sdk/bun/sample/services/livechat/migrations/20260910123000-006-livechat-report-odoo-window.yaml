@@ -1,0 +1,32 @@
+version: 0.0.6
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-08-10 08:15:00', start_hour = '08', day_name = 'Monday', agent_name = 'Odoo', rating = 5, rating_text = 'Happy' WHERE id = 'livechat-report-session-001';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-08-10 09:40:00', start_hour = '09', day_name = 'Monday', agent_name = 'Support Bot', rating = NULL, rating_text = 'None' WHERE id = 'livechat-report-session-002';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-08-10 10:20:00', start_hour = '10', day_name = 'Monday', agent_name = 'Mitchell Admin', rating = NULL, rating_text = 'None' WHERE id = 'livechat-report-session-003';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-08-10 11:05:00', start_hour = '11', day_name = 'Monday', agent_name = 'Mitchell Admin', rating = NULL, rating_text = 'None' WHERE id = 'livechat-report-session-004';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-08-10 12:30:00', start_hour = '12', day_name = 'Monday', agent_name = 'Support Bot', rating = NULL, rating_text = 'None' WHERE id = 'livechat-report-session-005';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-08-27 09:45:00', start_hour = '09', day_name = 'Thursday', agent_name = 'Mitchell Admin', rating = NULL, rating_text = 'None' WHERE id = 'livechat-report-session-006';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-08-31 10:15:00', start_hour = '10', day_name = 'Monday', agent_name = 'Mitchell Admin', rating = NULL, rating_text = 'None' WHERE id = 'livechat-report-session-007';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-09-04 11:00:00', start_hour = '11', day_name = 'Friday', agent_name = 'Support Bot', rating = NULL, rating_text = 'None' WHERE id = 'livechat-report-session-008';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-09-05 12:25:00', start_hour = '12', day_name = 'Saturday', agent_name = 'Mitchell Admin', rating = NULL, rating_text = 'None' WHERE id = 'livechat-report-session-009';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-09-09 13:05:00', start_hour = '13', day_name = 'Wednesday', agent_name = 'Support Bot', rating = 1, rating_text = 'Unhappy' WHERE id = 'livechat-report-session-010';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-09-09 14:10:00', start_hour = '14', day_name = 'Wednesday', agent_name = 'Mitchell Admin', rating = 1, rating_text = 'Unhappy' WHERE id = 'livechat-report-session-011';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-09-10 09:05:00', start_hour = '09', day_name = 'Thursday', agent_name = 'Mitchell Admin', rating = 3, rating_text = 'Neutral' WHERE id = 'livechat-report-session-012';
+      UPDATE livechat_report_sessions SET session_count = 1, start_date = TIMESTAMP '2026-09-10 10:20:00', start_hour = '10', day_name = 'Thursday', agent_name = 'Mitchell Admin', rating = 3, rating_text = 'Neutral' WHERE id = 'livechat-report-session-013';
+      INSERT OR IGNORE INTO livechat_report_sessions
+        (id, channel_id, channel_name, visitor_name, agent_name, start_date, start_hour, day_name, country_name, language_name, rating, rating_text, session_outcome, response_time, duration, number_of_calls, call_duration_hour, nbr_message, handled_by_agent, handled_by_bot)
+      VALUES
+        ('livechat-report-session-014', 'livechat-channel-demo-001', 'Website Support', 'Visitor #314', 'Odoo', TIMESTAMP '2026-09-10 11:10:00', '11', 'Thursday', 'United States', 'English', 3, 'Neutral', 'Success', 0.060000, 8.10, 0, 0.00, 7, 1, 0),
+        ('livechat-report-session-015', 'livechat-channel-demo-001', 'Website Support', 'Visitor #315', 'Support Bot', TIMESTAMP '2026-09-10 12:25:00', '12', 'Thursday', 'France', 'French', 3, 'Neutral', 'Success', 0.280000, 19.40, 0, 0.00, 15, 1, 0),
+        ('livechat-report-session-016', 'livechat-channel-demo-001', 'Website Support', 'Visitor #316', 'Odoo', TIMESTAMP '2026-09-10 13:40:00', '13', 'Thursday', 'United States', 'English', 3, 'Neutral', 'Success', 0.110000, 11.20, 1, 0.20, 10, 1, 0),
+        ('livechat-report-session-017', 'livechat-channel-demo-001', 'Website Support', 'Visitor #317', 'Support Bot', TIMESTAMP '2026-09-10 14:15:00', '14', 'Thursday', 'France', 'French', 3, 'Neutral', 'Success', 0.000000, 0.00, 0, 0.00, 2, 0, 1),
+        ('livechat-report-session-018', 'livechat-channel-demo-001', 'Website Support', 'Visitor #318', 'Support Bot', TIMESTAMP '2026-09-10 15:05:00', '15', 'Thursday', 'United States', 'English', 3, 'Neutral', 'Success', 0.050000, 6.80, 1, 0.10, 8, 1, 0);
+    down: |
+      DELETE FROM livechat_report_sessions WHERE id IN ('livechat-report-session-014', 'livechat-report-session-015', 'livechat-report-session-016', 'livechat-report-session-017', 'livechat-report-session-018');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

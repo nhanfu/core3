@@ -10,11 +10,11 @@ components:
       label: Date
       from_field: from_date
       to_field: to_date
-      default_preset: previous_month
-      presets: [previous_month, week, month, year]
-      preset_labels: { previous_month: 'Date: Last month', week: 'Date: Last week', month: 'Date: This month', year: 'Date: This year' }
+      default_preset: last_month
+      presets: [last_month, week, month, year]
+      preset_labels: { last_month: 'Date: Last month', week: 'Date: Last week', month: 'Date: This month', year: 'Date: This year' }
     filters:
-      - { field: rating_text, label: Rating, options: [Happy, Neutral, Unhappy] }
+      - { field: rating_text, label: Rating, options: [Happy, None, Neutral, Unhappy] }
       - { field: session_outcome, label: Status, options: [Success, Escalated, 'Never Answered', 'No one Available'] }
       - { field: channel_name, label: Channel, options: [Website Support] }
       - { field: country_name, label: Country, options: ['United States', Belgium, France] }
@@ -35,6 +35,19 @@ components:
         category_field: start_date_label
         measure_field: session_count
         measure_label: Sessions
+        series_field: rating_text
+        series:
+          - { value: Happy, label: Happy, color: blue }
+          - { value: None, label: None, color: red }
+          - { value: Unhappy, label: Unhappy, color: teal }
+          - { value: Neutral, label: Neutral, color: amber }
+        measures:
+          - { field: session_count, label: Sessions, aggregate: sum }
+          - { field: response_time, label: 'Response Time (hh:mm:ss)', aggregate: avg }
+          - { field: duration, label: 'Duration (min)', aggregate: avg }
+          - { field: rating, label: 'Rating (%)', aggregate: avg }
+          - { field: number_of_calls, label: '# of calls', aggregate: sum }
+          - { field: call_duration_hour, label: 'Call Duration', aggregate: avg }
         type: line
       - id: pivot
         label: Pivot
@@ -60,7 +73,7 @@ components:
             - { field: call_duration_hour, column: 'Call Duration' }
             - { field: nbr_message, column: 'Messages per Session' }
           default:
-            rows: [channel_name]
+            rows: [agent_name]
             columns: [rating_text]
             measures:
               - { field: session_count, aggregate: sum, column: Sessions }

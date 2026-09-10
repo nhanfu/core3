@@ -32,6 +32,7 @@ export type DateRangeFilterTagOptions = {
 const presetLabels: Record<DateRangePreset, string> = {
   today: 'Today',
   previous_month: 'Previous month',
+  last_month: 'Last month',
   week: 'This week',
   month: 'This month',
   quarter: 'This quarter',

@@ -352,6 +352,7 @@ function defaultDatePreset(preset: string): { from: string; to: string } | undef
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const end = new Date(start);
   if (preset === 'last_12_months') start.setUTCMonth(start.getUTCMonth() - 11, 1);
+  else if (preset === 'last_month') start.setUTCMonth(start.getUTCMonth() - 1);
   else if (preset === 'year') start.setUTCMonth(0, 1);
   else if (preset === 'quarter') start.setUTCMonth(Math.floor(start.getUTCMonth() / 3) * 3, 1);
   else if (preset === 'month') start.setUTCDate(1);

@@ -34,9 +34,9 @@ export type ListToolbarDefinition = {
     to_field?: string;
     from_label?: string;
     to_label?: string;
-    presets?: Array<'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all'>;
+    presets?: Array<'today' | 'previous_month' | 'last_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all'>;
     preset_style?: 'select' | 'segmented';
-    default_preset?: 'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all';
+    default_preset?: 'today' | 'previous_month' | 'last_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all';
     max_years?: number;
     deny_unbounded?: boolean;
   };
@@ -112,7 +112,7 @@ export class ListToolbar extends BaseComponent {
       const presets = (dateRange.presets || []).filter((preset) => !(dateRange.deny_unbounded && preset === 'all'));
       if (presets.length) {
         const labels: Record<string, string> = {
-          today: 'Hôm nay', previous_month: 'Tháng trước', week: 'Tuần này', month: 'Tháng này', quarter: 'Quý này', year: 'Năm nay', last_12_months: '12 tháng', all: 'Tất cả thời gian',
+          today: 'Hôm nay', previous_month: 'Tháng trước', last_month: 'Tháng trước', week: 'Tuần này', month: 'Tháng này', quarter: 'Quý này', year: 'Năm nay', last_12_months: '12 tháng', all: 'Tất cả thời gian',
         };
         const submitPreset = (value: typeof dateRange.presets[number]) => {
           const dates = this.resolvePreset(value);
@@ -277,7 +277,7 @@ function rollingDateBounds(years: number): { from: string; to: string } {
   return { from: fromDate.toISOString().slice(0, 10), to: toDate.toISOString().slice(0, 10) };
 }
 
-export type DateRangePreset = 'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all';
+export type DateRangePreset = 'today' | 'previous_month' | 'last_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all';
 
 export function resolveDatePreset(preset: DateRangePreset, now = new Date()) {
   if (preset === 'all') return { from: '', to: '' };
@@ -288,6 +288,7 @@ export function resolveDatePreset(preset: DateRangePreset, now = new Date()) {
     start.setMonth(start.getMonth() - 1, 1);
     end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
   }
+  if (preset === 'last_month') start.setMonth(start.getMonth() - 1);
   if (preset === 'week') start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
   if (preset === 'month') start.setDate(1);
   if (preset === 'quarter') start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);

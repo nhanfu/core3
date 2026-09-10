@@ -659,6 +659,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     measureField: view.measure_field,
     measureLabel: view.measure_label,
     categoryField: view.category_field,
+    seriesField: view.series_field,
+    series: view.series,
     type: view.type,
     labelField: view.label_field,
     subtitleField: view.subtitle_field,

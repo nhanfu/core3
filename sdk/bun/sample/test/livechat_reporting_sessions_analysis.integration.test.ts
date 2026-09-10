@@ -26,8 +26,21 @@ describe('Live Chat Reporting — Sessions analysis parity', () => {
     expect(reporting.items).toContainEqual(expect.objectContaining({ path: '/livechat-analysis', label: 'Sessions', permission: 'livechat.read' }));
     expect(list).toMatchObject({ source: 'livechat_report_sessions', variant: 'odoo', view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['graph', 'pivot']);
-    expect(list.views[0]).toMatchObject({ label: 'Graph', category_field: 'start_date_label', measure_field: 'session_count', type: 'line' });
-    expect(list.views[1].pivot.default).toMatchObject({ rows: ['channel_name'], columns: ['rating_text'] });
+    expect(list.date_range).toMatchObject({ default_preset: 'last_month', presets: ['last_month', 'week', 'month', 'year'] });
+    expect(list.views[0]).toMatchObject({ label: 'Graph', category_field: 'start_date_label', measure_field: 'session_count', series_field: 'rating_text', type: 'line' });
+    expect(list.views[0].series).toEqual([
+      { value: 'Happy', label: 'Happy', color: 'blue' },
+      { value: 'None', label: 'None', color: 'red' },
+      { value: 'Unhappy', label: 'Unhappy', color: 'teal' },
+      { value: 'Neutral', label: 'Neutral', color: 'amber' },
+    ]);
+    expect(list.views[0].measures).toEqual(expect.arrayContaining([
+      { field: 'session_count', label: 'Sessions', aggregate: 'sum' },
+      { field: 'response_time', label: 'Response Time (hh:mm:ss)', aggregate: 'avg' },
+      { field: 'duration', label: 'Duration (min)', aggregate: 'avg' },
+      { field: 'number_of_calls', label: '# of calls', aggregate: 'sum' },
+    ]));
+    expect(list.views[1].pivot.default).toMatchObject({ rows: ['agent_name'], columns: ['rating_text'] });
     expect(discovered.pageDatasources.get('livechat-analysis')).toContain('livechat_report_sessions');
     expect(discoverPageRoutes(discovered)).toContainEqual({ path: '/livechat-analysis', page: 'livechat-analysis', module: 'livechat' });
   });
@@ -39,12 +52,27 @@ describe('Live Chat Reporting — Sessions analysis parity', () => {
     const source = yaml('api/analysis.yaml').datasources[0];
     const range = { q: null, rating_text: null, session_outcome: null, channel_name: null, country_name: null, from_date: '2026-08-10', to_date: '2026-09-10', fixture_state: null };
     const populated = await repository.querySource(source, range, 0, 50);
-    expect(populated.data).toHaveLength(13);
+    expect(populated.data).toHaveLength(18);
+    expect(populated.data[0].start_date).toContain('2026-08-10');
+    expect(populated.data.at(-1).start_date).toContain('2026-09-10');
     expect(populated.data[0]).toMatchObject({ id: 'livechat-report-session-001', channel_name: 'Website Support', rating_text: 'Happy', session_count: 1 });
-    expect(populated.data.filter((row: any) => row.rating_text === 'Happy')).toHaveLength(4);
-    expect(populated.data.filter((row: any) => row.rating_text === 'Neutral')).toHaveLength(3);
+    expect(populated.data.filter((row: any) => row.rating_text === 'Happy')).toHaveLength(1);
+    expect(populated.data.filter((row: any) => row.rating_text === 'Neutral')).toHaveLength(7);
+    expect(populated.data.filter((row: any) => row.rating_text === 'None')).toHaveLength(8);
+    expect(populated.data.filter((row: any) => row.rating_text === 'Unhappy')).toHaveLength(2);
+    expect(new Set(populated.data.map((row: any) => row.agent_name))).toEqual(new Set(['Odoo', 'Support Bot', 'Mitchell Admin']));
+    expect(Object.fromEntries(['Odoo', 'Support Bot', 'Mitchell Admin'].map(agent => [agent, populated.data.filter((row: any) => row.agent_name === agent).length]))).toEqual({ Odoo: 3, 'Support Bot': 7, 'Mitchell Admin': 8 });
+    expect(new Set(populated.data.map((row: any) => String(row.start_date).slice(0, 10)))).toEqual(new Set(['2026-08-10', '2026-08-27', '2026-08-31', '2026-09-04', '2026-09-05', '2026-09-09', '2026-09-10']));
     expect((await repository.querySource(source, { ...range, q: 'Belgium' }, 0, 50)).data).toHaveLength(3);
-    expect((await repository.querySource(source, { ...range, from_date: '2026-09-01' }, 0, 50)).data).toHaveLength(4);
+    expect((await repository.querySource(source, { ...range, from_date: '2026-09-01' }, 0, 50)).data).toHaveLength(11);
+    const pivoted = await repository.querySource(source, range, 0, 50, undefined, undefined, {
+      rows: ['agent_name'],
+      columns: ['rating_text'],
+      measures: [{ field: 'session_count', aggregate: 'sum', label: 'Sessions' }],
+    });
+    expect(pivoted.data).toHaveLength(3);
+    expect(pivoted.meta.pivotColumns).toHaveLength(4);
+    expect(Object.fromEntries(pivoted.data.map((row: any) => [row.agent_name, Object.values(row).filter(value => typeof value === 'number').reduce((sum: number, value: unknown) => sum + Number(value), 0)]))).toEqual({ Odoo: 3, 'Support Bot': 7, 'Mitchell Admin': 8 });
     expect((await repository.querySource(source, { ...range, q: 'does-not-exist' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { ...range, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     database.close();

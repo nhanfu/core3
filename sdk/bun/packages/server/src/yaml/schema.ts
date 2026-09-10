@@ -708,7 +708,7 @@ function validateComponents(
             const viewPath = `${path}.views[${viewIndex}]`;
             requireRecord(view, viewPath, issues);
             if (!isRecord(view)) return;
-            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'mode', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card', 'row_field', 'column_field', 'row_fields', 'column_fields', 'measure_field', 'measure_label', 'measures', 'aggregate', 'category_field', 'type', 'label_field', 'subtitle_field', 'latitude_field', 'longitude_field', 'pivot', 'show_leaf_rows', 'title_field', 'record_date_field', 'record_end_date_field', 'mobile', 'empty_cell_action', 'schedule_action', 'activity_types']), viewPath, issues);
+            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'mode', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card', 'row_field', 'column_field', 'row_fields', 'column_fields', 'measure_field', 'measure_label', 'measures', 'aggregate', 'category_field', 'series_field', 'series', 'type', 'label_field', 'subtitle_field', 'latitude_field', 'longitude_field', 'pivot', 'show_leaf_rows', 'title_field', 'record_date_field', 'record_end_date_field', 'mobile', 'empty_cell_action', 'schedule_action', 'activity_types']), viewPath, issues);
             requireString(view.id, `${viewPath}.id`, issues);
             requireString(view.label, `${viewPath}.label`, issues);
             if (!['list', 'kanban', 'calendar', 'card', 'form', 'activity', 'pivot', 'graph', 'map'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, calendar, card, form, activity, pivot, graph, or map`);
@@ -758,6 +758,20 @@ function validateComponents(
               if (view.measures !== undefined && (!Array.isArray(view.measures) || !view.measures.length)) issues.push(`${viewPath}.measures must be a non-empty array`);
             }
             if (view.id === 'graph' && typeof view.category_field !== 'string') issues.push(`${viewPath}.category_field is required for graph`);
+            if (view.id === 'graph' && view.series_field !== undefined) requireString(view.series_field, `${viewPath}.series_field`, issues);
+            if (view.id === 'graph' && view.series !== undefined) {
+              if (!Array.isArray(view.series) || !view.series.length) issues.push(`${viewPath}.series must be a non-empty array`);
+              (Array.isArray(view.series) ? view.series : []).forEach((series: unknown, seriesIndex: number) => {
+                const seriesPath = `${viewPath}.series[${seriesIndex}]`;
+                requireRecord(series, seriesPath, issues);
+                if (isRecord(series)) {
+                  rejectUnknownKeys(series, new Set(['value', 'label', 'color']), seriesPath, issues);
+                  requireString(series.value, `${seriesPath}.value`, issues);
+                  requireString(series.label, `${seriesPath}.label`, issues);
+                  if (series.color !== undefined) requireString(series.color, `${seriesPath}.color`, issues);
+                }
+              });
+            }
             if (view.id === 'map' && typeof view.label_field !== 'string') issues.push(`${viewPath}.label_field is required for map`);
           });
         }
@@ -975,10 +989,10 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
     if (!Array.isArray(value.presets)) {
       issues.push(`${path}.presets must be an array`);
     } else {
-      const allowed = new Set(['today', 'previous_month', 'week', 'month', 'quarter', 'year', 'last_12_months', 'all']);
+      const allowed = new Set(['today', 'previous_month', 'last_month', 'week', 'month', 'quarter', 'year', 'last_12_months', 'all']);
       value.presets.forEach((preset, index) => {
         if (typeof preset !== 'string' || !allowed.has(preset)) {
-          issues.push(`${path}.presets[${index}] must be one of today, previous_month, week, month, quarter, year, last_12_months, all`);
+          issues.push(`${path}.presets[${index}] must be one of today, previous_month, last_month, week, month, quarter, year, last_12_months, all`);
         }
       });
     }
@@ -986,7 +1000,7 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
   if (value.preset_labels !== undefined) {
     requireRecord(value.preset_labels, `${path}.preset_labels`, issues);
     if (isRecord(value.preset_labels)) {
-      const allowed = new Set(['today', 'previous_month', 'week', 'month', 'quarter', 'year', 'last_12_months', 'all']);
+      const allowed = new Set(['today', 'previous_month', 'last_month', 'week', 'month', 'quarter', 'year', 'last_12_months', 'all']);
       for (const [key, label] of Object.entries(value.preset_labels)) {
         if (!allowed.has(key)) issues.push(`${path}.preset_labels.${key} is not a supported preset`);
         requireString(label, `${path}.preset_labels.${key}`, issues);
