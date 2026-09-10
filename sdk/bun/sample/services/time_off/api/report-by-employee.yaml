@@ -1,0 +1,11 @@
+page: { id: time-off-report-by-employee }
+datasources:
+  - id: time_off_report_states
+    permission: time_off.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Submitted','To Approve'), ('Approved','Approved')) states(value, label)"
+  - id: time_off_employee_report
+    permission: time_off.read
+    pivot:
+      fields: [employee_name, leave_type_name, date_from, days, request_count, state]
+    query: "SELECT r.id, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.state, r.approver, 1 AS request_count FROM leave_requests r WHERE r.state IN ('Submitted', 'Approved') AND r.date_from >= DATE '2026-01-01' AND r.date_from < DATE '2027-01-01' AND (:q IS NULL OR r.employee_name ILIKE '%' || :q || '%' OR r.leave_type_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from, r.employee_name, r.leave_type_name"

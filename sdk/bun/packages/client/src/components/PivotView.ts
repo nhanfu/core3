@@ -7,6 +7,7 @@ export type PivotViewDefinition = {
   fields?: string[];
   fieldLabels?: Record<string, string>; configLabel?: string;
   pivotColumns?: Array<{ values: string[]; prefix: string }>;
+  aggregated?: boolean;
   dateFields?: string[]; dateRanges?: Record<string, string>;
   showLeafRows?: boolean;
   rowFields: string[]; columnFields: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>;
@@ -57,7 +58,7 @@ export class PivotView extends BaseComponent {
       for (const column of columns) this.addCell(headRow, this.columnLabel(column), 'th');
     }
     const body = html.take(table).tbody.ele() as HTMLTableSectionElement;
-    const tree = this.buildPivotTree(rows, view.rowFields || [], view.showLeafRows !== false);
+    const tree = this.buildPivotTree(rows, view.rowFields || [], view.aggregated === true ? false : view.showLeafRows !== false);
     for (const item of this.visiblePivotRows(tree)) {
       const tr = html.take(body).trow.ele() as HTMLTableRowElement;
       for (const [index, column] of visibleDataColumns.entries()) this.addPivotCell(tr, item, column, index, view.rowFields || []);
@@ -179,7 +180,7 @@ export class PivotView extends BaseComponent {
     const visible: Array<{ node: PivotTreeNode; leaf: boolean }> = [];
     const visit = (node: PivotTreeNode) => {
       for (const child of node.children) {
-        const leaf = child.level >= rowDepth;
+        const leaf = child.children.length === 0 && child.row !== undefined;
         visible.push({ node: child, leaf });
         if (!leaf && !this.isCollapsed(child.key)) visit(child);
       }

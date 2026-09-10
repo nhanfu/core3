@@ -168,6 +168,26 @@ describe('PivotView builder', () => {
     expect(host.querySelector('.o-pivot-table tbody')?.textContent).toContain('Approved');
   });
 
+  it('does not duplicate aggregate leaf rows returned by a native pivot query', () => {
+    const host = document.createElement('div');
+    const view = new PivotView('time-off-report-pivot', {
+      rows: [{ employee_name: 'Admin User', leave_type_name: 'Sick Time Off', _01_Days: 3 }],
+    }, {
+      view: {
+        id: 'pivot', label: 'Time Off by Employee', fields: ['employee_name', 'leave_type_name', 'days'],
+        fieldLabels: { employee_name: 'Employee', leave_type_name: 'Time Off Type' },
+        rowFields: ['employee_name', 'leave_type_name'], columnFields: ['date_from'],
+        measures: [{ field: 'days', aggregate: 'sum', label: 'Days' }],
+        aggregated: true,
+      },
+      pivotColumns: [{ values: ['2026-01'], prefix: '_01' }],
+    });
+    view.mount(host);
+
+    expect(host.querySelectorAll('.o-pivot-table tbody tr')).toHaveLength(2);
+    expect(host.querySelector('.o-pivot-table')?.textContent).not.toContain('Admin UserSick Time Off');
+  });
+
   it('defaults date fields to month and emits a changed date range', () => {
     const host = document.createElement('div');
     const onChange = vi.fn();

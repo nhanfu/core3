@@ -208,6 +208,10 @@ function serviceRequest(mapping: Record<string, unknown>, params: Record<string,
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const AGGREGATES = new Set(['count', 'sum', 'avg', 'min', 'max']);
 const NULL_PIVOT_VALUE = '__core3_null__';
+const safePivotAlias = (value: unknown, fallback = 'pivot') => {
+  const alias = String(value || '').replace(/[^A-Za-z0-9_]+/g, '_').replace(/^[^A-Za-z_]+/, '');
+  return alias || fallback;
+};
 const quoteIdentifier = (value: unknown, label: string, dialect?: any) => {
   const identifier = String(value || '');
   if (!IDENTIFIER.test(identifier)) throw Object.assign(new Error(`${label} must be a safe identifier`), { status: 400 });
@@ -242,11 +246,12 @@ async function nativePivotStatement(repository: any, statement: string, values: 
     return `${expression} AS ${quoteIdentifier(alias, 'Pivot measure label', repository.db?.dialect)}`;
   });
   const groupBy = rowSql.length ? ` GROUP BY ${rowSql.join(', ')}` : '';
+  const rowOrder = rowSql.length ? ` ORDER BY ${rowSql.join(', ')}` : '';
   if (!columns.length) {
-    return { statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${sourceWithParams}) AS pivot_source${groupBy}`, values };
+    return { statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${sourceWithParams}) AS pivot_source${groupBy}${rowOrder}`, values };
   }
   const distinctRows = await repository.query(
-    `SELECT DISTINCT ${columnSql.join(', ')} FROM (${sourceWithParams}) AS pivot_values`,
+    `SELECT DISTINCT ${columnSql.join(', ')} FROM (${sourceWithParams}) AS pivot_values ORDER BY ${columnSql.join(', ')}`,
     values,
   );
   if (!distinctRows.length) {
@@ -254,7 +259,7 @@ async function nativePivotStatement(repository: any, statement: string, values: 
     // is rejected when the source query contains bound parameters, which is
     // common after filters remove every pivot column value.
     return {
-      statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${pivotDateSource(inlineBoundParameters(statement, values), rangedFields, dateRanges)}) AS pivot_source${groupBy}`,
+      statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${pivotDateSource(inlineBoundParameters(statement, values), rangedFields, dateRanges)}) AS pivot_source${groupBy}${rowOrder}`,
       values: [],
       columns: [],
     };
@@ -269,7 +274,7 @@ async function nativePivotStatement(repository: any, statement: string, values: 
   ).entries()]);
   const pivotColumns: Array<{ values: string[]; prefix: string }> = [];
   const addPivotColumn = (displayValues: string[], pivotValues: string[], index: number) => {
-    if (index === pivotDimensions.length) { pivotColumns.push({ values: displayValues, prefix: pivotValues.join('_') }); return; }
+    if (index === pivotDimensions.length) { pivotColumns.push({ values: displayValues, prefix: safePivotAlias(pivotValues.join('_')) }); return; }
     for (const [value, dimension] of pivotDimensions[index]) addPivotColumn([...displayValues, value], [...pivotValues, dimension.pivotValue], index + 1);
   };
   addPivotColumn([], [], 0);
@@ -288,13 +293,13 @@ async function nativePivotStatement(repository: any, statement: string, values: 
       const neutral = aggregate === 'sum' || aggregate === 'count' ? '0' : 'NULL';
       const alias = String(measure.label || `${aggregate}_${measure.field || 'rows'}`)
         .trim().replace(/[^A-Za-z0-9_]+/g, '_').replace(/^[^A-Za-z_]+/, '') || `${aggregate}_${measure.field || 'rows'}`;
-      const columnAlias = `${column.prefix}_${alias}`.replace(/[^A-Za-z0-9_]+/g, '_');
+      const columnAlias = safePivotAlias(`${column.prefix}_${alias}`);
       return `${aggregate}(CASE WHEN ${condition} THEN ${expression} ELSE ${neutral} END) AS ${quoteIdentifier(columnAlias, 'Pivot column', repository.db?.dialect)}`;
     });
   });
   const portableSource = inlineBoundParameters(pivotDateSource(statement, rangedFields, dateRanges), values);
   return {
-    statement: `SELECT ${[...rowSql, ...aggregateExpressions].join(', ')} FROM (${portableSource}) AS pivot_source${groupBy}`,
+    statement: `SELECT ${[...rowSql, ...aggregateExpressions].join(', ')} FROM (${portableSource}) AS pivot_source${groupBy}${rowOrder}`,
     values: [],
     columns: pivotColumns,
   };

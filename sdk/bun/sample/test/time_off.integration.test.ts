@@ -31,6 +31,7 @@ describe('Time Off Odoo view navigation', () => {
       'analysis.yaml',
       'my-allocations.yaml',
       'my-time-off.yaml',
+      'report-by-employee.yaml',
       'requests.yaml',
       'time-off-approval.yaml',
       'time-off-dashboard.yaml',
@@ -144,5 +145,41 @@ describe('Time Off Odoo view navigation', () => {
     await repository.executeMutation(approve, { id: 'allocation-test', expected_row_version: 2 });
     await expect(repository.executeMutation(approve, { id: 'allocation-test', expected_row_version: 2 })).rejects.toMatchObject({ status: 409 });
     database.close();
+  });
+
+  test('covers the next Odoo reporting action: Time Off by Employee', () => {
+    const manifest = yaml('manifest.yaml');
+    const reporting = manifest.menu.groups.find((group: any) => group.id === 'reporting');
+    expect(reporting.items).toContainEqual(expect.objectContaining({
+      path: '/time-off-reporting/by-employee',
+      label: 'By Employee',
+      permission: 'time_off.read',
+    }));
+
+    const page = yaml('pages/report-by-employee.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    expect(page.page).toMatchObject({ id: 'time-off-report-by-employee', route: '/time-off-reporting/by-employee' });
+    expect(page.page.datasources).toBeUndefined();
+    expect(list.source).toBe('time_off_employee_report');
+    expect(list.view_navigation).toBe('tabs');
+    expect(list.views.map((view: any) => view.id)).toEqual(['pivot', 'list', 'graph', 'calendar']);
+    expect(list.views[0].pivot.default).toMatchObject({
+      rows: ['employee_name', 'leave_type_name'],
+      columns: ['date_from'],
+    });
+    expect(list.views[0].pivot.date_ranges).toEqual({ date_from: 'month' });
+
+    const api = apiYaml('report-by-employee.yaml');
+    expect(api.page.id).toBe('time-off-report-by-employee');
+    expect(api.datasources.find((source: any) => source.id === 'time_off_employee_report')?.pivot.fields)
+      .toEqual(['employee_name', 'leave_type_name', 'date_from', 'days', 'request_count', 'state']);
+    expect(api.datasources.find((source: any) => source.id === 'time_off_employee_report')?.query)
+      .toContain("r.state IN ('Submitted', 'Approved')");
+    expect(api.datasources.find((source: any) => source.id === 'time_off_employee_report')?.query)
+      .toContain("r.date_from >= DATE '2026-01-01'");
+    expect(api.datasources.every((source: any) => source.permission === 'time_off.read')).toBe(true);
+
+    const migration = yaml('migrations/20260910223000-006-report-by-employee.yaml');
+    expect(migration.type.postgres.up).toContain('leave_requests_report_date_state_idx');
   });
 });

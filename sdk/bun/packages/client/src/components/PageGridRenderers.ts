@@ -656,6 +656,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     latitudeField: view.latitude_field,
     longitudeField: view.longitude_field,
     pivot: view.pivot,
+    aggregated: view.id === 'pivot' ? view.aggregated === true : undefined,
     fields: view.id === 'pivot' ? pivotFields : undefined,
     fieldLabels: view.id === 'pivot' ? pivotFieldLabels : undefined,
     dateFields: view.id === 'pivot' ? pivotFieldMappings.filter((field: any) => field.type === 'date' || view.pivot?.date_ranges?.[field.field]).map((field: any) => String(field.field)) : undefined,
@@ -694,7 +695,11 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   // Keep an explicitly selected view stable across viewport sizes. CardView
   // and ListView are separate view modes, not responsive aliases.
   const activeView = views.some((view: any) => view.id === requestedView) ? requestedView : undefined;
-  const pivotView = activeView === 'pivot' ? views.find((view: any) => view.id === 'pivot') : undefined;
+  const pivotView = activeView === 'pivot'
+    ? views.find((view: any) => view.id === 'pivot')
+    : !requestedView && views[0]?.id === 'pivot'
+      ? views[0]
+      : undefined;
   const pivotQuery = pivotView ? pivotRequestFromUrl(pageParams, pivotView) : undefined;
   if (pivotView && pivotQuery) Object.assign(pivotView, {
     rowFields: pivotQuery.rows,
@@ -711,6 +716,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       console.error(`[page-renderer] pivot query failed for "${sourceId}":`, error);
     }
   }
+  if (pivotView) pivotView.aggregated = Array.isArray(activeSourceResult?.meta?.pivotColumns) && activeSourceResult.meta.pivotColumns.length > 0;
   const utilityActions = (def.actions || []).filter((action: any) => {
     if (!hasPermission(ctx.user, action.permission)) return false;
     return !action.show_if || Boolean(evalExpr(action.show_if, ctx));

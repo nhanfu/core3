@@ -1,0 +1,49 @@
+title: Time Off by Employee
+page: { id: time-off-report-by-employee, route: /time-off-reporting/by-employee, breadcrumb: [Human Resources, Time Off, Reporting, By Employee], auth: { require: [time_off.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: time_off_employee_report
+    search: { label: Search employee report, placeholder: Search employee or time off type... }
+    empty_state: { title: No time off records found, description: Try adjusting your search or filters. }
+    filters: [{ field: state, label: Status, options_source: time_off_report_states }]
+    view_navigation: tabs
+    views:
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: employee_name, column: Employee }
+            - { field: leave_type_name, column: Time Off Type }
+            - { field: date_from, column: Date, type: date }
+            - { field: days, column: Duration (Days) }
+            - { field: request_count, column: Requests }
+          default:
+            rows: [employee_name, leave_type_name]
+            columns: [date_from]
+            measures: [{ field: days, aggregate: sum, column: Duration (Days) }]
+          date_ranges: { date_from: month }
+      - { id: list, label: List, icon: table }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: employee_name
+        measure_field: days
+        type: bar
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_from
+        end_date_field: date_to
+        card: { title: employee_name, subtitle: leave_type_name, fields: [{ field: days, label: Duration }, { field: state, label: Status }] }
+    columns:
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: date_from, label: Start Date }
+      - { field: date_to, label: End Date }
+      - { field: days, label: Duration (Days), align: right }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: approver, label: Approver }
+    page_size: 50
+    row_key: id

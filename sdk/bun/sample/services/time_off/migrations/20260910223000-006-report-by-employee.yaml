@@ -1,0 +1,12 @@
+version: 0.0.6
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS leave_requests_report_date_state_idx ON leave_requests(date_from, state);
+    down: |
+      DROP INDEX IF EXISTS leave_requests_report_date_state_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

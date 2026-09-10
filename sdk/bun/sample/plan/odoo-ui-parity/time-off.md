@@ -305,6 +305,18 @@ mobile browser checks assert twelve month panels, eight seeded leave markers,
 `/tmp/core3-time-off-year-desktop.png` and `/tmp/core3-time-off-year-mobile.png`;
 they are local evidence only.
 
+The next reporting slice adds `Reporting > By Employee` at
+`/time-off-reporting/by-employee`. It follows Odoo's default 2026
+`To Approve or Approved` scope and employee > time-off type grouping, with
+service-owned pivot/list/graph/calendar data and a read-permission boundary.
+The report query remains deterministic over the fixed 2026 fixture dates and
+the migration adds its date/state index idempotently. Authenticated desktop and
+mobile checks cover the pivot, list, graph, calendar, menu entry, empty search,
+and denied permission states with no unexpected requests or horizontal
+overflow. Odoo/Core3 captures remain outside Git under
+`/tmp/odoo-time-off-report-by-employee-{desktop,mobile}.png` and
+`/tmp/core3-time-off-report-by-employee-{desktop,mobile}.png`.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
