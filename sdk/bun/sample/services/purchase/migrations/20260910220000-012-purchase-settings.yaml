@@ -1,0 +1,40 @@
+version: 0.0.12
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_settings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        po_order_approval BOOLEAN NOT NULL DEFAULT FALSE,
+        po_order_approval_amount DECIMAL(18,2) NOT NULL DEFAULT 5000.00,
+        lock_confirmed_po BOOLEAN NOT NULL DEFAULT FALSE,
+        group_warning_purchase BOOLEAN NOT NULL DEFAULT FALSE,
+        module_purchase_requisition BOOLEAN NOT NULL DEFAULT FALSE,
+        group_send_reminder BOOLEAN NOT NULL DEFAULT TRUE,
+        module_account_3way_match BOOLEAN NOT NULL DEFAULT FALSE,
+        group_product_variant BOOLEAN NOT NULL DEFAULT TRUE,
+        module_purchase_product_matrix BOOLEAN NOT NULL DEFAULT FALSE,
+        group_uom BOOLEAN NOT NULL DEFAULT TRUE,
+        module_stock_dropshipping BOOLEAN NOT NULL DEFAULT FALSE,
+        replenish_on_order BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO purchase_settings(
+        id, po_order_approval, po_order_approval_amount, lock_confirmed_po, group_warning_purchase,
+        module_purchase_requisition, group_send_reminder, module_account_3way_match, group_product_variant,
+        module_purchase_product_matrix, group_uom, module_stock_dropshipping, replenish_on_order,
+        created_at, updated_at
+      ) VALUES (
+        'purchase-settings-demo', FALSE, 5000.00, FALSE, FALSE,
+        FALSE, TRUE, FALSE, TRUE,
+        FALSE, TRUE, FALSE, FALSE,
+        TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'
+      );
+    down: |
+      DROP TABLE IF EXISTS purchase_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

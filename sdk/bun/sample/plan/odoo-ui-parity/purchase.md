@@ -30,7 +30,7 @@ The visible Purchase application menu is exactly:
 | Orders | `Requests for Quotation` (`/odoo/purchase`), `Purchase Orders` (`/odoo/purchase-orders`), `Vendors` (`/odoo/vendors`) |
 | Products | `Products` (`/odoo/purchase-products`), `Product Variants` (`/odoo/action-694`) |
 | Reporting | `Purchase` (`/odoo/purchase-analysis`) |
-| Configuration | `Settings` (`/odoo/action-704`), `Vendor Pricelists` (`/odoo/action-239`), `Attributes` (`/odoo/attributes`), `Categories` (`/odoo/product-categories`) |
+| Configuration | `Settings` (`/odoo/action-642` in the owned database), `Vendor Pricelists` (`/odoo/action-239`), `Attributes` (`/odoo/attributes`), `Categories` (`/odoo/product-categories`) |
 
 The source inventory also contains group-gated `Units & Packagings`; it was
 not visible to `codex@core3.local` in this installed reference and remains a
@@ -255,6 +255,42 @@ radio presentation, and the purple/shared product shell remain follow-up gaps;
 the primary attribute list/form and responsive route are the bounded claim for
 this batch. Local comparison captures are `/tmp/core3-purchase-attributes-*`
 and `/tmp/odoo-purchase-attributes-*`; screenshots remain outside Git.
+
+## Purchase Settings bounded follow-up (selected 2026-09-10)
+
+The current owned Odoo database resolves `purchase.action_purchase_configuration`
+to action `642` (the earlier `action-704` identifier belonged to the previous
+reference database). Its authenticated form-only view was captured at
+1440x900 and 390x844 from `/odoo/action-642`. The visible Purchase settings are
+the Orders, Invoicing, Products, and inherited Logistics blocks; the current
+owned reference has no failed responses or horizontal overflow.
+
+Core3 now exposes `/purchase/settings` through the existing Purchase
+Configuration menu. The page/API pair is joined by `page.id` (`purchase-settings`)
+and uses the shared `SettingsView`; `api/settings.yaml` owns the
+`purchase_settings` datasource and guarded `purchase.settings.update` mutation.
+Migration `20260910220000-012-purchase-settings.yaml` seeds the fixed
+Purchase flags and row version, with idempotent re-run behavior. The explicit
+`purchase.settings` permission keeps the system-gated Settings action separate
+from ordinary Purchase read/write access; stale row versions and missing rows
+return guarded errors. Odoo's form-only mode is represented by the settings
+page rather than inventing list or report tabs. The optional Enterprise
+3-way-matching control is visible but disabled, matching the owned reference.
+
+Authenticated Core3 captures are `/tmp/core3-purchase-settings-desktop-final.png`
+and `/tmp/core3-purchase-settings-mobile-final.png`; owned Odoo captures are
+`/tmp/odoo-purchase-settings-desktop-final.png` and
+`/tmp/odoo-purchase-settings-mobile-final.png`. Core3 desktop/mobile checks
+reported zero failed responses, zero console errors, 1440/1440 and 390/390
+body widths, and only the settings content region scrolling. A real checkbox
+save, reload persistence check, and revert cycle also passed. Screenshots stay
+outside Git.
+
+The shared shell remains Fluent-style rather than copying Odoo's purple shell;
+the Purchase settings labels, section order, disabled optional setting,
+full-width surface, and responsive content behavior are the bounded parity
+claim. Cross-application Settings navigation and installation of optional
+modules remain shared-shell follow-ups.
 
 ## Required visible states
 

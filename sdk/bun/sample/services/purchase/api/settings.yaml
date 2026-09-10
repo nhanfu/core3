@@ -1,0 +1,29 @@
+page: { id: purchase-settings }
+datasources:
+  - id: purchase_settings
+    single: true
+    permission: purchase.settings
+    query: "SELECT id, row_version, po_order_approval, po_order_approval_amount, lock_confirmed_po, group_warning_purchase, module_purchase_requisition, group_send_reminder, module_account_3way_match, group_product_variant, module_purchase_product_matrix, group_uom, module_stock_dropshipping, replenish_on_order FROM purchase_settings WHERE id = 'purchase-settings-demo' AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found')"
+actions:
+  - id: purchase_settings_update_server
+    type: server
+    permission: purchase.settings
+    action: purchase.settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: purchase_settings
+      key_field: id
+      fields: [po_order_approval, lock_confirmed_po, group_warning_purchase, module_purchase_requisition, group_send_reminder, group_product_variant, module_purchase_product_matrix, group_uom, module_stock_dropshipping, replenish_on_order]
+      concurrency: { required: true }
+      guards:
+        - query: "SELECT id FROM purchase_settings WHERE id = :id"
+          status: 404
+          code: PURCHASE_SETTINGS_NOT_FOUND
+          message: Purchase settings no longer exist.
+        - query: "SELECT id FROM purchase_settings WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Purchase settings were changed by another user. Reload before saving.
+      result: { query: "SELECT id, row_version, po_order_approval, po_order_approval_amount, lock_confirmed_po, group_warning_purchase, module_purchase_requisition, group_send_reminder, module_account_3way_match, group_product_variant, module_purchase_product_matrix, group_uom, module_stock_dropshipping, replenish_on_order FROM purchase_settings WHERE id = :id" }

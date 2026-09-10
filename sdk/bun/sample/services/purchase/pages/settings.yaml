@@ -1,0 +1,59 @@
+title: Purchase Settings
+page: { id: purchase-settings, route: /purchase/settings, breadcrumb: [Supply Chain, Purchase, Configuration, Settings], auth: { require: [purchase.settings] } }
+components:
+  - type: SettingsView
+    id: purchase-settings-view
+    source: purchase_settings
+    title: Settings
+    save_action: save_purchase_settings
+    search_placeholder: Search...
+    tabs:
+      - id: purchase
+        label: Purchase
+        icon: purchase
+        sections:
+          - title: Orders
+            fields:
+              - { field: po_order_approval, label: Purchase Order Approval, description: Request managers to approve orders above a minimum amount., type: checkbox }
+              - { field: lock_confirmed_po, label: Lock Confirmed Orders, description: Automatically lock confirmed orders to prevent editing., type: checkbox }
+              - { field: group_warning_purchase, label: Warnings, description: Get warnings in orders for products or vendors., type: checkbox }
+              - { field: module_purchase_requisition, label: Purchase Agreements, description: Manage blanket orders and purchase templates., type: checkbox }
+              - { field: group_send_reminder, label: Receipt Reminder, description: Automatically remind the receipt date to your vendors., type: checkbox }
+          - title: Invoicing
+            fields:
+              - { field: module_account_3way_match, label: 3-way matching, description: Make sure you only pay bills for which you received the goods you ordered., type: checkbox, disabled: true }
+          - title: Products
+            fields:
+              - { field: group_product_variant, label: Variants, description: Purchase variants of a product using attributes (size, color, etc.)., type: checkbox, action_label: Attributes }
+              - { field: module_purchase_product_matrix, label: Variant Grid Entry, description: Add several variants to the purchase order from a grid., type: checkbox }
+              - { field: group_uom, label: Units of Measure & Packagings, description: Sell and purchase products in different units of measure or packagings., type: checkbox, action_label: Units & Packagings }
+          - title: Logistics
+            fields:
+              - { field: module_stock_dropshipping, label: Dropshipping, description: Request your vendors to deliver to your customers., type: checkbox }
+              - { field: replenish_on_order, label: Replenish on Order (MTO), description: Allow Make to Order, or automate PO, when a product is sold and get direct links between documents., type: checkbox }
+actions:
+  - id: save_purchase_settings
+    type: client
+    permission: purchase.settings
+    script: |
+      async ({ row, request }) => {
+        return request('/api/actions/purchase.settings.update', {
+          method: 'POST',
+          body: {
+            id: row.id,
+            expected_row_version: row.row_version,
+            values: {
+              po_order_approval: row.po_order_approval,
+              lock_confirmed_po: row.lock_confirmed_po,
+              group_warning_purchase: row.group_warning_purchase,
+              module_purchase_requisition: row.module_purchase_requisition,
+              group_send_reminder: row.group_send_reminder,
+              group_product_variant: row.group_product_variant,
+              module_purchase_product_matrix: row.module_purchase_product_matrix,
+              group_uom: row.group_uom,
+              module_stock_dropshipping: row.module_stock_dropshipping,
+              replenish_on_order: row.replenish_on_order,
+            },
+          },
+        });
+      }
