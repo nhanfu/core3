@@ -1,0 +1,166 @@
+title: Physical Inventory
+page: { id: physical-inventory, route: /physical-inventory, breadcrumb: [Supply Chain, Inventory, Operations, Physical Inventory], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_physical_inventory
+    view_navigation: tabs
+    create_action: create_inventory_quant
+    create_label: New
+    header_actions:
+      - { id: apply_all_inventory_quantities, label: Apply All, variant: primary, permission: inventory.write }
+    search: { label: Search physical inventory, placeholder: 'Search products, lots, or locations...' }
+    filters:
+      - field: count_filter
+        label: Filters
+        options:
+          - { id: my_count, label: My Counts }
+          - { id: internal, label: Internal Locations }
+          - { id: transit, label: Transit Locations }
+          - { id: to_count, label: To Count }
+          - { id: to_apply, label: To Apply }
+          - { id: conflicts, label: Conflicts }
+          - { id: negative, label: Negative Stock }
+    group_by:
+      - { field: product_name, label: Product }
+      - { field: location_name, label: Location }
+      - { field: inventory_user, label: User }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell, sortable: true }
+      - { field: lot_serial_number, label: Lot/Serial Number }
+      - { field: scheduled, label: Scheduled }
+      - { field: inventory_user, label: User }
+      - { field: on_hand, label: On Hand, align: right }
+      - { field: counted, label: Counted, align: right }
+      - { field: difference, label: Difference, align: right }
+      - { field: unit_name, label: Unit }
+      - field: actions
+        label: Actions
+        sortable: false
+        actions:
+          - { id: set_inventory_quantity, label: Set to On Hand, icon: check, variant: secondary, show_if: "row.inventory_quantity_set !== true" }
+          - { id: set_inventory_quantity_zero, label: Set to 0, icon: x, variant: danger, show_if: "row.inventory_quantity_set !== true" }
+          - { id: apply_inventory_quantity, label: Apply, icon: save, variant: primary, show_if: "row.inventory_quantity_set === true" }
+          - { id: clear_inventory_quantity, label: Clear, icon: x, variant: danger, show_if: "row.inventory_quantity_set === true" }
+          - { id: view_inventory_history, label: History, icon: history }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    selectable: false
+    column_chooser: true
+    empty_state: { title: Your stock is currently empty, description: Press New to define the quantity for a product in your stock or use the Apply All action to confirm counted quantities. }
+actions:
+  - id: create_inventory_quant
+    type: server_form
+    permission: inventory.write
+    title: New inventory quantity
+    action: inventory.quants.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_physical_inventory]
+    success_message: Inventory quantity created.
+    mutation:
+      operation: insert
+      table: inventory_quants
+      fields: [product_id, product_name, location_id, quantity, unit_name, lot_serial_number, inventory_date, inventory_quantity_set, is_outdated, company_name]
+      required: [product_id, product_name, location_id, quantity]
+      defaults: { unit_name: Units, inventory_date: '2026-01-15', inventory_quantity_set: false, is_outdated: false, company_name: Core3 Demo Company, reserved_quantity: 0, unit_cost: 0 }
+      guards:
+        - { query: "SELECT 1 AS ok FROM inventory_locations WHERE id = :location_id AND usage IN ('Internal', 'Transit') AND state = 'Active'", status: 422, code: INVENTORY_LOCATION_NOT_ALLOWED, message: Physical inventory is limited to active internal or transit locations. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) >= 0", status: 422, code: INVENTORY_QUANTITY_INVALID, message: Quantity must be zero or greater. }
+      result: { query: "SELECT * FROM inventory_quants WHERE id = :id" }
+    fields:
+      - { field: product_id, label: Product ID, type: text, required: true }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: location_id, label: Location, type: select, options_source: inventory_physical_locations, required: true }
+      - { field: quantity, label: On Hand, type: number, min: 0, required: true }
+      - { field: lot_serial_number, label: Lot/Serial Number, type: text }
+      - { field: unit_name, label: Unit, type: text, default: Units }
+  - id: apply_all_inventory_quantities
+    type: server_form
+    permission: inventory.write
+    title: Inventory Adjustment
+    action: inventory.quants.apply_all
+    handler: yaml_mutation
+    operation: apply_all
+    refresh: [inventory_physical_inventory]
+    success_message: Inventory quantities applied.
+    fields:
+      - { field: inventory_adjustment_name, label: Inventory Reason, type: text, default: Physical Inventory, required: true }
+      - { field: counting_date, label: Counting Date, type: date, default: '2026-01-15', required: true }
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:inventory_adjustment_name)) BETWEEN 1 AND 120 AND CAST(:counting_date AS DATE) IS NOT NULL", status: 422, code: INVENTORY_ADJUSTMENT_INVALID, message: Enter an inventory reason and a valid counting date. }
+      steps:
+        - query: "UPDATE inventory_quants SET quantity = CASE WHEN inventory_quantity_set AND counted_quantity IS NOT NULL THEN counted_quantity ELSE quantity END, counted_quantity = NULL, inventory_quantity_set = FALSE, inventory_user = :current_user_name, inventory_adjustment_name = :inventory_adjustment_name, counting_date = CAST(:counting_date AS DATE), row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE location_id IN (SELECT id FROM inventory_locations WHERE usage IN ('Internal', 'Transit'))"
+      result: { query: "SELECT :inventory_adjustment_name AS message" }
+  - id: set_inventory_quantity
+    type: server
+    permission: inventory.write
+    action: inventory.quants.set_on_hand
+    handler: yaml_mutation
+    operation: set_on_hand
+    refresh: [inventory_physical_inventory]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :id AND inventory_quantity_set = FALSE AND row_version = :expected_row_version", status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was already counted or changed. Reload before setting it. }
+      steps:
+        - query: "UPDATE inventory_quants SET counted_quantity = quantity, inventory_quantity_set = TRUE, inventory_user = :current_user_name, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_QUANT_STALE
+          message: This quantity was changed by another user. Reload before setting it.
+  - id: set_inventory_quantity_zero
+    type: server
+    permission: inventory.manage
+    action: inventory.quants.set_zero
+    handler: yaml_mutation
+    operation: set_zero
+    confirm: Set the counted quantity to zero?
+    refresh: [inventory_physical_inventory]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :id AND inventory_quantity_set = FALSE AND row_version = :expected_row_version", status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was already counted or changed. Reload before setting it. }
+      steps:
+        - query: "UPDATE inventory_quants SET counted_quantity = 0, inventory_quantity_set = TRUE, inventory_user = :current_user_name, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_QUANT_STALE
+          message: This quantity was changed by another user. Reload before setting it.
+  - id: apply_inventory_quantity
+    type: server
+    permission: inventory.write
+    action: inventory.quants.apply
+    handler: yaml_mutation
+    operation: apply
+    refresh: [inventory_physical_inventory]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :id AND inventory_quantity_set = TRUE AND counted_quantity IS NOT NULL AND counted_quantity >= 0 AND row_version = :expected_row_version", status: 422, code: INVENTORY_COUNT_INVALID, message: Enter a non-negative counted quantity before applying it. }
+      steps:
+        - query: "UPDATE inventory_quants SET quantity = counted_quantity, counted_quantity = NULL, inventory_quantity_set = FALSE, inventory_user = NULL, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_QUANT_STALE
+          message: This quantity was changed by another user. Reload before applying it.
+  - id: clear_inventory_quantity
+    type: server
+    permission: inventory.manage
+    action: inventory.quants.clear_count
+    handler: yaml_mutation
+    operation: clear_count
+    refresh: [inventory_physical_inventory]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok FROM inventory_quants WHERE id = :id AND inventory_quantity_set = TRUE AND row_version = :expected_row_version", status: 409, code: INVENTORY_QUANT_STALE, message: This quantity was changed by another user. Reload before clearing it. }
+      steps:
+        - query: "UPDATE inventory_quants SET counted_quantity = NULL, inventory_quantity_set = FALSE, inventory_user = NULL, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: INVENTORY_QUANT_STALE
+          message: This quantity was changed by another user. Reload before clearing it.
+  - id: view_inventory_history
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves
+    params: { q: '{row.product_name}' }

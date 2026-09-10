@@ -22,6 +22,10 @@ menu:
           label: Deliveries
           icon: truck
           permission: inventory.read
+        - path: /physical-inventory
+          label: Physical Inventory
+          icon: clipboard
+          permission: inventory.read
     - id: reporting
       label: Reporting
       items:

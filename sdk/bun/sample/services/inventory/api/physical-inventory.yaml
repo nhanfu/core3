@@ -1,0 +1,11 @@
+page: { id: physical-inventory }
+datasources:
+  - id: inventory_physical_locations
+    single: false
+    permission: inventory.read
+    query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM inventory_locations WHERE state = 'Active' AND usage IN ('Internal', 'Transit') ORDER BY usage, name"
+  - id: inventory_physical_inventory
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_PHYSICAL_DATA_UNAVAILABLE, message: Physical inventory data is temporarily unavailable. } }
+    query: "SELECT q.id, q.row_version, q.product_name, COALESCE(q.lot_serial_number, '') AS lot_serial_number, CAST(q.inventory_date AS VARCHAR) AS scheduled, COALESCE(q.inventory_user, '') AS inventory_user, CAST(q.quantity AS DOUBLE) AS on_hand, CASE WHEN q.inventory_quantity_set THEN CAST(q.counted_quantity AS DOUBLE) ELSE NULL END AS counted, CASE WHEN q.inventory_quantity_set THEN CAST(q.counted_quantity - q.quantity AS DOUBLE) ELSE NULL END AS difference, COALESCE(q.unit_name, 'Units') AS unit_name, l.name AS location_name, l.usage AS location_usage, COALESCE(q.company_name, 'Core3 Demo Company') AS company_name, q.inventory_quantity_set, q.is_outdated FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.usage IN ('Internal', 'Transit') AND (:q IS NULL OR q.product_name ILIKE '%' || :q || '%' OR COALESCE(q.lot_serial_number, '') ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') AND (:count_filter IS NULL OR (:count_filter = 'my_count' AND COALESCE(q.inventory_user, '') = :current_user_name) OR (:count_filter = 'internal' AND l.usage = 'Internal') OR (:count_filter = 'transit' AND l.usage = 'Transit') OR (:count_filter = 'to_count' AND q.inventory_date <= DATE '2026-01-15') OR (:count_filter = 'to_apply' AND q.inventory_quantity_set) OR (:count_filter = 'conflicts' AND q.is_outdated) OR (:count_filter = 'negative' AND q.quantity < 0)) ORDER BY l.usage, l.name, q.product_name, q.id"

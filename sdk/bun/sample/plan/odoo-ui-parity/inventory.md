@@ -262,6 +262,67 @@ Focused evidence:
   overflow found during comparison. The reference session used
   `codex@core3.local` in `core3_reference` at `http://127.0.0.1:8069`.
 
+## Bounded batch: Physical Inventory (2026-09-10)
+
+The authenticated `core3_owned` Odoo 19 reference was refreshed after the
+installed-module restart before this batch. The exact observed module/action
+state is:
+
+- `stock` is `installed`, with demo data enabled, version `19.0.1.1`.
+- XMLID `stock.action_view_inventory_tree` resolves to `ir.actions.server`
+  id `519`, named `Inventory`, path `physical-inventory`, model `Quants`.
+- XMLID `stock.menu_action_inventory_tree` resolves to `ir.ui.menu` id `331`.
+- The action is list-only. Its visible action surface is `Physical Inventory`
+  under Operations, with `New`, `Apply All`, row `History`, and the editable
+  Product, Lot/Serial Number, Scheduled, User, On Hand, Counted, Difference,
+  and Unit columns. Odoo's manager-only row actions `Set to 0` and `Clear`
+  are permissioned as `inventory.manage` in Core3; `Set to On Hand`, `Apply`,
+  and `Apply All` use `inventory.write`.
+- No kanban, calendar, or other Physical Inventory view was exposed by this
+  source action, so Core3 does not invent tabs for this list-only route. The
+  existing shell's visible text menu labels and the list's visible filter
+  labels are retained.
+
+Core3 keeps the service-owned page/API split joined by `page.id`:
+`pages/physical-inventory.yaml` (`physical-inventory`) binds to
+`api/physical-inventory.yaml` (`physical-inventory`). Migration `0.0.5`
+adds stable internal/transit physical-inventory quantities, lot values,
+counted states, fixed `2026-01-15` dates, and deterministic ordering. The
+route includes search, My Counts/location/count-state filters, grouping,
+empty and transport-error states, create/apply-all dialogs, row-version
+guards, and permission-aware row actions. The `Physical Inventory` manifest
+menu requires `inventory.read`.
+
+Focused evidence:
+
+- `bun run --cwd packages/client test -- test/cases/list-view.test.ts
+  test/cases/page-renderer-list-view.test.ts`: 44 tests passed, including
+  permitted header-action rendering, single-instance protection, and server
+  action dispatch; `bun test test/inventory_physical_inventory.integration.test.ts`:
+  3 tests and 22 assertions passed.
+- `bun run css:build:inventory`, `git diff --check`, and the Inventory audit
+  passed. The authenticated Core3 runtime used `admin@tms.local` at
+  `http://127.0.0.1:3090`; desktop and mobile both had no failed responses,
+  one `Apply All` header action, one Physical Inventory menu leaf, and no
+  duplicate header actions.
+- Core3 desktop (1440x900):
+  `/tmp/core3-inventory-next-physical-desktop.png`;
+  Core3 mobile (390x844):
+  `/tmp/core3-inventory-next-physical-mobile.png`. Both had document/body
+  `scrollWidth === clientWidth` (1440/1440 and 390/390).
+- Refreshed authenticated Odoo captures used `codex@core3.local` in
+  `core3_owned` at `http://localhost:8069`. Desktop:
+  `/tmp/odoo-inventory-next-owned-physical-desktop.png` with document/body
+  1440/1440 and table 1440/1440. Mobile:
+  `/tmp/odoo-inventory-next-owned-physical-mobile.png` with document/body
+  390/390; the table is intentionally 888/390 and clipped inside
+  `.o_list_renderer.table-responsive` with `overflow-x: auto`. No failed
+  requests occurred after navigating to the ready list in either capture.
+
+The list-only source action's absent tabs and deferred Odoo-side actions such
+as Relocate, Request a Count, and report/export flows remain documented
+limitations rather than invented routes or controls.
+
 ## Acceptance
 
 - The implementation maps every admin-visible menu/action in the table to a

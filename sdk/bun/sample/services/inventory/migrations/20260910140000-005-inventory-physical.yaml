@@ -1,0 +1,37 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS inventory_date DATE;
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS inventory_user VARCHAR;
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS counted_quantity DECIMAL(18,3);
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS inventory_quantity_set BOOLEAN;
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS inventory_adjustment_name VARCHAR;
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS counting_date DATE;
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS unit_name VARCHAR;
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS lot_serial_number VARCHAR;
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS tracking VARCHAR;
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE inventory_quants ADD COLUMN IF NOT EXISTS is_outdated BOOLEAN;
+      INSERT INTO inventory_locations(id, warehouse_id, name, code, usage, state) VALUES
+        ('location-transit', 'warehouse-main', 'Transit', 'TRANSIT', 'Transit', 'Active')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_quants(id, product_id, product_name, location_id, quantity, reserved_quantity, unit_cost, inventory_date, inventory_user, counted_quantity, inventory_quantity_set, unit_name, lot_serial_number, tracking, company_name, is_outdated) VALUES
+        ('quant-desk-main', 'product-desk-combination', '[FURN_7800] Desk Combination', 'location-stock', 235, 12, 450, DATE '2026-01-15', NULL, NULL, FALSE, 'Units', NULL, 'none', 'Core3 Demo Company', FALSE),
+        ('quant-box-main', 'product-storage-box', '[E-COM08] Storage Box', 'location-stock', 18, 3, 25, DATE '2026-01-15', 'Admin User', 20, TRUE, 'Units', NULL, 'none', 'Core3 Demo Company', FALSE),
+        ('quant-cabinet-main', 'product-large-cabinet', '[E-COM07] Large Cabinet', 'location-stock', 33, 0, 300, DATE '2026-01-22', NULL, NULL, FALSE, 'Units', NULL, 'none', 'Core3 Demo Company', FALSE),
+        ('quant-drawer-lot', 'product-drawer-lot', '[FURN_8855] Drawer', 'location-stock', 80, 4, 22, DATE '2026-01-15', NULL, NULL, FALSE, 'Units', '0000000000029', 'lot', 'Core3 Demo Company', FALSE),
+        ('quant-cable-lot-a', 'product-cable-a', '[FURN_5555] Cable Management Box', 'location-stock', 50, 0, 8, DATE '2026-01-15', NULL, NULL, FALSE, 'Units', 'CM-BOX-00001', 'lot', 'Core3 Demo Company', FALSE),
+        ('quant-cable-lot-b', 'product-cable-b', '[FURN_5555] Cable Management Box', 'location-stock', 40, 0, 8, DATE '2026-01-15', NULL, NULL, FALSE, 'Units', 'CM-BOX-00002', 'lot', 'Core3 Demo Company', FALSE),
+        ('quant-chair-transit', 'product-office-chair', '[FURN_0269] Office Chair Black', 'location-transit', 10, 0, 120, DATE '2026-01-15', NULL, NULL, FALSE, 'Units', NULL, 'none', 'Core3 Demo Company', FALSE),
+        ('quant-negative-transit', 'product-damaged-chair', 'Damaged Office Chair', 'location-transit', -2, 0, 120, DATE '2026-01-10', NULL, NULL, FALSE, 'Units', NULL, 'none', 'Core3 Demo Company', TRUE)
+      ON CONFLICT(id) DO NOTHING;
+      UPDATE inventory_quants SET inventory_date = COALESCE(inventory_date, DATE '2026-01-15'), unit_name = COALESCE(unit_name, 'Units'), company_name = COALESCE(company_name, 'Core3 Demo Company'), inventory_quantity_set = COALESCE(inventory_quantity_set, FALSE), is_outdated = COALESCE(is_outdated, FALSE);
+    down: |
+      DELETE FROM inventory_quants WHERE id IN ('quant-desk-main', 'quant-box-main', 'quant-cabinet-main', 'quant-drawer-lot', 'quant-cable-lot-a', 'quant-cable-lot-b', 'quant-chair-transit', 'quant-negative-transit');
+      DELETE FROM inventory_locations WHERE id = 'location-transit';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
