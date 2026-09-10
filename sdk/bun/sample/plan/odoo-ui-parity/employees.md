@@ -196,10 +196,9 @@ results plus manager-only edit/archive/restore actions.
 
 Authenticated Core3 captures are kept outside Git under
 `/tmp/core3-odoo-employees/` for desktop and 390x844 touch list, detail,
-create, and empty states. The Odoo environment remains `hr` uninstalled with
-`demo=false`, so its existing `/tmp/odoo-employees-desktop.png` and
-`/tmp/odoo-employees-mobile.png` files remain authenticated Discuss fallback
-captures, not Employees reference evidence.
+create, and empty states. That earlier Work Locations note predates the
+current owned reference refresh; the current `core3_owned` HR state and
+Departure Reasons evidence are recorded in the bounded batch below.
 
 ## Shared primitives
 
@@ -273,20 +272,64 @@ Working Schedules, Employee Tags, Contract Types, and payroll/version detail
 integrations must be explicit scoped routes or documented redirects with their
 permission/inactive reason; they must not disappear silently.
 
+## Bounded batch: Departure Reasons
+
+This batch implements the next uncovered visible HR configuration action:
+Departure Reasons. The current owned Odoo reference was re-authenticated on
+2026-09-10 against database `core3_owned`; `ir.module.module` reports module
+`hr` as `installed` with `demo=true`. The source-owned menu/action inventory is
+`Employees > Configuration > Employee > Departure Reasons`, XML action
+`hr_departure_reason_action`, model `hr.departure.reason`; the live Odoo route
+resolved to `/odoo/action-414` and displayed the demo rows Fired, Resigned, and
+Retired. Its list action has an inline New state rather than a separate form
+view, so the Odoo `form` captures document that inline state.
+
+Core3 owns the matching service/API/page contracts under page IDs
+`employee-departure-reasons` and `employee-departure-reason-detail`. The list
+and detail pages require `employees.manage`; all read/write datasource and
+server-form actions use the same permission boundary, while pages remain
+layout-only and bind to page-matched API fragments. Migration `006` uses stable
+IDs, fixed `TIMESTAMP '2026-01-15 00:00:00'` defaults, deterministic ordering,
+and an explicit generated-id policy for creates. Update mutations omit
+`timestamps:true` so fixture reads and mutations share the deterministic
+contract.
+
+Authenticated evidence, kept outside Git:
+
+- Odoo: `/tmp/odoo-employees/departure-reasons-list-desktop.png`,
+  `/tmp/odoo-employees/departure-reasons-form-desktop.png`,
+  `/tmp/odoo-employees/departure-reasons-list-mobile.png`, and
+  `/tmp/odoo-employees/departure-reasons-form-mobile.png`.
+- Core3: `/tmp/core3-odoo-employees/departure-reasons-list-desktop.png`,
+  `/tmp/core3-odoo-employees/departure-reasons-form-desktop.png`,
+  `/tmp/core3-odoo-employees/departure-reasons-list-mobile.png`, and
+  `/tmp/core3-odoo-employees/departure-reasons-form-mobile.png`.
+
+The authenticated Playwright run used Odoo/Core3 viewports 1440x900 and
+390x844, waited for `/api/modules` to expose both page IDs, asserted visible
+Departure Reasons content, recorded zero failed HTTP responses, and found no
+horizontal overflow. The Odoo mobile app launcher did not expose the same HR
+anchor in its touch DOM, so that mobile evidence reuses the authenticated
+`/odoo/action-414` resolved from the desktop menu. Core3 mobile uses the
+authenticated `/employees/departure-reasons` route and opens the Resignation
+detail card to prove the responsive detail state.
+
 ## Acceptance
 
 - Source and manifest checks identify `hr`, version, dependencies, official
-  `hr_demo.xml`, and live `uninstalled`/`demo=false` status. The gate never
-  treats Discuss fallback screenshots as Employees reference evidence.
+  `hr_demo.xml`, and live `core3_owned` status `installed`/`demo=true`. The
+  gate never treats Discuss fallback screenshots as Employees reference
+  evidence.
 - Inventory checks map every visible menu/action/view above, including group
   boundaries, source routes, launch/create/archive/wizard actions, and hidden
   technical/inactive entries.
 - Authenticated browser checks navigate from the Odoo Employees menu in an
   installed disposable demo database at 1440x900 and 390x844, capture each
   listed state, and assert title, action, records, no failed requests, no
-  horizontal overflow, and usable mobile controls. Current environment only
-  satisfies the fallback-route audit and the two actual `/tmp` captures.
-- Core3 checks navigate through People/Employees rather than direct URLs and
+  horizontal overflow, and usable mobile controls. The Departure Reasons
+  batch satisfies the installed action and its four Odoo captures.
+- Core3 checks navigate through People/Employees or the authenticated resolved
+  route and
   cover populated, empty, filtered, archived, denied, list, kanban, form,
   activity, graph, pivot, directory, department, configuration, wizard,
   chatter, attachment, and mobile states.

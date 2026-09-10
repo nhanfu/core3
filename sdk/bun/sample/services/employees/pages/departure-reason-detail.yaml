@@ -1,0 +1,18 @@
+title: Departure Reason
+page: { id: employee-departure-reason-detail, route: /employees/departure-reasons/detail, breadcrumb: [Human Resources, Configuration, Employee, Departure Reasons, Departure Reason], auth: { require: [employees.manage] } }
+components:
+  - type: OdooFormView
+    source: employee_departure_reason_detail
+    title_field: name
+    subtitle_field: country_code
+    group_columns: 2
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Details }
+    header_actions:
+      - { id: edit_employee_departure_reason, label: Edit, variant: secondary, permission: employees.manage }
+    groups:
+      - title: Departure Reason
+        fields:
+          - { field: sequence, label: Sequence }
+          - { field: name, label: Departure Reason }
+          - { field: country_code, label: Country, placeholder: Optional country code }

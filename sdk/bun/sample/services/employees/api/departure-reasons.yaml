@@ -1,0 +1,38 @@
+page: { id: employee-departure-reasons }
+datasources:
+  - id: employee_departure_reasons
+    permission: employees.manage
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_DATA_UNAVAILABLE, message: Employee configuration is temporarily unavailable } }
+    query: "SELECT id, row_version, sequence, name, country_code FROM employee_departure_reasons WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(country_code, '') ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: view_employee_departure_reason
+    type: navigate
+    permission: employees.manage
+    navigate_to: /employees/departure-reasons/detail
+    params: { id: '{row.id}' }
+  - id: create_employee_departure_reason_inline
+    type: server_form
+    permission: employees.manage
+    title: New departure reason
+    action: employees.departure_reasons.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_departure_reasons]
+    mutation: { operation: insert, table: employee_departure_reasons, fields: [sequence, name, country_code], required: [name], defaults: { sequence: 10, row_version: 1 }, generated: [id], result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" } }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 10 }
+      - { field: name, label: Departure Reason, type: text, required: true }
+      - { field: country_code, label: Country, type: text, placeholder: Optional country code }
+  - id: update_employee_departure_reason_inline
+    type: server_form
+    permission: employees.manage
+    title: Edit departure reason
+    action: employees.departure_reasons.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [employee_departure_reasons]
+    mutation: { operation: update, table: employee_departure_reasons, fields: [sequence, name, country_code], required: [name], result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" } }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Departure Reason, type: text, required: true }
+      - { field: country_code, label: Country, type: text, placeholder: Optional country code }

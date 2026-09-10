@@ -1,0 +1,37 @@
+title: Departure Reasons
+page: { id: employee-departure-reasons, route: /employees/departure-reasons, breadcrumb: [Human Resources, Configuration, Employee, Departure Reasons], auth: { require: [employees.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_departure_reasons
+    search: { label: Search departure reasons, placeholder: Search reason or country... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: country_code
+          fields:
+            - { field: sequence, label: Sequence }
+            - { field: country_code, label: Country }
+    inline_edit:
+      create_action: create_employee_departure_reason_inline
+      update_action: update_employee_departure_reason_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: sequence, type: number, default: 10 }
+        - { field: name, type: text, required: true, placeholder: Departure reason }
+        - { field: country_code, type: text, placeholder: Country code }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Departure Reason, type: PrimaryEntityCell, mobile: true }
+      - { field: country_code, label: Country, optional: hide }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: view_employee_departure_reason, label: Open, icon: edit }] }
+    row_key: id
+    row_open_action: view_employee_departure_reason
+    row_double_click_action: view_employee_departure_reason
+    empty_state: { title: No departure reasons found, description: Add a reason or adjust your search. }

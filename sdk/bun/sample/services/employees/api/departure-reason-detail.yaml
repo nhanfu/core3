@@ -1,0 +1,22 @@
+page: { id: employee-departure-reason-detail }
+datasources:
+  - id: employee_departure_reason_detail
+    single: true
+    permission: employees.manage
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_DATA_UNAVAILABLE, message: Employee configuration is temporarily unavailable } }
+    query: "SELECT id, row_version, sequence, name, country_code FROM employee_departure_reasons WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_employee_departure_reason
+    type: server_form
+    permission: employees.manage
+    title: Edit departure reason
+    action: employees.departure_reasons.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_departure_reason_detail
+    refresh: [employee_departure_reason_detail]
+    mutation: { operation: update, table: employee_departure_reasons, fields: [sequence, name, country_code], required: [name], result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" } }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Departure Reason, type: text, required: true }
+      - { field: country_code, label: Country, type: text, placeholder: Optional country code }

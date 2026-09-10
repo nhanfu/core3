@@ -1,0 +1,33 @@
+version: 0.0.6
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_departure_reasons (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL UNIQUE,
+        country_code VARCHAR,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO employee_departure_reasons(id, sequence, name, country_code, row_version) VALUES
+        ('departure-reason-resignation', 10, 'Resignation', NULL, 1),
+        ('departure-reason-end-contract', 20, 'End of contract', NULL, 1),
+        ('departure-reason-retirement', 30, 'Retirement', NULL, 1),
+        ('departure-reason-dismissal', 40, 'Dismissal', 'US', 1),
+        ('departure-reason-relocation', 50, 'Relocation', 'VN', 1);
+    down: |
+      DELETE FROM employee_departure_reasons WHERE id IN (
+        'departure-reason-resignation',
+        'departure-reason-end-contract',
+        'departure-reason-retirement',
+        'departure-reason-dismissal',
+        'departure-reason-relocation'
+      );
+      DROP TABLE IF EXISTS employee_departure_reasons;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

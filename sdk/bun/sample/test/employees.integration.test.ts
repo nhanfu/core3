@@ -20,6 +20,8 @@ describe('Employees Odoo action-mode parity batch', () => {
       ['pages/department-detail.yaml', 'employee-department-detail', 'employee_department_detail'],
       ['pages/work-locations.yaml', 'employee-work-locations', 'employee_work_locations'],
       ['pages/work-location-detail.yaml', 'employee-work-location-detail', 'employee_work_location_detail'],
+      ['pages/departure-reasons.yaml', 'employee-departure-reasons', 'employee_departure_reasons'],
+      ['pages/departure-reason-detail.yaml', 'employee-departure-reason-detail', 'employee_departure_reason_detail'],
     ] as const;
     for (const [file, pageId, sourceId] of routes) {
       const page = yaml(file);
@@ -91,7 +93,7 @@ describe('Employees Odoo action-mode parity batch', () => {
   });
 
   test('keeps source-side boundary and seed contracts deterministic', () => {
-    const pageFiles = ['pages/employees.yaml', 'pages/directory.yaml', 'pages/activities.yaml', 'pages/departments.yaml', 'pages/department-detail.yaml', 'pages/work-locations.yaml', 'pages/work-location-detail.yaml'];
+    const pageFiles = ['pages/employees.yaml', 'pages/directory.yaml', 'pages/activities.yaml', 'pages/departments.yaml', 'pages/department-detail.yaml', 'pages/work-locations.yaml', 'pages/work-location-detail.yaml', 'pages/departure-reasons.yaml', 'pages/departure-reason-detail.yaml'];
     expect(pageFiles.every(file => !/\bSELECT\b|\bUPDATE\b|\bINSERT\b/i.test(readFileSync(join(root, file), 'utf8')))).toBe(true);
     const migration = readFileSync(join(root, 'migrations/20260910140000-004-employees-action-modes.yaml'), 'utf8');
     expect(migration).not.toMatch(/CURRENT_DATE|CURRENT_TIMESTAMP|gen_random_uuid/i);
@@ -135,6 +137,66 @@ describe('Employees Odoo action-mode parity batch', () => {
     const detail = await repository.querySource(detailSource, { id: 'work-location-hcm', fixture_state: null }, 0, 1);
     expect(detail.data).toMatchObject({ id: 'work-location-hcm', name: 'Ho Chi Minh City', address_name: 'Core3 Vietnam HQ, District 1' });
     const missing = await repository.querySource(detailSource, { id: 'missing-work-location', fixture_state: 'not_found' }, 0, 1);
+    expect(missing.data).toEqual({});
+  });
+
+  test('adds the Odoo departure-reasons action with manager-only read/write boundary', async () => {
+    const listPage = yaml('pages/departure-reasons.yaml');
+    const detailPage = yaml('pages/departure-reason-detail.yaml');
+    const listApi = yaml('api/departure-reasons.yaml');
+    const detailApi = yaml('api/departure-reason-detail.yaml');
+
+    expect(listPage.datasources).toBeUndefined();
+    expect(detailPage.datasources).toBeUndefined();
+    expect(listPage.page.id).toBe('employee-departure-reasons');
+    expect(detailPage.page.id).toBe('employee-departure-reason-detail');
+    expect(listPage.page.auth.require).toEqual(['employees.manage']);
+    expect(detailPage.page.auth.require).toEqual(['employees.manage']);
+    expect(listPage.components[0]).toMatchObject({ source: 'employee_departure_reasons', inline_edit: { create_action: 'create_employee_departure_reason_inline', update_action: 'update_employee_departure_reason_inline' } });
+    expect(listPage.components[0].columns.map((column: any) => column.label)).toEqual([' ', 'Departure Reason', 'Country', ' ']);
+    expect(detailPage.components[0]).toMatchObject({ source: 'employee_departure_reason_detail', editable: true });
+    expect(listApi.page.id).toBe(listPage.page.id);
+    expect(detailApi.page.id).toBe(detailPage.page.id);
+    expect(listApi.datasources[0].permission).toBe('employees.manage');
+    expect(detailApi.datasources[0].permission).toBe('employees.manage');
+    expect(listApi.actions.filter((action: any) => action.type === 'server_form').every((action: any) => action.permission === 'employees.manage')).toBe(true);
+    expect(detailApi.actions.every((action: any) => action.permission === 'employees.manage')).toBe(true);
+    expect(listApi.actions.find((action: any) => action.id === 'create_employee_departure_reason_inline')?.mutation).toMatchObject({ generated: ['id'] });
+    expect(listApi.actions.find((action: any) => action.id === 'update_employee_departure_reason_inline')?.mutation.timestamps).toBeUndefined();
+    expect(detailApi.actions.find((action: any) => action.id === 'edit_employee_departure_reason')?.mutation.timestamps).toBeUndefined();
+    expect(yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration').items).toContainEqual({ path: '/employees/departure-reasons', label: 'Departure Reasons', icon: 'list', permission: 'employees.manage' });
+
+    const migration = readFileSync(join(root, 'migrations/20260910170000-006-departure-reasons.yaml'), 'utf8');
+    expect(migration).not.toMatch(/gen_random_uuid|CURRENT_TIMESTAMP|CURRENT_DATE/);
+    expect(migration).toContain("TIMESTAMP '2026-01-15 00:00:00'");
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_departure_reasons_schema_migrations', ['schema', 'data']);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_departure_reasons_schema_migrations', ['schema', 'data']);
+
+    const source = listApi.datasources[0];
+    const populated = await repository.querySource(source, { q: null, fixture_state: null }, 0, 50);
+    expect(populated.data.map((row: any) => row.id)).toEqual([
+      'departure-reason-resignation',
+      'departure-reason-end-contract',
+      'departure-reason-retirement',
+      'departure-reason-dismissal',
+      'departure-reason-relocation',
+    ]);
+    expect(populated.data[0]).toMatchObject({ sequence: 10, name: 'Resignation', country_code: null });
+    expect(populated.data.find((row: any) => row.id === 'departure-reason-dismissal')).toMatchObject({ country_code: 'US' });
+
+    const filtered = await repository.querySource(source, { q: 'contract', fixture_state: null }, 0, 50);
+    expect(filtered.data.map((row: any) => row.name)).toEqual(['End of contract']);
+    const empty = await repository.querySource(source, { q: null, fixture_state: 'empty' }, 0, 50);
+    expect(empty.data).toEqual([]);
+    await expect(repository.querySource(source, { q: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'EMPLOYEES_DATA_UNAVAILABLE' });
+
+    const detailSource = detailApi.datasources[0];
+    const detail = await repository.querySource(detailSource, { id: 'departure-reason-relocation', fixture_state: null }, 0, 1);
+    expect(detail.data).toMatchObject({ id: 'departure-reason-relocation', name: 'Relocation', country_code: 'VN' });
+    const missing = await repository.querySource(detailSource, { id: 'missing-departure-reason', fixture_state: 'not_found' }, 0, 1);
     expect(missing.data).toEqual({});
   });
 });
