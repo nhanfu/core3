@@ -10,7 +10,7 @@ menu:
     label: Email Marketing
     icon: mail
     permission: email_marketing.read
-  groups:
+    groups:
     - id: campaigns
       label: Campaigns
       items:
@@ -20,3 +20,7 @@ menu:
       label: Reporting
       items:
         - { path: /email-analysis, label: Email Analysis, icon: chart, permission: email_marketing.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /email-optout-reasons, label: Optout Reasons, icon: settings, permission: email_marketing.manage }

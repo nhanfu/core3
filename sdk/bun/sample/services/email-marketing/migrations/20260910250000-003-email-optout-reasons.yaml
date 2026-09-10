@@ -1,0 +1,32 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_marketing_optout_reasons (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL UNIQUE,
+        is_feedback BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      INSERT INTO email_marketing_optout_reasons(id, row_version, sequence, name, is_feedback, created_at, updated_at) VALUES
+        ('email-optout-never-subscribed', 1, 1, 'I never subscribed to this list', false, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'),
+        ('email-optout-changed-mind', 1, 2, 'I changed my mind', false, TIMESTAMP '2026-01-15 09:01:00', TIMESTAMP '2026-01-15 09:01:00'),
+        ('email-optout-too-many-emails', 1, 3, 'I receive too many emails from this list', false, TIMESTAMP '2026-01-15 09:02:00', TIMESTAMP '2026-01-15 09:02:00'),
+        ('email-optout-not-relevant', 1, 4, 'The content of these emails is not relevant to me', false, TIMESTAMP '2026-01-15 09:03:00', TIMESTAMP '2026-01-15 09:03:00'),
+        ('email-optout-other', 1, 99, 'Other', true, TIMESTAMP '2026-01-15 09:04:00', TIMESTAMP '2026-01-15 09:04:00')
+      ON CONFLICT (id) DO UPDATE SET
+        row_version = EXCLUDED.row_version,
+        sequence = EXCLUDED.sequence,
+        name = EXCLUDED.name,
+        is_feedback = EXCLUDED.is_feedback,
+        updated_at = EXCLUDED.updated_at;
+    down: |
+      DROP TABLE IF EXISTS email_marketing_optout_reasons;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

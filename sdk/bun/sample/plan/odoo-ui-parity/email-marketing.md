@@ -3,11 +3,11 @@
 Status: `planned`
 
 This is the implementation gate for the Odoo 19 Community `mass_mailing`
-addon. It is a plan and evidence record only: do not add product code,
-migrations, fixtures, assets, or tests in this worktree. `ready` is reserved
-for the point at which all six register gates have evidence, including an
-installed authenticated Odoo desktop/mobile reference. The current reference
-database does not meet that bar.
+addon. The overall register remains a plan and evidence record; completed
+action slices may add their scoped product code, migrations, fixtures, and
+tests. `ready` is reserved for the point at which all six register gates have
+evidence, including an installed authenticated Odoo desktop/mobile reference.
+The original reference database does not meet that bar.
 
 ## Reference gate and exact live limitation
 
@@ -40,7 +40,7 @@ database does not meet that bar.
   Marketing app menu, mailing action, record, view mode, settings, report,
   builder, or addon route. The authenticated fallback is Discuss at
   `/odoo/discuss`; it is not evidence of an installed Email Marketing UI.
-  Do not install/activate the addon in this plan-only task and do not invent
+  Do not install/activate the addon in the original plan-only task and do not invent
   installed/demo screenshots, payloads, menu visibility, or record IDs.
 
 ## Truthful authenticated screenshots
@@ -62,6 +62,42 @@ installed and demo loading explicitly recorded, navigate from the authenticated
 app menu/action, assert the title and records, record failed requests, and save
 desktop/mobile pairs under `/tmp`. Images are evidence only and are never
 committed.
+
+## Implemented action slice — Optout Reasons (2026-09-10)
+
+The first disjoint installed action slice is Odoo
+`mass_mailing.mailing_subscription_optout_action` (action 845, model
+`mailing.subscription.optout`, `list,form`). It is exposed in Core3 at
+`/email-marketing/email-optout-reasons` with the configuration menu permission
+`email_marketing.manage`. The page layout and service API are separate and
+joined by `page.id`:
+
+- Layout: `services/email-marketing/pages/optout-reasons.yaml` and
+  `services/email-marketing/pages/email-optout-reason-detail.yaml`.
+- API: `services/email-marketing/api/optout-reasons.yaml` and
+  `services/email-marketing/api/optout-reason-detail.yaml`.
+- Fixtures/migration: `services/email-marketing/migrations/20260910250000-003-email-optout-reasons.yaml`.
+- Focused contract test: `test/email_marketing_optout_reasons.integration.test.ts`.
+
+The fixed seed date is `2026-01-15`; fixture IDs are stable `email-optout-*`
+IDs and the five Odoo reasons are seeded idempotently. The slice covers
+permission-bound list/form access, create/update/delete, inline editing,
+duplicate/blank/stale/missing guards, search, empty data, and a deterministic
+503 transport-error state. The installed Odoo comparison used the disposable
+`core3_owned` database with `mass_mailing` installed and demo data loaded.
+
+Evidence for this slice is recorded by the focused test, `bun run audit`, and
+the authenticated browser captures listed below. The broader Email Marketing
+register remains `planned` until its other actions and shared gates are
+implemented.
+
+| Surface | Viewport | Capture |
+| --- | --- | --- |
+| Authenticated Odoo Optout Reasons | 1440x900 | `/tmp/odoo-email-optout-reasons-authenticated-desktop-final-20260910.png` |
+| Authenticated Odoo Optout Reasons | 390x844 | `/tmp/odoo-email-optout-reasons-authenticated-mobile-final-20260910.png` |
+| Authenticated Core3 Optout Reasons | 1440x900 | `/tmp/core3-email-optout-reasons-authenticated-desktop-final-20260910.png` |
+| Authenticated Core3 Optout Reasons | 390x844 | `/tmp/core3-email-optout-reasons-authenticated-mobile-final-20260910.png` |
+| Authenticated Core3 Optout Reason detail | 1440x900 | `/tmp/core3-email-optout-reason-detail-authenticated-desktop-final-20260910.png` |
 
 ## Source menu, action, view, and route inventory
 
@@ -302,5 +338,5 @@ retain this exact limitation and status.
   demo-on/off behavior, and replacement-ready service queries.
 - Run focused YAML/schema/API validation, authenticated desktop/mobile browser
   smoke and visual checks, `bun run audit` and `bun run audit:yaml` where
-  applicable, then `git diff --check`. This plan-only change must commit only
-  this Markdown artifact; screenshots remain under `/tmp`.
+  applicable, then `git diff --check`. Action slices must commit only code and
+  docs; screenshots remain under `/tmp`.

@@ -1,0 +1,94 @@
+page: { id: email-optout-reasons }
+datasources:
+  - id: email_optout_reasons
+    permission: email_marketing.manage
+    error_states: { transport_error: { status: 503, code: EMAIL_OPTOUT_REASONS_UNAVAILABLE, message: Opt-out reasons are temporarily unavailable. } }
+    query: "SELECT id, row_version, sequence, name, is_feedback FROM email_marketing_optout_reasons WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: create_email_optout_reason
+    type: server_form
+    permission: email_marketing.manage
+    title: New Optout Reason
+    action: email_marketing.optout_reasons.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [email_optout_reasons]
+    mutation:
+      operation: insert
+      table: email_marketing_optout_reasons
+      fields: [sequence, name, is_feedback]
+      required: [name]
+      defaults: { sequence: 10, is_feedback: false, row_version: 1, created_at: '2026-01-15 09:30:00', updated_at: '2026-01-15 09:30:00' }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'email-optout-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_OPTOUT_REASON_NAME_REQUIRED, message: An opt-out reason name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_optout_reasons WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: EMAIL_OPTOUT_REASON_EXISTS, message: An opt-out reason with this name already exists. }
+      result: { query: "SELECT * FROM email_marketing_optout_reasons WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 10 }
+      - { field: name, label: Reason, type: text, required: true }
+      - { field: is_feedback, label: Allow Feedback, type: checkbox }
+  - id: create_email_optout_reason_inline
+    type: server_form
+    permission: email_marketing.manage
+    title: New Optout Reason
+    action: email_marketing.optout_reasons.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [email_optout_reasons]
+    mutation: { operation: insert, table: email_marketing_optout_reasons, fields: [sequence, name, is_feedback], required: [name], defaults: { sequence: 10, is_feedback: false, row_version: 1, created_at: '2026-01-15 09:30:00', updated_at: '2026-01-15 09:30:00' }, generated: [id], before_steps: [{ query: "SELECT 'email-optout-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }], guards: [{ query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_OPTOUT_REASON_NAME_REQUIRED, message: An opt-out reason name is required. }, { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_optout_reasons WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: EMAIL_OPTOUT_REASON_EXISTS, message: An opt-out reason with this name already exists. }], result: { query: "SELECT * FROM email_marketing_optout_reasons WHERE id = :id" } }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 10 }
+      - { field: name, label: Reason, type: text, required: true }
+      - { field: is_feedback, label: Allow Feedback, type: checkbox }
+  - id: edit_email_optout_reason
+    type: server_form
+    permission: email_marketing.manage
+    title: Edit Optout Reason
+    action: email_marketing.optout_reasons.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [email_optout_reasons, email_optout_reason_detail]
+    mutation:
+      operation: update
+      table: email_marketing_optout_reasons
+      fields: [sequence, name, is_feedback]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_marketing_optout_reasons WHERE id = :id", status: 404, code: EMAIL_OPTOUT_REASON_NOT_FOUND, message: Opt-out reason not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_OPTOUT_REASON_NAME_REQUIRED, message: An opt-out reason name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_optout_reasons WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMAIL_OPTOUT_REASON_EXISTS, message: An opt-out reason with this name already exists. }
+      result: { query: "SELECT * FROM email_marketing_optout_reasons WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Reason, type: text, required: true }
+      - { field: is_feedback, label: Allow Feedback, type: checkbox }
+  - id: update_email_optout_reason_inline
+    type: server_form
+    permission: email_marketing.manage
+    title: Edit Optout Reason
+    action: email_marketing.optout_reasons.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [email_optout_reasons]
+    mutation: { operation: update, table: email_marketing_optout_reasons, fields: [sequence, name, is_feedback], required: [name], concurrency: { required: true }, guards: [{ query: "SELECT id FROM email_marketing_optout_reasons WHERE id = :id", status: 404, code: EMAIL_OPTOUT_REASON_NOT_FOUND, message: Opt-out reason not found. }, { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_OPTOUT_REASON_NAME_REQUIRED, message: An opt-out reason name is required. }, { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_optout_reasons WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMAIL_OPTOUT_REASON_EXISTS, message: An opt-out reason with this name already exists. }], result: { query: "SELECT * FROM email_marketing_optout_reasons WHERE id = :id" } }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Reason, type: text, required: true }
+      - { field: is_feedback, label: Allow Feedback, type: checkbox }
+  - id: delete_email_optout_reason
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.optout_reasons.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [email_optout_reasons]
+    mutation:
+      operation: delete
+      table: email_marketing_optout_reasons
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM email_marketing_optout_reasons WHERE id = :id", status: 404, code: EMAIL_OPTOUT_REASON_NOT_FOUND, message: Opt-out reason not found. }]

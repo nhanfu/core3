@@ -1,0 +1,18 @@
+title: Optout Reason
+page: { id: email-optout-reason-detail, route: /email-optout-reasons/detail, breadcrumb: [Marketing, Email Marketing, Configuration, Optout Reasons, Optout Reason], auth: { require: [email_marketing.manage] } }
+
+components:
+  - type: OdooFormView
+    source: email_optout_reason_detail
+    title_field: name
+    group_columns: 2
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Details }
+    header_actions:
+      - { id: edit_email_optout_reason_detail, label: Edit, variant: secondary, permission: email_marketing.manage }
+    groups:
+      - title: Optout Reason
+        fields:
+          - { field: sequence, label: Sequence }
+          - { field: name, label: Reason }
+          - { field: is_feedback, label: Allow Feedback }
