@@ -26,7 +26,10 @@ describe('Purchase product categories parity', () => {
     expect(discovered.pageDatasources.get('purchase-product-categories')).toContain('purchase_product_categories');
     expect(discovered.pageDatasources.get('purchase-product-category-detail')).toEqual(expect.arrayContaining(['purchase_product_category_detail', 'purchase_product_category_messages']));
     expect(list.components[0].columns).toEqual([{ field: 'name', label: 'Product Category', type: 'PrimaryEntityCell' }]);
+    expect(list.components[0].selectable).toBe(true);
     expect(detail.components[0].groups.map((group: any) => group.title)).toEqual(['Category', 'LOGISTICS', 'INVENTORY VALUATION']);
+    expect(detail.components[0].groups[0].wide).toBe(true);
+    expect(detail.components[0].groups[1].fields[1]).toMatchObject({ field: 'packaging_reserve_method', type: 'radio' });
   });
 
   test('records the Odoo menu order and permissions', () => {

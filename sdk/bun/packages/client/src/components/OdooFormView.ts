@@ -173,6 +173,17 @@ export class OdooFormView extends BaseComponent {
             html.take(chips).span.className('o-permission-chip').text(String(labelsByValue.get(permission) || permission));
           }
           if (!selected.size) html.take(value).replaceText('—');
+        } else if (field.type === 'radio') {
+          const group = html.take(value).div.className('o-form-radio-group').attr('role', 'radiogroup').ele();
+          const current = String(record[field.field] ?? '');
+          for (const [index, option] of (Array.isArray(field.options) ? field.options : []).entries()) {
+            const item = typeof option === 'string' ? { value: option, label: option } : option;
+            const optionValue = String(item.value ?? item.id ?? '');
+            const label = html.take(group).label.className('o-form-radio-option').ele();
+            const input = html.take(label).input.type('radio').attr('name', `readonly-radio-${this.id}-${field.field}`).prop('disabled', true).prop('checked', optionValue === current).ele();
+            input.id = `${this.id}-${field.field}-${index}`;
+            html.take(label).span.text(String(item.label ?? optionValue));
+          }
         } else {
           html.take(value).replaceText(record[field.field] == null || record[field.field] === '' ? '—' : String(record[field.field]));
         }

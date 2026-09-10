@@ -11,6 +11,7 @@ components:
       - { field: name, label: Product Category, type: PrimaryEntityCell }
     page_size: 50
     row_key: id
+    selectable: true
     row_open_action: view_purchase_product_category
     row_double_click_action: view_purchase_product_category
     row_actions: menu

@@ -64,6 +64,10 @@
 .o-form-field-wide { grid-column: 1 / -1; }
 .o-form-field-label { color: var(--o-form-muted); font-size: 12px; font-weight: 500; }
 .o-form-field-value { min-height: 22px; margin-top: 3px; color: var(--o-form-text); font-size: 14px; }
+.o-form-radio-group, .o-form-radio-editor { display: grid; gap: 6px; }
+.o-form-radio-option { display: inline-flex; align-items: center; gap: 7px; color: var(--o-form-text); font-size: 14px; }
+.o-form-radio-option input { width: 15px; height: 15px; margin: 0; accent-color: var(--o-form-action); }
+.o-form-radio-option input:disabled { opacity: 1; }
 .o-form-field-value.is-money { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
 .o-form-field input[type="checkbox"].o-form-inline-editor { width: 15px; height: 15px; margin: 3px 0 0; accent-color: var(--o-form-action); }
 .o-permission-chips { display: flex; flex-wrap: wrap; gap: 6px; }

@@ -24,15 +24,19 @@ components:
     group_columns: 2
     groups:
       - title: Category
+        wide: true
         fields:
           - { field: name, label: Category }
           - { field: parent_name, label: Parent Category }
       - title: LOGISTICS
         fields:
           - { field: force_removal_strategy, label: Force Removal Strategy? }
-          - { field: packaging_reserve_method, label: Reserve Packagings? }
-          - { field: packaging_reserve_method, label: Reserve Only Full Packagings, type: text }
-          - { field: packaging_reserve_method, label: Reserve Partial Packagings, type: text }
+          - field: packaging_reserve_method
+            label: Reserve Packagings?
+            type: radio
+            options:
+              - { value: full, label: Reserve Only Full Packagings }
+              - { value: partial, label: Reserve Partial Packagings }
       - title: INVENTORY VALUATION
         fields:
           - { field: costing_method, label: Costing Method? }

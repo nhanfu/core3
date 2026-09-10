@@ -7,6 +7,7 @@ import * as OdooMoneyEditor from './OdooMoneyEditor.ts';
 import * as OdooMultiSelectEditor from './OdooMultiSelectEditor.ts';
 import * as OdooNumberEditor from './OdooNumberEditor.ts';
 import * as OdooPermissionGridEditor from './OdooPermissionGridEditor.ts';
+import * as OdooRadioEditor from './OdooRadioEditor.ts';
 import * as OdooRichtextEditor from './OdooRichtextEditor.ts';
 import * as OdooSelectEditor from './OdooSelectEditor.ts';
 import * as OdooTextEditor from './OdooTextEditor.ts';
@@ -38,6 +39,7 @@ const directEagerModules: Record<string, ComponentModule> = {
   './OdooMultiSelectEditor.ts': OdooMultiSelectEditor,
   './OdooNumberEditor.ts': OdooNumberEditor,
   './OdooPermissionGridEditor.ts': OdooPermissionGridEditor,
+  './OdooRadioEditor.ts': OdooRadioEditor,
   './OdooRichtextEditor.ts': OdooRichtextEditor,
   './OdooSelectEditor.ts': OdooSelectEditor,
   './OdooTextEditor.ts': OdooTextEditor,
