@@ -1,0 +1,39 @@
+version: 0.0.6
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mailing_contacts (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL UNIQUE,
+        company_name VARCHAR,
+        message_bounce INTEGER NOT NULL DEFAULT 0,
+        is_blacklisted BOOLEAN NOT NULL DEFAULT false,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS mailing_subscriptions (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        contact_id VARCHAR NOT NULL,
+        list_id VARCHAR NOT NULL,
+        opt_out BOOLEAN NOT NULL DEFAULT false,
+        opt_out_reason_id VARCHAR,
+        opt_out_datetime TIMESTAMP,
+        subscription_date TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        UNIQUE (contact_id, list_id)
+      );
+      CREATE INDEX IF NOT EXISTS mailing_subscriptions_list_idx ON mailing_subscriptions(list_id);
+      CREATE INDEX IF NOT EXISTS mailing_subscriptions_contact_idx ON mailing_subscriptions(contact_id);
+    down: |
+      DROP TABLE IF EXISTS mailing_subscriptions;
+      DROP TABLE IF EXISTS mailing_contacts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

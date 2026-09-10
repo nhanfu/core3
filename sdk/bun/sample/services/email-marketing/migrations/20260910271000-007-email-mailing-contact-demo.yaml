@@ -1,0 +1,31 @@
+version: 0.0.7
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO mailing_contacts(id, row_version, name, email, company_name, message_bounce, is_blacklisted, active, created_at, updated_at) VALUES
+        ('mailing-contact-aristide-001', 1, 'Aristide Antario', 'alexandre.antario@example.com', 'Core3 Vietnam', 0, false, true, TIMESTAMP '2026-01-15 09:20:00', TIMESTAMP '2026-01-15 09:20:00'),
+        ('mailing-contact-beverly-001', 1, 'Beverly Bridge', 'beverly.bridge@example.com', 'Bridge & Co', 0, false, true, TIMESTAMP '2026-01-15 09:21:00', TIMESTAMP '2026-01-15 09:21:00'),
+        ('mailing-contact-carol-001', 1, 'Carol Cartridge', 'carol.cartridge@example.com', 'Cartridge Labs', 0, false, true, TIMESTAMP '2026-01-15 09:22:00', TIMESTAMP '2026-01-15 09:22:00'),
+        ('mailing-contact-david-001', 1, 'David Dawson', 'david.dawson@example.com', 'Dawson Retail', 0, false, true, TIMESTAMP '2026-01-15 09:23:00', TIMESTAMP '2026-01-15 09:23:00'),
+        ('mailing-contact-elsa-001', 1, 'Elsa Ericson', 'elsa.ericson@example.com', 'Ericson Design', 5, true, true, TIMESTAMP '2026-01-15 09:24:00', TIMESTAMP '2026-01-15 09:24:00'),
+        ('mailing-contact-franz-001', 1, 'Franz Faubourg', 'franz.faubourg@example.com', 'Faubourg Studio', 0, false, true, TIMESTAMP '2026-01-15 09:25:00', TIMESTAMP '2026-01-15 09:25:00'),
+        ('mailing-contact-gilbert-001', 1, 'Gilbert Gilson', 'gilbert.gilson@example.com', 'Gilson Services', 0, false, true, TIMESTAMP '2026-01-15 09:26:00', TIMESTAMP '2026-01-15 09:26:00')
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, company_name = EXCLUDED.company_name, message_bounce = EXCLUDED.message_bounce, is_blacklisted = EXCLUDED.is_blacklisted, active = EXCLUDED.active, row_version = EXCLUDED.row_version, updated_at = EXCLUDED.updated_at;
+      INSERT INTO mailing_subscriptions(id, row_version, contact_id, list_id, opt_out, opt_out_reason_id, opt_out_datetime, subscription_date, created_at, updated_at) VALUES
+        ('mailing-subscription-aristide-customers', 1, 'mailing-contact-aristide-001', 'mailing-list-demo-001', false, NULL, NULL, TIMESTAMP '2026-01-15 09:20:00', TIMESTAMP '2026-01-15 09:20:00', TIMESTAMP '2026-01-15 09:20:00'),
+        ('mailing-subscription-beverly-customers', 1, 'mailing-contact-beverly-001', 'mailing-list-demo-001', false, NULL, NULL, TIMESTAMP '2026-01-15 09:21:00', TIMESTAMP '2026-01-15 09:21:00', TIMESTAMP '2026-01-15 09:21:00'),
+        ('mailing-subscription-carol-customers', 1, 'mailing-contact-carol-001', 'mailing-list-demo-001', false, NULL, NULL, TIMESTAMP '2026-01-15 09:22:00', TIMESTAMP '2026-01-15 09:22:00', TIMESTAMP '2026-01-15 09:22:00'),
+        ('mailing-subscription-david-customers', 1, 'mailing-contact-david-001', 'mailing-list-demo-001', true, 'email-optout-changed-mind', TIMESTAMP '2026-01-15 10:00:00', TIMESTAMP '2026-01-15 09:23:00', TIMESTAMP '2026-01-15 09:23:00', TIMESTAMP '2026-01-15 10:00:00'),
+        ('mailing-subscription-elsa-customers', 1, 'mailing-contact-elsa-001', 'mailing-list-demo-001', true, 'email-optout-too-many-emails', TIMESTAMP '2026-01-15 10:05:00', TIMESTAMP '2026-01-15 09:24:00', TIMESTAMP '2026-01-15 09:24:00', TIMESTAMP '2026-01-15 10:05:00'),
+        ('mailing-subscription-carol-imported', 1, 'mailing-contact-carol-001', 'mailing-list-imported-001', false, NULL, NULL, TIMESTAMP '2026-01-15 09:27:00', TIMESTAMP '2026-01-15 09:27:00', TIMESTAMP '2026-01-15 09:27:00'),
+        ('mailing-subscription-franz-imported', 1, 'mailing-contact-franz-001', 'mailing-list-imported-001', false, NULL, NULL, TIMESTAMP '2026-01-15 09:28:00', TIMESTAMP '2026-01-15 09:28:00', TIMESTAMP '2026-01-15 09:28:00'),
+        ('mailing-subscription-gilbert-imported', 1, 'mailing-contact-gilbert-001', 'mailing-list-imported-001', true, 'email-optout-too-many-emails', TIMESTAMP '2026-01-15 10:10:00', TIMESTAMP '2026-01-15 09:29:00', TIMESTAMP '2026-01-15 09:29:00', TIMESTAMP '2026-01-15 10:10:00')
+      ON CONFLICT (id) DO UPDATE SET contact_id = EXCLUDED.contact_id, list_id = EXCLUDED.list_id, opt_out = EXCLUDED.opt_out, opt_out_reason_id = EXCLUDED.opt_out_reason_id, opt_out_datetime = EXCLUDED.opt_out_datetime, subscription_date = EXCLUDED.subscription_date, row_version = EXCLUDED.row_version, updated_at = EXCLUDED.updated_at;
+    down: |
+      DELETE FROM mailing_subscriptions WHERE id LIKE 'mailing-subscription-%';
+      DELETE FROM mailing_contacts WHERE id LIKE 'mailing-contact-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

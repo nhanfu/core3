@@ -1,0 +1,49 @@
+title: Mailing List Contacts
+page: { id: mailing-contacts, route: /mailing-contacts, breadcrumb: [Marketing, Email Marketing, Mailing Lists, Mailing List Contacts], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: mailing_subscriptions
+    create_action: create_mailing_subscription
+    create_label: Add contact to list
+    search: { label: Search mailing contacts, placeholder: 'Search name, email, or list...' }
+    filters:
+      - { field: list_id, label: Mailing list, options_source: mailing_subscription_lists }
+      - { field: status, label: Status, options: [{ id: Subscribed, label: Subscribed }, { id: Opted out, label: Opted out }, { id: Blacklisted, label: Blacklisted }] }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: list_name
+        card:
+          compact: true
+          title: contact_name
+          subtitle: email
+          company_field: company_name
+          primary_metric: message_bounce
+          primary_metric_label: Bounces
+          fields:
+            - { field: list_name, label: Mailing list }
+            - { field: status, label: Status }
+          footer:
+            - { field: opt_out_reason, label: Opt-out reason }
+      - { id: list, label: List, icon: table, mobile: true }
+    columns:
+      - { field: subscription_date, label: Subscription date, type: DateTime }
+      - { field: contact_name, label: Mailing contact, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: list_name, label: Mailing list }
+      - { field: status, label: Status, type: StatusChip }
+      - { field: opt_out_datetime, label: Unsubscription date, optional: true }
+      - { field: opt_out_reason, label: Opt-out reason, optional: true }
+      - { field: message_bounce, label: Bounces, align: right, optional: true }
+      - { field: is_blacklisted, label: Blacklisted, type: StatusChip, optional: true }
+    page_size: 50
+    row_key: id
+    row_open_action: edit_mailing_subscription
+    row_double_click_action: edit_mailing_subscription
+    row_actions: menu
+    empty_state: { title: No mailing contacts found, description: Add a contact to a mailing list or adjust your search and filters. }

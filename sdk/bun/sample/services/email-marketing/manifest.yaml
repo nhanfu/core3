@@ -16,6 +16,7 @@ menu:
       items:
         - { path: /email-campaigns, label: Campaigns, icon: mail, permission: email_marketing.read }
         - { path: /mailing-lists, label: Mailing Lists, icon: users, permission: email_marketing.read }
+        - { path: /mailing-contacts, label: Mailing List Contacts, icon: users, permission: email_marketing.read }
     - id: reporting
       label: Reporting
       items:

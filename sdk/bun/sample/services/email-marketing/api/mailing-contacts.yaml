@@ -1,0 +1,106 @@
+page: { id: mailing-contacts }
+datasources:
+  - id: mailing_subscriptions
+    permission: email_marketing.read
+    error_states: { transport_error: { status: 503, code: EMAIL_MAILING_CONTACTS_UNAVAILABLE, message: Mailing list contacts are temporarily unavailable. } }
+    query: "SELECT s.id, s.row_version, s.contact_id, c.name AS contact_name, c.email, c.company_name, c.message_bounce, c.is_blacklisted, s.list_id, l.name AS list_name, s.opt_out, CASE WHEN s.opt_out THEN 'Opted out' WHEN c.is_blacklisted THEN 'Blacklisted' ELSE 'Subscribed' END AS status, s.opt_out_reason_id, r.name AS opt_out_reason, CAST(s.opt_out_datetime AS VARCHAR) AS opt_out_datetime, CAST(s.subscription_date AS VARCHAR) AS subscription_date FROM mailing_subscriptions s JOIN mailing_contacts c ON c.id = s.contact_id JOIN mailing_lists l ON l.id = s.list_id LEFT JOIN email_marketing_optout_reasons r ON r.id = s.opt_out_reason_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:list_id IS NULL OR s.list_id = :list_id) AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') AND (:status IS NULL OR CASE WHEN s.opt_out THEN 'Opted out' WHEN c.is_blacklisted THEN 'Blacklisted' ELSE 'Subscribed' END = :status) ORDER BY l.name, c.name, s.id"
+  - id: mailing_subscription_lists
+    permission: email_marketing.read
+    query: "SELECT id AS value, name AS label FROM mailing_lists WHERE active = true ORDER BY name, id"
+  - id: mailing_subscription_contacts
+    permission: email_marketing.read
+    query: "SELECT id AS value, name || ' <' || email || '>' AS label FROM mailing_contacts WHERE active = true ORDER BY name, id"
+  - id: mailing_subscription_optout_reasons
+    permission: email_marketing.read
+    query: "SELECT id AS value, name AS label FROM email_marketing_optout_reasons ORDER BY sequence, id"
+actions:
+  - id: create_mailing_subscription
+    type: server_form
+    permission: email_marketing.manage
+    title: Add contact to mailing list
+    action: email_marketing.subscriptions.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mailing_subscriptions]
+    mutation:
+      operation: insert
+      table: mailing_subscriptions
+      fields: [contact_id, list_id, opt_out, opt_out_reason_id, opt_out_datetime, subscription_date]
+      required: [contact_id, list_id]
+      defaults: { row_version: 1, opt_out: false, subscription_date: '2026-01-15 10:30:00', created_at: '2026-01-15 10:30:00', updated_at: '2026-01-15 10:30:00' }
+      before_steps: [{ query: "SELECT 'mailing-subscription-' || :contact_id || '-' || :list_id AS id", assign: true }]
+      guards:
+        - { query: "SELECT id FROM mailing_contacts WHERE id = :contact_id AND active = true", status: 422, code: EMAIL_MAILING_CONTACT_INVALID, message: Select an active mailing contact. }
+        - { query: "SELECT id FROM mailing_lists WHERE id = :list_id AND active = true", status: 422, code: EMAIL_MAILING_LIST_INVALID, message: Select an active mailing list. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mailing_subscriptions WHERE contact_id = :contact_id AND list_id = :list_id)", status: 409, code: EMAIL_MAILING_SUBSCRIPTION_EXISTS, message: This contact is already on the selected mailing list. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:opt_out AS BOOLEAN), false) = true OR NOT EXISTS (SELECT 1 FROM mailing_contacts WHERE id = :contact_id AND is_blacklisted = true)", status: 409, code: EMAIL_MAILING_CONTACT_BLACKLISTED, message: Blacklisted email addresses cannot be subscribed. }
+      steps: [{ query: "UPDATE mailing_lists SET subscriber_count = subscriber_count + 1, contact_count = contact_count + 1, updated_at = TIMESTAMP '2026-01-15 10:30:00' WHERE id = :list_id" }]
+      result: { query: "SELECT * FROM mailing_subscriptions WHERE id = :id" }
+    fields:
+      - { field: contact_id, label: Mailing contact, type: select, options_source: mailing_subscription_contacts, required: true }
+      - { field: list_id, label: Mailing list, type: select, options_source: mailing_subscription_lists, required: true }
+      - { field: opt_out, label: Opted out, type: checkbox }
+      - { field: opt_out_reason_id, label: Opt-out reason, type: select, options_source: mailing_subscription_optout_reasons }
+      - { field: subscription_date, label: Subscription date, type: text }
+  - id: edit_mailing_subscription
+    type: server_form
+    permission: email_marketing.manage
+    title: Edit mailing list subscription
+    action: email_marketing.subscriptions.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [mailing_subscriptions]
+    mutation:
+      operation: update
+      table: mailing_subscriptions
+      fields: [opt_out, opt_out_reason_id, opt_out_datetime]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mailing_subscriptions WHERE id = :id", status: 404, code: EMAIL_MAILING_SUBSCRIPTION_NOT_FOUND, message: Mailing list subscription not found. }
+        - { query: "SELECT 1 AS ok FROM mailing_subscriptions s JOIN mailing_lists l ON l.id = s.list_id JOIN mailing_contacts c ON c.id = s.contact_id WHERE s.id = :id AND l.active = true AND c.active = true", status: 409, code: EMAIL_MAILING_SUBSCRIPTION_INACTIVE, message: Only active contacts on active lists can be edited. }
+        - { query: "SELECT 1 AS ok WHERE :opt_out_reason_id IS NULL OR :opt_out_reason_id = '' OR EXISTS (SELECT 1 FROM email_marketing_optout_reasons WHERE id = :opt_out_reason_id)", status: 422, code: EMAIL_MAILING_OPTOUT_REASON_INVALID, message: Select a valid opt-out reason. }
+      result: { query: "SELECT * FROM mailing_subscriptions WHERE id = :id" }
+    fields:
+      - { field: opt_out, label: Opted out, type: checkbox }
+      - { field: opt_out_reason_id, label: Opt-out reason, type: select, options_source: mailing_subscription_optout_reasons }
+      - { field: opt_out_datetime, label: Unsubscription date, type: text }
+  - id: unsubscribe_mailing_subscription
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.subscriptions.unsubscribe
+    handler: yaml_mutation
+    refresh: [mailing_subscriptions]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM mailing_subscriptions WHERE id = :id", status: 404, code: EMAIL_MAILING_SUBSCRIPTION_NOT_FOUND, message: Mailing list subscription not found. }
+        - { query: "SELECT id FROM mailing_subscriptions WHERE id = :id AND row_version = :expected_row_version AND opt_out = false", status: 409, code: EMAIL_MAILING_SUBSCRIPTION_STATE_CHANGED, message: This subscription is already opted out or has changed. Reload before unsubscribing. }
+      steps: [{ query: "UPDATE mailing_subscriptions SET opt_out = true, opt_out_reason_id = COALESCE(NULLIF(:opt_out_reason_id, ''), 'email-optout-other'), opt_out_datetime = TIMESTAMP '2026-01-15 11:00:00', updated_at = TIMESTAMP '2026-01-15 11:00:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_SUBSCRIPTION_STATE_CHANGED, message: This subscription changed before it could be opted out. }]
+      result: { query: "SELECT * FROM mailing_subscriptions WHERE id = :id" }
+  - id: subscribe_mailing_subscription
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.subscriptions.subscribe
+    handler: yaml_mutation
+    refresh: [mailing_subscriptions]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM mailing_subscriptions WHERE id = :id", status: 404, code: EMAIL_MAILING_SUBSCRIPTION_NOT_FOUND, message: Mailing list subscription not found. }
+        - { query: "SELECT id FROM mailing_subscriptions WHERE id = :id AND row_version = :expected_row_version AND opt_out = true", status: 409, code: EMAIL_MAILING_SUBSCRIPTION_STATE_CHANGED, message: This subscription is already active or has changed. Reload before resubscribing. }
+        - { query: "SELECT s.id FROM mailing_subscriptions s JOIN mailing_contacts c ON c.id = s.contact_id WHERE s.id = :id AND c.is_blacklisted = false", status: 409, code: EMAIL_MAILING_CONTACT_BLACKLISTED, message: Blacklisted email addresses cannot be resubscribed. }
+      steps: [{ query: "UPDATE mailing_subscriptions SET opt_out = false, opt_out_reason_id = NULL, opt_out_datetime = NULL, updated_at = TIMESTAMP '2026-01-15 11:05:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_SUBSCRIPTION_STATE_CHANGED, message: This subscription changed before it could be resubscribed. }]
+      result: { query: "SELECT * FROM mailing_subscriptions WHERE id = :id" }
+  - id: delete_mailing_subscription
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.subscriptions.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [mailing_subscriptions]
+    mutation:
+      operation: delete
+      table: mailing_subscriptions
+      concurrency: { required: true }
+      before_steps: [{ query: "SELECT list_id FROM mailing_subscriptions WHERE id = :id", assign: true }]
+      guards: [{ query: "SELECT id FROM mailing_subscriptions WHERE id = :id", status: 404, code: EMAIL_MAILING_SUBSCRIPTION_NOT_FOUND, message: Mailing list subscription not found. }]
+      steps: [{ query: "UPDATE mailing_lists SET subscriber_count = GREATEST(subscriber_count - 1, 0), contact_count = GREATEST(contact_count - 1, 0), updated_at = TIMESTAMP '2026-01-15 11:10:00' WHERE id = :list_id" }]

@@ -99,6 +99,31 @@ implemented.
 | Authenticated Core3 Optout Reasons | 390x844 | `/tmp/core3-email-optout-reasons-authenticated-mobile-final-20260910.png` |
 | Authenticated Core3 Optout Reason detail | 1440x900 | `/tmp/core3-email-optout-reason-detail-authenticated-desktop-final-20260910.png` |
 
+## Implemented action slice — Mailing List Contacts and Subscriptions (2026-09-10)
+
+The next bounded installed action slice maps Odoo `action_view_mass_mailing_contacts`
+and the `mailing.subscription` records exposed from a mailing list. Core3 exposes
+the list at `/mailing-contacts`, with the existing mailing-list Subscribers stat
+button now routing here with `list_id`. The page and API remain separate and are
+joined by `page.id`:
+
+- Layout: `services/email-marketing/pages/mailing-contacts.yaml`.
+- API: `services/email-marketing/api/mailing-contacts.yaml`.
+- Fixtures/schema: `services/email-marketing/migrations/20260910270000-006-email-mailing-contacts.yaml`
+  and `20260910271000-007-email-mailing-contact-demo.yaml`.
+- Focused contract test: `test/email_marketing_mailing_contacts.integration.test.ts`.
+
+The fixed seed date remains `2026-01-15`; seven Odoo demo contact names are
+stable and subscriptions cover active, opted-out, bounced, blacklisted, and
+multi-list cases. The slice covers permission-bound listing and subscription
+CRUD, list/contact/reason options, search/list/status filters, add/remove list
+membership, unsubscribe/resubscribe workflow, blacklist and inactive guards,
+stale row-version rejection, empty results, and deterministic 503 transport
+errors. Counts on the selected mailing list are updated transactionally when a
+subscription is added or removed. No screenshots are committed; installed
+Odoo visual evidence remains limited by the plan's `mass_mailing` uninstalled
+database gate unless a disposable installed reference is available.
+
 ## Source menu, action, view, and route inventory
 
 The source-defined visible menu tree is:
