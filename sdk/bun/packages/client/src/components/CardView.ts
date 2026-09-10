@@ -16,7 +16,7 @@ export type CardViewDefinition = {
   groupBy?: string;
   groups?: Array<{ value: string; label: string; color?: string }>;
   groupsSource?: string;
-  card?: { title: string; subtitle?: string; imageField?: string; image_field?: string; compact?: boolean; avatarField?: string; avatar_field?: string; companyField?: string; company_field?: string; primaryMetric?: string; primary_metric?: string; primaryMetricLabel?: string; primary_metric_label?: string; contactFields?: Array<{ field: string; icon?: string }>; contact_fields?: Array<{ field: string; icon?: string }>; fields?: Array<{ field: string; label?: string }>; footer?: Array<{ field: string; label?: string; totalField?: string; total_field?: string }> };
+  card?: { title: string; subtitle?: string; imageField?: string; image_field?: string; compact?: boolean; avatarField?: string; avatar_field?: string; companyField?: string; company_field?: string; primaryMetric?: string; primary_metric?: string; primaryMetricLabel?: string; primary_metric_label?: string; contactFields?: Array<{ field: string; icon?: string }>; contact_fields?: Array<{ field: string; icon?: string }>; badges?: Array<{ field: string }>; fields?: Array<{ field: string; label?: string }>; footer?: Array<{ field: string; label?: string; totalField?: string; total_field?: string }> };
 };
 
 export type CardViewOptions = {

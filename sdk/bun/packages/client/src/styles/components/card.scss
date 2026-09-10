@@ -42,6 +42,9 @@
 .o-kanban-card-contact-icon svg { width: 13px; height: 13px; }
 .o-kanban-card-company { display: flex; align-items: center; gap: 5px; margin-top: 7px; color: var(--o-list-text); font-size: 12px; }
 .o-kanban-card-company-icon { color: var(--o-list-text); font-size: 14px; line-height: 1; }
+.o-kanban-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+.o-kanban-card-badge { display: inline-flex; min-height: 20px; align-items: center; padding: 2px 8px; border-radius: 10px; color: #2f234d; font-size: 11px; line-height: 1.2; }
+.o-kanban-card-badge.is-color-0 { background: #dfb2d2; }.o-kanban-card-badge.is-color-1 { background: #b6e7c1; }.o-kanban-card-badge.is-color-2 { background: #aeb8f2; }.o-kanban-card-badge.is-color-3 { background: #f5dc83; }.o-kanban-card-badge.is-color-4 { background: #f2bd9a; }
 .o-kanban-card-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 16px; }
 .o-kanban-card-primary-metric { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border-radius: 4px; background: var(--o-list-action); color: #fff; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .o-kanban-card-metrics { display: grid; gap: 4px; color: var(--o-list-action); font-size: 12px; text-align: right; }

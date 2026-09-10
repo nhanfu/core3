@@ -7,6 +7,7 @@ type ListRow = Record<string, unknown>;
 type KanbanCardField = { field: string; label?: string };
 type KanbanCardFooter = { field: string; label?: string; totalField?: string; total_field?: string };
 type KanbanCardContact = { field: string; icon?: string };
+type KanbanCardBadge = { field: string };
 
 function initials(value: unknown) {
   const words = String(value || '').trim().split(/\s+/).filter(Boolean);
@@ -35,6 +36,7 @@ export type KanbanViewDefinition = {
     primary_metric_label?: string;
     contactFields?: KanbanCardContact[];
     contact_fields?: KanbanCardContact[];
+    badges?: KanbanCardBadge[];
     fields?: KanbanCardField[];
     footer?: KanbanCardFooter[];
   };
@@ -235,6 +237,13 @@ export class KanbanView extends BaseComponent {
       const companyLine = html.take(card).div.className('o-kanban-card-company').ele();
       html.take(companyLine).span.className('o-kanban-card-company-icon').text('▦');
       html.take(companyLine).span.text(String(company));
+    }
+
+    const badges = cardDef.badges || [];
+    const badgeValues = badges.flatMap(badge => String(row[badge.field] || '').split('|').map(value => value.trim()).filter(Boolean));
+    if (badgeValues.length) {
+      const badgeList = html.take(card).div.className('o-kanban-card-badges').ele();
+      for (const [index, value] of badgeValues.entries()) html.take(badgeList).span.className(`o-kanban-card-badge is-color-${index % 5}`).text(value);
     }
 
     const metricField = cardDef.primaryMetric || cardDef.primary_metric;

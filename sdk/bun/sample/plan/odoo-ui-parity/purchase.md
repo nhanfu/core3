@@ -520,8 +520,9 @@ gap to address in a future visual refinement. Screenshots remain under `/tmp`.
 A fresh authenticated comparison reproduced the documented mobile mismatch and
 was used to refine the existing shared compact-card contract. The Vendors card
 now exposes an Odoo-shaped identity block with deterministic initials and
-email, phone/location context through the datasource's `location_display`, a
-purchase-count metric, open-order/status details, and a purchase-order footer.
+email, phone/location context through the datasource's `location_display`,
+colored deterministic vendor-tag badges, a purchase-count metric,
+open-order/status details, and a purchase-order footer.
 The page remains page-only and continues to bind `services/purchase/api/vendors.yaml`
 through `page.id: vendors`; no shared renderer or image asset was added.
 
@@ -534,7 +535,8 @@ reference limitation, while the authenticated populated list/kanban DOM was
 still captured. The remaining deliberate difference is Odoo's live contact
 logos, colored vendor-tag chips, and activity-icon chips; Core3 now matches the
 card hierarchy and responsive information density using the available shared
-primitive, with those decorations still a future shared-card enhancement.
+primitive. Live contact logos and activity-icon chips remain a future shared
+card enhancement.
 
 ## Acceptance gate
 

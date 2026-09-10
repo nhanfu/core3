@@ -30,7 +30,7 @@ describe('Purchase Vendors parity', () => {
     const listView = list.components[0];
     expect(listView).toMatchObject({ source: 'purchase_vendors', row_open_action: 'view_purchase_vendor', responsive_card: true });
     expect(listView.views.map((view: any) => view.id)).toEqual(['list', 'card']);
-    expect(listView.views[1]).toMatchObject({ label: 'Kanban', mobile: true, card: { title: 'name', subtitle: 'email', compact: true, avatar_field: 'name', contact_fields: [{ field: 'phone', icon: 'phone' }], company_field: 'location_display', primary_metric: 'purchase_order_count' } });
+    expect(listView.views[1]).toMatchObject({ label: 'Kanban', mobile: true, card: { title: 'name', subtitle: 'email', compact: true, avatar_field: 'name', contact_fields: [{ field: 'phone', icon: 'phone' }], badges: [{ field: 'vendor_tags' }], company_field: 'location_display', primary_metric: 'purchase_order_count' } });
     expect(listView.columns.map((column: any) => column.field)).toEqual(['name', 'email', 'phone', 'city', 'country', 'purchase_order_count', 'payment_terms', 'state']);
     expect(detail.components[0]).toMatchObject({ source: 'purchase_vendor_detail', status_field: 'state', editable: true });
     expect(detail.components[0].stat_buttons).toContainEqual(expect.objectContaining({ id: 'vendor_purchase_orders', value_field: 'purchase_order_count' }));
@@ -47,7 +47,7 @@ describe('Purchase Vendors parity', () => {
     const active = await repository.querySource(source, params, 0, 50);
     expect(active.data.map((row: any) => row.name)).toEqual(['Gemini Furniture', 'Lotus Industrial Supply', 'Northwind Components', 'Ready Mat', 'Saigon Office Goods']);
     expect(active.data.every((row: any) => row.state === 'Active')).toBe(true);
-    expect(active.data.find((row: any) => row.name === 'Northwind Components')).toMatchObject({ purchase_order_count: 3, open_purchase_order_count: 3, country: 'United States', location_display: 'Seattle, United States' });
+    expect(active.data.find((row: any) => row.name === 'Northwind Components')).toMatchObject({ purchase_order_count: 3, open_purchase_order_count: 3, country: 'United States', location_display: 'Seattle, United States', vendor_tags: 'IT Suppliers' });
 
     const onlyActive = await repository.querySource(source, { ...params, state: 'Active' }, 0, 50);
     expect(onlyActive.data).toHaveLength(5);
