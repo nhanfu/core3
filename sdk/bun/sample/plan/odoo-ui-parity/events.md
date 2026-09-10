@@ -2,7 +2,32 @@
 
 Status: in-progress
 
-## Current batch: Revenues graph and pivot
+## Current batch: Question answer-choice editor
+
+The bounded follow-up for the Event Questions list/detail surface is now
+implemented. A reusable selection question has a page-owned
+`event_question_answers` datasource and an Odoo-style x2many answer grid with
+permissioned add, edit, and delete actions. Choices are ordered, normalized,
+validated, and projected back into the parent question's denormalized answer
+summary. Parent/child row versions protect stale edits and deletes; missing
+parents/children, duplicate choices, invalid names/sequences, and datasource
+transport failures have explicit stable error contracts.
+
+The fixed fixture is `Dietary requirements` with `Vegetarian`, `Vegan`, and
+`No preference`. The page and API remain joined by `page.id`, and the new
+migration is idempotent and free of current-time/random seed values.
+
+Acceptance evidence for this batch:
+
+- Focused Events integration tests: 7 passed, 72 assertions.
+- Authenticated Core3 desktop detail capture:
+  `/tmp/core3-events-question-answers-detail-desktop.png`.
+- Core3 desktop audit measured `scrollWidth === innerWidth` at 1440px and
+  observed no same-origin application API failures. The authenticated Odoo
+  desktop/mobile comparison is pending because the clean `core3_owned` init is
+  still running and has not opened port 8069.
+
+## Previous batch: Revenues graph and pivot
 
 The installed Odoo 19 reference was authenticated as `codex@core3.local` in
 database `core3_owned` and reached the Revenues action through action 750. Its
@@ -16,11 +41,9 @@ Reference captures: `/tmp/odoo-events-revenues-desktop.png`,
 `/tmp/odoo-events-revenues-mobile.png`. Core3 captures are produced during the
 authenticated browser gate and are intentionally kept outside Git.
 
-This is an implementation gate for the Odoo 19 Community `event` addon. It is
-plan-only: do not add or modify product code, migrations, fixtures, assets, or
-tests in this worktree. `ready` is reserved for the point at which all six
-register gates below have evidence, including installed-addon desktop/mobile
-reference captures.
+This is an implementation gate for the Odoo 19 Community `event` addon.
+`ready` is reserved for the point at which all six register gates below have
+evidence, including installed-addon desktop/mobile reference captures.
 
 ## Reference gate and live limitation
 
@@ -186,13 +209,13 @@ Core3 endpoint.
 - `event-workflow`: transition definitions using the generic
   `order_transition` handler.
 
-The schema only has `events` and `event_registrations`; the demo migration uses
-`CURRENT_TIMESTAMP + INTERVAL 14 DAY`; page YAML owns datasource SQL; there is
-no `services/events/api/` directory; and the manifest exposes only Events and
-Event Analysis. Missing are the full model graph, menus/actions, all view modes,
-registration desk, tickets/questions/slots/stages/tags/templates/mails,
-reports/settings, portal/ICS/tickets, activities/chatter/attachments,
-company/user visibility, Odoo stage semantics, and deterministic demo data.
+The schema now also includes the bounded `event_question_answers` relation for
+the question detail editor. The Event Questions page owns only layout, while
+`services/events/api/event-question-detail.yaml` owns its page-scoped query and
+CRUD actions. The remaining full model graph, menus/actions, other view modes,
+registration desk, tickets/slots/stages/tags/templates/mails, reports/settings,
+portal/ICS/tickets, activities/chatter/attachments, company/user visibility,
+and Odoo stage semantics remain outside this batch.
 The existing `order_transition` handler must not be treated as an adequate
 Events API boundary without a verified generic workflow contract.
 

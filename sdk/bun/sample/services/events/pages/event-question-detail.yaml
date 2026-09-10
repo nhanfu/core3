@@ -6,6 +6,7 @@ components:
     title_field: title
     subtitle_field: question_type
     editable: true
+    content_slot: true
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
       - { id: back_to_event_questions, label: Back to event questions, variant: secondary, permission: events.read }
@@ -18,7 +19,40 @@ components:
           - { field: question_type, label: Type }
           - { field: mandatory, label: Mandatory }
           - { field: once_per_order, label: Once per Order }
-      - title: Answers
-        fields:
-          - { field: answers, label: Answers }
           - { field: row_version, label: Record version }
+    notebook:
+      active: answers
+      tabs:
+        - { id: answers, label: Answers, content_slot: true }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: event_question_answers
+    parent_source: event_question_detail
+    title: Suggested answers
+    description: Add the choices attendees can select during registration.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_event_question_answer, label: Add an answer, variant: primary, permission: events.write }
+    empty_state: { title: No suggested answers, description: Add an answer choice for this selection question. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: name, field: name, label: Answer, input_type: text, required: true }
+      - type: LineItemActions
+        id: answer_actions
+        edit_action: edit_event_question_answer
+        create_action: add_event_question_answer
+        actions:
+          - { id: edit_event_question_answer, label: Edit, icon: edit, variant: ghost, permission: events.write }
+          - { id: delete_event_question_answer, label: Delete, icon: trash, variant: danger, permission: events.write }
+    columns:
+      - { field: sequence, label: '#', align: right, width: 64 }
+      - { field: name, label: Answer, width: 360 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_event_question_answer, label: Edit, icon: edit, variant: ghost, permission: events.write }
+          - { id: delete_event_question_answer, label: Delete, icon: trash, variant: danger, permission: events.write }

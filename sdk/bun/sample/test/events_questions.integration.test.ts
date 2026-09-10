@@ -36,9 +36,9 @@ describe('Events Event Questions parity action', () => {
     expect(detailPage.page).toMatchObject({ id: 'event-question-detail', route: '/events/questions/detail', auth: { require: ['events.read'] } });
     expect(list).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'event_questions', row_open_action: 'view_event_question', row_double_click_action: 'view_event_question', empty_state: { title: 'No event questions' } });
     expect(detail).toMatchObject({ type: 'OdooFormView', source: 'event_question_detail', editable: true });
-    expect(detail.groups.map((group: any) => group.title)).toEqual(['Question', 'Answers']);
+    expect(detail.groups.map((group: any) => group.title)).toEqual(['Question']);
     expect(discovered.pageDatasources.get('event-questions')).toEqual(['event_questions']);
-    expect(discovered.pageDatasources.get('event-question-detail')).toEqual(['event_question_detail']);
+    expect(discovered.pageDatasources.get('event-question-detail')).toEqual(['event_question_detail', 'event_question_answers']);
     expect(listApi().page.id).toBe('event-questions');
     expect(detailApi().page.id).toBe('event-question-detail');
   });
@@ -65,7 +65,7 @@ describe('Events Event Questions parity action', () => {
     const detail = detailApi().datasources[0];
 
     expect((await repository.querySource(list, { q: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.title))
-      .toEqual(['Email', 'Name', 'Phone']);
+      .toEqual(['Dietary requirements', 'Email', 'Name', 'Phone']);
     expect((await repository.querySource(list, { q: 'mail', fixture_state: null }, 0, 50)).data)
       .toMatchObject([{ id: 'question-email', title: 'Email', question_type: 'Email' }]);
     expect((await repository.querySource(list, { q: 'No matching question', fixture_state: null }, 0, 50)).data).toEqual([]);
@@ -88,10 +88,10 @@ describe('Events Event Questions parity action', () => {
     const remove = action('delete_event_question');
 
     const created = await repository.executeMutation(create.mutation, {
-      values: { title: 'Dietary requirements', question_type: 'Selection', mandatory: true, once_per_order: true, answers: 'Vegetarian, Vegan' },
+      values: { title: 'Accessibility needs', question_type: 'Selection', mandatory: true, once_per_order: true, answers: 'Vegetarian, Vegan' },
     });
-    expect(created).toMatchObject({ title: 'Dietary requirements', question_type: 'Selection', mandatory: true, once_per_order: true, row_version: 1 });
-    await expect(repository.executeMutation(create.mutation, { values: { title: 'dietary requirements', question_type: 'Text' } }))
+    expect(created).toMatchObject({ title: 'Accessibility needs', question_type: 'Selection', mandatory: true, once_per_order: true, row_version: 1 });
+    await expect(repository.executeMutation(create.mutation, { values: { title: 'accessibility needs', question_type: 'Text' } }))
       .rejects.toMatchObject({ status: 409, code: 'EVENT_QUESTION_TITLE_EXISTS' });
     await expect(repository.executeMutation(create.mutation, { values: { title: 'Unsupported', question_type: 'Date' } }))
       .rejects.toMatchObject({ status: 422, code: 'EVENT_QUESTION_TYPE_INVALID' });
@@ -101,9 +101,9 @@ describe('Events Event Questions parity action', () => {
     const updated = await repository.executeMutation(edit.mutation, {
       id: created.id,
       expected_row_version: 1,
-      values: { title: 'Dietary needs', question_type: 'Selection', mandatory: false, once_per_order: true, answers: 'Vegetarian, Vegan, Other' },
+      values: { title: 'Accessibility updated', question_type: 'Selection', mandatory: false, once_per_order: true, answers: 'Vegetarian, Vegan, Other' },
     });
-    expect(updated).toMatchObject({ id: created.id, title: 'Dietary needs', mandatory: false, row_version: 2 });
+    expect(updated).toMatchObject({ id: created.id, title: 'Accessibility updated', mandatory: false, row_version: 2 });
     await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { title: 'Stale question', question_type: 'Text' } }))
       .rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
     await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 2, values: { title: 'Invalid question', question_type: 'Date' } }))
@@ -114,7 +114,7 @@ describe('Events Event Questions parity action', () => {
     await expect(repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 1 }))
       .rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
     await repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 2 });
-    expect((await repository.querySource(listApi().datasources[0], { q: 'Dietary', fixture_state: null }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(listApi().datasources[0], { q: 'Accessibility', fixture_state: null }, 0, 50)).data).toEqual([]);
     await expect(repository.executeMutation(remove.mutation, { id: 'missing-question', expected_row_version: 1 }))
       .rejects.toMatchObject({ status: 404, code: 'EVENT_QUESTION_NOT_FOUND' });
   });

@@ -1,0 +1,20 @@
+version: 0.0.15
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_question_answers (id VARCHAR PRIMARY KEY, question_id VARCHAR NOT NULL, name VARCHAR NOT NULL, sequence INTEGER NOT NULL DEFAULT 10, row_version BIGINT NOT NULL DEFAULT 1);
+      INSERT INTO event_questions(id, title, question_type, mandatory, once_per_order, answers) VALUES ('question-dietary','Dietary requirements','Selection',false,false,'Vegetarian, Vegan, No preference') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_question_answers(id, question_id, name, sequence, row_version) VALUES
+        ('question-dietary-answer-01','question-dietary','Vegetarian',10,1),
+        ('question-dietary-answer-02','question-dietary','Vegan',20,1),
+        ('question-dietary-answer-03','question-dietary','No preference',30,1)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_question_answers WHERE id IN ('question-dietary-answer-01','question-dietary-answer-02','question-dietary-answer-03');
+      DELETE FROM event_questions WHERE id = 'question-dietary';
+      DROP TABLE IF EXISTS event_question_answers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

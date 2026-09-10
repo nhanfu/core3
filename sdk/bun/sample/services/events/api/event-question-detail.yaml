@@ -5,6 +5,10 @@ datasources:
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_QUESTION_DETAIL_UNAVAILABLE, message: Event question details are temporarily unavailable. } }
     query: "SELECT id, row_version, title, question_type, mandatory, once_per_order, answers, 'Event Question' AS question_label FROM event_questions WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: event_question_answers
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_QUESTION_ANSWERS_UNAVAILABLE, message: Suggested answers are temporarily unavailable. } }
+    query: "SELECT id, row_version, question_id, name, sequence FROM event_question_answers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND question_id = :id ORDER BY sequence, id"
 actions:
   - id: back_to_event_questions
     type: navigate
@@ -19,7 +23,7 @@ actions:
     operation: update
     params: { id: '{state.id}' }
     prefill: state.event_question_detail
-    refresh: [event_question_detail, event_questions]
+    refresh: [event_question_detail, event_questions, event_question_answers]
     mutation:
       operation: update
       table: event_questions
@@ -50,3 +54,74 @@ actions:
       table: event_questions
       concurrency: { required: true }
       guards: [{ query: "SELECT id FROM event_questions WHERE id = :id", status: 404, code: EVENT_QUESTION_NOT_FOUND, message: Event question not found. }]
+  - id: add_event_question_answer
+    type: server_form
+    permission: events.write
+    title: Add answer choice
+    action: events.questions.answers.create
+    handler: line_item
+    operation: create
+    domain: event_question
+    params: { id: '{state.id}' }
+    refresh: [event_question_detail, event_questions, event_question_answers]
+    fields:
+      - { field: name, label: Answer, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 10, min: 1 }
+    mutation:
+      generated: [answer_id]
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM event_question_answers WHERE question_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM event_questions WHERE id = :id AND question_type = 'Selection' AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The question changed or does not accept answer choices. Reload it before adding an answer. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:name AS VARCHAR), ''))) > 0", status: 422, code: EVENT_QUESTION_ANSWER_NAME_REQUIRED, message: Enter an answer choice. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_question_answers WHERE question_id = :id AND LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EVENT_QUESTION_ANSWER_EXISTS, message: This answer choice already exists for the question. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:sequence AS INTEGER), CAST(:next_sequence AS INTEGER)) > 0", status: 422, code: EVENT_QUESTION_ANSWER_SEQUENCE_INVALID, message: Sequence must be greater than zero. }
+      steps:
+        - { query: "INSERT INTO event_question_answers(id, question_id, name, sequence, row_version) VALUES(:answer_id, :id, TRIM(:name), COALESCE(CAST(:sequence AS INTEGER), CAST(:next_sequence AS INTEGER)), 1)" }
+        - { query: "UPDATE event_questions SET answers = COALESCE((SELECT string_agg(name, ', ' ORDER BY sequence, id) FROM event_question_answers WHERE question_id = :id), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The question changed while adding the answer. Reload it before saving. }
+      result: { query: "SELECT * FROM event_question_answers WHERE id = :answer_id" }
+  - id: edit_event_question_answer
+    type: server_form
+    permission: events.write
+    title: Edit answer choice
+    action: events.questions.answers.update
+    handler: line_item
+    operation: update
+    domain: event_question
+    prefill: row
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [event_question_detail, event_questions, event_question_answers]
+    fields:
+      - { field: name, label: Answer, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 1 }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM event_questions WHERE id = :id", status: 404, code: EVENT_QUESTION_NOT_FOUND, message: Event question not found. }
+        - { query: "SELECT id FROM event_questions WHERE id = :id AND question_type = 'Selection' AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The question changed or does not accept answer choices. Reload it before editing an answer. }
+        - { query: "SELECT id, name, sequence FROM event_question_answers WHERE id = :line_id AND question_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_QUESTION_ANSWER_STALE, message: The answer choice changed or was deleted. Reload it before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:name AS VARCHAR), ''))) > 0", status: 422, code: EVENT_QUESTION_ANSWER_NAME_REQUIRED, message: Enter an answer choice. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_question_answers WHERE question_id = :id AND LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :line_id)", status: 409, code: EVENT_QUESTION_ANSWER_EXISTS, message: This answer choice already exists for the question. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:sequence AS INTEGER), 0) > 0", status: 422, code: EVENT_QUESTION_ANSWER_SEQUENCE_INVALID, message: Sequence must be greater than zero. }
+      steps:
+        - { query: "UPDATE event_question_answers SET name = TRIM(:name), sequence = CAST(:sequence AS INTEGER), row_version = row_version + 1 WHERE id = :line_id AND question_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EVENT_QUESTION_ANSWER_STALE, message: The answer choice changed or was deleted. Reload it before saving. }
+        - { query: "UPDATE event_questions SET answers = COALESCE((SELECT string_agg(name, ', ' ORDER BY sequence, id) FROM event_question_answers WHERE question_id = :id), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The question changed while editing the answer. Reload it before saving. }
+      result: { query: "SELECT * FROM event_question_answers WHERE id = :line_id" }
+  - id: delete_event_question_answer
+    type: server
+    permission: events.write
+    action: events.questions.answers.delete
+    handler: line_item
+    operation: delete
+    domain: event_question
+    confirm: 'Delete answer choice {{row.name}}?'
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [event_question_detail, event_questions, event_question_answers]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM event_questions WHERE id = :id", status: 404, code: EVENT_QUESTION_NOT_FOUND, message: Event question not found. }
+        - { query: "SELECT id FROM event_questions WHERE id = :id AND question_type = 'Selection' AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The question changed or does not accept answer choices. Reload it before deleting an answer. }
+        - { query: "SELECT id FROM event_question_answers WHERE id = :line_id AND question_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_QUESTION_ANSWER_STALE, message: The answer choice changed or was deleted. Reload it before deleting. }
+      steps:
+        - { query: "DELETE FROM event_question_answers WHERE id = :line_id AND question_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EVENT_QUESTION_ANSWER_STALE, message: The answer choice changed or was deleted. Reload it before deleting. }
+        - { query: "UPDATE event_questions SET answers = COALESCE((SELECT string_agg(name, ', ' ORDER BY sequence, id) FROM event_question_answers WHERE question_id = :id), ''), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The question changed while deleting the answer. Reload it before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
