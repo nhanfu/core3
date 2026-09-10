@@ -102,6 +102,12 @@ export class OdooFormView extends BaseComponent {
 
     const sheet = html.take(sheetBackground).div.className('o-form-sheet').ele();
     const header = html.take(sheet).header.className('o-form-header').ele();
+    if (this.def.avatar_field || this.def.avatar_initials_field) {
+      const avatar = html.take(header).div.className('o-form-avatar').ele();
+      const image = String(record[this.def.avatar_field || ''] || '').trim();
+      if (image) html.take(avatar).img.attr('src', image).attr('alt', String(record[this.def.title_field] || 'Contact')).ele();
+      else html.take(avatar).span.className('o-form-avatar-initials').text(String(record[this.def.avatar_initials_field || ''] || String(record[this.def.title_field] || '?').trim().slice(0, 1)).toUpperCase());
+    }
     const identity = html.take(header).div.className('o-form-identity').ele();
     html.take(identity).h1.className('o-form-title').text(String(record[this.def.title_field] || '—'));
     if (this.def.subtitle_field && record[this.def.subtitle_field]) {

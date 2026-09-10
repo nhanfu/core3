@@ -1,15 +1,5 @@
 title: Contacts
-page: { id: contacts, breadcrumb: [Contacts], auth: { require: [base.contacts.read] } }
-datasources:
-  - id: contacts
-    permission: base.contacts.read
-    query: "SELECT c.id, c.row_version, c.name, c.company_type, c.email, c.phone, c.city, c.country_name, c.is_company, c.active, c.created_at, c.parent_company_id, parent.name AS parent_company_name, c.website, c.language_code, (SELECT COUNT(*) FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS category_count, (SELECT COUNT(*) FROM base_activities a WHERE a.contact_id = c.id AND a.state = 'planned') AS activity_count FROM base_contacts c LEFT JOIN base_contacts parent ON parent.id = c.parent_company_id WHERE c.active = true AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR c.phone ILIKE '%' || :q || '%') AND (:company_type IS NULL OR c.company_type = :company_type) AND (:country_name IS NULL OR c.country_name = :country_name) ORDER BY COALESCE(parent.name, c.name), c.name"
-  - id: contact_types
-    permission: base.contacts.read
-    query: "SELECT value, label FROM (VALUES ('person','Person'), ('company','Company'), ('other','Other')) types(value, label)"
-  - id: contact_countries
-    permission: base.contacts.read
-    query: "SELECT DISTINCT country_name AS value, country_name AS label FROM base_contacts WHERE active = true AND country_name IS NOT NULL ORDER BY country_name"
+page: { id: contacts, route: /contacts, breadcrumb: [Contacts], auth: { require: [base.contacts.read] } }
 components:
   - type: ListView
     variant: odoo
@@ -33,14 +23,31 @@ components:
     column_chooser: true
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: email
+          image_field: avatar_url
+          fields:
+            - { field: company_type, label: Type }
+            - { field: phone, label: Phone }
+            - { field: city, label: City }
+            - { field: country_name, label: Country }
+            - { field: parent_company_name, label: Company }
+            - { field: category_count, label: Tags }
+            - { field: activity_count, label: Activities }
       - id: kanban
         label: Kanban
         icon: dashboard
+        mobile: false
         group_by: company_type
         card:
           title: name
           subtitle: email
+          image_field: avatar_url
           fields:
             - { field: company_type, label: Type }
             - { field: phone, label: Phone }
@@ -63,100 +70,4 @@ components:
     row_actions: menu
     row_open_action: view_contact
     row_double_click_action: view_contact
-    form_view: { page: apps/services/base/pages/contact-detail.yaml, side_panel: true }
-    actions:
-      - { id: edit_contact, label: Edit, permission: base.contacts.write, variant: ghost }
-      - { id: duplicate_contact, label: Duplicate, permission: base.contacts.write, variant: secondary }
-      - { id: archive_contact, label: Archive, permission: base.contacts.write, variant: danger }
-actions:
-  - id: create_contact
-    type: server_form
-    permission: base.contacts.write
-    title: New contact
-    action: base.contacts.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [contacts]
-    mutation:
-      operation: insert
-      table: base_contacts
-      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, is_company, notes]
-      required: [name]
-      guards:
-        - { query: "SELECT id FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email)", status: 409, message: A contact with this email already exists }
-      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
-    fields:
-      - { field: name, label: Name, type: text, required: true }
-      - { field: company_type, label: Type, type: select, options_source: contact_types }
-      - { field: email, label: Email, type: text }
-      - { field: phone, label: Phone, type: text }
-      - { field: street, label: Street, type: text }
-      - { field: street2, label: Street 2, type: text }
-      - { field: city, label: City, type: text }
-      - { field: state_name, label: State, type: text }
-      - { field: zip, label: ZIP, type: text }
-      - { field: country_name, label: Country, type: text }
-      - { field: is_company, label: Is a company, type: checkbox }
-      - { field: notes, label: Notes, type: textarea }
-  - id: edit_contact
-    type: server_form
-    permission: base.contacts.write
-    title: Edit contact
-    action: base.contacts.update
-    handler: yaml_mutation
-    operation: update
-    prefill: row
-    refresh: [contacts]
-    mutation:
-      operation: update
-      table: base_contacts
-      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, currency_code, is_company, notes]
-      required: [name]
-      timestamps: true
-      guards:
-        - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true", status: 409, message: Archived contacts cannot be edited }
-        - { query: "SELECT 1 AS ok WHERE :email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email) AND id <> :id)", status: 409, message: A contact with this email already exists }
-    fields:
-      - { field: name, label: Name, type: text, required: true }
-      - { field: company_type, label: Type, type: select, options_source: contact_types }
-      - { field: email, label: Email, type: text }
-      - { field: phone, label: Phone, type: text }
-      - { field: street, label: Street, type: text }
-      - { field: street2, label: Street 2, type: text }
-      - { field: city, label: City, type: text }
-      - { field: state_name, label: State, type: text }
-      - { field: zip, label: ZIP, type: text }
-      - { field: country_name, label: Country, type: text }
-      - { field: currency_code, label: Currency, type: text }
-      - { field: is_company, label: Is a company, type: checkbox }
-      - { field: notes, label: Notes, type: textarea }
-  - id: duplicate_contact
-    type: server_form
-    permission: base.contacts.write
-    title: Duplicate contact
-    action: base.contacts.duplicate
-    handler: yaml_mutation
-    operation: create
-    prefill: row
-    refresh: [contacts]
-    mutation:
-      operation: insert
-      table: base_contacts
-      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, currency_code, is_company, notes]
-      required: [name]
-      defaults: { active: true }
-    fields:
-      - { field: name, label: Name, type: text, required: true }
-      - { field: company_type, label: Type, type: select, options_source: contact_types }
-      - { field: email, label: Email, type: text }
-      - { field: phone, label: Phone, type: text }
-      - { field: street, label: Street, type: text }
-      - { field: city, label: City, type: text }
-      - { field: country_name, label: Country, type: text }
-      - { field: notes, label: Notes, type: textarea }
-  - id: view_contact
-    type: navigate
-    permission: base.contacts.read
-    navigate_to: /contact-detail
-    params: { id: '{row.id}' }
-  - { id: archive_contact, type: server, permission: base.contacts.write, action: base.contacts.archive, handler: order_transition, workflow: base_contacts, operation: archive, refresh: [contacts] }
+    empty_state: { title: No contacts, description: No contacts match your search or filters. }
