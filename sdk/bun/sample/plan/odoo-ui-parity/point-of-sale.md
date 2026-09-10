@@ -451,3 +451,27 @@ product navigation require `pos.read`. Empty, missing, and transport-error
 contracts remain explicit at the datasource boundary. Authenticated Core3 and
 owned-Odoo desktop/mobile captures are retained under `/tmp`; screenshots are
 not committed.
+
+## Current batch: Preparation Printers detail and connection workflow
+
+The existing Preparation Printers list was only create-capable. Core3 now adds
+the Odoo-style row-open route `/point-of-sale/preparation-printer-detail` with
+a separate page/API pair joined by `pos-preparation-printer-detail`. The
+service-owned detail exposes printer/device/proxy/category/connection fields,
+active state, explicit empty/missing/transport-error datasource behavior, and
+permissioned edit/delete actions.
+
+Migration `026` adds optimistic `row_version` support and normalizes the three
+stable printer fixtures to fixed January 15, 2026 `last_seen` values. Create
+and update validate required fields and case-insensitive duplicate names;
+update/delete require `pos.manage` and a current row version. The declared
+`pos_preparation_printers` workflow covers Connected, Paused, and Disconnected
+states with guarded Connect, Pause, and Disconnect transitions, including
+stale-record and invalid-transition errors.
+
+Focused integration coverage passes with 4 tests and 34 assertions for menu
+registration, matching page/API IDs, fixture/search/empty/error states, CRUD,
+permissions, validation, stale guards, and workflow transitions. Browser
+verification was not run in this bounded handoff because the required
+persistent browser tooling was unavailable; no screenshots are part of the
+commit.

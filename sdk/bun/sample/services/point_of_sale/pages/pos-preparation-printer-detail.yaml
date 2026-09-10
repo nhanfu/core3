@@ -1,0 +1,31 @@
+title: Preparation Printer
+page: { id: pos-preparation-printer-detail, route: /point-of-sale/preparation-printer-detail, breadcrumb: [Sales, Point of Sale, Preparation Printers, Printer], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_preparation_printer_detail
+    title_field: name
+    status_field: state
+    status_colors: { Connected: green, Paused: amber, Disconnected: red }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_pos_preparation_printers, label: Preparation Printers, variant: secondary, permission: pos.read }
+      - { id: edit_pos_preparation_printer, label: Edit, variant: primary, permission: pos.manage }
+      - { id: connect_pos_preparation_printer, label: Connect, variant: secondary, permission: pos.manage, show_if: "state.pos_preparation_printer_detail.state !== 'Connected'" }
+      - { id: pause_pos_preparation_printer, label: Pause, variant: secondary, permission: pos.manage, show_if: "state.pos_preparation_printer_detail.state === 'Connected'" }
+      - { id: disconnect_pos_preparation_printer, label: Disconnect, variant: danger, permission: pos.manage, show_if: "state.pos_preparation_printer_detail.state !== 'Disconnected'" }
+      - { id: delete_pos_preparation_printer, label: Delete, variant: danger, permission: pos.manage, confirm: Delete this preparation printer? }
+    group_columns: 2
+    groups:
+      - title: Printer
+        wide: true
+        fields:
+          - { field: name, label: Printer }
+          - { field: printer_type, label: Device }
+          - { field: proxy_ip, label: Proxy address }
+          - { field: categories, label: Product categories }
+      - title: Connection
+        fields:
+          - { field: state, label: Status }
+          - { field: last_seen, label: Last seen }
+          - { field: active, label: Active }

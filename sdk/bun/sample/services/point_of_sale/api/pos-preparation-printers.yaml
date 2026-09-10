@@ -2,4 +2,11 @@ page: { id: pos-preparation-printers }
 datasources:
   - id: pos_preparation_printers
     permission: pos.read
-    query: "SELECT id, name, printer_type, proxy_ip, categories, state, CAST(last_seen AS VARCHAR) AS last_seen, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active FROM pos_preparation_printers WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR printer_type ILIKE '%' || :q || '%' OR categories ILIKE '%' || :q || '%') ORDER BY name"
+    error_states: { transport_error: { status: 503, code: POS_PREPARATION_PRINTERS_UNAVAILABLE, message: Preparation printers are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, printer_type, proxy_ip, categories, state, CAST(last_seen AS VARCHAR) AS last_seen, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active FROM pos_preparation_printers WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR printer_type ILIKE '%' || :q || '%' OR categories ILIKE '%' || :q || '%') ORDER BY name"
+actions:
+  - id: view_pos_preparation_printer
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/preparation-printer-detail
+    params: { id: '{row.id}' }

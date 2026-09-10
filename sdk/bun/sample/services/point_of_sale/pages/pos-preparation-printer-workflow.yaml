@@ -1,0 +1,46 @@
+workflow:
+  id: pos_preparation_printers
+  entity: pos_preparation_printers
+  handler: order_transition
+  initial: Connected
+  permission: pos.manage
+  mutable: true
+  status_query: SELECT state AS status FROM pos_preparation_printers WHERE id = ?
+  states:
+    - { id: Connected, label: Connected, color: green }
+    - { id: Paused, label: Paused, color: amber }
+    - { id: Disconnected, label: Disconnected, color: red }
+  transitions:
+    - id: connect
+      from: [Paused, Disconnected]
+      to: Connected
+      permission: pos.manage
+      mutation:
+        guards:
+          - { query: "SELECT id FROM pos_preparation_printers WHERE id = :id AND row_version = :expected_row_version", status: 409, code: POS_PREPARATION_PRINTER_STALE, message: Preparation printer changed; reload before reconnecting. }
+          - { query: "SELECT id FROM pos_preparation_printers WHERE id = :id AND state IN ('Paused', 'Disconnected')", status: 409, code: POS_PREPARATION_PRINTER_INVALID_TRANSITION, message: Only paused or disconnected printers can connect. }
+        steps:
+          - { query: "UPDATE pos_preparation_printers SET state = 'Connected', last_seen = TIMESTAMP '2026-01-15 12:00:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version" }
+        result: { query: "SELECT * FROM pos_preparation_printers WHERE id = :id" }
+    - id: pause
+      from: [Connected]
+      to: Paused
+      permission: pos.manage
+      mutation:
+        guards:
+          - { query: "SELECT id FROM pos_preparation_printers WHERE id = :id AND row_version = :expected_row_version", status: 409, code: POS_PREPARATION_PRINTER_STALE, message: Preparation printer changed; reload before pausing. }
+          - { query: "SELECT id FROM pos_preparation_printers WHERE id = :id AND state = 'Connected'", status: 409, code: POS_PREPARATION_PRINTER_INVALID_TRANSITION, message: Only connected printers can be paused. }
+        steps:
+          - { query: "UPDATE pos_preparation_printers SET state = 'Paused', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version" }
+        result: { query: "SELECT * FROM pos_preparation_printers WHERE id = :id" }
+    - id: disconnect
+      from: [Connected, Paused]
+      to: Disconnected
+      permission: pos.manage
+      mutation:
+        guards:
+          - { query: "SELECT id FROM pos_preparation_printers WHERE id = :id AND row_version = :expected_row_version", status: 409, code: POS_PREPARATION_PRINTER_STALE, message: Preparation printer changed; reload before disconnecting. }
+          - { query: "SELECT id FROM pos_preparation_printers WHERE id = :id AND state IN ('Connected', 'Paused')", status: 409, code: POS_PREPARATION_PRINTER_INVALID_TRANSITION, message: Only connected or paused printers can disconnect. }
+        steps:
+          - { query: "UPDATE pos_preparation_printers SET state = 'Disconnected', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version" }
+        result: { query: "SELECT * FROM pos_preparation_printers WHERE id = :id" }

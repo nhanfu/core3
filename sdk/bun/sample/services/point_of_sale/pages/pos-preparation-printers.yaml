@@ -6,6 +6,9 @@ components:
     source: pos_preparation_printers
     create_action: create_pos_preparation_printer
     create_label: New
+    row_open_action: view_pos_preparation_printer
+    row_double_click_action: view_pos_preparation_printer
+    form_view: { page: apps/services/point_of_sale/pages/pos-preparation-printer-detail.yaml, side_panel: false }
     search: { label: Search preparation printers, placeholder: Search printer or category... }
     columns:
       - { field: name, label: Printer, type: PrimaryEntityCell }
@@ -16,6 +19,7 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    empty_state: { title: No preparation printers, description: No preparation printers match the current search. }
 actions:
   - id: create_pos_preparation_printer
     type: server_form
@@ -28,9 +32,13 @@ actions:
     mutation:
       operation: insert
       table: pos_preparation_printers
-      fields: [name, printer_type, proxy_ip, categories, state, active]
+      fields: [name, printer_type, proxy_ip, categories, state, active, last_seen]
       required: [name, printer_type]
-      defaults: { categories: All products, state: Connected, active: true }
+      defaults: { categories: All products, state: Connected, active: true, last_seen: '2026-01-15 12:00:00' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_PREPARATION_PRINTER_NAME_REQUIRED, message: Printer name is required. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(:printer_type)) BETWEEN 1 AND 80", status: 422, code: POS_PREPARATION_PRINTER_TYPE_REQUIRED, message: Device is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_preparation_printers WHERE LOWER(name) = LOWER(:name))", status: 409, code: POS_PREPARATION_PRINTER_NAME_EXISTS, message: A preparation printer with this name already exists. }
       result: { query: "SELECT * FROM pos_preparation_printers WHERE id = :id" }
     fields:
       - { field: name, label: Printer, type: text, required: true }
