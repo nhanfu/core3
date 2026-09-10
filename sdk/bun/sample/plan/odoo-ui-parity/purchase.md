@@ -501,6 +501,20 @@ pivot table scrolling is internal to the table and the page remains viewport
 fit. A user without `purchase.read` is redirected to the Core3 home route,
 which is the current permission boundary rather than an explicit denial page.
 
+## Purchase Vendors visual acceptance — 2026-09-10
+
+The owned Odoo Vendors action is `/odoo/purchase/vendors`; authenticated paired
+captures were completed at 1440x900 and 390x844. Core3 captures are
+`/tmp/core3-purchase-vendors-desktop.png` and
+`/tmp/core3-purchase-vendors-mobile.png`; Odoo captures are
+`/tmp/odoo-purchase-vendors-desktop.png` and
+`/tmp/odoo-purchase-vendors-mobile.png`. Both surfaces reported zero failed
+responses and equal document/body widths to their viewport. Core3 intentionally
+uses deterministic five-vendor fixtures while Odoo currently displays two
+vendors; the mobile card layout is responsive and functional, but Odoo's
+contact logos, activity chips, and tag decorations remain a shared-card parity
+gap to address in a future visual refinement. Screenshots remain under `/tmp`.
+
 ## Acceptance gate
 
 - Every source-visible menu above has a Core3 route, or an explicit documented
