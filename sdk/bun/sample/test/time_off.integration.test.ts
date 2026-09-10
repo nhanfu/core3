@@ -33,6 +33,7 @@ describe('Time Off Odoo view navigation', () => {
       'balance.yaml',
       'my-allocations.yaml',
       'my-time-off.yaml',
+      'public-holidays.yaml',
       'report-by-employee.yaml',
       'report-by-type.yaml',
       'requests.yaml',

@@ -6,9 +6,24 @@ components:
   - type: ListView
     variant: odoo
     source: public_holidays
+    responsive_card: true
     create_action: create_public_holiday
     create_label: New public holiday
-    search: { label: Search public holidays, placeholder: Search holidays... }
+    search: { label: Search public holidays, placeholder: Search name or working hours... }
+    date_range:
+      label: Period
+      from_field: date_from
+      to_field: date_to
+      presets: [year, last_12_months, all]
+      default_preset: year
+      preset_labels: { year: This year, last_12_months: Last 12 months, all: All dates }
+      validation_messages:
+        invalid: Enter valid dates in YYYY-MM-DD format.
+        start_before_end: The start date must be before the end date.
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Cards, icon: dashboard, mobile: true, card: { title: name, subtitle: calendar_name, fields: [{ field: date_from, label: Start date }, { field: date_to, label: End date }] } }
     empty_state: { title: No public holidays found, description: Create a public holiday or adjust your search. }
     columns:
       - { field: name, label: Name, type: PrimaryEntityCell }
@@ -19,26 +34,7 @@ components:
     row_key: id
     row_open_action: view_public_holiday
     row_double_click_action: view_public_holiday
-actions:
-  - id: create_public_holiday
-    type: server_form
-    permission: time_off.manage
-    title: New public holiday
-    action: time_off.public_holidays.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [public_holidays]
-    mutation:
-      operation: insert
-      table: public_holidays
-      fields: [name, date_from, date_to, calendar_name]
-      required: [name, date_from, date_to]
-      defaults: { calendar_name: Standard 40 hours/week }
-      guards:
-        - { query: "SELECT 1 AS ok WHERE CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, message: End date must be on or after start date }
-      result: { query: "SELECT * FROM public_holidays WHERE id = :id" }
-    fields:
-      - { field: name, label: Name, type: text, required: true }
-      - { field: date_from, label: Start date, type: date, required: true }
-      - { field: date_to, label: End date, type: date, required: true }
-      - { field: calendar_name, label: Working Hours, type: text }
+    row_actions: menu
+    actions:
+      - { id: delete_public_holiday, label: Delete, permission: time_off.manage, variant: danger }
+    empty_state: { title: No public holidays found, description: Create a public holiday or adjust your search or period. }

@@ -1,0 +1,19 @@
+version: 0.0.8
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE public_holidays ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE public_holidays ALTER COLUMN row_version SET DEFAULT 1;
+      UPDATE public_holidays SET row_version = 1 WHERE row_version IS NULL;
+      CREATE INDEX IF NOT EXISTS public_holidays_date_idx ON public_holidays(date_from, date_to);
+      INSERT OR IGNORE INTO public_holidays(id, name, date_from, date_to, calendar_name, row_version) VALUES
+        ('public-holiday-demo-002', 'Reunification Day', '2026-04-30', '2026-04-30', 'Standard 40 hours/week', 1),
+        ('public-holiday-demo-003', 'National Day Holiday', '2026-09-02', '2026-09-02', 'Standard 40 hours/week', 1);
+    down: |
+      DELETE FROM public_holidays WHERE id IN ('public-holiday-demo-002', 'public-holiday-demo-003');
+      DROP INDEX IF EXISTS public_holidays_date_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

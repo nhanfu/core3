@@ -3,7 +3,8 @@ datasources:
   - id: public_holiday_detail
     single: true
     permission: time_off.manage
-    query: "SELECT id, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, calendar_name FROM public_holidays WHERE id = :id"
+    error_states: { transport_error: { status: 503, code: TIME_OFF_PUBLIC_HOLIDAY_DETAIL_UNAVAILABLE, message: Public holiday details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, calendar_name FROM public_holidays WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
 actions:
   - id: edit_public_holiday
     type: server_form
@@ -18,12 +19,13 @@ actions:
       operation: update
       table: public_holidays
       key_field: id
-      concurrency: false
+      concurrency: { required: true }
       fields: [name, date_from, date_to, calendar_name]
       required: [name, date_from, date_to]
       guards:
-        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, message: Name is required and end date must be on or after start date }
-        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM public_holidays other WHERE other.id <> :id AND other.name = :name)", status: 409, message: Public holiday names must be unique }
+        - { query: "SELECT id FROM public_holidays WHERE id = :id", status: 404, code: TIME_OFF_PUBLIC_HOLIDAY_NOT_FOUND, message: Public holiday not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, code: TIME_OFF_PUBLIC_HOLIDAY_INVALID, message: A name and valid date range are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM public_holidays other WHERE other.id <> :id AND LOWER(other.name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: TIME_OFF_PUBLIC_HOLIDAY_EXISTS, message: A public holiday with this name already exists. }
       result: { query: "SELECT * FROM public_holidays WHERE id = :id" }
     fields:
       - { field: name, label: Name, type: text, required: true }

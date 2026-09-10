@@ -340,6 +340,20 @@ filters, empty and transport-error states, and the `time_off.manage` boundary
 are service-owned through `page.id: time-off-balance`. Authenticated desktop
 and mobile captures and response/overflow checks are kept outside Git.
 
+The Public Holidays configuration slice completes the installed Odoo action
+`open_view_public_holiday` at `/public-holidays` with its
+`/public-holidays/detail` form counterpart. The service-owned list and detail
+API fragments share their matching `page.id` values, use fixed 2026 holiday
+fixtures, searchable and period-bounded reads, responsive list/cards, and
+explicit empty/transport-error states. Manager-only create, update, and
+list-row delete operations validate names and date ranges, reject duplicates
+and missing records, and require `row_version` for stale-write protection.
+Focused tests cover migration idempotency, source filtering, CRUD,
+404/409/422 validation, stale updates and deletes. The source XML was
+compared locally; the running `core3_owned` Odoo database does not have
+`hr_holidays` installed, so no authenticated live-screen evidence is claimed
+for this batch.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context

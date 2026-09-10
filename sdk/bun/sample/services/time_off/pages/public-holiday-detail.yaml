@@ -8,6 +8,7 @@ components:
     header_actions:
       - { id: edit_public_holiday, label: Edit, variant: secondary, permission: time_off.manage }
     group_columns: 2
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Details }
     groups:
       - title: Public Holiday
         fields: [{ field: name, label: Name }, { field: calendar_name, label: Working Hours }]
