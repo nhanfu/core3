@@ -264,6 +264,24 @@ describe('Odoo ListView', () => {
     expect(submit).toHaveBeenCalledWith('view_order', { row: expect.objectContaining({ id: 'o1' }) });
   });
 
+  it('late-binds Kanban card actions when the page handler is installed after mount', () => {
+    const submit = vi.fn();
+    const component = create({
+      views: [{ id: 'list', label: 'List' }, {
+        id: 'kanban', label: 'Kanban', groupBy: 'status',
+        groups: [{ value: 'Draft', label: 'Draft' }, { value: 'Approved', label: 'Approved' }],
+        card: { title: 'number', subtitle: 'customer' },
+      }],
+    }, { activeView: 'kanban' });
+    const container = mount(component);
+
+    // PageGridRenderers attaches its action callback after the initial mount.
+    component._onAction = submit;
+    container.querySelector<HTMLElement>('.o-kanban-card')!.click();
+
+    expect(submit).toHaveBeenCalledWith('view', { row: expect.objectContaining({ id: 'o1' }) }, component);
+  });
+
   it('keeps the active navigation icon aligned with CardView', () => {
     const component = create({
       formView: { page: 'order-detail.yaml', sidePanel: true },

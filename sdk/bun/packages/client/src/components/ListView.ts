@@ -297,7 +297,10 @@ export class ListView extends BaseComponent {
       );
       card.parent = this;
       card._transport = this._transport;
-      card._onAction = this._onAction;
+      // The page renderer installs the ListView action handler after mount.
+      // Keep the child callback late-bound so cards can still navigate when
+      // the handler is attached after the first draw.
+      card._onAction = (action, params) => this.submit(action, params);
       this.children.push(card);
       const content = html.take(root).div.className('o-list-content').ele();
       const cardHost = html.take(content).div.className('o-list-card-host').ele();
@@ -325,6 +328,7 @@ export class ListView extends BaseComponent {
       );
       kanban.parent = this;
       kanban._transport = this._transport;
+      kanban._onAction = (action, params) => this.submit(action, params);
       this.children.push(kanban);
       const content = html.take(root).div.className('o-list-content').ele();
       const kanbanHost = html.take(content).div.className('o-list-kanban-host').ele();
@@ -350,6 +354,7 @@ export class ListView extends BaseComponent {
       );
       calendar.parent = this;
       calendar._transport = this._transport;
+      calendar._onAction = (action, params) => this.submit(action, params);
       this.children.push(calendar);
       const content = html.take(root).div.className('o-list-content').ele();
       const calendarHost = html.take(content).div.className('o-list-calendar-host').ele();
@@ -374,7 +379,7 @@ export class ListView extends BaseComponent {
       );
       activity.parent = this;
       activity._transport = this._transport;
-      activity._onAction = this._onAction;
+      activity._onAction = (action, params) => this.submit(action, params);
       this.children.push(activity);
       const content = html.take(root).div.className('o-list-content').ele();
       const activityHost = html.take(content).div.className('o-list-activity-host').ele();
@@ -395,7 +400,11 @@ export class ListView extends BaseComponent {
         ...options,
         ...(activeView.id === 'pivot' ? { onChange: this.options.onPivotChange } : {}),
       } as any);
-      child.parent = this; child._transport = this._transport; this.children.push(child); child.mount(host);
+      child.parent = this;
+      child._transport = this._transport;
+      child._onAction = (action: string, params: Record<string, unknown>) => this.submit(action, params);
+      this.children.push(child);
+      child.mount(host);
       return;
     }
 
