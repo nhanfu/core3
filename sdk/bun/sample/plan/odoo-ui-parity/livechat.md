@@ -272,3 +272,25 @@ for 1440x900 and 390x844 are stored outside Git under `/tmp`:
 The overall sub-plan remains `planned` because the remaining Live Chat action,
 conversation, reporting, chatbot, technical, and public-widget surfaces still
 require separate parity slices.
+
+## Bounded implementation slice: Conversations — Sessions (2026-09-10)
+
+The owned reference database exposes Live Chat → Conversations → Sessions as
+Odoo action `817` (`discuss.channel`, `kanban,list,pivot,graph,form`) with a
+last-30-days session filter. This slice keeps the Core3 route
+`/livechat-sessions`, adds the flat session card/list presentation, and joins
+page layout to service-owned API fragments using `page.id`.
+
+The slice includes deterministic populated, search-empty, and empty fixtures;
+session detail navigation; livechat workflow action contracts; transport-error
+states; and `livechat.read`/`livechat.write` permission boundaries. Authenticated
+Odoo/Core3 captures for 1440x900 and 390x844 are stored outside Git under
+`/tmp`:
+
+- Odoo: `/tmp/odoo-livechat-sessions-desktop-1440x900.png` and
+  `/tmp/odoo-livechat-sessions-mobile-390x844.png`
+- Core3: `/tmp/core3-livechat-sessions-desktop-1440x900.png` and
+  `/tmp/core3-livechat-sessions-mobile-390x844.png`
+- Core3 detail/search-empty evidence:
+  `/tmp/core3-livechat-session-detail-desktop.png` and
+  `/tmp/core3-livechat-sessions-empty-desktop.png`

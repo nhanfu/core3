@@ -1,0 +1,48 @@
+page: { id: livechat-sessions }
+
+datasources:
+  - id: livechat_session_states
+    permission: livechat.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('In Progress','In Progress'), ('Waiting for Customer','Waiting for Customer'), ('Looking for Help','Looking for Help'), ('Closed','Closed')) states(value, label)"
+  - id: livechat_session_dates
+    permission: livechat.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('last_30_days','Last 30 Days'), ('all','All Sessions')) dates(value, label)"
+  - id: livechat_sessions
+    permission: livechat.read
+    single: false
+    error_states: { transport_error: { status: 503, code: LIVECHAT_SESSIONS_UNAVAILABLE, message: Live chat sessions are temporarily unavailable. } }
+    workflow: livechat_sessions
+    query: |
+      SELECT id, row_version, channel_id, channel_name, visitor_name,
+        COALESCE(NULLIF(visitor_name, ''), 'Visitor') AS visitor_display,
+        operator_name, status, outcome, duration_minutes, rating, COALESCE(message_count, 0) AS message_count,
+        country_name, avatar_url,
+        'Date: ' || CAST(started_at AS VARCHAR) AS session_date_label,
+        CAST(started_at AS VARCHAR) AS started_label,
+        CAST(duration_minutes AS VARCHAR) AS duration_label,
+        CAST(COALESCE(message_count, 0) AS VARCHAR) AS message_label,
+        CASE
+          WHEN status = 'Closed' THEN COALESCE(outcome, 'Success')
+          WHEN status = 'Looking for Help' THEN 'Escalated'
+          WHEN status = 'Waiting for Customer' THEN 'Waiting'
+          ELSE 'Never Answered'
+        END AS status_label,
+        CAST(started_at AS VARCHAR) AS started_at, CAST(ended_at AS VARCHAR) AS ended_at
+      FROM livechat_sessions
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR visitor_name ILIKE '%' || :q || '%' OR operator_name ILIKE '%' || :q || '%' OR channel_name ILIKE '%' || :q || '%')
+        AND (:session_date IS NULL OR :session_date = 'all' OR started_at >= CURRENT_TIMESTAMP - INTERVAL '30' DAY)
+      ORDER BY started_at DESC, id
+
+actions:
+  - id: view_livechat_session
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat-session-detail
+    params: { id: '{row.id}' }
+  - { id: wait_livechat_session, type: server, permission: livechat.write, action: livechat.sessions.wait, handler: order_transition, workflow: livechat_sessions, operation: wait, refresh: [livechat_sessions] }
+  - { id: resume_livechat_session, type: server, permission: livechat.write, action: livechat.sessions.resume, handler: order_transition, workflow: livechat_sessions, operation: resume, refresh: [livechat_sessions] }
+  - { id: help_livechat_session, type: server, permission: livechat.write, action: livechat.sessions.help, handler: order_transition, workflow: livechat_sessions, operation: help, refresh: [livechat_sessions] }
+  - { id: close_livechat_session, type: server, permission: livechat.write, action: livechat.sessions.close, handler: order_transition, workflow: livechat_sessions, operation: close, refresh: [livechat_sessions] }

@@ -1,0 +1,24 @@
+page: { id: livechat-session-detail }
+
+datasources:
+  - id: livechat_session_detail
+    permission: livechat.read
+    single: true
+    error_states: { transport_error: { status: 503, code: LIVECHAT_SESSION_DETAIL_UNAVAILABLE, message: Live chat session details are temporarily unavailable. } }
+    query: |
+      SELECT id, row_version, channel_id, channel_name, visitor_name,
+        COALESCE(NULLIF(visitor_name, ''), 'Visitor') AS visitor_display,
+        operator_name, status, outcome, duration_minutes, rating, COALESCE(message_count, 0) AS message_count,
+        country_name, avatar_url,
+        CAST(started_at AS VARCHAR) AS started_label,
+        CAST(duration_minutes AS VARCHAR) AS duration_label,
+        CASE
+          WHEN status = 'Closed' THEN COALESCE(outcome, 'Success')
+          WHEN status = 'Looking for Help' THEN 'Escalated'
+          WHEN status = 'Waiting for Customer' THEN 'Waiting'
+          ELSE 'Never Answered'
+        END AS status_label,
+        CAST(started_at AS VARCHAR) AS started_at, CAST(ended_at AS VARCHAR) AS ended_at
+      FROM livechat_sessions
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE
+        AND id = :id
