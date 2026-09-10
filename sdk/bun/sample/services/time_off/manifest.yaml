@@ -20,6 +20,7 @@ menu:
       label: Reporting
       items:
         - { path: /time-off-reporting/by-employee, label: By Employee, icon: chart, permission: time_off.read }
+        - { path: /time-off-reporting/by-type, label: By Type, icon: chart, permission: time_off.read }
         - { path: /time-off-analysis, label: Time Off Analysis, icon: chart, permission: time_off.read }
     - id: management
       label: Management

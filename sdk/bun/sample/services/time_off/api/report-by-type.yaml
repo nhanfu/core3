@@ -1,0 +1,54 @@
+page: { id: time-off-report-by-type }
+datasources:
+  - id: time_off_type_report_states
+    permission: time_off.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Submitted','To Approve'), ('Approved','Approved')) states(value, label)"
+  - id: time_off_type_report_types
+    permission: time_off.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM leave_types WHERE state = 'Active' ORDER BY name"
+  - id: time_off_type_report
+    permission: time_off.read
+    pivot:
+      fields: [leave_type_id, leave_type_name, allocation_days, time_off_days, balance_days, allocation_hours, time_off_hours, balance_hours, request_count]
+    error_states:
+      transport_error: { status: 503, code: TIME_OFF_TYPE_REPORT_UNAVAILABLE, message: Time Off by Type data is temporarily unavailable }
+    query: |
+      WITH allocations AS (
+        SELECT leave_type_id, SUM(days) AS allocation_days
+        FROM leave_allocations
+        WHERE state IN ('Submitted', 'Approved')
+          AND date_from >= DATE '2026-01-01'
+          AND date_from < DATE '2027-01-01'
+          AND (:state IS NULL OR :state = '' OR state = :state)
+        GROUP BY leave_type_id
+      ), requests AS (
+        SELECT leave_type_id, SUM(days) AS time_off_days, COUNT(*) AS request_count
+        FROM leave_requests
+        WHERE state IN ('Submitted', 'Approved')
+          AND date_from >= DATE '2026-01-01'
+          AND date_from < DATE '2027-01-01'
+          AND (:state IS NULL OR :state = '' OR state = :state)
+        GROUP BY leave_type_id
+      )
+      SELECT
+        t.id,
+        t.id AS leave_type_id,
+        t.name AS leave_type_name,
+        CAST(COALESCE(a.allocation_days, 0) AS DOUBLE) AS allocation_days,
+        CAST(COALESCE(r.time_off_days, 0) AS DOUBLE) AS time_off_days,
+        CAST(COALESCE(a.allocation_days, 0) - COALESCE(r.time_off_days, 0) AS DOUBLE) AS balance_days,
+        CAST(COALESCE(a.allocation_days, 0) * 7.6 AS DOUBLE) AS allocation_hours,
+        CAST(COALESCE(r.time_off_days, 0) * 7.6 AS DOUBLE) AS time_off_hours,
+        CAST((COALESCE(a.allocation_days, 0) - COALESCE(r.time_off_days, 0)) * 7.6 AS DOUBLE) AS balance_hours,
+        COALESCE(r.request_count, 0) AS request_count
+      FROM leave_types t
+      LEFT JOIN allocations a ON a.leave_type_id = t.id
+      LEFT JOIN requests r ON r.leave_type_id = t.id
+      WHERE t.state = 'Active'
+        AND (:fixture_state IS NULL OR :fixture_state <> 'transport_error')
+        AND (CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END) = 1
+        AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.code ILIKE '%' || :q || '%')
+        AND (:leave_type_id IS NULL OR :leave_type_id = '' OR t.id = :leave_type_id)
+      ORDER BY t.name

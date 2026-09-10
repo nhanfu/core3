@@ -1,0 +1,49 @@
+title: Time Off by Type
+page: { id: time-off-report-by-type, route: /time-off-reporting/by-type, breadcrumb: [Human Resources, Time Off, Reporting, By Type], auth: { require: [time_off.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: time_off_type_report
+    search: { label: Search time off report, placeholder: Search time off type... }
+    empty_state: { title: No Time off yet!, description: Check back later to overview all time off requests. }
+    filters:
+      - { field: state, label: Status, options_source: time_off_type_report_states }
+      - { field: leave_type_id, label: Type, options_source: time_off_type_report_types }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: leave_type_name
+        measure_field: time_off_days
+        measure_label: Time Off
+        type: bar
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: leave_type_name, column: Time Off Type }
+            - { field: allocation_days, column: Allocation }
+            - { field: time_off_days, column: Time Off }
+            - { field: balance_days, column: Balance }
+            - { field: allocation_hours, column: Allocation Hours }
+            - { field: time_off_hours, column: Time Off Hours }
+            - { field: balance_hours, column: Balance Hours }
+          default:
+            rows: [leave_type_name]
+            measures:
+              - { field: allocation_days, aggregate: sum, column: Allocation }
+              - { field: time_off_days, aggregate: sum, column: Time Off }
+              - { field: balance_days, aggregate: sum, column: Balance }
+    columns:
+      - { field: leave_type_name, label: Time Off Type, type: PrimaryEntityCell }
+      - { field: allocation_days, label: Allocation, align: right }
+      - { field: time_off_days, label: Time Off, align: right }
+      - { field: balance_days, label: Balance, align: right }
+      - { field: allocation_hours, label: Allocation Hours, align: right }
+      - { field: time_off_hours, label: Time Off Hours, align: right }
+      - { field: balance_hours, label: Balance Hours, align: right }
+    page_size: 50
+    row_key: id

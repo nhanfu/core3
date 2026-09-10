@@ -317,6 +317,17 @@ overflow. Odoo/Core3 captures remain outside Git under
 `/tmp/odoo-time-off-report-by-employee-{desktop,mobile}.png` and
 `/tmp/core3-time-off-report-by-employee-{desktop,mobile}.png`.
 
+The following reporting slice adds the uncovered installed Odoo action
+`action_hr_leave_report` as `Reporting > By Type` at
+`/time-off-reporting/by-type`. It is intentionally read-only, matching Odoo's
+graph/list/pivot report without create, edit, or delete controls. The report
+groups the existing fixed 2026 fixture records by active time-off type and
+exposes allocation, time-off, balance, days, and hours measures, with the Odoo
+default Submitted/Approved scope, type/status filters, search, empty state,
+transport-error state, and `time_off.read` boundary. Its frontend page and
+service API are joined by `page.id: time-off-report-by-type`; no Odoo frontend
+code or screenshots are committed.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
