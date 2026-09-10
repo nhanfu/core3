@@ -1,0 +1,30 @@
+title: Lead Generation Rule
+page: { id: event-lead-generation, route: /events/lead-generation, breadcrumb: [Marketing, Events, Configuration, Lead Generation], auth: { require: [events.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_lead_rules
+    create_label: New
+    search: { label: Search Lead Generation Rules, placeholder: Search Lead Generation Rules... }
+    filters: [{ field: active, label: Archived, options: [{ id: 'false', label: Archived }] }]
+    columns:
+      - { field: name, label: Rule Name, type: PrimaryEntityCell }
+      - { field: lead_creation_basis, label: Lead Creation Type }
+      - { field: lead_creation_trigger, label: When }
+      - { field: event_template_names, label: Event Templates }
+      - { field: event_name, label: Event }
+      - { field: company_name, label: Company }
+    page_size: 50
+    row_key: id
+    row_open_action: view_event_lead_rule
+    row_double_click_action: view_event_lead_rule
+    create_action: create_event_lead_rule
+    row_actions: menu
+    column_chooser: true
+    empty_state: { title: No Lead Generation Rules, description: Create a Lead Generation Rule to automatically create leads from event registrations. }
+actions:
+  - id: view_event_lead_rule
+    type: navigate
+    permission: events.manage
+    navigate_to: /events/lead-generation/detail
+    params: { id: '{row.id}' }

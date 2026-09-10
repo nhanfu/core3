@@ -1,0 +1,34 @@
+version: 0.0.17
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_lead_rules (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        lead_creation_basis VARCHAR NOT NULL DEFAULT 'Per Attendee',
+        lead_creation_trigger VARCHAR NOT NULL DEFAULT 'Attendees are created',
+        event_template_names VARCHAR NOT NULL DEFAULT 'All Event templates',
+        event_name VARCHAR NOT NULL DEFAULT 'All Events',
+        company_name VARCHAR NOT NULL DEFAULT 'Visible to all',
+        event_registration_filter VARCHAR NOT NULL DEFAULT '[]',
+        lead_type VARCHAR NOT NULL DEFAULT 'Lead',
+        sales_team_name VARCHAR NOT NULL DEFAULT '',
+        salesperson_name VARCHAR NOT NULL DEFAULT '',
+        tags VARCHAR NOT NULL DEFAULT '',
+        matched_registration_count INTEGER NOT NULL DEFAULT 0,
+        lead_count INTEGER NOT NULL DEFAULT 0,
+        execution_count INTEGER NOT NULL DEFAULT 0
+      );
+      INSERT INTO event_lead_rules(id, row_version, name, active, lead_creation_basis, lead_creation_trigger, event_template_names, event_name, company_name, event_registration_filter, lead_type, sales_team_name, salesperson_name, tags, matched_registration_count, lead_count, execution_count)
+      VALUES ('event-lead-rule-example', 1, 'Rule on @example.com', TRUE, 'Per Attendee', 'Attendees are created', 'All Event templates', 'Hockey Tournament', 'Visible to all', '[(''email'',''ilike'',''@example.com'')]', 'Lead', '', 'Mitchell Admin', '', 23, 0, 0)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_lead_rules WHERE id = 'event-lead-rule-example';
+      DROP TABLE IF EXISTS event_lead_rules;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

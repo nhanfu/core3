@@ -2,7 +2,58 @@
 
 Status: in-progress
 
-## Current batch: Question answer-choice editor
+## Current batch: Lead Generation Rules
+
+The next uncovered visible Events action is Odoo `Configuration > Lead
+Generation` from the auto-installed `event_crm` addon. The owned
+`core3_owned` menu audit resolves `event_crm.event_lead_rule_menu` to action
+783, model `event.lead.rule`, with `list,form` views. It is manager-only in
+Odoo, so Core3 exposes `/events/lead-generation` and its detail alias behind
+`events.manage`.
+
+The page/API pair is joined by `page.id`: page YAML owns the list/form layout
+and navigation while `api/event-lead-generation.yaml` and
+`api/event-lead-generation-detail.yaml` own queries and mutations. The bounded
+slice reproduces the visible rule list, responsive detail form, the
+`Per Attendee`/`Per Order` and attendee-trigger radios, event filters,
+attendee-condition summary, lead defaults, `Execute Rule`, archive/restore,
+delete, and deterministic empty/transport/missing/stale/validation guards.
+Executing a rule records a guarded event-owned run count; it deliberately does
+not create CRM records or modify another module.
+
+The fixed fixture is `event-lead-rule-example`, `Rule on @example.com`, linked
+to `Hockey Tournament`, with 23 matching attendee records. Migration
+`20260911140000-017-event-lead-generation.yaml` is idempotent and contains no
+current-time, random, or generated seed values. Focused evidence is in
+`events_lead_generation.integration.test.ts`; authenticated Odoo/Core3
+desktop/mobile captures are recorded after the browser gate and remain in
+`/tmp`, never in Git.
+
+## Previous batch: Event Settings/configuration
+
+The next uncovered user-visible Events action is now bounded to the Odoo
+Configuration > Settings form (res.config.settings, action 633 in the
+owned core3_owned reference). The Core3 page is layout-only and requires the
+system-level events.settings permission; its API fragment is joined by
+page.id: event-settings. It implements the Odoo Events, Registration, and
+Attendance blocks, deterministic singleton settings, empty/missing/transport
+error contracts, and a permissioned save mutation with required row-version
+and barcode-nomenclature validation guards.
+
+The fixed fixture is event-settings-demo for My Company (San Francisco).
+The migration is idempotent and contains no current-time or generated values.
+Focused integration evidence is 4 tests and 26 assertions; the full Events
+integration set is 38 tests and 318 assertions. Authenticated Core3 browser
+evidence reached the settled page at 1440x900 and 390x844, found all seven
+controls, no horizontal overflow, and no failed requests; the Save click
+returned HTTP 200 from events.settings.update. Temporary captures are
+/tmp/core3-events-settings-browser-desktop.png and
+/tmp/core3-events-settings-browser-mobile.png. The captures show the
+generic SettingsView content without module-specific card styling because
+the task restricts committed files to YAML/TS/docs/tests; screenshots are
+never committed.
+
+## Previous batch: Question answer-choice editor
 
 The bounded follow-up for the Event Questions list/detail surface is now
 implemented. A reusable selection question has a page-owned
@@ -52,6 +103,9 @@ evidence, including installed-addon desktop/mobile reference captures.
 - Manifest identity: `Events Organization`, version `1.9`, category
   `Marketing/Events`, license `LGPL-3`, installable, and dependencies
   `barcodes`, `base_setup`, `mail`, `phone_validation`, `portal`, and `utm`.
+- The installed `event_crm` addon is Odoo source revision `65975996`, version
+  `1.0`, auto-installed with dependencies `event` and `crm`; its official demo
+  seeds `Rule on @example.com` and the manager-only `Lead Generation` menu.
 - Official data includes stages, mail templates, event data, cron/tour,
   settings/report/template views, and partner/question data. Official demo
   files are `data/res_users_demo.xml`, `data/res_partner_demo.xml`,
@@ -115,6 +169,8 @@ The source-defined menu tree is:
     - `Event Tags Categories` (`menu_event_category`) ->
       `event_tag_category_action_tree`
     - `Event Questions` (`event_question_menu`) -> `event_question_action`
+    - `Lead Generation` (`event_crm.event_lead_rule_menu`, Event Manager group) ->
+      `event_crm.event_lead_rule_action`
     - `Settings` (`menu_event_global_settings`, `base.group_system`) ->
       `action_event_configuration`
     - `Mail Schedulers` (`menu_event_mail_schedulers`, `base.group_no_one`) ->
@@ -134,6 +190,7 @@ Source actions and their exact models/view modes are:
 | `event_registration_action_tree` | `event.registration` | generated alias | `list,kanban,form,calendar,graph` |
 | `event_registration_action_stats_from_event` | `event.registration` | generated event-scoped alias | `graph,pivot,kanban,list,form`; event domain and date grouping |
 | `action_event_type` | `event.type` | generated alias; planned `/odoo/event-templates` | source default list/form/search views; template help |
+| `event_lead_rule_action` | `event.lead.rule` | `/odoo/action-783` in the owned reference | `list,form`; manager-only; rule help and `Execute Rule` form action |
 | `event_stage_action` | `event.stage` | generated alias; planned `/odoo/event-stages` | `list,form`; stage help |
 | `event_tag_category_action_tree` | `event.tag.category` | generated alias; planned `/odoo/event-tag-categories` | `list,form`; category help |
 | `event_question_action` | `event.question` | generated alias; planned `/odoo/event-questions` | `list,form`; question search and no-question help |
@@ -154,6 +211,7 @@ description, notes, chatter, activities, followers, and attachments.
 ## Source contracts and behavior inventory
 
 Models requiring user-visible contracts are `event.event`, `event.type`,
+`event.lead.rule`,
 `event.event.ticket`, `event.registration`, `event.registration.answer`,
 `event.slot`, `event.stage`, `event.tag.category`, `event.tag`, `event.question`,
 `event.question.answer`, `event.mail`, `event.mail.registration`, and
@@ -258,6 +316,8 @@ include:
   Great Reno Ballon Race, Conference for Architects, Live Music Festival,
   Business workshops, Hockey Tournament, OpenWood Collection Online Reveal,
   and An unpublished event;
+- event lead rule `Rule on @example.com` for `Hockey Tournament`, with fixed
+  trigger/basis/default values and a 23-attendee condition count;
 - stages New, Booked, Announced, Ended; templates Exhibition, Training, Sport;
   tag categories Age/Activity/Type and tags 5-10, 10-14, 15-18, 18+, Culture,
   Music, Sport, Online, Conference;
@@ -275,7 +335,8 @@ include:
   responses.
 
 Required operations include event/template/ticket/registration/slot/stage/tag/
-question/answer/mail CRUD; publish/unpublish/archive/duplicate; register,
+question/answer/mail/lead-rule CRUD; publish/unpublish/archive/duplicate;
+execute lead rule; register,
 confirm, cancel, attend, check-in, badge/ticket generation; stage and seat
 updates; settings save; report/export/ICS; barcode initialization; chatter,
 activity, follower, attachment and portal actions. Guards must enforce event
@@ -301,6 +362,7 @@ Use explicit Core3 routes, preserving existing aliases:
 | `/events/tags` | Event Tags Categories | category/tag list/form |
 | `/events/questions` | Event Questions | list/form/answers |
 | `/events/settings` | Settings | settings form |
+| `/events/lead-generation` | `/odoo/action-783` | Lead Generation Rule list/form |
 
 Portal/public ICS, ticket, barcode JSON-RPC, website registration and reports
 must have explicit route and permission decisions before implementation.
@@ -491,21 +553,6 @@ or screenshot asset was added.
 The remaining Events mock-data contract is still open for the broader future
 model graph and transport-level loading/error fixtures; this batch is limited
 to the currently implemented list, detail, and analysis surfaces.
-
-## Current batch: Event Settings persistence
-
-The existing `/events/settings` surface had the Odoo-style settings layout but
-its Save action was an empty client script. This bounded follow-up makes Save
-actionable: the layout remains page-owned while `api/event-settings.yaml`
-provides the matching `page.id` datasource and permissioned server mutation.
-
-Migration `20260911130000-016-event-settings-persistence.yaml` adds one
-idempotent, deterministic settings row with a row version. Save persists all
-seven Events toggles and guards `events.write`, missing settings, boolean
-values, and stale row versions; reads expose explicit empty and transport-error
-states. Focused coverage is in `events_settings.integration.test.ts`.
-This singleton settings action intentionally has update-only CRUD semantics;
-create/delete do not apply to the Odoo `res.config.settings` model.
 
 The mobile visual follow-up closes a concrete responsive mismatch found during
 fresh comparison: Odoo switches the Events action to record cards at 390x844,

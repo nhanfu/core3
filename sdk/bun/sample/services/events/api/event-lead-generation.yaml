@@ -1,0 +1,37 @@
+page: { id: event-lead-generation }
+datasources:
+  - id: event_lead_rules
+    permission: events.manage
+    error_states: { transport_error: { status: 503, code: EVENT_LEAD_RULES_UNAVAILABLE, message: Lead Generation Rules are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, active, lead_creation_basis, lead_creation_trigger, event_template_names, event_name, company_name, lead_type, sales_team_name, salesperson_name, tags, matched_registration_count, lead_count, execution_count FROM event_lead_rules WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:active IS NULL OR active = CAST(:active AS BOOLEAN)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR event_name ILIKE '%' || :q || '%' OR event_template_names ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: create_event_lead_rule
+    type: server_form
+    permission: events.manage
+    title: New Lead Generation Rule
+    action: events.lead_rules.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [event_lead_rules]
+    mutation:
+      operation: insert
+      table: event_lead_rules
+      fields: [name, active, lead_creation_basis, lead_creation_trigger, event_template_names, event_name, company_name, event_registration_filter, lead_type, sales_team_name, salesperson_name, tags, matched_registration_count, lead_count, execution_count]
+      required: [name]
+      defaults: { active: true, lead_creation_basis: Per Attendee, lead_creation_trigger: Attendees are created, event_template_names: All Event templates, event_name: All Events, company_name: Visible to all, event_registration_filter: '[]', lead_type: Lead, sales_team_name: '', salesperson_name: '', tags: '', matched_registration_count: 0, lead_count: 0, execution_count: 0 }
+      before_steps: [{ query: "SELECT 'event-lead-rule-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_lead_rules WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EVENT_LEAD_RULE_NAME_EXISTS, message: A Lead Generation Rule with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:lead_creation_basis, 'Per Attendee') IN ('Per Attendee', 'Per Order')", status: 422, code: EVENT_LEAD_RULE_BASIS_INVALID, message: Choose a valid lead creation type. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:lead_creation_trigger, 'Attendees are created') IN ('Attendees are created', 'Attendees are registered', 'Attendees attended')", status: 422, code: EVENT_LEAD_RULE_TRIGGER_INVALID, message: Choose a valid lead creation trigger. }
+      result: { query: "SELECT * FROM event_lead_rules WHERE id = :id" }
+    fields:
+      - { field: name, label: Rule Name, type: text, required: true }
+      - { field: lead_creation_basis, label: Create?, type: radio, options: [{ value: Per Attendee, label: Per Attendee }, { value: Per Order, label: Per Order }], default: Per Attendee }
+      - { field: lead_creation_trigger, label: When?, type: radio, options: [{ value: Attendees are created, label: Attendees are created }, { value: Attendees are registered, label: Attendees are registered }, { value: Attendees attended, label: Attendees attended }], default: Attendees are created }
+      - { field: event_template_names, label: Event Templates?, type: text }
+      - { field: company_name, label: Company?, type: text }
+      - { field: event_name, label: Event?, type: text }
+      - { field: sales_team_name, label: Sales Team?, type: text }
+      - { field: salesperson_name, label: Salesperson?, type: text }
+      - { field: tags, label: Tags?, type: text }

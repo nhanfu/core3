@@ -1,0 +1,66 @@
+page: { id: event-lead-generation-detail }
+datasources:
+  - id: event_lead_rule_detail
+    single: true
+    permission: events.manage
+    error_states:
+      transport_error: { status: 503, code: EVENT_LEAD_RULE_DETAIL_UNAVAILABLE, message: Lead Generation Rule details are temporarily unavailable. }
+      missing_record: { status: 404, code: EVENT_LEAD_RULE_NOT_FOUND, message: Lead Generation Rule not found. }
+    query: "SELECT id, row_version, name, active, lead_creation_basis, lead_creation_trigger, event_template_names, event_name, company_name, event_registration_filter, lead_type, sales_team_name, salesperson_name, tags, matched_registration_count, lead_count, execution_count, 'Lead Generation Rule' AS rule_label, CASE WHEN COALESCE(event_registration_filter, '[]') IN ('', '[]') THEN 'Match all records' ELSE 'Email contains @example.com' END AS condition_summary, 'Add condition' AS condition_action, CAST(matched_registration_count AS VARCHAR) || ' record(s)' AS matching_records FROM event_lead_rules WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_event_lead_rule
+    type: server_form
+    permission: events.manage
+    title: Edit Lead Generation Rule
+    action: events.lead_rules.update
+    handler: yaml_mutation
+    mutation:
+      operation: update
+      table: event_lead_rules
+      fields: [name, active, lead_creation_basis, lead_creation_trigger, event_template_names, event_name, company_name, lead_type, sales_team_name, salesperson_name, tags]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_lead_rules WHERE id = :id", status: 404, code: EVENT_LEAD_RULE_NOT_FOUND, message: Lead Generation Rule not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_lead_rules WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EVENT_LEAD_RULE_NAME_EXISTS, message: A Lead Generation Rule with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:lead_creation_basis, 'Per Attendee') IN ('Per Attendee', 'Per Order')", status: 422, code: EVENT_LEAD_RULE_BASIS_INVALID, message: Choose a valid lead creation type. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:lead_creation_trigger, 'Attendees are created') IN ('Attendees are created', 'Attendees are registered', 'Attendees attended')", status: 422, code: EVENT_LEAD_RULE_TRIGGER_INVALID, message: Choose a valid lead creation trigger. }
+      result: { query: "SELECT * FROM event_lead_rules WHERE id = :id" }
+    fields: [{ field: name, label: Rule Name, type: text, required: true }, { field: lead_creation_basis, label: Create?, type: radio, options: [Per Attendee, Per Order] }, { field: lead_creation_trigger, label: When?, type: radio, options: [Attendees are created, Attendees are registered, Attendees attended] }, { field: event_template_names, label: Event Templates?, type: text }, { field: event_name, label: Event?, type: text }, { field: company_name, label: Company?, type: text }, { field: lead_type, label: Lead Type, type: select, options: [Lead, Opportunity] }, { field: sales_team_name, label: Sales Team?, type: text }, { field: salesperson_name, label: Salesperson?, type: text }, { field: tags, label: Tags?, type: text }]
+  - id: execute_event_lead_rule
+    type: server
+    permission: events.manage
+    action: events.lead_rules.execute
+    handler: yaml_mutation
+    mutation:
+      steps:
+        - { query: "UPDATE event_lead_rules SET execution_count = execution_count + 1, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Lead Generation Rule was changed by another user. Reload before executing. }
+      result: { query: "SELECT id, row_version, execution_count, 'Lead Generation Rule executed successfully.' AS message FROM event_lead_rules WHERE id = :id" }
+  - id: archive_event_lead_rule
+    type: server
+    permission: events.manage
+    action: events.lead_rules.archive
+    handler: yaml_mutation
+    mutation:
+      steps:
+        - { query: "UPDATE event_lead_rules SET active = false, row_version = row_version + 1 WHERE id = :id AND active = true AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Lead Generation Rule was changed by another user. Reload before archiving. }
+      result: { query: "SELECT * FROM event_lead_rules WHERE id = :id" }
+  - id: unarchive_event_lead_rule
+    type: server
+    permission: events.manage
+    action: events.lead_rules.unarchive
+    handler: yaml_mutation
+    mutation:
+      steps:
+        - { query: "UPDATE event_lead_rules SET active = true, row_version = row_version + 1 WHERE id = :id AND active = false AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Lead Generation Rule was changed by another user. Reload before restoring. }
+      result: { query: "SELECT * FROM event_lead_rules WHERE id = :id" }
+  - id: delete_event_lead_rule
+    type: server
+    permission: events.manage
+    action: events.lead_rules.delete
+    handler: yaml_mutation
+    mutation:
+      operation: delete
+      table: event_lead_rules
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM event_lead_rules WHERE id = :id", status: 404, code: EVENT_LEAD_RULE_NOT_FOUND, message: Lead Generation Rule not found. }]

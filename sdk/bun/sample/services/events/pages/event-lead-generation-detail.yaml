@@ -1,0 +1,40 @@
+title: Lead Generation Rule
+page: { id: event-lead-generation-detail, route: /events/lead-generation/detail, breadcrumb: [Marketing, Events, Configuration, Lead Generation], auth: { require: [events.manage] } }
+components:
+  - type: OdooFormView
+    source: event_lead_rule_detail
+    title_field: name
+    subtitle_field: rule_label
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_event_lead_rules, label: Back to Lead Generation Rules, variant: secondary, permission: events.manage }
+      - { id: execute_event_lead_rule, label: Execute Rule, variant: primary, permission: events.manage, result: alert, result_field: message }
+      - { id: edit_event_lead_rule, label: Edit, variant: secondary, permission: events.manage }
+      - { id: archive_event_lead_rule, label: Archive, variant: danger, permission: events.manage, show_if: "record.active === true" }
+      - { id: unarchive_event_lead_rule, label: Unarchive, variant: secondary, permission: events.manage, show_if: "record.active === false" }
+      - { id: delete_event_lead_rule, label: Delete, variant: danger, permission: events.manage, confirm: Delete this Lead Generation Rule? }
+    groups:
+      - fields:
+          - { field: lead_creation_basis, label: Create?, type: radio, options: [{ value: Per Attendee, label: Per Attendee }, { value: Per Order, label: Per Order }] }
+          - { field: lead_creation_trigger, label: When?, type: radio, options: [{ value: Attendees are created, label: Attendees are created }, { value: Attendees are registered, label: Attendees are registered }, { value: Attendees attended, label: Attendees attended }] }
+      - title: FOR ANY OF THESE EVENTS
+        fields:
+          - { field: event_template_names, label: Event Templates? }
+          - { field: company_name, label: Company? }
+          - { field: event_name, label: Event? }
+      - title: IF THE ATTENDEES MEET THESE CONDITIONS
+        fields:
+          - { field: condition_summary, label: '', wide: true }
+          - { field: condition_action, label: '', wide: true }
+          - { field: matching_records, label: '', wide: true }
+      - title: LEAD DEFAULT VALUES
+        fields:
+          - { field: sales_team_name, label: Sales Team? }
+          - { field: salesperson_name, label: Salesperson? }
+          - { field: tags, label: Tags? }
+actions:
+  - id: back_to_event_lead_rules
+    type: navigate
+    permission: events.manage
+    navigate_to: /events/lead-generation

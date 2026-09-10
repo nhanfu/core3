@@ -31,4 +31,5 @@ menu:
         - { path: /events/stages, label: Event Stages, icon: workflow, permission: events.read }
         - { path: /events/tags, label: Event Tags Categories, icon: tag, permission: events.read }
         - { path: /events/questions, label: Event Questions, icon: question, permission: events.read }
-        - { path: /events/settings, label: Settings, icon: settings, permission: events.read }
+        - { path: /events/settings, label: Settings, icon: settings, permission: events.settings }
+        - { path: /events/lead-generation, label: Lead Generation, icon: users, permission: events.manage }
