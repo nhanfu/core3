@@ -18,7 +18,7 @@ datasources:
           WHEN 'Approved' THEN 'Sales Order' WHEN 'Cancelled' THEN 'Cancelled'
           ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) END AS status,
         CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
-          WHEN 'Draft' THEN 'Quotation' WHEN 'Pending Approval' THEN 'Sent'
+          WHEN 'Draft' THEN 'Quotation' WHEN 'Pending Approval' THEN 'Quotation Sent'
           WHEN 'Approved' THEN 'Sales Order' WHEN 'Cancelled' THEN 'Cancelled'
           ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) END AS status_label,
         CASE WHEN EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id AND i.state = 'Posted') THEN 'Invoiced' ELSE COALESCE(o.invoice_status, 'To invoice') END AS invoice_status,
@@ -28,7 +28,7 @@ datasources:
   - id: sale_order_statuses
     single: false
     permission: orders.read
-    query: "SELECT value, label, color FROM (VALUES ('Quotation', 'Quotation', 'neutral'), ('Sent', 'Sent', 'amber'), ('Sales Order', 'Sales Order', 'green')) states(value, label, color) ORDER BY CASE value WHEN 'Quotation' THEN 1 WHEN 'Sent' THEN 2 ELSE 3 END"
+    query: "SELECT value, label, color FROM (VALUES ('Quotation', 'Quotation', 'neutral'), ('Sent', 'Quotation Sent', 'amber'), ('Sales Order', 'Sales Order', 'green'), ('Cancelled', 'Cancelled', 'red')) states(value, label, color) ORDER BY CASE value WHEN 'Quotation' THEN 1 WHEN 'Sent' THEN 2 WHEN 'Sales Order' THEN 3 ELSE 4 END"
   - id: sale_order_lines
     single: false
     permission: orders.read
@@ -90,6 +90,7 @@ actions:
       fields: [order_number, customer_name, customer_legal_name, customer_reference, order_date, validity_date, commitment_date, pricelist_name, payment_term_name, require_signature, require_payment, notes]
       required: [order_number, customer_name, order_date]
       timestamps: true
+      concurrency: { required: true }
       scope: { field: branch_id, message: Sales order is outside the current view scope }
       guards:
         - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number AND id <> :id)"
@@ -149,6 +150,27 @@ actions:
     workflow: orders
     operation: cancel
     confirm: 'Cancel {{row.order_number}}?'
+    mutation:
+      scope: { table: orders, field: branch_id, message: Sales order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Order was changed by another user. Reload it before cancelling.
+          message_key: errors.stale_record
+        - query: "SELECT o.order_number, COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS current_status FROM orders o WHERE o.id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) IN ('Draft', 'Pending Approval', 'Approved')"
+          status: 409
+          code: INVALID_TRANSITION
+          message: Order cannot be cancelled in its current state
+          message_key: errors.invalid_transition
+          assign: true
+      steps:
+        - query: "INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(:id, 'Cancelled', CURRENT_TIMESTAMP) ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.cancel', 'orders', :id, :order_number || ': ' || :current_status || ' -> Cancelled')"
+        - query: "UPDATE orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+      result: { query: "SELECT o.*, COALESCE(s.status, o.status) AS status, :current_status AS previous_status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = :id" }
     refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
   - id: reset_sale_quotation
     type: server

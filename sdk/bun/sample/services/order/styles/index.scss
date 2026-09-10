@@ -38,4 +38,22 @@
   .o-line-card-field { min-height: 40px; align-items: center; padding: 8px 0; border-top: 1px solid var(--o-form-border); }
   .o-line-card-value { font-size: 14px; font-weight: 500; }
   .o-line-card-actions { gap: 8px; margin-top: 12px; }
+
+  // Sales forms keep Odoo's mobile order: customer details, notebook, lines,
+  // then chatter. Compact the record header so the primary order context and
+  // line cards are reachable in the first viewport without horizontal scroll.
+  .o-form-page .o-form-sheet { padding: 16px; }
+  .o-form-page .o-form-header { padding-bottom: 10px; }
+  .o-form-page .o-form-title { font-size: 22px; }
+  .o-form-page .o-form-groups { gap: 8px; padding-top: 12px; }
+  .o-form-page .o-form-groups .o-form-field-group { padding: 10px 12px; border: 1px solid var(--o-form-border); border-radius: 8px; background: var(--o-form-surface); }
+  .o-form-page .o-form-groups .o-form-fields { gap: 1px; padding-top: 4px; }
+  .o-form-page .o-form-groups .o-form-field-label { margin-top: 4px; }
+  .o-form-page .o-form-groups .o-form-field-value { min-height: 18px; margin-top: 0; }
+  .o-form-page .o-form-notebook { margin-top: 14px; }
+  .o-form-page .o-form-statusbar-steps { flex-wrap: nowrap; overflow-x: auto; }
+  .o-form-page .o-form-statusbar-step { flex: 1 1 0; white-space: nowrap; }
+  .o-form-page .o-line-card-field:nth-of-type(1),
+  .o-form-page .o-line-card-field:nth-of-type(5),
+  .o-form-page .o-line-card-field:nth-of-type(6) { display: none; }
 }

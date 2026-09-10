@@ -37,9 +37,6 @@ components:
         fields:
           - { field: order_date, label: Quotation Date }
           - { field: validity_date, label: Expiration }
-          - { field: commitment_date, label: Delivery Date }
-          - { field: customer_reference, label: Customer Reference }
-          - { field: pricelist_name, label: Pricelist }
           - { field: payment_term_name, label: Payment Terms }
     notebook:
       active: order_lines
@@ -50,6 +47,9 @@ components:
           groups:
             - title: Sales
               fields:
+                - { field: commitment_date, label: Delivery Date }
+                - { field: customer_reference, label: Customer Reference }
+                - { field: pricelist_name, label: Pricelist }
                 - { field: salesperson_name, label: Salesperson }
                 - { field: company_name, label: Company }
                 - { field: require_signature, label: Online Signature }
