@@ -6,23 +6,16 @@ components:
     source: accounting_journals
     create_action: create_accounting_journal
     create_label: New
-    search: { label: Search journals, placeholder: Search journal... }
+    row_open_action: view_accounting_journal
+    row_double_click_action: view_accounting_journal
+    row_actions: menu
+    search: { label: Search journals, placeholder: Search... }
     empty_state: { title: No journals found, description: Create a journal or adjust your search. }
     columns:
-      - { field: name, label: Journal, type: PrimaryEntityCell }
+      - { field: name, label: Journal Name, type: PrimaryEntityCell }
       - { field: journal_type, label: Type }
-      - { field: currency, label: Currency }
-      - { field: state, label: Status, type: StatusChip }
+      - { field: sequence_prefix, label: Sequence Prefix }
+      - { field: default_account, label: Default Account }
     page_size: 50
+    responsive_card: true
     row_key: id
-actions:
-  - id: create_accounting_journal
-    type: server_form
-    permission: accounting.write
-    title: New Journal
-    action: accounting.journals.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [accounting_journals]
-    mutation: { operation: insert, table: accounting_config_journals, fields: [name, journal_type, currency, state], required: [name, journal_type], defaults: { currency: USD, state: Active }, result: { query: "SELECT * FROM accounting_config_journals WHERE id = :id" } }
-    fields: [{ field: name, label: Journal, type: text, required: true }, { field: journal_type, label: Type, type: select, options: [{ value: Sales, label: Sales }, { value: Purchase, label: Purchase }, { value: Bank, label: Bank }, { value: Cash, label: Cash }, { value: Miscellaneous, label: Miscellaneous }] }, { field: currency, label: Currency, type: text }, { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]

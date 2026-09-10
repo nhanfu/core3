@@ -1,0 +1,66 @@
+page: { id: journal-detail }
+datasources:
+  - id: accounting_journal_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_JOURNAL_DETAIL_UNAVAILABLE, message: Accounting journal details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, journal_type, sequence_prefix, default_account, company, currency, state, sequence FROM accounting_config_journals WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: back_to_accounting_journals
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/journals
+  - id: edit_accounting_journal
+    type: server_form
+    permission: accounting.write
+    title: Edit Journal
+    action: accounting.journals.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_journal_detail
+    refresh: [accounting_journal_detail, accounting_journals]
+    mutation:
+      operation: update
+      table: accounting_config_journals
+      fields: [name, journal_type, sequence_prefix, default_account, company, currency, sequence]
+      required: [name, journal_type]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_config_journals WHERE id = :id", status: 404, code: ACCOUNTING_JOURNAL_NOT_FOUND, message: Journal not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_JOURNAL_NAME_REQUIRED, message: A journal name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_journals WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND company = :company AND id <> :id)", status: 409, code: ACCOUNTING_JOURNAL_EXISTS, message: A journal with this name already exists for the company. }
+      result: { query: "SELECT * FROM accounting_config_journals WHERE id = :id" }
+    fields:
+      - { field: name, label: Journal Name, type: text, required: true }
+      - { field: journal_type, label: Type, type: select, options: [{ value: Sales, label: Sales }, { value: Purchase, label: Purchase }, { value: Bank, label: Bank }, { value: Cash, label: Cash }, { value: Miscellaneous, label: Miscellaneous }] }
+      - { field: sequence_prefix, label: Sequence Prefix, type: text }
+      - { field: company, label: Company, type: text }
+      - { field: default_account, label: Default Account, type: text }
+      - { field: currency, label: Currency, type: text }
+      - { field: sequence, label: Sequence, type: number }
+  - id: archive_accounting_journal
+    type: server
+    permission: accounting.write
+    action: accounting.journals.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { state: Archived } }
+    refresh: [accounting_journal_detail, accounting_journals]
+    mutation: { operation: update, table: accounting_config_journals, fields: [state], concurrency: { required: true }, result: { query: "SELECT * FROM accounting_config_journals WHERE id = :id" } }
+  - id: restore_accounting_journal
+    type: server
+    permission: accounting.write
+    action: accounting.journals.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { state: Active } }
+    refresh: [accounting_journal_detail, accounting_journals]
+    mutation: { operation: update, table: accounting_config_journals, fields: [state], concurrency: { required: true }, result: { query: "SELECT * FROM accounting_config_journals WHERE id = :id" } }
+  - id: delete_accounting_journal
+    type: server
+    permission: accounting.write
+    action: accounting.journals.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [accounting_journals]
+    mutation: { operation: delete, table: accounting_config_journals, concurrency: { required: true } }

@@ -3,4 +3,38 @@ datasources:
   - id: accounting_journals
     permission: accounting.read
     error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
-    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, journal_type, currency, state FROM accounting_config_journals CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR journal_type ILIKE '%' || :q || '%') ORDER BY name"
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, journal_type, sequence_prefix, default_account, company, currency, state, sequence FROM accounting_config_journals CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR journal_type ILIKE '%' || :q || '%' OR sequence_prefix ILIKE '%' || :q || '%' OR COALESCE(default_account, '') ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: create_accounting_journal
+    type: server_form
+    permission: accounting.write
+    title: New Journal
+    action: accounting.journals.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_journals]
+    mutation:
+      operation: insert
+      table: accounting_config_journals
+      generated: [id]
+      before_steps: [{ query: "SELECT 'accounting-journal-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [name, journal_type, sequence_prefix, default_account, company, currency, state, sequence]
+      required: [name, journal_type]
+      defaults: { sequence_prefix: '', default_account: '', company: 'My Company (San Francisco)', currency: USD, state: Active, sequence: 1000 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_JOURNAL_NAME_REQUIRED, message: A journal name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_journals WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND company = :company)", status: 409, code: ACCOUNTING_JOURNAL_EXISTS, message: A journal with this name already exists for the company. }
+      result: { query: "SELECT * FROM accounting_config_journals WHERE id = :id" }
+    fields:
+      - { field: name, label: Journal Name, type: text, required: true }
+      - { field: journal_type, label: Type, type: select, options: [{ value: Sales, label: Sales }, { value: Purchase, label: Purchase }, { value: Bank, label: Bank }, { value: Cash, label: Cash }, { value: Miscellaneous, label: Miscellaneous }] }
+      - { field: sequence_prefix, label: Sequence Prefix, type: text }
+      - { field: company, label: Company, type: text, default: 'My Company (San Francisco)' }
+      - { field: default_account, label: Default Account, type: text }
+      - { field: currency, label: Currency, type: text, default: USD }
+      - { field: sequence, label: Sequence, type: number, default: 1000 }
+  - id: view_accounting_journal
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/journal-detail
+    params: { id: '{row.id}' }

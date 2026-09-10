@@ -1,0 +1,37 @@
+version: 0.0.20
+description: Accounting journals Odoo configuration catalog fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_config_journals ADD COLUMN IF NOT EXISTS sequence_prefix VARCHAR DEFAULT '';
+      ALTER TABLE accounting_config_journals ADD COLUMN IF NOT EXISTS default_account VARCHAR DEFAULT '';
+      ALTER TABLE accounting_config_journals ADD COLUMN IF NOT EXISTS company VARCHAR DEFAULT 'My Company (San Francisco)';
+      ALTER TABLE accounting_config_journals ADD COLUMN IF NOT EXISTS sequence INTEGER DEFAULT 1000;
+      UPDATE accounting_config_journals SET name = 'Sales', journal_type = 'Sales', sequence_prefix = 'INV', default_account = 'Product Sales', company = 'My Company (San Francisco)', sequence = 10 WHERE id = 'sales';
+      UPDATE accounting_config_journals SET name = 'Purchases', journal_type = 'Purchase', sequence_prefix = 'BILL', default_account = 'Expenses', company = 'My Company (San Francisco)', sequence = 20 WHERE id = 'purchases';
+      UPDATE accounting_config_journals SET name = 'Bank', journal_type = 'Bank', sequence_prefix = 'BNK1', default_account = 'Bank', company = 'My Company (San Francisco)', sequence = 30 WHERE id = 'bank';
+      UPDATE accounting_config_journals SET name = 'Miscellaneous Operations', journal_type = 'Miscellaneous', sequence_prefix = 'MISC', default_account = '', company = 'My Company (San Francisco)', sequence = 40 WHERE id = 'misc';
+      UPDATE accounting_config_journals SET name = 'Cash Furn. Shop', journal_type = 'Cash', sequence_prefix = 'CSH1', default_account = 'Cash Furn. Shop', company = 'My Company (San Francisco)', sequence = 90 WHERE id = 'cash';
+      INSERT INTO accounting_config_journals(id, name, journal_type, sequence_prefix, default_account, company, currency, state, sequence) VALUES
+        ('exchange-difference', 'Exchange Difference', 'Miscellaneous', 'EXCH', '', 'My Company (San Francisco)', 'USD', 'Active', 50),
+        ('cash-basis-taxes', 'Cash Basis Taxes', 'Miscellaneous', 'CABA', '', 'My Company (San Francisco)', 'USD', 'Active', 60),
+        ('inventory-valuation', 'Inventory Valuation', 'Miscellaneous', 'STJ', '', 'My Company (San Francisco)', 'USD', 'Active', 70),
+        ('point-of-sale', 'Point of Sale', 'Miscellaneous', 'POSS', '', 'My Company (San Francisco)', 'USD', 'Active', 80),
+        ('cash-clothes-shop', 'Cash Clothes Shop', 'Cash', 'CSH2', 'Cash Clothes Shop', 'My Company (San Francisco)', 'USD', 'Active', 100),
+        ('cash-bakery', 'Cash Bakery', 'Cash', 'CSH3', 'Cash Bakery', 'My Company (San Francisco)', 'USD', 'Active', 110),
+        ('expense', 'Expense', 'Purchase', 'EXP', 'Expenses', 'My Company (San Francisco)', 'USD', 'Active', 120)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM accounting_config_journals WHERE id IN ('exchange-difference', 'cash-basis-taxes', 'inventory-valuation', 'point-of-sale', 'cash-clothes-shop', 'cash-bakery', 'expense');
+      UPDATE accounting_config_journals SET name = 'Sales', journal_type = 'Sales', currency = 'USD', state = 'Active' WHERE id = 'sales';
+      UPDATE accounting_config_journals SET name = 'Purchases', journal_type = 'Purchase', currency = 'USD', state = 'Active' WHERE id = 'purchases';
+      UPDATE accounting_config_journals SET name = 'Bank', journal_type = 'Bank', currency = 'USD', state = 'Active' WHERE id = 'bank';
+      UPDATE accounting_config_journals SET name = 'Miscellaneous', journal_type = 'Miscellaneous', currency = 'USD', state = 'Active' WHERE id = 'misc';
+      UPDATE accounting_config_journals SET name = 'Cash', journal_type = 'Cash', currency = 'USD', state = 'Active' WHERE id = 'cash';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database:
+  storage:
+    driver: duckdb

@@ -1,0 +1,33 @@
+title: Journal
+page: { id: journal-detail, route: /accounting/journal-detail, breadcrumb: [Finance, Configuration, Journals, Detail], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_journal_detail
+    title_field: name
+    status_field: state
+    status_badges: [{ value: Active, label: Active, tone: green }, { value: Archived, label: Archived, tone: neutral }]
+    editable: true
+    header_actions:
+      - { id: back_to_accounting_journals, label: Journals, variant: secondary, permission: accounting.read }
+      - { id: edit_accounting_journal, label: Edit, variant: secondary, permission: accounting.write }
+      - { id: archive_accounting_journal, label: Archive, variant: secondary, permission: accounting.write, show_if: 'state.accounting_journal_detail.state === "Active"' }
+      - { id: restore_accounting_journal, label: Restore, variant: secondary, permission: accounting.write, show_if: 'state.accounting_journal_detail.state === "Archived"' }
+      - { id: delete_accounting_journal, label: Delete, variant: danger, permission: accounting.write }
+    group_columns: 2
+    groups:
+      - title: Journal
+        fields:
+          - { field: name, label: Journal Name }
+          - { field: journal_type, label: Type }
+          - { field: sequence_prefix, label: Sequence Prefix }
+          - { field: company, label: Company }
+      - title: Journal Items
+        fields:
+          - { field: default_account, label: Default Account }
+          - { field: currency, label: Currency }
+    notebook:
+      active: advanced
+      tabs:
+        - id: advanced
+          label: Advanced Settings
+          fields: [{ field: sequence, label: Sequence }, { field: state, label: Status }]
