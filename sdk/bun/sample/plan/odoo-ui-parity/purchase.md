@@ -433,17 +433,35 @@ binary fixtures; local evidence stays under `/tmp`.
 
 The Purchase Analysis action is now page-id bound to
 `services/purchase/api/analysis.yaml`. Its deterministic report rows expose
-confirmation date/month, vendor, product, state, ordered/received quantities,
-and untaxed total. The layout uses visible `Graph`, `Pivot`, and `List` tabs,
-with a line graph defaulting to confirmation date and a pivot defaulting to
-confirmation month by state, matching the installed Odoo action 645.
+confirmation date/month, vendor, product, state, ordered/received/billed
+quantities, and untaxed/total amounts. The layout uses visible `Graph`,
+`Pivot`, and `List` tabs, with a line graph defaulting to confirmation date and
+a pivot defaulting to Category then Order with Untaxed Total and Total. The
+Core3 List tab is a deliberate convenience because the installed Odoo action
+is `graph,pivot` only.
 
-Authenticated reference captures are `/tmp/odoo-purchase-analysis-action-645-
-{desktop,mobile}.png`; Core3 before/after captures are kept under `/tmp` and
-are never committed. The initial comparison found the previous Core3 stat-card
-dashboard materially differed from Odoo's graph report; the replacement keeps
-the Odoo report controls and provides a deterministic empty state. Focused
-contract tests live in `test/purchase_analysis.integration.test.ts`.
+## Purchase Analysis final acceptance — 2026-09-10
+
+The owned Odoo database reports addon `purchase` installed at `19.0.1.2` and
+action `645` (`Purchase Analysis`, path `purchase-analysis`,
+`graph,pivot`). True authenticated Odoo evidence is captured at
+`/tmp/core3-purchase-analysis-next-odoo-desktop.png`,
+`/tmp/core3-purchase-analysis-next-odoo-mobile.png`, and
+`/tmp/core3-purchase-analysis-next-odoo-desktop-pivot.png`. Authenticated
+Core3 desktop/mobile Graph, Pivot, List, empty-state, and permission-boundary
+checks were exercised under `/tmp/core3-purchase-analysis-next-core3-*.png`;
+the focused integration test is the post-change regression evidence for the
+final datasource and control contract. No screenshots are committed.
+
+The bounded datasource uses Purchase `order_date` as the confirmation-date
+proxy because the current Core3 schema has no approval date; vendor country is
+empty, billed quantity is zero, and total equals untaxed total because the
+schema has no report-line/tax data. Core3's shared graph primitive also has a
+smaller control set than Odoo's chart toolbar. These are documented datasource
+and shared-component limits, not hidden Purchase-specific behavior. Mobile
+pivot table scrolling is internal to the table and the page remains viewport
+fit. A user without `purchase.read` is redirected to the Core3 home route,
+which is the current permission boundary rather than an explicit denial page.
 
 ## Acceptance gate
 
@@ -461,10 +479,10 @@ contract tests live in `test/purchase_analysis.integration.test.ts`.
 - Datasource completeness, stable ordering/totals, fresh migration, upgrade,
   API-fragment discovery, i18n, and YAML schema checks pass; no page-local
   purchase data or product-specific renderer is introduced.
-- Because the current live addon is uninstalled, installed-reference capture
-  and final visual sign-off remain a required follow-up prerequisite. The
-  fallback screenshots above must remain labeled as Discuss/uninstalled and
-  must never be presented as Purchase parity evidence.
+- The owned live addon is installed and action 645 was captured
+  authentically for this slice, so the earlier uninstalled-addon fallback is
+  superseded here. The remaining bounded datasource and shared-control limits
+  are recorded above and do not change the action-ownership result.
 
 ## Focused verification commands
 

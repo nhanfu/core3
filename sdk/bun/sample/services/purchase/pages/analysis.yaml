@@ -4,10 +4,16 @@ components:
   - type: ListView
     variant: odoo
     source: purchase_analysis
+    default_filters: { report_scope: orders }
     search: { label: Search Purchase Analysis, placeholder: 'Search vendors, products, or order status...' }
+    filters:
+      - { field: report_scope, label: Report, options: [{ id: orders, label: Purchase Orders }, { id: rfq, label: Requests for Quotation }] }
     group_by:
       - { field: vendor_name, label: Vendor }
+      - { field: vendor_country, label: Vendor Country }
+      - { field: buyer_name, label: Buyer }
       - { field: product_name, label: Product }
+      - { field: category_name, label: Product Category }
       - { field: state, label: Status }
       - { field: confirmation_month, label: Confirmation Date }
     view_navigation: tabs
@@ -17,36 +23,53 @@ components:
         icon: graph
         category_field: confirmation_date
         measure_field: untaxed_total
+        measures:
+          - { field: null, label: Count, aggregate: count }
+          - { field: untaxed_total, label: Untaxed Total, aggregate: sum }
+          - { field: total_amount, label: Total, aggregate: sum }
         type: line
       - id: pivot
         label: Pivot
         icon: pivot
         show_leaf_rows: false
         pivot:
+          config_label: Measures
           fields:
             - { field: confirmation_date, column: Confirmation Date, type: date }
             - { field: confirmation_month, column: Confirmation Month }
             - { field: vendor_name, column: Vendor }
+            - { field: vendor_country, column: 'Vendor Country' }
+            - { field: buyer_name, column: Buyer }
             - { field: product_name, column: Product }
+            - { field: category_name, column: 'Product Category' }
+            - { field: company_name, column: Company }
             - { field: state, column: Status }
-            - { field: quantity, column: Ordered Quantity }
-            - { field: qty_received, column: Received Quantity }
-            - { field: untaxed_total, column: Untaxed Total }
+            - { field: quantity, column: 'Ordered Quantity' }
+            - { field: qty_received, column: 'Received Quantity' }
+            - { field: qty_billed, column: 'Billed Quantity' }
+            - { field: untaxed_total, column: 'Untaxed Total' }
+            - { field: total_amount, column: Total }
           default:
-            rows: [confirmation_month]
-            columns: [state]
+            rows: [category_name, name]
+            columns: []
             measures:
-              - { field: untaxed_total, aggregate: sum, column: Untaxed Total }
-              - { field: quantity, aggregate: sum, column: Ordered Quantity }
+              - { field: untaxed_total, aggregate: sum, column: 'Untaxed Total' }
+              - { field: total_amount, aggregate: sum, column: Total }
       - { id: list, label: List, icon: table }
     columns:
       - { field: name, label: Order, type: PrimaryEntityCell }
       - { field: confirmation_date, label: Confirmation Date }
       - { field: vendor_name, label: Vendor }
+      - { field: vendor_country, label: Vendor Country, optional: hide }
+      - { field: buyer_name, label: Buyer, optional: hide }
       - { field: product_name, label: Product }
+      - { field: category_name, label: Product Category, optional: hide }
+      - { field: company_name, label: Company, optional: hide }
       - { field: quantity, label: Ordered Quantity, align: right }
       - { field: qty_received, label: Received Quantity, align: right }
+      - { field: qty_billed, label: Billed Quantity, align: right, optional: hide }
       - { field: untaxed_total, label: Untaxed Total, align: right }
+      - { field: total_amount, label: Total, align: right }
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
