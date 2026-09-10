@@ -63,7 +63,7 @@ The current authenticated menu audit resolved Events to action 292, global
 Event registrations to action 286, Reporting/Attendees to action 287,
 Registration statistics to action 288, Registration Desk to action 285, Event
 Templates to action 290, Event Stages to action 293, Settings to action 302,
-Event Tags Categories to action 303, Event Questions to action 304, and Answer
+Event Tags Categories to action 303, Event Questions to planned action 304, and Answer
 Breakdown to action 305. The installed Attendees list pair is
 `/tmp/odoo-events-attendees-desktop.png` and
 `/tmp/odoo-events-attendees-mobile-final.png`; the first attendee form pair is
@@ -530,12 +530,20 @@ The bounded Event Questions follow-up adds the missing list-to-form workflow at
 question, and the service-owned detail form exposes Odoo-shaped Question and
 Answers groups with permissioned edit/delete actions. Migration
 `20260910230000-011-event-question-detail.yaml` adds optimistic record-version
-data; duplicate-title, missing-record, and detail transport-error boundaries
-are declared and covered by focused tests. Fresh authenticated desktop/mobile
-Core3 captures are `/tmp/core3-events-questions-detail-{desktop,mobile}.png`;
-the installed Odoo list references are `/tmp/odoo-events-desktop-event-questions.png`
-and `/tmp/odoo-events-mobile-event-questions.png`. The Core3 detail remains a
-bounded form and does not yet reproduce Odoo's full answer-choice editor.
+data; duplicate-title, invalid-type, missing-record, list/detail empty, and
+transport-error boundaries are declared and covered by focused tests. The live
+owned Odoo menu audit resolved `event_question_action` to `/odoo/action-285`
+(the plan's recorded action 304 is stale in this database) with three seeded
+questions. Fresh authenticated list/detail captures are `/tmp/core3-events-questions-list-desktop-final-1440x900.png`,
+`/tmp/core3-events-questions-list-mobile-final-390x844.png`,
+`/tmp/core3-events-questions-detail-desktop-final-1440x900.png`, and
+`/tmp/core3-events-questions-detail-mobile-final-390x844.png`; the matching
+Odoo captures are `/tmp/odoo-events-questions-list-desktop-final-1440x900.png`,
+`/tmp/odoo-events-questions-list-mobile-final-390x844.png`,
+`/tmp/odoo-events-questions-detail-desktop-final-1440x900.png`, and
+`/tmp/odoo-events-questions-detail-mobile-final-390x844.png`. The Core3 detail
+remains a bounded form and does not yet reproduce Odoo's full answer-choice
+editor, default-question/reusable flags, or event usage banner.
 
 The next uncovered user-visible event action is now covered: the event-scoped
 Slots action. Odoo 19 defines this embedded action as `calendar,list,form`

@@ -2,4 +2,30 @@ page: { id: event-questions }
 datasources:
   - id: event_questions
     permission: events.read
-    query: "SELECT id, title, question_type, mandatory, once_per_order, answers FROM event_questions WHERE (:q IS NULL OR title ILIKE '%' || :q || '%') ORDER BY title"
+    error_states: { transport_error: { status: 503, code: EVENT_QUESTIONS_UNAVAILABLE, message: Event questions are temporarily unavailable. } }
+    query: "SELECT id, title, question_type, mandatory, once_per_order, answers FROM event_questions WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR title ILIKE '%' || :q || '%') ORDER BY title"
+actions:
+  - id: view_event_question
+    type: navigate
+    permission: events.read
+    navigate_to: /events/questions/detail
+    params: { id: '{row.id}' }
+  - id: create_event_question
+    type: server_form
+    permission: events.write
+    title: New event question
+    action: events.questions.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [event_questions]
+    mutation:
+      operation: insert
+      table: event_questions
+      fields: [title, question_type, mandatory, once_per_order, answers]
+      required: [title, question_type]
+      defaults: { mandatory: false, once_per_order: false, answers: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_questions WHERE LOWER(title) = LOWER(:title))", status: 409, code: EVENT_QUESTION_TITLE_EXISTS, message: An event question with this title already exists. }
+        - { query: "SELECT 1 AS ok WHERE :question_type IN ('Name', 'Email', 'Phone', 'Text', 'Selection')", status: 422, code: EVENT_QUESTION_TYPE_INVALID, message: Select a supported event question type. }
+      result: { query: "SELECT * FROM event_questions WHERE id = :id" }
+    fields: [{ field: title, label: Title, type: text, required: true }, { field: question_type, label: Type, type: select, options: [Name, Email, Phone, Text, Selection] }, { field: mandatory, label: Mandatory, type: checkbox, default: false }, { field: once_per_order, label: Once per Order, type: checkbox, default: false }, { field: answers, label: Answers, type: text }]

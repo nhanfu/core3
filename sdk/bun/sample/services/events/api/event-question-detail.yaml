@@ -5,3 +5,48 @@ datasources:
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_QUESTION_DETAIL_UNAVAILABLE, message: Event question details are temporarily unavailable. } }
     query: "SELECT id, row_version, title, question_type, mandatory, once_per_order, answers, 'Event Question' AS question_label FROM event_questions WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: back_to_event_questions
+    type: navigate
+    permission: events.read
+    navigate_to: /events/questions
+  - id: edit_event_question
+    type: server_form
+    permission: events.write
+    title: Edit event question
+    action: events.questions.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.event_question_detail
+    refresh: [event_question_detail, event_questions]
+    mutation:
+      operation: update
+      table: event_questions
+      fields: [title, question_type, mandatory, once_per_order, answers]
+      required: [title, question_type]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_questions WHERE id = :id", status: 404, code: EVENT_QUESTION_NOT_FOUND, message: Event question not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_questions WHERE LOWER(title) = LOWER(:title) AND id <> :id)", status: 409, code: EVENT_QUESTION_TITLE_EXISTS, message: An event question with this title already exists. }
+        - { query: "SELECT 1 AS ok WHERE :question_type IN ('Name', 'Email', 'Phone', 'Text', 'Selection')", status: 422, code: EVENT_QUESTION_TYPE_INVALID, message: Select a supported event question type. }
+      result: { query: "SELECT * FROM event_questions WHERE id = :id" }
+    fields:
+      - { field: title, label: Title, type: text, required: true }
+      - { field: question_type, label: Type, type: select, options: [Name, Email, Phone, Text, Selection] }
+      - { field: mandatory, label: Mandatory, type: checkbox }
+      - { field: once_per_order, label: Once per Order, type: checkbox }
+      - { field: answers, label: Answers, type: text }
+  - id: delete_event_question
+    type: server
+    permission: events.write
+    action: events.questions.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [event_questions]
+    mutation:
+      operation: delete
+      table: event_questions
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM event_questions WHERE id = :id", status: 404, code: EVENT_QUESTION_NOT_FOUND, message: Event question not found. }]
