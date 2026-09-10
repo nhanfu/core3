@@ -46,7 +46,13 @@ export class PageGridRenderers extends BaseComponent {
   const { config, dataMap, ctx, bindSource, sortState, paginationState, filterState, pageParams, refetchSource, updateBoundComponents, client, createQuery, handleAction, applySourceFilters, refreshSources, handleInlineForm, resolveActionParams, registry } = deps;
 const componentLoader = new ComLoader();
 
-const mountOwned = <T extends BaseComponent>(component: T, container: HTMLElement): T => this.mountChild(component, container);
+// The nested renderer functions outlive createRenderers; retain the owning
+// instance explicitly so side-panel children remain in the component tree.
+// eslint-disable-next-line @typescript-eslint/no-this-alias
+const owner = this;
+function mountOwned<T extends BaseComponent>(component: T, container: HTMLElement): T {
+  return owner.mountChild(component, container);
+}
 
 async function renderStatRow(def: any, targetContainer: HTMLElement) {
   const { StatRow } = await import('@core3/client/components/StatRow');
