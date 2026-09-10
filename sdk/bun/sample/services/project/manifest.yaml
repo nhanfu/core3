@@ -15,6 +15,7 @@ menu:
       label: Delivery
       items:
         - { path: /projects, label: Projects, icon: project, permission: project.read }
+        - { path: /project-by-stage, label: Projects, icon: workflow, permission: project.read }
         - { path: /tasks, label: My Tasks, icon: checklist, permission: project.read }
     - id: reporting
       label: Reporting

@@ -1,0 +1,56 @@
+title: Projects
+page: { id: project-by-stage, route: /project-by-stage, breadcrumb: [Services, Project], auth: { require: [project.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_projects_by_stage
+    default_group_by: stage
+    search: { label: Search projects, placeholder: 'Search project or customer...' }
+    filters: [{ field: state, label: Status, options_source: project_by_stage_states }, { field: stage, label: Stage, options_source: project_by_stage_groups }]
+    group_by: [{ field: stage, label: Stage }, { field: state, label: Status }, { field: project_manager, label: Project manager }]
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: stage
+        groups_source: project_by_stage_groups
+        card:
+          title: name
+          subtitle: customer_name
+          fields:
+            - { field: project_manager, label: Project manager }
+            - { field: task_count, label: Tasks }
+            - { field: progress, label: Progress }
+            - { field: end_date, label: Deadline }
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+      - { id: calendar, label: Calendar, icon: calendar, date_field: start_date, end_date_field: end_date, mobile: false }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: customer_name
+        record_date_field: start_date
+        activity_types: [{ id: todo, label: To-Do, icon: check }]
+    page_size: 25
+    column_chooser: true
+    row_key: id
+    row_open_action: view_project
+    row_double_click_action: view_project
+    form_view: { page: apps/services/project/pages/project-detail.yaml, side_panel: true }
+    row_actions: menu
+    empty_state: { title: No projects found by stage, description: Create a project or adjust your filters. }
+    columns:
+      - { field: name, label: Project, type: PrimaryEntityCell, sortable: true }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: customer_name, label: Customer }
+      - { field: project_manager, label: Project manager }
+      - { field: task_count, label: Tasks, align: right }
+      - { field: progress, label: Progress, align: right }
+      - { field: end_date, label: Deadline, sortable: true }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: favorite, label: Favorite, type: Boolean }
+actions:
+  - { id: view_project, type: navigate, permission: project.read, navigate_to: /projects/detail, params: { id: '{row.id}' } }

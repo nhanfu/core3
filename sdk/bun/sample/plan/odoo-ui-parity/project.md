@@ -273,6 +273,40 @@ the current Core3 Project service has no corresponding owned models. Those
 remain separate parity batches rather than being represented by page-local
 fixtures.
 
+## Bounded slice: Projects grouped by stage (2026-09-10)
+
+The next uncovered user-visible Project action is Odoo's
+`menu_projects_group_stage` / `open_view_project_all_group_stage` action. Core3
+maps it to `/project-by-stage` under the existing Project delivery menu, keeping
+it distinct from the ordinary `/projects` collection. Its primary view is a
+stage-grouped kanban, followed by list, form, calendar, and activity modes, and
+its row action opens the existing project detail side panel. This is the Core3
+equivalent of Odoo's `project.group_project_stages`-restricted menu; the current
+permission catalog has no separate stage-group role, so the menu and page use
+the existing `project.read` boundary.
+
+The layout is `pages/project-by-stage.yaml`; the service-owned API fragment is
+`api/project-by-stage.yaml`, joined by `page.id: project-by-stage`. The API
+provides ordered stage groups and non-template, non-archived project rows with
+stage sequence/fold metadata, search, state/stage filters, deterministic empty
+and not-found fixture branches, and the stable
+`PROJECT_GROUPED_PROJECTS_UNAVAILABLE` transport error. Existing fixed Project
+demo rows are reused as the realistic fixture contract: Website Refresh is in
+Planning and Core3 Implementation is in In progress; the template project is
+excluded as in Odoo's action domain. No new project CRUD or task workflow is
+introduced by this read-only menu action.
+
+Focused coverage is `test/project_grouped_stage.integration.test.ts`: it proves
+the distinct menu route, page/API separation, Odoo view ordering and default
+grouping, deterministic stage/row ordering, search/filter/empty behavior, and
+read-only permission/error guards. Core3 browser evidence covers the menu
+navigation, grouped columns, list mode, search/no-match result, row detail
+navigation, and 1440x900/390x844 overflow checks. The owned Odoo login works,
+but `codex@core3.local` does not expose the source stage-grouped menu because
+the account lacks `project.group_project_stages`; the source XML action and
+group restriction remain the comparison contract. Screenshots are under
+`/tmp` only and are not committed.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:

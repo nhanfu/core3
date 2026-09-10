@@ -1,0 +1,17 @@
+page: { id: project-by-stage }
+datasources:
+  - id: project_by_stage_states
+    single: false
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_GROUPED_PROJECTS_UNAVAILABLE, message: Grouped projects are temporarily unavailable. } }
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Active','Active'), ('Completed','Completed'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: project_by_stage_groups
+    single: false
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_GROUPED_PROJECTS_UNAVAILABLE, message: Grouped projects are temporarily unavailable. } }
+    query: "SELECT name AS value, name AS label, sequence, folded FROM project_stages WHERE active = TRUE ORDER BY sequence, name"
+  - id: project_projects_by_stage
+    single: false
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_GROUPED_PROJECTS_UNAVAILABLE, message: Grouped projects are temporarily unavailable. } }
+    query: "SELECT p.id, p.row_version, p.name, p.customer_name, p.project_manager, COALESCE(p.stage, 'Planning') AS stage, COALESCE(s.sequence, 999) AS stage_sequence, COALESCE(s.folded, FALSE) AS stage_folded, p.planned_hours, p.spent_hours, p.state, CAST(p.start_date AS VARCHAR) AS start_date, CAST(p.end_date AS VARCHAR) AS end_date, COUNT(t.id) AS task_count, COALESCE(ROUND(100.0 * COUNT(t.id) FILTER (WHERE t.state = 'Done') / NULLIF(COUNT(t.id), 0)), 0) AS progress, COALESCE(p.favorite, FALSE) AS favorite FROM projects p LEFT JOIN project_stages s ON s.name = COALESCE(p.stage, 'Planning') LEFT JOIN project_tasks t ON t.project_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.customer_name ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) AND (:stage IS NULL OR p.stage = :stage) AND COALESCE(p.archived, FALSE) = FALSE AND COALESCE(p.is_template, FALSE) = FALSE GROUP BY p.id, p.row_version, p.name, p.customer_name, p.project_manager, p.stage, s.sequence, s.folded, p.planned_hours, p.spent_hours, p.state, p.start_date, p.end_date, p.favorite ORDER BY COALESCE(s.sequence, 999), p.favorite DESC, p.name, p.id"
