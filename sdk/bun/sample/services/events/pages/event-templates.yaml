@@ -9,8 +9,16 @@ components:
     columns: [{ field: name, label: Event Template, type: PrimaryEntityCell }, { field: seats, label: Seats, align: right }, { field: active, label: Active, type: StatusChip }]
     page_size: 50
     row_key: id
+    row_open_action: view_event_template
+    row_double_click_action: view_event_template
     create_action: create_event_template
+    empty_state: { title: No event templates, description: Create a reusable template for your next event. }
 actions:
+  - id: view_event_template
+    type: navigate
+    permission: events.read
+    navigate_to: /events/templates/detail
+    params: { id: '{row.id}' }
   - id: create_event_template
     type: server_form
     permission: events.write
@@ -19,5 +27,14 @@ actions:
     handler: yaml_mutation
     operation: create
     refresh: [event_templates]
-    mutation: { operation: insert, table: event_templates, fields: [name, seats, active], required: [name], defaults: { seats: 0, active: true }, result: { query: "SELECT * FROM event_templates WHERE id = :id" } }
+    mutation:
+      operation: insert
+      table: event_templates
+      fields: [name, seats, active]
+      required: [name]
+      defaults: { seats: 0, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE LOWER(name) = LOWER(:name))", status: 409, code: EVENT_TEMPLATE_NAME_EXISTS, message: An event template with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:seats, 0) >= 0", status: 422, code: EVENT_TEMPLATE_SEATS_INVALID, message: Seats must be zero or greater. }
+      result: { query: "SELECT * FROM event_templates WHERE id = :id" }
     fields: [{ field: name, label: Event Template, type: text, required: true }, { field: seats, label: Seats, type: number, default: 0 }, { field: active, label: Active, type: checkbox, default: true }]

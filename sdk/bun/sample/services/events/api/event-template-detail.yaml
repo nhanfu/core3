@@ -1,0 +1,7 @@
+page: { id: event-template-detail }
+datasources:
+  - id: event_template_detail
+    single: true
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_DETAIL_UNAVAILABLE, message: Event template details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, seats, active, 'Event Template' AS template_label FROM event_templates WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"

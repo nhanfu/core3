@@ -1,0 +1,59 @@
+title: Event Template
+page: { id: event-template-detail, route: /events/templates/detail, breadcrumb: [Marketing, Events, Configuration, Event Templates], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_template_detail
+    title_field: name
+    subtitle_field: template_label
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_event_templates, label: Back to event templates, variant: secondary, permission: events.read }
+      - { id: edit_event_template, label: Edit, variant: primary, permission: events.write }
+      - { id: delete_event_template, label: Delete, variant: danger, permission: events.write, confirm: Delete this event template? }
+    groups:
+      - title: Event Template
+        fields:
+          - { field: name, label: Event Template }
+          - { field: seats, label: Seats }
+          - { field: active, label: Active }
+actions:
+  - id: back_to_event_templates
+    type: navigate
+    permission: events.read
+    navigate_to: /events/templates
+  - id: edit_event_template
+    type: server_form
+    permission: events.write
+    title: Edit event template
+    action: events.templates.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.event_template_detail
+    refresh: [event_template_detail, event_templates]
+    mutation:
+      operation: update
+      table: event_templates
+      fields: [name, seats, active]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id", status: 404, message: Event template not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: EVENT_TEMPLATE_NAME_EXISTS, message: An event template with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:seats, 0) >= 0", status: 422, code: EVENT_TEMPLATE_SEATS_INVALID, message: Seats must be zero or greater. }
+      result: { query: "SELECT * FROM event_templates WHERE id = :id" }
+    fields:
+      - { field: name, label: Event Template, type: text, required: true }
+      - { field: seats, label: Seats, type: number, min: 0 }
+      - { field: active, label: Active, type: checkbox }
+  - id: delete_event_template
+    type: server
+    permission: events.write
+    action: events.templates.delete
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [event_templates]
+    mutation:
+      operation: delete
+      table: event_templates
+      guards: [{ query: "SELECT id FROM event_templates WHERE id = :id", status: 404, message: Event template not found. }]

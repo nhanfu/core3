@@ -2,4 +2,5 @@ page: { id: event-templates }
 datasources:
   - id: event_templates
     permission: events.read
-    query: "SELECT id, name, seats, active FROM event_templates WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name"
+    error_states: { transport_error: { status: 503, code: EVENTS_TEMPLATES_UNAVAILABLE, message: Event templates are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, seats, active FROM event_templates WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name, id"

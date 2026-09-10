@@ -318,6 +318,13 @@ service-owned settings fields. Authenticated desktop/mobile checks confirmed
 the Save action remains on `/events/settings` with no failed requests or page
 overflow; the mobile evidence is `/tmp/core3-events-mobile-settings-save.png`.
 
+The bounded Event Templates configuration follow-up adds the missing Odoo list/form
+detail route at `/events/templates/detail`. Templates now support authenticated
+row open/double-click navigation, edit, delete, duplicate-name rejection,
+nonnegative seat validation, deterministic empty/detail fixtures, and optimistic
+row-version conflict handling. The slice is service-owned under
+`services/events` and does not change shared renderers or Surveys migrations.
+
 Registration Desk now has an explicit `/events/registration-desk` client-action
 surface with a fullscreen scan/manual-registration composition. The shared
 `ScannerView` primitive is intentionally device-neutral: keyboard-wedge
