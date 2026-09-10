@@ -58,6 +58,12 @@ contains the owned Odoo 19 container, PostgreSQL service, and disposable demo
 database used for UI comparison. Keep credentials out of source code outside
 this local parity plan.
 
+The owned `core3_owned` database has demo-enabled parity reference modules
+installed, including CRM, Sales, Purchase, Accounting, Inventory, POS, Events,
+Surveys, Employees, Expenses, Time Off, Timesheets, Project, Maintenance,
+Fleet, Manufacturing, Email Marketing, and Live Chat. The Compose init command
+keeps this module set reproducible for a fresh owned reference database.
+
 ## Module register
 
 | Core3 service | Odoo reference addon | Source status | Sub-plan | Status |
