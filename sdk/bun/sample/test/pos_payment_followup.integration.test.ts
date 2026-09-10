@@ -38,4 +38,23 @@ describe('POS cashier payment follow-up', () => {
     expect(lists[0].empty_state).toEqual(expect.objectContaining({ title: 'No products found' }));
     expect(lists[1].empty_state).toEqual(expect.objectContaining({ title: 'No open tickets' }));
   });
+
+  test('declares service-owned initial, empty, and transport-error fixtures', () => {
+    const api = yaml('api/pos-cashier.yaml');
+    for (const source of api.datasources) {
+      expect(source.error_states?.transport_error, source.id).toMatchObject({ status: 503 });
+    }
+    expect(api.datasources.map((source: any) => source.query).join('\n')).toContain(':fixture_state');
+    expect(yaml('pages/pos-cashier.yaml').page.id).toBe(api.page.id);
+  });
+
+  test('keeps touch state fixtures on the existing page-id API contract', () => {
+    const page = yaml('pages/pos-touch.yaml');
+    const api = yaml('api/pos-touch.yaml');
+    expect(page.page.id).toBe(api.page.id);
+    for (const source of api.datasources) {
+      expect(source.error_states?.transport_error, source.id).toMatchObject({ status: 503 });
+      expect(source.query).toContain(':fixture_state');
+    }
+  });
 });

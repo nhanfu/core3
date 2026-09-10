@@ -141,17 +141,28 @@ export function createYamlApi(ctx: YamlApiContext) {
       const workflow = typeof source.workflow === 'string' ? WORKFLOWS.get(source.workflow) : undefined;
       const stateWorkflow = typeof workflow_states === 'string' ? WORKFLOWS.get(workflow_states) : undefined;
       if (workflow_states && !stateWorkflow) throw { status: 500, message: `Unknown workflow: ${workflow_states}` };
-      const result = stateWorkflow
-        ? { data: localizedWorkflow(stateWorkflow, lang).states.map((state: any) => ({ value: state.id, label: state.label, color: state.color })), meta: {} }
-        : await repository.querySource(
-            source,
-            serverParams,
-            0,
-            pageSizes.get(source.id) || 25,
-            undefined,
-            pageSizes.has(source.id) ? listSort : undefined,
-          );
-      return { ...publicSource, ...(workflow ? { workflow: localizedWorkflow(workflow, lang) } : {}), data: result.data, meta: result.meta };
+      let result: any;
+      let sourceError: any;
+      try {
+        result = stateWorkflow
+          ? { data: localizedWorkflow(stateWorkflow, lang).states.map((state: any) => ({ value: state.id, label: state.label, color: state.color })), meta: {} }
+          : await repository.querySource(
+              source,
+              serverParams,
+              0,
+              pageSizes.get(source.id) || 25,
+              undefined,
+              pageSizes.has(source.id) ? listSort : undefined,
+            );
+      } catch (error: any) {
+        const requestedError = [serverParams.fixture_state, serverParams.mock_state, serverParams.state]
+          .find((value) => typeof value === 'string' && source.error_states?.[value]);
+        if (!requestedError) throw error;
+        const definition = source.error_states[String(requestedError)];
+        sourceError = { status: definition.status || 503, code: definition.code || 'DATASOURCE_UNAVAILABLE', message: definition.message };
+        result = { data: source.single ? {} : [], meta: { total: 0, page: 1, pageSize: pageSizes.get(source.id) || 25 } };
+      }
+      return { ...publicSource, ...(workflow ? { workflow: localizedWorkflow(workflow, lang) } : {}), ...(sourceError ? { error: sourceError } : {}), data: result.data, meta: result.meta };
     }));
     return {
       ...publicPageConfig(page),

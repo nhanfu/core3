@@ -4,43 +4,51 @@ datasources:
   - id: pos_touch_session
     single: true
     permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_TOUCH_SESSION_UNAVAILABLE, message: The POS register is temporarily unavailable. } }
     query: |
       SELECT s.id, s.name, s.state, s.config,
         CAST(s.balance_start AS DOUBLE) AS balance_start,
         CAST(COALESCE(s.opening_counted, s.balance_start, 0) AS DOUBLE) AS opening_counted,
         COALESCE(s.opening_note, '') AS opening_note
       FROM pos_sessions s
-      WHERE (:id IS NOT NULL AND s.id = :id)
+      WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
+        AND ((:id IS NOT NULL AND s.id = :id)
          OR (:id IS NULL AND s.state IN ('In Progress', 'Opening Control'))
+        )
       ORDER BY CASE WHEN s.state = 'In Progress' THEN 0 ELSE 1 END, s.opened_at DESC
       LIMIT 1
 
   - id: pos_touch_products
     single: false
     permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_TOUCH_PRODUCTS_UNAVAILABLE, message: POS products are temporarily unavailable. } }
     query: |
       SELECT id, name, barcode, category,
         CAST(price AS DOUBLE) AS price,
         CAST(tax_rate AS DOUBLE) AS tax_rate
       FROM pos_products
       WHERE active = true
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
         AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%')
       ORDER BY category, name
 
   - id: pos_touch_sessions
     single: false
     permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_TOUCH_SESSIONS_UNAVAILABLE, message: POS active sessions are temporarily unavailable. } }
     query: |
       SELECT id, name, config, state,
         CAST(balance_start AS DOUBLE) AS balance_start,
         CAST(COALESCE(opening_counted, 0) AS DOUBLE) AS opening_counted
       FROM pos_sessions
       WHERE state = 'In Progress'
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
       ORDER BY opened_at DESC
 
   - id: pos_touch_open_orders
     single: false
     permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_TOUCH_OPEN_ORDERS_UNAVAILABLE, message: POS open tickets are temporarily unavailable. } }
     query: |
       SELECT o.id, o.name, o.partner_name, o.state,
         CAST(o.amount_total AS DOUBLE) AS amount_total,
@@ -54,14 +62,17 @@ datasources:
       FROM pos_orders o
       JOIN pos_sessions s ON s.id = o.session_id
       WHERE o.state = 'New' AND s.state = 'In Progress'
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
       ORDER BY o.date_order DESC
 
   - id: pos_touch_payment_methods
     single: false
     permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_TOUCH_PAYMENT_METHODS_UNAVAILABLE, message: POS payment methods are temporarily unavailable. } }
     query: |
       SELECT name AS value, name AS label
       FROM pos_payment_methods
       WHERE active = true
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
       GROUP BY name
       ORDER BY CASE WHEN name = 'Cash' THEN 0 ELSE 1 END, name

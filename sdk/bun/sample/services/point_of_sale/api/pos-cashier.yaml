@@ -3,45 +3,53 @@ datasources:
   - id: pos_cashier_products
     single: false
     permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_CASHIER_PRODUCTS_UNAVAILABLE, message: POS products are temporarily unavailable. } }
     query: |
       SELECT id, name, barcode, category,
         CAST(price AS DOUBLE) AS price,
         CAST(tax_rate AS DOUBLE) AS tax_rate
       FROM pos_products WHERE active = true
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
         AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%')
       ORDER BY category, name
 
   - id: pos_cashier_sessions
     single: false
     permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_CASHIER_SESSIONS_UNAVAILABLE, message: POS sessions are temporarily unavailable. } }
     query: |
       SELECT id AS value, name || ' — ' || config AS label
       FROM pos_sessions WHERE state = 'In Progress'
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
       ORDER BY opened_at DESC
 
   - id: pos_cashier_session_stats
     single: true
     permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_CASHIER_STATS_UNAVAILABLE, message: POS register statistics are temporarily unavailable. } }
     query: |
       SELECT
-        COALESCE((SELECT name FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC LIMIT 1), 'None') AS session_name,
-        (SELECT COUNT(*) FROM pos_orders WHERE state = 'New' AND session_id IN (SELECT id FROM pos_sessions WHERE state = 'In Progress')) AS open_orders,
-        CAST((SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders WHERE state = 'Paid' AND DATE(date_order) = CURRENT_DATE) AS DOUBLE) AS total_paid,
-        COALESCE((SELECT state FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC LIMIT 1), 'No active session') AS cashier_state
+        CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 'None' ELSE COALESCE((SELECT name FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC LIMIT 1), 'None') END AS session_name,
+        CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE (SELECT COUNT(*) FROM pos_orders WHERE state = 'New' AND session_id IN (SELECT id FROM pos_sessions WHERE state = 'In Progress')) END AS open_orders,
+        CAST(CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE (SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders WHERE state = 'Paid' AND DATE(date_order) = CURRENT_DATE) END AS DOUBLE) AS total_paid,
+        CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 'No active session' ELSE COALESCE((SELECT state FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC LIMIT 1), 'No active session') END AS cashier_state
 
   - id: pos_cashier_payment_methods
     single: false
     permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_CASHIER_PAYMENT_METHODS_UNAVAILABLE, message: POS payment methods are temporarily unavailable. } }
     query: |
       SELECT name AS value, name AS label
       FROM pos_payment_methods
       WHERE active = true
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
       GROUP BY name
       ORDER BY CASE WHEN name = 'Cash' THEN 0 ELSE 1 END, name
 
   - id: pos_open_tickets
     single: false
     permission: pos.write
+    error_states: { transport_error: { status: 503, code: POS_OPEN_TICKETS_UNAVAILABLE, message: POS open tickets are temporarily unavailable. } }
     query: |
       SELECT o.id, o.name, o.session_id, s.name AS session_name,
         o.partner_name, o.state,
@@ -54,14 +62,17 @@ datasources:
       FROM pos_orders o
       JOIN pos_sessions s ON s.id = o.session_id
       WHERE o.state = 'New' AND s.state = 'In Progress'
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
       ORDER BY o.date_order DESC
 
   - id: pos_open_ticket_options
     single: false
     permission: pos.write
+    error_states: { transport_error: { status: 503, code: POS_OPEN_TICKET_OPTIONS_UNAVAILABLE, message: POS ticket choices are temporarily unavailable. } }
     query: |
       SELECT o.id AS value, o.name || COALESCE(' — ' || o.partner_name, '') AS label
       FROM pos_orders o
       JOIN pos_sessions s ON s.id = o.session_id
       WHERE o.state = 'New' AND s.state = 'In Progress'
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
       ORDER BY o.date_order DESC

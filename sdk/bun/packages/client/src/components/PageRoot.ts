@@ -241,6 +241,7 @@ export class PageRuntime extends BaseComponent {
       dataMap[src.id] = {
         data: src.data,
         meta: src.meta || { total: Array.isArray(src.data) ? src.data.length : 1, page: 1, pageSize },
+        ...(src.error ? { error: src.error } : {}),
       };
       continue;
     }
@@ -251,7 +252,11 @@ export class PageRuntime extends BaseComponent {
       dataMap[src.id] = result;
     } catch (err) {
       console.error(`[page-renderer] Failed to load datasource "${src.id}":`, err);
-      dataMap[src.id] = { data: src.single ? {} : [], meta: { total: 0, page: 1, pageSize } };
+      dataMap[src.id] = {
+        data: src.single ? {} : [],
+        meta: { total: 0, page: 1, pageSize },
+        error: err && typeof err === 'object' ? err : { message: String(err) },
+      };
     }
   }
   for (const [sourceId, result] of Object.entries(dataMap)) {
@@ -726,6 +731,7 @@ function collectSources(config: any) {
       url_pagination: def.type === 'ListView',
       data: def.data,
       meta: def.meta,
+      error: def.error,
     });
   };
   for (const source of config.datasources || []) add(source.id, source);

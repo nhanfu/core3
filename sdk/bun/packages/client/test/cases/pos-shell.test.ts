@@ -132,4 +132,60 @@ describe('POS touch selling shell', () => {
     expect(state.change).toBe(1.15);
     sessionStorage.removeItem('core3.pos.touch.pending-receipt');
   });
+
+  it('labels the initial register state and keeps the empty shell actionable', () => {
+    const shell = new PosShell('touch', { canWrite: true, bootstrapProducts: [], openOrders: [] });
+    shell.mount(document.body);
+
+    expect(document.querySelector('[data-pos-state="initial"]')).not.toBeNull();
+    expect(document.querySelector('[data-pos-initial-state]')).not.toBeNull();
+    expect(document.body.textContent).toContain('No active register');
+  });
+
+  it('labels empty product, cart, and ticket states without inventing records', () => {
+    const shell = new PosShell('touch', {
+      sessionSource: session,
+      bootstrapProducts: [],
+      openOrders: [],
+      canWrite: true,
+      screen: 'ticket',
+    });
+    shell.mount(document.body);
+
+    expect(document.querySelector('[data-pos-state="ready"]')).not.toBeNull();
+    expect(document.querySelector('[data-pos-tickets-empty]')).not.toBeNull();
+
+    shell.setState({ screen: 'product' });
+    expect(document.querySelector('[data-pos-products-empty]')).not.toBeNull();
+    expect(document.querySelector('[data-pos-product-empty-state="catalog"]')).not.toBeNull();
+    expect(document.querySelector('[data-pos-cart-empty]')).not.toBeNull();
+  });
+
+  it('renders a datasource error with a retry affordance', () => {
+    const shell = new PosShell('touch', {
+      dataErrors: [{ sourceId: 'pos_touch_products', status: 503, code: 'POS_TOUCH_PRODUCTS_UNAVAILABLE', message: 'POS products are temporarily unavailable.' }],
+      canWrite: true,
+    });
+    shell.mount(document.body);
+
+    expect(document.querySelector('[data-pos-state="error"]')).not.toBeNull();
+    expect(document.querySelector('[data-pos-error-state]')).not.toBeNull();
+    expect(document.querySelector('[data-pos-retry]')).not.toBeNull();
+    expect(document.body.textContent).toContain('POS products are temporarily unavailable.');
+  });
+
+  it('labels denied access and disables selling controls', () => {
+    const shell = new PosShell('touch', {
+      sessionSource: session,
+      bootstrapProducts: [product],
+      openOrders: [],
+      canWrite: false,
+    });
+    shell.mount(document.body);
+
+    expect(document.querySelector('[data-pos-state="denied"]')).not.toBeNull();
+    expect(document.querySelector('[data-pos-denied]')).not.toBeNull();
+    expect(document.querySelector('[data-touch-product="product-1"]')?.getAttribute('aria-disabled')).toBe('true');
+    expect(document.body.textContent).toContain('POS write access is required');
+  });
 });

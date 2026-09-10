@@ -421,6 +421,17 @@ outside Git; screenshots are never committed.
 - Commits contain YAML/TS/docs only; screenshots remain local evidence and are
   never committed.
 
+## Current batch: cashier initial, empty, error, and denied states
+
+The existing `/point-of-sale/cashier` and `/point-of-sale/touch` surfaces now
+carry explicit service-owned `initial`, `empty`, `not_found`, and
+`transport_error` fixture behavior through their page-id-matched API fragments.
+The touch shell labels its initial register, catalog/ticket/cart/payment empty,
+datasource error with retry, and permission-denied states in the existing
+surface. Page-prefetched datasource errors retain their status/code/message so
+the shell can render an actionable error card instead of treating a failed
+source as an ordinary empty list. No catalog route was added.
+
 ## Current batch: PoS Product Category detail
 
 The owned Odoo `point_of_sale` addon exposes `PoS Product Categories` as a

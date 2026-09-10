@@ -57,6 +57,7 @@ export class PosShell extends BaseComponent {
       tenderAmount: '',
       selectedPaymentMethod: 'Cash',
       paymentError: '',
+      dataErrors: [],
       ...state,
     });
     this.def = def;
@@ -65,6 +66,9 @@ export class PosShell extends BaseComponent {
   static resolveState(_definition: any, context: any = {}) {
     const dataMap = context.dataMap || {};
     const value = (id: string) => dataMap[id]?.data;
+    const dataErrors = Object.entries(dataMap)
+      .map(([sourceId, result]: [string, any]) => result?.error ? { sourceId, ...result.error } : null)
+      .filter(Boolean);
     const session = value('pos_touch_session') || {};
     const orders = Array.isArray(value('pos_touch_open_orders')) ? value('pos_touch_open_orders') : [];
     const paymentMethods = (Array.isArray(value('pos_touch_payment_methods')) ? value('pos_touch_payment_methods') : [])
@@ -118,6 +122,7 @@ export class PosShell extends BaseComponent {
       paymentMethods,
       paidAmount: Number(order.amount_paid || 0),
       selectedPaymentMethod: paymentMethods[0]?.value || 'Cash',
+      dataErrors,
       ...(storedReceipt ? {
         screen: 'receipt',
         activeOrderId: null,
@@ -138,12 +143,20 @@ export class PosShell extends BaseComponent {
       .className('pos-shell relative flex flex-col h-full min-h-screen w-full max-w-full overflow-x-hidden bg-gray-100')
       .ele();
 
+    const dataErrors = Array.isArray(this.state.dataErrors) ? this.state.dataErrors : [];
+    const hasSession = Boolean(sessionSource.id);
+    const stateName = dataErrors.length ? 'error' : !hasSession ? (this.state.canWrite ? 'initial' : 'denied') : !this.state.canWrite ? 'denied' : 'ready';
+    shell.setAttribute('data-pos-state', stateName);
+    if (stateName === 'denied') shell.setAttribute('data-pos-denied', 'true');
+
     this._drawHeader(shell, sessionSource);
 
     const screen = this.state.screen || 'product';
     const body = html.take(shell).div.className('pos-shell__body flex-1 min-w-0 max-w-full overflow-hidden').ele();
 
-    if (!sessionSource.id) {
+    if (dataErrors.length) {
+      this._drawDataError(body, dataErrors[0]);
+    } else if (!sessionSource.id) {
       this._drawClosedSession(body);
     } else if (sessionSource.state === 'Opening Control') {
       this._drawProductScreen(body, bootstrapProducts);
@@ -265,6 +278,7 @@ export class PosShell extends BaseComponent {
 
   private _drawClosedSession(container: HTMLElement) {
     const panel = html.take(container).div
+      .attr('data-pos-initial-state', 'true')
       .className('pos-touch-state flex min-h-[360px] items-center justify-center bg-white p-6')
       .ele();
     const card = html.take(panel).div.className('w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm').ele();
@@ -285,6 +299,24 @@ export class PosShell extends BaseComponent {
     }
   }
 
+  private _drawDataError(container: HTMLElement, error: any) {
+    const panel = html.take(container).div
+      .attr('data-pos-error-state', 'true')
+      .className('pos-touch-state flex min-h-[360px] items-center justify-center bg-white p-6')
+      .ele();
+    const card = html.take(panel).div.className('w-full max-w-md rounded-xl border border-red-200 bg-white p-8 text-center shadow-sm').ele();
+    html.take(card).div.className('mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-700').text('!').ele();
+    html.take(card).h2.className('mb-2 text-lg font-semibold text-gray-900').text('POS data unavailable').ele();
+    html.take(card).p.className('mb-2 text-sm text-gray-600').text(String(error?.message || 'The register data could not be loaded.')).ele();
+    if (error?.code) html.take(card).p.className('mb-6 text-xs text-gray-400').text(`Error code: ${String(error.code)}`).ele();
+    html.take(card).button
+      .attr('data-pos-retry', 'true')
+      .className('min-h-11 w-full rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700')
+      .text('Retry')
+      .event('click', () => window.location.reload())
+      .ele();
+  }
+
   private _drawProductScreen(container: HTMLElement, products: CatalogProduct[]) {
     const wrap = html.take(container).div
       .className('pos-product-screen flex flex-col md:flex-row h-full min-w-0 max-w-full')
@@ -294,6 +326,7 @@ export class PosShell extends BaseComponent {
     const catalog = html.take(wrap).div
       .className('pos-catalog w-full md:flex-1 p-4 overflow-y-auto bg-white border-r')
       .ele();
+    if (!products.length) catalog.setAttribute('data-pos-products-empty', 'true');
 
     html.take(catalog).h2.className('text-sm font-semibold text-gray-700 mb-3').text('Products').ele();
     if (!this.state.canWrite) {
@@ -334,7 +367,9 @@ export class PosShell extends BaseComponent {
           `<span class="text-sm font-semibold text-indigo-700">$${product.price.toFixed(2)}</span><span class="text-xs text-gray-400">${product.tax_rate}% tax</span>`;
       }
       if (!filtered.length) {
-        html.take(grid).div.className('col-span-full flex min-h-40 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 px-5 py-8 text-center')
+        html.take(grid).div
+          .attr('data-pos-product-empty-state', products.length ? 'search' : 'catalog')
+          .className('col-span-full flex min-h-40 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 px-5 py-8 text-center')
           .text(products.length ? 'No products match this search' : 'No products are available in this register').ele();
       }
     };
@@ -366,7 +401,7 @@ export class PosShell extends BaseComponent {
     // Cart lines
     const lines = html.take(panel).div.className('flex-1 overflow-y-auto px-3 py-2 space-y-2').ele();
     if (!cart.length) {
-      html.take(lines).div.className('text-center text-sm text-gray-400 py-8').text('No items in cart').ele();
+      html.take(lines).div.attr('data-pos-cart-empty', 'true').className('text-center text-sm text-gray-400 py-8').text('No items in cart').ele();
     }
     for (const line of cart) {
       const row = html.take(lines).div.className('flex items-center gap-2 bg-white rounded p-2 shadow-sm').ele();
@@ -418,7 +453,7 @@ export class PosShell extends BaseComponent {
     html.take(top).h2.className('text-lg font-semibold text-gray-900').text('Payment').ele();
 
     if (!this.state.activeOrderId || !cart.length) {
-      const empty = html.take(wrap).div.className('flex flex-1 items-center justify-center').ele();
+      const empty = html.take(wrap).div.attr('data-pos-payment-empty', 'true').className('flex flex-1 items-center justify-center').ele();
       const card = html.take(empty).div.className('w-full max-w-md rounded-xl border border-dashed border-gray-300 p-8 text-center').ele();
       html.take(card).h3.className('mb-2 text-base font-semibold text-gray-900').text('No order to pay').ele();
       html.take(card).p.className('mb-5 text-sm text-gray-500').text('Add an item to the current order before choosing a tender.').ele();
@@ -453,7 +488,7 @@ export class PosShell extends BaseComponent {
         .ele();
     }
     if (!methods.length) {
-      html.take(tender).div.className('rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500').text('No active payment methods are configured for this register.').ele();
+      html.take(tender).div.attr('data-pos-payment-methods-empty', 'true').className('rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500').text('No active payment methods are configured for this register.').ele();
     }
 
     const amountLabel = html.take(tender).label.className('mt-5 block text-sm font-medium text-gray-700').text('Amount tendered').ele() as HTMLLabelElement;
@@ -491,6 +526,7 @@ export class PosShell extends BaseComponent {
 
     html.take(tender).div
       .attr('data-touch-payment-error', 'true')
+      .attr('data-pos-action-error', 'true')
       .attr('role', 'alert')
       .className(`mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 ${this.state.paymentError ? '' : 'hidden'}`)
       .text(this.state.paymentError || '')
@@ -557,7 +593,7 @@ export class PosShell extends BaseComponent {
     html.take(wrap).h2.className('text-lg font-semibold text-gray-900 mb-4').text('Open tickets').ele();
 
     if (!orders.length) {
-      const empty = html.take(wrap).div.className('flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 px-5 py-12 text-center').ele();
+      const empty = html.take(wrap).div.attr('data-pos-tickets-empty', 'true').className('flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 px-5 py-12 text-center').ele();
       html.take(empty).div.className('mb-2 text-base font-semibold text-gray-800').text('No open tickets').ele();
       html.take(empty).div.className('text-sm text-gray-500').text(this.state.canWrite ? 'Return to the register to start a new order.' : 'POS write access is required to create or pay tickets.').ele();
       return;
