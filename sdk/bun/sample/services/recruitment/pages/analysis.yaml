@@ -1,13 +1,48 @@
 title: Recruitment Analysis
-page: { id: recruitment-analysis, breadcrumb: [Human Resources, Recruitment, Reporting, Analysis], auth: { require: [recruitment.read] } }
+page: { id: recruitment-analysis, breadcrumb: [Recruitment, Reporting, Recruitment Analysis], auth: { require: [recruitment.read] } }
 components:
-  - type: StatRow
-    source: recruitment_analysis_totals
-    title: Hiring funnel
-    stats: [{ label: Applicants, field: applicant_count }, { label: Hired, field: hired_count }, { label: Open, field: open_count }, { label: Job positions, field: opening_count }]
-  - type: Chart
-    source: recruitment_analysis_stages
-    title: Applicants by stage
-    label_field: category
-    value_field: applicant_count
-    variant: bar
+  - type: ListView
+    variant: odoo
+    source: recruitment_analysis
+    search: { label: Search Applicants, placeholder: 'Search applicants, job positions, departments, or recruiters...' }
+    filters:
+      - { field: stage, label: Stage, options: [New, Screening, Interview, Offer, Hired, Rejected] }
+      - { field: opening_name, label: Job Position, options_source: recruitment_analysis_openings }
+      - { field: recruiter, label: Responsible, options_source: recruitment_analysis_recruiters }
+    group_by:
+      - { field: stage, label: Stage }
+      - { field: opening_name, label: Job Position }
+      - { field: department_name, label: Department }
+      - { field: recruiter, label: Responsible }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: stage
+        measure_field: applicant_count
+        type: bar
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: stage, column: Stage }
+            - { field: opening_name, column: Job Position }
+            - { field: department_name, column: Department }
+            - { field: recruiter, column: Responsible }
+            - { field: applicant_count, column: Count }
+          default:
+            rows: [stage]
+            columns: [opening_name]
+            measures: [{ field: applicant_count, aggregate: sum, column: Count }]
+    columns:
+      - { field: stage, label: Stage, type: PrimaryEntityCell }
+      - { field: opening_name, label: Job Position }
+      - { field: department_name, label: Department }
+      - { field: recruiter, label: Responsible }
+      - { field: applicant_count, label: Count, align: right }
+    page_size: 50
+    row_key: stage
+    empty_state: { title: No data yet!, description: Create an application to analyze your recruitment pipeline. }

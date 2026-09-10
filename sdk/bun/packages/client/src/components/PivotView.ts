@@ -8,6 +8,7 @@ export type PivotViewDefinition = {
   fieldLabels?: Record<string, string>; configLabel?: string;
   pivotColumns?: Array<{ values: string[]; prefix: string }>;
   dateFields?: string[]; dateRanges?: Record<string, string>;
+  showLeafRows?: boolean;
   rowFields: string[]; columnFields: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>;
 };
 
@@ -24,6 +25,7 @@ type PivotTreeNode = {
 export class PivotView extends BaseComponent {
   constructor(id: string, state: { rows?: Record<string, unknown>[] } = {}, readonly options: {
     view: PivotViewDefinition; openAction?: string; rowKey?: string; pivotColumns?: Array<{ values: string[]; prefix: string }>;
+    emptyState?: { title?: string; description?: string };
     onChange?: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>; ranges?: Record<string, string> }) => void;
   }) { super(id, state); }
 
@@ -55,12 +57,17 @@ export class PivotView extends BaseComponent {
       for (const column of columns) this.addCell(headRow, this.columnLabel(column), 'th');
     }
     const body = html.take(table).tbody.ele() as HTMLTableSectionElement;
-    const tree = this.buildPivotTree(rows, view.rowFields || []);
+    const tree = this.buildPivotTree(rows, view.rowFields || [], view.showLeafRows !== false);
     for (const item of this.visiblePivotRows(tree)) {
       const tr = html.take(body).trow.ele() as HTMLTableRowElement;
       for (const [index, column] of visibleDataColumns.entries()) this.addPivotCell(tr, item, column, index, view.rowFields || []);
     }
-    if (!rows.length) { html.take(root).p.className('o-analytics-empty').replaceText(i18n.tKey('analytics.no_data', {}, 'No data')); return; }
+    if (!rows.length) {
+      const empty = this.options.emptyState || {};
+      html.take(root).h3.className('o-analytics-empty').replaceText(empty.title || i18n.tKey('analytics.no_data', {}, 'No data'));
+      if (empty.description) html.take(root).p.replaceText(empty.description);
+      return;
+    }
   }
 
   private addCell(row: HTMLTableRowElement, text: string | number, kind: 'th' | 'td') {
@@ -146,7 +153,7 @@ export class PivotView extends BaseComponent {
     return values.some((_, level) => level <= ancestorLevel && this.isColumnCollapsed(values, level));
   }
 
-  private buildPivotTree(rows: Record<string, unknown>[], rowFields: string[]) {
+  private buildPivotTree(rows: Record<string, unknown>[], rowFields: string[], showLeafRows: boolean) {
     if (!rowFields.length) return rows.map((row, index) => ({ node: { key: `leaf-${index}`, level: 0, row, children: [], leaves: [row] }, leaf: true }));
     const root: PivotTreeNode = { key: 'root', level: -1, children: [], leaves: rows };
     for (const row of rows) {
@@ -163,16 +170,16 @@ export class PivotView extends BaseComponent {
         child.leaves.push(row);
         parent = child;
       });
-      parent.children.push({ key: `${parent.key}/leaf-${parent.children.length}`, level: rowFields.length, row, children: [], leaves: [row] });
+      if (showLeafRows) parent.children.push({ key: `${parent.key}/leaf-${parent.children.length}`, level: rowFields.length, row, children: [], leaves: [row] });
     }
-    return this.flattenPivotTree(root);
+    return this.flattenPivotTree(root, rowFields.length);
   }
 
-  private flattenPivotTree(root: PivotTreeNode) {
+  private flattenPivotTree(root: PivotTreeNode, rowDepth: number) {
     const visible: Array<{ node: PivotTreeNode; leaf: boolean }> = [];
     const visit = (node: PivotTreeNode) => {
       for (const child of node.children) {
-        const leaf = child.children.length === 0;
+        const leaf = child.level >= rowDepth;
         visible.push({ node: child, leaf });
         if (!leaf && !this.isCollapsed(child.key)) visit(child);
       }

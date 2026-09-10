@@ -148,6 +148,26 @@ describe('PivotView builder', () => {
     expect(host.querySelectorAll('.o-pivot-group-toggle')).toHaveLength(2);
   });
 
+  it('can render grouped aggregates without duplicate leaf rows', () => {
+    const host = document.createElement('div');
+    const view = new PivotView('orders-pivot-no-leaves', {
+      rows: [
+        { status_label: 'Approved', Road_Amount: 1234 },
+        { status_label: 'Approved', Road_Amount: 2000 },
+      ],
+    }, {
+      view: {
+        id: 'pivot', label: 'Pivot', fields: ['status_label', 'total_amount'],
+        rowFields: ['status_label'], columnFields: ['total_amount'], measures: [{ aggregate: 'sum', label: 'Amount' }],
+        showLeafRows: false,
+      },
+    });
+    view.mount(host);
+
+    expect(host.querySelectorAll('.o-pivot-table tbody tr')).toHaveLength(1);
+    expect(host.querySelector('.o-pivot-table tbody')?.textContent).toContain('Approved');
+  });
+
   it('defaults date fields to month and emits a changed date range', () => {
     const host = document.createElement('div');
     const onChange = vi.fn();

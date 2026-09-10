@@ -1,11 +1,12 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-1-implemented`
+Status: `batch-2-implemented`
 
 This document remains the implementation gate and evidence record. Batch 1
 implements the coherent Core3 job-position/openings and applicant queues,
-including list/kanban/detail/filter/workflow states. It does not install Odoo
-modules or treat an uninstalled reference addon as visual evidence.
+including list/kanban/detail/filter/workflow states. Batch 2 adds the
+Recruitment Analysis graph/pivot action with deterministic report fixtures,
+search filters, and explicit empty/failed datasource states.
 
 ## Reference gate and exact limitation
 
@@ -13,26 +14,18 @@ modules or treat an uninstalled reference addon as visual evidence.
   `659759969d535d286b656c96b675e4612b925ddd` (`65975996`), addon
   `addons/hr_recruitment`.
 - The authenticated reference is `http://localhost:8069`, database
-  `core3_demo`, checked on 2026-09-10 as `admin@core3.local` using the
-  credentials in the parent register. Login succeeds and the Odoo shell is
-  `19.0-20260908`.
-- `hr_recruitment` is not installed in that database: the home launcher has no
-  Recruitment menu, while `/odoo/apps` shows Recruitment with an `Activate`
-  control. No Recruitment `ir.ui.menu`, installed action, loaded view, or
-  demo record is therefore available for authenticated live inspection. The
-  addon must not be activated as part of this plan.
-- Truthful fallback captures are under `/tmp` only:
-  `/tmp/odoo-recruitment-desktop.png` (1440x900 logged-in Discuss shell) and
-  `/tmp/odoo-recruitment-mobile.png` (390x844 logged-in Discuss shell), plus
-  `/tmp/odoo-recruitment-menu-desktop.png` (1440x900 launcher showing that
-  Recruitment is absent). These are explicitly Discuss/uninstalled captures,
-  not Recruitment parity screenshots. There is no installed-addon desktop or
-  mobile Recruitment screenshot and no screenshot is fabricated or committed.
-- Because the addon is uninstalled, installed-reference route resolution,
-  rendered menu/action/view assertions, live fixture inspection, and visual
-  comparison remain follow-up evidence. The source inventory and Core3
-  contract below are still complete enough to authorize implementation once
-  that reference prerequisite is restored.
+  `core3_personal`, checked on 2026-09-10 as `codex@core3.local` using the
+  personal credentials in the parent register. Login succeeds and the Odoo
+  shell is `19.0-20260908`.
+- `hr_recruitment` is installed with demo data in `core3_personal`. The live
+  launcher exposes Recruitment and `/odoo/recruitment` opens the default
+  Job Positions action. Reporting → Recruitment Analysis resolves to the
+  runtime-generated action URL `/odoo/action-655`.
+- Installed-reference screenshots for this batch are under `/tmp/odoo-recruitment/`:
+  `analysis-graph-desktop.png`, `analysis-graph-mobile.png`,
+  `analysis-pivot-desktop.png`, and `analysis-pivot-mobile.png`. They were
+  captured only after asserting the Recruitment title, menu, action title, and
+  loaded graph/pivot controls. Images are not committed.
 
 ## Addon, manifest, demo, and source evidence
 
@@ -241,28 +234,25 @@ The implementation batch is accepted only when:
 
 ## Focused pre-implementation validation
 
-Completed for this plan-only gate: source manifest, menu/action/view,
+Completed for the original plan gate: source manifest, menu/action/view,
 security, demo-data and Core3 service inspection; authenticated desktop and
-mobile login; authenticated launcher/apps-catalog check proving Recruitment is
-uninstalled; truthful fallback captures under `/tmp`; and source revision
-verification. Product implementation, module installation, and binary commit
-are out of scope.
+mobile login; authenticated launcher/apps-catalog check; and source revision
+verification. The personal Odoo database now provides the installed live
+reference used by Batch 2.
 
 Run from `sdk/bun/sample` after implementation:
 
 ```sh
 bun run audit
-bun run audit:yaml
 git diff --check
 ```
 
+The sample package does not define a separate `audit:yaml` script; YAML/schema
+validation runs during page discovery and the focused recruitment tests.
 Also run the focused recruitment migration/API/schema tests and the complete
-authenticated desktop/mobile Playwright matrix described above. The live Odoo
-`hr_recruitment` addon remains uninstalled, so no Odoo Recruitment screenshot,
-route, record, or menu assertion is claimed. Authenticated Core3 captures are
-under `/tmp/core3-recruitment-desktop.png` (1440x900) and
-`/tmp/core3-recruitment-mobile.png` (390x844); images are intentionally not
-committed.
+authenticated desktop/mobile Playwright matrix described above. Batch 2
+captures are under `/tmp/core3-recruitment/analysis-*.png` at 1440x900 and
+390x844; images are intentionally not committed.
 
 ## Batch 1 implementation record
 
@@ -276,5 +266,38 @@ application counts. Shared ListView, KanbanView, FormView, search, filter, and
 responsive primitives are reused without a recruitment-only renderer.
 
 Deliberate defer for a later batch: talent pools, configuration/reference data,
-settings, job-board email actions, reporting graph/pivot/calendar/activity,
-CV/chatter, and interviewer-specific permissions.
+settings, job-board email actions, reporting calendar/activity, CV/chatter,
+and interviewer-specific permissions.
+
+## Batch 2 implementation record — Recruitment Analysis
+
+The installed personal Odoo action was inspected from the source contract and
+live browser. Its view order is `graph,pivot`; the default search context shows
+`Creation Date: Month > Jobs`; the graph exposes Measures and chart controls;
+and the pivot is grouped by stage with job-position columns and a Count
+measure. Core3 now maps the Reporting → Recruitment Analysis menu to a
+presentation-only ListView with visible Graph/Pivot tabs in that order. Its
+page-owned API fragment returns stable stage/job/department/responsible counts,
+supports the report filters and search, declares pivot fields, and exposes
+empty, missing-fixture, and 503 transport-error behavior without page-local
+SQL.
+
+Authenticated evidence was captured at both required viewports and compared
+against the installed reference:
+
+- Core3: `/tmp/core3-recruitment/analysis-graph-desktop.png`,
+  `analysis-graph-mobile.png`, `analysis-pivot-desktop.png`, and
+  `analysis-pivot-mobile.png`.
+- Odoo: `/tmp/odoo-recruitment/analysis-graph-desktop.png`,
+  `analysis-graph-mobile.png`, `analysis-pivot-desktop.png`, and
+  `analysis-pivot-mobile.png`.
+
+The shared analytics empty-state handoff was extended so this module retains
+the Odoo `No data yet!` copy in Graph and Pivot states. The Recruitment pivot
+opts out of duplicate leaf rows so its single-stage grouping matches Odoo.
+The remaining visual delta is the shared Core3 chart renderer's intentionally smaller control set
+and deterministic three-record fixture volume; the action, tabs, responsive
+fit, search, pivot grouping, and report state contracts are covered by the
+focused test and browser evidence. Configuration, talent pools, calendar,
+activity, CV/chatter, and interviewer-specific permission parity remain later
+batches.

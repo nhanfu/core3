@@ -271,7 +271,7 @@ export class ListView extends BaseComponent {
     const activeView = this.activeView();
     this.drawPrimaryControls(main, labels);
     this.drawSearch(main, filters, selectedIds, labels);
-    this.drawNavigation(main, meta, visibleColumnIds, labels, activeView.id !== 'pivot');
+    this.drawNavigation(main, meta, visibleColumnIds, labels, !['graph', 'pivot'].includes(activeView.id));
     this.drawFacets(controlPanel, filters, labels);
 
     const listEnabled = this.isViewEnabled('list');
@@ -398,6 +398,7 @@ export class ListView extends BaseComponent {
       const View = activeView.id === 'pivot' ? PivotView : activeView.id === 'graph' ? GraphView : MapView;
       const child = new View(`${activeView.id}-view-${this.id}`, { rows }, {
         ...options,
+        emptyState: this.options.emptyState,
         ...(activeView.id === 'pivot' ? { onChange: this.options.onPivotChange } : {}),
       } as any);
       child.parent = this;

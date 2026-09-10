@@ -603,6 +603,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     dateFields: view.id === 'pivot' ? pivotFieldMappings.filter((field: any) => field.type === 'date' || view.pivot?.date_ranges?.[field.field]).map((field: any) => String(field.field)) : undefined,
     dateRanges: view.id === 'pivot' ? view.pivot?.date_ranges || {} : undefined,
     configLabel: view.pivot?.config_label,
+    showLeafRows: view.show_leaf_rows !== false,
     rowFields: view.row_fields || (view.row_field ? [view.row_field] : view.pivot?.default?.rows || []),
     columnFields: view.column_fields || (view.column_field ? [view.column_field] : view.pivot?.default?.columns || []),
     measures: view.measures || view.pivot?.default?.measures?.map((measure: any) => ({ field: measure.field, aggregate: measure.aggregate || 'sum', label: measure.column || measure.label })) || [],

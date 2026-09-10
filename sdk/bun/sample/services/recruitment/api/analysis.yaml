@@ -1,9 +1,17 @@
 page: { id: recruitment-analysis }
 datasources:
-  - id: recruitment_analysis_totals
-    single: true
+  - id: recruitment_analysis_openings
+    single: false
     permission: recruitment.read
-    query: "SELECT COUNT(*) AS applicant_count, COUNT(*) FILTER (WHERE stage = 'Hired') AS hired_count, COUNT(*) FILTER (WHERE stage NOT IN ('Hired', 'Rejected')) AS open_count, COUNT(DISTINCT opening_id) AS opening_count FROM recruitment_applicants WHERE archived = FALSE"
-  - id: recruitment_analysis_stages
+    query: "SELECT DISTINCT opening_name AS value, opening_name AS label FROM recruitment_applicants WHERE archived = FALSE ORDER BY opening_name"
+  - id: recruitment_analysis_recruiters
+    single: false
     permission: recruitment.read
-    query: "SELECT stage AS category, COUNT(*) AS applicant_count FROM recruitment_applicants WHERE archived = FALSE GROUP BY stage ORDER BY CASE stage WHEN 'New' THEN 1 WHEN 'Screening' THEN 2 WHEN 'Interview' THEN 3 WHEN 'Offer' THEN 4 WHEN 'Hired' THEN 5 ELSE 6 END"
+    query: "SELECT DISTINCT recruiter AS value, recruiter AS label FROM recruitment_applicants WHERE archived = FALSE AND recruiter IS NOT NULL ORDER BY recruiter"
+  - id: recruitment_analysis
+    single: false
+    permission: recruitment.read
+    error_states: { transport_error: { status: 503, code: RECRUITMENT_ANALYSIS_DATA_UNAVAILABLE, message: Recruitment analysis data is temporarily unavailable } }
+    pivot:
+      fields: [stage, opening_name, department_name, recruiter, applicant_count]
+    query: "SELECT a.stage, a.opening_name, a.department_name, a.recruiter, COUNT(*) AS applicant_count FROM recruitment_applicants a WHERE a.archived = FALSE AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR a.opening_name ILIKE '%' || :q || '%' OR COALESCE(a.department_name, '') ILIKE '%' || :q || '%' OR COALESCE(a.recruiter, '') ILIKE '%' || :q || '%' OR a.stage ILIKE '%' || :q || '%') AND (:stage IS NULL OR a.stage = :stage) AND (:opening_name IS NULL OR a.opening_name = :opening_name) AND (:recruiter IS NULL OR a.recruiter = :recruiter) GROUP BY a.stage, a.opening_name, a.department_name, a.recruiter ORDER BY CASE a.stage WHEN 'New' THEN 1 WHEN 'Screening' THEN 2 WHEN 'Interview' THEN 3 WHEN 'Offer' THEN 4 WHEN 'Hired' THEN 5 ELSE 6 END, a.opening_name, a.recruiter"
