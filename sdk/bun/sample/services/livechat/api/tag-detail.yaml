@@ -1,0 +1,49 @@
+page: { id: tag-detail }
+
+datasources:
+  - id: livechat_tag_detail
+    single: true
+    permission: livechat.read
+    error_states: { transport_error: { status: 503, code: LIVECHAT_TAG_DETAIL_UNAVAILABLE, message: This live chat tag is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, color FROM livechat_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+
+actions:
+  - id: back_to_livechat_tags
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat/tags
+
+  - id: edit_livechat_tag
+    type: server_form
+    permission: livechat.write
+    title: Edit Live Chat Tag
+    action: im_livechat.conversation_tags.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [livechat_tag_detail, livechat_tags]
+    mutation:
+      operation: update
+      table: livechat_tags
+      fields: [name, color]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_tags WHERE id = :id", status: 404, code: LIVECHAT_TAG_NOT_FOUND, message: Live chat tag not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_tags WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: LIVECHAT_TAG_NAME_EXISTS, message: A live chat tag with this name already exists. }
+      result: { query: "SELECT * FROM livechat_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: color, label: Color, type: color }
+
+  - id: delete_livechat_tag
+    type: server
+    permission: livechat.write
+    action: im_livechat.conversation_tags.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [livechat_tags]
+    mutation:
+      operation: delete
+      table: livechat_tags
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM livechat_tags WHERE id = :id", status: 404, code: LIVECHAT_TAG_NOT_FOUND, message: Live chat tag not found. }]

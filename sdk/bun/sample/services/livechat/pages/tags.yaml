@@ -1,0 +1,32 @@
+title: Live Chat Tags
+page: { id: livechat-tags, route: /livechat/tags, breadcrumb: [Website, Live Chat, Configuration, Tags], auth: { require: [livechat.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_tags
+    create_action: create_livechat_tag
+    create_label: New
+    search: { label: Search tags, placeholder: Search tags... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/livechat/pages/tag-detail.yaml, side_panel: true }
+    inline_edit:
+      create_action: create_livechat_tag
+      update_action: edit_livechat_tag
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, required: true, placeholder: Tag name }
+        - { field: color, type: color, default: 0 }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: color, label: Color, type: ColorCell, align: right }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_livechat_tag, label: Edit, icon: edit }, { id: delete_livechat_tag, label: Delete, icon: trash, variant: danger }] }
+    row_key: id
+    row_actions: menu
+    row_open_action: edit_livechat_tag
+    row_double_click_action: edit_livechat_tag
+    empty_state: { title: No live chat tags found, description: Create tags to classify live chat conversations. }

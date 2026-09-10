@@ -246,3 +246,29 @@ Keep `planned` until `im_livechat` is installed in the reference database and
 the missing authenticated Odoo desktop/mobile route/view evidence is captured.
 Then complete the six gates, reconcile any source-vs-live differences, obtain
 approval for the fixture and primitive contracts, and only then mark `ready`.
+
+## Bounded implementation slice: conversation tags (2026-09-10)
+
+The owned reference database now has `im_livechat` installed and exposes the
+Tags action as Odoo action `820` (`im_livechat.conversation.tag`,
+`list,form`). This slice adds the disjoint Core3 route `/livechat/tags` under
+Live Chat → Configuration → Tags. The page and API remain separate and join
+through `page.id` (`livechat-tags`); the detail form uses `tag-detail` for the
+shared side-panel loader contract.
+
+The slice includes deterministic Billing, Follow-up, Urgent, and VIP fixtures,
+search/no-results and empty fixtures, list/form rendering, create/update/delete
+CRUD, duplicate-name and stale-record guards, transport-error contracts, and
+`livechat.read`/`livechat.write` boundaries. Authenticated Odoo/Core3 captures
+for 1440x900 and 390x844 are stored outside Git under `/tmp`:
+
+- Odoo: `/tmp/odoo-livechat-tags-desktop-authenticated.png` and
+  `/tmp/odoo-livechat-tags-mobile-authenticated.png`
+- Core3: `/tmp/core3-livechat-tags-desktop-authenticated.png` and
+  `/tmp/core3-livechat-tags-mobile-authenticated.png`
+- Core3 detail/search evidence: `/tmp/core3-livechat-tag-detail-desktop-auth-final.png`
+  and `/tmp/core3-livechat-tags-empty-desktop-auth-final.png`
+
+The overall sub-plan remains `planned` because the remaining Live Chat action,
+conversation, reporting, chatbot, technical, and public-widget surfaces still
+require separate parity slices.

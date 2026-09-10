@@ -1,0 +1,71 @@
+page: { id: livechat-tags }
+
+datasources:
+  - id: livechat_tags
+    permission: livechat.read
+    error_states: { transport_error: { status: 503, code: LIVECHAT_TAGS_UNAVAILABLE, message: Live chat tags are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, color FROM livechat_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name, id"
+
+actions:
+  - id: create_livechat_tag
+    type: server_form
+    permission: livechat.write
+    title: New Live Chat Tag
+    action: im_livechat.conversation_tags.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [livechat_tags]
+    mutation:
+      operation: insert
+      table: livechat_tags
+      generated: [id]
+      fields: [name, color]
+      required: [name]
+      defaults: { color: 0 }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_tags WHERE LOWER(name) = LOWER(:name))", status: 409, code: LIVECHAT_TAG_NAME_EXISTS, message: A live chat tag with this name already exists. }]
+      result: { query: "SELECT * FROM livechat_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: color, label: Color, type: color, default: 0 }
+
+  - id: edit_livechat_tag
+    type: server_form
+    permission: livechat.write
+    title: Edit Live Chat Tag
+    action: im_livechat.conversation_tags.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [livechat_tags, livechat_tag_detail]
+    mutation:
+      operation: update
+      table: livechat_tags
+      fields: [name, color]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_tags WHERE id = :id", status: 404, code: LIVECHAT_TAG_NOT_FOUND, message: Live chat tag not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_tags WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: LIVECHAT_TAG_NAME_EXISTS, message: A live chat tag with this name already exists. }
+      result: { query: "SELECT * FROM livechat_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: color, label: Color, type: color }
+
+  - id: delete_livechat_tag
+    type: server
+    permission: livechat.write
+    action: im_livechat.conversation_tags.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [livechat_tags]
+    mutation:
+      operation: delete
+      table: livechat_tags
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM livechat_tags WHERE id = :id", status: 404, code: LIVECHAT_TAG_NOT_FOUND, message: Live chat tag not found. }]
+
+  - id: view_livechat_tag
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat/tags/detail
+    params: { id: '{row.id}' }

@@ -20,3 +20,7 @@ menu:
       label: Reporting
       items:
         - { path: /livechat-analysis, label: Livechat Analysis, icon: chart, permission: livechat.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /livechat/tags, label: Tags, icon: tag, permission: livechat.read }

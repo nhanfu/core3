@@ -1,0 +1,28 @@
+version: 0.0.3
+kind: data
+description: Add deterministic Live Chat conversation tag fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_tags (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        color INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT INTO livechat_tags(id, row_version, name, color, created_at, updated_at)
+      VALUES
+        ('livechat-tag-billing', 1, 'Billing', 4, TIMESTAMP '2026-01-15 08:00:00', TIMESTAMP '2026-01-15 08:00:00'),
+        ('livechat-tag-follow-up', 1, 'Follow-up', 7, TIMESTAMP '2026-01-15 08:05:00', TIMESTAMP '2026-01-15 08:05:00'),
+        ('livechat-tag-urgent', 1, 'Urgent', 2, TIMESTAMP '2026-01-15 08:10:00', TIMESTAMP '2026-01-15 08:10:00'),
+        ('livechat-tag-vip', 1, 'VIP', 10, TIMESTAMP '2026-01-15 08:15:00', TIMESTAMP '2026-01-15 08:15:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM livechat_tags WHERE id IN ('livechat-tag-billing', 'livechat-tag-follow-up', 'livechat-tag-urgent', 'livechat-tag-vip');
+      DROP TABLE IF EXISTS livechat_tags;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,14 @@
+title: Live Chat Tag
+page: { id: tag-detail, route: /livechat/tags/detail, breadcrumb: [Website, Live Chat, Configuration, Tags], auth: { require: [livechat.read] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_tag_detail
+    title_field: name
+    header_actions:
+      - { id: back_to_livechat_tags, label: Back to Tags, icon: arrow-left }
+      - { id: edit_livechat_tag, label: Edit, icon: edit }
+      - { id: delete_livechat_tag, label: Delete, icon: trash, variant: danger }
+    fields:
+      - { field: name, label: Name, type: text }
+      - { field: color, label: Color, type: ColorCell }
