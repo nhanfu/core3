@@ -15,4 +15,5 @@ datasources:
     query: "SELECT id, question, question_type, mandatory, once_per_order, answers FROM event_event_questions WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY id"
   - id: event_detail_slots
     permission: events.read
-    query: "SELECT id, row_version, event_id, name, CAST(start_at AS VARCHAR) AS start_at, CAST(end_at AS VARCHAR) AS end_at, seats, registration_count, state, date_tz, color FROM event_slots WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY start_at, id"
+    error_states: { transport_error: { status: 503, code: EVENT_SLOTS_UNAVAILABLE, message: Event slots are temporarily unavailable. } }
+    query: "SELECT id, row_version, event_id, name, CAST(start_at AS VARCHAR) AS start_at, CAST(end_at AS VARCHAR) AS end_at, seats, registration_count, state, date_tz, color FROM event_slots WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY start_at, id"

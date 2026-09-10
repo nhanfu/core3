@@ -3,13 +3,21 @@ kind: data
 type:
   postgres:
     up: |
+      INSERT INTO events(id, name, event_type, organizer, venue, description, capacity, registration_count, start_at, end_at, state)
+      VALUES ('event-demo-slot-20260115', 'Event Slot Planning Session', 'Conference', 'Events Team', 'Planning Room', 'Deterministic event-slot parity fixture', 80, 1, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 17:00:00', 'Published')
+      ON CONFLICT (id) DO NOTHING;
       ALTER TABLE event_slots ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
       ALTER TABLE event_slots ADD COLUMN IF NOT EXISTS date_tz VARCHAR DEFAULT 'Europe/Brussels';
       ALTER TABLE event_slots ADD COLUMN IF NOT EXISTS color VARCHAR DEFAULT '#875A7B';
       UPDATE event_slots SET row_version = 1 WHERE row_version IS NULL;
       UPDATE event_slots SET date_tz = 'Europe/Brussels' WHERE date_tz IS NULL;
       UPDATE event_slots SET color = '#875A7B' WHERE color IS NULL;
+      INSERT INTO event_slots(id, event_id, name, start_at, end_at, seats, registration_count, state, row_version, date_tz, color)
+      VALUES ('slot-event-20260115-main', 'event-demo-slot-20260115', 'Main session', TIMESTAMP '2026-01-15 10:00:00', TIMESTAMP '2026-01-15 12:00:00', 40, 1, 'Open', 1, 'Europe/Brussels', '#875A7B')
+      ON CONFLICT (id) DO NOTHING;
     down: |
+      DELETE FROM event_slots WHERE id = 'slot-event-20260115-main';
+      DELETE FROM events WHERE id = 'event-demo-slot-20260115';
       ALTER TABLE event_slots DROP COLUMN IF EXISTS color;
       ALTER TABLE event_slots DROP COLUMN IF EXISTS date_tz;
       ALTER TABLE event_slots DROP COLUMN IF EXISTS row_version;

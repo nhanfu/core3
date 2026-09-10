@@ -537,6 +537,25 @@ the installed Odoo list references are `/tmp/odoo-events-desktop-event-questions
 and `/tmp/odoo-events-mobile-event-questions.png`. The Core3 detail remains a
 bounded form and does not yet reproduce Odoo's full answer-choice editor.
 
+The next uncovered user-visible event action is now covered: the event-scoped
+Slots action. Odoo 19 defines this embedded action as `calendar,list,form`
+with the active event as its domain/default; the live `core3_owned` reference
+has no multi-slot demo records, so its Slots control is not shown on the
+currently seeded event forms. Core3 adds the visible Slots-tab create/open
+workflow and `/events/slots/detail`, with page-id-owned
+`api/event-slot-detail.yaml`, deterministic `Main session` data, permissioned
+create/update/delete, event-range and seat validation, registration-protected
+delete, and optimistic row-version handling. Focused coverage is
+`events_slots.integration.test.ts`; the migration uses free version `0.0.14`
+because the existing revenue fixture already owns `0.0.13`. Authenticated
+Fresh authenticated Core3 captures are `/tmp/core3-events-slots-desktop-fresh.png`
+and `/tmp/core3-events-slots-mobile-fresh.png`; the installed Odoo event-form
+references are `/tmp/odoo-events-slots-desktop-fresh.png` and
+`/tmp/odoo-events-slots-mobile-fresh.png`. The installed demo has no
+multi-slot record, so the Odoo pair proves the event form/action context while
+the Core3 pair proves the deterministic Slots tab. Images remain outside the
+repository.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

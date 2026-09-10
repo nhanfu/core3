@@ -102,6 +102,7 @@ components:
             variant: odoo
             scroll: body
             source: event_detail_slots
+            search: { label: Search slots, placeholder: Search slots... }
             create_label: New slot
             create_action: create_event_slot
             columns:
