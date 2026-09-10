@@ -7,13 +7,45 @@ components:
     create_action: create_accounting_payment
     create_label: New payment
     search: { label: Search payments, placeholder: Search payments or customers... }
-    columns:
-      - { field: name, label: Payment, type: PrimaryEntityCell }
+    filters:
+      - { field: state, label: Status, options_source: payment_states }
+    group_by:
       - { field: partner_name, label: Partner }
-      - { field: payment_type, label: Type }
+      - { field: journal, label: Journal }
+      - { field: payment_method, label: Payment Method }
+      - { field: state, label: Status }
+      - { field: payment_date, label: Payment Date }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: payment_states
+        card: { title: name, subtitle: partner_name, fields: [{ field: payment_date, label: Date }, { field: amount_display, label: Amount }, { field: payment_method, label: Payment Method }, { field: state, label: Status }] }
+      - { id: graph, label: Graph, icon: graph, category_field: payment_method, measure_field: amount, type: bar }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: partner_name
+        record_date_field: activity_date
+        activity_types:
+          - { id: todo, label: To-Do, icon: check }
+          - { id: email, label: Email, icon: mail }
+          - { id: done, label: Done, icon: check }
+    columns:
+      - { field: payment_date, label: Date, type: DateCell, sortable: true }
+      - { field: name, label: Number, type: PrimaryEntityCell }
+      - { field: journal, label: Journal }
+      - { field: payment_method, label: Payment Method }
+      - { field: partner_name, label: Customer }
+      - { field: amount_display, label: Amount in Currency, align: right }
       - { field: amount, label: Amount, align: right }
-      - { field: payment_method, label: Method }
-      - { field: payment_date, label: Date }
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_open_action: view_accounting_payment
+    row_double_click_action: view_accounting_payment
+    form_view: { page: apps/services/accounting/pages/payment-detail.yaml, side_panel: false }

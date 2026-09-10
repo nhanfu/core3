@@ -177,6 +177,17 @@ the Odoo comparison captures remain under `/tmp/odoo-accounting-config-*`.
 The implementation was developed in the dedicated
 `agent/odoo-ui-accounting-config` worktree and integrated as `5afc52db`.
 
+## Current batch: customer payments views
+
+The Payments surface now follows the live Odoo customer-payments action with
+List, Kanban, Graph, and Activity tabs, status filters, payment-method and
+partner grouping, Odoo-shaped payment columns, and row navigation to a
+read-only payment form. The payment contract owns journal and currency fields
+with deterministic defaults so created and migrated payments remain renderable
+across every view. The list and detail YAML are joined through their explicit
+`page.id` API fragments; authenticated desktop/mobile comparison captures are
+temporary under `/tmp` and are not repository assets.
+
 ## Current batch: resilient empty, search, and permission states
 
 Payment Tokens, Reconciliation, Invoice Analysis, Analytic Reporting, Partner

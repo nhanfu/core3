@@ -1,0 +1,15 @@
+version: 0.0.10
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_payments ADD COLUMN IF NOT EXISTS journal VARCHAR DEFAULT 'Bank';
+      ALTER TABLE accounting_payments ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'USD';
+      UPDATE accounting_payments SET journal = 'Bank', currency = 'USD' WHERE journal IS NULL OR currency IS NULL;
+    down: |
+      ALTER TABLE accounting_payments DROP COLUMN IF EXISTS currency;
+      ALTER TABLE accounting_payments DROP COLUMN IF EXISTS journal;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

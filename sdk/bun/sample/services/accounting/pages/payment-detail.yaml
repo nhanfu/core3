@@ -1,0 +1,39 @@
+title: Payment
+page: { id: payment-detail, route: /accounting/payment-detail, breadcrumb: [Finance, Accounting, Payments, Detail], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_payment_detail
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: In Process, label: In Process }
+      - { value: Posted, label: Posted }
+      - { value: Cancelled, label: Cancelled }
+    status_colors: { Draft: neutral, In Process: blue, Posted: green, Cancelled: red }
+    editable: false
+    group_columns: 2
+    groups:
+      - title: Payment
+        fields:
+          - { field: name, label: Payment }
+          - { field: state, label: Status }
+          - { field: payment_type, label: Payment Type }
+          - { field: partner_name, label: Customer or vendor }
+          - { field: reference, label: Memo }
+      - title: Payment information
+        fields:
+          - { field: payment_date, label: Date }
+          - { field: journal, label: Journal }
+          - { field: payment_method, label: Payment Method }
+          - { field: amount, label: Amount }
+          - { field: currency, label: Currency }
+    notebook:
+      active: other-info
+      tabs:
+        - id: other-info
+          label: Other Info
+          fields:
+            - { field: reference, label: Memo }
+            - { field: payment_type, label: Payment Type }
+            - { field: currency, label: Currency }
