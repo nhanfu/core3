@@ -1,0 +1,8 @@
+page: { id: partner-reports }
+datasources:
+  - id: accounting_partner_report
+    single: false
+    permission: accounting.read
+    pivot:
+      fields: [partner_name, document_count, total, due]
+    query: "SELECT partner_name, COUNT(*) AS document_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS due FROM accounting_invoices WHERE partner_name IS NOT NULL AND (:q IS NULL OR partner_name ILIKE '%' || :q || '%') GROUP BY partner_name ORDER BY total DESC"

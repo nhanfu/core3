@@ -1,0 +1,8 @@
+page: { id: analytic-report }
+datasources:
+  - id: accounting_analytic_report
+    single: false
+    permission: accounting.read
+    pivot:
+      fields: [plan, account, label, amount, state]
+    query: "SELECT plan, account, label, amount, state FROM (VALUES ('Project','Gemini Furniture','Revenue',1650.00,'Posted'), ('Project','Lumber Inc','Cost of goods',880.00,'Posted'), ('Operations','Main Company','Opening balance',1650.00,'Posted')) analytic(plan, account, label, amount, state) WHERE (:q IS NULL OR plan ILIKE '%' || :q || '%' OR account ILIKE '%' || :q || '%' OR label ILIKE '%' || :q || '%' OR state ILIKE '%' || :q || '%') ORDER BY plan, account"

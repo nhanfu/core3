@@ -1,0 +1,26 @@
+page: { id: reconciliation }
+datasources:
+  - id: accounting_reconciliation
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, name, partner_name, CAST(invoice_date AS VARCHAR) AS invoice_date, amount_total, amount_residual, state, reference FROM accounting_invoices WHERE state = 'Posted' AND amount_residual > 0 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(reference, '') ILIKE '%' || :q || '%') ORDER BY invoice_date"
+actions:
+  - { id: view_reconciliation_invoice, type: navigate, permission: accounting.read, navigate_to: /accounting/invoice-detail, params: { id: '{row.id}' } }
+  - id: reconcile_invoice
+    type: server_form
+    permission: accounting.write
+    title: Reconcile invoice
+    action: accounting.invoices.pay
+    handler: yaml_mutation
+    operation: pay
+    refresh: [accounting_reconciliation]
+    mutation:
+      generated: [payment_id]
+      guards:
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Posted' AND amount_residual > 0", status: 409, message: Only posted invoices with a balance can be reconciled }
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND CAST(:payment_amount AS DECIMAL(18,2)) > 0 AND CAST(:payment_amount AS DECIMAL(18,2)) <= amount_residual", status: 422, message: Payment must be positive and cannot exceed the amount due }
+      steps:
+        - query: "INSERT INTO accounting_payments(id, name, partner_name, payment_type, amount, payment_method, payment_date, state, reference) SELECT :payment_id, 'Reconciliation payment', partner_name, CASE WHEN invoice_type IN ('Vendor Bill', 'Vendor Refund') THEN 'Outbound' ELSE 'Inbound' END, CAST(:payment_amount AS DECIMAL(18,2)), COALESCE(:payment_method, 'Bank'), CURRENT_DATE, 'Posted', name FROM accounting_invoices WHERE id = :id"
+        - query: "UPDATE accounting_invoices SET amount_residual = amount_residual - CAST(:payment_amount AS DECIMAL(18,2)), state = CASE WHEN amount_residual - CAST(:payment_amount AS DECIMAL(18,2)) <= 0 THEN 'Paid' ELSE state END, row_version = row_version + 1 WHERE id = :id"
+      result: { query: "SELECT * FROM accounting_invoices WHERE id = :id" }
+    fields: [{ field: payment_amount, label: Payment amount, type: number, required: true }, { field: payment_method, label: Payment method, type: select, options: [Bank, Cash, Card, Other], default: Bank }]

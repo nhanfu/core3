@@ -1,13 +1,11 @@
 title: Analytic Report
 page: { id: analytic-report, route: /accounting/reports/analytic, breadcrumb: [Finance, Reporting, Analytic Report], auth: { require: [accounting.read] } }
-datasources:
-  - id: accounting_analytic_report
-    permission: accounting.read
-    query: "SELECT * FROM (VALUES ('Project','Gemini Furniture','Revenue',1650.00,'Posted'), ('Project','Lumber Inc','Cost of goods',880.00,'Posted'), ('Operations','Main Company','Opening balance',1650.00,'Posted')) analytic(plan, account, label, amount, state) ORDER BY plan, account"
 components:
   - type: ListView
     variant: odoo
     source: accounting_analytic_report
+    search: { label: Search analytic report, placeholder: Search accounts or entries... }
+    empty_state: { title: No records found, description: Try adjusting your search or filters. }
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }

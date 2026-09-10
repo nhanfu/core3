@@ -1,0 +1,6 @@
+page: { id: statement-reports }
+datasources:
+  - id: accounting_statement_report
+    single: false
+    permission: accounting.read
+    query: "SELECT journal, date_from, date_to, balance, statement_balance, state FROM (VALUES ('Bank','2026-09-01','2026-09-09',6793.93,6678.00,'Needs review'), ('Cash','2026-09-01','2026-09-09',1250.00,1250.00,'Reconciled')) statements(journal,date_from,date_to,balance,statement_balance,state) WHERE (:q IS NULL OR journal ILIKE '%' || :q || '%' OR state ILIKE '%' || :q || '%') ORDER BY journal"

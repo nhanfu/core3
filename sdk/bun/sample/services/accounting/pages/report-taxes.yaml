@@ -1,12 +1,10 @@
 title: Taxes and Fiscal Reports
 page: { id: tax-reports, route: /accounting/reports/taxes, breadcrumb: [Finance, Reporting, Taxes and Fiscal], auth: { require: [accounting.read] } }
-datasources:
-  - id: accounting_tax_report
-    permission: accounting.read
-    query: "SELECT * FROM (VALUES ('Sales Tax 10%','Sales',150.00,1500.00), ('Purchase Tax 10%','Purchases',80.00,800.00), ('Zero Rate','Sales',0.00,0.00)) taxes(tax,scope,tax_amount,base_amount) ORDER BY tax"
 components:
   - type: ListView
     variant: odoo
     source: accounting_tax_report
+    search: { label: Search taxes and fiscal reports, placeholder: Search taxes or scope... }
+    empty_state: { title: No records found, description: Try adjusting your search or filters. }
     columns: [{ field: tax, label: Tax, type: PrimaryEntityCell }, { field: scope, label: Scope }, { field: base_amount, label: Tax base, align: right }, { field: tax_amount, label: Tax amount, align: right }]
     row_key: tax

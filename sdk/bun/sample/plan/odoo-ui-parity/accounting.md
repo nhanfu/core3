@@ -177,6 +177,30 @@ the Odoo comparison captures remain under `/tmp/odoo-accounting-config-*`.
 The implementation was developed in the dedicated
 `agent/odoo-ui-accounting-config` worktree and integrated as `5afc52db`.
 
+## Current batch: resilient empty, search, and permission states
+
+Payment Tokens, Reconciliation, Invoice Analysis, Analytic Reporting, Partner
+Reports, Taxes, and Statements now take their list sources from service-owned
+API fragments keyed by `page.id`. Their ListViews declare route-specific search
+labels/placeholders and Odoo-style no-record copy; Payment Tokens matches the
+reference text `There is no token created yet.`. Report screens retain their
+List/Pivot controls and apply the same search contract to both views.
+
+Reconciliation keeps the invoice row visible beside a separate More-actions
+column. Its Register payment server form is permissioned with `accounting.write`
+and rejects zero, negative, and over-residual amounts with a visible validation
+toast while preserving the form. The read sources require `accounting.read`,
+and the Dispatcher role was checked against Payment Tokens at both required
+viewports for the visible 403 state.
+
+Authenticated Core3 checks covered all seven routes at 1440x900 and 390x844:
+initial populated/empty state, nonsense search, report pivots, reconciliation
+validation, and the denied Payment Tokens route. There were no unexpected
+failures or page-level overflow. Temporary comparison captures are under
+`/tmp/core3-accounting-followup-*` and `/tmp/odoo-accounting-followup-*`; no
+images are repository assets. Dedicated datasource transport-error copy and
+the remaining Accounting routes are outside this bounded batch.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a

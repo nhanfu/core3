@@ -1,13 +1,11 @@
 title: Invoice Analysis
 page: { id: invoice-analysis, route: /accounting/reports/invoice-analysis, breadcrumb: [Finance, Reporting, Invoice Analysis], auth: { require: [accounting.read] } }
-datasources:
-  - id: accounting_invoice_analysis
-    permission: accounting.read
-    query: "SELECT invoice_type, state, COUNT(*) AS invoice_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS outstanding FROM accounting_invoices GROUP BY invoice_type, state ORDER BY invoice_type, state"
 components:
   - type: ListView
     variant: odoo
     source: accounting_invoice_analysis
+    search: { label: Search invoice analysis, placeholder: Search invoice type or status... }
+    empty_state: { title: No records found, description: Try adjusting your search or filters. }
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }

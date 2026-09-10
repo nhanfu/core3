@@ -1,13 +1,11 @@
 title: Partner Reports
 page: { id: partner-reports, route: /accounting/reports/partner, breadcrumb: [Finance, Reporting, Partner Reports], auth: { require: [accounting.read] } }
-datasources:
-  - id: accounting_partner_report
-    permission: accounting.read
-    query: "SELECT partner_name, COUNT(*) AS document_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS due FROM accounting_invoices WHERE partner_name IS NOT NULL GROUP BY partner_name ORDER BY total DESC"
 components:
   - type: ListView
     variant: odoo
     source: accounting_partner_report
+    search: { label: Search partner reports, placeholder: Search partners... }
+    empty_state: { title: No records found, description: Try adjusting your search or filters. }
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }

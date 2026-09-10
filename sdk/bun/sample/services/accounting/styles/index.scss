@@ -4,6 +4,13 @@
   min-height: 100%;
 }
 
+// Keep Odoo-style empty copy centered in the visible mobile viewport. Dense
+// populated lists retain their horizontal table affordance on small screens.
+.o-list-table:has(.o-list-empty) {
+  width: 100%;
+  min-width: 100%;
+}
+
 /* Odoo's accounting dashboard uses a two-column tile grid on desktop. */
 .o-card-view:has([data-row-id='sales']) {
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -1,0 +1,8 @@
+page: { id: invoice-analysis }
+datasources:
+  - id: accounting_invoice_analysis
+    single: false
+    permission: accounting.read
+    pivot:
+      fields: [invoice_type, state, invoice_count, total, outstanding]
+    query: "SELECT invoice_type, state, COUNT(*) AS invoice_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS outstanding FROM accounting_invoices WHERE (:q IS NULL OR invoice_type ILIKE '%' || :q || '%' OR state ILIKE '%' || :q || '%') GROUP BY invoice_type, state ORDER BY invoice_type, state"
