@@ -1,0 +1,19 @@
+page: { id: event-ticket-detail }
+datasources:
+  - id: event_ticket_detail
+    single: true
+    permission: events.read
+    query: |
+      SELECT t.id, t.row_version, t.event_id, e.name AS event_name, t.name,
+        t.description, t.price, CAST(t.registration_start AS VARCHAR) AS registration_start,
+        CAST(t.registration_end AS VARCHAR) AS registration_end, t.maximum,
+        t.registration_count, CASE WHEN t.maximum = 0 THEN NULL
+          ELSE GREATEST(t.maximum - t.registration_count, 0) END AS seats_available,
+        t.limit_max_per_order, t.color,
+        CASE WHEN t.maximum > 0 AND t.registration_count >= t.maximum THEN 'Sold out'
+          WHEN t.registration_end IS NOT NULL AND t.registration_end < TIMESTAMP '2026-01-15 00:00:00' THEN 'Expired'
+          ELSE 'Available' END AS availability
+      FROM event_tickets t
+      JOIN events e ON e.id = t.event_id
+      WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND t.id = :id

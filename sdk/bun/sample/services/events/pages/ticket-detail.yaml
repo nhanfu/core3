@@ -1,0 +1,80 @@
+title: Event Ticket
+page: { id: event-ticket-detail, route: /events/tickets/detail, breadcrumb: [Marketing, Events, Event, Ticket], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_ticket_detail
+    title_field: name
+    subtitle_field: event_name
+    status_field: availability
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Availability }
+    header_actions:
+      - { id: back_to_event, label: Back to event, variant: secondary, permission: events.read }
+      - { id: edit_event_ticket, label: Edit, variant: secondary, permission: events.write }
+      - { id: delete_event_ticket, label: Delete, variant: danger, permission: events.write, confirm: Delete this ticket? }
+    statusbar: [{ value: Available, label: Available }, { value: 'Sold out', label: 'Sold out' }, { value: Expired, label: Expired }]
+    status_colors: { Available: green, Sold out: red, Expired: neutral }
+    group_columns: 2
+    groups:
+      - title: Ticket
+        fields:
+          - { field: name, label: Ticket Type }
+          - { field: event_name, label: Event }
+          - { field: description, label: Description, type: textarea }
+          - { field: color, label: Color }
+      - title: Registration
+        fields:
+          - { field: price, label: Price }
+          - { field: registration_start, label: Registration Start }
+          - { field: registration_end, label: Registration End }
+          - { field: maximum, label: Maximum Attendees }
+          - { field: limit_max_per_order, label: Limit per Order }
+          - { field: registration_count, label: Registration }
+          - { field: seats_available, label: Available Seats }
+          - { field: availability, label: Availability }
+actions:
+  - id: back_to_event
+    type: navigate
+    permission: events.read
+    navigate_to: /event-detail
+    params: { id: '{row.event_id}' }
+  - id: edit_event_ticket
+    type: server_form
+    permission: events.write
+    title: Edit event ticket
+    action: events.tickets.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [event_ticket_detail]
+    mutation:
+      operation: update
+      table: event_tickets
+      fields: [name, description, price, registration_start, registration_end, maximum, limit_max_per_order, color]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM event_tickets WHERE id = :id", status: 404, message: Ticket not found }
+        - { query: "SELECT 1 WHERE :registration_start IS NULL OR :registration_end IS NULL OR CAST(:registration_start AS TIMESTAMP) <= CAST(:registration_end AS TIMESTAMP)", status: 422, message: Registration end must be on or after registration start }
+        - { query: "SELECT 1 WHERE COALESCE(:maximum, 0) >= 0 AND COALESCE(:limit_max_per_order, 0) >= 0 AND (COALESCE(:maximum, 0) = 0 OR COALESCE(:limit_max_per_order, 0) <= COALESCE(:maximum, 0))", status: 422, message: Ticket order limit must not exceed the maximum seats }
+      result: { query: "SELECT * FROM event_tickets WHERE id = :id" }
+    fields:
+      - { field: name, label: Ticket Type, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: price, label: Price, type: number, min: 0 }
+      - { field: registration_start, label: Registration Start, type: text }
+      - { field: registration_end, label: Registration End, type: text }
+      - { field: maximum, label: Maximum Attendees, type: number, min: 0 }
+      - { field: limit_max_per_order, label: Limit per Order, type: number, min: 0 }
+      - { field: color, label: Color, type: text }
+  - id: delete_event_ticket
+    type: server
+    permission: events.write
+    action: events.tickets.delete
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    mutation:
+      operation: delete
+      table: event_tickets
+      guards:
+        - { query: "SELECT id FROM event_tickets WHERE id = :id", status: 404, message: Ticket not found }
+        - { query: "SELECT id FROM event_tickets WHERE id = :id AND registration_count = 0", status: 409, message: Tickets with registrations cannot be deleted }

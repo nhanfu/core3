@@ -9,7 +9,7 @@ datasources:
     query: "SELECT id, attendee_name, attendee_email, ticket_type, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY registered_at DESC"
   - id: event_tickets
     permission: events.read
-    query: "SELECT id, name, CAST(price AS DECIMAL(12,2)) AS price, CAST(registration_start AS VARCHAR) AS registration_start, CAST(registration_end AS VARCHAR) AS registration_end, maximum, registration_count FROM event_tickets WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY name"
+    query: "SELECT id, row_version, name, CAST(price AS DECIMAL(12,2)) AS price, CAST(registration_start AS VARCHAR) AS registration_start, CAST(registration_end AS VARCHAR) AS registration_end, maximum, registration_count, CASE WHEN maximum = 0 THEN NULL ELSE GREATEST(maximum - registration_count, 0) END AS seats_available, CASE WHEN maximum > 0 AND registration_count >= maximum THEN 'Sold out' ELSE 'Available' END AS availability FROM event_tickets WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY name"
   - id: event_detail_questions
     permission: events.read
     query: "SELECT id, question, question_type, mandatory, once_per_order, answers FROM event_event_questions WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY id"

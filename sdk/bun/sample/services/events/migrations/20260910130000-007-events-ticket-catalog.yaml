@@ -1,0 +1,23 @@
+version: 0.0.7
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_tickets ADD COLUMN IF NOT EXISTS description VARCHAR;
+      ALTER TABLE event_tickets ADD COLUMN IF NOT EXISTS limit_max_per_order INTEGER;
+      ALTER TABLE event_tickets ADD COLUMN IF NOT EXISTS color VARCHAR;
+      UPDATE event_tickets SET limit_max_per_order = COALESCE(limit_max_per_order, 0), color = COALESCE(color, '#875A7B');
+      UPDATE event_tickets SET description = COALESCE(description, 'Standard event access'), color = COALESCE(color, '#875A7B') WHERE id = 'ticket-event-007-standard';
+      UPDATE event_tickets SET description = COALESCE(description, 'Priority event access'), color = COALESCE(color, '#875A7B'), limit_max_per_order = COALESCE(limit_max_per_order, 4) WHERE id = 'ticket-event-007-vip';
+      INSERT INTO event_tickets(id, event_id, name, description, price, registration_start, registration_end, maximum, registration_count, limit_max_per_order, color) VALUES
+        ('ticket-event-007-general', 'event-demo-007', 'General Admission', 'Open access ticket', 0, TIMESTAMP '2026-09-01 00:00:00', TIMESTAMP '2026-09-27 23:59:00', 50, 0, 6, '#4C6FFF')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_tickets WHERE id = 'ticket-event-007-general';
+      ALTER TABLE event_tickets DROP COLUMN IF EXISTS color;
+      ALTER TABLE event_tickets DROP COLUMN IF EXISTS limit_max_per_order;
+      ALTER TABLE event_tickets DROP COLUMN IF EXISTS description;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

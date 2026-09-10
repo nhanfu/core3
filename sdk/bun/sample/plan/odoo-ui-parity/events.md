@@ -468,6 +468,18 @@ answer-count graph/pivot fields, the exact no-answers copy, and deterministic
 empty/transport-error/permission boundaries. Authenticated desktop/mobile
 checks and local Odoo captures are kept under `/tmp`; no screenshots are
 repository assets.
+The next bounded ticket-catalog batch adds the Odoo event-ticket one-to-many
+surface to the existing event detail Tickets tab. Tickets now open a
+service-owned `event-ticket-detail` form by `page.id`, support permissioned
+create/update/delete, expose deterministic sale-window, seat-limit,
+availability, and registration fields, and reject invalid windows, impossible
+order limits, missing records, stale row versions, and deletion of tickets
+with registrations. The existing event detail tab retains its empty state and
+now has a create action plus row navigation; a fixed General Admission fixture
+completes the official OpenWood ticket examples. Focused coverage proves API
+discovery, stable default/empty/missing reads, mutation guards, and the
+409/422 boundaries. Broader template-ticket inheritance, ticket PDFs/public
+sales, and slot-specific availability remain deferred.
 
 ## Acceptance
 
