@@ -1,0 +1,40 @@
+page: { id: fleet-contracts }
+datasources:
+  - id: fleet_contract_vehicles
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_vehicles WHERE COALESCE(archived, FALSE) = FALSE ORDER BY name, id"
+  - id: fleet_contracts
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_CONTRACT_DATA_UNAVAILABLE, message: Fleet contract data service is temporarily unavailable } }
+    query: "SELECT c.id, c.row_version, c.name, c.vehicle_id, v.name AS vehicle_name, COALESCE(c.vendor, '—') AS vendor, COALESCE(c.driver_name, v.driver_name, 'Unassigned') AS driver_name, c.contract_type, CAST(c.start_date AS VARCHAR) AS start_date, CAST(c.expiration_date AS VARCHAR) AS expiration_date, CAST(c.start_date AS VARCHAR) || ' - ' || CAST(c.expiration_date AS VARCHAR) AS date_range, c.recurring_cost, c.recurring_cost_frequency, c.cost_generated, c.status, c.renewal_status, COALESCE(c.notes, '') AS notes FROM fleet_vehicle_contracts c JOIN fleet_vehicles v ON v.id = c.vehicle_id WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR v.name ILIKE '%' || :q || '%' OR COALESCE(c.vendor, '') ILIKE '%' || :q || '%' OR COALESCE(c.driver_name, v.driver_name, '') ILIKE '%' || :q || '%') AND (:vehicle_id IS NULL OR c.vehicle_id = :vehicle_id) AND (:contract_type IS NULL OR c.contract_type = :contract_type) AND ((:status IS NULL AND c.status = 'Running') OR (:status IS NOT NULL AND c.status = :status)) ORDER BY c.expiration_date, c.name, c.id"
+actions:
+  - { id: view_fleet_contract, type: navigate, permission: fleet.read, navigate_to: /fleet/contracts/detail, params: { id: '{row.id}' } }
+  - id: create_fleet_contract
+    type: server_form
+    permission: fleet.write
+    title: New contract
+    action: fleet.contracts.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fleet_contracts]
+    mutation:
+      operation: insert
+      table: fleet_vehicle_contracts
+      fields: [name, vehicle_id, vendor, driver_name, contract_type, start_date, expiration_date, recurring_cost, recurring_cost_frequency, status, renewal_status, notes]
+      required: [name, vehicle_id, start_date, expiration_date]
+      defaults: { status: Running, renewal_status: On track, recurring_cost_frequency: No }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id AND COALESCE(archived, FALSE) = FALSE", status: 404, message: Vehicle was not found or is archived }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:start_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND regexp_matches(CAST(:expiration_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:expiration_date AS DATE) >= CAST(:start_date AS DATE) AND CAST(:recurring_cost AS DECIMAL(18,2)) >= 0", status: 422, message: Contract dates are invalid or the recurring cost is negative }
+      result: { query: "SELECT * FROM fleet_vehicle_contracts WHERE id = :id" }
+    fields:
+      - { field: name, label: Contract, type: text, required: true }
+      - { field: vehicle_id, label: Vehicle, type: select, options_source: fleet_contract_vehicles, required: true }
+      - { field: vendor, label: Vendor, type: text }
+      - { field: driver_name, label: Driver, type: text }
+      - { field: contract_type, label: Contract Type, type: select, options: [{ value: Leasing, label: Leasing }, { value: Insurance, label: Insurance }, { value: Services, label: Services }] }
+      - { field: start_date, label: Contract Start Date, type: text, required: true }
+      - { field: expiration_date, label: Contract Expiration Date, type: text, required: true }
+      - { field: recurring_cost, label: Recurring Cost, type: number, default: 0 }
+      - { field: recurring_cost_frequency, label: Recurring Cost Frequency, type: select, options: [{ value: No, label: No }, { value: Daily, label: Daily }, { value: Weekly, label: Weekly }, { value: Monthly, label: Monthly }, { value: Yearly, label: Yearly }] }
+      - { field: notes, label: Notes, type: textarea }

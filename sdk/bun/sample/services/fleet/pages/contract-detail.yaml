@@ -1,0 +1,30 @@
+title: Contract
+page: { id: contract-detail, route: /fleet/contracts/detail, breadcrumb: [Human Resources, Fleet, Contracts, Detail], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_contract_detail
+    title_field: name
+    subtitle_field: vehicle_name
+    status_field: status
+    status_colors: { Running: green, 'To Renew': amber, Expired: red, Closed: neutral }
+    status_badges: [{ value: Running, label: Running, tone: green }, { value: 'To Renew', label: To Renew, tone: amber }, { value: Expired, label: Expired, tone: red }, { value: Closed, label: Closed, tone: neutral }]
+    editable: true
+    group_columns: 2
+    header_actions:
+      - { id: edit_fleet_contract, label: Edit, variant: secondary, permission: fleet.write }
+      - { id: renew_fleet_contract, label: Renew Contract, variant: primary, permission: fleet.write, show_if: "record.status !== 'Closed'" }
+    groups:
+      - title: Contract
+        fields: [{ field: vehicle_name, label: Vehicle }, { field: vendor, label: Vendor }, { field: driver_name, label: Driver }, { field: contract_type, label: Contract Type }, { field: status, label: Status }, { field: renewal_status, label: Renewal Alert }]
+      - title: Dates and Costs
+        fields: [{ field: start_date, label: Contract Start Date }, { field: expiration_date, label: Contract Expiration Date }, { field: recurring_cost, label: Recurring Cost, type: money }, { field: recurring_cost_frequency, label: Recurring Cost Frequency }, { field: cost_generated, label: Generated Costs, type: money }]
+    notebook:
+      active: information
+      tabs:
+        - { id: information, label: Information, content_slot: true }
+        - id: recurrence
+          label: Costs & Recurrence
+          fields: [{ field: recurring_cost, label: Recurring Cost, type: money }, { field: recurring_cost_frequency, label: Recurring Cost Frequency }, { field: cost_generated, label: Generated Costs, type: money }, { field: renewal_status, label: Renewal Alert }]
+        - id: notes
+          label: Notes
+          fields: [{ field: notes, label: Notes, type: textarea, wide: true }]

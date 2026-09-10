@@ -5,7 +5,7 @@ worktrees, with remaining Fleet surfaces explicitly deferred below.
 
 This plan remains the source of truth for the complete Fleet parity scope.
 The current bounded implementation is recorded in
-`odoo-ui-parity/fleet-batch-2.md`.
+`odoo-ui-parity/fleet-batch-3.md`.
 
 ## Reference gate and limitation
 
@@ -19,17 +19,15 @@ The current bounded implementation is recorded in
   `data/fleet_demo.xml`. The manifest also loads the fleet data, mail subtype,
   activity type, car-brand/model and vehicle-mail wizard definitions.
 - Authenticated audit on 2026-09-10 used `http://localhost:8069`, database
-  `core3_reference`, login `codex@core3.local`, and password
+  `core3_owned`, login `codex@core3.local`, and password
   `Core3Odoo2026!`. Authentication succeeded as the personal administrator.
   SQL returned `fleet|installed|t|19.0.0.1` from `ir_module_module`, proving
   Fleet is installed with demo data in the personal reference database.
 - Authenticated Fleet reference captures are present under `/tmp` and are
-  deliberately not committed: `/tmp/odoo-fleet-reference-current-desktop.png`
-  (1440x900), `/tmp/odoo-fleet-vehicles-mobile.png` (390x844),
-  `/tmp/odoo-fleet-odometers-desktop.png` (1440x900), and
-  `/tmp/odoo-fleet-odometers-mobile.png` (390x844). The Odometers captures
-  show Odoo's real List view with Date, Vehicle, Driver, Odometer Value, and
-  Unit columns and its mobile dense-list behavior.
+  deliberately not committed: the earlier vehicle/Odometer captures above
+  plus `/tmp/odoo-owned-fleet-contracts-desktop.png` (1440x900) and
+  `/tmp/odoo-owned-fleet-contracts-mobile.png` (390x844). The Contracts
+  captures were re-authenticated against `core3_owned` after Fleet install.
 
 ## Source menu, action, route, and view inventory
 

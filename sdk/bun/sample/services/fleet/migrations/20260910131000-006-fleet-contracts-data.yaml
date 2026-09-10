@@ -1,0 +1,33 @@
+version: 0.0.6
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_contracts(id, name, vehicle_id, vendor, driver_name, contract_type, start_date, expiration_date, recurring_cost, recurring_cost_frequency, cost_generated, status, renewal_status, notes)
+      VALUES
+        ('fleet-contract-001', 'Unique leasing', 'fleet-demo-001', 'Acme Corporation', 'Admin User', 'Leasing', DATE '2026-01-15', DATE '2026-12-31', 0, 'No', 0, 'Running', 'On track', 'Annual leasing agreement for the pool vehicle.'),
+        ('fleet-contract-002', 'Weekly leasing contract', 'fleet-demo-001', 'Acme Corporation', 'Admin User', 'Leasing', DATE '2026-02-01', DATE '2026-09-30', 150, 'Weekly', 4500, 'Running', 'Due soon', 'Renewal reminder is due within the configured alert window.'),
+        ('fleet-contract-003', 'Daily leasing contract', 'fleet-demo-002', 'Acme Corporation', NULL, 'Leasing', DATE '2026-03-01', DATE '2026-10-15', 20, 'Daily', 4680, 'Running', 'Renewal required', 'Review the daily rental before the next renewal date.'),
+        ('fleet-contract-004', 'Monthly leasing', 'fleet-demo-001', 'Acme Corporation', 'Admin User', 'Leasing', DATE '2026-01-15', DATE '2027-01-01', 400, 'Monthly', 4800, 'Running', 'On track', 'Monthly maintenance and leasing package.'),
+        ('fleet-contract-005', 'Yearly leasing', 'fleet-demo-002', 'Acme Corporation', NULL, 'Leasing', DATE '2026-01-15', DATE '2027-12-31', 4000, 'Yearly', 4000, 'Running', 'Due soon', 'Yearly agreement for the electric bike fleet.'),
+        ('fleet-contract-006', 'Expired inspection cover', 'fleet-demo-001', 'Acme Corporation', 'Admin User', 'Insurance', DATE '2025-01-15', DATE '2025-12-31', 75, 'Monthly', 900, 'Expired', 'Expired', 'Expired coverage retained for audit history.')
+      ON CONFLICT (id) DO UPDATE SET
+        name = excluded.name,
+        vehicle_id = excluded.vehicle_id,
+        vendor = excluded.vendor,
+        driver_name = excluded.driver_name,
+        contract_type = excluded.contract_type,
+        start_date = excluded.start_date,
+        expiration_date = excluded.expiration_date,
+        recurring_cost = excluded.recurring_cost,
+        recurring_cost_frequency = excluded.recurring_cost_frequency,
+        cost_generated = excluded.cost_generated,
+        status = excluded.status,
+        renewal_status = excluded.renewal_status,
+        notes = excluded.notes;
+    down: |
+      DELETE FROM fleet_vehicle_contracts WHERE id IN ('fleet-contract-001', 'fleet-contract-002', 'fleet-contract-003', 'fleet-contract-004', 'fleet-contract-005', 'fleet-contract-006');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

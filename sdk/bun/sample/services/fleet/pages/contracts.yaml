@@ -1,0 +1,84 @@
+title: Contracts
+page: { id: fleet-contracts, route: /fleet/contracts, breadcrumb: [Human Resources, Fleet, Contracts], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_contracts
+    create_action: create_fleet_contract
+    create_label: New contract
+    search: { label: Search contracts, placeholder: 'Search contract, vehicle, vendor, or driver...' }
+    filters:
+      - { field: status, label: Status, options: [{ id: Running, label: In Progress }, { id: To Renew, label: To Renew }, { id: Expired, label: Expired }] }
+      - { field: vehicle_id, label: Vehicle, options_source: fleet_contract_vehicles }
+      - { field: contract_type, label: Contract Type, options: [{ id: Leasing, label: Leasing }, { id: Insurance, label: Insurance }, { id: Services, label: Services }] }
+    group_by:
+      - { field: vehicle_name, label: Vehicle }
+      - { field: vendor, label: Vendor }
+      - { field: contract_type, label: Contract Type }
+      - { field: status, label: Status }
+      - { field: recurring_cost_frequency, label: Recurring Cost Frequency }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: status
+        card: { title: vehicle_name, subtitle: date_range, fields: [{ field: name, label: Contract }, { field: vendor, label: Vendor }, { field: status, label: Status }] }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card: { title: vehicle_name, subtitle: date_range, fields: [{ field: vendor, label: Vendor }, { field: status, label: Status }] }
+      - { id: form, label: Form, icon: form }
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: expiration_date
+        measure_field: recurring_cost
+        type: line
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: vehicle_name, column: Vehicle }
+            - { field: vendor, column: Vendor }
+            - { field: contract_type, column: Contract Type }
+            - { field: status, column: Status }
+            - { field: recurring_cost_frequency, column: Recurring Cost Frequency }
+            - { field: recurring_cost, column: Recurring Cost }
+            - { field: cost_generated, column: Generated Costs }
+          default:
+            rows: [vehicle_name]
+            columns: [status]
+            measures: [{ field: recurring_cost, aggregate: sum, column: Recurring Cost }, { field: cost_generated, aggregate: sum, column: Generated Costs }]
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: vehicle_name
+        record_date_field: expiration_date
+        activity_types: [{ id: renewal, label: Renewal, icon: R }, { id: reminder, label: Reminder, icon: ! }]
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: start_date, label: Contract Start Date }
+      - { field: expiration_date, label: Contract Expiration Date }
+      - { field: vehicle_name, label: Vehicle }
+      - { field: vendor, label: Vendor }
+      - { field: driver_name, label: Driver }
+      - { field: recurring_cost, label: Recurring Cost, type: money, align: right }
+      - { field: recurring_cost_frequency, label: Recurring Cost Frequency }
+      - { field: status, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_fleet_contract
+    row_double_click_action: view_fleet_contract
+    form_view: { page: apps/services/fleet/pages/contract-detail.yaml, side_panel: true }
+    row_actions: menu
+    empty_state: { title: No contracts, description: Create a contract or adjust your search and filters. }

@@ -1,0 +1,32 @@
+version: 0.0.5
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_contracts (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        vehicle_id VARCHAR NOT NULL,
+        vendor VARCHAR,
+        driver_name VARCHAR,
+        contract_type VARCHAR NOT NULL DEFAULT 'Leasing',
+        start_date DATE NOT NULL,
+        expiration_date DATE NOT NULL,
+        recurring_cost DECIMAL(18,2) NOT NULL DEFAULT 0,
+        recurring_cost_frequency VARCHAR NOT NULL DEFAULT 'No',
+        cost_generated DECIMAL(18,2) NOT NULL DEFAULT 0,
+        status VARCHAR NOT NULL DEFAULT 'Running',
+        renewal_status VARCHAR NOT NULL DEFAULT 'On track',
+        notes VARCHAR,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS fleet_contracts_vehicle_idx ON fleet_vehicle_contracts(vehicle_id, expiration_date);
+      CREATE INDEX IF NOT EXISTS fleet_contracts_status_idx ON fleet_vehicle_contracts(status, expiration_date);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_contracts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
