@@ -1,0 +1,32 @@
+title: Units & Packagings
+page: { id: purchase-units-packagings, route: /purchase/units-packagings, breadcrumb: [Supply Chain, Purchase, Configuration, Products, Units & Packagings], auth: { require: [purchase.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: purchase_units_packagings
+    responsive_card: true
+    create_action: create_purchase_unit_packaging
+    create_label: New
+    search: { label: Search units and packagings, placeholder: Search... }
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: name
+          subtitle: relative_uom_name
+          fields: [{ field: relative_factor_display, label: Contains }, { field: sequence, label: Sequence }]
+    row_key: id
+    row_open_action: view_purchase_unit_packaging
+    row_double_click_action: view_purchase_unit_packaging
+    row_actions: menu
+    selectable: true
+    empty_state: { title: No units or packagings, description: Create a unit of measure or packaging to use with purchase products. }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Unit Name, type: PrimaryEntityCell, sortable: true }
+      - { field: relative_factor_display, label: Contains, align: right }
+      - { field: relative_uom_name, label: Reference Unit }
+    page_size: 50

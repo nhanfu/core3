@@ -1,0 +1,18 @@
+title: Unit & Packaging
+page: { id: purchase-unit-packaging-detail, route: /purchase/units-packagings/detail, breadcrumb: [Supply Chain, Purchase, Configuration, Products, Units & Packagings], auth: { require: [purchase.read] } }
+components:
+  - type: OdooFormView
+    source: purchase_unit_packaging_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_purchase_units_packagings, label: Back to Units & Packagings, icon: arrow-left }
+      - { id: edit_purchase_unit_packaging, label: Edit, variant: primary, permission: purchase.write }
+      - { id: delete_purchase_unit_packaging, label: Delete, icon: trash, variant: danger, permission: purchase.write }
+    groups:
+      - title: Unit of Measure
+        fields:
+          - { field: name, label: Unit Name }
+          - { field: relative_factor, label: Quantity }
+          - { field: relative_uom_name, label: Reference Unit }

@@ -1,0 +1,37 @@
+page: { id: purchase-units-packagings }
+datasources:
+  - id: purchase_units_packagings
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_UNITS_PACKAGINGS_UNAVAILABLE, message: Units and packagings are temporarily unavailable. } }
+    query: "SELECT id, row_version, sequence, name, relative_factor, CASE WHEN relative_factor = 1 AND COALESCE(relative_uom_name, '') = '' THEN NULL ELSE printf('%,.3f', CAST(relative_factor AS DOUBLE)) END AS relative_factor_display, COALESCE(relative_uom_name, '') AS relative_uom_name FROM purchase_units_packagings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(relative_uom_name, '') ILIKE '%' || :q || '%') ORDER BY sequence, sort_order, id"
+actions:
+  - id: view_purchase_unit_packaging
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/units-packagings/detail
+    params: { id: '{row.id}' }
+  - id: create_purchase_unit_packaging
+    type: server_form
+    permission: purchase.write
+    title: New Unit & Packaging
+    action: purchase.units_packagings.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [purchase_units_packagings]
+    mutation:
+      operation: insert
+      table: purchase_units_packagings
+      generated: [id]
+      fields: [sequence, name, relative_factor, relative_uom_name]
+      required: [name]
+      defaults: { sequence: 1000, relative_factor: 1, relative_uom_name: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PURCHASE_UNIT_NAME_REQUIRED, message: A unit name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_units_packagings WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: PURCHASE_UNIT_NAME_EXISTS, message: A unit or packaging with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:relative_factor AS DOUBLE) > 0", status: 422, code: PURCHASE_UNIT_FACTOR_INVALID, message: Quantity must be greater than zero. }
+      result: { query: "SELECT * FROM purchase_units_packagings WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 1000 }
+      - { field: name, label: Unit Name, type: text, required: true }
+      - { field: relative_factor, label: Quantity, type: number, required: true, min: 0.00001, step: 0.00001 }
+      - { field: relative_uom_name, label: Reference Unit, type: text }

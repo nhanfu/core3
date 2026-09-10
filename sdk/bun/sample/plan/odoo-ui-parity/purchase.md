@@ -292,6 +292,34 @@ full-width surface, and responsive content behavior are the bounded parity
 claim. Cross-application Settings navigation and installation of optional
 modules remain shared-shell follow-ups.
 
+## Units & Packagings bounded follow-up (selected 2026-09-10)
+
+The owned Odoo 19 database `core3_owned` was audited while authenticated as
+`codex@core3.local` at `http://localhost:8069` on both 1440x900 and 390x844.
+Purchase → Configuration → Products → Units & Packagings resolves to action
+90 (`uom.uom`, `list,form`) and contains 21 deterministic rows. The list
+columns are `Unit Name`, `Contains`, and `Reference Unit`; the form exposes
+`Unit Name`, `Quantity`, and the reference unit. Odoo references are local
+only under `/tmp/odoo-purchase-units-packagings-{desktop,mobile}-{list,form}.png`.
+
+Core3 now exposes `/purchase/units-packagings` and the page-id-bound detail
+route `/purchase/units-packagings/detail`. The layout-only pages use the
+shared `ListView` Odoo variant and `OdooFormView`; API fragments own the
+datasources and guarded server mutations. Migration
+`20260910230000-013-purchase-units-packagings.yaml` seeds the observed 21
+rows with stable IDs and Odoo ordering. The focused integration test covers
+search, empty/not-found and transport errors, purchase read/write permission
+boundaries, create/update/delete, duplicate names, positive-quantity
+validation, and stale row versions.
+
+Authenticated Core3 evidence is local only under
+`/tmp/core3-purchase-units-packagings-{desktop,mobile}-{list,form}-final.png`.
+Desktop uses the Odoo-shaped table; the shared responsive ListView uses
+compact cards on mobile to avoid the component's intentional desktop table
+minimum width. Packaging Barcodes is recorded as a follow-up because the
+owned fixture has no barcode action/data contract in this bounded slice. The
+shared Core3 Fluent shell also remains distinct from Odoo's purple shell.
+
 ## Required visible states
 
 - RFQ/order list: populated, empty, loading/error, search by order/vendor/

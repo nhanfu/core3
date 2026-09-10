@@ -1,0 +1,51 @@
+page: { id: purchase-unit-packaging-detail }
+datasources:
+  - id: purchase_unit_packaging_detail
+    single: true
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_UNIT_PACKAGING_UNAVAILABLE, message: This unit or packaging is temporarily unavailable. } }
+    query: "SELECT id, row_version, sequence, name, relative_factor, COALESCE(relative_uom_name, '') AS relative_uom_name FROM purchase_units_packagings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: back_to_purchase_units_packagings
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/units-packagings
+  - id: edit_purchase_unit_packaging
+    type: server_form
+    permission: purchase.write
+    title: Edit Unit & Packaging
+    action: purchase.units_packagings.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.purchase_unit_packaging_detail
+    refresh: [purchase_unit_packaging_detail, purchase_units_packagings]
+    mutation:
+      operation: update
+      table: purchase_units_packagings
+      fields: [sequence, name, relative_factor, relative_uom_name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_units_packagings WHERE id = :id", status: 404, code: PURCHASE_UNIT_PACKAGING_NOT_FOUND, message: Unit or packaging not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PURCHASE_UNIT_NAME_REQUIRED, message: A unit name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_units_packagings WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: PURCHASE_UNIT_NAME_EXISTS, message: A unit or packaging with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:relative_factor AS DOUBLE) > 0", status: 422, code: PURCHASE_UNIT_FACTOR_INVALID, message: Quantity must be greater than zero. }
+      result: { query: "SELECT * FROM purchase_units_packagings WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Unit Name, type: text, required: true }
+      - { field: relative_factor, label: Quantity, type: number, required: true, min: 0.00001, step: 0.00001 }
+      - { field: relative_uom_name, label: Reference Unit, type: text }
+  - id: delete_purchase_unit_packaging
+    type: server
+    permission: purchase.write
+    action: purchase.units_packagings.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete unit or packaging {{row.name}}?'
+    refresh: [purchase_units_packagings]
+    mutation:
+      operation: delete
+      table: purchase_units_packagings
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM purchase_units_packagings WHERE id = :id", status: 404, code: PURCHASE_UNIT_PACKAGING_NOT_FOUND, message: Unit or packaging not found. }]

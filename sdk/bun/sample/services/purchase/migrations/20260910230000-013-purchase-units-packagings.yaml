@@ -1,0 +1,49 @@
+version: 0.0.13
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_units_packagings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 1000,
+        sort_order INTEGER NOT NULL DEFAULT 100000,
+        name VARCHAR NOT NULL,
+        relative_factor DECIMAL(18, 6) NOT NULL DEFAULT 1,
+        relative_uom_name VARCHAR NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT OR IGNORE INTO purchase_units_packagings
+        (id, sequence, sort_order, name, relative_factor, relative_uom_name)
+      VALUES
+        ('purchase-uom-minutes', 1, 6, 'Minutes', 0.016667, 'Hours'),
+        ('purchase-uom-square-feet', 9, 24, 'ft²', 0.092903, 'm²'),
+        ('purchase-uom-units', 100, 1, 'Units', 1, ''),
+        ('purchase-uom-hours', 100, 4, 'Hours', 1, ''),
+        ('purchase-uom-millimeters', 100, 7, 'mm', 1, ''),
+        ('purchase-uom-square-meters', 100, 11, 'm²', 1, ''),
+        ('purchase-uom-milliliters', 100, 12, 'ml', 1, ''),
+        ('purchase-uom-grams', 100, 15, 'g', 1, ''),
+        ('purchase-uom-kwh', 100, 30, 'KWH', 1, ''),
+        ('purchase-uom-inches', 254, 20, 'in', 2.54, 'cm'),
+        ('purchase-uom-gallons', 400, 27, 'gal (US)', 4, 'qt (US)'),
+        ('purchase-uom-pack-of-six', 600, 2, 'Pack of 6', 6, 'Units'),
+        ('purchase-uom-days', 800, 5, 'Days', 8, 'Hours'),
+        ('purchase-uom-meters', 1000, 9, 'm', 100, 'cm'),
+        ('purchase-uom-kilometers', 1000, 10, 'km', 1000, 'm'),
+        ('purchase-uom-liters', 1000, 13, 'L', 1000, 'ml'),
+        ('purchase-uom-kilograms', 1000, 16, 'kg', 1000, 'g'),
+        ('purchase-uom-tons', 1000, 17, 'Ton', 1000, 'kg'),
+        ('purchase-uom-ounces', 1000, 18, 'oz', 28.3495, 'g'),
+        ('purchase-uom-pounds', 1000, 19, 'lb', 16, 'oz'),
+        ('purchase-uom-feet', 1000, 21, 'ft', 12, 'in');
+    down: |
+      DROP TABLE IF EXISTS purchase_units_packagings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database:
+  storage:
+    driver: duckdb
