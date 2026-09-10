@@ -1,32 +1,29 @@
-title: Salespersons
-page: { id: sale-reporting-salespersons, route: /order/reporting/salespersons, breadcrumb: [Sales, Reporting, Salespersons], auth: { require: [orders.read] } }
-datasources:
-  - id: sale_report_salespersons
-    single: false
-    permission: orders.read
-    query: |
-      SELECT
-        COALESCE(o.salesperson_name, o.created_by) AS salesperson_name,
-        COUNT(DISTINCT o.id) AS order_count,
-        CAST(SUM(o.total_amount) AS DOUBLE) AS total_amount,
-        printf('$%,.2f', CAST(SUM(o.total_amount) AS DOUBLE)) AS total_amount_display,
-        CAST(AVG(o.total_amount) AS DOUBLE) AS avg_order_value,
-        printf('$%,.2f', CAST(AVG(o.total_amount) AS DOUBLE)) AS avg_order_value_display
-      FROM orders o
-      WHERE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) IN ('Approved', 'Pending Approval')
-      GROUP BY COALESCE(o.salesperson_name, o.created_by)
-      ORDER BY total_amount DESC
+title: Sales Analysis By Salespersons
+page: { id: sale-reporting-salespersons, route: /order/reporting/salespersons, breadcrumb: [Sales, Reporting, Sales Analysis By Salespersons], auth: { require: [orders.read] } }
+
 components:
   - type: ListView
     variant: odoo
     source: sale_report_salespersons
-    view_navigation: tabs
+    search: { label: Search salespersons, placeholder: Search salespersons... }
+    date_range:
+      label: Order Date
+      from_field: from_date
+      to_field: to_date
+      default_preset: last_12_months
+      presets: [last_12_months, year, quarter, month]
+      preset_labels: { last_12_months: Last 365 Days, year: This Year, quarter: This Quarter, month: This Month }
+    group_by:
+      - { field: salesperson_name, label: Salesperson }
+    default_group_by: salesperson_name
     views:
       - id: graph
         label: Graph
         icon: graph
+        type: bar
         category_field: salesperson_name
-        measure_field: total_amount
+        measure_field: quantity_ordered
+        measure_label: Qty Ordered
       - id: pivot
         label: Pivot
         icon: pivot
@@ -34,20 +31,22 @@ components:
           fields:
             - { field: salesperson_name, column: Salesperson }
             - { field: order_count, column: Orders }
-            - { field: total_amount, column: Revenue }
+            - { field: quantity_ordered, column: Qty Ordered }
+            - { field: total_revenue, column: Total }
           default:
             rows: [salesperson_name]
             measures:
-              - { field: total_amount, aggregate: sum, column: Revenue }
+              - { field: quantity_ordered, aggregate: sum, column: Qty Ordered }
+              - { field: total_revenue, aggregate: sum, column: Total }
               - { field: order_count, aggregate: sum, column: Orders }
-      - { id: list, label: List, icon: table }
     columns:
       - { field: salesperson_name, label: Salesperson, type: PrimaryEntityCell }
       - { field: order_count, label: Orders, align: right }
-      - { field: total_amount_display, label: Revenue, align: right }
-      - { field: avg_order_value_display, label: Avg. order, align: right }
-    page_size: 50
+      - { field: quantity_ordered, label: Qty Ordered, align: right }
+      - { field: total_revenue_display, label: Total, align: right }
+      - { field: avg_order_value_display, label: Average Order, align: right }
+    page_size: 80
     row_key: salesperson_name
     empty_state:
-      title: No data
-      description: No confirmed orders found for this period.
+      title: No sales data
+      description: No confirmed orders match the selected salesperson or date filters.

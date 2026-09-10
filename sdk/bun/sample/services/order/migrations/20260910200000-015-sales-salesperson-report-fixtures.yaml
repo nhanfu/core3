@@ -1,0 +1,20 @@
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE orders SET salesperson_name = CASE id
+        WHEN 'sales-report-order-001' THEN 'Avery Chen'
+        WHEN 'sales-report-order-002' THEN 'Taylor Nguyen'
+        WHEN 'sales-report-order-003' THEN 'Jordan Lee'
+        WHEN 'sales-report-order-004' THEN 'Priya Patel'
+        ELSE salesperson_name
+      END
+      WHERE id IN ('sales-report-order-001', 'sales-report-order-002', 'sales-report-order-003', 'sales-report-order-004');
+    down: |
+      UPDATE orders SET salesperson_name = NULL
+      WHERE id IN ('sales-report-order-001', 'sales-report-order-002', 'sales-report-order-003', 'sales-report-order-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
