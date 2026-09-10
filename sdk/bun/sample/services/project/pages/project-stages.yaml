@@ -24,6 +24,7 @@ components:
     empty_state: { title: No stages found. Let's create one!, description: Define the steps your projects move through from creation to completion. }
     columns:
       - { field: sequence, label: ' ', type: HandleCell, mobile: false }
-      - { field: name, label: Name, type: PrimaryEntityCell, actions: [{ id: edit_project_stage, label: Edit, icon: edit }, { id: archive_project_stage, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_project_stage, label: Unarchive, icon: archive, show_if: 'row.active === false' }, { id: delete_project_stage, label: Delete, icon: trash, variant: danger }] }
-      - { field: fold, label: Folded, type: StatusChip }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: fold, label: Folded, type: BooleanToggle }
       - { field: company_name, label: Company, optional: hide }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_project_stage, label: Edit, icon: edit }, { id: archive_project_stage, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_project_stage, label: Unarchive, icon: archive, show_if: 'row.active === false' }, { id: delete_project_stage, label: Delete, icon: trash, variant: danger }] }

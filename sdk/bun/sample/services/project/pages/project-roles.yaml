@@ -24,5 +24,6 @@ components:
     empty_state: { title: No project role found. Let's create one!, description: Assign roles to tasks in your project templates. }
     columns:
       - { field: sequence, label: ' ', type: HandleCell, mobile: false }
-      - { field: name, label: Name, type: PrimaryEntityCell, actions: [{ id: edit_project_role, label: Edit, icon: edit }, { id: archive_project_role, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_project_role, label: Unarchive, icon: archive, show_if: 'row.active === false' }, { id: delete_project_role, label: Delete, icon: trash, variant: danger }] }
-      - { field: color, label: Color, type: StatusChip }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: color, label: Color, type: ColorCell }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_project_role, label: Edit, icon: edit }, { id: archive_project_role, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_project_role, label: Unarchive, icon: archive, show_if: 'row.active === false' }, { id: delete_project_role, label: Delete, icon: trash, variant: danger }] }

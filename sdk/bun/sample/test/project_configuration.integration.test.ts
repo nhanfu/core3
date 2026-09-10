@@ -35,9 +35,26 @@ describe('Project configuration parity', () => {
       }
     }
 
-    expect(yaml('pages/project-stages.yaml').components[0].columns.map((column: any) => column.label)).toEqual([' ', 'Name', 'Folded', 'Company']);
-    expect(yaml('pages/project-tags.yaml').components[0].columns.map((column: any) => column.label)).toEqual(['Name', 'Color']);
-    expect(yaml('pages/project-roles.yaml').components[0].columns.map((column: any) => column.label)).toEqual([' ', 'Name', 'Color']);
+    const stageColumns = yaml('pages/project-stages.yaml').components[0].columns;
+    expect(stageColumns.map((column: any) => column.label)).toEqual([' ', 'Name', 'Folded', 'Company', ' ']);
+    expect(stageColumns.find((column: any) => column.field === 'name')).toMatchObject({ type: 'PrimaryEntityCell', mobile: true });
+    expect(stageColumns.find((column: any) => column.field === 'name').actions).toBeUndefined();
+    expect(stageColumns.find((column: any) => column.field === 'id')).toMatchObject({ sortable: false });
+    expect(stageColumns.find((column: any) => column.field === 'fold')).toMatchObject({ type: 'BooleanToggle' });
+
+    const tagColumns = yaml('pages/project-tags.yaml').components[0].columns;
+    expect(tagColumns.map((column: any) => column.label)).toEqual(['Name', 'Color', ' ']);
+    expect(tagColumns.find((column: any) => column.field === 'name')).toMatchObject({ type: 'PrimaryEntityCell', mobile: true });
+    expect(tagColumns.find((column: any) => column.field === 'name').actions).toBeUndefined();
+    expect(tagColumns.find((column: any) => column.field === 'color')).toMatchObject({ type: 'ColorCell' });
+    expect(tagColumns.find((column: any) => column.field === 'id')).toMatchObject({ sortable: false });
+
+    const roleColumns = yaml('pages/project-roles.yaml').components[0].columns;
+    expect(roleColumns.map((column: any) => column.label)).toEqual([' ', 'Name', 'Color', ' ']);
+    expect(roleColumns.find((column: any) => column.field === 'name')).toMatchObject({ type: 'PrimaryEntityCell', mobile: true });
+    expect(roleColumns.find((column: any) => column.field === 'name').actions).toBeUndefined();
+    expect(roleColumns.find((column: any) => column.field === 'color')).toMatchObject({ type: 'ColorCell' });
+    expect(roleColumns.find((column: any) => column.field === 'id')).toMatchObject({ sortable: false });
     expect(yaml('manifest.yaml').menu.groups).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'configuration', label: 'Configuration' }),
     ]));

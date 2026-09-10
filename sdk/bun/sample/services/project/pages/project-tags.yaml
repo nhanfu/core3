@@ -19,5 +19,6 @@ components:
     row_actions: menu
     empty_state: { title: No tags found. Let's create one!, description: Use tags to categorize your tasks. }
     columns:
-      - { field: name, label: Name, type: PrimaryEntityCell, actions: [{ id: edit_project_tag, label: Edit, icon: edit }, { id: delete_project_tag, label: Delete, icon: trash, variant: danger }] }
-      - { field: color, label: Color, type: StatusChip }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: color, label: Color, type: ColorCell }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_project_tag, label: Edit, icon: edit }, { id: delete_project_tag, label: Delete, icon: trash, variant: danger }] }

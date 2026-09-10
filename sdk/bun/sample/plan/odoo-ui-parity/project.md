@@ -201,6 +201,11 @@ baseline limitation: it reports missing `mock_data` on 324 SQL-backed pages,
 including the pre-existing Project pages; this slice keeps SQL datasources
 live rather than replacing them with browser fixtures.
 
+The visual polish pass keeps that page/API separation and binds the existing
+list cell contracts explicitly: names use `PrimaryEntityCell` on desktop and
+mobile, stage `Folded` uses `BooleanToggle`, and displayed color values use
+`ColorCell` swatches instead of text status badges.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:
