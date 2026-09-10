@@ -1,0 +1,103 @@
+page: { id: mailing-lists }
+datasources:
+  - id: mailing_lists
+    permission: email_marketing.read
+    error_states: { transport_error: { status: 503, code: EMAIL_MAILING_LISTS_UNAVAILABLE, message: Mailing lists are temporarily unavailable. } }
+    query: "SELECT l.id, l.row_version, l.name, l.description, l.subscriber_count, l.contact_count, l.mailing_count, l.bounce_count, l.optout_count, l.blacklist_count, l.company_name, l.is_public, l.favorite, l.active, l.state FROM mailing_lists l WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((:active IS NULL AND l.active = true) OR (:active IS NOT NULL AND l.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR l.description ILIKE '%' || :q || '%') ORDER BY l.name, l.id"
+actions:
+  - id: view_mailing_list
+    type: navigate
+    permission: email_marketing.read
+    navigate_to: /mailing-lists/detail
+    params: { id: '{row.id}' }
+  - id: new_mailing_list
+    type: navigate
+    permission: email_marketing.manage
+    navigate_to: /mailing-lists
+  - id: create_mailing_list
+    type: server_form
+    permission: email_marketing.manage
+    title: New mailing list
+    action: email_marketing.lists.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mailing_lists]
+    mutation:
+      operation: insert
+      table: mailing_lists
+      generated: [id]
+      fields: [name, description, company_name, is_public, favorite]
+      required: [name]
+      defaults: { row_version: 1, active: true, state: Active, company_name: Core3 Vietnam, is_public: true, favorite: false, subscriber_count: 0, contact_count: 0, mailing_count: 0, bounce_count: 0, optout_count: 0, blacklist_count: 0, created_at: '2026-01-15 09:30:00', updated_at: '2026-01-15 09:30:00' }
+      before_steps: [{ query: "SELECT 'mailing-list-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_MAILING_LIST_NAME_REQUIRED, message: A mailing list name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mailing_lists WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: EMAIL_MAILING_LIST_EXISTS, message: A mailing list with this name already exists. }
+      result: { query: "SELECT * FROM mailing_lists WHERE id = :id" }
+    fields:
+      - { field: name, label: Mailing list, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: company_name, label: Company, type: text, default: Core3 Vietnam }
+      - { field: is_public, label: Public list, type: checkbox, default: true }
+  - id: edit_mailing_list
+    type: server_form
+    permission: email_marketing.manage
+    title: Edit mailing list
+    action: email_marketing.lists.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [mailing_lists, mailing_list_detail]
+    mutation:
+      operation: update
+      table: mailing_lists
+      fields: [name, description, company_name, is_public, favorite]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mailing_lists WHERE id = :id", status: 404, code: EMAIL_MAILING_LIST_NOT_FOUND, message: Mailing list not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mailing_lists WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMAIL_MAILING_LIST_EXISTS, message: A mailing list with this name already exists. }
+      result: { query: "SELECT * FROM mailing_lists WHERE id = :id" }
+    fields:
+      - { field: name, label: Mailing list, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: company_name, label: Company, type: text }
+      - { field: is_public, label: Public list, type: checkbox }
+  - id: archive_mailing_list
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.lists.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [mailing_lists]
+    mutation: { operation: update, table: mailing_lists, fields: [active, state], defaults: { active: false, state: Archived }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM mailing_lists WHERE id = :id AND active = true", status: 404, code: EMAIL_MAILING_LIST_NOT_FOUND, message: Active mailing list not found. }] }
+  - id: restore_mailing_list
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.lists.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [mailing_lists]
+    mutation: { operation: update, table: mailing_lists, fields: [active, state], defaults: { active: true, state: Active }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM mailing_lists WHERE id = :id AND active = false", status: 404, code: EMAIL_MAILING_LIST_NOT_FOUND, message: Archived mailing list not found. }] }
+  - id: favorite_mailing_list
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.lists.favorite
+    handler: yaml_mutation
+    operation: update
+    refresh: [mailing_lists]
+    mutation: { operation: update, table: mailing_lists, fields: [favorite], defaults: { favorite: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM mailing_lists WHERE id = :id", status: 404, code: EMAIL_MAILING_LIST_NOT_FOUND, message: Mailing list not found. }] }
+  - id: delete_mailing_list
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.lists.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [mailing_lists]
+    mutation:
+      operation: delete
+      table: mailing_lists
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mailing_lists WHERE id = :id", status: 404, code: EMAIL_MAILING_LIST_NOT_FOUND, message: Mailing list not found. }
+        - { query: "SELECT id FROM mailing_lists WHERE id = :id AND subscriber_count = 0 AND contact_count = 0 AND mailing_count = 0", status: 409, code: EMAIL_MAILING_LIST_IN_USE, message: A mailing list with audience or mailings cannot be deleted; archive it instead. }

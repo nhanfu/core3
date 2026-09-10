@@ -1,38 +1,45 @@
 title: Mailing Lists
-page: { id: mailing-lists, breadcrumb: [Marketing, Email Marketing, Mailing Lists], auth: { require: [email_marketing.read] } }
-datasources:
-  - id: mailing_lists
-    permission: email_marketing.read
-    query: "SELECT id, name, description, subscriber_count, state FROM mailing_lists ORDER BY name"
+page: { id: mailing-lists, route: /mailing-lists, breadcrumb: [Marketing, Email Marketing, Mailing Lists], auth: { require: [email_marketing.read] } }
+
 components:
   - type: ListView
     variant: odoo
     source: mailing_lists
     create_action: create_mailing_list
     create_label: New mailing list
+    search: { label: Search mailing lists, placeholder: Search list or description... }
+    filters: [{ field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: ''
+        card:
+          compact: true
+          title: name
+          subtitle: description
+          company_field: company_name
+          primary_metric: subscriber_count
+          primary_metric_label: Subscribers
+          fields:
+            - { field: contact_count, label: Contacts }
+            - { field: mailing_count, label: Mailings }
+          footer:
+            - { field: state, label: Status }
+      - { id: list, label: List, icon: table, mobile: true }
     columns:
       - { field: name, label: Mailing list, type: PrimaryEntityCell }
       - { field: description, label: Description }
       - { field: subscriber_count, label: Subscribers, align: right }
+      - { field: contact_count, label: Contacts, align: right }
+      - { field: mailing_count, label: Mailings, align: right }
       - { field: state, label: Status, type: StatusChip }
+      - { field: favorite, label: Favorite, type: StatusChip, optional: true }
     page_size: 50
     row_key: id
-actions:
-  - id: create_mailing_list
-    type: server_form
-    permission: email_marketing.manage
-    title: New mailing list
-    action: email_marketing.lists.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [mailing_lists]
-    mutation:
-      operation: insert
-      table: mailing_lists
-      fields: [name, description, subscriber_count]
-      required: [name]
-      result: { query: "SELECT * FROM mailing_lists WHERE id = :id" }
-    fields:
-      - { field: name, label: Mailing list, type: text, required: true }
-      - { field: description, label: Description, type: text }
-      - { field: subscriber_count, label: Subscribers, type: number }
+    row_open_action: view_mailing_list
+    row_double_click_action: view_mailing_list
+    row_actions: menu
+    empty_state: { title: No mailing lists found, description: Create a mailing list or adjust your search and filters. }

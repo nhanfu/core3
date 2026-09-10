@@ -1,10 +1,6 @@
 title: Email Campaign
-page: { id: email-campaign-detail, breadcrumb: [Marketing, Email Marketing, Detail], auth: { require: [email_marketing.read] } }
-datasources:
-  - id: email_campaign_detail
-    single: true
-    permission: email_marketing.read
-    query: "SELECT id, row_version, name, subject, sender_name, sender_email, list_name, body, recipient_count, delivered_count, opened_count, clicked_count, state, CAST(scheduled_at AS VARCHAR) AS scheduled_at, CAST(sent_at AS VARCHAR) AS sent_at FROM email_campaigns WHERE id = :id"
+page: { id: email-campaign-detail, route: /email-campaigns/detail, breadcrumb: [Marketing, Email Marketing, Campaigns, Mailing], auth: { require: [email_marketing.read] } }
+
 components:
   - type: OdooFormView
     source: email_campaign_detail
@@ -12,14 +8,44 @@ components:
     status_field: state
     statusbar: [{ value: Draft, label: Draft }, { value: Scheduled, label: Scheduled }, { value: Sending, label: Sending }, { value: Sent, label: Sent }, { value: Cancelled, label: Cancelled }]
     status_colors: { Draft: neutral, Scheduled: amber, Sending: blue, Sent: green, Cancelled: red }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: new_email_campaign_detail, label: New, variant: primary, permission: email_marketing.write }
+      - { id: edit_email_campaign_detail, label: Edit, variant: secondary, permission: email_marketing.write }
+      - { id: schedule_email_campaign_detail, label: Schedule, variant: primary, permission: email_marketing.write, show_if: "state.email_campaign_detail.state === 'Draft'" }
+      - { id: send_email_campaign_detail, label: Send, variant: secondary, permission: email_marketing.write, show_if: "state.email_campaign_detail.state === 'Scheduled'" }
+      - { id: complete_email_campaign_detail, label: Complete send, variant: primary, permission: email_marketing.manage, show_if: "state.email_campaign_detail.state === 'Sending'" }
+      - { id: cancel_email_campaign_detail, label: Cancel, variant: danger, permission: email_marketing.manage, show_if: "state.email_campaign_detail.state === 'Draft' || state.email_campaign_detail.state === 'Scheduled'" }
+      - { id: archive_email_campaign_detail, label: Archive, variant: danger, permission: email_marketing.manage, show_if: "state.email_campaign_detail.active === true" }
+      - { id: restore_email_campaign_detail, label: Restore, variant: secondary, permission: email_marketing.manage, show_if: "state.email_campaign_detail.active === false" }
+    stat_buttons:
+      - { id: campaign_recipients, label: Recipients, value_field: recipient_count }
+      - { id: campaign_delivered, label: Delivered, value_field: delivered_count }
+      - { id: campaign_opened, label: Opened, value_field: opened_count }
+      - { id: campaign_clicked, label: Clicked, value_field: clicked_count }
     group_columns: 2
     groups:
-      - title: Campaign
-        fields: [{ field: name, label: Campaign }, { field: state, label: Status }, { field: subject, label: Subject }, { field: sender_name, label: Sender }, { field: list_name, label: Audience }]
+      - title: Mailing
+        fields:
+          - { field: name, label: Campaign }
+          - { field: state, label: Status }
+          - { field: subject, label: Subject }
+          - { field: sender_name, label: Sender name }
+          - { field: sender_email, label: Sender email }
+          - { field: reply_to, label: Reply-to }
+          - { field: list_name, label: Audience }
       - title: Delivery
-        fields: [{ field: recipient_count, label: Recipients }, { field: delivered_count, label: Delivered }, { field: opened_count, label: Opened }, { field: clicked_count, label: Clicked }, { field: scheduled_at, label: Scheduled at }, { field: sent_at, label: Sent at }, { field: body, label: Body }]
-actions:
-  - { id: schedule_email_campaign_detail, type: server, permission: email_marketing.write, action: email_marketing.campaigns.schedule, handler: order_transition, workflow: email_campaigns, operation: schedule, params: { id: '{state.id}' }, refresh: [email_campaign_detail] }
-  - { id: send_email_campaign_detail, type: server, permission: email_marketing.write, action: email_marketing.campaigns.send, handler: order_transition, workflow: email_campaigns, operation: send, params: { id: '{state.id}' }, refresh: [email_campaign_detail] }
-  - { id: complete_email_campaign_detail, type: server, permission: email_marketing.manage, action: email_marketing.campaigns.complete, handler: order_transition, workflow: email_campaigns, operation: complete, params: { id: '{state.id}' }, refresh: [email_campaign_detail] }
-  - { id: cancel_email_campaign_detail, type: server, permission: email_marketing.manage, action: email_marketing.campaigns.cancel, handler: order_transition, workflow: email_campaigns, operation: cancel, params: { id: '{state.id}' }, refresh: [email_campaign_detail] }
+        fields:
+          - { field: recipient_model, label: Recipient model }
+          - { field: recipient_domain, label: Recipient domain, type: textarea, wide: true }
+          - { field: recipient_count, label: Recipients }
+          - { field: delivered_count, label: Delivered }
+          - { field: failed_count, label: Failed }
+          - { field: retriable_count, label: Retriable }
+          - { field: scheduled_at, label: Scheduled at }
+          - { field: sent_at, label: Sent at }
+          - { field: active, label: Active }
+      - title: Content
+        fields:
+          - { field: body, label: HTML body, type: textarea, wide: true }

@@ -1,0 +1,40 @@
+title: Mailing List
+page: { id: mailing-list-detail, route: /mailing-lists/detail, breadcrumb: [Marketing, Email Marketing, Mailing Lists, Mailing List], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: OdooFormView
+    source: mailing_list_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Active, label: Active }, { value: Archived, label: Archived }]
+    status_colors: { Active: green, Archived: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: new_mailing_list_detail, label: New, variant: primary, permission: email_marketing.manage }
+      - { id: edit_mailing_list_detail, label: Edit, variant: secondary, permission: email_marketing.manage }
+      - { id: archive_mailing_list_detail, label: Archive, variant: danger, permission: email_marketing.manage, show_if: "state.mailing_list_detail.active === true" }
+      - { id: restore_mailing_list_detail, label: Restore, variant: secondary, permission: email_marketing.manage, show_if: "state.mailing_list_detail.active === false" }
+    stat_buttons:
+      - { id: mailing_list_subscribers, label: Subscribers, value_field: subscriber_count }
+      - { id: mailing_list_contacts, label: Contacts, value_field: contact_count }
+      - { id: mailing_list_mailings, label: Mailings, value_field: mailing_count }
+      - { id: mailing_list_bounces, label: Bounces, value_field: bounce_count }
+    group_columns: 2
+    groups:
+      - title: Mailing list
+        fields:
+          - { field: name, label: Name }
+          - { field: state, label: Status }
+          - { field: description, label: Description, type: textarea, wide: true }
+          - { field: company_name, label: Company }
+          - { field: is_public, label: Public list }
+          - { field: favorite, label: Favorite }
+      - title: Audience
+        fields:
+          - { field: subscriber_count, label: Subscribers }
+          - { field: contact_count, label: Contacts }
+          - { field: mailing_count, label: Mailings }
+          - { field: bounce_count, label: Bounces }
+          - { field: optout_count, label: Opt-outs }
+          - { field: blacklist_count, label: Blacklisted }

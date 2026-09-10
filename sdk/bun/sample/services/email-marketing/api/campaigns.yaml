@@ -1,0 +1,134 @@
+page: { id: email-campaigns }
+datasources:
+  - id: email_campaign_states
+    permission: email_marketing.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Scheduled','Scheduled'), ('Sending','Sending'), ('Sent','Sent'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: mailing_list_lookup
+    permission: email_marketing.read
+    query: "SELECT id AS value, name AS label FROM mailing_lists WHERE active = true ORDER BY name, id"
+  - id: email_campaigns
+    permission: email_marketing.read
+    workflow: email_campaigns
+    error_states: { transport_error: { status: 503, code: EMAIL_CAMPAIGNS_UNAVAILABLE, message: Email campaigns are temporarily unavailable. } }
+    query: "SELECT c.id, c.row_version, c.name, c.subject, c.sender_name, c.list_name, c.recipient_count, c.delivered_count, c.opened_count, c.clicked_count, c.failed_count, c.retriable_count, c.state, c.active, c.favorite, CAST(c.scheduled_at AS VARCHAR) AS scheduled_at, CAST(c.sent_at AS VARCHAR) AS sent_at FROM email_campaigns c WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((:active IS NULL AND c.active = true) OR (:active IS NOT NULL AND c.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.subject ILIKE '%' || :q || '%' OR c.sender_name ILIKE '%' || :q || '%' OR c.list_name ILIKE '%' || :q || '%') AND (:state IS NULL OR c.state = :state) ORDER BY c.created_at DESC, c.id"
+actions:
+  - id: view_email_campaign
+    type: navigate
+    permission: email_marketing.read
+    navigate_to: /email-campaigns/detail
+    params: { id: '{row.id}' }
+  - id: new_email_campaign
+    type: navigate
+    permission: email_marketing.write
+    navigate_to: /email-campaigns
+  - id: create_email_campaign
+    type: server_form
+    permission: email_marketing.write
+    title: New email campaign
+    action: email_marketing.campaigns.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [email_campaigns]
+    mutation:
+      operation: insert
+      table: email_campaigns
+      generated: [id]
+      fields: [name, subject, sender_name, sender_email, reply_to, list_id, list_name, body, recipient_model, recipient_domain, scheduled_at, recipient_count]
+      required: [name, subject, sender_name, sender_email, list_id, list_name, body, recipient_count]
+      defaults: { recipient_model: res.partner, recipient_domain: Active subscribers, row_version: 1, active: true, favorite: false, mail_server_available: true, created_at: '2026-01-15 09:30:00', updated_at: '2026-01-15 09:30:00' }
+      before_steps: [{ query: "SELECT 'email-campaign-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:subject AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:body AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:sender_name AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:sender_email AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$') AND CAST(:recipient_count AS INTEGER) > 0", status: 422, code: EMAIL_CAMPAIGN_REQUIRED_FIELDS, message: Campaign name, subject, sender, body, valid email, and recipients are required. }
+        - { query: "SELECT 1 AS ok FROM mailing_lists WHERE id = :list_id AND active = true", status: 409, code: EMAIL_CAMPAIGN_AUDIENCE_UNAVAILABLE, message: Select an active mailing list. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_campaigns WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: EMAIL_CAMPAIGN_EXISTS, message: A campaign with this name already exists. }
+      result: { query: "SELECT * FROM email_campaigns WHERE id = :id" }
+    fields:
+      - { field: name, label: Campaign, type: text, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: sender_name, label: Sender name, type: text, required: true }
+      - { field: sender_email, label: Sender email, type: text, required: true }
+      - { field: reply_to, label: Reply-to, type: text }
+      - { field: list_id, label: Audience, type: select, options_source: mailing_list_lookup, required: true }
+      - { field: list_name, label: Audience name, type: text, required: true }
+      - { field: body, label: HTML body, type: textarea, required: true }
+      - { field: recipient_model, label: Recipient model, type: text, default: res.partner }
+      - { field: recipient_domain, label: Recipient domain, type: textarea }
+      - { field: scheduled_at, label: Scheduled at, type: text }
+      - { field: recipient_count, label: Recipients, type: number, required: true, min: 1 }
+  - id: edit_email_campaign
+    type: server_form
+    permission: email_marketing.write
+    title: Edit email campaign
+    action: email_marketing.campaigns.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [email_campaigns, email_campaign_detail]
+    mutation:
+      operation: update
+      table: email_campaigns
+      fields: [name, subject, sender_name, sender_email, reply_to, list_id, list_name, body, recipient_model, recipient_domain, scheduled_at, recipient_count]
+      required: [name, subject, sender_name, sender_email, list_id, list_name, body, recipient_count]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_campaigns WHERE id = :id", status: 404, code: EMAIL_CAMPAIGN_NOT_FOUND, message: Email campaign not found. }
+        - { query: "SELECT 1 AS ok FROM email_campaigns WHERE id = :id AND state NOT IN ('Sent', 'Sending')", status: 409, code: EMAIL_CAMPAIGN_IMMUTABLE, message: Sent or sending campaigns cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:subject AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:body AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:sender_name AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:sender_email AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$') AND CAST(:recipient_count AS INTEGER) > 0", status: 422, code: EMAIL_CAMPAIGN_REQUIRED_FIELDS, message: Campaign name, subject, sender, body, valid email, and recipients are required. }
+        - { query: "SELECT 1 AS ok FROM mailing_lists WHERE id = :list_id AND active = true", status: 409, code: EMAIL_CAMPAIGN_AUDIENCE_UNAVAILABLE, message: Select an active mailing list. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_campaigns WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMAIL_CAMPAIGN_EXISTS, message: A campaign with this name already exists. }
+      result: { query: "SELECT * FROM email_campaigns WHERE id = :id" }
+    fields:
+      - { field: name, label: Campaign, type: text, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: sender_name, label: Sender name, type: text, required: true }
+      - { field: sender_email, label: Sender email, type: text, required: true }
+      - { field: reply_to, label: Reply-to, type: text }
+      - { field: list_id, label: Audience, type: select, options_source: mailing_list_lookup, required: true }
+      - { field: list_name, label: Audience name, type: text, required: true }
+      - { field: body, label: HTML body, type: textarea, required: true }
+      - { field: recipient_model, label: Recipient model, type: text }
+      - { field: recipient_domain, label: Recipient domain, type: textarea }
+      - { field: scheduled_at, label: Scheduled at, type: text }
+      - { field: recipient_count, label: Recipients, type: number, required: true, min: 1 }
+  - { id: schedule_email_campaign, type: server, permission: email_marketing.write, action: email_marketing.campaigns.schedule, handler: order_transition, workflow: email_campaigns, operation: schedule, refresh: [email_campaigns] }
+  - { id: send_email_campaign, type: server, permission: email_marketing.write, action: email_marketing.campaigns.send, handler: order_transition, workflow: email_campaigns, operation: send, refresh: [email_campaigns] }
+  - { id: complete_email_campaign, type: server, permission: email_marketing.manage, action: email_marketing.campaigns.complete, handler: order_transition, workflow: email_campaigns, operation: complete, refresh: [email_campaigns] }
+  - { id: cancel_email_campaign, type: server, permission: email_marketing.manage, action: email_marketing.campaigns.cancel, handler: order_transition, workflow: email_campaigns, operation: cancel, refresh: [email_campaigns] }
+  - id: archive_email_campaign
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.campaigns.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_campaigns]
+    mutation: { operation: update, table: email_campaigns, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM email_campaigns WHERE id = :id AND active = true AND state <> 'Sending'", status: 409, code: EMAIL_CAMPAIGN_ARCHIVE_BLOCKED, message: Sending campaigns cannot be archived. }] }
+  - id: restore_email_campaign
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.campaigns.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_campaigns]
+    mutation: { operation: update, table: email_campaigns, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM email_campaigns WHERE id = :id AND active = false", status: 404, code: EMAIL_CAMPAIGN_NOT_FOUND, message: Archived campaign not found. }] }
+  - id: favorite_email_campaign
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.campaigns.favorite
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_campaigns]
+    mutation: { operation: update, table: email_campaigns, fields: [favorite], defaults: { favorite: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM email_campaigns WHERE id = :id", status: 404, code: EMAIL_CAMPAIGN_NOT_FOUND, message: Email campaign not found. }] }
+  - id: delete_email_campaign
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.campaigns.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [email_campaigns]
+    mutation:
+      operation: delete
+      table: email_campaigns
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_campaigns WHERE id = :id", status: 404, code: EMAIL_CAMPAIGN_NOT_FOUND, message: Email campaign not found. }
+        - { query: "SELECT id FROM email_campaigns WHERE id = :id AND state IN ('Draft', 'Cancelled')", status: 409, code: EMAIL_CAMPAIGN_DELETE_BLOCKED, message: Only draft or cancelled campaigns can be deleted. }
