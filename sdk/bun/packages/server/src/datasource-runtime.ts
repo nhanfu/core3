@@ -3,7 +3,7 @@ import { resolveQueryWindow, type QueryWindowDefinition } from './database/query
 
 export const datasourceMethods = {
   querySource: async function(this: any,
-    source: { id?: string; type?: string; query?: string; single?: boolean; pivot?: any; query_window?: QueryWindowDefinition; service?: string; operation?: string; service_params?: Record<string, unknown>; enrich?: any; mock_data?: { default?: unknown; states?: Record<string, unknown> } },
+    source: { id?: string; type?: string; query?: string; single?: boolean; pivot?: any; query_window?: QueryWindowDefinition; service?: string; operation?: string; service_params?: Record<string, unknown>; enrich?: any; mock_data?: { default?: unknown; states?: Record<string, unknown> }; error_states?: Record<string, { status?: number; code?: string; message: string }> },
     params: Record<string, any> = {},
     skip = 0,
     top = 25,
@@ -11,6 +11,12 @@ export const datasourceMethods = {
     sort?: { field?: unknown; direction?: unknown },
     pivot?: any,
   ): Promise<any> {
+    const requestedErrorState = [params.fixture_state, params.mock_state, params.state]
+      .find((value) => typeof value === 'string' && value.trim() && source.error_states?.[value]);
+    if (requestedErrorState) {
+      const definition = source.error_states![String(requestedErrorState)];
+      throw { status: definition.status || 503, code: definition.code || 'DATASOURCE_UNAVAILABLE', message: definition.message };
+    }
     if (source.type === 'service') return queryServiceSource.call(this, source, params, top);
     if (source.mock_data !== undefined) return queryMockSource(source, params, skip, top);
     const bounds = source.query_window ? resolveQueryWindow(source.query_window, params) : undefined;

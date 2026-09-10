@@ -3,7 +3,8 @@ datasources:
   - id: accounting_reconciliation
     single: false
     permission: accounting.read
-    query: "SELECT id, row_version, name, partner_name, CAST(invoice_date AS VARCHAR) AS invoice_date, amount_total, amount_residual, state, reference FROM accounting_invoices WHERE state = 'Posted' AND amount_residual > 0 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(reference, '') ILIKE '%' || :q || '%') ORDER BY invoice_date"
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, partner_name, CAST(invoice_date AS VARCHAR) AS invoice_date, amount_total, amount_residual, state, reference FROM accounting_invoices CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND state = 'Posted' AND amount_residual > 0 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(reference, '') ILIKE '%' || :q || '%') ORDER BY invoice_date"
 actions:
   - { id: view_reconciliation_invoice, type: navigate, permission: accounting.read, navigate_to: /accounting/invoice-detail, params: { id: '{row.id}' } }
   - id: reconcile_invoice

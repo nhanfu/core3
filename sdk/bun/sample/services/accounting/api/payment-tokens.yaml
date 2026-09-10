@@ -3,4 +3,5 @@ datasources:
   - id: accounting_payment_tokens
     single: false
     permission: accounting.read
-    query: "SELECT payment_details, partner, payment_method, provider FROM (VALUES (CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR))) tokens(payment_details, partner, payment_method, provider) WHERE payment_details IS NOT NULL AND (:q IS NULL OR payment_details ILIKE '%' || :q || '%' OR COALESCE(partner, '') ILIKE '%' || :q || '%' OR COALESCE(payment_method, '') ILIKE '%' || :q || '%' OR COALESCE(provider, '') ILIKE '%' || :q || '%')"
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT payment_details, partner, payment_method, provider FROM (VALUES (CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR))) tokens(payment_details, partner, payment_method, provider) CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND payment_details IS NOT NULL AND (:q IS NULL OR payment_details ILIKE '%' || :q || '%' OR COALESCE(partner, '') ILIKE '%' || :q || '%' OR COALESCE(payment_method, '') ILIKE '%' || :q || '%' OR COALESCE(provider, '') ILIKE '%' || :q || '%')"

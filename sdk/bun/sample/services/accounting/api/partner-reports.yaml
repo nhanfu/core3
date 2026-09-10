@@ -3,6 +3,7 @@ datasources:
   - id: accounting_partner_report
     single: false
     permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
     pivot:
       fields: [partner_name, document_count, total, due]
-    query: "SELECT partner_name, COUNT(*) AS document_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS due FROM accounting_invoices WHERE partner_name IS NOT NULL AND (:q IS NULL OR partner_name ILIKE '%' || :q || '%') GROUP BY partner_name ORDER BY total DESC"
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT partner_name, COUNT(*) AS document_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS due FROM accounting_invoices CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND partner_name IS NOT NULL AND (:q IS NULL OR partner_name ILIKE '%' || :q || '%') GROUP BY partner_name ORDER BY total DESC"

@@ -27,6 +27,7 @@ export type DatasourceDefinition = {
     default?: unknown;
     states?: Record<string, unknown>;
   };
+  error_states?: Record<string, { status?: number; code?: string; message: string }>;
   workflow?: string | WorkflowDefinition;
   workflow_states?: string;
   meta?: Record<string, unknown>;
@@ -95,7 +96,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'route', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'type', 'single', 'permission', 'query', 'data', 'mock_data', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window', 'service', 'operation', 'service_params', 'enrich', 'limit_param']);
+const DATASOURCE_KEYS = new Set(['id', 'type', 'single', 'permission', 'query', 'data', 'mock_data', 'error_states', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window', 'service', 'operation', 'service_params', 'enrich', 'limit_param']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -322,6 +323,7 @@ function validateDatasources(value: unknown, ids: Set<string>, options: PageVali
     if (sourceKinds !== 1) issues.push(`${path} must define exactly one of query, data, mock_data, or workflow_states`);
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
     if (source.mock_data !== undefined) validateMockData(source.mock_data, `${path}.mock_data`, issues);
+    if (source.error_states !== undefined) validateErrorStates(source.error_states, `${path}.error_states`, issues);
     if (source.type !== undefined && source.type !== 'local' && source.type !== 'service') issues.push(`${path}.type must be local or service`);
     if (source.type === 'service') {
       requireString(source.service, `${path}.service`, issues);
@@ -367,6 +369,22 @@ function validateMockData(value: unknown, path: string, issues: string[]) {
     if (isRecord(value.states)) {
       for (const key of Object.keys(value.states)) if (!key.trim()) issues.push(`${path}.states contains an empty state name`);
     }
+  }
+}
+
+function validateErrorStates(value: unknown, path: string, issues: string[]) {
+  requireRecord(value, path, issues);
+  if (!isRecord(value)) return;
+  for (const [state, definition] of Object.entries(value)) {
+    const statePath = `${path}.${state}`;
+    requireRecord(definition, statePath, issues);
+    if (!isRecord(definition)) continue;
+    rejectUnknownKeys(definition, new Set(['status', 'code', 'message']), statePath, issues);
+    requireString(definition.message, `${statePath}.message`, issues);
+    if (definition.status !== undefined && (!Number.isInteger(definition.status) || definition.status < 400 || definition.status > 599)) {
+      issues.push(`${statePath}.status must be an HTTP error status`);
+    }
+    if (definition.code !== undefined) requireString(definition.code, `${statePath}.code`, issues);
   }
 }
 

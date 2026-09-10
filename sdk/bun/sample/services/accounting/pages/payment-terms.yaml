@@ -7,6 +7,7 @@ components:
     create_action: create_accounting_payment_term
     create_label: New
     search: { label: Search payment terms, placeholder: Search payment term... }
+    empty_state: { title: No payment terms found, description: Create a payment term or adjust your search. }
     columns:
       - { field: name, label: Payment term, type: PrimaryEntityCell }
       - { field: description, label: Due rule }

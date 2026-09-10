@@ -2,4 +2,5 @@ page: { id: chart-of-accounts }
 datasources:
   - id: accounting_chart_of_accounts
     permission: accounting.read
-    query: "SELECT id, row_version, code, name, account_type, normal_balance, state FROM accounting_config_accounts WHERE (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%') ORDER BY code"
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, code, name, account_type, normal_balance, state FROM accounting_config_accounts CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%') ORDER BY code"

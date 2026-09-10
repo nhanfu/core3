@@ -3,6 +3,7 @@ datasources:
   - id: accounting_invoice_analysis
     single: false
     permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
     pivot:
       fields: [invoice_type, state, invoice_count, total, outstanding]
-    query: "SELECT invoice_type, state, COUNT(*) AS invoice_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS outstanding FROM accounting_invoices WHERE (:q IS NULL OR invoice_type ILIKE '%' || :q || '%' OR state ILIKE '%' || :q || '%') GROUP BY invoice_type, state ORDER BY invoice_type, state"
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT invoice_type, state, COUNT(*) AS invoice_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS outstanding FROM accounting_invoices CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR invoice_type ILIKE '%' || :q || '%' OR state ILIKE '%' || :q || '%') GROUP BY invoice_type, state ORDER BY invoice_type, state"

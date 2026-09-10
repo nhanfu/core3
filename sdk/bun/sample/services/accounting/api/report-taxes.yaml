@@ -3,4 +3,5 @@ datasources:
   - id: accounting_tax_report
     single: false
     permission: accounting.read
-    query: "SELECT tax, scope, tax_amount, base_amount FROM (VALUES ('Sales Tax 10%','Sales',150.00,1500.00), ('Purchase Tax 10%','Purchases',80.00,800.00), ('Zero Rate','Sales',0.00,0.00)) taxes(tax,scope,tax_amount,base_amount) WHERE (:q IS NULL OR tax ILIKE '%' || :q || '%' OR scope ILIKE '%' || :q || '%') ORDER BY tax"
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT tax, scope, tax_amount, base_amount FROM (VALUES ('Sales Tax 10%','Sales',150.00,1500.00), ('Purchase Tax 10%','Purchases',80.00,800.00), ('Zero Rate','Sales',0.00,0.00)) taxes(tax,scope,tax_amount,base_amount) CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR tax ILIKE '%' || :q || '%' OR scope ILIKE '%' || :q || '%') ORDER BY tax"

@@ -7,6 +7,7 @@ components:
     create_action: create_accounting_journal
     create_label: New
     search: { label: Search journals, placeholder: Search journal... }
+    empty_state: { title: No journals found, description: Create a journal or adjust your search. }
     columns:
       - { field: name, label: Journal, type: PrimaryEntityCell }
       - { field: journal_type, label: Type }

@@ -3,6 +3,7 @@ datasources:
   - id: accounting_analytic_report
     single: false
     permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
     pivot:
       fields: [plan, account, label, amount, state]
-    query: "SELECT plan, account, label, amount, state FROM (VALUES ('Project','Gemini Furniture','Revenue',1650.00,'Posted'), ('Project','Lumber Inc','Cost of goods',880.00,'Posted'), ('Operations','Main Company','Opening balance',1650.00,'Posted')) analytic(plan, account, label, amount, state) WHERE (:q IS NULL OR plan ILIKE '%' || :q || '%' OR account ILIKE '%' || :q || '%' OR label ILIKE '%' || :q || '%' OR state ILIKE '%' || :q || '%') ORDER BY plan, account"
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT plan, account, label, amount, state FROM (VALUES ('Project','Gemini Furniture','Revenue',1650.00,'Posted'), ('Project','Lumber Inc','Cost of goods',880.00,'Posted'), ('Operations','Main Company','Opening balance',1650.00,'Posted')) analytic(plan, account, label, amount, state) CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR plan ILIKE '%' || :q || '%' OR account ILIKE '%' || :q || '%' OR label ILIKE '%' || :q || '%' OR state ILIKE '%' || :q || '%') ORDER BY plan, account"

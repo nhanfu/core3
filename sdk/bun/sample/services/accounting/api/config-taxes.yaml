@@ -2,4 +2,5 @@ page: { id: taxes }
 datasources:
   - id: accounting_taxes
     permission: accounting.read
-    query: "SELECT id, row_version, name, tax_scope, rate, state FROM accounting_config_taxes WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR tax_scope ILIKE '%' || :q || '%') ORDER BY name"
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, tax_scope, rate, state FROM accounting_config_taxes CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR tax_scope ILIKE '%' || :q || '%') ORDER BY name"

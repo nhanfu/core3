@@ -201,6 +201,33 @@ failures or page-level overflow. Temporary comparison captures are under
 images are repository assets. Dedicated datasource transport-error copy and
 the remaining Accounting routes are outside this bounded batch.
 
+## Current batch: deterministic transport and form-state boundaries
+
+The report and configuration catalog sources from the resilient-state batch now
+carry an explicit `fixture_state` contract. `fixture_state=empty` returns no
+rows while retaining each route's Odoo empty-state copy; the normal request
+continues to use the seeded query; and `fixture_state=transport_error` raises
+the stable server error `Accounting data service is temporarily unavailable`.
+The server-side source permission remains `accounting.read`, so a user without
+that permission still receives the visible 403 page state before the fixture
+query executes. The bounded route set is Payment Tokens, Reconciliation,
+Invoice Analysis, Analytic Report, Partner Reports, Taxes and Fiscal,
+Statement Reports, Chart of Accounts, Journals, Taxes, Payment Terms, and
+Payment Methods. Tests execute the default, empty, and transport-error paths
+against the Accounting migrations.
+
+Invoice Detail is now layout-only with its datasource and mutations in the
+page-ID API fragment. The existing Odoo form sheet exposes Invoice Lines and
+Other Info notebook tabs, deterministic line summary fields, and a partner
+select relation control backed by the seeded Accounting partner vocabulary.
+Draft editing, posting, and payment guards remain server-side and retain their
+existing permission boundary.
+
+Authenticated desktop and mobile checks exercise the normal, empty-search,
+fixture-empty, fixture-error, denied, invoice-tab, and partner-editor states;
+captures remain temporary under `/tmp/core3-accounting-errors-next-*` and are
+not repository assets.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a

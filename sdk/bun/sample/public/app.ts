@@ -114,6 +114,7 @@ export function selectApp(app: any, makeDefault = false) {
 }
 
 export function getDefaultRoute(user: any = _user) {
+  void user;
   return '/apps';
 }
 
@@ -301,7 +302,10 @@ async function renderRoute(path: string, langCode?: string) {
         ? { cache: 'no-store' }
         : {};
       const res = await apiFetch(`/api/pages/${pageId}?${pageParams.toString()}`, fetchOptions);
-      if (!res.ok) throw new Error(`Failed to load page (${res.status})`);
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        throw new Error(String(errorBody.error || errorBody.message || `Failed to load page (${res.status})`));
+      }
       const config = await res.json();
       i18n.hydrate(pageId, config.i18n);
       // Page responses also carry the global catalog. The shell is mounted
