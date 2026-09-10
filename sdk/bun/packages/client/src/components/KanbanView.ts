@@ -5,13 +5,18 @@ import { Dialog, type DialogTagGroup } from '@core3/client/components/Dialog';
 
 type ListRow = Record<string, unknown>;
 
+function initials(value: unknown) {
+  const words = String(value || '').trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, 2).map(word => word[0]?.toUpperCase() || '').join('') || '?';
+}
+
 export type KanbanViewDefinition = {
   id: 'list' | 'kanban';
   label: string;
   icon?: string;
   groupBy?: string;
   groups?: Array<{ value: string; label: string; color?: string }>;
-  card?: { title: string; subtitle?: string; fields?: Array<{ field: string; label?: string }> };
+  card?: { title: string; subtitle?: string; imageField?: string; image_field?: string; fields?: Array<{ field: string; label?: string }> };
   groupsSource?: string;
 };
 
@@ -132,6 +137,14 @@ export class KanbanView extends BaseComponent {
     }
 
     const cardDef = this.options.view.card;
+    const imageField = cardDef?.imageField || cardDef?.image_field;
+    if (imageField) {
+      html.take(card).toggleClass('has-avatar', true);
+      const avatar = html.take(card).div.className('o-kanban-card-avatar').ele();
+      const image = String(row[imageField] || '').trim();
+      if (image) html.take(avatar).img.attr('src', image).attr('alt', String(row[cardDef?.title || 'name'] || 'Employee')).ele();
+      else html.take(avatar).span.className('o-kanban-card-avatar-initials').text(initials(row[cardDef?.title || 'name']));
+    }
     const title = row[cardDef?.title || 'name'];
     html.take(card).h3.className('o-kanban-card-title').text(title == null || title === '' ? '—' : String(title));
     if (cardDef?.subtitle) {

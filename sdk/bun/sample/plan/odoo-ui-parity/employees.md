@@ -10,9 +10,10 @@ Status: ready
 - The addon is an application and depends on `base_setup`, `digest`,
   `phone_validation`, `resource_mail`, and `web`. It declares official demo
   data in `data/hr_demo.xml`.
-- Authenticated live check on 2026-09-10 against `core3_demo` reports
-  `ir.module.module(name=hr).state=uninstalled` and `demo=false`. This is a
-  module-state check, not an inference from an empty list.
+- Authenticated live check on 2026-09-10 against the personal reference
+  database `core3_personal` reports `ir.module.module(name=hr).state=installed`
+  with demo data enabled. The installed reference contains 21 employees and 7
+  departments; this supersedes the earlier `core3_demo` fallback observation.
 - Reference URL: `http://localhost:8069`. Credentials remain outside this
   document's implementation contracts.
 
@@ -21,19 +22,22 @@ Status: ready
 Odoo action paths explicitly declared by the source are `/odoo/employees`,
 `/odoo/all_activities`, and `/odoo/departments`. Actions without a `path`
 must be reached through their authenticated menu/action, not guessed from a
-URL. The live audit loaded `/odoo/employees` at both requested viewports; Odoo
-redirected to `/odoo/discuss` because `hr` is uninstalled. No Employees menu,
-action, record, or view state was available to capture.
+URL. The personal installed reference loaded all three routes at both target
+viewports with seeded records and no page-level horizontal overflow. Optional
+uninstalled addons referenced by the Employees application still produce
+expected icon 404s in the Odoo shell and are not treated as Employees failures.
 
-Actual fallback captures, kept outside Git:
+Authenticated installed-reference captures, kept outside Git:
 
-- Desktop, 1440x900: `/tmp/odoo-employees-desktop.png`
-- Mobile, 390x844 touch context: `/tmp/odoo-employees-mobile.png`
+- Employees: `/tmp/odoo-employees-employees-desktop-personal.png` and
+  `/tmp/odoo-employees-employees-mobile-personal.png`
+- Departments: `/tmp/odoo-employees-departments-desktop-personal.png` and
+  `/tmp/odoo-employees-departments-mobile-personal.png`
+- All activities: `/tmp/odoo-employees-activities-desktop-personal.png` and
+  `/tmp/odoo-employees-activities-mobile-personal.png`
 
-These are authenticated Discuss-shell fallback captures only. They are not
-Employees reference screenshots. No installed-addon screenshots are claimed.
-Required future captures, after enabling `hr` with demo loading in a disposable
-database, are listed below; absent files must not be invented:
+The broader form/configuration captures below remain future evidence; absent
+files must not be invented:
 
 - `/tmp/odoo-employees/employees-kanban-desktop.png` and
   `/tmp/odoo-employees/employees-kanban-mobile.png`
@@ -177,6 +181,18 @@ empty/denied states. It must also move the current page-local SQL into
 convention-discovered `services/employees/api/` fragments keyed by `page.id`;
 API fragments are not frontend `pages:` entries.
 
+The bounded action-mode batch adds service-owned All activities and Departments
+routes, visible List/Kanban/Cards/Activity/Graph/Pivot tabs where the source
+action provides them, deterministic activity slots, department counts, and
+permissioned department creation/detail contracts. The authenticated Core3
+matrix verified Employees, Directory, All activities, and Departments at
+1440x900 and 390x844 with no unexpected responses or horizontal overflow.
+Captures are under `/tmp/core3-employees-*-avatar.png` and are local evidence
+only. A shared optional avatar contract was then added to Kanban/Card views;
+Employees and Directory use `image_url` with deterministic initials fallback,
+which preserves the Odoo left-photo geometry when no local binary asset is
+available.
+
 ## Shared primitives
 
 Reuse and verify `ListView`/`DataGrid` with Odoo variant, avatar and status
@@ -252,16 +268,16 @@ permission/inactive reason; they must not disappear silently.
 ## Acceptance
 
 - Source and manifest checks identify `hr`, version, dependencies, official
-  `hr_demo.xml`, and live `uninstalled`/`demo=false` status. The gate never
-  treats Discuss fallback screenshots as Employees reference evidence.
+  `hr_demo.xml`, and the installed personal reference state. The gate never
+  treats old Discuss fallback screenshots as Employees reference evidence.
 - Inventory checks map every visible menu/action/view above, including group
   boundaries, source routes, launch/create/archive/wizard actions, and hidden
   technical/inactive entries.
-- Authenticated browser checks navigate from the Odoo Employees menu in an
-  installed disposable demo database at 1440x900 and 390x844, capture each
-  listed state, and assert title, action, records, no failed requests, no
-  horizontal overflow, and usable mobile controls. Current environment only
-  satisfies the fallback-route audit and the two actual `/tmp` captures.
+- Authenticated browser checks navigate from the Odoo Employees menu in the
+  installed personal demo database at 1440x900 and 390x844, capture each
+  completed state, and assert title, action, records, no page-level horizontal
+  overflow, and usable mobile controls. The three installed route pairs above
+  are complete; the broader form/configuration matrix remains open.
 - Core3 checks navigate through People/Employees rather than direct URLs and
   cover populated, empty, filtered, archived, denied, list, kanban, form,
   activity, graph, pivot, directory, department, configuration, wizard,

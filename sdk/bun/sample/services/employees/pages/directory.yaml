@@ -16,6 +16,7 @@ components:
         card:
           title: name
           subtitle: job_title
+          image_field: image_url
           fields:
             - { field: department_name, label: Department }
             - { field: work_email, label: Work Email }
@@ -30,6 +31,7 @@ components:
         card:
           title: name
           subtitle: job_title
+          image_field: image_url
           fields:
             - { field: department_name, label: Department }
             - { field: work_email, label: Work Email }
