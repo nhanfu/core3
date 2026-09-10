@@ -354,6 +354,21 @@ compared locally; the running `core3_owned` Odoo database does not have
 `hr_holidays` installed, so no authenticated live-screen evidence is claimed
 for this batch.
 
+The next bounded workflow slice adds the source `hr_leave_allocation_action_my`
+surface's “Create a new allocation request” path to `My Allocations`. Core3
+adds a permissioned New allocation dialog with the Odoo-shaped title, active
+Time Off Type lookup, allocation amount, validity dates, and reasons; the
+service-owned insert defaults to the fixed `Admin User` 2026 fixture employee.
+The API fragment is joined to the layout by `page.id: my-allocations`, while
+the existing allocation detail workflow supplies row-version-protected Submit,
+Approve, Refuse, and Cancel transitions. Create guards reject archived or
+mismatched types, non-positive amounts, reversed dates, and duplicate titles
+with deterministic 422/409 responses. The live `core3_owned` reference was
+authenticated successfully but currently reports `hr_holidays` as
+`uninstalled`, so Odoo screenshots for this action are unavailable; Core3
+desktop/mobile captures and focused YAML/mutation tests are the evidence for
+this batch. Batch allocation and multiple-request wizards remain deferred.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context

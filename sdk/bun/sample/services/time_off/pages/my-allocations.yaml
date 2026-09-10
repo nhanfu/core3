@@ -1,9 +1,15 @@
 title: My Allocations
 page: { id: my-allocations, route: /my-allocations, breadcrumb: [Human Resources, Time Off, My Allocations], auth: { require: [time_off.read] } }
+toolbar:
+  - { id: create_my_allocation, label: New allocation, action: create_my_allocation, permission: time_off.write, variant: primary }
 components:
   - type: ListView
     variant: odoo
     source: my_allocations
+    create_action: create_my_allocation
+    create_label: New allocation
+    search: { label: Search allocations, placeholder: Search allocation or type... }
+    empty_state: { title: Create a new allocation request, description: You can create a new allocation or follow the approval status of the current ones. }
     view_navigation: tabs
     views:
       - id: list
@@ -23,9 +29,3 @@ components:
     page_size: 50
     row_key: id
     row_open_action: view_my_allocation
-actions:
-  - id: view_my_allocation
-    type: navigate
-    permission: time_off.read
-    navigate_to: /time-off-allocations/detail
-    params: { id: '{row.id}' }

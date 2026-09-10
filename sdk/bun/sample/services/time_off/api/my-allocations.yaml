@@ -1,5 +1,44 @@
 page: { id: my-allocations }
 datasources:
+  - id: my_allocation_types
+    permission: time_off.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM leave_types WHERE state = 'Active' ORDER BY name"
   - id: my_allocations
     permission: time_off.read
-    query: "SELECT id, row_version, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state FROM leave_allocations WHERE employee_name = 'Admin User' ORDER BY date_from DESC, name"
+    query: "SELECT id, row_version, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state FROM leave_allocations WHERE employee_name = 'Admin User' AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR leave_type_name ILIKE '%' || :q || '%') ORDER BY date_from DESC, name"
+actions:
+  - id: create_my_allocation
+    type: server_form
+    permission: time_off.write
+    title: New allocation
+    action: time_off.my_allocations.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [my_allocations]
+    success_message: Allocation request created.
+    mutation:
+      operation: insert
+      table: leave_allocations
+      generated: [id]
+      fields: [name, employee_id, employee_name, leave_type_id, leave_type_name, days, date_from, date_to, state, reason]
+      required: [name, leave_type_id, leave_type_name, days, date_from, date_to]
+      defaults: { employee_id: employee-demo-001, employee_name: Admin User, state: Draft }
+      guards:
+        - { query: "SELECT 1 AS ok FROM leave_types WHERE id = :leave_type_id AND name = :leave_type_name AND state = 'Active'", status: 422, code: TIME_OFF_ALLOCATION_TYPE_INVALID, message: Select an active Time Off Type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:days AS DECIMAL(18,3)) > 0 AND CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, code: TIME_OFF_ALLOCATION_DATES_INVALID, message: Allocation must have a positive amount and valid dates. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_allocations WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: TIME_OFF_ALLOCATION_NAME_EXISTS, message: An allocation with this title already exists. }
+      result: { query: "SELECT * FROM leave_allocations WHERE id = :id" }
+    fields:
+      - { field: name, label: Title, type: text, required: true, placeholder: e.g. Annual leave allocation }
+      - { field: leave_type_id, label: Time Off Type ID, type: select, options_source: my_allocation_types, required: true, default: leave-type-annual }
+      - { field: leave_type_name, label: Time Off Type, type: text, required: true, default: Annual Leave }
+      - { field: days, label: Allocation, type: number, required: true, min: 0.001, step: 0.5, default: 5 }
+      - { field: date_from, label: Start Date, type: date, required: true, default: '2026-01-15' }
+      - { field: date_to, label: End Date, type: date, required: true, default: '2026-12-31' }
+      - { field: reason, label: Reasons, type: textarea, placeholder: Add a reason... }
+  - id: view_my_allocation
+    type: navigate
+    permission: time_off.read
+    navigate_to: /time-off-allocations/detail
+    params: { id: '{row.id}' }

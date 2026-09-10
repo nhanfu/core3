@@ -67,9 +67,52 @@ describe('Time Off Odoo view navigation', () => {
 
   test('guards new requests against reversed dates', () => {
     const page = yaml('pages/requests.yaml');
-    const action = page.actions.find((candidate: any) => candidate.id === 'create_leave_request');
+    const api = apiYaml('requests.yaml');
+    const action = api.actions.find((candidate: any) => candidate.id === 'create_leave_request');
+    expect(page.actions).toBeUndefined();
     expect(action.mutation.guards[0].query).toContain('CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)');
     expect(action.mutation.guards[0].message).toContain('valid dates');
+  });
+
+  test('covers the My Allocations request form through its page-id API fragment', async () => {
+    const page = yaml('pages/my-allocations.yaml');
+    const api = apiYaml('my-allocations.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    const create = api.actions.find((candidate: any) => candidate.id === 'create_my_allocation');
+
+    expect(page.page).toMatchObject({ id: 'my-allocations', route: '/my-allocations' });
+    expect(page.datasources).toBeUndefined();
+    expect(page.actions).toBeUndefined();
+    expect(page.toolbar).toContainEqual(expect.objectContaining({ action: 'create_my_allocation', permission: 'time_off.write' }));
+    expect(list).toMatchObject({ source: 'my_allocations', create_action: 'create_my_allocation', create_label: 'New allocation' });
+    expect(list.empty_state?.title).toBe('Create a new allocation request');
+    expect(api.page.id).toBe(page.page.id);
+    expect(api.datasources.find((source: any) => source.id === 'my_allocation_types')).toMatchObject({ permission: 'time_off.read' });
+    expect(api.datasources.find((source: any) => source.id === 'my_allocations')?.query).toContain('row_version');
+    expect(create).toMatchObject({ type: 'server_form', permission: 'time_off.write', operation: 'create', handler: 'yaml_mutation' });
+    expect(create.mutation.guards).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 422, code: 'TIME_OFF_ALLOCATION_TYPE_INVALID' }),
+      expect.objectContaining({ status: 422, code: 'TIME_OFF_ALLOCATION_DATES_INVALID' }),
+      expect.objectContaining({ status: 409, code: 'TIME_OFF_ALLOCATION_NAME_EXISTS' }),
+    ]));
+    expect(create.fields.map((field: any) => field.label)).toEqual(['Title', 'Time Off Type ID', 'Time Off Type', 'Allocation', 'Start Date', 'End Date', 'Reasons']);
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await repository.run(`CREATE TABLE leave_types(id VARCHAR, name VARCHAR, state VARCHAR);`);
+    await repository.run(`CREATE TABLE leave_allocations(
+      id VARCHAR PRIMARY KEY, name VARCHAR UNIQUE, employee_id VARCHAR, employee_name VARCHAR,
+      leave_type_id VARCHAR, leave_type_name VARCHAR, days DECIMAL(18,3), date_from DATE,
+      date_to DATE, state VARCHAR, reason VARCHAR, row_version BIGINT DEFAULT 1
+    );`);
+    await repository.run("INSERT INTO leave_types VALUES ('leave-type-annual', 'Annual Leave', 'Active'), ('leave-type-archived', 'Legacy Leave', 'Archived')");
+    const values = { name: 'ALLOC/REQUEST/TEST', leave_type_id: 'leave-type-annual', leave_type_name: 'Annual Leave', days: 5, date_from: '2026-01-15', date_to: '2026-01-19', reason: 'Annual balance' };
+    const created = await repository.executeMutation(create.mutation, { values });
+    expect(created).toMatchObject({ name: 'ALLOC/REQUEST/TEST', employee_name: 'Admin User', state: 'Draft' });
+    await expect(repository.executeMutation(create.mutation, { values: { ...values, name: 'ALLOC/INVALID', date_from: '2026-02-01', date_to: '2026-01-31' } })).rejects.toMatchObject({ status: 422, code: 'TIME_OFF_ALLOCATION_DATES_INVALID' });
+    await expect(repository.executeMutation(create.mutation, { values: { ...values, name: 'ALLOC/ARCHIVED', leave_type_id: 'leave-type-archived', leave_type_name: 'Legacy Leave' } })).rejects.toMatchObject({ status: 422, code: 'TIME_OFF_ALLOCATION_TYPE_INVALID' });
+    await expect(repository.executeMutation(create.mutation, { values: { ...values, name: 'alloc/request/test' } })).rejects.toMatchObject({ status: 409, code: 'TIME_OFF_ALLOCATION_NAME_EXISTS' });
+    database.close();
   });
 
   test('covers configuration list to form contracts and the Odoo activity columns', () => {
