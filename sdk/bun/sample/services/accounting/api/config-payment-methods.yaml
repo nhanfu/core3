@@ -2,8 +2,8 @@ page: { id: payment-methods }
 datasources:
   - id: accounting_payment_methods
     permission: accounting.read
-    error_states: { transport_error: { status: 503, code: ACCOUNTING_PAYMENT_METHODS_UNAVAILABLE, message: Accounting payment methods are temporarily unavailable. } }
-    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, code, active, countries, currencies, providers, brands FROM accounting_config_payment_methods CROSS JOIN request_guard WHERE request_guard.ok AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(code, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR (:active = 'active' AND active = TRUE) OR (:active = 'archived' AND active = FALSE)) ORDER BY name"
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, code, active, countries, currencies, providers, brands FROM accounting_config_payment_methods CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(code, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR (:active = 'active' AND active = TRUE) OR (:active = 'archived' AND active = FALSE)) ORDER BY name"
 actions:
   - id: view_accounting_payment_method
     type: navigate

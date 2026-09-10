@@ -47,7 +47,7 @@ describe('Accounting Payment Methods Odoo action parity', () => {
     expect((await repository.querySource(source, { q: 'bank', active: 'active', fixture_state: null }, 0, 50)).data).toMatchObject([{ name: 'Bank', code: 'bank', active: true }]);
     expect((await repository.querySource(source, { q: 'No such method', active: null, fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { q: null, active: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
-    await expect(repository.querySource(source, { q: null, active: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'ACCOUNTING_PAYMENT_METHODS_UNAVAILABLE' });
+    await expect(repository.querySource(source, { q: null, active: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'ACCOUNTING_DATA_UNAVAILABLE' });
     const detail = yaml('api/payment-method-detail.yaml').datasources[0];
     expect((await repository.querySource(detail, { id: 'bank', fixture_state: null }, 0, 1)).data).toMatchObject({ id: 'bank', name: 'Bank', code: 'bank', active: true });
     expect((await repository.querySource(detail, { id: 'missing-payment-method', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
