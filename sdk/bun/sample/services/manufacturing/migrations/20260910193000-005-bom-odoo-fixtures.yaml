@@ -1,0 +1,28 @@
+version: 0.0.5
+description: Align Bills of Materials fixtures with the installed Odoo 19 demo rows
+type:
+  postgres:
+    up: |
+      DELETE FROM mrp_bom_lines WHERE bom_id = 'bom-pallet-kit';
+      DELETE FROM mrp_boms WHERE id = 'bom-pallet-kit';
+      UPDATE mrp_boms SET row_version = 1, name = '[FURN_7800] Desk Combination BoM', product_id = 'product-furn-7800', product_name = '[FURN_7800] Desk Combination', product_variant = NULL, product_quantity = 1, uom = 'Units', version = '1.0', reference = NULL, bom_type = 'Manufacture this product', company_name = 'My Company (San Francisco)', active = TRUE, valid_from = DATE '2026-01-15', valid_to = NULL, routing = 'Assembly', notes = 'Desk combination assembly', created_at = TIMESTAMP '2026-01-15 08:00:00' WHERE id = 'bom-desk-combination';
+      UPDATE mrp_boms SET row_version = 1, name = '[FURN_8621] Plastic Laminate BoM', product_id = 'product-furn-8621', product_name = '[FURN_8621] Plastic Laminate', product_variant = NULL, product_quantity = 1, uom = 'Units', version = '1.0', reference = NULL, bom_type = 'Manufacture this product', company_name = 'My Company (San Francisco)', active = TRUE, valid_from = DATE '2026-01-15', valid_to = NULL, routing = 'Finishing', notes = 'Plastic laminate manufacturing', created_at = TIMESTAMP '2026-01-15 08:02:00' WHERE id = 'bom-laminate-archived';
+      UPDATE mrp_boms SET row_version = 1, name = '[FURN_7023] Wood Panel BoM', product_id = 'product-furn-7023', product_name = '[FURN_7023] Wood Panel', product_variant = NULL, product_quantity = 1, uom = 'Units', version = '1.0', reference = NULL, bom_type = 'Manufacture this product', company_name = 'My Company (San Francisco)', active = TRUE, valid_from = DATE '2026-01-15', valid_to = NULL, routing = 'Cutting', notes = 'Wood panel manufacturing', created_at = TIMESTAMP '2026-01-15 08:03:00' WHERE id = 'bom-table-kit';
+      UPDATE mrp_boms SET row_version = 1, name = '[FURN_8855] Drawer PRIM-ASSEM BoM', product_id = 'product-furn-8855', product_name = '[FURN_8855] Drawer', product_variant = 'PRIM-ASSEM', product_quantity = 1, uom = 'Units', version = '1.0', reference = 'PRIM-ASSEM', bom_type = 'Manufacture this product', company_name = 'My Company (San Francisco)', active = TRUE, valid_from = DATE '2026-01-15', valid_to = NULL, routing = 'Assembly', notes = 'Primary drawer assembly', created_at = TIMESTAMP '2026-01-15 08:04:00' WHERE id = 'bom-drawer-primary';
+      INSERT INTO mrp_boms(id, row_version, name, product_id, product_name, product_variant, product_quantity, uom, version, reference, bom_type, company_name, active, valid_from, routing, notes, created_at) VALUES
+        ('bom-table-top-odoo', 1, '[FURN_8522] Table Top BoM', 'product-furn-8522', '[FURN_8522] Table Top', NULL, 1, 'Units', '1.0', NULL, 'Manufacture this product', 'My Company (San Francisco)', TRUE, DATE '2026-01-15', 'Assembly', 'Table top manufacturing', TIMESTAMP '2026-01-15 08:01:00'),
+        ('bom-table-kit-odoo', 1, '[FURN_78236] Table Kit BoM', 'product-furn-78236', '[FURN_78236] Table Kit', NULL, 1, 'Units', '1.0', NULL, 'Kit', 'My Company (San Francisco)', TRUE, DATE '2026-01-15', NULL, 'Kit components sold together', TIMESTAMP '2026-01-15 08:05:00'),
+        ('bom-drawer-secondary', 1, '[FURN_8855] Drawer SEC-ASSEM BoM', 'product-furn-8855-sec', '[FURN_8855] Drawer', 'SEC-ASSEM', 1, 'Units', '1.0', 'SEC-ASSEM', 'Manufacture this product', 'My Company (San Francisco)', TRUE, DATE '2026-01-15', 'Assembly', 'Secondary drawer assembly', TIMESTAMP '2026-01-15 08:06:00'),
+        ('bom-table-odoo', 1, '[FURN_9666] Table BoM', 'product-furn-9666', '[FURN_9666] Table', NULL, 1, 'Units', '1.0', NULL, 'Manufacture this product', 'My Company (San Francisco)', TRUE, DATE '2026-01-15', 'Assembly', 'Table manufacturing', TIMESTAMP '2026-01-15 08:07:00')
+      ON CONFLICT(id) DO NOTHING;
+      UPDATE mrp_boms SET created_at = TIMESTAMP '2026-01-15 08:00:00' WHERE id = 'bom-desk-combination';
+      UPDATE mrp_boms SET created_at = TIMESTAMP '2026-01-15 08:02:00' WHERE id = 'bom-laminate-archived';
+      UPDATE mrp_boms SET created_at = TIMESTAMP '2026-01-15 08:03:00' WHERE id = 'bom-table-kit';
+      UPDATE mrp_boms SET created_at = TIMESTAMP '2026-01-15 08:04:00' WHERE id = 'bom-drawer-primary';
+    down: |
+      DELETE FROM mrp_bom_lines WHERE bom_id IN ('bom-table-top-odoo', 'bom-drawer-secondary', 'bom-table-kit-odoo', 'bom-table-odoo');
+      DELETE FROM mrp_boms WHERE id IN ('bom-table-top-odoo', 'bom-drawer-secondary', 'bom-table-kit-odoo', 'bom-table-odoo');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

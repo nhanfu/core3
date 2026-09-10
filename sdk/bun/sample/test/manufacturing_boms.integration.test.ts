@@ -36,7 +36,13 @@ describe('Manufacturing Bills of Materials parity slice', () => {
     expect(listPage.page).toMatchObject({ id: 'boms', route: '/boms', auth: { require: ['manufacturing.read'] } });
     expect(detailPage.page).toMatchObject({ id: 'bom-detail', route: '/boms/detail', auth: { require: ['manufacturing.read'] } });
     expect(list).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'mrp_boms', row_open_action: 'view_mrp_bom' });
-    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'card', 'form']);
+    expect(list).toMatchObject({ view_navigation: 'icons' });
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
+    expect(list.views.find((view: any) => view.id === 'list')).not.toHaveProperty('mobile', false);
+    expect(list.views.find((view: any) => view.id === 'kanban')).not.toHaveProperty('mobile', false);
+    expect(list.views.find((view: any) => view.id === 'card')).toBeUndefined();
+    expect(list.columns.find((column: any) => column.field === 'product_name')).toMatchObject({ mobile_secondary: 'reference' });
+    expect(list.columns.find((column: any) => column.field === 'product_quantity')).toMatchObject({ type: 'WeightCell', unit: 'Units', mobile: true, optional: 'hide' });
     expect(detail).toMatchObject({ type: 'OdooFormView', source: 'mrp_bom_detail', editable: true });
     expect(detail.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Components', 'Operations', 'By-products', 'Miscellaneous']);
     expect(discovered.pageDatasources.get('boms')).toEqual(['mrp_boms']);
@@ -71,14 +77,15 @@ describe('Manufacturing Bills of Materials parity slice', () => {
     const params = { q: null, active: null, bom_type: null, fixture_state: null };
 
     expect((await repository.querySource(list, params, 0, 50)).data.map((row: any) => row.product_name)).toEqual([
-      'Desk Combination', 'Drawer', 'Plastic Laminate', 'Reusable pallet', 'Table Kit',
+      '[FURN_7800] Desk Combination', '[FURN_8522] Table Top', '[FURN_8621] Plastic Laminate', '[FURN_7023] Wood Panel',
+      '[FURN_8855] Drawer', '[FURN_78236] Table Kit', '[FURN_8855] Drawer', '[FURN_9666] Table',
     ]);
-    expect((await repository.querySource(list, { ...params, active: 'active' }, 0, 50)).data).toHaveLength(4);
-    expect((await repository.querySource(list, { ...params, active: 'archived' }, 0, 50)).data).toMatchObject([{ id: 'bom-laminate-archived', active: false, company_name: 'Northwind Manufacturing' }]);
-    expect((await repository.querySource(list, { ...params, q: 'Drawer' }, 0, 50)).data).toMatchObject([{ id: 'bom-drawer-primary', reference: 'PRIM-ASSEM' }]);
+    expect((await repository.querySource(list, { ...params, active: 'active' }, 0, 50)).data).toHaveLength(8);
+    expect((await repository.querySource(list, { ...params, active: 'archived' }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(list, { ...params, q: 'Drawer' }, 0, 50)).data.map((row: any) => row.reference)).toEqual(['PRIM-ASSEM', 'SEC-ASSEM']);
     expect((await repository.querySource(list, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(list, { ...params, q: 'not found' }, 0, 50)).data).toEqual([]);
-    expect(await repository.querySource(detail, { id: 'bom-desk-combination', fixture_state: null }, 0, 1)).toMatchObject({ data: { product_name: 'Desk Combination', component_count: 2, active: true } });
+    expect(await repository.querySource(detail, { id: 'bom-desk-combination', fixture_state: null }, 0, 1)).toMatchObject({ data: { product_name: '[FURN_7800] Desk Combination', component_count: 2, active: true } });
     expect((await repository.querySource(detail, { id: 'missing-bom', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     expect((await repository.querySource(components, { id: 'bom-desk-combination', fixture_state: null }, 0, 50)).data).toHaveLength(2);
     expect((await repository.querySource(operations, { id: 'bom-desk-combination', fixture_state: null }, 0, 50)).data).toHaveLength(2);

@@ -13,10 +13,10 @@ Status: in-progress (live reference addon is available; full parity remains inco
   not-found/validation/conflict states.
 - The Products / Bills of Materials action (`menu_mrp_bom_form_action`, menu
   574, `mrp_bom_form_action`, action 876, model `mrp.bom`) is implemented in
-  Core3 as `/manufacturing/boms` with a page-only list/kanban/mobile-card
-  layout, a page-only form detail route, page-id-bound API fragments, four
-  active and one archived deterministic fixtures, components/operations/
-  by-products tabs, and CRUD/archive/restore/duplicate guards.
+  Core3 as `/manufacturing/boms` with a page-only list/kanban layout and icon
+  view controls, a page-only form detail route, page-id-bound API fragments,
+  eight deterministic fixtures matching the installed Odoo rows, components/
+  operations/by-products tabs, and CRUD/archive/restore/duplicate guards.
 - This is one bounded action only; the full manufacturing readiness gate below
   remains open until the other source actions, view modes, integrations,
   permissions, and paired browser evidence are complete.
@@ -133,7 +133,7 @@ slice. The completed Bills of Materials pair is:
 | Viewport | Required evidence |
 | --- | --- |
 | Desktop 1440x900 | Odoo action 876 list, kanban, and populated form; Core3 `/manufacturing/boms` list, kanban, and detail/form |
-| Mobile 390x844 touch | Odoo action 876 list, kanban, and populated form; Core3 responsive list/card/detail/form with no horizontal overflow |
+| Mobile 390x844 touch | Odoo action 876 list, kanban, and populated form; Core3 responsive list/kanban/detail/form with icon controls, quantity/UoM, references, and no horizontal overflow |
 
 For every capture record Odoo action ID, resulting browser URL, model, view
 mode, fixture/data state, viewport, and `/tmp` path. A screenshot from another
@@ -143,7 +143,7 @@ module, an uninstalled route, or synthetic HTML is not acceptable.
 
 The existing service is `sdk/bun/sample/services/manufacturing`: manifest menu
 entries for four routes, permissions `manufacturing.read/write/manage`, DuckDB
-storage, migrations `0.0.1` through `0.0.4`, and pages for orders, detail, BOMs,
+storage, migrations `0.0.1` through `0.0.5`, and pages for orders, detail, BOMs,
 analysis, and a production workflow. The BOM page no longer embeds SQL; its
 list/detail API fragments own the datasource queries and mutations.
 

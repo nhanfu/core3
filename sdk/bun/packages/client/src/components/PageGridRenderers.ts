@@ -616,9 +616,18 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         const entity = html.take(cell).div.className('data-grid-entity').ele() as HTMLElement;
         const copy = html.take(entity).span.className('data-grid-entity-copy').ele() as HTMLElement;
         html.take(copy).div.className('data-grid-primary').replaceText(value == null || value === '' ? '—' : String(value));
-        if (column.secondary) {
-          html.take(copy).div.className('data-grid-secondary').replaceText(row[column.secondary] == null ? '' : String(row[column.secondary]));
+        const secondaryField = column.mobile_secondary && typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+          ? column.mobile_secondary
+          : column.secondary;
+        if (secondaryField) {
+          html.take(copy).div.className('data-grid-secondary').replaceText(row[secondaryField] == null ? '' : String(row[secondaryField]));
         }
+        return;
+      }
+      if (column.type === 'WeightCell') {
+        const numeric = Number(value);
+        const formatted = Number.isFinite(numeric) ? numeric.toFixed(2) : String(value ?? '—');
+        html.take(cell).replaceText(column.unit ? `${formatted} ${column.unit}` : formatted);
         return;
       }
       if (column.type === 'DateCell') {

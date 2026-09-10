@@ -10,7 +10,7 @@ components:
     filters:
       - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }
       - { field: bom_type, label: BoM Type, options: [{ id: Manufacture this product, label: Manufacture this product }, { id: Kit, label: Kit }] }
-    view_navigation: tabs
+    view_navigation: icons
     views:
       - { id: list, label: List, icon: table }
       - id: kanban
@@ -18,12 +18,6 @@ components:
         icon: dashboard
         group_by: bom_type
         card: { title: product_name, subtitle: reference, fields: [{ field: product_quantity, label: Quantity }, { field: uom, label: Unit }, { field: bom_type, label: BoM Type }, { field: company_name, label: Company }] }
-      - id: card
-        label: Cards
-        icon: grid
-        mobile: true
-        card: { title: product_name, subtitle: reference, fields: [{ field: product_quantity, label: Quantity }, { field: uom, label: Unit }, { field: bom_type, label: BoM Type }, { field: company_name, label: Company }] }
-      - { id: form, label: Form, icon: edit }
     form_view: { page: apps/services/manufacturing/pages/bom-detail.yaml, side_panel: false }
     row_key: id
     row_open_action: view_mrp_bom
@@ -31,13 +25,13 @@ components:
     row_actions: menu
     empty_state: { title: No bills of materials found, description: Create a bill of materials or change the current search and filters. }
     columns:
-      - { field: product_name, label: Product, type: PrimaryEntityCell, mobile: true, sortable: true }
-      - { field: reference, label: Reference }
-      - { field: bom_type, label: BoM Type }
-      - { field: company_name, label: Company }
-      - { field: product_quantity, label: Quantity, optional: hide, align: right }
+      - { field: product_name, label: Product, type: PrimaryEntityCell, mobile: true, mobile_secondary: reference, sortable: true }
+      - { field: reference, label: Reference, mobile: false }
+      - { field: bom_type, label: BoM Type, mobile: false }
+      - { field: company_name, label: Company, mobile: false }
+      - { field: product_quantity, label: Quantity, type: WeightCell, unit: Units, mobile: true, optional: hide, align: right }
       - { field: uom, label: Unit, optional: hide }
-      - { field: version, label: Version, optional: hide }
-      - { field: active, label: Status, type: StatusChip, optional: hide }
-      - { field: id, label: ' ', sortable: false, actions: [{ id: view_mrp_bom, label: Open, icon: eye }] }
+      - { field: version, label: Version, optional: hide, mobile: false }
+      - { field: active, label: Status, type: StatusChip, optional: hide, mobile: false }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_mrp_bom, label: Open, icon: eye }] }
     page_size: 50

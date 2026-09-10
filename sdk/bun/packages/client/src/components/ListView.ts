@@ -271,7 +271,9 @@ export class ListView extends BaseComponent {
       ...suppliedLabels,
     };
     const storedColumns = Array.isArray(this.state.visibleColumns) ? undefined : this.readStoredColumns();
-    const defaultVisible = this.defs.filter(column => column.optional !== 'hide').map(column => String(column.id || column.field));
+    const defaultVisible = this.defs
+      .filter(column => column.optional !== 'hide' || (this.isSmallScreen() && column.mobile === true))
+      .map(column => String(column.id || column.field));
     const storedVisible = storedColumns
       ? new Set([...storedColumns.visible, ...defaultVisible.filter(id => !storedColumns.known.includes(id))])
       : undefined;
