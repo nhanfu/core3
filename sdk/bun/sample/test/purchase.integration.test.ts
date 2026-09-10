@@ -29,8 +29,10 @@ describe('Purchase Orders list and detail parity', () => {
 
     const list = yaml('pages/purchase-orders.yaml').components.find((component: any) => component.type === 'ListView');
     expect(list).toMatchObject({ source: 'purchase_orders', row_open_action: 'view_purchase_order', empty_state: { title: 'No purchase orders' } });
-    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'graph', 'activity']);
-    expect(list.views.filter((view: any) => view.mobile === false).map((view: any) => view.id)).toEqual(['list', 'calendar', 'pivot', 'graph', 'activity']);
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'card', 'calendar', 'pivot', 'graph', 'activity']);
+    expect(list.views.filter((view: any) => view.mobile === false).map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'graph', 'activity']);
+    expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: true, card: { title: 'name', subtitle: 'vendor_name' } });
+    expect(apiSource('purchase-orders.yaml', 'purchase_orders').pivot.fields).toEqual(['vendor_name', 'state', 'expected_arrival', 'quantity', 'qty_received', 'total_amount']);
     expect(yaml('pages/purchase-orders.yaml').actions.find((action: any) => action.id === 'view_purchase_order')).toMatchObject({ navigate_to: '/purchase/detail', permission: 'purchase.read' });
   });
 

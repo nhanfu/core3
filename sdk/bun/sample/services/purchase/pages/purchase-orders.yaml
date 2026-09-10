@@ -17,7 +17,8 @@ components:
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table, mobile: false }
-      - { id: kanban, label: Kanban, icon: dashboard, group_by: state, groups_source: purchase_order_states, card: { title: name, subtitle: vendor_name, fields: [{ field: expected_date, label: Expected }, { field: total_amount_display, label: Total }] } }
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: false, group_by: state, groups_source: purchase_order_states, card: { title: name, subtitle: vendor_name, fields: [{ field: expected_date, label: Expected }, { field: total_amount_display, label: Total }] } }
+      - { id: card, label: Cards, icon: grid, mobile: true, card: { title: name, subtitle: vendor_name, fields: [{ field: expected_date, label: Expected }, { field: total_amount_display, label: Total }] } }
       - { id: calendar, label: Calendar, icon: calendar, mobile: false, date_field: expected_date, card: { title: name, subtitle: vendor_name } }
       - id: pivot
         label: Pivot
