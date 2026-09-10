@@ -38,11 +38,28 @@ export default class SurveysModule implements ModuleLifecycle {
   }
 
   private async handlePublicRoute(request: Request, url: URL, service: PublicService): Promise<Response | null> {
-    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit))?$/);
+    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|print))?$/);
     if (!match) return null;
     const token = match[1];
     const operation = match[2];
     const detail = (await service.call('survey.public.detail', { access_token: token }))?.survey?.[0];
+    const printDetail = operation === 'print'
+      ? (await service.call('survey.public.print.detail', { access_token: token }))?.survey?.[0]
+      : undefined;
+    if (operation === 'print') {
+      if (request.method !== 'GET') return this.json({ error: 'Method not allowed' }, 405);
+      if (!printDetail) return this.json({ error: 'This survey is unavailable for printing' }, 404);
+      const questions = (await service.call('survey.public.print.questions', { survey_id: printDetail.id }))?.questions || [];
+      const answerToken = url.searchParams.get('answer_token') || '';
+      if (!answerToken) return this.json({ survey: printDetail, questions, answer: null, review: url.searchParams.get('review') === '1' });
+      if (!this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 422);
+      const answer = (await service.call('survey.public.print.response', {
+        access_token: answerToken,
+        survey_id: printDetail.id,
+      }))?.response?.[0];
+      if (!answer) return this.json({ error: 'Survey response is unavailable' }, 404);
+      return this.json({ survey: printDetail, questions, answer, review: url.searchParams.get('review') === '1' });
+    }
     if (!detail) return this.json({ error: 'Survey is unavailable' }, 404);
 
     const readResponse = async (answerToken: string) => (await service.call('survey.public.response', {

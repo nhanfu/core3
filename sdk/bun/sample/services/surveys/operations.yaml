@@ -8,3 +8,12 @@ operations:
   survey.public.response:
     result_key: response
     query: "SELECT id, access_token, survey_id, state, answer_data, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"
+  survey.public.print.detail:
+    result_key: survey
+    query: "SELECT id, access_token, name, title, description, state, certification, scoring_type FROM surveys WHERE access_token = :access_token AND state IN ('Published', 'Closed') LIMIT 1"
+  survey.public.print.questions:
+    result_key: questions
+    query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :survey_id ORDER BY sequence, id"
+  survey.public.print.response:
+    result_key: response
+    query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, CAST(submitted_at AS VARCHAR) AS submitted_at, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"

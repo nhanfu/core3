@@ -242,13 +242,25 @@ function publicSurveyRoute(path: string): { surveyToken: string; answerToken?: s
   return { surveyToken: match[1], ...(match[2] ? { answerToken: match[2] } : {}) };
 }
 
+function publicSurveyPrintRoute(path: string): { surveyToken: string } | null {
+  const match = path.match(/^\/survey\/print\/([A-Za-z0-9_-]+)$/);
+  return match ? { surveyToken: match[1] } : null;
+}
+
 function publicSurveyToken(path: string): string | null {
-  return publicSurveyRoute(path)?.surveyToken || null;
+  return publicSurveyRoute(path)?.surveyToken || publicSurveyPrintRoute(path)?.surveyToken || null;
 }
 
 async function renderPublicSurvey(path: string) {
-  const route = publicSurveyRoute(path);
+  const printRoute = publicSurveyPrintRoute(path);
   const outlet = document.getElementById('outlet');
+  if (printRoute && outlet) {
+    const mod = await import('./components/PublicSurveyPrint.ts');
+    const answerToken = new URLSearchParams(window.location.search).get('answer_token') || '';
+    await mod.mount(outlet, printRoute.surveyToken, answerToken);
+    return;
+  }
+  const route = publicSurveyRoute(path);
   if (!route || !outlet) return;
   const mod = await import('./components/PublicSurvey.ts');
   const queryAnswerToken = new URLSearchParams(window.location.search).get('answer_token') || '';

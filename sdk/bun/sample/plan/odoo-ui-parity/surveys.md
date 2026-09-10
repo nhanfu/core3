@@ -295,6 +295,18 @@ archived/empty/unseeded surveys server-side and requires `surveys.write`.
 The deterministic seed date is `2026-01-15`; focused YAML/integration and
 authenticated desktop/mobile browser evidence is retained under `/tmp`.
 
+The public print follow-up implements Odoo's read-only
+`/survey/print/<survey_token>` contract. Core3 adds a token-scoped print API
+with optional answer-token review, deterministic completed Feedback Form
+answers, selected-choice/numeric/text rendering, Take Again and browser Print
+controls, and a no-question empty state. Invalid answer tokens return 422,
+wrong-survey or unavailable tokens return 404, and non-GET print requests
+return 405. Authenticated Odoo reference captures are
+`/tmp/odoo-surveys-print-{desktop,mobile}-1440-or-390.png`; Core3 paired
+captures and request/overflow telemetry are retained under `/tmp` after the
+runtime verification. The survey-level print route is public by design, while
+the existing authenticated participant-print/report contracts remain separate.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions

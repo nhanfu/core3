@@ -1,0 +1,15 @@
+version: 0.0.11
+description: Deterministic completed response for the public survey print contract
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_responses(id, survey_id, survey_name, respondent_name, respondent_email, answer_data, access_token, state, test_entry, submitted_at) VALUES
+        ('print-response-survey-demo-feedback', 'survey-demo-feedback', 'Feedback Form', 'Azure Interior', 'azure@example.com', '{"question-feedback-rating":"5","question-feedback-comment":"Clearer onboarding","question-feedback-service":"Excellent","question-feedback-recommend":"Yes","question-feedback-support":"Chat","question-feedback-followup":"Yes","question-feedback-notes":"Thanks for the good quality of your products"}', 'print-feedback-answer-2026', 'Submitted', false, TIMESTAMP '2026-01-15 11:30:00')
+      ON CONFLICT (id) DO UPDATE SET answer_data = excluded.answer_data, state = 'Submitted', test_entry = false, access_token = excluded.access_token, submitted_at = excluded.submitted_at;
+    down: |
+      DELETE FROM survey_responses WHERE id = 'print-response-survey-demo-feedback';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
