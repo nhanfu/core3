@@ -46,15 +46,16 @@ but its menu structure or visual/UX details remain approximate.
 ## Live Odoo reference environment
 
 - URL: `http://localhost:8069`
-- Login email: `admin@core3.local`
+- Database: `core3_personal`
+- Login email: `codex@core3.local`
 - Login password: `Core3Odoo2026!`
-- Docker Compose file: `/home/nhanjs/projects/odoo-core3-demo/docker-compose.yml`
-- Restore/start command: `docker compose -f /home/nhanjs/projects/odoo-core3-demo/docker-compose.yml up -d`
-- Stop command: `docker compose -f /home/nhanjs/projects/odoo-core3-demo/docker-compose.yml down`
+- Docker Compose file: `/home/nhanjs/projects/odoo-core3-personal/docker-compose.yml`
+- Restore/start command: `docker compose -f /home/nhanjs/projects/odoo-core3-personal/docker-compose.yml up -d`
+- Stop command: `docker compose -f /home/nhanjs/projects/odoo-core3-personal/docker-compose.yml down`
 
-The Compose project contains the Odoo 19 container, PostgreSQL service, and
-demo database used for UI comparison. Keep credentials out of source code
-outside this local parity plan.
+The Compose project contains the fresh Odoo 19 container, PostgreSQL service,
+and personal demo database used for UI comparison. Keep credentials out of
+source code outside this local parity plan.
 
 ## Module register
 
