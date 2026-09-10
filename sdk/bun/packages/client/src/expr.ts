@@ -11,7 +11,7 @@ const _cache = new Map<string, (...args: any[]) => any>();
 function compile(expr: string) {
   if (_cache.has(expr)) return _cache.get(expr);
 
-  const fn: any = new Function('user', 'row', 'state', `"use strict"; return (${expr})`);
+  const fn: any = new Function('user', 'row', 'state', 'record', `"use strict"; return (${expr})`);
   _cache.set(expr, fn);
   return fn;
 }
@@ -27,8 +27,9 @@ export function evalExpr(expr: any, ctx: any = {}) {
   const user  = Object.freeze(ctx.user  || {});
   const row   = Object.freeze(ctx.row   || {});
   const state = Object.freeze(ctx.state || {});
+  const record = Object.freeze(ctx.record || {});
   try {
-    return compile(expr)(user, row, state);
+    return compile(expr)(user, row, state, record);
   } catch {
     return undefined;
   }
