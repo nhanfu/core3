@@ -4,12 +4,15 @@ components:
   - type: OdooFormView
     source: pos_payment_method_detail
     title_field: name
+    editable: true
+    header_actions:
+      - { id: edit_pos_payment_method, label: Edit, variant: secondary, permission: pos.manage }
     group_columns: 2
     groups:
       - title: Payment Method
         fields:
-          - { field: name, label: Payment method }
+          - { field: name, label: Method }
           - { field: journal, label: Journal }
           - { field: company, label: Company }
           - { field: point_of_sale, label: Point of Sale }
-          - { field: state, label: Status }
+          - { field: active, label: Active }

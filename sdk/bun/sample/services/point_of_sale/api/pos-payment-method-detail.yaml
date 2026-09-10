@@ -4,3 +4,23 @@ datasources:
     single: true
     permission: pos.read
     query: "SELECT id, name, journal, company, point_of_sale, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE id = :id"
+actions:
+  - id: edit_pos_payment_method
+    type: server_form
+    permission: pos.manage
+    title: Edit payment method
+    action: pos.payment_methods.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [pos_payment_method_detail]
+    mutation:
+      operation: update
+      table: pos_payment_methods
+      fields: [name, journal, point_of_sale, active]
+      required: [name]
+      result: { query: "SELECT id, name, journal, company, point_of_sale, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE id = :id" }
+    fields:
+      - { field: name, label: Method, type: text, required: true }
+      - { field: journal, label: Journal, type: text }
+      - { field: point_of_sale, label: Point of Sale, type: text }
+      - { field: active, label: Active, type: checkbox }

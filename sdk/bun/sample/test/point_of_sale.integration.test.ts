@@ -72,6 +72,36 @@ describe('POS payments list/detail parity', () => {
   });
 });
 
+describe('POS payment method detail parity', () => {
+  test('matches Odoo edit state, labels, and POS-owned update contract', () => {
+    const page = yaml('pages/pos-payment-method-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    const api = yaml('api/pos-payment-method-detail.yaml');
+    const edit = action(api, 'edit_pos_payment_method');
+
+    expect(form).toMatchObject({
+      title_field: 'name',
+      editable: true,
+      header_actions: [{ id: 'edit_pos_payment_method', label: 'Edit', permission: 'pos.manage' }],
+    });
+    expect(form.groups[0].fields).toEqual([
+      { field: 'name', label: 'Method' },
+      { field: 'journal', label: 'Journal' },
+      { field: 'company', label: 'Company' },
+      { field: 'point_of_sale', label: 'Point of Sale' },
+      { field: 'active', label: 'Active' },
+    ]);
+    expect(edit).toMatchObject({
+      type: 'server_form', permission: 'pos.manage', operation: 'update',
+      action: 'pos.payment_methods.update',
+    });
+    expect(edit.mutation).toMatchObject({
+      operation: 'update', table: 'pos_payment_methods', fields: ['name', 'journal', 'point_of_sale', 'active'],
+    });
+    expect(edit.fields).toContainEqual({ field: 'active', label: 'Active', type: 'checkbox' });
+  });
+});
+
 describe('POS preset detail parity batch', () => {
   test('keeps the preset page and API contracts joined by page.id', () => {
     const listPage = yaml('pages/pos-presets.yaml');
