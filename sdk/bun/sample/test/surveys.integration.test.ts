@@ -115,4 +115,22 @@ describe('Surveys parity catalog and workflow', () => {
       'survey_results_header', 'survey_results_questions', 'survey_results_choices', 'survey_results_text',
     ]);
   });
+
+  test('declares Odoo-style result cohorts across every result datasource', () => {
+    const page = yaml('pages/survey-results.yaml');
+    const tabs = page.components.filter((component: any) => component.type === 'StatusTabs');
+    expect(tabs.map((tab: any) => tab.filter_field)).toEqual(['completion_status', 'result_status']);
+    expect(tabs.every((tab: any) => Array.isArray(tab.filter_sources))).toBe(true);
+    expect(tabs[0].tabs.map((tab: any) => tab.label)).toEqual(['All surveys', 'Completed surveys']);
+    expect(tabs[1].tabs.map((tab: any) => tab.label)).toEqual(['Passed and failed', 'Passed only', 'Failed only']);
+
+    const api = yaml('api/survey-results.yaml');
+    for (const source of api.datasources) {
+      expect(source.query).toContain(':completion_status');
+      expect(source.query).toContain(':result_status');
+    }
+    const migration = yaml('migrations/20260910220000-007-survey-results-cohorts.yaml');
+    expect(migration.type.postgres.up).toContain('participant-feedback-passed');
+    expect(migration.type.postgres.up).toContain('participant-feedback-failed');
+  });
 });

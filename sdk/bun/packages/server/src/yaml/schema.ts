@@ -173,7 +173,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['ScheduleGrid', new Set(['type', 'source', 'title', 'date_field', 'resource_field', 'resource_label_field', 'title_field', 'subtitle_field', 'status_field', 'empty_state'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'empty_state', 'labels', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'search_button', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help', 'actions_inline'])],
-  ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs', 'show_counts', 'variant'])],
+  ['StatusTabs', new Set(['type', 'source', 'filter_sources', 'filter_field', 'tabs', 'show_counts', 'variant'])],
   ['TabGroup', new Set(['type', 'tabs', 'mount_in'])],
   ['StatRow', new Set(['type', 'source', 'title', 'stats'])],
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color', 'variant', 'series', 'layout'])],

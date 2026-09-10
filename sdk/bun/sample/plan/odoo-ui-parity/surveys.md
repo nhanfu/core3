@@ -234,6 +234,25 @@ safe for incomplete/no-answer records through an unavailable/empty state, and
 missing `surveys.read` is denied by the page/API boundary. No live-session work
 is included in this batch.
 
+The results-cohort follow-up adds Odoo-style All/Completed and Passed/Failed
+filters to `/surveys/results`. The `StatusTabs` declarations fan each
+selection through the page-id-bound `api/survey-results.yaml` sources so the
+header counters, answer chart, question response rates, and text responses
+remain in the same cohort. Migration `0.0.7` adds deterministic completed
+passed/failed Feedback attempts and answer lines. Authenticated Core3 checks
+at 1440x900 and 390x844 selected Completed (3 participants) and Passed (1
+participant), confirmed the filtered text response, verified the New cohort
+empty state, returned no failed API responses or horizontal overflow, and
+confirmed an unauthenticated results page returns 401. Captures are
+`/tmp/core3-survey-results-cohorts-{desktop,mobile}.png` and
+`/tmp/core3-survey-results-cohorts-empty-{desktop,mobile}.png`.
+
+The matching fresh Odoo reference check used database `core3_reference`,
+`codex@core3.local`, route `/survey/results/feedback-form-1`, and 1440x900 /
+390x844; both loaded Feedback Form without failed responses or horizontal
+overflow. Captures are
+`/tmp/odoo-survey-results-followup-{desktop,mobile}.png`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions

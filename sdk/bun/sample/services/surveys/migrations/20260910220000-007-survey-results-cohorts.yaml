@@ -1,0 +1,28 @@
+version: 0.0.7
+description: Deterministic completed and passed/failed result cohorts
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_participants(id,survey_id,survey_name,contact,email,attempt_no,deadline,quiz_passed,score,state,created_at) VALUES
+        ('participant-feedback-passed','survey-demo-feedback','Feedback Form','Deco Addict','deco.feedback@example.com',1,'2026-01-30',true,100,'Completed',TIMESTAMP '2026-01-14 09:00:00'),
+        ('participant-feedback-failed','survey-demo-feedback','Feedback Form','Gemini Furniture','gemini.feedback@example.com',1,'2026-01-30',false,40,'Completed',TIMESTAMP '2026-01-14 10:00:00')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO survey_detailed_answers(id,participant_id,survey_name,question_text,answer_type,answer_value,skipped,score,submitted_at) VALUES
+        ('detail-feedback-passed-rating','participant-feedback-passed','Feedback Form','How satisfied are you?','number','5',false,100,TIMESTAMP '2026-01-14 09:05:00'),
+        ('detail-feedback-passed-comment','participant-feedback-passed','Feedback Form','What can we improve?','text','Clearer onboarding',false,0,TIMESTAMP '2026-01-14 09:06:00'),
+        ('detail-feedback-failed-rating','participant-feedback-failed','Feedback Form','How satisfied are you?','number','2',false,40,TIMESTAMP '2026-01-14 10:05:00'),
+        ('detail-feedback-failed-comment','participant-feedback-failed','Feedback Form','What can we improve?','text','More product examples',false,0,TIMESTAMP '2026-01-14 10:06:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_detailed_answers WHERE id IN ('detail-feedback-passed-rating','detail-feedback-passed-comment','detail-feedback-failed-rating','detail-feedback-failed-comment');
+      DELETE FROM survey_participants WHERE id IN ('participant-feedback-passed','participant-feedback-failed');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database:
+  storage:
+    driver: duckdb
+permissions:
+  - surveys.read
