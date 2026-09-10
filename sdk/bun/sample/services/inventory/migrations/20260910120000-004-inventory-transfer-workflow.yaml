@@ -1,0 +1,37 @@
+version: 0.0.4
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_messages (
+        id VARCHAR PRIMARY KEY, picking_id VARCHAR NOT NULL, actor_name VARCHAR NOT NULL,
+        action VARCHAR NOT NULL, action_label VARCHAR NOT NULL, detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity) VALUES
+        ('receipt-00001-move-001', 'receipt-00001', 'Desk Combination', 35, 35),
+        ('receipt-00001-move-002', 'receipt-00001', 'Storage Box', 12, 12),
+        ('receipt-00003-move-001', 'receipt-00003', 'Office Chair', 18, 0),
+        ('receipt-00004-move-001', 'receipt-00004', 'Conference Table', 4, 0),
+        ('receipt-00006-move-001', 'receipt-00006', 'Desk Combination', 20, 20),
+        ('delivery-00001-move-001', 'delivery-00001', 'Desk Combination', 12, 0),
+        ('delivery-00001-move-002', 'delivery-00001', 'Storage Box', 8, 0),
+        ('delivery-00006-move-001', 'delivery-00006', 'Desk Combination', 40, 0),
+        ('delivery-00008-move-001', 'delivery-00008', 'Office Chair', 6, 0)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail, created_at) VALUES
+        ('receipt-00001-message-001', 'receipt-00001', 'OdooBot', 'inventory.transfer.created', 'Transfer created', 'Transfer created', TIMESTAMP '2026-01-09 08:00:00'),
+        ('delivery-00001-message-001', 'delivery-00001', 'OdooBot', 'inventory.transfer.created', 'Transfer created', 'Transfer created', TIMESTAMP '2025-12-27 08:00:00'),
+        ('delivery-00006-message-001', 'delivery-00006', 'OdooBot', 'inventory.transfer.created', 'Transfer created', 'Transfer created', TIMESTAMP '2025-12-28 08:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_transfer_messages WHERE id IN ('receipt-00001-message-001', 'delivery-00001-message-001', 'delivery-00006-message-001');
+      DELETE FROM inventory_picking_moves WHERE id IN (
+        'receipt-00001-move-001', 'receipt-00001-move-002', 'receipt-00003-move-001', 'receipt-00004-move-001',
+        'receipt-00006-move-001', 'delivery-00001-move-001', 'delivery-00001-move-002', 'delivery-00006-move-001',
+        'delivery-00008-move-001'
+      );
+      DROP TABLE IF EXISTS inventory_transfer_messages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

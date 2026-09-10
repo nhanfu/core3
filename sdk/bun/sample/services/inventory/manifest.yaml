@@ -11,8 +11,8 @@ menu:
     icon: warehouse
     permission: inventory.read
   groups:
-    - id: operations
-      label: Operations
+    - id: transfers
+      label: Transfers
       items:
         - path: /receipts
           label: Receipts
@@ -22,12 +22,15 @@ menu:
           label: Deliveries
           icon: truck
           permission: inventory.read
+    - id: reporting
+      label: Reporting
+      items:
         - path: /stock
-          label: On Hand
+          label: Stock
           icon: boxes
           permission: inventory.read
         - path: /moves
-          label: Stock Moves
+          label: Moves History
           icon: transfer
           permission: inventory.read
     - id: configuration

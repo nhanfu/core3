@@ -1,17 +1,67 @@
 title: Transfer
-page: { id: inventory-transfer-detail, route: /inventory/transfer/detail, breadcrumb: [Supply Chain, Inventory, Transfer], auth: { require: [inventory.read] } }
+page: { id: transfer-detail, route: /inventory/transfer/detail, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, Transfer], auth: { require: [inventory.read] } }
 components:
   - type: OdooFormView
     source: inventory_transfer_detail
     title_field: name
     subtitle_field: operation_type_name
     status_field: state
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     status_colors: { Ready: teal, Draft: neutral, Waiting: amber, Done: green, Cancelled: red }
     statusbar: [{ value: Draft, label: Draft }, { value: Waiting, label: Waiting }, { value: Ready, label: Ready }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
+    header_actions:
+      - { id: mark_inventory_transfer_todo, label: Mark as Todo, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Draft'" }
+      - { id: check_inventory_transfer_availability, label: Check Availability, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Waiting' || state.inventory_transfer_detail.state === 'Draft'" }
+      - { id: validate_inventory_transfer, label: Validate, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
+      - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
+    message_source: inventory_transfer_timeline
+    chatter_label: Messages and activities
+    message_label: Send message
+    note_label: Log note
+    message_action: send_inventory_transfer_message
+    note_action: log_inventory_transfer_note
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    message_action_labels:
+      inventory.transfer.created: Transfer created
+      inventory.transfer.validated: Validated
+      inventory.transfer.message: Message
+      inventory.transfer.note: Note
+    content_slot: true
     group_columns: 2
     groups:
       - title: Transfer
-        fields: [{ field: name, label: Reference }, { field: operation_type_name, label: Operation type }, { field: contact_name, label: Contact }, { field: company_name, label: Company }]
+        fields: [{ field: name, label: Reference }, { field: operation_type_name, label: Operation Type }, { field: contact_name, label: Contact }, { field: company_name, label: Company }]
       - title: Scheduling
-        fields: [{ field: scheduled_date, label: Scheduled date }, { field: source_document, label: Source document }, { field: source_location, label: Source location }, { field: destination_location, label: Destination location }]
-actions: []
+        fields: [{ field: scheduled_date, label: Scheduled Date }, { field: source_document, label: Source Document }, { field: source_location, label: Source Location }, { field: destination_location, label: Destination Location }, { field: product_availability, label: Product Availability }]
+    notebook:
+      active: operations
+      tabs:
+        - { id: operations, label: Operations, content_slot: true }
+        - id: additional_information
+          label: Additional Info
+          groups:
+            - title: Additional information
+              fields: [{ field: operation_kind, label: Operation kind }, { field: move_count, label: Move lines }]
+        - id: note
+          label: Note
+          groups:
+            - title: Note
+              fields: [{ field: note, label: Note, type: textarea, wide: true }]
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: inventory_transfer_lines
+    parent_source: inventory_transfer_detail
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    empty_state: { title: No move lines, description: Add a product to define the demand and quantity for this transfer. }
+    columns:
+      - { field: product_name, label: Product, width: 260 }
+      - { field: demand, label: Demand, align: right, width: 120 }
+      - { field: quantity, label: Quantity, align: right, width: 120 }
+      - { field: uom, label: Unit of Measure, width: 140 }
+      - { field: availability, label: Availability, width: 150 }

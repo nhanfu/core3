@@ -1,6 +1,121 @@
-page: { id: inventory-transfer-detail }
+page: { id: transfer-detail }
 datasources:
   - id: inventory_transfer_detail
     single: true
     permission: inventory.read
-    query: "SELECT p.id, p.row_version, p.name, t.name AS operation_type_name, p.contact_name, p.company_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, sl.name AS source_location, dl.name AS destination_location, p.state FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id JOIN inventory_locations sl ON sl.id = p.source_location_id JOIN inventory_locations dl ON dl.id = p.destination_location_id WHERE p.id = :id"
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_DATA_UNAVAILABLE, message: Transfer data is temporarily unavailable. } }
+    query: "SELECT p.id, p.row_version, p.name, t.name AS operation_type_name, t.operation_kind, p.contact_name, p.company_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, sl.name AS source_location, dl.name AS destination_location, p.state, (SELECT COUNT(*) FROM inventory_picking_moves m WHERE m.picking_id = p.id) AS move_count, CASE WHEN t.operation_kind = 'delivery' THEN 'Available' ELSE NULL END AS product_availability, '' AS note FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id JOIN inventory_locations sl ON sl.id = p.source_location_id JOIN inventory_locations dl ON dl.id = p.destination_location_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id"
+  - id: inventory_transfer_lines
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_DATA_UNAVAILABLE, message: Transfer lines are temporarily unavailable. } }
+    query: "SELECT m.id, m.picking_id, m.product_name, CAST(m.quantity AS DOUBLE) AS demand, CAST(m.done_quantity AS DOUBLE) AS quantity, 'Unit(s)' AS uom, CASE WHEN m.done_quantity >= m.quantity THEN 'Available' WHEN p.state IN ('Ready', 'Done') THEN 'Available' ELSE 'Waiting' END AS availability, p.state AS parent_state FROM inventory_picking_moves m JOIN inventory_pickings p ON p.id = m.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.picking_id = :id ORDER BY m.id"
+  - id: inventory_transfer_timeline
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_DATA_UNAVAILABLE, message: Transfer history is temporarily unavailable. } }
+    query: "SELECT actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM inventory_transfer_messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND picking_id = :id UNION ALL SELECT 'OdooBot', 'inventory.transfer.created', 'Transfer created', 'Transfer created', CAST(p.scheduled_date AS VARCHAR) FROM inventory_pickings p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id AND NOT EXISTS (SELECT 1 FROM inventory_transfer_messages m WHERE m.picking_id = p.id) ORDER BY created_at DESC"
+
+actions:
+  - id: edit_inventory_transfer
+    type: form
+    permission: inventory.write
+    title: Edit transfer
+    table: inventory_pickings
+    operation: update
+    fields: [{ field: contact_name, label: Contact, type: text }, { field: scheduled_date, label: Scheduled Date, type: text }, { field: source_document, label: Source Document, type: text }]
+    refresh: [inventory_transfer_detail, inventory_transfer_lines]
+  - id: mark_inventory_transfer_todo
+    type: server
+    permission: inventory.write
+    action: inventory.pickings.confirm
+    handler: yaml_mutation
+    operation: confirm
+    params: { id: '{state.id}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, message: Only draft transfers can be marked as todo }
+      steps:
+        - { query: "UPDATE inventory_pickings SET state = 'Waiting', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version" }
+      result: { query: "SELECT * FROM inventory_pickings WHERE id = :id" }
+  - id: check_inventory_transfer_availability
+    type: server
+    permission: inventory.write
+    action: inventory.pickings.check_availability
+    handler: yaml_mutation
+    operation: check_availability
+    params: { id: '{state.id}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state IN ('Waiting', 'Draft') AND row_version = :expected_row_version", status: 409, message: Only draft or waiting transfers can check availability }
+      steps:
+        - { query: "UPDATE inventory_pickings SET state = 'Ready', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version" }
+      result: { query: "SELECT * FROM inventory_pickings WHERE id = :id" }
+  - id: validate_inventory_transfer
+    type: server
+    permission: inventory.write
+    action: inventory.pickings.validate
+    handler: yaml_mutation
+    operation: validate
+    params: { id: '{state.id}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state = 'Ready' AND row_version = :expected_row_version", status: 409, message: Only ready transfers can be validated }
+        - { query: "SELECT p.id FROM inventory_pickings p JOIN inventory_picking_moves m ON m.picking_id = p.id WHERE p.id = :id AND m.quantity > 0 AND m.done_quantity <= m.quantity", status: 422, message: A transfer needs at least one valid move line }
+      generated: [message_id]
+      steps:
+        - { query: "UPDATE inventory_picking_moves SET done_quantity = quantity WHERE picking_id = :id" }
+        - { query: "UPDATE inventory_pickings SET state = 'Done', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version" }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.validated', 'Validated', 'Transfer validated')" }
+      result: { query: "SELECT * FROM inventory_pickings WHERE id = :id" }
+  - id: cancel_inventory_transfer
+    type: server
+    permission: inventory.write
+    action: inventory.pickings.cancel
+    handler: yaml_mutation
+    operation: cancel
+    params: { id: '{state.id}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state IN ('Draft', 'Waiting', 'Ready') AND row_version = :expected_row_version", status: 409, message: Only open transfers can be cancelled }
+      steps:
+        - { query: "UPDATE inventory_pickings SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version" }
+      result: { query: "SELECT * FROM inventory_pickings WHERE id = :id" }
+  - id: send_inventory_transfer_message
+    type: server_form
+    permission: inventory.write
+    title: Send message
+    action: inventory.pickings.message
+    handler: yaml_mutation
+    operation: message
+    params: { id: '{state.id}' }
+    refresh: [inventory_transfer_timeline]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000", status: 422, message: Message content must be between 1 and 4000 characters }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, message: Transfer not found }
+      steps:
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.message', 'Message', :content)" }
+  - id: log_inventory_transfer_note
+    type: server_form
+    permission: inventory.write
+    title: Log note
+    action: inventory.pickings.note
+    handler: yaml_mutation
+    operation: note
+    params: { id: '{state.id}' }
+    refresh: [inventory_transfer_timeline]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000", status: 422, message: Note content must be between 1 and 4000 characters }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, message: Transfer not found }
+      steps:
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.note', 'Note', :content)" }

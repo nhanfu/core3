@@ -12,7 +12,7 @@ Status: ready
   `stock_demo_pre.xml`, `stock_demo.xml`, `stock_demo2.xml`,
   `stock_orderpoint_demo.xml`, and `stock_storage_category_demo.xml`.
 - Authenticated live audit on 2026-09-10: `http://localhost:8069`, database
-  `core3_demo`, admin session. `ir.module.module` reports `stock` as
+  `core3_personal`, user `codex@core3.local`. `ir.module.module` reports `stock` as
   `installed`, `demo: true`, `latest_version: 19.0.1.1`; server version is
   `19.0-20260908`. The live database is therefore an installed, official-demo
   reference, not an unavailable/uninstalled fallback.
@@ -211,6 +211,56 @@ the report request as a permission-checked service action and must not expose a
 raw arbitrary report path. Preserve explicit Core3 routes `/stock`, `/moves`,
 `/warehouses`, `/locations`, and `/inventory-analysis`, adding aliases only for
 compatibility; add explicit routes for the parity surfaces above.
+
+## Bounded batch: receipts and deliveries transfers (2026-09-10)
+
+This batch implements the next bounded transfer slice only. It follows the
+Odoo 19 `action_picking_tree_incoming` and `action_picking_tree_outgoing`
+orders: `list`, `kanban`, `form`, `calendar`, `activity`, with Receipts before
+Deliveries under the Transfers menu group. Core3 keeps its existing route
+aliases (`/receipts`, `/deliveries`, and `/inventory/transfer/detail`) because
+the shell qualifies service routes; the visible labels and breadcrumb order
+match the Odoo action/menu labels. The Inventory overview remains the existing
+`/stock` alias and is not claimed as complete in this batch.
+
+The list pages are layout-only YAML. `pages/receipts.yaml` and
+`pages/deliveries.yaml` bind to `api/transfers.yaml` and
+`api/deliveries.yaml`; the shared detail layout is `pages/transfer-detail.yaml`
+with page id `transfer-detail`, owned by `api/transfer-detail.yaml`. That
+page-id alignment fixes side-panel requests that previously addressed the
+filename `transfer-detail` while the API page id was `inventory-transfer-detail`.
+
+The `0.0.4` Inventory migration adds stable move-line and transfer-history
+fixtures for receipts and deliveries. List and detail sources expose
+deterministic empty/not-found predicates and `503`
+`INVENTORY_TRANSFER_DATA_UNAVAILABLE` transport states. Detail actions enforce
+`inventory.write`, row-version guards, and the Odoo-style Draft → Waiting →
+Ready → Done / Cancelled transitions. The detail includes Operations,
+Additional Info, Note, move lines, Send message, and Log note. Move-line CRUD,
+lot/package/reservation details, Print, Return, and the mobile action menu are
+intentionally deferred rather than represented by placeholder controls.
+
+Focused evidence:
+
+- `bun test test/inventory_transfer_workflow.integration.test.ts`: 3 tests,
+  41 assertions passed; `git diff --check` passed.
+- Authenticated Core3 desktop captures (1440x900):
+  `/tmp/core3-inventory-batch-desktop-receipts-list-final.png`,
+  `/tmp/core3-inventory-batch-desktop-receipts-detail-final.png`.
+- Authenticated Core3 mobile captures (390x844):
+  `/tmp/core3-inventory-batch-mobile-deliveries-list-final.png`,
+  `/tmp/core3-inventory-batch-mobile-deliveries-detail-final.png`.
+- Authenticated personal Odoo 19 comparison captures:
+  `/tmp/odoo-inventory-batch-desktop-receipts-list.png`,
+  `/tmp/odoo-inventory-batch-desktop-receipts-detail.png`,
+  `/tmp/odoo-inventory-batch-desktop-deliveries-detail.png`,
+  `/tmp/odoo-inventory-batch-mobile-deliveries-list.png`.
+- Core3 browser checks used `admin@tms.local` on the isolated runtime at
+  `http://127.0.0.1:3090`; the list/detail routes loaded with no responses at
+  or above HTTP 400. The final mobile delivery list has
+  `scrollWidth === clientWidth === 390`, after removing the grouped kanban
+  overflow found during comparison. The reference session used
+  `codex@core3.local` in `core3_personal` at `http://127.0.0.1:8069`.
 
 ## Acceptance
 
