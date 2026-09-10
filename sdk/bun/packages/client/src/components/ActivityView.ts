@@ -21,6 +21,9 @@ export type ActivityViewDefinition = {
   icon?: string;
   titleField: string;
   subtitleField?: string;
+  recordDateField?: string;
+  recordEndDateField?: string;
+  mobile?: boolean;
   emptyCellAction?: string;
   scheduleAction?: string;
   activityTypes: ActivityTypeDefinition[];
@@ -111,6 +114,13 @@ export class ActivityView extends BaseComponent {
     html.take(record).strong.text(title == null || title === '' ? '—' : String(title));
     if (this.options.view.subtitleField && row[this.options.view.subtitleField] != null) {
       html.take(record).span.className('o-activity-record-subtitle').text(String(row[this.options.view.subtitleField]));
+    }
+    if (this.options.view.recordDateField && row[this.options.view.recordDateField] != null) {
+      const from = this.formatDate(row[this.options.view.recordDateField]);
+      const to = this.options.view.recordEndDateField && row[this.options.view.recordEndDateField] != null
+        ? ` → ${this.formatDate(row[this.options.view.recordEndDateField])}`
+        : '';
+      html.take(record).time.className('o-activity-record-date').text(`${from}${to}`);
     }
     if (recordAction) html.take(record).event('click', () => void this.submit(recordAction, { row }));
 

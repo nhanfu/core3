@@ -736,7 +736,7 @@ export class ListView extends BaseComponent {
 
   private drawViewTabs(container: HTMLElement) {
     // FormView is an inline/detail presentation, not a collection view tab.
-    const views = (this.options.views || []).filter(view => view.id !== 'form');
+    const views = (this.options.views || []).filter(view => view.id !== 'form' && (!this.isSmallScreen() || (view as any).mobile !== false));
     if (views.length <= 1) return;
     const tabList = html.take(container).nav.className('o-list-view-tabs').attr('role', 'tablist').attr('aria-label', i18n.tKey('list.view', {}, 'View')).ele();
     for (const view of views) {
@@ -986,7 +986,9 @@ export class ListView extends BaseComponent {
   }
 
   private activeView(): ListViewMode {
-    const views = this.options.views || [];
+    const views = this.isSmallScreen()
+      ? (this.options.views || []).filter(view => (view as any).mobile !== false)
+      : (this.options.views || []);
     if (this.isSmallScreen()) {
       const cardView = views.find(view => view.id === 'card');
       if (this.state.activeView === undefined || this.state.activeView === 'form') {

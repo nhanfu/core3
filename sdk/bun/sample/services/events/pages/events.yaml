@@ -56,6 +56,9 @@ components:
         icon: activity
         title_field: name
         subtitle_field: event_type
+        record_date_field: start_at
+        record_end_date_field: end_at
+        mobile: false
         schedule_action: schedule_event_activity
         empty_cell_action: schedule_event_activity
         activity_types:
@@ -63,6 +66,7 @@ components:
           - { id: email, label: Email, icon: ✉ }
           - { id: call, label: Call, icon: ☎ }
           - { id: meeting, label: Meeting, icon: ◉ }
+          - { id: document, label: Document, icon: ▣ }
     columns:
       - { field: name, label: Event, type: PrimaryEntityCell }
       - { field: event_type, label: Type }

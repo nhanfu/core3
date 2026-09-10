@@ -7,6 +7,8 @@ describe('ActivityView', () => {
     label: 'Activity',
     titleField: 'name',
     subtitleField: 'owner',
+    recordDateField: 'date_from',
+    recordEndDateField: 'date_to',
     activityTypes: [
       { id: 'todo', label: 'To-Do' },
       { id: 'email', label: 'Email' },
@@ -17,8 +19,8 @@ describe('ActivityView', () => {
     const host = document.createElement('div');
     const component = new ActivityView('activities', {
       rows: [
-        { id: 'r1', name: 'Design Fair', owner: 'Mitchell', activity_type: 'todo', activity_summary: 'Confirm venue', activity_date: '2026-01-20', activity_state: 'overdue' },
-        { id: 'r2', name: 'Balloon Race', owner: 'Marc', activity_type: 'email', activity_summary: 'Send reminder', activity_date: '2026-01-22', activity_state: 'planned' },
+        { id: 'r1', name: 'Design Fair', owner: 'Mitchell', date_from: '2026-01-20', date_to: '2026-01-22', activity_type: 'todo', activity_summary: 'Confirm venue', activity_date: '2026-01-20', activity_state: 'overdue' },
+        { id: 'r2', name: 'Balloon Race', owner: 'Marc', date_from: '2026-01-22', date_to: '2026-01-23', activity_type: 'email', activity_summary: 'Send reminder', activity_date: '2026-01-22', activity_state: 'planned' },
       ],
     }, { view, rowKey: 'id', openAction: 'open_record', emptyCellAction: 'schedule_activity', scheduleAction: 'schedule_activity' });
     const submit = vi.fn();
@@ -28,6 +30,7 @@ describe('ActivityView', () => {
     expect(host.querySelectorAll('.o-activity-type-header')).toHaveLength(2);
     expect(host.querySelector('[data-activity-state="overdue"]')?.textContent).toBe('Overdue 1');
     expect(host.querySelector('.o-activity-cell.is-overdue')?.textContent).toContain('Confirm venue');
+    expect(host.querySelector('.o-activity-record-date')?.textContent).toBe('Jan 20, 2026 → Jan 22, 2026');
     expect(host.querySelectorAll('.o-activity-empty-action')).toHaveLength(2);
     (host.querySelector('.o-activity-empty-action') as HTMLButtonElement).click();
     expect(submit).toHaveBeenCalledWith('schedule_activity', expect.objectContaining({ activity_type: 'email' }));

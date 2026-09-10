@@ -21,7 +21,8 @@
 .o-activity-record-link { display: flex; width: 100%; flex-direction: column; gap: 3px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; }
 button.o-activity-record-link { cursor: pointer; }
 button.o-activity-record-link:hover strong { color: var(--o-list-action, #71639e); }
-.o-activity-record-subtitle { color: var(--o-list-muted, #6c757d); font-size: 12px; }
+.o-activity-record-subtitle,
+.o-activity-record-date { color: var(--o-list-muted, #6c757d); font-size: 12px; }
 .o-activity-cell { width: 180px; min-width: 180px; min-height: 82px; padding: 0; }
 .o-activity-cell.is-overdue { background: #f8d7da; color: #842029; }
 .o-activity-cell.is-today { background: #fff3cd; color: #664d03; }

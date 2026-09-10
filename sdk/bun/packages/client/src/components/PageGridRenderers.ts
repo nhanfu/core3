@@ -607,6 +607,9 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     groupsSource: view.groups_source,
     form: view.form,
     titleField: view.title_field,
+    recordDateField: view.record_date_field,
+    recordEndDateField: view.record_end_date_field,
+    mobile: view.mobile,
     emptyCellAction: view.empty_cell_action,
     scheduleAction: view.schedule_action,
     activityTypes: (view.activity_types || []).map((type: any) => ({

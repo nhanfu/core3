@@ -27,6 +27,9 @@ components:
         icon: activity
         title_field: name
         subtitle_field: leave_type_name
+        record_date_field: date_from
+        record_end_date_field: date_to
+        mobile: false
         schedule_action: schedule_my_time_off_activity
         empty_cell_action: schedule_my_time_off_activity
         activity_types:
@@ -34,6 +37,10 @@ components:
           - { id: email, label: Email, icon: ✉ }
           - { id: call, label: Call, icon: ☎ }
           - { id: meeting, label: Meeting, icon: ◉ }
+          - { id: time_off_approval, label: Time Off Approval, icon: ✓ }
+          - { id: time_off_second_approve, label: Time Off Second Approve, icon: ✓ }
+          - { id: trip_with_family, label: Trip with Family, icon: ✈ }
+          - { id: doctor_appointment, label: Doctor Appointment, icon: ✚ }
     columns:
       - { field: name, label: Time Off, type: PrimaryEntityCell }
       - { field: leave_type_name, label: Time Off Type }
