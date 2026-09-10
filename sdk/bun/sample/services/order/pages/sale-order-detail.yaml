@@ -1,0 +1,100 @@
+title: Sales order
+page: { id: sale-order-detail, route: /order/sale-order, breadcrumb: [Sales, Orders, Sales order], auth: { require: [orders.read] } }
+
+components:
+  - type: OdooFormView
+    source: sale_order_detail
+    title_field: order_number
+    status_field: status
+    status_label_field: status_label
+    statusbar_source: sale_order_statuses
+    status_colors: { Quotation: neutral, Sent: amber, 'Sales Order': green, Cancelled: red }
+    status_badges:
+      - { value: Cancelled, label: Cancelled, tone: red }
+    labels:
+      save: Save
+      discard: Discard
+      editDetails: Edit
+      workflowStatus: Status
+    header_actions:
+      - { id: edit_sale_order, label: Edit, variant: secondary, show_if: "state.sale_order_detail.status !== 'Sales Order' && state.sale_order_detail.status !== 'Cancelled'" }
+      - { id: send_sale_quotation, label: Send, variant: primary, show_if: "state.sale_order_detail.status === 'Quotation'" }
+      - { id: confirm_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Sent'" }
+      - { id: confirm_draft_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Quotation'" }
+      - { id: create_sale_invoice, label: Create Invoice, variant: primary, show_if: "state.sale_order_detail.status === 'Sales Order' && state.sale_order_detail.invoice_status !== 'Invoiced'" }
+      - { id: cancel_sale_order, label: Cancel, variant: secondary, show_if: "state.sale_order_detail.status !== 'Cancelled'" }
+      - { id: reset_sale_quotation, label: Set to Quotation, variant: secondary, show_if: "state.sale_order_detail.status === 'Cancelled'" }
+    stat_buttons:
+      - { id: view_sale_invoice, label: Invoices, value_field: invoice_count, show_if: "state.sale_order_detail.invoice_count > 0" }
+    group_columns: 2
+    groups:
+      - title: Customer
+        fields:
+          - { field: customer_name, label: Customer }
+          - { field: customer_legal_name, label: Invoice Address }
+          - { field: shipping_address, label: Delivery Address }
+      - title: Order details
+        fields:
+          - { field: order_date, label: Quotation Date }
+          - { field: validity_date, label: Expiration }
+          - { field: commitment_date, label: Delivery Date }
+          - { field: customer_reference, label: Customer Reference }
+          - { field: pricelist_name, label: Pricelist }
+          - { field: payment_term_name, label: Payment Terms }
+    notebook:
+      active: order_lines
+      tabs:
+        - { id: order_lines, label: Order Lines, content_slot: true }
+        - id: other_information
+          label: Other Information
+          groups:
+            - title: Sales
+              fields:
+                - { field: salesperson_name, label: Salesperson }
+                - { field: company_name, label: Company }
+                - { field: require_signature, label: Online Signature }
+                - { field: require_payment, label: Online Payment }
+                - { field: notes, label: Terms and Conditions, type: textarea, wide: true }
+    message_source: sale_order_timeline
+    chatter_label: Chatter
+    message_label: Send message
+    note_label: Log note
+    message_action: send_sale_order_message
+    note_action: log_sale_order_note
+    follower_source: sale_order_followers
+    follower_label: Followers
+    no_followers_label: No followers
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: sale_order_lines
+    parent_source: sale_order_detail
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    column_chooser: true
+    actions:
+      - { id: add_sale_order_line, label: Add a product, variant: primary, permission: orders.write, show_if: "state.sale_order_detail.status === 'Quotation' || state.sale_order_detail.status === 'Sent'" }
+    empty_state: { title: No order lines, description: Add a product to calculate the order total. }
+    footer:
+      source: sale_order_detail
+      stats:
+        - { label: Total, field: total_amount_display }
+    children:
+      - { type: LineItemField, id: product_id, field: product_id, display_field: product_name, label: Product, input_type: select, options_source: sale_order_product_lookup }
+      - { type: LineItemField, id: description, field: description, label: Description, input_type: text }
+      - { type: LineItemField, id: quantity, field: quantity, display_field: quantity_display, label: Quantity, input_type: number }
+      - { type: LineItemField, id: unit, field: unit, label: Unit, input_type: select, options_source: sale_unit_lookup }
+      - { type: LineItemField, id: unit_price, field: unit_price, display_field: unit_price_display, label: Unit Price, input_type: money }
+      - { type: LineItemField, id: discount, field: discount, display_field: discount_display, label: Discount, input_type: number, decimals: 2 }
+      - { type: LineItemField, id: tax_rate, field: tax_rate, display_field: tax_rate_display, label: Taxes, input_type: money, decimals: 2 }
+      - { type: LineItemField, id: line_total, field: line_total, display_field: line_total_display, label: Amount, readonly: true }
+    columns:
+      - { field: product_name, label: Product, width: 230 }
+      - { field: description, label: Description, width: 260 }
+      - { field: quantity_display, label: Quantity, align: right, width: 100 }
+      - { field: unit, label: Unit, width: 100 }
+      - { field: unit_price_display, label: Unit Price, align: right, width: 140 }
+      - { field: discount_display, label: Discount, align: right, width: 100 }
+      - { field: tax_rate_display, label: Taxes, align: right, width: 90 }
+      - { field: line_total_display, label: Amount, align: right, width: 150 }
+    labels: { noRecords: No records found, columnChooser: Columns, selectAll: Select all lines, selectRow: Select line }

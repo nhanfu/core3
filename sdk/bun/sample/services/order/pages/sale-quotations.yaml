@@ -9,7 +9,7 @@ components:
     search: { label: Search quotations, placeholder: Search quotations and customers... }
     row_open_action: view_quotation
     row_double_click_action: view_quotation
-    form_view: { page: apps/services/order/pages/order-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/order/pages/sale-order-detail.yaml, side_panel: true }
     columns:
       - { field: order_number, label: Quotation, type: PrimaryEntityCell }
       - { field: customer_name, label: Customer }

@@ -36,3 +36,10 @@ Capture `/odoo/sales` (quotations/orders) and every listed action at 1440x900 an
 - Core3 captures: `/tmp/core3-odoo-parity/integrated-20260909/quotations-desktop.png`, `quotations-mobile.png`, `sales-orders-desktop.png`, `sales-orders-mobile.png`, `sales-reporting-desktop.png`, and `sales-reporting-mobile.png`.
 - Odoo captures: `/tmp/odoo-sales-quotations-desktop.png`, `odoo-sales-quotations-mobile.png`, `odoo-sales-orders-list-desktop.png`, and `odoo-sales-reporting-desktop.png`.
 - Verified: authenticated menu routes, populated quotation/order/report lists, reporting graph/pivot/list tabs, and responsive mobile rendering.
+
+## Next bounded slice: Sales order form
+
+- Added dedicated `/order/sale-order` form and `sale-order-detail` page/API fragment; quotation and confirmed-order rows no longer open the generic logistics `/order/detail` form.
+- Odoo source/reference contract: `sale/views/sale_order_views.xml` supplies `Send`, `Confirm`, `Create Invoice`, `Cancel`, `Set to Quotation`, the `Quotation`/`Sent`/`Sales Order` status progression, customer/order detail fields, `Order Lines`, and `Other Information` tabs.
+- Core3 form coverage: deterministic order/line/status/timeline sources, product selector/add-product action, total, exact labels, editable quotation fields, `orders.write`/`orders.approve` boundaries, and 409 stale/invalid-state plus 400 unavailable-product guards.
+- Pending final evidence: authenticated Core3/Odoo desktop and mobile form screenshots, live action smoke, focused test, audit, ESLint, and diff-check results.

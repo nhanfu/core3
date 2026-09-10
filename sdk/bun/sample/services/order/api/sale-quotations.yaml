@@ -64,7 +64,7 @@ actions:
   - id: view_quotation
     type: navigate
     permission: orders.read
-    navigate_to: /detail
+    navigate_to: /order/sale-order
     params: { id: '{row.id}' }
   - id: send_quotation
     type: server
