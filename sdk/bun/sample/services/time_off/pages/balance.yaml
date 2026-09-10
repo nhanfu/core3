@@ -1,0 +1,62 @@
+title: Balance
+page: { id: time-off-balance, route: /time-off-reporting/balance, breadcrumb: [Human Resources, Time Off, Reporting, Balance], auth: { require: [time_off.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: time_off_balance_report
+    search: { label: Search balance, placeholder: Search employee or time off type... }
+    empty_state: { title: No Balance yet!, description: Allocate time off to see employee balances here. }
+    filters:
+      - { field: employee_id, label: Employee, options_source: time_off_balance_employees }
+      - { field: leave_type_id, label: Time Off Type, options_source: time_off_balance_types }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: employee_name
+        measure_field: remaining_days
+        measure_label: Remaining Days
+        type: bar
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: employee_name, column: Employee }
+            - { field: leave_type_name, column: Time Off Type }
+            - { field: allocation_days, column: Allocated Days }
+            - { field: taken_days, column: Taken Days }
+            - { field: planned_days, column: Planned Days }
+            - { field: remaining_days, column: Remaining Days }
+            - { field: allocation_hours, column: Allocated Hours }
+            - { field: taken_hours, column: Taken Hours }
+            - { field: planned_hours, column: Planned Hours }
+            - { field: remaining_hours, column: Remaining Hours }
+          default:
+            rows: [employee_name]
+            columns: [leave_type_name]
+            measures:
+              - { field: allocation_days, aggregate: sum, column: Allocated Days }
+              - { field: taken_days, aggregate: sum, column: Taken Days }
+              - { field: remaining_days, aggregate: sum, column: Remaining Days }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_from
+        end_date_field: date_to
+        card: { title: employee_name, subtitle: leave_type_name, fields: [{ field: remaining_days, label: Remaining Days }, { field: taken_days, label: Taken Days }, { field: planned_days, label: Planned Days }] }
+    columns:
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: allocation_days, label: Allocated Days, align: right }
+      - { field: taken_days, label: Taken Days, align: right }
+      - { field: planned_days, label: Planned Days, align: right }
+      - { field: remaining_days, label: Remaining Days, align: right }
+      - { field: allocation_hours, label: Allocated Hours, align: right }
+      - { field: taken_hours, label: Taken Hours, align: right }
+      - { field: planned_hours, label: Planned Hours, align: right }
+      - { field: remaining_hours, label: Remaining Hours, align: right }
+    page_size: 50
+    row_key: id

@@ -21,6 +21,7 @@ menu:
       items:
         - { path: /time-off-reporting/by-employee, label: By Employee, icon: chart, permission: time_off.read }
         - { path: /time-off-reporting/by-type, label: By Type, icon: chart, permission: time_off.read }
+        - { path: /time-off-reporting/balance, label: Balance, icon: chart, permission: time_off.manage }
         - { path: /time-off-analysis, label: Time Off Analysis, icon: chart, permission: time_off.read }
     - id: management
       label: Management

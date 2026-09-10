@@ -1,0 +1,13 @@
+version: 0.0.7
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS leave_balances_report_year_employee_type_idx
+        ON leave_balances(year, employee_id, leave_type_id);
+    down: |
+      DROP INDEX IF EXISTS leave_balances_report_year_employee_type_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
