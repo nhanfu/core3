@@ -5,18 +5,8 @@ components:
     variant: odoo
     source: employee_departure_reasons
     search: { label: Search departure reasons, placeholder: Search reason or country... }
-    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
-      - id: card
-        label: Cards
-        icon: grid
-        card:
-          title: name
-          subtitle: country_code
-          fields:
-            - { field: sequence, label: Sequence }
-            - { field: country_code, label: Country }
     inline_edit:
       create_action: create_employee_departure_reason_inline
       update_action: update_employee_departure_reason_inline
@@ -30,7 +20,6 @@ components:
       - { field: sequence, label: ' ', type: HandleCell, mobile: false }
       - { field: name, label: Departure Reason, type: PrimaryEntityCell, mobile: true }
       - { field: country_code, label: Country, optional: hide }
-      - { field: id, label: ' ', sortable: false, actions: [{ id: view_employee_departure_reason, label: Open, icon: edit }] }
     row_key: id
     row_open_action: view_employee_departure_reason
     row_double_click_action: view_employee_departure_reason

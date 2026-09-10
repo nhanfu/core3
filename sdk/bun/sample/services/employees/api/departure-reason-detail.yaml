@@ -15,7 +15,17 @@ actions:
     operation: update
     prefill: state.employee_departure_reason_detail
     refresh: [employee_departure_reason_detail]
-    mutation: { operation: update, table: employee_departure_reasons, fields: [sequence, name, country_code], required: [name], result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" } }
+    mutation:
+      operation: update
+      table: employee_departure_reasons
+      fields: [sequence, name, country_code]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_DEPARTURE_REASON_NAME_REQUIRED, message: A departure reason name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departure_reasons WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMPLOYEES_DEPARTURE_REASON_EXISTS, message: A departure reason with this name already exists. }
+      result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" }
     fields:
       - { field: sequence, label: Sequence, type: number }
       - { field: name, label: Departure Reason, type: text, required: true }

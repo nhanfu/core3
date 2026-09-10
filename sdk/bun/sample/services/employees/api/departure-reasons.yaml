@@ -18,7 +18,18 @@ actions:
     handler: yaml_mutation
     operation: create
     refresh: [employee_departure_reasons]
-    mutation: { operation: insert, table: employee_departure_reasons, fields: [sequence, name, country_code], required: [name], defaults: { sequence: 10, row_version: 1 }, generated: [id], result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" } }
+    mutation:
+      operation: insert
+      table: employee_departure_reasons
+      fields: [sequence, name, country_code]
+      required: [name]
+      defaults: { sequence: 10, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'departure-reason-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_DEPARTURE_REASON_NAME_REQUIRED, message: A departure reason name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departure_reasons WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMPLOYEES_DEPARTURE_REASON_EXISTS, message: A departure reason with this name already exists. }
+      result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" }
     fields:
       - { field: sequence, label: Sequence, type: number, default: 10 }
       - { field: name, label: Departure Reason, type: text, required: true }
@@ -31,8 +42,32 @@ actions:
     handler: yaml_mutation
     operation: update
     refresh: [employee_departure_reasons]
-    mutation: { operation: update, table: employee_departure_reasons, fields: [sequence, name, country_code], required: [name], result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" } }
+    mutation:
+      operation: update
+      table: employee_departure_reasons
+      fields: [sequence, name, country_code]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_DEPARTURE_REASON_NAME_REQUIRED, message: A departure reason name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departure_reasons WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMPLOYEES_DEPARTURE_REASON_EXISTS, message: A departure reason with this name already exists. }
+      result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" }
     fields:
       - { field: sequence, label: Sequence, type: number }
       - { field: name, label: Departure Reason, type: text, required: true }
       - { field: country_code, label: Country, type: text, placeholder: Optional country code }
+  - id: delete_employee_departure_reason
+    type: server
+    permission: employees.manage
+    action: employees.departure_reasons.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [employee_departure_reasons]
+    mutation:
+      operation: delete
+      table: employee_departure_reasons
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found. }
+        - { query: "SELECT 1 AS ok WHERE :id NOT IN ('departure-reason-fired', 'departure-reason-resigned', 'departure-reason-retired')", status: 409, code: EMPLOYEES_DEPARTURE_REASON_DEFAULT, message: Default departure reasons cannot be deleted. }
