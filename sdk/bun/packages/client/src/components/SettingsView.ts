@@ -125,7 +125,8 @@ export class SettingsView extends BaseComponent {
       save.disabled = true;
       discard.disabled = true;
       try {
-        await this.submit(String(this.def.save_action || ''), { id: this.state.record.id, ...this.state.draft });
+        const result = await this.submit(String(this.def.save_action || ''), { id: this.state.record.id, ...this.state.draft });
+        if (result && typeof result === 'object') this.state.draft = { ...this.state.draft, ...result };
         this.state.record = { ...this.state.draft };
         save.textContent = 'Saved';
         window.setTimeout(() => { save.textContent = this.def.save_label || 'Save'; }, 1200);

@@ -421,7 +421,7 @@ export class PageRuntime extends BaseComponent {
             return result;
           };
           const { navigate: appNavigate } = await import(/* @vite-ignore */ ['/app.ts'].join(''));
-          await fn({
+          return await fn({
             user: ctx.user,
             row: row || {},
             state: ctx.state,

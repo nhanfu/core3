@@ -1,0 +1,25 @@
+title: Timesheets Settings
+page: { id: timesheets-settings, route: /timesheets/settings, auth: { require: [timesheets.settings] } }
+components:
+  - type: SettingsView
+    id: timesheets-settings-view
+    source: timesheets_settings
+    title: Settings
+    save_action: save_timesheets_settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: timesheets
+        label: Timesheets
+        icon: clock
+        sections:
+          - title: Time Encoding
+            fields:
+              - { field: project_time_unit, label: Project Time Unit, description: This will set the unit of measure used in projects and tasks., type: select, options: [{ value: hours, label: Hours }, { value: days, label: Days }] }
+              - { field: timesheet_encode_method, label: Encoding Method, description: Time unit used to record your timesheets., type: select, options: [{ value: hours, label: Hours / Minutes }, { value: days, label: Days / Half-Days }] }
+          - title: Timesheets Control
+            fields:
+              - { field: reminder_user_allow, label: Employee Reminder, description: Send a periodical email reminder to timesheets users that still have timesheets to encode., type: checkbox }
+              - { field: reminder_allow, label: Approver Reminder, description: Send a periodical email reminder to timesheets approvers that still have timesheets to validate., type: checkbox }
+          - title: Time Off
+            fields:
+              - { field: time_off_integration, label: Time Off, description: Generate timesheets for validated time off requests and public holidays. Install the optional Time Off integration to enable this setting., type: checkbox, disabled: true }

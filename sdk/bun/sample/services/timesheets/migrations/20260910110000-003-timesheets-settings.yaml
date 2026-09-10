@@ -1,0 +1,25 @@
+version: 0.0.3
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS timesheet_settings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        project_time_unit VARCHAR NOT NULL DEFAULT 'hours',
+        timesheet_encode_method VARCHAR NOT NULL DEFAULT 'hours',
+        reminder_user_allow BOOLEAN NOT NULL DEFAULT FALSE,
+        reminder_allow BOOLEAN NOT NULL DEFAULT FALSE,
+        time_off_integration BOOLEAN NOT NULL DEFAULT FALSE,
+        time_off_available BOOLEAN NOT NULL DEFAULT FALSE,
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO timesheet_settings(id, company_name, project_time_unit, timesheet_encode_method, reminder_user_allow, reminder_allow, time_off_integration, time_off_available, updated_at)
+      VALUES ('timesheets-settings-demo', 'My Company', 'hours', 'hours', FALSE, FALSE, FALSE, FALSE, TIMESTAMP '2026-01-15 00:00:00');
+    down: |
+      DROP TABLE IF EXISTS timesheet_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

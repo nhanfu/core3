@@ -202,3 +202,21 @@ reported `state: uninstalled`, `demo: false`, and no installed Timesheets
 menu, action, records, or views. No Odoo Timesheets screenshots were created
 or used. The Core3 runtime also exposes the pre-existing `/api/v1/notifications`
 404; it does not affect the Timesheets routes or datasource requests.
+
+## Batch 2 implementation record — Configuration
+
+Batch 2 adds the system-only Timesheets Configuration surface at
+`/timesheets/settings`, with the Odoo `Timesheets` tab and exact `Time Encoding`,
+`Timesheets Control`, and `Time Off` sections. Settings are persisted through
+the page-bound `api/settings.yaml` fragment and a deterministic
+`2026-01-15` migration row. `timesheets.settings` gates both the menu/page and
+save action; invalid encodings or unavailable optional Time Off integration
+return 422, stale row versions return 409, and missing permission returns 403.
+
+Authenticated Core3 menu-to-route checks used `admin@tms.local` at 1440x900 and
+390x844. Captures: `/tmp/odoo-timesheets/core3-settings-desktop.png` and
+`/tmp/odoo-timesheets/core3-settings-mobile.png`. The live Odoo check used
+`core3_reference` and `codex@core3.local`: the Timesheets Apps card displayed
+`Upgrade`, so no installed Timesheets route or settings view was available.
+Truthful limitation captures are `/tmp/odoo-timesheets-reference-desktop.png`
+and `/tmp/odoo-timesheets/odoo-reference-apps-mobile.png`.

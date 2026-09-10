@@ -1,0 +1,45 @@
+page: { id: timesheets-settings }
+datasources:
+  - id: timesheets_settings
+    single: true
+    permission: timesheets.settings
+    query: "SELECT id, row_version, company_name, project_time_unit, timesheet_encode_method, reminder_user_allow, reminder_allow, time_off_integration, time_off_available FROM timesheet_settings WHERE id = 'timesheets-settings-demo'"
+actions:
+  - id: save_timesheets_settings
+    type: client
+    permission: timesheets.settings
+    script: |
+      async ({ row, request }) => {
+        return request('/api/actions/timesheets.settings.update', {
+          method: 'POST',
+          body: {
+            id: row.id,
+            expected_row_version: row.row_version,
+            values: {
+              project_time_unit: row.project_time_unit,
+              timesheet_encode_method: row.timesheet_encode_method,
+              reminder_user_allow: row.reminder_user_allow,
+              reminder_allow: row.reminder_allow,
+              time_off_integration: row.time_off_integration,
+            },
+          },
+        });
+      }
+  - id: timesheets_settings_update_server
+    type: server
+    permission: timesheets.settings
+    action: timesheets.settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: timesheet_settings
+      key_field: id
+      fields: [project_time_unit, timesheet_encode_method, reminder_user_allow, reminder_allow, time_off_integration]
+      concurrency: { required: true }
+      guards:
+        - query: "SELECT id FROM timesheet_settings WHERE id = :id AND :project_time_unit IN ('hours', 'days') AND :timesheet_encode_method IN ('hours', 'days') AND CAST(:time_off_integration AS BOOLEAN) = false"
+          status: 422
+          code: TIMESHEETS_SETTINGS_INVALID
+          message: Choose a valid time encoding and install the optional Time Off integration before enabling it.
+      result: { query: "SELECT id, row_version, company_name, project_time_unit, timesheet_encode_method, reminder_user_allow, reminder_allow, time_off_integration, time_off_available FROM timesheet_settings WHERE id = :id" }

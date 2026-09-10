@@ -2,3 +2,4 @@ permissions:
   - timesheets.read
   - timesheets.write
   - timesheets.manage
+  - timesheets.settings
