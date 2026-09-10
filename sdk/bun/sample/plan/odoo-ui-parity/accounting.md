@@ -261,6 +261,35 @@ inline with list-level Save/Discard, while this bounded Core3 slice uses the
 existing permissioned server-form create interaction; editing existing groups
 and the excluded-journal many-to-many widget remain follow-up work.
 
+## Next batch contract: vendor payments
+
+The live Odoo 19 Invoicing menu audit recorded the next missing Accounting
+surface before implementation: Vendors → Payments, menu XML ID
+`account.menu_action_account_payments_payable`, at `/odoo/vendor-payments`.
+The Vendors dropdown presents Bills, Refunds, Payments, Employee Expenses,
+Products, and Vendors; Core3 already has the other bounded payment/document
+surfaces but does not have an explicit vendor-payments route.
+
+The desktop contract at `1440x900` is a populated `Vendor Payments` list with
+`New`, the informational panel title `Register a payment` and copy
+`Payments are used to register liquidity movements. You can process those
+payments by your own means or by using installed facilities.`, followed by
+columns Date, Number, Journal, Payment Method, Vendor, Amount, and State.
+The Odoo view switcher exposes List, Kanban, Graph, and Activity modes, and
+the list contains ten deterministic demo rows plus a total amount footer.
+The mobile contract at `390x844` opens the Kanban mode (`view_type=kanban`)
+with one card per payment showing Vendor, Amount, Number, Date, and State;
+the informational panel remains below the cards and the page has no
+horizontal overflow.
+
+The desktop New action navigates to `/odoo/vendor-payments/new` and renders a
+`Draft Payment` form with the statusbar Confirm, Paid, In Process, Draft;
+Payment Type choices Send/Receive with Send selected; Vendor; Amount `$ 0.00`;
+Date; Memo; Journal; Payment Method?; Vendor Bank Account; and the chatter
+tabs Send message, Log note, and Activity. Odoo's current demo rows and form
+were captured temporarily at `/tmp/odoo-accounting-vendor-payments-*.png`;
+the images are evidence only and are not repository assets.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a
