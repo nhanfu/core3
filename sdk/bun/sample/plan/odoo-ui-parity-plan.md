@@ -54,7 +54,7 @@ but its menu structure or visual/UX details remain approximate.
 - Stop command: `docker compose -f /home/nhanjs/projects/odoo-core3-reference/docker-compose.yml down`
 
 The Compose project contains the fresh Odoo 19 container, PostgreSQL service,
-and personal demo database used for UI comparison. Keep credentials out of
+and disposable reference demo database used for UI comparison. Keep credentials out of
 source code outside this local parity plan.
 
 ## Module register
