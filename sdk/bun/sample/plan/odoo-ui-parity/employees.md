@@ -625,6 +625,46 @@ application failures/page errors, and prove exact viewport fit. Known bounded
 differences may include Core3's Fluent shell and its service-owned activity
 row projection versus Odoo's native employee list/activity widgets.
 
+## Bounded batch: Reporting Departments
+
+This batch hardens the installed Odoo 19 `hr_department_kanban_action` under
+Employees > Reporting > Departments. The owned reference was authenticated as
+`codex@core3.local` on 2026-09-10 at `/odoo/departments`; it displayed seven
+demo departments in kanban and list states, with department forms exposing the
+Employees and Plans stat buttons, manager, parent department, company, color,
+and organization details.
+
+Core3 keeps the existing `/employees/departments` route and its
+`employee-departments` page ID, but now serves a deterministic service-owned
+projection. Migration `007` adds the Odoo-facing relation counts, color,
+visibility, and update-version fields, hides the legacy Engineering fixture
+from this report without removing it from employee configuration, and seeds
+the same seven department names and ordering. List and detail API fragments
+remain separate from layout YAML and join by `page.id`; create, update,
+archive, restore, delete, validation, duplicate, stale, missing-record, and
+transport-error contracts are explicit and manager-gated. Deletion is guarded
+to empty departments, matching Odoo's archive-first behavior for departments
+that still have employees.
+
+Final authenticated evidence, kept outside Git:
+
+- Odoo: `/tmp/odoo-employees/departments-kanban-final-1440x900.png`,
+  `/tmp/odoo-employees/departments-list-final-1440x900.png`,
+  `/tmp/odoo-employees/department-form-final-1440x900.png`,
+  `/tmp/odoo-employees/departments-kanban-final-390x844.png`, and
+  `/tmp/odoo-employees/department-form-final-390x844.png`.
+- Core3: `/tmp/core3-odoo-employees/departments-kanban-final-1440x900.png`,
+  `/tmp/core3-odoo-employees/departments-list-final-1440x900.png`,
+  `/tmp/core3-odoo-employees/department-form-final-1440x900.png`,
+  `/tmp/core3-odoo-employees/departments-kanban-final-390x844.png`, and
+  `/tmp/core3-odoo-employees/department-form-final-390x844.png`.
+
+The focused Departments reporting test covers page/API ownership, seven
+stable fixtures, search and empty states, detail/not-found and transport
+errors, create/update/archive/restore, required-name validation, duplicate
+names, optimistic stale writes, and the `employees.read` versus
+`employees.manage` boundary.
+
 ## Acceptance
 
 - Source and manifest checks identify `hr`, version, dependencies, official
