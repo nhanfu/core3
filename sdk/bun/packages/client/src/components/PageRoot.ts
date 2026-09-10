@@ -13,6 +13,8 @@ import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 import { i18n } from '@core3/client/i18n';
 import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 import { html } from '@core3/client/html';
+import { client } from '@core3/client/client';
+import { createQuery } from '@core3/client/dtos';
 
 function createFluentElement(tag: string): HTMLElement {
   return html.node(tag) as HTMLElement;
@@ -168,10 +170,6 @@ export class PageRuntime extends BaseComponent {
   async draw(container: HTMLElement) {
     const { config } = this.state;
     const registry = this.registry;
-  // Dynamic imports to avoid circular deps
-  const { client } = await import('@core3/client/client');
-  const { createQuery } = await import('@core3/client/dtos');
-
   // 1. Auth check
   const user: any = window.__CORE3_USER__ || {};
   const requiredPerms = config.page?.auth?.require || [];
