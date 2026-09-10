@@ -174,14 +174,15 @@ evidenced:
   authenticated Odoo reference screenshots and Core3 verification screenshots
   under explicitly recorded `/tmp` paths;
 - ordinary user, Equipment Manager, system/settings user, another company,
-  and denied user checks prove visibility and mutation boundaries. No claim of
-  Odoo visual parity is made while the reference addon remains uninstalled.
+  and denied user checks prove visibility and mutation boundaries. The current
+  local reference is installed with demo data; this plan still does not claim
+  full Odoo visual parity for deferred surfaces.
 
 ## Focused pre-implementation evidence
 
 Completed for this gate: source manifest/XML/security/demo inspection; Core3
 maintenance manifest, pages, migrations, permissions, styles, and package
 scripts inspection; authenticated localhost:8069 login and RPC status query;
-and `/tmp` maintenance screenshot filename audit. The reference limitation is
-recorded precisely above. Product implementation and product-code tests are
-out of scope for this plan-only change.
+and authenticated desktop/mobile Maintenance captures in `/tmp`. The local
+reference is `core3_personal`, with `maintenance=installed,demo=true`; the
+remaining limitation is deferred behavior, not addon availability.
