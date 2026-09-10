@@ -139,6 +139,36 @@ describe('document detail components', () => {
     expect(container.querySelector('.o-form-statusbar-step.is-current')).toBeNull();
   });
 
+  it('dispatches configured statusbar actions while preserving Odoo labels', async () => {
+    const submitted: Array<{ action: string; params: any }> = [];
+    const component = new OdooFormView('maintenance-request', {
+      record: { id: 'request-1', name: 'MNT/2026/0001', state: 'New Request' },
+    }, {
+      title_field: 'name',
+      status_field: 'state',
+      statusbar: [
+        { value: 'New Request', label: 'New Request' },
+        { value: 'In Progress', label: 'In Progress' },
+        { value: 'Repaired', label: 'Repaired' },
+        { value: 'Scrap', label: 'Scrap' },
+      ],
+      statusbar_actions: {
+        'In Progress': 'assign_request',
+        Repaired: 'repair_request',
+      },
+      header_actions: [{ id: 'cancel_request', label: 'Cancel', variant: 'danger' }],
+    });
+    component._transport = { submit: async (action, params) => { submitted.push({ action, params }); } };
+    const container = mount(component);
+
+    expect([...container.querySelectorAll('.o-form-statusbar-step')].map(step => step.textContent)).toEqual(['New Request', 'In Progress', 'Repaired', 'Scrap']);
+    expect(container.querySelector<HTMLButtonElement>('.o-form-statusbar-step:nth-child(2)')?.type).toBe('button');
+    expect(container.querySelectorAll('.o-form-statusbar-step')[3]?.tagName).toBe('SPAN');
+    container.querySelector<HTMLButtonElement>('.o-form-statusbar-step:nth-child(2)')!.click();
+    await Promise.resolve();
+    expect(submitted).toEqual([{ action: 'assign_request', params: { id: 'request-1', name: 'MNT/2026/0001', state: 'New Request' } }]);
+  });
+
   it('supports inline edit, save, and discard lifecycle', async () => {
     const saved: any[] = [];
     const component = new OdooFormView('customer', { record: { id: 'c1', name: 'Acme', status: 'Active' } }, {

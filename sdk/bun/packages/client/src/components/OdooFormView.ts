@@ -47,6 +47,9 @@ export class OdooFormView extends BaseComponent {
       ? String(record[this.def.status_label_field || this.def.status_field] || status)
       : '';
     const statusStages = Array.isArray(this.def.statusbar) ? this.def.statusbar : [];
+    const statusbarActions = this.def.statusbar_actions && typeof this.def.statusbar_actions === 'object'
+      ? this.def.statusbar_actions
+      : {};
     const statusBadge = (this.def.status_badges || []).find((badge: any) => String(badge.value) === status);
     const layout = html.take(root).div.className('o-form-layout').ele();
     const sheetBackground = html.take(layout).div.className('o-form-sheet-bg').ele();
@@ -93,9 +96,13 @@ export class OdooFormView extends BaseComponent {
         for (const stage of statusStages) {
           const stageValue = String(stage.value ?? stage.id ?? stage.label ?? '');
           const stageLabel = String(stage.label ?? stageValue);
-          const item = html.take(steps).span.className(`o-form-statusbar-step${stageValue === status ? ' is-current' : ''}`).ele();
+          const actionId = typeof statusbarActions[stageValue] === 'string' ? statusbarActions[stageValue] : undefined;
+          const item = actionId
+            ? html.take(steps).button.className(`o-form-statusbar-step${stageValue === status ? ' is-current' : ''}`).attr('type', 'button').ele()
+            : html.take(steps).span.className(`o-form-statusbar-step${stageValue === status ? ' is-current' : ''}`).ele();
           html.take(item).replaceText(stageLabel);
           if (stageValue === status) html.take(item).attr('aria-current', 'step');
+          if (actionId) html.take(item).event('click', () => void this.submit(actionId, { ...record }));
         }
       }
     }

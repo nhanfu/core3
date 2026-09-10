@@ -86,6 +86,28 @@ describe('Maintenance bounded Odoo parity batch', () => {
     expect(yaml('api/settings.yaml').actions[0].permission).toBe('maintenance.settings');
   });
 
+  test('exposes Odoo request statusbar actions and cancel action', () => {
+    const page = yaml('pages/request-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    expect(form.statusbar.map((stage: any) => stage.label)).toEqual(['New Request', 'In Progress', 'Repaired', 'Scrap']);
+    expect(form.statusbar_actions).toEqual({
+      'In Progress': 'assign_maintenance_request_detail',
+      Repaired: 'start_maintenance_request_detail',
+      Scrap: 'repair_maintenance_request_detail',
+    });
+    expect(form.header_actions).toEqual([{ id: 'cancel_maintenance_request_detail', label: 'Cancel', variant: 'danger', permission: 'maintenance.write', show_if: "state.maintenance_request_detail.state !== 'Scrap'" }]);
+    const api = yaml('api/request-detail.yaml');
+    expect(api.actions.map((action: any) => action.id)).toEqual([
+      'assign_maintenance_request_detail',
+      'start_maintenance_request_detail',
+      'repair_maintenance_request_detail',
+      'cancel_maintenance_request_detail',
+    ]);
+    expect(api.actions.every((action: any) => action.permission === 'maintenance.write')).toBe(true);
+    expect(api.actions.every((action: any) => action.refresh.includes('maintenance_request_detail'))).toBe(true);
+    expect(yaml('pages/maintenance-workflow.yaml').workflow.transitions.map((transition: any) => transition.mutation.guards[0].status)).toEqual([409, 409, 409, 409]);
+  });
+
   test('uses fixed migration fixtures rather than moving clock or random identifiers', () => {
     for (const file of readdirSync(join(serviceRoot, 'migrations')).filter((file) => file.endsWith('.yaml'))) {
       const source = readFileSync(join(serviceRoot, 'migrations', file), 'utf8');

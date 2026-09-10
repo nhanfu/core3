@@ -146,6 +146,14 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
       ...Object.fromEntries(statusSource.map((state: any) => [state.value, state.color || 'neutral'])),
     };
   }
+  if (def.statusbar_actions && typeof def.statusbar_actions === 'object') {
+    formDef.statusbar_actions = Object.fromEntries(
+      Object.entries(def.statusbar_actions).filter(([, actionId]) => {
+        const action = (config.actions || []).find((candidate: any) => candidate.id === actionId);
+        return action && hasPermission(ctx.user, action.permission);
+      }),
+    );
+  }
   const editButton = (def.header_actions || []).find((button: any) => {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
     return action && ['form', 'server_form'].includes(action.type)
