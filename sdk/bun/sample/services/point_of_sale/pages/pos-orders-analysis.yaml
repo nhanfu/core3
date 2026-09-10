@@ -1,0 +1,41 @@
+title: Orders Analysis
+page: { id: pos-orders-analysis, route: /point-of-sale/orders-analysis, breadcrumb: [Sales, Point of Sale, Reporting, Orders], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_orders_analysis
+    search: { label: Search orders analysis, placeholder: Search product category or state... }
+    empty_state: { title: No order analysis data, description: Orders matching the current search or filters are shown here. }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: category
+        measure_field: total_price
+        measure_label: Total Price
+        type: bar
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: category, column: Product Category }
+            - { field: state, column: Status }
+            - { field: order_count, column: Orders }
+            - { field: total_price, column: Total Price }
+          default:
+            rows: [category]
+            columns: [state]
+            measures:
+              - { field: order_count, aggregate: sum, column: Orders }
+              - { field: total_price, aggregate: sum, column: Total Price }
+        show_leaf_rows: false
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: category, label: Product Category, type: PrimaryEntityCell }
+      - { field: state, label: Status }
+      - { field: order_count, label: Orders, align: right }
+      - { field: total_price, label: Total Price, align: right }
+    page_size: 80
+    row_key: category

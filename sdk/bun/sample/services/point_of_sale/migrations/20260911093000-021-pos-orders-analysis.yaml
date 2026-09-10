@@ -1,0 +1,24 @@
+version: 0.0.22
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_order_analysis (
+        id VARCHAR PRIMARY KEY,
+        category VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Paid',
+        total_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        order_date TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT INTO pos_order_analysis(id, category, state, total_price, order_date) VALUES
+        ('pos-analysis-demo-001', 'Furniture / Office', 'Paid', 11.45, TIMESTAMP '2026-08-17 09:15:00'),
+        ('pos-analysis-demo-002', 'Goods', 'Paid', 7.50, TIMESTAMP '2026-08-17 09:40:00'),
+        ('pos-analysis-demo-003', 'Goods', 'Paid', 10.85, TIMESTAMP '2026-08-17 10:20:00'),
+        ('pos-analysis-demo-004', 'Goods', 'Cancelled', 4.20, TIMESTAMP '2026-08-17 10:45:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_order_analysis;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -64,6 +64,10 @@ menu:
           label: Sales Analysis
           icon: chart
           permission: pos.read
+        - path: /point-of-sale/orders-analysis
+          label: Orders
+          icon: chart
+          permission: pos.read
         - path: /point-of-sale/session-report
           label: Session Report
           icon: chart

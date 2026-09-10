@@ -1,0 +1,15 @@
+page: { id: pos-orders-analysis }
+datasources:
+  - id: pos_orders_analysis
+    single: false
+    permission: pos.read
+    pivot:
+      fields: [category, state, order_count, total_price]
+    query: |
+      SELECT category, state, COUNT(*) AS order_count,
+        CAST(SUM(total_price) AS DOUBLE) AS total_price
+      FROM pos_order_analysis
+      WHERE state <> 'Cancelled'
+        AND (:q IS NULL OR category ILIKE '%' || :q || '%' OR state ILIKE '%' || :q || '%')
+      GROUP BY category, state
+      ORDER BY total_price DESC, category

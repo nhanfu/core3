@@ -38,6 +38,46 @@ describe('POS session parity batch', () => {
   });
 });
 
+describe('POS Orders Analysis parity', () => {
+  test('registers the distinct Reporting Orders action and joins page/API by id', () => {
+    const manifest = yaml('manifest.yaml');
+    const menu = manifest.menu.groups.flatMap((group: any) => group.items);
+    const page = yaml('pages/pos-orders-analysis.yaml');
+    const api = yaml('api/pos-orders-analysis.yaml');
+    expect(menu).toContainEqual(expect.objectContaining({ path: '/point-of-sale/orders-analysis', label: 'Orders', permission: 'pos.read' }));
+    expect(page.page.id).toBe('pos-orders-analysis');
+    expect(api.page.id).toBe(page.page.id);
+    expect(page.page.route).toBe('/point-of-sale/orders-analysis');
+  });
+
+  test('matches Odoo graph/pivot fields and keeps the default cancelled exclusion service-owned', () => {
+    const page = yaml('pages/pos-orders-analysis.yaml');
+    const api = yaml('api/pos-orders-analysis.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    expect(list.views.map((view: any) => view.id)).toEqual(['graph', 'pivot', 'list']);
+    expect(list.views[0]).toMatchObject({ category_field: 'category', measure_field: 'total_price', measure_label: 'Total Price', type: 'bar' });
+    expect(list.views[1].pivot.default).toMatchObject({ rows: ['category'], columns: ['state'] });
+    expect(list.views[1].show_leaf_rows).toBe(false);
+    expect(list.views[1].pivot.default.measures).toEqual(expect.arrayContaining([
+      { field: 'order_count', aggregate: 'sum', column: 'Orders' },
+      { field: 'total_price', aggregate: 'sum', column: 'Total Price' },
+    ]));
+    expect(api.datasources[0]).toMatchObject({ id: 'pos_orders_analysis', permission: 'pos.read' });
+    expect(api.datasources[0].query).toContain("WHERE state <> 'Cancelled'");
+    expect(api.datasources[0].pivot.fields).toEqual(['category', 'state', 'order_count', 'total_price']);
+  });
+
+  test('seeds deterministic grouped analysis values for graph and pivot states', () => {
+    const migration = yaml('migrations/20260911093000-021-pos-orders-analysis.yaml');
+    expect(migration.kind).toBe('data');
+    expect(migration.type.postgres.up).toContain("'pos-analysis-demo-001'");
+    expect(migration.type.postgres.up).toContain("'Furniture / Office'");
+    expect(migration.type.postgres.up).toContain("'Goods', 'Cancelled'");
+    expect(migration.type.postgres.up).toContain("TIMESTAMP '2026-01-15 00:00:00'");
+    expect(migration.type.postgres.up).not.toContain('CURRENT_TIMESTAMP');
+  });
+});
+
 describe('POS payments list/detail parity', () => {
   test('keeps the payment list read-only and opens the Odoo payment form', () => {
     const page = yaml('pages/pos-payments.yaml');

@@ -343,6 +343,27 @@ permissioned New/Save/Discard editing with required-field and row-version
 guards. Authenticated desktop/mobile CRUD evidence is retained under `/tmp`;
 screenshots remain outside Git.
 
+## Current batch: Orders Analysis report
+
+The owned Odoo 19 reference exposes `Point of Sale → Reporting → Orders` as
+the Orders Analysis action. Its authenticated report defaults to the `Not
+Cancelled` domain and provides Graph and Pivot views at desktop and mobile
+widths. The graph groups by product category and measures `Total Price`; the
+pivot groups by product category and status with `Orders` and `Total Price`
+measures. Reference captures are `/tmp/odoo-pos-orders-analysis-desktop.png`
+and `/tmp/odoo-pos-orders-analysis-mobile.png`.
+
+Core3 adds `/point-of-sale/orders-analysis` with a separate page/API pair
+joined by `page.id`, the reporting menu entry, deterministic paid/cancelled
+analysis rows, service-owned cancelled exclusion, Graph/Pivot/List tabs,
+empty/search states, and `pos.read` permission. The pivot explicitly
+suppresses duplicate leaf rows for grouped aggregate results. Core3 captures
+are `/tmp/core3-pos-orders-analysis-desktop.png`,
+`/tmp/core3-pos-orders-analysis-mobile.png`, and
+`/tmp/core3-pos-orders-analysis-pivot.png`; screenshots remain outside Git.
+The bounded slice does not yet reproduce Odoo's purple shell or visible
+`Not Cancelled` search facet; those remain documented visual follow-up gaps.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,
