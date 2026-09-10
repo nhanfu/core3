@@ -1,0 +1,7 @@
+page: { id: event-question-detail }
+datasources:
+  - id: event_question_detail
+    single: true
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_QUESTION_DETAIL_UNAVAILABLE, message: Event question details are temporarily unavailable. } }
+    query: "SELECT id, row_version, title, question_type, mandatory, once_per_order, answers, 'Event Question' AS question_label FROM event_questions WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"

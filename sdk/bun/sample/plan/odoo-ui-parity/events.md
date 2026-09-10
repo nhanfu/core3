@@ -500,6 +500,18 @@ its list has the same four seeded stages, while the Core3 detail remains a
 bounded three-field form and does not yet reproduce Odoo's richer stage form
 controls.
 
+The bounded Event Questions follow-up adds the missing list-to-form workflow at
+`/events/questions/detail?id=<id>`. The list now opens and double-clicks into a
+question, and the service-owned detail form exposes Odoo-shaped Question and
+Answers groups with permissioned edit/delete actions. Migration
+`20260910230000-011-event-question-detail.yaml` adds optimistic record-version
+data; duplicate-title, missing-record, and detail transport-error boundaries
+are declared and covered by focused tests. Fresh authenticated desktop/mobile
+Core3 captures are `/tmp/core3-events-questions-detail-{desktop,mobile}.png`;
+the installed Odoo list references are `/tmp/odoo-events-desktop-event-questions.png`
+and `/tmp/odoo-events-mobile-event-questions.png`. The Core3 detail remains a
+bounded form and does not yet reproduce Odoo's full answer-choice editor.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

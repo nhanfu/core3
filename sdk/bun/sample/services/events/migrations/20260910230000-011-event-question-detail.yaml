@@ -1,0 +1,13 @@
+version: 0.0.11
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_questions ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      UPDATE event_questions SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      ALTER TABLE event_questions DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

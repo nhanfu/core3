@@ -1,0 +1,65 @@
+title: Event Question
+page: { id: event-question-detail, route: /events/questions/detail, breadcrumb: [Marketing, Events, Configuration, Event Questions], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_question_detail
+    title_field: title
+    subtitle_field: question_type
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_event_questions, label: Back to event questions, variant: secondary, permission: events.read }
+      - { id: edit_event_question, label: Edit, variant: primary, permission: events.write }
+      - { id: delete_event_question, label: Delete, variant: danger, permission: events.write, confirm: Delete this event question? }
+    groups:
+      - title: Question
+        fields:
+          - { field: title, label: Title }
+          - { field: question_type, label: Type }
+          - { field: mandatory, label: Mandatory }
+          - { field: once_per_order, label: Once per Order }
+      - title: Answers
+        fields:
+          - { field: answers, label: Answers }
+          - { field: row_version, label: Record version }
+actions:
+  - id: back_to_event_questions
+    type: navigate
+    permission: events.read
+    navigate_to: /events/questions
+  - id: edit_event_question
+    type: server_form
+    permission: events.write
+    title: Edit event question
+    action: events.questions.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.event_question_detail
+    refresh: [event_question_detail, event_questions]
+    mutation:
+      operation: update
+      table: event_questions
+      fields: [title, question_type, mandatory, once_per_order, answers]
+      required: [title, question_type]
+      guards:
+        - { query: "SELECT id FROM event_questions WHERE id = :id", status: 404, message: Event question not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_questions WHERE LOWER(title) = LOWER(:title) AND id <> :id)", status: 409, code: EVENT_QUESTION_TITLE_EXISTS, message: An event question with this title already exists. }
+      result: { query: "SELECT * FROM event_questions WHERE id = :id" }
+    fields:
+      - { field: title, label: Title, type: text, required: true }
+      - { field: question_type, label: Type, type: select, options: [Name, Email, Phone, Text, Selection] }
+      - { field: mandatory, label: Mandatory, type: checkbox }
+      - { field: once_per_order, label: Once per Order, type: checkbox }
+      - { field: answers, label: Answers, type: text }
+  - id: delete_event_question
+    type: server
+    permission: events.write
+    action: events.questions.delete
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [event_questions]
+    mutation:
+      operation: delete
+      table: event_questions
+      guards: [{ query: "SELECT id FROM event_questions WHERE id = :id", status: 404, message: Event question not found. }]

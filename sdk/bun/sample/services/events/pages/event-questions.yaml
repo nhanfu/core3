@@ -9,8 +9,16 @@ components:
     columns: [{ field: title, label: Title, type: PrimaryEntityCell }, { field: mandatory, label: Mandatory, type: StatusChip }, { field: once_per_order, label: Once per Order, type: StatusChip }, { field: question_type, label: Type }, { field: answers, label: Answers }]
     page_size: 50
     row_key: id
+    row_open_action: view_event_question
+    row_double_click_action: view_event_question
     create_action: create_event_question
+    empty_state: { title: No event questions, description: Create questions to collect attendee information during registration. }
 actions:
+  - id: view_event_question
+    type: navigate
+    permission: events.read
+    navigate_to: /events/questions/detail
+    params: { id: '{row.id}' }
   - id: create_event_question
     type: server_form
     permission: events.write
@@ -19,5 +27,13 @@ actions:
     handler: yaml_mutation
     operation: create
     refresh: [event_questions]
-    mutation: { operation: insert, table: event_questions, fields: [title, question_type, mandatory, once_per_order, answers], required: [title, question_type], defaults: { mandatory: false, once_per_order: false, answers: '' }, result: { query: "SELECT * FROM event_questions WHERE id = :id" } }
+    mutation:
+      operation: insert
+      table: event_questions
+      fields: [title, question_type, mandatory, once_per_order, answers]
+      required: [title, question_type]
+      defaults: { mandatory: false, once_per_order: false, answers: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_questions WHERE LOWER(title) = LOWER(:title))", status: 409, code: EVENT_QUESTION_TITLE_EXISTS, message: An event question with this title already exists. }
+      result: { query: "SELECT * FROM event_questions WHERE id = :id" }
     fields: [{ field: title, label: Title, type: text, required: true }, { field: question_type, label: Type, type: select, options: [Name, Email, Phone, Text, Selection] }, { field: mandatory, label: Mandatory, type: checkbox, default: false }, { field: once_per_order, label: Once per Order, type: checkbox, default: false }, { field: answers, label: Answers, type: text }]
