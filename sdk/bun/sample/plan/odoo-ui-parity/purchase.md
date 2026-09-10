@@ -1,6 +1,6 @@
 # Purchase UI parity — sub-plan
 
-Status: `ready`
+Status: `in-progress`
 
 ## Reference gate and evidence
 
@@ -10,36 +10,92 @@ Status: `ready`
   It depends on `account`, is an application, and declares official demo data
   in `data/purchase_demo.xml`.
 - Authenticated live reference checked on 2026-09-10 at
-  `http://localhost:8069`, database `core3_demo`, server version
-  `19.0-20260908`, as `admin@core3.local`.
-- Live addon status was read through authenticated `ir.module.module`: module
-  `purchase` is `state: uninstalled`, `demo: false`, `latest_version: false`.
-  Therefore the live database has no Purchase menu/action/record/view state to
-  use as an installed visual reference. Do not claim official demo records are
-  live or create installed-reference screenshots until Purchase is installed
-  in a disposable database with demo loading enabled.
-- Authenticated `/odoo/purchase`, `/odoo/purchase-orders`, and
-  `/odoo/purchase-products` all resolved to `/odoo/discuss` (Discuss shell).
-  These are truthful addon-unavailable fallbacks, not Purchase captures:
-  `/tmp/odoo-purchase-uninstalled-desktop.png` (1440x900) and
-  `/tmp/odoo-purchase-uninstalled-mobile.png` (390x844).
-- Required installed-reference captures, to be produced only after the addon
-  is enabled, are under `/tmp/odoo-purchase/`:
-  `rfq-desktop.png`, `rfq-mobile.png`, `orders-desktop.png`,
-  `orders-mobile.png`, `order-draft-desktop.png`, `order-draft-mobile.png`,
-  `order-sent-desktop.png`, `order-sent-mobile.png`,
-  `order-confirmed-desktop.png`, `order-confirmed-mobile.png`,
-  `order-cancelled-desktop.png`, `order-cancelled-mobile.png`,
-  `products-desktop.png`, `products-mobile.png`,
-  `variants-desktop.png`, `variants-mobile.png`,
-  `purchase-analysis-desktop.png`, `purchase-analysis-mobile.png`,
-  `vendor-pricelists-desktop.png`, `vendor-pricelists-mobile.png`,
-  `categories-desktop.png`, `categories-mobile.png`,
-  `attributes-desktop.png`, `attributes-mobile.png`,
-  `units-packagings-desktop.png`, `units-packagings-mobile.png`,
-  `settings-desktop.png`, and `settings-mobile.png`.
-  Use 1440x900 desktop and 390x844 touch mobile; capture loaded authenticated
-  states after asserting the expected app/menu/title and visible records.
+  `http://localhost:8069`, database `core3_personal`, server version
+  `19.0-20260908`, as `codex@core3.local`.
+- Purchase is installed with official demo data enabled. The live RFQ route
+  contains 12 records and the live Purchase Orders route contains 4 records;
+  the installed reference captures are under `/tmp/odoo-purchase/`:
+  `list-desktop.png`, `kanban-desktop.png`, `pivot-desktop.png`,
+  `graph-desktop.png`, `calendar-desktop.png`, `activity-desktop.png`,
+  `desktop-orders.png`, `mobile-orders.png`, `desktop-order-p00012.png`, and
+  `mobile-order-p00012.png`. They are local evidence only and are not
+  committed.
+
+### Installed reference menu and responsive evidence
+
+The visible Purchase application menu is exactly:
+
+| Top menu | Visible entries and authenticated route |
+| --- | --- |
+| Orders | `Requests for Quotation` (`/odoo/purchase`), `Purchase Orders` (`/odoo/purchase-orders`), `Vendors` (`/odoo/vendors`) |
+| Products | `Products` (`/odoo/purchase-products`), `Product Variants` (`/odoo/action-694`) |
+| Reporting | `Purchase` (`/odoo/purchase-analysis`) |
+| Configuration | `Settings` (`/odoo/action-704`), `Vendor Pricelists` (`/odoo/action-239`), `Attributes` (`/odoo/attributes`), `Categories` (`/odoo/product-categories`) |
+
+The source inventory also contains group-gated `Units & Packagings`; it was
+not visible to `codex@core3.local` in this installed reference and remains a
+manager/UoM-group follow-up rather than an observed visible menu entry.
+
+On a 1440x900 desktop, `/odoo/purchase` and `/odoo/purchase-orders` expose
+visible `List`, `Kanban`, `Pivot`, `Graph`, `Calendar`, and `Activity` view
+switches. RFQ list rows show `Reference`, `Vendor`, `Company`, `Buyer`,
+`Order Deadline`, `Activities`, `Total`, and `Status`; Purchase Orders rows
+show `Reference`, `Confirmation Date`, `Vendor`, `Company`, `Buyer`,
+`Activities`, `Source`, `Total`, `Billing Status`, and `Expected Arrival`.
+Both populated routes fit the viewport without horizontal overflow.
+
+On a 390x844 touch viewport, both list routes select `Kanban` and use compact
+cards; the top menu becomes `Toggle menu`, the `New` and `Actions menu`
+controls remain available, and there is no horizontal overflow. Selecting
+`P00012` navigates to `/odoo/purchase-orders/12` at both sizes. Desktop detail
+shows `Bill Matching`, `Price Comparison`, `Receipt`, `Receive`, `Upload Bill`,
+`Send PO`, `Acknowledge`, `Print`, `Cancel`, the Products table, totals, and
+chatter. Mobile keeps `Receive` in the compact header, collapses the two
+product rows into cards with `Add Order Lines`, and preserves totals/chatter
+without horizontal overflow.
+
+## Bounded Purchase Orders batch delivered
+
+The isolated batch implements the coherent Purchase Orders list/detail seam:
+
+- Core3 routes are `/purchase/purchase-orders` and
+  `/purchase/detail?id=<stable-order-id>`, with the visible manifest entry
+  `Purchase Orders` under `Operations`.
+- `services/purchase/api/purchase-orders.yaml` and
+  `services/purchase/api/purchase-detail.yaml` own the datasource contracts by
+  matching `page.id`; page YAML remains layout-only.
+- Migration `20260910150000-004-purchase-orders-ui-demo.yaml` adds three fixed
+  purchase orders to the existing confirmed record, covering `Confirmed` and
+  `Received`, partial/full receipt, billing status, vendor, buyer, expected
+  arrival, reference, notes, lock, and acknowledgement fields.
+- The desktop list exposes Odoo-labeled `List`, `Kanban`, `Calendar`, `Pivot`,
+  `Graph`, and `Activity` tabs. The pivot datasource declares its safe fields,
+  and the table is constrained to an internal horizontal control rather than
+  expanding the page.
+- The mobile list uses the shared flat `Cards` fallback while hiding the
+  desktop-only grouped Kanban; tapping a card navigates to the detail route at
+  390px without overflow. A late-bound shared ListView action callback fixes
+  card navigation when page actions attach after the first render.
+- Focused fixtures cover populated ordering, vendor/product search, status
+  filtering, no-match/empty list, not-found detail, and route/API permission
+  boundaries. Dispatcher browser access receives the expected 403 page state.
+
+Core3 comparison captures are local under `/tmp`:
+`core3-purchase-orders-desktop-final3.png`,
+`core3-purchase-orders-mobile-final3.png`,
+`core3-purchase-order-detail-desktop-final3.png`,
+`core3-purchase-order-detail-mobile-final3.png`,
+`core3-purchase-orders-pivot-desktop-final3.png`,
+`core3-purchase-empty-final.png`, `core3-purchase-no_match-final.png`,
+`core3-purchase-not_found-final.png`, and
+`core3-purchase-denied-final.png`. They are deliberately not committed.
+
+The remaining reference limitation is scope, not environment: this batch has
+one live installed Odoo detail capture (`P00012`) and does not yet clone the
+other Purchase menu families, manager/UoM-gated entries, all order states,
+multi-line/section/note order editing, chatter actions, portal routes, or the
+full product/configuration/reporting contracts. Those remain open follow-up
+gates in this sub-plan.
 
 ## Source-defined menu and action inventory
 
@@ -120,8 +176,8 @@ backend Purchase application batch unless explicitly added to the parent plan.
 
 The existing service is `sdk/bun/sample/services/purchase` with:
 
-- `manifest.yaml`, `permissions.yaml`, `storage.yaml`, and two foundation/demo
-  migrations;
+- `manifest.yaml`, `permissions.yaml`, `storage.yaml`, foundation/demo/parity
+  migrations, and the bounded Purchase Orders demo migration;
 - `pages/purchase-orders.yaml`, `purchase-detail.yaml`, `vendors.yaml`,
   `analysis.yaml`, and `purchase-workflow.yaml`;
 - `purchase_orders` and `purchase_vendors` storage, a Draft → Sent → Confirmed

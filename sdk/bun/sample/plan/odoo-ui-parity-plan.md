@@ -75,7 +75,7 @@ source code outside this local parity plan.
 | spreadsheet | spreadsheet | available | `odoo-ui-parity/spreadsheet.md` | ready |
 | inventory | stock | available | `odoo-ui-parity/inventory.md` | ready |
 | manufacturing | mrp | available | `odoo-ui-parity/manufacturing.md` | planned |
-| purchase | purchase | available | `odoo-ui-parity/purchase.md` | ready |
+| purchase | purchase | available | `odoo-ui-parity/purchase.md` | in-progress |
 | maintenance | maintenance | available | `odoo-ui-parity/maintenance.md` | ready |
 | field-service | industry_fsm | unavailable in supplied source | `odoo-ui-parity/field-service.md` | planned |
 | helpdesk | helpdesk | unavailable in supplied source | `odoo-ui-parity/helpdesk.md` | planned |
