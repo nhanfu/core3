@@ -3,7 +3,7 @@ datasources:
   - id: pos_preset_detail
     single: true
     permission: pos.read
-    query: "SELECT id, row_version, name, service_mode, pricelist, fiscal_position, use_timing, schedule, slots_per_interval, interval_time, identification, is_return, color, available_in_self, service_at, email_confirmation, preparation_minutes, guest_count, note, active FROM pos_order_presets WHERE id = :id"
+    query: "SELECT id, row_version, name, service_mode, pricelist, fiscal_position, use_timing, schedule, slots_per_interval, interval_time, identification, is_return, color, available_in_self, service_at, email_confirmation, preparation_minutes, guest_count, note, active, CASE name WHEN 'Dine In' THEN 8 ELSE 1 END AS orders_count, 1 AS config_count FROM pos_order_presets WHERE id = :id"
 actions:
   - id: edit_pos_order_preset
     type: server_form
@@ -39,3 +39,12 @@ actions:
       - { field: guest_count, label: Default guests, type: number }
       - { field: note, label: Default note, type: textarea }
       - { field: active, label: Active, type: checkbox }
+  - id: open_pos_preset_orders
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/orders
+    params: { preset_id: '{row.id}' }
+  - id: open_pos_preset_config
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/configs

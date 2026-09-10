@@ -89,6 +89,8 @@ describe('POS preset detail parity batch', () => {
       empty_state: expect.objectContaining({ title: 'No presets' }),
     });
     expect(listPage.components[0].columns.map((column: any) => column.label)).toEqual(['Label', 'Manage orders by time', 'Identification', 'Color']);
+    expect(listPage.components[0].selectable).toBe(true);
+    expect(listPage.components[0].column_chooser).toBe(true);
     expect(action(listApi, 'view_pos_order_preset')).toMatchObject({
       navigate_to: '/point-of-sale/preset-detail',
       params: { id: '{row.id}' },
@@ -99,6 +101,7 @@ describe('POS preset detail parity batch', () => {
     });
     expect(detailPage.components[0].groups.flatMap((group: any) => group.fields.map((field: any) => field.field)))
       .toEqual(expect.arrayContaining(['use_timing', 'identification', 'is_return', 'available_in_self', 'email_confirmation']));
+    expect(detailPage.components[0].stat_buttons.map((button: any) => button.label)).toEqual(['Order(s)', 'PoS Config']);
   });
 
   test('creates and updates presets with required fields and stale-write protection', async () => {

@@ -1,0 +1,14 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE pos_order_presets SET name = 'Takeout', service_mode = 'Takeout' WHERE id = 'pos-preset-takeaway';
+      UPDATE pos_order_presets SET name = 'Dine In', service_mode = 'Dine In' WHERE id = 'pos-preset-dine-in';
+    down: |
+      UPDATE pos_order_presets SET name = 'Takeaway', service_mode = 'Takeaway' WHERE id = 'pos-preset-takeaway';
+      UPDATE pos_order_presets SET name = 'Dine in', service_mode = 'Dine in' WHERE id = 'pos-preset-dine-in';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

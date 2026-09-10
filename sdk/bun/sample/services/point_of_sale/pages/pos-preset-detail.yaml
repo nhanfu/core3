@@ -4,12 +4,14 @@ components:
   - type: OdooFormView
     source: pos_preset_detail
     title_field: name
+    stat_buttons:
+      - { id: open_pos_preset_orders, label: Order(s), value_field: orders_count, permission: pos.read }
+      - { id: open_pos_preset_config, label: PoS Config, value_field: config_count, permission: pos.read }
     group_columns: 2
     groups:
       - title: Preset
         fields:
           - { field: name, label: Label }
-          - { field: service_mode, label: Service mode }
           - { field: pricelist, label: Pricelist }
           - { field: fiscal_position, label: Fiscal Position }
           - { field: identification, label: Identification }

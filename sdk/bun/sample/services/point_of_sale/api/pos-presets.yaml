@@ -22,11 +22,11 @@ actions:
       table: pos_order_presets
       fields: [name, service_mode, preparation_minutes, guest_count, note, active]
       required: [name, service_mode]
-      defaults: { service_mode: Takeaway, preparation_minutes: 0, guest_count: 1, active: true }
+      defaults: { service_mode: Takeout, preparation_minutes: 0, guest_count: 1, active: true }
       result: { query: "SELECT * FROM pos_order_presets WHERE id = :id" }
     fields:
       - { field: name, label: Preset, type: text, required: true }
-      - { field: service_mode, label: Service mode, type: select, options: [Takeaway, Dine in, Delivery], default: Takeaway }
+      - { field: service_mode, label: Service mode, type: select, options: [Takeout, Dine In, Delivery], default: Takeout }
       - { field: preparation_minutes, label: Preparation (min), type: number, default: 0 }
       - { field: guest_count, label: Guests, type: number, default: 1 }
       - { field: note, label: Default note, type: textarea }
