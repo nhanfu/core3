@@ -10,6 +10,7 @@ components:
     labels: { workflowStatus: Session state }
     header_actions:
       - { id: start_live_session_question, label: Start, variant: primary, permission: surveys.manage, show_if: "record.session_state === 'Ready'" }
+      - { id: advance_live_session_question, label: Next, variant: primary, permission: surveys.manage, show_if: "record.session_state === 'In Progress' && record.current_question_sequence < record.question_count" }
       - { id: end_live_session, label: Close Live Session, variant: danger, permission: surveys.manage, show_if: "record.session_state === 'Ready' || record.session_state === 'In Progress'" }
     statusbar: [{ value: Closed, label: Closed }, { value: Ready, label: Ready }, { value: In Progress, label: In Progress }]
     status_colors: { Closed: neutral, Ready: blue, 'In Progress': green }

@@ -325,6 +325,23 @@ captures and request/overflow telemetry are retained under `/tmp` after the
 runtime verification. The survey-level print route is public by design, while
 the existing authenticated participant-print/report contracts remain separate.
 
+The live-session next-question follow-up implements the next installed Odoo
+host action after the existing `Start`/first-question slice. The authenticated
+Odoo manager route `/survey/session/manage/b135640d-14d4-4748-9ef6-344ca256531e`
+showed `Next` advancing from `Where do you live?` to `When is your date of
+birth?`, with `End of Survey` at the final question; no `Back` control was
+visible in the installed state. Core3 therefore adds only the permissioned
+`Next` action to the existing `survey-live-session` page/API pair. It advances
+the deterministic ordered question, refreshes the current-question catalog,
+hides the action at the final question, and guards closed/not-in-progress,
+stale-row, and exhausted-question states with explicit 409 responses. The
+slice does not add a public session join, attendee answers, leaderboard,
+results, or an inferred Back action. Focused coverage is in
+`test/surveys.integration.test.ts`; Odoo evidence is under
+`/tmp/odoo-owned-surveys-live-{manager,question,next-back}-{desktop,mobile}.png`
+where captured, and Core3 comparison evidence is retained under `/tmp` after
+runtime verification.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions

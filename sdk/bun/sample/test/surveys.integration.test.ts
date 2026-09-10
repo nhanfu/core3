@@ -223,6 +223,41 @@ describe('Surveys parity catalog and workflow', () => {
     await expect(repository.executeMutation(start.mutation, { id: 'live-session-empty', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'SURVEY_LIVE_SESSION_NO_QUESTIONS' });
   });
 
+  test('advances the host to the next question with explicit end and stale guards', async () => {
+    const page = yaml('pages/live-session.yaml');
+    const api = yaml('api/live-session.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    const next = api.actions.find((action: any) => action.id === 'advance_live_session_question');
+    expect(page.page.id).toBe('survey-live-session');
+    expect(api.page.id).toBe(page.page.id);
+    expect(form.header_actions).toContainEqual(expect.objectContaining({ id: 'advance_live_session_question', label: 'Next' }));
+    expect(next).toMatchObject({ permission: 'surveys.manage', action: 'surveys.sessions.next_question', handler: 'yaml_mutation' });
+    expect(next.params).toEqual({ expected_row_version: '{row.row_version}' });
+    expect(String(next.mutation.guards[0].query)).toContain("state = 'In Progress'");
+    expect(String(next.mutation.guards[0].query)).toContain('current_question_id IS NOT NULL');
+    expect(next.mutation.guards[1]).toMatchObject({ status: 409, code: 'SURVEY_LIVE_SESSION_STALE' });
+    expect(next.mutation.guards[2]).toMatchObject({ status: 409, code: 'SURVEY_LIVE_SESSION_NO_NEXT_QUESTION' });
+    expect(String(next.mutation.steps[0].query)).toContain('ORDER BY next_question.sequence, next_question.id');
+    expect(String(next.mutation.steps[0].query)).toContain("state = 'In Progress'");
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_live_session_next_migrations', ['schema', 'data']);
+    const createSession = yaml('api/survey-detail.yaml').actions.find((action: any) => action.id === 'start_live_session_detail');
+    const start = api.actions.find((action: any) => action.id === 'start_live_session_question');
+    await repository.executeMutation(createSession.mutation, { id: 'survey-demo-feedback', expected_session_row_version: 1 });
+    await repository.executeMutation(start.mutation, { id: 'live-session-feedback', expected_row_version: 2 });
+    const advanced = await repository.executeMutation(next.mutation, { id: 'live-session-feedback', expected_row_version: 3 });
+    expect(advanced).toMatchObject({ state: 'In Progress', current_question_id: 'question-feedback-comment', current_question_text: 'What can we improve?', current_question_sequence: 2 });
+    expect(await repository.query('SELECT current_question_id, row_version FROM survey_live_sessions WHERE id = ?', ['live-session-feedback'])).toEqual([{ current_question_id: 'question-feedback-comment', row_version: 4 }]);
+    await expect(repository.executeMutation(next.mutation, { id: 'live-session-feedback', expected_row_version: 3 })).rejects.toMatchObject({ status: 409, code: 'SURVEY_LIVE_SESSION_STALE' });
+    await repository.run("UPDATE survey_live_sessions SET current_question_id = 'question-feedback-notes', current_question_text = 'Additional comments', row_version = 5 WHERE id = 'live-session-feedback'");
+    await expect(repository.executeMutation(next.mutation, { id: 'live-session-feedback', expected_row_version: 5 })).rejects.toMatchObject({ status: 409, code: 'SURVEY_LIVE_SESSION_NO_NEXT_QUESTION' });
+
+    await repository.run("UPDATE survey_live_sessions SET state = 'Closed', current_question_id = NULL, row_version = 6 WHERE id = 'live-session-feedback'");
+    await expect(repository.executeMutation(next.mutation, { id: 'live-session-feedback', expected_row_version: 6 })).rejects.toMatchObject({ status: 409, code: 'SURVEY_LIVE_SESSION_NOT_IN_PROGRESS' });
+  });
+
   test('exposes the permissioned Odoo Test action with deterministic entries', () => {
     const page = yaml('pages/survey-test.yaml');
     const api = yaml('api/survey-test.yaml');
