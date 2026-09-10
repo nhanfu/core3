@@ -1,0 +1,16 @@
+version: 0.0.19
+kind: data
+description: POS touch opening-control modal state and note
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS opening_note VARCHAR;
+      UPDATE pos_sessions
+      SET opening_note = COALESCE(opening_note, '')
+      WHERE opening_note IS NULL;
+    down: |
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS opening_note;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -7,10 +7,12 @@ datasources:
     query: |
       SELECT s.id, s.name, s.state, s.config,
         CAST(s.balance_start AS DOUBLE) AS balance_start,
-        CAST(COALESCE(s.opening_counted, 0) AS DOUBLE) AS opening_counted
+        CAST(COALESCE(s.opening_counted, s.balance_start, 0) AS DOUBLE) AS opening_counted,
+        COALESCE(s.opening_note, '') AS opening_note
       FROM pos_sessions s
-      WHERE s.state = 'In Progress'
-      ORDER BY s.opened_at DESC
+      WHERE (:id IS NOT NULL AND s.id = :id)
+         OR (:id IS NULL AND s.state IN ('In Progress', 'Opening Control'))
+      ORDER BY CASE WHEN s.state = 'In Progress' THEN 0 ELSE 1 END, s.opened_at DESC
       LIMIT 1
 
   - id: pos_touch_products

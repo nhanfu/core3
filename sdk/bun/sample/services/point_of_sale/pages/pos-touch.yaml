@@ -19,6 +19,23 @@ actions:
     permission: pos.write
     navigate_to: /point-of-sale/cashier
 
+  - id: touch_open_session
+    type: client
+    permission: pos.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        await request('/api/actions/pos.touch.open_session', {
+          method: 'POST',
+          body: {
+            session_id: row.session_id,
+            opening_cash: row.opening_cash,
+            opening_note: row.opening_note || '',
+          },
+        })
+        window.location.reload()
+      }
+
   - id: touch_sessions
     type: navigate
     permission: pos.read
@@ -126,3 +143,28 @@ actions:
               row_version = row_version + 1
             WHERE id = :ticket_id
       result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
+
+  - id: touch_open_session_backend
+    type: server
+    permission: pos.write
+    action: pos.touch.open_session
+    handler: yaml_mutation
+    operation: open_session
+    mutation:
+      guards:
+        - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND state = 'Opening Control'"
+          status: 409
+          message: This register is no longer waiting for opening control
+        - query: "SELECT 1 AS ok WHERE CAST(:opening_cash AS DECIMAL(18,2)) >= 0"
+          status: 422
+          message: Opening cash must be zero or greater
+      steps:
+        - query: |
+            UPDATE pos_sessions SET
+              opening_counted = CAST(:opening_cash AS DECIMAL(18,2)),
+              opening_note = COALESCE(:opening_note, ''),
+              state = 'In Progress',
+              opened_at = COALESCE(opened_at, CURRENT_TIMESTAMP),
+              row_version = row_version + 1
+            WHERE id = :session_id
+      result: { query: "SELECT * FROM pos_sessions WHERE id = :session_id" }

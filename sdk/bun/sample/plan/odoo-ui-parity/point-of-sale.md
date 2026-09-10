@@ -235,6 +235,23 @@ the form to `pos-preset-detail`/`pos_preset_detail` API YAML with matching
 updates the three stable preset fixtures. The list has an explicit empty state;
 read access requires `pos.read` and edits require `pos.manage`.
 
+## Current batch: touch opening control
+
+The touch register now renders an Odoo-style Opening Control modal when the
+selected session is in `Opening Control`. It exposes counted opening cash,
+opening note, Open Register, and Discard controls, with a service-owned guarded
+mutation that rejects negative cash or a session that has already opened and
+persists the note before moving the session to In Progress. Migration 019 adds
+the deterministic note column. Authenticated isolated-runtime checks reached
+the modal at `/point-of-sale/touch?id=pos-session-demo-opening` at 1440x900 and
+390x844 with no failed requests or horizontal overflow. Odoo references are
+`/tmp/odoo-pos-opening-control-{desktop,mobile}-fresh.png`; Core3 captures are
+`/tmp/core3-pos-opening-control-{desktop,mobile}-fresh.png`. The underlying
+isolated runtime still shows the known oversized launcher icon treatment in
+the background; the modal fields, labels, spacing, and actions were compared
+directly against Odoo. Existing-row editing and broader opening-control cash
+denomination behavior remain deferred.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,

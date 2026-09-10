@@ -40,6 +40,9 @@ export class PosShell extends BaseComponent {
       sessionId: null,
       sessionName: 'No session',
       sessionStatus: 'closed',
+      openingCash: null,
+      openingNote: null,
+      openingError: '',
       activeOrderId: null,
       screen: 'product',
       catalog: [],
@@ -106,6 +109,9 @@ export class PosShell extends BaseComponent {
       sessionId: session.id || null,
       sessionName: session.name || 'No active session',
       sessionStatus: session.state || 'closed',
+      openingCash: Number(session.opening_counted ?? session.balance_start ?? 0).toFixed(2),
+      openingNote: String(session.opening_note || ''),
+      openingError: '',
       activeOrderId: order.id || null,
       cart: initialCart,
       canWrite: hasPermission(context.user, 'pos.write'),
@@ -129,7 +135,7 @@ export class PosShell extends BaseComponent {
     const openOrders = this.state.openOrders || [];
 
     const shell = html.take(container).div
-      .className('pos-shell flex flex-col h-full min-h-screen w-full max-w-full overflow-x-hidden bg-gray-100')
+      .className('pos-shell relative flex flex-col h-full min-h-screen w-full max-w-full overflow-x-hidden bg-gray-100')
       .ele();
 
     this._drawHeader(shell, sessionSource);
@@ -139,6 +145,9 @@ export class PosShell extends BaseComponent {
 
     if (!sessionSource.id) {
       this._drawClosedSession(body);
+    } else if (sessionSource.state === 'Opening Control') {
+      this._drawProductScreen(body, bootstrapProducts);
+      this._drawOpeningControl(shell, sessionSource);
     } else if (screen === 'payment') {
       this._drawPaymentScreen(body);
     } else if (screen === 'receipt') {
@@ -148,6 +157,72 @@ export class PosShell extends BaseComponent {
     } else {
       this._drawProductScreen(body, bootstrapProducts);
     }
+  }
+
+  private _drawOpeningControl(container: HTMLElement, session: any) {
+    const overlay = html.take(container).div
+      .attr('data-touch-opening-control', 'true')
+      .className('fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4')
+      .ele();
+    const modal = html.take(overlay).div
+      .className('w-full max-w-2xl rounded-lg border border-gray-300 bg-white shadow-xl')
+      .ele();
+    html.take(modal).div.className('border-b border-gray-200 px-4 py-4 text-lg font-medium text-gray-900 md:px-6')
+      .text('Opening Control').ele();
+    const form = html.take(modal).div.className('space-y-4 px-4 py-5 md:px-6').ele();
+
+    const cashLabel = html.take(form).label.className('block text-sm font-medium text-gray-700').text('Opening cash').ele() as HTMLLabelElement;
+    const cashInput = html.take(form).input
+      .attr('data-touch-opening-cash', 'true')
+      .attr('type', 'text')
+      .attr('inputmode', 'decimal')
+      .attr('autocomplete', 'off')
+      .className('mt-2 min-h-12 w-full rounded-md border border-gray-300 px-3 text-base text-gray-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200')
+      .ele() as HTMLInputElement;
+    cashInput.id = `touch-opening-cash-${Date.now()}`;
+    cashInput.value = String(this.state.openingCash ?? Number(session.opening_counted ?? session.balance_start ?? 0).toFixed(2));
+    cashLabel.htmlFor = cashInput.id;
+
+    const noteLabel = html.take(form).label.className('block text-sm font-medium text-gray-700').text('Opening note').ele() as HTMLLabelElement;
+    const noteInput = html.take(form).textarea
+      .attr('data-touch-opening-note', 'true')
+      .attr('placeholder', 'Add an opening note...')
+      .className('mt-2 min-h-24 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200')
+      .ele() as HTMLTextAreaElement;
+    noteInput.id = `touch-opening-note-${Date.now()}`;
+    noteInput.value = String(this.state.openingNote || session.opening_note || '');
+    noteLabel.htmlFor = noteInput.id;
+
+    html.take(form).div
+      .attr('data-touch-opening-error', 'true')
+      .attr('role', 'alert')
+      .className(`rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 ${this.state.openingError ? '' : 'hidden'}`)
+      .text(String(this.state.openingError || ''))
+      .ele();
+    const footer = html.take(modal).div.className('flex flex-wrap gap-2 border-t border-gray-200 px-4 py-4 md:px-6').ele();
+    html.take(footer).button
+      .attr('data-touch-opening-submit', 'true')
+      .className('min-h-11 rounded-md bg-indigo-600 px-4 py-2 text-base font-medium text-white hover:bg-indigo-700')
+      .text('Open Register')
+      .event('click', () => {
+        const amount = Number(String(cashInput.value).replace(',', '.'));
+        if (!Number.isFinite(amount) || amount < 0) {
+          this.setState({ openingError: 'Opening cash must be zero or greater.' });
+          return;
+        }
+        void this.submit('touch_open_session', {
+          session_id: session.id,
+          opening_cash: amount.toFixed(2),
+          opening_note: noteInput.value.trim(),
+        });
+      })
+      .ele();
+    html.take(footer).button
+      .attr('data-touch-opening-discard', 'true')
+      .className('min-h-11 rounded-md border border-gray-300 px-4 py-2 text-base font-medium text-gray-800 hover:bg-gray-50')
+      .text('Discard')
+      .event('click', () => { window.location.href = '/point-of-sale'; })
+      .ele();
   }
 
   private _drawHeader(container: HTMLElement, session: any) {

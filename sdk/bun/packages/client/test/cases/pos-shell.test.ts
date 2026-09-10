@@ -86,6 +86,30 @@ describe('POS touch selling shell', () => {
     expect(document.body.textContent).toContain('POS write access is required');
   });
 
+  it('renders Odoo-style opening control and submits the counted cash', async () => {
+    const submit = vi.fn().mockResolvedValue({});
+    const shell = new PosShell('touch', {
+      sessionSource: { id: 'opening-1', name: 'POS/2026/09/10/001', state: 'Opening Control', balance_start: 300 },
+      bootstrapProducts: [product],
+      canWrite: true,
+    });
+    shell._transport = { submit };
+    shell.mount(document.body);
+
+    expect(document.querySelector('[data-touch-opening-control]')).not.toBeNull();
+    expect(document.body.textContent).toContain('Opening Control');
+    const cash = document.querySelector<HTMLInputElement>('[data-touch-opening-cash]')!;
+    expect(cash.value).toBe('300.00');
+    cash.value = '312.50';
+    document.querySelector<HTMLTextAreaElement>('[data-touch-opening-note]')!.value = 'Counted by Maya';
+    document.querySelector<HTMLButtonElement>('[data-touch-opening-submit]')!.click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(submit).toHaveBeenCalledWith('touch_open_session', {
+      session_id: 'opening-1', opening_cash: '312.50', opening_note: 'Counted by Maya',
+    });
+  });
+
   it('restores a pending receipt after the page is reconstructed', () => {
     sessionStorage.setItem('core3.pos.touch.pending-receipt', JSON.stringify({
       receiptOrder: { name: 'POS/1', amount_total: 3.85, amount_paid: 3.85, payment_method: 'Cash' },
