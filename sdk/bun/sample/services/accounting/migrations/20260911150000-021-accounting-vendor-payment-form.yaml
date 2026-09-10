@@ -1,0 +1,32 @@
+version: 0.0.21
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_payments ADD COLUMN IF NOT EXISTS vendor_bank_account VARCHAR DEFAULT '';
+      CREATE TABLE IF NOT EXISTS accounting_vendor_payment_messages (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), payment_id VARCHAR NOT NULL,
+        actor_name VARCHAR NOT NULL, action VARCHAR NOT NULL, action_label VARCHAR NOT NULL,
+        detail VARCHAR NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_accounting_vendor_payment_messages_payment ON accounting_vendor_payment_messages(payment_id, created_at);
+      UPDATE accounting_payments SET vendor_bank_account = CASE id
+        WHEN 'accounting-vendor-payment-demo-001' THEN 'US001-BANK-0001'
+        WHEN 'accounting-vendor-payment-demo-002' THEN 'US001-BANK-0002'
+        WHEN 'accounting-vendor-payment-demo-003' THEN 'US001-BANK-0003'
+        WHEN 'accounting-vendor-payment-demo-004' THEN 'US001-BANK-0004'
+        WHEN 'accounting-vendor-payment-demo-005' THEN 'US001-BANK-0005'
+        WHEN 'accounting-vendor-payment-demo-006' THEN 'US001-BANK-0006'
+        WHEN 'accounting-vendor-payment-demo-007' THEN 'US001-BANK-0007'
+        WHEN 'accounting-vendor-payment-demo-008' THEN 'US001-BANK-0008'
+        WHEN 'accounting-vendor-payment-demo-009' THEN 'US001-BANK-0009'
+        WHEN 'accounting-vendor-payment-demo-010' THEN 'US001-BANK-0010'
+        ELSE COALESCE(vendor_bank_account, '') END
+      WHERE payment_type = 'Outbound';
+    down: |
+      DROP TABLE IF EXISTS accounting_vendor_payment_messages;
+      ALTER TABLE accounting_payments DROP COLUMN IF EXISTS vendor_bank_account;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

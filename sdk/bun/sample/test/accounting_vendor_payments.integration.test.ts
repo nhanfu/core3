@@ -16,7 +16,7 @@ describe('Accounting vendor payments parity', () => {
     expect(list.views.find((view: any) => view.id === 'list')).toMatchObject({ mobile: false });
     expect(list.columns.map((column: any) => column.label)).toEqual(['Date', 'Number', 'Journal', 'Payment Method', 'Vendor', 'Amount', 'State']);
     expect(list.row_open_action).toBe('view_accounting_vendor_payment');
-    expect(list.form_view).toEqual({ page: 'apps/services/accounting/pages/payment-detail.yaml', side_panel: false });
+    expect(list.form_view).toEqual({ page: 'apps/services/accounting/pages/vendor-payment-detail.yaml', side_panel: false });
   });
 
   test('keeps vendor payment layout and API fragments joined by page id', () => {
@@ -27,10 +27,8 @@ describe('Accounting vendor payments parity', () => {
     expect(api.datasources.find((source: any) => source.id === 'accounting_vendor_payments').query).toContain("strftime(payment_date, '%b %-d') AS payment_date_display");
     expect(api.datasources.find((source: any) => source.id === 'accounting_vendor_payments').query).toContain("printf('$ %,.2f'");
     expect(api.datasources.find((source: any) => source.id === 'accounting_vendor_payments').permission).toBe('accounting.read');
-    expect(api.actions).toContainEqual(expect.objectContaining({ id: 'create_accounting_vendor_payment', permission: 'accounting.write' }));
-    const create = api.actions.find((action: any) => action.id === 'create_accounting_vendor_payment');
-    expect(create.mutation.fields).toContain('payment_date');
-    expect(create.fields).toContainEqual(expect.objectContaining({ field: 'payment_date', type: 'date', default: '2026-09-10' }));
+    expect(api.actions).toContainEqual(expect.objectContaining({ id: 'new_accounting_vendor_payment', permission: 'accounting.write', type: 'navigate' }));
+    expect(api.actions.find((action: any) => action.id === 'new_accounting_vendor_payment').navigate_to).toBe('/accounting/vendor-payments/new');
   });
 
   test('seeds ten deterministic outbound vendor payments with Odoo states', () => {

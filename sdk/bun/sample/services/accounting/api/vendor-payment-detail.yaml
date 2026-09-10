@@ -1,0 +1,148 @@
+page: { id: vendor-payment-detail }
+datasources:
+  - id: accounting_vendor_payment_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_VENDOR_PAYMENT_DETAIL_UNAVAILABLE, message: Vendor payment details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, partner_name, payment_type, amount, payment_method, journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, state, reference, vendor_bank_account FROM accounting_payments WHERE payment_type = 'Outbound' AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND id = :id"
+  - id: accounting_vendor_payment_vendors
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Acme Corporation','Acme Corporation'), ('Azure Interior','Azure Interior'), ('Gemini Furniture','Gemini Furniture'), ('Lumber Inc','Lumber Inc'), ('Ready Mat','Ready Mat'), ('Wood Corner','Wood Corner')) vendors(value, label) ORDER BY label"
+  - id: accounting_vendor_payment_messages
+    single: false
+    permission: accounting.read
+    query: "SELECT id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM accounting_vendor_payment_messages WHERE payment_id = :id UNION ALL SELECT 'vendor-payment-created-' || CAST(:id AS VARCHAR), 'Administrator', 'created', 'Creating a new record...', 'Draft payment form opened', CAST(CURRENT_TIMESTAMP AS VARCHAR) WHERE :id IS NULL ORDER BY created_at DESC"
+actions:
+  - id: back_to_accounting_vendor_payments
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/vendor-payments
+  - id: edit_accounting_vendor_payment
+    type: server_form
+    permission: accounting.write
+    title: Edit Vendor Payment
+    action: accounting.vendor_payments.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_vendor_payment_detail
+    refresh: [accounting_vendor_payment_detail, accounting_vendor_payment_messages]
+    mutation:
+      operation: update
+      table: accounting_payments
+      fields: [partner_name, payment_type, amount, payment_method, journal, currency, payment_date, reference, vendor_bank_account]
+      required: [partner_name, amount, payment_date, journal, payment_method]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Outbound'", status: 404, code: ACCOUNTING_VENDOR_PAYMENT_NOT_FOUND, message: Vendor payment was not found. }
+        - { query: "SELECT 1 AS ok WHERE :payment_type = 'Outbound'", status: 422, code: ACCOUNTING_VENDOR_PAYMENT_TYPE_INVALID, message: Vendor payments must use Send. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0", status: 422, code: ACCOUNTING_VENDOR_PAYMENT_AMOUNT_INVALID, message: Payment amount must be positive. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:payment_date AS DATE) IS NOT NULL", status: 422, code: ACCOUNTING_VENDOR_PAYMENT_DATE_INVALID, message: Payment date must be valid. }
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_VENDOR_PAYMENT_STALE, message: This payment changed elsewhere. Reload before saving. }
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+    fields:
+      - { field: partner_name, label: Vendor, type: select, options_source: accounting_vendor_payment_vendors, required: true }
+      - { field: payment_type, label: Payment Type, type: radio, options: [{ value: Outbound, label: Send }, { value: Inbound, label: Receive }] }
+      - { field: amount, label: Amount, type: money, required: true }
+      - { field: payment_date, label: Date, type: date, required: true }
+      - { field: reference, label: Memo, type: text }
+      - { field: journal, label: Journal, type: select, options: [Bank, Cash, Miscellaneous], required: true }
+      - { field: payment_method, label: Payment Method?, type: select, options: [Manual Payment, Check, Card, Other], required: true }
+      - { field: vendor_bank_account, label: Vendor Bank Account, type: text }
+      - { field: currency, label: Currency, type: text }
+  - id: confirm_accounting_vendor_payment
+    type: server
+    permission: accounting.write
+    action: accounting.vendor_payments.confirm
+    handler: yaml_mutation
+    operation: confirm
+    params: { id: '{state.id}', values: { state: In Process } }
+    refresh: [accounting_vendor_payment_detail, accounting_vendor_payment_messages]
+    mutation:
+      operation: update
+      table: accounting_payments
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Outbound' AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_VENDOR_PAYMENT_STALE, message: Only an unchanged draft vendor payment can be confirmed. }
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+  - id: mark_accounting_vendor_payment_paid
+    type: server
+    permission: accounting.write
+    action: accounting.vendor_payments.paid
+    handler: yaml_mutation
+    operation: paid
+    params: { id: '{state.id}', values: { state: Paid } }
+    refresh: [accounting_vendor_payment_detail, accounting_vendor_payment_messages]
+    mutation:
+      operation: update
+      table: accounting_payments
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Outbound' AND state = 'In Process' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_VENDOR_PAYMENT_STALE, message: Only an unchanged in-process vendor payment can be marked paid. }
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+  - id: cancel_accounting_vendor_payment
+    type: server
+    permission: accounting.write
+    action: accounting.vendor_payments.cancel
+    handler: yaml_mutation
+    operation: cancel
+    params: { id: '{state.id}', values: { state: Canceled } }
+    refresh: [accounting_vendor_payment_detail, accounting_vendor_payment_messages]
+    mutation:
+      operation: update
+      table: accounting_payments
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Outbound' AND state IN ('Draft', 'In Process') AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_VENDOR_PAYMENT_STALE, message: This vendor payment is no longer cancellable. }
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+  - id: send_accounting_vendor_payment_message
+    type: server_form
+    permission: accounting.write
+    title: Send message
+    action: accounting.vendor_payments.message
+    handler: yaml_mutation
+    operation: message
+    params: { id: '{state.id}' }
+    refresh: [accounting_vendor_payment_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_VENDOR_PAYMENT_MESSAGE_INVALID, message: Message content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Outbound'", status: 404, code: ACCOUNTING_VENDOR_PAYMENT_NOT_FOUND, message: Vendor payment was not found. }
+      steps:
+        - { query: "INSERT INTO accounting_vendor_payment_messages(id, payment_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'accounting.vendor_payment.message', 'Message', :content)" }
+  - id: log_accounting_vendor_payment_note
+    type: server_form
+    permission: accounting.write
+    title: Log note
+    action: accounting.vendor_payments.note
+    handler: yaml_mutation
+    operation: note
+    params: { id: '{state.id}' }
+    refresh: [accounting_vendor_payment_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_VENDOR_PAYMENT_NOTE_INVALID, message: Note content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Outbound'", status: 404, code: ACCOUNTING_VENDOR_PAYMENT_NOT_FOUND, message: Vendor payment was not found. }
+      steps:
+        - { query: "INSERT INTO accounting_vendor_payment_messages(id, payment_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'accounting.vendor_payment.note', 'Note', :content)" }
+  - id: schedule_accounting_vendor_payment_activity
+    type: server_form
+    permission: accounting.write
+    title: Schedule activity
+    action: accounting.vendor_payments.activity
+    handler: yaml_mutation
+    operation: activity
+    params: { id: '{state.id}' }
+    refresh: [accounting_vendor_payment_messages]
+    fields: [{ field: content, label: Activity, type: textarea, required: true }]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_VENDOR_PAYMENT_ACTIVITY_INVALID, message: Activity content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Outbound'", status: 404, code: ACCOUNTING_VENDOR_PAYMENT_NOT_FOUND, message: Vendor payment was not found. }
+      steps:
+        - { query: "INSERT INTO accounting_vendor_payment_messages(id, payment_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'accounting.vendor_payment.activity', 'Activity', :content)" }

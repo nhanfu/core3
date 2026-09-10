@@ -1,0 +1,56 @@
+title: New Vendor Payment
+page: { id: vendor-payment-new, route: /accounting/vendor-payments/new, breadcrumb: [Finance, Vendors, Payments, New], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_vendor_payment_new
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: In Process, label: In Process }
+      - { value: Paid, label: Paid }
+    status_colors: { Draft: neutral, In Process: blue, Paid: green }
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Payment status }
+    header_actions:
+      - { id: back_to_accounting_vendor_payments, label: Vendor Payments, variant: secondary, permission: accounting.read }
+      - { id: create_accounting_vendor_payment, label: Save, variant: primary, permission: accounting.write }
+    group_columns: 2
+    groups:
+      - title: Payment
+        fields:
+          - { field: payment_type, label: Payment Type, type: radio, options: [{ value: Outbound, label: Send }, { value: Inbound, label: Receive }] }
+          - { field: partner_name, label: Vendor, type: select, options_source: accounting_vendor_payment_new_vendors }
+          - { field: amount, label: Amount, type: money }
+          - { field: payment_date, label: Date, type: date }
+          - { field: reference, label: Memo, type: text }
+      - title: Payment information
+        fields:
+          - { field: journal, label: Journal, type: select, options: [Bank, Cash, Miscellaneous] }
+          - { field: payment_method, label: Payment Method?, type: select, options: [Manual Payment, Check, Card, Other] }
+          - { field: vendor_bank_account, label: Vendor Bank Account, type: text }
+          - { field: currency, label: Currency, type: text }
+    notebook:
+      active: other-info
+      tabs:
+        - id: other-info
+          label: Other Info
+          fields:
+            - { field: name, label: Payment Number }
+            - { field: reference, label: Memo }
+            - { field: vendor_bank_account, label: Vendor Bank Account }
+            - { field: currency, label: Currency }
+    message_source: accounting_vendor_payment_new_messages
+    chatter_label: Messages and activities
+    chatter_empty: Save the payment to start the conversation.
+    message_label: Send message
+    note_label: Log note
+    activity_label: Activity
+    message_action: send_accounting_vendor_payment_message
+    note_action: log_accounting_vendor_payment_note
+    activity_action: schedule_accounting_vendor_payment_activity
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+page: { id: vendor-payment-new }

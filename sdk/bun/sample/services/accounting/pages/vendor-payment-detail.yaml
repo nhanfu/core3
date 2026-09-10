@@ -1,0 +1,60 @@
+title: Vendor Payment
+page: { id: vendor-payment-detail, route: /accounting/vendor-payment-detail, breadcrumb: [Finance, Vendors, Payments, Payment], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_vendor_payment_detail
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: In Process, label: In Process }
+      - { value: Paid, label: Paid }
+      - { value: Canceled, label: Canceled }
+      - { value: Rejected, label: Rejected }
+    status_colors: { Draft: neutral, In Process: blue, Paid: green, Canceled: red, Rejected: red }
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Payment status }
+    header_actions:
+      - { id: back_to_accounting_vendor_payments, label: Vendor Payments, variant: secondary, permission: accounting.read }
+      - { id: edit_accounting_vendor_payment, label: Edit, variant: secondary, permission: accounting.write, show_if: "state.vendor_payment_detail.state === 'Draft'" }
+      - { id: confirm_accounting_vendor_payment, label: Confirm, variant: primary, permission: accounting.write, show_if: "state.vendor_payment_detail.state === 'Draft'" }
+      - { id: mark_accounting_vendor_payment_paid, label: Paid, variant: primary, permission: accounting.write, show_if: "state.vendor_payment_detail.state === 'In Process'" }
+      - { id: cancel_accounting_vendor_payment, label: Cancel, variant: danger, permission: accounting.write, show_if: "state.vendor_payment_detail.state === 'Draft' || state.vendor_payment_detail.state === 'In Process'" }
+    group_columns: 2
+    groups:
+      - title: Payment
+        fields:
+          - { field: payment_type, label: Payment Type, type: radio, options: [{ value: Outbound, label: Send }, { value: Inbound, label: Receive }] }
+          - { field: partner_name, label: Vendor, type: select, options_source: accounting_vendor_payment_vendors }
+          - { field: amount, label: Amount, type: money }
+          - { field: payment_date, label: Date, type: date }
+          - { field: reference, label: Memo, type: text }
+      - title: Payment information
+        fields:
+          - { field: journal, label: Journal, type: select, options: [Bank, Cash, Miscellaneous] }
+          - { field: payment_method, label: Payment Method?, type: select, options: [Manual Payment, Check, Card, Other] }
+          - { field: vendor_bank_account, label: Vendor Bank Account, type: text }
+          - { field: currency, label: Currency, type: text }
+    notebook:
+      active: other-info
+      tabs:
+        - id: other-info
+          label: Other Info
+          fields:
+            - { field: name, label: Payment Number }
+            - { field: reference, label: Memo }
+            - { field: vendor_bank_account, label: Vendor Bank Account }
+            - { field: currency, label: Currency }
+    message_source: accounting_vendor_payment_messages
+    chatter_label: Messages and activities
+    chatter_empty: No messages or activities yet.
+    message_label: Send message
+    note_label: Log note
+    activity_label: Activity
+    message_action: send_accounting_vendor_payment_message
+    note_action: log_accounting_vendor_payment_note
+    activity_action: schedule_accounting_vendor_payment_activity
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+page: { id: vendor-payment-detail }

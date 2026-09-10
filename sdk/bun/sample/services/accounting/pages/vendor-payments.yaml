@@ -4,7 +4,7 @@ components:
   - type: ListView
     variant: odoo
     source: accounting_vendor_payments
-    create_action: create_accounting_vendor_payment
+    create_action: new_accounting_vendor_payment
     create_label: New
     breadcrumbs: [Vendor Payments]
     search: { label: Search vendor payments, placeholder: Search vendor payments... }
@@ -60,4 +60,4 @@ components:
     row_key: id
     row_open_action: view_accounting_vendor_payment
     row_double_click_action: view_accounting_vendor_payment
-    form_view: { page: apps/services/accounting/pages/payment-detail.yaml, side_panel: false }
+    form_view: { page: apps/services/accounting/pages/vendor-payment-detail.yaml, side_panel: false }

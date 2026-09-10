@@ -12,31 +12,9 @@ actions:
   - id: view_accounting_vendor_payment
     type: navigate
     permission: accounting.read
-    navigate_to: /accounting/payment-detail
+    navigate_to: /accounting/vendor-payment-detail
     params: { id: '{row.id}' }
-  - id: create_accounting_vendor_payment
-    type: server_form
+  - id: new_accounting_vendor_payment
+    type: navigate
     permission: accounting.write
-    title: New vendor payment
-    action: accounting.vendor_payments.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [accounting_vendor_payments]
-    mutation:
-      operation: insert
-      table: accounting_payments
-      fields: [name, partner_name, payment_type, amount, payment_method, journal, currency, payment_date, reference]
-      required: [name, amount]
-      defaults: { payment_type: Outbound, payment_method: Manual Payment, journal: Bank, currency: USD, state: Draft }
-      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0", status: 400, message: Payment amount must be positive }]
-      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
-    fields:
-      - { field: name, label: Payment, type: text, required: true }
-      - { field: partner_name, label: Vendor, type: text }
-      - { field: payment_type, label: Payment Type, type: select, options: [Outbound, Inbound], default: Outbound }
-      - { field: amount, label: Amount, type: number, required: true }
-      - { field: payment_date, label: Date, type: date, default: '2026-09-10' }
-      - { field: reference, label: Memo, type: text }
-      - { field: journal, label: Journal, type: select, options: [Bank, Cash, Miscellaneous], default: Bank }
-      - { field: payment_method, label: Payment Method?, type: select, options: [Manual Payment, Check, Card, Other], default: Manual Payment }
-      - { field: currency, label: Currency, type: text, default: USD }
+    navigate_to: /accounting/vendor-payments/new

@@ -331,6 +331,43 @@ vendor-bank-account field, and chatter; row navigation reuses the existing
 read-only generic payment detail. A later payment-form slice can add those
 controls without changing this vendor-list datasource boundary.
 
+## Current batch: vendor payment form follow-up
+
+Core3 now replaces that bounded modal/detail limitation with dedicated
+layout-only `/accounting/vendor-payments/new` and
+`/accounting/vendor-payment-detail` pages. Their API fragments join by
+`page.id`, use Accounting-owned datasources/actions, and leave the shared
+customer `/accounting/payments` and `/accounting/payment-detail` routes
+unchanged. The forms provide the Odoo-shaped Draft Payment statusbar, Send /
+Receive payment type, vendor, amount, date, memo, journal, payment method,
+vendor bank account, currency, Other Info tab, and Send message / Log note /
+Activity chatter controls. Existing vendor rows navigate to the dedicated
+detail page; New is permissioned with `accounting.write`.
+
+Migration `20260911150000-021-accounting-vendor-payment-form.yaml` adds the
+vendor bank account column, an Accounting-owned message table, and explicit
+bank-account fixtures for all ten vendor payments. Create, edit, confirm, paid,
+cancel, and chatter actions enforce permissions, required/positive/date/type
+validation, record existence, and row-version stale guards. The focused
+integration suite exercises the in-memory create/edit/workflow/message path
+and static page/API contracts.
+
+Authenticated Core3 captures at 1440x900 and 390x844 are temporary evidence:
+`/tmp/core3-accounting-vendor-payment-detail-next-desktop.png`,
+`/tmp/core3-accounting-vendor-payment-form-next-desktop.png`,
+`/tmp/core3-accounting-vendor-payment-detail-next-mobile.png`, and
+`/tmp/core3-accounting-vendor-payment-form-next-mobile.png`. All four routes
+returned zero unexpected failed responses and no horizontal overflow. The
+authenticated owned Odoo comparison captures are
+`/tmp/odoo-accounting-vendor-payments-next-desktop.png`,
+`/tmp/odoo-accounting-vendor-payment-form-next-desktop.png`,
+`/tmp/odoo-accounting-vendor-payments-next-mobile.png`, and
+`/tmp/odoo-accounting-vendor-payment-form-next-mobile.png`; these also
+returned zero unexpected failed responses and no horizontal overflow.
+Odoo-specific vendor bank relation widgets, server-side accounting
+reconciliation, and full activity scheduling remain outside this bounded
+slice.
+
 ## Current batch: Secure Entries closing wizard
 
 The live Odoo 19 menu/action audit found Accounting → Closing → Secure Entries,
