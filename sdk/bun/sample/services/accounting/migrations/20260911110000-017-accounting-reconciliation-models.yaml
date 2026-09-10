@@ -1,0 +1,38 @@
+version: 0.0.17
+description: Accounting reconciliation model fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_reconciliation_models (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        trigger VARCHAR NOT NULL DEFAULT 'Manual',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        match_journals VARCHAR NOT NULL DEFAULT '',
+        match_partners VARCHAR NOT NULL DEFAULT '',
+        match_amount VARCHAR NOT NULL DEFAULT 'Any',
+        match_label VARCHAR NOT NULL DEFAULT '',
+        match_label_param VARCHAR NOT NULL DEFAULT '',
+        next_activity VARCHAR NOT NULL DEFAULT '',
+        counterpart_partner VARCHAR NOT NULL DEFAULT '',
+        counterpart_account VARCHAR NOT NULL DEFAULT 'Bank Fees',
+        amount_type VARCHAR NOT NULL DEFAULT 'Percentage of balance',
+        amount_value DECIMAL(18,2) NOT NULL DEFAULT 100,
+        counterpart_label VARCHAR NOT NULL DEFAULT '',
+        sequence INTEGER NOT NULL DEFAULT 50,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      INSERT INTO accounting_reconciliation_models (id, name, trigger, match_label, match_label_param, counterpart_account, amount_type, amount_value, counterpart_label, sequence) VALUES
+        ('accounting-reconcile-model-001', 'Internal Transfers', 'Manual', 'Contains', 'Transfer', 'Outstanding Receipts', 'Fixed', 100, 'Internal transfer', 10),
+        ('accounting-reconcile-model-002', 'Bank Fees', 'Manual', 'Contains', 'Bank Fees', 'Bank Fees', 'Percentage of balance', 100, 'Bank Fees', 20),
+        ('accounting-reconcile-model-003', 'Line with Bank Fees', 'Manual', 'Contains', 'Bank Fees', 'Bank Fees', 'Percentage of balance', 100, 'Bank Fees', 30),
+        ('accounting-reconcile-model-004', 'Owner''s Current Account', 'Manual', 'Contains', 'Owner', 'Owner''s Current Account', 'Fixed', 100, 'Owner draw', 40)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS accounting_reconciliation_models;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

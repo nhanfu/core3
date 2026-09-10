@@ -1,0 +1,47 @@
+page: { id: accounting-reconciliation-models }
+datasources:
+  - id: accounting_reconciliation_model_triggers
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Manual','Manual'), ('Automated','Automated')) triggers(value, label) ORDER BY value"
+  - id: accounting_reconciliation_models
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, trigger, active, company, match_journals, match_partners, match_amount, match_label, match_label_param FROM accounting_reconciliation_models CROSS JOIN request_guard WHERE request_guard.ok AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR trigger ILIKE '%' || :q || '%' OR COALESCE(match_label_param, '') ILIKE '%' || :q || '%') AND (:trigger IS NULL OR trigger = :trigger) AND (:active IS NULL OR (:active = 'active' AND active = TRUE) OR (:active = 'archived' AND active = FALSE)) ORDER BY sequence, name, id"
+actions:
+  - id: create_accounting_reconciliation_model
+    type: server_form
+    permission: accounting.write
+    title: New Reconciliation Model
+    action: accounting.reconciliation_models.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_reconciliation_models]
+    mutation:
+      operation: insert
+      table: accounting_reconciliation_models
+      generated: [id]
+      fields: [name, trigger, active, company, match_journals, match_partners, match_amount, match_label, match_label_param, next_activity, counterpart_partner, counterpart_account, amount_type, amount_value, counterpart_label, sequence]
+      required: [name]
+      defaults: { trigger: Manual, active: true, company: 'My Company (San Francisco)', match_journals: '', match_partners: '', match_amount: Any, next_activity: '', counterpart_partner: '', counterpart_account: 'Bank Fees', amount_type: Percentage of balance, amount_value: 100, counterpart_label: '', sequence: 50 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_reconciliation_models WHERE LOWER(name) = LOWER(:name) AND active = TRUE)", status: 409, code: ACCOUNTING_RECONCILIATION_MODEL_EXISTS, message: A reconciliation model with this name already exists. }
+      result: { query: "SELECT * FROM accounting_reconciliation_models WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: trigger, label: Automation, type: select, options_source: accounting_reconciliation_model_triggers, default: Manual }
+      - { field: match_journals, label: Journals?, type: text }
+      - { field: match_partners, label: Partners?, type: text }
+      - { field: match_amount, label: Amount?, type: text, default: Any }
+      - { field: match_label, label: Label?, type: text }
+      - { field: match_label_param, label: Contains, type: text }
+      - { field: next_activity, label: Next Activity, type: text }
+      - { field: company, label: Company, type: text, default: 'My Company (San Francisco)' }
+      - { field: counterpart_account, label: Account, type: text, default: 'Bank Fees' }
+      - { field: amount_type, label: Amount Type, type: select, options: [Fixed, Percentage of balance] }
+      - { field: amount_value, label: Amount, type: number, default: 100 }
+      - { field: counterpart_label, label: Counterpart Label, type: text }
+  - id: view_accounting_reconciliation_model
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/reconciliation-model-detail
+    params: { id: '{row.id}' }

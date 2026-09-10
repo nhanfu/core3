@@ -1,0 +1,75 @@
+page: { id: accounting-reconciliation-model-detail }
+datasources:
+  - id: accounting_reconciliation_model_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "SELECT id, row_version, name, trigger, active, company, match_journals, match_partners, match_amount, match_label, match_label_param, next_activity, counterpart_partner, counterpart_account, amount_type, amount_value, counterpart_label FROM accounting_reconciliation_models WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_accounting_reconciliation_model
+    type: server_form
+    permission: accounting.write
+    title: Edit Reconciliation Model
+    action: accounting.reconciliation_models.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_reconciliation_model_detail
+    refresh: [accounting_reconciliation_model_detail, accounting_reconciliation_models]
+    mutation:
+      operation: update
+      table: accounting_reconciliation_models
+      fields: [name, trigger, company, match_journals, match_partners, match_amount, match_label, match_label_param, next_activity, counterpart_partner, counterpart_account, amount_type, amount_value, counterpart_label]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM accounting_reconciliation_models WHERE id = :id AND active = TRUE", status: 409, code: ACCOUNTING_RECONCILIATION_MODEL_ARCHIVED, message: Archived reconciliation models cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_reconciliation_models WHERE LOWER(name) = LOWER(:name) AND active = TRUE AND id <> :id)", status: 409, code: ACCOUNTING_RECONCILIATION_MODEL_EXISTS, message: A reconciliation model with this name already exists. }
+      result: { query: "SELECT * FROM accounting_reconciliation_models WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: trigger, label: Automation, type: select, options_source: accounting_reconciliation_model_triggers }
+      - { field: match_journals, label: Journals?, type: text }
+      - { field: match_partners, label: Partners?, type: text }
+      - { field: match_amount, label: Amount?, type: text }
+      - { field: match_label, label: Label?, type: text }
+      - { field: match_label_param, label: Contains, type: text }
+      - { field: next_activity, label: Next Activity, type: text }
+      - { field: company, label: Company, type: text }
+      - { field: counterpart_account, label: Account, type: text }
+      - { field: amount_type, label: Amount Type, type: select, options: [Fixed, Percentage of balance] }
+      - { field: amount_value, label: Amount, type: number }
+      - { field: counterpart_label, label: Counterpart Label, type: text }
+  - id: automate_accounting_reconciliation_model
+    type: server
+    permission: accounting.write
+    action: accounting.reconciliation_models.automate
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_reconciliation_model_detail, accounting_reconciliation_models]
+    params: { values: { trigger: Automated } }
+    mutation: { operation: update, table: accounting_reconciliation_models, fields: [trigger], result: { query: "SELECT * FROM accounting_reconciliation_models WHERE id = :id" } }
+  - id: manual_accounting_reconciliation_model
+    type: server
+    permission: accounting.write
+    action: accounting.reconciliation_models.manual
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_reconciliation_model_detail, accounting_reconciliation_models]
+    params: { values: { trigger: Manual } }
+    mutation: { operation: update, table: accounting_reconciliation_models, fields: [trigger], result: { query: "SELECT * FROM accounting_reconciliation_models WHERE id = :id" } }
+  - id: archive_accounting_reconciliation_model
+    type: server
+    permission: accounting.write
+    action: accounting.reconciliation_models.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_reconciliation_models, accounting_reconciliation_model_detail]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: accounting_reconciliation_models, fields: [active], result: { query: "SELECT * FROM accounting_reconciliation_models WHERE id = :id" } }
+  - id: delete_accounting_reconciliation_model
+    type: server
+    permission: accounting.write
+    action: accounting.reconciliation_models.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [accounting_reconciliation_models]
+    mutation: { operation: delete, table: accounting_reconciliation_models }

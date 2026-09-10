@@ -1,0 +1,19 @@
+title: Reconciliation Models
+page: { id: accounting-reconciliation-models, route: /accounting/reconciliation-models, breadcrumb: [Finance, Accounting, Reconciliation Models], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_reconciliation_models
+    create_action: create_accounting_reconciliation_model
+    create_label: New
+    search: { label: Search reconciliation models, placeholder: Search... }
+    filters: [{ field: trigger, label: Automation, options_source: accounting_reconciliation_model_triggers }]
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: trigger, label: Trigger }
+    page_size: 50
+    row_key: id
+    row_open_action: view_accounting_reconciliation_model
+    row_double_click_action: view_accounting_reconciliation_model
+    row_actions: menu
+    empty_state: { title: No reconciliation models, description: Create a new reconciliation model to automate recurring bank reconciliation entries. }

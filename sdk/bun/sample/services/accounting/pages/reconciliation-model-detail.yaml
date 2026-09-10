@@ -1,0 +1,44 @@
+title: Reconciliation Model
+page: { id: accounting-reconciliation-model-detail, route: /accounting/reconciliation-model-detail, breadcrumb: [Finance, Accounting, Reconciliation Models, Detail], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_reconciliation_model_detail
+    title_field: name
+    status_field: trigger
+    statusbar:
+      - { value: Manual, label: Manual }
+      - { value: Automated, label: Automated }
+    status_colors: { Manual: neutral, Automated: blue }
+    editable: true
+    header_actions:
+      - { id: edit_accounting_reconciliation_model, label: Edit, variant: secondary, permission: accounting.write }
+      - { id: automate_accounting_reconciliation_model, label: Automate, variant: primary, permission: accounting.write, show_if: "state.accounting_reconciliation_model_detail.trigger !== 'Automated'" }
+      - { id: manual_accounting_reconciliation_model, label: Set Manual, variant: secondary, permission: accounting.write, show_if: "state.accounting_reconciliation_model_detail.trigger === 'Automated'" }
+      - { id: archive_accounting_reconciliation_model, label: Archive, variant: secondary, permission: accounting.write, show_if: "state.accounting_reconciliation_model_detail.active === true" }
+    group_columns: 2
+    groups:
+      - title: Reconciliation Model
+        fields:
+          - { field: name, label: Name }
+          - { field: trigger, label: Automation }
+          - { field: match_journals, label: Journals? }
+          - { field: match_partners, label: Partners? }
+          - { field: match_amount, label: Amount? }
+      - title: Matching Rules
+        fields:
+          - { field: match_label, label: Label? }
+          - { field: match_label_param, label: Contains }
+          - { field: next_activity, label: Next Activity }
+          - { field: company, label: Company }
+          - { field: active, label: Active }
+    notebook:
+      active: counterpart-items
+      tabs:
+        - id: counterpart-items
+          label: Counterpart Items
+          fields:
+            - { field: counterpart_partner, label: Partner }
+            - { field: counterpart_account, label: Account }
+            - { field: amount_type, label: Amount Type }
+            - { field: amount_value, label: Amount }
+            - { field: counterpart_label, label: Label }

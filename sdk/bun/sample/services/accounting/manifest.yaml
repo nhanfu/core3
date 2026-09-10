@@ -85,6 +85,10 @@ menu:
           label: Reconciliation
           icon: bank
           permission: accounting.read
+        - path: /accounting/reconciliation-models
+          label: Reconciliation Models
+          icon: ledger
+          permission: accounting.read
         - path: /accounting/closing
           label: Closing
           icon: lock
