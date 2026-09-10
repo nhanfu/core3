@@ -39,5 +39,32 @@ datasources:
         AND (:payment_mode IS NULL OR e.payment_method = :payment_mode)
       ORDER BY e.expense_date DESC, e.id
 actions:
-  - { id: submit_expense, type: server, permission: expenses.write, action: expenses.submit, handler: order_transition, workflow: expense_items, operation: submit, refresh: [expenses_my] }
-  - { id: reset_expense, type: server, permission: expenses.write, action: expenses.reset, handler: order_transition, workflow: expense_items, operation: reset, refresh: [expenses_my] }
+  - id: submit_expense
+    type: server
+    permission: expenses.write
+    action: expenses.submit
+    handler: order_transition
+    workflow: expense_items
+    operation: submit
+    refresh: [expenses_my]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft' AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, message: Attach a receipt before submitting this expense }
+      steps:
+        - query: "UPDATE expenses SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.submit', 'Submitted', 'Submitted for manager approval')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+  - id: reset_expense
+    type: server
+    permission: expenses.write
+    action: expenses.reset
+    handler: order_transition
+    workflow: expense_items
+    operation: reset
+    refresh: [expenses_my]
+    mutation:
+      guards: [{ query: "SELECT id FROM expenses WHERE id = :id AND state = 'Refused'", status: 409, message: Only refused expenses can be reset }]
+      steps:
+        - query: "UPDATE expenses SET state = 'Draft', refusal_reason = NULL, row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.reset', 'Reset', 'Reset to draft')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }

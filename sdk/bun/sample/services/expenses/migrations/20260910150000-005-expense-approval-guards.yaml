@@ -1,0 +1,18 @@
+version: 0.0.5
+description: Receipt-gated approval and refusal-reason fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS refusal_reason VARCHAR;
+      UPDATE expenses
+      SET duplicate_candidate = 'Similar submitted expense: Travel by car (expense-demo-submitted)'
+      WHERE id = 'expense-demo-submitted-2' AND duplicate_candidate IS NULL;
+      UPDATE expenses
+      SET receipt_reference = 'receipt-hotel.pdf', receipt_label = 'Possible duplicate receipt'
+      WHERE id = 'expense-demo-submitted-2';
+    down: |
+      ALTER TABLE expenses DROP COLUMN IF EXISTS refusal_reason;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

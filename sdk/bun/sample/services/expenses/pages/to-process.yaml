@@ -43,5 +43,3 @@ components:
       - { field: company_name, label: Company, optional: hide }
       - { field: status, label: Status, type: StatusChip }
       - { field: actions, label: '', align: right, actions: [{ id: approve_expense, label: Approve, variant: primary, permission: expenses.manage, show_if: "row.status === 'Submitted'" }, { id: refuse_expense, label: Refuse, variant: danger, permission: expenses.manage, show_if: "row.status === 'Submitted'" }] }
-actions:
-  - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }

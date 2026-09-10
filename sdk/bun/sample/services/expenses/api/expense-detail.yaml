@@ -4,6 +4,7 @@ datasources:
     single: true
     permission: expenses.read
     workflow: expense_items
+    error_states: { transport_error: { status: 503, code: EXPENSE_DETAIL_UNAVAILABLE, message: Expense detail data is temporarily unavailable } }
     query: |
       SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
         CAST(e.expense_date AS VARCHAR) AS expense_date, e.description,
@@ -13,8 +14,8 @@ datasources:
         CASE e.payment_method WHEN 'Company' THEN 'Paid by Company' ELSE 'Paid by Employee' END AS payment_mode_label,
         e.receipt_reference, e.receipt_label, e.company_name, e.department_name,
         e.analytic_distribution, e.journal_entry, e.duplicate_candidate,
-        e.reimbursement_status, e.state AS status
-      FROM expenses e WHERE e.id = :id
+        e.reimbursement_status, e.refusal_reason, e.state AS status
+      FROM expenses e WHERE e.id = :id AND (:fixture_state IS NULL OR :fixture_state <> 'empty')
   - id: expense_detail_activity
     single: false
     permission: expenses.read
@@ -50,9 +51,96 @@ actions:
       - { field: receipt_reference, label: Receipt attachment, type: text }
       - { field: tax_amount, label: Taxes, type: number }
       - { field: analytic_distribution, label: Analytic distribution, type: text }
-  - { id: submit_expense_detail, type: server, permission: expenses.write, action: expenses.submit, handler: order_transition, workflow: expense_items, operation: submit, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
-  - { id: approve_expense_detail, type: server, permission: expenses.manage, action: expenses.approve, handler: order_transition, workflow: expense_items, operation: approve, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
-  - { id: post_expense_detail, type: server, permission: expenses.manage, action: expenses.post, handler: order_transition, workflow: expense_items, operation: post, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
-  - { id: pay_expense_detail, type: server, permission: expenses.manage, action: expenses.pay, handler: order_transition, workflow: expense_items, operation: pay, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
-  - { id: refuse_expense_detail, type: server, permission: expenses.manage, action: expenses.refuse, handler: order_transition, workflow: expense_items, operation: refuse, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
-  - { id: reset_expense_detail, type: server, permission: expenses.write, action: expenses.reset, handler: order_transition, workflow: expense_items, operation: reset, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
+  - id: submit_expense_detail
+    type: server
+    permission: expenses.write
+    action: expenses.submit
+    handler: order_transition
+    workflow: expense_items
+    operation: submit
+    params: { id: '{state.id}' }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft' AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, message: Attach a receipt before submitting this expense }
+      steps:
+        - query: "UPDATE expenses SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.submit', 'Submitted', 'Submitted for manager approval')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expense_detail, expense_detail_activity]
+  - id: approve_expense_detail
+    type: server
+    permission: expenses.manage
+    action: expenses.approve
+    handler: yaml_mutation
+    operation: approve
+    params: { id: '{state.id}' }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Submitted' AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, message: Attach a receipt before approving this expense }
+      steps:
+        - query: "UPDATE expenses SET state = 'Approved', row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.approve', 'Approved', 'Approved for posting')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expense_detail, expense_detail_activity]
+  - id: post_expense_detail
+    type: server
+    permission: expenses.manage
+    action: expenses.post
+    handler: yaml_mutation
+    operation: post
+    params: { id: '{state.id}' }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Approved' AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, message: Attach a receipt before posting this expense }
+      steps:
+        - query: "UPDATE expenses SET state = 'Posted', row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.post', 'Posted', 'Journal entry posted')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expense_detail, expense_detail_activity]
+  - id: pay_expense_detail
+    type: server
+    permission: expenses.manage
+    action: expenses.pay
+    handler: yaml_mutation
+    operation: pay
+    params: { id: '{state.id}' }
+    mutation:
+      guards: [{ query: "SELECT id FROM expenses WHERE id = :id AND state IN ('Posted', 'In Payment')", status: 409, message: Only posted or in-payment expenses can be paid }]
+      steps:
+        - query: "UPDATE expenses SET state = 'Paid', reimbursement_status = 'Paid', row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.pay', 'Paid', 'Reimbursement marked paid')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expense_detail, expense_detail_activity]
+  - id: refuse_expense_detail
+    type: server_form
+    permission: expenses.manage
+    action: expenses.refuse
+    handler: yaml_mutation
+    operation: refuse
+    title: Refuse Expense
+    params: { id: '{state.id}' }
+    fields: [{ field: reason, label: Reason, type: text, required: true, placeholder: Explain why this expense is being refused... }]
+    mutation:
+      steps:
+        - query: "UPDATE expenses SET state = 'Refused', refusal_reason = :reason, row_version = row_version + 1 WHERE id = :id AND state IN ('Submitted', 'Approved')"
+          expect_changed: true
+          status: 409
+          message: Only submitted or approved expenses can be refused
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.refuse', 'Refused', :reason)"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expense_detail, expense_detail_activity]
+  - id: reset_expense_detail
+    type: server
+    permission: expenses.write
+    action: expenses.reset
+    handler: order_transition
+    workflow: expense_items
+    operation: reset
+    params: { id: '{state.id}' }
+    mutation:
+      guards: [{ query: "SELECT id FROM expenses WHERE id = :id AND state = 'Refused'", status: 409, message: Only refused expenses can be reset }]
+      steps:
+        - query: "UPDATE expenses SET state = 'Draft', refusal_reason = NULL, row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.reset', 'Reset', 'Reset to draft')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expense_detail, expense_detail_activity]

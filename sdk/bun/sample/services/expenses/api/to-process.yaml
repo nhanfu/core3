@@ -4,6 +4,7 @@ datasources:
     single: false
     permission: expenses.read
     workflow: expense_items
+    error_states: { transport_error: { status: 503, code: EXPENSE_QUEUE_UNAVAILABLE, message: Expense processing data is temporarily unavailable } }
     query: |
       SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
         CAST(e.expense_date AS VARCHAR) AS expense_date, e.amount,
@@ -16,5 +17,35 @@ datasources:
         AND (:payment_mode IS NULL OR e.payment_method = :payment_mode)
       ORDER BY e.expense_date ASC, e.id
 actions:
-  - { id: approve_expense, type: server, permission: expenses.manage, action: expenses.approve, handler: order_transition, workflow: expense_items, operation: approve, refresh: [expenses_to_process] }
-  - { id: refuse_expense, type: server, permission: expenses.manage, action: expenses.refuse, handler: order_transition, workflow: expense_items, operation: refuse, refresh: [expenses_to_process] }
+  - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
+  - id: approve_expense
+    type: server
+    permission: expenses.manage
+    action: expenses.approve
+    handler: yaml_mutation
+    operation: approve
+    mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Submitted' AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, message: Attach a receipt before approving this expense }
+      steps:
+        - query: "UPDATE expenses SET state = 'Approved', row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.approve', 'Approved', 'Approved for posting')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expenses_to_process]
+  - id: refuse_expense
+    type: server_form
+    permission: expenses.manage
+    action: expenses.refuse
+    handler: yaml_mutation
+    operation: refuse
+    title: Refuse Expense
+    fields: [{ field: reason, label: Reason, type: text, required: true, placeholder: Explain why this expense is being refused... }]
+    mutation:
+      steps:
+        - query: "UPDATE expenses SET state = 'Refused', refusal_reason = :reason, row_version = row_version + 1 WHERE id = :id AND state IN ('Submitted', 'Approved')"
+          expect_changed: true
+          status: 409
+          message: Only submitted or approved expenses can be refused
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.refuse', 'Refused', :reason)"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expenses_to_process]

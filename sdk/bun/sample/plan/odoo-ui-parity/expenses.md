@@ -266,6 +266,15 @@ Categories, and Settings. The implementation is in commits `e5f805d`,
 `83fb678`, and `7c3dec3`; its source was developed in the dedicated
 `agent/odoo-ui-expenses-impl` worktree.
 
+Batch 2 is implemented in the dedicated `agent/odoo-ui-expenses-next`
+worktree. It closes the receipt-gated approval/refusal detail gap: Submit,
+Approve, and Post require a receipt; Refuse requires a persisted reason and
+activity entry; Reset clears the refusal; and duplicate-receipt/error/empty
+fixtures are deterministic. The page/API split remains joined by `page.id`.
+See [expenses-batch-2.md](expenses-batch-2.md) for the bounded acceptance and
+verification record. The disposable comparison used the live `core3_reference`
+Odoo database at `http://127.0.0.1:8069`.
+
 ## Acceptance
 
 - The implementation inventory maps every visible installed-addon menu and

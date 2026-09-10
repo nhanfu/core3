@@ -54,6 +54,7 @@ components:
                 - { field: receipt_label, label: Receipt status }
                 - { field: receipt_reference, label: Attachment }
                 - { field: duplicate_candidate, label: Duplicate check }
+                - { field: refusal_reason, label: Refusal reason, show_if: "state.expense_detail.status === 'Refused'" }
         - id: activity
           label: Chatter
           content_slot: true
