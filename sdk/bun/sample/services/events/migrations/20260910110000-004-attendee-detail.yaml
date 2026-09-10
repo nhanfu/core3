@@ -1,0 +1,28 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS attendee_phone VARCHAR;
+      ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS booked_by VARCHAR;
+      ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS row_version BIGINT NOT NULL DEFAULT 1;
+      CREATE TABLE IF NOT EXISTS event_registration_answers (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        registration_id VARCHAR NOT NULL,
+        question VARCHAR NOT NULL,
+        question_type VARCHAR NOT NULL,
+        suggested_answer VARCHAR,
+        text_answer VARCHAR
+      );
+      UPDATE event_registrations SET attendee_phone = '+1 202 555 0122', company_name = '', booked_by = 'My Company (San Francisco)' WHERE id = 'registration-demo-001';
+      UPDATE event_registrations SET attendee_phone = '+1 202 555 0161', company_name = 'Azure Interior', booked_by = 'My Company (San Francisco)' WHERE id = 'registration-demo-002';
+      UPDATE event_registrations SET attendee_phone = '', company_name = '', booked_by = 'My Company (San Francisco)' WHERE id = 'registration-demo-003';
+      INSERT INTO event_registration_answers(id, registration_id, question, question_type, suggested_answer, text_answer) VALUES
+        ('registration-answer-demo-001', 'registration-demo-002', 'Do you need accessibility assistance?', 'Simple Choice', 'No', ''),
+        ('registration-answer-demo-002', 'registration-demo-002', 'What is your role?', 'Text', '', 'Designer')
+      ON CONFLICT (id) DO NOTHING;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

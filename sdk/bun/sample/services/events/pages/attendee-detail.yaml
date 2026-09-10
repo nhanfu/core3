@@ -1,0 +1,53 @@
+title: Attendee
+page: { id: event-attendee-detail, route: /events/attendees/detail, breadcrumb: [Marketing, Events, Reporting, Attendees, Attendee], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_attendee_detail
+    title_field: attendee_name
+    subtitle_field: event_name
+    status_field: state
+    editable: false
+    labels: { workflowStatus: Status }
+    header_actions:
+      - { id: mark_attendee_attended_detail, label: Attended, variant: primary, permission: events.write, show_if: "state.event_attendee_detail.state === 'Registered'" }
+      - { id: cancel_event_attendee_detail, label: Cancel Registration, variant: secondary, permission: events.write, show_if: "state.event_attendee_detail.state !== 'Cancelled'" }
+    statusbar: [{ value: Registered, label: Registered }, { value: Attended, label: Attended }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Registered: blue, Attended: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Attendee
+        fields: [{ field: attendee_name, label: Attendee Name }, { field: attendee_email, label: Email }, { field: attendee_phone, label: Phone }, { field: company_name, label: Company Name }]
+      - title: Event Information
+        fields: [{ field: event_name, label: Event }, { field: ticket_type, label: Ticket Type }, { field: booked_by, label: Booked by }, { field: registered_at, label: Registration Date }]
+  - type: ContactGrid
+    source: event_attendee_answers
+    row_key: id
+    columns:
+      - { field: question, label: Question, type: PrimaryEntityCell }
+      - { field: question_type, label: Type }
+      - { field: suggested_answer, label: Suggested answer }
+      - { field: text_answer, label: Text answer }
+    empty_state: { title: No questions, description: Registration questions and answers will appear here. }
+actions:
+  - id: mark_attendee_attended_detail
+    type: server
+    permission: events.write
+    action: events.registrations.check_in
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [event_attendee_detail]
+    mutation:
+      guards: [{ query: "SELECT id FROM event_registrations WHERE id = :id AND state = 'Registered'", status: 409, message: Only registered attendees can be marked attended }]
+      steps: [{ query: "UPDATE event_registrations SET state = 'Attended', row_version = row_version + 1 WHERE id = :id" }]
+      result: { query: "SELECT * FROM event_registrations WHERE id = :id" }
+  - id: cancel_event_attendee_detail
+    type: server
+    permission: events.write
+    action: events.registrations.cancel
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [event_attendee_detail]
+    mutation:
+      guards: [{ query: "SELECT id FROM event_registrations WHERE id = :id AND state <> 'Cancelled'", status: 409, message: Only active registrations can be cancelled }]
+      steps: [{ query: "UPDATE event_registrations SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+      result: { query: "SELECT * FROM event_registrations WHERE id = :id" }

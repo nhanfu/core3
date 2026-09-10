@@ -5,10 +5,12 @@ components:
     variant: odoo
     source: event_attendees
     search: { label: Search attendees, placeholder: Search attendees or events... }
-    filters: [{ field: state, label: Status, options: [{ id: Registered, label: Registered }, { id: Attended, label: Attended }]}]
+    filters: [{ field: state, label: Status, options: [{ id: Registered, label: Registered }, { id: Attended, label: Attended }, { id: Cancelled, label: Cancelled }]}]
     page_size: 50
     row_key: id
     row_actions: menu
+    row_open_action: view_event_attendee
+    row_double_click_action: view_event_attendee
     columns:
       - { field: attendee_name, label: Attendee, type: PrimaryEntityCell }
       - { field: event_name, label: Event }
@@ -22,6 +24,11 @@ components:
           - { id: mark_attendee_attended, label: Mark attended, variant: primary, permission: events.write, show_if: "row.state === 'Registered'" }
           - { id: cancel_event_attendee, label: Cancel registration, variant: danger, permission: events.write, show_if: "row.state !== 'Cancelled'" }
 actions:
+  - id: view_event_attendee
+    type: navigate
+    permission: events.read
+    navigate_to: /events/attendees/detail
+    params: { id: '{row.id}' }
   - id: mark_attendee_attended
     type: server
     permission: events.write

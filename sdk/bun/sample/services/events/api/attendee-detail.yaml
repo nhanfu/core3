@@ -1,0 +1,9 @@
+page: { id: event-attendee-detail }
+datasources:
+  - id: event_attendee_detail
+    single: true
+    permission: events.read
+    query: "SELECT id, row_version, attendee_name, COALESCE(attendee_email, '') AS attendee_email, COALESCE(attendee_phone, '') AS attendee_phone, COALESCE(company_name, '') AS company_name, event_name, COALESCE(ticket_type, '') AS ticket_type, COALESCE(booked_by, '') AS booked_by, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE id = :id"
+  - id: event_attendee_answers
+    permission: events.read
+    query: "SELECT id, question, question_type, COALESCE(suggested_answer, '') AS suggested_answer, COALESCE(text_answer, '') AS text_answer FROM event_registration_answers WHERE registration_id = :id ORDER BY id"
