@@ -16,15 +16,49 @@ components:
       - { field: order_date, label: Order date }
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
+      - { id: list, label: List, icon: table, mobile: false }
       - { id: kanban, label: Kanban, icon: dashboard, group_by: state, groups_source: purchase_order_states, card: { title: name, subtitle: vendor_name, fields: [{ field: expected_date, label: Expected }, { field: total_amount_display, label: Total }] } }
-      - { id: calendar, label: Calendar, icon: calendar, date_field: expected_date, card: { title: name, subtitle: vendor_name } }
+      - { id: calendar, label: Calendar, icon: calendar, mobile: false, date_field: expected_date, card: { title: name, subtitle: vendor_name } }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields:
+            - { field: vendor_name, column: Vendor }
+            - { field: state, column: Status }
+            - { field: expected_arrival, column: Expected arrival, type: date }
+            - { field: quantity, column: Ordered quantity }
+            - { field: qty_received, column: Received quantity }
+            - { field: total_amount, column: Total }
+          default:
+            rows: [vendor_name]
+            columns: [state]
+            measures:
+              - { field: total_amount, aggregate: sum, column: Total }
+              - { field: quantity, aggregate: sum, column: Ordered }
+          date_ranges: { expected_arrival: month }
+      - { id: graph, label: Graph, icon: graph, mobile: false, category_field: vendor_name, measure_field: total_amount, type: bar }
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: vendor_name
+        record_date_field: activity_date
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: document, label: Document, icon: ▣ }
     columns:
-      - { field: name, label: Purchase order, type: PrimaryEntityCell, sortable: true }
-      - { field: order_date, label: Order date, sortable: true }
+      - { field: name, label: Reference, type: PrimaryEntityCell, sortable: true }
+      - { field: confirmation_date, label: Confirmation date, sortable: true }
       - { field: vendor_name, label: Vendor }
-      - { field: product_name, label: Product }
+      - { field: company_name, label: Company }
+      - { field: buyer_name, label: Buyer }
+      - { field: billing_status, label: Billing status }
       - { field: total_amount_display, label: Total, align: right }
+      - { field: expected_arrival, label: Expected arrival }
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id

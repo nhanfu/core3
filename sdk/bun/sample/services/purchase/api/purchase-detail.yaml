@@ -3,7 +3,7 @@ datasources:
   - id: purchase_order_detail
     single: true
     permission: purchase.read
-    query: "SELECT id, row_version, name, vendor_name, contact_name, product_name, quantity, qty_received, unit_price, state, CAST(order_date AS VARCHAR) AS order_date, CAST(expected_date AS VARCHAR) AS expected_date, reference, currency, buyer_name, total_amount, printf('%s %,.2f', currency, CAST(total_amount AS DOUBLE)) AS total_amount_display, locked, acknowledged, notes FROM purchase_orders WHERE id = :id"
+    query: "SELECT id, row_version, name, vendor_name, contact_name, product_name, quantity, qty_received, unit_price, state, CAST(order_date AS VARCHAR) AS order_date, CAST(order_date AS VARCHAR) AS confirmation_date, CAST(expected_date AS VARCHAR) AS expected_date, CAST(expected_date AS VARCHAR) AS expected_arrival, reference, currency, 'Main Company (San Francisco)' AS company_name, buyer_name, CASE WHEN state IN ('Confirmed', 'Received') THEN 'Nothing to Bill' ELSE 'To Bill' END AS billing_status, total_amount, printf('%s %,.2f', currency, CAST(total_amount AS DOUBLE)) AS total_amount_display, locked, acknowledged, notes FROM purchase_orders WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
 actions:
   - { id: send_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.send, handler: order_transition, workflow: purchase_orders, operation: send, refresh: [purchase_order_detail] }
   - { id: confirm_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.confirm, handler: order_transition, workflow: purchase_orders, operation: confirm, refresh: [purchase_order_detail] }

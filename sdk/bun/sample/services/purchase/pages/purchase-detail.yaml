@@ -12,9 +12,9 @@ components:
     group_columns: 2
     groups:
       - title: Vendor
-        fields: [{ field: vendor_name, label: Vendor }, { field: contact_name, label: Contact }, { field: reference, label: Vendor reference }, { field: currency, label: Currency }]
+        fields: [{ field: vendor_name, label: Vendor }, { field: contact_name, label: Contact }, { field: reference, label: Vendor reference }, { field: currency, label: Currency }, { field: company_name, label: Company }]
       - title: Order details
-        fields: [{ field: name, label: Purchase order }, { field: buyer_name, label: Buyer }, { field: order_date, label: Order date }, { field: expected_date, label: Expected date }, { field: state, label: Status }]
+        fields: [{ field: name, label: Purchase order }, { field: buyer_name, label: Buyer }, { field: confirmation_date, label: Confirmation date }, { field: expected_arrival, label: Expected arrival }, { field: billing_status, label: Billing status }, { field: state, label: Status }]
       - title: Products
         fields: [{ field: product_name, label: Product }, { field: quantity, label: Ordered }, { field: qty_received, label: Received }, { field: unit_price, label: Unit price }, { field: total_amount_display, label: Total }]
       - title: Notes

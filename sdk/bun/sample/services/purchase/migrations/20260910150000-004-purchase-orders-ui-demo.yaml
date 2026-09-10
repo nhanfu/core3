@@ -1,0 +1,16 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO purchase_orders(id, name, vendor_id, vendor_name, product_name, quantity, qty_received, unit_price, state, order_date, expected_date, reference, order_type, approval_status, locked, acknowledged, currency, buyer_name, total_amount, contact_name, notes)
+      VALUES
+        ('po-demo-005', 'PO/2026/0005', 'vendor-demo-002', 'Northwind Components', 'Warehouse barcode scanners', 18, 6, 75.00, 'Confirmed', DATE '2026-08-28', DATE '2026-09-16', 'Warehouse replenishment', 'purchase', 'approved', false, false, 'USD', 'Mitchell Admin', 1350.00, 'Grace Chen', 'Partial receipt is scheduled for the next delivery window.'),
+        ('po-demo-006', 'PO/2026/0006', 'vendor-demo-003', 'Saigon Office Goods', 'Ergonomic office desks', 8, 8, 420.00, 'Received', DATE '2026-08-24', DATE '2026-09-08', 'Office expansion', 'purchase', 'approved', true, true, 'USD', 'Mitchell Admin', 3360.00, 'Nguyen Minh', 'Received in full and matched to the vendor bill.'),
+        ('po-demo-007', 'PO/2026/0007', 'vendor-demo-001', 'Lotus Industrial Supply', 'Packing tape dispensers', 30, 0, 18.50, 'Confirmed', DATE '2026-08-22', DATE '2026-09-19', 'Packaging line refresh', 'purchase', 'approved', false, false, 'USD', 'Mitchell Admin', 555.00, 'Linh Tran', 'Confirm the delivery window before receipt.' );
+    down: |
+      DELETE FROM purchase_orders WHERE id IN ('po-demo-005', 'po-demo-006', 'po-demo-007');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
