@@ -1,0 +1,13 @@
+version: 0.0.11
+description: Accounting partner customer and vendor defaults
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_partner_accounting (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, partner_name VARCHAR NOT NULL, partner_role VARCHAR NOT NULL, customer_payment_terms VARCHAR, vendor_payment_terms VARCHAR, fiscal_position VARCHAR, company VARCHAR NOT NULL, state VARCHAR NOT NULL DEFAULT 'Active');
+      INSERT INTO accounting_partner_accounting(id, partner_name, partner_role, customer_payment_terms, vendor_payment_terms, fiscal_position, company) VALUES ('partner-azure-interior','Azure Interior','Customer','End of Following Month',NULL,'Domestic','Main Company (San Francisco)'),('partner-gemini-furniture','Gemini Furniture','Customer','End of Following Month',NULL,'Domestic','Main Company (San Francisco)'),('partner-lumber-inc','Lumber Inc','Vendor',NULL,'Net 30','Domestic','Main Company (San Francisco)'),('partner-ready-mat','Ready Mat','Customer & Vendor','End of Following Month','Net 30','Foreign Trade','Main Company (San Francisco)') ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS accounting_partner_accounting;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

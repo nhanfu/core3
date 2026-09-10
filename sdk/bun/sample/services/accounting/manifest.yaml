@@ -140,6 +140,10 @@ menu:
           label: Analytic Distribution Models
           icon: ledger
           permission: accounting.read
+        - path: /accounting/partner-accounting
+          label: Partner Accounting
+          icon: users
+          permission: accounting.read
     - id: review
       label: Review
       items:

@@ -1,0 +1,18 @@
+title: Partner Accounting
+page: { id: partner-accounting, route: /accounting/partner-accounting, breadcrumb: [Finance, Configuration, Partner Accounting], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_partner_accounting
+    search: { label: Search partners, placeholder: Search partner accounting... }
+    empty_state: { title: No partner accounting records found, description: Adjust your search or configure a customer or vendor. }
+    columns:
+      - { field: partner_name, label: Partner, type: PrimaryEntityCell }
+      - { field: partner_role, label: Partner Type }
+      - { field: customer_payment_terms, label: Customer Payment Terms }
+      - { field: vendor_payment_terms, label: Vendor Payment Terms }
+      - { field: fiscal_position, label: Fiscal Position }
+      - { field: company, label: Company }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
