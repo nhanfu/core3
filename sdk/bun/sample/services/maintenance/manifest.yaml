@@ -29,4 +29,5 @@ menu:
       items:
         - { path: /maintenance-teams, label: Maintenance Teams, icon: users, permission: maintenance.manage }
         - { path: /equipement-categories, label: Equipment Categories, icon: category, permission: maintenance.manage }
+        - { path: /maintenance-stages, label: Maintenance Stages, icon: pipeline, permission: maintenance.manage }
         - { path: /maintenance-settings, label: Settings, icon: settings, permission: maintenance.settings }

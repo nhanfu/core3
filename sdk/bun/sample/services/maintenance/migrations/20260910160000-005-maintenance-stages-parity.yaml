@@ -1,0 +1,19 @@
+version: 0.0.5
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE maintenance_stages ADD COLUMN IF NOT EXISTS fold BOOLEAN DEFAULT FALSE;
+      ALTER TABLE maintenance_stages ADD COLUMN IF NOT EXISTS done BOOLEAN DEFAULT FALSE;
+      ALTER TABLE maintenance_stages ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      UPDATE maintenance_stages SET fold = FALSE, done = FALSE WHERE id IN ('maintenance-stage-new', 'maintenance-stage-progress');
+      UPDATE maintenance_stages SET fold = FALSE, done = TRUE WHERE id = 'maintenance-stage-repaired';
+      UPDATE maintenance_stages SET fold = TRUE, done = TRUE WHERE id = 'maintenance-stage-scrap';
+    down: |
+      ALTER TABLE maintenance_stages DROP COLUMN IF EXISTS row_version;
+      ALTER TABLE maintenance_stages DROP COLUMN IF EXISTS done;
+      ALTER TABLE maintenance_stages DROP COLUMN IF EXISTS fold;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

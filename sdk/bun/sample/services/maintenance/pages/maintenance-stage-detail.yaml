@@ -1,0 +1,11 @@
+title: Maintenance Stage
+page: { id: maintenance-stage-detail, route: /maintenance-stages/detail, breadcrumb: [Supply Chain, Maintenance, Configuration, Maintenance Stages], auth: { require: [maintenance.manage] } }
+components:
+  - type: OdooFormView
+    source: maintenance_stage_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Maintenance Stage
+        fields: [{ field: name, label: Name }, { field: sequence, label: Sequence }, { field: fold, label: Folded }, { field: done, label: Request Done }]
+    header_actions: [{ id: edit_maintenance_stage_detail, label: Save, variant: primary }]

@@ -1,0 +1,34 @@
+title: Maintenance Stages
+page: { id: maintenance-stages, route: /maintenance-stages, breadcrumb: [Supply Chain, Maintenance, Configuration, Maintenance Stages], auth: { require: [maintenance.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: maintenance_stages
+    create_action: create_maintenance_stage
+    create_label: New
+    search: { label: Search stages, placeholder: 'Search maintenance stages...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: fold
+        card: { title: name, subtitle: sequence, fields: [{ field: fold, label: Folded }, { field: done, label: Request Done }] }
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: sequence, fields: [{ field: fold, label: Folded }, { field: done, label: Request Done }] }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/maintenance/pages/maintenance-stage-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: edit_maintenance_stage
+    row_actions: menu
+    empty_state: { title: No maintenance stages, description: Add a stage to define the maintenance request flow. }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: fold, label: Folded, type: BooleanToggle }
+      - { field: done, label: Request Done, type: BooleanToggle }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_maintenance_stage, label: Edit, icon: edit }, { id: delete_maintenance_stage, label: Delete, icon: trash, variant: danger }] }

@@ -1,0 +1,59 @@
+page: { id: maintenance-stages }
+datasources:
+  - id: maintenance_stages
+    permission: maintenance.manage
+    error_states: { transport_error: { status: 503, code: MAINTENANCE_STAGES_UNAVAILABLE, message: Maintenance stages are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, sequence, fold, done FROM maintenance_stages WHERE active = TRUE AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name, id"
+actions:
+  - id: create_maintenance_stage
+    type: server_form
+    permission: maintenance.manage
+    title: New Maintenance Stage
+    action: maintenance.stages.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [maintenance_stages]
+    mutation:
+      operation: insert
+      table: maintenance_stages
+      generated: [id]
+      fields: [name, sequence, fold, done]
+      required: [name]
+      defaults: { sequence: 50, fold: false, done: false, active: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_stages WHERE LOWER(name) = LOWER(:name))", status: 409, code: MAINTENANCE_STAGE_NAME_EXISTS, message: A maintenance stage with this name already exists. }]
+      result: { query: "SELECT * FROM maintenance_stages WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number, default: 50 }, { field: fold, label: Folded, type: checkbox }, { field: done, label: Request Done, type: checkbox }]
+  - id: edit_maintenance_stage
+    type: server_form
+    permission: maintenance.manage
+    title: Edit Maintenance Stage
+    action: maintenance.stages.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [maintenance_stages]
+    mutation:
+      operation: update
+      table: maintenance_stages
+      fields: [name, sequence, fold, done]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_stages WHERE id = :id AND active = TRUE", status: 404, code: MAINTENANCE_STAGE_NOT_FOUND, message: Active maintenance stage not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_stages WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: MAINTENANCE_STAGE_NAME_EXISTS, message: A maintenance stage with this name already exists. }
+      result: { query: "SELECT * FROM maintenance_stages WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number }, { field: fold, label: Folded, type: checkbox }, { field: done, label: Request Done, type: checkbox }]
+  - id: delete_maintenance_stage
+    type: server
+    permission: maintenance.manage
+    action: maintenance.stages.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [maintenance_stages]
+    mutation:
+      operation: delete
+      table: maintenance_stages
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_stages WHERE id = :id AND active = TRUE", status: 404, code: MAINTENANCE_STAGE_NOT_FOUND, message: Active maintenance stage not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_requests r JOIN maintenance_stages s ON s.id = :id WHERE r.stage = s.name)", status: 409, code: MAINTENANCE_STAGE_IN_USE, message: A maintenance stage used by requests cannot be deleted. }
