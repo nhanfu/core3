@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { discoverPages } from '@core3/server/discovery';
+import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
+import { YamlRepository } from '@core3/server/database/yaml-repository';
 
 const root = join(import.meta.dir, '../services/time_off');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -101,5 +103,46 @@ describe('Time Off Odoo view navigation', () => {
     ]);
     expect(activityTypes).not.toContain('Trip with Family');
     expect(activityTypes).not.toContain('Doctor Appointment');
+  });
+
+  test('covers allocation approval workflow, row-version guards, and detail routing', async () => {
+    const discovered = discoverPages(join(import.meta.dir, '..'));
+    const list = yaml('pages/allocations.yaml');
+    const listView = list.components.find((component: any) => component.type === 'ListView');
+    const detail = yaml('pages/allocation-detail.yaml');
+    const detailForm = detail.components.find((component: any) => component.type === 'OdooFormView');
+    const api = apiYaml('allocations.yaml');
+    const detailApi = apiYaml('allocation-detail.yaml');
+    const workflow = yaml('pages/allocation-workflow.yaml').workflow;
+
+    expect(discovered.pageDatasources.get('allocation-detail')).toEqual(['allocation_states_detail', 'allocation_detail']);
+    expect(list.page.datasources).toBeUndefined();
+    expect(listView.empty_state).toMatchObject({ title: 'No allocation requests found' });
+    expect(listView.filters[0]).toMatchObject({ field: 'state', options_source: 'allocation_states' });
+    expect(listView.row_open_action).toBe('view_allocation');
+    expect(api.datasources.find((source: any) => source.id === 'time_off_allocations')?.query).toContain('row_version');
+    expect(detailForm.statusbar.map((state: any) => state.value)).toEqual(['Draft', 'Submitted', 'Approved', 'Refused', 'Cancelled']);
+    expect(detailApi.page.id).toBe('allocation-detail');
+    expect(detailApi.datasources.find((source: any) => source.id === 'allocation_detail')?.single).toBe(true);
+    expect(workflow.transitions.map((transition: any) => transition.id)).toEqual(['submit', 'approve', 'refuse', 'cancel']);
+    expect(workflow.transitions.every((transition: any) => transition.mutation.guards[0].status === 409)).toBe(true);
+    expect(workflow.transitions.every((transition: any) => String(transition.mutation.guards[0].query).includes('expected_row_version'))).toBe(true);
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await repository.run(`CREATE TABLE leave_allocations(
+      id VARCHAR PRIMARY KEY, name VARCHAR, employee_id VARCHAR, employee_name VARCHAR,
+      leave_type_id VARCHAR, leave_type_name VARCHAR, days DECIMAL(18,3), date_from DATE,
+      date_to DATE, state VARCHAR, reason VARCHAR, row_version BIGINT DEFAULT 1
+    );`);
+    const submit = workflow.transitions.find((transition: any) => transition.id === 'submit').mutation;
+    const approve = workflow.transitions.find((transition: any) => transition.id === 'approve').mutation;
+    await repository.run("INSERT INTO leave_allocations VALUES ('allocation-test', 'ALLOC/TEST', 'employee-1', 'Admin User', 'leave-type-annual', 'Annual Leave', 5, '2026-01-15', '2026-01-19', 'Draft', 'Test', 1)");
+    await repository.executeMutation(submit, { id: 'allocation-test', expected_row_version: 1 });
+    expect(await repository.query("SELECT state, row_version FROM leave_allocations WHERE id = 'allocation-test'")).toEqual([{ state: 'Submitted', row_version: 2 }]);
+    await expect(repository.executeMutation(submit, { id: 'allocation-test', expected_row_version: 2 })).rejects.toMatchObject({ status: 409 });
+    await repository.executeMutation(approve, { id: 'allocation-test', expected_row_version: 2 });
+    await expect(repository.executeMutation(approve, { id: 'allocation-test', expected_row_version: 2 })).rejects.toMatchObject({ status: 409 });
+    database.close();
   });
 });

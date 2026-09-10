@@ -9,6 +9,8 @@ components:
     create_action: create_allocation
     create_label: New allocation
     search: { label: Search allocations, placeholder: Search employee or allocation... }
+    empty_state: { title: No allocation requests found, description: Create an allocation or adjust your search. }
+    filters: [{ field: state, label: Status, options_source: allocation_states }]
     view_navigation: tabs
     views:
       - id: list
@@ -28,6 +30,13 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_open_action: view_allocation
+    row_actions: menu
+    actions:
+      - { id: submit_allocation, label: Submit, permission: time_off.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: approve_allocation, label: Approve, permission: time_off.manage, variant: primary, show_if: "row.state === 'Submitted'" }
+      - { id: refuse_allocation, label: Refuse, permission: time_off.manage, variant: danger, show_if: "row.state === 'Submitted'" }
+      - { id: cancel_allocation, label: Cancel, permission: time_off.write, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted'" }
 actions:
   - id: create_allocation
     type: server_form

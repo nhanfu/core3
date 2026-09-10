@@ -22,3 +22,10 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_open_action: view_my_allocation
+actions:
+  - id: view_my_allocation
+    type: navigate
+    permission: time_off.read
+    navigate_to: /time-off-allocations/detail
+    params: { id: '{row.id}' }

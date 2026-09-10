@@ -1,0 +1,21 @@
+title: Allocation Request
+page: { id: allocation-detail, route: /time-off-allocations/detail, breadcrumb: [Human Resources, Time Off, Allocations, Request], auth: { require: [time_off.read] } }
+components:
+  - type: OdooFormView
+    source: allocation_detail
+    title_field: name
+    subtitle_field: employee_name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Waiting For Me }, { value: Approved, label: Approved }, { value: Refused, label: Refused }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Submitted: amber, Approved: green, Refused: red, Cancelled: violet }
+    header_actions:
+      - { id: submit_allocation_detail, label: Submit, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: approve_allocation_detail, label: Approve, variant: primary, show_if: "row.state === 'Submitted'" }
+      - { id: refuse_allocation_detail, label: Refuse, variant: danger, show_if: "row.state === 'Submitted'" }
+      - { id: cancel_allocation_detail, label: Cancel, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted'" }
+    group_columns: 2
+    groups:
+      - title: Allocation
+        fields: [{ field: name, label: Allocation }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: leave_type_name, label: Time Off Type }]
+      - title: Validity and amount
+        fields: [{ field: days, label: Amount }, { field: date_from, label: Start date }, { field: date_to, label: End date }, { field: reason, label: Reason }]

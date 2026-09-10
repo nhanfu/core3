@@ -1,0 +1,15 @@
+page: { id: allocation-detail }
+datasources:
+  - id: allocation_states_detail
+    permission: time_off.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Waiting For Me'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: allocation_detail
+    single: true
+    permission: time_off.read
+    query: "SELECT id, row_version, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state, reason FROM leave_allocations WHERE id = :id"
+actions:
+  - { id: submit_allocation_detail, type: server, permission: time_off.write, action: time_off.allocations.submit, handler: order_transition, workflow: leave_allocations, operation: submit, refresh: [allocation_detail, time_off_allocations] }
+  - { id: approve_allocation_detail, type: server, permission: time_off.manage, action: time_off.allocations.approve, handler: order_transition, workflow: leave_allocations, operation: approve, refresh: [allocation_detail, time_off_allocations] }
+  - { id: refuse_allocation_detail, type: server, permission: time_off.manage, action: time_off.allocations.refuse, handler: order_transition, workflow: leave_allocations, operation: refuse, refresh: [allocation_detail, time_off_allocations] }
+  - { id: cancel_allocation_detail, type: server, permission: time_off.write, action: time_off.allocations.cancel, handler: order_transition, workflow: leave_allocations, operation: cancel, refresh: [allocation_detail, time_off_allocations] }

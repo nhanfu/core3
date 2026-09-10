@@ -2,4 +2,4 @@ page: { id: my-allocations }
 datasources:
   - id: my_allocations
     permission: time_off.read
-    query: "SELECT id, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state FROM leave_allocations WHERE employee_name = 'Admin User' ORDER BY date_from DESC, name"
+    query: "SELECT id, row_version, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state FROM leave_allocations WHERE employee_name = 'Admin User' ORDER BY date_from DESC, name"

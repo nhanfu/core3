@@ -1,0 +1,48 @@
+workflow:
+  id: leave_allocations
+  entity: leave_allocations
+  handler: order_transition
+  initial: Draft
+  permission: time_off.write
+  mutable: true
+  status_source: allocation_states_detail
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Submitted, label: Waiting For Me, color: amber }
+    - { id: Approved, label: Approved, color: green, terminal: true }
+    - { id: Refused, label: Refused, color: red, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: violet, terminal: true }
+  transitions:
+    - id: submit
+      from: [Draft]
+      to: Submitted
+      permission: time_off.write
+      mutation:
+        guards:
+          - { query: "SELECT id FROM leave_allocations WHERE id = :id AND row_version = :expected_row_version AND state = 'Draft' AND days > 0 AND date_to >= date_from", status: 409, code: STALE_OR_INVALID_ALLOCATION, message: Only valid draft allocations can be submitted }
+        steps: [{ query: "UPDATE leave_allocations SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: Allocation was changed by another user. Reload it before submitting. }]
+        result: { query: "SELECT * FROM leave_allocations WHERE id = :id" }
+    - id: approve
+      from: [Submitted]
+      to: Approved
+      permission: time_off.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM leave_allocations WHERE id = :id AND row_version = :expected_row_version AND state = 'Submitted'", status: 409, code: INVALID_TRANSITION, message: Only submitted allocations can be approved }]
+        steps: [{ query: "UPDATE leave_allocations SET state = 'Approved', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: Allocation was changed by another user. Reload it before approving. }]
+        result: { query: "SELECT * FROM leave_allocations WHERE id = :id" }
+    - id: refuse
+      from: [Submitted]
+      to: Refused
+      permission: time_off.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM leave_allocations WHERE id = :id AND row_version = :expected_row_version AND state = 'Submitted'", status: 409, code: INVALID_TRANSITION, message: Only submitted allocations can be refused }]
+        steps: [{ query: "UPDATE leave_allocations SET state = 'Refused', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: Allocation was changed by another user. Reload it before refusing. }]
+        result: { query: "SELECT * FROM leave_allocations WHERE id = :id" }
+    - id: cancel
+      from: [Draft, Submitted]
+      to: Cancelled
+      permission: time_off.write
+      mutation:
+        guards: [{ query: "SELECT id FROM leave_allocations WHERE id = :id AND row_version = :expected_row_version AND state IN ('Draft', 'Submitted')", status: 409, code: INVALID_TRANSITION, message: Only open allocations can be cancelled }]
+        steps: [{ query: "UPDATE leave_allocations SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: Allocation was changed by another user. Reload it before cancelling. }]
+        result: { query: "SELECT * FROM leave_allocations WHERE id = :id" }

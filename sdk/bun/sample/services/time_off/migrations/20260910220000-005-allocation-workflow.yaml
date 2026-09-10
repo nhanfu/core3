@@ -1,0 +1,20 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE leave_allocations ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE leave_allocations ALTER COLUMN row_version SET DEFAULT 1;
+      UPDATE leave_allocations SET row_version = 1 WHERE row_version IS NULL;
+      CREATE INDEX IF NOT EXISTS leave_allocations_state_idx ON leave_allocations(state);
+      INSERT OR IGNORE INTO leave_allocations(id, name, employee_id, employee_name, leave_type_id, leave_type_name, days, date_from, date_to, state, reason)
+      VALUES
+        ('allocation-demo-005', 'ALLOC/2026/0005', 'employee-demo-002', 'Marc Demo', 'leave-type-training', 'Training Time Off', 3, '2026-07-13', '2026-07-15', 'Refused', 'Course postponed'),
+        ('allocation-demo-006', 'ALLOC/2026/0006', 'employee-demo-003', 'Mitchell Admin', 'leave-type-annual', 'Annual Leave', 4, '2026-08-03', '2026-08-06', 'Cancelled', 'Request withdrawn');
+    down: |
+      DELETE FROM leave_allocations WHERE id IN ('allocation-demo-005', 'allocation-demo-006');
+      DROP INDEX IF EXISTS leave_allocations_state_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

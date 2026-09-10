@@ -1,5 +1,19 @@
 page: { id: time-off-allocations }
 datasources:
+  - id: allocation_states
+    permission: time_off.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Waiting For Me'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"
   - id: time_off_allocations
     permission: time_off.read
-    query: "SELECT id, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state, reason FROM leave_allocations WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR employee_name ILIKE '%' || :q || '%') ORDER BY date_from DESC, name"
+    query: "SELECT id, row_version, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state, reason FROM leave_allocations WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY date_from DESC, name"
+actions:
+  - id: view_allocation
+    type: navigate
+    permission: time_off.read
+    navigate_to: /time-off-allocations/detail
+    params: { id: '{row.id}' }
+  - { id: submit_allocation, type: server, permission: time_off.write, action: time_off.allocations.submit, handler: order_transition, workflow: leave_allocations, operation: submit, refresh: [time_off_allocations] }
+  - { id: approve_allocation, type: server, permission: time_off.manage, action: time_off.allocations.approve, handler: order_transition, workflow: leave_allocations, operation: approve, refresh: [time_off_allocations] }
+  - { id: refuse_allocation, type: server, permission: time_off.manage, action: time_off.allocations.refuse, handler: order_transition, workflow: leave_allocations, operation: refuse, refresh: [time_off_allocations] }
+  - { id: cancel_allocation, type: server, permission: time_off.write, action: time_off.allocations.cancel, handler: order_transition, workflow: leave_allocations, operation: cancel, refresh: [time_off_allocations] }
