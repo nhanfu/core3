@@ -9,8 +9,16 @@ components:
     columns: [{ field: name, label: Stage Name, type: PrimaryEntityCell }, { field: sequence, label: Sequence, align: right }, { field: fold, label: Folded, type: StatusChip }]
     page_size: 50
     row_key: id
+    row_open_action: view_event_stage
+    row_double_click_action: view_event_stage
     create_action: create_event_stage
+    empty_state: { title: No event stages, description: Create stages to organize the event lifecycle. }
 actions:
+  - id: view_event_stage
+    type: navigate
+    permission: events.read
+    navigate_to: /events/stages/detail
+    params: { id: '{row.id}' }
   - id: create_event_stage
     type: server_form
     permission: events.write
@@ -19,5 +27,14 @@ actions:
     handler: yaml_mutation
     operation: create
     refresh: [event_stages]
-    mutation: { operation: insert, table: event_stages, fields: [name, sequence, fold], required: [name], defaults: { sequence: 10, fold: false }, result: { query: "SELECT * FROM event_stages WHERE id = :id" } }
+    mutation:
+      operation: insert
+      table: event_stages
+      fields: [name, sequence, fold]
+      required: [name]
+      defaults: { sequence: 10, fold: false }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_stages WHERE LOWER(name) = LOWER(:name))", status: 409, code: EVENT_STAGE_NAME_EXISTS, message: An event stage with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:sequence, 0) > 0", status: 422, code: EVENT_STAGE_SEQUENCE_INVALID, message: Sequence must be greater than zero. }
+      result: { query: "SELECT * FROM event_stages WHERE id = :id" }
     fields: [{ field: name, label: Stage Name, type: text, required: true }, { field: sequence, label: Sequence, type: number, default: 10 }, { field: fold, label: Folded, type: checkbox, default: false }]

@@ -1,0 +1,67 @@
+title: Event Stage
+page: { id: event-stage-detail, route: /events/stages/detail, breadcrumb: [Marketing, Events, Configuration, Event Stages], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_stage_detail
+    title_field: name
+    subtitle_field: stage_label
+    editable: true
+    header_actions:
+      - { id: back_to_event_stages, label: Back to event stages, variant: secondary, permission: events.read }
+      - { id: edit_event_stage, label: Edit, variant: primary, permission: events.write }
+      - { id: delete_event_stage, label: Delete, variant: danger, permission: events.write, confirm: Delete this event stage? }
+    groups:
+      - title: Event Stage
+        fields:
+          - { field: name, label: Stage Name }
+          - { field: sequence, label: Sequence }
+          - { field: fold, label: Folded }
+    notebook:
+      active: configuration
+      tabs:
+        - id: configuration
+          label: Configuration
+          fields:
+            - { field: name, label: Stage Name }
+            - { field: sequence, label: Sequence }
+            - { field: fold, label: Folded }
+actions:
+  - id: back_to_event_stages
+    type: navigate
+    permission: events.read
+    navigate_to: /events/stages
+  - id: edit_event_stage
+    type: server_form
+    permission: events.write
+    title: Edit event stage
+    action: events.stages.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.event_stage_detail
+    refresh: [event_stage_detail, event_stages]
+    mutation:
+      operation: update
+      table: event_stages
+      fields: [name, sequence, fold]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM event_stages WHERE id = :id", status: 404, message: Event stage not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_stages WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: EVENT_STAGE_NAME_EXISTS, message: An event stage with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:sequence, 0) > 0", status: 422, code: EVENT_STAGE_SEQUENCE_INVALID, message: Sequence must be greater than zero. }
+      result: { query: "SELECT * FROM event_stages WHERE id = :id" }
+    fields:
+      - { field: name, label: Stage Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 1 }
+      - { field: fold, label: Folded, type: checkbox }
+  - id: delete_event_stage
+    type: server
+    permission: events.write
+    action: events.stages.delete
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [event_stages]
+    mutation:
+      operation: delete
+      table: event_stages
+      guards: [{ query: "SELECT id FROM event_stages WHERE id = :id", status: 404, message: Event stage not found. }]

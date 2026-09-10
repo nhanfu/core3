@@ -1,0 +1,13 @@
+version: 0.0.10
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_stages ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      UPDATE event_stages SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      ALTER TABLE event_stages DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

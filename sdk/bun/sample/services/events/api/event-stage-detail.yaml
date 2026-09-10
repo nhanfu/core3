@@ -1,0 +1,6 @@
+page: { id: event-stage-detail }
+datasources:
+  - id: event_stage_detail
+    single: true
+    permission: events.read
+    query: "SELECT id, row_version, name, sequence, fold, 'Event Stage' AS stage_label FROM event_stages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"

@@ -488,6 +488,18 @@ discovery, stable default/empty/missing reads, mutation guards, and the
 409/422 boundaries. Broader template-ticket inheritance, ticket PDFs/public
 sales, and slot-specific availability remain deferred.
 
+The bounded Event Stages follow-up adds the missing row-to-form workflow at
+`/events/stages/detail?id=<id>`. The list now opens and double-clicks into a
+stage, while the service-owned detail form supports guarded edit and delete
+operations for stage name, sequence, and folded state. Focused coverage proves
+page/API ownership, seeded detail reads, duplicate-name and invalid-sequence
+responses, and missing-record/delete boundaries. Authenticated Core3 desktop
+and mobile captures are `/tmp/core3-events-stages-{list,detail}-{desktop,mobile}.png`.
+The installed Odoo reference is `/tmp/odoo-events-stages-{desktop,mobile}-reference.png`;
+its list has the same four seeded stages, while the Core3 detail remains a
+bounded three-field form and does not yet reproduce Odoo's richer stage form
+controls.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and
