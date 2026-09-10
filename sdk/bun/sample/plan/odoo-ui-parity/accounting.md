@@ -451,3 +451,27 @@ temporary under `/tmp/odoo-accounting-payment-providers-*` and
 assets. Core3 uses a local Odoo image fallback for the deterministic fixture
 cards and the existing server-form workflow; Odoo provider-specific setup
 credentials and add-ons are outside this bounded slice.
+
+## Current batch: Payment Terms configuration
+
+The Odoo 19 reference exposes 11 deterministic Payment Terms rows at
+`/odoo/payment-terms`, with `Payment Terms` and `Company` list columns. The
+authenticated form also exposes Company, Early Discount, and Due Terms. Core3
+now matches that bounded list contract with a company-aware catalog, stable
+ordering, and fixtures for the observed day, month-end, installment, and early
+discount examples.
+
+`/accounting/payment-terms` remains layout-only and joins
+`api/config-payment-terms.yaml` through `page.id`. The new
+`/accounting/payment-term-detail` form similarly joins
+`api/payment-term-detail.yaml` through `page.id`. Create, edit, archive,
+restore, and delete require `accounting.write`; names, company, and due rules
+are validated; duplicate, missing, and stale-row guards are server-side. Both
+list and detail sources retain deterministic empty and transport-error states.
+
+Focused integration coverage verifies the 11-row fixture order, search,
+empty/detail/transport states, permission declarations, CRUD transitions,
+validation, duplicate rejection, missing records, and optimistic concurrency.
+This batch was implemented in a fresh isolated accounting worktree. The local
+Odoo reference was reachable and authenticated headless browser inspection
+confirmed the list/form contract; no screenshots are repository assets.

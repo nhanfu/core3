@@ -7,21 +7,14 @@ components:
     create_action: create_accounting_payment_term
     create_label: New
     search: { label: Search payment terms, placeholder: Search payment term... }
-    empty_state: { title: No payment terms found, description: Create a payment term or adjust your search. }
+    filters: [{ field: state, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
     columns:
-      - { field: name, label: Payment term, type: PrimaryEntityCell }
-      - { field: description, label: Due rule }
-      - { field: state, label: Status, type: StatusChip }
+      - { field: name, label: Payment Terms, type: PrimaryEntityCell }
+      - { field: company, label: Company }
     page_size: 50
+    responsive_card: true
     row_key: id
-actions:
-  - id: create_accounting_payment_term
-    type: server_form
-    permission: accounting.write
-    title: New Payment Term
-    action: accounting.payment_terms.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [accounting_payment_terms]
-    mutation: { operation: insert, table: accounting_config_payment_terms, fields: [name, description, state], required: [name], defaults: { state: Active }, result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id" } }
-    fields: [{ field: name, label: Payment Term, type: text, required: true }, { field: description, label: Due Rule, type: text }, { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]
+    row_actions: menu
+    row_open_action: view_accounting_payment_term
+    row_double_click_action: view_accounting_payment_term
+    empty_state: { title: No payment terms found, description: Create a payment term or adjust your search. }

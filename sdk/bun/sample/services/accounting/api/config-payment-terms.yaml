@@ -3,4 +3,38 @@ datasources:
   - id: accounting_payment_terms
     permission: accounting.read
     error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
-    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, description, state FROM accounting_config_payment_terms CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY name"
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, company, description, early_discount, state FROM accounting_config_payment_terms CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR company ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') AND (:state IS NULL OR (:state = 'active' AND state = 'Active') OR (:state = 'archived' AND state = 'Archived')) ORDER BY sequence, name"
+actions:
+  - id: view_accounting_payment_term
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/payment-term-detail
+    params: { id: '{row.id}' }
+  - id: create_accounting_payment_term
+    type: server_form
+    permission: accounting.write
+    title: New Payment Term
+    action: accounting.payment_terms.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_payment_terms]
+    mutation:
+      operation: insert
+      table: accounting_config_payment_terms
+      generated: [id]
+      before_steps: [{ query: "SELECT 'accounting-payment-term-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [name, company, description, early_discount, state]
+      required: [name, company, description]
+      defaults: { company: 'My Company (San Francisco)', description: Due on receipt, early_discount: false, state: Active, sequence: 1000 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PAYMENT_TERM_NAME_REQUIRED, message: A payment term name is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:company AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PAYMENT_TERM_COMPANY_REQUIRED, message: A company is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:description AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PAYMENT_TERM_RULE_REQUIRED, message: A due rule is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_payment_terms WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: ACCOUNTING_PAYMENT_TERM_EXISTS, message: A payment term with this name already exists. }
+      result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id" }
+    fields:
+      - { field: name, label: Payment Terms, type: text, required: true, placeholder: 'e.g. 30 days' }
+      - { field: company, label: Company, type: text, required: true, default: 'My Company (San Francisco)' }
+      - { field: description, label: Due Rule, type: text, required: true, default: Due on receipt }
+      - { field: early_discount, label: Early Discount, type: checkbox }
+      - { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }

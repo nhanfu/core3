@@ -1,0 +1,78 @@
+page: { id: payment-term-detail }
+datasources:
+  - id: accounting_payment_term_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_PAYMENT_TERM_DETAIL_UNAVAILABLE, message: Payment term details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, company, description, early_discount, state FROM accounting_config_payment_terms WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_accounting_payment_term
+    type: server_form
+    permission: accounting.write
+    title: Edit Payment Term
+    action: accounting.payment_terms.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_payment_term_detail
+    refresh: [accounting_payment_term_detail, accounting_payment_terms]
+    mutation:
+      operation: update
+      table: accounting_config_payment_terms
+      fields: [name, company, description, early_discount, state]
+      required: [name, company, description]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id", status: 404, code: ACCOUNTING_PAYMENT_TERM_NOT_FOUND, message: Payment term not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PAYMENT_TERM_NAME_REQUIRED, message: A payment term name is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:company AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PAYMENT_TERM_COMPANY_REQUIRED, message: A company is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:description AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PAYMENT_TERM_RULE_REQUIRED, message: A due rule is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_payment_terms WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: ACCOUNTING_PAYMENT_TERM_EXISTS, message: A payment term with this name already exists. }
+      result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id" }
+    fields:
+      - { field: name, label: Payment Terms, type: text, required: true }
+      - { field: company, label: Company, type: text, required: true }
+      - { field: description, label: Due Rule, type: text, required: true }
+      - { field: early_discount, label: Early Discount, type: checkbox }
+      - { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }
+  - id: archive_accounting_payment_term
+    type: server
+    permission: accounting.write
+    action: accounting.payment_terms.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { state: Archived } }
+    refresh: [accounting_payment_term_detail, accounting_payment_terms]
+    mutation:
+      operation: update
+      table: accounting_config_payment_terms
+      fields: [state]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id", status: 404, code: ACCOUNTING_PAYMENT_TERM_NOT_FOUND, message: Payment term not found. }]
+      result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id" }
+  - id: restore_accounting_payment_term
+    type: server
+    permission: accounting.write
+    action: accounting.payment_terms.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { state: Active } }
+    refresh: [accounting_payment_term_detail, accounting_payment_terms]
+    mutation:
+      operation: update
+      table: accounting_config_payment_terms
+      fields: [state]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id", status: 404, code: ACCOUNTING_PAYMENT_TERM_NOT_FOUND, message: Payment term not found. }]
+      result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id" }
+  - id: delete_accounting_payment_term
+    type: server
+    permission: accounting.write
+    action: accounting.payment_terms.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [accounting_payment_terms]
+    mutation:
+      operation: delete
+      table: accounting_config_payment_terms
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id", status: 404, code: ACCOUNTING_PAYMENT_TERM_NOT_FOUND, message: Payment term not found. }]

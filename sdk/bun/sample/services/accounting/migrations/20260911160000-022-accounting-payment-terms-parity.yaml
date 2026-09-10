@@ -1,0 +1,32 @@
+version: 0.0.22
+description: Accounting payment terms Odoo parity fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_config_payment_terms ADD COLUMN IF NOT EXISTS company VARCHAR DEFAULT 'My Company (San Francisco)';
+      ALTER TABLE accounting_config_payment_terms ADD COLUMN IF NOT EXISTS early_discount BOOLEAN DEFAULT FALSE;
+      ALTER TABLE accounting_config_payment_terms ADD COLUMN IF NOT EXISTS sequence INTEGER DEFAULT 1000;
+      UPDATE accounting_config_payment_terms SET company = 'My Company (San Francisco)' WHERE company IS NULL;
+      UPDATE accounting_config_payment_terms SET early_discount = FALSE WHERE early_discount IS NULL;
+      UPDATE accounting_config_payment_terms SET sequence = 10, name = 'Immediate Payment', description = 'Due on receipt' WHERE id = 'immediate';
+      UPDATE accounting_config_payment_terms SET sequence = 40, name = '30 Days', description = '30 days after invoice date' WHERE id = 'net30';
+      UPDATE accounting_config_payment_terms SET sequence = 20, name = '15 Days', description = '15 days after invoice date' WHERE id = 'net60';
+      INSERT INTO accounting_config_payment_terms(id, row_version, name, company, description, early_discount, state, sequence) VALUES
+        ('payment-term-21-days', 1, '21 Days', 'My Company (San Francisco)', '21 days after invoice date', FALSE, 'Active', 30),
+        ('payment-term-45-days', 1, '45 Days', 'My Company (San Francisco)', '45 days after invoice date', FALSE, 'Active', 50),
+        ('payment-term-end-following-month', 1, 'End of Following Month', 'My Company (San Francisco)', 'Due at the end of the following month', FALSE, 'Active', 60),
+        ('payment-term-end-next-month-10', 1, '10 Days after End of Next Month', 'My Company (San Francisco)', '10 days after the end of next month', FALSE, 'Active', 70),
+        ('payment-term-30-now-60', 1, '30% Now, Balance 60 Days', 'My Company (San Francisco)', '30% now, balance 60 days', FALSE, 'Active', 80),
+        ('payment-term-2-7-net-30', 1, '2/7 Net 30', 'My Company (San Francisco)', '30 Days, 2% Early Payment Discount under 7 days', TRUE, 'Active', 90),
+        ('payment-term-90-tenth', 1, '90 days, on the 10th', 'My Company (San Francisco)', '90 days, on the 10th', FALSE, 'Active', 100),
+        ('payment-term-30-advance-following-month', 1, '30% Advance End of Following Month', 'My Company (San Francisco)', '30% advance, balance at end of following month', FALSE, 'Active', 110)
+      ON CONFLICT (id) DO UPDATE SET row_version = EXCLUDED.row_version, name = EXCLUDED.name, company = EXCLUDED.company, description = EXCLUDED.description, early_discount = EXCLUDED.early_discount, state = EXCLUDED.state, sequence = EXCLUDED.sequence;
+    down: |
+      DELETE FROM accounting_config_payment_terms WHERE id LIKE 'payment-term-%';
+      ALTER TABLE accounting_config_payment_terms DROP COLUMN IF EXISTS sequence;
+      ALTER TABLE accounting_config_payment_terms DROP COLUMN IF EXISTS early_discount;
+      ALTER TABLE accounting_config_payment_terms DROP COLUMN IF EXISTS company;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
