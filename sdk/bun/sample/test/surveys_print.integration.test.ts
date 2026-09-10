@@ -39,6 +39,7 @@ describe('Surveys public print contract', () => {
   test('declares token-scoped printable operations and deterministic response seed', () => {
     const operations = yaml('operations.yaml').operations;
     expect(operations['survey.public.print.detail'].query).toContain("state IN ('Published', 'Closed')");
+    expect(operations['survey.public.print.detail'].query).not.toContain('certification');
     expect(operations['survey.public.print.questions'].query).toContain('survey_id = :survey_id');
     expect(operations['survey.public.print.response'].query).toContain('access_token = :access_token');
     expect(yaml('migrations/20260910250000-010-survey-print-answers.yaml').version).toBe('0.0.11');
