@@ -43,4 +43,16 @@ describe('Surveys parity catalog and workflow', () => {
     expect(workflow.transitions.find((transition: any) => transition.id === 'reopen')).toMatchObject({ from: ['Archived'], to: 'Draft', permission: 'surveys.manage' });
     expect(workflow.transitions.filter((transition: any) => ['archive', 'reopen'].includes(transition.id)).every((transition: any) => transition.mutation.guards?.[0]?.status === 409)).toBe(true);
   });
+
+  test('declares the token-scoped public survey contract', () => {
+    const manifest = yaml('manifest.yaml');
+    const operations = yaml('operations.yaml').operations;
+    const page = yaml('pages/surveys.yaml');
+    expect(manifest.operations).toBe('operations.yaml');
+    expect(operations['survey.public.detail'].query).toContain("state = 'Published'");
+    expect(operations['survey.public.response'].query).toContain('access_token = :access_token');
+    expect(page.actions.find((action: any) => action.action === 'surveys.public.start')).toMatchObject({ title: 'Start public survey response' });
+    expect(page.actions.find((action: any) => action.action === 'surveys.public.submit').mutation.steps[0].query).toContain("state = 'Submitted'");
+    expect(yaml('migrations/20260910200000-005-survey-public-tokens.yaml').version).toBe('0.0.5');
+  });
 });

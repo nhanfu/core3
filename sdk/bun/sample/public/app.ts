@@ -235,6 +235,19 @@ function currentLocation() {
   return { path: resolveModuleRootPath(cleanPath), langCode: new URLSearchParams(window.location.search).get('lc') || undefined };
 }
 
+function publicSurveyToken(path: string): string | null {
+  const match = path.match(/^\/survey\/(?:start\/)?([A-Za-z0-9_-]+)$/);
+  return match ? match[1] : null;
+}
+
+async function renderPublicSurvey(path: string) {
+  const token = publicSurveyToken(path);
+  const outlet = document.getElementById('outlet');
+  if (!token || !outlet) return;
+  const mod = await import('./components/PublicSurvey.ts');
+  await mod.mount(outlet, token);
+}
+
 async function renderRoute(path: string, langCode?: string) {
   if (langCode && langCode !== i18n.lang) await i18n.setLang(langCode);
   // Normalize: strip trailing slash
@@ -337,6 +350,13 @@ async function bootstrap() {
   const token = getToken();
   if (!app) return;
 
+  const publicToken = publicSurveyToken(window.location.pathname);
+  if (publicToken) {
+    app.innerHTML = '<div id="outlet"></div>';
+    await renderPublicSurvey(window.location.pathname);
+    return;
+  }
+
   // Older sessions may contain an avatar data URL inside the JWT. Discard
   // those sessions so the user can receive a compact token after logging in.
   if (token && token.length > 8192) {
@@ -431,6 +451,10 @@ async function bootstrap() {
 
 // Handle browser back/forward and direct slash navigation.
 window.addEventListener('popstate', () => {
+  if (publicSurveyToken(window.location.pathname)) {
+    void renderPublicSurvey(window.location.pathname);
+    return;
+  }
   const location = currentLocation();
   void renderRoute(location.path, location.langCode);
 });

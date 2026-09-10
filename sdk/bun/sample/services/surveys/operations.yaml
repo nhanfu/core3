@@ -1,0 +1,10 @@
+operations:
+  survey.public.detail:
+    result_key: survey
+    query: "SELECT id, access_token, name, title, description, state FROM surveys WHERE access_token = :access_token AND state = 'Published' LIMIT 1"
+  survey.public.questions:
+    result_key: questions
+    query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :survey_id ORDER BY sequence, id"
+  survey.public.response:
+    result_key: response
+    query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"

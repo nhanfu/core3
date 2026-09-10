@@ -1,0 +1,17 @@
+version: 0.0.5
+type:
+  postgres:
+    up: |
+      ALTER TABLE surveys ADD COLUMN IF NOT EXISTS access_token VARCHAR;
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS access_token VARCHAR;
+      UPDATE surveys SET access_token = 'b135640d-14d4-4748-9ef6-344ca256531e', description = 'This survey allows you to give a feedback about your experience with our products. Filling it helps us improving your experience.' WHERE id = 'survey-demo-feedback' AND (access_token IS NULL OR access_token = '');
+      UPDATE surveys SET access_token = '4ead4bc8-b8f2-4760-a682-1fde8ddb95ac', description = 'Test your knowledge of our products.' WHERE id = 'survey-demo-certification' AND (access_token IS NULL OR access_token = '');
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_responses_access_token_idx ON survey_responses(access_token);
+    down: |
+      DROP INDEX IF EXISTS survey_responses_access_token_idx;
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS access_token;
+      ALTER TABLE surveys DROP COLUMN IF EXISTS access_token;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

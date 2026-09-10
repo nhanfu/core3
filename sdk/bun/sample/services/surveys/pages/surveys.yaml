@@ -93,6 +93,44 @@ actions:
       - { field: respondent_name, label: Respondent, type: text }
       - { field: respondent_email, label: Email, type: text }
       - { field: answer_data, label: Answers, type: text, required: true }
+  - id: public_survey_start
+    type: server_form
+    permission: surveys.write
+    title: Start public survey response
+    action: surveys.public.start
+    handler: yaml_mutation
+    mutation:
+      operation: insert
+      table: survey_responses
+      fields: [survey_id, survey_name, answer_data, access_token]
+      required: [survey_id, survey_name, answer_data]
+      defaults: { state: In Progress }
+      generated: [access_token]
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE id = :id" }
+    fields:
+      - { field: survey_id, label: Survey ID, type: text, required: true }
+      - { field: survey_name, label: Survey, type: text, required: true }
+      - { field: answer_data, label: Answers, type: text, required: true }
+  - id: public_survey_submit
+    type: server_form
+    permission: surveys.write
+    title: Submit public survey response
+    action: surveys.public.submit
+    handler: yaml_mutation
+    mutation:
+      operation: update
+      table: survey_responses
+      fields: [answer_data, respondent_name, respondent_email]
+      required: [answer_data]
+      concurrency: false
+      steps:
+        - { query: "UPDATE survey_responses SET state = 'Submitted', submitted_at = CURRENT_TIMESTAMP WHERE id = :id" }
+        - { query: "UPDATE surveys SET response_count = response_count + 1, row_version = row_version + 1 WHERE id = :survey_id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE id = :id" }
+    fields:
+      - { field: answer_data, label: Answers, type: text, required: true }
+      - { field: respondent_name, label: Respondent, type: text }
+      - { field: respondent_email, label: Email, type: text }
   - { id: publish_survey, type: server, permission: surveys.write, action: surveys.records.publish, handler: order_transition, workflow: surveys, operation: publish, refresh: [surveys] }
   - { id: close_survey, type: server, permission: surveys.manage, action: surveys.records.close, handler: order_transition, workflow: surveys, operation: close, refresh: [surveys] }
   - { id: cancel_survey, type: server, permission: surveys.manage, action: surveys.records.cancel, handler: order_transition, workflow: surveys, operation: cancel, refresh: [surveys] }

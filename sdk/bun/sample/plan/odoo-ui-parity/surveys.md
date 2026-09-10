@@ -156,6 +156,20 @@ installed Odoo reference. Authenticated desktop/mobile checks rendered
 requests or horizontal overflow. Captures are
 `/tmp/core3-surveys-{desktop,mobile}-detail-stats.png`.
 
+The public-flow follow-up adds a token-scoped `/survey/start/<survey_token>`
+and `/survey/<survey_token>` browser surface for published surveys. It mirrors
+Odoo's public start screen, responsive question progression, required-answer
+validation, UUID answer token, and submitted response lifecycle through
+`/api/public/surveys/<survey_token>[/start|/submit]`. The Odoo feedback token
+`b135640d-14d4-4748-9ef6-344ca256531e` is seeded for comparison. Desktop and
+mobile captures are `/tmp/core3-public-survey-start-{desktop,mobile}.png`,
+`/tmp/core3-public-survey-question-{desktop,mobile}.png`, and
+`/tmp/core3-public-survey-done-{desktop,mobile}.png`; the matching Odoo
+reference start captures are `/tmp/odoo-public-survey-start-{desktop,mobile}.png`.
+This is a bounded first public slice: Odoo's print, image, session-manager,
+multi-page/section, authenticated test/results, and exact question semantics
+remain open acceptance gates.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
