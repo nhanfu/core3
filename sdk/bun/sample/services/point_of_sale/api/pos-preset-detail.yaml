@@ -22,7 +22,7 @@ actions:
       result: { query: "SELECT id, row_version, name, service_mode, pricelist, fiscal_position, use_timing, schedule, slots_per_interval, interval_time, identification, is_return, color, available_in_self, service_at, email_confirmation, preparation_minutes, guest_count, note, active FROM pos_order_presets WHERE id = :id" }
     fields:
       - { field: name, label: Label, type: text, required: true }
-      - { field: service_mode, label: Service mode, type: select, options: [Takeaway, Dine in, Delivery], required: true }
+      - { field: service_mode, label: Service mode, type: select, options: [Takeout, Dine In, Delivery], required: true }
       - { field: pricelist, label: Pricelist, type: text }
       - { field: fiscal_position, label: Fiscal Position, type: text }
       - { field: use_timing, label: Manage orders by time, type: checkbox }

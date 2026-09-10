@@ -99,6 +99,12 @@ describe('POS preset detail parity batch', () => {
     expect(action(detailApi, 'edit_pos_order_preset')).toMatchObject({
       type: 'server_form', permission: 'pos.manage', operation: 'update',
     });
+    expect(action(detailApi, 'edit_pos_order_preset').fields.find((field: any) => field.field === 'service_mode').options)
+      .toEqual(['Takeout', 'Dine In', 'Delivery']);
+    expect(detailPage.components[0]).toMatchObject({
+      editable: true,
+      header_actions: [{ id: 'edit_pos_order_preset', label: 'Edit', permission: 'pos.manage' }],
+    });
     expect(detailPage.components[0].groups.flatMap((group: any) => group.fields.map((field: any) => field.field)))
       .toEqual(expect.arrayContaining(['use_timing', 'identification', 'is_return', 'available_in_self', 'email_confirmation']));
     expect(detailPage.components[0].stat_buttons.map((button: any) => button.label)).toEqual(['Order(s)', 'PoS Config']);

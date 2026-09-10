@@ -4,6 +4,9 @@ components:
   - type: OdooFormView
     source: pos_preset_detail
     title_field: name
+    editable: true
+    header_actions:
+      - { id: edit_pos_order_preset, label: Edit, variant: secondary, permission: pos.manage }
     stat_buttons:
       - { id: open_pos_preset_orders, label: Order(s), value_field: orders_count, permission: pos.read }
       - { id: open_pos_preset_config, label: PoS Config, value_field: config_count, permission: pos.read }
