@@ -11,16 +11,26 @@ menu:
     icon: purchase
     permission: purchase.read
   groups:
-    - id: operations
-      label: Operations
+    - id: orders
+      label: Orders
       items:
         - { path: /purchase, label: Requests for Quotation, icon: purchase, permission: purchase.read }
         - { path: /purchase-orders, label: Purchase Orders, icon: purchase, permission: purchase.read }
+        - { path: /vendors, label: Vendors, icon: contacts, permission: purchase.read }
+    - id: products
+      label: Products
+      items:
         - { path: /purchase/products, label: Products, icon: package, permission: purchase.read }
         - { path: /purchase/product-variants, label: Product Variants, icon: package, permission: purchase.read }
-        - { path: /purchase/vendor-pricelists, label: Vendor Pricelists, icon: list, permission: purchase.read }
-        - { path: /vendors, label: Vendors, icon: contacts, permission: purchase.read }
     - id: reporting
       label: Reporting
       items:
         - { path: /purchase-analysis, label: Purchase Analysis, icon: chart, permission: purchase.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /purchase/settings, label: Settings, icon: settings, permission: purchase.read }
+        - { path: /purchase/vendor-pricelists, label: Vendor Pricelists, icon: list, permission: purchase.read }
+        - { path: /purchase/attributes, label: Attributes, icon: sliders, permission: purchase.read }
+        - { path: /purchase/product-categories, label: Categories, icon: folder, permission: purchase.read }
+        - { path: /purchase/units-packagings, label: Units & Packagings, icon: ruler, permission: purchase.read }

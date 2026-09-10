@@ -1,0 +1,39 @@
+title: Product Category
+page: { id: purchase-product-category-detail, route: /purchase/product-categories/detail, breadcrumb: [Supply Chain, Purchase, Configuration, Categories, Product Category], auth: { require: [purchase.read] } }
+components:
+  - type: OdooFormView
+    source: purchase_product_category_detail
+    title_field: name
+    stat_buttons: [{ id: purchase_product_category_products, label: Products, value_field: product_count }]
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: new_purchase_product_category, label: New, variant: primary, permission: purchase.write }
+      - { id: edit_purchase_product_category, label: Edit, variant: secondary, permission: purchase.write }
+    message_source: purchase_product_category_messages
+    chatter_label: Messages and activities
+    message_label: Send message
+    note_label: Log note
+    message_action: send_purchase_product_category_message
+    note_action: log_purchase_product_category_note
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    message_action_labels: { purchase.product_categories.message: Message, purchase.product_categories.note: Note, created: Product Category created }
+    group_columns: 2
+    groups:
+      - title: Category
+        fields:
+          - { field: name, label: Category }
+          - { field: parent_name, label: Parent Category }
+      - title: LOGISTICS
+        fields:
+          - { field: force_removal_strategy, label: Force Removal Strategy? }
+          - { field: packaging_reserve_method, label: Reserve Packagings? }
+          - { field: packaging_reserve_method, label: Reserve Only Full Packagings, type: text }
+          - { field: packaging_reserve_method, label: Reserve Partial Packagings, type: text }
+      - title: INVENTORY VALUATION
+        fields:
+          - { field: costing_method, label: Costing Method? }
+          - { field: inventory_valuation, label: Inventory Valuation? }

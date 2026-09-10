@@ -1,0 +1,17 @@
+title: Categories
+page: { id: purchase-product-categories, route: /purchase/product-categories, breadcrumb: [Supply Chain, Purchase, Configuration, Categories], auth: { require: [purchase.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: purchase_product_categories
+    create_action: create_purchase_product_category
+    create_label: New
+    search: { label: Search categories, placeholder: Search... }
+    columns:
+      - { field: name, label: Product Category, type: PrimaryEntityCell }
+    page_size: 50
+    row_key: id
+    row_open_action: view_purchase_product_category
+    row_double_click_action: view_purchase_product_category
+    row_actions: menu
+    empty_state: { title: No categories, description: Create a product category to organize your products. }
