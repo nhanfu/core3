@@ -22,6 +22,16 @@ export class GraphView extends BaseComponent {
     }
     const max = Math.max(...entries.map(([, value]) => value), 1);
     const svg = html.take(root).svg(SvgTag.Svg).attr('viewBox', `0 0 ${Math.max(560, entries.length * 100)} 300`).attr('role', 'img').attr('aria-label', this.options.view.label).ele() as SVGSVGElement;
+    if (type === 'line') {
+      const points = entries.map(([, value], index) => {
+        const x = 72 + index * 100;
+        const y = 250 - (value / max) * 220;
+        return `${x},${y}`;
+      });
+      const areaPoints = [...points, `${72 + (entries.length - 1) * 100},250`, '72,250'].join(' ');
+      html.take(svg).svg(SvgTag.Polygon).attr('class', 'o-graph-area').attr('points', areaPoints).attr('fill', 'currentColor').attr('opacity', '0.18');
+      html.take(svg).svg(SvgTag.Polyline).attr('class', 'o-graph-line').attr('points', points.join(' ')).attr('fill', 'none').attr('stroke', 'currentColor').attr('stroke-width', '3');
+    }
     entries.forEach(([label, value], index) => {
       const x = 40 + index * 100; const height = (value / max) * 220;
       const shape = html.take(svg).svg(type === 'line' ? SvgTag.Circle : SvgTag.Rect)

@@ -277,6 +277,22 @@ Use semantic names and record shapes derived from `purchase_demo.xml` where
 useful, but seed explicit fixed dates and IDs. Do not commit screenshots or
 binary fixtures; local evidence stays under `/tmp`.
 
+## Current batch: Purchase Analysis Graph and Pivot
+
+The Purchase Analysis action is now page-id bound to
+`services/purchase/api/analysis.yaml`. Its deterministic report rows expose
+confirmation date/month, vendor, product, state, ordered/received quantities,
+and untaxed total. The layout uses visible `Graph`, `Pivot`, and `List` tabs,
+with a line graph defaulting to confirmation date and a pivot defaulting to
+confirmation month by state, matching the installed Odoo action 645.
+
+Authenticated reference captures are `/tmp/odoo-purchase-analysis-action-645-
+{desktop,mobile}.png`; Core3 before/after captures are kept under `/tmp` and
+are never committed. The initial comparison found the previous Core3 stat-card
+dashboard materially differed from Odoo's graph report; the replacement keeps
+the Odoo report controls and provides a deterministic empty state. Focused
+contract tests live in `test/purchase_analysis.integration.test.ts`.
+
 ## Acceptance gate
 
 - Every source-visible menu above has a Core3 route, or an explicit documented

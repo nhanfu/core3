@@ -1,21 +1,53 @@
 title: Purchase Analysis
-page: { id: purchase-analysis, breadcrumb: [Supply Chain, Purchase, Analysis], auth: { require: [purchase.read] } }
-datasources:
-  - id: purchase_analysis_totals
-    single: true
-    permission: purchase.read
-    query: "SELECT COUNT(*) AS order_count, COALESCE(SUM(quantity), 0) AS ordered_units, COALESCE(SUM(qty_received), 0) AS received_units, COALESCE(SUM(quantity * unit_price), 0) AS committed_value FROM purchase_orders"
-  - id: purchase_analysis_states
-    permission: purchase.read
-    query: "SELECT state AS category, COUNT(*) AS order_count FROM purchase_orders GROUP BY state ORDER BY order_count DESC"
+page: { id: purchase-analysis, route: /purchase-analysis, breadcrumb: [Supply Chain, Purchase, Analysis], auth: { require: [purchase.read] } }
 components:
-  - type: StatRow
-    source: purchase_analysis_totals
-    title: Purchasing performance
-    stats: [{ label: Orders, field: order_count }, { label: Ordered units, field: ordered_units }, { label: Received units, field: received_units }, { label: Committed value, field: committed_value }]
-  - type: Chart
-    source: purchase_analysis_states
-    title: Orders by status
-    label_field: category
-    value_field: order_count
-    variant: bar
+  - type: ListView
+    variant: odoo
+    source: purchase_analysis
+    search: { label: Search Purchase Analysis, placeholder: 'Search vendors, products, or order status...' }
+    group_by:
+      - { field: vendor_name, label: Vendor }
+      - { field: product_name, label: Product }
+      - { field: state, label: Status }
+      - { field: confirmation_month, label: Confirmation Date }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: confirmation_date
+        measure_field: untaxed_total
+        type: line
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: confirmation_date, column: Confirmation Date, type: date }
+            - { field: confirmation_month, column: Confirmation Month }
+            - { field: vendor_name, column: Vendor }
+            - { field: product_name, column: Product }
+            - { field: state, column: Status }
+            - { field: quantity, column: Ordered Quantity }
+            - { field: qty_received, column: Received Quantity }
+            - { field: untaxed_total, column: Untaxed Total }
+          default:
+            rows: [confirmation_month]
+            columns: [state]
+            measures:
+              - { field: untaxed_total, aggregate: sum, column: Untaxed Total }
+              - { field: quantity, aggregate: sum, column: Ordered Quantity }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: name, label: Order, type: PrimaryEntityCell }
+      - { field: confirmation_date, label: Confirmation Date }
+      - { field: vendor_name, label: Vendor }
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Ordered Quantity, align: right }
+      - { field: qty_received, label: Received Quantity, align: right }
+      - { field: untaxed_total, label: Untaxed Total, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No purchase analysis records, description: Purchase orders will appear here once they have confirmation data. }

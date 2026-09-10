@@ -1,0 +1,7 @@
+page: { id: purchase-analysis }
+datasources:
+  - id: purchase_analysis
+    permission: purchase.read
+    pivot:
+      fields: [name, confirmation_date, confirmation_month, vendor_name, product_name, state, quantity, qty_received, untaxed_total]
+    query: "SELECT p.id, p.name, CAST(COALESCE(p.order_date, DATE '2026-01-15') AS VARCHAR) AS confirmation_date, strftime(COALESCE(p.order_date, DATE '2026-01-15'), '%Y-%m') AS confirmation_month, p.vendor_name, p.product_name, p.state, CAST(p.quantity AS DOUBLE) AS quantity, CAST(p.qty_received AS DOUBLE) AS qty_received, CAST(COALESCE(p.total_amount, p.quantity * p.unit_price) AS DOUBLE) AS untaxed_total FROM purchase_orders p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.vendor_name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%' OR p.state ILIKE '%' || :q || '%') ORDER BY p.order_date, p.name"
