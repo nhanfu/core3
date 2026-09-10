@@ -1,0 +1,33 @@
+page: { id: canned-response-detail }
+
+datasources:
+  - id: chat_canned_response_detail
+    single: true
+    permission: chat.read
+    error_states: { transport_error: { status: 503, code: CHAT_CANNED_RESPONSE_DETAIL_UNAVAILABLE, message: This canned response is temporarily unavailable. } }
+    query: "SELECT id, row_version, source, substitution, authorized_groups, is_shared, is_editable, created_by, CAST(last_used AS VARCHAR) AS last_used FROM chat_canned_responses WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+
+actions:
+  - id: edit_canned_response
+    type: server_form
+    permission: chat.write
+    title: Edit Canned Response
+    action: chat.canned_responses.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [chat_canned_response_detail, chat_canned_responses]
+    mutation:
+      operation: update
+      table: chat_canned_responses
+      fields: [source, substitution, authorized_groups, is_shared]
+      required: [source, substitution]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(trim(CAST(:source AS VARCHAR)), '^[a-z0-9_-]{1,64}$')", status: 422, code: CHAT_CANNED_RESPONSE_SHORTCUT_INVALID, message: Shortcut must use lowercase letters, numbers, underscores, or hyphens. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM chat_canned_responses WHERE lower(source) = lower(trim(CAST(:source AS VARCHAR))) AND id <> :id)", status: 409, code: CHAT_CANNED_RESPONSE_SHORTCUT_EXISTS, message: A canned response with this shortcut already exists. }
+      result: { query: "SELECT * FROM chat_canned_responses WHERE id = :id" }
+    fields:
+      - { field: source, label: Shortcut, type: text, required: true }
+      - { field: substitution, label: Substitution, type: textarea, required: true }
+      - { field: authorized_groups, label: Authorized Groups, type: text }
+      - { field: is_shared, label: Shared, type: checkbox }

@@ -47,3 +47,29 @@ Capture Odoo/Core3 at 1440x900 and 390x844 for inbox, channel, direct message, t
 - Added deterministic Inbox, Starred, History, Channels, Direct Messages, search-no-results, empty, and offline fixtures plus the `chat.read`/`chat.write` permission boundary and migration `20260910180000-006-chat-sidebar-flags.yaml`.
 - Added authenticated browser verification against the isolated Core3 runtime at 1440x900 and 390x844: Discuss navigation, seeded Event Store Demo and Operations team conversations, Starred/Channels filters, and search empty state rendered successfully. Captures are `/tmp/core3-odoo-parity/chat-next-inbox-1440x900.png` and `/tmp/core3-odoo-parity/chat-next-inbox-390x844.png`; images remain outside Git.
 - Focused verification: client ChatWorkspace tests `11/11` passed; Chat API/page integration tests `3/3` passed; UI audit passed with `316` pages, `320` routes, and `571` datasources; changed-file ESLint and `git diff --check` passed.
+
+## Bounded batch — Canned Responses action parity
+
+- Added the installed Odoo `mail.mail_canned_response_action` surface at
+  `/chat/canned-responses`, with separate page/API YAML fragments joined by
+  `page.id`, a matching detail form contract, and a manifest-owned Discuss →
+  Configuration → Canned Responses menu.
+- Added service-owned `chat_canned_responses` storage with fixed IDs,
+  substitutions, authorized-group labels, fixed timestamps, and idempotent
+  migration `20260910190000-007-chat-canned-responses.yaml`. The list contract
+  covers search, Shared/Private filters, list/kanban/form modes, CRUD, and
+  optimistic-concurrency/de-duplication/shortcut-format guards.
+- Coverage includes `chat.read` for page/data access and `chat.write` for
+  create/update/delete, plus deterministic empty/not-found query states and
+  transport-error contracts. Core3 desktop/mobile and authenticated Odoo
+  desktop/mobile comparison captures are kept under `/tmp` and are not Git
+  artifacts:
+  - Odoo: `/tmp/odoo-canned-responses-desktop.png`,
+    `/tmp/odoo-canned-responses-mobile.png`
+  - Core3: `/tmp/core3-chat-canned-responses-desktop.png`,
+    `/tmp/core3-chat-canned-responses-mobile.png`
+- Authenticated browser verification recorded zero failed responses and zero
+  console errors. Core3 measured `1440/1440` and `390/390` body/document widths;
+  Odoo mobile measured `390/390`. The Core3 desktop list and mobile kanban
+  captures were reviewed against the Odoo action surface; no clipped content
+  or horizontal page overflow was observed.

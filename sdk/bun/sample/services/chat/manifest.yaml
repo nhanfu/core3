@@ -5,3 +5,18 @@ permissions: permissions.yaml
 topics: topics.yaml
 events: events.yaml
 storage: storage.yaml
+menu:
+  chat:
+    path: /chat
+    label: Discuss
+    icon: message
+    permission: chat.read
+  groups:
+    - id: workspace
+      label: Workspace
+      items:
+        - { path: /chat, label: Discuss, icon: message, permission: chat.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /chat/canned-responses, label: Canned Responses, icon: message, permission: chat.read }

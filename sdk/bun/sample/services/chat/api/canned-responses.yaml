@@ -1,0 +1,67 @@
+page: { id: chat-canned-responses }
+
+datasources:
+  - id: chat_canned_responses
+    permission: chat.read
+    error_states: { transport_error: { status: 503, code: CHAT_CANNED_RESPONSES_UNAVAILABLE, message: Canned responses are temporarily unavailable. } }
+    query: "SELECT id, row_version, source, '::' || source AS shortcut, substitution, authorized_groups, is_shared, is_editable, created_by, CAST(last_used AS VARCHAR) AS last_used FROM chat_canned_responses WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR source ILIKE '%' || :q || '%' OR substitution ILIKE '%' || :q || '%') AND (:visibility IS NULL OR (:visibility = 'shared' AND is_shared = TRUE) OR (:visibility = 'private' AND is_shared = FALSE)) ORDER BY is_shared DESC, source, id"
+
+actions:
+  - id: create_canned_response
+    type: server_form
+    permission: chat.write
+    title: New Canned Response
+    action: chat.canned_responses.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [chat_canned_responses]
+    mutation:
+      operation: insert
+      table: chat_canned_responses
+      fields: [source, substitution, authorized_groups, is_shared, is_editable, created_by, created_at]
+      required: [source, substitution]
+      defaults: { authorized_groups: '', is_shared: false, is_editable: true, created_by: user-admin, created_at: '2026-01-15 00:00:00' }
+      before_steps: [{ query: "SELECT 'chat-canned-' || lower(trim(CAST(:source AS VARCHAR))) AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(trim(CAST(:source AS VARCHAR)), '^[a-z0-9_-]{1,64}$')", status: 422, code: CHAT_CANNED_RESPONSE_SHORTCUT_INVALID, message: Shortcut must use lowercase letters, numbers, underscores, or hyphens. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM chat_canned_responses WHERE lower(source) = lower(trim(CAST(:source AS VARCHAR))))", status: 409, code: CHAT_CANNED_RESPONSE_SHORTCUT_EXISTS, message: A canned response with this shortcut already exists. }
+      result: { query: "SELECT * FROM chat_canned_responses WHERE id = :id" }
+    fields:
+      - { field: source, label: Shortcut, type: text, required: true }
+      - { field: substitution, label: Substitution, type: textarea, required: true }
+      - { field: authorized_groups, label: Authorized Groups, type: text }
+      - { field: is_shared, label: Shared, type: checkbox }
+
+  - id: edit_canned_response
+    type: server_form
+    permission: chat.write
+    title: Edit Canned Response
+    action: chat.canned_responses.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [chat_canned_responses, chat_canned_response_detail]
+    mutation:
+      operation: update
+      table: chat_canned_responses
+      fields: [source, substitution, authorized_groups, is_shared]
+      required: [source, substitution]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(trim(CAST(:source AS VARCHAR)), '^[a-z0-9_-]{1,64}$')", status: 422, code: CHAT_CANNED_RESPONSE_SHORTCUT_INVALID, message: Shortcut must use lowercase letters, numbers, underscores, or hyphens. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM chat_canned_responses WHERE lower(source) = lower(trim(CAST(:source AS VARCHAR))) AND id <> :id)", status: 409, code: CHAT_CANNED_RESPONSE_SHORTCUT_EXISTS, message: A canned response with this shortcut already exists. }
+      result: { query: "SELECT * FROM chat_canned_responses WHERE id = :id" }
+    fields:
+      - { field: source, label: Shortcut, type: text, required: true }
+      - { field: substitution, label: Substitution, type: textarea, required: true }
+      - { field: authorized_groups, label: Authorized Groups, type: text }
+      - { field: is_shared, label: Shared, type: checkbox }
+
+  - id: delete_canned_response
+    type: server
+    permission: chat.write
+    action: chat.canned_responses.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [chat_canned_responses]
+    mutation: { operation: delete, table: chat_canned_responses, concurrency: { required: true } }

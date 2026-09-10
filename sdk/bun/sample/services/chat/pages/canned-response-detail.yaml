@@ -1,0 +1,12 @@
+title: Canned Response
+page: { id: canned-response-detail, breadcrumb: [Discuss, Configuration, Canned Responses], auth: { require: [chat.read] } }
+
+components:
+  - type: OdooFormView
+    source: chat_canned_response_detail
+    title_field: source
+    editable: true
+    groups:
+      - title: Canned Response
+        fields: [{ field: source, label: Shortcut }, { field: substitution, label: Substitution }, { field: authorized_groups, label: Authorized Groups }, { field: is_shared, label: Shared }]
+    header_actions: [{ id: edit_canned_response, label: Save, variant: primary, permission: chat.write }]
