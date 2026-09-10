@@ -24,7 +24,8 @@ describe('Purchase Vendor Pricelists parity', () => {
     expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: true, card: { title: 'vendor_name', subtitle: 'product_name' } });
     expect(list.columns.map((column: any) => column.field)).toEqual(['vendor_name', 'product_name', 'company_name', 'uom', 'unit_price_display', 'lead_time_days']);
     expect(source.permission).toBe('purchase.read');
-    expect(yaml('manifest.yaml').menu.groups[0].items).toEqual(expect.arrayContaining([expect.objectContaining({ path: '/purchase/vendor-pricelists', label: 'Vendor Pricelists' })]));
+    const configuration = yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration');
+    expect(configuration.items).toEqual(expect.arrayContaining([expect.objectContaining({ path: '/purchase/vendor-pricelists', label: 'Vendor Pricelists' })]));
   });
 
   test('returns 27 Odoo-shaped supplier records and validates create boundaries', async () => {

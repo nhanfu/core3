@@ -131,7 +131,8 @@ describe('Purchase Orders list and detail parity', () => {
     expect(list.views.find((view: any) => view.id === 'activity')).toMatchObject({ title_field: 'name', record_date_field: 'created_at' });
     expect(source.permission).toBe('purchase.read');
     expect(list.columns.map((column: any) => column.field)).toEqual(['name', 'default_code', 'product_tags', 'barcode', 'company_name', 'cost_price_display', 'category', 'product_type', 'uom', 'active']);
-    expect(yaml('manifest.yaml').menu.groups[0].items).toEqual(expect.arrayContaining([expect.objectContaining({ path: '/purchase/products', label: 'Products' })]));
+    const productsMenu = yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'products');
+    expect(productsMenu.items).toEqual(expect.arrayContaining([expect.objectContaining({ path: '/purchase/products', label: 'Products' })]));
   });
 
   test('returns 105 deterministic Purchase Products with search, empty, and write boundaries', async () => {
