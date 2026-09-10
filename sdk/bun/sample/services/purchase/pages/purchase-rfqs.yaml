@@ -13,14 +13,48 @@ components:
     group_by: [{ field: vendor_name, label: Vendor }, { field: state, label: Status }]
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
-      - { id: kanban, label: Kanban, icon: dashboard, group_by: state, groups_source: purchase_rfq_states, card: { title: name, subtitle: vendor_name, fields: [{ field: expected_date, label: Expected }, { field: total_amount_display, label: Total }] } }
-      - { id: calendar, label: Calendar, icon: calendar, date_field: expected_date, card: { title: name, subtitle: vendor_name } }
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Cards, icon: grid, mobile: true, card: { title: name, subtitle: vendor_name, fields: [{ field: expected_date, label: Deadline }, { field: total_amount_display, label: Total }, { field: state, label: Status }] } }
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: false, group_by: state, groups_source: purchase_rfq_states, card: { title: name, subtitle: vendor_name, fields: [{ field: expected_date, label: Deadline }, { field: total_amount_display, label: Total }] } }
+      - { id: calendar, label: Calendar, icon: calendar, mobile: false, date_field: expected_date, card: { title: name, subtitle: vendor_name, fields: [{ field: total_amount_display, label: Total }, { field: state, label: Status }] } }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields:
+            - { field: vendor_name, column: Vendor }
+            - { field: state, column: Status }
+            - { field: expected_date, column: Order deadline, type: date }
+            - { field: quantity, column: Ordered quantity }
+            - { field: qty_received, column: Received quantity }
+            - { field: total_amount, column: Total }
+          default:
+            rows: [vendor_name]
+            columns: [state]
+            measures:
+              - { field: total_amount, aggregate: sum, column: Total }
+              - { field: quantity, aggregate: sum, column: Ordered }
+          date_ranges: { expected_date: month }
+      - { id: graph, label: Graph, icon: graph, mobile: false, category_field: vendor_name, measure_field: total_amount, type: bar }
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: vendor_name
+        record_date_field: activity_date
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: document, label: Document, icon: ▣ }
     columns:
       - { field: name, label: Reference, type: PrimaryEntityCell, sortable: true }
-      - { field: order_date, label: Order date }
       - { field: vendor_name, label: Vendor }
-      - { field: product_name, label: Product }
+      - { field: company_name, label: Company }
+      - { field: buyer_name, label: Buyer }
+      - { field: expected_date, label: Order deadline }
+      - { field: activity_count, label: Activities, type: ActivityCell }
       - { field: total_amount_display, label: Total, align: right }
       - { field: state, label: Status, type: StatusChip }
     page_size: 50

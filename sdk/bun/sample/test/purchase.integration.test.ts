@@ -72,4 +72,48 @@ describe('Purchase Orders list and detail parity', () => {
     expect(yaml('pages/purchase-orders.yaml').page.auth.require).toEqual(['purchase.read']);
     expect(yaml('pages/purchase-detail.yaml').page.auth.require).toEqual(['purchase.read']);
   });
+
+  test('keeps RFQs aligned with the Odoo action view family and page/API boundary', () => {
+    const page = yaml('pages/purchase-rfqs.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    const source = apiSource('purchase-rfqs.yaml', 'purchase_rfqs');
+
+    expect(page.datasources).toBeUndefined();
+    expect(page.page).toMatchObject({ id: 'purchase-rfqs', route: '/purchase', auth: { require: ['purchase.read'] } });
+    expect(yaml('api/purchase-rfqs.yaml').page.id).toBe('purchase-rfqs');
+    expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('purchase-rfqs')).toContain('purchase_rfqs');
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'card', 'kanban', 'calendar', 'pivot', 'graph', 'activity']);
+    expect(list.views.filter((view: any) => view.mobile === false).map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'graph', 'activity']);
+    expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: true, card: { title: 'name', subtitle: 'vendor_name' } });
+    expect(list.views.find((view: any) => view.id === 'pivot')?.pivot.default).toMatchObject({ rows: ['vendor_name'], columns: ['state'] });
+    expect(list.views.find((view: any) => view.id === 'graph')).toMatchObject({ category_field: 'vendor_name', measure_field: 'total_amount' });
+    expect(list.views.find((view: any) => view.id === 'activity')).toMatchObject({ title_field: 'name', record_date_field: 'activity_date' });
+    expect(source.permission).toBe('purchase.read');
+    expect(source.pivot.fields).toEqual(['vendor_name', 'state', 'expected_date', 'quantity', 'qty_received', 'total_amount']);
+    expect(list.columns.map((column: any) => column.field)).toEqual(['name', 'vendor_name', 'company_name', 'buyer_name', 'expected_date', 'activity_count', 'total_amount_display', 'state']);
+  });
+
+  test('returns deterministic RFQ status, search, empty, and permission fixtures', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_rfq_views_test_schema_migrations', ['schema', 'data']);
+
+    const rfqs = apiSource('purchase-rfqs.yaml', 'purchase_rfqs');
+    const defaultRfqs = await repository.querySource(rfqs, { q: null, state: null, vendor_id: null, fixture_state: null }, 0, 50);
+    expect(defaultRfqs.data.map((row: any) => row.id)).toEqual(['po-demo-008', 'po-demo-002', 'po-demo-001', 'po-demo-004']);
+    expect(defaultRfqs.data.map((row: any) => row.state)).toEqual(['To Approve', 'Sent', 'Draft', 'Cancelled']);
+    expect(defaultRfqs.data.map((row: any) => row.total_amount)).toEqual([1560, 3096, 625, 360]);
+    expect(defaultRfqs.data.every((row: any) => row.company_name === 'Main Company (San Francisco)' && row.activity_count === 1)).toBe(true);
+
+    const searched = await repository.querySource(rfqs, { q: 'Industrial label', state: null, vendor_id: null, fixture_state: null }, 0, 50);
+    expect(searched.data.map((row: any) => row.id)).toEqual(['po-demo-008']);
+    const approval = await repository.querySource(rfqs, { q: null, state: 'To Approve', vendor_id: null, fixture_state: null }, 0, 50);
+    expect(approval.data).toMatchObject([{ id: 'po-demo-008', total_amount: 1560, activity_type: 'todo' }]);
+    const empty = await repository.querySource(rfqs, { q: null, state: null, vendor_id: null, fixture_state: 'empty' }, 0, 50);
+    expect(empty.data).toEqual([]);
+
+    expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['purchase.read', 'purchase.write', 'purchase.manage']));
+    expect(yaml('pages/purchase-rfqs.yaml').page.auth.require).toEqual(['purchase.read']);
+    expect(yaml('api/purchase-rfqs.yaml').actions[0]).toMatchObject({ id: 'create_purchase_order', permission: 'purchase.write' });
+  });
 });

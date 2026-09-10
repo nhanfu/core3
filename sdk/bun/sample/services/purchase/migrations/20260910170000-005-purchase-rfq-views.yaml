@@ -1,0 +1,14 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE purchase_orders SET total_amount = quantity * unit_price WHERE id = 'po-demo-001' AND total_amount IS NULL;
+      INSERT OR IGNORE INTO purchase_orders(id, name, vendor_id, vendor_name, product_name, quantity, qty_received, unit_price, state, order_date, expected_date, reference, order_type, approval_status, locked, acknowledged, currency, buyer_name, total_amount, contact_name, notes)
+      VALUES ('po-demo-008', 'PO/2026/0008', 'vendor-demo-002', 'Northwind Components', 'Industrial label printers', 6, 0, 260.00, 'To Approve', DATE '2026-09-03', DATE '2026-09-22', 'Warehouse labelling upgrade', 'rfq', 'pending', false, false, 'USD', 'Mitchell Admin', 1560.00, 'Grace Chen', 'Manager approval is required before sending this quotation.');
+    down: |
+      DELETE FROM purchase_orders WHERE id = 'po-demo-008';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
