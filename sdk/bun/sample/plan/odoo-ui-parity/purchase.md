@@ -168,6 +168,64 @@ Odoo references are `/tmp/odoo-purchase-vendor-pricelists-desktop.png` and
 `/tmp/odoo-purchase-vendor-pricelists-mobile.png`; the older action 239 noted
 above is stale and opens Discuss in the current database.
 
+## Product Categories bounded follow-up
+
+The next visible Purchase menu gap was Configuration → Categories, reached in
+the installed Odoo reference at `/odoo/product-categories`. The exact visible
+menu order captured before implementation is:
+
+| Purchase menu | Entries |
+| --- | --- |
+| Orders | Requests for Quotation, Purchase Orders, Vendors |
+| Products | Products, Product Variants |
+| Reporting | Purchase |
+| Configuration | Settings, Vendor Pricelists, Attributes, Categories, Units & Packagings |
+
+Odoo Categories is a single-column list titled `Categories` with `New`,
+actions, search, pager, a selection column, and the one visible column
+`Product Category`. The authenticated reference contains the deterministic
+records `Clothes`, `Expenses`, `Food`, `Furniture`, `Furniture / Office`,
+`Furniture / Outdoor`, `Goods`, `Home Construction`, `Services`, and
+`Services / Events`. Selecting `Furniture` reaches the form with the `30
+Products` stat button, `Category`, `LOGISTICS`, and `INVENTORY VALUATION`
+sections, disabled packaging radio choices, costing/valuation fields, and
+`Send message` / `Log note` chatter controls. Both desktop and mobile fit
+without horizontal overflow; mobile stacks the form sections and keeps the
+chatter composer controls at the bottom.
+
+Core3 now exposes `/purchase/product-categories` and
+`/purchase/product-categories/detail?id=purchase-category-furniture`. The
+page/API pairs are joined by `page.id`; migration
+`20260910210000-010-purchase-product-categories.yaml` owns ten stable
+category fixtures plus the created-message fixture. The list provides the
+selection column, search, pager, row navigation, empty state, and permissioned
+New form. The detail provides the product stat navigation, permissioned edit
+form with a shared read-only/editable radio primitive, and permissioned
+chatter message/note actions. Duplicate names, missing records, stale row
+versions, and chatter guards are declared in the API contract; deterministic
+rows, search, empty/not-found fixtures, menu ordering, page-id binding, and
+read/write action permissions are covered by
+`test/purchase_product_categories.integration.test.ts`.
+
+Comparison captures are local only:
+
+- Odoo: `/tmp/odoo-purchase-categories-desktop.png`,
+  `/tmp/odoo-purchase-categories-mobile.png`,
+  `/tmp/odoo-purchase-categories-detail-exact.png`, and
+  `/tmp/odoo-purchase-categories-detail-mobile.png`.
+- Core3: `/tmp/core3-purchase-categories-list-desktop-final.png`,
+  `/tmp/core3-purchase-categories-list-mobile-styled.png`,
+  `/tmp/core3-purchase-categories-detail-desktop-final.png`, and
+  `/tmp/core3-purchase-categories-detail-mobile-final.png`.
+
+The shared Core3 shell intentionally retains its existing Fluent-style header
+and toolbar rather than copying Odoo's purple shell; the category-specific
+list structure, labels, selection affordance, form section ordering, radio
+choices, chatter, responsive stacking, and deterministic record content match
+the captured reference. The isolated runtime required the normal generated
+stylesheet build before browser capture; generated CSS is ignored and was not
+committed.
+
 ## Required visible states
 
 - RFQ/order list: populated, empty, loading/error, search by order/vendor/
