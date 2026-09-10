@@ -71,7 +71,10 @@ describe('Project list and task navigation parity', () => {
 
     const tasks = apiSource('tasks.yaml', 'project_tasks_all');
     const taskRows = await repository.querySource(tasks, { q: null, state: null, priority: null, stage: null, fixture_state: null }, 0, 50);
-    expect(taskRows.data).toHaveLength(5);
+    // The reporting slice adds eight deterministic analysis fixtures to the
+    // same service-owned task table; the all-tasks datasource must expose
+    // both the original navigation fixtures and those report rows.
+    expect(taskRows.data).toHaveLength(13);
     const searchedTasks = await repository.querySource(tasks, { q: 'screenshots', state: null, priority: null, stage: null, fixture_state: null }, 0, 50);
     expect(searchedTasks.data.map((row: any) => row.id)).toEqual(['task-demo-002']);
     const emptyTasks = await repository.querySource(tasks, { q: null, state: null, priority: null, stage: null, fixture_state: 'empty' }, 0, 50);
@@ -79,7 +82,10 @@ describe('Project list and task navigation parity', () => {
 
     const projectTasks = apiSource('project-detail.yaml', 'project_tasks_detail');
     const projectTaskRows = await repository.querySource(projectTasks, { id: 'project-demo-001', fixture_state: null }, 0, 50);
-    expect(projectTaskRows.data.map((row: any) => row.id)).toEqual(['task-demo-003', 'task-demo-002', 'task-demo-001']);
+    expect(projectTaskRows.data.map((row: any) => row.id)).toEqual([
+      'task-demo-003', 'task-analysis-001', 'task-demo-002',
+      'task-analysis-002', 'task-analysis-003', 'task-demo-001', 'task-analysis-008',
+    ]);
   });
 
   test('keeps permission and task workflow boundaries explicit', () => {
