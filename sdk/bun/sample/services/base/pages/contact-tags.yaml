@@ -1,0 +1,25 @@
+title: Contact Tags
+page: { id: contact-tags, route: /base-contact-tags, breadcrumb: [Contacts, Configuration, Contact Tags], auth: { require: [base.reference.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: contact_tags
+    search: { label: Search contact tags, placeholder: 'Search...' }
+    filters: [{ field: active, label: Status, options_source: contact_tag_states }]
+    inline_edit:
+      create_action: create_contact_tag
+      update_action: edit_contact_tag
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, placeholder: 'e.g. "Roadshow"' }
+        - { field: color, type: color, default: 0 }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: category, label: Category }
+      - { field: color, label: Color, type: ColorCell, align: right }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: archive_contact_tag, label: Archive, icon: archive, variant: danger, show_if: 'row.active === true' }, { id: unarchive_contact_tag, label: Unarchive, icon: refresh, show_if: 'row.active === false' }, { id: delete_contact_tag, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No contact tags found, description: No contact tags match the current search or filter. }

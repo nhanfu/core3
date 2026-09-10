@@ -55,7 +55,7 @@ export type ListViewAction = {
 };
 export type ListViewInlineEditField = {
   field: string;
-  type?: 'text' | 'number' | 'select' | 'relation';
+  type?: 'text' | 'number' | 'select' | 'relation' | 'color';
   placeholder?: string;
   default?: unknown;
   readonly?: boolean;
@@ -1048,6 +1048,33 @@ export class ListView extends BaseComponent {
     const values = this.state.inlineEditValues || {};
     const value = values[field.field] ?? '';
     const wrap = html.take(cell).div.className('o-list-inline-editor-wrap').ele();
+    if (field.type === 'color') {
+      const palette = ['#ffffff', '#875A7B', '#00A09A', '#F0AD4E', '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12', '#D35400', '#34495E', '#7F8C8D'];
+      const paletteWrap = html.take(wrap).div.className('o-list-inline-color-palette').ele();
+      paletteWrap.style.display = 'flex';
+      paletteWrap.style.flexWrap = 'wrap';
+      paletteWrap.style.alignItems = 'center';
+      paletteWrap.style.justifyContent = 'flex-end';
+      for (let color = 0; color < palette.length; color += 1) {
+        const swatch = html.take(paletteWrap).button.attr('type', 'button').className('o-list-color-cell-swatch').ele() as HTMLButtonElement;
+        swatch.style.backgroundColor = palette[color];
+        swatch.style.width = '20px';
+        swatch.style.height = '20px';
+        swatch.style.padding = '0';
+        swatch.style.margin = '0 2px 2px 0';
+        swatch.style.borderRadius = '50%';
+        swatch.style.border = Number(value) === color ? '2px solid var(--o-list-action)' : '1px solid var(--o-list-border)';
+        swatch.setAttribute('aria-label', `Color ${color}`);
+        swatch.setAttribute('aria-pressed', String(Number(value) === color));
+        html.take(swatch).event('click', (event: MouseEvent) => {
+          event.stopPropagation();
+          this.setInlineValue(field.field, color);
+        });
+      }
+      void row;
+      void column;
+      return;
+    }
     if (field.type === 'relation') {
       const input = html.take(wrap).input.attr('type', 'text').className('o-list-inline-editor').prop('value', String(value ?? '')).attr('placeholder', field.placeholder || '').prop('readOnly', Boolean(field.readonly)).ele() as HTMLInputElement;
       html.take(input).event('input', () => this.setInlineValue(field.field, input.value));

@@ -1,0 +1,35 @@
+version: 0.0.5
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_contact_tags (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        parent_tag_id VARCHAR,
+        color INTEGER NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      INSERT INTO base_contact_tags(id, name, parent_tag_id, color, active, created_at, updated_at) VALUES
+        ('contact-tag-vendor', 'Vendor', NULL, 2, true, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'),
+        ('contact-tag-prospects', 'Prospects', NULL, 3, true, TIMESTAMP '2026-01-15 09:01:00', TIMESTAMP '2026-01-15 09:01:00'),
+        ('contact-tag-employees', 'Employees', NULL, 4, true, TIMESTAMP '2026-01-15 09:02:00', TIMESTAMP '2026-01-15 09:02:00'),
+        ('contact-tag-consulting-services', 'Consulting Services', NULL, 5, true, TIMESTAMP '2026-01-15 09:03:00', TIMESTAMP '2026-01-15 09:03:00'),
+        ('contact-tag-services', 'Services', NULL, 7, true, TIMESTAMP '2026-01-15 09:04:00', TIMESTAMP '2026-01-15 09:04:00'),
+        ('contact-tag-office-supplies', 'Office Supplies', 'contact-tag-vendor', 8, true, TIMESTAMP '2026-01-15 09:05:00', TIMESTAMP '2026-01-15 09:05:00'),
+        ('contact-tag-desk-manufacturers', 'Desk Manufacturers', 'contact-tag-vendor', 10, true, TIMESTAMP '2026-01-15 09:06:00', TIMESTAMP '2026-01-15 09:06:00'),
+        ('contact-tag-archived-fixture', 'Archived Contact Tag', NULL, 1, false, TIMESTAMP '2026-01-15 09:07:00', TIMESTAMP '2026-01-15 09:07:00')
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        parent_tag_id = EXCLUDED.parent_tag_id,
+        color = EXCLUDED.color,
+        active = EXCLUDED.active,
+        updated_at = EXCLUDED.updated_at;
+    down: |
+      DROP TABLE IF EXISTS base_contact_tags;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

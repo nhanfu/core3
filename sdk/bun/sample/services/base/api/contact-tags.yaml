@@ -1,0 +1,87 @@
+page: { id: contact-tags }
+datasources:
+  - id: contact_tag_states
+    permission: base.reference.read
+    query: "SELECT value, label FROM (VALUES ('active', 'Active'), ('archived', 'Archived')) states(value, label)"
+  - id: contact_tag_parents
+    permission: base.reference.read
+    query: "SELECT id AS value, name AS label FROM base_contact_tags WHERE active = true AND parent_tag_id IS NULL ORDER BY name"
+  - id: contact_tags
+    permission: base.reference.read
+    error_states: { transport_error: { status: 503, code: BASE_CONTACT_TAGS_UNAVAILABLE, message: Contact tags are temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.name, parent.name AS category, t.parent_tag_id, t.color, t.active FROM base_contact_tags t LEFT JOIN base_contact_tags parent ON parent.id = t.parent_tag_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((COALESCE(:active, '') = '' AND t.active = true) OR (:active = 'active' AND t.active = true) OR (:active = 'archived' AND t.active = false)) AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR COALESCE(parent.name, '') ILIKE '%' || :q || '%') ORDER BY t.name, t.id"
+actions:
+  - id: create_contact_tag
+    type: server_form
+    permission: base.reference.write
+    title: New Contact Tag
+    action: base.reference.contact_tags.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [contact_tags]
+    mutation:
+      operation: insert
+      table: base_contact_tags
+      generated: [id]
+      fields: [name, parent_tag_id, color]
+      required: [name]
+      defaults: { active: true, color: 0 }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contact_tags WHERE LOWER(name) = LOWER(:name))", status: 409, code: BASE_CONTACT_TAG_NAME_EXISTS, message: A contact tag with this name already exists. }]
+      result: { query: "SELECT * FROM base_contact_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: parent_tag_id, label: Category, type: select, options_source: contact_tag_parents }
+      - { field: color, label: Color, type: color, default: 0 }
+  - id: edit_contact_tag
+    type: server_form
+    permission: base.reference.write
+    title: Edit Contact Tag
+    action: base.reference.contact_tags.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [contact_tags]
+    mutation:
+      operation: update
+      table: base_contact_tags
+      fields: [name, color]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM base_contact_tags WHERE id = :id AND active = true", status: 404, code: BASE_CONTACT_TAG_NOT_FOUND, message: Active contact tag not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contact_tags WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: BASE_CONTACT_TAG_NAME_EXISTS, message: A contact tag with this name already exists. }
+      result: { query: "SELECT * FROM base_contact_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: color, label: Color, type: color }
+  - id: archive_contact_tag
+    type: server
+    permission: base.reference.write
+    action: base.reference.contact_tags.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [contact_tags]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: base_contact_tags, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM base_contact_tags WHERE id = :id" } }
+  - id: unarchive_contact_tag
+    type: server
+    permission: base.reference.write
+    action: base.reference.contact_tags.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [contact_tags]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: base_contact_tags, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM base_contact_tags WHERE id = :id" } }
+  - id: delete_contact_tag
+    type: server
+    permission: base.reference.write
+    action: base.reference.contact_tags.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [contact_tags]
+    params: { id: '{row.id}' }
+    mutation:
+      operation: delete
+      table: base_contact_tags
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM base_contact_tags WHERE id = :id", status: 404, code: BASE_CONTACT_TAG_NOT_FOUND, message: Contact tag not found. }]

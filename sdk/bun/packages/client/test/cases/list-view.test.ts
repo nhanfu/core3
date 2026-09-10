@@ -737,6 +737,29 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('[data-row-id="__new__"]')).toBeNull();
   });
 
+  it('renders an Odoo color palette for inline color fields', () => {
+    const component = new ListView('contact-tags', {
+      rows: [{ id: 'tag-1', name: 'Vendor', color: 2, row_version: 1 }],
+      meta: { total: 1, page: 1, pageSize: 50 },
+    }, [
+      { field: 'name', label: 'Name' },
+      { field: 'color', label: 'Color' },
+    ], {
+      variant: 'odoo',
+      inlineEdit: {
+        createAction: 'create_tag',
+        updateAction: 'update_tag',
+        fields: [{ field: 'name', type: 'text' }, { field: 'color', type: 'color' }],
+        onSave: vi.fn(),
+      },
+    });
+    const container = mount(component);
+    container.querySelector<HTMLElement>('[data-row-id="tag-1"] [data-column="name"]')!.click();
+    const swatches = container.querySelectorAll<HTMLButtonElement>('.o-list-inline-color-palette button');
+    expect(swatches).toHaveLength(12);
+    expect(swatches[2].getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('keeps the legacy card list as the default variant', () => {
     const container = mount(new ListView('legacy', { items: [{ name: 'Legacy item' }] }, [{ field: 'name', label: 'Name' }]));
     expect(container.textContent).toContain('Legacy item');
