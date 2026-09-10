@@ -14,7 +14,7 @@ or claim unavailable visual evidence.
   on `mail`, includes maintenance views, activity types, settings, security,
   and backend assets, and is installable.
 - Authenticated HTTP/RPC audit on 2026-09-10 used `http://localhost:8069`,
-  database `core3_personal`, and the local reference credentials recorded in
+  database `core3_reference`, and the local reference credentials recorded in
   the execution handoff. The server answered and `ir.module.module` reports
   `maintenance: state=installed, demo=true, latest_version=19.0.1.0`.
 - Authenticated desktop and mobile Maintenance captures exist under `/tmp`.
@@ -184,5 +184,5 @@ Completed for this gate: source manifest/XML/security/demo inspection; Core3
 maintenance manifest, pages, migrations, permissions, styles, and package
 scripts inspection; authenticated localhost:8069 login and RPC status query;
 and authenticated desktop/mobile Maintenance captures in `/tmp`. The local
-reference is `core3_personal`, with `maintenance=installed,demo=true`; the
+reference is `core3_reference`, with `maintenance=installed,demo=true`; the
 remaining limitation is deferred behavior, not addon availability.

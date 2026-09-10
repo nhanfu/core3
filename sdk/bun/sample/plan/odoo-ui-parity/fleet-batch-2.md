@@ -11,7 +11,7 @@ service-owned detail form, deterministic DuckDB/Postgres migration fixtures,
 create/edit relation validation, empty and transport-error fixtures, and
 desktop/mobile evidence.
 
-Reference: Odoo 19 Fleet is installed with demo data in `core3_personal`.
+Reference: Odoo 19 Fleet is installed with demo data in `core3_reference`.
 The authenticated captures are `/tmp/odoo-fleet-odometers-desktop.png` and
 `/tmp/odoo-fleet-odometers-mobile.png`; they are not committed.
 

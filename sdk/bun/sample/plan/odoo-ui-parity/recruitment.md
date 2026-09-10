@@ -14,10 +14,10 @@ search filters, and explicit empty/failed datasource states.
   `659759969d535d286b656c96b675e4612b925ddd` (`65975996`), addon
   `addons/hr_recruitment`.
 - The authenticated reference is `http://localhost:8069`, database
-  `core3_personal`, checked on 2026-09-10 as `codex@core3.local` using the
+  `core3_reference`, checked on 2026-09-10 as `codex@core3.local` using the
   personal credentials in the parent register. Login succeeds and the Odoo
   shell is `19.0-20260908`.
-- `hr_recruitment` is installed with demo data in `core3_personal`. The live
+- `hr_recruitment` is installed with demo data in `core3_reference`. The live
   launcher exposes Recruitment and `/odoo/recruitment` opens the default
   Job Positions action. Reporting → Recruitment Analysis resolves to the
   runtime-generated action URL `/odoo/action-655`.

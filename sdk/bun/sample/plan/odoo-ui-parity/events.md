@@ -26,8 +26,8 @@ reference captures.
 - The former Odoo app container and its `core3_demo` reference were stopped for
   this parity run; they are not used as installed-Events evidence.
 - The current disposable installed reference is Compose project
-  `/home/nhanjs/projects/odoo-core3-personal`, at `http://localhost:8069`,
-  database `core3_personal`, created on 2026-09-10 with official demo data.
+  `/home/nhanjs/projects/odoo-core3-reference`, at `http://localhost:8069`,
+  database `core3_reference`, created on 2026-09-10 with official demo data.
   Its local reference login is `codex@core3.local` / `Core3Odoo2026!`.
   The account was authenticated successfully and has administrator access.
 

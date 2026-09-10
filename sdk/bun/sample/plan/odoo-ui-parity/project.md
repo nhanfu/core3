@@ -20,11 +20,11 @@ addon remains open for later batches.
   activities, and related mail records; it is the source fixture reference,
   not evidence that the local live database contains those records.
 - Authenticated live audit on 2026-09-10 used `http://localhost:8069`, the
-  disposable personal database `core3_personal`, and `codex@core3.local`.
+  disposable reference database `core3_reference`, and `codex@core3.local`.
   Project is installed with demo data: four Projects cards and 32 All Tasks
   rows were visible. This is the reference database for this batch; it is
   separate from the source demo contract and may be recreated by the local
-  Compose stack at `/home/nhanjs/projects/odoo-core3-personal`.
+  Compose stack at `/home/nhanjs/projects/odoo-core3-reference`.
 
 ## Live screenshot evidence
 
@@ -40,7 +40,7 @@ planned-date range, and Description/Settings tabs without horizontal overflow.
 | Project detail (`/odoo/project/5`) | `/tmp/odoo-project-detail-id5-desktop.png` | `/tmp/odoo-project-detail-id5-mobile.png` |
 | My Tasks / All Tasks | `/tmp/odoo-my-tasks-settled-desktop.png`, `/tmp/odoo-all-tasks-settled-desktop.png` | route inventory captured; mobile follow-up remains open |
 
-The captures use source revision `65975996`, database `core3_personal`, the
+The captures use source revision `65975996`, database `core3_reference`, the
 personal user above, and the stated viewport. Screenshots remain under `/tmp`
 and are not committed. The browser skill's persistent `js_repl` was not
 exposed in this session; the fallback authenticated Playwright runner was

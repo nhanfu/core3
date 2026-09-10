@@ -12,7 +12,7 @@ Status: ready
   `stock_demo_pre.xml`, `stock_demo.xml`, `stock_demo2.xml`,
   `stock_orderpoint_demo.xml`, and `stock_storage_category_demo.xml`.
 - Authenticated live audit on 2026-09-10: `http://localhost:8069`, database
-  `core3_personal`, user `codex@core3.local`. `ir.module.module` reports `stock` as
+  `core3_reference`, user `codex@core3.local`. `ir.module.module` reports `stock` as
   `installed`, `demo: true`, `latest_version: 19.0.1.1`; server version is
   `19.0-20260908`. The live database is therefore an installed, official-demo
   reference, not an unavailable/uninstalled fallback.
@@ -260,7 +260,7 @@ Focused evidence:
   or above HTTP 400. The final mobile delivery list has
   `scrollWidth === clientWidth === 390`, after removing the grouped kanban
   overflow found during comparison. The reference session used
-  `codex@core3.local` in `core3_personal` at `http://127.0.0.1:8069`.
+  `codex@core3.local` in `core3_reference` at `http://127.0.0.1:8069`.
 
 ## Acceptance
 

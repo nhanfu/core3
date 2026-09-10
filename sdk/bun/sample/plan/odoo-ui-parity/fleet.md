@@ -19,7 +19,7 @@ The current bounded implementation is recorded in
   `data/fleet_demo.xml`. The manifest also loads the fleet data, mail subtype,
   activity type, car-brand/model and vehicle-mail wizard definitions.
 - Authenticated audit on 2026-09-10 used `http://localhost:8069`, database
-  `core3_personal`, login `codex@core3.local`, and password
+  `core3_reference`, login `codex@core3.local`, and password
   `Core3Odoo2026!`. Authentication succeeded as the personal administrator.
   SQL returned `fleet|installed|t|19.0.0.1` from `ir_module_module`, proving
   Fleet is installed with demo data in the personal reference database.

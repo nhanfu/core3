@@ -10,7 +10,7 @@ Status: `in-progress`
   It depends on `account`, is an application, and declares official demo data
   in `data/purchase_demo.xml`.
 - Authenticated live reference checked on 2026-09-10 at
-  `http://localhost:8069`, database `core3_personal`, server version
+  `http://localhost:8069`, database `core3_reference`, server version
   `19.0-20260908`, as `codex@core3.local`.
 - Purchase is installed with official demo data enabled. The live RFQ route
   contains 12 records and the live Purchase Orders route contains 4 records;

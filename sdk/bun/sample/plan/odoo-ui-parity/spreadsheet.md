@@ -26,7 +26,7 @@ records the source contract, implementation, verification, and deferred scope.
   dashboards, but their menus are owned by their respective modules and are
   not silently counted as Spreadsheet menus.
 - Live authenticated audit date: 2026-09-10, URL
-  `http://localhost:8069`, database `core3_personal`, admin account from the
+  `http://localhost:8069`, database `core3_reference`, admin account from the
   parent parity plan. Authenticated `ir.module.module.search_read` reported:
   `spreadsheet` state `installed`, `demo: true`, installed/latest version
   `19.0.1.0`; `spreadsheet_dashboard` reported the same. The live database
@@ -179,7 +179,7 @@ Reuse generic contracts before adding Spreadsheet-specific renderers:
 ## 2026-09-10 bounded implementation batch: Configuration > Dashboards
 
 The authenticated personal Odoo 19 database was refreshed at
-`http://localhost:8069` using database `core3_personal`. The live menu resolves
+`http://localhost:8069` using database `core3_reference`. The live menu resolves
 the configuration action to `/odoo/action-499` in this database (action ids are
 database-specific; the earlier `/odoo/action-308` capture belongs to the
 previous reference database). The installed view contract was verified before
