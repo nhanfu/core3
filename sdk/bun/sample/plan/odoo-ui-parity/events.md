@@ -428,6 +428,18 @@ The remaining Events mock-data contract is still open for the broader future
 model graph and transport-level loading/error fixtures; this batch is limited
 to the currently implemented list, detail, and analysis surfaces.
 
+The mobile visual follow-up closes a concrete responsive mismatch found during
+fresh comparison: Odoo switches the Events action to record cards at 390x844,
+whereas the prior Core3 table clipped Organizer and later columns behind the
+content viewport. The Events page now declares a shared CardView with the
+Odoo-visible event title, type, organizer, venue, registration count, and
+status, while the desktop List/Kanban/Calendar/Pivot/Graph/Activity modes stay
+available. Fresh authenticated checks show eight mobile cards, no table,
+document width 390, and no failed responses. Evidence is
+`/tmp/core3-events-desktop-cards-fix.png` and
+`/tmp/core3-events-mobile-cards-fix.png`; the matching installed Odoo
+reference remains `/tmp/odoo-events-list-modes-{desktop,mobile}.png`.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

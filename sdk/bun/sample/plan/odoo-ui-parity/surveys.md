@@ -209,6 +209,17 @@ Captures are under `/tmp/core3-surveys-followup-*.png`, including
 `test/surveys.integration.test.ts`; the full Surveys parity and permission,
 public-flow, and Odoo visual acceptance gates remain in progress.
 
+The landing-screen visual follow-up aligns the main Surveys action with the
+installed Odoo reference: Odoo presents survey records as cards on both
+desktop and mobile, while the prior Core3 table clipped Owner and later
+columns at 390x844. The page now defaults to a CardView with title, owner,
+completion, publication, and status fields; the desktop List mode remains
+available as an explicit secondary view. Fresh authenticated checks show four
+cards at each viewport, document width equal to the viewport, and no failed
+responses. Evidence is `/tmp/core3-surveys-desktop-cards-fix.png` and
+`/tmp/core3-surveys-mobile-cards-fix.png`; the installed Odoo comparison is
+`/tmp/odoo-surveys-{desktop,mobile}-fresh.png`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions

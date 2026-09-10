@@ -10,10 +10,25 @@ components:
     filters: [{ field: state, label: Status, options_source: event_states }]
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: event_type
+          fields:
+            - { field: organizer, label: Organizer }
+            - { field: venue, label: Venue }
+            - { field: registration_count, label: Registered }
+            - { field: state, label: Status }
       - id: kanban
         label: Kanban
         icon: dashboard
+        mobile: false
         group_by: state
         groups_source: event_states
         card:
@@ -27,6 +42,7 @@ components:
       - id: calendar
         label: Calendar
         icon: calendar
+        mobile: false
         date_field: start_at
         end_date_field: end_at
         card:
@@ -36,6 +52,7 @@ components:
       - id: pivot
         label: Pivot
         icon: pivot
+        mobile: false
         pivot:
           fields:
             - { field: state, column: Status }
@@ -50,7 +67,7 @@ components:
               - { field: capacity, aggregate: sum, column: Capacity }
               - { field: registration_count, aggregate: sum, column: Registered }
           date_ranges: { start_at: month }
-      - { id: graph, label: Graph, icon: graph, category_field: state, measure_field: registration_count, type: bar }
+      - { id: graph, label: Graph, icon: graph, category_field: state, measure_field: registration_count, type: bar, mobile: false }
       - id: activity
         label: Activity
         icon: activity

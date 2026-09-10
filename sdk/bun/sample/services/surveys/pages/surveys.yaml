@@ -8,6 +8,22 @@ components:
     create_label: New survey
     search: { label: Search surveys, placeholder: 'Search survey or title...' }
     filters: [{ field: state, label: Status, options_source: survey_states }]
+    view_navigation: tabs
+    views:
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: title
+          subtitle: owner
+          fields:
+            - { field: response_count, label: Completed }
+            - { field: published_at, label: Published at }
+            - { field: state, label: Status }
+      - id: list
+        label: List
+        icon: table
+        mobile: false
     columns:
       - { field: name, label: Survey, type: PrimaryEntityCell }
       - { field: title, label: Title }

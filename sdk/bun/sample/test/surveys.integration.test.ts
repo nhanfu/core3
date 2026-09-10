@@ -7,6 +7,15 @@ const root = join(import.meta.dir, '../services/surveys');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('Surveys parity catalog and workflow', () => {
+  test('uses Odoo-style card records on the survey landing screen', () => {
+    const page = yaml('pages/surveys.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    expect(list.view_navigation).toBe('tabs');
+    expect(list.views.map((view: any) => view.id)).toEqual(['card', 'list']);
+    expect(list.views[0].card).toMatchObject({ title: 'title', subtitle: 'owner' });
+    expect(list.views[1].mobile).toBe(false);
+  });
+
   test('matches Odoo survey detail stat buttons and counts', () => {
     const page = yaml('pages/survey-detail.yaml');
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
