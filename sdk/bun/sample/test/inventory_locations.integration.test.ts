@@ -35,14 +35,14 @@ describe('Inventory Locations Odoo action parity', () => {
     ]));
 
     const list = listPage.components[0];
-    expect(list).toMatchObject({ source: 'inventory_locations', create_action: 'create_inventory_location', row_open_action: 'view_inventory_location', row_double_click_action: 'view_inventory_location' });
+    expect(list).toMatchObject({ source: 'inventory_locations', row_open_action: 'view_inventory_location', row_double_click_action: 'view_inventory_location', default_filters: { usage: 'Internal' } });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'card', 'form']);
     expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ card: { title: 'complete_name', subtitle: 'usage' } });
     expect(list.form_view).toEqual({ page: 'apps/services/inventory/pages/location-detail.yaml', side_panel: false });
     expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ mobile: false });
     expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: false });
     expect(action('view_inventory_location')).toMatchObject({ type: 'navigate', permission: 'inventory.read', navigate_to: '/locations/detail', params: { id: '{row.id}' } });
-    expect(list.columns.map((column: any) => column.field)).toEqual(['complete_name', 'usage', 'company_name', 'warehouse_name', 'is_empty', 'active', 'id']);
+    expect(list.columns.map((column: any) => column.field)).toEqual(['complete_name', 'usage', 'company_name', 'warehouse_name', 'is_empty', 'active']);
     expect(parsed('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration').items).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/locations', label: 'Locations', permission: 'inventory.read' }),
     ]));
@@ -104,6 +104,7 @@ describe('Inventory Locations Odoo action parity', () => {
     const detailApi = parsed('api/location-detail.yaml');
     expect(parsed('pages/locations.yaml').page.auth.require).toEqual(['inventory.read']);
     expect(parsed('pages/location-detail.yaml').page.auth.require).toEqual(['inventory.read']);
+    expect(parsed('pages/location-detail.yaml').components[0]).toMatchObject({ editable: false, group_columns: 2 });
     for (const source of [...listApi.datasources, ...detailApi.datasources]) {
       expect(source.permission, source.id).toBe('inventory.read');
       expect(source.error_states?.transport_error?.status ?? source.id).toBe(source.id === 'inventory_location_usage_options' || source.id === 'inventory_location_warehouses' ? source.id : 503);

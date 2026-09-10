@@ -194,6 +194,17 @@ export class PageRuntime extends BaseComponent {
     initialDateFilters[range.to_field || 'to_date'] = dates.to;
   }
   const urlParams = getPageParams();
+  const defaultFilters = Object.fromEntries(
+    (config.components || [])
+      .filter((component: any) => component.type === 'ListView' && component.default_filters && typeof component.default_filters === 'object')
+      .flatMap((component: any) => Object.entries(component.default_filters))
+      .filter(([, value]) => value != null && value !== '')
+      .map(([key, value]) => [key, String(value)]),
+  );
+  for (const [key, value] of Object.entries(defaultFilters)) {
+    if (pageParams[key] === undefined) pageParams[key] = value;
+    if (urlParams[key] === undefined) urlParams[key] = value;
+  }
   for (const [key, value] of Object.entries(initialDateFilters)) {
     if (pageParams[key] === undefined) pageParams[key] = value;
     if (urlParams[key] === undefined) urlParams[key] = value;

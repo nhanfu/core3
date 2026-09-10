@@ -4,8 +4,7 @@ components:
   - type: ListView
     variant: odoo
     source: inventory_locations
-    create_action: create_inventory_location
-    create_label: New
+    default_filters: { usage: Internal }
     search: { label: Stock Locations, placeholder: Search locations... }
     filters:
       - { field: usage, label: Location Type, options_source: inventory_location_usage_options }
@@ -34,7 +33,6 @@ components:
     row_key: id
     row_open_action: view_inventory_location
     row_double_click_action: view_inventory_location
-    row_actions: menu
     empty_state: { title: No locations found, description: Add a location or adjust your search and filters. }
     columns:
       - { field: complete_name, label: Location, type: PrimaryEntityCell }
@@ -43,4 +41,3 @@ components:
       - { field: warehouse_name, label: Warehouse, optional: hide }
       - { field: is_empty, label: Empty, type: BooleanToggle, optional: hide }
       - { field: active, label: Active, type: BooleanToggle, optional: hide }
-      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_inventory_location, label: Edit, icon: edit }, { id: archive_inventory_location, label: Archive, icon: archive }, { id: delete_inventory_location, label: Delete, icon: trash, variant: danger }] }

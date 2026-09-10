@@ -51,7 +51,8 @@ export class OdooFormView extends BaseComponent {
       ? this.def.statusbar_actions
       : {};
     const statusBadge = (this.def.status_badges || []).find((badge: any) => String(badge.value) === status);
-    const layout = html.take(root).div.className('o-form-layout').ele();
+    const hasChatter = Boolean(this.def.message_source || this.def.follower_source || this.def.attachment_source);
+    const layout = html.take(root).div.className(`o-form-layout${hasChatter ? '' : ' o-form-layout-single'}`).ele();
     const sheetBackground = html.take(layout).div.className('o-form-sheet-bg').ele();
 
     if (headerActions.length || editing || statusStages.length) {

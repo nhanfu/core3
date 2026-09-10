@@ -4,9 +4,11 @@ components:
   - type: OdooFormView
     source: inventory_location_detail
     title_field: complete_name
-    editable: true
+    editable: false
+    group_columns: 2
     groups:
       - title: Stock Location
+        wide: true
         fields:
           - { field: name, label: Location Name }
           - { field: parent_location_name, label: Parent Location }
@@ -24,4 +26,3 @@ components:
         fields:
           - { field: removal_strategy, label: Removal Strategy, type: radio }
     stat_buttons: [{ id: view_inventory_location_products, label: Products, icon: list, value_field: product_count }]
-    header_actions: [{ id: save_inventory_location, label: Save, variant: primary }]
