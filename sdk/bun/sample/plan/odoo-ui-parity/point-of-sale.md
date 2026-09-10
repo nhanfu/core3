@@ -252,6 +252,62 @@ the background; the modal fields, labels, spacing, and actions were compared
 directly against Odoo. Existing-row editing and broader opening-control cash
 denomination behavior remain deferred.
 
+## Current batch: Product Variants list and detail parity contract
+
+### Odoo menu and action contract (inspected 2026-09-10)
+
+- Addon/version: `point_of_sale`, Odoo 19 Community; the fresh owned reference
+  database has the official demo catalog enabled.
+- Menu tree and ordering: `Point of Sale` → `Products` → `Product Variants`,
+  immediately before `Combo Choices`. The visible menu opens Odoo action 689;
+  its list action is `list,kanban,form`, with `New` before the search bar and
+  list/kanban view controls on the right.
+- Visibility: the menu and read-only list/detail require the POS product read
+  access available to the authenticated reference user. `New` and edits are
+  product-management actions and remain outside this bounded slice; Core3
+  detail must therefore be read-only for `pos.read` users.
+- List states: desktop list columns are `Internal Reference`, `Name`, `Variant
+  Values`, `Sales Price`, `Cost`, `On Hand`, `Forecasted`, and `Unit`; the
+  initial demo state shows `1-80 / 141`. At 390px Odoo switches to a compact
+  kanban card with favorite affordance, name, internal reference, variant-value
+  chips, price, and product image. Empty/search-no-result state remains an
+  explicit list/kanban empty state.
+- Row action: selecting the first demo row (`CONS_0001`, `Whiteboard Pen`)
+  opens `/odoo/action-689/71`; the row position is shown as `1 / 80` with
+  previous/next navigation and a `New` action in the form header.
+- Detail layout: the header shows `Product`, favorite, product name, product
+  image, and checkboxes `Sales`, `Point of Sale ?`, `Expenses ?`, `Purchase`.
+  The notebook tabs are exactly `General Information`, `Sales`, `Point of
+  Sale`, `Purchase`, and `Inventory`. The first tab exposes `Product Type ?`
+  (`Goods`, `Service`, `Combo`), `Invoicing Policy ?`, `Track Inventory ?`,
+  `Sales Price ?`, `Sales Taxes ?`, `Cost ?`, `Internal Reference`, `Barcode ?`,
+  `Purchase Taxes ?`, `Category`, and `Company`, followed by `INTERNAL NOTES`.
+  The right-side chatter shows `Send message`, `Log note`, and `Activity`.
+- Responsive contract: at 1440x900 the form uses a two-column content card
+  with chatter on the right; at 390x844 the list is card-based and the form
+  remains single-column with tabs/action controls fitting the viewport without
+  horizontal overflow.
+- Captured references: `/tmp/odoo-pos-next-product-variants-list-desktop.png`,
+  `/tmp/odoo-pos-next-product-variants-list-mobile.png`, and
+  `/tmp/odoo-pos-next-product-variant-detail-desktop.png`.
+
+### Core3 implementation and QA contract
+
+- Add a row-open/double-click action from `pos-product-variants` to a separate
+  `pos-product-variant-detail` page. Keep page YAML and API YAML separate and
+  join them through the exact matching `page.id`.
+- Use deterministic service-owned variant fixtures and a detail datasource
+  keyed by `:id`; do not add page-local records or an unrelated generic product
+  detail shortcut. The detail is read-only under `pos.read`; no edit mutation is
+  part of this slice.
+- Reuse `ListView`, `OdooFormView`, `StatusBar`/header primitives, and the
+  existing responsive form/chatter composition. Focused tests must cover page
+  and API IDs, list navigation, detail projection, unknown-ID behavior, and the
+  permission boundary. Authenticated headless checks must capture list and
+  detail at 1440x900 and 390x844, verify no unexpected responses or horizontal
+  overflow, and compare the visible labels, tabs, toolbar, empty state, and
+  responsive cards against the Odoo references.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,
