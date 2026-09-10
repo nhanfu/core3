@@ -364,6 +364,26 @@ are `/tmp/core3-pos-orders-analysis-desktop.png`,
 The bounded slice does not yet reproduce Odoo's purple shell or visible
 `Not Cancelled` search facet; those remain documented visual follow-up gaps.
 
+## Current batch: Sales Details wizard action 703
+
+The owned Odoo 19 reference exposes `Point of Sale → Reporting → Sales Details`
+as action 703 (`pos.details.wizard`, form view). At 1440x900 it opens a modal
+with Start Date, End Date, a three-row Point of Sale line table, Add a line,
+Print, and Cancel; at 390x844 the same table becomes a clipped responsive row
+layout and the footer actions remain touch-sized. Reference captures are
+`/tmp/odoo-pos-next-sales-details-wizard-{desktop,mobile}.png`; both had zero
+failed responses and viewport/body widths of 1440/1440 and 390/390.
+
+Core3 adds the disjoint `/point-of-sale/sales-details-wizard` route rather than
+changing the existing `/point-of-sale/sales-details` list. Its page/API
+fragments join through `pos-sales-details-wizard`, with fixed January 2026
+wizard and line fixtures, read/manager permissions, date-range and balance
+guards, line create/update/delete actions, explicit empty and transport-error
+datasource states, and a client Print action. The route is deliberately
+full-page because the YAML page runtime has no page-level modal contract; its
+form sheet and x2many line grid preserve the Odoo fields, labels, actions, and
+responsive structure.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,

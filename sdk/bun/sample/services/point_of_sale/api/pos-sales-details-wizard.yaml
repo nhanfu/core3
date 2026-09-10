@@ -1,0 +1,114 @@
+page: { id: pos-sales-details-wizard }
+datasources:
+  - id: pos_sales_details_wizard
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_SALES_DETAILS_UNAVAILABLE, message: Sales details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date, state, CAST(generated_at AS VARCHAR) AS generated_at FROM pos_sales_details_wizards WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = COALESCE(:id, 'pos-sales-wizard-demo-001')"
+  - id: pos_sales_details_wizard_lines
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_SALES_DETAILS_LINES_UNAVAILABLE, message: Sales detail lines are temporarily unavailable. } }
+    query: "SELECT id, row_version, wizard_id AS document_id, point_of_sale, company, CAST(closing AS VARCHAR) AS closing, CASE WHEN closing IS NULL THEN '' ELSE strftime(closing, '%b %-d') END AS closing_display, CAST(balance AS DOUBLE) AS balance, printf('$ %,.2f', CAST(balance AS DOUBLE)) AS balance_display FROM pos_sales_details_wizard_lines WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND wizard_id = COALESCE(:id, 'pos-sales-wizard-demo-001') AND (:q IS NULL OR point_of_sale ILIKE '%' || :q || '%' OR company ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: print_pos_sales_details
+    type: client
+    permission: pos.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: cancel_pos_sales_details
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/sales-details
+  - id: edit_pos_sales_details
+    type: server_form
+    permission: pos.manage
+    title: Edit Sales Details
+    action: pos.sales_details.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.pos_sales_details_wizard
+    refresh: [pos_sales_details_wizard, pos_sales_details_wizard_lines]
+    mutation:
+      operation: update
+      table: pos_sales_details_wizards
+      key_field: id
+      concurrency: { required: true }
+      fields: [start_date, end_date]
+      required: [start_date, end_date]
+      guards:
+        - { query: "SELECT id FROM pos_sales_details_wizards WHERE id = :id", status: 404, message: Sales details wizard not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:start_date AS TIMESTAMP) <= CAST(:end_date AS TIMESTAMP)", status: 422, code: POS_SALES_DETAILS_DATE_RANGE, message: Start Date must be before End Date. }
+      result: { query: "SELECT * FROM pos_sales_details_wizards WHERE id = :id" }
+    fields:
+      - { field: start_date, label: Start Date, type: text, required: true }
+      - { field: end_date, label: End Date, type: text, required: true }
+  - id: add_pos_sales_details_line
+    type: server_form
+    permission: pos.manage
+    title: Add a line
+    action: pos.sales_details.lines.create
+    handler: line_item
+    operation: create
+    domain: sales_details_wizard
+    params: { id: '{state.id}' }
+    refresh: [pos_sales_details_wizard_lines]
+    mutation:
+      generated: [line_id]
+      guards:
+        - { query: "SELECT id FROM pos_sales_details_wizards WHERE id = :id AND state = 'Draft'", status: 409, code: POS_SALES_DETAILS_WIZARD_LOCKED, message: Only draft sales details can be changed. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:balance AS DECIMAL(18, 2)) >= 0", status: 422, code: POS_SALES_DETAILS_BALANCE, message: Balance cannot be negative. }
+      steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM pos_sales_details_wizard_lines WHERE wizard_id = :id", assign: true }
+        - { query: "INSERT INTO pos_sales_details_wizard_lines(id, wizard_id, sequence, point_of_sale, company, closing, balance) VALUES(:line_id, :id, :next_sequence, :point_of_sale, :company, NULLIF(:closing, ''), :balance)" }
+      result: { query: "SELECT * FROM pos_sales_details_wizard_lines WHERE id = :line_id" }
+    fields:
+      - { field: point_of_sale, label: Point of Sale, type: text, required: true }
+      - { field: company, label: Company, type: text, required: true }
+      - { field: closing, label: Closing, type: text }
+      - { field: balance, label: Balance, type: money, required: true, min: 0 }
+  - id: edit_pos_sales_details_line
+    type: server_form
+    permission: pos.manage
+    title: Edit sales detail line
+    action: pos.sales_details.lines.update
+    handler: line_item
+    operation: update
+    domain: sales_details_wizard
+    prefill: row
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [pos_sales_details_wizard_lines]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM pos_sales_details_wizards WHERE id = :id AND state = 'Draft'", status: 409, code: POS_SALES_DETAILS_WIZARD_LOCKED, message: Only draft sales details can be changed. }
+        - { query: "SELECT id FROM pos_sales_details_wizard_lines WHERE id = :line_id AND wizard_id = :id", status: 404, message: Sales detail line not found. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(:point_of_sale)) > 0 AND length(trim(:company)) > 0 AND CAST(:balance AS DECIMAL(18, 2)) >= 0", status: 422, code: POS_SALES_DETAILS_LINE_VALUES, message: Point of Sale, Company, and a non-negative Balance are required. }
+        - { query: "SELECT id FROM pos_sales_details_wizard_lines WHERE id = :line_id AND wizard_id = :id AND row_version = :expected_row_version", status: 409, code: POS_SALES_DETAILS_LINE_STALE, message: Sales detail line changed; reload before saving. }
+      steps:
+        - { query: "UPDATE pos_sales_details_wizard_lines SET point_of_sale = :point_of_sale, company = :company, closing = NULLIF(:closing, ''), balance = :balance, row_version = row_version + 1 WHERE id = :line_id AND wizard_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_SALES_DETAILS_LINE_STALE }
+      result: { query: "SELECT * FROM pos_sales_details_wizard_lines WHERE id = :line_id" }
+    fields:
+      - { field: point_of_sale, label: Point of Sale, type: text, required: true }
+      - { field: company, label: Company, type: text, required: true }
+      - { field: closing, label: Closing, type: text }
+      - { field: balance, label: Balance, type: money, required: true, min: 0 }
+  - id: delete_pos_sales_details_line
+    type: server
+    permission: pos.manage
+    action: pos.sales_details.lines.delete
+    handler: line_item
+    operation: delete
+    domain: sales_details_wizard
+    confirm: 'Delete sales detail line {{row.point_of_sale}}?'
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [pos_sales_details_wizard_lines]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM pos_sales_details_wizards WHERE id = :id AND state = 'Draft'", status: 409, code: POS_SALES_DETAILS_WIZARD_LOCKED, message: Only draft sales details can be changed. }
+        - { query: "SELECT id FROM pos_sales_details_wizard_lines WHERE id = :line_id AND wizard_id = :id", status: 404, message: Sales detail line not found. }
+        - { query: "SELECT id FROM pos_sales_details_wizard_lines WHERE id = :line_id AND wizard_id = :id AND row_version = :expected_row_version", status: 409, code: POS_SALES_DETAILS_LINE_STALE, message: Sales detail line changed; reload before deleting. }
+      steps:
+        - { query: "DELETE FROM pos_sales_details_wizard_lines WHERE id = :line_id AND wizard_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_SALES_DETAILS_LINE_STALE }

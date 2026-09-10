@@ -1,0 +1,40 @@
+version: 0.0.23
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_sales_details_wizards (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        start_date TIMESTAMP NOT NULL,
+        end_date TIMESTAMP NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Draft',
+        generated_at TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS pos_sales_details_wizard_lines (
+        id VARCHAR PRIMARY KEY,
+        wizard_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        point_of_sale VARCHAR NOT NULL,
+        company VARCHAR NOT NULL,
+        closing TIMESTAMP,
+        balance DECIMAL(18, 2) NOT NULL DEFAULT 0
+      );
+      INSERT INTO pos_sales_details_wizards(id, row_version, name, start_date, end_date, state)
+      VALUES ('pos-sales-wizard-demo-001', 1, 'Sales Details', TIMESTAMP '2026-01-01 00:00:00', TIMESTAMP '2026-01-31 23:59:59', 'Draft')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_sales_details_wizard_lines(id, wizard_id, row_version, sequence, point_of_sale, company, closing, balance)
+      VALUES
+        ('pos-sales-wizard-line-001', 'pos-sales-wizard-demo-001', 1, 10, 'Furniture Shop', 'My Company (San Francisco)', TIMESTAMP '2026-01-15 00:00:00', 2243.57),
+        ('pos-sales-wizard-line-002', 'pos-sales-wizard-demo-001', 1, 20, 'Clothes Shop', 'My Company (San Francisco)', NULL, 0),
+        ('pos-sales-wizard-line-003', 'pos-sales-wizard-demo-001', 1, 30, 'Bakery Shop', 'My Company (San Francisco)', NULL, 0)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_sales_details_wizard_lines;
+      DROP TABLE IF EXISTS pos_sales_details_wizards;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

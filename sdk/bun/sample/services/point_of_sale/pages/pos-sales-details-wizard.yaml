@@ -1,0 +1,55 @@
+title: Sales Details
+page: { id: pos-sales-details-wizard, route: /point-of-sale/sales-details-wizard, breadcrumb: [Sales, Point of Sale, Reporting, Sales Details], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_sales_details_wizard
+    title_field: name
+    editable: true
+    initial_editing: true
+    group_columns: 2
+    labels: { save: Save, discard: Cancel }
+    header_actions:
+      - { id: print_pos_sales_details, label: Print, permission: pos.read, variant: primary }
+      - { id: cancel_pos_sales_details, label: Cancel, permission: pos.read, variant: secondary }
+      - { id: edit_pos_sales_details, label: Edit, permission: pos.manage, variant: secondary }
+    groups:
+      - title: Sales Details
+        fields:
+          - { field: start_date, label: Start Date, type: text, required: true }
+          - { field: end_date, label: End Date, type: text, required: true }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: pos_sales_details_wizard_lines
+    parent_source: pos_sales_details_wizard
+    title: Point of Sale
+    description: Select the point of sale lines included in this report.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_pos_sales_details_line, label: Add a line, variant: primary, permission: pos.manage }
+    empty_state: { title: No point of sale lines, description: Add a line to include a point of sale in this report. }
+    children:
+      - { type: LineItemField, id: point_of_sale, field: point_of_sale, label: Point of Sale, readonly: true }
+      - { type: LineItemField, id: company, field: company, label: Company, readonly: true }
+      - { type: LineItemField, id: closing, field: closing, label: Closing, readonly: true }
+      - { type: LineItemField, id: balance, field: balance, label: Balance, readonly: true }
+      - type: LineItemActions
+        id: pos_sales_details_line_actions
+        edit_action: edit_pos_sales_details_line
+        create_action: add_pos_sales_details_line
+        actions:
+          - { id: edit_pos_sales_details_line, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_sales_details_line, label: Delete, icon: trash, variant: danger, permission: pos.manage }
+    columns:
+      - { field: point_of_sale, label: Point of Sale, width: 220 }
+      - { field: company, label: Company, width: 240 }
+      - { field: closing_display, label: Closing, width: 150 }
+      - { field: balance_display, label: Balance, align: right, width: 150 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_pos_sales_details_line, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_sales_details_line, label: Delete, icon: trash, variant: danger, permission: pos.manage }
