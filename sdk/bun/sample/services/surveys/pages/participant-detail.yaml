@@ -8,6 +8,8 @@ components:
     status_field: state
     editable: false
     labels: { workflowStatus: Status }
+    header_actions:
+      - { id: complete_survey_participant, label: Mark completed, permission: surveys.write, variant: primary, show_if: "record.state === 'In Progress'" }
     statusbar: [{ value: New, label: New }, { value: In Progress, label: In Progress }, { value: Completed, label: Completed }]
     status_colors: { New: neutral, 'In Progress': blue, Completed: green }
     group_columns: 2
@@ -27,3 +29,17 @@ components:
       - { field: score, label: Score, align: right }
       - { field: submitted_at, label: Submitted at }
     empty_state: { title: No answer lines, description: This participant has not submitted any answers. }
+actions:
+  - id: complete_survey_participant
+    type: server
+    permission: surveys.write
+    action: surveys.participants.complete
+    handler: yaml_mutation
+    params: { id: '{row.id}' }
+    refresh: [survey_participant_detail, participant_answer_lines]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM survey_participants WHERE id = :id AND state = 'In Progress' AND row_version = :expected_row_version AND EXISTS (SELECT 1 FROM survey_detailed_answers WHERE participant_id = :id AND skipped = false)", status: 409, message: Only in-progress participants with an answer can be completed. }
+      steps:
+        - { query: "UPDATE survey_participants SET state = 'Completed', score = COALESCE(score, 0), quiz_passed = COALESCE(quiz_passed, false), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: The participant changed before completion. }
+      result: { query: "SELECT * FROM survey_participants WHERE id = :id" }

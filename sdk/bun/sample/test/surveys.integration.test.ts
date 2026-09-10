@@ -27,6 +27,20 @@ describe('Surveys parity catalog and workflow', () => {
     expect(yaml('pages/detailed-answer-detail.yaml').page.route).toBe('/surveys/detailed-answer-detail');
   });
 
+  test('scopes participant and answer catalogs and exposes the guarded lifecycle action', () => {
+    const participants = yaml('api/participants.yaml').datasources.find((source: any) => source.id === 'survey_participants');
+    expect(participants.query).toContain(':survey_id');
+    expect(participants.query).toContain(':quiz_status');
+    const answers = yaml('api/detailed-answers.yaml').datasources.find((source: any) => source.id === 'survey_detailed_answers');
+    expect(answers.query).toContain(':participant_id');
+    const detail = yaml('pages/participant-detail.yaml');
+    const action = detail.actions.find((candidate: any) => candidate.id === 'complete_survey_participant');
+    expect(action).toMatchObject({ permission: 'surveys.write', action: 'surveys.participants.complete' });
+    expect(action.mutation.guards[0].query).toContain("state = 'In Progress'");
+    expect(action.mutation.guards[0].query).toContain('EXISTS (SELECT 1 FROM survey_detailed_answers');
+    expect(yaml('migrations/20260910210000-006-survey-participant-workflow-answers.yaml').version).toBe('0.0.6');
+  });
+
   test('keeps suggested-value creation service-owned and relation-backed', () => {
     const page = yaml('pages/suggested-values.yaml');
     const action = page.actions.find((candidate: any) => candidate.id === 'create_survey_suggested_value');

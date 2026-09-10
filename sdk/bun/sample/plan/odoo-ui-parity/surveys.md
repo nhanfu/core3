@@ -184,6 +184,31 @@ screen remains a bounded first slice: Odoo's per-question response sections,
 print action, live-session results, and exact answer-type renderers remain open
 acceptance gates.
 
+The participant workflow and answer-state follow-up adds server-side
+`survey_id` and Quiz Passed filtering to `/surveys/participants`,
+`participant_id` scoping to `/surveys/detailed-answers`, and deterministic New,
+In Progress, skipped-answer, answered-answer, and no-answer fixtures in
+migration `0.0.6`. The participant form remains readonly for answers and adds a
+permissioned `Mark completed` action guarded by In Progress state, an answered
+line, and the expected row version; stale or invalid completion returns 409.
+Authenticated admin checks covered the survey stat route
+`/surveys/participants?survey_id=survey-demo-certification` (4 rows), the
+Quiz Passed=Passed filter (2 rows), answer scoping
+`/surveys/detailed-answers?participant_id=participant-feedback` (3 rows),
+answered/skipped/empty participant details, completion, and a no-match empty
+state. Dispatcher authentication was also checked against the participant page
+and datasource boundary: both returned 403 for missing `surveys.read`.
+Desktop and mobile checks used 1440x900 and 390x844; the mobile empty state is
+responsive and has no document overflow after a Surveys-owned CSS exception.
+Captures are under `/tmp/core3-surveys-followup-*.png`, including
+`participants-scoped-{desktop,mobile}.png`,
+`participants-empty-fixed-mobile.png`,
+`participant-{answered,skipped,empty-answers,completed}-{desktop,mobile}.png`,
+`participants-denied-mobile-authenticated.png`, and
+`detailed-answers-scoped-desktop.png`. Focused integration coverage is in
+`test/surveys.integration.test.ts`; the full Surveys parity and permission,
+public-flow, and Odoo visual acceptance gates remain in progress.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions

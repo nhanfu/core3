@@ -2,4 +2,4 @@ page: { id: survey-detailed-answers }
 datasources:
   - id: survey_detailed_answers
     permission: surveys.read
-    query: "SELECT id, row_version, survey_name, question_text, answer_type, answer_value, skipped, score, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_detailed_answers WHERE (:q IS NULL OR survey_name ILIKE '%' || :q || '%' OR question_text ILIKE '%' || :q || '%' OR answer_value ILIKE '%' || :q || '%') ORDER BY submitted_at DESC, id"
+    query: "SELECT id, row_version, participant_id, survey_name, question_text, answer_type, answer_value, skipped, score, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_detailed_answers WHERE (:q IS NULL OR survey_name ILIKE '%' || :q || '%' OR question_text ILIKE '%' || :q || '%' OR answer_value ILIKE '%' || :q || '%') AND (:participant_id IS NULL OR participant_id = :participant_id) ORDER BY submitted_at DESC, id"

@@ -1,0 +1,21 @@
+version: 0.0.6
+description: Deterministic participant lifecycle and answered/skipped fixtures
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_participants(id,survey_id,survey_name,contact,email,attempt_no,deadline,quiz_passed,score,state,created_at) VALUES
+        ('participant-feedback-in-progress','survey-demo-feedback','Feedback Form','Acme Corporation','acme@example.com',2,'2026-01-20',NULL,NULL,'In Progress',TIMESTAMP '2026-01-12 09:00:00'),
+        ('participant-burger-new','survey-demo-001','Burger Quiz','FurniCo','furnico@example.com',1,'2026-01-30',NULL,NULL,'New',TIMESTAMP '2026-01-13 09:00:00')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO survey_detailed_answers(id,participant_id,survey_name,question_text,answer_type,answer_value,skipped,score,submitted_at) VALUES
+        ('detail-feedback-followup-skipped','participant-feedback','Feedback Form','May we contact you for follow-up?','choice',NULL,true,NULL,TIMESTAMP '2026-01-12 09:05:00'),
+        ('detail-feedback-in-progress-rating','participant-feedback-in-progress','Feedback Form','How satisfied are you?','number','4',false,NULL,TIMESTAMP '2026-01-12 09:05:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_detailed_answers WHERE id IN ('detail-feedback-followup-skipped','detail-feedback-in-progress-rating');
+      DELETE FROM survey_participants WHERE id IN ('participant-feedback-in-progress','participant-burger-new');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

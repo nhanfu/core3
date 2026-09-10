@@ -2,7 +2,7 @@ page: { id: survey-participants }
 datasources:
   - id: survey_participants
     permission: surveys.read
-    query: "SELECT id, row_version, survey_name, contact, email, attempt_no, CAST(deadline AS VARCHAR) AS deadline, CASE WHEN quiz_passed THEN 'Passed' ELSE 'Not Passed' END AS quiz_status, score, state FROM survey_participants WHERE (:q IS NULL OR survey_name ILIKE '%' || :q || '%' OR contact ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY created_at DESC, id"
+    query: "SELECT id, row_version, survey_id, survey_name, contact, email, attempt_no, CAST(deadline AS VARCHAR) AS deadline, CASE WHEN quiz_passed THEN 'Passed' ELSE 'Not Passed' END AS quiz_status, score, state FROM survey_participants WHERE (:q IS NULL OR survey_name ILIKE '%' || :q || '%' OR contact ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) AND (:quiz_status IS NULL OR CASE WHEN quiz_passed THEN 'Passed' ELSE 'Not Passed' END = :quiz_status) AND (:survey_id IS NULL OR survey_id = :survey_id) ORDER BY created_at DESC, id"
   - id: participant_states
     permission: surveys.read
     query: "SELECT value, label FROM (VALUES ('New','New'), ('In Progress','In Progress'), ('Completed','Completed')) states(value, label)"

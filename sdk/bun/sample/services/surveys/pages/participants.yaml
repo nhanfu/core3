@@ -5,7 +5,9 @@ components:
     variant: odoo
     source: survey_participants
     search: { label: Search participants, placeholder: 'Search survey, contact, or email...' }
-    filters: [{ field: state, label: Status, options_source: participant_states }]
+    filters:
+      - { field: state, label: Status, options_source: participant_states }
+      - { field: quiz_status, label: Quiz Passed, options: [{ id: Passed, label: Passed }, { id: 'Not Passed', label: 'Not Passed' }] }
     group_by: [{ field: survey_name, label: Survey }, { field: state, label: Status }]
     view_navigation: tabs
     views:

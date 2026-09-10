@@ -1,2 +1,33 @@
 .surveys-page { min-height: 100%; }
 .surveys-page .o-list-view__toolbar { gap: .65rem; }
+
+// The shared list keeps a content-sized table for wide, Odoo-style lists. On
+// a narrow Surveys no-match result, that makes the single empty-state cell
+// wider than the viewport and clips its message. Scope the responsive
+// exception to empty Surveys lists so populated tables retain horizontal
+// column navigation on mobile.
+@media (max-width: 480px) {
+  .page:has(.o-list-view .o-list-empty) .o-list-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .page:has(.o-list-view .o-list-empty) .o-list-table thead {
+    display: none;
+  }
+
+  .page:has(.o-list-view .o-list-empty) .o-list-empty {
+    max-width: none;
+    padding: 40px 16px;
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .page:has(.o-list-view .o-list-empty) .o-list-empty h3,
+  .page:has(.o-list-view .o-list-empty) .o-list-empty p {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
