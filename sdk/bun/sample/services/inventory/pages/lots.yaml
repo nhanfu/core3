@@ -38,7 +38,7 @@ components:
     row_open_action: view_inventory_lot
     row_double_click_action: view_inventory_lot
     row_actions: menu
-    form_view: { page: apps/services/inventory/pages/lot-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/inventory/pages/lot-detail.yaml, side_panel: false }
     actions:
       - { id: edit_inventory_lot, label: Edit, permission: inventory.manage, variant: secondary }
       - { id: delete_inventory_lot, label: Delete, permission: inventory.manage, variant: danger, show_if: "row.product_qty === 0 && row.transfer_count === 0" }

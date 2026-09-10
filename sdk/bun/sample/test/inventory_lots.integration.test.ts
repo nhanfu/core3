@@ -39,7 +39,7 @@ describe('Inventory Lots / Serial Numbers Odoo action parity', () => {
     expect(list.filters[0].options.map((option: any) => option.id)).toEqual(['at_customer', 'on_hand']);
     expect(list.group_by.map((group: any) => group.field)).toEqual(['product_name', 'location_name', 'create_date', 'company_name']);
     expect(list.row_open_action).toBe('view_inventory_lot');
-    expect(list.form_view).toEqual({ page: 'apps/services/inventory/pages/lot-detail.yaml', side_panel: true });
+    expect(list.form_view).toEqual({ page: 'apps/services/inventory/pages/lot-detail.yaml', side_panel: false });
     expect(action('view_inventory_lot')).toMatchObject({ type: 'navigate', permission: 'inventory.tracking', navigate_to: '/lots/detail', params: { id: '{row.id}' } });
     expect(yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'products').items).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/lots', label: 'Lots / Serial Numbers', permission: 'inventory.tracking' }),
