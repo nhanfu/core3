@@ -23,8 +23,9 @@ describe('Events Settings persistence slice', () => {
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
     expect(settings).toMatchObject({ source: 'event_settings', save_action: 'save_event_settings' });
-    expect(menu).toMatchObject({ label: 'Settings', permission: 'events.read' });
-    expect(api.datasources[0]).toMatchObject({ id: 'event_settings', single: true, permission: 'events.read' });
+    expect(menu).toMatchObject({ label: 'Settings', permission: 'events.settings' });
+    expect(page.page.auth).toEqual({ require: ['events.settings'] });
+    expect(api.datasources[0]).toMatchObject({ id: 'event_settings', single: true, permission: 'events.settings' });
     expect(save).toMatchObject({ type: 'server_form', permission: 'events.write', operation: 'update', handler: 'yaml_mutation' });
     expect(save.mutation).toMatchObject({ table: 'event_settings', key_field: 'id', concurrency: { required: true } });
     expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('event-settings')).toEqual(['event_settings']);

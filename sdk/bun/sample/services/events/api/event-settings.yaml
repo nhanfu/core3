@@ -2,7 +2,7 @@ page: { id: event-settings }
 datasources:
   - id: event_settings
     single: true
-    permission: events.read
+    permission: events.settings
     error_states: { transport_error: { status: 503, code: EVENTS_SETTINGS_UNAVAILABLE, message: Event settings are temporarily unavailable. } }
     query: "SELECT id, row_version, schedule, online_exhibitors, booth_management, sale_tickets, pos_tickets, online_ticketing, barcode_attendance FROM event_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = 'event-settings'"
 actions:

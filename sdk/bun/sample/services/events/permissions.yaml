@@ -2,3 +2,4 @@ permissions:
   - events.read
   - events.write
   - events.manage
+  - events.settings

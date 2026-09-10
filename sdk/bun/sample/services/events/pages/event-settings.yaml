@@ -1,5 +1,5 @@
 title: Events Settings
-page: { id: event-settings, route: /events/settings, breadcrumb: [Marketing, Events, Configuration, Settings], auth: { require: [events.read] } }
+page: { id: event-settings, route: /events/settings, breadcrumb: [Marketing, Events, Configuration, Settings], auth: { require: [events.settings] } }
 components:
   - type: SettingsView
     source: event_settings
