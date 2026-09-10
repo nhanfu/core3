@@ -263,6 +263,20 @@ are `/tmp/core3-time-off-tabs-{desktop,mobile}-{time-off,leave-requests,time-off
 plus `/tmp/core3-time-off-mobile-{empty-search,invalid-request,denied}.png`.
 The isolated batch was committed as `1c291fba` and integrated as `33b4e777`.
 
+The shared ActivityView batch adds the desktop Activity counterpart to My Time
+Off. Its deterministic API slots render the Odoo-observed To-Do, Email, Call,
+Meeting, Time Off Approval, Time Off Second Approve, Trip with Family, and
+Doctor Appointment columns, with state counters, colored cells, record date
+ranges, empty-cell scheduling, and the Schedule activity footer. Activity is
+desktop-only to match Odoo's responsive behavior: at 1440x900 Core3 and Odoo
+both render the activity matrix with no failed requests or document overflow;
+captures are `/tmp/core3-my-time-off-activity-desktop-final.png` and
+`/tmp/odoo-time-off-desktop-activity-personal.png`. At 390x844 both fall back
+to the responsive collection surface with no horizontal overflow; captures
+are `/tmp/core3-my-time-off-activity-mobile-final.png` and
+`/tmp/odoo-my-time-off-activity-mobile.png`. The implementation was committed
+as `5327ecbf`/`d9aa4d8e` and integrated as `712820a5`/`7aeecab3`.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context

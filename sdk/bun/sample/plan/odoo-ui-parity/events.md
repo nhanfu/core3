@@ -395,11 +395,20 @@ Authenticated desktop/mobile checks cover every implemented mode and retain
 the Odoo reference pair at `/tmp/odoo-events-list-modes-{desktop,mobile}.png`;
 Core3 evidence is captured per mode at
 `/tmp/core3-events-list-modes-{desktop,mobile}-{list,kanban,calendar,pivot,graph}.png`.
-Odoo also
-exposes Activity for this action, but the shared Core3 renderer has no Activity
-view contract yet, so it remains an explicit parity gate rather than an
-unimplemented tab. The isolated implementation was committed as `87141425`
-and integrated into `odoo-pos` as `2f2e4cd8`.
+Odoo also exposes Activity for this action. The shared ActivityView batch now
+provides the Odoo-style activity matrix with visible type columns, state
+counters, colored activity cells, record date ranges, empty-cell scheduling,
+and a Schedule activity footer. Events declares To-Do, Email, Call, Meeting,
+and Document columns from deterministic API activity slots. An authenticated
+Core3 check at 1440x900 opened Activity through the visible tab with no failed
+requests and document width 1440; the matching Odoo capture is
+`/tmp/odoo-events-activity-desktop.png` and Core3 evidence is
+`/tmp/core3-events-activity-desktop-final.png`. At 390x844 both Odoo and
+Core3 follow the responsive fallback (Odoo kanban and Core3 list) without
+page overflow; captures are `/tmp/odoo-events-activity-mobile.png` and
+`/tmp/core3-events-activity-mobile-final.png`. The shared implementation was
+committed as `5327ecbf`/`d9aa4d8e` and integrated into `odoo-pos` as
+`712820a5`/`7aeecab3`.
 
 ## Acceptance
 
