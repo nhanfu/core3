@@ -3,7 +3,8 @@ page: { id: survey-detail, route: /surveys/detail, breadcrumb: [Marketing, Surve
 components:
   - type: OdooFormView
     source: survey_detail
-    title_field: name
+    title_field: title
+    subtitle_field: name
     status_field: state
     editable: true
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
@@ -13,6 +14,9 @@ components:
       - { id: cancel_survey_detail, label: Cancel, variant: danger, permission: surveys.manage, show_if: "state.survey_detail.state === 'Draft' || state.survey_detail.state === 'Published'" }
       - { id: archive_survey_detail, label: Archive, variant: secondary, permission: surveys.manage, show_if: "state.survey_detail.state === 'Draft' || state.survey_detail.state === 'Published' || state.survey_detail.state === 'Closed'" }
       - { id: reopen_survey_detail, label: Reopen, variant: primary, permission: surveys.manage, show_if: "state.survey_detail.state === 'Archived'" }
+    stat_buttons:
+      - { id: survey_certified_stats_detail, label: Certified, value_field: certified_count, permission: surveys.read }
+      - { id: survey_participant_stats_detail, label: Participants, value_field: participant_count, permission: surveys.read }
     statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: Closed, label: Closed }, { value: Cancelled, label: Cancelled }, { value: Archived, label: Archived }]
     status_colors: { Draft: neutral, Published: blue, Closed: green, Cancelled: red, Archived: neutral }
     group_columns: 2
@@ -41,6 +45,8 @@ components:
       - { field: state, label: Status, type: StatusChip }
     empty_state: { title: No responses, description: Responses will appear here after publication. }
 actions:
+  - { id: survey_certified_stats_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/participants, params: { survey_id: '{row.id}' } }
+  - { id: survey_participant_stats_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/participants, params: { survey_id: '{row.id}' } }
   - { id: publish_survey_detail, type: server, permission: surveys.write, action: surveys.records.publish, handler: order_transition, workflow: surveys, operation: publish, params: { id: '{state.id}' }, refresh: [survey_detail] }
   - { id: close_survey_detail, type: server, permission: surveys.manage, action: surveys.records.close, handler: order_transition, workflow: surveys, operation: close, params: { id: '{state.id}' }, refresh: [survey_detail] }
   - { id: cancel_survey_detail, type: server, permission: surveys.manage, action: surveys.records.cancel, handler: order_transition, workflow: surveys, operation: cancel, params: { id: '{state.id}' }, refresh: [survey_detail] }

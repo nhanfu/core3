@@ -7,6 +7,15 @@ const root = join(import.meta.dir, '../services/surveys');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('Surveys parity catalog and workflow', () => {
+  test('matches Odoo survey detail stat buttons and counts', () => {
+    const page = yaml('pages/survey-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    expect(form.stat_buttons.map((button: any) => button.value_field)).toEqual(['certified_count', 'participant_count']);
+    expect(page.actions.find((action: any) => action.id === 'survey_participant_stats_detail').params).toEqual({ survey_id: '{row.id}' });
+    expect(yaml('api/survey-detail.yaml').datasources[0].query).toContain('certified_count');
+    expect(yaml('migrations/20260910193000-004-survey-participant-fixtures.yaml').type.postgres.up).toContain('participant-certification-4');
+  });
+
   test('registers the catalog forms and readonly detail routes', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     expect(yaml('pages/suggested-values.yaml').page.route).toBe('/surveys/suggested-values');

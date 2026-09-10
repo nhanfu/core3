@@ -3,7 +3,7 @@ datasources:
   - id: survey_detail
     single: true
     permission: surveys.read
-    query: "SELECT id, row_version, name, title, description, owner, response_count, state, CAST(published_at AS VARCHAR) AS published_at, CAST(closed_at AS VARCHAR) AS closed_at FROM surveys WHERE id = :id"
+    query: "SELECT s.id, s.row_version, s.name, s.title, s.description, s.owner, s.response_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS participant_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.quiz_passed = true) AS certified_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE s.id = :id"
   - id: survey_questions
     permission: surveys.read
     query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :id ORDER BY sequence, id"

@@ -1,0 +1,17 @@
+version: 0.0.4
+description: Complete the installed Odoo survey participant counters
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_participants(id,survey_id,survey_name,contact,email,attempt_no,deadline,quiz_passed,score,state) VALUES
+        ('participant-certification-2','survey-demo-certification','MyCompany Vendor Certification','Gemini Furniture','gemini@example.com',1,'2026-09-30',true,100,'Completed'),
+        ('participant-certification-3','survey-demo-certification','MyCompany Vendor Certification','Ready Mat','ready.mat@example.com',1,'2026-09-30',false,60,'Completed'),
+        ('participant-certification-4','survey-demo-certification','MyCompany Vendor Certification','Wood Corner','wood.corner@example.com',1,'2026-09-30',false,40,'Completed')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_participants WHERE id IN ('participant-certification-2','participant-certification-3','participant-certification-4');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
