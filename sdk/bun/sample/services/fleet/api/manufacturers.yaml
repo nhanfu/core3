@@ -1,0 +1,86 @@
+page: { id: fleet-manufacturers }
+datasources:
+  - id: fleet_manufacturers
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_MANUFACTURERS_UNAVAILABLE, message: Manufacturer data is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, model_count, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label, CASE WHEN model_count = 1 THEN '1 Model' ELSE CAST(model_count AS VARCHAR) || ' Models' END AS model_count_label, logo_abbr, CAST(NULL AS VARCHAR) AS logo_url FROM fleet_vehicle_model_brands WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((COALESCE(CAST(:active AS VARCHAR), 'active') = 'active' AND active = TRUE) OR (CAST(:active AS VARCHAR) = 'archived' AND active = FALSE)) AND (COALESCE(CAST(:with_models AS VARCHAR), '') <> 'true' OR model_count > 0) AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: view_fleet_manufacturer
+    type: navigate
+    permission: fleet.read
+    navigate_to: /fleet/config/manufacturers/detail
+    params: { id: '{row.id}' }
+  - id: new_fleet_manufacturer
+    type: navigate
+    permission: fleet.manage
+    navigate_to: /fleet/config/manufacturers/new
+  - id: edit_fleet_manufacturer
+    type: server_form
+    permission: fleet.manage
+    title: Edit Manufacturer
+    action: fleet.manufacturers.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.fleet_manufacturer_detail
+    refresh: [fleet_manufacturer_detail, fleet_manufacturers]
+    mutation:
+      operation: update
+      table: fleet_vehicle_model_brands
+      fields: [name, logo_abbr]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_model_brands WHERE id = :id", status: 404, code: FLEET_MANUFACTURER_NOT_FOUND, message: Manufacturer was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: FLEET_MANUFACTURER_NAME_REQUIRED, message: Manufacturer name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_model_brands WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: FLEET_MANUFACTURER_EXISTS, message: A manufacturer with this name already exists. }
+      result: { query: "SELECT * FROM fleet_vehicle_model_brands WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: logo_abbr, label: Logo, type: text }
+  - id: archive_fleet_manufacturer
+    type: server
+    permission: fleet.manage
+    action: fleet.manufacturers.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_manufacturer_detail, fleet_manufacturers]
+    params: { values: { active: false } }
+    mutation:
+      operation: update
+      table: fleet_vehicle_model_brands
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_model_brands WHERE id = :id AND active = TRUE", status: 404, code: FLEET_MANUFACTURER_NOT_FOUND, message: Active manufacturer was not found. }
+      result: { query: "SELECT * FROM fleet_vehicle_model_brands WHERE id = :id" }
+  - id: unarchive_fleet_manufacturer
+    type: server
+    permission: fleet.manage
+    action: fleet.manufacturers.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_manufacturer_detail, fleet_manufacturers]
+    params: { values: { active: true } }
+    mutation:
+      operation: update
+      table: fleet_vehicle_model_brands
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok FROM fleet_vehicle_model_brands WHERE id = :id AND active = FALSE", status: 404, code: FLEET_MANUFACTURER_NOT_FOUND, message: Archived manufacturer was not found. }
+      result: { query: "SELECT * FROM fleet_vehicle_model_brands WHERE id = :id" }
+  - id: delete_fleet_manufacturer
+    type: server
+    permission: fleet.manage
+    action: fleet.manufacturers.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [fleet_manufacturers]
+    params: { id: '{row.id}' }
+    mutation:
+      operation: delete
+      table: fleet_vehicle_model_brands
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_model_brands WHERE id = :id", status: 404, code: FLEET_MANUFACTURER_NOT_FOUND, message: Manufacturer was not found. }
+        - { query: "SELECT 1 AS ok FROM fleet_vehicle_model_brands WHERE id = :id AND model_count = 0", status: 409, code: FLEET_MANUFACTURER_IN_USE, message: A manufacturer with models cannot be deleted; archive it instead. }

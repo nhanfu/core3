@@ -1,0 +1,18 @@
+title: New Manufacturer
+page: { id: fleet-manufacturer-new, route: /fleet/config/manufacturers/new, breadcrumb: [Human Resources, Fleet, Configuration, Models, Manufacturers, New], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_manufacturer_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_fleet_manufacturers, label: Manufacturers, variant: secondary, permission: fleet.read }
+      - { id: create_fleet_manufacturer, label: Save, variant: primary, permission: fleet.manage }
+    group_columns: 1
+    groups:
+      - title: Model Make
+        fields:
+          - { field: name, label: Name, type: text, required: true }
+          - { field: logo_abbr, label: Logo, type: text, placeholder: 'e.g. AC' }

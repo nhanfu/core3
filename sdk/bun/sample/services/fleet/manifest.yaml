@@ -21,3 +21,7 @@ menu:
       label: Reporting
       items:
         - { path: /fleet-analysis, label: Fleet Analysis, icon: chart, permission: fleet.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /fleet/config/manufacturers, label: Manufacturers, icon: car, permission: fleet.manage }

@@ -27,7 +27,7 @@ The installed Fleet external IDs resolve to the following live records:
 | Officer ACL | access id `1109`: read `true`, write/create/unlink `false` on model `806` |
 | Manager ACL | access id `1119`: read/write/create/unlink `true` on model `806` |
 
-The live demo currently contains 65 active manufacturers ordered by name. Five
+The live demo currently contains 67 active manufacturers ordered by name. Five
 have models (`Ford`, `Nissan`, `Renault`, `Toyota`, `Volkswagen`); the other
 60 are empty manufacturers. The action's `With Models` context means the
 initial action state is the five-record subset. The `Manufacturers` leaf menu

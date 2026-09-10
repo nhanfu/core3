@@ -1,0 +1,34 @@
+page: { id: fleet-manufacturer-new }
+datasources:
+  - id: fleet_manufacturer_new
+    single: true
+    permission: fleet.read
+    query: "SELECT CAST(NULL AS VARCHAR) AS id, 1 AS row_version, '' AS name, 0 AS model_count, TRUE AS active, 'Active' AS active_label, '' AS logo_abbr, CAST(NULL AS VARCHAR) AS logo_url"
+actions:
+  - id: back_to_fleet_manufacturers
+    type: navigate
+    permission: fleet.read
+    navigate_to: /fleet/config/manufacturers
+  - id: create_fleet_manufacturer
+    type: server_form
+    permission: fleet.manage
+    title: New Manufacturer
+    action: fleet.manufacturers.create
+    handler: yaml_mutation
+    operation: insert
+    params: { id: '{state.id}' }
+    refresh: [fleet_manufacturers]
+    mutation:
+      operation: insert
+      table: fleet_vehicle_model_brands
+      generated: [id]
+      fields: [row_version, name, model_count, active, logo_abbr]
+      required: [name]
+      defaults: { row_version: 1, model_count: 0, active: true, logo_abbr: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: FLEET_MANUFACTURER_NAME_REQUIRED, message: Manufacturer name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_model_brands WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: FLEET_MANUFACTURER_EXISTS, message: A manufacturer with this name already exists. }
+      result: { query: "SELECT * FROM fleet_vehicle_model_brands WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: logo_abbr, label: Logo, type: text }

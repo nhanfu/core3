@@ -1,0 +1,27 @@
+title: Manufacturer
+page: { id: fleet-manufacturer-detail, route: /fleet/config/manufacturers/detail, breadcrumb: [Human Resources, Fleet, Configuration, Models, Manufacturers], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_manufacturer_detail
+    title_field: name
+    avatar_initials_field: logo_abbr
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_fleet_manufacturers, label: Manufacturers, variant: secondary, permission: fleet.read }
+      - { id: edit_fleet_manufacturer, label: Edit, variant: primary, permission: fleet.manage }
+      - { id: archive_fleet_manufacturer, label: Archive, variant: danger, permission: fleet.manage, show_if: 'state.fleet_manufacturer_detail.active === true' }
+      - { id: unarchive_fleet_manufacturer, label: Restore, variant: secondary, permission: fleet.manage, show_if: 'state.fleet_manufacturer_detail.active === false' }
+      - { id: delete_fleet_manufacturer, label: Delete, variant: danger, permission: fleet.manage, confirm: Delete this manufacturer? }
+    stat_buttons:
+      - { id: view_fleet_manufacturer_models, label: Models, value_field: model_count, permission: fleet.read }
+    group_columns: 2
+    groups:
+      - title: Model Make
+        fields:
+          - { field: name, label: Name }
+          - { field: logo_abbr, label: Logo, type: text }
+          - { field: model_count, label: Models }
+          - { field: active_label, label: Active }

@@ -1,0 +1,40 @@
+title: Manufacturers
+page: { id: fleet-manufacturers, route: /fleet/config/manufacturers, breadcrumb: [Human Resources, Fleet, Configuration, Models, Manufacturers], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_manufacturers
+    default_filters: { with_models: true }
+    create_action: new_fleet_manufacturer
+    create_label: New
+    search: { label: Search manufacturers, placeholder: Search manufacturers... }
+    filters:
+      - { field: with_models, label: Manufacturers, options: [{ id: 'true', label: With Models }] }
+      - { field: active, label: Status, options: [{ id: archived, label: Archived }] }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: ''
+        card: { title: name, subtitle: model_count_label, image_field: logo_url, fields: [{ field: model_count, label: Models }, { field: active_label, label: Status }] }
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card: { title: name, subtitle: model_count_label, image_field: logo_url, fields: [{ field: model_count, label: Models }, { field: active_label, label: Status }] }
+      - { id: form, label: Form, icon: form }
+    row_key: id
+    row_open_action: view_fleet_manufacturer
+    row_double_click_action: view_fleet_manufacturer
+    form_view: { page: apps/services/fleet/pages/manufacturer-detail.yaml, side_panel: true }
+    row_actions: menu
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: model_count, label: Models, align: right }
+      - { field: active_label, label: Active, optional: hide }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_fleet_manufacturer, label: Edit, icon: edit }, { id: archive_fleet_manufacturer, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_fleet_manufacturer, label: Restore, icon: refresh, show_if: 'row.active === false' }, { id: delete_fleet_manufacturer, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    empty_state: { title: Create a new manufacturer, description: No manufacturers match your search or filters. }
