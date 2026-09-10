@@ -1,0 +1,22 @@
+version: 0.0.13
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE event_tickets SET price = 300 WHERE id = 'ticket-event-007-standard';
+      UPDATE event_tickets SET price = 450 WHERE id = 'ticket-event-007-vip';
+      INSERT INTO event_tickets(id, event_id, name, description, price, registration_start, registration_end, maximum, registration_count, limit_max_per_order, color) VALUES
+        ('ticket-event-001-standard', 'event-demo-001', 'Standard', 'Product launch access', 75, TIMESTAMP '2026-09-01 00:00:00', TIMESTAMP '2026-10-08 23:59:00', 100, 8, 6, '#4C6FFF'),
+        ('ticket-event-002-standard', 'event-demo-002', 'Standard', 'Conference access', 80, TIMESTAMP '2026-08-15 00:00:00', TIMESTAMP '2026-09-13 23:59:00', 100, 15, 6, '#4C6FFF'),
+        ('ticket-event-003-standard', 'event-demo-003', 'Standard', 'Training access', 150, TIMESTAMP '2026-08-15 00:00:00', TIMESTAMP '2026-09-18 23:59:00', 40, 4, 4, '#4C6FFF'),
+        ('ticket-event-004-vip', 'event-demo-004', 'VIP', 'Design fair priority access', 230, TIMESTAMP '2026-09-01 00:00:00', TIMESTAMP '2026-12-18 23:59:00', 80, 10, 4, '#875A7B'),
+        ('ticket-event-005-standard', 'event-demo-005', 'Standard', 'Festival access', 250, TIMESTAMP '2026-09-01 00:00:00', TIMESTAMP '2026-10-02 23:59:00', 100, 9, 6, '#4C6FFF'),
+        ('ticket-event-006-vip', 'event-demo-006', 'VIP', 'Tournament priority access', 350, TIMESTAMP '2026-09-01 00:00:00', TIMESTAMP '2026-11-06 23:59:00', 60, 6, 4, '#875A7B')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_tickets WHERE id IN ('ticket-event-001-standard', 'ticket-event-002-standard', 'ticket-event-003-standard', 'ticket-event-004-vip', 'ticket-event-005-standard', 'ticket-event-006-vip');
+      UPDATE event_tickets SET price = 0 WHERE id IN ('ticket-event-007-standard', 'ticket-event-007-vip');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

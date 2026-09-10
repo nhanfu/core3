@@ -22,6 +22,7 @@ menu:
       items:
         - { path: /events/attendees, label: Attendees, icon: users, permission: events.read }
         - { path: /events/attendees-analysis, label: Registration Analysis, icon: chart, permission: events.read }
+        - { path: /events/revenues, label: Revenues, icon: chart, permission: events.read }
         - { path: /events/answer-breakdown, label: Answer Breakdown, icon: chart, permission: events.read }
     - id: configuration
       label: Configuration

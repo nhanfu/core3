@@ -2,6 +2,20 @@
 
 Status: in-progress
 
+## Current batch: Revenues graph and pivot
+
+The installed Odoo 19 reference was authenticated as `codex@core3.local` in
+database `core3_owned` and reached the Revenues action through action 750. Its
+visible contract is a graph/pivot report with the active `Non-free tickets` and
+`Event Start Date: 2026` filters, a Revenues measure, and a line/area graph.
+Core3 implements that report at `/events/revenues` with a page-id-bound
+`event_revenues` API datasource, deterministic priced ticket fixtures, Graph,
+Pivot, and List modes, and an Event Status filter.
+
+Reference captures: `/tmp/odoo-events-revenues-desktop.png`,
+`/tmp/odoo-events-revenues-mobile.png`. Core3 captures are produced during the
+authenticated browser gate and are intentionally kept outside Git.
+
 This is an implementation gate for the Odoo 19 Community `event` addon. It is
 plan-only: do not add or modify product code, migrations, fixtures, assets, or
 tests in this worktree. `ready` is reserved for the point at which all six

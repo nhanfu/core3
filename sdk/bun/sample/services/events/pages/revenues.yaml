@@ -1,0 +1,53 @@
+title: Revenues
+page: { id: events-revenues, route: /events/revenues, breadcrumb: [Marketing, Events, Reporting, Revenues], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_revenues
+    search: { label: Search revenues, placeholder: Search events or ticket types... }
+    filters: [{ field: state, label: Event Status, options: [Draft, Published, In Progress, Completed, Cancelled] }]
+    group_by:
+      - { field: event_name, label: Event }
+      - { field: ticket_name, label: Ticket Type }
+      - { field: event_start_month, label: Event Start Date }
+      - { field: state, label: Event Status }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: event_start_date
+        measure_field: revenue
+        type: line
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: event_start_date, column: Event Start Date, type: date }
+            - { field: event_start_month, column: Event Start Month }
+            - { field: event_name, column: Event }
+            - { field: ticket_name, column: Ticket Type }
+            - { field: unit_price, column: Unit Price }
+            - { field: sold_quantity, column: Sold Tickets }
+            - { field: revenue, column: Revenues }
+            - { field: state, column: Event Status }
+          default:
+            rows: [event_start_month]
+            columns: [event_name]
+            measures:
+              - { field: revenue, aggregate: sum, column: Revenues }
+              - { field: sold_quantity, aggregate: sum, column: Sold Tickets }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: event_name, label: Event, type: PrimaryEntityCell }
+      - { field: event_start_date, label: Event Start Date }
+      - { field: ticket_name, label: Ticket Type }
+      - { field: unit_price, label: Unit Price, align: right }
+      - { field: sold_quantity, label: Sold Tickets, align: right }
+      - { field: revenue, label: Revenues, align: right }
+      - { field: state, label: Event Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No revenues yet, description: Non-free event tickets will appear here after they are sold. }
