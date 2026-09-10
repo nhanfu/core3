@@ -1,0 +1,64 @@
+page: { id: payment-method-detail }
+datasources:
+  - id: accounting_payment_method_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_PAYMENT_METHOD_DETAIL_UNAVAILABLE, message: Accounting payment method details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, code, active, countries, currencies, providers, brands FROM accounting_config_payment_methods WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_accounting_payment_method
+    type: server_form
+    permission: accounting.write
+    title: Edit Payment Method
+    action: accounting.payment_methods.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_payment_method_detail
+    refresh: [accounting_payment_method_detail, accounting_payment_methods]
+    mutation:
+      operation: update
+      table: accounting_config_payment_methods
+      fields: [name, code, active, countries, currencies, providers, brands]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_config_payment_methods WHERE id = :id", status: 404, code: ACCOUNTING_PAYMENT_METHOD_NOT_FOUND, message: Payment method not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PAYMENT_METHOD_NAME_REQUIRED, message: A payment method name is required. }
+        - { query: "SELECT 1 AS ok WHERE :code IS NULL OR LENGTH(TRIM(CAST(:code AS VARCHAR))) = 0 OR regexp_matches(TRIM(CAST(:code AS VARCHAR)), '^[A-Za-z0-9_-]+$')", status: 422, code: ACCOUNTING_PAYMENT_METHOD_CODE_INVALID, message: Code may contain only letters, numbers, underscores, and hyphens. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_payment_methods WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: ACCOUNTING_PAYMENT_METHOD_EXISTS, message: A payment method with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE :code IS NULL OR LENGTH(TRIM(CAST(:code AS VARCHAR))) = 0 OR NOT EXISTS (SELECT 1 FROM accounting_config_payment_methods WHERE LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))) AND id <> :id)", status: 409, code: ACCOUNTING_PAYMENT_METHOD_CODE_EXISTS, message: A payment method with this code already exists. }
+      result: { query: "SELECT * FROM accounting_config_payment_methods WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: code, label: Code, type: text }
+      - { field: active, label: Active, type: checkbox }
+      - { field: countries, label: Countries, type: text }
+      - { field: currencies, label: Currencies, type: text }
+      - { field: providers, label: Providers, type: text }
+      - { field: brands, label: Brands, type: text }
+  - id: archive_accounting_payment_method
+    type: server
+    permission: accounting.write
+    action: accounting.payment_methods.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    refresh: [accounting_payment_method_detail, accounting_payment_methods]
+    mutation: { operation: update, table: accounting_config_payment_methods, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM accounting_config_payment_methods WHERE id = :id" } }
+  - id: restore_accounting_payment_method
+    type: server
+    permission: accounting.write
+    action: accounting.payment_methods.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: true } }
+    refresh: [accounting_payment_method_detail, accounting_payment_methods]
+    mutation: { operation: update, table: accounting_config_payment_methods, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM accounting_config_payment_methods WHERE id = :id" } }
+  - id: delete_accounting_payment_method
+    type: server
+    permission: accounting.write
+    action: accounting.payment_methods.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [accounting_payment_methods]
+    mutation: { operation: delete, table: accounting_config_payment_methods, concurrency: { required: true } }

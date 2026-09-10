@@ -1,0 +1,28 @@
+version: 0.0.18
+description: Accounting Odoo payment methods metadata and deterministic fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_config_payment_methods ADD COLUMN IF NOT EXISTS code VARCHAR;
+      ALTER TABLE accounting_config_payment_methods ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      ALTER TABLE accounting_config_payment_methods ADD COLUMN IF NOT EXISTS countries VARCHAR;
+      ALTER TABLE accounting_config_payment_methods ADD COLUMN IF NOT EXISTS currencies VARCHAR;
+      ALTER TABLE accounting_config_payment_methods ADD COLUMN IF NOT EXISTS providers VARCHAR;
+      ALTER TABLE accounting_config_payment_methods ADD COLUMN IF NOT EXISTS brands VARCHAR;
+      UPDATE accounting_config_payment_methods SET code = CASE id WHEN 'bank' THEN 'bank' WHEN 'cash' THEN 'cash' WHEN 'card' THEN 'card' ELSE lower(regexp_replace(name, '[^a-zA-Z0-9]+', '-', 'g')) END WHERE code IS NULL;
+      UPDATE accounting_config_payment_methods SET active = TRUE WHERE active IS NULL;
+      UPDATE accounting_config_payment_methods SET countries = 'All countries' WHERE countries IS NULL;
+      UPDATE accounting_config_payment_methods SET currencies = 'All currencies' WHERE currencies IS NULL;
+      UPDATE accounting_config_payment_methods SET providers = '' WHERE providers IS NULL;
+      UPDATE accounting_config_payment_methods SET brands = '' WHERE brands IS NULL;
+    down: |
+      ALTER TABLE accounting_config_payment_methods DROP COLUMN IF EXISTS brands;
+      ALTER TABLE accounting_config_payment_methods DROP COLUMN IF EXISTS providers;
+      ALTER TABLE accounting_config_payment_methods DROP COLUMN IF EXISTS currencies;
+      ALTER TABLE accounting_config_payment_methods DROP COLUMN IF EXISTS countries;
+      ALTER TABLE accounting_config_payment_methods DROP COLUMN IF EXISTS active;
+      ALTER TABLE accounting_config_payment_methods DROP COLUMN IF EXISTS code;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

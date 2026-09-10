@@ -177,6 +177,20 @@ the Odoo comparison captures remain under `/tmp/odoo-accounting-config-*`.
 The implementation was developed in the dedicated
 `agent/odoo-ui-accounting-config` worktree and integrated as `5afc52db`.
 
+## Current batch: Payment Methods action and form states
+
+The live Odoo 19 audit resolved Accounting → Configuration → Payment Methods
+to `/odoo/accounting/payment-methods`. At 1440x900 and 390x844 the owned
+database showed the Odoo empty list state (`Name`, `Active`, and the provider
+configuration prompt); the `New` form exposed `Name`, `Code`, `Active`,
+`Countries`, `Currencies`, and `Providers`/`Brands` tabs. Core3 now keeps the
+list and detail layouts presentation-only, joins their service-owned API
+fragments by `page.id`, and provides deterministic Bank, Cash, and Card rows
+with guarded create, edit, archive/restore, and delete actions. API tests cover
+search, empty/detail/transport-error states, duplicate and code validation,
+missing and stale records, permissions, and idempotent migration. Authenticated
+comparison captures are temporary under `/tmp` and are not repository assets.
+
 ## Current batch: customer payments views
 
 The Payments surface now follows the live Odoo customer-payments action with

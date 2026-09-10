@@ -7,17 +7,15 @@ components:
     create_action: create_accounting_payment_method
     create_label: New
     search: { label: Search payment methods, placeholder: Search methods... }
-    empty_state: { title: No payment methods found, description: Create a payment method or adjust your search. }
-    columns: [{ field: name, label: Method, type: PrimaryEntityCell }, { field: description, label: Description }, { field: state, label: Status, type: StatusChip }]
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: active, label: Active, type: BooleanToggle }
+      - { field: code, label: Code, optional: hide }
+    page_size: 50
+    responsive_card: true
     row_key: id
-actions:
-  - id: create_accounting_payment_method
-    type: server_form
-    permission: accounting.write
-    title: New Payment Method
-    action: accounting.payment_methods.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [accounting_payment_methods]
-    mutation: { operation: insert, table: accounting_config_payment_methods, fields: [name, description, state], required: [name], defaults: { state: Active }, result: { query: "SELECT * FROM accounting_config_payment_methods WHERE id = :id" } }
-    fields: [{ field: name, label: Method, type: text, required: true }, { field: description, label: Description, type: text }, { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]
+    row_actions: menu
+    row_open_action: view_accounting_payment_method
+    row_double_click_action: view_accounting_payment_method
+    empty_state: { title: No payment methods found, description: Create a payment method or adjust your search. }

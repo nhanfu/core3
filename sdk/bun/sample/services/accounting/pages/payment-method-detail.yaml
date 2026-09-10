@@ -1,0 +1,32 @@
+title: Payment Method
+page: { id: payment-method-detail, route: /accounting/payment-method-detail, breadcrumb: [Finance, Configuration, Payment Methods, Detail], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_payment_method_detail
+    title_field: name
+    status_field: active
+    status_badges: [{ value: true, label: Active, tone: green }, { value: false, label: Archived, tone: neutral }]
+    editable: true
+    header_actions:
+      - { id: edit_accounting_payment_method, label: Edit, variant: secondary, permission: accounting.write }
+      - { id: archive_accounting_payment_method, label: Archive, variant: secondary, permission: accounting.write, show_if: 'state.accounting_payment_method_detail.active === true' }
+      - { id: restore_accounting_payment_method, label: Restore, variant: secondary, permission: accounting.write, show_if: 'state.accounting_payment_method_detail.active === false' }
+      - { id: delete_accounting_payment_method, label: Delete, variant: danger, permission: accounting.write }
+    group_columns: 2
+    groups:
+      - title: Payment Method
+        fields:
+          - { field: name, label: Name }
+          - { field: code, label: Code }
+          - { field: active, label: Active }
+          - { field: countries, label: Countries }
+          - { field: currencies, label: Currencies }
+    notebook:
+      active: providers
+      tabs:
+        - id: providers
+          label: Providers
+          fields: [{ field: providers, label: Name }, { field: active, label: State }]
+        - id: brands
+          label: Brands
+          fields: [{ field: brands, label: Name }, { field: active, label: State }]

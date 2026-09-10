@@ -2,5 +2,41 @@ page: { id: payment-methods }
 datasources:
   - id: accounting_payment_methods
     permission: accounting.read
-    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
-    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, description, state FROM accounting_config_payment_methods CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY name"
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_PAYMENT_METHODS_UNAVAILABLE, message: Accounting payment methods are temporarily unavailable. } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, code, active, countries, currencies, providers, brands FROM accounting_config_payment_methods CROSS JOIN request_guard WHERE request_guard.ok AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(code, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR (:active = 'active' AND active = TRUE) OR (:active = 'archived' AND active = FALSE)) ORDER BY name"
+actions:
+  - id: view_accounting_payment_method
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/payment-method-detail
+    params: { id: '{row.id}' }
+  - id: create_accounting_payment_method
+    type: server_form
+    permission: accounting.write
+    title: New Payment Method
+    action: accounting.payment_methods.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_payment_methods]
+    mutation:
+      operation: insert
+      table: accounting_config_payment_methods
+      generated: [id]
+      before_steps: [{ query: "SELECT 'accounting-payment-method-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [name, code, active, countries, currencies, providers, brands]
+      required: [name]
+      defaults: { active: true, countries: All countries, currencies: All currencies, providers: '', brands: '', row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PAYMENT_METHOD_NAME_REQUIRED, message: A payment method name is required. }
+        - { query: "SELECT 1 AS ok WHERE :code IS NULL OR LENGTH(TRIM(CAST(:code AS VARCHAR))) = 0 OR regexp_matches(TRIM(CAST(:code AS VARCHAR)), '^[A-Za-z0-9_-]+$')", status: 422, code: ACCOUNTING_PAYMENT_METHOD_CODE_INVALID, message: Code may contain only letters, numbers, underscores, and hyphens. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_payment_methods WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: ACCOUNTING_PAYMENT_METHOD_EXISTS, message: A payment method with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE :code IS NULL OR LENGTH(TRIM(CAST(:code AS VARCHAR))) = 0 OR NOT EXISTS (SELECT 1 FROM accounting_config_payment_methods WHERE LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))))", status: 409, code: ACCOUNTING_PAYMENT_METHOD_CODE_EXISTS, message: A payment method with this code already exists. }
+      result: { query: "SELECT * FROM accounting_config_payment_methods WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: code, label: Code, type: text, placeholder: 'e.g. bank' }
+      - { field: active, label: Active, type: checkbox, default: true }
+      - { field: countries, label: Countries, type: text, default: All countries }
+      - { field: currencies, label: Currencies, type: text, default: All currencies }
+      - { field: providers, label: Providers, type: text }
+      - { field: brands, label: Brands, type: text }
