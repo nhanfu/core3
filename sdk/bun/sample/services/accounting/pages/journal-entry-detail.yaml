@@ -1,0 +1,94 @@
+title: Journal Entry
+page: { id: journal-entry-detail, route: /accounting/journal-entry-detail, breadcrumb: [Finance, Accounting, Journal Entries, Detail], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_journal_entry_detail
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: Posted, label: Posted }
+    status_colors: { Draft: neutral, Posted: blue }
+    editable: true
+    header_actions:
+      - { id: edit_journal_entry, label: Edit, variant: secondary, permission: accounting.write, show_if: "state.accounting_journal_entry_detail.state === 'Draft'" }
+      - { id: post_journal_entry, label: Post, variant: primary, permission: accounting.write, show_if: "state.accounting_journal_entry_detail.state === 'Draft'" }
+      - { id: reset_journal_entry, label: Reset to Draft, variant: secondary, permission: accounting.write, show_if: "state.accounting_journal_entry_detail.state === 'Posted'" }
+    group_columns: 2
+    groups:
+      - title: Journal Entry
+        fields:
+          - { field: name, label: Entry }
+          - { field: state, label: Status }
+          - { field: journal, label: Journal }
+          - { field: entry_date, label: Date }
+          - { field: reference, label: Reference }
+      - title: Amounts
+        fields:
+          - { field: debit, label: Debit }
+          - { field: credit, label: Credit }
+          - { field: balance, label: Balance }
+    notebook:
+      active: journal-items
+      tabs:
+        - id: journal-items
+          label: Journal Items
+          fields:
+            - { field: journal, label: Journal }
+            - { field: debit, label: Debit }
+            - { field: credit, label: Credit }
+            - { field: balance, label: Balance }
+        - id: other-info
+          label: Other Info
+          fields:
+            - { field: entry_date, label: Date }
+            - { field: reference, label: Reference }
+            - { field: row_version, label: Version }
+actions:
+  - id: edit_journal_entry
+    type: server_form
+    permission: accounting.write
+    title: Edit journal entry
+    action: accounting.journal_entries.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_journal_entry_detail
+    refresh: [accounting_journal_entry_detail, accounting_journal_entries]
+    mutation:
+      operation: update
+      table: accounting_journal_entries
+      fields: [name, journal, entry_date, reference, debit, credit]
+      required: [name, journal]
+      guards:
+        - { query: "SELECT id FROM accounting_journal_entries WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft journal entries can be edited }
+        - { query: "SELECT 1 AS ok WHERE CAST(:debit AS DECIMAL(18,2)) >= 0 AND CAST(:credit AS DECIMAL(18,2)) >= 0 AND (CAST(:debit AS DECIMAL(18,2)) > 0 OR CAST(:credit AS DECIMAL(18,2)) > 0)", status: 422, message: An entry must contain a debit or credit amount }
+      result: { query: "SELECT * FROM accounting_journal_entries WHERE id = :id" }
+    fields:
+      - { field: name, label: Entry, type: text, required: true }
+      - { field: journal, label: Journal, type: select, options: [Sales, Purchases, Bank, Cash, Miscellaneous] }
+      - { field: entry_date, label: Date, type: date }
+      - { field: reference, label: Reference, type: text }
+      - { field: debit, label: Debit, type: number }
+      - { field: credit, label: Credit, type: number }
+  - id: post_journal_entry
+    type: server
+    permission: accounting.write
+    action: accounting.journal_entries.post
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_journal_entry_detail, accounting_journal_entries]
+    mutation:
+      guards: [{ query: "SELECT id FROM accounting_journal_entries WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft journal entries can be posted }]
+      steps: [{ query: "UPDATE accounting_journal_entries SET state = 'Posted', row_version = row_version + 1 WHERE id = :id" }]
+      result: { query: "SELECT * FROM accounting_journal_entries WHERE id = :id" }
+  - id: reset_journal_entry
+    type: server
+    permission: accounting.write
+    action: accounting.journal_entries.reset
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_journal_entry_detail, accounting_journal_entries]
+    mutation:
+      guards: [{ query: "SELECT id FROM accounting_journal_entries WHERE id = :id AND state = 'Posted'", status: 409, message: Only posted journal entries can be reset }]
+      steps: [{ query: "UPDATE accounting_journal_entries SET state = 'Draft', row_version = row_version + 1 WHERE id = :id" }]
+      result: { query: "SELECT * FROM accounting_journal_entries WHERE id = :id" }

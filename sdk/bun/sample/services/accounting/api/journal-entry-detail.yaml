@@ -1,0 +1,6 @@
+page: { id: journal-entry-detail }
+datasources:
+  - id: accounting_journal_entry_detail
+    single: true
+    permission: accounting.read
+    query: "SELECT id, row_version, name, journal, CAST(entry_date AS VARCHAR) AS entry_date, reference, debit, credit, debit - credit AS balance, state FROM accounting_journal_entries WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"

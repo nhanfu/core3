@@ -1,0 +1,22 @@
+version: 0.0.12
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO accounting_journal_entries(id, name, journal, entry_date, reference, debit, credit, state)
+      SELECT
+        'accounting-entry-demo-' || LPAD(CAST(i AS VARCHAR), 3, '0'),
+        CASE WHEN i % 4 = 0 THEN 'INV/2026/00' || LPAD(CAST(i AS VARCHAR), 2, '0') ELSE 'Journal Entry ' || LPAD(CAST(i AS VARCHAR), 2, '0') END,
+        CASE WHEN i % 4 = 0 THEN 'Sales' WHEN i % 4 = 1 THEN 'Purchases' WHEN i % 4 = 2 THEN 'Bank' ELSE 'Miscellaneous' END,
+        DATE '2026-09-10' - ((i % 9) * INTERVAL '1 day'),
+        CASE WHEN i % 3 = 0 THEN 'Demo reference ' || CAST(i AS VARCHAR) ELSE NULL END,
+        CAST(10 + (i * 37) % 2200 AS DECIMAL(18,2)),
+        CAST(10 + (i * 37) % 2200 AS DECIMAL(18,2)),
+        'Posted'
+      FROM generate_series(2, 33) AS series(i);
+    down: |
+      DELETE FROM accounting_journal_entries WHERE id LIKE 'accounting-entry-demo-%' AND id <> 'accounting-entry-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

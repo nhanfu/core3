@@ -17,4 +17,12 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_open_action: view_journal_entry
+    row_double_click_action: view_journal_entry
     row_actions: menu
+actions:
+  - id: view_journal_entry
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/journal-entry-detail
+    params: { id: '{row.id}' }
