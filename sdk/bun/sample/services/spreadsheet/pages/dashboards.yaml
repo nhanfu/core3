@@ -1,37 +1,13 @@
 title: Dashboards
 page: { id: dashboards, route: /dashboards, breadcrumb: [Dashboards], auth: { require: [spreadsheet.read] } }
 components:
-  - type: PageIntro
-    title: Dashboards
-    description: Browse published spreadsheets and open a dashboard canvas.
-  - type: ListView
-    variant: odoo
-    source: spreadsheet_dashboards_landing
-    views:
-      - { id: list, label: List, icon: table }
-      - id: kanban
-        label: Cards
-        icon: dashboard
-        group_by: state
-        card: { title: name, subtitle: group_name, fields: [{ field: state, label: Status }, { field: favorite, label: Favorite }] }
-    columns:
-      - { field: name, label: Dashboard, type: PrimaryEntityCell }
-      - { field: group_name, label: Group }
-      - { field: state, label: Status, type: StatusChip }
-      - { field: favorite, label: Favorite, type: StatusChip }
-      - { field: company_name, label: Company }
-    filters:
-      - { field: state, label: Status, options: [{ id: Published, label: Published }, { id: Draft, label: Draft }, { id: Archived, label: Archived }] }
-      - { field: favorite, label: Favorites, options: [{ id: favorites, label: Favorites }, { id: all, label: All }] }
-    page_size: 50
-    row_key: id
-    row_open_action: view_dashboard
-    row_double_click_action: view_dashboard
-    row_actions: menu
-    empty_state: { title: No dashboards, description: There are no published dashboards available for your account. }
-actions:
-  - id: view_dashboard
-    type: navigate
-    permission: spreadsheet.read
-    navigate_to: /dashboard-detail
-    params: { id: '{row.id}' }
+  - type: SpreadsheetDashboardClientAction
+    id: spreadsheet-dashboard-client-action
+    groups_source: spreadsheet_dashboard_groups_landing
+    dashboards_source: spreadsheet_dashboards_landing
+    workbooks_source: spreadsheet_dashboard_workbooks
+    summaries_source: spreadsheet_dashboard_summaries_landing
+    chart_source: spreadsheet_dashboard_chart_landing
+    rows_source: spreadsheet_dashboard_rows_landing
+    default_dashboard_id: sdb-sales
+    read_only: true

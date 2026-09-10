@@ -11,6 +11,56 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, fil
 const apiSource = (file: string, id: string) => yaml(`api/${file}`).datasources.find((source: any) => source.id === id);
 
 describe('Spreadsheet dashboard configuration parity', () => {
+  test('defines the authenticated Dashboards client action with page-id API ownership', () => {
+    const page = yaml('pages/dashboards.yaml');
+    const api = yaml('api/dashboards.yaml');
+    const action = page.components[0];
+    expect(page.datasources).toBeUndefined();
+    expect(page.page.id).toBe('dashboards');
+    expect(page.page.auth.require).toEqual(['spreadsheet.read']);
+    expect(action).toMatchObject({
+      type: 'SpreadsheetDashboardClientAction',
+      read_only: true,
+      default_dashboard_id: 'sdb-sales',
+    });
+    expect(action.groups_source).toBe('spreadsheet_dashboard_groups_landing');
+    expect(action.workbooks_source).toBe('spreadsheet_dashboard_workbooks');
+    expect(api.page.id).toBe('dashboards');
+    expect(api.datasources.map((source: any) => source.id)).toEqual([
+      'spreadsheet_dashboard_groups_landing',
+      'spreadsheet_dashboards_landing',
+      'spreadsheet_dashboard_workbooks',
+      'spreadsheet_dashboard_summaries_landing',
+      'spreadsheet_dashboard_chart_landing',
+      'spreadsheet_dashboard_rows_landing',
+    ]);
+    expect(api.datasources.every((source: any) => source.permission === 'spreadsheet.read')).toBe(true);
+  });
+
+  test('returns deterministic client-action dashboard, workbook, figure, and stable error fixtures', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_client_action_migrations', ['schema', 'data']);
+
+    const dashboards = apiSource('dashboards.yaml', 'spreadsheet_dashboards_landing');
+    const workbooks = apiSource('dashboards.yaml', 'spreadsheet_dashboard_workbooks');
+    const chart = apiSource('dashboards.yaml', 'spreadsheet_dashboard_chart_landing');
+    const table = apiSource('dashboards.yaml', 'spreadsheet_dashboard_rows_landing');
+    const dashboardRows = await repository.querySource(dashboards, { q: null, state: null, favorite: null }, 0, 50);
+    expect(dashboardRows.data.map((row: any) => row.name)).toEqual(['Empty workbook', 'Invoicing', 'Sales', 'Warehouse Metrics', 'Product', 'Unreadable source example']);
+    expect((await repository.querySource(workbooks, {}, 0, 50)).data.find((row: any) => row.id === 'sdb-sales')).toMatchObject({
+      snapshot_status: 'ready',
+      workbook_snapshot: expect.stringContaining('Sheet1'),
+    });
+    expect((await repository.querySource(chart, {}, 0, 50)).data).toHaveLength(5);
+    expect((await repository.querySource(table, {}, 0, 50)).data).toHaveLength(5);
+    expect((await repository.querySource(dashboards, { q: 'not-found', state: null, favorite: null }, 0, 50)).data).toEqual([]);
+    expect(yaml('api/dashboards.yaml').datasources.find((source: any) => source.id === 'spreadsheet_dashboard_workbooks').error_states.transport_error).toMatchObject({
+      status: 503,
+      code: 'SPREADSHEET_DASHBOARD_WORKBOOKS_UNAVAILABLE',
+    });
+  });
+
   test('keeps configuration pages layout-only and API-owned by page id', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const pages = [

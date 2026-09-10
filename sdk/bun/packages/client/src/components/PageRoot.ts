@@ -748,6 +748,10 @@ function collectSources(config: any) {
           page_size: component.follower_candidates_page_size || 100,
         });
       }
+      for (const sourceId of component.sources || []) add(sourceId, component);
+      for (const key of ['groups_source', 'dashboards_source', 'workbooks_source', 'summaries_source', 'chart_source', 'rows_source']) {
+        add(component[key], component);
+      }
       for (const tab of component.tabs || []) visit(tab.components);
     }
   };

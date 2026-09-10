@@ -217,13 +217,59 @@ Authenticated comparison evidence (temporary, never committed):
 | Group form desktop | `/tmp/odoo-spreadsheet-personal-group-form-desktop.png` | `/tmp/core3-spreadsheet-group-form-desktop.png` |
 | Group form mobile | `/tmp/odoo-spreadsheet-personal-group-form-mobile.png` | `/tmp/core3-spreadsheet-group-form-mobile.png` |
 
-Deferred from this batch: the client-action dashboard canvas and workbook
-editor/runtime, dashboard group search panel and card selection, formula and
-figure execution, global filters, favorite/publication mutations, CRUD and
-row-version conflict operations, share/public-token/download controllers,
-spreadsheet logging, company/group access enforcement, and the remaining
-dashboard landing visual comparison. These remain required follow-up work;
-this batch does not claim full Spreadsheet parity.
+Deferred from this batch: the workbook editor/runtime, formula and figure
+execution, global filters, favorite/publication mutations, CRUD and row-version
+conflict operations, share/public-token/download controllers, spreadsheet
+logging, and company/group access enforcement. These remain required follow-up
+work; this batch does not claim full Spreadsheet parity.
+
+## 2026-09-10 bounded implementation batch: Dashboards client action and read-only canvas
+
+The owned Odoo reference is `http://localhost:8069`, database `core3_owned`,
+with the private account created for this parity workspace. Its source action
+is `action_spreadsheet_dashboard` from the `spreadsheet_dashboard` addon. The
+reference structure is an authenticated client action at `/odoo/dashboards`
+with a dashboard search panel on desktop, a collapsed dashboard selector on
+mobile, date/filter and Share controls, and a read-only `SpreadsheetComponent`
+for the selected published workbook. The owned database was initialized with
+demo data and the Spreadsheet addon dependency set before capture; any
+optional business dashboards are not treated as part of this bounded slice.
+
+Core3 now renders `/dashboards?dashboard_id=<id>` through the registered
+`SpreadsheetDashboardClientAction` component. The page remains layout-only and
+declares no embedded records or queries. Its six service-owned sources are
+discovered from `services/spreadsheet/api/dashboards.yaml` by the matching
+`page.id: dashboards`: visible groups, published dashboards, workbook
+snapshots, KPI summaries, chart points, and table rows. The component provides
+stable deterministic 2026-01-15 controls and a read-only workbook canvas with
+Sheet1/formula chrome, KPI cards, revenue chart, top-categories table, country
+map, and category treemap. Dashboard selection updates `dashboard_id` in the
+URL and remains read-only; Share/favorite/date controls are visibly present but
+disabled until their separate access/mutation batch.
+
+The API contract includes stable 503 transport branches for the landing and
+workbook sources. A missing requested dashboard renders `Dashboard not found`,
+an empty published catalog renders `No available dashboard`, an empty workbook
+renders `Empty workbook`, and malformed/error fixtures render `Unable to load
+dashboard`. The focused service test proves deterministic ordering, workbook
+payload, chart/table fixture counts, search-empty, and error metadata. The
+client test proves the authenticated-action canvas controls and missing/error
+states. The new source-list collection in `PageRoot` is generic and supports
+page components that consume multiple service-owned sources without moving
+queries into page YAML.
+
+Authenticated screenshot evidence is temporary under `/tmp`, never committed:
+
+| Surface | Odoo owned reference | Core3 isolated worktree |
+| --- | --- | --- |
+| Dashboards client action, desktop 1440x900 | `/tmp/odoo-spreadsheet-dashboard-owned-desktop.png` | `/tmp/core3-spreadsheet-dashboard-desktop.png` |
+| Dashboards client action, mobile 390x844 | `/tmp/odoo-spreadsheet-dashboard-owned-mobile.png` | `/tmp/core3-spreadsheet-dashboard-mobile.png` |
+
+Browser acceptance checks for both viewports record zero failed requests,
+zero console errors, visible Sales/Sheet1/workbook figures, exact document
+width equal to the viewport, and no page-level horizontal overflow. The
+browser skill's interactive kernel was unavailable, so the same authenticated
+Playwright fallback runner was used and recorded here for reproducibility.
 
 If a primitive is missing, plan and verify the generic contract first rather
 than creating a page-specific substitute. Use Odoo-style full-width settings

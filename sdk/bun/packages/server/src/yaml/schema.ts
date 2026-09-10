@@ -237,6 +237,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['Form', new Set(['type', 'id', 'title', 'class', 'section_class', 'title_class', 'action', 'submit_variant', 'submit_label', 'loading_label', 'success_label', 'fields', 'validation'])],
   ['ScannerView', new Set(['type', 'id', 'source', 'fullscreen', 'client_action', 'scan_action', 'scan_permission', 'title', 'description', 'placeholder', 'scan_label', 'helper_text', 'labels', 'manual_form'])],
   ['Button', new Set(['type', 'id', 'action', 'label', 'icon', 'variant', 'full_width'])],
+  ['SpreadsheetDashboardClientAction', new Set(['type', 'id', 'groups_source', 'dashboards_source', 'workbooks_source', 'summaries_source', 'chart_source', 'rows_source', 'default_dashboard_id', 'read_only'])],
   // POS cashier components (Phase 1)
   ['PosShell', new Set(['type', 'id', 'session_source', 'bootstrap_source', 'orders_source', 'actions'])],
   ['ProductScreen', new Set(['type', 'id', 'source', 'session_source', 'cart_source', 'search', 'actions', 'labels'])],

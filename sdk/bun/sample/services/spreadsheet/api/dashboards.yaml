@@ -8,4 +8,24 @@ datasources:
     single: false
     permission: spreadsheet.read
     workflow: spreadsheet_dashboards
-    query: "SELECT d.id, d.row_version, d.name, g.name AS group_name, d.state, d.favorite, d.company_name, d.published, d.snapshot_status FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE d.state <> 'Archived' AND d.published = TRUE AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR g.name ILIKE '%' || :q || '%') AND (:state IS NULL OR d.state = :state) AND (:favorite IS NULL OR d.favorite = CAST(:favorite AS BOOLEAN)) ORDER BY d.sequence, d.name"
+    query: "SELECT d.id, d.row_version, d.group_id, d.name, g.name AS group_name, d.state, d.favorite, d.company_name, d.published, d.snapshot_status FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE d.state <> 'Archived' AND d.published = TRUE AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR g.name ILIKE '%' || :q || '%') AND (:state IS NULL OR d.state = :state) AND (:favorite IS NULL OR d.favorite = CAST(:favorite AS BOOLEAN)) ORDER BY d.sequence, d.name"
+    error_states:
+      transport_error: { status: 503, code: SPREADSHEET_DASHBOARDS_UNAVAILABLE, message: Published dashboards are temporarily unavailable. }
+  - id: spreadsheet_dashboard_workbooks
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT id, name, snapshot_status, workbook_snapshot FROM spreadsheet_dashboards WHERE state <> 'Archived' AND published = TRUE ORDER BY sequence, name"
+    error_states:
+      transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_WORKBOOKS_UNAVAILABLE, message: Dashboard workbooks are temporarily unavailable. }
+  - id: spreadsheet_dashboard_summaries_landing
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT dashboard_id, revenue, orders, customers FROM spreadsheet_dashboard_summaries ORDER BY dashboard_id"
+  - id: spreadsheet_dashboard_chart_landing
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT dashboard_id, sequence, period, revenue FROM spreadsheet_dashboard_chart_points ORDER BY dashboard_id, sequence"
+  - id: spreadsheet_dashboard_rows_landing
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT dashboard_id, sequence, country, category, revenue, orders FROM spreadsheet_dashboard_rows ORDER BY dashboard_id, sequence"
