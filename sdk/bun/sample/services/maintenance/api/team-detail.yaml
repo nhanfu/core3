@@ -1,0 +1,14 @@
+page: { id: maintenance-team-detail }
+datasources:
+  - { id: maintenance_team_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, member_names, company_name, active, color, note FROM maintenance_team_records WHERE id = :id" }
+actions:
+  - id: edit_maintenance_team
+    type: server_form
+    permission: maintenance.manage
+    title: Edit Maintenance Team
+    action: maintenance.teams.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [maintenance_team_detail]
+    mutation: { operation: update, table: maintenance_team_records, fields: [name, member_names, company_name, color, note], required: [name], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_team_records WHERE id = :id" } }
+    fields: [{ field: name, label: Team Name, type: text, required: true }, { field: member_names, label: Team Members, type: text }, { field: company_name, label: Company, type: text }, { field: color, label: Color, type: number }, { field: note, label: Note, type: text }]

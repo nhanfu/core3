@@ -1,0 +1,8 @@
+page: { id: maintenance-calendar }
+datasources:
+  - { id: maintenance_request_states_calendar, single: false, permission: maintenance.read, query: "SELECT id AS value, name AS label FROM maintenance_stages WHERE active = TRUE ORDER BY sequence" }
+  - id: maintenance_calendar
+    single: false
+    permission: maintenance.read
+    error_states: { transport_error: { status: 503, code: MAINTENANCE_DATA_UNAVAILABLE, message: Maintenance calendar is temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.name, r.equipment_name, r.category, r.team, r.assigned_to, r.priority, r.state, r.kanban_state, CAST(r.scheduled_date AS VARCHAR) AS scheduled_date, CAST(r.request_date AS VARCHAR) AS request_date, CAST(r.completed_date AS VARCHAR) AS completed_date, r.archived FROM maintenance_requests r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.scheduled_date IS NOT NULL AND (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.equipment_name ILIKE '%' || :q || '%' OR r.category ILIKE '%' || :q || '%' OR r.assigned_to ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) AND (:priority IS NULL OR r.priority = :priority) AND (:archived IS NULL OR (:archived = 'active' AND r.archived = FALSE) OR (:archived = 'archived' AND r.archived = TRUE)) ORDER BY r.scheduled_date, r.name"

@@ -1,5 +1,5 @@
 title: Equipment
-page: { id: maintenance-equipment-detail, route: /equipment/detail, breadcrumb: [Supply Chain, Maintenance, Equipment], auth: { require: [maintenance.read] } }
+page: { id: equipment-detail, route: /equipments/detail, breadcrumb: [Supply Chain, Maintenance, Equipment], auth: { require: [maintenance.read] } }
 components:
   - type: OdooFormView
     source: maintenance_equipment_detail

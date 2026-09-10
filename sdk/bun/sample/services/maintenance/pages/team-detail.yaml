@@ -1,0 +1,11 @@
+title: Maintenance Team
+page: { id: maintenance-team-detail, route: /maintenance-teams/detail, breadcrumb: [Supply Chain, Maintenance, Configuration, Maintenance Teams], auth: { require: [maintenance.manage] } }
+components:
+  - type: OdooFormView
+    source: maintenance_team_detail
+    title_field: name
+    subtitle_field: company_name
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    group_columns: 2
+    groups: [{ title: Maintenance Team, fields: [{ field: name, label: Team Name }, { field: member_names, label: Team Members }, { field: company_name, label: Company }, { field: color, label: Color }, { field: note, label: Note }] }]

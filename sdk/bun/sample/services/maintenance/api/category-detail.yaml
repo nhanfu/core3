@@ -1,0 +1,14 @@
+page: { id: maintenance-category-detail }
+datasources:
+  - { id: maintenance_category_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, technician, company_name, active, color, note FROM maintenance_category_records WHERE id = :id" }
+actions:
+  - id: edit_maintenance_category
+    type: server_form
+    permission: maintenance.manage
+    title: Edit Equipment Category
+    action: maintenance.categories.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [maintenance_category_detail]
+    mutation: { operation: update, table: maintenance_category_records, fields: [name, technician, company_name, color, note], required: [name], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_category_records WHERE id = :id" } }
+    fields: [{ field: name, label: Category Name, type: text, required: true }, { field: technician, label: Responsible, type: text }, { field: company_name, label: Company, type: text }, { field: color, label: Color, type: number }, { field: note, label: Note, type: text }]

@@ -1,45 +1,46 @@
-# Maintenance parity batch 1
+# Maintenance parity batch 2
 
-Implemented in the isolated `odoo-ui-maintenance-impl` worktree from main
-`5fa3e03`.
+Implemented on the isolated `agent/odoo-ui-maintenance` worktree.
 
 ## Scope
 
-- Requests: deterministic search, status/priority/archive filters, group-by,
-  list and shared kanban views, create action, row navigation, and request
-  form/detail states.
-- Equipment: deterministic name/model/serial/vendor search, status filter,
-  group-by, list and shared kanban views, manager create action, row
-  navigation, and equipment form/detail states.
-- Backend reads, lookups, create mutations, and detail actions now live in
-  convention-discovered `services/maintenance/api/*.yaml` fragments keyed by
-  `page.id`; page YAML contains presentation only.
-- Migrations now use stable IDs, the seeded date `2026-01-15`, explicit
-  ordering, idempotent `ON CONFLICT` inserts, request stages, teams,
-  categories, active/archived equipment, multiple request states, recurrence,
-  and a second company fixture.
+- Restored the Odoo Maintenance menu tree and labels: Dashboard, Maintenance
+  Requests, Maintenance Calendar, Equipment, Maintenance Requests Analysis,
+  Maintenance Teams, Equipment Categories, and manager-only Settings.
+- Added page-id-owned API fragments for dashboard cards, calendar/reporting,
+  teams, categories, and settings. Page YAML remains presentation-only.
+- Added deterministic, service-owned team/category/settings fixtures with
+  stable IDs, fixed timestamps, idempotent migrations, active/archived fields,
+  row versions, and manager/settings permissions.
+- Added Odoo-style visible view tabs for request/calendar/reporting/team/category
+  surfaces, with desktop-only analytical views and mobile card fallbacks.
+- Added team/category create and edit mutation contracts, archive/reopen
+  contracts, settings save contract, stable empty-result fixtures, transport
+  error contracts, and focused integration coverage.
 
-## Deliberate deferrals
+## Deliberate limitations
 
-Dashboard context cards, calendar/activity/pivot/graph reporting, teams,
-categories, settings, followers/chatter/attachments, and full CRUD/permission
-mutation coverage are deferred to the next coherent batch. The Analysis menu
-remains a deliberate empty route rather than implying unsupported reporting.
+This is not full Maintenance parity. Followers/chatter/attachments, activity
+CRUD, recurrence generation, full equipment CRUD, linked-record delete guards,
+record-rule/company filtering, and the OEE/Losses actionless source menu
+entries remain deferred. Stage and Activity Types remain hidden because the
+Odoo addon marks them `base.group_no_one`.
 
-Live Odoo maintenance evidence is unavailable: the authenticated reference
-database reports the `maintenance` addon as uninstalled. No Odoo screenshot is
-claimed or fabricated. Core3 screenshots, when captured, are verification
-evidence only and do not represent Odoo parity evidence.
+The Odoo 19 addon is installed with demo data in the personal reference
+database as of 2026-09-10, so authenticated comparison captures are available:
+
+- Odoo desktop/mobile: `/tmp/odoo-maintenance-*.png`
+- Core3 desktop/mobile captures are produced during the final browser audit
+  under `/tmp/core3-maintenance-batch2/` and are intentionally untracked.
+
+The reference is local and revision-specific (`65975996`); it does not prove
+behavior of other Odoo versions or a clean database without the installed
+addon.
 
 ## Verification record
 
-- `bun run audit` passes after integration: 253 pages, 256 routes, and 463
-  datasources.
-- `bun run frontend:build` reaches the existing repository-wide CSS build but
-  is blocked by the pre-existing missing
-  `services/ecommerce/styles/index.scss` path.
-- `git diff --check` passes.
-- Authenticated Core3 browser checks passed for requests, equipment, and both
-  detail routes at 1440x900 and 390x844 with no failed requests or horizontal
-  overflow. Captures are under `/tmp/core3-timesheets-maintenance/`; image
-  files are intentionally excluded from the commit.
+- Focused `maintenance.integration.test.ts` covers page/API ownership, menu
+  labels, view tabs/mobile fallbacks, deterministic migrations, fixture search
+  and empty states, permissions, error boundaries, and fixed-date checks.
+- Final handoff records the exact focused test, audit/schema/lint/diff results,
+  authenticated 1440x900 and 390x844 browser checks, and the commit hash.

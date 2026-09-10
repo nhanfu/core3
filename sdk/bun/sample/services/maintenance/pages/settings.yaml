@@ -1,0 +1,28 @@
+title: Maintenance Settings
+page: { id: maintenance-settings, route: /maintenance-settings, breadcrumb: [Supply Chain, Maintenance, Configuration, Settings], auth: { require: [maintenance.settings] } }
+components:
+  - type: SettingsView
+    id: maintenance-settings-view
+    source: maintenance_settings
+    title: Settings
+    save_action: save_maintenance_settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: maintenance
+        label: Maintenance
+        icon: wrench
+        sections:
+          - title: Maintenance
+            fields:
+              - { field: custom_worksheets, label: Custom Worksheets, description: Create custom worksheet templates for maintenance requests and equipment., type: checkbox }
+actions:
+  - id: save_maintenance_settings
+    type: client
+    permission: maintenance.settings
+    script: |
+      async ({ row, request }) => {
+        await request('/api/actions/maintenance.settings.update', {
+          method: 'POST',
+          body: { id: row.id, expected_row_version: row.row_version, custom_worksheets: row.custom_worksheets },
+        });
+      }

@@ -1,0 +1,28 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO maintenance_team_records(id, name, company_name, member_names, color, note) VALUES
+        ('maintenance-team-internal', 'Internal Maintenance', 'My Company', 'Mitchell Admin', 0, 'Internal equipment and facility maintenance.'),
+        ('maintenance-team-metrology', 'Metrology', 'My Company', 'Mitchell Admin', 3, 'Calibration and measurement equipment.'),
+        ('maintenance-team-subcontractor', 'Subcontractor', 'My Company', 'OdooBot', 6, 'External maintenance partners.')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO maintenance_category_records(id, name, company_name, technician, color, note) VALUES
+        ('maintenance-category-computers', 'Computers', 'My Company', 'OdooBot', 0, 'Desktop and laptop equipment.'),
+        ('maintenance-category-software', 'Software', 'My Company', 'OdooBot', 1, 'Software and service subscriptions.'),
+        ('maintenance-category-printers', 'Printers', 'My Company', 'OdooBot', 2, 'Printers and consumables.'),
+        ('maintenance-category-monitors', 'Monitors', 'My Company', 'Mitchell Admin', 3, 'Displays and meeting-room monitors.'),
+        ('maintenance-category-phones', 'Phones', 'My Company', 'Mitchell Admin', 4, 'Company mobile phones.')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO maintenance_settings(id, custom_worksheets, company_name) VALUES
+        ('maintenance-settings-demo', FALSE, 'My Company')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM maintenance_settings WHERE id = 'maintenance-settings-demo';
+      DELETE FROM maintenance_category_records WHERE id LIKE 'maintenance-category-%';
+      DELETE FROM maintenance_team_records WHERE id LIKE 'maintenance-team-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

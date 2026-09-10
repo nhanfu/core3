@@ -1,0 +1,15 @@
+title: Maintenance Teams
+page: { id: maintenance-dashboard, route: /maintenance, breadcrumb: [Supply Chain, Maintenance, Dashboard], auth: { require: [maintenance.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: maintenance_dashboard_teams
+    search: { label: Search, placeholder: Search maintenance teams... }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    views:
+      - { id: card, label: Kanban, icon: dashboard, card: { title: name, subtitle: company_name, fields: [{ field: todo_count, label: To Do }, { field: scheduled_count, label: Scheduled }, { field: high_priority_count, label: Top Priorities }, { field: blocked_count, label: Blocked }, { field: unscheduled_count, label: Unscheduled }] } }
+    row_key: id
+    row_open_action: view_maintenance_team
+    empty_state: { title: No maintenance teams, description: No maintenance teams match the current filters. }
+actions:
+  - { id: view_maintenance_team, type: navigate, permission: maintenance.read, navigate_to: /maintenance-teams/detail, params: { id: '{row.id}' } }

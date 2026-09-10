@@ -2,3 +2,4 @@ permissions:
   - maintenance.read
   - maintenance.write
   - maintenance.manage
+  - maintenance.settings

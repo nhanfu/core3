@@ -1,0 +1,14 @@
+page: { id: maintenance-analysis }
+datasources:
+  - id: maintenance_analysis_totals
+    single: true
+    permission: maintenance.read
+    query: "SELECT COUNT(*) AS request_count, COUNT(*) FILTER (WHERE state IN ('New Request', 'In Progress')) AS open_count, COUNT(*) FILTER (WHERE state = 'Repaired') AS repaired_count, COUNT(*) FILTER (WHERE state = 'Scrap') AS scrap_count, 0 AS average_duration FROM maintenance_requests"
+  - id: maintenance_analysis_states
+    single: false
+    permission: maintenance.read
+    query: "SELECT state AS category, COUNT(*) AS request_count FROM maintenance_requests WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR equipment_name ILIKE '%' || :q || '%') GROUP BY state ORDER BY request_count DESC, state"
+  - id: maintenance_analysis_requests
+    single: false
+    permission: maintenance.read
+    query: "SELECT id, name, equipment_name, category, team, assigned_to, state, priority, CAST(request_date AS VARCHAR) AS request_date, 0 AS duration FROM maintenance_requests WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR equipment_name ILIKE '%' || :q || '%' OR category ILIKE '%' || :q || '%') ORDER BY request_date DESC, name"

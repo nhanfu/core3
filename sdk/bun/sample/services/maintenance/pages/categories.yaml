@@ -1,0 +1,20 @@
+title: Equipment Categories
+page: { id: maintenance-categories, route: /equipement-categories, breadcrumb: [Supply Chain, Maintenance, Configuration, Equipment Categories], auth: { require: [maintenance.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: maintenance_categories
+    create_action: create_maintenance_category
+    create_label: New
+    search: { label: Search, placeholder: Search equipment categories... }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: company_name, card: { title: name, subtitle: technician, fields: [{ field: equipment_count, label: Equipment }, { field: request_count, label: Maintenance }] } }
+      - { id: card, label: Cards, icon: grid, card: { title: name, subtitle: technician, fields: [{ field: company_name, label: Company }, { field: active, label: Status }] } }
+    row_key: id
+    row_open_action: view_maintenance_category
+    row_actions: menu
+    empty_state: { title: No equipment categories, description: No equipment categories match the current filters. }
+    columns: [{ field: name, label: Category Name, type: PrimaryEntityCell }, { field: technician, label: Responsible }, { field: company_name, label: Company }, { field: equipment_count, label: Equipment }, { field: request_count, label: Maintenance }]

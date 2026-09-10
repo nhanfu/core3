@@ -1,0 +1,14 @@
+page: { id: maintenance-settings }
+datasources:
+  - id: maintenance_settings
+    single: true
+    permission: maintenance.settings
+    query: "SELECT id, row_version, custom_worksheets, company_name FROM maintenance_settings WHERE id = 'maintenance-settings-demo'"
+actions:
+  - id: maintenance_settings_update_server
+    type: server
+    permission: maintenance.settings
+    action: maintenance.settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation: { operation: update, table: maintenance_settings, fields: [custom_worksheets], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_settings WHERE id = :id" } }

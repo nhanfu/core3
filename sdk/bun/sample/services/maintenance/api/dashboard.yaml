@@ -1,0 +1,7 @@
+page: { id: maintenance-dashboard }
+datasources:
+  - id: maintenance_dashboard_teams
+    single: false
+    permission: maintenance.read
+    error_states: { transport_error: { status: 503, code: MAINTENANCE_DATA_UNAVAILABLE, message: Maintenance data is temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.name, t.member_names, t.company_name, COUNT(r.id) FILTER (WHERE r.archived = FALSE AND r.state NOT IN ('Repaired', 'Scrap')) AS todo_count, COUNT(r.id) FILTER (WHERE r.archived = FALSE AND r.scheduled_date IS NOT NULL) AS scheduled_count, COUNT(r.id) FILTER (WHERE r.archived = FALSE AND r.priority = 'High') AS high_priority_count, COUNT(r.id) FILTER (WHERE r.archived = FALSE AND r.kanban_state = 'blocked') AS blocked_count, COUNT(r.id) FILTER (WHERE r.archived = FALSE AND r.scheduled_date IS NULL) AS unscheduled_count FROM maintenance_team_records t LEFT JOIN maintenance_requests r ON r.team_id = t.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR COALESCE(t.member_names, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR (:active = 'active' AND t.active = TRUE) OR (:active = 'archived' AND t.active = FALSE)) GROUP BY t.id, t.row_version, t.name, t.member_names, t.company_name ORDER BY t.name, t.id"

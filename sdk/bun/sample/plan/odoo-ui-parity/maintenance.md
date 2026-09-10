@@ -14,16 +14,13 @@ or claim unavailable visual evidence.
   on `mail`, includes maintenance views, activity types, settings, security,
   and backend assets, and is installable.
 - Authenticated HTTP/RPC audit on 2026-09-10 used `http://localhost:8069`,
-  database `core3_demo`, and the local admin account. The server answered and
-  authentication succeeded, but `ir.module.module` reports
-  `maintenance: state=uninstalled, demo=false, latest_version=false`.
-  Consequently no maintenance menu/action records are live in that database,
-  and no live maintenance records or demo rows can be used as visual evidence.
-- No maintenance-specific desktop or mobile screenshot file exists under
-  `/tmp` (checked by filename search). Do not cite a screenshot path until the
-  addon is installed in the reference database and an authenticated desktop
-  and mobile capture is actually produced. The absence is a reference
-  limitation, not a reason to fabricate captures or mark parity complete.
+  database `core3_personal`, and the local reference credentials recorded in
+  the execution handoff. The server answered and `ir.module.module` reports
+  `maintenance: state=installed, demo=true, latest_version=19.0.1.0`.
+- Authenticated desktop and mobile Maintenance captures exist under `/tmp`.
+  They are comparison evidence only and are never committed. The reference is
+  local, demo-data dependent, and does not prove unsupported addon behavior or
+  parity with other Odoo 19 databases.
 
 ## Source menu, action, route, and view inventory
 

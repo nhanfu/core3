@@ -1,5 +1,5 @@
 title: Equipment
-page: { id: equipment, route: /equipment, breadcrumb: [Supply Chain, Maintenance, Equipment], auth: { require: [maintenance.read] } }
+page: { id: equipment, route: /equipments, breadcrumb: [Supply Chain, Maintenance, Equipment], auth: { require: [maintenance.read] } }
 components:
   - type: ListView
     variant: odoo
@@ -16,9 +16,9 @@ components:
     row_key: id
     row_open_action: view_maintenance_equipment
     row_double_click_action: view_maintenance_equipment
-    form_view: { page: apps/services/maintenance/pages/maintenance-equipment-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/maintenance/pages/equipment-detail.yaml, side_panel: true }
     row_actions: menu
     empty_state: { title: No equipment, description: No equipment matches the current filters. }
     columns: [{ field: name, label: Equipment, type: PrimaryEntityCell, sortable: true }, { field: model, label: Model }, { field: serial_number, label: Serial number }, { field: category, label: Category }, { field: technician, label: Technician }, { field: team, label: Team }, { field: state, label: Status, type: StatusChip }]
 actions:
-  - { id: view_maintenance_equipment, type: navigate, permission: maintenance.read, navigate_to: /equipment/detail, params: { id: '{row.id}' } }
+  - { id: view_maintenance_equipment, type: navigate, permission: maintenance.read, navigate_to: /equipments/detail, params: { id: '{row.id}' } }

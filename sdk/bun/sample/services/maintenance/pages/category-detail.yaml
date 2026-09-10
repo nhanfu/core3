@@ -1,0 +1,11 @@
+title: Equipment Category
+page: { id: maintenance-category-detail, route: /equipement-categories/detail, breadcrumb: [Supply Chain, Maintenance, Configuration, Equipment Categories], auth: { require: [maintenance.manage] } }
+components:
+  - type: OdooFormView
+    source: maintenance_category_detail
+    title_field: name
+    subtitle_field: company_name
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    group_columns: 2
+    groups: [{ title: Equipment Category, fields: [{ field: name, label: Category Name }, { field: technician, label: Responsible }, { field: company_name, label: Company }, { field: color, label: Color }, { field: note, label: Note }] }]

@@ -1,3 +1,20 @@
-title: Maintenance Analysis
-page: { id: maintenance-analysis, route: /maintenance-analysis, breadcrumb: [Supply Chain, Maintenance, Analysis], auth: { require: [maintenance.read] } }
-components: []
+title: Maintenance Requests Analysis
+page: { id: maintenance-analysis, route: /maintenance-requests-analysis, breadcrumb: [Supply Chain, Maintenance, Reporting, Maintenance Requests Analysis], auth: { require: [maintenance.read] } }
+components:
+  - type: StatRow
+    source: maintenance_analysis_totals
+    title: Maintenance Requests
+    stats: [{ label: Requests, field: request_count }, { label: Open, field: open_count }, { label: Repaired, field: repaired_count }, { label: Scrap, field: scrap_count }, { label: Average Duration, field: average_duration }]
+  - type: Chart
+    source: maintenance_analysis_states
+    title: Requests by Stage
+    label_field: category
+    value_field: request_count
+    variant: bar
+  - type: ListView
+    variant: odoo
+    source: maintenance_analysis_requests
+    view_navigation: tabs
+    views: [{ id: list, label: List, icon: table, mobile: false }, { id: pivot, label: Pivot, icon: pivot, mobile: false }, { id: graph, label: Graph, icon: chart, category_field: state, measure_field: id, mobile: false }, { id: card, label: Cards, icon: grid, card: { title: name, subtitle: equipment_name, fields: [{ field: state, label: Status }, { field: duration, label: Duration }] } }]
+    search: { label: Search, placeholder: Search maintenance requests... }
+    columns: [{ field: name, label: Request, type: PrimaryEntityCell }, { field: equipment_name, label: Equipment }, { field: category, label: Category }, { field: team, label: Team }, { field: assigned_to, label: Responsible }, { field: state, label: Status, type: StatusChip }, { field: duration, label: Duration }]

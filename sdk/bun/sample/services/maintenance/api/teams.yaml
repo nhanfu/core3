@@ -1,0 +1,20 @@
+page: { id: maintenance-teams }
+datasources:
+  - id: maintenance_teams
+    single: false
+    permission: maintenance.read
+    query: "SELECT t.id, t.row_version, t.name, t.member_names, t.company_name, t.active, t.color, COUNT(r.id) FILTER (WHERE r.archived = FALSE AND r.state NOT IN ('Repaired', 'Scrap')) AS todo_count, COUNT(r.id) FILTER (WHERE r.archived = FALSE AND r.scheduled_date IS NOT NULL) AS scheduled_count FROM maintenance_team_records t LEFT JOIN maintenance_requests r ON r.team_id = t.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR COALESCE(t.member_names, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR (:active = 'active' AND t.active = TRUE) OR (:active = 'archived' AND t.active = FALSE)) GROUP BY t.id, t.row_version, t.name, t.member_names, t.company_name, t.active, t.color ORDER BY t.name, t.id"
+actions:
+  - id: create_maintenance_team
+    type: server_form
+    permission: maintenance.manage
+    title: New Maintenance Team
+    action: maintenance.teams.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [maintenance_teams]
+    mutation: { operation: insert, table: maintenance_team_records, fields: [name, active, company_name, member_names, color, note], required: [name], defaults: { active: true, company_name: My Company, color: 0 }, result: { query: "SELECT * FROM maintenance_team_records WHERE id = :id" } }
+    fields: [{ field: name, label: Team Name, type: text, required: true }, { field: member_names, label: Team Members, type: text }, { field: company_name, label: Company, type: text }, { field: color, label: Color, type: number }, { field: note, label: Note, type: text }]
+  - { id: archive_maintenance_team, type: server, permission: maintenance.manage, action: maintenance.teams.archive, handler: yaml_mutation, operation: update, refresh: [maintenance_teams], params: { values: { active: false } }, mutation: { operation: update, table: maintenance_team_records, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_team_records WHERE id = :id" } } }
+  - { id: reopen_maintenance_team, type: server, permission: maintenance.manage, action: maintenance.teams.reopen, handler: yaml_mutation, operation: update, refresh: [maintenance_teams], params: { values: { active: true } }, mutation: { operation: update, table: maintenance_team_records, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_team_records WHERE id = :id" } } }
+  - { id: view_maintenance_team, type: navigate, permission: maintenance.read, navigate_to: /maintenance-teams/detail, params: { id: '{row.id}' } }

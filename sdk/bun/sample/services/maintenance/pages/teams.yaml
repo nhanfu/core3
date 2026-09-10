@@ -1,0 +1,20 @@
+title: Maintenance Teams
+page: { id: maintenance-teams, route: /maintenance-teams, breadcrumb: [Supply Chain, Maintenance, Configuration, Maintenance Teams], auth: { require: [maintenance.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: maintenance_teams
+    create_action: create_maintenance_team
+    create_label: New
+    search: { label: Search, placeholder: Search maintenance teams... }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: company_name, card: { title: name, subtitle: company_name, fields: [{ field: member_names, label: Team Members }, { field: todo_count, label: To Do }, { field: scheduled_count, label: Scheduled }] } }
+      - { id: card, label: Cards, icon: grid, card: { title: name, subtitle: company_name, fields: [{ field: member_names, label: Team Members }, { field: active, label: Status }] } }
+    row_key: id
+    row_open_action: view_maintenance_team
+    row_actions: menu
+    empty_state: { title: No maintenance teams, description: No maintenance teams match the current filters. }
+    columns: [{ field: name, label: Team Name, type: PrimaryEntityCell }, { field: member_names, label: Team Members }, { field: company_name, label: Company }, { field: todo_count, label: To Do }, { field: scheduled_count, label: Scheduled }]

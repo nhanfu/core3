@@ -11,14 +11,26 @@ components:
     group_by: [{ field: stage, label: Stage }, { field: assigned_to, label: Responsible }, { field: category, label: Category }, { field: owner, label: Created by }]
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
-      - { id: kanban, label: Kanban, icon: dashboard, group_by: state, groups_source: maintenance_request_states, card: { title: name, subtitle: equipment_name, fields: [{ field: priority, label: Priority }, { field: assigned_to, label: Responsible }, { field: scheduled_date, label: Scheduled }] } }
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: false, group_by: state, groups_source: maintenance_request_states, card: { title: name, subtitle: equipment_name, fields: [{ field: priority, label: Priority }, { field: assigned_to, label: Responsible }, { field: scheduled_date, label: Scheduled }] } }
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Cards, icon: grid, card: { title: name, subtitle: equipment_name, fields: [{ field: priority, label: Priority }, { field: assigned_to, label: Responsible }, { field: state, label: Status }] } }
+      - { id: calendar, label: Calendar, icon: calendar, mobile: false, date_field: scheduled_date }
+      - { id: pivot, label: Pivot, icon: pivot, mobile: false }
+      - { id: graph, label: Graph, icon: chart, category_field: state, measure_field: id, mobile: false }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: equipment_name
+        record_date_field: scheduled_date
+        mobile: false
+        activity_types: [{ id: todo, label: To-Do, icon: check }]
     page_size: 25
     column_chooser: true
     row_key: id
     row_open_action: view_maintenance_request
     row_double_click_action: view_maintenance_request
-    form_view: { page: apps/services/maintenance/pages/maintenance-request-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/maintenance/pages/request-detail.yaml, side_panel: true }
     row_actions: menu
     empty_state: { title: No maintenance requests, description: No requests match the current filters. }
     columns: [{ field: name, label: Request, type: PrimaryEntityCell, sortable: true }, { field: equipment_name, label: Equipment }, { field: category, label: Category }, { field: request_type, label: Type }, { field: priority, label: Priority, type: StatusChip }, { field: assigned_to, label: Responsible }, { field: scheduled_date, label: Scheduled }, { field: state, label: Status, type: StatusChip }]

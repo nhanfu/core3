@@ -1,0 +1,30 @@
+title: Maintenance Calendar
+page: { id: maintenance-calendar, route: /maintenance-calendar, breadcrumb: [Supply Chain, Maintenance, Maintenance Calendar], auth: { require: [maintenance.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: maintenance_calendar
+    search: { label: Search, placeholder: Search maintenance requests... }
+    filters: [{ field: state, label: Status, options_source: maintenance_request_states_calendar }, { field: priority, label: Priority, options: [Low, Normal, High] }]
+    view_navigation: tabs
+    views:
+      - { id: calendar, label: Calendar, icon: calendar, mobile: false, date_field: scheduled_date }
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: false, group_by: state, groups_source: maintenance_request_states, card: { title: name, subtitle: equipment_name, fields: [{ field: priority, label: Priority }, { field: assigned_to, label: Responsible }] } }
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Cards, icon: grid, card: { title: name, subtitle: equipment_name, fields: [{ field: scheduled_date, label: Scheduled }, { field: state, label: Status }] } }
+      - { id: pivot, label: Pivot, icon: pivot, mobile: false }
+      - { id: graph, label: Graph, icon: chart, category_field: state, measure_field: id, mobile: false }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: equipment_name
+        record_date_field: scheduled_date
+        mobile: false
+        activity_types: [{ id: todo, label: To-Do, icon: check }]
+    row_key: id
+    row_open_action: view_maintenance_request
+    empty_state: { title: No scheduled maintenance, description: No scheduled maintenance requests match the current filters. }
+    columns: [{ field: name, label: Request, type: PrimaryEntityCell }, { field: equipment_name, label: Equipment }, { field: scheduled_date, label: Scheduled }, { field: assigned_to, label: Responsible }, { field: state, label: Status, type: StatusChip }]
+actions:
+  - { id: view_maintenance_request, type: navigate, permission: maintenance.read, navigate_to: /maintenance-requests/detail, params: { id: '{row.id}' } }
