@@ -136,7 +136,7 @@ const COMPONENT_ACTION_KEYS = new Set([
   'permission',
   'show_if',
 ]);
-const EMPTY_STATE_KEYS = new Set(['title', 'description']);
+const EMPTY_STATE_KEYS = new Set(['title', 'description', 'illustration']);
 const LIST_VIEW_LABEL_KEYS = new Set(['new', 'filters', 'columns', 'selected', 'clear_selection', 'remove_filter', 'previous_page', 'next_page', 'select_all', 'select_row', 'search_facet', 'apply', 'more_actions']);
 const CHART_COLORS = new Set(['blue', 'indigo', 'green', 'amber', 'red', 'teal']);
 

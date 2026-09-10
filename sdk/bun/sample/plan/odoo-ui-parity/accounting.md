@@ -239,6 +239,28 @@ fixture-empty, fixture-error, denied, invoice-tab, and partner-editor states;
 captures remain temporary under `/tmp/core3-accounting-errors-next-*` and are
 not repository assets.
 
+## Current batch: Multi-Ledger configuration catalog
+
+The live Accounting menu audit found Configuration → Accounting → Multi-Ledger,
+backed by Odoo action `action_account_journal_group_list` at
+`/odoo/multi-ledger`. Core3 now exposes the explicit route
+`/accounting/multi-ledger`, with a page-owned API datasource and migration-backed
+`accounting_journal_groups` table. The initial state intentionally remains empty
+to match the fresh Odoo reference and uses its ledger-group columns, explanatory
+copy, selection header, hidden empty pager, and an opt-in local inline
+illustration. The create mutation defaults the company and sequence and rejects
+duplicate ledger-group names within a company with HTTP 409.
+
+Authenticated Core3 and Odoo captures were taken at 1440x900 and 390x844:
+`/tmp/core3-accounting-multi-ledger-desktop-final.png`,
+`/tmp/core3-accounting-multi-ledger-mobile-final.png`,
+`/tmp/odoo-accounting-multi-ledger-desktop.png`, and
+`/tmp/odoo-accounting-multi-ledger-mobile.png`. Both Core3 viewports returned
+zero unexpected responses and no horizontal overflow. Odoo creates a new row
+inline with list-level Save/Discard, while this bounded Core3 slice uses the
+existing permissioned server-form create interaction; editing existing groups
+and the excluded-journal many-to-many widget remain follow-up work.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a

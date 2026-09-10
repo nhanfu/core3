@@ -1,0 +1,12 @@
+version: 0.0.13
+description: Accounting multi-ledger catalog
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_journal_groups (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, excluded_journals VARCHAR NOT NULL DEFAULT '', company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)', sequence INTEGER NOT NULL DEFAULT 10);
+    down: |
+      DROP TABLE IF EXISTS accounting_journal_groups;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

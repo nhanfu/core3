@@ -1,0 +1,22 @@
+title: Multi-ledger
+page: { id: multi-ledger, route: /accounting/multi-ledger, breadcrumb: [Finance, Configuration, Multi-Ledger], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_journal_groups
+    create_action: create_accounting_journal_group
+    create_label: New
+    breadcrumbs: [Multi-ledger]
+    show_pager: false
+    selectable: true
+    search: { label: Search ledger groups, placeholder: Search... }
+    empty_state:
+      illustration: multi-ledger
+      title: Ledger group allows managing multiple accounting standards.
+      description: Create as many ledger groups as needed to maintain separate ledgers for local GAAP, IFRS, or fiscal adjustments, ensuring compliance with diverse regulations.
+    columns:
+      - { field: name, label: Ledger group, type: PrimaryEntityCell }
+      - { field: excluded_journals, label: Excluded Journals }
+      - { field: company, label: Company }
+    page_size: 50
+    row_key: id

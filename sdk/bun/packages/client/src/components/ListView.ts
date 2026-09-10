@@ -112,7 +112,7 @@ export type ListViewOptions = {
   onKanbanDeleteStatus?: (stateId: string, replacementState: string) => Promise<void> | void;
   kanbanTransitions?: Array<{ from: string | string[]; to: string }>;
   kanbanStateEditor?: Record<string, any>;
-  emptyState?: { title?: string; description?: string };
+  emptyState?: { title?: string; description?: string; illustration?: string };
   labels?: {
     new?: string;
     filters?: string;
@@ -451,9 +451,35 @@ export class ListView extends BaseComponent {
       const cell = html.take(body).trow.tdata
         .attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0)))
         .className('o-list-empty')
+        .css('whiteSpace', 'normal')
         .ele();
-      html.take(cell).h3.text(empty.title || i18n.tKey('list.no_records', {}, 'No records found'));
-      if (empty.description) html.take(cell).p.text(empty.description);
+      if (empty.illustration === 'multi-ledger') {
+        const topMargin = window.innerWidth < 576 ? '90px' : '150px';
+        const illustration = html.take(cell).div
+          .className('o-list-empty-illustration')
+          .css('width', '190px')
+          .css('height', '190px')
+          .css('margin', `${topMargin} auto 16px`)
+          .attr('aria-hidden', 'true')
+          .ele();
+        html.take(illustration).innerHTML('<svg viewBox="0 0 190 190" width="190" height="190" xmlns="http://www.w3.org/2000/svg"><circle cx="95" cy="124" r="61" fill="#6d486b"/><path d="M57 22h61l25 25v122H57z" fill="#fff" stroke="#adb5bd" stroke-width="3"/><path d="M118 22v25h25" fill="none" stroke="#adb5bd" stroke-width="3"/><path d="M69 61h53M69 73h53M69 85h38M69 151h53M69 163h38" stroke="#e9ecef" stroke-width="7" stroke-linecap="round"/><circle cx="95" cy="98" r="24" fill="#835879"/><text x="95" y="104" text-anchor="middle" fill="#fff" font-size="15" font-family="Arial, sans-serif" font-weight="700">IFRS</text><circle cx="126" cy="125" r="27" fill="#1ecbb8"/><text x="126" y="130" text-anchor="middle" fill="#fff" font-size="10" font-family="Arial, sans-serif" font-weight="700">Local</text><text x="126" y="142" text-anchor="middle" fill="#fff" font-size="10" font-family="Arial, sans-serif" font-weight="700">GAAP</text><circle cx="66" cy="128" r="27" fill="#ffbf45"/><text x="66" y="133" text-anchor="middle" fill="#fff" font-size="11" font-family="Arial, sans-serif" font-weight="700">FISCAL</text></svg>');
+      }
+      const copy = html.take(cell).div
+        .css('maxWidth', '720px')
+        .css('margin', '0 auto')
+        .css('whiteSpace', 'normal')
+        .css('overflowWrap', 'anywhere')
+        .ele();
+      html.take(copy).h3
+        .css('whiteSpace', 'normal')
+        .css('overflowWrap', 'anywhere')
+        .text(empty.title || i18n.tKey('list.no_records', {}, 'No records found'));
+      if (empty.description) {
+        html.take(copy).p
+          .css('whiteSpace', 'normal')
+          .css('overflowWrap', 'anywhere')
+          .text(empty.description);
+      }
     } else if (groupBy) {
       const groups = new Map<string, ListRow[]>();
       for (const row of rows) {

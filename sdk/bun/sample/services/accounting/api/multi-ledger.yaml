@@ -1,0 +1,31 @@
+page: { id: multi-ledger }
+datasources:
+  - id: accounting_journal_groups
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, name, excluded_journals, company FROM accounting_journal_groups CROSS JOIN request_guard WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR excluded_journals ILIKE '%' || :q || '%' OR company ILIKE '%' || :q || '%') ORDER BY sequence, name"
+actions:
+  - id: create_accounting_journal_group
+    type: server_form
+    permission: accounting.write
+    title: New Multi-ledger
+    action: accounting.journal_groups.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_journal_groups]
+    mutation:
+      operation: insert
+      table: accounting_journal_groups
+      fields: [name, excluded_journals, company, sequence]
+      required: [name]
+      defaults: { excluded_journals: '', company: 'My Company (San Francisco)', sequence: 10 }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_journal_groups WHERE name = :name AND company = :company)"
+          status: 409
+          message: A Ledger group name must be unique per company.
+      result: { query: "SELECT * FROM accounting_journal_groups WHERE id = :id" }
+    fields:
+      - { field: name, label: Ledger group, type: text, required: true }
+      - { field: excluded_journals, label: Excluded Journals, type: text }
+      - { field: company, label: Company, type: text, default: 'My Company (San Francisco)' }
+      - { field: sequence, label: Sequence, type: number, default: 10 }

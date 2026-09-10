@@ -116,6 +116,10 @@ menu:
           label: Fiscal Positions
           icon: globe
           permission: accounting.read
+        - path: /accounting/multi-ledger
+          label: Multi-Ledger
+          icon: ledger
+          permission: accounting.read
         - path: /accounting/tax-groups
           label: Tax Groups
           icon: percent
