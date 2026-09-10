@@ -23,7 +23,7 @@ not create CRM records or modify another module.
 
 The fixed fixture is `event-lead-rule-example`, `Rule on @example.com`, linked
 to `Hockey Tournament`, with 23 matching attendee records. Migration
-`20260911140000-017-event-lead-generation.yaml` is idempotent and contains no
+`20260911140000-018-event-lead-generation.yaml` is idempotent and contains no
 current-time, random, or generated seed values. Focused evidence is in
 `events_lead_generation.integration.test.ts`; authenticated Odoo/Core3
 desktop/mobile captures are recorded after the browser gate and remain in

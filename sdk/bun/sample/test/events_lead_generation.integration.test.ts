@@ -95,7 +95,7 @@ describe('Events Lead Generation Rules parity', () => {
   });
 
   test('keeps the fixture migration deterministic and event-owned', () => {
-    const migration = readFileSync(join(serviceRoot, 'migrations/20260911140000-017-event-lead-generation.yaml'), 'utf8');
+    const migration = readFileSync(join(serviceRoot, 'migrations/20260911140000-018-event-lead-generation.yaml'), 'utf8');
     expect(migration).toContain("'Rule on @example.com'");
     expect(migration).not.toMatch(/CURRENT_(DATE|TIMESTAMP)|gen_random_uuid\(\)|random\(\)/i);
     expect(migration).toContain('CREATE TABLE IF NOT EXISTS event_lead_rules');
