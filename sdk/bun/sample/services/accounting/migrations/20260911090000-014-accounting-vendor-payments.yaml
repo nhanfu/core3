@@ -1,0 +1,23 @@
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO accounting_payments(id, name, partner_name, payment_type, amount, payment_method, journal, currency, payment_date, state, reference)
+      VALUES
+        ('accounting-vendor-payment-demo-001', 'BILL/2026/0001', 'Lumber Inc', 'Outbound', 880.00, 'Manual Payment', 'Bank', 'USD', CURRENT_DATE - INTERVAL '5' DAY, 'Paid', 'BILL-001'),
+        ('accounting-vendor-payment-demo-002', 'BILL/2026/0002', 'Wood Corner', 'Outbound', 1250.00, 'Manual Payment', 'Bank', 'USD', CURRENT_DATE - INTERVAL '4' DAY, 'In Process', 'BILL-002'),
+        ('accounting-vendor-payment-demo-003', 'BILL/2026/0003', 'Acme Corporation', 'Outbound', 4375.50, 'Check', 'Cash', 'USD', CURRENT_DATE - INTERVAL '3' DAY, 'Draft', 'BILL-003'),
+        ('accounting-vendor-payment-demo-004', 'BILL/2026/0004', 'Azure Interior', 'Outbound', 620.00, 'Manual Payment', 'Bank', 'USD', CURRENT_DATE - INTERVAL '2' DAY, 'Canceled', 'BILL-004'),
+        ('accounting-vendor-payment-demo-005', 'BILL/2026/0005', 'Gemini Furniture', 'Outbound', 2190.75, 'Manual Payment', 'Bank', 'USD', CURRENT_DATE - INTERVAL '1' DAY, 'Rejected', 'BILL-005'),
+        ('accounting-vendor-payment-demo-006', 'BILL/2026/0006', 'Ready Mat', 'Outbound', 3100.00, 'Manual Payment', 'Miscellaneous', 'USD', CURRENT_DATE, 'Draft', 'BILL-006'),
+        ('accounting-vendor-payment-demo-007', 'BILL/2026/0007', 'Lumber Inc', 'Outbound', 945.20, 'Check', 'Cash', 'USD', CURRENT_DATE + INTERVAL '1' DAY, 'In Process', 'BILL-007'),
+        ('accounting-vendor-payment-demo-008', 'BILL/2026/0008', 'Wood Corner', 'Outbound', 785.00, 'Manual Payment', 'Bank', 'USD', CURRENT_DATE + INTERVAL '2' DAY, 'Paid', 'BILL-008'),
+        ('accounting-vendor-payment-demo-009', 'BILL/2026/0009', 'Acme Corporation', 'Outbound', 1680.00, 'Manual Payment', 'Bank', 'USD', CURRENT_DATE + INTERVAL '3' DAY, 'Draft', 'BILL-009'),
+        ('accounting-vendor-payment-demo-010', 'BILL/2026/0010', 'Gemini Furniture', 'Outbound', 2500.00, 'Manual Payment', 'Miscellaneous', 'USD', CURRENT_DATE + INTERVAL '4' DAY, 'Rejected', 'BILL-010');
+    down: |
+      DELETE FROM accounting_payments WHERE id LIKE 'accounting-vendor-payment-demo-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
