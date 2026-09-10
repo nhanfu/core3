@@ -682,10 +682,11 @@ export class ListView extends BaseComponent {
     }
 
     const views = this.options.views || [];
-    if (views.length > 1 && this.options.viewNavigation !== 'tabs' && !this.options.responsiveCard) {
+    const navigationViews = views.filter(view => view.id === 'form' || (this.isSmallScreen() ? (view as any).mobile !== false : (view as any).mobile !== true));
+    if (navigationViews.length > 1 && this.options.viewNavigation !== 'tabs' && !this.options.responsiveCard) {
       const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', i18n.tKey('list.view', {}, 'View')).ele();
-      for (const view of views) {
-        const mobileCardView = views.some(candidate => candidate.id === 'card');
+      for (const view of navigationViews) {
+        const mobileCardView = navigationViews.some(candidate => candidate.id === 'card');
         const button = html.take(switcher).button
           .className(`${this.isViewEnabled(view.id) ? 'is-active ' : ''}${view.id === 'card' ? 'o-list-view-mobile-only' : ''}${view.id === 'form' ? 'o-list-view-form-only' : ''}${view.id === 'list' && mobileCardView ? 'o-list-view-desktop-only' : ''}`)
           .dataAttr('list-view', view.id)
@@ -745,7 +746,7 @@ export class ListView extends BaseComponent {
 
   private drawViewTabs(container: HTMLElement) {
     // FormView is an inline/detail presentation, not a collection view tab.
-    const views = (this.options.views || []).filter(view => view.id !== 'form' && (!this.isSmallScreen() || (view as any).mobile !== false));
+    const views = (this.options.views || []).filter(view => view.id !== 'form' && (this.isSmallScreen() ? (view as any).mobile !== false : (view as any).mobile !== true));
     if (views.length <= 1) return;
     const tabList = html.take(container).nav.className('o-list-view-tabs').attr('role', 'tablist').attr('aria-label', i18n.tKey('list.view', {}, 'View')).ele();
     for (const view of views) {
@@ -997,7 +998,7 @@ export class ListView extends BaseComponent {
   private activeView(): ListViewMode {
     const views = this.isSmallScreen()
       ? (this.options.views || []).filter(view => (view as any).mobile !== false)
-      : (this.options.views || []);
+      : (this.options.views || []).filter(view => (view as any).mobile !== true);
     if (this.isSmallScreen()) {
       const cardView = views.find(view => view.id === 'card');
       if (this.state.activeView === undefined || this.state.activeView === 'form') {

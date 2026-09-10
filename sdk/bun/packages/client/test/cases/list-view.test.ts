@@ -322,6 +322,34 @@ describe('Odoo ListView', () => {
     }
   });
 
+  it('keeps mobile-only card fallbacks out of desktop tabs', () => {
+    const originalMatchMedia = window.matchMedia;
+    try {
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: false, media: '(max-width: 768px)' }) });
+      const desktop = mount(create({
+        viewNavigation: 'tabs',
+        views: [
+          { id: 'list', label: 'List', mobile: false },
+          { id: 'card', label: 'Cards', mobile: true, card: { title: 'number' } },
+        ],
+      }));
+      expect(desktop.querySelector('[data-list-view="card"]')).toBeNull();
+
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: true, media: '(max-width: 768px)' }) });
+      const mobile = mount(create({
+        viewNavigation: 'tabs',
+        views: [
+          { id: 'list', label: 'List', mobile: false },
+          { id: 'card', label: 'Cards', mobile: true, card: { title: 'number' } },
+        ],
+      }));
+      expect(mobile.querySelector('.o-card-view')).not.toBeNull();
+      expect(mobile.querySelector('[data-list-view="card"]')).toBeNull();
+    } finally {
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMatchMedia });
+    }
+  });
+
   it('does not render FormView alongside ListView on small screens', () => {
     const originalMatchMedia = window.matchMedia;
     Object.defineProperty(window, 'matchMedia', {
