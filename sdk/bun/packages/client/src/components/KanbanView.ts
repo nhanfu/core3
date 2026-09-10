@@ -6,6 +6,7 @@ import { Dialog, type DialogTagGroup } from '@core3/client/components/Dialog';
 type ListRow = Record<string, unknown>;
 type KanbanCardField = { field: string; label?: string };
 type KanbanCardFooter = { field: string; label?: string; totalField?: string; total_field?: string };
+type KanbanCardContact = { field: string; icon?: string };
 
 function initials(value: unknown) {
   const words = String(value || '').trim().split(/\s+/).filter(Boolean);
@@ -32,6 +33,8 @@ export type KanbanViewDefinition = {
     primary_metric?: string;
     primaryMetricLabel?: string;
     primary_metric_label?: string;
+    contactFields?: KanbanCardContact[];
+    contact_fields?: KanbanCardContact[];
     fields?: KanbanCardField[];
     footer?: KanbanCardFooter[];
   };
@@ -208,7 +211,22 @@ export class KanbanView extends BaseComponent {
       } else {
         html.take(avatar).span.className('o-kanban-card-avatar-initials').text(initials(avatarValue || manager || title));
       }
-      if (manager != null && manager !== '') html.take(identity).span.className('o-kanban-card-manager-name').text(String(manager));
+    if (manager != null && manager !== '') html.take(identity).span.className('o-kanban-card-manager-name').text(String(manager));
+    }
+
+    const contactFields = cardDef.contactFields || cardDef.contact_fields || [];
+    if (contactFields.length) {
+      const contacts = html.take(card).div.className('o-kanban-card-contacts').ele();
+      for (const contact of contactFields) {
+        const value = row[contact.field];
+        if (value == null || value === '') continue;
+        const line = html.take(contacts).div.className('o-kanban-card-contact').ele();
+        if (contact.icon) {
+          const icon = html.take(line).span.className('o-kanban-card-contact-icon').ele();
+          appendIcon(icon, contact.icon);
+        }
+        html.take(line).span.text(String(value));
+      }
     }
 
     const companyField = cardDef.companyField || cardDef.company_field;

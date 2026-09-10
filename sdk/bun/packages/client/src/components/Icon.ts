@@ -77,6 +77,7 @@ const ICON_PATHS: Record<string, string> = {
   share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.5 6.6-4M8.7 13.5l6.6 4"/>',
   car: '<path d="m5 16-1-5 2-5h12l2 5-1 5H5Z"/><path d="M6 11h12M7 16v2m10-2v2"/><circle cx="7" cy="14" r="1"/><circle cx="17" cy="14" r="1"/>',
   mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/>',
+  phone: '<path d="M6.5 3.5 9 3l2 4-2 2a13 13 0 0 0 5 5l2-2 4 2-.5 2.5a2 2 0 0 1-2.2 1.6C10.5 17.2 6.8 13.5 4.9 6.7A2 2 0 0 1 6.5 3.5Z"/>',
   survey: '<path d="M5 3h14v18H5V3Z"/><path d="M8 7h1m3 0h5M8 12h1m3 0h5M8 17h1m3 0h5"/>',
   automation: '<path d="M12 3v4m0 10v4M3 12h4m10 0h4M5.6 5.6l2.8 2.8m7.2 7.2 2.8 2.8m0-12.8-2.8 2.8m-7.2 7.2-2.8 2.8"/><circle cx="12" cy="12" r="3"/>',
   project: '<path d="M4 5h16v14H4z"/><path d="M8 5v14M4 10h16M12 10v9"/>',

@@ -12,7 +12,7 @@ components:
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table, mobile: false }
-      - { id: card, label: Kanban, icon: dashboard, mobile: true, card: { title: name, subtitle: email, fields: [{ field: city, label: City }, { field: country, label: Country }, { field: purchase_order_count, label: Purchases }, { field: state, label: Status }] } }
+      - { id: card, label: Kanban, icon: dashboard, mobile: true, card: { title: name, subtitle: email, avatar_field: name, contact_fields: [{ field: phone, icon: phone }], company_field: location_display, primary_metric: purchase_order_count, primary_metric_label: Purchases, compact: true, fields: [{ field: open_purchase_order_count, label: Open }, { field: state, label: Status }], footer: [{ field: purchase_order_count, label: Purchase orders }] } }
     columns:
       - { field: name, label: Vendor, type: PrimaryEntityCell }
       - { field: email, label: Email }
