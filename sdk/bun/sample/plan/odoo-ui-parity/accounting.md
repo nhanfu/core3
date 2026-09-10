@@ -317,6 +317,38 @@ vendor-bank-account field, and chatter; row navigation reuses the existing
 read-only generic payment detail. A later payment-form slice can add those
 controls without changing this vendor-list datasource boundary.
 
+## Current batch: Secure Entries closing wizard
+
+The live Odoo 19 menu/action audit found Accounting → Closing → Secure Entries,
+menu action `account.action_view_account_secure_entries_wizard` (action 371).
+Odoo opens the `account.secure.entries.wizard` form with the instruction
+“Secure entries up to [date] inclusive, to make them immutable” and `Secure
+Entries` and `Discard` actions.
+
+Core3 exposes `/accounting/secure-entries` with a layout-only page joined to
+`api/secure-entries.yaml` through `page.id`. Migration
+`20260911100000-015-accounting-secure-entries.yaml` seeds a deterministic
+company state. The read datasource requires `accounting.read`; the server-form
+mutation requires `accounting.write`, records a bounded `2026-01-15` date, and
+guards required, bounded, monotonic dates. This slice does not claim Odoo's
+cryptographic hash-chain or database immutability. Authenticated comparison
+captures are temporary under `/tmp` and are not repository assets.
+
+## Current batch: Vendor Employee Expenses action
+
+The owned Odoo 19 database exposes Vendors → Employee Expenses through menu XML
+ID `hr_expense.menu_hr_expense_account_employee_expenses` (window action 599,
+`/odoo/expenses-employee`). Core3 adds `/accounting/employee-expenses` with a
+dedicated Accounting-owned table, separate page/API fragments joined by
+`page.id`, List desktop and Kanban mobile modes, status filtering, search,
+New, row navigation, and fixed comparison rows totaling `$737.80`.
+
+Migration `20260910180000-016-accounting-employee-expenses.yaml` uses explicit
+IDs and `2026-01-15` dates/timestamps. Read access requires `accounting.read`;
+New requires `accounting.write`, with positive-amount, valid-date, and duplicate
+description guards. Empty and transport-error paths are explicit, and browser
+captures remain temporary outside the repository.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a
