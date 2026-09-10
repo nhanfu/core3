@@ -1,14 +1,5 @@
 title: Events
 page: { id: events, route: /events, breadcrumb: [Marketing, Events], auth: { require: [events.read] } }
-datasources:
-  - id: event_states
-    permission: events.read
-    single: false
-    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('In Progress','In Progress'), ('Completed','Completed'), ('Cancelled','Cancelled')) states(value, label)"
-  - id: events
-    permission: events.read
-    workflow: events
-    query: "SELECT e.id, e.row_version, e.name, e.event_type, e.organizer, e.venue, e.capacity, e.registration_count, CAST(e.start_at AS VARCHAR) AS start_at, CAST(e.end_at AS VARCHAR) AS end_at, e.state FROM events e WHERE (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.event_type ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) ORDER BY e.start_at DESC"
 components:
   - type: ListView
     variant: odoo
@@ -17,6 +8,49 @@ components:
     create_label: New event
     search: { label: Search events, placeholder: 'Search event or event type...' }
     filters: [{ field: state, label: Status, options_source: event_states }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: event_states
+        card:
+          title: name
+          subtitle: event_type
+          fields:
+            - { field: organizer, label: Organizer }
+            - { field: venue, label: Venue }
+            - { field: registration_count, label: Registered }
+            - { field: state, label: Status }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: start_at
+        end_date_field: end_at
+        card:
+          title: name
+          subtitle: venue
+          fields: [{ field: state, label: Status }]
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: state, column: Status }
+            - { field: event_type, column: Type }
+            - { field: start_at, column: Date, type: date }
+            - { field: capacity, column: Capacity }
+            - { field: registration_count, column: Registered }
+          default:
+            rows: [state]
+            columns: [event_type]
+            measures:
+              - { field: capacity, aggregate: sum, column: Capacity }
+              - { field: registration_count, aggregate: sum, column: Registered }
+          date_ranges: { start_at: month }
+      - { id: graph, label: Graph, icon: graph, category_field: state, measure_field: registration_count, type: bar }
     columns:
       - { field: name, label: Event, type: PrimaryEntityCell }
       - { field: event_type, label: Type }

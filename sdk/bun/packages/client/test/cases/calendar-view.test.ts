@@ -34,4 +34,17 @@ describe('CalendarView', () => {
     expect(host.querySelector('.o-calendar-title')?.textContent).toContain('July');
     expect(host.querySelector('[data-row-id="o1"]')?.textContent).toBe('ORD-001');
   });
+
+  it('renders SQL timestamp rows with a space date-time separator', () => {
+    const host = document.createElement('div');
+    const view = new CalendarView('events-calendar', {
+      rows: [{ id: 'event-1', start_at: '2026-09-14 14:00:00', name: 'Conference' }],
+      month: '2026-09',
+    }, {
+      view: { id: 'calendar', label: 'Calendar', dateField: 'start_at', card: { title: 'name' } },
+    });
+    view.mount(host);
+
+    expect(host.querySelector('[data-row-id="event-1"]')?.textContent).toBe('Conference');
+  });
 });

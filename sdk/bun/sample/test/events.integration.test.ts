@@ -7,6 +7,21 @@ const root = join(import.meta.dir, '../services/events');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('Events attendee parity batch', () => {
+  test('matches the Odoo event list view inventory', () => {
+    const page = yaml('pages/events.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    expect(page.datasources).toBeUndefined();
+    expect(list.view_navigation).toBe('tabs');
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar', 'pivot', 'graph']);
+    expect(list.views.map((view: any) => view.label)).toEqual(['List', 'Kanban', 'Calendar', 'Pivot', 'Graph']);
+    expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ group_by: 'state', groups_source: 'event_states' });
+    expect(list.views.find((view: any) => view.id === 'calendar')).toMatchObject({ date_field: 'start_at', end_date_field: 'end_at' });
+    expect(list.views.find((view: any) => view.id === 'pivot')?.pivot.default).toMatchObject({ rows: ['state'], columns: ['event_type'] });
+    expect(list.views.find((view: any) => view.id === 'graph')).toMatchObject({ category_field: 'state', measure_field: 'registration_count' });
+    expect(yaml('api/events.yaml').datasources.map((source: any) => source.id)).toEqual(['event_states', 'events']);
+    expect(yaml('api/events.yaml').datasources.find((source: any) => source.id === 'events')?.pivot.fields).toEqual(['state', 'event_type', 'start_at', 'capacity', 'registration_count']);
+  });
+
   test('matches the Odoo event form actions and stat buttons', () => {
     const page = yaml('pages/event-detail.yaml');
     const form = page.components.find((component: any) => component.type === 'OdooFormView');

@@ -122,7 +122,11 @@ export class CalendarView extends BaseComponent {
 
   private parseDate(value: unknown) {
     if (value == null || value === '') return null;
-    const date = new Date(String(value).includes('T') ? String(value) : `${String(value)}T00:00:00`);
+    const raw = String(value).trim();
+    // SQL-backed datasources commonly serialize timestamps as `YYYY-MM-DD HH:mm:ss`.
+    // Normalize that separator before adding a time to date-only values.
+    const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+    const date = new Date(normalized.includes('T') ? normalized : `${normalized}T00:00:00`);
     return Number.isNaN(date.getTime()) ? null : date;
   }
 

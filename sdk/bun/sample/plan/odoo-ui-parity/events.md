@@ -387,6 +387,19 @@ requests, and kept document width within the viewport. Captures are
 `/tmp/core3-events-detail-catalog-{desktop,mobile}.png`; the branch remains
 isolated until the main runtime verification completes.
 
+The event-list view-mode batch moves the Events list queries to
+`services/events/api/events.yaml` and adds the Odoo action's List, Kanban,
+Calendar, Pivot, and Graph presentations with visible tab navigation, status
+grouping, event scheduling, registration measures, and mobile-safe controls.
+Authenticated desktop/mobile checks cover every implemented mode and retain
+the Odoo reference pair at `/tmp/odoo-events-list-modes-{desktop,mobile}.png`;
+Core3 evidence is captured per mode at
+`/tmp/core3-events-list-modes-{desktop,mobile}-{list,kanban,calendar,pivot,graph}.png`.
+Odoo also
+exposes Activity for this action, but the shared Core3 renderer has no Activity
+view contract yet, so it remains an explicit parity gate rather than an
+unimplemented tab.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

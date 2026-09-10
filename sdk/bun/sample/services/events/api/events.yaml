@@ -1,0 +1,12 @@
+page: { id: events }
+datasources:
+  - id: event_states
+    permission: events.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('In Progress','In Progress'), ('Completed','Completed'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: events
+    permission: events.read
+    workflow: events
+    pivot:
+      fields: [state, event_type, start_at, capacity, registration_count]
+    query: "SELECT e.id, e.row_version, e.name, e.event_type, e.organizer, e.venue, e.capacity, e.registration_count, CAST(e.start_at AS VARCHAR) AS start_at, CAST(e.end_at AS VARCHAR) AS end_at, e.state FROM events e WHERE (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.event_type ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) ORDER BY e.start_at DESC"
