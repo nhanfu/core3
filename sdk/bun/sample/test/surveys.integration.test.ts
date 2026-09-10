@@ -139,4 +139,34 @@ describe('Surveys parity catalog and workflow', () => {
     expect(migration.type.postgres.up).toContain('participant-feedback-passed');
     expect(migration.type.postgres.up).toContain('participant-feedback-failed');
   });
+
+  test('owns the live-session lifecycle through page-bound YAML actions', () => {
+    const detail = yaml('pages/survey-detail.yaml');
+    const detailApi = yaml('api/survey-detail.yaml');
+    const session = yaml('pages/live-session.yaml');
+    const sessionApi = yaml('api/live-session.yaml');
+    const detailForm = detail.components.find((component: any) => component.type === 'OdooFormView');
+    const start = detailApi.actions.find((action: any) => action.id === 'start_live_session_detail');
+    const end = sessionApi.actions.find((action: any) => action.id === 'end_live_session');
+    expect(yaml('manifest.yaml').permissions).toBe('permissions.yaml');
+    expect(yaml('migrations/20260910230000-008-survey-live-sessions.yaml').version).toBe('0.0.9');
+    expect(session.page.id).toBe('survey-live-session');
+    expect(sessionApi.page.id).toBe('survey-live-session');
+    expect(sessionApi.datasources[0].query).toContain(':survey_id');
+    expect(detailApi.datasources[0].query).toContain('session_state');
+    expect(detailForm.header_actions.map((action: any) => action.id)).toEqual(expect.arrayContaining([
+      'start_live_session_detail', 'open_live_session_detail', 'end_live_session_detail',
+    ]));
+    expect(detail.actions.find((action: any) => action.id === 'open_live_session_detail')).toMatchObject({
+      navigate_to: '/surveys/live-session', params: { survey_id: '{row.id}' },
+    });
+    expect(start).toMatchObject({ permission: 'surveys.manage', handler: 'yaml_mutation', action: 'surveys.sessions.start' });
+    expect(start.params).toEqual({ expected_session_row_version: '{row.session_row_version}' });
+    expect(String(start.mutation.guards[0].query)).toContain('EXISTS (SELECT 1 FROM survey_questions');
+    expect(String(start.mutation.steps[0].query)).toContain("state = 'Ready'");
+    expect(end).toMatchObject({ permission: 'surveys.manage', handler: 'yaml_mutation', action: 'surveys.sessions.end' });
+    expect(detailApi.actions.find((action: any) => action.id === 'end_live_session_detail').params).toEqual({ id: '{row.session_id}', expected_row_version: '{row.session_row_version}' });
+    expect(String(end.mutation.guards[0].query)).toContain("state IN ('Ready', 'In Progress')");
+    expect(String(end.mutation.steps[0].query)).toContain("state = 'Closed'");
+  });
 });

@@ -262,6 +262,28 @@ The matching fresh Odoo reference check used database `core3_reference`,
 overflow. Captures are
 `/tmp/odoo-survey-results-followup-{desktop,mobile}.png`.
 
+The live-session follow-up implements the next uncovered visible Odoo action
+state from the installed `core3_owned` reference. Odoo's Feedback Form exposes
+`Create Live Session`; starting it opens `/survey/session/manage/<access_token>`
+with the survey description, session code `5822`, join link, `0 Waiting for
+attendees`, and `Start`. Core3 now owns a deterministic
+`survey_live_sessions` record per seeded survey, adds permissioned
+`Create Live Session`, `Open Session Manager`, and `Close Live Session`
+controls to `/surveys/detail`, and exposes `/surveys/live-session` through the
+matching `survey-live-session` page/API fragments. The lifecycle is guarded by
+`surveys.manage`, optimistic session row versions, and the states `Closed`,
+`Ready`, and `In Progress`; the bounded slice intentionally does not implement
+question-by-question polling, attendee answers, leaderboard updates, or the
+public `/s/<session_code>` join flow. Deterministic seed date is
+`2026-01-15`; the migration is `0.0.9`.
+
+Authenticated Odoo reference captures for this slice are
+`/tmp/odoo-surveys-live-form-{desktop,mobile}.png` and
+`/tmp/odoo-surveys-live-session-{desktop,mobile}.png`; Core3 comparison
+captures are under `/tmp/core3-surveys-live-session-{desktop,mobile}.png`.
+The Odoo session was closed after capture so `core3_owned` remains in its
+initial no-active-session state.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions

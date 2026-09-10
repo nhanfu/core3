@@ -3,10 +3,40 @@ datasources:
   - id: survey_detail
     single: true
     permission: surveys.read
-    query: "SELECT s.id, s.row_version, s.name, s.title, s.description, s.owner, s.response_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS participant_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.quiz_passed = true) AS certified_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE s.id = :id"
+    query: "SELECT s.id, s.row_version, s.name, s.title, s.description, s.owner, s.response_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS participant_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.quiz_passed = true) AS certified_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at, ls.id AS session_id, ls.row_version AS session_row_version, CASE WHEN ls.state IN ('Ready', 'In Progress') THEN ls.state ELSE NULL END AS session_state, ls.session_code, ls.session_link, ls.current_question_text, CAST(ls.session_start_time AS VARCHAR) AS session_start_time, ls.answer_count AS session_answer_count, ls.question_answer_count AS session_question_answer_count FROM surveys s LEFT JOIN survey_live_sessions ls ON ls.survey_id = s.id WHERE s.id = :id"
   - id: survey_questions
     permission: surveys.read
     query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :id ORDER BY sequence, id"
   - id: survey_responses
     permission: surveys.read
     query: "SELECT id, respondent_name, respondent_email, answer_data, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC, id"
+actions:
+  - id: start_live_session_detail
+    type: server
+    permission: surveys.manage
+    action: surveys.sessions.start
+    handler: yaml_mutation
+    params: { expected_session_row_version: '{row.session_row_version}' }
+    result: alert
+    refresh: [survey_detail]
+    mutation:
+      guards:
+        - { query: "SELECT s.id FROM surveys s WHERE s.id = :id AND s.state IN ('Draft', 'Published') AND EXISTS (SELECT 1 FROM survey_questions q WHERE q.survey_id = s.id)", status: 409, message: Only an open survey with at least one question can start a live session. }
+        - { query: "SELECT id FROM survey_live_sessions WHERE survey_id = :id AND state = 'Closed' AND row_version = :expected_session_row_version", status: 409, message: This survey already has an active live session or has changed. Reload before starting it. }
+      steps:
+        - { query: "UPDATE survey_live_sessions SET state = 'Ready', session_start_time = TIMESTAMP '2026-01-15 10:00:00', question_started_at = NULL, current_question_id = NULL, current_question_text = NULL, answer_count = 0, question_answer_count = 0, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 10:00:00' WHERE survey_id = :id AND state = 'Closed' AND row_version = :expected_session_row_version", expect_changed: true, status: 409, message: This survey already has an active live session or has changed. }
+      result: { query: "SELECT 'Live session ready' AS message, state, session_code FROM survey_live_sessions WHERE survey_id = :id" }
+  - id: end_live_session_detail
+    type: server
+    permission: surveys.manage
+    action: surveys.sessions.end
+    handler: yaml_mutation
+    params: { id: '{row.session_id}', expected_row_version: '{row.session_row_version}' }
+    result: alert
+    refresh: [survey_detail]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM survey_live_sessions WHERE id = :id AND state IN ('Ready', 'In Progress') AND row_version = :expected_row_version", status: 409, message: Only an active live session can be closed. Reload before closing it. }
+      steps:
+        - { query: "UPDATE survey_live_sessions SET state = 'Closed', current_question_id = NULL, current_question_text = NULL, question_started_at = NULL, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 10:00:00' WHERE id = :id AND state IN ('Ready', 'In Progress') AND row_version = :expected_row_version", expect_changed: true, status: 409, message: Only an active live session can be closed. }
+      result: { query: "SELECT 'Live session closed' AS message, state FROM survey_live_sessions WHERE id = :id" }
