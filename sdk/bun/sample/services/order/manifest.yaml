@@ -67,6 +67,10 @@ menu:
     - id: configuration
       label: Configuration
       items:
+        - path: /crm/teams
+          label: Sales Teams
+          icon: users
+          permission: crm.manage
         - path: /order/payment-terms
           label: Payment Terms
           icon: calendar
