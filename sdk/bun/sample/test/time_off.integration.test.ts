@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { discoverPages } from '@core3/server/discovery';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
+import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 
 const root = join(import.meta.dir, '../services/time_off');
@@ -181,5 +182,17 @@ describe('Time Off Odoo view navigation', () => {
 
     const migration = yaml('migrations/20260910223000-006-report-by-employee.yaml');
     expect(migration.type.postgres.up).toContain('leave_requests_report_date_state_idx');
+  });
+
+  test('applies the report migration and deterministic fixtures idempotently', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'time_off_test_schema_migrations', ['schema', 'data']);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'time_off_test_schema_migrations', ['schema', 'data']);
+
+    expect((await repository.query("SELECT version FROM time_off_test_schema_migrations WHERE version = '0.0.6'")).length).toBe(1);
+    expect((await repository.query("SELECT COUNT(*) AS count FROM leave_requests WHERE state IN ('Submitted', 'Approved') AND date_from >= DATE '2026-01-01' AND date_from < DATE '2027-01-01'"))[0].count).toBe(3);
+    expect((await repository.query("SELECT index_name FROM duckdb_indexes() WHERE index_name = 'leave_requests_report_date_state_idx'")).length).toBe(1);
+    database.close();
   });
 });
