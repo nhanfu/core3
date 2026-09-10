@@ -16,7 +16,7 @@ menu:
       items:
         - { path: /purchase, label: Requests for Quotation, icon: purchase, permission: purchase.read }
         - { path: /purchase-orders, label: Purchase Orders, icon: purchase, permission: purchase.read }
-        - { path: /vendors, label: Vendors, icon: contacts, permission: purchase.read }
+        - { path: /purchase/vendors, label: Vendors, icon: contacts, permission: purchase.read }
     - id: products
       label: Products
       items:

@@ -1,5 +1,5 @@
 title: Vendor
-page: { id: vendor-detail, route: /vendors/detail, breadcrumb: [Supply Chain, Purchase, Vendors, Vendor], auth: { require: [purchase.read] } }
+page: { id: vendor-detail, route: /purchase/vendors/detail, breadcrumb: [Supply Chain, Purchase, Vendors, Vendor], auth: { require: [purchase.read] } }
 components:
   - type: OdooFormView
     source: purchase_vendor_detail
@@ -8,11 +8,18 @@ components:
     status_field: state
     status_colors: { Active: green, Inactive: neutral }
     editable: true
+    stat_buttons: [{ id: vendor_purchase_orders, label: Purchases, value_field: purchase_order_count }]
+    header_actions:
+      - { id: back_to_purchase_vendors, label: Vendors, icon: arrow-left, permission: purchase.read }
+      - { id: edit_purchase_vendor, label: Edit, variant: primary, permission: purchase.manage }
+      - { id: archive_purchase_vendor_detail, label: Archive, variant: danger, permission: purchase.manage, show_if: "row.state === 'Active'" }
+      - { id: restore_purchase_vendor_detail, label: Restore, variant: secondary, permission: purchase.manage, show_if: "row.state === 'Inactive'" }
+      - { id: delete_purchase_vendor_detail, label: Delete, icon: trash, variant: danger, permission: purchase.manage }
     group_columns: 2
     groups:
       - title: Contact
         fields: [{ field: name, label: Vendor }, { field: email, label: Email }, { field: phone, label: Phone }, { field: vat, label: Tax ID }]
       - title: Address
-        fields: [{ field: street, label: Street }, { field: city, label: City }, { field: country, label: Country }, { field: payment_terms, label: Payment terms }]
+        fields: [{ field: street, label: Street }, { field: city, label: City }, { field: country, label: Country }]
       - title: Purchase
-        fields: [{ field: state, label: Status }, { field: row_version, label: Record version }]
+        fields: [{ field: state, label: Status, readonly: true }, { field: payment_terms, label: Payment terms }, { field: open_purchase_order_count, label: Open purchases, readonly: true }, { field: row_version, label: Record version, readonly: true }]

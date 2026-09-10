@@ -3,22 +3,39 @@ datasources:
   - id: purchase_vendor_detail
     single: true
     permission: purchase.read
-    query: "SELECT id, row_version, name, email, phone, street, city, country, vat, payment_terms, state FROM purchase_vendors WHERE id = :id"
+    error_states: { transport_error: { status: 503, code: PURCHASE_VENDOR_DETAIL_UNAVAILABLE, message: This vendor is temporarily unavailable. } }
+    query: "SELECT v.id, v.row_version, v.name, COALESCE(v.email, '') AS email, COALESCE(v.phone, '') AS phone, COALESCE(v.street, '') AS street, COALESCE(v.city, '') AS city, COALESCE(v.country, '') AS country, COALESCE(v.vat, '') AS vat, COALESCE(v.payment_terms, '') AS payment_terms, v.state, (SELECT COUNT(*) FROM purchase_orders p WHERE p.vendor_id = v.id) AS purchase_order_count, (SELECT COUNT(*) FROM purchase_orders p WHERE p.vendor_id = v.id AND p.state <> 'Cancelled') AS open_purchase_order_count FROM purchase_vendors v WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND v.id = :id"
 actions:
-  - id: update_purchase_vendor
+  - id: back_to_purchase_vendors
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/vendors
+  - id: vendor_purchase_orders
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase
+    params: { vendor_id: '{row.id}' }
+  - id: edit_purchase_vendor
     type: server_form
     permission: purchase.manage
     title: Edit vendor
     action: purchase.vendors.update
     handler: yaml_mutation
     operation: update
-    refresh: [purchase_vendor_detail]
+    params: { id: '{state.id}' }
+    prefill: state.purchase_vendor_detail
+    refresh: [purchase_vendor_detail, purchase_vendors]
     mutation:
       operation: update
       table: purchase_vendors
       key: id
-      fields: [name, email, phone, street, city, country, vat, payment_terms, state]
+      fields: [name, email, phone, street, city, country, vat, payment_terms]
       required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_vendors WHERE id = :id", status: 404, code: PURCHASE_VENDOR_NOT_FOUND, message: Vendor not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PURCHASE_VENDOR_NAME_REQUIRED, message: A vendor name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_vendors WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: PURCHASE_VENDOR_NAME_EXISTS, message: A vendor with this name already exists. }
       result: { query: "SELECT * FROM purchase_vendors WHERE id = :id" }
     fields:
       - { field: name, label: Vendor, type: text, required: true }
@@ -29,4 +46,37 @@ actions:
       - { field: country, label: Country, type: text }
       - { field: vat, label: Tax ID, type: text }
       - { field: payment_terms, label: Payment terms, type: text }
-      - { field: state, label: Status, type: select, options: [Active, Inactive] }
+  - id: archive_purchase_vendor_detail
+    type: server
+    permission: purchase.manage
+    action: purchase.vendors.archive
+    handler: order_transition
+    workflow: purchase_vendors
+    operation: archive
+    params: { id: '{state.id}' }
+    refresh: [purchase_vendor_detail, purchase_vendors]
+  - id: restore_purchase_vendor_detail
+    type: server
+    permission: purchase.manage
+    action: purchase.vendors.restore
+    handler: order_transition
+    workflow: purchase_vendors
+    operation: restore
+    params: { id: '{state.id}' }
+    refresh: [purchase_vendor_detail, purchase_vendors]
+  - id: delete_purchase_vendor_detail
+    type: server
+    permission: purchase.manage
+    action: purchase.vendors.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    confirm: 'Delete vendor {{row.name}}?'
+    refresh: [purchase_vendors]
+    mutation:
+      operation: delete
+      table: purchase_vendors
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_vendors WHERE id = :id", status: 404, code: PURCHASE_VENDOR_NOT_FOUND, message: Vendor not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_orders WHERE vendor_id = :id)", status: 409, code: PURCHASE_VENDOR_IN_USE, message: A vendor with purchase orders cannot be deleted. }

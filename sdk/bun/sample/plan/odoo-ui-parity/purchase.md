@@ -320,6 +320,44 @@ minimum width. Packaging Barcodes is recorded as a follow-up because the
 owned fixture has no barcode action/data contract in this bounded slice. The
 shared Core3 Fluent shell also remains distinct from Odoo's purple shell.
 
+## Vendors bounded follow-up (selected 2026-09-10)
+
+The owned Odoo 19 database `core3_owned` was queried while authenticated as
+`codex@core3.local` at `http://localhost:8069`. Purchase → Orders → Vendors
+resolves to the inherited `account.res_partner_action_supplier` action 302,
+with path `/odoo/vendors`, model `res.partner`, and `list,kanban,form` views.
+Its supplier context defaults the list to supplier partners and the live
+database currently contains the deterministic demo suppliers `Gemini
+Furniture` and `Ready Mat`; the supplier form also exposes purchase-order
+stat context and the purchase-specific receipt-reminder/buyer extensions.
+
+Core3 completes the existing Vendors scaffold at `/purchase/vendors` and
+`/purchase/vendors/detail?id=<stable-vendor-id>`. The layout-only list/detail pages are
+bound to `api/vendors.yaml` and `api/vendor-detail.yaml` by matching
+`page.id`; `vendor-workflow.yaml` owns the Active → Inactive lifecycle.
+Migration `20260910240000-014-purchase-vendors.yaml` adds stable, realistic
+supplier fixtures, including Odoo-shaped Gemini Furniture and Ready Mat rows
+plus an archived supplier for the inactive state. The list defaults to active
+vendors, supports All/Active/Inactive filtering and supplier/contact/location
+search, and switches to compact Kanban cards on mobile. The detail exposes
+contact/address/purchase fields and a Purchases stat navigation action.
+
+Vendor create/update/delete actions require `purchase.manage`, while both
+routes and navigation require `purchase.read`. Names must be non-empty and
+unique; edits require a row version; vendors with purchase orders cannot be
+deleted; active vendors with open purchase orders cannot be archived; and
+archive/restore transitions reject invalid source states. List/detail
+transport errors, empty/no-match/not-found fixtures, lifecycle guards, CRUD,
+duplicate, in-use, stale-version, and permission declarations are covered by
+`test/purchase_vendors.integration.test.ts`.
+
+The authenticated Odoo evidence for this batch is an RPC action/model audit;
+an authenticated Core3 desktop/mobile browser capture was not completed in
+this environment because the persistent Playwright browser interface was not
+available. Screenshots, if captured later, remain local under `/tmp` and are
+not part of the commit. The shared Core3 Fluent shell remains distinct from
+Odoo's purple shell.
+
 ## Required visible states
 
 - RFQ/order list: populated, empty, loading/error, search by order/vendor/

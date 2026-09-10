@@ -1,18 +1,25 @@
 title: Vendors
-page: { id: vendors, route: /vendors, breadcrumb: [Supply Chain, Purchase, Vendors], auth: { require: [purchase.read] } }
+page: { id: vendors, route: /purchase/vendors, breadcrumb: [Supply Chain, Purchase, Vendors], auth: { require: [purchase.read] } }
 components:
   - type: ListView
     variant: odoo
     source: purchase_vendors
+    responsive_card: true
     create_action: create_purchase_vendor
     create_label: New vendor
     search: { label: Search vendors, placeholder: Search vendors... }
     filters: [{ field: state, label: Status, options_source: purchase_vendor_states }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Kanban, icon: dashboard, mobile: true, card: { title: name, subtitle: email, fields: [{ field: city, label: City }, { field: country, label: Country }, { field: purchase_order_count, label: Purchases }, { field: state, label: Status }] } }
     columns:
       - { field: name, label: Vendor, type: PrimaryEntityCell }
       - { field: email, label: Email }
       - { field: phone, label: Phone }
       - { field: city, label: City }
+      - { field: country, label: Country }
+      - { field: purchase_order_count, label: Purchases, align: right }
       - { field: payment_terms, label: Payment terms }
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
@@ -20,10 +27,14 @@ components:
     row_open_action: view_purchase_vendor
     row_double_click_action: view_purchase_vendor
     row_actions: menu
+    actions:
+      - { id: archive_purchase_vendor, label: Archive, permission: purchase.manage, variant: danger, show_if: "row.state === 'Active'" }
+      - { id: restore_purchase_vendor, label: Restore, permission: purchase.manage, variant: secondary, show_if: "row.state === 'Inactive'" }
+      - { id: delete_purchase_vendor, label: Delete, permission: purchase.manage, variant: danger }
     empty_state: { title: No vendors, description: Add a vendor to request prices and create purchase orders. }
 actions:
   - id: view_purchase_vendor
     type: navigate
     permission: purchase.read
-    navigate_to: /vendors/detail
+    navigate_to: /purchase/vendors/detail
     params: { id: '{row.id}' }

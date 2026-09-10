@@ -1,0 +1,15 @@
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO purchase_vendors(id, name, email, phone, state, payment_terms, street, city, country, vat) VALUES
+        ('vendor-demo-004', 'Gemini Furniture', 'john.b@tech.info', '+1 312 349 2324', 'Active', 'Net 30', 'Via Industria 21', 'Serravalle', 'San Marino', 'SM12345'),
+        ('vendor-demo-005', 'Ready Mat', 'info@deltapc.example.com', '(803)-873-6126', 'Active', '30 Days', '7500 W Linne Road', 'Tracy', 'United States', 'US12345675'),
+        ('vendor-demo-006', 'Legacy Office Furnishings', 'archive@legacy-office.example', '+1 415 555 0188', 'Inactive', 'Net 30', '88 Mission Street', 'San Francisco', 'United States', 'US-LOF-2026');
+    down: |
+      DELETE FROM purchase_vendors WHERE id IN ('vendor-demo-004', 'vendor-demo-005', 'vendor-demo-006');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
