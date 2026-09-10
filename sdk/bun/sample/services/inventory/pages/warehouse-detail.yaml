@@ -1,0 +1,30 @@
+title: Warehouse
+page: { id: warehouse-detail, route: /warehouses/detail, breadcrumb: [Supply Chain, Inventory, Configuration, Warehouses, Warehouse], auth: { require: [inventory.read] } }
+components:
+  - type: OdooFormView
+    source: inventory_warehouse_detail
+    title_field: name
+    subtitle_field: code
+    status_field: state
+    status_badges: [{ value: Active, label: Active, tone: green }, { value: Archived, label: Archived, tone: neutral }]
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_inventory_warehouses, label: Back to Warehouses, icon: arrow-left, permission: inventory.read }
+      - { id: edit_inventory_warehouse, label: Edit, variant: primary, permission: inventory.manage }
+      - { id: archive_inventory_warehouse, label: Archive, variant: secondary, permission: inventory.manage, show_if: "record.state === 'Active'" }
+      - { id: restore_inventory_warehouse, label: Restore, variant: secondary, permission: inventory.manage, show_if: "record.state === 'Archived'" }
+      - { id: delete_inventory_warehouse, label: Delete, variant: danger, permission: inventory.manage }
+    group_columns: 2
+    groups:
+      - title: Warehouse
+        fields:
+          - { field: name, label: Warehouse }
+          - { field: code, label: Short Name }
+          - { field: company_name, label: Company }
+          - { field: address, label: Address }
+      - title: Warehouse Configuration
+        fields:
+          - { field: reception_steps, label: Incoming Shipments }
+          - { field: delivery_steps, label: Outgoing Shipments }
+          - { field: location_count, label: Active Locations }

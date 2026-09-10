@@ -1,0 +1,89 @@
+page: { id: warehouse-detail }
+datasources:
+  - id: inventory_warehouse_detail
+    single: true
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_WAREHOUSE_DETAIL_UNAVAILABLE, message: Warehouse details are temporarily unavailable. } }
+    query: "SELECT w.id, w.row_version, w.name, w.code, COALESCE(w.address, '') AS address, COALESCE(w.company_name, 'My Company (San Francisco)') AS company_name, w.state, COALESCE(w.reception_steps, 'one_step') AS reception_steps, COALESCE(w.delivery_steps, 'ship_only') AS delivery_steps, COUNT(l.id) AS location_count FROM inventory_warehouses w LEFT JOIN inventory_locations l ON l.warehouse_id = w.id AND l.state = 'Active' WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND w.id = :id GROUP BY w.id, w.row_version, w.name, w.code, w.address, w.company_name, w.state, w.reception_steps, w.delivery_steps"
+actions:
+  - id: back_to_inventory_warehouses
+    type: navigate
+    permission: inventory.read
+    navigate_to: /warehouses
+  - id: edit_inventory_warehouse
+    type: server_form
+    permission: inventory.manage
+    title: Edit warehouse
+    action: inventory.warehouses.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_warehouse_detail
+    refresh: [inventory_warehouse_detail, inventory_warehouses]
+    mutation:
+      operation: update
+      table: inventory_warehouses
+      fields: [name, code, address, reception_steps, delivery_steps]
+      required: [name, code]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_warehouses WHERE id = :id", status: 404, code: INVENTORY_WAREHOUSE_NOT_FOUND, message: Warehouse not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_WAREHOUSE_NAME_REQUIRED, message: A warehouse name is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:code AS VARCHAR))) BETWEEN 1 AND 5", status: 422, code: INVENTORY_WAREHOUSE_CODE_INVALID, message: The short name must contain between 1 and 5 characters. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_warehouses WHERE LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))) AND id <> :id)", status: 409, code: INVENTORY_WAREHOUSE_CODE_EXISTS, message: A warehouse with this short name already exists. }
+        - { query: "SELECT 1 AS ok WHERE :reception_steps IN ('one_step', 'two_steps', 'three_steps')", status: 422, code: INVENTORY_WAREHOUSE_RECEPTION_INVALID, message: Select a valid incoming shipment flow. }
+        - { query: "SELECT 1 AS ok WHERE :delivery_steps IN ('ship_only', 'pick_ship', 'pick_pack_ship')", status: 422, code: INVENTORY_WAREHOUSE_DELIVERY_INVALID, message: Select a valid outgoing shipment flow. }
+      result: { query: "SELECT * FROM inventory_warehouses WHERE id = :id" }
+    fields:
+      - { field: name, label: Warehouse, type: text, required: true }
+      - { field: code, label: Short Name, type: text, required: true }
+      - { field: address, label: Address, type: text }
+      - { field: reception_steps, label: Incoming Shipments, type: select, options: [{ value: one_step, label: Receive and Store (1 step) }, { value: two_steps, label: Receive then Store (2 steps) }, { value: three_steps, label: 'Receive, Quality Control, then Store (3 steps)' }] }
+      - { field: delivery_steps, label: Outgoing Shipments, type: select, options: [{ value: ship_only, label: Deliver (1 step) }, { value: pick_ship, label: Pick then Deliver (2 steps) }, { value: pick_pack_ship, label: 'Pick, Pack, then Deliver (3 steps)' }] }
+  - id: archive_inventory_warehouse
+    type: server
+    permission: inventory.manage
+    action: inventory.warehouses.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { state: Archived } }
+    refresh: [inventory_warehouse_detail, inventory_warehouses]
+    mutation:
+      operation: update
+      table: inventory_warehouses
+      fields: [state]
+      defaults: { state: Archived }
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_warehouses WHERE id = :id AND state = 'Active'", status: 404, code: INVENTORY_WAREHOUSE_NOT_FOUND, message: Active warehouse not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_pickings p JOIN inventory_locations source_location ON source_location.id = p.source_location_id JOIN inventory_locations destination_location ON destination_location.id = p.destination_location_id WHERE (source_location.warehouse_id = :id OR destination_location.warehouse_id = :id) AND p.state NOT IN ('Done', 'Cancelled'))", status: 409, code: INVENTORY_WAREHOUSE_HAS_OPEN_MOVES, message: A warehouse with open inventory operations cannot be archived. }
+      result: { query: "SELECT * FROM inventory_warehouses WHERE id = :id" }
+  - id: restore_inventory_warehouse
+    type: server
+    permission: inventory.manage
+    action: inventory.warehouses.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { state: Active } }
+    refresh: [inventory_warehouse_detail, inventory_warehouses]
+    mutation:
+      operation: update
+      table: inventory_warehouses
+      fields: [state]
+      defaults: { state: Active }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_warehouses WHERE id = :id AND state = 'Archived'", status: 404, code: INVENTORY_WAREHOUSE_NOT_FOUND, message: Archived warehouse not found. }]
+      result: { query: "SELECT * FROM inventory_warehouses WHERE id = :id" }
+  - id: delete_inventory_warehouse
+    type: server
+    permission: inventory.manage
+    action: inventory.warehouses.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_warehouses]
+    mutation:
+      operation: delete
+      table: inventory_warehouses
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_warehouses WHERE id = :id", status: 404, code: INVENTORY_WAREHOUSE_NOT_FOUND, message: Warehouse not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_locations WHERE warehouse_id = :id)", status: 409, code: INVENTORY_WAREHOUSE_IN_USE, message: A warehouse with locations cannot be deleted. }

@@ -1,0 +1,21 @@
+version: 0.0.9
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS reception_steps VARCHAR;
+      ALTER TABLE inventory_warehouses ADD COLUMN IF NOT EXISTS delivery_steps VARCHAR;
+      UPDATE inventory_warehouses
+      SET company_name = COALESCE(NULLIF(company_name, ''), 'My Company (San Francisco)'),
+          reception_steps = COALESCE(NULLIF(reception_steps, ''), 'one_step'),
+          delivery_steps = COALESCE(NULLIF(delivery_steps, ''), 'ship_only');
+      UPDATE inventory_warehouses SET state = 'Active' WHERE id = 'warehouse-main';
+      UPDATE inventory_warehouses SET state = 'Archived' WHERE id = 'warehouse-overflow';
+    down: |
+      ALTER TABLE inventory_warehouses DROP COLUMN IF EXISTS delivery_steps;
+      ALTER TABLE inventory_warehouses DROP COLUMN IF EXISTS reception_steps;
+      ALTER TABLE inventory_warehouses DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

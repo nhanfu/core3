@@ -364,6 +364,46 @@ relations are deterministic text contracts, and traceability/report,
 activities/chatter, properties, and full Odoo many2one behavior remain future
 parity work.
 
+## Bounded batch: Warehouses configuration (2026-09-10)
+
+The owned Odoo 19 reference was reachable at `http://localhost:8069` and was
+authenticated as `codex@core3.local` in `core3_owned`. Source XML
+`stock.action_warehouse_form` (`stock/views/stock_warehouse_views.xml`) is a
+list/form action with an Archived search filter. The live `stock.warehouse`
+record exposes Warehouse, Short Name, Company, Address, Incoming Shipments,
+and Outgoing Shipments; the model constrains the short name to five characters
+and enforces unique name/code per company. The generated live action URL was
+`/odoo/action-397`; Core3 keeps its explicit service route and shell alias
+`/inventory/warehouses` (`/warehouses` in the manifest) rather than treating
+the generated Odoo action alias as an HTTP endpoint.
+
+Core3 now keeps the presentation pages layout-only:
+`pages/warehouses.yaml` (`warehouses`) and
+`pages/warehouse-detail.yaml` (`warehouse-detail`) bind by matching
+`page.id` to `api/warehouses.yaml` and `api/warehouse-detail.yaml`. The list
+supports active/archived/all status filtering, search, row-open detail
+navigation, empty state, and transport-error state. The detail supports the
+Odoo field/state slice and manager-only create, edit, archive, restore, and
+delete actions. Migration `0.0.9` adds deterministic company and shipment-flow
+fields, initializes stable `2026-01-15` fixture behavior through the existing
+seed rows, and marks the overflow warehouse archived. Guards cover required
+name, five-character code, duplicate code, valid shipment flows, stale row
+versions, open operations, and warehouses that still own locations.
+
+Focused evidence:
+
+- `bun test test/inventory_warehouses.integration.test.ts`: 3 tests, 48
+  assertions passed.
+- The test reruns the Inventory migrations against DuckDB, checks deterministic
+  active/archived fixture ordering, and exercises read, empty, 503, 404, 409,
+  422, CRUD, lifecycle, permission, and concurrency contracts.
+- The authenticated Odoo comparison used JSON-RPC evidence in
+  `/tmp/core3-odoo-warehouse-auth.json` and
+  `/tmp/core3-odoo-warehouse-data.json`; no screenshots were added to Git.
+  Browser navigation evidence was not run in this batch per the execution
+  instruction to proceed without waiting for browser tooling, so authenticated
+  Core3 visual/mobile parity remains an explicit limitation.
+
 ## Acceptance
 
 - The implementation maps every admin-visible menu/action in the table to a

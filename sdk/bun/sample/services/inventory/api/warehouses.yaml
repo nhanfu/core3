@@ -1,0 +1,42 @@
+page: { id: warehouses }
+datasources:
+  - id: inventory_warehouses
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_WAREHOUSES_UNAVAILABLE, message: Warehouses are temporarily unavailable. } }
+    query: "SELECT w.id, w.row_version, w.name, w.code, COALESCE(w.address, '') AS address, COALESCE(w.company_name, 'My Company (San Francisco)') AS company_name, w.state, COUNT(l.id) AS location_count FROM inventory_warehouses w LEFT JOIN inventory_locations l ON l.warehouse_id = w.id AND l.state = 'Active' WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 AND (COALESCE(:state, 'active') = 'all' OR (COALESCE(:state, 'active') = 'active' AND w.state = 'Active') OR (COALESCE(:state, 'active') = 'archived' AND w.state = 'Archived')) AND (:q IS NULL OR w.name ILIKE '%' || :q || '%' OR w.code ILIKE '%' || :q || '%' OR COALESCE(w.address, '') ILIKE '%' || :q || '%') GROUP BY w.id, w.row_version, w.name, w.code, w.address, w.company_name, w.state ORDER BY w.name, w.id"
+actions:
+  - id: view_inventory_warehouse
+    type: navigate
+    permission: inventory.read
+    navigate_to: /warehouses/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_warehouse
+    type: server_form
+    permission: inventory.manage
+    title: New warehouse
+    action: inventory.warehouses.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_warehouses]
+    mutation:
+      operation: insert
+      table: inventory_warehouses
+      generated: [id]
+      fields: [name, code, address, company_name, reception_steps, delivery_steps, state]
+      required: [name, code]
+      defaults: { state: Active, company_name: 'My Company (San Francisco)', reception_steps: one_step, delivery_steps: ship_only }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_WAREHOUSE_NAME_REQUIRED, message: A warehouse name is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:code AS VARCHAR))) BETWEEN 1 AND 5", status: 422, code: INVENTORY_WAREHOUSE_CODE_INVALID, message: The short name must contain between 1 and 5 characters. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_warehouses WHERE LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))))", status: 409, code: INVENTORY_WAREHOUSE_CODE_EXISTS, message: A warehouse with this short name already exists. }
+        - { query: "SELECT 1 AS ok WHERE :reception_steps IN ('one_step', 'two_steps', 'three_steps')", status: 422, code: INVENTORY_WAREHOUSE_RECEPTION_INVALID, message: Select a valid incoming shipment flow. }
+        - { query: "SELECT 1 AS ok WHERE :delivery_steps IN ('ship_only', 'pick_ship', 'pick_pack_ship')", status: 422, code: INVENTORY_WAREHOUSE_DELIVERY_INVALID, message: Select a valid outgoing shipment flow. }
+      result: { query: "SELECT * FROM inventory_warehouses WHERE id = :id" }
+    fields:
+      - { field: name, label: Warehouse, type: text, required: true, placeholder: 'e.g. Central Warehouse' }
+      - { field: code, label: Short Name, type: text, required: true, placeholder: 'e.g. CW' }
+      - { field: address, label: Address, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: reception_steps, label: Incoming Shipments, type: select, options: [{ value: one_step, label: Receive and Store (1 step) }, { value: two_steps, label: Receive then Store (2 steps) }, { value: three_steps, label: 'Receive, Quality Control, then Store (3 steps)' }] }
+      - { field: delivery_steps, label: Outgoing Shipments, type: select, options: [{ value: ship_only, label: Deliver (1 step) }, { value: pick_ship, label: Pick then Deliver (2 steps) }, { value: pick_pack_ship, label: 'Pick, Pack, then Deliver (3 steps)' }] }
