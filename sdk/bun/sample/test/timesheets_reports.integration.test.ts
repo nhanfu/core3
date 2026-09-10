@@ -9,10 +9,10 @@ import { YamlRepository } from '@core3/server/database/yaml-repository';
 const serviceRoot = join(import.meta.dir, '../services/timesheets');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
 const reportPages = [
-  ['timesheets-by-employee', 'timesheets-by-employee.yaml', 'timesheet_report_by_employee', 'employee_name'],
-  ['timesheets-by-project', 'timesheets-by-project.yaml', 'timesheet_report_by_project', 'project_name'],
-  ['timesheets-by-task', 'timesheets-by-task.yaml', 'timesheet_report_by_task', 'task_name'],
-  ['timesheets-billing', 'timesheets-billing.yaml', 'timesheet_report_by_billing_type', 'billing_type'],
+  ['timesheets-by-employee', 'timesheets-by-employee.yaml', 'timesheet_report_by_employee', 'employee_name', 'TIMESHEETS_REPORT_BY_EMPLOYEE_UNAVAILABLE'],
+  ['timesheets-by-project', 'timesheets-by-project.yaml', 'timesheet_report_by_project', 'project_name', 'TIMESHEETS_REPORT_BY_PROJECT_UNAVAILABLE'],
+  ['timesheets-by-task', 'timesheets-by-task.yaml', 'timesheet_report_by_task', 'task_name', 'TIMESHEETS_REPORT_BY_TASK_UNAVAILABLE'],
+  ['timesheets-billing', 'timesheets-billing.yaml', 'timesheet_report_by_billing_type', 'billing_type', 'TIMESHEETS_REPORT_BY_BILLING_TYPE_UNAVAILABLE'],
 ] as const;
 
 describe('Timesheets reporting parity slice', () => {
@@ -31,11 +31,16 @@ describe('Timesheets reporting parity slice', () => {
       expect(page.datasources, pageFile).toBeUndefined();
       expect(page.actions, pageFile).toBeUndefined();
       expect(page.page.id, pageFile).toBe(pageId);
+      expect(page.page.auth, pageFile).toEqual({ require: ['timesheets.manage'] });
       expect(api.page.id, pageFile).toBe(pageId);
       expect(discovered.pages.get(pageId)?.config.page.id, pageFile).toBe(pageId);
       expect(discovered.pageDatasources.get(pageId), pageFile).toContain(api.datasources[0].id);
       expect(routes.find((route) => route.page === pageId)?.path, pageFile).toBe(`/${pageId}`);
       expect(api.datasources[0].permission, pageFile).toBe('timesheets.manage');
+      expect(api.datasources[0].error_states.transport_error, pageFile).toMatchObject({
+        status: 503,
+        code: reportPages.find((entry) => entry[0] === pageId)?.[4],
+      });
       expect(api.datasources[0].pivot.fields).toEqual(expect.arrayContaining(['date', 'month']));
       expect(page.components[0].views.find((view: any) => view.id === 'pivot').pivot.default.measures).toEqual([
         { field: pageId === 'timesheets-billing' ? 'unit_amount' : 'amount', aggregate: 'sum', column: pageId === 'timesheets-billing' ? 'Time Spent' : 'Timesheet Costs' },
@@ -56,7 +61,7 @@ describe('Timesheets reporting parity slice', () => {
 
     for (const [, pageFile, sourceId, dimension] of reportPages) {
       const source = yaml(`api/${pageFile}`).datasources.find((candidate: any) => candidate.id === sourceId);
-      const result = await repository.querySource(source, { q: null }, 0, 50);
+      const result = await repository.querySource(source, { q: null, fixture_state: null }, 0, 50);
       expect(result.meta.total, sourceId).toBe(8);
       expect(result.data[0]).toEqual(expect.objectContaining({ date: '2026-01-15T00:00:00.000Z', [dimension]: expect.any(String), unit_amount: 8 }));
       expect(result.data.every((row: any) => row.amount <= 0), sourceId).toBe(true);
@@ -68,6 +73,8 @@ describe('Timesheets reporting parity slice', () => {
             ? ['Complete module migration', 'Requirements analysis', 'Design', 'Quality analysis', 'Delivery', 'Training', 'Presentation', 'Sprint']
             : ['Billed at a Fixed Price', 'Billed Manually', 'Billed on Milestones', 'Billed on Timesheets', 'Non-Billable'];
       expect(result.data.map((row: any) => row[dimension]), sourceId).toEqual(expect.arrayContaining(expectedValues));
+      expect((await repository.querySource(source, { q: null, fixture_state: 'empty' }, 0, 50)).data, sourceId).toEqual([]);
+      expect((await repository.querySource(source, { q: null, fixture_state: 'not_found' }, 0, 50)).data, sourceId).toEqual([]);
     }
   });
 
@@ -76,7 +83,7 @@ describe('Timesheets reporting parity slice', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'timesheets_reports_search_migrations', ['schema', 'data']);
     const source = yaml('api/timesheets-by-task.yaml').datasources[0];
-    const result = await repository.querySource(source, { q: 'Training' }, 0, 50);
+    const result = await repository.querySource(source, { q: 'Training', fixture_state: null }, 0, 50);
     expect(result.data).toHaveLength(1);
     expect(result.data[0]).toMatchObject({ task_name: 'Training', date: '2026-01-08T00:00:00.000Z', unit_amount: 5 });
   });
@@ -86,17 +93,38 @@ describe('Timesheets reporting parity slice', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'timesheets_billing_report_migrations', ['schema', 'data']);
     const source = yaml('api/timesheets-billing.yaml').datasources[0];
-    const result = await repository.querySource(source, { q: null }, 0, 50);
+    const result = await repository.querySource(source, { q: null, fixture_state: null }, 0, 50);
     expect(result.meta.total).toBe(8);
     expect(result.data.map((row: any) => row.billing_type)).toEqual(expect.arrayContaining([
       'Billed at a Fixed Price', 'Billed Manually', 'Billed on Milestones', 'Billed on Timesheets', 'Non-Billable',
     ]));
     expect(result.data.filter((row: any) => row.billing_type === 'Non-Billable').every((row: any) => row.billable_time === 0 && row.non_billable_time > 0)).toBe(true);
-    const searched = await repository.querySource(source, { q: 'Billed Manually' }, 0, 50);
+    const searched = await repository.querySource(source, { q: 'Billed Manually', fixture_state: null }, 0, 50);
     expect(searched.data).toHaveLength(1);
     expect(searched.data[0].billing_type).toBe('Billed Manually');
     const empty = await repository.querySource(source, { q: null, fixture_state: 'empty' }, 0, 50);
     expect(empty.meta.total).toBe(0);
     expect(empty.data).toEqual([]);
+  });
+
+  test('declares read-only report controls, deterministic SQL, and transport contracts for every route', async () => {
+    const migrationFiles = (await import('node:fs')).readdirSync(join(serviceRoot, 'migrations')).filter((file) => file.endsWith('.yaml'));
+    const versions = migrationFiles.map((file) => yaml(`migrations/${file}`).version);
+    expect(new Set(versions).size).toBe(versions.length);
+    for (const [pageId, pageFile, sourceId, , errorCode] of reportPages) {
+      const page = yaml(`pages/${pageFile}`);
+      const api = yaml(`api/${pageFile}`);
+      const source = api.datasources.find((candidate: any) => candidate.id === sourceId);
+      expect(page.components[0]).toMatchObject({ type: 'ListView', variant: 'odoo', source: sourceId, view_navigation: 'tabs' });
+      expect(page.components[0].views.map((view: any) => view.id)).toEqual(['pivot', 'graph', 'list']);
+      expect(page.components[0].views.find((view: any) => view.id === 'pivot').pivot.default.measures).toHaveLength(2);
+      expect(String(source.query)).not.toMatch(/CURRENT_(DATE|TIMESTAMP)|random_uuid|gen_random_uuid/i);
+      expect(source.error_states.transport_error).toMatchObject({ status: 503, code: errorCode });
+      const database = await DuckDbDatabase.open(':memory:');
+      const repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, `timesheets_${pageId.replaceAll('-', '_')}_error_migrations`, ['schema', 'data']);
+      await expect(repository.querySource(source, { q: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: errorCode });
+      database.close();
+    }
   });
 });

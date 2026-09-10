@@ -279,3 +279,56 @@ console errors and no document/body horizontal overflow. Core3 desktop was
 opened through the Timesheets menu; the mobile capture used the authenticated
 action path because the compact launcher hides the nested menu, after the
 desktop menu-to-action path was verified.
+
+## Batch 3/4 revalidation record — installed Odoo reference and reporting contracts
+
+The owned Odoo reference was queried live on 2026-09-10 as
+`codex@core3.local` in database `core3_owned`. The queried module state was
+`hr=installed,demo=true,installed_version=19.0.1.1`,
+`hr_timesheet=installed,demo=true,installed_version=19.0.1.0`,
+`project=installed,demo=true,installed_version=19.0.1.4`,
+`sale_timesheet=installed,demo=true,installed_version=19.0.1.0`, and
+`uom=installed,demo=true,installed_version=19.0.1.0`. The live menu tree keeps
+By Employee (menu 413/action 664), By Project (414/665), By Task (415/666),
+and By Billing Type (487/action 766) under
+`Timesheets/Reporting/Timesheets`. Actions 664–666 and 766 are named
+Timesheets by Employee/Project/Task/Billing Type, use model
+`timesheets.analysis.report`, domain `[('project_id', '!=', False)]`, and
+`pivot,graph` modes with list fallback. Billing action 766 exposes the
+additional measures `billable_time` and `non_billable_time`. The live pivot
+fixtures contain 991:00 total across June–September 2026; this is reference
+evidence only, not a replacement for Core3's required fixed seed.
+
+Authenticated Odoo 19 captures were refreshed at 1440x900 and 390x844:
+
+- Desktop: `/tmp/odoo-timesheets-by-employee-desktop-owned.png`,
+  `/tmp/odoo-timesheets-by-project-desktop-owned.png`,
+  `/tmp/odoo-timesheets-by-task-desktop-owned.png`, and
+  `/tmp/odoo-timesheets-billing-desktop-owned.png`.
+- Mobile: `/tmp/odoo-timesheets/employee-owned-390x844-revalidated.png`,
+  `/tmp/odoo-timesheets/project-owned-390x844-revalidated.png`,
+  `/tmp/odoo-timesheets/task-owned-390x844-revalidated.png`, and
+  `/tmp/odoo-timesheets/billing-owned-390x844-revalidated.png`.
+
+Authenticated Core3 captures were checked through the Timesheets action paths
+at both viewports. Desktop captures are
+`/tmp/odoo-timesheets/core3-employee-revalidated-1440x900.png`,
+`/tmp/odoo-timesheets/core3-project-revalidated-1440x900.png`,
+`/tmp/odoo-timesheets/core3-task-revalidated-1440x900.png`, and
+`/tmp/odoo-timesheets/core3-billing-revalidated-1440x900.png`; mobile captures are
+`/tmp/odoo-timesheets/core3-employee-revalidated-390x844.png`,
+`/tmp/odoo-timesheets/core3-project-revalidated-390x844.png`,
+`/tmp/odoo-timesheets/core3-task-revalidated-390x844.png`, and the previously verified
+`/tmp/odoo-timesheets/core3-billing-final-mobile.png`. Pivot, Graph, and List controls were
+exercised on the reporting routes, including search and the billing empty
+fixture. The checks reported no Timesheets failed requests or console errors;
+the document stayed within the viewport at 1440px and 390px, with the wide
+pivot table retained in its Odoo-equivalent scroll region on mobile.
+
+Revalidation found the existing layout-only/page.id design aligned with the
+installed reference. It also closed the reporting API-state gap: all four
+report datasources now explicitly return deterministic empty/not-found results
+and route-specific transport `503` contracts, while retaining the
+`timesheets.manage` permission guard. The focused report test now covers every
+route, menu/page/API ownership, read-only controls and measures, deterministic
+SQL and migration versions, search, empty/not-found, and transport states.
