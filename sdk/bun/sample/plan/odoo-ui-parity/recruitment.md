@@ -301,3 +301,25 @@ fit, search, pivot grouping, and report state contracts are covered by the
 focused test and browser evidence. Configuration, talent pools, calendar,
 activity, CV/chatter, and interviewer-specific permission parity remain later
 batches.
+
+## Batch 3 implementation record — Recruitment Degrees
+
+The installed Odoo action `hr_recruitment_degree_action` was inspected against
+`hr_recruitment_degree_views.xml` in the owned `core3_owned` demo database; its
+live action URL was `/odoo/action-917`. It exposes the editable Degrees list with
+`name`, `score`, and `sequence`, plus a Degree form. Core3 now maps
+Recruitment → Configuration → Applications → Degrees to
+`/recruitment/degrees`, with page-owned API fragments, deterministic Odoo
+degree fixtures, manager-only permissions, duplicate and score-range
+validation, stale-row and missing-record guards, and create/edit/delete
+mutations. Search, empty, and transport-error datasource states are explicit.
+
+Authenticated evidence was captured at both required viewports and compared
+against the installed reference:
+
+- Core3: `/tmp/core3-recruitment/degrees-desktop.png` and
+  `/tmp/core3-recruitment/degrees-mobile.png`.
+- Odoo: `/tmp/odoo-recruitment/degrees-desktop.png` and
+  `/tmp/odoo-recruitment/degrees-mobile.png`.
+
+Screenshots are intentionally not committed.

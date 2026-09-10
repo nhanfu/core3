@@ -1,0 +1,19 @@
+title: Degrees
+page: { id: recruitment-degrees, route: /recruitment/degrees, breadcrumb: [Recruitment, Configuration, Applications, Degrees], auth: { require: [recruitment.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_degrees
+    create_action: create_recruitment_degree
+    create_label: New
+    search: { label: Search degrees, placeholder: Search degrees... }
+    row_key: id
+    row_open_action: edit_recruitment_degree
+    row_actions: menu
+    empty_state: { title: No degrees, description: Create a degree to describe applicant qualifications. }
+    columns:
+      - { field: sequence, label: Sequence, type: Number, sortable: true, mobile: false }
+      - { field: name, label: Degree Name, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: score, label: Score, type: Number, align: right }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_recruitment_degree, label: Edit, icon: edit }, { id: delete_recruitment_degree, label: Delete, icon: delete, variant: danger }] }
+    page_size: 25

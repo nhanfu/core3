@@ -20,3 +20,7 @@ menu:
       label: Reporting
       items:
         - { path: /recruitment-analysis, label: Recruitment Analysis, icon: chart, permission: recruitment.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /recruitment/degrees, label: Degrees, icon: list, permission: recruitment.manage }
