@@ -1,0 +1,50 @@
+title: Departments
+page: { id: employee-departments, route: /employees/departments, breadcrumb: [Human Resources, Reporting, Departments], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_departments_report
+    create_action: create_department
+    create_label: New department
+    search: { label: Search departments, placeholder: Search department or manager... }
+    filters: [{ field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: state
+        groups: [{ value: Active, label: Active }, { value: Archived, label: Archived }]
+        card:
+          title: name
+          subtitle: manager_name
+          fields:
+            - { field: employee_count, label: Employees }
+            - { field: company_name, label: Company }
+            - { field: state, label: Status }
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: manager_name
+          fields:
+            - { field: employee_count, label: Employees }
+            - { field: company_name, label: Company }
+            - { field: state, label: Status }
+    columns:
+      - { field: name, label: Department, type: PrimaryEntityCell }
+      - { field: company_name, label: Company }
+      - { field: manager_name, label: Manager }
+      - { field: employee_count, label: Employees, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_department
+    row_double_click_action: view_department
+    empty_state: { title: No departments found, description: Create a department or adjust your search. }

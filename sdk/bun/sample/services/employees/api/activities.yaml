@@ -1,0 +1,17 @@
+page: { id: employee-activities }
+datasources:
+  - id: employee_activity_timing
+    permission: employees.read
+    query: "SELECT value, label FROM (VALUES ('Overdue', 'Overdue'), ('Today', 'Today'), ('Planned', 'Planned'), ('Done', 'Done')) timing(value, label)"
+  - id: employee_activity_types
+    permission: employees.read
+    query: "SELECT value, label FROM (VALUES ('todo', 'To-Do'), ('email', 'Email'), ('call', 'Call'), ('meeting', 'Meeting'), ('document', 'Document')) types(value, label)"
+  - id: employee_activities
+    permission: employees.read
+    query: "SELECT a.id, a.row_version, a.employee_id, a.employee_name, a.job_title, a.activity_type, a.activity_summary, CAST(a.activity_date AS VARCHAR) AS activity_date, a.activity_user, a.activity_state, a.activity_count, a.timing FROM employee_activities a WHERE (:q IS NULL OR a.employee_name ILIKE '%' || :q || '%' OR a.job_title ILIKE '%' || :q || '%' OR a.activity_summary ILIKE '%' || :q || '%') AND (:timing IS NULL OR a.timing = :timing) AND (:activity_type IS NULL OR a.activity_type = :activity_type) ORDER BY a.activity_date, a.employee_name, a.id"
+actions:
+  - id: view_employee_activity
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/detail
+    params: { id: '{row.employee_id}' }

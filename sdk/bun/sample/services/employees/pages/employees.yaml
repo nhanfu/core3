@@ -10,6 +10,79 @@ components:
     filters:
       - { field: state, label: Status, options_source: employee_states }
       - { field: department_name, label: Department, options_source: employee_departments }
+      - { field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
+    group_by:
+      - { field: manager_name, label: Manager }
+      - { field: department_name, label: Department }
+      - { field: job_title, label: Job Position }
+      - { field: employment_type, label: Employee Type }
+      - { field: state, label: Status }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: state
+        groups_source: employee_states
+        card:
+          title: name
+          subtitle: job_title
+          fields:
+            - { field: department_name, label: Department }
+            - { field: work_email, label: Work Email }
+            - { field: work_phone, label: Work Phone }
+            - { field: state, label: Status }
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: job_title
+          fields:
+            - { field: department_name, label: Department }
+            - { field: work_email, label: Work Email }
+            - { field: state, label: Status }
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: job_title
+        record_date_field: hire_date
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: call, label: Call, icon: ☎ }
+          - { id: meeting, label: Meeting, icon: ◉ }
+          - { id: document, label: Document, icon: ▣ }
+        schedule_action: view_employee
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: hire_date
+        measure_field: activity_count
+        type: line
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields:
+            - { field: state, column: Status }
+            - { field: department_name, column: Department }
+            - { field: hire_date, column: Start Date, type: date }
+            - { field: activity_count, column: Activities }
+          default:
+            rows: [department_name]
+            columns: [state]
+            measures: [{ field: activity_count, aggregate: sum, column: Activities }]
+          date_ranges: { hire_date: month }
     columns:
       - { field: image_url, label: Avatar, type: Image }
       - { field: employee_number, label: Employee number, type: PrimaryEntityCell }

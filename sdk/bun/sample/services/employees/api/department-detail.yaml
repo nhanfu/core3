@@ -1,0 +1,50 @@
+page: { id: employee-department-detail }
+datasources:
+  - id: employee_department_detail
+    single: true
+    permission: employees.read
+    query: "SELECT d.id, d.row_version, d.name, d.manager_name, d.state, d.active, COALESCE(d.company_name, 'Core3 Vietnam') AS company_name, COALESCE(d.parent_name, '') AS parent_name, COALESCE(d.notes, '') AS notes, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true) AS employee_count FROM employee_departments d LEFT JOIN employees e ON e.department_id = d.id WHERE d.id = :id GROUP BY d.id, d.row_version, d.name, d.manager_name, d.state, d.active, d.company_name, d.parent_name, d.notes"
+actions:
+  - id: department_employee_count
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees
+    params: { department_name: '{row.name}' }
+  - id: edit_department
+    type: server_form
+    permission: employees.manage
+    title: Edit department
+    action: employees.departments.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_department_detail
+    refresh: [employee_department_detail]
+    mutation:
+      operation: update
+      table: employee_departments
+      fields: [name, manager_name, company_name, parent_name, notes]
+      required: [name]
+      timestamps: true
+      result: { query: "SELECT * FROM employee_departments WHERE id = :id" }
+    fields:
+      - { field: name, label: Department, type: text, required: true }
+      - { field: manager_name, label: Manager, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: parent_name, label: Parent Department, type: text }
+      - { field: notes, label: Notes, type: textarea }
+  - id: archive_department
+    type: server
+    permission: employees.manage
+    action: employees.departments.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [employee_department_detail]
+    mutation: { operation: update, table: employee_departments, fields: [active, state], defaults: { active: false, state: Archived } }
+  - id: restore_department
+    type: server
+    permission: employees.manage
+    action: employees.departments.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [employee_department_detail]
+    mutation: { operation: update, table: employee_departments, fields: [active, state], defaults: { active: true, state: Active } }

@@ -5,6 +5,35 @@ components:
     variant: odoo
     source: employee_directory
     search: { label: Search directory, placeholder: 'Search employees...' }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: department_name
+        groups: [{ value: Engineering, label: Engineering }]
+        card:
+          title: name
+          subtitle: job_title
+          fields:
+            - { field: department_name, label: Department }
+            - { field: work_email, label: Work Email }
+            - { field: work_phone, label: Work Phone }
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: job_title
+          fields:
+            - { field: department_name, label: Department }
+            - { field: work_email, label: Work Email }
+            - { field: work_phone, label: Work Phone }
     columns:
       - { field: image_url, label: Avatar, type: Image }
       - { field: name, label: Name, type: PrimaryEntityCell }
@@ -14,4 +43,5 @@ components:
       - { field: work_phone, label: Work Phone }
     page_size: 50
     row_key: id
+    empty_state: { title: No employees found, description: No public employees match the current search. }
     row_double_click_action: view_directory_employee

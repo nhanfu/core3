@@ -8,7 +8,9 @@ datasources:
     query: "SELECT id AS value, name AS label FROM employee_departments WHERE state = 'Active' ORDER BY name"
   - id: employees
     permission: employees.read
-    query: "SELECT e.id, e.row_version, e.employee_number, e.name, e.image_url, e.work_email, e.work_phone, e.department_name, e.job_title, e.manager_name, e.employment_type, e.state, e.active, CAST(e.hire_date AS VARCHAR) AS hire_date FROM employees e WHERE (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) AND (:department_name IS NULL OR e.department_name = :department_name) ORDER BY e.name, e.id"
+    pivot:
+      fields: [state, department_name, job_title, employment_type, hire_date, activity_count]
+    query: "SELECT e.id, e.row_version, e.employee_number, e.name, e.image_url, e.work_email, e.work_phone, e.department_name, e.job_title, e.manager_name, e.employment_type, e.state, e.active, CAST(e.hire_date AS VARCHAR) AS hire_date, COALESCE(a.activity_type, 'todo') AS activity_type, a.activity_summary, CAST(a.activity_date AS VARCHAR) AS activity_date, a.activity_user, COALESCE(a.activity_state, 'planned') AS activity_state, COALESCE(a.activity_count, 0) AS activity_count FROM employees e LEFT JOIN employee_activities a ON a.employee_id = e.id AND a.is_primary = true WHERE ((:active IS NULL AND COALESCE(e.active, true) = true) OR (:active IS NOT NULL AND e.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) AND (:department_name IS NULL OR e.department_name = :department_name) ORDER BY e.name, e.id"
 actions:
   - id: view_employee
     type: navigate

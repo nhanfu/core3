@@ -3,4 +3,4 @@ datasources:
   - id: employee_directory_detail
     single: true
     permission: employees.read
-    query: "SELECT id, name, job_title, department_name, work_email, work_phone, company_name, work_location FROM employees WHERE active = true AND id = :id"
+    query: "SELECT id, name, image_url, job_title, department_name, work_email, work_phone, company_name, work_location, presence FROM employees WHERE active = true AND id = :id"

@@ -1,0 +1,47 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS parent_name VARCHAR;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS notes VARCHAR;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      UPDATE employee_departments SET row_version = 1 WHERE row_version IS NULL;
+      UPDATE employee_departments SET active = true WHERE active IS NULL;
+      UPDATE employee_departments SET state = 'Active' WHERE state IS NULL;
+      UPDATE employee_departments SET company_name = 'Core3 Vietnam' WHERE company_name IS NULL;
+      CREATE TABLE IF NOT EXISTS employee_activities (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        employee_id VARCHAR NOT NULL,
+        employee_name VARCHAR NOT NULL,
+        job_title VARCHAR,
+        activity_type VARCHAR NOT NULL,
+        activity_summary VARCHAR NOT NULL,
+        activity_date DATE NOT NULL,
+        activity_user VARCHAR NOT NULL,
+        activity_state VARCHAR NOT NULL,
+        activity_count INTEGER NOT NULL DEFAULT 1,
+        timing VARCHAR NOT NULL,
+        is_primary BOOLEAN NOT NULL DEFAULT false
+      );
+      CREATE INDEX IF NOT EXISTS employee_activities_employee_idx ON employee_activities(employee_id);
+      INSERT OR IGNORE INTO employee_activities(id, employee_id, employee_name, job_title, activity_type, activity_summary, activity_date, activity_user, activity_state, activity_count, timing, is_primary) VALUES
+        ('employee-activity-001', 'employee-demo-001', 'Admin User', 'Operations Lead', 'todo', 'Review onboarding checklist', DATE '2026-01-12', 'Admin User', 'overdue', 1, 'Overdue', true),
+        ('employee-activity-002', 'employee-demo-002', 'Nguyen Minh Anh', 'Frontend Engineer', 'email', 'Send probation review', DATE '2026-01-15', 'HR Manager', 'today', 1, 'Today', true),
+        ('employee-activity-003', 'employee-demo-003', 'Tran Bao Long', 'QA Specialist', 'meeting', 'Plan release verification', DATE '2026-01-20', 'Engineering Manager', 'planned', 1, 'Planned', true),
+        ('employee-activity-004', 'employee-demo-004', 'Le Thu Ha', 'Product Designer', 'document', 'Archive departure documents', DATE '2026-01-08', 'HR Manager', 'done', 1, 'Done', true),
+        ('employee-activity-005', 'employee-demo-001', 'Admin User', 'Operations Lead', 'call', 'Confirm emergency contact', DATE '2026-01-15', 'HR Manager', 'today', 1, 'Today', false);
+    down: |
+      DROP TABLE IF EXISTS employee_activities;
+      ALTER TABLE employee_departments DROP COLUMN IF EXISTS active;
+      ALTER TABLE employee_departments DROP COLUMN IF EXISTS company_name;
+      ALTER TABLE employee_departments DROP COLUMN IF EXISTS parent_name;
+      ALTER TABLE employee_departments DROP COLUMN IF EXISTS notes;
+      ALTER TABLE employee_departments DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

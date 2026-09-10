@@ -16,4 +16,8 @@ menu:
       items:
         - { path: /employees, label: Employees, icon: users, permission: employees.read }
         - { path: /employees/directory, label: Directory, icon: contacts, permission: employees.read }
-        - { path: /employee-analysis, label: Employee Analysis, icon: chart, permission: employees.read }
+        - { path: /employees/activities, label: All activities, icon: activity, permission: employees.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /employees/departments, label: Departments, icon: hierarchy, permission: employees.read }
