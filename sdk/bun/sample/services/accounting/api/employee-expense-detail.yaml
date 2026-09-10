@@ -1,0 +1,45 @@
+page: { id: accounting-employee-expense-detail }
+datasources:
+  - id: accounting_employee_expense_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_EMPLOYEE_EXPENSE_DETAIL_UNAVAILABLE, message: Employee expense detail is temporarily unavailable. } }
+    query: |
+      SELECT id, row_version, name, employee_name, category,
+        CAST(expense_date AS VARCHAR) AS expense_date,
+        amount, printf('$%,.2f', amount) AS amount_display,
+        CASE payment_method WHEN 'Employee' THEN 'Employee (to reimburse)' ELSE 'Company' END AS payment_mode,
+        description, receipt_reference, state AS status, company_name
+      FROM accounting_employee_expenses
+      WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+  - id: accounting_employee_expense_activity
+    single: false
+    permission: accounting.read
+    query: "SELECT 'Admin User' AS actor_name, 'accounting.employee_expenses.created' AS action, 'Created' AS action_label, 'Employee expense created from the Accounting action.' AS detail, '2026-01-15 00:00:00' AS created_at WHERE :id IS NOT NULL"
+actions:
+  - id: edit_accounting_employee_expense
+    type: server_form
+    permission: accounting.write
+    title: Edit Employee Expense
+    action: accounting.employee_expenses.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [accounting_employee_expense_detail, accounting_employee_expense_activity]
+    mutation:
+      operation: update
+      table: accounting_employee_expenses
+      fields: [name, employee_name, category, expense_date, amount, payment_method, description, receipt_reference]
+      required: [name, employee_name, category, expense_date, amount]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0 AND CAST(:expense_date AS DATE) IS NOT NULL", status: 422, code: ACCOUNTING_EMPLOYEE_EXPENSE_INVALID, message: Employee expense date and amount must be valid and the amount must be positive. }]
+      result: { query: "SELECT * FROM accounting_employee_expenses WHERE id = :id" }
+    fields:
+      - { field: name, label: Description, type: text, required: true }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: category, label: Category, type: text, required: true }
+      - { field: expense_date, label: Expense Date, type: date, required: true }
+      - { field: amount, label: Total, type: number, required: true }
+      - { field: payment_method, label: Paid By, type: select, options: [{ value: Employee, label: Employee (to reimburse) }, { value: Company, label: Company }] }
+      - { field: description, label: Notes, type: textarea }
+      - { field: receipt_reference, label: Receipt attachment, type: text }

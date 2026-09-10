@@ -34,6 +34,10 @@ menu:
           label: Vendor Payments
           icon: bank
           permission: accounting.read
+        - path: /accounting/employee-expenses
+          label: Employee Expenses
+          icon: receipt
+          permission: accounting.read
         - path: /accounting/products
           label: Products
           icon: cube

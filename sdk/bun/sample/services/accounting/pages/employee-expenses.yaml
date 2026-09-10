@@ -1,0 +1,68 @@
+title: Employee Expenses
+page: { id: accounting-employee-expenses, route: /accounting/employee-expenses, breadcrumb: [Finance, Vendors, Employee Expenses], auth: { require: [accounting.read] } }
+components:
+  - type: StatRow
+    source: accounting_employee_expense_totals
+    title: Employee Expenses
+    stats:
+      - { label: To Submit, field: to_submit }
+      - { label: Waiting Approval, field: waiting_approval }
+      - { label: Waiting Reimbursement, field: waiting_reimbursement }
+  - type: ListView
+    variant: odoo
+    source: accounting_employee_expenses
+    create_action: create_accounting_employee_expense
+    create_label: New
+    breadcrumbs: [Employee Expenses]
+    search: { label: Search employee expenses, placeholder: Search employee expenses... }
+    filters: [{ field: status, label: Status, options_source: accounting_employee_expense_states }]
+    group_by: [{ field: employee_name, label: Employee }, { field: category, label: Category }, { field: status, label: Status }, { field: expense_date, label: Expense Date }]
+    view_navigation: icons
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card:
+          title: name
+          subtitle: amount_display
+          fields:
+            - { field: employee_name, label: Employee }
+            - { field: status, label: Status }
+            - { field: expense_date_display, label: Expense Date }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: status
+        groups_source: accounting_employee_expense_states
+        card: { title: name, subtitle: employee_name, fields: [{ field: amount_display, label: Total }, { field: expense_date_display, label: Expense Date }, { field: status, label: Status }] }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        show_leaf_rows: false
+        pivot:
+          fields: [{ field: employee_name, column: Employee }, { field: category, column: Category }, { field: status, column: Status }, { field: amount, column: Total }]
+          default: { rows: [employee_name], columns: [status], measures: [{ field: amount, aggregate: sum, column: Total }] }
+      - { id: graph, label: Graph, icon: graph, category_field: employee_name, measure_field: amount, type: bar, mobile: false }
+    columns:
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell }
+      - { field: name, label: Description }
+      - { field: expense_date_display, label: Expense Date, sortable: true }
+      - { field: category, label: Category }
+      - { field: payment_mode, label: Paid By }
+      - { field: activity_count, label: Activities, align: center }
+      - { field: company_name, label: Company }
+      - { field: amount_display, label: Total, align: right }
+      - { field: status, label: Status, type: StatusChip }
+    page_size: 25
+    selectable: true
+    column_chooser: true
+    row_key: id
+    row_open_action: view_accounting_employee_expense
+    row_double_click_action: view_accounting_employee_expense
+    form_view: { page: apps/services/accounting/pages/employee-expense-detail.yaml, side_panel: false }
+    empty_state: { title: No employee expenses, description: There are no employee expenses matching the current filters. }
+    labels: { selected: selected, filters: Filters, columns: Columns, clear_selection: Clear selection, select_all: Select all, select_row: Select row, previous_page: Previous page, next_page: Next page }

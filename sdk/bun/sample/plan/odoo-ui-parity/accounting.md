@@ -359,3 +359,29 @@ width result at 1440x900 after generating the ignored runtime CSS assets.
 - Authenticated desktop/mobile checks cover list, pivot, kanban, form,
   payment/reconciliation modal, settings, and denied/empty states.
 - `bun run audit` passes and commits contain no images.
+
+## Current batch: Vendor Employee Expenses action
+
+The owned Odoo 19 database has `hr_expense` installed and exposes Vendors →
+Employee Expenses through menu XML ID
+`hr_expense.menu_hr_expense_account_employee_expenses` (window action 599,
+`/odoo/expenses-employee`). The Accounting manifest previously omitted this
+installed action even though the Expenses service had a separate
+`/expenses/employee` screen.
+
+Core3 now adds the explicit Accounting route `/accounting/employee-expenses`
+with a dedicated Accounting-owned `accounting_employee_expenses` table. Its
+list and detail page/API fragments use matching page IDs; the fixed comparison
+rows are isolated from the existing Expenses-service `/expenses/employee`
+surface. The page mirrors Odoo's List desktop
+and Kanban mobile modes, columns, status filter, search, selectable rows,
+New action, row navigation, pivot, and graph controls.
+
+Migration `20260910180000-016-accounting-employee-expenses.yaml` seeds four
+fixed comparison rows totaling `$737.80`, all with explicit IDs and
+`2026-01-15` dates/timestamps. Read access requires `accounting.read`; New
+requires `accounting.write`, with positive-amount, valid-date, and duplicate
+description guards. The datasource declares stable empty and transport-error
+paths. Authenticated Odoo/Core3 desktop and mobile captures, search-empty,
+create, response, and overflow checks are temporary under `/tmp` and no
+screenshots are repository assets.

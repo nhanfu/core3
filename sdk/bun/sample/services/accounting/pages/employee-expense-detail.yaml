@@ -1,0 +1,29 @@
+title: Employee Expense
+page: { id: accounting-employee-expense-detail, route: /accounting/employee-expense-detail, breadcrumb: [Finance, Vendors, Employee Expenses, Expense], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_employee_expense_detail
+    title_field: name
+    status_field: status
+    statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Submitted }, { value: Approved, label: Approved }, { value: Posted, label: Posted }, { value: Paid, label: Paid }, { value: Refused, label: Refused }]
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Workflow status }
+    header_actions: [{ id: edit_accounting_employee_expense, label: Edit, variant: secondary, permission: accounting.write }]
+    group_columns: 2
+    groups:
+      - title: Expense details
+        fields: [{ field: name, label: Description }, { field: employee_name, label: Employee }, { field: category, label: Category }, { field: expense_date, label: Expense Date }]
+      - title: Payment and accounting
+        fields: [{ field: amount_display, label: Total }, { field: payment_mode, label: Paid By }, { field: company_name, label: Company }, { field: receipt_reference, label: Receipt attachment }]
+    notebook:
+      active: details
+      tabs:
+        - id: details
+          label: Details
+          groups: [{ title: Notes, fields: [{ field: description, label: Notes, type: textarea, wide: true }] }]
+        - id: chatter
+          label: Chatter
+          content_slot: true
+    message_source: accounting_employee_expense_activity
+    chatter_label: Messages and activities
+    no_attachments_label: No receipt attached
+    attachment_label: Receipt

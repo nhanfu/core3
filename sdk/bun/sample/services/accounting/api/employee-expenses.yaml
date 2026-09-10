@@ -1,0 +1,67 @@
+page: { id: accounting-employee-expenses }
+datasources:
+  - id: accounting_employee_expense_states
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Posted','Posted'), ('Paid','Paid'), ('Refused','Refused')) states(value, label)"
+  - id: accounting_employee_expense_totals
+    single: true
+    permission: accounting.read
+    query: |
+      SELECT
+        printf('$%,.2f', COALESCE(SUM(CASE WHEN e.state = 'Draft' THEN e.amount ELSE 0 END), 0)) AS to_submit,
+        printf('$%,.2f', COALESCE(SUM(CASE WHEN e.state = 'Submitted' THEN e.amount ELSE 0 END), 0)) AS waiting_approval,
+        printf('$%,.2f', COALESCE(SUM(CASE WHEN e.state IN ('Approved', 'Posted', 'In Payment') THEN e.amount ELSE 0 END), 0)) AS waiting_reimbursement
+      FROM accounting_employee_expenses e
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+  - id: accounting_employee_expenses
+    single: false
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_EMPLOYEE_EXPENSES_UNAVAILABLE, message: Employee expense data is temporarily unavailable. } }
+    query: |
+      SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
+        strftime(e.expense_date, '%b %-d') AS expense_date_display,
+        CAST(e.expense_date AS VARCHAR) AS expense_date,
+        e.amount, printf('$%,.2f', e.amount) AS amount_display,
+        CASE e.payment_method WHEN 'Employee' THEN 'Employee (to reimburse)' ELSE 'Company' END AS payment_mode,
+        e.company_name, e.state AS status, e.receipt_reference,
+        1 AS activity_count
+      FROM accounting_employee_expenses e
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%' OR COALESCE(e.company_name, '') ILIKE '%' || :q || '%')
+        AND (:status IS NULL OR e.state = :status)
+      ORDER BY e.expense_date DESC, e.id
+actions:
+  - id: view_accounting_employee_expense
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/employee-expense-detail
+    params: { id: '{row.id}' }
+  - id: create_accounting_employee_expense
+    type: server_form
+    permission: accounting.write
+    title: New Employee Expense
+    action: accounting.employee_expenses.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_employee_expenses]
+    mutation:
+      operation: insert
+      table: accounting_employee_expenses
+      generated: [id]
+      fields: [name, employee_name, category, expense_date, amount, payment_method, description, receipt_reference, state, company_name, created_at]
+      required: [name, employee_name, category, expense_date, amount]
+      defaults: { payment_method: Employee, state: Draft, company_name: My Company (San Francisco), created_at: '2026-01-15 00:00:00' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0 AND CAST(:expense_date AS DATE) IS NOT NULL", status: 422, code: ACCOUNTING_EMPLOYEE_EXPENSE_INVALID, message: Employee expense date and amount must be valid and the amount must be positive. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_employee_expenses WHERE LOWER(name) = LOWER(:name))", status: 409, code: ACCOUNTING_EMPLOYEE_EXPENSE_EXISTS, message: An employee expense with this description already exists. }
+      result: { query: "SELECT * FROM accounting_employee_expenses WHERE id = :id" }
+    fields:
+      - { field: name, label: Description, type: text, required: true }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: category, label: Category, type: text, required: true }
+      - { field: expense_date, label: Expense Date, type: date, required: true, default: '2026-01-15' }
+      - { field: amount, label: Total, type: number, required: true }
+      - { field: payment_method, label: Paid By, type: select, options: [{ value: Employee, label: Employee (to reimburse) }, { value: Company, label: Company }] }
+      - { field: description, label: Notes, type: textarea }
+      - { field: receipt_reference, label: Receipt attachment, type: text }
