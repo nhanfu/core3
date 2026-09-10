@@ -8,6 +8,7 @@ function createWorkspace() {
       {
         id: 'thread-1',
         title: 'Operations',
+        thread_type: 'Group',
         participant_names: 'Dispatcher',
         preview: 'Truck assigned',
         unread_count: 0,
@@ -15,9 +16,11 @@ function createWorkspace() {
       {
         id: 'thread-2',
         title: 'Finance',
+        thread_type: 'Direct',
         participant_names: 'Accountant',
         preview: 'Invoice ready',
         unread_count: 2,
+        starred: true,
       },
     ],
     messages: [
@@ -34,6 +37,13 @@ function createWorkspace() {
       message_id: 'message-1',
       file_name: 'proof.pdf',
     }],
+    sidebar: [
+      { id: 'inbox', kind: 'filter', label: 'Inbox', count: 1 },
+      { id: 'starred', kind: 'filter', label: 'Starred', count: 1 },
+      { id: 'history', kind: 'filter', label: 'History', count: 0 },
+      { id: 'channels', kind: 'section', label: 'Channels' },
+      { id: 'direct', kind: 'section', label: 'Direct Messages' },
+    ],
   }, {
     send_action: 'send_message',
     upload_action: 'upload_attachment',
@@ -48,6 +58,36 @@ function createWorkspace() {
 }
 
 describe('ChatWorkspace', () => {
+  it('renders Discuss navigation and filters starred, history, channel, and direct views', () => {
+    const { container } = createWorkspace();
+    expect(container.querySelector('[aria-label="Discuss navigation"]')).not.toBeNull();
+    expect(container.textContent).toContain('Direct Messages');
+
+    const starred = [...container.querySelectorAll<HTMLButtonElement>('.chat-nav-item')]
+      .find((button) => button.textContent?.includes('Starred'))!;
+    starred.click();
+    expect(container.querySelectorAll('button[aria-label^="Mở cuộc trò chuyện"]')).toHaveLength(1);
+    expect(container.textContent).toContain('Finance');
+
+    const channels = [...container.querySelectorAll<HTMLButtonElement>('.chat-nav-item')]
+      .find((button) => button.textContent?.includes('Channels'))!;
+    channels.click();
+    expect(container.querySelectorAll('button[aria-label^="Mở cuộc trò chuyện"]')).toHaveLength(1);
+    expect(container.textContent).toContain('Operations');
+  });
+
+  it('shows the offline banner while retaining saved conversation fixtures', () => {
+    const component = new ChatWorkspace('chat-offline', {
+      threads: [{ id: 'thread-1', title: 'Saved conversation' }],
+      sidebar: [{ id: 'connection', kind: 'status', status: 'offline', detail: 'Showing saved conversations' }],
+    });
+    const container = document.createElement('div');
+    component.mount(container);
+    expect(container.querySelector('.chat-connection.is-offline')?.textContent).toBe('Offline');
+    expect(container.textContent).toContain('Showing saved conversations');
+    expect(container.textContent).toContain('Saved conversation');
+  });
+
   it('filters threads and marks an unread selection as read', async () => {
     const { container, submit } = createWorkspace();
     const search = container.querySelector<HTMLInputElement>('input[type="search"]')!;

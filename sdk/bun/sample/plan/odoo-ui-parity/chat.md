@@ -40,3 +40,10 @@ Capture Odoo/Core3 at 1440x900 and 390x844 for inbox, channel, direct message, t
 - Core3 captures: `/tmp/core3-odoo-parity/chat-20260909-desktop.png` and `chat-20260909-mobile.png`.
 - Odoo captures: `/tmp/odoo-chat-inbox-1440x900.png` and `/tmp/odoo-chat-inbox-390x844.png`.
 - Verified: deterministic inbox/thread rendering, unread/starred fixture fields, attachment display, and desktop/mobile rendering. The Core3 shell remains intentionally separate from Odoo's native shell for this fixture-focused batch.
+
+## Bounded batch — Discuss sidebar parity
+
+- Added a page-only `chat` layout and page-scoped API fragment joined by `page.id`, with explicit sidebar, thread, message, and attachment datasource contracts.
+- Added deterministic Inbox, Starred, History, Channels, Direct Messages, search-no-results, empty, and offline fixtures plus the `chat.read`/`chat.write` permission boundary and migration `20260910180000-006-chat-sidebar-flags.yaml`.
+- Added authenticated browser verification against the isolated Core3 runtime at 1440x900 and 390x844: Discuss navigation, seeded Event Store Demo and Operations team conversations, Starred/Channels filters, and search empty state rendered successfully. Captures are `/tmp/core3-odoo-parity/chat-next-inbox-1440x900.png` and `/tmp/core3-odoo-parity/chat-next-inbox-390x844.png`; images remain outside Git.
+- Focused verification: client ChatWorkspace tests `11/11` passed; Chat API/page integration tests `3/3` passed; UI audit passed with `316` pages, `320` routes, and `571` datasources; changed-file ESLint and `git diff --check` passed.

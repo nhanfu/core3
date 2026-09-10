@@ -41,7 +41,9 @@ export class ChatWorkspace extends BaseComponent {
       messages: [],
       pendingMessages: [],
       attachments: [],
+      sidebar: [],
       activeThreadId: null,
+      activeCategory: 'inbox',
       query: '',
       inputValue: '',
       selectedFile: null,
@@ -182,33 +184,74 @@ export class ChatWorkspace extends BaseComponent {
       this.state.activeThreadId = threads[0]?.id || null;
     }
 
-    const activeThread = threads.find((thread: any) => thread.id === this.state.activeThreadId);
+    const sidebarRows = Array.isArray(this.state.sidebar) ? this.state.sidebar : [];
+    const offline = sidebarRows.some((row: any) => row.kind === 'status' && row.status === 'offline');
+    const activeCategory = String(this.state.activeCategory || 'inbox');
+    const query = String(this.state.query || '').trim().toLocaleLowerCase();
+    const visibleThreadsFor = (currentCategory = activeCategory, currentQuery = query) => threads.filter((thread: any) => {
+      const categoryMatches = currentCategory === 'starred' ? thread.starred === true
+        : currentCategory === 'history' ? thread.history === true
+          : currentCategory === 'channels' ? String(thread.thread_type || '').toLowerCase() === 'group'
+            : currentCategory === 'direct' ? String(thread.thread_type || '').toLowerCase() === 'direct'
+              : currentCategory === 'unread' ? Number(thread.unread_count) > 0
+                : true;
+      return categoryMatches && (!currentQuery
+        || String(thread.title || '').toLocaleLowerCase().includes(currentQuery)
+        || String(thread.participant_names || '').toLocaleLowerCase().includes(currentQuery)
+        || String(thread.preview || '').toLocaleLowerCase().includes(currentQuery));
+    });
+    const visibleThreads = visibleThreadsFor();
+    const activeThread = visibleThreads.find((thread: any) => thread.id === this.state.activeThreadId)
+      || visibleThreads[0];
+    if (activeThread && activeThread.id !== this.state.activeThreadId) this.state.activeThreadId = activeThread.id;
     const root = html.take(container).section.className('chat-workspace grid min-h-[560px] overflow-hidden rounded-md border').css('height', 'calc(100vh - 204px)').css('gridTemplateColumns', 'minmax(250px, 320px) minmax(0, 1fr)').ele() as HTMLElement;
 
     const sidebar = html.take(root).aside.className('chat-sidebar flex min-w-0 flex-col border-r').ele() as HTMLElement;
     const sidebarHeader = html.take(sidebar).div.className('chat-sidebar-header').ele() as HTMLElement;
-    html.take(sidebarHeader).strong.className('chat-sidebar-title').text(i18n.tKey('chat.messages', {}, 'Messages'));
+    const sidebarHeading = html.take(sidebarHeader).div.className('chat-sidebar-heading').ele() as HTMLElement;
+    html.take(sidebarHeading).strong.className('chat-sidebar-title').text(i18n.tKey('chat.discuss', {}, 'Discuss'));
+    html.take(sidebarHeading).span.className(`chat-connection ${offline ? 'is-offline' : ''}`).text(offline ? 'Offline' : 'Online');
     const search = html.take(sidebarHeader).input.className('chat-search form-input w-full').ele() as HTMLInputElement;
     html.take(search).type('search').prop('value', String(this.state.query || ''));
     const searchPlaceholder = String(this.def.search_placeholder || 'Search conversations...');
     html.take(search).prop('placeholder', searchPlaceholder).attr('aria-label', searchPlaceholder);
+    const sidebarNav = html.take(sidebar).nav.className('chat-sidebar-nav').attr('aria-label', 'Discuss navigation').ele() as HTMLElement;
+    for (const item of sidebarRows.filter((row: any) => row.kind === 'filter')) {
+      const button = html.take(sidebarNav).button.className(`chat-nav-item ${item.id === activeCategory ? 'is-active' : ''}`).type('button').attr('aria-pressed', item.id === activeCategory ? 'true' : 'false').ele() as HTMLButtonElement;
+      html.take(button).span.className('chat-nav-icon').text(String(item.icon === 'star' ? '★' : item.icon === 'history' ? '↺' : '▣'));
+      html.take(button).span.className('chat-nav-label').text(String(item.label));
+      if (Number(item.count) > 0) html.take(button).span.className('chat-nav-count').text(String(item.count));
+      html.take(button).event('click', () => {
+        this.state.activeCategory = String(item.id);
+        this.redraw();
+      });
+    }
+    const sectionRows = sidebarRows.filter((row: any) => row.kind === 'section');
+    if (sectionRows.length) {
+      const sectionHeading = html.take(sidebar).div.className('chat-sidebar-section-heading').text('Conversations').ele() as HTMLElement;
+      void sectionHeading;
+      for (const item of sectionRows) {
+        const button = html.take(sidebar).button.className(`chat-nav-item chat-nav-section ${item.id === activeCategory ? 'is-active' : ''}`).type('button').attr('aria-pressed', item.id === activeCategory ? 'true' : 'false').ele() as HTMLButtonElement;
+        html.take(button).span.className('chat-nav-icon').text(String(item.id === 'channels' ? '#' : '●'));
+        html.take(button).span.className('chat-nav-label').text(String(item.label));
+        html.take(button).event('click', () => { this.state.activeCategory = String(item.id); this.redraw(); });
+      }
+    }
+    if (offline) {
+      html.take(sidebar).div.className('chat-offline-banner').text(String(sidebarRows.find((row: any) => row.status === 'offline')?.detail || 'Showing saved conversations'));
+    }
     const threadList = html.take(sidebar).div.className('chat-thread-list min-h-0 flex-1 overflow-y-auto').ele() as HTMLElement;
 
     const renderThreads = () => {
       html.take(threadList).clear();
-      const query = String(this.state.query || '').trim().toLocaleLowerCase();
-      const visibleThreads = threads.filter((thread: any) =>
-        !query
-        || String(thread.title || '').toLocaleLowerCase().includes(query)
-        || String(thread.participant_names || '').toLocaleLowerCase().includes(query)
-        || String(thread.preview || '').toLocaleLowerCase().includes(query)
-      );
-      if (!visibleThreads.length) {
-        html.take(threadList).p.className('chat-empty px-5 py-10 text-center text-sm').text(String(this.def.empty_threads || 'No conversations'));
+      const currentQuery = String(this.state.query || '').trim().toLocaleLowerCase();
+      const currentThreads = visibleThreadsFor(String(this.state.activeCategory || 'inbox'), currentQuery);
+      if (!currentThreads.length) {
+        html.take(threadList).p.className('chat-empty px-5 py-10 text-center text-sm').text(currentQuery ? 'No conversations match your search' : String(this.def.empty_threads || 'No conversations'));
         return;
       }
 
-      for (const thread of visibleThreads) {
+      for (const thread of currentThreads) {
         const button = html.take(threadList).button.className(`chat-thread w-full border-b px-3 py-3 text-left transition-colors ${
             thread.id === this.state.activeThreadId
               ? 'is-active'

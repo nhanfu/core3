@@ -721,6 +721,7 @@ function collectSources(config: any) {
   const visit = (components: any[] = []) => {
     for (const component of components) {
       add(component.source, component);
+      add(component.sidebar_source, { page_size: component.sidebar_page_size || 100 });
       if (component.message_source) {
         add(component.message_source, {
           page_size: component.message_page_size,

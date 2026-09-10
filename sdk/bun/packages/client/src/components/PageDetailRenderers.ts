@@ -276,12 +276,14 @@ async function renderApprovalTimeline(def: any, targetContainer: HTMLElement) {
 async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
   const { ChatWorkspace } = await import('@core3/client/components/ChatWorkspace');
   const threadSource = def.source;
+  const sidebarSource = def.sidebar_source;
   const messageSource = def.message_source;
   const attachmentSource = def.attachment_source;
   const comp = new ChatWorkspace(
     `chat-workspace-${def.id || threadSource || Date.now()}`,
     {
       threads: dataMap[threadSource]?.data || [],
+      sidebar: dataMap[sidebarSource]?.data || [],
       messages: dataMap[messageSource]?.data || [],
       attachments: dataMap[attachmentSource]?.data || [],
       currentUserId: ctx.user.sub,
@@ -315,6 +317,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
   mountOwned(comp, slot);
 
   bindSource(threadSource, data => _origSetState({ threads: data.data || [] }, true));
+  bindSource(sidebarSource, data => _origSetState({ sidebar: data.data || [] }, true));
   bindSource(messageSource, data => _origSetState({ messages: data.data || [] }, true));
   bindSource(attachmentSource, data => _origSetState({ attachments: data.data || [] }, true));
 }

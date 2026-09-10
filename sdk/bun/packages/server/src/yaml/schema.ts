@@ -191,6 +191,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'type',
     'id',
     'source',
+    'sidebar_source',
     'message_source',
     'attachment_source',
     'page_size',
@@ -557,6 +558,9 @@ function validateComponents(
     rejectUnknownKeys(component, allowedKeys, path, issues);
     if (component.source !== undefined) {
       requireSource(component.source, `${path}.source`, datasourceIds, options, issues);
+    }
+    if (component.type === 'ChatWorkspace' && component.sidebar_source !== undefined) {
+      requireSource(component.sidebar_source, `${path}.sidebar_source`, datasourceIds, options, issues);
     }
     if (component.template_source !== undefined) {
       requireString(component.template_source, `${path}.template_source`, issues);

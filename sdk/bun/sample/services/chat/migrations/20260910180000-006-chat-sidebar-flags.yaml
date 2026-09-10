@@ -1,0 +1,25 @@
+version: 0.0.6
+kind: schema
+description: Add deterministic Discuss sidebar flags to chat threads
+type:
+  postgres:
+    up: |
+      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS starred BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS history BOOLEAN NOT NULL DEFAULT FALSE;
+      UPDATE chat_threads SET starred = TRUE, history = FALSE WHERE id = 'chat-demo-thread';
+      UPDATE chat_threads SET starred = FALSE, history = TRUE WHERE id = 'chat-team-thread';
+    down: |
+      ALTER TABLE chat_threads DROP COLUMN IF EXISTS starred;
+      ALTER TABLE chat_threads DROP COLUMN IF EXISTS history;
+  duckdb:
+    up: |
+      ALTER TABLE chat_threads ADD COLUMN starred BOOLEAN DEFAULT FALSE;
+      ALTER TABLE chat_threads ADD COLUMN history BOOLEAN DEFAULT FALSE;
+      UPDATE chat_threads SET starred = TRUE, history = FALSE WHERE id = 'chat-demo-thread';
+      UPDATE chat_threads SET starred = FALSE, history = TRUE WHERE id = 'chat-team-thread';
+    down: |
+      ALTER TABLE chat_threads DROP COLUMN starred;
+      ALTER TABLE chat_threads DROP COLUMN history;
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
