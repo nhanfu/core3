@@ -39,7 +39,7 @@ describe('Inventory receipts and deliveries transfer workflow parity', () => {
     expect(detail.statusbar.map((state: any) => state.value)).toEqual(['Draft', 'Waiting', 'Ready', 'Done', 'Cancelled']);
     expect(detail.header_actions.map((candidate: any) => candidate.label)).toEqual(['Mark as Todo', 'Check Availability', 'Validate', 'Cancel']);
     expect(detail.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Operations', 'Additional Info', 'Note']);
-    expect(Bun.YAML.parse(readFileSync(join(serviceRoot, 'manifest.yaml'), 'utf8')).menu.groups.map((group: any) => group.label)).toEqual(['Transfers', 'Reporting', 'Configuration']);
+    expect(Bun.YAML.parse(readFileSync(join(serviceRoot, 'manifest.yaml'), 'utf8')).menu.groups.map((group: any) => group.label)).toEqual(['Transfers', 'Reporting', 'Products', 'Configuration']);
   });
 
   test('returns realistic deterministic fixtures and explicit empty/error states', async () => {
