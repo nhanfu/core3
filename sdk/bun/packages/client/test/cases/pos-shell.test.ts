@@ -85,4 +85,27 @@ describe('POS touch selling shell', () => {
     expect(submit).not.toHaveBeenCalled();
     expect(document.body.textContent).toContain('POS write access is required');
   });
+
+  it('restores a pending receipt after the page is reconstructed', () => {
+    sessionStorage.setItem('core3.pos.touch.pending-receipt', JSON.stringify({
+      receiptOrder: { name: 'POS/1', amount_total: 3.85, amount_paid: 3.85, payment_method: 'Cash' },
+      change: 1.15,
+      timestamp: Date.now(),
+    }));
+
+    const state = PosShell.resolveState({}, {
+      dataMap: {
+        pos_touch_session: { data: session },
+        pos_touch_open_orders: { data: [] },
+        pos_touch_payment_methods: { data: [{ value: 'Cash', label: 'Cash' }] },
+        pos_touch_products: { data: [] },
+      },
+      user: { permissions: ['pos.write'] },
+    });
+
+    expect(state.screen).toBe('receipt');
+    expect(state.receiptOrder).toMatchObject({ name: 'POS/1', amount_paid: 3.85 });
+    expect(state.change).toBe(1.15);
+    sessionStorage.removeItem('core3.pos.touch.pending-receipt');
+  });
 });

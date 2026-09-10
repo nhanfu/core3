@@ -29,6 +29,7 @@ type PaymentMethod = {
 };
 
 export class PosShell extends BaseComponent {
+  private static readonly receiptStorageKey = 'core3.pos.touch.pending-receipt';
   def: any;
   private _session: any = null;
   private _products: CatalogProduct[] = [];
@@ -86,6 +87,18 @@ export class PosShell extends BaseComponent {
           total: lineTotal || Math.round(lineQuantity * lineUnitPrice * (1 + lineTaxRate / 100) * 100) / 100,
         }]
       : [];
+    let storedReceipt: { receiptOrder: any; change: number; timestamp: number } | null = null;
+    try {
+      const raw = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(PosShell.receiptStorageKey) : null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Date.now() - Number(parsed.timestamp || 0) < 10 * 60 * 1000) storedReceipt = parsed;
+        else sessionStorage.removeItem(PosShell.receiptStorageKey);
+      }
+    } catch {
+      storedReceipt = null;
+    }
+
     return {
       sessionSource: session,
       bootstrapProducts: Array.isArray(value('pos_touch_products')) ? value('pos_touch_products') : [],
@@ -99,6 +112,13 @@ export class PosShell extends BaseComponent {
       paymentMethods,
       paidAmount: Number(order.amount_paid || 0),
       selectedPaymentMethod: paymentMethods[0]?.value || 'Cash',
+      ...(storedReceipt ? {
+        screen: 'receipt',
+        activeOrderId: null,
+        cart: [],
+        receiptOrder: storedReceipt.receiptOrder,
+        change: Number(storedReceipt.change || 0),
+      } : {}),
     };
   }
 
@@ -450,7 +470,10 @@ export class PosShell extends BaseComponent {
       .attr('data-touch-new-ticket', 'true')
       .className('mt-6 w-full max-w-sm py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors')
       .text('New ticket')
-      .event('click', () => this.setState({ screen: 'product', cart: [], activeOrderId: null, receiptOrder: null, paidAmount: 0, tenderAmount: '', change: 0, paymentError: '' }))
+      .event('click', () => {
+        try { sessionStorage.removeItem(PosShell.receiptStorageKey); } catch { /* storage may be disabled */ }
+        this.setState({ screen: 'product', cart: [], activeOrderId: null, receiptOrder: null, paidAmount: 0, tenderAmount: '', change: 0, paymentError: '' });
+      })
       .ele();
   }
 
@@ -549,31 +572,42 @@ export class PosShell extends BaseComponent {
       this.setState({ paymentError: message });
       return;
     }
+    const order = (this.state.openOrders || []).find((candidate: any) => candidate.id === this.state.activeOrderId) || {};
+    const total = Number(order.amount_total || due + Number(this.state.paidAmount || 0));
+    const newPaid = Math.round((Number(this.state.paidAmount || 0) + amount) * 100) / 100;
+    const change = Math.max(0, Math.round((amount - due) * 100) / 100);
+    const remaining = Math.max(0, Math.round((due - amount) * 100) / 100);
+    const receiptOrder = {
+      ...order,
+      amount_total: total,
+      amount_paid: newPaid,
+      payment_method: method,
+    };
+    if (remaining === 0) {
+      try {
+        sessionStorage.setItem(PosShell.receiptStorageKey, JSON.stringify({ receiptOrder, change, timestamp: Date.now() }));
+      } catch { /* storage may be disabled */ }
+    }
     try {
       await this.submit('touch_submit_payment', {
         ticket_id: this.state.activeOrderId,
         amount: amount.toFixed(2),
         method,
       });
-      const newPaid = Math.round((Number(this.state.paidAmount || 0) + amount) * 100) / 100;
-      const change = Math.max(0, Math.round((amount - due) * 100) / 100);
-      const remaining = Math.max(0, Math.round((due - amount) * 100) / 100);
       if (remaining === 0) {
         this.setState({
           screen: 'receipt',
           change,
           paymentError: '',
-          receiptOrder: {
-            ...((this.state.openOrders || []).find((order: any) => order.id === this.state.activeOrderId) || {}),
-            amount_total: Number((this.state.openOrders || []).find((order: any) => order.id === this.state.activeOrderId)?.amount_total || due + Number(this.state.paidAmount || 0)),
-            amount_paid: newPaid,
-            payment_method: method,
-          },
+          receiptOrder,
         });
       } else {
         this.setState({ paidAmount: newPaid, change, paymentError: '' });
       }
     } catch (error: any) {
+      if (remaining === 0) {
+        try { sessionStorage.removeItem(PosShell.receiptStorageKey); } catch { /* storage may be disabled */ }
+      }
       const message = error?.message || 'Payment failed — please retry.';
       showToast(message, 'error');
       this.setState({ paymentError: message });
