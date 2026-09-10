@@ -288,11 +288,12 @@ Core3 owns the matching service/API/page contracts under page IDs
 `employee-departure-reasons` and `employee-departure-reason-detail`. The list
 and detail pages require `employees.manage`; all read/write datasource and
 server-form actions use the same permission boundary, while pages remain
-layout-only and bind to page-matched API fragments. Migration `006` uses stable
-IDs, fixed `TIMESTAMP '2026-01-15 00:00:00'` defaults, deterministic ordering,
-and an explicit generated-id policy for creates. Update mutations omit
-`timestamps:true` so fixture reads and mutations share the deterministic
-contract.
+layout-only and bind to page-matched API fragments. Migration `006` uses the
+Odoo default IDs and rows Fired, Resigned, and Retired; migration `009` repairs
+older installs that already recorded the earlier synthetic fixtures. Both
+preserve deterministic ordering and the explicit generated-id policy for
+creates. Update mutations omit `timestamps:true` so fixture reads and
+mutations share the deterministic contract.
 
 Authenticated evidence, kept outside Git:
 
@@ -300,10 +301,10 @@ Authenticated evidence, kept outside Git:
   `/tmp/odoo-employees/departure-reasons-form-desktop.png`,
   `/tmp/odoo-employees/departure-reasons-list-mobile.png`, and
   `/tmp/odoo-employees/departure-reasons-form-mobile.png`.
-- Core3: `/tmp/core3-odoo-employees/departure-reasons-list-desktop.png`,
-  `/tmp/core3-odoo-employees/departure-reasons-form-desktop.png`,
-  `/tmp/core3-odoo-employees/departure-reasons-list-mobile.png`, and
-  `/tmp/core3-odoo-employees/departure-reasons-form-mobile.png`.
+- Core3: `/tmp/core3-odoo-employees/departure-reasons-list-final-desktop-20260910.png`,
+  `/tmp/core3-odoo-employees/departure-reasons-form-final-desktop-20260910.png`,
+  `/tmp/core3-odoo-employees/departure-reasons-list-final-mobile-20260910.png`, and
+  `/tmp/core3-odoo-employees/departure-reasons-form-final-mobile-20260910.png`.
 
 The authenticated Playwright run used Odoo/Core3 viewports 1440x900 and
 390x844, waited for `/api/modules` to expose both page IDs, asserted visible
@@ -311,8 +312,10 @@ Departure Reasons content, recorded zero failed HTTP responses, and found no
 horizontal overflow. The Odoo mobile app launcher did not expose the same HR
 anchor in its touch DOM, so that mobile evidence reuses the authenticated
 `/odoo/action-414` resolved from the desktop menu. Core3 mobile uses the
-authenticated `/employees/departure-reasons` route and opens the Resignation
-detail card to prove the responsive detail state.
+authenticated `/employees/departure-reasons` route and opens its inline New
+state to prove the responsive detail/edit boundary. The follow-up acceptance
+run also verifies search, empty and missing detail responses, manager-only
+CRUD, validation, stale-version, duplicate, and protected-default guards.
 
 ## Bounded batch: Reporting Departments
 
