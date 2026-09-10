@@ -1,0 +1,20 @@
+title: Secure Journal Entries
+page: { id: secure-entries, route: /accounting/secure-entries, breadcrumb: [Finance, Accounting, Closing, Secure Entries], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_secure_entries
+    title_field: title
+    subtitle_field: instruction
+    group_columns: 2
+    groups:
+      - title: Secure Journal Entries
+        fields:
+          - { field: hash_date, label: Secure entries up to, type: date }
+          - { field: max_hash_date, label: Latest eligible date, type: date }
+      - title: Entries
+        fields:
+          - { field: entry_count, label: Entries to secure }
+          - { field: company, label: Company }
+    header_actions:
+      - { id: secure_accounting_entries, label: Secure Entries, variant: primary, permission: accounting.write }
+      - { id: discard_secure_accounting_entries, label: Discard, variant: secondary, permission: accounting.read }

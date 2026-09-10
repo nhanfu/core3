@@ -1,0 +1,24 @@
+version: 0.0.15
+description: Accounting secure journal entries wizard state
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_secure_entries (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company VARCHAR NOT NULL,
+        hash_date DATE,
+        max_hash_date DATE NOT NULL,
+        entry_count INTEGER NOT NULL DEFAULT 0,
+        secured_entries INTEGER NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL DEFAULT 'Ready',
+        last_secured_at TIMESTAMP
+      );
+      INSERT OR IGNORE INTO accounting_secure_entries(id, company, max_hash_date, entry_count, secured_entries, state)
+      VALUES ('secure-entries-state-001', 'My Company (San Francisco)', DATE '2026-01-14', 9, 0, 'Ready');
+    down: |
+      DROP TABLE IF EXISTS accounting_secure_entries;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

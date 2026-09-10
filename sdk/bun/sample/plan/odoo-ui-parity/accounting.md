@@ -317,6 +317,29 @@ vendor-bank-account field, and chatter; row navigation reuses the existing
 read-only generic payment detail. A later payment-form slice can add those
 controls without changing this vendor-list datasource boundary.
 
+## Current batch: Secure Entries closing wizard
+
+The live Odoo 19 menu/action audit found the next uncovered Accounting leaf at
+Accounting → Closing → Secure Entries, menu action
+`account.action_view_account_secure_entries_wizard` (action 371). Odoo opens
+the `account.secure.entries.wizard` form with the exact instruction “Secure
+entries up to [date] inclusive, to make them immutable” and `Secure Entries`
+and `Discard` actions.
+
+Core3 now exposes `/accounting/secure-entries` beside Closing. The page YAML is
+layout-only and joins `api/secure-entries.yaml` through `page.id`. Migration
+`20260911100000-015-accounting-secure-entries.yaml` seeds one deterministic
+company state with nine eligible entries. The read datasource requires
+`accounting.read`; the Secure Entries server-form mutation requires
+`accounting.write`, records the selected date with a deterministic
+`2026-01-15` timestamp boundary, increments the row version, and guards
+required, bounded, monotonic dates. Discard returns to Closing.
+
+This bounded UI slice does not claim Odoo's cryptographic hash-chain or actual
+database immutability; those implementation concerns remain outside the menu
+wizard parity boundary. Authenticated desktop/mobile captures are temporary
+under `/tmp/core3-odoo-parity/` and are not repository assets.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a

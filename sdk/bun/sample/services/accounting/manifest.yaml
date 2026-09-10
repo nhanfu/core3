@@ -85,6 +85,10 @@ menu:
           label: Closing
           icon: lock
           permission: accounting.read
+        - path: /accounting/secure-entries
+          label: Secure Entries
+          icon: lock
+          permission: accounting.read
     - id: configuration
       label: Configuration
       items:

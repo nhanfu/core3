@@ -1,0 +1,35 @@
+page: { id: secure-entries }
+datasources:
+  - id: accounting_secure_entries
+    single: true
+    permission: accounting.read
+    query: "SELECT id, row_version, 'Secure Journal Entries' AS title, 'Secure entries up to the selected date, inclusive, to make them immutable.' AS instruction, company, CAST(hash_date AS VARCHAR) AS hash_date, CAST(max_hash_date AS VARCHAR) AS max_hash_date, entry_count, state, secured_entries, CAST(last_secured_at AS VARCHAR) AS last_secured_at FROM accounting_secure_entries WHERE id = 'secure-entries-state-001'"
+actions:
+  - id: secure_accounting_entries
+    type: server_form
+    permission: accounting.write
+    title: Secure Journal Entries
+    action: accounting.secure_entries.run
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_secure_entries
+    refresh: [accounting_secure_entries]
+    mutation:
+      operation: update
+      table: accounting_secure_entries
+      key_field: id
+      concurrency: false
+      fields: [hash_date]
+      required: [hash_date]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE CAST(:hash_date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2026-01-15' AND (SELECT hash_date IS NULL OR CAST(:hash_date AS DATE) >= hash_date FROM accounting_secure_entries WHERE id = :id)", status: 422, message: The secure date must be between the last secured date and January 15, 2026 }
+        - { query: "SELECT id FROM accounting_secure_entries WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: The secure entries state changed; reload before securing again }
+      steps:
+        - { query: "UPDATE accounting_secure_entries SET hash_date = CAST(:hash_date AS DATE), state = 'Secured', secured_entries = entry_count, row_version = row_version + 1, last_secured_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The secure entries state changed; reload before securing again }
+      result: { query: "SELECT id, row_version, company, CAST(hash_date AS VARCHAR) AS hash_date, CAST(max_hash_date AS VARCHAR) AS max_hash_date, entry_count, secured_entries, state, CAST(last_secured_at AS VARCHAR) AS last_secured_at FROM accounting_secure_entries WHERE id = :id" }
+    fields:
+      - { field: hash_date, label: Secure entries up to, type: date, required: true }
+  - id: discard_secure_accounting_entries
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/closing
