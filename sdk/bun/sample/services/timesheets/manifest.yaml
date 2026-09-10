@@ -17,6 +17,12 @@ menu:
         - { path: /timesheets, label: Timesheets, icon: clock, permission: timesheets.read }
         - { path: /timesheet-analysis, label: Timesheet Analysis, icon: chart, permission: timesheets.read }
         - { path: /all-timesheets, label: All Timesheets, icon: users, permission: timesheets.manage }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /timesheets-by-employee, label: By Employee, icon: users, permission: timesheets.manage }
+        - { path: /timesheets-by-project, label: By Project, icon: project, permission: timesheets.manage }
+        - { path: /timesheets-by-task, label: By Task, icon: task, permission: timesheets.manage }
     - id: configuration
       label: Configuration
       items:

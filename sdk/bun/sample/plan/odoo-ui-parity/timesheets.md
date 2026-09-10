@@ -220,3 +220,20 @@ Authenticated Core3 menu-to-route checks used `admin@tms.local` at 1440x900 and
 `Upgrade`, so no installed Timesheets route or settings view was available.
 Truthful limitation captures are `/tmp/odoo-timesheets-reference-desktop.png`
 and `/tmp/odoo-timesheets/odoo-reference-apps-mobile.png`.
+
+## Batch 3 implementation record — Reporting routes
+
+Batch 3 adds the bounded reporting slice for the installed Odoo actions
+`/odoo/timesheets-by-employee`, `/odoo/timesheets-by-project`, and
+`/odoo/timesheets-by-task`. Each route has a layout-only page and a matching
+Timesheets-owned API fragment joined by `page.id`, with approver permission,
+pivot/graph/list modes, deterministic monthly pivot keys, Time Spent and
+Timesheet Costs measures, search, and fixed `2026-01-15`-anchored demo data.
+The data migration is idempotent and remains inside `services/timesheets`.
+
+Focused report/settings integration tests pass: 6 tests and 60 assertions;
+`git diff --check` is clean. The live Odoo reference was authenticated against
+`core3_reference`; `hr_timesheet` is installed with demo data and the three
+actions report `pivot,graph` modes. Post-fix Core3/Odoo desktop/mobile capture
+signoff was limited by the interrupted isolated runtime/browser pass, so no
+post-fix screenshot is claimed as final evidence here.

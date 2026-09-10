@@ -1,0 +1,7 @@
+page: { id: timesheets-by-project }
+datasources:
+  - id: timesheet_report_by_project
+    permission: timesheets.manage
+    single: false
+    pivot: { fields: [id, date, month, project_name, employee_name, task_name, amount, unit_amount, billable, state] }
+    query: "SELECT t.id, CAST(t.work_date AS DATE) AS date, CAST(strftime(t.work_date, '%Y_%m') AS VARCHAR) AS month, t.project_name, t.employee_name, t.task_name, CAST(-t.hours * t.unit_amount AS DECIMAL(18,2)) AS amount, CAST(t.hours AS DECIMAL(18,3)) AS unit_amount, t.billable, t.state FROM timesheet_entries t WHERE t.project_name IS NOT NULL AND (:q IS NULL OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') ORDER BY t.work_date DESC, t.project_name, t.id"

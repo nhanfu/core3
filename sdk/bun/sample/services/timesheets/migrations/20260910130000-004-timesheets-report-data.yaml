@@ -1,0 +1,22 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE timesheet_entries SET unit_amount = 125, state = 'Approved', updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = 'timesheet-demo-001';
+      INSERT OR IGNORE INTO timesheet_entries(id, name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, billable, unit_amount, state, approver, approved_at)
+      VALUES
+        ('timesheet-report-002', 'TS/2026/0002', 'employee-demo-002', 'Morgan Taylor', 'project-demo-001', 'Core3 Implementation', 'task-report-002', 'Requirements analysis', DATE '2026-01-14', 'Requirements analysis', 6.5, TRUE, 95, 'Approved', 'Admin User', TIMESTAMP '2026-01-15 00:00:00'),
+        ('timesheet-report-003', 'TS/2026/0003', 'employee-demo-002', 'Morgan Taylor', 'project-demo-001', 'Core3 Implementation', 'task-report-003', 'Design', DATE '2026-01-13', 'Design', 4.25, TRUE, 95, 'Submitted', NULL, NULL),
+        ('timesheet-report-004', 'TS/2026/0004', 'employee-demo-003', 'Priya Shah', 'project-demo-001', 'Core3 Implementation', 'task-report-004', 'Quality analysis', DATE '2026-01-12', 'Quality analysis', 3.5, FALSE, 110, 'Approved', 'Admin User', TIMESTAMP '2026-01-15 00:00:00'),
+        ('timesheet-report-005', 'TS/2026/0005', 'employee-demo-001', 'Admin User', 'project-demo-002', 'Delivery Enablement', 'task-report-005', 'Delivery', DATE '2026-01-09', 'Delivery', 7.5, TRUE, 125, 'Approved', 'Admin User', TIMESTAMP '2026-01-15 00:00:00'),
+        ('timesheet-report-006', 'TS/2026/0006', 'employee-demo-003', 'Priya Shah', 'project-demo-002', 'Delivery Enablement', 'task-report-006', 'Training', DATE '2026-01-08', 'Training', 5, FALSE, 110, 'Submitted', NULL, NULL),
+        ('timesheet-report-007', 'TS/2026/0007', 'employee-demo-002', 'Morgan Taylor', 'project-demo-002', 'Delivery Enablement', 'task-report-007', 'Presentation', DATE '2026-01-07', 'Presentation', 2.75, TRUE, 95, 'Approved', 'Admin User', TIMESTAMP '2026-01-15 00:00:00'),
+        ('timesheet-report-008', 'TS/2026/0008', 'employee-demo-001', 'Admin User', 'project-demo-002', 'Delivery Enablement', 'task-report-008', 'Sprint', DATE '2026-01-06', 'Sprint', 6, TRUE, 125, 'Approved', 'Admin User', TIMESTAMP '2026-01-15 00:00:00');
+    down: |
+      DELETE FROM timesheet_entries WHERE id IN ('timesheet-report-002', 'timesheet-report-003', 'timesheet-report-004', 'timesheet-report-005', 'timesheet-report-006', 'timesheet-report-007', 'timesheet-report-008');
+      UPDATE timesheet_entries SET unit_amount = 0, state = 'Draft', updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = 'timesheet-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

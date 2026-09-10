@@ -1,0 +1,28 @@
+title: Timesheets by Project
+page: { id: timesheets-by-project, route: /timesheets-by-project, breadcrumb: [Timesheets, Reporting, By Project], auth: { require: [timesheets.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: timesheet_report_by_project
+    search: { label: Search timesheet report, placeholder: 'Search projects, employees, or tasks...' }
+    group_by: [{ field: project_name, label: Project }, { field: employee_name, label: Employee }, { field: task_name, label: Task }]
+    view_navigation: tabs
+    views:
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: month, column: Month }, { field: project_name, column: Project }, { field: employee_name, column: Employee }, { field: task_name, column: Task }, { field: amount, column: Timesheet Costs }, { field: unit_amount, column: Time Spent }]
+          default: { rows: [project_name], columns: [month], measures: [{ field: amount, aggregate: sum, column: Timesheet Costs }, { field: unit_amount, aggregate: sum, column: Time Spent }] }
+      - { id: graph, label: Graph, icon: graph, category_field: project_name, measure_field: unit_amount, type: bar }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: date, label: Date, type: DateCell }
+      - { field: project_name, label: Project, type: PrimaryEntityCell }
+      - { field: employee_name, label: Employee }
+      - { field: task_name, label: Task }
+      - { field: amount, label: Timesheet Costs, align: right, optional: hide }
+      - { field: unit_amount, label: Time Spent, align: right }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No data yet!, description: Analyze the projects and tasks on which your employees spend their time. }
