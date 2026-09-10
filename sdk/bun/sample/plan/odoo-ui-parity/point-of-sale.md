@@ -336,6 +336,13 @@ catalog; Core3 uses four deterministic service-owned variants. Chatter writes
 are guarded by `pos.write`, while the displayed detail remains read-only for
 this batch.
 
+The Coins/Bills batch now uses the shared inline-list contract for Odoo action
+698. It provides thirteen deterministic denomination fixtures at
+`/point-of-sale/coins-bills`, responsive search and list rendering, and
+permissioned New/Save/Discard editing with required-field and row-version
+guards. Authenticated desktop/mobile CRUD evidence is retained under `/tmp`;
+screenshots remain outside Git.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,

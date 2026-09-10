@@ -2,4 +2,4 @@ page: { id: pos-coins-bills }
 datasources:
   - id: pos_cash_denominations
     permission: pos.read
-    query: "SELECT id, CAST(denomination AS DOUBLE) AS denomination, currency, kind, quantity, CAST(denomination * quantity AS DOUBLE) AS total, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active FROM pos_cash_denominations WHERE (:q IS NULL OR currency ILIKE '%' || :q || '%' OR kind ILIKE '%' || :q || '%') ORDER BY denomination"
+    query: "SELECT id, COALESCE(name, printf('%.2f', CAST(denomination AS DOUBLE))) AS name, printf('%.4f', CAST(COALESCE(value, denomination) AS DOUBLE)) AS value, COALESCE(pos_config_ids, 'For all point of sale.') AS pos_config_ids, row_version, denomination, currency, kind, quantity, CAST(denomination * quantity AS DOUBLE) AS total, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active FROM pos_cash_denominations WHERE (:q IS NULL OR COALESCE(name, printf('%.2f', CAST(denomination AS DOUBLE))) ILIKE '%' || :q || '%' OR CAST(COALESCE(value, denomination) AS VARCHAR) ILIKE '%' || :q || '%' OR COALESCE(pos_config_ids, 'For all point of sale.') ILIKE '%' || :q || '%') ORDER BY COALESCE(value, denomination)"

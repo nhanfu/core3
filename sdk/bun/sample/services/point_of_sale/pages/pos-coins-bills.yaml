@@ -1,19 +1,25 @@
-title: POS Coins and Bills
-page: { id: pos-coins-bills, route: /point-of-sale/coins-bills, breadcrumb: [Sales, Point of Sale, Configuration, Coins and Bills], auth: { require: [pos.read] } }
+title: Coins/Bills
+page: { id: pos-coins-bills, route: /point-of-sale/coins-bills, breadcrumb: [Sales, Point of Sale, Configuration, Coins/Bills], auth: { require: [pos.read] } }
 components:
   - type: ListView
     variant: odoo
     source: pos_cash_denominations
-    create_action: create_pos_cash_denomination
-    create_label: New
-    search: { label: Search denominations, placeholder: Search currency or kind... }
+    search: { label: Search..., placeholder: Search... }
+    selectable: true
+    column_chooser: true
+    inline_edit:
+      create_action: create_pos_cash_denomination_inline
+      update_action: update_pos_cash_denomination_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, required: true }
+        - { field: value, type: number, required: true, default: '0.0000' }
+        - { field: pos_config_ids, type: relation, placeholder: For all point of sale. }
     columns:
-      - { field: denomination, label: Denomination, type: PrimaryEntityCell, align: right }
-      - { field: currency, label: Currency }
-      - { field: kind, label: Type }
-      - { field: quantity, label: Default quantity, align: right }
-      - { field: total, label: Opening value, align: right }
-      - { field: active, label: Status, type: StatusChip }
+      - { field: name, label: Name }
+      - { field: value, label: Value, align: right }
+      - { field: pos_config_ids, label: Point of Sales }
     page_size: 50
     row_key: id
 actions:
@@ -38,3 +44,40 @@ actions:
       - { field: kind, label: Type, type: select, options: [Coin, Bill], default: Coin }
       - { field: quantity, label: Default quantity, type: number, default: 0 }
       - { field: active, label: Active, type: checkbox, default: true }
+  - id: create_pos_cash_denomination_inline
+    type: server_form
+    permission: pos.manage
+    title: New coin or bill
+    action: pos.cash_denominations.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [pos_cash_denominations]
+    mutation:
+      operation: insert
+      table: pos_cash_denominations
+      fields: [name, value, pos_config_ids, denomination, currency, kind, quantity, active]
+      required: [name, value]
+      defaults: { denomination: 0, currency: USD, kind: Coin, quantity: 0, active: true, pos_config_ids: 'For all point of sale.' }
+      result: { query: "SELECT * FROM pos_cash_denominations WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: value, label: Value, type: number, required: true, default: '0.0000' }
+      - { field: pos_config_ids, label: Point of Sales, type: text, default: 'For all point of sale.' }
+  - id: update_pos_cash_denomination_inline
+    type: server_form
+    permission: pos.manage
+    title: Edit coin or bill
+    action: pos.cash_denominations.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [pos_cash_denominations]
+    mutation:
+      operation: update
+      table: pos_cash_denominations
+      fields: [name, value, pos_config_ids]
+      required: [name, value]
+      result: { query: "SELECT * FROM pos_cash_denominations WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: value, label: Value, type: number, required: true }
+      - { field: pos_config_ids, label: Point of Sales, type: text }

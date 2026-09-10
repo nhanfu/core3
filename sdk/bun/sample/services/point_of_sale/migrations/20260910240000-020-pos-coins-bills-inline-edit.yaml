@@ -1,0 +1,36 @@
+version: 0.0.20
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_cash_denominations ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE pos_cash_denominations ADD COLUMN IF NOT EXISTS name VARCHAR;
+      ALTER TABLE pos_cash_denominations ADD COLUMN IF NOT EXISTS value DECIMAL(18,4);
+      ALTER TABLE pos_cash_denominations ADD COLUMN IF NOT EXISTS pos_config_ids VARCHAR;
+      UPDATE pos_cash_denominations SET row_version = COALESCE(row_version, 1);
+      UPDATE pos_cash_denominations SET denomination = 0.05 WHERE id = 'pos-cash-001';
+      INSERT INTO pos_cash_denominations(id, denomination, currency, kind, quantity)
+      VALUES
+        ('pos-cash-010c', 0.10, 'USD', 'Coin', 20),
+        ('pos-cash-020c', 0.20, 'USD', 'Coin', 20),
+        ('pos-cash-050c', 0.50, 'USD', 'Coin', 20),
+        ('pos-cash-002d', 2.00, 'USD', 'Coin', 20),
+        ('pos-cash-050d', 50.00, 'USD', 'Bill', 4),
+        ('pos-cash-100d', 100.00, 'USD', 'Bill', 2),
+        ('pos-cash-200d', 200.00, 'USD', 'Bill', 1)
+      ON CONFLICT(id) DO NOTHING;
+      UPDATE pos_cash_denominations
+      SET name = COALESCE(name, printf('%.2f', CAST(denomination AS DOUBLE))),
+          value = COALESCE(value, CAST(denomination AS DECIMAL(18,4))),
+          pos_config_ids = COALESCE(pos_config_ids, 'For all point of sale.');
+    down: |
+      DELETE FROM pos_cash_denominations
+      WHERE id IN ('pos-cash-010c', 'pos-cash-020c', 'pos-cash-050c', 'pos-cash-002d', 'pos-cash-050d', 'pos-cash-100d', 'pos-cash-200d');
+      UPDATE pos_cash_denominations SET denomination = 0.01 WHERE id = 'pos-cash-001';
+      ALTER TABLE pos_cash_denominations DROP COLUMN IF EXISTS pos_config_ids;
+      ALTER TABLE pos_cash_denominations DROP COLUMN IF EXISTS value;
+      ALTER TABLE pos_cash_denominations DROP COLUMN IF EXISTS name;
+      ALTER TABLE pos_cash_denominations DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
