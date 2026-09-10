@@ -294,6 +294,17 @@ Captures are `/tmp/core3-time-off-next-types-list-desktop.png`,
 `/tmp/core3-time-off-next-activity-mobile.png`. Focused tests cover the
 configuration contracts and exact Activity labels.
 
+The year-calendar visual follow-up closes a concrete Odoo mismatch found in a
+fresh authenticated comparison: Odoo's Time Off dashboard uses a twelve-month
+year view, while Core3 previously rendered only the first month. The shared
+CalendarView now supports an explicit `mode: year` contract with previous/next
+year controls and responsive month panels; only the Time Off dashboard opts
+into it, so ordinary module calendars retain their month behavior. Desktop and
+mobile browser checks assert twelve month panels, eight seeded leave markers,
+390px mobile width, and no failed requests. Captures are
+`/tmp/core3-time-off-year-desktop.png` and `/tmp/core3-time-off-year-mobile.png`;
+they are local evidence only.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context

@@ -47,4 +47,20 @@ describe('CalendarView', () => {
 
     expect(host.querySelector('[data-row-id="event-1"]')?.textContent).toBe('Conference');
   });
+
+  it('renders a year calendar as twelve month panels', () => {
+    const host = document.createElement('div');
+    const view = new CalendarView('time-off-calendar', {
+      rows: [{ id: 'leave-1', date_from: '2026-01-12', name: 'LEAVE/2026/0001' }],
+      month: '2026-01',
+    }, {
+      view: { id: 'calendar', label: 'Calendar', mode: 'year', dateField: 'date_from', card: { title: 'name' } },
+    });
+    view.mount(host);
+
+    expect(host.querySelector('.o-calendar-title')?.textContent).toBe('2026');
+    expect(host.querySelectorAll('.o-calendar-month')).toHaveLength(12);
+    expect(host.querySelectorAll('.o-calendar-year-event')).toHaveLength(1);
+    expect(host.querySelector('[data-row-id="leave-1"]')?.textContent).toBe('LEAVE/2026/0001');
+  });
 });

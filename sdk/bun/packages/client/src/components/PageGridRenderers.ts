@@ -584,6 +584,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     id: view.id,
     label: view.label || view.id,
     icon: view.icon,
+    mode: view.mode,
     dateField: view.date_field,
     endDateField: view.end_date_field,
     rowField: view.row_field,

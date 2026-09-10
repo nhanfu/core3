@@ -27,6 +27,7 @@ components:
       - id: calendar
         label: Calendar
         icon: calendar
+        mode: year
         date_field: date_from
         end_date_field: date_to
         card: { title: name, subtitle: employee_name }

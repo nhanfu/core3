@@ -8,6 +8,7 @@ export type CalendarViewDefinition = {
   id: 'calendar';
   label: string;
   icon?: string;
+  mode?: 'month' | 'year';
   dateField: string;
   endDateField?: string;
   card?: { title: string; subtitle?: string; fields?: Array<{ field: string; label?: string }> };
@@ -35,22 +36,53 @@ export class CalendarView extends BaseComponent {
     const month = this.monthFromState();
     const root = html.take(container).section.className('o-calendar-view').ele();
     const toolbar = html.take(root).header.className('o-calendar-toolbar').ele();
-    const previous = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', i18n.tKey('calendar.previous_month', {}, 'Previous month')).text('‹').ele();
-    html.take(previous).event('click', () => this.setMonth(month.getFullYear(), month.getMonth() - 1));
-    html.take(toolbar).h2.className('o-calendar-title').text(new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(month));
+    const yearMode = this.options.view.mode === 'year';
+    const previous = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', i18n.tKey(yearMode ? 'calendar.previous_year' : 'calendar.previous_month', {}, yearMode ? 'Previous year' : 'Previous month')).text('‹').ele();
+    html.take(previous).event('click', () => yearMode ? this.setYear(month.getFullYear() - 1) : this.setMonth(month.getFullYear(), month.getMonth() - 1));
+    if (yearMode) html.take(toolbar).button.className('o-calendar-period').text('Year').ele();
+    html.take(toolbar).h2.className('o-calendar-title').text(yearMode ? String(month.getFullYear()) : new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(month));
     const today = html.take(toolbar).button.className('o-calendar-today').text(i18n.tKey('calendar.today', {}, 'Today')).ele();
     html.take(today).event('click', () => {
       const now = new Date();
-      this.setMonth(now.getFullYear(), now.getMonth());
+      if (yearMode) this.setYear(now.getFullYear());
+      else this.setMonth(now.getFullYear(), now.getMonth());
     });
-    const next = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', i18n.tKey('calendar.next_month', {}, 'Next month')).text('›').ele();
-    html.take(next).event('click', () => this.setMonth(month.getFullYear(), month.getMonth() + 1));
+    const next = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', i18n.tKey(yearMode ? 'calendar.next_year' : 'calendar.next_month', {}, yearMode ? 'Next year' : 'Next month')).text('›').ele();
+    html.take(next).event('click', () => yearMode ? this.setYear(month.getFullYear() + 1) : this.setMonth(month.getFullYear(), month.getMonth() + 1));
 
+    const events = this.eventsByDate(rows);
+    if (yearMode) {
+      const yearGrid = html.take(root).div.className('o-calendar-year-grid').attr('role', 'grid').ele();
+      for (let monthIndex = 0; monthIndex < 12; monthIndex++) this.drawMonth(yearGrid, new Date(month.getFullYear(), monthIndex, 1), events, true);
+      return;
+    }
     const grid = html.take(root).div.className('o-calendar-grid').attr('role', 'grid').ele();
-    for (const label of this.weekdayLabels()) html.take(grid).div.className('o-calendar-weekday').attr('role', 'columnheader').text(label);
+    this.drawMonthGrid(grid, month, events);
+  }
 
+  private drawMonth(container: HTMLElement, month: Date, events: Map<string, CalendarRow[]>, compact: boolean) {
+    const section = html.take(container).section.className('o-calendar-month').ele();
+    html.take(section).h3.className('o-calendar-month-title').text(new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(month));
+    const grid = html.take(section).div.className(compact ? 'o-calendar-month-grid' : 'o-calendar-grid').attr('role', 'grid').ele();
+    this.drawMonthGrid(grid, month, events, compact);
+  }
+
+  private drawMonthGrid(grid: HTMLElement, month: Date, events: Map<string, CalendarRow[]>, compact = false) {
+    for (const label of this.weekdayLabels()) html.take(grid).div.className('o-calendar-weekday').attr('role', 'columnheader').text(label);
     const first = new Date(month.getFullYear(), month.getMonth(), 1);
     const start = new Date(first.getFullYear(), first.getMonth(), 1 - first.getDay());
+    for (let index = 0; index < 42; index++) {
+      const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + index);
+      const day = html.take(grid).div.className('o-calendar-day').attr('role', 'gridcell').ele();
+      if (date.getMonth() !== month.getMonth()) html.take(day).toggleClass('is-muted', true);
+      if (this.dateKey(date) === this.dateKey(new Date())) html.take(day).toggleClass('is-today', true);
+      html.take(day).div.className('o-calendar-day-number').text(String(date.getDate()));
+      const list = html.take(day).div.className('o-calendar-events').ele();
+      for (const [eventIndex, row] of (events.get(this.dateKey(date)) || []).entries()) this.drawEvent(list, row, eventIndex, compact ? 'o-calendar-year-event' : 'o-calendar-event');
+    }
+  }
+
+  private eventsByDate(rows: CalendarRow[]) {
     const events = new Map<string, CalendarRow[]>();
     for (const row of rows) {
       const date = this.parseDate(row[this.options.view.dateField]);
@@ -60,21 +92,12 @@ export class CalendarView extends BaseComponent {
       bucket.push(row);
       events.set(key, bucket);
     }
-
-    for (let index = 0; index < 42; index++) {
-      const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + index);
-      const day = html.take(grid).div.className('o-calendar-day').attr('role', 'gridcell').ele();
-      if (date.getMonth() !== month.getMonth()) html.take(day).toggleClass('is-muted', true);
-      if (this.dateKey(date) === this.dateKey(new Date())) html.take(day).toggleClass('is-today', true);
-      html.take(day).div.className('o-calendar-day-number').text(String(date.getDate()));
-      const list = html.take(day).div.className('o-calendar-events').ele();
-      for (const [eventIndex, row] of (events.get(this.dateKey(date)) || []).entries()) this.drawEvent(list, row, eventIndex);
-    }
+    return events;
   }
 
-  private drawEvent(container: HTMLElement, row: CalendarRow, index: number) {
+  private drawEvent(container: HTMLElement, row: CalendarRow, index: number, className = 'o-calendar-event') {
     const card = this.options.view.card;
-    const event = html.take(container).button.className('o-calendar-event').dataAttr('row-id', this.rowId(row, index)).ele() as HTMLButtonElement;
+    const event = html.take(container).button.className(className).dataAttr('row-id', this.rowId(row, index)).ele() as HTMLButtonElement;
     const title = row[card?.title || 'name'];
     html.take(event).replaceText(title == null || title === '' ? '—' : String(title));
     if (card?.subtitle && row[card.subtitle] != null) event.title = String(row[card.subtitle]);
@@ -118,6 +141,10 @@ export class CalendarView extends BaseComponent {
 
   private setMonth(year: number, month: number) {
     this.setState({ month: `${year}-${String(month + 1).padStart(2, '0')}` });
+  }
+
+  private setYear(year: number) {
+    this.setState({ month: `${year}-01` });
   }
 
   private parseDate(value: unknown) {

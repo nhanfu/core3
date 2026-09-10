@@ -699,7 +699,7 @@ function validateComponents(
             const viewPath = `${path}.views[${viewIndex}]`;
             requireRecord(view, viewPath, issues);
             if (!isRecord(view)) return;
-            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card', 'row_field', 'column_field', 'row_fields', 'column_fields', 'measure_field', 'measure_label', 'measures', 'aggregate', 'category_field', 'type', 'label_field', 'subtitle_field', 'latitude_field', 'longitude_field', 'pivot', 'title_field', 'record_date_field', 'record_end_date_field', 'mobile', 'empty_cell_action', 'schedule_action', 'activity_types']), viewPath, issues);
+            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'mode', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card', 'row_field', 'column_field', 'row_fields', 'column_fields', 'measure_field', 'measure_label', 'measures', 'aggregate', 'category_field', 'type', 'label_field', 'subtitle_field', 'latitude_field', 'longitude_field', 'pivot', 'title_field', 'record_date_field', 'record_end_date_field', 'mobile', 'empty_cell_action', 'schedule_action', 'activity_types']), viewPath, issues);
             requireString(view.id, `${viewPath}.id`, issues);
             requireString(view.label, `${viewPath}.label`, issues);
             if (!['list', 'kanban', 'calendar', 'card', 'form', 'activity', 'pivot', 'graph', 'map'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, calendar, card, form, activity, pivot, graph, or map`);
@@ -707,6 +707,7 @@ function validateComponents(
             if (typeof view.id === 'string') viewIds.add(view.id);
             if (view.id === 'kanban' && typeof view.group_by !== 'string') issues.push(`${viewPath}.group_by is required for kanban`);
             if (view.id === 'calendar' && typeof view.date_field !== 'string') issues.push(`${viewPath}.date_field is required for calendar`);
+            if (view.id === 'calendar' && view.mode !== undefined && !['month', 'year'].includes(String(view.mode))) issues.push(`${viewPath}.mode must be month or year`);
             if (view.id === 'activity') {
               if (typeof view.title_field !== 'string') issues.push(`${viewPath}.title_field is required for activity`);
               if (!Array.isArray(view.activity_types) || !view.activity_types.length) issues.push(`${viewPath}.activity_types must be a non-empty array for activity`);

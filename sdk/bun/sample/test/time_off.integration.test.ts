@@ -18,6 +18,9 @@ describe('Time Off Odoo view navigation', () => {
         multiViewPages.push(file);
         expect(component.view_navigation, file).toBe('tabs');
         expect(component.views.every((view: any) => typeof view.label === 'string' && view.label.length > 0), file).toBe(true);
+        if (file === 'time-off-dashboard.yaml') {
+          expect(component.views.find((view: any) => view.id === 'calendar'), file).toMatchObject({ mode: 'year', date_field: 'date_from' });
+        }
       }
     }
     expect(multiViewPages.sort()).toEqual([
