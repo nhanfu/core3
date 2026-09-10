@@ -223,6 +223,17 @@ Focused client/integration tests cover product submission, tender selection,
 change calculation, receipt transition, permission-boundary taps, datasource
 ownership, server guards, and the deterministic fixture. Final desktop/mobile
 checks are recorded with the commit handoff.
+## Current batch: Preset detail form
+
+The live Odoo Presets action is action 755 and uses `list,form` views. Its form
+exposes label, service mode, pricelist, fiscal position, order timing and
+capacity, identification, return mode, color, and self-order options. Core3
+now opens `/point-of-sale/preset-detail?id=...` from the Presets list and binds
+the form to `pos-preset-detail`/`pos_preset_detail` API YAML with matching
+`page.id` values. The permissioned update action uses optimistic
+`row_version` concurrency, while migration 014 adds the detail fields and
+updates the three stable preset fixtures. The list has an explicit empty state;
+read access requires `pos.read` and edits require `pos.manage`.
 
 ## Shared primitives and fixtures
 

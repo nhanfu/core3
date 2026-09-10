@@ -6,36 +6,18 @@ components:
     source: pos_order_presets
     create_action: create_pos_order_preset
     create_label: New
+    row_open_action: view_pos_order_preset
+    row_double_click_action: view_pos_order_preset
     search: { label: Search presets, placeholder: Search preset or service mode... }
+    empty_state: { title: No presets, description: Create a preset to control service modes and self-order options. }
     columns:
       - { field: name, label: Preset, type: PrimaryEntityCell }
+      - { field: use_timing, label: Manage orders by time }
+      - { field: identification, label: Identification }
+      - { field: color, label: Color }
       - { field: service_mode, label: Service mode }
       - { field: preparation_minutes, label: Preparation (min), align: right }
       - { field: guest_count, label: Guests, align: right }
-      - { field: note, label: Default note }
       - { field: active, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
-actions:
-  - id: create_pos_order_preset
-    type: server_form
-    permission: pos.manage
-    title: New POS preset
-    action: pos.order_presets.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [pos_order_presets]
-    mutation:
-      operation: insert
-      table: pos_order_presets
-      fields: [name, service_mode, preparation_minutes, guest_count, note, active]
-      required: [name, service_mode]
-      defaults: { preparation_minutes: 0, guest_count: 1, active: true }
-      result: { query: "SELECT * FROM pos_order_presets WHERE id = :id" }
-    fields:
-      - { field: name, label: Preset, type: text, required: true }
-      - { field: service_mode, label: Service mode, type: select, options: [Takeaway, Dine in, Delivery], default: Takeaway }
-      - { field: preparation_minutes, label: Preparation (min), type: number, default: 0 }
-      - { field: guest_count, label: Guests, type: number, default: 1 }
-      - { field: note, label: Default note, type: textarea }
-      - { field: active, label: Active, type: checkbox, default: true }

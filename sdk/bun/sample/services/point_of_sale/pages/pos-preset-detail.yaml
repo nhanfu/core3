@@ -1,0 +1,34 @@
+title: POS Preset
+page: { id: pos-preset-detail, route: /point-of-sale/preset-detail, breadcrumb: [Sales, Point of Sale, Configuration, Presets, Preset], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_preset_detail
+    title_field: name
+    group_columns: 2
+    groups:
+      - title: Preset
+        fields:
+          - { field: name, label: Label }
+          - { field: service_mode, label: Service mode }
+          - { field: pricelist, label: Pricelist }
+          - { field: fiscal_position, label: Fiscal Position }
+          - { field: identification, label: Identification }
+          - { field: is_return, label: Return mode }
+          - { field: color, label: Color }
+      - title: Order timing
+        fields:
+          - { field: use_timing, label: Manage orders by time }
+          - { field: schedule, label: Schedule based on }
+          - { field: slots_per_interval, label: Preparation capacity }
+          - { field: interval_time, label: Interval time (min) }
+          - { field: preparation_minutes, label: Default preparation (min) }
+          - { field: guest_count, label: Default guests }
+      - title: Self Ordering
+        fields:
+          - { field: available_in_self, label: Available in self }
+          - { field: service_at, label: Service at }
+          - { field: email_confirmation, label: Email Confirmation }
+          - { field: note, label: Default note, type: textarea }
+      - title: Status
+        fields:
+          - { field: active, label: Active }

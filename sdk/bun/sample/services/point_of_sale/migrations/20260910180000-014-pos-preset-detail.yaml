@@ -1,0 +1,52 @@
+version: 0.0.14
+kind: data
+description: POS preset detail fields and deterministic Odoo-style fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS pricelist VARCHAR;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS fiscal_position VARCHAR;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS use_timing BOOLEAN;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS schedule VARCHAR;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS slots_per_interval INTEGER;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS interval_time INTEGER;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS identification VARCHAR;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS is_return BOOLEAN;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS color INTEGER;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS available_in_self BOOLEAN;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS service_at VARCHAR;
+      ALTER TABLE pos_order_presets ADD COLUMN IF NOT EXISTS email_confirmation BOOLEAN;
+      UPDATE pos_order_presets SET
+        row_version = COALESCE(row_version, 1),
+        pricelist = CASE id WHEN 'pos-preset-takeaway' THEN 'Public Pricelist' WHEN 'pos-preset-dine-in' THEN 'Public Pricelist' ELSE 'Delivery Pricelist' END,
+        fiscal_position = 'Domestic',
+        use_timing = CASE WHEN id = 'pos-preset-dine-in' THEN true ELSE false END,
+        schedule = CASE WHEN id = 'pos-preset-dine-in' THEN 'Weekdays, 09:00-18:00' ELSE NULL END,
+        slots_per_interval = CASE WHEN id = 'pos-preset-dine-in' THEN 5 ELSE 10 END,
+        interval_time = CASE WHEN id = 'pos-preset-dine-in' THEN 20 ELSE 30 END,
+        identification = CASE id WHEN 'pos-preset-takeaway' THEN 'Name' WHEN 'pos-preset-delivery' THEN 'Address' ELSE 'Not required' END,
+        is_return = false,
+        color = CASE id WHEN 'pos-preset-takeaway' THEN 4 WHEN 'pos-preset-dine-in' THEN 10 ELSE 7 END,
+        available_in_self = CASE WHEN id IN ('pos-preset-takeaway', 'pos-preset-dine-in') THEN true ELSE false END,
+        service_at = CASE id WHEN 'pos-preset-takeaway' THEN 'Counter' WHEN 'pos-preset-delivery' THEN 'Delivery' ELSE 'Table' END,
+        email_confirmation = CASE WHEN id = 'pos-preset-delivery' THEN true ELSE false END
+      WHERE id IN ('pos-preset-takeaway', 'pos-preset-dine-in', 'pos-preset-delivery');
+    down: |
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS email_confirmation;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS service_at;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS available_in_self;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS color;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS is_return;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS identification;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS interval_time;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS slots_per_interval;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS schedule;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS use_timing;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS fiscal_position;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS pricelist;
+      ALTER TABLE pos_order_presets DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
