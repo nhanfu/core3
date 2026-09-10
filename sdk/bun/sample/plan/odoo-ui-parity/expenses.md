@@ -275,6 +275,16 @@ See [expenses-batch-2.md](expenses-batch-2.md) for the bounded acceptance and
 verification record. The disposable comparison used the live `core3_reference`
 Odoo database at `http://127.0.0.1:8069`.
 
+Batch 3 is implemented in the isolated `agent/odoo-ui-expenses-next-20260910`
+worktree from parent HEAD `75ffcae4`. It closes the next visible Configuration
+gap: Expense Categories now has a manager-only page/API contract, active and
+archived filters, shared edit form actions, duplicate-name and optimistic
+concurrency guards, archive/unarchive actions, deterministic archived data,
+and an explicit error state. The Expenses manifest exposes Reporting and
+Configuration as visible groups so the owned Odoo menu hierarchy is preserved.
+See [expenses-batch-3.md](expenses-batch-3.md) for the live menu inventory,
+bounded acceptance, and authenticated desktop/mobile evidence.
+
 ## Acceptance
 
 - The implementation inventory maps every visible installed-addon menu and

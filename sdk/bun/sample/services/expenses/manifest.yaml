@@ -26,16 +26,21 @@ menu:
           label: Employee Expenses
           icon: people
           permission: expenses.read
-      children:
+    - id: reporting
+      label: Reporting
+      items:
         - path: /expense-analysis
           label: Expense Analysis
           icon: chart
           permission: expenses.read
+    - id: configuration
+      label: Configuration
+      items:
         - path: /expenses/categories
           label: Expense Categories
           icon: folder
-          permission: expenses.read
+          permission: expenses.manage
         - path: /expenses/settings
           label: Settings
           icon: settings
-          permission: expenses.read
+          permission: expenses.manage

@@ -1,0 +1,14 @@
+version: 0.0.6
+description: Expense category archive and CRUD parity fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO expense_categories(id, row_version, name, cost_method, unit_cost, reference, guideline, active)
+      VALUES ('expense-category-archived', 1, 'Archived Meal Voucher', 'fixed', 0, 'ARCHIVE', 'Retained to exercise the archived category filter.', false)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM expense_categories WHERE id = 'expense-category-archived';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

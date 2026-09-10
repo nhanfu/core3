@@ -1,5 +1,61 @@
 page: { id: expense-categories }
 datasources:
   - id: expense_categories
-    permission: expenses.read
-    query: "SELECT id, row_version, name, cost_method, unit_cost, reference, guideline, active FROM expense_categories WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR reference ILIKE '%' || :q || '%') ORDER BY name"
+    permission: expenses.manage
+    error_states: { transport_error: { status: 503, code: EXPENSE_CATEGORIES_UNAVAILABLE, message: Expense categories are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, cost_method, unit_cost, reference, guideline, active FROM expense_categories WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((:active IS NULL AND active = TRUE) OR (:active = 'active' AND active = TRUE) OR (:active = 'archived' AND active = FALSE)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(reference, '') ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: create_expense_category
+    type: server_form
+    permission: expenses.manage
+    title: New Expense Category
+    action: expenses.categories.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [expense_categories]
+    mutation:
+      operation: insert
+      table: expense_categories
+      generated: [id]
+      fields: [name, cost_method, unit_cost, reference, guideline, active]
+      required: [name]
+      defaults: { cost_method: fixed, unit_cost: 0, active: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM expense_categories WHERE LOWER(name) = LOWER(:name))", status: 409, code: EXPENSE_CATEGORY_NAME_EXISTS, message: An expense category with this name already exists. }]
+      result: { query: "SELECT * FROM expense_categories WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: cost_method, label: Cost Method, type: select, options: [{ value: fixed, label: Fixed Cost }, { value: quantity, label: Per Unit }] }, { field: unit_cost, label: Cost per Unit, type: number }, { field: reference, label: Reference, type: text }, { field: guideline, label: Note, type: textarea }, { field: active, label: Active, type: checkbox, default: true }]
+  - id: edit_expense_category
+    type: server_form
+    permission: expenses.manage
+    title: Edit Expense Category
+    action: expenses.categories.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [expense_categories]
+    mutation:
+      operation: update
+      table: expense_categories
+      fields: [name, cost_method, unit_cost, reference, guideline]
+      required: [name]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM expense_categories WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: EXPENSE_CATEGORY_NAME_EXISTS, message: An expense category with this name already exists. }]
+      result: { query: "SELECT * FROM expense_categories WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: cost_method, label: Cost Method, type: select, options: [{ value: fixed, label: Fixed Cost }, { value: quantity, label: Per Unit }] }, { field: unit_cost, label: Cost per Unit, type: number }, { field: reference, label: Reference, type: text }, { field: guideline, label: Note, type: textarea }]
+  - id: archive_expense_category
+    type: server
+    permission: expenses.manage
+    action: expenses.categories.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [expense_categories]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: expense_categories, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM expense_categories WHERE id = :id" } }
+  - id: unarchive_expense_category
+    type: server
+    permission: expenses.manage
+    action: expenses.categories.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [expense_categories]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: expense_categories, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM expense_categories WHERE id = :id" } }

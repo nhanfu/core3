@@ -1,5 +1,5 @@
 title: Expense Categories
-page: { id: expense-categories, route: /expenses/categories, breadcrumb: [Expenses, Configuration, Expense Categories], auth: { require: [expenses.read] } }
+page: { id: expense-categories, route: /expenses/categories, breadcrumb: [Expenses, Configuration, Expense Categories], auth: { require: [expenses.manage] } }
 components:
   - type: ListView
     variant: odoo
@@ -7,25 +7,20 @@ components:
     create_action: create_expense_category
     create_label: New
     search: { label: Search categories, placeholder: Search expense categories... }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
+      - { id: list, label: List, icon: table, mobile: false }
       - { id: kanban, label: Kanban, icon: dashboard, group_by: cost_method, card: { title: name, subtitle: reference, fields: [{ field: cost_method, label: Cost Method }, { field: unit_cost, label: Unit Cost }, { field: active, label: Active }] } }
+    row_key: id
+    row_open_action: edit_expense_category
+    row_actions: menu
+    empty_state: { title: No expense categories, description: No expense categories match the current filters. }
     columns:
-      - { field: name, label: Category, type: PrimaryEntityCell, sortable: true }
+      - { field: name, label: Name, type: PrimaryEntityCell, sortable: true, mobile: true }
       - { field: cost_method, label: Cost Method }
       - { field: unit_cost, label: Cost per Unit, align: right }
       - { field: reference, label: Reference }
-      - { field: active, label: Active }
+      - { field: active, label: Active, optional: hide }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_expense_category, label: Edit, icon: edit }, { id: archive_expense_category, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_expense_category, label: Unarchive, icon: archive, show_if: 'row.active === false' }] }
     page_size: 25
-    row_key: id
-actions:
-  - id: create_expense_category
-    type: server_form
-    permission: expenses.write
-    title: New Expense Category
-    action: expenses.categories.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [expense_categories]
-    mutation: { operation: insert, table: expense_categories, fields: [name, cost_method, unit_cost, reference, guideline, active], required: [name], defaults: { cost_method: fixed, unit_cost: 0, active: true }, result: { query: "SELECT * FROM expense_categories WHERE id = :id" } }
-    fields: [{ field: name, label: Category, type: text, required: true }, { field: cost_method, label: Cost Method, type: select, options: [{ value: fixed, label: Fixed Cost }, { value: quantity, label: Per Unit }] }, { field: unit_cost, label: Cost per Unit, type: number }, { field: reference, label: Reference, type: text }, { field: guideline, label: Guideline, type: textarea }, { field: active, label: Active, type: checkbox, default: true }]
