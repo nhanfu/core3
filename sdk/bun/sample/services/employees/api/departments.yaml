@@ -2,7 +2,8 @@ page: { id: employee-departments }
 datasources:
   - id: employee_departments_report
     permission: employees.read
-    query: "SELECT d.id, d.row_version, d.name, d.manager_name, d.state, d.active, COALESCE(d.company_name, 'Core3 Vietnam') AS company_name, COALESCE(d.parent_name, '') AS parent_name, COALESCE(d.notes, '') AS notes, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true) AS employee_count FROM employee_departments d LEFT JOIN employees e ON e.department_id = d.id WHERE ((:active IS NULL AND COALESCE(d.active, true) = true) OR (:active IS NOT NULL AND d.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.manager_name ILIKE '%' || :q || '%') GROUP BY d.id, d.row_version, d.name, d.manager_name, d.state, d.active, d.company_name, d.parent_name, d.notes ORDER BY d.name, d.id"
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_DEPARTMENTS_UNAVAILABLE, message: Department reporting is temporarily unavailable. } }
+    query: "SELECT d.id, d.row_version, d.name, d.manager_name, d.state, d.active, COALESCE(d.company_name, 'Core3 Vietnam') AS company_name, COALESCE(d.parent_name, '') AS parent_name, COALESCE(d.notes, '') AS notes, COALESCE(d.employee_count, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true)) AS employee_count, COALESCE(d.applicant_count, 0) AS applicant_count, COALESCE(d.allocation_count, 0) AS allocation_count, COALESCE(d.expense_count, 0) AS expense_count, COALESCE(d.time_off_count, 0) AS time_off_count, COALESCE(d.plan_count, 0) AS plan_count, COALESCE(d.color, 0) AS color FROM employee_departments d LEFT JOIN employees e ON e.department_id = d.id WHERE COALESCE(d.report_visible, true) = true AND ((:active IS NULL AND COALESCE(d.active, true) = true) OR (:active IS NOT NULL AND d.active = CAST(:active AS BOOLEAN))) AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.manager_name ILIKE '%' || :q || '%' OR d.parent_name ILIKE '%' || :q || '%' OR d.company_name ILIKE '%' || :q || '%') GROUP BY d.id, d.row_version, d.name, d.manager_name, d.state, d.active, d.company_name, d.parent_name, d.notes, d.employee_count, d.applicant_count, d.allocation_count, d.expense_count, d.time_off_count, d.plan_count, d.color ORDER BY d.name, d.id"
 actions:
   - id: view_department
     type: navigate
@@ -20,13 +21,16 @@ actions:
     mutation:
       operation: insert
       table: employee_departments
-      fields: [name, manager_name, company_name, parent_name, notes]
+      generated: [id]
+      fields: [name, manager_name, company_name, parent_name, notes, color]
       required: [name]
-      defaults: { active: true, state: Active, company_name: Core3 Vietnam }
+      defaults: { active: true, state: Active, report_visible: true, employee_count: 0, company_name: My Company (San Francisco), color: 0, row_version: 1 }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departments WHERE LOWER(name) = LOWER(:name) AND COALESCE(report_visible, true) = true)", status: 409, code: EMPLOYEE_DEPARTMENT_NAME_EXISTS, message: A department with this name already exists. }]
       result: { query: "SELECT * FROM employee_departments WHERE id = :id" }
     fields:
       - { field: name, label: Department, type: text, required: true }
       - { field: manager_name, label: Manager, type: text }
-      - { field: company_name, label: Company, type: text, default: Core3 Vietnam }
+      - { field: company_name, label: Company, type: text, default: My Company (San Francisco) }
       - { field: parent_name, label: Parent Department, type: text }
+      - { field: color, label: Color, type: color, default: 0 }
       - { field: notes, label: Notes, type: textarea }

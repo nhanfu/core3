@@ -1,5 +1,6 @@
 /* Kanban and card-view surfaces. */
 .o-kanban-board { display: flex; min-height: 0; flex: 1; gap: 12px; overflow: auto; padding: 16px; background: var(--o-list-panel-bg); }
+.o-kanban-board.is-ungrouped { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; overflow: auto; }
 .o-kanban-column { display: flex; width: min(320px, calc(100vw - 48px)); min-width: 280px; height: fit-content; max-height: 100%; flex-direction: column; border-radius: 5px; background: var(--o-list-muted-bg); }
 @media (max-width: 768px) {
   .o-kanban-board { display: block; overflow-x: hidden; padding: 12px; }
@@ -36,3 +37,4 @@
 .o-card-view-group { grid-column: 1 / -1; }
 .o-card-view-group-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 8px; }
 .o-card-view-item { flex: 0 0 auto; }
+@media (max-width: 720px) { .o-kanban-board.is-ungrouped { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px; } }

@@ -5,8 +5,8 @@ components:
     variant: odoo
     source: employee_departments_report
     create_action: create_department
-    create_label: New department
-    search: { label: Search departments, placeholder: Search department or manager... }
+    create_label: New
+    search: { label: Search, placeholder: Search... }
     filters: [{ field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }]
     view_navigation: tabs
     views:
@@ -14,14 +14,17 @@ components:
         label: Kanban
         icon: dashboard
         mobile: false
-        group_by: state
-        groups: [{ value: Active, label: Active }, { value: Archived, label: Archived }]
+        group_by: ''
         card:
           title: name
           subtitle: manager_name
           fields:
             - { field: employee_count, label: Employees }
             - { field: company_name, label: Company }
+            - { field: applicant_count, label: New Applicants }
+            - { field: allocation_count, label: Allocation Requests }
+            - { field: expense_count, label: Expenses }
+            - { field: time_off_count, label: Time Off Requests }
             - { field: state, label: Status }
       - id: list
         label: List
@@ -36,15 +39,19 @@ components:
           fields:
             - { field: employee_count, label: Employees }
             - { field: company_name, label: Company }
+            - { field: parent_name, label: Parent Department }
+            - { field: applicant_count, label: New Applicants }
             - { field: state, label: Status }
     columns:
-      - { field: name, label: Department, type: PrimaryEntityCell }
+      - { field: name, label: Department Name, type: PrimaryEntityCell }
       - { field: company_name, label: Company }
       - { field: manager_name, label: Manager }
       - { field: employee_count, label: Employees, align: right }
-      - { field: state, label: Status, type: StatusChip }
+      - { field: parent_name, label: Parent Department }
+      - { field: color, label: Color, type: ColorCell, align: right }
     page_size: 50
     row_key: id
     row_open_action: view_department
     row_double_click_action: view_department
+    row_actions: menu
     empty_state: { title: No departments found, description: Create a department or adjust your search. }

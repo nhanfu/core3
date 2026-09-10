@@ -46,7 +46,14 @@ export class KanbanView extends BaseComponent {
   draw(container: HTMLElement) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows : [];
     const view = this.options.view;
-    const groupBy = view.groupBy || 'status';
+    // An explicitly empty group_by is the Odoo ungrouped kanban state. Keep
+    // the legacy status fallback only for views that omit the setting.
+    const groupBy = view.groupBy === undefined ? 'status' : view.groupBy;
+    if (!groupBy) {
+      const board = html.take(container).div.className('o-kanban-board is-ungrouped').ele();
+      for (const [index, row] of rows.entries()) this.drawCard(board, row, index);
+      return;
+    }
     const groups = (view.groups || []).map(group => ({ ...group, rows: [] as ListRow[] }));
     const byValue = new Map(groups.map(group => [String(group.value), group]));
     for (const row of rows) {

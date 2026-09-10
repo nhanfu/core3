@@ -62,7 +62,7 @@ describe('Employees Odoo action-mode parity batch', () => {
     expect(departments.create_action).toBe('create_department');
     expect(yaml('api/departments.yaml').actions.find((action: any) => action.id === 'create_department')?.permission).toBe('employees.manage');
     expect(yaml('api/department-detail.yaml').actions.map((action: any) => action.id)).toEqual([
-      'department_employee_count', 'edit_department', 'archive_department', 'restore_department',
+      'department_employee_count', 'department_plan_count', 'edit_department', 'archive_department', 'restore_department', 'delete_department',
     ]);
   });
 
@@ -88,8 +88,10 @@ describe('Employees Odoo action-mode parity batch', () => {
 
     const departmentSource = yaml('api/departments.yaml').datasources[0];
     const departments = await repository.querySource(departmentSource, { q: null, active: null }, 0, 50);
-    expect(departments.data).toHaveLength(1);
-    expect(departments.data[0]).toMatchObject({ name: 'Engineering', employee_count: 3 });
+    expect(departments.data.map((row: any) => row.name)).toEqual([
+      'Administration', 'Long Term Projects', 'Management', 'Professional Services', 'R&D USA', 'Research & Development', 'Sales',
+    ]);
+    expect(departments.data.find((row: any) => row.name === 'Research & Development')).toMatchObject({ employee_count: 7 });
   });
 
   test('keeps source-side boundary and seed contracts deterministic', () => {

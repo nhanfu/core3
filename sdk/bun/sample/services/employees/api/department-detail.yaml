@@ -3,12 +3,18 @@ datasources:
   - id: employee_department_detail
     single: true
     permission: employees.read
-    query: "SELECT d.id, d.row_version, d.name, d.manager_name, d.state, d.active, COALESCE(d.company_name, 'Core3 Vietnam') AS company_name, COALESCE(d.parent_name, '') AS parent_name, COALESCE(d.notes, '') AS notes, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true) AS employee_count FROM employee_departments d LEFT JOIN employees e ON e.department_id = d.id WHERE d.id = :id GROUP BY d.id, d.row_version, d.name, d.manager_name, d.state, d.active, d.company_name, d.parent_name, d.notes"
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_DEPARTMENT_DETAIL_UNAVAILABLE, message: Department details are temporarily unavailable. } }
+    query: "SELECT d.id, d.row_version, d.name, d.manager_name, d.state, d.active, COALESCE(d.company_name, 'Core3 Vietnam') AS company_name, COALESCE(d.parent_name, '') AS parent_name, COALESCE(d.notes, '') AS notes, COALESCE(d.employee_count, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true)) AS employee_count, COALESCE(d.applicant_count, 0) AS applicant_count, COALESCE(d.allocation_count, 0) AS allocation_count, COALESCE(d.expense_count, 0) AS expense_count, COALESCE(d.time_off_count, 0) AS time_off_count, COALESCE(d.plan_count, 0) AS plan_count, COALESCE(d.color, 0) AS color FROM employee_departments d LEFT JOIN employees e ON e.department_id = d.id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND d.id = :id GROUP BY d.id, d.row_version, d.name, d.manager_name, d.state, d.active, d.company_name, d.parent_name, d.notes, d.employee_count, d.applicant_count, d.allocation_count, d.expense_count, d.time_off_count, d.plan_count, d.color"
 actions:
   - id: department_employee_count
     type: navigate
     permission: employees.read
     navigate_to: /employees
+    params: { department_name: '{row.name}' }
+  - id: department_plan_count
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/activities
     params: { department_name: '{row.name}' }
   - id: edit_department
     type: server_form
@@ -22,9 +28,13 @@ actions:
     mutation:
       operation: update
       table: employee_departments
-      fields: [name, manager_name, company_name, parent_name, notes]
+      fields: [name, manager_name, company_name, parent_name, notes, color]
       required: [name]
       timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_departments WHERE id = :id AND COALESCE(report_visible, true) = true", status: 404, code: EMPLOYEE_DEPARTMENT_NOT_FOUND, message: Department not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departments WHERE LOWER(name) = LOWER(:name) AND id <> :id AND COALESCE(report_visible, true) = true)", status: 409, code: EMPLOYEE_DEPARTMENT_NAME_EXISTS, message: A department with this name already exists. }
       result: { query: "SELECT * FROM employee_departments WHERE id = :id" }
     fields:
       - { field: name, label: Department, type: text, required: true }
@@ -39,7 +49,7 @@ actions:
     handler: yaml_mutation
     operation: update
     refresh: [employee_department_detail]
-    mutation: { operation: update, table: employee_departments, fields: [active, state], defaults: { active: false, state: Archived } }
+    mutation: { operation: update, table: employee_departments, fields: [active, state], defaults: { active: false, state: Archived }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_departments WHERE id = :id AND COALESCE(report_visible, true) = true AND active = true", status: 404, code: EMPLOYEE_DEPARTMENT_NOT_FOUND, message: Active department not found. }] }
   - id: restore_department
     type: server
     permission: employees.manage
@@ -47,4 +57,18 @@ actions:
     handler: yaml_mutation
     operation: update
     refresh: [employee_department_detail]
-    mutation: { operation: update, table: employee_departments, fields: [active, state], defaults: { active: true, state: Active } }
+    mutation: { operation: update, table: employee_departments, fields: [active, state], defaults: { active: true, state: Active }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_departments WHERE id = :id AND COALESCE(report_visible, true) = true AND active = false", status: 404, code: EMPLOYEE_DEPARTMENT_NOT_FOUND, message: Archived department not found. }] }
+  - id: delete_department
+    type: server
+    permission: employees.manage
+    action: employees.departments.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [employee_departments_report]
+    mutation:
+      operation: delete
+      table: employee_departments
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_departments WHERE id = :id AND COALESCE(report_visible, true) = true", status: 404, code: EMPLOYEE_DEPARTMENT_NOT_FOUND, message: Department not found. }
+        - { query: "SELECT id FROM employee_departments WHERE id = :id AND COALESCE(employee_count, 0) = 0", status: 409, code: EMPLOYEE_DEPARTMENT_IN_USE, message: A department with employees cannot be deleted; archive it instead. }

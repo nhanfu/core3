@@ -13,10 +13,10 @@ components:
       - { id: edit_department, label: Edit, variant: secondary, permission: employees.manage }
       - { id: archive_department, label: Archive, variant: danger, permission: employees.manage, show_if: "state.employee_department_detail.active === true" }
       - { id: restore_department, label: Restore, variant: secondary, permission: employees.manage, show_if: "state.employee_department_detail.active === false" }
-    stat_buttons: [{ id: department_employee_count, label: Employees, value_field: employee_count }]
+    stat_buttons: [{ id: department_employee_count, label: Employees, value_field: employee_count }, { id: department_plan_count, label: Plans, value_field: plan_count }]
     group_columns: 2
     groups:
       - title: Department
-        fields: [{ field: name, label: Department }, { field: manager_name, label: Manager }, { field: company_name, label: Company }, { field: state, label: Status }]
+        fields: [{ field: name, label: Department }, { field: manager_name, label: Manager }, { field: company_name, label: Company }, { field: color, label: Color, type: color }, { field: state, label: Status }]
       - title: Organization
-        fields: [{ field: employee_count, label: Employees }, { field: parent_name, label: Parent Department }, { field: notes, label: Notes, type: textarea, wide: true }]
+        fields: [{ field: employee_count, label: Employees }, { field: plan_count, label: Plans }, { field: parent_name, label: Parent Department }, { field: notes, label: Notes, type: textarea, wide: true }]

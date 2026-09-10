@@ -1,0 +1,34 @@
+version: 0.0.7
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS report_visible BOOLEAN;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS employee_count INTEGER;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS applicant_count INTEGER;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS allocation_count INTEGER;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS expense_count INTEGER;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS time_off_count INTEGER;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS plan_count INTEGER;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS color INTEGER;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
+      UPDATE employee_departments SET report_visible = false WHERE id = 'department-engineering';
+      UPDATE employee_departments SET employee_count = 3, report_visible = false WHERE id = 'department-engineering';
+      INSERT OR IGNORE INTO employee_departments
+        (id, name, manager_name, state, active, row_version, company_name, parent_name, notes, report_visible, employee_count, applicant_count, allocation_count, expense_count, time_off_count, plan_count, color)
+      VALUES
+        ('department-administration', 'Administration', 'Mitchell Admin', 'Active', true, 1, 'My Company (San Francisco)', 'Management', 'Administrative operations and shared services.', true, 2, 1, 0, 0, 0, 2, 2),
+        ('department-long-term-projects', 'Long Term Projects', 'Paul Williams', 'Active', true, 1, 'My Company (San Francisco)', 'Management / Research & Development / R&D USA', 'Long-running customer and platform initiatives.', true, 1, 0, 2, 0, 0, 1, 4),
+        ('department-management', 'Management', 'Mitchell Admin', 'Active', true, 1, 'My Company (San Francisco)', '', 'Company management and people operations.', true, 2, 0, 1, 4, 1, 2, 6),
+        ('department-professional-services', 'Professional Services', 'Tina Williamson', 'Active', true, 1, 'My Company (San Francisco)', 'Management', 'Customer delivery and implementation services.', true, 5, 1, 1, 0, 0, 2, 1),
+        ('department-rnd-usa', 'R&D USA', 'Ronnie Hart', 'Active', true, 1, 'My Company (San Francisco)', 'Management / Research & Development', 'United States research and development team.', true, 1, 0, 1, 0, 0, 1, 4),
+        ('department-research-development', 'Research & Development', 'Marc Demo', 'Active', true, 1, 'My Company (San Francisco)', 'Management', 'Product engineering and research.', true, 7, 4, 0, 0, 0, 3, 3),
+        ('department-sales', 'Sales', 'Jeffrey Kelly', 'Active', true, 1, 'My Company (San Francisco)', 'Management', 'Commercial and customer growth team.', true, 3, 2, 0, 0, 0, 1, 5);
+      UPDATE employee_departments SET report_visible = COALESCE(report_visible, true), employee_count = COALESCE(employee_count, 0), applicant_count = COALESCE(applicant_count, 0), allocation_count = COALESCE(allocation_count, 0), expense_count = COALESCE(expense_count, 0), time_off_count = COALESCE(time_off_count, 0), plan_count = COALESCE(plan_count, 0), color = COALESCE(color, 0);
+      UPDATE employee_departments SET updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE updated_at IS NULL;
+    down: |
+      DELETE FROM employee_departments WHERE id IN ('department-administration', 'department-long-term-projects', 'department-management', 'department-professional-services', 'department-rnd-usa', 'department-research-development', 'department-sales');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
