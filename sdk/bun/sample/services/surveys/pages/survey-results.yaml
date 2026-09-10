@@ -1,0 +1,43 @@
+title: Survey Results
+page: { id: survey-results, route: /surveys/results, breadcrumb: [Marketing, Surveys, Results], auth: { require: [surveys.read] } }
+components:
+  - type: StatRow
+    source: survey_results_header
+    title: Survey Results
+    stats: [{ label: Responses, field: response_count }, { label: Participants, field: participant_count }, { label: Questions, field: question_count }]
+  - type: Chart
+    source: survey_results_choices
+    title: Responses by answer
+    label_field: category
+    value_field: responses
+    variant: pie
+    color: blue
+  - type: ListView
+    variant: odoo
+    scroll: body
+    source: survey_results_questions
+    search: { label: Search questions, placeholder: Search questions... }
+    columns:
+      - { field: sequence, label: '#', align: right }
+      - { field: question_text, label: Question, type: PrimaryEntityCell }
+      - { field: question_type, label: Type }
+      - { field: responded, label: Responded, align: right }
+      - { field: participants, label: Participants, align: right }
+      - { field: response_rate, label: Response rate, align: right }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No questions yet, description: Questions and responses will appear here after the survey is configured. }
+  - type: ListView
+    variant: odoo
+    scroll: body
+    source: survey_results_text
+    columns:
+      - { field: question_text, label: Question, type: PrimaryEntityCell }
+      - { field: answer_value, label: User Responses }
+      - { field: respondent, label: Respondent }
+      - { field: submitted_at, label: Submitted at }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No text responses, description: Text responses will appear here after participants respond. }
+actions:
+  - { id: back_to_surveys_results, type: navigate, permission: surveys.read, navigate_to: /surveys }

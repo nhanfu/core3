@@ -17,9 +17,15 @@ export default class SurveysModule implements ModuleLifecycle {
   }
 
   async load(context: ModuleContext): Promise<void> {
-    await this.getDelegate(context).load(context);
+    const delegate = this.getDelegate(context);
+    await delegate.load(context);
     const service = context.resolveService<PublicService>('yaml.service.surveys');
-    context.registerApi((request, url) => this.handlePublicRoute(request, url, service));
+    const yamlApi = delegate.getRuntimeContext()?.api;
+    context.registerApi(async (request, url, server) => {
+      const publicResponse = await this.handlePublicRoute(request, url, service);
+      if (publicResponse) return publicResponse;
+      return yamlApi ? (await yamlApi(request, url, server)) || null : null;
+    });
   }
 
   async unload(context: ModuleContext): Promise<void> {

@@ -55,4 +55,14 @@ describe('Surveys parity catalog and workflow', () => {
     expect(page.actions.find((action: any) => action.action === 'surveys.public.submit').mutation.steps[0].query).toContain("state = 'Submitted'");
     expect(yaml('migrations/20260910200000-005-survey-public-tokens.yaml').version).toBe('0.0.5');
   });
+
+  test('wires Odoo-style survey results from the detail form', () => {
+    const detail = yaml('pages/survey-detail.yaml');
+    const form = detail.components.find((component: any) => component.type === 'OdooFormView');
+    expect(form.header_actions[0]).toMatchObject({ id: 'see_survey_results_detail', label: 'See results' });
+    expect(detail.actions.find((action: any) => action.id === 'see_survey_results_detail')).toMatchObject({ navigate_to: '/surveys/results', params: { survey_id: '{row.id}' } });
+    expect(yaml('api/survey-results.yaml').datasources.map((source: any) => source.id)).toEqual([
+      'survey_results_header', 'survey_results_questions', 'survey_results_choices', 'survey_results_text',
+    ]);
+  });
 });

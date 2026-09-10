@@ -9,6 +9,7 @@ components:
     editable: true
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
+      - { id: see_survey_results_detail, label: See results, variant: secondary, permission: surveys.read }
       - { id: publish_survey_detail, label: Publish, variant: primary, permission: surveys.write, show_if: "state.survey_detail.state === 'Draft'" }
       - { id: close_survey_detail, label: Close, variant: secondary, permission: surveys.manage, show_if: "state.survey_detail.state === 'Published'" }
       - { id: cancel_survey_detail, label: Cancel, variant: danger, permission: surveys.manage, show_if: "state.survey_detail.state === 'Draft' || state.survey_detail.state === 'Published'" }
@@ -45,6 +46,7 @@ components:
       - { field: state, label: Status, type: StatusChip }
     empty_state: { title: No responses, description: Responses will appear here after publication. }
 actions:
+  - { id: see_survey_results_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/results, params: { survey_id: '{row.id}' } }
   - { id: survey_certified_stats_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/participants, params: { survey_id: '{row.id}' } }
   - { id: survey_participant_stats_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/participants, params: { survey_id: '{row.id}' } }
   - { id: publish_survey_detail, type: server, permission: surveys.write, action: surveys.records.publish, handler: order_transition, workflow: surveys, operation: publish, params: { id: '{state.id}' }, refresh: [survey_detail] }

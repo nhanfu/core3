@@ -170,6 +170,20 @@ This is a bounded first public slice: Odoo's print, image, session-manager,
 multi-page/section, authenticated test/results, and exact question semantics
 remain open acceptance gates.
 
+The authenticated results follow-up adds a permissioned `/surveys/results`
+route, a `See results` action from the survey detail form, service-owned
+header/question/choice/text result queries, response counters, answer chart,
+question response-rate table, and text-response table. The lists use the
+shared Odoo-style table with body scrolling so their responsive overflow stays
+inside the viewport. Authenticated desktop/mobile checks for the seeded
+Feedback Form reached the route through the detail action and returned no
+failed requests or document overflow. Captures are
+`/tmp/core3-survey-results-{desktop,mobile}.png`; the matching Odoo reference
+captures are `/tmp/odoo-survey-results-{desktop,mobile}.png`. The results
+screen remains a bounded first slice: Odoo's per-question response sections,
+print action, live-session results, and exact answer-type renderers remain open
+acceptance gates.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions

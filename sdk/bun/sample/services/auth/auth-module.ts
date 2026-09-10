@@ -186,6 +186,18 @@ export default class AuthModule {
           return json({ ok: true, company });
         } catch (error) { return errorResponse(error); }
       }
+      if (url.pathname === '/api/v1/notifications' && request.method === 'GET') {
+        try {
+          await this.service.getCurrentUser(request);
+          return json([]);
+        } catch (error) { return errorResponse(error); }
+      }
+      if ((url.pathname === '/api/v1/notifications/read-all' || /^\/api\/v1\/notifications\/[^/]+\/read$/.test(url.pathname)) && request.method === 'PATCH') {
+        try {
+          await this.service.getCurrentUser(request);
+          return json({ ok: true });
+        } catch (error) { return errorResponse(error); }
+      }
       if (url.pathname === profileEndpoint && (request.method === 'GET' || request.method === 'PATCH')) {
         try {
           const user = await this.service.getCurrentUser(request);

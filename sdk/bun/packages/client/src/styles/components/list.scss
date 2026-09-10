@@ -368,8 +368,8 @@
 .o-list-view-body-scroll,
 .o-list-view-body-scroll .o-list-content { overflow-x: hidden !important; overflow-y: visible !important; }
 .o-list-view-body-scroll .o-list-table-viewport {
-  width: 0;
-  flex: 1 1 0%;
+  width: 100%;
+  flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
   overflow-x: auto !important;
