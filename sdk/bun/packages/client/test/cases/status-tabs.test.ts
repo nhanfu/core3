@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { StatusTabs } from '@core3/client/components/StatusTabs';
+import { i18n } from '@core3/client/i18n';
 
 describe('StatusTabs', () => {
   it('can render reference-style toggles without count badges', () => {
+    i18n.hydrate('*', { lang: 'en', global: { 'status.filter': 'Bộ lọc trạng thái' } });
     const container = document.createElement('div');
     new StatusTabs(
       'vehicle-status',

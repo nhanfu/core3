@@ -10,9 +10,10 @@ Status: ready
 - The addon is an application and depends on `base_setup`, `digest`,
   `phone_validation`, `resource_mail`, and `web`. It declares official demo
   data in `data/hr_demo.xml`.
-- Authenticated live check on 2026-09-10 against `core3_demo` reports
-  `ir.module.module(name=hr).state=uninstalled` and `demo=false`. This is a
-  module-state check, not an inference from an empty list.
+- Authenticated live check on 2026-09-10 against `core3_reference` reports
+  `ir.module.module(name=hr).state=installed` and `demo=true`, with 21
+  Employees records visible. This is a module-state and rendered-record check,
+  not an inference from an empty list.
 - Reference URL: `http://localhost:8069`. Credentials remain outside this
   document's implementation contracts.
 
@@ -21,19 +22,17 @@ Status: ready
 Odoo action paths explicitly declared by the source are `/odoo/employees`,
 `/odoo/all_activities`, and `/odoo/departments`. Actions without a `path`
 must be reached through their authenticated menu/action, not guessed from a
-URL. The live audit loaded `/odoo/employees` at both requested viewports; Odoo
-redirected to `/odoo/discuss` because `hr` is uninstalled. No Employees menu,
-action, record, or view state was available to capture.
+URL. The live audit loaded `/odoo/employees` at both requested viewports with
+the installed `hr` addon and demo records.
 
-Actual fallback captures, kept outside Git:
+Current authenticated reference captures, kept outside Git:
 
-- Desktop, 1440x900: `/tmp/odoo-employees-desktop.png`
-- Mobile, 390x844 touch context: `/tmp/odoo-employees-mobile.png`
+- Desktop, 1440x900: `/tmp/odoo-reference-employees-desktop.png`
+- Mobile, 390x844 touch context: `/tmp/odoo-reference-employees-mobile.png`
 
-These are authenticated Discuss-shell fallback captures only. They are not
-Employees reference screenshots. No installed-addon screenshots are claimed.
-Required future captures, after enabling `hr` with demo loading in a disposable
-database, are listed below; absent files must not be invented:
+These captures cover the populated Employees action only. Required future
+captures for the remaining view modes, forms, configuration, departments, and
+empty/archived states are listed below; absent files must not be invented:
 
 - `/tmp/odoo-employees/employees-kanban-desktop.png` and
   `/tmp/odoo-employees/employees-kanban-mobile.png`
