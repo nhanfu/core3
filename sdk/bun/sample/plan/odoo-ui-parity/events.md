@@ -367,6 +367,15 @@ expectations; `bun run audit` passes with 293 pages, 297 routes, and 521
 datasources. The existing Events mock-data audit remains an open plan gate for
 the older query-backed pages.
 
+The event-form batch adds Odoo-style Registration Desk and state-gated
+Publish/Start/Complete/Cancel controls, plus service-owned Registration and
+Attendees stat buttons backed by the event detail query. The shared YAML schema
+now validates `OdooFormView.stat_buttons`. An authenticated isolated-worktree
+check at 1440x900 and 390x844 found the expected counters and Draft controls,
+zero failed requests, and no page-level overflow. Captures are
+`/tmp/core3-events-{desktop,mobile}-event-form.png`; the isolated branch was
+committed as `f95df20e` and integrated as `a5023d3d`.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and
