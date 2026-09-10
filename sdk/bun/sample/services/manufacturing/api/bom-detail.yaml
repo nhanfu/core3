@@ -1,0 +1,138 @@
+page: { id: bom-detail }
+datasources:
+  - id: mrp_bom_detail
+    single: true
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_BOM_DETAIL_UNAVAILABLE, message: This bill of materials is temporarily unavailable. } }
+    query: |
+      SELECT b.id, b.row_version, b.name, b.product_id, b.product_name,
+        COALESCE(b.product_variant, '') AS product_variant, b.product_quantity, b.uom,
+        b.version, b.reference, b.bom_type, b.company_name, b.active,
+        b.valid_from, b.valid_to, b.routing, b.notes,
+        CASE WHEN b.active THEN 'Active' ELSE 'Archived' END AS status,
+        (SELECT COUNT(*) FROM mrp_bom_lines l WHERE l.bom_id = b.id) AS component_count
+      FROM mrp_boms b
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND b.id = :id
+  - id: mrp_bom_components
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_BOM_COMPONENTS_UNAVAILABLE, message: BoM components are temporarily unavailable. } }
+    query: "SELECT l.id, l.bom_id, l.component_id, l.component_name, l.quantity, l.uom, COALESCE(l.operation_name, '') AS operation_name FROM mrp_bom_lines l WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.bom_id = :id ORDER BY l.sequence, l.id"
+  - id: mrp_bom_operations
+    permission: manufacturing.read
+    query: "SELECT id, bom_id, sequence, name, workcenter, time_cycle, worksheet FROM mrp_bom_operations WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND bom_id = :id ORDER BY sequence, id"
+  - id: mrp_bom_byproducts
+    permission: manufacturing.read
+    query: "SELECT id, bom_id, product_id, product_name, quantity, uom, cost_share FROM mrp_bom_byproducts WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND bom_id = :id ORDER BY product_name, id"
+actions:
+  - id: back_to_mrp_boms
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/boms
+  - id: bom_overview
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/manufacturing-analysis
+  - id: duplicate_mrp_bom
+    type: server_form
+    permission: manufacturing.write
+    title: Duplicate bill of materials
+    action: manufacturing.boms.duplicate
+    handler: yaml_mutation
+    operation: create
+    prefill: row
+    refresh: [mrp_boms]
+    mutation:
+      operation: insert
+      table: mrp_boms
+      generated: [id]
+      fields: [name, product_id, product_name, product_variant, product_quantity, uom, version, reference, bom_type, company_name, active, valid_from, valid_to, routing, notes]
+      required: [product_name]
+      defaults: { active: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_boms WHERE product_id = :product_id AND version = :version)", status: 409, code: MRP_BOM_VERSION_EXISTS, message: A BoM with this product and version already exists. Choose a new version. }]
+      result: { query: "SELECT * FROM mrp_boms WHERE id = :id" }
+    fields:
+      - { field: name, label: BoM Name, type: text }
+      - { field: product_id, label: Product ID, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: product_variant, label: Product Variant?, type: text }
+      - { field: product_quantity, label: Quantity, type: number, required: true }
+      - { field: uom, label: Unit of Measure, type: text }
+      - { field: version, label: Version, type: text }
+      - { field: reference, label: Reference, type: text }
+      - { field: bom_type, label: BoM Type, type: select, options: [Manufacture this product, Kit] }
+      - { field: company_name, label: Company, type: text }
+      - { field: active, label: Active, type: checkbox }
+      - { field: valid_from, label: Valid From, type: text }
+      - { field: valid_to, label: Valid To, type: text }
+      - { field: routing, label: Routing, type: text }
+      - { field: notes, label: Notes, type: textarea }
+  - id: edit_mrp_bom
+    type: server_form
+    permission: manufacturing.write
+    title: Edit bill of materials
+    action: manufacturing.boms.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.mrp_bom_detail
+    refresh: [mrp_bom_detail, mrp_boms]
+    mutation:
+      operation: update
+      table: mrp_boms
+      fields: [name, product_id, product_name, product_variant, product_quantity, uom, version, reference, bom_type, company_name, active, valid_from, valid_to, routing, notes]
+      required: [product_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_boms WHERE id = :id", status: 404, code: MRP_BOM_NOT_FOUND, message: Bill of materials not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:product_quantity, 1) AS DECIMAL(18,3)) > 0", status: 422, code: MRP_BOM_QUANTITY_INVALID, message: BoM quantity must be greater than zero. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:bom_type, 'Manufacture this product') IN ('Manufacture this product', 'Kit')", status: 422, code: MRP_BOM_TYPE_INVALID, message: Select a valid BoM type. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_boms WHERE product_id = :product_id AND version = :version AND id <> :id)", status: 409, code: MRP_BOM_VERSION_EXISTS, message: A BoM with this product and version already exists. }
+      result: { query: "SELECT * FROM mrp_boms WHERE id = :id" }
+    fields:
+      - { field: name, label: BoM Name, type: text }
+      - { field: product_id, label: Product ID, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: product_variant, label: Product Variant?, type: text }
+      - { field: product_quantity, label: Quantity, type: number, required: true }
+      - { field: uom, label: Unit of Measure, type: text }
+      - { field: version, label: Version, type: text }
+      - { field: reference, label: Reference, type: text }
+      - { field: bom_type, label: BoM Type, type: select, options: [Manufacture this product, Kit] }
+      - { field: company_name, label: Company, type: text }
+      - { field: active, label: Active, type: checkbox }
+      - { field: valid_from, label: Valid From, type: text }
+      - { field: valid_to, label: Valid To, type: text }
+      - { field: routing, label: Routing, type: text }
+      - { field: notes, label: Notes, type: textarea }
+  - id: archive_mrp_bom
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.boms.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    refresh: [mrp_bom_detail, mrp_boms]
+    mutation: { operation: update, table: mrp_boms, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_boms WHERE id = :id AND active = TRUE", status: 409, code: MRP_BOM_ALREADY_ARCHIVED, message: Bill of materials is already archived. }], result: { query: "SELECT * FROM mrp_boms WHERE id = :id" } }
+  - id: unarchive_mrp_bom
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.boms.unarchive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: true } }
+    refresh: [mrp_bom_detail, mrp_boms]
+    mutation: { operation: update, table: mrp_boms, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_boms WHERE id = :id AND active = FALSE", status: 409, code: MRP_BOM_ALREADY_ACTIVE, message: Bill of materials is already active. }], result: { query: "SELECT * FROM mrp_boms WHERE id = :id" } }
+  - id: delete_mrp_bom
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.boms.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [mrp_boms]
+    mutation:
+      operation: delete
+      table: mrp_boms
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM mrp_boms WHERE id = :id", status: 404, code: MRP_BOM_NOT_FOUND, message: Bill of materials not found. }]
+      before_steps: [{ query: "DELETE FROM mrp_bom_lines WHERE bom_id = :id" }, { query: "DELETE FROM mrp_bom_operations WHERE bom_id = :id" }, { query: "DELETE FROM mrp_bom_byproducts WHERE bom_id = :id" }]

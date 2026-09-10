@@ -1,0 +1,79 @@
+title: Bill of Materials
+page: { id: bom-detail, route: /boms/detail, breadcrumb: [Supply Chain, Manufacturing, Products, Bills of Materials], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_bom_detail
+    title_field: product_name
+    subtitle_field: reference
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_mrp_boms, label: Back to Bills of Materials, icon: arrow-left, permission: manufacturing.read }
+      - { id: edit_mrp_bom, label: Edit, variant: primary, permission: manufacturing.write }
+      - { id: duplicate_mrp_bom, label: Duplicate, icon: copy, permission: manufacturing.write }
+      - { id: archive_mrp_bom, label: Archive, icon: archive, permission: manufacturing.manage, show_if: 'record.active === true' }
+      - { id: unarchive_mrp_bom, label: Unarchive, icon: archive, permission: manufacturing.manage, show_if: 'record.active === false' }
+      - { id: delete_mrp_bom, label: Delete, icon: trash, variant: danger, permission: manufacturing.manage, confirm: Delete this bill of materials? }
+    stat_buttons:
+      - { id: bom_overview, label: BoM Overview, value_field: component_count, permission: manufacturing.read }
+    group_columns: 2
+    groups:
+      - title: Bill of Materials
+        fields:
+          - { field: product_name, label: Product }
+          - { field: product_id, label: Product ID }
+          - { field: product_variant, label: Product Variant? }
+          - { field: product_quantity, label: Quantity }
+          - { field: uom, label: Unit of Measure }
+          - { field: reference, label: Reference }
+          - { field: bom_type, label: BoM Type }
+          - { field: company_name, label: Company }
+      - title: Miscellaneous
+        fields:
+          - { field: version, label: Version }
+          - { field: active, label: Active, type: checkbox }
+          - { field: valid_from, label: Valid From }
+          - { field: valid_to, label: Valid To }
+          - { field: routing, label: Routing }
+          - { field: notes, label: Notes }
+    notebook:
+      active: components
+      tabs:
+        - id: components
+          label: Components
+          groups:
+            - title: Components
+              fields: [{ field: component_count, label: Components }]
+          component:
+            type: ListView
+            variant: odoo
+            scroll: body
+            source: mrp_bom_components
+            columns: [{ field: component_name, label: Component, type: PrimaryEntityCell }, { field: quantity, label: Quantity, align: right }, { field: uom, label: Unit }, { field: operation_name, label: Operation }]
+            row_key: id
+            empty_state: { title: No components, description: Add components to define how this product is manufactured. }
+        - id: operations
+          label: Operations
+          component:
+            type: ListView
+            variant: odoo
+            scroll: body
+            source: mrp_bom_operations
+            columns: [{ field: sequence, label: Sequence, align: right }, { field: name, label: Operation, type: PrimaryEntityCell }, { field: workcenter, label: Work Center }, { field: time_cycle, label: Duration, align: right }, { field: worksheet, label: Worksheet }]
+            row_key: id
+            empty_state: { title: No operations, description: Add operations to route this bill of materials through work centers. }
+        - id: by-products
+          label: By-products
+          component:
+            type: ListView
+            variant: odoo
+            scroll: body
+            source: mrp_bom_byproducts
+            columns: [{ field: product_name, label: Product, type: PrimaryEntityCell }, { field: quantity, label: Quantity, align: right }, { field: uom, label: Unit }, { field: cost_share, label: Cost Share, align: right }]
+            row_key: id
+            empty_state: { title: No by-products, description: By-products will appear here when configured. }
+        - id: miscellaneous
+          label: Miscellaneous
+          groups:
+            - title: Effectivity and routing
+              fields: [{ field: version, label: Version }, { field: valid_from, label: Valid From }, { field: valid_to, label: Valid To }, { field: routing, label: Routing }, { field: notes, label: Notes }]

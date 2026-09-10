@@ -11,6 +11,12 @@ Status: in-progress (live reference addon is available; full parity remains inco
   presentation-only list/detail pair, page-id-bound API fragments, fixed
   2026-01-15 fixtures, CRUD/archive permissions, and explicit empty/error/
   not-found/validation/conflict states.
+- The Products / Bills of Materials action (`menu_mrp_bom_form_action`, menu
+  574, `mrp_bom_form_action`, action 876, model `mrp.bom`) is implemented in
+  Core3 as `/manufacturing/boms` with a page-only list/kanban/mobile-card
+  layout, a page-only form detail route, page-id-bound API fragments, four
+  active and one archived deterministic fixtures, components/operations/
+  by-products tabs, and CRUD/archive/restore/duplicate guards.
 - This is one bounded action only; the full manufacturing readiness gate below
   remains open until the other source actions, view modes, integrations,
   permissions, and paired browser evidence are complete.
@@ -31,20 +37,13 @@ evidence below exist.
   normal data list includes `data/mrp_data.xml`, all MRP menus/views, wizard
   views, report views, and backend assets `mrp/static/src/**/*`.
 - Live authenticated check on 2026-09-10: `http://localhost:8069`, database
-  `core3_demo`, supplied admin credentials. Authentication returned `uid=2`,
-  `is_admin=true`, Odoo server `19.0-20260908`. Authenticated
-  `ir.module.module.search_read` returned:
-  `name=mrp`, `state=uninstalled`, `latest_version=false`, `demo=false`.
-- Because `mrp` is uninstalled, no Manufacturing menu/action/view records are
-  live in that database. Directly asserting a live MRP route would be false;
-  no Odoo reference screenshot was fabricated. `/tmp` has no manufacturing or
-  MRP screenshot. Required future paths are reserved as
-  `/tmp/odoo-mrp-desktop-1440x900.png` and `/tmp/odoo-mrp-mobile-390x844.png`,
-  but neither exists and neither is evidence yet.
-- The persistent `js_repl` Playwright tool and a local Playwright package were
-  unavailable in this session. The authenticated RPC status check above is
-  recorded; after installation, use authenticated Playwright from menu clicks
-  and save only real captures under `/tmp`.
+  `core3_owned`, user `codex@core3.local`. Odoo server is `19.0-20260908` and
+  `ir.module.module.search_read` returned `name=mrp`, `state=installed`,
+  `latest_version=19.0.2.0`, `demo=true`. The menu resolves to action 876 and
+  the rendered action URL is `/odoo/boms`; the desktop action exposes List and
+  Kanban view switches and the form opens at `/odoo/boms/1`.
+- Paired authenticated BOM evidence for this bounded slice is recorded below;
+  all image files remain under `/tmp` and are intentionally not committed.
 
 ## Gate 1 - addon, manifest, version, and demo status
 
@@ -56,9 +55,9 @@ operations, manufacturing orders, stock moves/quantities, and transitions
 used to make the operations screens non-empty. Do not copy transient source
 dates or random database IDs; use stable Core3 fixtures described below.
 
-The live status is a hard evidence limitation, not an assumed empty dataset:
-the addon is explicitly uninstalled and its live demo flag is false. Installing
-it or changing the shared reference database is outside this plan.
+The owned reference is installed with official demo data. Full manufacturing
+readiness remains open because the other Manufacturing actions in this plan are
+not yet implemented as paired slices.
 
 ## Gate 2 - complete visible menu, action, route, and view inventory
 
@@ -128,27 +127,25 @@ other modules inside Manufacturing.
 
 ## Gate 3 - route and screenshot evidence
 
-Required capture matrix after `mrp` is installed in the reference database:
+Required capture matrix for the full module remains broader than this bounded
+slice. The completed Bills of Materials pair is:
 
 | Viewport | Required evidence |
 | --- | --- |
-| Desktop 1440x900 | authenticated navigation from Manufacturing menu; each menu action above; populated list/kanban/form; MO tabs and status actions; BoM inline tabs; work-order calendar/pivot/graph; OEE; unbuild; settings; empty, denied, error, and confirmation states |
-| Mobile 390x844 touch | same menu reachability; responsive list/kanban/form; MO and BoM forms; work-order cards; filters/action menus; no horizontal overflow; empty, denied, and error states |
+| Desktop 1440x900 | Odoo action 876 list, kanban, and populated form; Core3 `/manufacturing/boms` list, kanban, and detail/form |
+| Mobile 390x844 touch | Odoo action 876 list, kanban, and populated form; Core3 responsive list/card/detail/form with no horizontal overflow |
 
 For every capture record Odoo action ID, resulting browser URL, model, view
-mode, fixture/data state, viewport, and `/tmp` path. Also capture Core3 at the
-same dimensions only after implementation. A screenshot from another module,
-an uninstalled route, or a synthetic HTML page is not acceptable. Current
-status: blocked; there are no Odoo MRP screenshots to compare.
+mode, fixture/data state, viewport, and `/tmp` path. A screenshot from another
+module, an uninstalled route, or synthetic HTML is not acceptable.
 
 ## Gate 4 - Core3 datasource, deterministic fixtures, and API contract
 
 The existing service is `sdk/bun/sample/services/manufacturing`: manifest menu
 entries for four routes, permissions `manufacturing.read/write/manage`, DuckDB
-storage, migrations `0.0.1` foundation and `0.0.2` demo data, pages for orders,
-detail, BOMs, analysis, and a production workflow. Current page files embed SQL
-and current prototype coverage is only one BOM, one MO, two work orders, and one
-analysis chart. Treat this as a starting inventory, not parity.
+storage, migrations `0.0.1` through `0.0.4`, and pages for orders, detail, BOMs,
+analysis, and a production workflow. The BOM page no longer embeds SQL; its
+list/detail API fragments own the datasource queries and mutations.
 
 Before implementation, move backend SQL, lookups, mutations, and workflows into
 convention-discovered `services/manufacturing/api/` fragments keyed by `page.id`;

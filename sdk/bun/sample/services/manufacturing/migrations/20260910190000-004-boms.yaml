@@ -1,0 +1,72 @@
+version: 0.0.4
+description: Deterministic Bills of Materials list, kanban, form, and line fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE mrp_boms ADD COLUMN IF NOT EXISTS product_variant VARCHAR;
+      ALTER TABLE mrp_boms ADD COLUMN IF NOT EXISTS reference VARCHAR;
+      ALTER TABLE mrp_boms ADD COLUMN IF NOT EXISTS bom_type VARCHAR;
+      ALTER TABLE mrp_boms ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE mrp_boms ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      ALTER TABLE mrp_boms ADD COLUMN IF NOT EXISTS valid_from DATE;
+      ALTER TABLE mrp_boms ADD COLUMN IF NOT EXISTS valid_to DATE;
+      ALTER TABLE mrp_boms ADD COLUMN IF NOT EXISTS routing VARCHAR;
+      ALTER TABLE mrp_boms ADD COLUMN IF NOT EXISTS notes VARCHAR;
+      ALTER TABLE mrp_bom_lines ADD COLUMN IF NOT EXISTS sequence INTEGER;
+      ALTER TABLE mrp_bom_lines ADD COLUMN IF NOT EXISTS operation_name VARCHAR;
+      CREATE TABLE IF NOT EXISTS mrp_bom_operations (
+        id VARCHAR PRIMARY KEY, bom_id VARCHAR NOT NULL, sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL, workcenter VARCHAR NOT NULL, time_cycle DECIMAL(18,2) NOT NULL DEFAULT 0,
+        worksheet VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS mrp_bom_byproducts (
+        id VARCHAR PRIMARY KEY, bom_id VARCHAR NOT NULL, product_id VARCHAR, product_name VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL DEFAULT 1, uom VARCHAR NOT NULL DEFAULT 'Units',
+        cost_share DECIMAL(8,3) NOT NULL DEFAULT 0, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      UPDATE mrp_boms SET bom_type = COALESCE(bom_type, 'Manufacture this product'), company_name = COALESCE(company_name, 'My Company (San Francisco)'), active = COALESCE(active, TRUE);
+      UPDATE mrp_bom_lines SET sequence = COALESCE(sequence, 10);
+      UPDATE mrp_boms SET product_variant = NULL, reference = 'PALLET-ASSEMBLY', bom_type = 'Manufacture this product', company_name = 'My Company (San Francisco)', active = TRUE, valid_from = DATE '2026-01-15', routing = 'Assembly', notes = 'Reusable pallet repair kit' WHERE id = 'bom-pallet-kit';
+      UPDATE mrp_bom_lines SET sequence = 10, operation_name = 'Assemble pallet' WHERE id = 'bom-line-board';
+      UPDATE mrp_bom_lines SET sequence = 20, operation_name = 'Assemble pallet' WHERE id = 'bom-line-nail';
+      INSERT INTO mrp_boms(id, row_version, name, product_id, product_name, product_variant, product_quantity, uom, version, reference, bom_type, company_name, active, valid_from, routing, notes, created_at) VALUES
+        ('bom-desk-combination', 1, 'Desk Combination BoM', 'product-furn-7800', 'Desk Combination', NULL, 1, 'Units', '1.0', NULL, 'Manufacture this product', 'My Company (San Francisco)', TRUE, DATE '2026-01-15', 'Assembly', 'Desk combination assembly', TIMESTAMP '2026-01-15 08:00:00'),
+        ('bom-table-kit', 1, 'Table Kit BoM', 'product-furn-78236', 'Table Kit', NULL, 1, 'Units', '1.0', NULL, 'Kit', 'My Company (San Francisco)', TRUE, DATE '2026-01-15', NULL, 'Kit components sold together', TIMESTAMP '2026-01-15 08:05:00'),
+        ('bom-drawer-primary', 1, 'Drawer Primary Assembly', 'product-furn-8855', 'Drawer', 'PRIM-ASSEM', 1, 'Units', '1.0', 'PRIM-ASSEM', 'Manufacture this product', 'My Company (San Francisco)', TRUE, DATE '2026-01-15', 'Assembly', 'Primary drawer assembly', TIMESTAMP '2026-01-15 08:10:00'),
+        ('bom-laminate-archived', 1, 'Plastic Laminate Legacy', 'product-furn-8621', 'Plastic Laminate', NULL, 1, 'Units', '0.9', 'LEGACY-8621', 'Manufacture this product', 'Northwind Manufacturing', FALSE, DATE '2025-01-15', 'Finishing', 'Archived legacy formulation', TIMESTAMP '2026-01-15 08:15:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO mrp_bom_lines(id, bom_id, component_id, component_name, quantity, uom, sequence, operation_name, created_at) VALUES
+        ('bom-line-desk-frame', 'bom-desk-combination', 'component-desk-frame', 'Desk Frame', 1, 'Units', 10, 'Frame assembly', TIMESTAMP '2026-01-15 08:20:00'),
+        ('bom-line-desk-top', 'bom-desk-combination', 'component-desk-top', 'Desk Top', 1, 'Units', 20, 'Top assembly', TIMESTAMP '2026-01-15 08:21:00'),
+        ('bom-line-table-leg', 'bom-table-kit', 'component-table-leg', 'Table Leg', 4, 'Units', 10, NULL, TIMESTAMP '2026-01-15 08:22:00'),
+        ('bom-line-drawer-front', 'bom-drawer-primary', 'component-drawer-front', 'Drawer Front', 1, 'Units', 10, 'Drawer assembly', TIMESTAMP '2026-01-15 08:23:00'),
+        ('bom-line-laminate-sheet', 'bom-laminate-archived', 'component-laminate-sheet', 'Laminate Sheet', 1, 'Units', 10, 'Finishing', TIMESTAMP '2026-01-15 08:24:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO mrp_bom_operations(id, bom_id, sequence, name, workcenter, time_cycle, worksheet) VALUES
+        ('bom-op-desk-frame', 'bom-desk-combination', 10, 'Frame assembly', 'Assembly', 45, 'Desk frame work instructions'),
+        ('bom-op-desk-top', 'bom-desk-combination', 20, 'Top assembly', 'Drill 1', 30, 'Desk top work instructions'),
+        ('bom-op-drawer', 'bom-drawer-primary', 10, 'Drawer assembly', 'Assembly', 20, 'Drawer work instructions'),
+        ('bom-op-laminate', 'bom-laminate-archived', 10, 'Finishing', 'Finishing', 15, 'Legacy laminate instructions')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO mrp_bom_byproducts(id, bom_id, product_id, product_name, quantity, uom, cost_share) VALUES
+        ('bom-byproduct-desk-sawdust', 'bom-desk-combination', 'component-sawdust', 'Wood shavings', 0.2, 'kg', 3),
+        ('bom-byproduct-drawer-scrap', 'bom-drawer-primary', 'component-wood-scrap', 'Wood scrap', 0.1, 'kg', 1)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS mrp_bom_byproducts;
+      DROP TABLE IF EXISTS mrp_bom_operations;
+      ALTER TABLE mrp_bom_lines DROP COLUMN IF EXISTS operation_name;
+      ALTER TABLE mrp_bom_lines DROP COLUMN IF EXISTS sequence;
+      ALTER TABLE mrp_boms DROP COLUMN IF EXISTS notes;
+      ALTER TABLE mrp_boms DROP COLUMN IF EXISTS routing;
+      ALTER TABLE mrp_boms DROP COLUMN IF EXISTS valid_to;
+      ALTER TABLE mrp_boms DROP COLUMN IF EXISTS valid_from;
+      ALTER TABLE mrp_boms DROP COLUMN IF EXISTS active;
+      ALTER TABLE mrp_boms DROP COLUMN IF EXISTS company_name;
+      ALTER TABLE mrp_boms DROP COLUMN IF EXISTS bom_type;
+      ALTER TABLE mrp_boms DROP COLUMN IF EXISTS reference;
+      ALTER TABLE mrp_boms DROP COLUMN IF EXISTS product_variant;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,62 @@
+page: { id: boms }
+datasources:
+  - id: mrp_boms
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_BOMS_UNAVAILABLE, message: Bills of Materials are temporarily unavailable. } }
+    query: |
+      SELECT b.id, b.row_version, b.name, b.product_id, b.product_name,
+        COALESCE(b.product_variant, '') AS product_variant, b.product_quantity, b.uom,
+        b.version, b.reference, b.bom_type, b.company_name, b.active,
+        CASE WHEN b.active THEN 'Active' ELSE 'Archived' END AS status,
+        COUNT(l.id) AS component_count
+      FROM mrp_boms b
+      LEFT JOIN mrp_bom_lines l ON l.bom_id = b.id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (CAST(:active AS VARCHAR) IS NULL OR (CAST(:active AS VARCHAR) = 'active' AND b.active = TRUE) OR (CAST(:active AS VARCHAR) = 'archived' AND b.active = FALSE))
+        AND (:bom_type IS NULL OR b.bom_type = :bom_type)
+        AND (:q IS NULL OR b.product_name ILIKE '%' || :q || '%' OR COALESCE(b.reference, '') ILIKE '%' || :q || '%' OR b.name ILIKE '%' || :q || '%')
+      GROUP BY b.id, b.row_version, b.name, b.product_id, b.product_name, b.product_variant,
+        b.product_quantity, b.uom, b.version, b.reference, b.bom_type, b.company_name, b.active
+      ORDER BY b.product_name, b.reference, b.version, b.id
+actions:
+  - id: view_mrp_bom
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/boms/detail
+    params: { id: '{row.id}' }
+  - id: create_mrp_bom
+    type: server_form
+    permission: manufacturing.write
+    title: New bill of materials
+    action: manufacturing.boms.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mrp_boms]
+    mutation:
+      operation: insert
+      table: mrp_boms
+      generated: [id]
+      fields: [name, product_id, product_name, product_variant, product_quantity, uom, version, reference, bom_type, company_name, active, valid_from, valid_to, routing, notes]
+      required: [product_name]
+      defaults: { product_quantity: 1, uom: Units, version: '1.0', bom_type: Manufacture this product, company_name: My Company (San Francisco), active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:product_quantity, 1) AS DECIMAL(18,3)) > 0", status: 422, code: MRP_BOM_QUANTITY_INVALID, message: BoM quantity must be greater than zero. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:bom_type, 'Manufacture this product') IN ('Manufacture this product', 'Kit')", status: 422, code: MRP_BOM_TYPE_INVALID, message: Select a valid BoM type. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_boms WHERE product_id = :product_id AND version = COALESCE(:version, '1.0'))", status: 409, code: MRP_BOM_VERSION_EXISTS, message: A BoM with this product and version already exists. }
+      result: { query: "SELECT * FROM mrp_boms WHERE id = :id" }
+    fields:
+      - { field: name, label: BoM Name, type: text }
+      - { field: product_id, label: Product ID, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: product_variant, label: Product Variant?, type: text }
+      - { field: product_quantity, label: Quantity, type: number, required: true, min: 0.001 }
+      - { field: uom, label: Unit of Measure, type: text }
+      - { field: version, label: Version, type: text }
+      - { field: reference, label: Reference, type: text }
+      - { field: bom_type, label: BoM Type, type: select, options: [Manufacture this product, Kit] }
+      - { field: company_name, label: Company, type: text }
+      - { field: active, label: Active, type: checkbox, default: true }
+      - { field: valid_from, label: Valid From, type: text }
+      - { field: valid_to, label: Valid To, type: text }
+      - { field: routing, label: Routing, type: text }
+      - { field: notes, label: Notes, type: textarea }
