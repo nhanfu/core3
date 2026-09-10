@@ -251,6 +251,18 @@ start/end date contract explicit; the resulting fixture remained visible after
 refresh with no failed responses or horizontal overflow. Core3 form captures
 remain under `/tmp/core3-time-off-mobile-allocation-{new,created}.png`.
 
+The view-navigation batch changes every multi-view Time Off list to visible
+text tabs, declares the analysis Pivot fields in its API datasource, and adds
+reversed-date validation to new leave requests. Authenticated desktop/mobile
+checks covered all twelve current routes and every implemented List, Cards,
+Calendar, and Pivot tab with no unexpected failures or horizontal overflow.
+The expected invalid-request response is HTTP 400 with the visible
+`An active leave type, positive days, and valid dates are required` message;
+the dispatcher boundary returns HTTP 403 with the failed-page state. Captures
+are `/tmp/core3-time-off-tabs-{desktop,mobile}-{time-off,leave-requests,time-off-analysis}.png`,
+plus `/tmp/core3-time-off-mobile-{empty-search,invalid-request,denied}.png`.
+The isolated batch was committed as `1c291fba` and integrated as `33b4e777`.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
