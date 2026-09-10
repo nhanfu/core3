@@ -22,6 +22,12 @@ type:
         ('registration-answer-demo-001', 'registration-demo-002', 'Do you need accessibility assistance?', 'Simple Choice', 'No', ''),
         ('registration-answer-demo-002', 'registration-demo-002', 'What is your role?', 'Text', '', 'Designer')
       ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS event_registration_answers;
+      ALTER TABLE event_registrations DROP COLUMN IF EXISTS attendee_phone;
+      ALTER TABLE event_registrations DROP COLUMN IF EXISTS company_name;
+      ALTER TABLE event_registrations DROP COLUMN IF EXISTS booked_by;
+      ALTER TABLE event_registrations DROP COLUMN IF EXISTS row_version;
   duckdb: postgres
   mysql: postgres
   oracle: postgres
