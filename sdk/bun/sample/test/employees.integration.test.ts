@@ -155,7 +155,7 @@ describe('Employees Odoo action-mode parity batch', () => {
     expect(listPage.page.auth.require).toEqual(['employees.manage']);
     expect(detailPage.page.auth.require).toEqual(['employees.manage']);
     expect(listPage.components[0]).toMatchObject({ source: 'employee_departure_reasons', inline_edit: { create_action: 'create_employee_departure_reason_inline', update_action: 'update_employee_departure_reason_inline' } });
-    expect(listPage.components[0].columns.map((column: any) => column.label)).toEqual([' ', 'Departure Reason', 'Country', ' ']);
+    expect(listPage.components[0].columns.map((column: any) => column.label)).toEqual([' ', 'Departure Reason', 'Country']);
     expect(detailPage.components[0]).toMatchObject({ source: 'employee_departure_reason_detail', editable: true });
     expect(listApi.page.id).toBe(listPage.page.id);
     expect(detailApi.page.id).toBe(detailPage.page.id);
@@ -180,24 +180,21 @@ describe('Employees Odoo action-mode parity batch', () => {
     const source = listApi.datasources[0];
     const populated = await repository.querySource(source, { q: null, fixture_state: null }, 0, 50);
     expect(populated.data.map((row: any) => row.id)).toEqual([
-      'departure-reason-resignation',
-      'departure-reason-end-contract',
-      'departure-reason-retirement',
-      'departure-reason-dismissal',
-      'departure-reason-relocation',
+      'departure-reason-fired',
+      'departure-reason-resigned',
+      'departure-reason-retired',
     ]);
-    expect(populated.data[0]).toMatchObject({ sequence: 10, name: 'Resignation', country_code: null });
-    expect(populated.data.find((row: any) => row.id === 'departure-reason-dismissal')).toMatchObject({ country_code: 'US' });
+    expect(populated.data[0]).toMatchObject({ sequence: 0, name: 'Fired', country_code: null });
 
-    const filtered = await repository.querySource(source, { q: 'contract', fixture_state: null }, 0, 50);
-    expect(filtered.data.map((row: any) => row.name)).toEqual(['End of contract']);
+    const filtered = await repository.querySource(source, { q: 'resign', fixture_state: null }, 0, 50);
+    expect(filtered.data.map((row: any) => row.name)).toEqual(['Resigned']);
     const empty = await repository.querySource(source, { q: null, fixture_state: 'empty' }, 0, 50);
     expect(empty.data).toEqual([]);
     await expect(repository.querySource(source, { q: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'EMPLOYEES_DATA_UNAVAILABLE' });
 
     const detailSource = detailApi.datasources[0];
-    const detail = await repository.querySource(detailSource, { id: 'departure-reason-relocation', fixture_state: null }, 0, 1);
-    expect(detail.data).toMatchObject({ id: 'departure-reason-relocation', name: 'Relocation', country_code: 'VN' });
+    const detail = await repository.querySource(detailSource, { id: 'departure-reason-resigned', fixture_state: null }, 0, 1);
+    expect(detail.data).toMatchObject({ id: 'departure-reason-resigned', name: 'Resigned', country_code: null });
     const missing = await repository.querySource(detailSource, { id: 'missing-departure-reason', fixture_state: 'not_found' }, 0, 1);
     expect(missing.data).toEqual({});
   });
