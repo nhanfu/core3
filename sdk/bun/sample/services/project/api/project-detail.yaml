@@ -3,8 +3,8 @@ datasources:
   - id: project_detail
     single: true
     permission: project.read
-    query: "SELECT id, row_version, name, customer_name, project_manager, stage, favorite, description, planned_hours, spent_hours, state, COALESCE(ROUND(100.0 * (SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id AND state = 'Done') / NULLIF((SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id), 0)), 0) AS progress, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date FROM projects p WHERE id = :id"
+    query: "SELECT id, row_version, name, customer_name, project_manager, stage, favorite, description, planned_hours, spent_hours, state, COALESCE(ROUND(100.0 * (SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id AND state = 'Done') / NULLIF((SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id), 0)), 0) AS progress, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date FROM projects p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
   - id: project_tasks_detail
     single: false
     permission: project.read
-    query: "SELECT id, row_version, project_name, name, stage, assignee, milestone_name, priority, planned_hours, spent_hours, state, CAST(due_date AS VARCHAR) AS due_date FROM project_tasks WHERE project_id = :id ORDER BY due_date NULLS LAST, id"
+    query: "SELECT id, row_version, project_name, name, stage, assignee, milestone_name, priority, planned_hours, spent_hours, state, CAST(due_date AS VARCHAR) AS due_date FROM project_tasks WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND project_id = :id ORDER BY due_date NULLS LAST, id"

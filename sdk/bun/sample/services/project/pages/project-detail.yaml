@@ -17,3 +17,21 @@ components:
     notebook:
       active: tasks
       tabs: [{ id: tasks, label: Tasks, content_slot: true }, { id: milestones, label: Milestones, content_slot: true }, { id: updates, label: Updates, content_slot: true }]
+  - type: ListView
+    variant: odoo
+    source: project_tasks_detail
+    mount_in: previous-panel
+    search: { label: Search project tasks, placeholder: 'Search task or assignee...' }
+    row_key: id
+    row_open_action: view_project_task
+    row_actions: menu
+    empty_state: { title: No tasks, description: Tasks for this project will appear here. }
+    columns:
+      - { field: name, label: Task, type: PrimaryEntityCell }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: assignee, label: Assignee }
+      - { field: priority, label: Priority, type: StatusChip }
+      - { field: due_date, label: Deadline }
+      - { field: state, label: Status, type: StatusChip }
+actions:
+  - { id: view_project_task, type: navigate, permission: project.read, navigate_to: /tasks/detail, params: { id: '{row.id}' } }

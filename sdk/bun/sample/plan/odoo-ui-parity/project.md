@@ -1,10 +1,11 @@
 # Project UI parity
 
-Status: ready
+Status: in progress
 
-This is an implementation gate for the Odoo 19 Project addon. It is a plan
-only: this sub-plan must not add or modify product code, migrations, fixtures,
-assets, or tests.
+This is an implementation gate for the Odoo 19 Project addon. The first
+bounded implementation batch covers the Projects collection, project detail
+with embedded task navigation, My Tasks, and task detail. The broader Project
+addon remains open for later batches.
 
 ## Reference gate
 
@@ -18,38 +19,57 @@ assets, or tests.
   file contains projects, tasks, users, stages, milestones, followers,
   activities, and related mail records; it is the source fixture reference,
   not evidence that the local live database contains those records.
-- Authenticated live audit on 2026-09-10 used `http://localhost:8069`, database
-  `core3_demo`, and the admin account. The Apps screen shows Project with
-  `Activate`. An authenticated `ir.module.module.search_read` returned
-  `{name: project, state: uninstalled, demo: false, latest_version: false,
-  installed_version: 19.0.1.4}`. Consequently the live Project menu/actions,
-  live Project records, installed demo data, and installed Project web-client
-  routes are unavailable in this database. Do not activate the addon during
-  this plan-only task and do not fabricate their screenshots or payloads.
-- The source manifest/demo and the live module record are intentionally
-  separate facts: source demo availability is confirmed; live official demo
-  status is `not installed / not observable`, not `true` or `false`.
+- Authenticated live audit on 2026-09-10 used `http://localhost:8069`, the
+  disposable personal database `core3_personal`, and `codex@core3.local`.
+  Project is installed with demo data: four Projects cards and 32 All Tasks
+  rows were visible. This is the reference database for this batch; it is
+  separate from the source demo contract and may be recreated by the local
+  Compose stack at `/home/nhanjs/projects/odoo-core3-personal`.
 
 ## Live screenshot evidence
 
-The only truthful live captures are the authenticated Apps-page uninstalled
-state. They were captured headlessly at 1440x900 and 390x844 after login;
-each body asserted the Project card text and `Activate` state. The observed
-failed request in the repeat audit was `GET /mail/data` with
-`net::ERR_ABORTED`; therefore these captures are not a zero-failure reference
-(the uninstalled reference is still valid for the limitation below).
+Authenticated Project captures were taken headlessly after login at 1440x900
+and 390x844. The Project list has no failed responses and fits the mobile
+viewport exactly (`scrollWidth === 390`). The mobile project detail keeps the
+purple Odoo shell, New/action controls, Share Project, project fields, tags,
+planned-date range, and Description/Settings tabs without horizontal overflow.
 
 | Surface | Desktop | Mobile |
 | --- | --- | --- |
-| Apps > Project, uninstalled | `/tmp/odoo-project-desktop.png` | `/tmp/odoo-project-mobile.png` |
+| Project kanban/list | `/tmp/odoo-project-installed-home-desktop.png`, `/tmp/odoo-project-list-desktop.png` | `/tmp/odoo-project-mobile-installed.png` |
+| Project detail (`/odoo/project/5`) | `/tmp/odoo-project-detail-id5-desktop.png` | `/tmp/odoo-project-detail-id5-mobile.png` |
+| My Tasks / All Tasks | `/tmp/odoo-my-tasks-settled-desktop.png`, `/tmp/odoo-all-tasks-settled-desktop.png` | route inventory captured; mobile follow-up remains open |
 
-No `/tmp` screenshot is claimed for an installed Project menu, action, view,
-record, or mobile responsive Project state. New desktop/mobile captures are
-required if `project` is installed in a database with a known demo-data state,
-and the database, user, source revision, viewport, failed-request list, and
-route must be recorded with them. The browser skill's required persistent
-`js_repl` was not exposed in this session; the fallback authenticated
-Playwright runner was used and this tooling limitation must not be hidden.
+The captures use source revision `65975996`, database `core3_personal`, the
+personal user above, and the stated viewport. Screenshots remain under `/tmp`
+and are not committed. The browser skill's persistent `js_repl` was not
+exposed in this session; the fallback authenticated Playwright runner was
+used and this tooling limitation is recorded rather than hidden.
+
+### Observed Project labels and behavior
+
+- `/odoo/project` shows the shell labels `Project`, `Projects`, `Tasks`,
+  `Reporting`, and `Configuration`, then `New`, `Projects`, the `1-4 / 4`
+  pager, and cards for `Home Construction`, `Office Design`, `Renovations`,
+  and `Research & Development`. Each card exposes customer/company context,
+  planned-date range where present, colored tags, task count/progress, and a
+  menu. `Kanban View` and `List View` are explicit controls. List mode shows
+  `Name`, `Customer`, `Company`, `Project Manager`, and `View Tasks`.
+- Opening `/odoo/project/5` shows `Projects`, `Home Construction`, `Tasks`,
+  `0 / 0 (0%)`, `Dashboard`, `2 Status`, `Share Project`, `Name of the Tasks?`,
+  `Customer`, `Tags`, `Company`, `Project Manager`, `Planned Date`,
+  `Description`, `Settings`, `Send message`, `Log note`, and `Activity`.
+  Desktop uses the project form/dashboard; mobile collapses the same fields
+  into a single column and keeps Share Project plus the Description/Settings
+  tabs usable.
+- `/odoo/my-tasks` opens the `My Tasks` activity board with `Open`, `Inbox`,
+  relative date groups, `Done`, and `Cancelled`. `/odoo/all-tasks` opens
+  `All Tasks`, `Open`, `1-32 / 32`, and columns `Title`, `Project`,
+  `Assignees`, `Priority`, `Next Activity`, `Tags`, and `Stage`; its controls
+  include List, Kanban, Calendar, Activity, Pivot, and Graph views.
+- Direct `/odoo/project`, `/odoo/my-tasks`, `/odoo/all-tasks`, and
+  `/odoo/project/5` navigation returned no failed responses in the desktop
+  audit. Project mobile list/detail both reported no horizontal overflow.
 
 ## Source menu, action, route, and view inventory
 
@@ -120,18 +140,28 @@ must be tested as record actions, not incorrectly promoted to top-level menus.
 
 ## Existing Core3 surface and parity gap
 
-`services/project` currently contains `manifest.yaml`, `storage.yaml`,
-`permissions.yaml`, `styles/index.scss`, two migrations, and four pages:
+`services/project` now contains page-id API fragments and the first bounded
+implementation batch:
 
-- `/projects` (`projects`): project ListView plus a task ContactGrid;
+- `/projects` (`projects`): service-owned project ListView with Odoo list and
+  kanban modes, search, state/stage filters, deterministic empty fixture, and
+  project navigation;
 - `/project-analysis` (`project-analysis`): five totals and a status chart;
-- `/project-detail` (`project-detail`): project OdooFormView and task grid;
+- `/projects/detail` (`project-detail`): project OdooFormView plus an embedded
+  service-owned task ListView whose rows navigate to `/tasks/detail`;
+- `/tasks` (`project-tasks`): task ListView and kanban navigation with search,
+  filters, deterministic empty fixture, and row navigation;
+- `/tasks/detail` (`project-task-detail`): task OdooFormView with guarded
+  start/complete/cancel actions;
 - `project_tasks` workflow: Todo/In Progress/Done/Cancelled transitions.
 
-There is no `services/project/api/` directory. Page YAML owns SQL, the detail
-route has no declared route/action contract in the page, and the list page
-uses an `:id` task datasource without a collection route binding. The current
-schema only has projects, milestones, and denormalized project_tasks. It lacks
+The bounded batch moves list/detail/task reads into
+`services/project/api/{projects,project-detail,tasks,task-detail}.yaml`, keyed
+by `page.id`. Queries accept stable `q`, filter, `id`, and `fixture_state`
+parameters so default, search/no-match, empty, and missing-detail behavior can
+be tested without browser fixtures. Project stage filter values match the
+seeded stage names. The current schema only has projects, milestones, and
+denormalized project_tasks. It lacks
 project stages, task types/personal stages, tags, roles, users/partners,
 companies, followers/chatter/attachments, activities/plans, ratings, updates,
 recurrence/dependencies/subtasks, templates, sharing/portal projections,

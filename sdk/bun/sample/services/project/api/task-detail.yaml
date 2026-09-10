@@ -4,4 +4,4 @@ datasources:
     single: true
     permission: project.read
     workflow: project_tasks
-    query: "SELECT id, row_version, project_id, project_name, name, stage, assignee, priority, description, planned_hours, spent_hours, state, CAST(due_date AS VARCHAR) AS due_date FROM project_tasks WHERE id = :id"
+    query: "SELECT id, row_version, project_id, project_name, name, stage, assignee, priority, description, planned_hours, spent_hours, state, CAST(due_date AS VARCHAR) AS due_date FROM project_tasks WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
