@@ -1,15 +1,15 @@
 .o-activity-view { display: flex; height: 100%; min-height: 0; flex-direction: column; background: var(--o-list-bg, #fff); color: var(--o-list-text, #212529); }
 .o-activity-table-viewport { width: 100%; min-height: 0; flex: 1 1 auto; overflow: auto; }
-.o-activity-table { width: max-content; min-width: 760px; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.o-activity-table { width: 100%; min-width: 760px; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 13px; }
 .o-activity-table th,
 .o-activity-table td { border-right: 1px solid var(--o-list-border, #dee2e6); border-bottom: 1px solid var(--o-list-border, #dee2e6); vertical-align: top; }
 .o-activity-table th:first-child,
 .o-activity-table td:first-child { border-left: 1px solid var(--o-list-border, #dee2e6); }
 .o-activity-record-header,
-.o-activity-record { width: 280px; min-width: 280px; padding: 12px 16px; text-align: left; }
+.o-activity-record { width: 24%; min-width: 220px; padding: 12px 16px; text-align: left; }
 .o-activity-record-header,
 .o-activity-type-header { position: sticky; top: 0; z-index: 2; background: var(--o-list-panel-bg, #f8f9fa); font-weight: 600; }
-.o-activity-type-header { width: 180px; min-width: 180px; padding: 12px; text-align: left; }
+.o-activity-type-header { width: auto; min-width: 120px; padding: 12px; text-align: left; }
 .o-activity-type-title { display: flex; align-items: center; gap: 6px; }
 .o-activity-type-icon { color: var(--o-list-action, #71639e); font-size: 12px; }
 .o-activity-state-counts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
@@ -50,6 +50,7 @@ button.o-activity-record-link:hover strong { color: var(--o-list-action, #71639e
 .o-activity-no-records p { margin: 0; }
 .o-activity-empty { padding: 32px; text-align: center; }
 @media (max-width: 768px) {
+  .o-activity-table { width: max-content; table-layout: auto; }
   .o-activity-record-header,
   .o-activity-record { width: 210px; min-width: 210px; padding: 10px; }
   .o-activity-type-header,
