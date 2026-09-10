@@ -318,11 +318,31 @@ service-owned settings fields. Authenticated desktop/mobile checks confirmed
 the Save action remains on `/events/settings` with no failed requests or page
 overflow; the mobile evidence is `/tmp/core3-events-mobile-settings-save.png`.
 
-Registration Desk now includes a manual attendee form alongside the scanner
-guidance and registration counters. An authenticated mobile check submitted
-`QA Attendee` for `EVT/2026/0002`, refreshed the counters from 3 to 4, and
-returned no failed requests or page overflow; the evidence is
-`/tmp/core3-events-mobile-registration-desk-created.png`.
+Registration Desk now has an explicit `/events/registration-desk` client-action
+surface with a fullscreen scan/manual-registration composition. The shared
+`ScannerView` primitive is intentionally device-neutral: keyboard-wedge
+barcode input submits the service-owned `scan_registration_badge` action, so a
+camera or hardware adapter can be added later without changing the YAML
+contract. The existing generic `Form` primitive is mounted for manual
+registration by the scanner renderer.
+
+`event_registration_desk` is owned by `services/events/api/registration-desk.yaml`
+and exposes deterministic `ready`, `invalid`, `duplicate`, `capacity`, and
+`empty` fixture states through `fixture_state`. Barcode scan and manual
+registration mutations enforce events.write, badge existence/already-used,
+event-open, capacity, and duplicate-attendee guards with stable 404/409
+responses. The page requires events.read and displays a read-only permission
+state when events.write is absent. Focused coverage is in
+`events_registration_desk.integration.test.ts` plus the isolated generic
+`ScannerView` test.
+
+This bounded slice preserves Odoo's source distinction: the source
+`event_barcode_action_main_view` is represented as a Core3 client-action
+metadata field, while scan/registration transport uses named authenticated
+actions through `/api/mutate`; no public `/event/*` or controller route is
+introduced here. Authenticated desktop/mobile captures are retained under
+`/tmp/core3-events-registration-desk-{desktop,mobile}.png` and are not
+committed.
 
 The installed Odoo event card interaction opens `/odoo/events/8`; desktop and
 mobile detail captures show the event status, registration/ticket sections,

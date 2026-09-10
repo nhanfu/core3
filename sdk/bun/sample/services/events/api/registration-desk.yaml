@@ -1,6 +1,28 @@
 page: { id: registration-desk }
 datasources:
+  # Fixture state is deterministic and URL-selectable for empty/error visual QA.
+  # This source is service-owned; the page remains layout-only.
   - id: event_registration_desk
     single: true
     permission: events.read
-    query: "SELECT COUNT(*) AS registrations, COUNT(*) FILTER (WHERE state = 'Registered') AS pending, 'event-demo-002' AS event_id, 'EVT/2026/0002' AS event_name FROM event_registrations"
+    query: |
+      SELECT
+        CASE COALESCE(:fixture_state, '')
+          WHEN 'empty' THEN 'empty'
+          WHEN 'capacity' THEN 'capacity'
+          WHEN 'invalid' THEN 'invalid'
+          WHEN 'duplicate' THEN 'duplicate'
+          ELSE 'ready'
+        END AS desk_state,
+        CASE COALESCE(:fixture_state, '')
+          WHEN 'empty' THEN 'No active event is available for registration.'
+          WHEN 'capacity' THEN 'This event has reached capacity.'
+          WHEN 'invalid' THEN 'Badge not found. Check the code and try again.'
+          WHEN 'duplicate' THEN 'This badge has already been used.'
+          ELSE 'Ready to scan an attendee badge.'
+        END AS status_message,
+        'event-demo-002' AS event_id,
+        'Conference for Architects' AS event_name,
+        CASE WHEN COALESCE(:fixture_state, '') = 'capacity' THEN 1 ELSE 180 END AS capacity,
+        CASE WHEN COALESCE(:fixture_state, '') = 'capacity' THEN 1 ELSE 3 END AS registered,
+        CASE WHEN COALESCE(:fixture_state, '') = 'capacity' THEN 0 ELSE 177 END AS remaining

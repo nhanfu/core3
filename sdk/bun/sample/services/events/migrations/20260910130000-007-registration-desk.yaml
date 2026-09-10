@@ -1,0 +1,23 @@
+version: 0.0.7
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS barcode VARCHAR;
+      UPDATE event_registrations SET barcode = CASE id
+        WHEN 'registration-demo-001' THEN 'BADGE-ATTENDED-001'
+        WHEN 'registration-demo-002' THEN 'BADGE-REGISTERED-002'
+        WHEN 'registration-demo-003' THEN 'BADGE-REGISTERED-003'
+        WHEN 'registration-demo-004' THEN 'BADGE-MUSIC-004'
+        WHEN 'registration-demo-005' THEN 'BADGE-MUSIC-005'
+        WHEN 'registration-demo-006' THEN 'BADGE-HOCKEY-006'
+        WHEN 'registration-demo-007' THEN 'BADGE-OPENWOOD-007'
+        ELSE barcode
+      END
+      WHERE barcode IS NULL;
+    down: |
+      ALTER TABLE event_registrations DROP COLUMN IF EXISTS barcode;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

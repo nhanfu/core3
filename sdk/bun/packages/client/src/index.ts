@@ -72,6 +72,7 @@ export { DateRangeFilterTag } from './components/DateRangeFilterTag.ts';
 export { KanbanView } from './components/KanbanView.ts';
 export { CalendarView } from './components/CalendarView.ts';
 export { ActivityView } from './components/ActivityView.ts';
+export { ScannerView } from './components/ScannerView.ts';
 export { PivotView } from './components/PivotView.ts';
 export { GraphView } from './components/GraphView.ts';
 export { MapView } from './components/MapView.ts';

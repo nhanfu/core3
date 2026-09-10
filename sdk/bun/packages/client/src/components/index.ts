@@ -73,6 +73,7 @@ export { Kanban }               from '@core3/client/components/Kanban';
 export { KanbanView }           from '@core3/client/components/KanbanView';
 export { CalendarView }         from '@core3/client/components/CalendarView';
 export { ActivityView }         from '@core3/client/components/ActivityView';
+export { ScannerView }          from '@core3/client/components/ScannerView';
 export { CardView }             from '@core3/client/components/CardView';
 export { PivotView }            from '@core3/client/components/PivotView';
 export { GraphView }            from '@core3/client/components/GraphView';

@@ -23,6 +23,7 @@ const renderHandlers = new PageRenderHandlerRegistry({
   renderLineItemGrid: renderDataGrid,
   renderContactGrid: renderDataGrid,
   renderDocumentSummary,
+  renderScannerView,
   renderOdooFormView,
   renderMoneySummary,
   renderApprovalTimeline,
@@ -35,6 +36,9 @@ const renderHandlers = new PageRenderHandlerRegistry({
   renderChart,
 });
 const componentLoader = new ComLoader();
+// The nested renderer functions outlive createRenderers; retain the owning
+// instance explicitly so scanner and detail children remain in the tree.
+// eslint-disable-next-line @typescript-eslint/no-this-alias
 const owner = this;
 
 function mountOwned<T extends BaseComponent>(component: T, container: HTMLElement): T {
@@ -52,6 +56,80 @@ async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
   const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
   mountOwned(comp, slot);
   bindSource(def.source, data => comp.setState({ record: data.data || {} }, true));
+}
+
+async function renderScannerView(def: any, targetContainer: HTMLElement) {
+  const { ScannerView } = await import('@core3/client/components/ScannerView');
+  const { Form } = await import('@core3/client/components/Form');
+  const sourceId = def.source;
+  const sourceData = dataMap[sourceId]?.data || {};
+  const scanAction = (config.actions || []).find((action: any) => action.id === def.scan_action);
+  const canScan = !scanAction || hasPermission(ctx.user, scanAction.permission);
+  const layout = html.take(targetContainer).div.className('o-registration-desk-layout').ele() as HTMLElement;
+  const scannerSlot = html.take(layout).div.className('o-registration-desk-scanner-slot').ele() as HTMLElement;
+  const manualSlot = html.take(layout).div.className('o-registration-desk-manual-slot').ele() as HTMLElement;
+
+  const scanner = new ScannerView(
+    `scanner-view-${sourceId || def.id || Date.now()}`,
+    { desk: sourceData },
+    def,
+    {
+      canScan,
+      onScan: async (barcode: string) => {
+        if (!scanAction?.action) throw new Error('Barcode scanning is not configured');
+        const result = await client.action(scanAction.action, {
+          barcode,
+          values: { barcode },
+        });
+        scanner.setState({
+          scan_state: 'valid',
+          scan_message: def.labels?.valid || 'Badge checked in successfully.',
+          result,
+        }, true);
+        if (sourceId) await refreshSources([sourceId]);
+      },
+    },
+  );
+  mountOwned(scanner, scannerSlot);
+
+  if (sourceId) bindSource(sourceId, data => scanner.setState({ desk: data.data || {} }, true));
+
+  const manual = def.manual_form;
+  const manualAction = manual?.action
+    ? (config.actions || []).find((action: any) => action.id === manual.action)
+    : undefined;
+  if (!manual || !manualAction || !hasPermission(ctx.user, manualAction.permission)) {
+    html.take(manualSlot).div.className('o-registration-desk-manual-permission').replaceText(
+      hasPermission(ctx.user, 'events.write')
+        ? 'Manual registration is unavailable for this desk.'
+        : 'Registration permission is required for manual check-in.',
+    );
+    return;
+  }
+
+  const manualForm = new Form(
+    `scanner-manual-form-${sourceId || Date.now()}`,
+    {},
+    {
+      ...manual,
+      class: 'o-registration-desk-manual-form',
+    },
+  );
+  manualForm._onAction = async (_actionId: string, values: Record<string, unknown>) => {
+    if (!manualAction.action) throw new Error('Manual registration is not configured');
+    const result = await client.action(manualAction.action, {
+      ...resolveActionParams(manualAction.params, { ...ctx, row: values }),
+      values,
+    });
+    scanner.setState({
+      scan_state: 'registered',
+      scan_message: manual.success_label || 'Attendee registered successfully.',
+      result,
+    }, true);
+    if (sourceId) await refreshSources([sourceId]);
+    return result;
+  };
+  mountOwned(manualForm, manualSlot);
 }
 
 async function renderOdooFormView(def: any, targetContainer: HTMLElement) {

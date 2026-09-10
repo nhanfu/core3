@@ -1,43 +1,94 @@
 title: Registration Desk
-page: { id: registration-desk, route: /events/registration-desk, breadcrumb: [Marketing, Events, Registration Desk], auth: { require: [events.read] } }
+page: { id: registration-desk, route: /events/registration-desk, auth: { require: [events.read] } }
 components:
-  - type: PageIntro
-    title: Event Registrations
-    description: Scan or tap an attendee to check in at the registration desk.
-  - type: StatRow
+  # Odoo's event_barcode_action_main_view is a client action. It is not a
+  # public/controller HTTP route; scan_action below calls a named Core3 action.
+  - type: ScannerView
+    id: registration-desk-scanner
     source: event_registration_desk
-    stats: [{ label: Registrations, field: registrations }, { label: Pending, field: pending }]
-  - type: Form
-    id: registration-desk-check-in
-    title: Manual registration
-    action: register_event_from_desk
-    submit_label: Register attendee
-    fields:
-      - { field: event_id, label: Event ID, type: text, required: true }
-      - { field: event_name, label: Event, type: text, required: true }
-      - { field: attendee_name, label: Attendee, type: text, required: true }
-      - { field: attendee_email, label: Email, type: text }
-      - { field: ticket_type, label: Ticket type, type: text }
+    fullscreen: true
+    client_action: event_barcode_action_main_view
+    scan_action: scan_registration_badge
+    title: Registration Desk
+    description: Scan an attendee badge or register a guest manually.
+    placeholder: Scan or enter badge code
+    scan_label: Check in
+    helper_text: Use a barcode scanner or enter the badge code below.
+    labels:
+      ready: Ready to scan an attendee badge.
+      scanning: Checking badge…
+      valid: Badge checked in successfully.
+      registered: Attendee registered successfully.
+      empty: No active event is available for registration.
+      capacity: This event has reached capacity.
+      invalid: Badge not found. Check the code and try again.
+      duplicate: This badge has already been used.
+    manual_form:
+      title: Manual registration
+      action: register_event_from_desk
+      submit_label: Register attendee
+      loading_label: Registering…
+      success_label: Registered
+      fields:
+        - { field: event_id, label: Event ID, type: text, required: true, placeholder: event-demo-002 }
+        - { field: event_name, label: Event, type: text, required: true, placeholder: Conference for Architects }
+        - { field: attendee_name, label: Attendee, type: text, required: true }
+        - { field: attendee_email, label: Email, type: text, required: true }
+        - { field: ticket_type, label: Ticket type, type: text, placeholder: General Admission }
+      validation:
+        - { type: required, fields: [event_id, event_name, attendee_name, attendee_email], message: Event and attendee details are required. }
 actions:
+  - id: scan_registration_badge
+    type: server
+    permission: events.write
+    action: events.registrations.scan
+    handler: yaml_mutation
+    operation: scan
+    mutation:
+      guards:
+        - query: "SELECT id FROM event_registrations WHERE barcode = :barcode"
+          status: 404
+          message: Badge not found. Check the code and try again.
+        - query: "SELECT id FROM event_registrations WHERE barcode = :barcode AND state = 'Registered'"
+          status: 409
+          message: This badge has already been used or cancelled.
+      steps:
+        - query: "UPDATE event_registrations SET state = 'Attended', row_version = COALESCE(row_version, 0) + 1 WHERE barcode = :barcode"
+      result:
+        query: "SELECT id, attendee_name, event_name, ticket_type, state, barcode FROM event_registrations WHERE barcode = :barcode"
+
   - id: register_event_from_desk
     type: server_form
     permission: events.write
     title: Register attendee
-    action: events.registrations.create
+    action: events.registrations.register_desk
     handler: yaml_mutation
     operation: register
     refresh: [event_registration_desk]
-    mutation:
-      operation: insert
-      table: event_registrations
-      fields: [event_id, event_name, attendee_name, attendee_email, ticket_type]
-      required: [event_id, event_name, attendee_name]
-      guards: [{ query: "SELECT 1 AS ok FROM events WHERE id = :event_id AND state IN ('Published', 'In Progress') AND (capacity = 0 OR registration_count < capacity)", status: 409, message: The event is not open or has reached capacity }]
-      steps: [{ query: "UPDATE events SET registration_count = registration_count + 1, row_version = row_version + 1 WHERE id = :event_id" }]
-      result: { query: "SELECT COUNT(*) AS registrations, COUNT(*) FILTER (WHERE state = 'Registered') AS pending FROM event_registrations" }
     fields:
       - { field: event_id, label: Event ID, type: text, required: true }
       - { field: event_name, label: Event, type: text, required: true }
       - { field: attendee_name, label: Attendee, type: text, required: true }
-      - { field: attendee_email, label: Email, type: text }
+      - { field: attendee_email, label: Email, type: text, required: true }
       - { field: ticket_type, label: Ticket type, type: text }
+    mutation:
+      operation: insert
+      table: event_registrations
+      generated: [id]
+      fields: [event_id, event_name, attendee_name, attendee_email, ticket_type]
+      defaults: { state: Registered, row_version: 1 }
+      required: [event_id, event_name, attendee_name, attendee_email]
+      guards:
+        - query: "SELECT id FROM events WHERE id = :event_id AND name = :event_name AND state IN ('Published', 'In Progress')"
+          status: 404
+          message: Event not found or registration is closed.
+        - query: "SELECT id FROM events WHERE id = :event_id AND (capacity = 0 OR registration_count < capacity)"
+          status: 409
+          message: This event has reached capacity.
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_registrations WHERE event_id = :event_id AND lower(COALESCE(attendee_email, '')) = lower(:attendee_email) AND state <> 'Cancelled')"
+          status: 409
+          message: This attendee is already registered for the event.
+      steps:
+        - query: "UPDATE events SET registration_count = registration_count + 1, row_version = row_version + 1 WHERE id = :event_id"
+      result:
+        query: "SELECT id, attendee_name, event_name, attendee_email, ticket_type, state FROM event_registrations WHERE id = :id"

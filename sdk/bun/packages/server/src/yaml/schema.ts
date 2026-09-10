@@ -230,6 +230,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['AvatarPicker', new Set(['type', 'id', 'action'])],
   ['ChoiceGroup', new Set(['type', 'id', 'title', 'value', 'class', 'section_class', 'title_class', 'group_class', 'option_class', 'options', 'action'])],
   ['Form', new Set(['type', 'id', 'title', 'class', 'section_class', 'title_class', 'action', 'submit_variant', 'submit_label', 'loading_label', 'success_label', 'fields', 'validation'])],
+  ['ScannerView', new Set(['type', 'id', 'source', 'fullscreen', 'client_action', 'scan_action', 'scan_permission', 'title', 'description', 'placeholder', 'scan_label', 'helper_text', 'labels', 'manual_form'])],
   ['Button', new Set(['type', 'id', 'action', 'label', 'icon', 'variant', 'full_width'])],
   // POS cashier components (Phase 1)
   ['PosShell', new Set(['type', 'id', 'session_source', 'bootstrap_source', 'orders_source', 'actions'])],
@@ -740,6 +741,29 @@ function validateComponents(
       } else {
         for (const [key, value] of Object.entries(component.action_labels)) {
           if (typeof value !== 'string' || !value.trim()) issues.push(`${path}.action_labels.${key} must be a non-empty string`);
+        }
+      }
+    }
+    if (component.type === 'ScannerView') {
+      if (component.scan_action !== undefined) {
+        requireString(component.scan_action, `${path}.scan_action`, issues);
+        if (typeof component.scan_action === 'string' && !actionIds.has(component.scan_action)) {
+          issues.push(`${path}.scan_action references unknown action "${component.scan_action}"`);
+        }
+      }
+      if (component.client_action !== undefined) requireString(component.client_action, `${path}.client_action`, issues);
+      if (component.fullscreen !== undefined && typeof component.fullscreen !== 'boolean') issues.push(`${path}.fullscreen must be a boolean`);
+      if (component.labels !== undefined && !isRecord(component.labels)) issues.push(`${path}.labels must be an object`);
+      if (component.manual_form !== undefined) {
+        const manualPath = `${path}.manual_form`;
+        requireRecord(component.manual_form, manualPath, issues);
+        if (isRecord(component.manual_form)) {
+          rejectUnknownKeys(component.manual_form, new Set(['title', 'action', 'submit_variant', 'submit_label', 'loading_label', 'success_label', 'fields', 'validation']), manualPath, issues);
+          requireString(component.manual_form.action, `${manualPath}.action`, issues);
+          if (typeof component.manual_form.action === 'string' && !actionIds.has(component.manual_form.action)) {
+            issues.push(`${manualPath}.action references unknown action "${component.manual_form.action}"`);
+          }
+          validateFields(component.manual_form.fields, `${manualPath}.fields`, issues);
         }
       }
     }

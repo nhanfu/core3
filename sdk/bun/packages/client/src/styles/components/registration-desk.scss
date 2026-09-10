@@ -1,0 +1,109 @@
+.app-content:has(.o-registration-desk-layout) {
+  padding: 0;
+}
+
+.app-layout:has(.o-registration-desk-layout) .app-header { display: none; }
+.app-layout:has(.o-registration-desk-layout) .app-content { min-height: 100vh; }
+
+.o-registration-desk-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+  min-height: calc(100vh - var(--header-height, 56px));
+  width: 100%;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.o-registration-desk-scanner-slot,
+.o-registration-desk-manual-slot { min-width: 0; }
+
+.o-registration-desk {
+  --o-registration-action: #71639e;
+  --o-registration-text: #212529;
+  --o-registration-muted: #6c757d;
+  --o-registration-border: #dee2e6;
+  --o-registration-surface: #fff;
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  background: var(--o-registration-surface);
+  color: var(--o-registration-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, Arial, sans-serif;
+}
+
+.o-registration-desk-header { padding: 28px 32px 20px; border-bottom: 1px solid var(--o-registration-border); }
+.o-registration-desk-eyebrow { color: var(--o-registration-action); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.o-registration-desk-title { margin: 4px 0 0; font-size: 24px; font-weight: 600; }
+.o-registration-desk-description { margin: 6px 0 0; color: var(--o-registration-muted); font-size: 13px; }
+.o-registration-desk-body { display: grid; min-height: 0; flex: 1; grid-template-columns: minmax(0, 1fr) 280px; }
+.o-registration-desk-scan-stage { display: flex; min-width: 0; flex-direction: column; align-items: center; justify-content: center; padding: 32px; text-align: center; }
+.o-registration-desk-scan-frame { position: relative; display: grid; width: min(280px, 70vw); aspect-ratio: 1.5; place-items: center; margin-bottom: 24px; border: 1px dashed #adb5bd; border-radius: 6px; background: #f8f9fa; color: var(--o-registration-action); }
+.o-registration-desk-scan-frame.is-empty,
+.o-registration-desk-scan-frame.is-capacity,
+.o-registration-desk-scan-frame.is-invalid,
+.o-registration-desk-scan-frame.is-duplicate,
+.o-registration-desk-scan-frame.is-error { border-color: #dc3545; }
+.o-registration-desk-scan-frame.is-valid,
+.o-registration-desk-scan-frame.is-registered { border-color: #198754; }
+.o-registration-desk-scan-icon { font-size: 46px; line-height: 1; transform: rotate(90deg); }
+.o-registration-desk-scan-corner { position: absolute; width: 22px; height: 22px; border-color: currentColor; border-style: solid; }
+.corner-top-left { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
+.corner-top-right { top: -2px; right: -2px; border-width: 3px 3px 0 0; }
+.corner-bottom-left { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; }
+.corner-bottom-right { right: -2px; bottom: -2px; border-width: 0 3px 3px 0; }
+.o-registration-desk-scan-heading { margin: 0; font-size: 18px; font-weight: 600; }
+.o-registration-desk-scan-help { max-width: 420px; margin: 8px 0 18px; color: var(--o-registration-muted); font-size: 13px; }
+.o-registration-desk-scan-form { display: flex; width: min(480px, 100%); gap: 8px; }
+.o-registration-desk-scan-input { min-width: 0; flex: 1; min-height: 40px; padding: 8px 12px; border: 1px solid #adb5bd; border-radius: 4px; color: inherit; font: inherit; }
+.o-registration-desk-scan-input:focus { border-color: var(--o-registration-action); outline: 2px solid rgb(113 99 158 / 20%); }
+.o-registration-desk-scan-button { min-height: 40px; padding: 8px 16px; border: 1px solid var(--o-registration-action); border-radius: 4px; background: var(--o-registration-action); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.o-registration-desk-scan-button:disabled { cursor: default; opacity: .6; }
+.o-registration-desk-status { display: flex; width: min(480px, 100%); flex-direction: column; gap: 3px; margin-top: 22px; padding: 10px 12px; border-left: 3px solid var(--o-registration-action); background: #f8f9fa; text-align: left; }
+.o-registration-desk-status.is-valid,
+.o-registration-desk-status.is-registered { border-color: #198754; background: #e9f7ef; }
+.o-registration-desk-status.is-empty,
+.o-registration-desk-status.is-capacity,
+.o-registration-desk-status.is-invalid,
+.o-registration-desk-status.is-duplicate,
+.o-registration-desk-status.is-error { border-color: #dc3545; background: #fff0f1; }
+.o-registration-desk-status-message { color: var(--o-registration-muted); font-size: 12px; }
+.o-registration-desk-permission { width: min(480px, 100%); margin-top: 12px; color: #842029; font-size: 12px; text-align: left; }
+.o-registration-desk-context { min-width: 0; padding: 32px 24px; border-left: 1px solid var(--o-registration-border); background: #f8f9fa; }
+.o-registration-desk-context-heading { color: var(--o-registration-muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.o-registration-desk-event-name { margin: 8px 0 20px; font-size: 18px; font-weight: 600; line-height: 1.3; }
+.o-registration-desk-details { margin: 0; }
+.o-registration-desk-detail { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--o-registration-border); font-size: 13px; }
+.o-registration-desk-detail dt { color: var(--o-registration-muted); }
+.o-registration-desk-detail dd { margin: 0; font-weight: 600; text-align: right; }
+.o-registration-desk-empty { margin-top: 18px; color: var(--o-registration-muted); font-size: 13px; line-height: 1.5; }
+.o-registration-desk-result { display: flex; flex-direction: column; gap: 4px; margin-top: 24px; padding: 14px; border: 1px solid #a3cfbb; border-radius: 4px; background: #e9f7ef; color: #0f5132; }
+.o-registration-desk-result-label { font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.o-registration-desk-result span:last-child { font-size: 12px; }
+.o-registration-desk-manual-slot { padding: 32px 24px; border-left: 1px solid var(--o-registration-border); background: #fff; }
+.o-registration-desk-manual-form { max-width: 440px; margin: 0 auto; }
+.o-registration-desk-manual-form .drawer-section-title { margin-bottom: 18px; color: #212529; font-size: 18px; font-weight: 600; }
+.o-registration-desk-manual-form .form-group { margin-bottom: 14px; }
+.o-registration-desk-manual-form .form-label { display: block; margin-bottom: 5px; color: #495057; font-size: 12px; font-weight: 600; }
+.o-registration-desk-manual-form .form-input { box-sizing: border-box; width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid #adb5bd; border-radius: 4px; background: #fff; color: #212529; font: inherit; font-size: 13px; }
+.o-registration-desk-manual-form .form-input:focus { border-color: var(--o-registration-action); outline: 2px solid rgb(113 99 158 / 20%); }
+.o-registration-desk-manual-form .btn { min-height: 38px; padding: 8px 14px; border: 1px solid var(--o-registration-action); border-radius: 4px; background: var(--o-registration-action); color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.o-registration-desk-manual-form .btn:disabled { cursor: default; opacity: .6; }
+.o-registration-desk-manual-permission { max-width: 360px; margin: 40px auto; color: var(--o-registration-muted); font-size: 13px; line-height: 1.5; }
+
+@media (max-width: 960px) {
+  .o-registration-desk-body { grid-template-columns: 1fr; }
+  .o-registration-desk-context { border-top: 1px solid var(--o-registration-border); border-left: 0; }
+  .o-registration-desk-manual-slot { border-top: 1px solid var(--o-registration-border); border-left: 0; }
+}
+
+@media (max-width: 600px) {
+  .o-registration-desk-layout { display: block; min-height: 0; overflow: visible; }
+  .o-registration-desk-header { padding: 20px 16px 16px; }
+  .o-registration-desk-title { font-size: 20px; }
+  .o-registration-desk-scan-stage { padding: 24px 16px; }
+  .o-registration-desk-scan-form { flex-direction: column; }
+  .o-registration-desk-scan-button { width: 100%; }
+  .o-registration-desk-manual-form .btn { width: 100%; }
+  .o-registration-desk-context,
+  .o-registration-desk-manual-slot { padding: 24px 16px; }
+}
