@@ -1,0 +1,28 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_settings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        schedule BOOLEAN NOT NULL DEFAULT FALSE,
+        online_exhibitors BOOLEAN NOT NULL DEFAULT FALSE,
+        booth_management BOOLEAN NOT NULL DEFAULT FALSE,
+        sale_tickets BOOLEAN NOT NULL DEFAULT FALSE,
+        pos_tickets BOOLEAN NOT NULL DEFAULT FALSE,
+        online_ticketing BOOLEAN NOT NULL DEFAULT FALSE,
+        use_event_barcode BOOLEAN NOT NULL DEFAULT FALSE,
+        barcode_nomenclature VARCHAR NOT NULL DEFAULT 'Default GS1'
+      );
+      INSERT INTO event_settings(id, row_version, company_name, schedule, online_exhibitors, booth_management, sale_tickets, pos_tickets, online_ticketing, use_event_barcode, barcode_nomenclature)
+      VALUES ('event-settings-demo', 1, 'My Company (San Francisco)', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 'Default GS1')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_settings WHERE id = 'event-settings-demo';
+      DROP TABLE IF EXISTS event_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
