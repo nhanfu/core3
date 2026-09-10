@@ -106,6 +106,7 @@ export type ListViewOptions = {
     denyUnbounded?: boolean;
   };
   actions?: ListViewAction[];
+  headerActions?: ListViewAction[];
   favorites?: ListViewFavorite[];
   bulkActions?: ListViewAction[];
   rowKey?: string;
@@ -606,6 +607,15 @@ export class ListView extends BaseComponent {
         }
         void this.submit(this.options.createAction!.id);
       });
+    }
+    for (const action of this.options.headerActions || []) {
+      const button = html.take(primary).button
+        .className(`o-list-header-action${action.variant === 'primary' ? ' is-primary' : ''}${action.variant === 'danger' ? ' is-danger' : ''}`)
+        .dataAttr('list-header-action', action.id)
+        .text(action.label || action.title || action.id)
+        .ele();
+      html.take(button).prop('disabled', Boolean(action.disabled));
+      if (!button.disabled) html.take(button).event('click', () => void this.submit(action.id, action.params || {}));
     }
     if (this.options.breadcrumbs?.length) {
       const breadcrumbs = html.take(primary).nav.className('o-list-breadcrumbs').attr('aria-label', 'Breadcrumb').ele();

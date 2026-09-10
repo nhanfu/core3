@@ -94,6 +94,41 @@ describe('YAML Odoo ListView renderer', () => {
     expect(container.querySelector('[data-list-row-action="approve:o1"]')).toBeNull();
   });
 
+  it('renders permitted list header actions once and dispatches their server action', async () => {
+    vi.spyOn(client, 'query').mockResolvedValue({
+      data: [{ id: 'o1', number: 'ORD-001' }],
+      meta: { total: 1, page: 1, pageSize: 50 },
+    });
+    const action = vi.spyOn(client, 'action').mockResolvedValue({});
+    window.__CORE3_USER__ = { permissions: ['orders.read', 'orders.write'] };
+    const container = document.createElement('div');
+    await renderPage({
+      title: 'Orders',
+      page: { id: 'orders' },
+      datasources: [{ id: 'orders', permission: 'orders.read', query: 'SELECT 1' }],
+      components: [{
+        type: 'ListView', variant: 'odoo', source: 'orders',
+        header_actions: [
+          { id: 'apply_all', label: 'Apply All', variant: 'primary' },
+          { id: 'manager_action', label: 'Manager action' },
+        ],
+        columns: [{ field: 'number', label: 'Order' }],
+      }],
+      actions: [
+        { id: 'apply_all', type: 'server', permission: 'orders.write', action: 'orders.apply_all', handler: 'apply_all' },
+        { id: 'manager_action', type: 'server', permission: 'orders.manage', action: 'orders.manager_action', handler: 'manager_action' },
+      ],
+    }, { container });
+
+    const headerActions = [...container.querySelectorAll<HTMLButtonElement>('[data-list-header-action]')];
+    expect(headerActions.map(button => button.textContent)).toEqual(['Apply All']);
+    expect(container.querySelectorAll('[data-list-header-action="apply_all"]')).toHaveLength(1);
+    expect(container.querySelector('[data-list-header-action="manager_action"]')).toBeNull();
+
+    headerActions[0].click();
+    await vi.waitFor(() => expect(action).toHaveBeenCalledWith('orders.apply_all', expect.objectContaining({ id: null })));
+  });
+
   it('preserves routed filters when applying another list filter', async () => {
     const query = vi.spyOn(client, 'query').mockResolvedValue({
       data: [{ id: 'o1', number: 'ORD-001', status: 'Draft' }],

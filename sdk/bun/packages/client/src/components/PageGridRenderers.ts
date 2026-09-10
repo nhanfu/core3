@@ -735,6 +735,11 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     if (!hasPermission(ctx.user, action.permission || actionDef?.permission)) return false;
     return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
   });
+  const headerActions = (def.header_actions || []).filter((action: any) => {
+    const actionDef = (config.actions || []).find((candidate: any) => candidate.id === action.id);
+    if (!hasPermission(ctx.user, action.permission || actionDef?.permission)) return false;
+    return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
+  });
   const formView = def.form_view?.page ? {
     page: def.form_view.page,
     sidePanel: def.form_view.side_panel !== false,
@@ -957,6 +962,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         validationMessages: def.date_range.validation_messages,
       } : undefined,
       actions: utilityActions,
+      headerActions,
       groupBy,
       favorites,
       bulkActions,
