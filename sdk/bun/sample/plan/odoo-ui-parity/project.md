@@ -230,6 +230,49 @@ permissions, and the 503 transport-error contract. Authenticated comparison
 captures for the owned Odoo database and Core3 are recorded under `/tmp` and
 are not committed.
 
+## Bounded slice: Task detail/form workflow (2026-09-10)
+
+The task-detail follow-up keeps the completed Project configuration and Tasks
+Analysis slices unchanged. The existing `/tasks` list remains the entry point
+for `/tasks/detail?id=<task-id>` and the detail layout is presentation only;
+its service-owned `api/task-detail.yaml` fragment is joined by
+`page.id: project-task-detail`.
+
+The task form follows the Odoo Project task contract for the supported service
+model: Project, Milestone, Assignees, Tags, Customer, Stage, Priority, Deadline,
+Allocated Time, Spent Time, and a status bar for To do, In progress, Done, and
+Cancelled. Its notebook exposes Description, Sub-tasks, and Blocked By tabs
+with deterministic zero-count/empty values. Edit is a permissioned server form
+with required-title, non-negative-hours, missing-record, and row-version
+conflict guards. Start, Mark done, and Cancel are service-owned mutations with
+read/write/manage permission boundaries, valid-state guards, row-version
+checks, stable 404/409 errors, and refresh targets for list and detail sources.
+
+Migration `20260910130000-006-project-task-detail.yaml` adds only the fields
+needed by this bounded form and normalizes all seeded task `created_at` values
+to `2026-01-15`; it is idempotent and DuckDB-compatible. Focused coverage is
+`test/project_task_detail.integration.test.ts` (6 tests, 83 assertions when
+run with the existing Project navigation contract). It proves page/API
+separation, list-to-detail navigation, deterministic fields and empty/not-found
+states, edit validation, stale conflicts, and guarded transitions. The API
+declares `PROJECT_TASK_DETAIL_UNAVAILABLE` as the stable transport-error
+contract.
+
+Core3 authenticated browser evidence is captured under `/tmp` as
+`core3-project-task-detail-desktop.png` and
+`core3-project-task-detail-mobile.png`; screenshots are not committed. The
+owned Odoo reference stack at `localhost:8069` was being cleanly reinitialized
+with the owned `core3_owned` database and Project demo data during this batch;
+if it is not ready before handoff, Odoo XML/source fields are the comparison
+contract and live Odoo visual capture remains an explicit follow-up limitation.
+
+This slice intentionally does not add Odoo dependency-backed chatter,
+followers, attachments, recurrence, dependency records, subtask records,
+personal stages, ratings, portal sharing, or the full Odoo state vocabulary;
+the current Core3 Project service has no corresponding owned models. Those
+remain separate parity batches rather than being represented by page-local
+fixtures.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:

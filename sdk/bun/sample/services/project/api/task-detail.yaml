@@ -4,4 +4,75 @@ datasources:
     single: true
     permission: project.read
     workflow: project_tasks
-    query: "SELECT id, row_version, project_id, project_name, name, stage, assignee, priority, description, planned_hours, spent_hours, state, CAST(due_date AS VARCHAR) AS due_date FROM project_tasks WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    error_states: { transport_error: { status: 503, code: PROJECT_TASK_DETAIL_UNAVAILABLE, message: Task details are temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.stage, t.assignee, t.priority, t.description, t.milestone_name, COALESCE(t.customer_name, p.customer_name) AS customer_name, COALESCE(t.company_name, 'Core3') AS company_name, COALESCE(t.tags, '') AS tags, COALESCE(t.subtask_summary, '0 / 0 (0%)') AS subtask_summary, COALESCE(t.subtask_names, '') AS subtask_names, COALESCE(t.blocked_by_summary, 'None') AS blocked_by_summary, COALESCE(t.blocked_by_names, '') AS blocked_by_names, t.planned_hours, t.spent_hours, t.state, COALESCE(t.active, TRUE) AS active, CAST(t.due_date AS VARCHAR) AS due_date, CAST(t.created_at AS VARCHAR) AS created_at FROM project_tasks t LEFT JOIN projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :id"
+actions:
+  - id: edit_task
+    type: server_form
+    permission: project.write
+    title: Edit Task
+    action: project.tasks.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [project_task_detail, project_tasks_all, project_tasks_detail]
+    mutation:
+      operation: update
+      table: project_tasks
+      fields: [name, assignee, milestone_name, priority, description, due_date, planned_hours]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id", status: 404, code: PROJECT_TASK_NOT_FOUND, message: Task was not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:planned_hours, 0) >= 0", status: 422, code: PROJECT_TASK_HOURS_INVALID, message: Allocated Time cannot be negative. }
+      result: { query: "SELECT * FROM project_tasks WHERE id = :id" }
+    fields:
+      - { field: name, label: Title, type: text, required: true }
+      - { field: assignee, label: Assignees, type: text }
+      - { field: milestone_name, label: Milestone, type: text }
+      - { field: priority, label: Priority, type: select, options: [{ value: Low, label: Low }, { value: Normal, label: Medium }, { value: High, label: High }, { value: Urgent, label: Urgent }] }
+      - { field: description, label: Description, type: textarea, wide: true }
+      - { field: due_date, label: Deadline, type: date }
+      - { field: planned_hours, label: Allocated Time, type: number }
+  - id: start_task
+    type: server
+    permission: project.write
+    action: project.tasks.start
+    handler: yaml_mutation
+    operation: start
+    params: { state: In Progress }
+    refresh: [project_task_detail, project_tasks_all, project_tasks_detail]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id", status: 404, code: PROJECT_TASK_NOT_FOUND, message: Task was not found. }
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id AND state = 'Todo'", status: 409, code: PROJECT_TASK_INVALID_TRANSITION, message: Only To do tasks can be started. }
+      steps: [{ query: "UPDATE project_tasks SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id AND state = 'Todo' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Task was changed by another user. Reload it before starting. }]
+      result: { query: "SELECT * FROM project_tasks WHERE id = :id" }
+  - id: complete_task
+    type: server
+    permission: project.write
+    action: project.tasks.complete
+    handler: yaml_mutation
+    operation: complete
+    params: { state: Done }
+    refresh: [project_task_detail, project_tasks_all, project_tasks_detail]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id", status: 404, code: PROJECT_TASK_NOT_FOUND, message: Task was not found. }
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id AND state = 'In Progress'", status: 409, code: PROJECT_TASK_INVALID_TRANSITION, message: Only In progress tasks can be marked done. }
+      steps: [{ query: "UPDATE project_tasks SET state = 'Done', row_version = row_version + 1 WHERE id = :id AND state = 'In Progress' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Task was changed by another user. Reload it before completing. }]
+      result: { query: "SELECT * FROM project_tasks WHERE id = :id" }
+  - id: cancel_task
+    type: server
+    permission: project.manage
+    action: project.tasks.cancel
+    handler: yaml_mutation
+    operation: cancel
+    params: { state: Cancelled }
+    refresh: [project_task_detail, project_tasks_all, project_tasks_detail]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id", status: 404, code: PROJECT_TASK_NOT_FOUND, message: Task was not found. }
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :id AND state IN ('Todo', 'In Progress')", status: 409, code: PROJECT_TASK_INVALID_TRANSITION, message: Only open tasks can be cancelled. }
+      steps: [{ query: "UPDATE project_tasks SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id AND state IN ('Todo', 'In Progress') AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Task was changed by another user. Reload it before cancelling. }]
+      result: { query: "SELECT * FROM project_tasks WHERE id = :id" }

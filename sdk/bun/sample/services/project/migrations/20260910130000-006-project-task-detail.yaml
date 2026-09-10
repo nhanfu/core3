@@ -1,0 +1,36 @@
+version: 0.0.6
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS customer_name VARCHAR;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS tags VARCHAR;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS subtask_summary VARCHAR;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS subtask_names VARCHAR;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS blocked_by_summary VARCHAR;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS blocked_by_names VARCHAR;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      UPDATE project_tasks t SET customer_name = COALESCE(t.customer_name, p.customer_name), company_name = COALESCE(t.company_name, 'Core3') FROM projects p WHERE p.id = t.project_id;
+      UPDATE project_tasks SET tags = CASE id
+        WHEN 'task-demo-001' THEN 'Architecture, Internal'
+        WHEN 'task-demo-002' THEN 'Design, Priority'
+        WHEN 'task-demo-003' THEN 'Documentation'
+        WHEN 'task-demo-004' THEN 'External'
+        WHEN 'task-demo-005' THEN 'Archive'
+        ELSE COALESCE(tags, '')
+      END;
+      UPDATE project_tasks SET subtask_summary = COALESCE(subtask_summary, '0 / 0 (0%)'), blocked_by_summary = COALESCE(blocked_by_summary, 'None'), subtask_names = COALESCE(subtask_names, ''), blocked_by_names = COALESCE(blocked_by_names, ''), active = COALESCE(active, TRUE), created_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS blocked_by_names;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS blocked_by_summary;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS subtask_names;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS subtask_summary;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS tags;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS company_name;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS customer_name;
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
