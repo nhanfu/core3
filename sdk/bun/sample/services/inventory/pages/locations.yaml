@@ -27,12 +27,13 @@ components:
       - id: card
         label: Cards
         icon: grid
+        mobile: false
         card: { title: complete_name, subtitle: usage, fields: [{ field: warehouse_name, label: Warehouse }, { field: company_name, label: Company }, { field: active, label: Active }] }
       - { id: form, label: Form, icon: edit }
-    form_view: { page: apps/services/inventory/pages/location-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/inventory/pages/location-detail.yaml, side_panel: false }
     row_key: id
-    row_open_action: edit_inventory_location
-    row_double_click_action: edit_inventory_location
+    row_open_action: view_inventory_location
+    row_double_click_action: view_inventory_location
     row_actions: menu
     empty_state: { title: No locations found, description: Add a location or adjust your search and filters. }
     columns:

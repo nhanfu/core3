@@ -1,0 +1,27 @@
+version: 0.0.7
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE inventory_warehouses SET code = 'WH' WHERE id = 'warehouse-main' AND code = 'WH-MAIN';
+      UPDATE inventory_locations SET name = 'Input', code = 'INPUT', usage = 'View', active = TRUE, state = 'Active', company_name = 'My Company (San Francisco)' WHERE id = 'location-input';
+      UPDATE inventory_locations SET parent_location_id = NULL WHERE id = 'location-stock';
+      UPDATE inventory_locations SET active = FALSE, state = 'Archived' WHERE id = 'location-overflow-stock';
+      INSERT INTO inventory_locations(id, warehouse_id, parent_location_id, name, code, usage, state, active, company_name, replenish_location, cyclic_inventory_frequency, removal_strategy) VALUES
+        ('location-input-order-processing', 'warehouse-main', 'location-input', 'Order Processing', 'ORDER-PROCESSING', 'Internal', 'Active', TRUE, 'My Company (San Francisco)', FALSE, 0, ''),
+        ('location-input-dispatch-zone', 'warehouse-main', 'location-input-order-processing', 'Dispatch Zone', 'DISPATCH-ZONE', 'Internal', 'Active', TRUE, 'My Company (San Francisco)', FALSE, 0, ''),
+        ('location-input-gate-a', 'warehouse-main', 'location-input-dispatch-zone', 'Gate A', 'GATE-A', 'Internal', 'Active', TRUE, 'My Company (San Francisco)', FALSE, 0, ''),
+        ('location-input-gate-b', 'warehouse-main', 'location-input-dispatch-zone', 'Gate B', 'GATE-B', 'Internal', 'Active', TRUE, 'My Company (San Francisco)', FALSE, 0, '')
+      ON CONFLICT(id) DO UPDATE SET warehouse_id = EXCLUDED.warehouse_id, parent_location_id = EXCLUDED.parent_location_id, name = EXCLUDED.name, code = EXCLUDED.code, usage = EXCLUDED.usage, state = EXCLUDED.state, active = EXCLUDED.active, company_name = EXCLUDED.company_name;
+      UPDATE inventory_locations SET parent_location_id = 'location-stock' WHERE id = 'location-stock-shelf-1';
+      UPDATE inventory_locations SET parent_location_id = 'location-stock' WHERE id = 'location-stock-shelf-2';
+      UPDATE inventory_locations SET parent_location_id = 'location-stock-shelf-2' WHERE id = 'location-stock-small-refrigerator';
+    down: |
+      DELETE FROM inventory_locations WHERE id IN ('location-input-order-processing', 'location-input-dispatch-zone', 'location-input-gate-a', 'location-input-gate-b');
+      UPDATE inventory_locations SET name = 'Input', code = 'INPUT', usage = 'Internal' WHERE id = 'location-input';
+      UPDATE inventory_locations SET active = TRUE, state = 'Active' WHERE id = 'location-overflow-stock';
+      UPDATE inventory_warehouses SET code = 'WH-MAIN' WHERE id = 'warehouse-main' AND code = 'WH';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

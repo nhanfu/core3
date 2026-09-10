@@ -35,10 +35,13 @@ describe('Inventory Locations Odoo action parity', () => {
     ]));
 
     const list = listPage.components[0];
-    expect(list).toMatchObject({ source: 'inventory_locations', create_action: 'create_inventory_location', row_open_action: 'edit_inventory_location' });
+    expect(list).toMatchObject({ source: 'inventory_locations', create_action: 'create_inventory_location', row_open_action: 'view_inventory_location', row_double_click_action: 'view_inventory_location' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'card', 'form']);
     expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ card: { title: 'complete_name', subtitle: 'usage' } });
-    expect(list.form_view.page).toBe('apps/services/inventory/pages/location-detail.yaml');
+    expect(list.form_view).toEqual({ page: 'apps/services/inventory/pages/location-detail.yaml', side_panel: false });
+    expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ mobile: false });
+    expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: false });
+    expect(action('view_inventory_location')).toMatchObject({ type: 'navigate', permission: 'inventory.read', navigate_to: '/locations/detail', params: { id: '{row.id}' } });
     expect(list.columns.map((column: any) => column.field)).toEqual(['complete_name', 'usage', 'company_name', 'warehouse_name', 'is_empty', 'active', 'id']);
     expect(parsed('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration').items).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/locations', label: 'Locations', permission: 'inventory.read' }),
@@ -54,17 +57,26 @@ describe('Inventory Locations Odoo action parity', () => {
 
     const source = parsed('api/locations.yaml').datasources.find((item: any) => item.id === 'inventory_locations');
     const internal = await repository.querySource(source, { q: null, usage: null, active: null, warehouse_id: null, is_empty: null, fixture_state: null }, 0, 50);
-    expect(internal.data.length).toBeGreaterThanOrEqual(6);
+    expect(internal.data.length).toBe(8);
     expect(internal.data.every((row: any) => row.usage === 'Internal' && row.active === true)).toBe(true);
-    expect(internal.data.map((row: any) => row.complete_name)).toEqual(expect.arrayContaining(['Stock', 'Input', 'Stock/Shelf 1', 'Stock/Shelf 2']));
+    expect(internal.data.map((row: any) => row.complete_name)).toEqual([
+      'WH/Input/Order Processing',
+      'WH/Input/Order Processing/Dispatch Zone',
+      'WH/Input/Order Processing/Dispatch Zone/Gate A',
+      'WH/Input/Order Processing/Dispatch Zone/Gate B',
+      'WH/Stock',
+      'WH/Stock/Shelf 1',
+      'WH/Stock/Shelf 2',
+      'WH/Stock/Shelf 2/Small Refrigerator',
+    ]);
     expect((await repository.querySource(source, { q: 'SHELF-1', usage: 'all', active: 'all', warehouse_id: null, is_empty: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['location-stock-shelf-1']);
     expect((await repository.querySource(source, { q: 'missing', usage: 'all', active: 'all', warehouse_id: null, is_empty: null, fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { q: null, usage: null, active: null, warehouse_id: null, is_empty: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { q: null, usage: 'Supplier', active: 'active', warehouse_id: null, is_empty: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Vendors']);
-    expect((await repository.querySource(source, { q: null, usage: 'all', active: 'archived', warehouse_id: null, is_empty: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['location-archived']);
+    expect((await repository.querySource(source, { q: null, usage: 'all', active: 'archived', warehouse_id: null, is_empty: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['location-archived', 'location-overflow-stock']);
 
     const detail = parsed('api/location-detail.yaml').datasources[0];
-    expect((await repository.querySource(detail, { id: 'location-stock-shelf-1', fixture_state: null }, 0, 1)).data).toMatchObject({ id: 'location-stock-shelf-1', name: 'Shelf 1', parent_location_name: 'Stock', removal_strategy: 'FIFO' });
+    expect((await repository.querySource(detail, { id: 'location-stock-shelf-1', fixture_state: null }, 0, 1)).data).toMatchObject({ id: 'location-stock-shelf-1', name: 'Shelf 1', complete_name: 'WH/Stock/Shelf 1', parent_location_name: 'WH/Stock', removal_strategy: 'FIFO' });
     expect((await repository.querySource(detail, { id: 'location-missing', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
 
     const created = await repository.executeMutation(action('create_inventory_location').mutation, { values: { warehouse_id: 'warehouse-main', parent_location_id: 'location-stock', name: 'Quality Review', code: 'QUALITY', usage: 'Internal', company_name: 'My Company (San Francisco)', replenish_location: false, cyclic_inventory_frequency: 0, removal_strategy: '' } });
