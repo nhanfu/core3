@@ -154,6 +154,20 @@ routes in `controllers/portal.py`: `/my/rfq`, `/my/rfq/page/<page>`,
 JSON-RPC `/update` endpoint, and `/download_edi`. Portal parity is out of this
 backend Purchase application batch unless explicitly added to the parent plan.
 
+## Vendor Pricelists bounded follow-up
+
+Core3 now exposes `/purchase/vendor-pricelists` under Purchase → Configuration,
+owned by `services/purchase/api/vendor-pricelists.yaml`. Migration
+`20260910200000-009-purchase-vendor-pricelists.yaml` seeds 27 stable supplier
+information rows matching the installed Odoo Vendor Pricelists action 206,
+including vendor/product/company, unit, unit price, minimum quantity, and lead
+time. The shared ListView provides the desktop table and responsive mobile card
+fallback, active-product filter, search, empty state, and permissioned New
+form with nonnegative-price/lead-time and positive-minimum-quantity guards.
+Odoo references are `/tmp/odoo-purchase-vendor-pricelists-desktop.png` and
+`/tmp/odoo-purchase-vendor-pricelists-mobile.png`; the older action 239 noted
+above is stale and opens Discuss in the current database.
+
 ## Required visible states
 
 - RFQ/order list: populated, empty, loading/error, search by order/vendor/

@@ -1,0 +1,49 @@
+version: 0.0.9
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_vendor_pricelists (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        vendor_name VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        uom VARCHAR NOT NULL DEFAULT 'Units', unit_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        min_qty DECIMAL(18,3) NOT NULL DEFAULT 1, lead_time_days INTEGER NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT OR IGNORE INTO purchase_vendor_pricelists(id, vendor_name, product_name, company_name, uom, unit_price, min_qty, lead_time_days)
+      VALUES
+        ('supplierinfo-demo-001', 'Wood Corner', '[E-COM07] Large Cabinet', 'My Company (San Francisco)', 'Units', 750.00, 2, 3),
+        ('supplierinfo-demo-002', 'Ready Mat', '[E-COM07] Large Cabinet', 'My Company (San Francisco)', 'Units', 790.00, 1, 3),
+        ('supplierinfo-demo-003', 'Ready Mat', '[E-COM07] Large Cabinet', 'My Company (San Francisco)', 'Units', 785.00, 1, 3),
+        ('supplierinfo-demo-004', 'Wood Corner', '[E-COM08] Storage Box', 'My Company (San Francisco)', 'Units', 13.00, 1, 3),
+        ('supplierinfo-demo-005', 'Ready Mat', '[E-COM08] Storage Box', 'My Company (San Francisco)', 'Units', 14.40, 1, 3),
+        ('supplierinfo-demo-006', 'Wood Corner', 'Large Desk', 'My Company (San Francisco)', 'Units', 1299.00, 5, 2),
+        ('supplierinfo-demo-007', 'Azure Interior', 'Large Desk', 'My Company (San Francisco)', 'Units', 1399.00, 5, 4),
+        ('supplierinfo-demo-008', 'Wood Corner', '[E-COM11] Cabinet with Doors', 'My Company (San Francisco)', 'Units', 120.50, 1, 2),
+        ('supplierinfo-demo-009', 'Wood Corner', 'Conference Chair', 'My Company (San Francisco)', 'Units', 28.00, 1, 2),
+        ('supplierinfo-demo-010', 'Ready Mat', '[FURN_1118] Corner Desk Left Sit', 'My Company (San Francisco)', 'Units', 78.00, 1, 5),
+        ('supplierinfo-demo-011', 'Gemini Furniture', '[FURN_8900] Drawer Black', 'My Company (San Francisco)', 'Units', 20.00, 1, 1),
+        ('supplierinfo-demo-012', 'Ready Mat', '[FURN_9001] Flipover', 'My Company (San Francisco)', 'Units', 1700.00, 1, 3),
+        ('supplierinfo-demo-013', 'Wood Corner', '[FURN_9001] Flipover', 'My Company (San Francisco)', 'Units', 1720.00, 1, 4),
+        ('supplierinfo-demo-014', 'Acme Corporation', '[FURN_7888] Desk Stand with Screen', 'My Company (San Francisco)', 'Units', 2010.00, 1, 3),
+        ('supplierinfo-demo-015', 'Acme Corporation', '[FURN_0789] Individual Workplace', 'My Company (San Francisco)', 'Units', 876.00, 1, 3),
+        ('supplierinfo-demo-016', 'Wood Corner', 'Acoustic Bloc Screens', 'My Company (San Francisco)', 'Units', 287.00, 1, 8),
+        ('supplierinfo-demo-017', 'Acme Corporation', '[FURN_8888] Office Lamp', 'My Company (San Francisco)', 'Units', 390.00, 1, 4),
+        ('supplierinfo-demo-018', 'Gemini Furniture', '[FURN_7777] Office Chair', 'My Company (San Francisco)', 'Units', 90.00, 1, 2),
+        ('supplierinfo-demo-019', 'Wood Corner', '[FURN_7777] Office Chair', 'My Company (San Francisco)', 'Units', 66.00, 1, 4),
+        ('supplierinfo-demo-020', 'Wood Corner', '[FURN_8888] Office Lamp', 'My Company (San Francisco)', 'Units', 35.00, 1, 5),
+        ('supplierinfo-demo-021', 'Azure Interior', '[FURN_7777] Office Chair', 'My Company (San Francisco)', 'Units', 55.00, 1, 7),
+        ('supplierinfo-demo-022', 'Azure Interior', '[E-COM10] Pedal Bin', 'My Company (San Francisco)', 'Units', 10.00, 1, 4),
+        ('supplierinfo-demo-023', 'Wood Corner', '[FURN_8855] Drawer', 'My Company (San Francisco)', 'Units', 95.50, 1, 10),
+        ('supplierinfo-demo-024', 'Wood Corner', '[FURN_0269] Office Chair Black', 'My Company (San Francisco)', 'Units', 120.50, 1, 3),
+        ('supplierinfo-demo-025', 'Ready Mat', '[FURN_0269] Office Chair Black', 'My Company (San Francisco)', 'Units', 130.50, 1, 2),
+        ('supplierinfo-demo-026', 'The Jackson Group', '[E-COM06] Corner Desk Right Sit', 'My Company (San Francisco)', 'Units', 145.00, 1, 1),
+        ('supplierinfo-demo-027', 'Ready Mat', 'Acoustic Bloc Screens', 'My Company (San Francisco)', 'Units', 286.80, 1, 0);
+    down: |
+      DROP TABLE IF EXISTS purchase_vendor_pricelists;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

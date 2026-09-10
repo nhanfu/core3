@@ -1,0 +1,52 @@
+title: Vendor Pricelists
+page: { id: purchase-vendor-pricelists, route: /purchase/vendor-pricelists, breadcrumb: [Supply Chain, Purchase, Configuration, Vendor Pricelists], auth: { require: [purchase.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: purchase_vendor_pricelists
+    create_action: create_purchase_vendor_pricelist
+    create_label: New
+    search: { label: Search vendor pricelists, placeholder: Search... }
+    filters: [{ field: active, label: Active Products, options_source: purchase_vendor_pricelist_active_states }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Cards, icon: grid, mobile: true, card: { title: vendor_name, subtitle: product_name, fields: [{ field: unit_price_display, label: Unit Price }, { field: min_qty_display, label: Minimum Quantity }, { field: lead_time_display, label: Lead Time }] } }
+    columns:
+      - { field: vendor_name, label: Vendor, type: PrimaryEntityCell, sortable: true }
+      - { field: product_name, label: Product, sortable: true }
+      - { field: company_name, label: Company }
+      - { field: uom, label: Unit }
+      - { field: unit_price_display, label: Unit Price, align: right }
+      - { field: lead_time_days, label: Lead Time, align: right }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_actions: menu
+    empty_state: { title: No vendor pricelists, description: Add supplier information to compare purchase prices and lead times. }
+actions:
+  - id: create_purchase_vendor_pricelist
+    type: server_form
+    permission: purchase.write
+    title: New vendor pricelist
+    action: purchase.vendor_pricelists.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [purchase_vendor_pricelists]
+    mutation:
+      operation: insert
+      table: purchase_vendor_pricelists
+      fields: [vendor_name, product_name, company_name, uom, unit_price, min_qty, lead_time_days, active]
+      required: [vendor_name, product_name]
+      defaults: { company_name: 'My Company (San Francisco)', uom: Units, unit_price: 0, min_qty: 1, lead_time_days: 0, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:unit_price, 0) >= 0 AND COALESCE(:min_qty, 0) > 0 AND COALESCE(:lead_time_days, 0) >= 0", status: 422, code: SUPPLIER_INFO_VALUES_INVALID, message: Unit price and lead time must be nonnegative and minimum quantity must be greater than zero. }
+      result: { query: "SELECT * FROM purchase_vendor_pricelists WHERE id = :id" }
+    fields:
+      - { field: vendor_name, label: Vendor, type: text, required: true }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: company_name, label: Company, type: text, default: 'My Company (San Francisco)' }
+      - { field: uom, label: Unit, type: text, default: Units }
+      - { field: unit_price, label: Unit Price, type: number, min: 0 }
+      - { field: min_qty, label: Minimum Quantity, type: number, min: 1 }
+      - { field: lead_time_days, label: Lead Time, type: number, min: 0 }
