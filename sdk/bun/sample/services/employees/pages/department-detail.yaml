@@ -4,12 +4,14 @@ components:
   - type: OdooFormView
     source: employee_department_detail
     title_field: name
+    avatar_initials_field: manager_name
     status_field: state
     statusbar: [{ value: Active, label: Active }, { value: Archived, label: Archived }]
     status_colors: { Active: green, Archived: neutral }
     editable: true
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
+      - { id: new_department, label: New, variant: primary, permission: employees.manage }
       - { id: edit_department, label: Edit, variant: secondary, permission: employees.manage }
       - { id: archive_department, label: Archive, variant: danger, permission: employees.manage, show_if: "state.employee_department_detail.active === true" }
       - { id: restore_department, label: Restore, variant: secondary, permission: employees.manage, show_if: "state.employee_department_detail.active === false" }
@@ -18,5 +20,8 @@ components:
     groups:
       - title: Department
         fields: [{ field: name, label: Department }, { field: manager_name, label: Manager }, { field: company_name, label: Company }, { field: color, label: Color, type: color }, { field: state, label: Status }]
-      - title: Organization
-        fields: [{ field: employee_count, label: Employees }, { field: plan_count, label: Plans }, { field: parent_name, label: Parent Department }, { field: notes, label: Notes, type: textarea, wide: true }]
+      - title: Department Organization
+        fields: [{ field: employee_count, label: Employees }, { field: plan_count, label: Plans }, { field: parent_name, label: Organization tree, type: hierarchy, wide: true }, { field: notes, label: Notes, type: textarea, wide: true }]
+    message_source: employee_department_activity
+    chatter_label: Activities
+    chatter_empty: No department activities yet.

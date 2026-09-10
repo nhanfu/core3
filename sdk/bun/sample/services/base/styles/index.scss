@@ -1,11 +1,6 @@
 @use 'styles/tokens';
 @use 'styles/components';
 
-/* Odoo res.partner keeps the chatter below the full-width form sheet. This
- * Base-only override leaves shared form pages free to use the aside layout. */
-.o-form-layout { grid-template-columns: minmax(0, 1fr); }
-.o-form-chatter-slot { grid-column: 1; }
-
 .o-form-view-slot {
   max-width: 1480px;
   margin: 0 auto;
@@ -18,6 +13,8 @@
 .o-form-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .o-form-avatar-initials { line-height: 1; }
 .o-form-header:has(.o-form-avatar) .o-form-identity { margin-right: auto; }
+.o-list-avatar-cell-wrapper { display: inline-flex; align-items: center; gap: 7px; }
+.o-list-avatar-cell { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: 4px; background: #d8d1e6; color: #554477; font-size: 10px; font-weight: 700; }
 .o-card-view .o-card-view-item { height: auto; min-height: 210px; }
 
 @media (max-width: 768px) {

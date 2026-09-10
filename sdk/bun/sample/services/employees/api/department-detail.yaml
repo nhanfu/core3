@@ -4,8 +4,16 @@ datasources:
     single: true
     permission: employees.read
     error_states: { transport_error: { status: 503, code: EMPLOYEES_DEPARTMENT_DETAIL_UNAVAILABLE, message: Department details are temporarily unavailable. } }
-    query: "SELECT d.id, d.row_version, d.name, d.manager_name, d.state, d.active, COALESCE(d.company_name, 'Core3 Vietnam') AS company_name, COALESCE(d.parent_name, '') AS parent_name, COALESCE(d.notes, '') AS notes, COALESCE(d.employee_count, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true)) AS employee_count, COALESCE(d.applicant_count, 0) AS applicant_count, COALESCE(d.allocation_count, 0) AS allocation_count, COALESCE(d.expense_count, 0) AS expense_count, COALESCE(d.time_off_count, 0) AS time_off_count, COALESCE(d.plan_count, 0) AS plan_count, COALESCE(d.color, 0) AS color FROM employee_departments d LEFT JOIN employees e ON e.department_id = d.id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND d.id = :id GROUP BY d.id, d.row_version, d.name, d.manager_name, d.state, d.active, d.company_name, d.parent_name, d.notes, d.employee_count, d.applicant_count, d.allocation_count, d.expense_count, d.time_off_count, d.plan_count, d.color"
+    query: "SELECT d.id, d.row_version, d.name, d.manager_name, d.state, d.active, COALESCE(d.company_name, 'Core3 Vietnam') AS company_name, COALESCE(d.parent_name, '') AS parent_name, COALESCE(d.notes, '') AS notes, COALESCE(d.employee_count, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true)) AS employee_count, COALESCE(d.applicant_count, 0) AS applicant_count, COALESCE(d.allocation_count, 0) AS allocation_count, COALESCE(d.expense_count, 0) AS expense_count, COALESCE(d.time_off_count, 0) AS time_off_count, COALESCE(d.plan_count, 0) AS plan_count, COALESCE(d.absence_count, 0) AS absence_count, COALESCE(d.absence_total, 0) AS absence_total, COALESCE(d.color, 0) AS color FROM employee_departments d LEFT JOIN employees e ON e.department_id = d.id WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND d.id = :id GROUP BY d.id, d.row_version, d.name, d.manager_name, d.state, d.active, d.company_name, d.parent_name, d.notes, d.employee_count, d.applicant_count, d.allocation_count, d.expense_count, d.time_off_count, d.plan_count, d.absence_count, d.absence_total, d.color"
+  - id: employee_department_activity
+    single: false
+    permission: employees.read
+    query: "SELECT 'Admin User' AS actor_name, 'employees.department.viewed' AS action, 'Department reporting opened' AS action_label, 'Department activity is available from the Employees reporting record.' AS detail, '2026-01-15 00:00:00' AS created_at WHERE :id IS NOT NULL"
 actions:
+  - id: new_department
+    type: navigate
+    permission: employees.manage
+    navigate_to: /employees/departments
   - id: department_employee_count
     type: navigate
     permission: employees.read

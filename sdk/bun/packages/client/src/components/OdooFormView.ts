@@ -5,6 +5,11 @@ import { OdooChatter } from './OdooChatter.ts';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 import { ComLoader } from '@core3/client/components/ComLoader';
 
+function initials(value: unknown) {
+  const words = String(value || '').trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, 2).map(word => word[0]?.toUpperCase() || '').join('') || '?';
+}
+
 /**
  * Read-only form sheet for back-office record pages.  It deliberately only
  * owns record identity, field layout, and the optional aside chatter. Related
@@ -114,7 +119,7 @@ export class OdooFormView extends BaseComponent {
       const avatar = html.take(header).div.className('o-form-avatar').ele();
       const image = String(record[this.def.avatar_field || ''] || '').trim();
       if (image) html.take(avatar).img.attr('src', image).attr('alt', String(record[this.def.title_field] || 'Contact')).ele();
-      else html.take(avatar).span.className('o-form-avatar-initials').text(String(record[this.def.avatar_initials_field || ''] || String(record[this.def.title_field] || '?').trim().slice(0, 1)).toUpperCase());
+      else html.take(avatar).span.className('o-form-avatar-initials').text(initials(record[this.def.avatar_initials_field || ''] || record[this.def.title_field]));
     }
     const identity = html.take(header).div.className('o-form-identity').ele();
     html.take(identity).h1.className('o-form-title').text(String(record[this.def.title_field] || '—'));
@@ -184,6 +189,13 @@ export class OdooFormView extends BaseComponent {
             const input = html.take(label).input.type('radio').attr('name', `readonly-radio-${this.id}-${field.field}`).prop('disabled', true).prop('checked', optionValue === current).ele();
             input.id = `${this.id}-${field.field}-${index}`;
             html.take(label).span.text(String(item.label ?? optionValue));
+          }
+        } else if (field.type === 'hierarchy') {
+          const current = String(record[this.def.title_field] || '').trim();
+          const ancestors = String(record[field.field] || '').split('/').map(value => value.trim()).filter(Boolean);
+          const tree = html.take(value).div.className('o-form-hierarchy').ele();
+          for (const [index, item] of [...ancestors, current].filter(Boolean).entries()) {
+            html.take(tree).div.className(`o-form-hierarchy-node${index === ancestors.length ? ' is-current' : ''}`).text(item);
           }
         } else {
           html.take(value).replaceText(record[field.field] == null || record[field.field] === '' ? '—' : String(record[field.field]));

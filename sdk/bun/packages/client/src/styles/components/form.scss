@@ -45,6 +45,11 @@
 .o-form-statusbar-steps { display: flex; min-width: 0; flex: 0 1 auto; align-items: stretch; justify-content: flex-end; overflow: hidden; }
 .o-form-sheet { min-width: 0; padding: 32px 40px; border: 1px solid var(--o-form-border); border-radius: 4px; background: var(--o-form-surface); }
 .o-form-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding-bottom: 18px; }
+.o-form-header:has(.o-form-avatar) { align-items: center; justify-content: flex-start; }
+.o-form-avatar { display: flex; width: 52px; height: 52px; flex: 0 0 52px; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--o-form-border); border-radius: 50%; background: #e9e7f2; color: var(--o-form-action); font-size: 17px; font-weight: 700; }
+.o-form-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.o-form-avatar-initials { line-height: 1; }
+.o-form-header:has(.o-form-avatar) .o-form-identity { margin-right: auto; }
 .o-form-title { color: var(--o-form-text); font-size: 28px; font-weight: 500; line-height: 1.2; }
 .o-form-subtitle { margin-top: 6px; color: var(--o-form-muted); font-size: 14px; }
 .o-form-stat-buttons { display: flex; flex: 0 0 auto; gap: 8px; margin-left: auto; }
@@ -67,6 +72,10 @@
 .o-form-field-wide { grid-column: 1 / -1; }
 .o-form-field-label { color: var(--o-form-muted); font-size: 12px; font-weight: 500; }
 .o-form-field-value { min-height: 22px; margin-top: 3px; color: var(--o-form-text); font-size: 14px; }
+.o-form-hierarchy { display: grid; gap: 3px; padding: 2px 0; }
+.o-form-hierarchy-node { position: relative; padding: 3px 8px 3px 18px; border-left: 1px solid var(--o-form-border); color: var(--o-form-muted); font-size: 13px; }
+.o-form-hierarchy-node::before { position: absolute; top: 0; left: -1px; width: 10px; height: 50%; border-bottom: 1px solid var(--o-form-border); content: ''; }
+.o-form-hierarchy-node.is-current { border-left-color: var(--o-form-action); color: var(--o-form-text); font-weight: 600; }
 .o-form-radio-group, .o-form-radio-editor { display: grid; gap: 6px; }
 .o-form-radio-option { display: inline-flex; align-items: center; gap: 7px; color: var(--o-form-text); font-size: 14px; }
 .o-form-radio-option input { width: 15px; height: 15px; margin: 0; accent-color: var(--o-form-action); }

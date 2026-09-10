@@ -34,6 +34,18 @@ function pivotRequestFromUrl(params: Record<string, string>, view: any) {
   return measures.length ? { rows, columns, measures, ranges } : undefined;
 }
 
+function renderAvatarCell(cell: HTMLElement, value: unknown, column: any) {
+  const name = String(value ?? '');
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(word => word[0]?.toUpperCase() || '').join('') || '?';
+  const avatar = document.createElement('span');
+  avatar.className = 'o-list-avatar-cell';
+  avatar.textContent = initials;
+  avatar.title = name;
+  avatar.setAttribute('aria-label', name || String(column.label || 'Avatar'));
+  cell.replaceChildren(avatar, document.createTextNode(name));
+  cell.classList.add('o-list-avatar-cell-wrapper');
+}
+
 export class PageGridRenderers extends BaseComponent {
   readonly renderers: any;
 
@@ -258,6 +270,10 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
       if (column.type === 'StatusChip') {
         const tone = column.colors?.[String(value)] || column.tone || 'neutral';
         html.take(cell).span.className(`data-grid-status data-grid-status-${tone}`).replaceText(value == null || value === '' ? '—' : String(value));
+        return;
+      }
+      if (column.type === 'AvatarCell') {
+        renderAvatarCell(cell, value, column);
         return;
       }
       if (column.type === 'PrimaryEntityCell') {
@@ -610,6 +626,10 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       if (column.type === 'StatusChip') {
         const tone = column.colors?.[String(value)] || column.tone || 'neutral';
         html.take(cell).span.className(`data-grid-status data-grid-status-${tone}`).replaceText(value == null || value === '' ? '—' : String(value));
+        return;
+      }
+      if (column.type === 'AvatarCell') {
+        renderAvatarCell(cell, value, column);
         return;
       }
       if (column.type === 'PrimaryEntityCell') {

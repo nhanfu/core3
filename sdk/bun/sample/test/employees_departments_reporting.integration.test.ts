@@ -21,12 +21,18 @@ describe('Employees Departments reporting parity', () => {
     expect(page.datasources).toBeUndefined();
     expect(page.components[0]).toMatchObject({ source: 'employee_departments_report', variant: 'odoo', view_navigation: 'tabs' });
     expect(page.components[0].views.map((view: any) => view.id)).toEqual(['kanban', 'list', 'card']);
+    expect(page.components[0].views[0]).toMatchObject({ group_by: '', card: { compact: true, avatar_field: 'manager_name', company_field: 'company_name', primary_metric: 'employee_count' } });
+    expect(page.components[0].views[0].card.fields.map((field: any) => field.label)).toEqual(['New Applicants', 'Allocation Requests', 'Expenses', 'Time Off Requests']);
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Department Name', 'Company', 'Manager', 'Employees', 'Parent Department', 'Color']);
+    expect(page.components[0].columns.find((column: any) => column.field === 'manager_name')).toMatchObject({ type: 'AvatarCell' });
     expect(detailPage.page.id).toBe('employee-department-detail');
     expect(detailApi.page.id).toBe(detailPage.page.id);
     expect(detailPage.datasources).toBeUndefined();
-    expect(detailPage.components[0]).toMatchObject({ source: 'employee_department_detail', status_field: 'state' });
+    expect(detailPage.components[0]).toMatchObject({ source: 'employee_department_detail', status_field: 'state', avatar_initials_field: 'manager_name', message_source: 'employee_department_activity' });
+    expect(detailPage.components[0].header_actions[0]).toMatchObject({ id: 'new_department', label: 'New' });
     expect(detailPage.components[0].stat_buttons.map((button: any) => button.label)).toEqual(['Employees', 'Plans']);
+    expect(detailPage.components[0].groups[1]).toMatchObject({ title: 'Department Organization' });
+    expect(detailPage.components[0].groups[1].fields.find((field: any) => field.field === 'parent_name')).toMatchObject({ type: 'hierarchy' });
   });
 
   test('seeds the seven installed Odoo departments and deterministic report states', async () => {
@@ -41,7 +47,7 @@ describe('Employees Departments reporting parity', () => {
       'Administration', 'Long Term Projects', 'Management', 'Professional Services', 'R&D USA', 'Research & Development', 'Sales',
     ]);
     expect(all.data.find((row: any) => row.name === 'Administration')).toMatchObject({ manager_name: 'Mitchell Admin', employee_count: 2, applicant_count: 1, parent_name: 'Management', color: 2 });
-    expect(all.data.find((row: any) => row.name === 'Management')).toMatchObject({ expense_count: 4, time_off_count: 1, plan_count: 2 });
+    expect(all.data.find((row: any) => row.name === 'Management')).toMatchObject({ expense_count: 4, time_off_count: 1, plan_count: 2, absence_count: 1, absence_total: 2 });
 
     expect((await repository.querySource(source, { q: 'Mitchell', active: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Administration', 'Management']);
     expect((await repository.querySource(source, { q: 'does-not-exist', active: null, fixture_state: null }, 0, 50)).data).toEqual([]);

@@ -1,0 +1,16 @@
+version: 0.0.8
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS absence_count INTEGER;
+      ALTER TABLE employee_departments ADD COLUMN IF NOT EXISTS absence_total INTEGER;
+      UPDATE employee_departments SET absence_count = 1, absence_total = 2 WHERE id = 'department-management';
+      UPDATE employee_departments SET absence_count = COALESCE(absence_count, 0), absence_total = COALESCE(absence_total, 0);
+    down: |
+      ALTER TABLE employee_departments DROP COLUMN IF EXISTS absence_count;
+      ALTER TABLE employee_departments DROP COLUMN IF EXISTS absence_total;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

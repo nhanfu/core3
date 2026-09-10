@@ -4,6 +4,8 @@ import { appendIcon } from '@core3/client/components/Icon';
 import { Dialog, type DialogTagGroup } from '@core3/client/components/Dialog';
 
 type ListRow = Record<string, unknown>;
+type KanbanCardField = { field: string; label?: string };
+type KanbanCardFooter = { field: string; label?: string; totalField?: string; total_field?: string };
 
 function initials(value: unknown) {
   const words = String(value || '').trim().split(/\s+/).filter(Boolean);
@@ -16,7 +18,23 @@ export type KanbanViewDefinition = {
   icon?: string;
   groupBy?: string;
   groups?: Array<{ value: string; label: string; color?: string }>;
-  card?: { title: string; subtitle?: string; imageField?: string; image_field?: string; fields?: Array<{ field: string; label?: string }> };
+  card?: {
+    title: string;
+    subtitle?: string;
+    imageField?: string;
+    image_field?: string;
+    compact?: boolean;
+    avatarField?: string;
+    avatar_field?: string;
+    companyField?: string;
+    company_field?: string;
+    primaryMetric?: string;
+    primary_metric?: string;
+    primaryMetricLabel?: string;
+    primary_metric_label?: string;
+    fields?: KanbanCardField[];
+    footer?: KanbanCardFooter[];
+  };
   groupsSource?: string;
 };
 
@@ -144,6 +162,10 @@ export class KanbanView extends BaseComponent {
     }
 
     const cardDef = this.options.view.card;
+    if (cardDef?.compact) {
+      this.drawCompactCardContent(card, row, cardDef);
+      return;
+    }
     const imageField = cardDef?.imageField || cardDef?.image_field;
     if (imageField) {
       html.take(card).toggleClass('has-avatar', true);
@@ -167,6 +189,71 @@ export class KanbanView extends BaseComponent {
       const line = html.take(details).div.ele();
       if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
       html.take(line).span.className('o-kanban-card-field-value').text(String(value));
+    }
+  }
+
+  private drawCompactCardContent(card: HTMLElement, row: ListRow, cardDef: NonNullable<KanbanViewDefinition['card']>) {
+    html.take(card).toggleClass('is-compact', true);
+    const title = row[cardDef.title || 'name'];
+    html.take(card).h3.className('o-kanban-card-title').text(title == null || title === '' ? '—' : String(title));
+
+    const avatarField = cardDef.avatarField || cardDef.avatar_field || cardDef.imageField || cardDef.image_field || cardDef.subtitle;
+    const manager = cardDef.subtitle ? row[cardDef.subtitle] : undefined;
+    if (avatarField || manager != null) {
+      const identity = html.take(card).div.className('o-kanban-card-manager').ele();
+      const avatar = html.take(identity).span.className('o-kanban-card-avatar').ele();
+      const avatarValue = String(row[avatarField || cardDef.subtitle || cardDef.title] || '').trim();
+      if (/^(https?:|data:|\/)/.test(avatarValue)) {
+        html.take(avatar).img.attr('src', avatarValue).attr('alt', String(manager || title || 'Employee')).ele();
+      } else {
+        html.take(avatar).span.className('o-kanban-card-avatar-initials').text(initials(avatarValue || manager || title));
+      }
+      if (manager != null && manager !== '') html.take(identity).span.className('o-kanban-card-manager-name').text(String(manager));
+    }
+
+    const companyField = cardDef.companyField || cardDef.company_field;
+    const company = companyField ? row[companyField] : undefined;
+    if (company != null && company !== '') {
+      const companyLine = html.take(card).div.className('o-kanban-card-company').ele();
+      html.take(companyLine).span.className('o-kanban-card-company-icon').text('▦');
+      html.take(companyLine).span.text(String(company));
+    }
+
+    const metricField = cardDef.primaryMetric || cardDef.primary_metric;
+    const metricValue = metricField ? row[metricField] : undefined;
+    const metricLabel = cardDef.primaryMetricLabel || cardDef.primary_metric_label || 'Employees';
+    const metrics = cardDef.fields || [];
+    if (metricField && metricValue != null && metricValue !== '') {
+      const summary = html.take(card).div.className('o-kanban-card-summary').ele();
+      html.take(summary).span.className('o-kanban-card-primary-metric').text(`${metricValue} ${metricLabel}`);
+      if (metrics.length) {
+        const metricList = html.take(summary).div.className('o-kanban-card-metrics').ele();
+        for (const field of metrics) {
+          const value = row[field.field];
+          if (value == null || value === '' || Number(value) === 0) continue;
+          const line = html.take(metricList).div.ele();
+          if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
+          html.take(line).span.className('o-kanban-card-field-value').text(String(value));
+        }
+      }
+    }
+
+    const footerFields = cardDef.footer || [];
+    if (footerFields.length) {
+      const footer = html.take(card).add('footer').className('o-kanban-card-footer').ele();
+      for (const field of footerFields) {
+        const value = row[field.field];
+        if (value == null || value === '' || Number(value) === 0) continue;
+        const line = html.take(footer).div.className('o-kanban-card-footer-line').ele();
+        if (field.label) html.take(line).span.text(field.label);
+        const totalField = field.totalField || field.total_field;
+        const total = totalField ? row[totalField] : undefined;
+        html.take(line).span.text(total == null || total === '' ? String(value) : `${value} / ${total}`);
+        if (total != null && Number(total) > 0) {
+          const progress = html.take(footer).div.className('o-kanban-card-footer-progress').ele();
+          progress.style.width = `${Math.min(100, Math.max(0, Number(value) / Number(total) * 100))}%`;
+        }
+      }
     }
   }
 

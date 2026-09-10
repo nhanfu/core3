@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { KanbanView } from '@core3/client/components/KanbanView';
 
 type CardRow = Record<string, unknown>;
 
@@ -15,7 +16,7 @@ export type CardViewDefinition = {
   groupBy?: string;
   groups?: Array<{ value: string; label: string; color?: string }>;
   groupsSource?: string;
-  card?: { title: string; subtitle?: string; imageField?: string; image_field?: string; fields?: Array<{ field: string; label?: string }> };
+  card?: { title: string; subtitle?: string; imageField?: string; image_field?: string; compact?: boolean; avatarField?: string; avatar_field?: string; companyField?: string; company_field?: string; primaryMetric?: string; primary_metric?: string; primaryMetricLabel?: string; primary_metric_label?: string; fields?: Array<{ field: string; label?: string }>; footer?: Array<{ field: string; label?: string; totalField?: string; total_field?: string }> };
 };
 
 export type CardViewOptions = {
@@ -44,6 +45,19 @@ export class CardView extends BaseComponent {
       const state = html.take(root).div.className('o-list-empty').ele();
       html.take(state).h3.text(empty.title || 'No records found');
       if (empty.description) html.take(state).p.text(empty.description);
+      return;
+    }
+    if (this.options.view.card?.compact) {
+      html.take(root).toggleClass('is-compact', true);
+      const kanban = new KanbanView(`compact-kanban-${this.id}`, { rows }, {
+        view: { ...this.options.view as any, id: 'kanban', groupBy: '' },
+        rowKey: this.options.rowKey,
+        openAction: this.options.openAction,
+      });
+      kanban.parent = this;
+      kanban._transport = this._transport;
+      kanban._onAction = (action, params) => this.submit(action, params);
+      kanban.draw(root);
       return;
     }
     // Grouping is a searchbar concern. The view definition may provide the

@@ -62,7 +62,7 @@ describe('Employees Odoo action-mode parity batch', () => {
     expect(departments.create_action).toBe('create_department');
     expect(yaml('api/departments.yaml').actions.find((action: any) => action.id === 'create_department')?.permission).toBe('employees.manage');
     expect(yaml('api/department-detail.yaml').actions.map((action: any) => action.id)).toEqual([
-      'department_employee_count', 'department_plan_count', 'edit_department', 'archive_department', 'restore_department', 'delete_department',
+      'new_department', 'department_employee_count', 'department_plan_count', 'edit_department', 'archive_department', 'restore_department', 'delete_department',
     ]);
   });
 
