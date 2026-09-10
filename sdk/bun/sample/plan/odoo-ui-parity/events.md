@@ -398,7 +398,8 @@ Core3 evidence is captured per mode at
 Odoo also
 exposes Activity for this action, but the shared Core3 renderer has no Activity
 view contract yet, so it remains an explicit parity gate rather than an
-unimplemented tab.
+unimplemented tab. The isolated implementation was committed as `87141425`
+and integrated into `odoo-pos` as `2f2e4cd8`.
 
 ## Acceptance
 
