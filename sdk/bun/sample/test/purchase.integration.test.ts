@@ -116,4 +116,42 @@ describe('Purchase Orders list and detail parity', () => {
     expect(yaml('pages/purchase-rfqs.yaml').page.auth.require).toEqual(['purchase.read']);
     expect(yaml('api/purchase-rfqs.yaml').actions[0]).toMatchObject({ id: 'create_purchase_order', permission: 'purchase.write' });
   });
+
+  test('keeps Purchase Products aligned with the Odoo action view family and page/API boundary', () => {
+    const page = yaml('pages/purchase-products.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    const source = apiSource('purchase-products.yaml', 'purchase_products');
+
+    expect(page.datasources).toBeUndefined();
+    expect(page.page).toMatchObject({ id: 'purchase-products', route: '/purchase/products', auth: { require: ['purchase.read'] } });
+    expect(yaml('api/purchase-products.yaml').page.id).toBe('purchase-products');
+    expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('purchase-products')).toContain('purchase_products');
+    expect(list.views.map((view: any) => view.id)).toEqual(['kanban', 'list', 'card', 'activity']);
+    expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: true, card: { title: 'name', subtitle: 'default_code' } });
+    expect(list.views.find((view: any) => view.id === 'activity')).toMatchObject({ title_field: 'name', record_date_field: 'created_at' });
+    expect(source.permission).toBe('purchase.read');
+    expect(list.columns.map((column: any) => column.field)).toEqual(['name', 'default_code', 'product_tags', 'barcode', 'company_name', 'cost_price_display', 'category', 'product_type', 'uom', 'active']);
+    expect(yaml('manifest.yaml').menu.groups[0].items).toEqual(expect.arrayContaining([expect.objectContaining({ path: '/purchase/products', label: 'Products' })]));
+  });
+
+  test('returns 105 deterministic Purchase Products with search, empty, and write boundaries', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_products_test_schema_migrations', ['schema', 'data']);
+
+    const products = apiSource('purchase-products.yaml', 'purchase_products');
+    const productParams = { q: null, purchase_ok: null, active: null, fixture_state: null };
+    const firstPage = await repository.querySource(products, productParams, 0, 80);
+    const secondPage = await repository.querySource(products, productParams, 80, 80);
+    expect([...firstPage.data, ...secondPage.data]).toHaveLength(105);
+    expect(firstPage.data.slice(0, 5).map((row: any) => row.name)).toEqual(['Acoustic Bloc Screens', 'Apple Pie', 'Bagel', 'Black embroidered t-shirt', 'Blue Denim Jeans']);
+
+    const searched = await repository.querySource(products, { q: 'Acoustic', purchase_ok: true, active: true, fixture_state: null }, 0, 50);
+    expect(searched.data).toMatchObject([{ id: 'purchase-product-acoustic', default_code: 'FURN-001', purchase_ok: true }]);
+    const empty = await repository.querySource(products, { q: null, purchase_ok: null, active: null, fixture_state: 'empty' }, 0, 50);
+    expect(empty.data).toEqual([]);
+    expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['purchase.read', 'purchase.write', 'purchase.manage']));
+    expect(yaml('api/purchase-products.yaml').actions.find((action: any) => action.id === 'create_purchase_product')).toMatchObject({ permission: 'purchase.write' });
+    expect(yaml('pages/purchase-products.yaml').page.auth.require).toEqual(['purchase.read']);
+  });
 });

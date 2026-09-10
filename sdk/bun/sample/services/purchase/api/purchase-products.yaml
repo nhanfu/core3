@@ -1,0 +1,45 @@
+page: { id: purchase-products }
+datasources:
+  - id: purchase_product_purchase_states
+    permission: purchase.read
+    query: "SELECT value, label FROM (VALUES (true, 'Purchase'), (false, 'Not for purchase')) states(value, label)"
+  - id: purchase_products
+    permission: purchase.read
+    query: "SELECT id, row_version, default_code, name, product_tags, barcode, company_name, list_price, cost_price, printf('$ %,.2f', CAST(cost_price AS DOUBLE)) AS cost_price_display, category, product_type, uom, purchase_ok, active, CAST(created_at AS VARCHAR) AS created_at, 1 AS activity_count FROM purchase_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR default_code ILIKE '%' || :q || '%' OR COALESCE(barcode, '') ILIKE '%' || :q || '%') AND (:purchase_ok IS NULL OR purchase_ok = :purchase_ok) AND (:active IS NULL OR active = :active) ORDER BY name"
+actions:
+  - id: create_purchase_product
+    type: server_form
+    permission: purchase.write
+    title: New product
+    action: purchase.products.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [purchase_products]
+    mutation:
+      operation: insert
+      table: purchase_products
+      fields: [default_code, name, product_tags, barcode, company_name, list_price, cost_price, category, product_type, uom, purchase_ok, active]
+      required: [name]
+      defaults: { company_name: 'My Company (San Francisco)', product_type: Goods, uom: Units, purchase_ok: true, active: true, list_price: 0, cost_price: 0 }
+      result: { query: "SELECT * FROM purchase_products WHERE id = :id" }
+    fields:
+      - { field: default_code, label: Internal reference, type: text }
+      - { field: name, label: Product name, type: text, required: true }
+      - { field: product_type, label: Type, type: select, options: [Goods, Service, Consumable] }
+      - { field: cost_price, label: Cost, type: number }
+      - { field: uom, label: Unit of Measure, type: text, default: Units }
+      - { field: category, label: Category, type: text }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: product_tags, label: Tags, type: text }
+  - id: archive_purchase_product
+    type: server
+    permission: purchase.write
+    action: purchase.products.archive
+    handler: product_status
+    operation: archive
+    params: { id: '{row.id}' }
+    refresh: [purchase_products]
+    mutation:
+      guards: [{ query: "SELECT id FROM purchase_products WHERE id = :id AND active = true", status: 409, message: Product is already archived }]
+      steps: [{ query: "UPDATE purchase_products SET active = false, purchase_ok = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id" }]
+      result: { query: "SELECT * FROM purchase_products WHERE id = :id" }

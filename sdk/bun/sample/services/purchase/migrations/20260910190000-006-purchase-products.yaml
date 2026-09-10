@@ -1,0 +1,29 @@
+version: 0.0.6
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_products (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        default_code VARCHAR UNIQUE, name VARCHAR NOT NULL, product_tags VARCHAR,
+        barcode VARCHAR, company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        list_price DECIMAL(18,2) NOT NULL DEFAULT 0, cost_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        category VARCHAR, product_type VARCHAR NOT NULL DEFAULT 'Goods', uom VARCHAR NOT NULL DEFAULT 'Units',
+        purchase_ok BOOLEAN NOT NULL DEFAULT true, active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT OR IGNORE INTO purchase_products(id, default_code, name, product_tags, barcode, list_price, cost_price, category, product_type, uom)
+      VALUES
+        ('purchase-product-acoustic', 'FURN-001', 'Acoustic Bloc Screens', 'Office Furniture', '100000000001', 295.00, 180.00, 'Office Furniture', 'Goods', 'Units'),
+        ('purchase-product-apple-pie', 'FOOD-001', 'Apple Pie', 'Food', '100000000002', 12.00, 7.00, 'Food', 'Goods', 'Units'),
+        ('purchase-product-bagel', 'FOOD-002', 'Bagel', 'Food', '100000000003', 1.25, 0.60, 'Food', 'Goods', 'Units'),
+        ('purchase-product-black-shirt', 'CLOTH-001', 'Black embroidered t-shirt', 'Apparel', '100000000004', 25.00, 14.00, 'Apparel', 'Goods', 'Units'),
+        ('purchase-product-blue-jeans', 'CLOTH-002', 'Blue Denim Jeans', 'Apparel', '100000000005', 80.00, 48.00, 'Apparel', 'Goods', 'Units');
+      INSERT OR IGNORE INTO purchase_products(id, default_code, name, product_tags, barcode, list_price, cost_price, category, product_type, uom)
+      SELECT 'purchase-product-' || LPAD(CAST(i AS VARCHAR), 3, '0'), 'PUR-' || LPAD(CAST(i AS VARCHAR), 3, '0'), 'Purchase Catalog Product ' || LPAD(CAST(i AS VARCHAR), 3, '0'), CASE WHEN i % 3 = 0 THEN 'Consumables' WHEN i % 3 = 1 THEN 'Operations' ELSE 'Office' END, '200000000' || LPAD(CAST(i AS VARCHAR), 3, '0'), 25 + i, 10 + i, CASE WHEN i % 3 = 0 THEN 'Consumables' WHEN i % 3 = 1 THEN 'Operations' ELSE 'Office' END, CASE WHEN i % 5 = 0 THEN 'Service' ELSE 'Goods' END, CASE WHEN i % 4 = 0 THEN 'Hours' ELSE 'Units' END FROM generate_series(1, 100) AS series(i);
+    down: |
+      DROP TABLE IF EXISTS purchase_products;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
