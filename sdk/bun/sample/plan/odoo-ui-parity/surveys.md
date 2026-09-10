@@ -284,6 +284,24 @@ captures are under `/tmp/core3-surveys-live-session-{desktop,mobile}.png`.
 The Odoo session was closed after capture so `core3_owned` remains in its
 initial no-active-session state.
 
+The live-session manager follow-up covers the next visible Odoo action after
+session creation: its `Start` control moves a `Ready` session to `In Progress`
+and selects the first question by deterministic sequence. Core3 adds the
+permissioned `start_live_session_question` action to the page/API pair already
+bound by `page.id`, exposes the ordered session-question catalog, and records
+explicit transport, empty, no-question, invalid-state, and optimistic
+row-version conflict contracts. The existing seeded session fixtures remain
+stable: Feedback Form starts with `How satisfied are you?`, while the
+session-question catalog has a deterministic empty state for an unconfigured
+survey. This slice intentionally does not implement next/back polling,
+attendee answer aggregation, leaderboard updates, or the public `/s/<code>`
+join flow.
+
+Focused YAML and DuckDB integration coverage is in
+`test/surveys.integration.test.ts`. Browser capture was not produced in this
+turn because the required persistent Playwright `js_repl` capability is not
+available in the current agent session; no screenshot is committed.
+
 The authenticated Test action follow-up implements Odoo's `action_test_survey`
 (``/survey/test/<access_token>``). Core3 adds the page/API pair
 `survey-test`, a permissioned deterministic test-entry action, and fixed test

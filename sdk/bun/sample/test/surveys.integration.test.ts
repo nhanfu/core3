@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
+import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { discoverPages } from '@core3/server/discovery';
+import { migrateDatabase } from '@core3/server/migrations';
 
 const root = join(import.meta.dir, '../services/surveys');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -168,6 +171,56 @@ describe('Surveys parity catalog and workflow', () => {
     expect(detailApi.actions.find((action: any) => action.id === 'end_live_session_detail').params).toEqual({ id: '{row.session_id}', expected_row_version: '{row.session_row_version}' });
     expect(String(end.mutation.guards[0].query)).toContain("state IN ('Ready', 'In Progress')");
     expect(String(end.mutation.steps[0].query)).toContain("state = 'Closed'");
+  });
+
+  test('starts the first deterministic question with guarded Ready lifecycle', async () => {
+    const page = yaml('pages/live-session.yaml');
+    const api = yaml('api/live-session.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    const questions = page.components.find((component: any) => component.source === 'survey_live_session_questions');
+    const start = api.actions.find((action: any) => action.id === 'start_live_session_question');
+    expect(page.page.id).toBe('survey-live-session');
+    expect(api.page.id).toBe(page.page.id);
+    expect(form.header_actions).toContainEqual(expect.objectContaining({ id: 'start_live_session_question', label: 'Start' }));
+    expect(questions).toMatchObject({ title: 'Session questions', empty_state: { title: 'No questions in this session' } });
+    expect(api.datasources.find((source: any) => source.id === 'survey_live_session')).toMatchObject({
+      permission: 'surveys.read',
+      error_states: { transport_error: { status: 503, code: 'SURVEY_LIVE_SESSION_UNAVAILABLE' } },
+    });
+    expect(api.datasources.find((source: any) => source.id === 'survey_live_session_questions')).toMatchObject({
+      permission: 'surveys.read',
+      error_states: { transport_error: { status: 503, code: 'SURVEY_LIVE_SESSION_QUESTIONS_UNAVAILABLE' } },
+    });
+    expect(start).toMatchObject({ permission: 'surveys.manage', handler: 'yaml_mutation', action: 'surveys.sessions.start_question' });
+    expect(start.params).toEqual({ expected_row_version: '{row.row_version}' });
+    expect(String(start.mutation.guards[0].query)).toContain("state = 'Ready'");
+    expect(String(start.mutation.guards[0].query)).toContain('row_version = :expected_row_version');
+    expect(String(start.mutation.guards[1].query)).toContain('ORDER BY q.sequence, q.id');
+    expect(String(start.mutation.steps[0].query)).toContain("state = 'In Progress'");
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_live_session_question_migrations', ['schema', 'data']);
+    const sessionSource = api.datasources.find((source: any) => source.id === 'survey_live_session');
+    const questionSource = api.datasources.find((source: any) => source.id === 'survey_live_session_questions');
+    const initial = await repository.querySource(sessionSource, { survey_id: 'survey-demo-feedback', fixture_state: null }, 0, 1);
+    expect(initial.data).toMatchObject({ id: 'live-session-feedback', session_state: 'Closed', row_version: 1, current_question_text: 'Waiting for the host to start the first question' });
+    expect((await repository.querySource(questionSource, { survey_id: 'survey-demo-feedback', fixture_state: null }, 0, 50)).data[0]).toMatchObject({ sequence: 1, question_text: 'How satisfied are you?', question_state: 'Upcoming' });
+    expect((await repository.querySource(questionSource, { survey_id: 'survey-demo-feedback', fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+
+    const createSession = yaml('api/survey-detail.yaml').actions.find((action: any) => action.id === 'start_live_session_detail');
+    await repository.executeMutation(createSession.mutation, { id: 'survey-demo-feedback', expected_session_row_version: 1 });
+    const ready = await repository.querySource(sessionSource, { survey_id: 'survey-demo-feedback', fixture_state: null }, 0, 1);
+    expect(ready.data).toMatchObject({ session_state: 'Ready', row_version: 2 });
+    const started = await repository.executeMutation(start.mutation, { id: ready.data.id, expected_row_version: ready.data.row_version });
+    expect(started).toMatchObject({ state: 'In Progress', current_question_id: 'question-feedback-rating', current_question_text: 'How satisfied are you?' });
+    expect(await repository.query('SELECT state, current_question_id, row_version FROM survey_live_sessions WHERE id = ?', ['live-session-feedback'])).toEqual([{ state: 'In Progress', current_question_id: 'question-feedback-rating', row_version: 3 }]);
+    await expect(repository.executeMutation(start.mutation, { id: ready.data.id, expected_row_version: ready.data.row_version })).rejects.toMatchObject({ status: 409, code: 'SURVEY_LIVE_SESSION_NOT_READY' });
+    await expect(repository.executeMutation(start.mutation, { id: ready.data.id, expected_row_version: 2 })).rejects.toMatchObject({ status: 409, code: 'SURVEY_LIVE_SESSION_NOT_READY' });
+
+    await repository.run("INSERT INTO surveys(id, name, title, description, owner, state) VALUES ('survey-live-empty', 'SURVEY/LIVE-EMPTY', 'Empty Live Survey', 'No questions yet.', 'Mitchell Admin', 'Draft')");
+    await repository.run("INSERT INTO survey_live_sessions(id, survey_id, survey_name, state, session_code, session_link) VALUES ('live-session-empty', 'survey-live-empty', 'Empty Live Survey', 'Ready', '9000', '/s/9000')");
+    await expect(repository.executeMutation(start.mutation, { id: 'live-session-empty', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'SURVEY_LIVE_SESSION_NO_QUESTIONS' });
   });
 
   test('exposes the permissioned Odoo Test action with deterministic entries', () => {

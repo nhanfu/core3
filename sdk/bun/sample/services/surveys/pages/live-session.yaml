@@ -9,6 +9,7 @@ components:
     editable: false
     labels: { workflowStatus: Session state }
     header_actions:
+      - { id: start_live_session_question, label: Start, variant: primary, permission: surveys.manage, show_if: "record.session_state === 'Ready'" }
       - { id: end_live_session, label: Close Live Session, variant: danger, permission: surveys.manage, show_if: "record.session_state === 'Ready' || record.session_state === 'In Progress'" }
     statusbar: [{ value: Closed, label: Closed }, { value: Ready, label: Ready }, { value: In Progress, label: In Progress }]
     status_colors: { Closed: neutral, Ready: blue, 'In Progress': green }
@@ -18,6 +19,18 @@ components:
         fields: [{ field: session_code, label: Session code }, { field: session_link, label: Join link }, { field: session_start_time, label: Started at }, { field: leaderboard, label: Leaderboard }]
       - title: Attendees
         fields: [{ field: answer_count, label: Answers }, { field: question_answer_count, label: Current question answers }, { field: current_question_text, label: Current question, wide: true }, { field: description, label: Survey description, wide: true }]
+  - type: ContactGrid
+    source: survey_live_session_questions
+    title: Session questions
+    description: The host starts the first question from Ready state; attendees answer through the public session link.
+    row_key: id
+    columns:
+      - { field: sequence, label: '#', align: right }
+      - { field: question_text, label: Question, type: PrimaryEntityCell }
+      - { field: question_type, label: Type }
+      - { field: requirement, label: Requirement, type: StatusChip }
+      - { field: question_state, label: State, type: StatusChip }
+    empty_state: { title: No questions in this session, description: Add a question to the survey before starting the live session. }
 actions:
   - id: back_to_survey_detail
     type: navigate
