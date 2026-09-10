@@ -1,0 +1,70 @@
+page: { id: pos-product-category-detail }
+datasources:
+  - id: pos_product_category_detail
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_PRODUCT_CATEGORY_DETAIL_UNAVAILABLE, message: Product category details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, parent_category, CAST(sequence AS INTEGER) AS sequence, color, active, (SELECT COUNT(*) FROM pos_products p WHERE p.category = pos_product_categories.name) AS product_count FROM pos_product_categories WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: back_to_pos_product_categories
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-categories
+
+  - id: new_pos_product_category
+    type: navigate
+    permission: pos.manage
+    navigate_to: /point-of-sale/product-categories/new
+
+  - id: open_pos_category_products
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/products
+    params: { category: '{row.name}' }
+
+  - id: edit_pos_product_category
+    type: server_form
+    permission: pos.manage
+    title: Edit PoS Product Category
+    action: pos.product_categories.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.pos_product_category_detail
+    refresh: [pos_product_category_detail, pos_product_categories]
+    mutation:
+      operation: update
+      table: pos_product_categories
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, parent_category, sequence, color, active]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM pos_product_categories WHERE id = :id", status: 404, code: POS_PRODUCT_CATEGORY_NOT_FOUND, message: Product category not found. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_PRODUCT_CATEGORY_NAME_REQUIRED, message: Category name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_product_categories WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: POS_PRODUCT_CATEGORY_NAME_EXISTS, message: A product category with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:parent_category, '') = '' OR LOWER(:parent_category) <> LOWER(:name)", status: 422, code: POS_PRODUCT_CATEGORY_SELF_PARENT, message: A category cannot be its own parent. }
+      result: { query: "SELECT * FROM pos_product_categories WHERE id = :id" }
+    fields:
+      - { field: name, label: PoS Product Category, type: text, required: true }
+      - { field: parent_category, label: Parent Category, type: text }
+      - { field: sequence, label: Sequence, type: number, required: true }
+      - { field: color, label: Color, type: text }
+      - { field: active, label: Active, type: checkbox }
+
+  - id: delete_pos_product_category
+    type: server
+    permission: pos.manage
+    action: pos.product_categories.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [pos_product_categories]
+    mutation:
+      operation: delete
+      table: pos_product_categories
+      key_field: id
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_product_categories WHERE id = :id", status: 404, code: POS_PRODUCT_CATEGORY_NOT_FOUND, message: Product category not found. }
+        - { query: "SELECT 1 AS ok FROM pos_product_categories c WHERE c.id = :id AND NOT EXISTS (SELECT 1 FROM pos_products p WHERE p.category = c.name) AND NOT EXISTS (SELECT 1 FROM pos_product_categories child WHERE LOWER(child.parent_category) = LOWER(c.name))", status: 409, code: POS_PRODUCT_CATEGORY_IN_USE, message: Product categories with products or child categories cannot be deleted. }

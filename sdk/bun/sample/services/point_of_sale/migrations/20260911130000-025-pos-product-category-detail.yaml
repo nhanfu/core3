@@ -1,0 +1,14 @@
+version: 0.0.26
+kind: data
+description: POS product category detail fields and optimistic CRUD support
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_product_categories ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      UPDATE pos_product_categories SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      ALTER TABLE pos_product_categories DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -2,7 +2,18 @@ page: { id: pos-product-categories }
 datasources:
   - id: pos_product_categories
     permission: pos.read
-    query: "SELECT id, 1 AS row_version, name, parent_category, CAST(sequence AS INTEGER) AS sequence, color, active FROM pos_product_categories WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR parent_category ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY sequence, name"
+    query: "SELECT id, row_version, name, parent_category, CAST(sequence AS INTEGER) AS sequence, color, active, (SELECT COUNT(*) FROM pos_products p WHERE p.category = pos_product_categories.name) AS product_count FROM pos_product_categories WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR parent_category ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY sequence, name"
   - id: pos_category_active
     permission: pos.read
     query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"
+actions:
+  - id: new_pos_product_category
+    type: navigate
+    permission: pos.manage
+    navigate_to: /point-of-sale/product-categories/new
+
+  - id: view_pos_product_category
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-category-detail
+    params: { id: '{row.id}' }

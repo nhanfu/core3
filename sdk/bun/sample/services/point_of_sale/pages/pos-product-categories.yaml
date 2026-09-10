@@ -4,6 +4,11 @@ components:
   - type: ListView
     variant: odoo
     source: pos_product_categories
+    responsive_card: true
+    create_action: new_pos_product_category
+    create_label: New
+    row_open_action: view_pos_product_category
+    row_double_click_action: view_pos_product_category
     search: { label: Search categories, placeholder: 'Search category or parent...' }
     filters: [{ field: active, label: Status, options_source: pos_category_active }]
     columns:
@@ -14,3 +19,4 @@ components:
       - { field: active, label: Active, type: StatusChip }
     page_size: 50
     row_key: id
+    empty_state: { title: Define a new category, description: Categories are used to browse your products through the touchscreen interface. }

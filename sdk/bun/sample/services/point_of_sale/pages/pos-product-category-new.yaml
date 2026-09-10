@@ -1,0 +1,23 @@
+title: New POS Product Category
+page: { id: pos-product-category-new, route: /point-of-sale/product-categories/new, breadcrumb: [Sales, Point of Sale, Products, Categories, New], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_product_category_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions:
+      - { id: back_to_pos_product_categories, label: Categories, variant: secondary, permission: pos.read }
+      - { id: create_pos_product_category, label: Save, variant: primary, permission: pos.manage }
+    groups:
+      - title: Category
+        wide: true
+        fields:
+          - { field: name, label: PoS Product Category, type: text, required: true }
+          - { field: parent_category, label: Parent Category, type: text }
+      - title: Point of Sale
+        fields:
+          - { field: sequence, label: Sequence, type: number, required: true }
+          - { field: color, label: Color, type: text }
+          - { field: active, label: Active, type: checkbox, default: true }

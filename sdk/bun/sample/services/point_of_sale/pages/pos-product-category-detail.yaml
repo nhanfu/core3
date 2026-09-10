@@ -1,0 +1,27 @@
+title: POS Product Category
+page: { id: pos-product-category-detail, route: /point-of-sale/product-category-detail, breadcrumb: [Sales, Point of Sale, Products, Categories, Product Category], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_product_category_detail
+    title_field: name
+    stat_buttons: [{ id: open_pos_category_products, label: Products, value_field: product_count, permission: pos.read }]
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions:
+      - { id: back_to_pos_product_categories, label: Categories, variant: secondary, permission: pos.read }
+      - { id: new_pos_product_category, label: New, variant: primary, permission: pos.manage }
+      - { id: edit_pos_product_category, label: Edit, variant: secondary, permission: pos.manage }
+      - { id: delete_pos_product_category, label: Delete, variant: danger, permission: pos.manage, confirm: Delete this product category? }
+    group_columns: 2
+    groups:
+      - title: Category
+        wide: true
+        fields:
+          - { field: name, label: PoS Product Category }
+          - { field: parent_category, label: Parent Category }
+      - title: Point of Sale
+        fields:
+          - { field: sequence, label: Sequence, type: number }
+          - { field: color, label: Color, type: text }
+          - { field: active, label: Active, type: checkbox }
+          - { field: product_count, label: Products }

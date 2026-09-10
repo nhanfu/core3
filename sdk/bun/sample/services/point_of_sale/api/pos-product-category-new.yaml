@@ -1,0 +1,39 @@
+page: { id: pos-product-category-new }
+datasources:
+  - id: pos_product_category_new
+    single: true
+    permission: pos.read
+    query: "SELECT NULL AS id, 1 AS row_version, '' AS name, '' AS parent_category, 50 AS sequence, 'Gray' AS color, true AS active, 0 AS product_count"
+actions:
+  - id: back_to_pos_product_categories
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-categories
+
+  - id: create_pos_product_category
+    type: server_form
+    permission: pos.manage
+    title: New PoS Product Category
+    action: pos.product_categories.create
+    handler: yaml_mutation
+    operation: insert
+    params: { id: '{state.id}' }
+    refresh: [pos_product_categories]
+    mutation:
+      operation: insert
+      table: pos_product_categories
+      generated: [id]
+      fields: [row_version, name, parent_category, sequence, color, active]
+      required: [name]
+      defaults: { row_version: 1, parent_category: '', sequence: 50, color: Gray, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_PRODUCT_CATEGORY_NAME_REQUIRED, message: Category name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_product_categories WHERE LOWER(name) = LOWER(:name))", status: 409, code: POS_PRODUCT_CATEGORY_NAME_EXISTS, message: A product category with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:parent_category, '') = '' OR LOWER(:parent_category) <> LOWER(:name)", status: 422, code: POS_PRODUCT_CATEGORY_SELF_PARENT, message: A category cannot be its own parent. }
+      result: { query: "SELECT * FROM pos_product_categories WHERE id = :id" }
+    fields:
+      - { field: name, label: PoS Product Category, type: text, required: true }
+      - { field: parent_category, label: Parent Category, type: text }
+      - { field: sequence, label: Sequence, type: number, required: true, default: 50 }
+      - { field: color, label: Color, type: text, default: Gray }
+      - { field: active, label: Active, type: checkbox, default: true }
