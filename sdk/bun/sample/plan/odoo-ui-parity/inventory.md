@@ -348,10 +348,16 @@ Focused evidence:
 - `git diff --check`: passed before commit.
 - Odoo authenticated JSON-RPC evidence: `/tmp/core3-owned-auth.json`,
   `/tmp/core3-owned-lot-fields.json`, and `/tmp/core3-owned-lot-data.json`.
-- Requested paired desktop/mobile screenshot capture was attempted against
-  the authenticated Odoo/Core3 runtimes, but the available session did not
-  expose the required persistent Playwright `js_repl`; no screenshot files
-  are included in Git or claimed as completed artifacts.
+- Fresh authenticated paired list captures were completed at 1440x900 and
+  390x844: Core3 `/tmp/core3-inventory-lots-desktop.png` and
+  `/tmp/core3-inventory-lots-mobile.png`, Odoo
+  `/tmp/odoo-inventory-lots-odoo-desktop.png` and
+  `/tmp/odoo-inventory-lots-odoo-mobile.png`. Both surfaces reported zero
+  failed responses and equal document/body widths to their viewport. Visual
+  comparison found Core3 was opening the first record in a desktop side
+  panel; `form_view.side_panel` is now false so the initial list matches
+  Odoo, with row selection still opening the detail route. Screenshots remain
+  under `/tmp` and are not included in Git.
 
 Known limitations are unchanged from this bounded action: product and partner
 relations are deterministic text contracts, and traceability/report,
