@@ -338,7 +338,19 @@ required, bounded, monotonic dates. Discard returns to Closing.
 This bounded UI slice does not claim Odoo's cryptographic hash-chain or actual
 database immutability; those implementation concerns remain outside the menu
 wizard parity boundary. Authenticated desktop/mobile captures are temporary
-under `/tmp/core3-odoo-parity/` and are not repository assets.
+under `/tmp/core3-odoo-parity/` and are not repository assets. Final comparison
+paths are:
+
+- Odoo desktop: `/tmp/core3-odoo-parity/odoo-accounting-secure-entries-desktop.png`
+- Odoo mobile 390x844: `/tmp/core3-odoo-parity/odoo-accounting-secure-entries-mobile-final.png`
+- Core3 desktop: `/tmp/core3-odoo-parity/core3-accounting-secure-entries-desktop-css.png`
+- Core3 desktop dialog: `/tmp/core3-odoo-parity/core3-accounting-secure-entries-desktop-dialog-css.png`
+- Core3 mobile 390x844: `/tmp/core3-odoo-parity/core3-accounting-secure-entries-mobile-final.png`
+
+The authenticated mobile checks returned zero failed responses at both Odoo and
+Core3 and exact-width metrics of `390 / 390` (`innerWidth / scrollWidth`), with
+no horizontal overflow. Core3 desktop returned the same zero-failure and exact
+width result at 1440x900 after generating the ignored runtime CSS assets.
 
 ## Acceptance
 
