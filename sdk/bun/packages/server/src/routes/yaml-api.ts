@@ -111,6 +111,7 @@ export function createYamlApi(ctx: YamlApiContext) {
       const previous = params[key];
       params[key] = previous === undefined ? value : Array.isArray(previous) ? [...previous, value] : [previous, value];
     }
+    applyDefaultFilters(page.components || [], params);
     applyDefaultDateRanges(page.components || [], params);
     const pageSizes = sourcePageSizes(page);
     const listSort = typeof params.sort === 'string'
@@ -343,6 +344,17 @@ function applyDefaultDateRanges(components: any[], params: Record<string, unknow
       }
     }
     for (const tab of component?.tabs || []) applyDefaultDateRanges(tab.components || [], params);
+  }
+}
+
+export function applyDefaultFilters(components: any[], params: Record<string, unknown>): void {
+  for (const component of components) {
+    if (component?.source && component?.type === 'ListView' && component.default_filters && typeof component.default_filters === 'object') {
+      for (const [key, value] of Object.entries(component.default_filters)) {
+        if (params[key] === undefined && value !== undefined && value !== null && value !== '') params[key] = value;
+      }
+    }
+    for (const tab of component?.tabs || []) applyDefaultFilters(tab.components || [], params);
   }
 }
 
