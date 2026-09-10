@@ -16,7 +16,13 @@
 .o-kanban-card:hover { border-color: var(--o-list-action); box-shadow: 0 2px 6px rgb(0 0 0 / 13%); }.o-kanban-card:focus-visible { outline: 2px solid var(--o-list-action); outline-offset: 2px; }
 .o-kanban-card-title { margin: 0; color: var(--o-list-action); font-size: 14px; font-weight: 600; }.o-kanban-card-subtitle { margin: 4px 0 0; color: var(--o-list-text); font-size: 13px; }
 .o-kanban-card-fields { display: grid; gap: 4px; margin: 10px 0 0; color: var(--o-list-muted); font-size: 12px; }.o-kanban-card-fields > div { display: flex; justify-content: space-between; gap: 12px; }.o-kanban-card-field-label { font-weight: 500; }.o-kanban-card-field-value { color: var(--o-list-text); text-align: right; }
-.o-card-view { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); align-content: start; min-width: 0; min-height: 0; flex: 1; gap: 10px; overflow: auto; padding: 12px; background: var(--o-list-panel-bg); }
+.o-kanban-card-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--o-list-border); }
+.o-kanban-card-action { display: inline-flex; min-height: 28px; align-items: center; justify-content: center; padding: 4px 10px; border: 1px solid transparent; border-radius: 3px; font: inherit; font-size: 12px; font-weight: 600; line-height: 1.2; cursor: pointer; }
+.o-kanban-card-action-primary { border-color: var(--o-list-action); background: var(--o-list-action); color: #fff; }.o-kanban-card-action-secondary { border-color: var(--o-list-border); background: var(--o-list-muted-bg); color: var(--o-list-action); }.o-kanban-card-action-ghost { background: transparent; color: var(--o-list-action); }
+.o-kanban-card-action:hover { filter: brightness(.96); }.o-kanban-card-action:focus-visible { outline: 2px solid var(--o-list-action); outline-offset: 1px; }
+.o-kanban-card.has-card-actions { display: flex; min-height: 110px; height: max-content; flex-direction: column; overflow: hidden; }
+.o-kanban-card.has-card-actions .o-kanban-card-actions { flex: 0 0 auto; }
+.o-card-view { display: grid; grid-auto-rows: max-content; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); align-content: start; min-width: 0; min-height: 0; flex: 1; gap: 10px; overflow: auto; padding: 12px; background: var(--o-list-panel-bg); }
 .o-card-view-group { display: flex; flex-direction: column; gap: 8px; }
 .o-card-view-group-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0; color: var(--o-list-text); font-size: 13px; font-weight: 700; }
 .o-card-view-group-title::before { width: 8px; height: 8px; margin-right: 2px; border-radius: 50%; background: var(--o-list-muted); content: ''; }

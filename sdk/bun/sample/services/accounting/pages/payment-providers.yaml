@@ -1,12 +1,25 @@
 title: Payment Providers
 page: { id: payment-providers, route: /accounting/payment-providers, breadcrumb: [Finance, Configuration, Payment Providers], auth: { require: [accounting.read] } }
-datasources:
-  - id: accounting_payment_providers
-    permission: accounting.read
-    query: "SELECT * FROM (VALUES ('manual','Manual payments','Bank and cash methods','Enabled'), ('demo','Demo provider','Fixture provider for testing','Test mode')) providers(id,name,description,state) ORDER BY name"
 components:
   - type: ListView
     variant: odoo
     source: accounting_payment_providers
-    columns: [{ field: name, label: Provider, type: PrimaryEntityCell }, { field: description, label: Description }, { field: state, label: State, type: StatusChip }]
+    search: { label: Search payment providers, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - id: card
+        label: Kanban
+        icon: dashboard
+        card: { title: name, subtitle: company, image_field: logo_url, actions: [{ id: install_accounting_payment_provider, label_field: action_label, variant: primary }] }
+      - { id: list, label: List, icon: table, mobile: false }
     row_key: id
+    row_open_action: view_accounting_payment_provider
+    row_double_click_action: view_accounting_payment_provider
+    row_actions: menu
+    empty_state: { title: No payment providers found, description: No payment providers match your search. }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: state, label: State }
+      - { field: company, label: Company }
+      - { field: action_label, label: Action }
+    page_size: 50

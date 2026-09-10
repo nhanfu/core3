@@ -391,3 +391,26 @@ Authenticated Odoo/Core3 desktop and mobile captures at 1440x900 and 390x844
 are temporary under `/tmp/odoo-accounting-reconciliation-models-*` and
 `/tmp/core3-accounting-reconciliation-models-*`; no screenshots are repository
 assets.
+## Current batch: Payment Providers action and list/form states
+
+The installed Odoo 19 `account` action is Accounting → Configuration → Payment
+Providers at `/odoo/accounting/payment-providers`. The owned reference exposes
+24 providers, defaults to Kanban cards at desktop and mobile, and offers a List
+view switch; cards show provider name, company, logo, and Install/Upgrade. The
+Wire Transfer form is `/odoo/accounting/payment-providers/22` and shows the
+provider title, logo, New, pager, and Install controls.
+
+Core3 hardens the existing `/accounting/payment-providers` route. Its page is
+layout-only and joins page-owned list/detail API fragments by `page.id`; the
+shared ListView is card-first with a visible List tab, has no page-level New
+action like the read-only Odoo list, and the detail uses OdooFormView. The API
+keeps a permissioned create mutation for service contract and guard coverage,
+but it is not exposed by this page. Migration `20260911130000-019-accounting-payment-providers.yaml`
+seeds all 24 deterministic providers. Contracts cover search, empty, detail,
+transport-error, permissioned CRUD, validation, duplicate/stale/missing guards,
+and install/uninstall transitions. Final authenticated comparison captures are
+temporary under `/tmp/odoo-accounting-payment-providers-*` and
+`/tmp/core3-accounting-payment-providers-*`; screenshots are not repository
+assets. Core3 uses a local Odoo image fallback for the deterministic fixture
+cards and the existing server-form workflow; Odoo provider-specific setup
+credentials and add-ons are outside this bounded slice.
