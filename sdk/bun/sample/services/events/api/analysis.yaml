@@ -1,0 +1,9 @@
+page: { id: events-analysis }
+datasources:
+  - id: event_analysis_totals
+    single: true
+    permission: events.read
+    query: "SELECT COUNT(*) AS event_count, COALESCE(SUM(capacity), 0) AS capacity, COALESCE(SUM(registration_count), 0) AS registrations, COUNT(*) FILTER (WHERE state = 'Completed') AS completed_count FROM events WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR event_type ILIKE '%' || :q || '%')"
+  - id: event_analysis_states
+    permission: events.read
+    query: "SELECT state AS category, COUNT(*) AS event_count FROM events WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR event_type ILIKE '%' || :q || '%') GROUP BY state ORDER BY event_count DESC, state"

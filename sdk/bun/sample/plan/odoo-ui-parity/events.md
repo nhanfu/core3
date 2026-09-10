@@ -410,6 +410,24 @@ page overflow; captures are `/tmp/odoo-events-activity-mobile.png` and
 committed as `5327ecbf`/`d9aa4d8e` and integrated into `odoo-pos` as
 `712820a5`/`7aeecab3`.
 
+The next bounded state-coverage batch moves the legacy `/events-analysis`
+aggregates out of `pages/analysis.yaml` into the convention-discovered
+`services/events/api/analysis.yaml` fragment keyed by `events-analysis`. The
+Events list, event detail, and analysis read sources now accept the existing
+`fixture_state` query contract for deterministic empty and missing-record
+responses, while `:q` produces stable search/no-result states against the
+fixed 2026 fixtures. The list and analysis surfaces expose Odoo-style empty
+copy; detail tabs retain their existing ticket/question/slot/registration
+empty states. All read sources and page guards retain `events.read`, and the
+focused state suite checks stable seeded records, search results, empty and
+missing responses, API ownership/discovery, permission declarations, and the
+existing 409/required-field mutation error boundaries. No new shared renderer
+or screenshot asset was added.
+
+The remaining Events mock-data contract is still open for the broader future
+model graph and transport-level loading/error fixtures; this batch is limited
+to the currently implemented list, detail, and analysis surfaces.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

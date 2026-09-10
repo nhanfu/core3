@@ -1,13 +1,5 @@
 title: Event Analysis
 page: { id: events-analysis, route: /events-analysis, breadcrumb: [Marketing, Events, Analysis], auth: { require: [events.read] } }
-datasources:
-  - id: event_analysis_totals
-    single: true
-    permission: events.read
-    query: "SELECT COUNT(*) AS event_count, COALESCE(SUM(capacity), 0) AS capacity, COALESCE(SUM(registration_count), 0) AS registrations, COUNT(*) FILTER (WHERE state = 'Completed') AS completed_count FROM events"
-  - id: event_analysis_states
-    permission: events.read
-    query: "SELECT state AS category, COUNT(*) AS event_count FROM events GROUP BY state ORDER BY event_count DESC"
 components:
   - type: StatRow
     source: event_analysis_totals
@@ -19,3 +11,11 @@ components:
     label_field: category
     value_field: event_count
     variant: bar
+  - type: ListView
+    variant: odoo
+    source: event_analysis_states
+    search: { label: Search event analysis, placeholder: Search event or type... }
+    empty_state: { title: No event analysis data, description: Events matching the current search or fixture are shown here. }
+    columns: [{ field: category, label: Status, type: PrimaryEntityCell }, { field: event_count, label: Events, align: right }]
+    page_size: 25
+    row_key: category

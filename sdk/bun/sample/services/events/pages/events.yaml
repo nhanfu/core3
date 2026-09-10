@@ -78,6 +78,7 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    empty_state: { title: No events, description: No events match the current search or filters. }
     row_actions: menu
     row_double_click_action: view_event_detail
     actions:
