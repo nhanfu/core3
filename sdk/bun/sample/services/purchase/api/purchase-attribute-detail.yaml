@@ -1,0 +1,39 @@
+page: { id: purchase-product-attribute-detail }
+datasources:
+  - id: purchase_product_attribute_detail
+    single: true
+    permission: purchase.read
+    query: "SELECT id, row_version, name, display_type, variant_creation, values_count, active FROM purchase_product_attributes WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: purchase_product_attribute_values
+    permission: purchase.read
+    query: "SELECT id, row_version, attribute_id, sequence, value, free_text, CASE WHEN free_text THEN 'Yes' ELSE 'No' END AS free_text_label, CAST(price_extra AS DOUBLE) AS price_extra, printf('$ %,.2f', CAST(price_extra AS DOUBLE)) AS price_extra_display FROM purchase_product_attribute_values WHERE attribute_id = :id AND active = true ORDER BY sequence, id"
+actions:
+  - id: back_to_purchase_product_attributes
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/attributes
+  - id: edit_purchase_product_attribute
+    type: server_form
+    permission: purchase.write
+    title: Edit Attribute
+    action: purchase.product_attributes.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.purchase_product_attribute_detail
+    refresh: [purchase_product_attribute_detail, purchase_product_attributes, purchase_product_attribute_values]
+    mutation:
+      operation: update
+      table: purchase_product_attributes
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, display_type, variant_creation, values_count, active]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM purchase_product_attributes WHERE id = :id", status: 404, message: Attribute not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_product_attributes WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: PURCHASE_PRODUCT_ATTRIBUTE_EXISTS, message: An attribute with this name already exists. }
+      result: { query: "SELECT * FROM purchase_product_attributes WHERE id = :id" }
+    fields:
+      - { field: name, label: Attribute Name, type: text, required: true }
+      - { field: display_type, label: Display Type?, type: select, options: [Radio, Pills, Select, Color, Multi-checkbox, Image] }
+      - { field: variant_creation, label: Variant Creation?, type: select, options: [Instantly, Dynamically, Never] }

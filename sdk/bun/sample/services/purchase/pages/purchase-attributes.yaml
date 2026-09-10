@@ -1,0 +1,20 @@
+title: Attributes
+page: { id: purchase-product-attributes, route: /purchase/attributes, breadcrumb: [Supply Chain, Purchase, Configuration, Products, Attributes], auth: { require: [purchase.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: purchase_product_attributes
+    create_action: create_purchase_product_attribute
+    create_label: New
+    search: { label: Search attributes, placeholder: Search attribute or display type... }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+    columns:
+      - { field: name, label: Attribute, type: PrimaryEntityCell, sortable: true }
+      - { field: display_type, label: Display Type, sortable: true }
+      - { field: variant_creation, label: Variant Creation, sortable: true }
+    page_size: 50
+    row_key: id
+    row_open_action: view_purchase_product_attribute
+    row_double_click_action: view_purchase_product_attribute
+    empty_state: { title: No attributes found, description: Create an attribute to define the choices used by purchased products. }

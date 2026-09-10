@@ -1,0 +1,33 @@
+title: Attribute
+page: { id: purchase-product-attribute-detail, route: /purchase/attributes/detail, breadcrumb: [Supply Chain, Purchase, Configuration, Products, Attributes], auth: { require: [purchase.read] } }
+components:
+  - type: OdooFormView
+    source: purchase_product_attribute_detail
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_purchase_product_attributes, label: Attributes, variant: secondary, permission: purchase.read }
+      - { id: edit_purchase_product_attribute, label: Edit, variant: primary, permission: purchase.write }
+    group_columns: 2
+    groups:
+      - title: Attribute
+        fields:
+          - { field: name, label: Attribute Name, type: text, required: true }
+          - { field: display_type, label: Display Type?, type: select, options: [Radio, Pills, Select, Color, Multi-checkbox, Image] }
+          - { field: variant_creation, label: Variant Creation?, type: select, options: [Instantly, Dynamically, Never] }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: purchase_product_attribute_values
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    columns:
+      - { field: value, label: Value, width: 280 }
+      - { field: free_text_label, label: Free text, width: 140 }
+      - { field: price_extra_display, label: Default Extra Price, align: right, width: 180 }
+    children:
+      - { type: LineItemField, id: value, field: value, label: Value, readonly: true }
+      - { type: LineItemField, id: free_text_label, field: free_text_label, label: Free text, readonly: true }
+      - { type: LineItemField, id: price_extra_display, field: price_extra_display, label: Default Extra Price, readonly: true }

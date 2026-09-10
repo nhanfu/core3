@@ -1,0 +1,115 @@
+version: 0.0.11
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_product_attributes (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        display_type VARCHAR NOT NULL DEFAULT 'Radio',
+        variant_creation VARCHAR NOT NULL DEFAULT 'Instantly',
+        values_count INTEGER NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS purchase_product_attribute_values (
+        id VARCHAR PRIMARY KEY,
+        attribute_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        value VARCHAR NOT NULL,
+        free_text BOOLEAN NOT NULL DEFAULT false,
+        price_extra DECIMAL(18,2) NOT NULL DEFAULT 0,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        UNIQUE(attribute_id, value)
+      );
+      CREATE INDEX IF NOT EXISTS purchase_product_attributes_name_idx ON purchase_product_attributes(name);
+      CREATE INDEX IF NOT EXISTS purchase_product_attribute_values_attribute_idx ON purchase_product_attribute_values(attribute_id, sequence, id);
+      INSERT OR IGNORE INTO purchase_product_attributes (id, name, display_type, variant_creation, values_count) VALUES
+        ('purchase-attribute-brand', 'Brand', 'Radio', 'Instantly', 40),
+        ('purchase-attribute-size', 'Size', 'Pills', 'Instantly', 6),
+        ('purchase-attribute-shoes-size', 'Shoes size', 'Pills', 'Never', 10),
+        ('purchase-attribute-color', 'Color', 'Color', 'Instantly', 6),
+        ('purchase-attribute-height', 'Height', 'Select', 'Instantly', 3),
+        ('purchase-attribute-length', 'Length', 'Pills', 'Dynamically', 3),
+        ('purchase-attribute-duration', 'Duration', 'Select', 'Never', 4),
+        ('purchase-attribute-fabric', 'Fabric', 'Color', 'Instantly', 4),
+        ('purchase-attribute-legs', 'Legs', 'Radio', 'Instantly', 3),
+        ('purchase-attribute-options', 'Options', 'Multi-checkbox', 'Never', 3),
+        ('purchase-attribute-customization', 'Customization', 'Radio', 'Never', 2);
+      INSERT OR IGNORE INTO purchase_product_attribute_values (id, attribute_id, sequence, value, free_text, price_extra) VALUES
+        ('purchase-attribute-brand-adidas', 'purchase-attribute-brand', 10, 'Adidas', false, 0),
+        ('purchase-attribute-brand-apple', 'purchase-attribute-brand', 20, 'Apple', false, 0),
+        ('purchase-attribute-brand-ariel', 'purchase-attribute-brand', 30, 'Ariel', false, 0),
+        ('purchase-attribute-brand-canon', 'purchase-attribute-brand', 40, 'Canon', false, 0),
+        ('purchase-attribute-brand-coca-cola', 'purchase-attribute-brand', 50, 'Coca-Cola', false, 0),
+        ('purchase-attribute-brand-colgate', 'purchase-attribute-brand', 60, 'Colgate', false, 0),
+        ('purchase-attribute-brand-dell', 'purchase-attribute-brand', 70, 'Dell', false, 0),
+        ('purchase-attribute-brand-dove', 'purchase-attribute-brand', 80, 'Dove', false, 0),
+        ('purchase-attribute-brand-dyson', 'purchase-attribute-brand', 90, 'Dyson', false, 0),
+        ('purchase-attribute-brand-gillette', 'purchase-attribute-brand', 100, 'Gillette', false, 0),
+        ('purchase-attribute-brand-hm', 'purchase-attribute-brand', 110, 'H&M', false, 0),
+        ('purchase-attribute-brand-head-shoulders', 'purchase-attribute-brand', 120, 'Head & Shoulders', false, 0),
+        ('purchase-attribute-brand-loreal', 'purchase-attribute-brand', 130, 'L''Oréal', false, 0),
+        ('purchase-attribute-brand-lenovo', 'purchase-attribute-brand', 140, 'Lenovo', false, 0),
+        ('purchase-attribute-brand-levis', 'purchase-attribute-brand', 150, 'Levi''s', false, 0),
+        ('purchase-attribute-brand-lg', 'purchase-attribute-brand', 160, 'LG', false, 0),
+        ('purchase-attribute-brand-maybelline', 'purchase-attribute-brand', 170, 'Maybelline', false, 0),
+        ('purchase-attribute-brand-montblanc', 'purchase-attribute-brand', 180, 'Montblanc', false, 0),
+        ('purchase-attribute-brand-nestle', 'purchase-attribute-brand', 190, 'Nestlé', false, 0),
+        ('purchase-attribute-brand-new-balance', 'purchase-attribute-brand', 200, 'New Balance', false, 0),
+        ('purchase-attribute-brand-nike', 'purchase-attribute-brand', 210, 'Nike', false, 0),
+        ('purchase-attribute-brand-nikon', 'purchase-attribute-brand', 220, 'Nikon', false, 0),
+        ('purchase-attribute-brand-nivea', 'purchase-attribute-brand', 230, 'Nivea', false, 0),
+        ('purchase-attribute-brand-olay', 'purchase-attribute-brand', 240, 'Olay', false, 0),
+        ('purchase-attribute-brand-oral-b', 'purchase-attribute-brand', 250, 'Oral-B', false, 0),
+        ('purchase-attribute-brand-panasonic', 'purchase-attribute-brand', 260, 'Panasonic', false, 0),
+        ('purchase-attribute-brand-pantene', 'purchase-attribute-brand', 270, 'Pantene', false, 0),
+        ('purchase-attribute-brand-pepsi', 'purchase-attribute-brand', 280, 'Pepsi', false, 0),
+        ('purchase-attribute-brand-philips', 'purchase-attribute-brand', 290, 'Philips', false, 0),
+        ('purchase-attribute-brand-puma', 'purchase-attribute-brand', 300, 'Puma', false, 0),
+        ('purchase-attribute-brand-ray-ban', 'purchase-attribute-brand', 310, 'Ray-Ban', false, 0),
+        ('purchase-attribute-brand-reebok', 'purchase-attribute-brand', 320, 'Reebok', false, 0),
+        ('purchase-attribute-brand-rolex', 'purchase-attribute-brand', 330, 'Rolex', false, 0),
+        ('purchase-attribute-brand-samsung', 'purchase-attribute-brand', 340, 'Samsung', false, 0),
+        ('purchase-attribute-brand-sony', 'purchase-attribute-brand', 350, 'Sony', false, 0),
+        ('purchase-attribute-brand-tide', 'purchase-attribute-brand', 360, 'Tide', false, 0),
+        ('purchase-attribute-brand-under-armour', 'purchase-attribute-brand', 370, 'Under Armour', false, 0),
+        ('purchase-attribute-brand-uniqlo', 'purchase-attribute-brand', 380, 'Uniqlo', false, 0),
+        ('purchase-attribute-brand-whirlpool', 'purchase-attribute-brand', 390, 'Whirlpool', false, 0),
+        ('purchase-attribute-brand-zara', 'purchase-attribute-brand', 400, 'Zara', false, 0),
+        ('purchase-attribute-size-xs', 'purchase-attribute-size', 10, 'XS', false, 0),
+        ('purchase-attribute-size-s', 'purchase-attribute-size', 20, 'S', false, 0),
+        ('purchase-attribute-size-m', 'purchase-attribute-size', 30, 'M', false, 0),
+        ('purchase-attribute-size-l', 'purchase-attribute-size', 40, 'L', false, 0),
+        ('purchase-attribute-size-xl', 'purchase-attribute-size', 50, 'XL', false, 0),
+        ('purchase-attribute-size-xxl', 'purchase-attribute-size', 60, 'XXL', false, 0),
+        ('purchase-attribute-shoes-36', 'purchase-attribute-shoes-size', 10, '36', false, 0),
+        ('purchase-attribute-shoes-37', 'purchase-attribute-shoes-size', 20, '37', false, 0),
+        ('purchase-attribute-shoes-38', 'purchase-attribute-shoes-size', 30, '38', false, 0),
+        ('purchase-attribute-shoes-39', 'purchase-attribute-shoes-size', 40, '39', false, 0),
+        ('purchase-attribute-shoes-40', 'purchase-attribute-shoes-size', 50, '40', false, 0),
+        ('purchase-attribute-shoes-41', 'purchase-attribute-shoes-size', 60, '41', false, 0),
+        ('purchase-attribute-shoes-42', 'purchase-attribute-shoes-size', 70, '42', false, 0),
+        ('purchase-attribute-shoes-43', 'purchase-attribute-shoes-size', 80, '43', false, 0),
+        ('purchase-attribute-shoes-44', 'purchase-attribute-shoes-size', 90, '44', false, 0),
+        ('purchase-attribute-shoes-45', 'purchase-attribute-shoes-size', 100, '45', false, 0),
+        ('purchase-attribute-color-black', 'purchase-attribute-color', 10, 'Black', false, 0),
+        ('purchase-attribute-color-white', 'purchase-attribute-color', 20, 'White', false, 0),
+        ('purchase-attribute-color-red', 'purchase-attribute-color', 30, 'Red', false, 0),
+        ('purchase-attribute-color-blue', 'purchase-attribute-color', 40, 'Blue', false, 0),
+        ('purchase-attribute-color-green', 'purchase-attribute-color', 50, 'Green', false, 0),
+        ('purchase-attribute-color-yellow', 'purchase-attribute-color', 60, 'Yellow', false, 0),
+        ('purchase-attribute-customization-gift-wrap', 'purchase-attribute-customization', 10, 'Gift Wrap', true, 2),
+        ('purchase-attribute-customization-engraving', 'purchase-attribute-customization', 20, 'Engraving', true, 8);
+    down: |
+      DROP TABLE IF EXISTS purchase_product_attribute_values;
+      DROP TABLE IF EXISTS purchase_product_attributes;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

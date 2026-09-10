@@ -226,6 +226,36 @@ the captured reference. The isolated runtime required the normal generated
 stylesheet build before browser capture; generated CSS is ignored and was not
 committed.
 
+## Attributes bounded follow-up (selected 2026-09-10)
+
+The next uncovered visible Purchase action was selected from the live
+`core3_owned` menu as `Configuration → Products → Attributes`. Odoo 19 exposes
+the shared product-configuration route `/odoo/attributes` with 11 seeded
+records and columns `Attribute`, `Display Type`, and `Variant Creation`.
+Opening `Brand` reaches `/odoo/attributes/1` and shows the editable attribute
+fields plus the `Attribute Values` table with `Value`, `Free text`, and
+`Default Extra Price`. The same list and form fit the authenticated 1440×900
+desktop and 390×844 touch viewports without horizontal overflow. The direct
+route uses Odoo's shared Inventory/Product configuration shell; it is recorded
+as reference behavior rather than treated as a Purchase-only shell.
+
+The Core3 slice adds `/purchase/attributes` and
+`/purchase/attributes/detail?id=<stable-attribute-id>`, the manifest entry
+under Purchase → Configuration, and page/API YAML pairs joined by
+`purchase-product-attributes` and `purchase-product-attribute-detail`. Migration
+`20260910103000-011-purchase-attributes.yaml` seeds the 11 deterministic
+attributes and the observed Brand values, with idempotent re-run behavior.
+`purchase.read` protects both routes and `purchase.write` protects create and
+update; duplicate-name, missing-record, and stale-row-version guards are
+covered by the focused integration test.
+
+Core3 renders the value rows through the shared `LineItemGrid` as read-only
+embedded data. Adding, deleting, or editing individual value rows, Odoo's
+radio presentation, and the purple/shared product shell remain follow-up gaps;
+the primary attribute list/form and responsive route are the bounded claim for
+this batch. Local comparison captures are `/tmp/core3-purchase-attributes-*`
+and `/tmp/odoo-purchase-attributes-*`; screenshots remain outside Git.
+
 ## Required visible states
 
 - RFQ/order list: populated, empty, loading/error, search by order/vendor/

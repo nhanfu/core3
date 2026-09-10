@@ -1,0 +1,33 @@
+page: { id: purchase-product-attributes }
+datasources:
+  - id: purchase_product_attributes
+    permission: purchase.read
+    query: "SELECT id, row_version, name, display_type, variant_creation, values_count, active FROM purchase_product_attributes WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR display_type ILIKE '%' || :q || '%' OR variant_creation ILIKE '%' || :q || '%') AND active = true ORDER BY name, id"
+actions:
+  - id: create_purchase_product_attribute
+    type: server_form
+    permission: purchase.write
+    title: New Attribute
+    action: purchase.product_attributes.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [purchase_product_attributes]
+    mutation:
+      operation: insert
+      table: purchase_product_attributes
+      generated: [id]
+      fields: [name, display_type, variant_creation, values_count, active]
+      required: [name]
+      defaults: { display_type: Radio, variant_creation: Instantly, values_count: 0, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_product_attributes WHERE LOWER(name) = LOWER(:name))", status: 409, code: PURCHASE_PRODUCT_ATTRIBUTE_EXISTS, message: An attribute with this name already exists. }
+      result: { query: "SELECT * FROM purchase_product_attributes WHERE id = :id" }
+    fields:
+      - { field: name, label: Attribute Name, type: text, required: true }
+      - { field: display_type, label: Display Type?, type: select, options: [Radio, Pills, Select, Color, Multi-checkbox, Image], default: Radio }
+      - { field: variant_creation, label: Variant Creation?, type: select, options: [Instantly, Dynamically, Never], default: Instantly }
+  - id: view_purchase_product_attribute
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/attributes/detail
+    params: { id: '{row.id}' }
