@@ -1,0 +1,19 @@
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE event_slots ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      ALTER TABLE event_slots ADD COLUMN IF NOT EXISTS date_tz VARCHAR DEFAULT 'Europe/Brussels';
+      ALTER TABLE event_slots ADD COLUMN IF NOT EXISTS color VARCHAR DEFAULT '#875A7B';
+      UPDATE event_slots SET row_version = 1 WHERE row_version IS NULL;
+      UPDATE event_slots SET date_tz = 'Europe/Brussels' WHERE date_tz IS NULL;
+      UPDATE event_slots SET color = '#875A7B' WHERE color IS NULL;
+    down: |
+      ALTER TABLE event_slots DROP COLUMN IF EXISTS color;
+      ALTER TABLE event_slots DROP COLUMN IF EXISTS date_tz;
+      ALTER TABLE event_slots DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

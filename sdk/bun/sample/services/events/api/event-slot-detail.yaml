@@ -1,0 +1,7 @@
+page: { id: event-slot-detail }
+datasources:
+  - id: event_slot_detail
+    single: true
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_SLOT_DETAIL_UNAVAILABLE, message: Event slot details are temporarily unavailable. } }
+    query: "SELECT s.id, s.row_version, s.event_id, e.name AS event_name, s.name, CAST(s.start_at AS VARCHAR) AS start_at, CAST(s.end_at AS VARCHAR) AS end_at, s.seats, s.registration_count, s.state, s.date_tz, s.color, CASE WHEN s.seats = 0 THEN 'Unlimited' WHEN s.registration_count >= s.seats THEN 'Sold out' ELSE CAST(s.seats - s.registration_count AS VARCHAR) || ' seats remaining' END AS availability, 'Event Slot' AS slot_label FROM event_slots s JOIN events e ON e.id = s.event_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND s.id = :id"

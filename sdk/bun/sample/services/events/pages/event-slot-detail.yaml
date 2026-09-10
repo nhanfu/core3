@@ -1,0 +1,75 @@
+title: Event Slot
+page: { id: event-slot-detail, route: /events/slots/detail, breadcrumb: [Marketing, Events, Event, Slots], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_slot_detail
+    title_field: name
+    subtitle_field: slot_label
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_event_slots, label: Back to event, variant: secondary, permission: events.read }
+      - { id: edit_event_slot, label: Edit, variant: primary, permission: events.write }
+      - { id: delete_event_slot, label: Delete, variant: danger, permission: events.write, confirm: Delete this event slot? }
+    groups:
+      - title: Event Slot
+        fields:
+          - { field: event_name, label: Event }
+          - { field: name, label: Slot }
+          - { field: start_at, label: Starts at }
+          - { field: end_at, label: Ends at }
+          - { field: date_tz, label: Timezone }
+          - { field: color, label: Color }
+      - title: Availability
+        fields:
+          - { field: seats, label: Seats per slot }
+          - { field: registration_count, label: Registration }
+          - { field: availability, label: Availability }
+          - { field: state, label: Status, type: StatusChip }
+actions:
+  - id: back_to_event_slots
+    type: navigate
+    permission: events.read
+    navigate_to: /event-detail
+    params: { id: '{state.event_id}' }
+  - id: edit_event_slot
+    type: server_form
+    permission: events.write
+    title: Edit event slot
+    action: events.slots.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.event_slot_detail
+    refresh: [event_slot_detail, event_detail_slots]
+    mutation:
+      operation: update
+      table: event_slots
+      fields: [name, start_at, end_at, seats, date_tz, color]
+      required: [name, start_at, end_at]
+      guards:
+        - { query: "SELECT id FROM event_slots WHERE id = :id", status: 404, code: EVENT_SLOT_NOT_FOUND, message: Event slot not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:start_at AS TIMESTAMP) < CAST(:end_at AS TIMESTAMP)", status: 422, code: EVENT_SLOT_TIME_RANGE_INVALID, message: Slot end must be later than slot start. }
+        - { query: "SELECT 1 AS ok FROM events e JOIN event_slots s ON s.event_id = e.id WHERE s.id = :id AND CAST(:start_at AS TIMESTAMP) >= e.start_at AND CAST(:end_at AS TIMESTAMP) <= e.end_at", status: 422, code: EVENT_SLOT_OUTSIDE_EVENT, message: Slot must be within the event time range. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:seats, 0) >= 0", status: 422, code: EVENT_SLOT_SEATS_INVALID, message: Seats must be zero or greater. }
+      result: { query: "SELECT * FROM event_slots WHERE id = :id" }
+    fields:
+      - { field: name, label: Slot, type: text, required: true }
+      - { field: start_at, label: Starts at, type: text, required: true }
+      - { field: end_at, label: Ends at, type: text, required: true }
+      - { field: date_tz, label: Timezone, type: text }
+      - { field: seats, label: Seats per slot, type: number, min: 0 }
+      - { field: color, label: Color, type: text }
+  - id: delete_event_slot
+    type: server
+    permission: events.write
+    action: events.slots.delete
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [event_detail_slots]
+    mutation:
+      operation: delete
+      table: event_slots
+      guards:
+        - { query: "SELECT id FROM event_slots WHERE id = :id", status: 404, code: EVENT_SLOT_NOT_FOUND, message: Event slot not found. }
+        - { query: "SELECT 1 AS ok FROM event_slots WHERE id = :id AND registration_count = 0", status: 409, code: EVENT_SLOT_HAS_REGISTRATIONS, message: Event slots with registrations cannot be deleted. }

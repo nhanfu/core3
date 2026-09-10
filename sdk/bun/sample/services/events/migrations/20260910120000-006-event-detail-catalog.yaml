@@ -32,7 +32,10 @@ type:
         end_at TIMESTAMP NOT NULL,
         seats INTEGER NOT NULL DEFAULT 0,
         registration_count INTEGER NOT NULL DEFAULT 0,
-        state VARCHAR NOT NULL DEFAULT 'Open'
+        state VARCHAR NOT NULL DEFAULT 'Open',
+        row_version BIGINT NOT NULL DEFAULT 1,
+        date_tz VARCHAR NOT NULL DEFAULT 'Europe/Brussels',
+        color VARCHAR NOT NULL DEFAULT '#875A7B'
       );
       INSERT INTO event_tickets(id, event_id, name, price, registration_end, maximum, registration_count) VALUES
         ('ticket-event-007-standard', 'event-demo-007', 'Standard', 0, TIMESTAMP '2026-09-11 22:00:00', 0, 2),
