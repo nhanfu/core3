@@ -4,6 +4,7 @@ components:
   - type: ListView
     variant: odoo
     source: my_allocations
+    view_navigation: tabs
     views:
       - id: list
         label: List

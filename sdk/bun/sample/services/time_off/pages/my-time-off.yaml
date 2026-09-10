@@ -7,6 +7,7 @@ components:
     variant: odoo
     source: my_time_off_requests
     search: { label: Search my time off, placeholder: Search by request or type... }
+    view_navigation: tabs
     views:
       - id: list
         label: List

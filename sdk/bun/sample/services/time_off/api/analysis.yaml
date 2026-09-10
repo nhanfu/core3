@@ -6,4 +6,6 @@ datasources:
     query: "SELECT COUNT(*) AS request_count, COALESCE(SUM(days) FILTER (WHERE state = 'Approved'), 0) AS approved_days, COUNT(*) FILTER (WHERE state = 'Submitted') AS pending_count, COUNT(DISTINCT employee_id) AS employee_count FROM leave_requests"
   - id: time_off_analysis_states
     permission: time_off.read
+    pivot:
+      fields: [category, request_count]
     query: "SELECT state AS category, COUNT(*) AS request_count FROM leave_requests GROUP BY state ORDER BY request_count DESC"

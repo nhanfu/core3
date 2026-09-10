@@ -14,6 +14,7 @@ components:
   - type: ListView
     variant: odoo
     source: time_off_analysis_states
+    view_navigation: tabs
     views:
       - id: list
         label: List

@@ -9,6 +9,7 @@ components:
     create_action: create_accrual_plan
     create_label: New accrual plan
     search: { label: Search accrual plans, placeholder: Search plans... }
+    view_navigation: tabs
     views:
       - id: list
         label: List

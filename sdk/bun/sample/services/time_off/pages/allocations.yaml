@@ -9,6 +9,7 @@ components:
     create_action: create_allocation
     create_label: New allocation
     search: { label: Search allocations, placeholder: Search employee or allocation... }
+    view_navigation: tabs
     views:
       - id: list
         label: List

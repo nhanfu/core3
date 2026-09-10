@@ -6,6 +6,7 @@ components:
     source: time_off_approval_requests
     search: { label: Search all time off, placeholder: Search employee or request... }
     filters: [{ field: state, label: Status, options_source: time_off_approval_states }]
+    view_navigation: tabs
     views:
       - id: list
         label: List

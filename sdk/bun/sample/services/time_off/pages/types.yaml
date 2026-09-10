@@ -8,6 +8,7 @@ components:
     create_label: New leave type
     search: { label: Search leave types, placeholder: Search by name or code... }
     filters: [{ field: state, label: Status, options_source: leave_type_states }]
+    view_navigation: tabs
     views:
       - id: list
         label: List
