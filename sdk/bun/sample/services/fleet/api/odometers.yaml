@@ -1,0 +1,11 @@
+page: { id: fleet-odometers }
+datasources:
+  - id: fleet_odometer_vehicles
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_vehicles WHERE COALESCE(archived, FALSE) = FALSE ORDER BY name, id"
+  - id: fleet_odometers
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_ODOMETER_DATA_UNAVAILABLE, message: Fleet odometer data service is temporarily unavailable } }
+    query: "SELECT o.id, o.row_version, CAST(o.date AS VARCHAR) AS date, o.vehicle_id, v.name AS vehicle_name, COALESCE(o.driver_name, v.driver_name) AS driver_name, o.value, o.unit FROM fleet_vehicle_odometers o JOIN fleet_vehicles v ON v.id = o.vehicle_id WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR COALESCE(o.driver_name, v.driver_name, '') ILIKE '%' || :q || '%' OR CAST(o.value AS VARCHAR) ILIKE '%' || :q || '%' OR CAST(o.date AS VARCHAR) ILIKE '%' || :q || '%') AND (:vehicle_id IS NULL OR o.vehicle_id = :vehicle_id) ORDER BY o.date DESC, o.id"
+actions:
+  - { id: view_fleet_odometer, type: navigate, permission: fleet.read, navigate_to: /fleet/odometers/detail, params: { id: '{row.id}' } }

@@ -1,0 +1,32 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_odometers (
+        id VARCHAR PRIMARY KEY,
+        vehicle_id VARCHAR NOT NULL,
+        driver_name VARCHAR,
+        date DATE NOT NULL,
+        value DECIMAL(18,2) NOT NULL,
+        unit VARCHAR NOT NULL DEFAULT 'km',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_odometers_date_idx ON fleet_vehicle_odometers(date, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_odometers_vehicle_idx ON fleet_vehicle_odometers(vehicle_id, date);
+      INSERT INTO fleet_vehicle_odometers(id, vehicle_id, driver_name, date, value, unit) VALUES
+        ('fleet-odometer-001', 'fleet-demo-001', 'Admin User', DATE '2026-09-07', 7981.00, 'km'),
+        ('fleet-odometer-002', 'fleet-demo-002', NULL, DATE '2026-08-30', 8001.20, 'km'),
+        ('fleet-odometer-003', 'fleet-demo-001', 'Admin User', DATE '2026-08-08', 7954.00, 'km'),
+        ('fleet-odometer-004', 'fleet-demo-002', NULL, DATE '2026-07-16', 5987.00, 'km'),
+        ('fleet-odometer-005', 'fleet-demo-001', 'Admin User', DATE '2026-06-16', 5873.00, 'km'),
+        ('fleet-odometer-006', 'fleet-demo-002', NULL, DATE '2026-06-05', 4935.00, 'km'),
+        ('fleet-odometer-007', 'fleet-demo-001', 'Admin User', DATE '2026-05-27', 5171.00, 'km'),
+        ('fleet-odometer-008', 'fleet-demo-002', NULL, DATE '2026-05-08', 4205.50, 'km')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_odometers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -20,7 +20,10 @@ settings, activities/chatter, reporting graphs/pivots, multi-company and
 employee/Auth relational operations. These remain planned Fleet surfaces and
 are not represented as completed parity in this batch.
 
-The live Odoo 19 Fleet addon is uninstalled in `core3_demo`; `/odoo/fleet`
-redirects to Discuss and has no Fleet menus, views, or demo rows. Therefore no
-Odoo Fleet screenshot is fabricated or used as visual evidence. Core3 captures
-are the only parity screenshots for this batch and are kept under `/tmp`.
+The personal Odoo 19 reference is `core3_personal` at `http://localhost:8069`.
+An authenticated SQL check on 2026-09-10 returned
+`fleet|installed|t|19.0.0.1`; authenticated Fleet vehicle captures are kept
+under `/tmp` and are not committed. This batch's vehicle implementation was
+completed before the personal reference was installed and therefore retains
+its original Core3-only evidence; later Fleet batches must use the installed
+reference captures.

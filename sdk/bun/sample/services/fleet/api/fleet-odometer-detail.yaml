@@ -1,0 +1,33 @@
+page: { id: fleet-odometer-detail }
+datasources:
+  - id: fleet_odometer_detail
+    single: true
+    permission: fleet.read
+    query: "SELECT o.id, o.row_version, o.vehicle_id, v.name AS vehicle_name, COALESCE(o.driver_name, v.driver_name) AS driver_name, o.value, o.unit, CAST(o.date AS VARCHAR) AS date FROM fleet_vehicle_odometers o JOIN fleet_vehicles v ON v.id = o.vehicle_id WHERE o.id = :id"
+actions:
+  - id: edit_fleet_odometer
+    type: server_form
+    permission: fleet.write
+    title: Edit odometer log
+    action: fleet.odometer.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.fleet_odometer_detail
+    refresh: [fleet_odometer_detail, fleet_odometers]
+    mutation:
+      operation: update
+      table: fleet_vehicle_odometers
+      key: id
+      concurrency: false
+      fields: [vehicle_id, date, value, unit]
+      required: [vehicle_id, date, value]
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_odometers WHERE id = :id", status: 404, message: Odometer log was not found }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id", status: 404, message: Vehicle was not found }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2100-12-31' AND CAST(:value AS DECIMAL(18,2)) >= 0", status: 422, message: Date must be YYYY-MM-DD and odometer value must be zero or greater }
+      result: { query: "SELECT * FROM fleet_vehicle_odometers WHERE id = :id" }
+    fields:
+      - { field: vehicle_id, label: Vehicle, type: select, options_source: fleet_odometer_vehicles, required: true }
+      - { field: date, label: Date, type: text, required: true }
+      - { field: value, label: Odometer Value, type: number, required: true }
+      - { field: unit, label: Unit, type: text }

@@ -1,0 +1,14 @@
+title: Odometer Logs
+page: { id: fleet-odometer-detail, route: /fleet/odometers/detail, breadcrumb: [Human Resources, Fleet, Odometers, Odometer Logs], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_odometer_detail
+    title_field: vehicle_name
+    subtitle_field: date
+    editable: true
+    header_actions:
+      - { id: edit_fleet_odometer, label: Edit, variant: secondary, permission: fleet.write }
+    group_columns: 1
+    groups:
+      - title: Odometer Logs
+        fields: [{ field: vehicle_name, label: Vehicle }, { field: driver_name, label: Driver }, { field: value, label: Odometer Value }, { field: unit, label: Unit }, { field: date, label: Date }]

@@ -1,10 +1,11 @@
 # Odoo 19 UI parity — Fleet
 
-Status: ready
+Status: ready; vehicle batch 1 and Odometers batch 2 implemented in isolated
+worktrees, with remaining Fleet surfaces explicitly deferred below.
 
-This is a plan-only implementation gate. It authorizes a later Fleet
-implementation batch; it does not change product code, install Odoo modules,
-or claim that the uninstalled reference database contains Fleet screens.
+This plan remains the source of truth for the complete Fleet parity scope.
+The current bounded implementation is recorded in
+`odoo-ui-parity/fleet-batch-2.md`.
 
 ## Reference gate and limitation
 
@@ -18,23 +19,17 @@ or claim that the uninstalled reference database contains Fleet screens.
   `data/fleet_demo.xml`. The manifest also loads the fleet data, mail subtype,
   activity type, car-brand/model and vehicle-mail wizard definitions.
 - Authenticated audit on 2026-09-10 used `http://localhost:8069`, database
-  `core3_demo`, and the credentials in the parent parity plan. Authentication
-  succeeded as uid 2. RPC `ir.module.module` returned
-  `name=fleet, state=uninstalled, demo=false, latest_version=false,
-  installed_version=19.0.0.1`.
-- Because Fleet is uninstalled, the live database has no Fleet menu/action/view
-  records and no Fleet demo rows. `/odoo/fleet` redirected to `/odoo/discuss`.
-  This is the exact current limitation: source and planned contracts are
-  inspectable, but an authenticated Fleet desktop/mobile screen cannot be
-  truthfully captured until the addon is installed in `core3_demo`.
-- Authenticated reference captures proving the limitation (not Fleet parity)
-  are present under `/tmp` and are deliberately not committed:
-  `/tmp/odoo-fleet-uninstalled-desktop.png` (1440x900),
-  `/tmp/odoo-fleet-uninstalled-mobile.png` (390x844),
-  `/tmp/odoo-fleet-route-probe-desktop.png` (1440x900), and
-  `/tmp/odoo-fleet-route-probe-mobile.png` (390x844). They show the authenticated
-  Discuss shell after the unavailable route redirects; they must not be cited
-  as Fleet visual evidence.
+  `core3_personal`, login `codex@core3.local`, and password
+  `Core3Odoo2026!`. Authentication succeeded as the personal administrator.
+  SQL returned `fleet|installed|t|19.0.0.1` from `ir_module_module`, proving
+  Fleet is installed with demo data in the personal reference database.
+- Authenticated Fleet reference captures are present under `/tmp` and are
+  deliberately not committed: `/tmp/odoo-fleet-reference-current-desktop.png`
+  (1440x900), `/tmp/odoo-fleet-vehicles-mobile.png` (390x844),
+  `/tmp/odoo-fleet-odometers-desktop.png` (1440x900), and
+  `/tmp/odoo-fleet-odometers-mobile.png` (390x844). The Odometers captures
+  show Odoo's real List view with Date, Vehicle, Driver, Odometer Value, and
+  Unit columns and its mobile dense-list behavior.
 
 ## Source menu, action, route, and view inventory
 
@@ -140,10 +135,10 @@ Convertible/MPV/BMX/VTT/City, manufacturers/models, contracts and vehicles.
 states plus Omnium and Leasing categories. Use these as semantic reference
 fixtures, not as time-sensitive copied records or Odoo IDs.
 
-The current Core3 service is `sdk/bun/sample/services/fleet`: it exposes only
-Vehicles and Fleet Analysis, has one `fleet_vehicles` table, one demo vehicle,
-SQL embedded in page YAML, and an approximate Available/Assigned/Maintenance/
-Retired workflow. The implementation batch must:
+The current Core3 service is `sdk/bun/sample/services/fleet`: vehicle batch 1
+and Odometers batch 2 expose service-owned page-id APIs, stable Fleet vehicle
+and odometer fixtures, and the approximate Available/Assigned/Maintenance/
+Retired workflow. The remaining implementation batches must:
 
 - move every list/detail/analysis datasource, lookup, mutation and transition
   to convention-discovered `services/fleet/api/` fragments keyed by `page.id`;
@@ -220,9 +215,8 @@ The Fleet implementation batch is complete only when all of these are evidenced:
   contract/service/odometer actions, reports, settings, empty/error/loading,
   no horizontal overflow and browser network failures. Capture Core3
   verification screenshots under recorded `/tmp` paths;
-- authenticated Odoo reference desktop/mobile captures are added only after
-  Fleet is installed. Until then, the four uninstalled captures listed above
-  remain limitation evidence and no visual parity claim is allowed;
+- authenticated Odoo reference desktop/mobile captures are recorded for the
+  installed personal Fleet database under `/tmp`; they are not committed;
 - ordinary Fleet user, manager, system/settings user, other company and denied
   user checks prove menu, row, mutation, configuration and report boundaries.
 
@@ -231,6 +225,6 @@ The Fleet implementation batch is complete only when all of these are evidenced:
 Completed for this gate: pinned Odoo manifest/source XML/security/demo
 inspection; action/menu/view-mode and field inventory; Core3 Fleet manifest,
 pages, permissions, migrations, storage and styles inspection; authenticated
-Odoo login and `ir.module.module` status query; authenticated desktop/mobile
-home and `/odoo/fleet` route-probe screenshots; and plan-only review of the six
-register gates. No product code or image is part of this change.
+personal Odoo login and SQL module-status query; authenticated Fleet vehicle and
+Odometers desktop/mobile captures; and review of the six register gates. No
+product image is part of this change.

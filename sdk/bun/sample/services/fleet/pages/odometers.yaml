@@ -1,0 +1,55 @@
+title: Odometers
+page: { id: fleet-odometers, route: /fleet/odometers, breadcrumb: [Human Resources, Fleet, Odometers], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_odometers
+    create_action: create_fleet_odometer
+    create_label: New
+    search: { label: Search odometers, placeholder: 'Search vehicle, driver, value, or date...' }
+    filters:
+      - { field: vehicle_id, label: Vehicle, options_source: fleet_odometer_vehicles }
+    group_by:
+      - { field: vehicle_name, label: Vehicle }
+      - { field: date, label: Date }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+      - { id: graph, label: Graph, icon: graph, category_field: vehicle_name, measure_field: value, type: bar }
+    form_view: { page: apps/services/fleet/pages/fleet-odometer-detail.yaml, side_panel: true }
+    columns:
+      - { field: date, label: Date, type: DateCell, sortable: true }
+      - { field: vehicle_name, label: Vehicle, type: PrimaryEntityCell }
+      - { field: driver_name, label: Driver }
+      - { field: value, label: Odometer Value, align: right }
+      - { field: unit, label: Unit }
+    page_size: 50
+    row_key: id
+    row_open_action: view_fleet_odometer
+    row_double_click_action: view_fleet_odometer
+    row_actions: menu
+    empty_state: { title: No odometer logs, description: Create a new odometer log or adjust your search. }
+actions:
+  - id: create_fleet_odometer
+    type: server_form
+    permission: fleet.write
+    title: New odometer log
+    action: fleet.odometer.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fleet_odometers]
+    mutation:
+      operation: insert
+      table: fleet_vehicle_odometers
+      fields: [vehicle_id, driver_name, date, value, unit]
+      required: [vehicle_id, date, value]
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id", status: 404, message: Vehicle was not found }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2100-12-31' AND CAST(:value AS DECIMAL(18,2)) >= 0", status: 422, message: Date must be YYYY-MM-DD and odometer value must be zero or greater }
+      result: { query: "SELECT * FROM fleet_vehicle_odometers WHERE id = :id" }
+    fields:
+      - { field: vehicle_id, label: Vehicle, type: select, options_source: fleet_odometer_vehicles, required: true }
+      - { field: date, label: Date, type: text, required: true }
+      - { field: value, label: Odometer Value, type: number, required: true }
+      - { field: unit, label: Unit, type: text, default: km }

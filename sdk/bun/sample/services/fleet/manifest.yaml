@@ -12,7 +12,11 @@ menu:
     permission: fleet.read
   groups:
     - id: vehicles
-      label: Vehicles
+      label: Fleet
       items:
-        - { path: /vehicles, label: Vehicles, icon: car, permission: fleet.read }
+        - { path: /vehicles, label: Fleet, icon: car, permission: fleet.read }
+        - { path: /fleet/odometers, label: Odometers, icon: chart, permission: fleet.read }
+    - id: reporting
+      label: Reporting
+      items:
         - { path: /fleet-analysis, label: Fleet Analysis, icon: chart, permission: fleet.read }
