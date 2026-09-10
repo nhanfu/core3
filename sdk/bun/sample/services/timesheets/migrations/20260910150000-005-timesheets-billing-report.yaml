@@ -1,0 +1,24 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE timesheet_entries ADD COLUMN IF NOT EXISTS billing_type VARCHAR;
+      UPDATE timesheet_entries SET billing_type = CASE id
+        WHEN 'timesheet-demo-001' THEN 'billable_time'
+        WHEN 'timesheet-report-002' THEN 'billable_fixed'
+        WHEN 'timesheet-report-003' THEN 'billable_manual'
+        WHEN 'timesheet-report-004' THEN 'non_billable'
+        WHEN 'timesheet-report-005' THEN 'billable_milestones'
+        WHEN 'timesheet-report-006' THEN 'non_billable'
+        WHEN 'timesheet-report-007' THEN 'billable_time'
+        WHEN 'timesheet-report-008' THEN 'billable_fixed'
+        ELSE CASE WHEN billable THEN 'billable_time' ELSE 'non_billable' END
+      END,
+      updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      ALTER TABLE timesheet_entries DROP COLUMN IF EXISTS billing_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

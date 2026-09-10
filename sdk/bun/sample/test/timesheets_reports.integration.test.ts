@@ -12,6 +12,7 @@ const reportPages = [
   ['timesheets-by-employee', 'timesheets-by-employee.yaml', 'timesheet_report_by_employee', 'employee_name'],
   ['timesheets-by-project', 'timesheets-by-project.yaml', 'timesheet_report_by_project', 'project_name'],
   ['timesheets-by-task', 'timesheets-by-task.yaml', 'timesheet_report_by_task', 'task_name'],
+  ['timesheets-billing', 'timesheets-billing.yaml', 'timesheet_report_by_billing_type', 'billing_type'],
 ] as const;
 
 describe('Timesheets reporting parity slice', () => {
@@ -22,7 +23,7 @@ describe('Timesheets reporting parity slice', () => {
     const reportItems = manifest.menu.groups.find((group: any) => group.id === 'reporting').items;
 
     expect(reportItems.map((item: any) => item.path)).toEqual([
-      '/timesheets-by-employee', '/timesheets-by-project', '/timesheets-by-task',
+      '/timesheets-by-employee', '/timesheets-by-project', '/timesheets-by-task', '/timesheets-billing',
     ]);
     for (const [pageId, pageFile] of reportPages) {
       const page = yaml(`pages/${pageFile}`);
@@ -37,8 +38,8 @@ describe('Timesheets reporting parity slice', () => {
       expect(api.datasources[0].permission, pageFile).toBe('timesheets.manage');
       expect(api.datasources[0].pivot.fields).toEqual(expect.arrayContaining(['date', 'month']));
       expect(page.components[0].views.find((view: any) => view.id === 'pivot').pivot.default.measures).toEqual([
-        { field: 'amount', aggregate: 'sum', column: 'Timesheet Costs' },
-        { field: 'unit_amount', aggregate: 'sum', column: 'Time Spent' },
+        { field: pageId === 'timesheets-billing' ? 'unit_amount' : 'amount', aggregate: 'sum', column: pageId === 'timesheets-billing' ? 'Time Spent' : 'Timesheet Costs' },
+        { field: pageId === 'timesheets-billing' ? 'amount' : 'unit_amount', aggregate: 'sum', column: pageId === 'timesheets-billing' ? 'Timesheet Costs' : 'Time Spent' },
       ]);
     }
   });
@@ -63,7 +64,9 @@ describe('Timesheets reporting parity slice', () => {
         ? ['Admin User', 'Morgan Taylor', 'Priya Shah']
         : dimension === 'project_name'
           ? ['Core3 Implementation', 'Delivery Enablement']
-          : ['Complete module migration', 'Requirements analysis', 'Design', 'Quality analysis', 'Delivery', 'Training', 'Presentation', 'Sprint'];
+          : dimension === 'task_name'
+            ? ['Complete module migration', 'Requirements analysis', 'Design', 'Quality analysis', 'Delivery', 'Training', 'Presentation', 'Sprint']
+            : ['Billed at a Fixed Price', 'Billed Manually', 'Billed on Milestones', 'Billed on Timesheets', 'Non-Billable'];
       expect(result.data.map((row: any) => row[dimension]), sourceId).toEqual(expect.arrayContaining(expectedValues));
     }
   });
@@ -76,5 +79,24 @@ describe('Timesheets reporting parity slice', () => {
     const result = await repository.querySource(source, { q: 'Training' }, 0, 50);
     expect(result.data).toHaveLength(1);
     expect(result.data[0]).toMatchObject({ task_name: 'Training', date: '2026-01-08T00:00:00.000Z', unit_amount: 5 });
+  });
+
+  test('billing report groups deterministic invoice types and honors empty fixtures', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'timesheets_billing_report_migrations', ['schema', 'data']);
+    const source = yaml('api/timesheets-billing.yaml').datasources[0];
+    const result = await repository.querySource(source, { q: null }, 0, 50);
+    expect(result.meta.total).toBe(8);
+    expect(result.data.map((row: any) => row.billing_type)).toEqual(expect.arrayContaining([
+      'Billed at a Fixed Price', 'Billed Manually', 'Billed on Milestones', 'Billed on Timesheets', 'Non-Billable',
+    ]));
+    expect(result.data.filter((row: any) => row.billing_type === 'Non-Billable').every((row: any) => row.billable_time === 0 && row.non_billable_time > 0)).toBe(true);
+    const searched = await repository.querySource(source, { q: 'Billed Manually' }, 0, 50);
+    expect(searched.data).toHaveLength(1);
+    expect(searched.data[0].billing_type).toBe('Billed Manually');
+    const empty = await repository.querySource(source, { q: null, fixture_state: 'empty' }, 0, 50);
+    expect(empty.meta.total).toBe(0);
+    expect(empty.data).toEqual([]);
   });
 });

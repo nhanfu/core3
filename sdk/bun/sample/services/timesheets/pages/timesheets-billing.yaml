@@ -1,0 +1,29 @@
+title: Timesheets by Billing Type
+page: { id: timesheets-billing, route: /timesheets-billing, breadcrumb: [Timesheets, Reporting, By Billing Type], auth: { require: [timesheets.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: timesheet_report_by_billing_type
+    search: { label: Search timesheet report, placeholder: 'Search billing types, projects, employees, or tasks...' }
+    group_by: [{ field: billing_type, label: Billing Type }, { field: month, label: Month }, { field: project_name, label: Project }, { field: employee_name, label: Employee }, { field: task_name, label: Task }]
+    view_navigation: tabs
+    views:
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: month, column: Month }, { field: billing_type, column: Billing Type }, { field: amount, column: Timesheet Costs }, { field: unit_amount, column: Time Spent }, { field: billable_time, column: Billable Time }, { field: non_billable_time, column: Non-Billable Time }]
+          default: { rows: [month], columns: [billing_type], measures: [{ field: unit_amount, aggregate: sum, column: Time Spent }, { field: amount, aggregate: sum, column: Timesheet Costs }] }
+      - { id: graph, label: Graph, icon: graph, category_field: billing_type, measure_field: unit_amount, type: bar }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: date, label: Date, type: DateCell }
+      - { field: billing_type, label: Billing Type, type: PrimaryEntityCell }
+      - { field: project_name, label: Project }
+      - { field: employee_name, label: Employee }
+      - { field: task_name, label: Task }
+      - { field: amount, label: Timesheet Costs, align: right, optional: hide }
+      - { field: unit_amount, label: Time Spent, align: right }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No data yet!, description: Review your timesheets by billing type and make sure your time is billable. }

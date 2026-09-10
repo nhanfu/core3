@@ -237,3 +237,45 @@ Focused report/settings integration tests pass: 6 tests and 60 assertions;
 actions report `pivot,graph` modes. Post-fix Core3/Odoo desktop/mobile capture
 signoff was limited by the interrupted isolated runtime/browser pass, so no
 post-fix screenshot is claimed as final evidence here.
+
+## Batch 4 implementation record — Billing type reporting
+
+The refreshed authenticated owned reference is `core3_owned` on Odoo
+`19.0-20260908`, checked as `codex@core3.local` after the module-install
+restart. Exact observed module state was `hr_timesheet=installed,demo=true,
+installed_version=19.0.1.0`, `sale_timesheet=installed,demo=true,
+installed_version=19.0.1.0`, `fleet=installed,demo=true,installed_version=19.0.0.1`,
+`mrp=installed,demo=true,installed_version=19.0.2.0`,
+`mass_mailing=installed,demo=true,installed_version=19.0.2.7`, and
+`im_livechat=installed,demo=true,installed_version=19.0.1.0`.
+
+The next uncovered visible action was confirmed in the authenticated menu as
+`Timesheets/Reporting/Timesheets/By Billing Type`, menu id `487`, action
+`ir.actions.act_window,766`, named `Timesheets by Billing Type`, model
+`timesheets.analysis.report`, path `timesheets-billing`, domain
+`[('project_id', '!=', False)]`, and `pivot,graph` view modes. Odoo’s exact
+empty help text was also observed: `No data yet!` and `Review your timesheets
+by billing type and make sure your time is billable.`
+
+Batch 4 adds a Timesheets-owned `timesheets-billing` page/API pair, a
+deterministic `billing_type` migration `0.0.5`, fixed semantic categories for
+the seeded entries, Time Spent/Timesheet Costs/Billable Time/Non-Billable Time
+measures, search and empty-fixture guards, and the permission-bound
+`timesheets.manage` report menu. The page remains layout-only and joins its
+API by `page.id`; the report is reachable from the authenticated Core3 menu at
+`/timesheets/timesheets-billing`.
+
+Focused report coverage passed 4 tests and 67 assertions; migration versions
+are unique from `0.0.1` through `0.0.5`; the UI audit passed with 351 pages,
+356 routes, and 624 datasources; CSS was rebuilt successfully in the isolated
+worktree. Authenticated Odoo captures are
+`/tmp/odoo-timesheets/owned-billing-final-desktop.png` and
+`/tmp/odoo-timesheets/owned-billing-final-mobile.png`. Authenticated Core3
+captures are `/tmp/odoo-timesheets/core3-billing-final-desktop.png`,
+`/tmp/odoo-timesheets/core3-billing-final-mobile.png`, plus the exercised
+empty-search state `/tmp/odoo-timesheets/core3-billing-empty-desktop.png`.
+Both Odoo viewports and both Core3 viewports reported no failed requests or
+console errors and no document/body horizontal overflow. Core3 desktop was
+opened through the Timesheets menu; the mobile capture used the authenticated
+action path because the compact launcher hides the nested menu, after the
+desktop menu-to-action path was verified.

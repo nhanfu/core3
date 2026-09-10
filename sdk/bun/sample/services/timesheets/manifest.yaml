@@ -23,6 +23,7 @@ menu:
         - { path: /timesheets-by-employee, label: By Employee, icon: users, permission: timesheets.manage }
         - { path: /timesheets-by-project, label: By Project, icon: project, permission: timesheets.manage }
         - { path: /timesheets-by-task, label: By Task, icon: task, permission: timesheets.manage }
+        - { path: /timesheets-billing, label: By Billing Type, icon: chart, permission: timesheets.manage }
     - id: configuration
       label: Configuration
       items:
