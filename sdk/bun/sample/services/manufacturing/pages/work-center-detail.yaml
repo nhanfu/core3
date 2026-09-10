@@ -1,0 +1,15 @@
+title: Work Center
+page: { id: work-center-detail, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers], auth: { require: [manufacturing.manage] } }
+components:
+  - type: OdooFormView
+    source: mrp_workcenter_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Work Center
+        fields: [{ field: name, label: Work Center }, { field: code, label: Code }, { field: company_name, label: Company }, { field: active, label: Active }]
+      - title: Performance
+        fields: [{ field: time_efficiency, label: Time Efficiency }, { field: oee_target, label: OEE Target }, { field: working_state, label: Workcenter Status }]
+      - title: Work Orders
+        fields: [{ field: planned_workorders, label: Planned }, { field: ready_workorders, label: Ready }, { field: progress_workorders, label: In Progress }, { field: blocked_workorders, label: Blocked }]
+    header_actions: [{ id: edit_mrp_workcenter, label: Edit, variant: primary }]

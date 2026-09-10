@@ -1,6 +1,19 @@
 # Odoo 19 UI parity - Manufacturing
 
-Status: blocked (live reference addon prerequisite)
+Status: in-progress (live reference addon is available; full parity remains incomplete)
+
+## 2026-09-10 bounded implementation progress
+
+- The owned authenticated reference database `core3_owned` has Manufacturing
+  installed with demo data. The disjoint Configuration / Work Centers action
+  (`mrp_workcenter_action`, action 872, model `mrp.workcenter`,
+  `list,kanban,form`) is implemented in Core3 as `/work-centers` with a
+  presentation-only list/detail pair, page-id-bound API fragments, fixed
+  2026-01-15 fixtures, CRUD/archive permissions, and explicit empty/error/
+  not-found/validation/conflict states.
+- This is one bounded action only; the full manufacturing readiness gate below
+  remains open until the other source actions, view modes, integrations,
+  permissions, and paired browser evidence are complete.
 
 This is the complete implementation sub-plan for the Core3 `manufacturing`
 service. It is plan-only: it does not change product code, install Odoo

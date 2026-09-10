@@ -1,0 +1,37 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_workcenters (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        code VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        time_efficiency DECIMAL(8,2) NOT NULL DEFAULT 100,
+        oee_target DECIMAL(8,2) NOT NULL DEFAULT 90,
+        working_state VARCHAR NOT NULL DEFAULT 'normal',
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        planned_workorders INTEGER NOT NULL DEFAULT 0,
+        ready_workorders INTEGER NOT NULL DEFAULT 0,
+        progress_workorders INTEGER NOT NULL DEFAULT 0,
+        blocked_workorders INTEGER NOT NULL DEFAULT 0,
+        color INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        UNIQUE(name, company_name)
+      );
+      INSERT INTO mrp_workcenters (id, name, code, active, time_efficiency, oee_target, working_state, company_name, planned_workorders, ready_workorders, progress_workorders, blocked_workorders, color)
+      VALUES
+        ('workcenter-assembly-1', 'Assembly 1', NULL, TRUE, 100, 90, 'normal', 'My Company', 2, 1, 0, 0, 0),
+        ('workcenter-assembly-2', 'Assembly 2', NULL, TRUE, 100, 90, 'normal', 'My Company', 1, 0, 1, 0, 0),
+        ('workcenter-drill-1', 'Drill 1', NULL, TRUE, 100, 90, 'blocked', 'My Company', 0, 0, 0, 1, 0),
+        ('workcenter-packaging-1', 'Packaging 1', 'PACK-01', FALSE, 92.5, 85, 'normal', 'My Company', 0, 0, 0, 0, 7)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM mrp_workcenters WHERE id IN ('workcenter-assembly-1', 'workcenter-assembly-2', 'workcenter-drill-1', 'workcenter-packaging-1');
+      DROP TABLE IF EXISTS mrp_workcenters;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

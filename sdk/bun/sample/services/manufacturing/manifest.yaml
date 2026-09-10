@@ -33,3 +33,10 @@ menu:
           label: Production Analysis
           icon: chart
           permission: manufacturing.read
+    - id: configuration
+      label: Configuration
+      items:
+        - path: /work-centers
+          label: Work Centers
+          icon: tools
+          permission: manufacturing.manage

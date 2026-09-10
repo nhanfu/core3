@@ -1,0 +1,39 @@
+title: Work Centers
+page: { id: manufacturing-work-centers, route: /work-centers, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers], auth: { require: [manufacturing.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_workcenters
+    create_action: create_mrp_workcenter
+    create_label: New
+    search: { label: Search work centers, placeholder: Search work centers or codes... }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: working_state
+        mobile: false
+        card: { title: name, subtitle: company_name, fields: [{ field: code, label: Code }, { field: planned_workorders, label: Planned }, { field: ready_workorders, label: Ready }, { field: progress_workorders, label: In Progress }, { field: blocked_workorders, label: Blocked }, { field: working_state, label: Status }] }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card: { title: name, subtitle: company_name, fields: [{ field: code, label: Code }, { field: time_efficiency, label: Time Efficiency }, { field: oee_target, label: OEE Target }, { field: working_state, label: Status }] }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/manufacturing/pages/work-center-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: edit_mrp_workcenter
+    row_actions: menu
+    empty_state: { title: No work centers found, description: No work centers match the current filters. Try another search or create a new work center. }
+    columns:
+      - { field: name, label: Work Center, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: code, label: Code, optional: hide }
+      - { field: working_state, label: Status, type: StatusChip }
+      - { field: time_efficiency, label: Time Efficiency, align: right }
+      - { field: oee_target, label: OEE Target, align: right }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_mrp_workcenter, label: Edit, icon: edit }, { id: archive_mrp_workcenter, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_mrp_workcenter, label: Unarchive, icon: archive, show_if: 'row.active === false' }, { id: delete_mrp_workcenter, label: Delete, icon: trash, variant: danger }] }
+    page_size: 25
