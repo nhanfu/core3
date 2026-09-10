@@ -460,6 +460,15 @@ document width 390, and no failed responses. Evidence is
 `/tmp/core3-events-mobile-cards-fix.png`; the matching installed Odoo
 reference remains `/tmp/odoo-events-list-modes-{desktop,mobile}.png`.
 
+The Answer Breakdown batch adds the Odoo Reporting / Answer Breakdown action at
+`/events/answer-breakdown` with the source view order List, Graph, Pivot. Its
+page is layout-only and reads the existing service-owned registration-answer
+catalog through `api/answer-breakdown.yaml`, including Odoo list labels,
+answer-count graph/pivot fields, the exact no-answers copy, and deterministic
+empty/transport-error/permission boundaries. Authenticated desktop/mobile
+checks and local Odoo captures are kept under `/tmp`; no screenshots are
+repository assets.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

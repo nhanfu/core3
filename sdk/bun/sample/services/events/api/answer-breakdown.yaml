@@ -1,0 +1,8 @@
+page: { id: answer-breakdown }
+datasources:
+  - id: event_answer_breakdown
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENTS_ANSWER_DATA_UNAVAILABLE, message: Event answer data is temporarily unavailable } }
+    pivot:
+      fields: [registration_name, partner_name, question_name, value_text_box, value_answer_id, event_name, answer_count]
+    query: "SELECT a.id, a.registration_id, r.attendee_name AS registration_name, r.attendee_email AS partner_name, a.question AS question_name, COALESCE(a.text_answer, '') AS value_text_box, COALESCE(NULLIF(a.suggested_answer, ''), NULLIF(a.text_answer, ''), 'No answer') AS value_answer_id, e.id AS event_id, e.name AS event_name, 1 AS answer_count FROM event_registration_answers a JOIN event_registrations r ON r.id = a.registration_id JOIN events e ON e.id = r.event_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR r.attendee_name ILIKE '%' || :q || '%' OR r.attendee_email ILIKE '%' || :q || '%' OR a.question ILIKE '%' || :q || '%' OR COALESCE(a.suggested_answer, '') ILIKE '%' || :q || '%' OR COALESCE(a.text_answer, '') ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%') ORDER BY e.name, r.attendee_name, a.question, a.id"

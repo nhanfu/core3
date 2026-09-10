@@ -1,0 +1,41 @@
+title: Answer Breakdown
+page: { id: answer-breakdown, route: /events/answer-breakdown, breadcrumb: [Marketing, Events, Reporting, Answer Breakdown], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_answer_breakdown
+    search: { label: Search answers, placeholder: 'Search attendee, question, answer, or event...' }
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: value_answer_id
+        measure_field: answer_count
+        type: bar
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: registration_name, column: Registration }
+            - { field: value_answer_id, column: Selected answer }
+            - { field: event_name, column: Event }
+            - { field: answer_count, column: Answers }
+          default:
+            rows: [registration_name]
+            columns: [value_answer_id]
+            measures: [{ field: answer_count, aggregate: sum, column: Answers }]
+    columns:
+      - { field: registration_name, label: Registration, type: PrimaryEntityCell }
+      - { field: partner_name, label: Partner }
+      - { field: question_name, label: Question }
+      - { field: value_text_box, label: Text answer }
+      - { field: value_answer_id, label: Selected answer }
+      - { field: event_name, label: Event }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No Answers yet!, description: Come back once you have registrations to overview answers. }
