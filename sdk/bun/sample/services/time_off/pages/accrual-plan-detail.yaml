@@ -1,0 +1,18 @@
+title: Accrual Plan
+page: { id: accrual-plan-detail, route: /accrual-plans/detail, breadcrumb: [Human Resources, Time Off, Accrual Plans, Plan], auth: { require: [time_off.manage] } }
+components:
+  - type: OdooFormView
+    source: accrual_plan_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Active, label: Active }, { value: Archived, label: Archived }]
+    status_colors: { Active: green, Archived: neutral }
+    editable: true
+    header_actions:
+      - { id: edit_accrual_plan, label: Edit, variant: secondary, permission: time_off.manage }
+    group_columns: 2
+    groups:
+      - title: Accrual Plan
+        fields: [{ field: name, label: Name }, { field: state, label: Status }]
+      - title: Configuration
+        fields: [{ field: level_count, label: Levels }, { field: employee_count, label: Employees }]

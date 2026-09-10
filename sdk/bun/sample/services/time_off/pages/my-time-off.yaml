@@ -39,8 +39,7 @@ components:
           - { id: meeting, label: Meeting, icon: ◉ }
           - { id: time_off_approval, label: Time Off Approval, icon: ✓ }
           - { id: time_off_second_approve, label: Time Off Second Approve, icon: ✓ }
-          - { id: trip_with_family, label: Trip with Family, icon: ✈ }
-          - { id: doctor_appointment, label: Doctor Appointment, icon: ✚ }
+          - { id: document, label: Document, icon: ▣ }
     columns:
       - { field: name, label: Time Off, type: PrimaryEntityCell }
       - { field: leave_type_name, label: Time Off Type }

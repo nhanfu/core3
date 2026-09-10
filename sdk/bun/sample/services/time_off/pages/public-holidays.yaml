@@ -9,6 +9,7 @@ components:
     create_action: create_public_holiday
     create_label: New public holiday
     search: { label: Search public holidays, placeholder: Search holidays... }
+    empty_state: { title: No public holidays found, description: Create a public holiday or adjust your search. }
     columns:
       - { field: name, label: Name, type: PrimaryEntityCell }
       - { field: date_from, label: Start date }
@@ -16,6 +17,8 @@ components:
       - { field: calendar_name, label: Working Hours }
     page_size: 50
     row_key: id
+    row_open_action: view_public_holiday
+    row_double_click_action: view_public_holiday
 actions:
   - id: create_public_holiday
     type: server_form
@@ -31,6 +34,8 @@ actions:
       fields: [name, date_from, date_to, calendar_name]
       required: [name, date_from, date_to]
       defaults: { calendar_name: Standard 40 hours/week }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, message: End date must be on or after start date }
       result: { query: "SELECT * FROM public_holidays WHERE id = :id" }
     fields:
       - { field: name, label: Name, type: text, required: true }

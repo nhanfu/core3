@@ -1,0 +1,32 @@
+page: { id: accrual-plan-detail }
+datasources:
+  - id: accrual_plan_detail
+    single: true
+    permission: time_off.manage
+    query: "SELECT id, name, level_count, employee_count, state FROM accrual_plans WHERE id = :id"
+actions:
+  - id: edit_accrual_plan
+    type: server_form
+    permission: time_off.manage
+    title: Edit accrual plan
+    action: time_off.accrual_plans.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accrual_plan_detail
+    refresh: [accrual_plan_detail, accrual_plans]
+    mutation:
+      operation: update
+      table: accrual_plans
+      key_field: id
+      concurrency: false
+      fields: [name, level_count, employee_count, state]
+      required: [name]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(CASE WHEN CAST(:level_count AS VARCHAR) = '' THEN '0' ELSE CAST(:level_count AS VARCHAR) END AS INTEGER) >= 0 AND CAST(CASE WHEN CAST(:employee_count AS VARCHAR) = '' THEN '0' ELSE CAST(:employee_count AS VARCHAR) END AS INTEGER) >= 0 AND CAST(:state AS VARCHAR) IN ('Active', 'Archived')", status: 422, message: Name, levels, employees, and status are required }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accrual_plans other WHERE other.id <> :id AND other.name = :name)", status: 409, message: Accrual plan names must be unique }
+      result: { query: "SELECT * FROM accrual_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: level_count, label: Levels, type: number }
+      - { field: employee_count, label: Employees, type: number }
+      - { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }

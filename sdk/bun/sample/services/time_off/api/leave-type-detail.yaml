@@ -1,0 +1,33 @@
+page: { id: leave-type-detail }
+datasources:
+  - id: leave_type_detail
+    single: true
+    permission: time_off.manage
+    query: "SELECT id, name, code, allocation_days, requires_approval, state FROM leave_types WHERE id = :id"
+actions:
+  - id: edit_leave_type
+    type: server_form
+    permission: time_off.manage
+    title: Edit time off type
+    action: time_off.types.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.leave_type_detail
+    refresh: [leave_type_detail, leave_types]
+    mutation:
+      operation: update
+      table: leave_types
+      key_field: id
+      concurrency: false
+      fields: [name, code, allocation_days, requires_approval, state]
+      required: [name, code]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:code AS VARCHAR))) > 0 AND CAST(CASE WHEN CAST(:allocation_days AS VARCHAR) = '' THEN '0' ELSE CAST(:allocation_days AS VARCHAR) END AS DECIMAL(18,3)) >= 0 AND CAST(:state AS VARCHAR) IN ('Active', 'Archived')", status: 422, message: Name, code, and non-negative allocation days are required }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_types other WHERE other.id <> :id AND (other.name = :name OR other.code = :code))", status: 409, message: Time off type name and code must be unique }
+      result: { query: "SELECT * FROM leave_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Time off type, type: text, required: true }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: allocation_days, label: Allocation days, type: number }
+      - { field: requires_approval, label: Approval required, type: checkbox }
+      - { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }

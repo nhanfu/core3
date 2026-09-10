@@ -1,0 +1,18 @@
+title: Time Off Type
+page: { id: leave-type-detail, route: /leave-types/detail, breadcrumb: [Human Resources, Time Off, Time Off Types, Type], auth: { require: [time_off.manage] } }
+components:
+  - type: OdooFormView
+    source: leave_type_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Active, label: Active }, { value: Archived, label: Archived }]
+    status_colors: { Active: green, Archived: neutral }
+    editable: true
+    header_actions:
+      - { id: edit_leave_type, label: Edit, variant: secondary, permission: time_off.manage }
+    group_columns: 2
+    groups:
+      - title: Time Off Type
+        fields: [{ field: name, label: Time off type }, { field: code, label: Code }, { field: state, label: Status }]
+      - title: Allocation and approval
+        fields: [{ field: allocation_days, label: Allocation days }, { field: requires_approval, label: Approval required }]

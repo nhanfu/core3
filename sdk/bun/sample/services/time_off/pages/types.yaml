@@ -1,5 +1,5 @@
-title: Leave Types
-page: { id: leave-types, breadcrumb: [Human Resources, Time Off, Leave Types], auth: { require: [time_off.manage] } }
+title: Time Off Types
+page: { id: leave-types, route: /leave-types, breadcrumb: [Human Resources, Time Off, Time Off Types], auth: { require: [time_off.manage] } }
 components:
   - type: ListView
     variant: odoo
@@ -7,6 +7,7 @@ components:
     create_action: create_leave_type
     create_label: New leave type
     search: { label: Search leave types, placeholder: Search by name or code... }
+    empty_state: { title: No time off types found, description: Create a time off type or adjust your search. }
     filters: [{ field: state, label: Status, options_source: leave_type_states }]
     view_navigation: tabs
     views:
@@ -30,6 +31,8 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_open_action: view_leave_type
+    row_double_click_action: view_leave_type
     row_actions: menu
 actions:
   - id: create_leave_type
@@ -45,6 +48,8 @@ actions:
       table: leave_types
       fields: [name, code, allocation_days, requires_approval]
       required: [name, code]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE CAST(CASE WHEN CAST(:allocation_days AS VARCHAR) = '' THEN '0' ELSE CAST(:allocation_days AS VARCHAR) END AS DECIMAL(18,3)) >= 0", status: 422, message: Allocation days must be zero or greater }
       result: { query: "SELECT * FROM leave_types WHERE id = :id" }
     fields:
       - { field: name, label: Leave type, type: text, required: true }

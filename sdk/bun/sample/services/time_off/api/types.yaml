@@ -6,4 +6,10 @@ datasources:
     query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Archived','Archived')) states(value, label)"
   - id: leave_types
     permission: time_off.read
-    query: "SELECT id, name, code, allocation_days, requires_approval, state FROM leave_types WHERE (:state IS NULL OR state = :state) ORDER BY name"
+    query: "SELECT id, name, code, allocation_days, requires_approval, state FROM leave_types WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR code ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY name"
+actions:
+  - id: view_leave_type
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /leave-types/detail
+    params: { id: '{row.id}' }

@@ -265,17 +265,34 @@ The isolated batch was committed as `1c291fba` and integrated as `33b4e777`.
 
 The shared ActivityView batch adds the desktop Activity counterpart to My Time
 Off. Its deterministic API slots render the Odoo-observed To-Do, Email, Call,
-Meeting, Time Off Approval, Time Off Second Approve, Trip with Family, and
-Doctor Appointment columns, with state counters, colored cells, record date
-ranges, empty-cell scheduling, and the Schedule activity footer. Activity is
-desktop-only to match Odoo's responsive behavior: at 1440x900 Core3 and Odoo
-both render the activity matrix with no failed requests or document overflow;
-captures are `/tmp/core3-my-time-off-activity-desktop-final.png` and
+Meeting, Time Off Approval, Time Off Second Approve, and Document columns,
+with state counters, colored cells, record date ranges, empty-cell scheduling,
+and the Schedule activity footer. Activity is desktop-only to match Odoo's
+responsive behavior: at 1440x900 Core3 and Odoo both render the activity
+matrix with no failed requests or document overflow; captures are
+`/tmp/core3-my-time-off-activity-desktop-final.png` and
 `/tmp/odoo-time-off-desktop-activity-personal.png`. At 390x844 both fall back
 to the responsive collection surface with no horizontal overflow; captures
 are `/tmp/core3-my-time-off-activity-mobile-final.png` and
 `/tmp/odoo-my-time-off-activity-mobile.png`. The implementation was committed
 as `5327ecbf`/`d9aa4d8e` and integrated as `712820a5`/`7aeecab3`.
+
+The configuration-form follow-up adds explicit list-to-form routes for Time
+Off Types, Accrual Plans, and Public Holidays. Each list keeps its existing
+Odoo tabs where applicable, service-owned `page.id` API fragments now provide
+searchable fixtures, visible empty states, permissioned row navigation, and
+editable OdooFormView detail pages with deterministic 422 validation and 409
+uniqueness guards. Authenticated Core3 browser checks at 1440x900 loaded all
+three seeded lists and the Time Off Type form; an invalid allocation returned
+HTTP 422 without stopping the server, and a valid edit returned HTTP 200 and
+persisted. Desktop Activity now visibly matches Odoo's seven columns, with no
+`Trip with Family` or `Doctor Appointment`; at 390x844 the Activity URL falls
+back to Cards, preserves `scrollWidth === 390`, and has no failed responses.
+Captures are `/tmp/core3-time-off-next-types-list-desktop.png`,
+`/tmp/core3-time-off-next-type-detail-desktop.png`,
+`/tmp/core3-time-off-next-activity-desktop.png`, and
+`/tmp/core3-time-off-next-activity-mobile.png`. Focused tests cover the
+configuration contracts and exact Activity labels.
 
 ### Source and navigation
 

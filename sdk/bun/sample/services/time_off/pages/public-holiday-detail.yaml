@@ -1,0 +1,15 @@
+title: Public Holiday
+page: { id: public-holiday-detail, route: /public-holidays/detail, breadcrumb: [Human Resources, Time Off, Public Holidays, Holiday], auth: { require: [time_off.manage] } }
+components:
+  - type: OdooFormView
+    source: public_holiday_detail
+    title_field: name
+    editable: true
+    header_actions:
+      - { id: edit_public_holiday, label: Edit, variant: secondary, permission: time_off.manage }
+    group_columns: 2
+    groups:
+      - title: Public Holiday
+        fields: [{ field: name, label: Name }, { field: calendar_name, label: Working Hours }]
+      - title: Dates
+        fields: [{ field: date_from, label: Start date }, { field: date_to, label: End date }]

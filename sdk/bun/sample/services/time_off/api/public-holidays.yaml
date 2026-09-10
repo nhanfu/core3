@@ -2,4 +2,10 @@ page: { id: public-holidays }
 datasources:
   - id: public_holidays
     permission: time_off.manage
-    query: "SELECT id, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, calendar_name FROM public_holidays ORDER BY date_from"
+    query: "SELECT id, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, calendar_name FROM public_holidays WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR calendar_name ILIKE '%' || :q || '%') ORDER BY date_from"
+actions:
+  - id: view_public_holiday
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /public-holidays/detail
+    params: { id: '{row.id}' }

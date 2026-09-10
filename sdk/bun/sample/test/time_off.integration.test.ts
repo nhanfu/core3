@@ -5,6 +5,7 @@ import { discoverPages } from '@core3/server/discovery';
 
 const root = join(import.meta.dir, '../services/time_off');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
+const apiYaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, `api/${file}`), 'utf8')) as any;
 
 describe('Time Off Odoo view navigation', () => {
   test('uses visible tabs for every multi-view list', () => {
@@ -59,5 +60,43 @@ describe('Time Off Odoo view navigation', () => {
     const action = page.actions.find((candidate: any) => candidate.id === 'create_leave_request');
     expect(action.mutation.guards[0].query).toContain('CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)');
     expect(action.mutation.guards[0].message).toContain('valid dates');
+  });
+
+  test('covers configuration list to form contracts and the Odoo activity columns', () => {
+    const configuration = [
+      ['types.yaml', 'leave-type-detail.yaml', 'leave_types', 'leave_type_detail', '/leave-types/detail'],
+      ['accrual-plans.yaml', 'accrual-plan-detail.yaml', 'accrual_plans', 'accrual_plan_detail', '/accrual-plans/detail'],
+      ['public-holidays.yaml', 'public-holiday-detail.yaml', 'public_holidays', 'public_holiday_detail', '/public-holidays/detail'],
+    ] as const;
+
+    for (const [listFile, detailFile, listSource, detailSource, detailRoute] of configuration) {
+      const list = yaml(`pages/${listFile}`);
+      const listView = list.components.find((component: any) => component.type === 'ListView');
+      expect(listView.source, listFile).toBe(listSource);
+      expect(listView.empty_state?.title, listFile).toBeTruthy();
+      expect(listView.search?.placeholder, listFile).toBeTruthy();
+      expect(listView.row_open_action, listFile).toBeTruthy();
+      expect(apiYaml(listFile).actions.find((candidate: any) => candidate.id === listView.row_open_action)?.navigate_to, listFile).toBe(detailRoute);
+
+      const detail = yaml(`pages/${detailFile}`);
+      const form = detail.components.find((component: any) => component.type === 'OdooFormView');
+      expect(form.source, detailFile).toBe(detailSource);
+      expect(form.header_actions?.map((action: any) => action.label), detailFile).toContain('Edit');
+      expect(apiYaml(detailFile).datasources.find((source: any) => source.id === detailSource)?.single, detailFile).toBe(true);
+      const update = apiYaml(detailFile).actions.find((candidate: any) => candidate.operation === 'update');
+      expect(update?.permission, detailFile).toBe('time_off.manage');
+      expect(update?.mutation?.guards?.some((guard: any) => guard.status === 422), detailFile).toBe(true);
+    }
+
+    const activityTypes = yaml('pages/my-time-off.yaml').components
+      .find((component: any) => component.type === 'ListView')
+      .views.find((view: any) => view.id === 'activity').activity_types
+      .map((activity: any) => activity.label);
+    expect(activityTypes).toEqual([
+      'To-Do', 'Email', 'Call', 'Meeting', 'Time Off Approval',
+      'Time Off Second Approve', 'Document',
+    ]);
+    expect(activityTypes).not.toContain('Trip with Family');
+    expect(activityTypes).not.toContain('Doctor Appointment');
   });
 });

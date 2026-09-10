@@ -1,0 +1,32 @@
+page: { id: public-holiday-detail }
+datasources:
+  - id: public_holiday_detail
+    single: true
+    permission: time_off.manage
+    query: "SELECT id, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, calendar_name FROM public_holidays WHERE id = :id"
+actions:
+  - id: edit_public_holiday
+    type: server_form
+    permission: time_off.manage
+    title: Edit public holiday
+    action: time_off.public_holidays.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.public_holiday_detail
+    refresh: [public_holiday_detail, public_holidays]
+    mutation:
+      operation: update
+      table: public_holidays
+      key_field: id
+      concurrency: false
+      fields: [name, date_from, date_to, calendar_name]
+      required: [name, date_from, date_to]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, message: Name is required and end date must be on or after start date }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM public_holidays other WHERE other.id <> :id AND other.name = :name)", status: 409, message: Public holiday names must be unique }
+      result: { query: "SELECT * FROM public_holidays WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: date_from, label: Start date, type: date, required: true }
+      - { field: date_to, label: End date, type: date, required: true }
+      - { field: calendar_name, label: Working Hours, type: text, required: true }
