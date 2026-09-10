@@ -1,0 +1,55 @@
+page: { id: pos-product-tag-detail }
+datasources:
+  - id: pos_product_tag_detail
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_PRODUCT_TAG_DETAIL_UNAVAILABLE, message: Product tag details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, visible_to_customers, color, description, product_templates, product_variants, product_count, active FROM pos_product_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: back_to_pos_product_tags
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-tags
+
+  - id: edit_pos_product_tag
+    type: server_form
+    permission: pos.write
+    title: Edit Product Tag
+    action: pos.product_tags.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.pos_product_tag_detail
+    refresh: [pos_product_tag_detail, pos_product_tags]
+    mutation:
+      operation: update
+      table: pos_product_tags
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, visible_to_customers, color, description]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM pos_product_tags WHERE id = :id", status: 404, code: POS_PRODUCT_TAG_NOT_FOUND, message: Product tag not found. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_PRODUCT_TAG_NAME_REQUIRED, message: Tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_product_tags WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: POS_PRODUCT_TAG_NAME_EXISTS, message: A product tag with this name already exists. }
+      result: { query: "SELECT * FROM pos_product_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Tag, type: text, required: true }
+      - { field: visible_to_customers, label: Visible to customers?, type: checkbox }
+      - { field: color, label: Color, type: text }
+      - { field: description, label: Description, type: textarea }
+
+  - id: delete_pos_product_tag
+    type: server
+    permission: pos.write
+    action: pos.product_tags.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [pos_product_tags]
+    mutation:
+      operation: delete
+      table: pos_product_tags
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_product_tags WHERE id = :id", status: 404, code: POS_PRODUCT_TAG_NOT_FOUND, message: Product tag not found. }

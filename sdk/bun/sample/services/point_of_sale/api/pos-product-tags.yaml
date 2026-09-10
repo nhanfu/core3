@@ -2,7 +2,16 @@ page: { id: pos-product-tags }
 datasources:
   - id: pos_product_tags
     permission: pos.read
-    query: "SELECT id, 1 AS row_version, name, color, product_count, active FROM pos_product_tags WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY name"
-  - id: pos_tag_active
+    error_states: { transport_error: { status: 503, code: POS_PRODUCT_TAGS_UNAVAILABLE, message: Product tags are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, visible_to_customers, product_templates, product_variants, color, description, active FROM pos_product_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: new_pos_product_tag
+    type: navigate
+    permission: pos.write
+    navigate_to: /point-of-sale/product-tags/new
+
+  - id: view_pos_product_tag
+    type: navigate
     permission: pos.read
-    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"
+    navigate_to: /point-of-sale/product-tag-detail
+    params: { id: '{row.id}' }

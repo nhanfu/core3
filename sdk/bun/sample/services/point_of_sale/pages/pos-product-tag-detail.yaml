@@ -1,0 +1,23 @@
+title: Product Tag
+page: { id: pos-product-tag-detail, route: /point-of-sale/product-tag-detail, breadcrumb: [Sales, Point of Sale, Products, Product Tags], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_product_tag_detail
+    title_field: name
+    editable: true
+    header_actions:
+      - { id: back_to_pos_product_tags, label: Product Tags, variant: secondary, permission: pos.read }
+      - { id: edit_pos_product_tag, label: Edit, variant: primary, permission: pos.write }
+      - { id: delete_pos_product_tag, label: Delete, variant: danger, permission: pos.write, confirm: Delete this product tag? }
+    group_columns: 2
+    groups:
+      - title: Tag
+        fields:
+          - { field: name, label: Tag }
+          - { field: visible_to_customers, label: Visible to customers? }
+          - { field: color, label: Color, type: ColorCell }
+      - title: Point of Sale
+        fields:
+          - { field: description, label: Description, type: textarea }
+          - { field: product_templates, label: Product Templates }
+          - { field: product_variants, label: Product Variant }

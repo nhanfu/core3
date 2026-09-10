@@ -1,0 +1,33 @@
+version: 0.0.25
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_product_tags ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE pos_product_tags ADD COLUMN IF NOT EXISTS visible_to_customers BOOLEAN;
+      ALTER TABLE pos_product_tags ADD COLUMN IF NOT EXISTS description VARCHAR;
+      ALTER TABLE pos_product_tags ADD COLUMN IF NOT EXISTS product_templates INTEGER;
+      ALTER TABLE pos_product_tags ADD COLUMN IF NOT EXISTS product_variants INTEGER;
+      UPDATE pos_product_tags SET row_version = 1 WHERE row_version IS NULL;
+      UPDATE pos_product_tags SET visible_to_customers = true WHERE visible_to_customers IS NULL;
+      UPDATE pos_product_tags SET description = '' WHERE description IS NULL;
+      UPDATE pos_product_tags SET product_templates = 0 WHERE product_templates IS NULL;
+      UPDATE pos_product_tags SET product_variants = 0 WHERE product_variants IS NULL;
+      UPDATE pos_product_tags SET product_templates = product_count, product_variants = product_count WHERE product_templates = 0 AND product_count <> 0;
+      UPDATE pos_product_tags SET description = CASE id
+        WHEN 'pos-tag-new' THEN 'Recently added products.'
+        WHEN 'pos-tag-best-seller' THEN 'Products with consistently strong sales.'
+        WHEN 'pos-tag-seasonal' THEN 'Products for the current seasonal collection.'
+        WHEN 'pos-tag-kitchen' THEN 'Products used in the kitchen.'
+        WHEN 'pos-tag-archived' THEN 'Clearance products retained for reference.'
+        ELSE description END
+      WHERE description = '';
+    down: |
+      ALTER TABLE pos_product_tags DROP COLUMN IF EXISTS product_variants;
+      ALTER TABLE pos_product_tags DROP COLUMN IF EXISTS product_templates;
+      ALTER TABLE pos_product_tags DROP COLUMN IF EXISTS description;
+      ALTER TABLE pos_product_tags DROP COLUMN IF EXISTS visible_to_customers;
+      ALTER TABLE pos_product_tags DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

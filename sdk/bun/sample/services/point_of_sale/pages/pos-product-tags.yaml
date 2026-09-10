@@ -4,12 +4,16 @@ components:
   - type: ListView
     variant: odoo
     source: pos_product_tags
-    search: { label: Search product tags, placeholder: 'Search tag...' }
-    filters: [{ field: active, label: Status, options_source: pos_tag_active }]
+    create_action: new_pos_product_tag
+    create_label: New
+    search: { label: Search product tags, placeholder: 'Search...' }
     columns:
-      - { field: name, label: Tag, type: PrimaryEntityCell }
-      - { field: color, label: Color }
-      - { field: product_count, label: Products, align: right }
-      - { field: active, label: Active, type: StatusChip }
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: visible_to_customers, label: Visible to customers? }
+      - { field: product_templates, label: Product Templates }
+      - { field: product_variants, label: Product Variant }
     page_size: 50
     row_key: id
+    row_open_action: view_pos_product_tag
+    row_double_click_action: view_pos_product_tag
+    empty_state: { title: Define a new tag, description: Tags are used to search product for a given theme. }
