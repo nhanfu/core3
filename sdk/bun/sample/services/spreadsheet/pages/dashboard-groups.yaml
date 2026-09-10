@@ -1,25 +1,22 @@
 title: Dashboards
-page: { id: spreadsheet-dashboard-groups, route: /spreadsheet/dashboard-groups, breadcrumb: [Dashboards, Configuration, Dashboards], auth: { require: [spreadsheet.manage] } }
+page: { id: spreadsheet-dashboard-groups, route: /spreadsheet/dashboard-groups, breadcrumb: [Dashboards], auth: { require: [spreadsheet.manage] } }
 components:
-  - type: PageIntro
-    title: Dashboards
-    description: Organize dashboards into groups.
   - type: ListView
     variant: odoo
     source: spreadsheet_dashboard_groups_configuration
     create_action: create_dashboard_group
     create_label: New
+    selectable: true
+    column_chooser: true
     columns:
-      - { field: name, label: Group, type: PrimaryEntityCell }
-      - { field: dashboard_count, label: Dashboards, align: right }
-      - { field: official, label: Official, type: StatusChip }
-      - { field: company_name, label: Company }
+      - { field: sequence, label: '', type: HandleCell, sortable: false }
+      - { field: name, label: Name, type: PrimaryEntityCell }
     page_size: 50
+    scroll: body
     row_key: id
     row_open_action: view_dashboard_group
     row_double_click_action: view_dashboard_group
-    row_actions: menu
-    empty_state: { title: No dashboard groups, description: Create a group to organize dashboards. }
+    empty_state: { title: No dashboard groups, description: Create a dashboard group to organize dashboards. }
 actions:
   - id: view_dashboard_group
     type: navigate

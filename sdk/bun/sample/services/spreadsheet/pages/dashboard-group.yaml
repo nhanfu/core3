@@ -1,27 +1,30 @@
 title: Dashboard group
-page: { id: spreadsheet-dashboard-group, route: /spreadsheet/dashboard-group, breadcrumb: [Dashboards, Configuration, Dashboards, Group], auth: { require: [spreadsheet.manage] } }
+page: { id: spreadsheet-dashboard-group, route: /spreadsheet/dashboard-group, breadcrumb: [Dashboards], auth: { require: [spreadsheet.manage] } }
 components:
   - type: OdooFormView
     source: spreadsheet_dashboard_group
     title_field: name
     editable: true
-    group_columns: 2
-    groups:
-      - title: Group
-        fields:
-          - { field: name, label: Group name, required: true }
-          - { field: company_name, label: Company }
-          - { field: official, label: Official, type: checkbox, readonly: true }
     notebook:
-      - id: spreadsheets
-        label: Spreadsheets
-        component:
-          type: ListView
-          variant: odoo
-          source: spreadsheet_group_dashboards
-          columns:
-            - { field: name, label: Dashboard, type: PrimaryEntityCell }
-            - { field: state, label: Status, type: StatusChip }
-            - { field: favorite, label: Favorite, type: StatusChip }
-          row_key: id
-          empty_state: { title: No spreadsheets, description: This group has no dashboards yet. }
+      tabs:
+        - id: spreadsheets
+          label: Spreadsheets
+          content_slot: true
+  - type: ListView
+    mount_in: previous-panel
+    variant: odoo
+    source: spreadsheet_group_dashboards
+    breadcrumbs: []
+    create_action: add_spreadsheet_dashboard
+    create_label: Add Dashboard
+    create_mobile_only: true
+    search: false
+    show_pager: false
+    columns:
+      - { field: sequence, label: '', type: HandleCell, sortable: false, mobile: false }
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: group_name, label: Group, mobile: false }
+      - { field: company_name, label: Companies, mobile: false }
+      - { field: published, label: Is Published, type: BooleanToggle, sortable: false, mobile: false }
+    row_key: id
+    empty_state: { title: No spreadsheets, description: This group has no dashboards yet. }

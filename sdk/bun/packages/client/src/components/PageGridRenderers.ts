@@ -208,6 +208,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     id: column.id || column.field || `column-${index}`,
     field: column.field,
     label: column.label || '',
+    mobile: column.mobile,
     width: typeof column.width === 'number' ? column.width : undefined,
     align: column.align,
     sortable: column.sortable !== false,
@@ -225,6 +226,23 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
         const depth = treeDepth(row);
         html.take(cell).css('paddingLeft', `${16 + depth * 20}px`);
         cell.dataset.treeDepth = String(depth);
+      }
+      if (column.type === 'HandleCell') {
+        cell.classList.add('o-list-handle-cell');
+        cell.setAttribute('aria-label', 'Reorder');
+        cell.textContent = '⠿';
+        return;
+      }
+      if (column.type === 'BooleanToggle') {
+        cell.classList.add('o-list-boolean-cell');
+        const toggle = document.createElement('input');
+        toggle.type = 'checkbox';
+        toggle.checked = Boolean(value);
+        toggle.disabled = true;
+        toggle.tabIndex = -1;
+        toggle.setAttribute('aria-label', String(column.label || 'Boolean value'));
+        cell.append(toggle);
+        return;
       }
       if (column.type === 'StatusChip') {
         const tone = column.colors?.[String(value)] || column.tone || 'neutral';
@@ -536,6 +554,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     id: column.id || column.field || `column-${index}`,
     field: column.field,
     label: column.label || '',
+    mobile: column.mobile,
     align: column.align,
     sortable: column.sortable !== false,
     optional: column.optional,
@@ -549,6 +568,23 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       },
     })),
     render: column.type ? (cell: HTMLElement, value: unknown, row: any) => {
+      if (column.type === 'HandleCell') {
+        cell.classList.add('o-list-handle-cell');
+        cell.setAttribute('aria-label', 'Reorder');
+        cell.textContent = '⠿';
+        return;
+      }
+      if (column.type === 'BooleanToggle') {
+        cell.classList.add('o-list-boolean-cell');
+        const toggle = document.createElement('input');
+        toggle.type = 'checkbox';
+        toggle.checked = Boolean(value);
+        toggle.disabled = true;
+        toggle.tabIndex = -1;
+        toggle.setAttribute('aria-label', String(column.label || 'Boolean value'));
+        cell.append(toggle);
+        return;
+      }
       if (column.type === 'StatusChip') {
         const tone = column.colors?.[String(value)] || column.tone || 'neutral';
         html.take(cell).span.className(`data-grid-status data-grid-status-${tone}`).replaceText(value == null || value === '' ? '—' : String(value));
@@ -814,7 +850,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   } : undefined;
   const createDefinition = (config.actions || []).find((action: any) => action.id === def.create_action);
   const createAction = def.create_action && hasPermission(ctx.user, createDefinition?.permission)
-    ? { id: def.create_action, label: def.create_label || 'New', modal: createDefinition?.type === 'server_form' }
+    ? { id: def.create_action, label: def.create_label || 'New', modal: createDefinition?.type === 'server_form', mobileOnly: def.create_mobile_only === true }
     : undefined;
   const translatedLabels = def.labels || {};
   const initialFormMode = pageParams.form === 'hidden' ? 'hidden' : 'right';
@@ -837,8 +873,9 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     {
       variant: 'odoo',
       scroll: def.scroll === 'body' ? 'body' : 'list',
-      breadcrumbs: config.page?.breadcrumb || [config.title].filter(Boolean),
+      breadcrumbs: Array.isArray(def.breadcrumbs) ? def.breadcrumbs : (config.page?.breadcrumb || [config.title].filter(Boolean)),
       createAction,
+      showPager: def.show_pager !== false,
       search: def.search,
       filters,
       dateRange: def.date_range ? {

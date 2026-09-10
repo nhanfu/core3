@@ -364,6 +364,18 @@
 .o-list-facet svg { width: 12px; height: 12px; }
 
 .o-list-table-viewport { min-height: 0; width: 100%; flex: 1; overflow: auto; background: var(--o-list-bg); }
+.o-list-handle-cell {
+  width: 28px;
+  padding-right: 2px !important;
+  padding-left: 8px !important;
+  color: var(--o-list-muted);
+  cursor: grab;
+  font-size: 16px;
+  line-height: 1;
+  text-align: center !important;
+}
+.o-list-boolean-cell { width: 92px; text-align: center !important; }
+.o-list-boolean-cell input { width: 16px; height: 16px; accent-color: var(--o-list-action); }
 .o-list-view-body-scroll .o-list-content { flex: 0 0 auto; }
 .o-list-view-body-scroll,
 .o-list-view-body-scroll .o-list-content { overflow-x: hidden !important; overflow-y: visible !important; }

@@ -2,9 +2,9 @@
 
 Status: ready
 
-This is an implementation gate for the Odoo 19 `spreadsheet` and
-`spreadsheet_dashboard` addons. It is a plan only: this sub-plan must not add
-or modify product code, migrations, fixtures, assets, or tests.
+This is an implementation gate and evidence record for the Odoo 19
+`spreadsheet` and `spreadsheet_dashboard` addons. Each bounded batch below
+records the source contract, implementation, verification, and deferred scope.
 
 ## Reference gate
 
@@ -26,7 +26,7 @@ or modify product code, migrations, fixtures, assets, or tests.
   dashboards, but their menus are owned by their respective modules and are
   not silently counted as Spreadsheet menus.
 - Live authenticated audit date: 2026-09-10, URL
-  `http://localhost:8069`, database `core3_demo`, admin account from the
+  `http://localhost:8069`, database `core3_personal`, admin account from the
   parent parity plan. Authenticated `ir.module.module.search_read` reported:
   `spreadsheet` state `installed`, `demo: true`, installed/latest version
   `19.0.1.0`; `spreadsheet_dashboard` reported the same. The live database
@@ -48,8 +48,8 @@ content, recorded zero `requestfailed` events, and asserted
 
 | Surface | Odoo route | Desktop | Mobile |
 | --- | --- | --- | --- |
-| Dashboards client action | `/odoo/dashboards?dashboard_id=2` | `/tmp/odoo-spreadsheet-dashboard-desktop.png` | `/tmp/odoo-spreadsheet-dashboard-mobile.png` |
-| Configuration > Dashboards | `/odoo/action-308` | `/tmp/odoo-spreadsheet-config-desktop.png` | `/tmp/odoo-spreadsheet-config-mobile.png` |
+| Dashboards client action | `/odoo/dashboards?dashboard_id=2` | `/tmp/odoo-spreadsheet-personal-dashboard-desktop.png` | `/tmp/odoo-spreadsheet-personal-dashboard-mobile.png` |
+| Configuration > Dashboards | `/odoo/action-499` | `/tmp/odoo-spreadsheet-personal-config-desktop.png` | `/tmp/odoo-spreadsheet-personal-config-mobile.png` |
 
 The desktop dashboard capture visibly contains the Dashboards shell, date
 filter, Share action, Sales/Product/Invoicing/Warehouse Metrics dashboard
@@ -175,6 +175,55 @@ Reuse generic contracts before adding Spreadsheet-specific renderers:
 - dashboard cards, KPI/stat, chart/figure, canvas pan/zoom, status/published
   control, permission-aware server actions, public-token shell, and stable
   401/403/404/409/422 error mapping.
+
+## 2026-09-10 bounded implementation batch: Configuration > Dashboards
+
+The authenticated personal Odoo 19 database was refreshed at
+`http://localhost:8069` using database `core3_personal`. The live menu resolves
+the configuration action to `/odoo/action-499` in this database (action ids are
+database-specific; the earlier `/odoo/action-308` capture belongs to the
+previous reference database). The installed view contract was verified before
+implementation:
+
+- Configuration > Dashboards is a `spreadsheet.dashboard.group` `list,form`
+  action with `New`, a system-user sequence handle, and a single visible
+  `Name` column. The live list contains the seven official groups in source
+  sequence: Sales, Finance, Logistics, Services, Marketing, Website, and Human
+  Resources.
+- The group form exposes the group name in the sheet title and one notebook
+  tab named `Spreadsheets`. Its nested dashboard list exposes `Name`, `Group`,
+  `Companies`, and `Is Published`; mobile reduces this to the dashboard names
+  and `Add Dashboard`.
+- Source authority remains
+  `addons/spreadsheet_dashboard/views/menu_views.xml`,
+  `addons/spreadsheet_dashboard/views/spreadsheet_dashboard_views.xml`, and
+  `addons/spreadsheet_dashboard/data/dashboard.xml` at revision `65975996`.
+
+Core3 now maps this bounded contract through layout-only
+`pages/dashboard-groups.yaml` and `pages/dashboard-group.yaml`, with the
+page-id-owned API fragments `api/dashboard-groups.yaml` and
+`api/dashboard-group.yaml`. The configuration list has Odoo's `New`/`Name`
+shape and visible handle glyph; the nested list uses the Odoo field order and
+read-only boolean toggle. The API declares deterministic `empty`, `not_found`,
+and 503 transport-error branches, and the focused test covers migration
+idempotency, fixed ordering, search, permission ownership, and nested rows.
+
+Authenticated comparison evidence (temporary, never committed):
+
+| Surface | Odoo personal | Core3 isolated worktree |
+| --- | --- | --- |
+| Configuration list desktop | `/tmp/odoo-spreadsheet-personal-config-desktop.png` | `/tmp/core3-spreadsheet-config-desktop.png` |
+| Configuration list mobile | `/tmp/odoo-spreadsheet-personal-config-mobile.png` | `/tmp/core3-spreadsheet-config-mobile.png` |
+| Group form desktop | `/tmp/odoo-spreadsheet-personal-group-form-desktop.png` | `/tmp/core3-spreadsheet-group-form-desktop.png` |
+| Group form mobile | `/tmp/odoo-spreadsheet-personal-group-form-mobile.png` | `/tmp/core3-spreadsheet-group-form-mobile.png` |
+
+Deferred from this batch: the client-action dashboard canvas and workbook
+editor/runtime, dashboard group search panel and card selection, formula and
+figure execution, global filters, favorite/publication mutations, CRUD and
+row-version conflict operations, share/public-token/download controllers,
+spreadsheet logging, company/group access enforcement, and the remaining
+dashboard landing visual comparison. These remain required follow-up work;
+this batch does not claim full Spreadsheet parity.
 
 If a primitive is missing, plan and verify the generic contract first rather
 than creating a page-specific substitute. Use Odoo-style full-width settings

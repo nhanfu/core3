@@ -20,6 +20,7 @@ export type ListViewColumn = {
   id?: string;
   field: string;
   label: string;
+  mobile?: boolean;
   align?: 'left' | 'center' | 'right';
   sortable?: boolean;
   optional?: 'show' | 'hide';
@@ -72,7 +73,8 @@ export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
   scroll?: 'list' | 'body';
   breadcrumbs?: string[];
-  createAction?: { id: string; label: string; modal?: boolean };
+  createAction?: { id: string; label: string; modal?: boolean; mobileOnly?: boolean };
+  showPager?: boolean;
   search?: false | { label?: string; placeholder?: string };
   filters?: ListViewFilter[];
   groupBy?: ListViewGroupBy[];
@@ -261,7 +263,8 @@ export class ListView extends BaseComponent {
         : storedVisible || defaultVisible,
     );
     if (storedVisible) this.persistColumns(visibleColumnIds);
-    const visibleColumns = this.defs.filter(column => visibleColumnIds.has(column.id || column.field));
+    const visibleColumns = this.defs.filter(column => visibleColumnIds.has(column.id || column.field)
+      && (!this.isSmallScreen() || column.mobile !== false));
     const root = html.take(container).section.className(`o-list-view${this.options.scroll === 'body' ? ' o-list-view-body-scroll' : ''}`).ele();
 
     if (this.options.viewNavigation === 'tabs') this.drawViewTabs(root);
@@ -271,7 +274,7 @@ export class ListView extends BaseComponent {
     const activeView = this.activeView();
     this.drawPrimaryControls(main, labels);
     this.drawSearch(main, filters, selectedIds, labels);
-    this.drawNavigation(main, meta, visibleColumnIds, labels, !['graph', 'pivot'].includes(activeView.id));
+    this.drawNavigation(main, meta, visibleColumnIds, labels, !['graph', 'pivot'].includes(activeView.id) && this.options.showPager !== false);
     this.drawFacets(controlPanel, filters, labels);
 
     const listEnabled = this.isViewEnabled('list');
@@ -533,7 +536,7 @@ export class ListView extends BaseComponent {
 
   private drawPrimaryControls(container: HTMLElement, labels: Required<NonNullable<ListViewOptions['labels']>>) {
     const primary = html.take(container).div.className('o-list-primary-controls').ele();
-    if (this.options.createAction) {
+    if (this.options.createAction && (!this.options.createAction.mobileOnly || this.isSmallScreen())) {
       const button = html.take(primary).button.className('o-list-create').dataAttr('list-create', this.options.createAction.id).text(this.options.createAction.label || labels.new).ele();
       html.take(button).event('click', () => {
         if (this.options.formView?.sidePanel && !this.options.createAction?.modal) {

@@ -3,4 +3,6 @@ datasources:
   - id: spreadsheet_dashboard_groups_configuration
     single: false
     permission: spreadsheet.manage
-    query: "SELECT id, row_version, name, sequence, company_name, official, dashboard_count FROM spreadsheet_dashboard_groups WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name"
+    query: "SELECT id, row_version, name, sequence, company_name, official, dashboard_count FROM spreadsheet_dashboard_groups WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (official = true OR :fixture_state = 'all') AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name"
+    error_states:
+      transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_GROUPS_UNAVAILABLE, message: Dashboard groups are temporarily unavailable. }

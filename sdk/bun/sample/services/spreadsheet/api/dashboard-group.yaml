@@ -3,8 +3,28 @@ datasources:
   - id: spreadsheet_dashboard_group
     single: true
     permission: spreadsheet.manage
-    query: "SELECT id, row_version, name, company_name, official FROM spreadsheet_dashboard_groups WHERE id = :id"
+    query: "SELECT id, row_version, name, company_name, official FROM spreadsheet_dashboard_groups WHERE id = :id AND (:fixture_state IS NULL OR :fixture_state <> 'not_found')"
+    error_states:
+      transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_GROUP_UNAVAILABLE, message: Dashboard group is temporarily unavailable. }
   - id: spreadsheet_group_dashboards
     single: false
     permission: spreadsheet.manage
-    query: "SELECT id, row_version, name, state, favorite, published FROM spreadsheet_dashboards WHERE group_id = :id ORDER BY sequence, name"
+    query: "SELECT d.id, d.row_version, d.sequence, d.name, g.name AS group_name, d.company_name, d.published FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE d.group_id = :id AND (:fixture_state IS NULL OR :fixture_state <> 'empty') ORDER BY d.sequence, d.name"
+    error_states:
+      transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_GROUP_SPREADSHEETS_UNAVAILABLE, message: Group spreadsheets are temporarily unavailable. }
+actions:
+  - id: add_spreadsheet_dashboard
+    type: server_form
+    permission: spreadsheet.manage
+    title: Add Dashboard
+    action: spreadsheet.dashboard.create
+    handler: yaml_mutation
+    operation: create
+    params: { group_id: '{state.id}' }
+    refresh: [spreadsheet_group_dashboards]
+    mutation:
+      generated: [id]
+      before_steps:
+        - query: "INSERT INTO spreadsheet_dashboards (id, group_id, name, sequence, state, published, favorite, company_name, snapshot_status, workbook_snapshot) VALUES (:id, :group_id, :name, 10, 'Draft', false, false, 'Global', 'empty', '{}')"
+      result: { query: "SELECT id, row_version, sequence, name, group_id, company_name, published FROM spreadsheet_dashboards WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }]
