@@ -1,0 +1,54 @@
+title: Tasks Analysis
+page: { id: project-tasks-analysis, route: /tasks-analysis, breadcrumb: [Project, Reporting, Tasks Analysis], auth: { require: [project.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_tasks_analysis
+    search: { label: Search tasks analysis, placeholder: 'Search projects, stages, or assignees...' }
+    filters:
+      - { field: state, label: Status, options: [Todo, In Progress, Done, Cancelled] }
+      - { field: stage, label: Stage, options: [Planning, In progress, Done] }
+    group_by: [{ field: project_name, label: Project }, { field: stage, label: Stage }, { field: state, label: Status }]
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: project_name
+        measure_field: task_count
+        measure_label: Tasks
+        type: bar
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: project_name, column: Project }
+            - { field: stage, column: Stage }
+            - { field: state, column: Status }
+            - { field: task_count, column: Tasks }
+            - { field: planned_hours, column: Planned Hours }
+            - { field: spent_hours, column: Spent Hours }
+            - { field: working_hours_open, column: Open Hours }
+            - { field: working_hours_close, column: Closed Hours }
+          default:
+            rows: [project_name]
+            columns: [stage]
+            measures:
+              - { field: task_count, aggregate: sum, column: Tasks }
+              - { field: planned_hours, aggregate: sum, column: Planned Hours }
+              - { field: spent_hours, aggregate: sum, column: Spent Hours }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: project_name, label: Project, type: PrimaryEntityCell }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: assignee, label: Assignee }
+      - { field: task_count, label: Tasks, align: right }
+      - { field: planned_hours, label: Planned Hours, align: right }
+      - { field: spent_hours, label: Spent Hours, align: right }
+      - { field: due_date, label: Deadline }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No task analysis data, description: Analyze project progress and employee workload from the available tasks. }

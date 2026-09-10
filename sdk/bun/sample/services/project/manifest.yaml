@@ -16,7 +16,10 @@ menu:
       items:
         - { path: /projects, label: Projects, icon: project, permission: project.read }
         - { path: /tasks, label: My Tasks, icon: checklist, permission: project.read }
-        - { path: /project-analysis, label: Project Analysis, icon: chart, permission: project.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /tasks-analysis, label: Tasks Analysis, icon: chart, permission: project.read }
     - id: configuration
       label: Configuration
       items:

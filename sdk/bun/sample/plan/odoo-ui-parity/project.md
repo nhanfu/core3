@@ -46,6 +46,10 @@ and are not committed. The browser skill's persistent `js_repl` was not
 exposed in this session; the fallback authenticated Playwright runner was
 used and this tooling limitation is recorded rather than hidden.
 
+The disposable replacement Odoo image is also available at
+`http://localhost:8069` with database `core3_owned`; new parity captures use
+that owned database after the former `core3_reference` image is stopped.
+
 ### Observed Project labels and behavior
 
 - `/odoo/project` shows the shell labels `Project`, `Projects`, `Tasks`,
@@ -205,6 +209,26 @@ The visual polish pass keeps that page/API separation and binds the existing
 list cell contracts explicitly: names use `PrimaryEntityCell` on desktop and
 mobile, stage `Folded` uses `BooleanToggle`, and displayed color values use
 `ColorCell` swatches instead of text status badges.
+
+## Completed bounded slice: Tasks Analysis (2026-09-10)
+
+The next visible source action is Reporting > Tasks Analysis
+(`menu_project_report_task_analysis`, `action_project_task_user_tree`). The
+Core3 slice maps it to `/tasks-analysis` under a user-visible Reporting menu
+and preserves the source graph-first, pivot, and search behavior. The layout
+is `pages/tasks-analysis.yaml`; the service-owned query is
+`api/tasks-analysis.yaml`, both joined by page id `project-tasks-analysis`.
+It reports non-template, non-archived project tasks with stable
+project/stage/status dimensions, task counts, planned/spent hours, search,
+filters, and deterministic empty/error branches.
+
+The fixed migration `20260910120000-005-project-tasks-analysis.yaml` adds
+eight stable task rows with IDs and `2026-01-15` creation timestamps across
+the seeded projects and stages. Focused integration coverage verifies API
+discovery, deterministic ordering, search/filter/empty behavior, read-only
+permissions, and the 503 transport-error contract. Authenticated comparison
+captures for the owned Odoo database and Core3 are recorded under `/tmp` and
+are not committed.
 
 ## Required shared primitives
 

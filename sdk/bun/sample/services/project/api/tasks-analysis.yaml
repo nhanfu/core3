@@ -1,0 +1,9 @@
+page: { id: project-tasks-analysis }
+datasources:
+  - id: project_tasks_analysis
+    single: false
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_TASK_ANALYSIS_UNAVAILABLE, message: Task analysis is temporarily unavailable. } }
+    pivot:
+      fields: [id, project_id, project_name, stage, state, assignee, task_count, planned_hours, spent_hours, working_hours_open, working_hours_close, due_date]
+    query: "SELECT t.id, t.project_id, t.project_name, COALESCE(NULLIF(t.stage, ''), 'Planning') AS stage, t.state, t.assignee, CAST(1 AS INTEGER) AS task_count, CAST(t.planned_hours AS DOUBLE) AS planned_hours, CAST(t.spent_hours AS DOUBLE) AS spent_hours, CAST(GREATEST(t.planned_hours - t.spent_hours, 0) AS DOUBLE) AS working_hours_open, CAST(t.spent_hours AS DOUBLE) AS working_hours_close, CAST(t.due_date AS VARCHAR) AS due_date FROM project_tasks t LEFT JOIN projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND COALESCE(p.is_template, FALSE) = FALSE AND COALESCE(p.archived, FALSE) = FALSE AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR COALESCE(t.stage, 'Planning') ILIKE '%' || :q || '%' OR t.state ILIKE '%' || :q || '%' OR COALESCE(t.assignee, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (:stage IS NULL OR COALESCE(NULLIF(t.stage, ''), 'Planning') = :stage) ORDER BY t.project_name, COALESCE(NULLIF(t.stage, ''), 'Planning'), t.id"

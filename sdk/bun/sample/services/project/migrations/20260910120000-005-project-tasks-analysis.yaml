@@ -1,0 +1,22 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO project_tasks (id, project_id, project_name, name, assignee, milestone_name, priority, planned_hours, spent_hours, state, stage, due_date, row_version, created_at)
+      VALUES
+        ('task-analysis-001', 'project-demo-001', 'Core3 Implementation', 'Validate reporting contract', 'Mitchell Admin', 'Foundation release', 'High', 12, 4, 'In Progress', 'In progress', DATE '2026-01-20', 1, TIMESTAMP '2026-01-15 00:00:00'),
+        ('task-analysis-002', 'project-demo-001', 'Core3 Implementation', 'Review permission boundaries', 'Project Team', NULL, 'Normal', 8, 8, 'Done', 'Done', DATE '2026-01-21', 1, TIMESTAMP '2026-01-15 00:00:00'),
+        ('task-analysis-003', 'project-demo-001', 'Core3 Implementation', 'Prepare rollout checklist', 'Project Team', NULL, 'Normal', 6, 0, 'Todo', 'Planning', DATE '2026-01-29', 1, TIMESTAMP '2026-01-15 00:00:00'),
+        ('task-analysis-004', 'project-demo-002', 'Website Refresh', 'Approve homepage wireframe', 'Mitchell Admin', NULL, 'High', 16, 6, 'In Progress', 'In progress', DATE '2026-02-05', 1, TIMESTAMP '2026-01-15 00:00:00'),
+        ('task-analysis-005', 'project-demo-002', 'Website Refresh', 'Publish content inventory', 'Project Team', NULL, 'Normal', 10, 10, 'Done', 'Done', DATE '2026-02-12', 1, TIMESTAMP '2026-01-15 00:00:00'),
+        ('task-analysis-006', 'project-demo-002', 'Website Refresh', 'Collect analytics baseline', 'Project Team', NULL, 'Low', 5, 0, 'Todo', 'Planning', DATE '2026-02-18', 1, TIMESTAMP '2026-01-15 00:00:00'),
+        ('task-analysis-007', 'project-demo-002', 'Website Refresh', 'Archive superseded copy', 'Project Team', NULL, 'Low', 3, 3, 'Cancelled', 'Planning', DATE '2026-01-22', 1, TIMESTAMP '2026-01-15 00:00:00'),
+        ('task-analysis-008', 'project-demo-001', 'Core3 Implementation', 'Close audit follow-up', 'Mitchell Admin', NULL, 'Normal', 4, 4, 'Done', 'Done', DATE '2026-02-20', 1, TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM project_tasks WHERE id IN ('task-analysis-001', 'task-analysis-002', 'task-analysis-003', 'task-analysis-004', 'task-analysis-005', 'task-analysis-006', 'task-analysis-007', 'task-analysis-008');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
