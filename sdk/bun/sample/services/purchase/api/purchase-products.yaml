@@ -5,7 +5,7 @@ datasources:
     query: "SELECT value, label FROM (VALUES (true, 'Purchase'), (false, 'Not for purchase')) states(value, label)"
   - id: purchase_products
     permission: purchase.read
-    query: "SELECT id, row_version, default_code, name, product_tags, barcode, company_name, list_price, cost_price, printf('$ %,.2f', CAST(cost_price AS DOUBLE)) AS cost_price_display, category, product_type, uom, purchase_ok, active, CAST(created_at AS VARCHAR) AS created_at, 1 AS activity_count FROM purchase_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR default_code ILIKE '%' || :q || '%' OR COALESCE(barcode, '') ILIKE '%' || :q || '%') AND (:purchase_ok IS NULL OR purchase_ok = :purchase_ok) AND (:active IS NULL OR active = :active) ORDER BY name"
+    query: "SELECT id, row_version, default_code, name, product_tags, barcode, company_name, list_price, cost_price, printf('$ %,.2f', CAST(list_price AS DOUBLE)) AS list_price_display, printf('$ %,.2f', CAST(cost_price AS DOUBLE)) AS cost_price_display, on_hand, printf('%.2f %s', CAST(on_hand AS DOUBLE), uom) AS on_hand_display, category, product_type, uom, purchase_ok, active, CAST(created_at AS VARCHAR) AS created_at, 1 AS activity_count FROM purchase_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR default_code ILIKE '%' || :q || '%' OR COALESCE(barcode, '') ILIKE '%' || :q || '%') AND (:purchase_ok IS NULL OR purchase_ok = :purchase_ok) AND (:active IS NULL OR active = :active) ORDER BY name"
 actions:
   - id: create_purchase_product
     type: server_form

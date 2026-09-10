@@ -126,8 +126,8 @@ describe('Purchase Orders list and detail parity', () => {
     expect(page.page).toMatchObject({ id: 'purchase-products', route: '/purchase/products', auth: { require: ['purchase.read'] } });
     expect(yaml('api/purchase-products.yaml').page.id).toBe('purchase-products');
     expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('purchase-products')).toContain('purchase_products');
-    expect(list.views.map((view: any) => view.id)).toEqual(['kanban', 'list', 'card', 'activity']);
-    expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: true, card: { title: 'name', subtitle: 'default_code' } });
+    expect(list.views.map((view: any) => view.id)).toEqual(['card', 'list', 'activity']);
+    expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ label: 'Kanban', card: { title: 'name', subtitle: 'default_code', fields: [{ field: 'list_price_display', label: 'Price' }, { field: 'on_hand_display', label: 'On hand' }] } });
     expect(list.views.find((view: any) => view.id === 'activity')).toMatchObject({ title_field: 'name', record_date_field: 'created_at' });
     expect(source.permission).toBe('purchase.read');
     expect(list.columns.map((column: any) => column.field)).toEqual(['name', 'default_code', 'product_tags', 'barcode', 'company_name', 'cost_price_display', 'category', 'product_type', 'uom', 'active']);
@@ -148,6 +148,7 @@ describe('Purchase Orders list and detail parity', () => {
 
     const searched = await repository.querySource(products, { q: 'Acoustic', purchase_ok: true, active: true, fixture_state: null }, 0, 50);
     expect(searched.data).toMatchObject([{ id: 'purchase-product-acoustic', default_code: 'FURN-001', purchase_ok: true }]);
+    expect(firstPage.data[0]).toMatchObject({ list_price_display: '$ 295.00', on_hand_display: '16.00 Units' });
     const empty = await repository.querySource(products, { q: null, purchase_ok: null, active: null, fixture_state: 'empty' }, 0, 50);
     expect(empty.data).toEqual([]);
     expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['purchase.read', 'purchase.write', 'purchase.manage']));

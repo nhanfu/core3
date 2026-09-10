@@ -1,0 +1,18 @@
+version: 0.0.7
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE purchase_products ADD COLUMN IF NOT EXISTS on_hand DECIMAL(18,2);
+      UPDATE purchase_products
+      SET on_hand = CASE
+        WHEN id = 'purchase-product-acoustic' THEN 16
+        WHEN product_type = 'Goods' THEN 2 + (LENGTH(id) % 18)
+        ELSE 0
+      END;
+    down: |
+      ALTER TABLE purchase_products DROP COLUMN IF EXISTS on_hand;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

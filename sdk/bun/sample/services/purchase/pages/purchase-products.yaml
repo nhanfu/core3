@@ -10,9 +10,8 @@ components:
     filters: [{ field: purchase_ok, label: Purchase, options_source: purchase_product_purchase_states }]
     view_navigation: tabs
     views:
-      - { id: kanban, label: Kanban, icon: dashboard, mobile: false, group_by: category, card: { title: name, subtitle: default_code, fields: [{ field: cost_price_display, label: Cost }, { field: category, label: Category }] } }
+      - { id: card, label: Kanban, icon: dashboard, card: { title: name, subtitle: default_code, fields: [{ field: list_price_display, label: Price }, { field: on_hand_display, label: On hand }] } }
       - { id: list, label: List, icon: table, mobile: false }
-      - { id: card, label: Cards, icon: grid, mobile: true, card: { title: name, subtitle: default_code, fields: [{ field: cost_price_display, label: Cost }, { field: uom, label: Unit of Measure }] } }
       - { id: activity, label: Activity, icon: activity, mobile: false, title_field: name, subtitle_field: default_code, record_date_field: created_at, activity_types: [{ id: todo, label: To-Do, icon: ✓ }, { id: document, label: Document, icon: ▣ }] }
     columns:
       - { field: name, label: Product Name, type: PrimaryEntityCell, sortable: true }
