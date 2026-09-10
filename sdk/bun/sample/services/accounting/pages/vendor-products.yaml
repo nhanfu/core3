@@ -1,0 +1,35 @@
+title: Products
+page: { id: accounting-vendor-products, route: /accounting/vendor-products, breadcrumb: [Finance, Vendors, Products], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_vendor_products
+    create_action: create_accounting_vendor_product
+    create_label: New
+    breadcrumbs: [Products]
+    search: { label: Search products, placeholder: Search products... }
+    filters:
+      - { field: active, label: Active, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
+    view_navigation: tabs
+    views:
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card: { title: name, subtitle: default_code, fields: [{ field: price_display, label: Price }, { field: on_hand_display, label: On hand }, { field: variant_count, label: Variants }] }
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: false, group_by: '', card: { title: name, subtitle: default_code, fields: [{ field: price_display, label: Price }, { field: on_hand_display, label: On hand }, { field: variant_count, label: Variants }] } }
+      - { id: list, label: List, icon: table, mobile: false }
+    columns:
+      - { field: name, label: Product Name, type: PrimaryEntityCell }
+      - { field: default_code, label: Internal Reference }
+      - { field: cost_display, label: Cost, align: right }
+      - { field: purchase_taxes, label: Purchase Taxes }
+      - { field: on_hand_display, label: On Hand, align: right }
+      - { field: forecasted_display, label: Forecasted, align: right }
+      - { field: unit, label: Unit }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_accounting_vendor_product, label: Edit, icon: edit }, { id: archive_accounting_vendor_product, label: Archive, icon: archive, variant: danger, show_if: 'row.active === true' }, { id: restore_accounting_vendor_product, label: Restore, icon: refresh, show_if: 'row.active === false' }, { id: delete_accounting_vendor_product, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    responsive_card: true
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No products found, description: No products match your search or filters. }

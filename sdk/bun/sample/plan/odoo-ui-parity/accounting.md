@@ -475,3 +475,26 @@ validation, duplicate rejection, missing records, and optimistic concurrency.
 This batch was implemented in a fresh isolated accounting worktree. The local
 Odoo reference was reachable and authenticated headless browser inspection
 confirmed the list/form contract; no screenshots are repository assets.
+
+## Current batch: Vendor Products action
+
+The authenticated owned Odoo 19 menu audit found the next uncovered installed
+Accounting action at Vendors → Products, menu XML ID
+`account.product_product_menu_purchasable`, `/odoo/vendor-products`. It is a
+product Kanban by default at both required viewports, with a visible `New`
+button, `Products` title, and `Purchase` mode label. The desktop List switch
+shows Product Name, Internal Reference, Cost, Purchase Taxes, On Hand,
+Forecasted, and Unit; mobile remains Kanban with no horizontal overflow.
+
+Core3 adds `/accounting/vendor-products` as a separate Invoicing/Vendors menu
+entry. The page-only layout joins `api/vendor-products.yaml` by page ID and
+uses an Accounting-owned migration-backed table with ten deterministic rows,
+Odoo-shaped card/list labels, search, Active/Archived filtering, and a
+permissioned New action. Create, edit, archive, restore, and delete mutations
+have Accounting write permission, duplicate/name validation, and optimistic
+row-version guards. Empty and transport-error read states are explicit.
+
+The bounded slice does not implement the full Odoo product form, variants,
+vendor pricelists, purchase taxes relations, or stock-detail navigation; those
+remain follow-up product-detail work. Authenticated Core3/Odoo desktop and
+mobile captures are temporary under `/tmp` and are not repository assets.

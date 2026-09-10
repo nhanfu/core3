@@ -38,6 +38,10 @@ menu:
           label: Employee Expenses
           icon: receipt
           permission: accounting.read
+        - path: /accounting/vendor-products
+          label: Products
+          icon: cube
+          permission: accounting.read
         - path: /accounting/products
           label: Products
           icon: cube

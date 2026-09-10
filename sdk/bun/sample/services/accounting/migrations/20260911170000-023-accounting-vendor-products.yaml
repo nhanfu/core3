@@ -1,0 +1,34 @@
+version: 0.0.23
+description: Accounting Vendor Products Odoo action fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_vendor_products (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        default_code VARCHAR, name VARCHAR NOT NULL, product_type VARCHAR NOT NULL,
+        cost DECIMAL(18,2) NOT NULL DEFAULT 0,
+        purchase_taxes VARCHAR NOT NULL DEFAULT 'No Tax',
+        on_hand DECIMAL(18,2) NOT NULL DEFAULT 0,
+        forecasted DECIMAL(18,2) NOT NULL DEFAULT 0,
+        variant_count INTEGER NOT NULL DEFAULT 1,
+        unit VARCHAR NOT NULL DEFAULT 'Units',
+        active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      INSERT OR IGNORE INTO accounting_vendor_products(id, row_version, default_code, name, product_type, cost, purchase_taxes, on_hand, forecasted, variant_count, unit, active) VALUES
+        ('accounting-vendor-product-001', 1, '[CONS_89957]', 'Bolt', 'Goods', 0.50, 'Tax 15%', 0.00, 0.00, 1, 'Units', TRUE),
+        ('accounting-vendor-product-002', 1, '[FURN_0001]', 'Cabinet with Doors', 'Goods', 140.00, 'Tax 15%', 33.00, 41.00, 1, 'Units', TRUE),
+        ('accounting-vendor-product-003', 1, '[COMM]', 'Communication', 'Service', 1.00, 'No Tax', 0.00, 0.00, 1, 'Units', TRUE),
+        ('accounting-vendor-product-004', 1, '[FOOD_0001]', 'Flour', 'Goods', 2.99, 'Tax 15%', 18.00, 26.00, 1, 'kg', TRUE),
+        ('accounting-vendor-product-005', 1, '[GIFT]', 'Gifts', 'Goods', 1.00, 'Tax 15%', 0.00, 0.00, 1, 'Units', TRUE),
+        ('accounting-vendor-product-006', 1, '[FOOD]', 'Meals', 'Goods', 1.00, 'Tax 15%', 0.00, 0.00, 1, 'Units', TRUE),
+        ('accounting-vendor-product-007', 1, '[MIL]', 'Mileage', 'Service', 1.00, 'No Tax', 0.00, 0.00, 1, 'Miles', TRUE),
+        ('accounting-vendor-product-008', 1, '[FURN_7777]', 'Office Chair', 'Goods', 70.00, 'Tax 15%', 0.00, 10.00, 1, 'Units', TRUE),
+        ('accounting-vendor-product-009', 1, '[FURN_8888]', 'Office Lamp', 'Goods', 40.00, 'Tax 15%', 0.00, 0.00, 1, 'Units', TRUE),
+        ('accounting-vendor-product-010', 1, '[SERV_001]', 'Furniture Assembly', 'Service', 2000.00, 'No Tax', 0.00, 0.00, 1, 'Hours', TRUE);
+    down: |
+      DELETE FROM accounting_vendor_products WHERE id LIKE 'accounting-vendor-product-%';
+      DROP TABLE IF EXISTS accounting_vendor_products;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
