@@ -19,7 +19,7 @@ menu:
     - id: reporting
       label: Reporting
       items:
-        - { path: /livechat-analysis, label: Livechat Analysis, icon: chart, permission: livechat.read }
+        - { path: /livechat-analysis, label: Sessions, icon: chart, permission: livechat.read }
     - id: configuration
       label: Configuration
       items:

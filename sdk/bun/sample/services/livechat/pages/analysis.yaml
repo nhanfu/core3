@@ -1,21 +1,75 @@
-title: Livechat Analysis
-page: { id: livechat-analysis, breadcrumb: [Website, Live Chat, Analysis], auth: { require: [livechat.read] } }
-datasources:
-  - id: livechat_analysis_totals
-    single: true
-    permission: livechat.read
-    query: "SELECT (SELECT COUNT(*) FROM livechat_channels WHERE active) AS channel_count, COUNT(*) AS session_count, COUNT(*) FILTER (WHERE status = 'Closed') AS closed_count, COALESCE(AVG(duration_minutes) FILTER (WHERE status = 'Closed'), 0) AS avg_duration, COALESCE(AVG(rating) FILTER (WHERE rating IS NOT NULL), 0) AS avg_rating FROM livechat_sessions"
-  - id: livechat_analysis_ratings
-    permission: livechat.read
-    query: "SELECT CASE WHEN rating = 5 THEN 'Satisfied' WHEN rating = 3 THEN 'Okay' WHEN rating = 1 THEN 'Dissatisfied' ELSE 'Not rated' END AS category, COUNT(*) AS session_count FROM livechat_sessions GROUP BY category ORDER BY session_count DESC"
+title: Sessions
+page: { id: livechat-analysis, route: /livechat-analysis, breadcrumb: [Website, Live Chat, Reporting, Sessions], auth: { require: [livechat.read] } }
+
 components:
-  - type: StatRow
-    source: livechat_analysis_totals
-    title: Livechat overview
-    stats: [{ label: Channels, field: channel_count }, { label: Sessions, field: session_count }, { label: Closed, field: closed_count }, { label: Avg duration (min), field: avg_duration }, { label: Avg rating, field: avg_rating }]
-  - type: Chart
-    source: livechat_analysis_ratings
-    title: Sessions by satisfaction
-    label_field: category
-    value_field: session_count
-    variant: bar
+  - type: ListView
+    variant: odoo
+    source: livechat_report_sessions
+    search: { label: Search Report, placeholder: 'Search agents, channels, countries, or visitors...' }
+    date_range:
+      label: Date
+      from_field: from_date
+      to_field: to_date
+      default_preset: previous_month
+      presets: [previous_month, week, month, year]
+      preset_labels: { previous_month: 'Date: Last month', week: 'Date: Last week', month: 'Date: This month', year: 'Date: This year' }
+    filters:
+      - { field: rating_text, label: Rating, options: [Happy, Neutral, Unhappy] }
+      - { field: session_outcome, label: Status, options: [Success, Escalated, 'Never Answered', 'No one Available'] }
+      - { field: channel_name, label: Channel, options: [Website Support] }
+      - { field: country_name, label: Country, options: ['United States', Belgium, France] }
+    group_by:
+      - { field: channel_name, label: Channel }
+      - { field: agent_name, label: Agent }
+      - { field: rating_text, label: Rating }
+      - { field: country_name, label: Country }
+      - { field: session_outcome, label: Status }
+      - { field: start_hour, label: 'Hour of Day' }
+      - { field: day_name, label: 'Day of Week' }
+      - { field: start_date_month, label: Date }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: start_date_label
+        measure_field: session_count
+        measure_label: Sessions
+        type: line
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: channel_name, column: Channel }
+            - { field: agent_name, column: Agent }
+            - { field: start_date, column: 'Start Date of session', type: date }
+            - { field: start_date_month, column: Date }
+            - { field: start_hour, column: 'Hour of start Date of session' }
+            - { field: day_name, column: 'Day of the Week' }
+            - { field: country_name, column: 'Country of the visitor' }
+            - { field: language_name, column: Language }
+            - { field: rating_text, column: 'Satisfaction Rate' }
+            - { field: session_outcome, column: 'Session Outcome' }
+            - { field: session_count, column: Sessions }
+            - { field: response_time, column: 'Response Time (hh:mm:ss)' }
+            - { field: duration, column: 'Duration (min)' }
+            - { field: rating, column: 'Rating (%)' }
+            - { field: number_of_calls, column: '# of calls' }
+            - { field: call_duration_hour, column: 'Call Duration' }
+            - { field: nbr_message, column: 'Messages per Session' }
+          default:
+            rows: [channel_name]
+            columns: [rating_text]
+            measures:
+              - { field: session_count, aggregate: sum, column: Sessions }
+              - { field: response_time, aggregate: avg, column: 'Response Time (hh:mm:ss)' }
+              - { field: duration, aggregate: avg, column: 'Duration (min)' }
+              - { field: rating, aggregate: avg, column: 'Rating (%)' }
+              - { field: number_of_calls, aggregate: sum, column: '# of calls' }
+              - { field: call_duration_hour, aggregate: avg, column: 'Call Duration' }
+    show_pager: false
+    empty_state:
+      title: No data yet!
+      description: 'Track and improve live chat performance with insights on session activity, response times, customer ratings, and call interactions.'

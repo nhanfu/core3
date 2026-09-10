@@ -1,0 +1,27 @@
+page: { id: livechat-analysis }
+
+datasources:
+  - id: livechat_report_sessions
+    single: false
+    permission: livechat.read
+    error_states: { transport_error: { status: 503, code: LIVECHAT_REPORT_SESSIONS_UNAVAILABLE, message: Live chat session reporting is temporarily unavailable. } }
+    pivot:
+      fields: [id, channel_name, agent_name, start_date, start_date_month, start_date_label, start_hour, day_name, country_name, language_name, rating_text, session_outcome, session_count, response_time, duration, rating, number_of_calls, call_duration_hour, nbr_message, handled_by_agent, handled_by_bot]
+    query: |
+      SELECT id, channel_name, agent_name, start_date,
+        strftime(start_date, '%Y-%m') AS start_date_month,
+        strftime(start_date, '%d %b %Y') AS start_date_label,
+        start_hour, day_name, country_name, language_name, rating_text,
+        session_outcome, session_count, response_time, duration, rating,
+        number_of_calls, call_duration_hour, nbr_message, handled_by_agent,
+        handled_by_bot
+      FROM livechat_report_sessions
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR channel_name ILIKE '%' || :q || '%' OR agent_name ILIKE '%' || :q || '%' OR country_name ILIKE '%' || :q || '%' OR COALESCE(visitor_name, '') ILIKE '%' || :q || '%')
+        AND (:rating_text IS NULL OR rating_text = :rating_text)
+        AND (:session_outcome IS NULL OR session_outcome = :session_outcome)
+        AND (:channel_name IS NULL OR channel_name = :channel_name)
+        AND (:country_name IS NULL OR country_name = :country_name)
+        AND (:from_date IS NULL OR start_date >= CAST(:from_date AS TIMESTAMP))
+        AND (:to_date IS NULL OR start_date < CAST(:to_date AS TIMESTAMP) + INTERVAL '1' DAY)
+      ORDER BY start_date, id

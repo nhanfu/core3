@@ -1,0 +1,50 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_report_sessions (
+        id VARCHAR PRIMARY KEY,
+        channel_id VARCHAR NOT NULL,
+        channel_name VARCHAR NOT NULL,
+        visitor_name VARCHAR,
+        agent_name VARCHAR,
+        start_date TIMESTAMP NOT NULL,
+        start_hour VARCHAR NOT NULL,
+        day_name VARCHAR NOT NULL,
+        country_name VARCHAR,
+        language_name VARCHAR,
+        rating INTEGER,
+        rating_text VARCHAR,
+        session_outcome VARCHAR NOT NULL,
+        session_count INTEGER NOT NULL DEFAULT 1,
+        response_time DECIMAL(18,6) NOT NULL DEFAULT 0,
+        duration DECIMAL(18,2) NOT NULL DEFAULT 0,
+        number_of_calls INTEGER NOT NULL DEFAULT 0,
+        call_duration_hour DECIMAL(18,2) NOT NULL DEFAULT 0,
+        nbr_message INTEGER NOT NULL DEFAULT 0,
+        handled_by_agent INTEGER NOT NULL DEFAULT 0,
+        handled_by_bot INTEGER NOT NULL DEFAULT 0
+      );
+      INSERT OR IGNORE INTO livechat_report_sessions
+        (id, channel_id, channel_name, visitor_name, agent_name, start_date, start_hour, day_name, country_name, language_name, rating, rating_text, session_outcome, response_time, duration, number_of_calls, call_duration_hour, nbr_message, handled_by_agent, handled_by_bot)
+      VALUES
+        ('livechat-report-session-001', 'livechat-channel-demo-001', 'Website Support', 'Visitor #301', 'Support Agent', TIMESTAMP '2026-08-12 08:15:00', '08', 'Wednesday', 'United States', 'English', 5, 'Happy', 'Success', 0.050000, 6.50, 1, 0.25, 8, 1, 0),
+        ('livechat-report-session-002', 'livechat-channel-demo-001', 'Website Support', 'Visitor #302', 'Support Agent', TIMESTAMP '2026-08-12 09:40:00', '09', 'Wednesday', 'United States', 'English', 5, 'Happy', 'Success', 0.020000, 4.25, 0, 0.00, 6, 1, 0),
+        ('livechat-report-session-003', 'livechat-channel-demo-001', 'Website Support', 'Visitor #303', 'Support Agent', TIMESTAMP '2026-08-15 10:20:00', '10', 'Saturday', 'Belgium', 'French', 3, 'Neutral', 'Success', 0.100000, 12.00, 0, 0.00, 10, 1, 0),
+        ('livechat-report-session-004', 'livechat-channel-demo-001', 'Website Support', 'Visitor #304', 'Support Agent', TIMESTAMP '2026-08-18 13:05:00', '13', 'Tuesday', 'France', 'French', 1, 'Unhappy', 'Escalated', 0.250000, 18.75, 0, 0.00, 14, 1, 0),
+        ('livechat-report-session-005', 'livechat-channel-demo-001', 'Website Support', 'Visitor #305', NULL, TIMESTAMP '2026-08-21 14:30:00', '14', 'Friday', 'United States', 'English', NULL, NULL, 'Never Answered', 0.000000, 0.00, 0, 0.00, 2, 0, 0),
+        ('livechat-report-session-006', 'livechat-channel-demo-001', 'Website Support', 'Visitor #306', NULL, TIMESTAMP '2026-08-23 15:45:00', '15', 'Sunday', 'United States', 'English', NULL, NULL, 'No one Available', 0.000000, 0.00, 0, 0.00, 1, 0, 1),
+        ('livechat-report-session-007', 'livechat-channel-demo-001', 'Website Support', 'Visitor #307', 'Support Agent', TIMESTAMP '2026-08-25 16:10:00', '16', 'Tuesday', 'Belgium', 'French', 5, 'Happy', 'Success', 0.030000, 8.40, 1, 0.50, 11, 1, 0),
+        ('livechat-report-session-008', 'livechat-channel-demo-001', 'Website Support', 'Visitor #308', 'Support Agent', TIMESTAMP '2026-08-28 11:00:00', '11', 'Friday', 'France', 'French', 3, 'Neutral', 'Success', 0.090000, 9.25, 0, 0.00, 7, 1, 0),
+        ('livechat-report-session-009', 'livechat-channel-demo-001', 'Website Support', 'Visitor #309', 'Support Agent', TIMESTAMP '2026-08-30 12:25:00', '12', 'Sunday', 'United States', 'English', 1, 'Unhappy', 'Escalated', 0.300000, 21.50, 0, 0.00, 16, 1, 0),
+        ('livechat-report-session-010', 'livechat-channel-demo-001', 'Website Support', 'Visitor #310', NULL, TIMESTAMP '2026-09-02 09:05:00', '09', 'Wednesday', 'United States', 'English', NULL, NULL, 'Never Answered', 0.000000, 0.00, 0, 0.00, 1, 0, 1),
+        ('livechat-report-session-011', 'livechat-channel-demo-001', 'Website Support', 'Visitor #311', 'Support Agent', TIMESTAMP '2026-09-04 10:35:00', '10', 'Friday', 'United States', 'English', 5, 'Happy', 'Success', 0.040000, 7.75, 1, 0.15, 9, 1, 0),
+        ('livechat-report-session-012', 'livechat-channel-demo-001', 'Website Support', 'Visitor #312', NULL, TIMESTAMP '2026-09-07 17:20:00', '17', 'Monday', 'Belgium', 'French', NULL, NULL, 'No one Available', 0.000000, 0.00, 0, 0.00, 3, 0, 1),
+        ('livechat-report-session-013', 'livechat-channel-demo-001', 'Website Support', 'Visitor #313', 'Support Agent', TIMESTAMP '2026-09-09 18:10:00', '18', 'Wednesday', 'France', 'French', 3, 'Neutral', 'Success', 0.080000, 5.60, 0, 0.00, 5, 1, 0);
+    down: |
+      DROP TABLE IF EXISTS livechat_report_sessions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
