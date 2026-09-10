@@ -1,19 +1,12 @@
 title: Event
 page: { id: event-detail, route: /event-detail, breadcrumb: [Marketing, Events, Detail], auth: { require: [events.read] } }
-datasources:
-  - id: event_detail
-    single: true
-    permission: events.read
-    query: "SELECT e.id, e.row_version, e.name, e.event_type, e.organizer, e.venue, e.description, e.capacity, e.registration_count, (SELECT COUNT(DISTINCT attendee_name) FROM event_registrations r WHERE r.event_id = e.id) AS attendee_count, CAST(e.start_at AS VARCHAR) AS start_at, CAST(e.end_at AS VARCHAR) AS end_at, e.state FROM events e WHERE e.id = :id"
-  - id: event_registrations
-    permission: events.read
-    query: "SELECT id, attendee_name, attendee_email, ticket_type, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE event_id = :id ORDER BY registered_at DESC"
 components:
   - type: OdooFormView
     source: event_detail
     title_field: name
     status_field: state
     editable: true
+    content_slot: true
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
       - { id: registration_desk_event_detail, label: Registration Desk, variant: primary, permission: events.read }
@@ -30,9 +23,91 @@ components:
     group_columns: 2
     groups:
       - title: Event
-        fields: [{ field: name, label: Event }, { field: state, label: Status }, { field: event_type, label: Type }, { field: organizer, label: Organizer }, { field: venue, label: Venue }]
+        fields:
+          - { field: name, label: Event Name }
+          - { field: start_at, label: Date }
+          - { field: display_timezone, label: Display Timezone }
+          - { field: multiple_slots, label: Multiple Slots, type: checkbox }
+          - { field: template, label: Template }
+          - { field: tags, label: Tags }
+      - title: Organization
+        fields:
+          - { field: event_type, label: Type }
+          - { field: organizer, label: Organizer }
+          - { field: company, label: Company }
+          - { field: venue, label: Venue }
+          - { field: online_url, label: Online Event URL }
+          - { field: limit_registrations, label: Limit Registrations, type: checkbox }
       - title: Schedule and attendance
-        fields: [{ field: start_at, label: Starts at }, { field: end_at, label: Ends at }, { field: capacity, label: Capacity }, { field: registration_count, label: Registered }, { field: description, label: Description }]
+        wide: true
+        fields: [{ field: end_at, label: Ends at }, { field: capacity, label: Capacity }, { field: registration_count, label: Registered }, { field: description, label: Description }]
+  - type: TabGroup
+    mount_in: previous-panel
+    tabs:
+      - id: tickets
+        label: Tickets
+        components:
+          - type: ListView
+            variant: odoo
+            scroll: body
+            source: event_tickets
+            columns:
+              - { field: name, label: Name, type: PrimaryEntityCell }
+              - { field: price, label: Price, align: right }
+              - { field: registration_start, label: Registration Start }
+              - { field: registration_end, label: Registration End }
+              - { field: maximum, label: Maximum, align: right }
+              - { field: registration_count, label: Registration, align: right }
+            row_key: id
+            page_size: 50
+            empty_state: { title: No tickets, description: Tickets will appear here when they are configured. }
+      - id: communication
+        label: Communication
+        components:
+          - type: Html
+            tag: p
+            class: event-detail-empty-tab
+            text: Automated emails and reminders will appear here.
+      - id: questions
+        label: Questions
+        components:
+          - type: ListView
+            variant: odoo
+            scroll: body
+            source: event_detail_questions
+            columns:
+              - { field: question, label: Question, type: PrimaryEntityCell }
+              - { field: question_type, label: Type }
+              - { field: mandatory, label: Mandatory, type: StatusChip }
+              - { field: once_per_order, label: Once per Order, type: StatusChip }
+              - { field: answers, label: Answers }
+            row_key: id
+            page_size: 50
+            empty_state: { title: No questions, description: Registration questions will appear here. }
+      - id: notes
+        label: Notes & Documents
+        components:
+          - type: Html
+            tag: p
+            class: event-detail-empty-tab
+            text: Notes and documents will appear here.
+      - id: slots
+        label: Slots
+        components:
+          - type: ListView
+            variant: odoo
+            scroll: body
+            source: event_detail_slots
+            columns:
+              - { field: name, label: Slot, type: PrimaryEntityCell }
+              - { field: start_at, label: Starts at }
+              - { field: end_at, label: Ends at }
+              - { field: seats, label: Seats, align: right }
+              - { field: registration_count, label: Registration, align: right }
+              - { field: state, label: Status, type: StatusChip }
+            row_key: id
+            page_size: 50
+            empty_state: { title: No slots, description: Event slots will appear here when multiple slots are enabled. }
   - type: ContactGrid
     source: event_registrations
     row_key: id
@@ -76,16 +151,3 @@ actions:
   - { id: start_event_detail, type: server, permission: events.write, action: events.records.start, handler: order_transition, workflow: events, operation: start, params: { id: '{state.id}' }, refresh: [event_detail] }
   - { id: complete_event_detail, type: server, permission: events.manage, action: events.records.complete, handler: order_transition, workflow: events, operation: complete, params: { id: '{state.id}' }, refresh: [event_detail] }
   - { id: cancel_event_detail, type: server, permission: events.manage, action: events.records.cancel, handler: order_transition, workflow: events, operation: cancel, params: { id: '{state.id}' }, refresh: [event_detail] }
-  - id: register_event_attendee_detail
-    type: server_form
-    title: Register attendee
-    permission: events.write
-    action: events.registrations.create
-    handler: yaml_mutation
-    operation: register
-    params: { event_id: '{state.id}', event_name: '{state.name}' }
-    refresh: [event_detail, event_registrations]
-    fields:
-      - { field: attendee_name, label: Attendee, type: text, required: true }
-      - { field: attendee_email, label: Email, type: text }
-      - { field: ticket_type, label: Ticket type, type: text }

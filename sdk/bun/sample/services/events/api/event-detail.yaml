@@ -1,0 +1,18 @@
+page: { id: event-detail }
+datasources:
+  - id: event_detail
+    single: true
+    permission: events.read
+    query: "SELECT e.id, e.row_version, e.name, e.event_type, e.organizer, e.venue, e.description, e.capacity, e.registration_count, (SELECT COUNT(DISTINCT attendee_name) FROM event_registrations r WHERE r.event_id = e.id) AS attendee_count, CAST(e.start_at AS VARCHAR) AS start_at, CAST(e.end_at AS VARCHAR) AS end_at, 'Europe/Brussels' AS display_timezone, 'Exhibition' AS template, 'Online' AS tags, 'YourCompany' AS company, '' AS online_url, false AS multiple_slots, false AS limit_registrations, e.state FROM events e WHERE e.id = :id"
+  - id: event_registrations
+    permission: events.read
+    query: "SELECT id, attendee_name, attendee_email, ticket_type, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE event_id = :id ORDER BY registered_at DESC"
+  - id: event_tickets
+    permission: events.read
+    query: "SELECT id, name, CAST(price AS DECIMAL(12,2)) AS price, CAST(registration_start AS VARCHAR) AS registration_start, CAST(registration_end AS VARCHAR) AS registration_end, maximum, registration_count FROM event_tickets WHERE event_id = :id ORDER BY name"
+  - id: event_detail_questions
+    permission: events.read
+    query: "SELECT id, question, question_type, mandatory, once_per_order, answers FROM event_event_questions WHERE event_id = :id ORDER BY id"
+  - id: event_detail_slots
+    permission: events.read
+    query: "SELECT id, name, CAST(start_at AS VARCHAR) AS start_at, CAST(end_at AS VARCHAR) AS end_at, seats, registration_count, state FROM event_slots WHERE event_id = :id ORDER BY start_at, id"

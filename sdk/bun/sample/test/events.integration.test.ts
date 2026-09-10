@@ -20,7 +20,21 @@ describe('Events attendee parity batch', () => {
     ]);
     expect(form.stat_buttons.map((action: any) => action.value_field)).toEqual(['registration_count', 'attendee_count']);
     expect(page.actions.find((action: any) => action.id === 'event_registration_stats_detail').params).toEqual({ event_id: '{row.id}' });
-    expect(page.datasources.find((source: any) => source.id === 'event_detail').query).toContain('attendee_count');
+    expect(yaml('api/event-detail.yaml').datasources.find((source: any) => source.id === 'event_detail').query).toContain('attendee_count');
+    expect(yaml('migrations/20260910120000-006-event-detail-catalog.yaml').version).toBe('0.0.6');
+  });
+
+  test('declares the event detail ticket, question, and slot tabs', () => {
+    const page = yaml('pages/event-detail.yaml');
+    const tabs = page.components.find((component: any) => component.type === 'TabGroup');
+    expect(tabs).toMatchObject({ mount_in: 'previous-panel' });
+    expect(tabs.tabs.map((tab: any) => tab.label)).toEqual(['Tickets', 'Communication', 'Questions', 'Notes & Documents', 'Slots']);
+    expect(yaml('api/event-detail.yaml').datasources.map((source: any) => source.id)).toEqual([
+      'event_detail', 'event_registrations', 'event_tickets', 'event_detail_questions', 'event_detail_slots',
+    ]);
+    expect(tabs.tabs.find((tab: any) => tab.id === 'tickets').components[0].source).toBe('event_tickets');
+    expect(tabs.tabs.find((tab: any) => tab.id === 'questions').components[0].source).toBe('event_detail_questions');
+    expect(tabs.tabs.find((tab: any) => tab.id === 'slots').components[0].source).toBe('event_detail_slots');
   });
 
   test('opens attendee rows on a service-owned detail route', () => {

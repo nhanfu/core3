@@ -376,6 +376,17 @@ zero failed requests, and no page-level overflow. Captures are
 `/tmp/core3-events-{desktop,mobile}-event-form.png`; the isolated branch was
 committed as `f95df20e` and integrated as `a5023d3d`.
 
+The event-detail catalog batch moves the event detail and registration queries
+to `services/events/api/event-detail.yaml`, adds deterministic ticket,
+registration-question, and slot tables, and mounts Odoo-style Tickets,
+Communication, Questions, Notes & Documents, and Slots tabs inside the shared
+form sheet. Authenticated desktop/mobile checks reached
+`OpenWood Collection Online Reveal` by opening the row from `/events`, showed
+the Standard/VIP tickets plus question and slot records, returned no failed
+requests, and kept document width within the viewport. Captures are
+`/tmp/core3-events-detail-catalog-{desktop,mobile}.png`; the branch remains
+isolated until the main runtime verification completes.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

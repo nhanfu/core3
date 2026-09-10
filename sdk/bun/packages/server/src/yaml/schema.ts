@@ -172,7 +172,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['GridView', new Set(['type', 'source', 'page_size', 'empty_state', 'labels', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'search_button', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help', 'actions_inline'])],
   ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs', 'show_counts', 'variant'])],
-  ['TabGroup', new Set(['type', 'tabs'])],
+  ['TabGroup', new Set(['type', 'tabs', 'mount_in'])],
   ['StatRow', new Set(['type', 'source', 'title', 'stats'])],
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color', 'variant', 'series', 'layout'])],
   ['DocumentSummary', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_colors', 'columns'])],
