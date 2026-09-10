@@ -117,6 +117,18 @@ export class OdooFormView extends BaseComponent {
         html.take(header).span.className(`o-form-status data-grid-status data-grid-status-${tone}`).text(statusLabel);
       }
     }
+    const statButtons = Array.isArray(this.def.stat_buttons) ? this.def.stat_buttons : [];
+    if (statButtons.length) {
+      const statBar = html.take(header).div.className('o-form-stat-buttons').ele();
+      for (const stat of statButtons) {
+        if (stat.show_if && !Boolean(evalExpr(stat.show_if, { row: record, record, state: actionState }))) continue;
+        const button = html.take(statBar).button.className('o-form-stat-button').attr('type', 'button').ele();
+        const value = record[stat.value_field] == null ? '0' : String(record[stat.value_field]);
+        html.take(button).strong.className('o-form-stat-value').text(value);
+        html.take(button).span.className('o-form-stat-label').text(String(stat.label || stat.id || ''));
+        html.take(button).event('click', () => void this.submit(String(stat.id), { ...record }));
+      }
+    }
 
     const editFields = Array.isArray(this.def.edit_fields) && this.def.edit_fields.length
       ? this.def.edit_fields

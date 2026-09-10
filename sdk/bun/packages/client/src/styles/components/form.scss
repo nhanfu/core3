@@ -44,6 +44,11 @@
 .o-form-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding-bottom: 18px; }
 .o-form-title { color: var(--o-form-text); font-size: 28px; font-weight: 500; line-height: 1.2; }
 .o-form-subtitle { margin-top: 6px; color: var(--o-form-muted); font-size: 14px; }
+.o-form-stat-buttons { display: flex; flex: 0 0 auto; gap: 8px; margin-left: auto; }
+.o-form-stat-button { display: grid; min-width: 112px; padding: 7px 14px; border: 1px solid var(--o-form-border); border-radius: 4px; background: var(--o-form-surface); color: var(--o-form-text); font: inherit; text-align: left; cursor: pointer; }
+.o-form-stat-button:hover { border-color: var(--o-form-action); color: var(--o-form-action); }
+.o-form-stat-value { font-size: 16px; line-height: 1.2; }
+.o-form-stat-label { margin-top: 2px; color: var(--o-form-muted); font-size: 12px; }
 .o-form-status { flex: 0 0 auto; margin-top: 3px; border-radius: 3px; }
 .o-form-status-exception { font-size: 12px; font-weight: 700; text-transform: uppercase; }
 .o-form-statusbar-step { position: relative; min-width: 104px; margin-left: -9px; padding: 6px 15px 6px 22px; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%); color: var(--o-form-muted); background: var(--o-form-border); font-size: 12px; font-weight: 600; text-align: center; }.o-form-statusbar-step:first-child { margin-left: 0; padding-left: 15px; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%); }.o-form-statusbar-step::after { position: absolute; z-index: -1; inset: 1px 11px 1px 1px; clip-path: inherit; background: var(--o-form-surface); content: ''; }.o-form-statusbar-step.is-current { z-index: 1; color: #fff; background: var(--o-form-action); }.o-form-statusbar-step.is-current::after { background: var(--o-form-action); }
@@ -310,6 +315,8 @@
   .o-form-header { gap: 12px; padding: 4px 0 20px; }
   .o-form-title { font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
   .o-form-status { margin-top: 0; padding: 6px 10px; border-radius: 999px; }
+  .o-form-stat-buttons { width: 100%; order: 3; margin-left: 0; overflow-x: auto; }
+  .o-form-stat-button { min-width: 112px; }
   .o-form-actionbar {
     width: 100%;
     flex-wrap: nowrap;

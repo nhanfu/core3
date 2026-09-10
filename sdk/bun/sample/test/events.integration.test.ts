@@ -7,6 +7,21 @@ const root = join(import.meta.dir, '../services/events');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('Events attendee parity batch', () => {
+  test('matches the Odoo event form actions and stat buttons', () => {
+    const page = yaml('pages/event-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    expect(form.header_actions.map((action: any) => action.id)).toEqual([
+      'registration_desk_event_detail',
+      'edit_event_detail',
+      'publish_event_detail',
+      'start_event_detail',
+      'complete_event_detail',
+      'cancel_event_detail',
+    ]);
+    expect(form.stat_buttons.map((action: any) => action.value_field)).toEqual(['registration_count', 'attendee_count']);
+    expect(page.datasources.find((source: any) => source.id === 'event_detail').query).toContain('attendee_count');
+  });
+
   test('opens attendee rows on a service-owned detail route', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const attendees = yaml('pages/attendees.yaml');

@@ -111,6 +111,10 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
     return { ...button, is_workflow: Boolean(action?.workflow) };
   });
+  formDef.stat_buttons = (def.stat_buttons || []).filter((button: any) => {
+    const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
+    return action && hasPermission(ctx.user, action.permission);
+  });
   formDef.onEditingChange = (editing: boolean) => {
     document.dispatchEvent(new CustomEvent('core3:form-editing', {
       detail: { source: def.source, editing },
