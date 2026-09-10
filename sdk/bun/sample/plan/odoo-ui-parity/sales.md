@@ -37,6 +37,14 @@ Capture `/odoo/sales` (quotations/orders) and every listed action at 1440x900 an
 - Odoo captures: `/tmp/odoo-sales-quotations-desktop.png`, `odoo-sales-quotations-mobile.png`, `odoo-sales-orders-list-desktop.png`, and `odoo-sales-reporting-desktop.png`.
 - Verified: authenticated menu routes, populated quotation/order/report lists, reporting graph/pivot/list tabs, and responsive mobile rendering.
 
+## Current batch: Sales Analysis By Customers
+
+- Odoo 19 source action: `sale.action_order_report_customers` / action `717`, model `sale.report`, with `graph,pivot` views, default Customer grouping, and the `Order Date: Last 365 Days` search facet.
+- Odoo authenticated captures: `/tmp/odoo-sales-customers-desktop-reference.png` and `/tmp/odoo-sales-customers-mobile-reference.png`.
+- Core3 route: `/order/reporting/customers`, owned by `sale-reporting-customers`; its page/API fragments join by `page.id` and the reporting menu entry is permissioned by `orders.read`.
+- Core3 behavior: Odoo-shaped customer bar graph and pivot, Qty Ordered default measure, fixed date range/search facets, deterministic customer/order/line fixtures, read-only report semantics, empty-state rendering, and transport-error contract.
+- Verification: `bun test test/sales_customer_report.integration.test.ts` (3 pass, 25 assertions), GraphView/PivotView client tests (12 pass), UI audit (362 pages, 366 routes, 641 datasources), and `git diff --check` all pass. Authenticated Core3 desktop/mobile captures are `/tmp/core3-sales-customers-desktop-final-20260910.png` and `/tmp/core3-sales-customers-mobile-final-20260910.png`; Odoo references remain `/tmp/odoo-sales-customers-desktop-reference.png` and `/tmp/odoo-sales-customers-mobile-reference.png`. Runtime evidence covers populated, search-empty, forced-empty, pivot, and anonymous permission-boundary states; desktop `1440/1440` and mobile `390/390` report/body widths have no horizontal overflow and browser response/page/console failure lists are empty. Deferred Odoo report list view is intentional because action `717` exposes only graph and pivot.
+
 ## Next bounded slice: Sales order form
 
 - Added dedicated `/order/sale-order` form and `sale-order-detail` page/API fragment; quotation and confirmed-order rows no longer open the generic logistics `/order/detail` form.

@@ -1,0 +1,52 @@
+title: Sales Analysis By Customers
+page: { id: sale-reporting-customers, route: /order/reporting/customers, breadcrumb: [Sales, Reporting, Sales Analysis By Customers], auth: { require: [orders.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_report_customers
+    search: { label: Search, placeholder: Search customers... }
+    date_range:
+      label: Order Date
+      from_field: from_date
+      to_field: to_date
+      default_preset: last_12_months
+      presets: [last_12_months, year, quarter, month]
+      preset_labels: { last_12_months: Last 365 Days, year: This Year, quarter: This Quarter, month: This Month }
+    group_by:
+      - { field: customer_name, label: Customer }
+    default_group_by: customer_name
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        type: bar
+        category_field: customer_name
+        measure_field: quantity_ordered
+        measure_label: Qty Ordered
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: customer_name, column: Customer }
+            - { field: order_count, column: Orders }
+            - { field: quantity_ordered, column: Qty Ordered }
+            - { field: total_revenue, column: Total }
+          default:
+            rows: [customer_name]
+            measures:
+              - { field: quantity_ordered, aggregate: sum, column: Qty Ordered }
+              - { field: total_revenue, aggregate: sum, column: Total }
+              - { field: order_count, aggregate: sum, column: Orders }
+    columns:
+      - { field: customer_name, label: Customer, type: PrimaryEntityCell }
+      - { field: order_count, label: Orders, align: right }
+      - { field: quantity_ordered, label: Qty Ordered, align: right }
+      - { field: total_revenue_display, label: Total, align: right }
+      - { field: avg_order_value_display, label: Average Order, align: right }
+    page_size: 80
+    row_key: customer_name
+    empty_state:
+      title: No sales data
+      description: No orders match the selected customer or date filters.

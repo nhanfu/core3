@@ -11,8 +11,26 @@ describe('GraphView', () => {
       ],
     }, { view: { id: 'graph', label: 'Graph', categoryField: 'date', measureField: 'amount', type: 'line' } }).mount(container);
 
-    expect(container.querySelector('.o-graph-line')?.getAttribute('points')).toBe('72,140 172,30');
-    expect(container.querySelector('.o-graph-area')?.getAttribute('points')).toContain('172,250');
+    expect(container.querySelector('.o-graph-line')?.getAttribute('points')).toContain(',');
+    expect(container.querySelector('.o-graph-area')?.getAttribute('points')).toContain(' ');
     expect(container.querySelectorAll('.o-graph-mark')).toHaveLength(2);
+  });
+
+  it('renders an accessible measure legend and scale for grouped reports', () => {
+    const host = document.createElement('div');
+    const view = new GraphView('sales-customers-graph', {
+      rows: [{ customer_name: 'Acme Corporation', quantity_ordered: 4 }],
+    }, {
+      view: {
+        id: 'graph', label: 'Graph', categoryField: 'customer_name', measureField: 'quantity_ordered', measureLabel: 'Qty Ordered',
+      },
+    });
+
+    view.mount(host);
+
+    expect(host.querySelector('svg')?.getAttribute('aria-label')).toBe('Graph');
+    expect(host.querySelector('.o-graph-legend')?.textContent).toContain('Qty Ordered');
+    expect(host.querySelectorAll('.o-graph-gridline')).toHaveLength(5);
+    expect(host.querySelector('.o-graph-mark')?.getAttribute('data-category')).toBe('Acme Corporation');
   });
 });

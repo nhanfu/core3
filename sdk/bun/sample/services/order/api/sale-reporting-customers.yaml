@@ -1,0 +1,28 @@
+title: Sales Analysis By Customers
+page: { id: sale-reporting-customers }
+
+datasources:
+  - id: sale_report_customers
+    single: false
+    permission: orders.read
+    pivot:
+      fields: [customer_name, order_count, quantity_ordered, total_revenue]
+    error_states:
+      transport_error: { status: 503, code: SALES_CUSTOMER_REPORT_UNAVAILABLE, message: Customer sales analysis is temporarily unavailable. }
+    query: |
+      SELECT
+        o.customer_name,
+        COUNT(DISTINCT o.id) AS order_count,
+        CAST(COALESCE(SUM(ol.quantity), 0) AS DOUBLE) AS quantity_ordered,
+        CAST(COALESCE(SUM(COALESCE(ol.line_total, 0)), 0) AS DOUBLE) AS total_revenue,
+        printf('$%,.2f', CAST(COALESCE(SUM(COALESCE(ol.line_total, 0)), 0) AS DOUBLE)) AS total_revenue_display,
+        CAST(COALESCE(AVG(o.total_amount), 0) AS DOUBLE) AS avg_order_value,
+        printf('$%,.2f', CAST(COALESCE(AVG(o.total_amount), 0) AS DOUBLE)) AS avg_order_value_display
+      FROM orders o
+      LEFT JOIN order_lines ol ON ol.order_id = o.id
+      WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty')
+        AND (:q IS NULL OR o.customer_name ILIKE '%' || :q || '%' OR o.order_number ILIKE '%' || :q || '%')
+        AND (:from_date IS NULL OR o.order_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR o.order_date <= CAST(:to_date AS DATE))
+      GROUP BY o.customer_name
+      ORDER BY quantity_ordered DESC, o.customer_name

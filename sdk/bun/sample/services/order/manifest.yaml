@@ -60,6 +60,10 @@ menu:
           label: Products
           icon: cube
           permission: orders.read
+        - path: /order/reporting/customers
+          label: Customers
+          icon: users
+          permission: orders.read
     - id: configuration
       label: Configuration
       items:

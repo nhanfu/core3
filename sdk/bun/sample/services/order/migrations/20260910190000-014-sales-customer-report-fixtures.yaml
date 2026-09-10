@@ -1,0 +1,41 @@
+version: 0.0.13
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO customers(id, code, name, owner_name, visibility, status)
+      VALUES
+        ('customer-sales-report-acme', 'ACME-SR', 'Acme Corporation', 'Mitchell Admin', 'Public', 'Active'),
+        ('customer-sales-report-ready', 'READY-SR', 'Ready Mat', 'Mitchell Admin', 'Public', 'Active'),
+        ('customer-sales-report-gemini', 'GEMINI-SR', 'Gemini Furniture', 'Sarah Johnson', 'Public', 'Active'),
+        ('customer-sales-report-willow', 'WILLOW-SR', 'Willow Corner', 'Sarah Johnson', 'Public', 'Active')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO orders(
+        id, order_number, customer_name, customer_legal_name, order_date, status,
+        shipment_type, route, transport_method, trip_count, total_amount, branch_id,
+        created_by, notes, created_at, updated_at
+      )
+      VALUES
+        ('sales-report-order-001', 'SR/2026/0001', 'Acme Corporation', 'Acme Corporation', DATE '2026-01-15', 'Approved', 'Goods', 'San Francisco → Oakland', 'Road', 1, 45000, 'branch-hcm', 'Admin User', 'Customer analysis fixture', TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('sales-report-order-002', 'SR/2026/0002', 'Ready Mat', 'Ready Mat', DATE '2026-01-16', 'Approved', 'Goods', 'San Francisco → San Jose', 'Road', 1, 30000, 'branch-hcm', 'Admin User', 'Customer analysis fixture', TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('sales-report-order-003', 'SR/2026/0003', 'Gemini Furniture', 'Gemini Furniture', DATE '2026-01-17', 'Pending Approval', 'Goods', 'Oakland → Sacramento', 'Road', 1, 18000, 'branch-hcm', 'Dispatcher User', 'Customer analysis fixture', TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('sales-report-order-004', 'SR/2026/0004', 'Willow Corner', 'Willow Corner', DATE '2026-01-18', 'Approved', 'Goods', 'San Jose → Fresno', 'Road', 1, 9000, 'branch-hcm', 'Admin User', 'Customer analysis fixture', TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO order_lines(
+        id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total,
+        created_at, updated_at
+      )
+      VALUES
+        ('sales-report-line-001', 'sales-report-order-001', 10, 'Acme implementation package', 18, 'Units', 2500, 0, 45000, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('sales-report-line-002', 'sales-report-order-002', 10, 'Ready Mat delivery package', 15, 'Units', 2000, 0, 30000, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('sales-report-line-003', 'sales-report-order-003', 10, 'Gemini furniture package', 9, 'Units', 2000, 0, 18000, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('sales-report-line-004', 'sales-report-order-004', 10, 'Willow Corner package', 3, 'Units', 3000, 0, 9000, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM order_lines WHERE id IN ('sales-report-line-001', 'sales-report-line-002', 'sales-report-line-003', 'sales-report-line-004');
+      DELETE FROM orders WHERE id IN ('sales-report-order-001', 'sales-report-order-002', 'sales-report-order-003', 'sales-report-order-004');
+      DELETE FROM customers WHERE id IN ('customer-sales-report-acme', 'customer-sales-report-ready', 'customer-sales-report-gemini', 'customer-sales-report-willow');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
