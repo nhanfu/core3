@@ -5,27 +5,81 @@ components:
     variant: odoo
     source: all_timesheet_entries
     search: { label: Search all timesheets, placeholder: 'Search employee, project, or entry...' }
-    filters: [{ field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }]
-    group_by: [{ field: employee_name, label: Employee }, { field: project_name, label: Project }, { field: task_name, label: Task }, { field: state, label: Status }]
+    filters:
+      - { field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }
+      - { field: work_date, label: Date, options: [{ id: today, label: Today }, { id: this_week, label: This Week }, { id: last_week, label: Last Week }] }
+    group_by:
+      - { field: employee_name, label: Employee }
+      - { field: project_name, label: Project }
+      - { field: task_name, label: Task }
+      - { field: state, label: Status }
+      - { field: work_date, label: Date }
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
+      - { id: list, label: List, icon: table, mobile: false }
       - id: kanban
         label: Kanban
         icon: dashboard
         group_by: employee_name
-        card: { title: name, subtitle: employee_name, fields: [{ field: project_name, label: Project }, { field: task_name, label: Task }, { field: hours, label: Time Spent }, { field: state, label: Status }] }
+        mobile: false
+        card: { title: project_name, subtitle: employee_name, fields: [{ field: task_name, label: Task }, { field: work_date, label: Date }, { field: time_spent_display, label: Time Spent }, { field: state, label: Status }] }
+      - { id: form, label: Form, icon: form, mobile: false }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: work_date
+        mobile: false
+        card: { title: project_name, subtitle: time_spent_display, fields: [{ field: employee_name, label: Employee }, { field: task_name, label: Task }, { field: description, label: Description }] }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: project_name
+        record_date_field: activity_date
+        mobile: false
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: meeting, label: Meeting, icon: ◉ }
+          - { id: call, label: Call, icon: ☎ }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields:
+            - { field: employee_name, column: Employee }
+            - { field: project_name, column: Project }
+            - { field: task_name, column: Task }
+            - { field: work_date, column: Date, type: date }
+            - { field: hours, column: Time Spent }
+            - { field: unit_amount, column: Timesheet Costs }
+          default:
+            rows: [employee_name]
+            columns: [work_date]
+            measures:
+              - { field: hours, aggregate: sum, column: Time Spent }
+              - { field: unit_amount, aggregate: sum, column: Timesheet Costs }
+          date_ranges: { work_date: month }
+      - { id: graph, label: Graph, icon: graph, category_field: employee_name, series_field: project_name, measure_field: hours, measure_label: Time Spent, type: bar, mobile: false }
     column_chooser: true
     row_key: id
     row_open_action: view_all_timesheet_entry
+    row_double_click_action: view_all_timesheet_entry
     row_actions: menu
     columns:
-      - { field: name, label: Entry, type: PrimaryEntityCell }
+      - { field: work_date, label: Date }
       - { field: employee_name, label: Employee }
       - { field: project_name, label: Project }
       - { field: task_name, label: Task }
-      - { field: work_date, label: Date }
-      - { field: hours, label: Time Spent, align: right }
-      - { field: state, label: Status, type: StatusChip }
+      - { field: name, label: Entry, type: PrimaryEntityCell }
+      - { field: description, label: Description }
+      - { field: sales_order_item, label: Sales Order Item, optional: hide }
+      - { field: time_spent_display, label: Time Spent, align: right }
+      - { field: state, label: Status, type: StatusChip, optional: hide }
+    form_view: { page: apps/services/timesheets/pages/all-timesheets-detail.yaml, side_panel: true }
+    page_size: 25
+    empty_state: { title: No timesheets, description: No timesheet entries match the current filters. }
+    labels: { selected: selected, filters: Filters, columns: Columns, clear_selection: Clear selection, select_all: Select all rows, select_row: Select row, previous_page: Previous page, next_page: Next page }
 actions:
-  - { id: view_all_timesheet_entry, type: navigate, permission: timesheets.manage, navigate_to: /timesheets/detail, params: { id: '{row.id}' } }
+  - { id: view_all_timesheet_entry, type: navigate, permission: timesheets.manage, navigate_to: /all-timesheets/detail, params: { id: '{row.id}' } }
