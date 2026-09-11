@@ -403,6 +403,71 @@ tests and 47 assertions; `bun run audit` passes with 415 pages, 421 routes,
 and 726 datasources. Existing Employees action, Departments, Departure
 Reasons, and Work Locations suites also pass.
 
+## Bounded batch: Job Positions
+
+This batch implements the next ordinary visible Employees configuration action
+after Working Schedules and Departure Reasons: Employees > Configuration >
+Recruitment > Job Positions. The live personal Odoo database `core3_personal`
+was inspected on 2026-09-11. Menu id 309 resolves to `action_hr_job` (database
+action 436), model `hr.job`, and view mode `list,form`; the action context
+enables the `Current` filter. The installed `hr_recruitment` extension adds the
+visible `Open Applications` list column and Company/Department search-panel
+facets. The authenticated reference contained nine current demo positions.
+
+Core3 adds `/employees/jobs` and `/employees/jobs/detail` under the Employees
+Configuration menu. Layout pages are separate from service-owned API fragments
+and join by page IDs `employee-job-positions` and
+`employee-job-position-detail`. Migration
+`20260911180000-011-job-positions.yaml` seeds nine deterministic positions,
+stable counts, ordering, relations, and `2026-01-15` timestamps. The list
+contract includes the Current/Archived boundary, name/department/company
+search, empty and transport-error states, and the Odoo labels Job Position,
+Department, Open Applications, and Target. The detail contract includes
+Applications and Employees stat actions, Details/Summary/Trackers tabs,
+permissioned HR-user create/edit/archive/restore actions, required-name and
+non-negative-target validation, duplicate and missing guards, and optimistic
+stale-write protection. Ordinary `employees.read` users can inspect the
+projection; mutations require `employees.write`.
+
+Focused validation and static evidence:
+
+- `bun test test/employees_job_positions.integration.test.ts`: 3 tests,
+  49 assertions passed.
+- `bun run audit`: 443 pages, 450 routes, and 769 datasources passed.
+- `git diff --check` passed before the implementation checkpoint
+  `e1047537`.
+- The implementation checkpoint contains only the Employees manifest, page/API
+  YAML, migration, and focused test; screenshots are not tracked.
+
+Authenticated visual evidence is kept outside Git. Odoo reference captures
+used `core3_personal` and action 436 at 1440x900 and 390x844:
+
+| State | Desktop | Mobile |
+| --- | --- | --- |
+| Odoo list | `/tmp/odoo-employees-job-positions-desktop-20260911.png` (`1b23959076d05793a400476b2b337ba272885a1ff73e05dde61d6636a1f9475b`) | `/tmp/odoo-employees-job-positions-mobile-20260911.png` (`de63c7b12f1bb05a269ed82a99f82212e0b4cb857004beb89f73261b48047642`) |
+| Odoo form | `/tmp/odoo-employees-job-position-form-desktop-20260911.png` (`4a91adfed920f29518c506a1bced5e1690f9ae205fd69c21db03f76ddca55685`) | `/tmp/odoo-employees-job-position-form-mobile-20260911.png` (`dacce8d00fee191a845a68fc3926e013a7d65d2794c3922025fa8a5ca0d550b0`) |
+
+Fresh authenticated Core3 captures used `admin@tms.local` on the isolated
+runtime and the same two viewports:
+
+| State | Desktop | Mobile |
+| --- | --- | --- |
+| Core3 list | `/tmp/core3-odoo-employees-job-positions-list-desktop-20260911-checkpoint.png` (`54009e56b231d988d06d574121fb871d5c14a0bb5735aafef75352eed1fb6b44`) | `/tmp/core3-odoo-employees-job-positions-list-mobile-20260911-checkpoint.png` (`e07e8153b5552a22e51e7b6ae58bd55d1ec23256535e7786e2fc0a11b55e6e9c`) |
+| Core3 detail | `/tmp/core3-odoo-employees-job-position-detail-desktop-20260911-checkpoint.png` (`46beb6deaacf7ad3db88ef1054f97ea9fdeeaa7e733f9f2a5caebdc8c2c5568e`) | `/tmp/core3-odoo-employees-job-position-detail-mobile-20260911-checkpoint.png` (`0539569a7e72779e2d6f5abb7a5539ce6207e4d60473890b12f837b3850dce99`) |
+
+The browser matrix loaded the Job Positions title, all nine deterministic
+rows, Open Applications, Chief Technical Officer, Hiring Process, Job Posting,
+and Details/Summary/Trackers at both viewports. It recorded no failed
+application responses, no page errors, and no horizontal overflow. Known
+bounded differences remain: Core3 uses the Fluent shell instead of Odoo's
+purple shell, its generic list renderer presents filters as a top chip instead
+of Odoo's left search panel, and the shared `OdooFormView` renders the
+permissioned edit-field summary before the notebook, so the detail fields are
+repeated in the Details tab. Odoo's native recruitment many2many skills,
+chatter, relational editors, and application/employee drill-down surfaces are
+represented by deterministic display fields and permissioned navigation
+actions in this slice; they remain follow-up parity work.
+
 ## Acceptance
 
 - Source and manifest checks identify `hr`, version, dependencies, official
