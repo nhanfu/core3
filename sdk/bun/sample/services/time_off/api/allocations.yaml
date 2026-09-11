@@ -7,12 +7,51 @@ datasources:
   - id: time_off_allocations
     permission: time_off.read
     query: "SELECT id, row_version, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state, reason FROM leave_allocations WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY date_from DESC, name"
+  - id: group_allocation_employees
+    permission: time_off.manage
+    single: false
+    query: "SELECT id AS value, name AS label FROM time_off_group_allocation_employees ORDER BY name"
+  - id: group_allocation_types
+    permission: time_off.manage
+    single: false
+    query: "SELECT id AS value, name AS label FROM leave_types WHERE state = 'Active' ORDER BY name"
+  - id: group_allocation_plans
+    permission: time_off.manage
+    single: false
+    query: "SELECT id AS value, name AS label FROM accrual_plans WHERE state = 'Active' ORDER BY name"
 actions:
   - id: view_allocation
     type: navigate
     permission: time_off.read
     navigate_to: /time-off-allocations/detail
     params: { id: '{row.id}' }
+  - id: create_group_allocation
+    type: server_form
+    permission: time_off.manage
+    title: New Group Allocation
+    action: time_off.allocations.group_create
+    handler: yaml_mutation
+    refresh: [time_off_allocations]
+    success_message: Group allocation created.
+    mutation:
+      generated: [group_id]
+      guards:
+        - { query: "SELECT 1 AS ok FROM leave_types WHERE id = :leave_type_id AND state = 'Active'", status: 422, code: TIME_OFF_GROUP_ALLOCATION_TYPE_INVALID, message: Select an active Time Off Type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:days AS DECIMAL(18,3)) > 0 AND CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, code: TIME_OFF_GROUP_ALLOCATION_VALUES_INVALID, message: Allocation must have a positive amount and valid dates. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM time_off_group_allocation_employees WHERE id IN :employee_ids)", status: 422, code: TIME_OFF_GROUP_ALLOCATION_EMPLOYEES_INVALID, message: Select at least one employee. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_allocations WHERE name IN (SELECT 'ALLOC/GROUP/' || CAST(:date_from AS DATE) || '/' || id FROM time_off_group_allocation_employees WHERE id IN :employee_ids))", status: 409, code: TIME_OFF_GROUP_ALLOCATION_EXISTS, message: A group allocation already exists for one of these employees and dates. }
+      steps:
+        - query: "INSERT INTO leave_allocations(id, name, employee_id, employee_name, leave_type_id, leave_type_name, days, date_from, date_to, state, reason, allocation_type, accrual_plan_id) SELECT 'group-allocation-' || e.id || '-' || CAST(:date_from AS DATE), 'ALLOC/GROUP/' || CAST(:date_from AS DATE) || '/' || e.id, e.id, e.name, :leave_type_id, t.name, CAST(:days AS DECIMAL(18,3)), CAST(:date_from AS DATE), CAST(:date_to AS DATE), 'Submitted', COALESCE(NULLIF(CAST(:reason AS VARCHAR), ''), 'Group allocation'), COALESCE(:allocation_type, 'Regular Allocation'), :accrual_plan_id FROM time_off_group_allocation_employees e JOIN leave_types t ON t.id = :leave_type_id WHERE e.id IN :employee_ids"
+    fields:
+      - { field: grant_mode, label: Grant?, type: select, options: [{ value: employee, label: By Employee }, { value: department, label: By Department }], default: employee }
+      - { field: employee_ids, label: Employees, type: multi-select, options_source: group_allocation_employees, multiple: true, required: true }
+      - { field: leave_type_id, label: Time Off Type, type: select, options_source: group_allocation_types, required: true, default: leave-type-annual }
+      - { field: allocation_type, label: Allocation Type, type: select, options: [{ value: regular, label: Regular Allocation }, { value: accrual, label: Based on Accrual Plan }], default: regular }
+      - { field: accrual_plan_id, label: Accrual Plan, type: select, options_source: group_allocation_plans, show_if: "state.allocation_type === 'accrual'" }
+      - { field: date_from, label: Validity Start, type: date, required: true, default: '2026-01-15' }
+      - { field: date_to, label: Validity End, type: date, required: true, default: '2026-12-31' }
+      - { field: days, label: Allocation (Days), type: number, required: true, min: 0.001, step: 0.5, default: 1 }
+      - { field: reason, label: Reasons, type: textarea, placeholder: Add a reason... }
   - { id: submit_allocation, type: server, permission: time_off.write, action: time_off.allocations.submit, handler: order_transition, workflow: leave_allocations, operation: submit, refresh: [time_off_allocations] }
   - { id: approve_allocation, type: server, permission: time_off.manage, action: time_off.allocations.approve, handler: order_transition, workflow: leave_allocations, operation: approve, refresh: [time_off_allocations] }
   - { id: refuse_allocation, type: server, permission: time_off.manage, action: time_off.allocations.refuse, handler: order_transition, workflow: leave_allocations, operation: refuse, refresh: [time_off_allocations] }

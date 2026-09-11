@@ -1,0 +1,27 @@
+version: 0.0.11
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE leave_allocations ADD COLUMN IF NOT EXISTS allocation_type VARCHAR;
+      ALTER TABLE leave_allocations ADD COLUMN IF NOT EXISTS accrual_plan_id VARCHAR;
+      UPDATE leave_allocations SET allocation_type = 'Regular Allocation' WHERE allocation_type IS NULL;
+      CREATE TABLE IF NOT EXISTS time_off_group_allocation_employees (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL UNIQUE,
+        department_name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      INSERT OR IGNORE INTO time_off_group_allocation_employees(id, name, department_name, active) VALUES
+        ('employee-demo-001', 'Admin User', 'Management', TRUE),
+        ('employee-demo-002', 'Marc Demo', 'Product', TRUE),
+        ('employee-demo-003', 'Mitchell Admin', 'Management', TRUE),
+        ('employee-demo-004', 'Paul Williams', 'Product', TRUE);
+    down: |
+      DROP TABLE IF EXISTS time_off_group_allocation_employees;
+      ALTER TABLE leave_allocations DROP COLUMN IF EXISTS accrual_plan_id;
+      ALTER TABLE leave_allocations DROP COLUMN IF EXISTS allocation_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

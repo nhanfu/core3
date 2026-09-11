@@ -2,6 +2,7 @@ title: Allocations
 page: { id: time-off-allocations, route: /time-off-allocations, breadcrumb: [Human Resources, Time Off, Allocations], auth: { require: [time_off.read] } }
 toolbar:
   - { id: create_allocation, label: New, action: create_allocation, permission: time_off.manage, variant: primary }
+  - { id: create_group_allocation, label: New Group Allocation, action: create_group_allocation, permission: time_off.manage, variant: secondary }
 components:
   - type: ListView
     variant: odoo
