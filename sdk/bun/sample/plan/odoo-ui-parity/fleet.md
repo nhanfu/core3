@@ -382,3 +382,38 @@ pages, permissions, migrations, storage and styles inspection; authenticated
 personal Odoo login and SQL module-status query; authenticated Fleet vehicle and
 Odometers desktop/mobile captures; and review of the six register gates. No
 product image is part of this change.
+
+## Reporting Odometers analysis (2026-09-11)
+
+The installed Odoo source and owned demo database support the separate Fleet
+Reporting > Odometers action (`fleet_vehicle_odometer_reporting_action`, action
+186). Its source-backed report is manager-visible, defaults to date/category
+grouping, and exposes Graph analysis over active-vehicle odometer records. The
+owned reference contains populated report rows, so this is implemented as a
+bounded report slice rather than a placeholder.
+
+Core3 adds `/fleet/reporting/odometers` with page-only layout YAML and a
+page-bound API fragment. The service-owned migration provides 23 deterministic
+monthly rows across electric City Bike and petrol Model S fixtures. Search,
+vehicle/category/fuel/model filters, date/vehicle/category/fuel/model groupings,
+Graph rendering, empty/not-found fixtures, transport error, and manager
+permission are explicit. The report is read-only; sequence editing, native
+relational pickers, cross-company policy detail, and activity/chatter are
+outside this bounded action.
+
+Focused coverage passes 3 tests and 21 assertions. Audit reports 485 pages,
+492 routes, and 848 datasources; ESLint, global Sass, and `git diff --check`
+pass. Authenticated Core3 browser verification reached the report from the
+Fleet surface at both viewports with no failed requests, page errors, or
+horizontal overflow. Screenshots remain outside Git:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Odometer Analysis | 1440x900 | `/tmp/odoo-fleet-odometer-analysis-20260911/odoo-desktop-1440x900.png` | `c906be558d571bea916ef337511edad25ad4868d25a3b365f4f1e4aca09f1d51` |
+| Core3 Odometer Analysis | 1440x900 | `/tmp/core3-fleet-odometer-analysis-verified-desktop-1440x900.png` | `c58573cfd41eadbbfcb82d50dcc3fc7063c6906eed88865da9c29a9d3965b42d` |
+| Core3 Odometer Analysis | 390x844 | `/tmp/core3-fleet-odometer-analysis-verified-mobile-390x844.png` | `8ac3926bd8dfa94caf64c306b5444009154b35c1bc13795cfe7ce32c44aec603` |
+
+The Odoo worker capture is desktop-only; the Core3 mobile capture covers the
+responsive report state. Odoo's installed action is Graph-first, while Core3
+also uses the shared report list projection for responsive fallback. Date
+labels and shell styling retain the documented Core3/Odoo visual differences.
