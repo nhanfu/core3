@@ -262,6 +262,89 @@ Status: in-progress (live reference addon is available; full parity remains inco
 - Authenticated captures are under `/tmp`: Odoo desktop `/tmp/odoo-manufacturing-work-centers-desktop-{list,kanban,form}.png`, Odoo mobile `/tmp/odoo-manufacturing-work-centers-mobile-{list,form}.png`, and Core3 final desktop `/tmp/core3-manufacturing-work-centers-desktop-{list,form}.png`. The final Core3 mobile list/form pair was not refreshed after the row-navigation adjustment, and the shared renderer did not expose a Kanban switcher in the runtime control panel, so those are explicit evidence gaps rather than signoff claims. Browser runs used `domcontentloaded` plus fixed waits; no `networkidle` dependency was used.
 - Deliberately deferred in this bounded slice: cross-module OEE/Load/Performance/Operations report targets, mail chatter data, and inline Product Capacities CRUD. No fake Manufacturing routes were added for those source actions.
 
+## 2026-09-11 bounded Productivity Losses follow-up
+
+- Revalidated the uncovered live source action in the authenticated personal
+  database `core3_personal`: Work Center `Assembly 1` opens the button action
+  `mrp_workcenter_productivity_report_blocked` (runtime action `831`), model
+  `mrp.workcenter.productivity`, at
+  `http://localhost:8069/odoo/work-centers/1/action-831`. Its modes are
+  `list,form,graph,pivot`. The list fields are Start Date, End Date, Work
+  Center, User, Loss Reason, Duration (minutes), and Company; the form adds
+  Manufacturing Order, Work Order, and Description. The live list contains
+  Equipment Failure and Material Availability rows scoped to Assembly 1.
+  Direct `/odoo/action-831` is not a valid source entry point in this Odoo
+  build because its default context evaluates `active_id`; the Work Center
+  stat-button route is therefore the authoritative action path.
+- Core3 implements the bounded report at
+  `/manufacturing/productivity-losses` and the detail route at
+  `/manufacturing/productivity-losses/detail`. The Work Center detail now
+  exposes the `Lost` stat button and passes `workcenter_id` into the report.
+  `pages/productivity-losses.yaml` and
+  `pages/productivity-loss-detail.yaml` are presentation-only; the separate
+  `api/productivity-losses.yaml` and `api/productivity-loss-detail.yaml`
+  fragments own page-id-bound queries, permissions, CRUD, validation, and
+  row-version guards. Migration `20260911210000-014-productivity-losses.yaml`
+  seeds six deterministic loss reasons and reuses the existing OEE loss rows.
+  Work-center option values use the same names submitted by the form guards,
+  and the mobile list intentionally retains only Start Date and End Date like
+  the live source.
+- Focused verification after the responsive/selector fix:
+  `bun test test/manufacturing_productivity_losses.integration.test.ts` passed
+  with 4 tests and 47 assertions. The suite covers page/API separation,
+  route discovery, Work Center stat navigation, all four modes, six reasons,
+  scoped/search/type/date/empty/error states, CRUD, validation, stale writes,
+  and detail not-found/forbidden states.
+- Authenticated source captures at exact 1440x900 are:
+  `/tmp/odoo-manufacturing-productivity-losses-desktop-1440x900-list.png`,
+  `...-form.png`, `...-graph.png`, and `...-pivot.png`. Exact 390x844 source
+  captures are `/tmp/odoo-manufacturing-productivity-losses-mobile-390x844-list.png`
+  and `...-form.png`; the live mobile control bar hides Graph/Pivot, so no
+  mobile source images for those unreachable view switches are claimed.
+  Authenticated isolated Core3 captures at exact 1440x900 are
+  `/tmp/core3-manufacturing-productivity-losses-1440x900-{list,form,graph,pivot}-final.png`;
+  exact 390x844 captures are
+  `/tmp/core3-manufacturing-productivity-losses-390x844-{list,form,graph,pivot}-final.png`.
+  The Core3 browser pass used `http://localhost:3004` with the authenticated
+  Core3 user, found no page/request/HTTP errors, and reported
+  `scrollWidth === innerWidth` (1440 and 390) on every capture. Images remain
+  under `/tmp` and are not committed.
+- Evidence SHA-256 hashes:
+
+  | Capture | Path | Dimensions | SHA-256 |
+  | --- | --- | --- | --- |
+  | Odoo desktop list | `/tmp/odoo-manufacturing-productivity-losses-desktop-1440x900-list.png` | 1440x900 | `672d442140dcb1c873a309281ac3f2378af773916ca553d6eb0cd523da3ad5af` |
+  | Odoo desktop form | `/tmp/odoo-manufacturing-productivity-losses-desktop-1440x900-form.png` | 1440x900 | `0aa4e6b433ad6cc7141db59a0cdf2036ac87dec6280e2600b2622c389b49675a` |
+  | Odoo desktop graph | `/tmp/odoo-manufacturing-productivity-losses-desktop-1440x900-graph.png` | 1440x900 | `ffa713baf919567f44fd4dce92a1d54e38e4d8b9b23d46fe5b58454d94c8587e` |
+  | Odoo desktop pivot | `/tmp/odoo-manufacturing-productivity-losses-desktop-1440x900-pivot.png` | 1440x900 | `be4ffc0aaacac4e535e08f5c2f2e2903a43a2f979e8a5271ec02bdd96b0d9022` |
+  | Odoo mobile list | `/tmp/odoo-manufacturing-productivity-losses-mobile-390x844-list.png` | 390x844 | `f3d81609d9629029c258807c706e981bb89a6d76d6cb78ea8b1a0591c5a5a24d` |
+  | Odoo mobile form | `/tmp/odoo-manufacturing-productivity-losses-mobile-390x844-form.png` | 390x844 | `a46f2b817c596b2a0e34e5f2da64dae610987acc1f336cf29cd6e188f7affba7` |
+  | Core3 desktop list | `/tmp/core3-manufacturing-productivity-losses-1440x900-list-final.png` | 1440x900 | `bc8f8066315f3cf0f49fc32bf942ef2ffff16f4e7482edf407a5b5924815b891` |
+  | Core3 desktop form | `/tmp/core3-manufacturing-productivity-losses-1440x900-form-final.png` | 1440x900 | `aeb08162b55c184bf55508ce909931cd923ad60639697ad44c1917fda3e1a241` |
+  | Core3 desktop graph | `/tmp/core3-manufacturing-productivity-losses-1440x900-graph-final.png` | 1440x900 | `90c6b0838a02fd4e6946ea9e8682816576e79f5d1d317334622d9654746c3b3c` |
+  | Core3 desktop pivot | `/tmp/core3-manufacturing-productivity-losses-1440x900-pivot-final.png` | 1440x900 | `59d6e31f7e19107f49940148daff22640f810d29f4266442009b84625000947d` |
+  | Core3 mobile list | `/tmp/core3-manufacturing-productivity-losses-390x844-list-final.png` | 390x844 | `0724cc8d448b2d61826aea1130c2934b6d3cf513c21816e995bdc82cccc4840f` |
+  | Core3 mobile form | `/tmp/core3-manufacturing-productivity-losses-390x844-form-final.png` | 390x844 | `bdf76f91c15cb5966da61fbe2d26fcf8d2c7e3de3eb4679986c8d6f387d2e4f7` |
+  | Core3 mobile graph | `/tmp/core3-manufacturing-productivity-losses-390x844-graph-final.png` | 390x844 | `23075b5b2bb072deeaf2617da91c0d27f9b210b0bb15967f4769a8bfb19184f5` |
+  | Core3 mobile pivot | `/tmp/core3-manufacturing-productivity-losses-390x844-pivot-final.png` | 390x844 | `f42e2d0110a433f060704b97c945646c14edc1c4ad19f5b4e0d29f9455b71d19` |
+
+- Comparison/fixes: the initial isolated runtime needed the repository CSS
+  bundle built before screenshots; rebuilding with `bun run css:build` restored
+  the authenticated Core3 shell. The responsive fix then removed Work Center,
+  Loss Reason, and Duration from the mobile list and fixed the selector value
+  contract. Remaining bounded differences are Odoo's purple shell versus the
+  shared Core3 Fluent shell, Odoo's current-date/timezone-rendered timestamps
+  versus deterministic `2026-01-10` fixtures, duplicated breadcrumb labels in
+  the Core3 detail, and Odoo's zero-duration graph axes/legend versus Core3's
+  empty-state message when every plotted duration is zero. Core3's pivot uses
+  the shared table renderer rather than Odoo's compact expandable pivot chrome;
+  these are recorded residuals, not hidden parity claims.
+- Implementation checkpoints are `1c173ce4`
+  (`feat(manufacturing): add productivity losses parity slice`) and
+  `5b5ccc61` (`fix(manufacturing): align productivity loss responsive
+  selectors`). This evidence/documentation checkpoint is committed separately
+  after those implementation commits.
+
 ## 2026-09-10 bounded implementation progress
 
 - The owned authenticated reference database `core3_owned` has Manufacturing
