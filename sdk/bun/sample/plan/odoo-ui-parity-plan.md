@@ -81,7 +81,7 @@ keeps this module set reproducible for a fresh owned reference database.
 | approvals | approvals | unavailable in supplied source | `odoo-ui-parity/approvals.md` | planned |
 | spreadsheet | spreadsheet | available | `odoo-ui-parity/spreadsheet.md` | ready |
 | inventory | stock | available | `odoo-ui-parity/inventory.md` | ready |
-| manufacturing | mrp | available | `odoo-ui-parity/manufacturing.md` | planned |
+| manufacturing | mrp | available | `odoo-ui-parity/manufacturing.md` | in-progress |
 | purchase | purchase | available | `odoo-ui-parity/purchase.md` | in-progress |
 | maintenance | maintenance | available | `odoo-ui-parity/maintenance.md` | ready |
 | field-service | industry_fsm | unavailable in supplied source | `odoo-ui-parity/field-service.md` | planned |
