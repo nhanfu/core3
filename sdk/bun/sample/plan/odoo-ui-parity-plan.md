@@ -46,24 +46,28 @@ but its menu structure or visual/UX details remain approximate.
 ## Live Odoo reference environment
 
 - URL: `http://localhost:8069`
-- Database: `core3_codex_demo`
-- Login email: `codex@core3.local`
-- Login password: `Core3Odoo2026!`
-- Odoo container: `odoo-core3-codex`
-- PostgreSQL container: `odoo-core3-codex-db`
-- Start command: `docker start odoo-core3-codex-db odoo-core3-codex`
-- Stop command: `docker stop odoo-core3-codex odoo-core3-codex-db`
+- Database: `core3_user_demo`
+- Login email: `admin@core3.local`
+- Login password: `Core3OdooUser2026!`
+- Odoo container: `odoo-core3-user`
+- PostgreSQL container: `odoo-core3-user-db`
+- Start command: `docker start odoo-core3-user-db odoo-core3-user`
+- Stop command: `docker stop odoo-core3-user odoo-core3-user-db`
 
-The former `odoo-core3-personal` pair is stopped with its volumes preserved for
-rollback. The active `odoo-core3-codex` pair is a separately provisioned Odoo
-19 reference database, initialized with demo data and the local parity addons.
-Keep credentials out of source code outside this local parity plan.
+The former `odoo-core3-codex` and `odoo-core3-personal` pairs are stopped with
+their volumes preserved for rollback. The active `odoo-core3-user` pair is a
+freshly provisioned Odoo 19 reference database initialized with official demo
+data for the installed CRM, Sales, Accounting, Project, Event, Inventory,
+Manufacturing, Maintenance, Expenses, Time Off, and Calendar applications.
+Historical capture notes that name an older database remain tied to that
+database; new parity captures must use the active credentials above. Keep
+credentials out of source code outside this local parity plan.
 
-The `core3_codex_demo` database has demo-enabled parity reference modules
-installed, including CRM, Sales, Purchase, Accounting, Inventory, POS, Events,
-Surveys, Employees, Expenses, Time Off, Timesheets, Project, Maintenance,
-Fleet, Manufacturing, Email Marketing, and Live Chat. Its verified demo data
-includes partners, products, CRM leads, events, and sales orders.
+The `core3_user_demo` database has demo-enabled Odoo modules installed,
+including CRM, Sales, Accounting, Inventory, Events, Expenses, Time Off,
+Project, Maintenance, Manufacturing, and Calendar. Its verified demo data
+includes partners, products, CRM leads, events, sales orders, projects,
+expenses, leave records, and maintenance requests.
 
 ## Module register
 
