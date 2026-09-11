@@ -4,6 +4,10 @@ datasources:
     permission: time_off.read
     single: false
     query: "SELECT value, label FROM (VALUES ('Submitted','To Approve'), ('Approved','Approved')) states(value, label)"
+  - id: time_off_summary_types
+    permission: time_off.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Approved','Approved'), ('Confirmed','Confirmed'), ('both','Both Approved and Confirmed')) types(value, label)"
   - id: time_off_employee_report
     permission: time_off.read
     pivot:

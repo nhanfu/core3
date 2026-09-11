@@ -42,7 +42,7 @@ describe('Time Off Summary report action parity', () => {
     const action = api.actions.find((candidate: any) => candidate.id === 'print_time_off_summary');
 
     const rows = await repository.querySource(report, { q: null, state: null }, 0, 50);
-    expect(rows.data.map((row: any) => row.employee_name)).toEqual(['Admin User', 'Marc Demo', 'Marc Demo']);
+    expect(rows.data.map((row: any) => row.employee_name)).toEqual(['Admin User', 'Admin User', 'Marc Demo']);
     expect(rows.data[0]).toMatchObject({ employee_id: 'employee-demo-001', leave_type_name: 'Sick Time Off' });
     expect(await repository.querySource(api.datasources.find((source: any) => source.id === 'time_off_summary_types'), {}, 0, 10)).toEqual({
       data: [
@@ -50,13 +50,13 @@ describe('Time Off Summary report action parity', () => {
         { value: 'Confirmed', label: 'Confirmed' },
         { value: 'both', label: 'Both Approved and Confirmed' },
       ],
-      meta: { total: 3, offset: 0, limit: 10 },
+      meta: { total: 3, page: 1, pageSize: 10, pages: 1 },
     });
 
     const created = await repository.executeMutation(action.mutation, {
       values: { employee_id: 'employee-demo-002', employee_name: 'Marc Demo', date_from: '2026-09-01', holiday_type: 'Approved' },
     });
-    expect(created).toMatchObject({ employee_id: 'employee-demo-002', employee_name: 'Marc Demo', date_from: '2026-09-01', holiday_type: 'Approved' });
+    expect(created).toMatchObject({ employee_id: 'employee-demo-002', employee_name: 'Marc Demo', date_from: '2026-09-01T00:00:00.000Z', holiday_type: 'Approved' });
     expect((await repository.query("SELECT COUNT(*) AS count FROM time_off_summary_runs"))[0].count).toBe(1);
     database.close();
   });

@@ -1,0 +1,22 @@
+version: 0.0.13
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS time_off_summary_runs (
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        employee_name VARCHAR NOT NULL,
+        date_from DATE NOT NULL,
+        holiday_type VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS time_off_summary_runs_employee_date_idx
+        ON time_off_summary_runs(employee_id, date_from);
+    down: |
+      DROP INDEX IF EXISTS time_off_summary_runs_employee_date_idx;
+      DROP TABLE IF EXISTS time_off_summary_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
