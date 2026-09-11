@@ -1,0 +1,62 @@
+version: 0.0.14
+kind: data
+description: Add deterministic read-only Technical Live Chat ongoing session fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_technical_ongoing_sessions (
+        id VARCHAR PRIMARY KEY,
+        row_version INTEGER NOT NULL DEFAULT 1,
+        session_date TIMESTAMP NOT NULL,
+        customer_name VARCHAR NOT NULL,
+        participant_name VARCHAR NOT NULL,
+        agents_name VARCHAR NOT NULL DEFAULT '',
+        country_name VARCHAR NOT NULL DEFAULT '',
+        language_name VARCHAR NOT NULL DEFAULT '',
+        expertise_name VARCHAR NOT NULL DEFAULT '',
+        duration_hour DOUBLE NOT NULL DEFAULT 0,
+        message_count INTEGER NOT NULL DEFAULT 0,
+        rating_text VARCHAR NOT NULL DEFAULT '',
+        rating_feedback VARCHAR NOT NULL DEFAULT '',
+        status VARCHAR NOT NULL DEFAULT 'ongoing',
+        channel_type VARCHAR NOT NULL DEFAULT 'livechat'
+      );
+      INSERT INTO livechat_technical_ongoing_sessions(
+        id, row_version, session_date, customer_name, participant_name,
+        agents_name, country_name, language_name, expertise_name, duration_hour,
+        message_count, rating_text, rating_feedback, status, channel_type
+      ) VALUES
+        ('livechat-ongoing-session-001', 1, TIMESTAMP '2026-09-11 13:03:00', 'Visitor', 'Visitor', 'Core3 Administrator', 'United States', 'English (US)', '', 1.534000, 1, '', '', 'ongoing', 'livechat'),
+        ('livechat-ongoing-session-002', 1, TIMESTAMP '2026-09-11 13:02:00', 'Visitor', 'Visitor', 'Core3 Administrator', 'United States', 'English (US)', 'Support', 1.539722, 3, 'Happy', 'Helpful answer', 'ongoing', 'livechat'),
+        ('livechat-ongoing-session-003', 1, TIMESTAMP '2026-09-11 13:01:00', 'YourCompany, Joel Willis', 'YourCompany, Joel Willis', 'Core3 Administrator', '', 'English (US)', 'Discuss', 1.541389, 2, '', '', 'ongoing', 'livechat'),
+        ('livechat-ongoing-session-004', 1, TIMESTAMP '2026-09-11 13:00:00', 'Visiteur', 'Visiteur', 'Core3 Administrator', 'Belgium', 'French / Français', 'Livechat', 1.556111, 3, 'Neutral', '', 'ongoing', 'livechat'),
+        ('livechat-ongoing-session-005', 1, TIMESTAMP '2026-09-11 12:58:00', 'Visitatore #304', 'Visitatore #304', 'Core3 Administrator', '', 'Italian / Italiano', '', 1.589167, 8, '', '', 'ongoing', 'livechat')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO livechat_technical_ongoing_sessions(
+        id, row_version, session_date, customer_name, participant_name,
+        agents_name, country_name, language_name, expertise_name, duration_hour,
+        message_count, rating_text, rating_feedback, status, channel_type
+      )
+      SELECT 'livechat-ongoing-session-' || LPAD(CAST(n AS VARCHAR), 3, '0'), 1,
+        TIMESTAMP '2026-09-10 13:00:00' - ((n - 6) * INTERVAL '1 day'),
+        CASE WHEN n % 2 = 0 THEN 'Visitor #' || CAST(300 + n AS VARCHAR) ELSE 'Visitor' END,
+        CASE WHEN n % 2 = 0 THEN 'Visitor #' || CAST(300 + n AS VARCHAR) ELSE 'Visitor' END,
+        CASE WHEN n % 3 = 0 THEN 'Core3 Administrator' ELSE '' END,
+        CASE WHEN n % 3 = 0 THEN 'United States' ELSE '' END,
+        CASE WHEN n % 3 = 0 THEN 'English (US)' ELSE 'French / Français' END,
+        CASE WHEN n % 4 = 0 THEN 'Support' ELSE '' END,
+        CASE WHEN n % 2 = 0 THEN 2.000000 ELSE 1.250000 END,
+        CASE WHEN n % 2 = 0 THEN 4 ELSE 2 END,
+        CASE WHEN n % 4 = 0 THEN 'Happy' ELSE '' END,
+        CASE WHEN n % 4 = 0 THEN 'Deterministic follow-up rating' ELSE '' END,
+        'ongoing', 'livechat'
+      FROM (WITH RECURSIVE ongoing_numbers(n) AS (
+        SELECT 6 UNION ALL SELECT n + 1 FROM ongoing_numbers WHERE n < 12
+      ) SELECT n FROM ongoing_numbers) seeded
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS livechat_technical_ongoing_sessions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

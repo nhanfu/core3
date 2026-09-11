@@ -1,0 +1,33 @@
+page: { id: livechat-technical-ongoing-sessions }
+
+datasources:
+  - id: livechat_technical_ongoing_sessions
+    single: false
+    permission: livechat.read
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_ONGOING_SESSIONS_UNAUTHORIZED, message: Sign in to view ongoing Live Chat sessions. }
+      forbidden: { status: 403, code: LIVECHAT_ONGOING_SESSIONS_FORBIDDEN, message: You do not have permission to view ongoing Live Chat sessions. }
+      transport_error: { status: 503, code: LIVECHAT_ONGOING_SESSIONS_UNAVAILABLE, message: Ongoing Live Chat sessions are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, CAST(session_date AS VARCHAR) AS session_date,
+        customer_name, agents_name, country_name, language_name, expertise_name,
+        CAST(FLOOR(CAST(ROUND(duration_hour * 3600) AS INTEGER) / 3600.0) AS INTEGER) || ':' ||
+          LPAD(CAST(CAST(FLOOR((CAST(ROUND(duration_hour * 3600) AS INTEGER) % 3600) / 60.0) AS INTEGER) AS VARCHAR), 2, '0') || ':' ||
+          LPAD(CAST(CAST(ROUND(duration_hour * 3600) AS INTEGER) % 60 AS VARCHAR), 2, '0') AS duration_display,
+        message_count, rating_text, status
+      FROM livechat_technical_ongoing_sessions
+      WHERE status = 'ongoing'
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR customer_name ILIKE '%' || :q || '%' OR agents_name ILIKE '%' || :q || '%'
+          OR country_name ILIKE '%' || :q || '%' OR language_name ILIKE '%' || :q || '%'
+          OR expertise_name ILIKE '%' || :q || '%')
+        AND (:country_name IS NULL OR country_name = :country_name)
+        AND (:rating_text IS NULL OR (:rating_text = 'Unrated' AND rating_text = '') OR rating_text = :rating_text)
+      ORDER BY session_date DESC, id
+
+actions:
+  - id: view_livechat_technical_ongoing_session
+    type: navigate
+    permission: livechat.manage
+    navigate_to: /livechat/technical/ongoing-sessions/detail
+    params: { id: '{row.id}' }
