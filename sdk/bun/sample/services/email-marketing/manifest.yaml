@@ -11,6 +11,10 @@ menu:
     icon: mail
     permission: email_marketing.read
     groups:
+    - id: mailings
+      label: Mailings
+      items:
+        - { path: /email-mailings, label: Mailings, icon: mail, permission: email_marketing.read }
     - id: campaigns
       label: Campaigns
       items:

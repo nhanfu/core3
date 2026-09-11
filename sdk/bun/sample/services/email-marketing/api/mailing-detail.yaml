@@ -1,0 +1,168 @@
+page: { id: email-mailing-detail }
+datasources:
+  - id: email_mailing_detail
+    single: true
+    permission: email_marketing.read
+    error_states:
+      missing_record: { status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Mailing not found. }
+      transport_error: { status: 503, code: EMAIL_MAILING_DETAIL_UNAVAILABLE, message: Mailing details are temporarily unavailable. }
+    query: "SELECT m.id, m.row_version, m.subject, m.preview, m.email_from, m.reply_to, m.state, m.schedule_type, CAST(m.schedule_date AS VARCHAR) AS schedule_date, CAST(m.sent_date AS VARCHAR) AS sent_date, m.recipient_model, m.recipient_model_label, m.recipient_domain, m.responsible, m.recipient_count, m.sent, m.scheduled, m.expected, m.canceled, m.process, m.delivered, m.opened, m.clicked, m.replied, m.bounced, m.failed, m.received_ratio, m.opened_ratio, m.replied_ratio, m.bounced_ratio, m.clicks_ratio, m.link_trackers_count, m.mailing_list_names, m.campaign_name, m.body, m.last_test_email, m.mail_server_available, m.active, m.favorite, m.ab_testing_enabled FROM email_mailings m WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.id = :id"
+actions:
+  - id: new_email_mailing
+    type: navigate
+    permission: email_marketing.write
+    navigate_to: /email-mailings
+  - { id: email_mailing_opened, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: opened } }
+  - { id: email_mailing_replied, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: replied } }
+  - { id: email_mailing_clicked, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: clicked } }
+  - { id: email_mailing_received, type: navigate, permission: email_marketing.read, navigate_to: /email-mailings, params: { id: '{state.email_mailing_detail.id}', metric: received } }
+  - id: edit_email_mailing
+    type: server_form
+    permission: email_marketing.write
+    title: Edit Mailing
+    action: email_marketing.mailings.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.email_mailing_detail
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      operation: update
+      table: email_mailings
+      fields: [subject, preview, email_from, reply_to, recipient_model, recipient_model_label, recipient_domain, responsible, recipient_count, schedule_date, mailing_list_names, campaign_name, body]
+      required: [subject, email_from, recipient_model, recipient_model_label, responsible, recipient_count, body]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_mailings WHERE id = :id", status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Mailing not found. }
+        - { query: "SELECT 1 AS ok FROM email_mailings WHERE id = :id AND state NOT IN ('Sending', 'Sent')", status: 409, code: EMAIL_MAILING_IMMUTABLE, message: Sending or sent mailings cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:subject AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:email_from AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:body AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:email_from AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$') AND CAST(:recipient_count AS INTEGER) >= 0", status: 422, code: EMAIL_MAILING_REQUIRED_FIELDS, message: Subject, sender, body, valid email, and recipients are required. }
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+    fields:
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: preview, label: Preview Text, type: text }
+      - { field: email_from, label: Send From, type: text, required: true }
+      - { field: reply_to, label: Reply To, type: text }
+      - { field: recipient_model, label: Recipients Model, type: text, required: true }
+      - { field: recipient_model_label, label: Recipients, type: text, required: true }
+      - { field: recipient_domain, label: Domain, type: textarea }
+      - { field: responsible, label: Responsible, type: text, required: true }
+      - { field: recipient_count, label: Recipients Count, type: number, required: true, min: 0 }
+      - { field: schedule_date, label: Scheduled for, type: text }
+      - { field: mailing_list_names, label: Mailing Lists, type: text }
+      - { field: campaign_name, label: Campaign, type: text }
+      - { field: body, label: Body, type: textarea, required: true }
+  - id: send_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.send
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'Draft' AND active = true AND mail_server_available = true AND LENGTH(TRIM(subject)) > 0 AND LENGTH(TRIM(body)) > 0 AND recipient_count > 0", status: 409, code: EMAIL_MAILING_SEND_BLOCKED, message: A mailing needs a mail server, subject, body, and recipients before sending. }
+      steps: [{ query: "UPDATE email_mailings SET state = 'Sent', schedule_type = 'now', sent_date = TIMESTAMP '2026-01-15 11:30:00', calendar_date = TIMESTAMP '2026-01-15 11:30:00', sent = recipient_count, expected = recipient_count, delivered = recipient_count, received_ratio = 100, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could be sent. }]
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+  - id: schedule_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.schedule
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'Draft' AND active = true AND mail_server_available = true AND LENGTH(TRIM(subject)) > 0 AND LENGTH(TRIM(body)) > 0 AND recipient_count > 0", status: 409, code: EMAIL_MAILING_NOT_READY, message: A mailing needs a subject, body, recipients, and available mail server before scheduling. }]
+      steps: [{ query: "UPDATE email_mailings SET state = 'In Queue', schedule_type = 'scheduled', schedule_date = TIMESTAMP '2026-01-16 12:00:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could be scheduled. }]
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+  - id: cancel_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.cancel
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'In Queue'", status: 409, code: EMAIL_MAILING_CANCEL_BLOCKED, message: Only queued mailings can be cancelled. }]
+      steps: [{ query: "UPDATE email_mailings SET state = 'Draft', schedule_type = 'now', schedule_date = NULL, row_version = row_version + 1 WHERE id = :id AND state = 'In Queue' AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could be cancelled. }]
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+  - id: retry_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.retry
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'Sent' AND failed > 0", status: 409, code: EMAIL_MAILING_RETRY_BLOCKED, message: Only sent mailings with failed recipients can be retried. }]
+      steps: [{ query: "UPDATE email_mailings SET state = 'In Queue', schedule_type = 'now', row_version = row_version + 1 WHERE id = :id AND state = 'Sent' AND failed > 0 AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could be retried. }]
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+  - id: start_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.start
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'In Queue'", status: 409, code: EMAIL_MAILING_START_BLOCKED, message: Only queued mailings can start sending. }]
+      steps: [{ query: "UPDATE email_mailings SET state = 'Sending', row_version = row_version + 1 WHERE id = :id AND state = 'In Queue' AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could start sending. }]
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+  - id: complete_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.complete
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'Sending'", status: 409, code: EMAIL_MAILING_COMPLETE_BLOCKED, message: Only sending mailings can be completed. }]
+      steps: [{ query: "UPDATE email_mailings SET state = 'Sent', sent_date = TIMESTAMP '2026-01-15 11:30:00', calendar_date = TIMESTAMP '2026-01-15 11:30:00', row_version = row_version + 1 WHERE id = :id AND state = 'Sending' AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could be completed. }]
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+  - id: test_email_mailing
+    type: server_form
+    permission: email_marketing.write
+    title: Send a Test Mailing
+    action: email_marketing.mailings.test
+    handler: yaml_mutation
+    operation: update
+    prefill: state.email_mailing_detail
+    refresh: [email_mailing_detail]
+    mutation:
+      operation: update
+      table: email_mailings
+      fields: [last_test_email]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_mailings WHERE id = :id AND state NOT IN ('Sending', 'Sent')", status: 409, code: EMAIL_MAILING_TEST_BLOCKED, message: Sending or sent mailings cannot be tested. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(TRIM(CAST(:last_test_email AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$')", status: 422, code: EMAIL_MAILING_TEST_EMAIL_INVALID, message: Enter a valid test email address. }
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+    fields: [{ field: last_test_email, label: Test Email, type: text, required: true }]
+  - id: add_email_mailing_template
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.favorite
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND row_version = :expected_row_version", status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Mailing not found. }]
+      steps: [{ query: "UPDATE email_mailings SET favorite = true, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD, message: Mailing was changed before it could be added to templates. }]
+  - id: remove_email_mailing_template
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.unfavorite
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND row_version = :expected_row_version", status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Mailing not found. }]
+      steps: [{ query: "UPDATE email_mailings SET favorite = false, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD, message: Mailing was changed before it could be removed from templates. }]
+  - id: archive_email_mailing_detail
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailing_detail, email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND active = true AND row_version = :expected_row_version", status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Active mailing not found. }]
+      steps: [{ query: "UPDATE email_mailings SET active = false, row_version = row_version + 1 WHERE id = :id AND active = true AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD, message: Mailing was changed before it could be archived. }]

@@ -1,0 +1,82 @@
+page: { id: email-mailings }
+datasources:
+  - id: email_mailing_states
+    single: false
+    permission: email_marketing.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('In Queue','In Queue'), ('Sending','Sending'), ('Sent','Sent')) states(value, label)"
+  - id: email_mailings
+    single: false
+    permission: email_marketing.read
+    error_states: { transport_error: { status: 503, code: EMAIL_MAILINGS_UNAVAILABLE, message: Mailings are temporarily unavailable. } }
+    query: "SELECT m.id, m.row_version, m.subject, m.preview, CAST(m.calendar_date AS VARCHAR) AS calendar_date, CAST(m.sent_date AS VARCHAR) AS sent_date, CAST(m.schedule_date AS VARCHAR) AS schedule_date, m.responsible, m.recipient_model_label, m.recipient_count, m.sent, m.scheduled, m.expected, m.canceled, m.process, m.delivered, m.opened, m.clicked, m.replied, m.bounced, m.failed, m.received_ratio, m.opened_ratio, m.replied_ratio, m.bounced_ratio, m.clicks_ratio, m.link_trackers_count, m.mailing_list_names, m.campaign_name, m.state, m.active, m.favorite, m.ab_testing_enabled FROM email_mailings m WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((:active IS NULL AND m.active = true) OR (:active IS NOT NULL AND m.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR m.subject ILIKE '%' || :q || '%' OR m.recipient_model_label ILIKE '%' || :q || '%' OR m.responsible ILIKE '%' || :q || '%' OR COALESCE(m.mailing_list_names, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR m.state = :state) AND (:ab_testing_enabled IS NULL OR m.ab_testing_enabled = CAST(:ab_testing_enabled AS BOOLEAN)) ORDER BY CASE m.state WHEN 'Draft' THEN 0 WHEN 'In Queue' THEN 1 WHEN 'Sending' THEN 2 ELSE 3 END, m.created_at, m.id"
+actions:
+  - id: view_email_mailing
+    type: navigate
+    permission: email_marketing.read
+    navigate_to: /email-mailings/detail
+    params: { id: '{row.id}' }
+  - { id: new_email_mailing, type: navigate, permission: email_marketing.write, navigate_to: /email-mailings }
+  - id: create_email_mailing
+    type: server_form
+    permission: email_marketing.write
+    title: New Mailing
+    action: email_marketing.mailings.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [email_mailings]
+    mutation:
+      operation: insert
+      table: email_mailings
+      generated: [id]
+      fields: [subject, preview, email_from, reply_to, recipient_model, recipient_model_label, recipient_domain, responsible, recipient_count, schedule_date, mailing_list_names, campaign_name, body]
+      required: [subject, email_from, recipient_model, recipient_model_label, responsible, recipient_count, body]
+      defaults: { state: Draft, schedule_type: now, row_version: 1, sent: 0, scheduled: 0, expected: 0, canceled: 0, process: 0, delivered: 0, opened: 0, clicked: 0, replied: 0, bounced: 0, failed: 0, received_ratio: 0, opened_ratio: 0, replied_ratio: 0, bounced_ratio: 0, clicks_ratio: 0, link_trackers_count: 0, mail_server_available: true, active: true, favorite: false, ab_testing_enabled: false, created_at: '2026-01-15 09:30:00', updated_at: '2026-01-15 09:30:00' }
+      before_steps: [{ query: "SELECT 'email-mailing-' || regexp_replace(lower(trim(CAST(:subject AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:subject AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:email_from AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:body AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:email_from AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$') AND CAST(:recipient_count AS INTEGER) >= 0", status: 422, code: EMAIL_MAILING_REQUIRED_FIELDS, message: Subject, sender, body, valid email, and recipients are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_mailings WHERE lower(subject) = lower(trim(CAST(:subject AS VARCHAR))))", status: 409, code: EMAIL_MAILING_EXISTS, message: A mailing with this subject already exists. }
+      result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+    fields:
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: preview, label: Preview Text, type: text }
+      - { field: email_from, label: Send From, type: text, required: true }
+      - { field: reply_to, label: Reply To, type: text }
+      - { field: recipient_model, label: Recipients Model, type: text, required: true }
+      - { field: recipient_model_label, label: Recipients, type: text, required: true }
+      - { field: recipient_domain, label: Domain, type: textarea }
+      - { field: responsible, label: Responsible, type: text, required: true }
+      - { field: recipient_count, label: Recipients Count, type: number, required: true, min: 0 }
+      - { field: schedule_date, label: Scheduled for, type: text }
+      - { field: mailing_list_names, label: Mailing Lists, type: text }
+      - { field: campaign_name, label: Campaign, type: text }
+      - { field: body, label: Body, type: textarea, required: true }
+  - id: archive_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND active = true AND row_version = :expected_row_version", status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Active mailing not found. }]
+      steps: [{ query: "UPDATE email_mailings SET active = false, row_version = row_version + 1 WHERE id = :id AND active = true AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD, message: Mailing was changed before it could be archived. }]
+  - id: restore_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND active = false AND row_version = :expected_row_version", status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Archived mailing not found. }]
+      steps: [{ query: "UPDATE email_mailings SET active = true, row_version = row_version + 1 WHERE id = :id AND active = false AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD, message: Mailing was changed before it could be restored. }]
+  - id: favorite_email_mailing
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.mailings.favorite
+    handler: yaml_mutation
+    operation: update
+    refresh: [email_mailings]
+    mutation:
+      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND row_version = :expected_row_version", status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Mailing not found. }]
+      steps: [{ query: "UPDATE email_mailings SET favorite = true, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD, message: Mailing was changed before it could be added to templates. }]

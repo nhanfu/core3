@@ -1,0 +1,63 @@
+version: 0.0.9
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO email_mailings (
+        id, row_version, subject, preview, email_from, reply_to, state,
+        schedule_type, schedule_date, sent_date, calendar_date,
+        recipient_model, recipient_model_label, recipient_domain, responsible,
+        recipient_count, sent, scheduled, expected, canceled, process,
+        delivered, opened, clicked, replied, bounced, failed,
+        received_ratio, opened_ratio, replied_ratio, bounced_ratio, clicks_ratio,
+        link_trackers_count, mailing_list_names, campaign_name, body,
+        mail_server_available, active, favorite, ab_testing_enabled,
+        created_at, updated_at
+      ) VALUES
+        ('email-mailing-monthly-newsletter', 1, 'Monthly Newsletter', 'Discover what is new this month.', 'Info <info@core3.example.com>', 'Info <info@core3.example.com>', 'Sent',
+          'now', NULL, TIMESTAMP '2026-01-15 10:15:00', TIMESTAMP '2026-01-15 10:15:00',
+          'res.partner', 'Contact', '[(''parent_id'', ''='', 11)]', 'Mitchell Admin',
+          8, 6, 0, 8, 0, 0, 5, 4, 0, 2, 2, 1,
+          62.5, 80, 40, 28.57, 0, 0, NULL, 'Newsletter', '<p>Great stories have personality.</p><p>Discover the latest news from Core3.</p>',
+          true, true, false, false, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 10:15:00'),
+        ('email-mailing-lead-feedback', 1, 'We want to hear from you!', NULL, 'OdooBot <odoobot@core3.example.com>', '{{ object.company_id.email }}', 'Draft',
+          'scheduled', TIMESTAMP '2026-01-16 08:00:00', NULL, NULL,
+          'crm.lead', 'Lead', '[]', 'Mitchell Admin',
+          39, 0, 0, 39, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, NULL, 'Newsletter', '<p>Tell us what you think about your experience.</p>',
+          true, true, false, false, TIMESTAMP '2026-01-15 09:05:00', TIMESTAMP '2026-01-15 09:05:00'),
+        ('email-mailing-promotions', 1, 'Our last promotions, just for you!', NULL, 'OdooBot <odoobot@core3.example.com>', '{{ object.company_id.email }}', 'Draft',
+          'scheduled', TIMESTAMP '2026-01-16 08:30:00', NULL, NULL,
+          'sale.order', 'Sales Order', '[]', 'Mitchell Admin',
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, NULL, 'Newsletter', '<p>New offers selected for your next order.</p>',
+          true, true, false, false, TIMESTAMP '2026-01-15 09:10:00', TIMESTAMP '2026-01-15 09:10:00'),
+        ('email-mailing-quarterly-briefing', 1, 'Quarterly Product Briefing', 'A quick look at what is coming next.', 'Core3 Marketing <marketing@core3.example.com>', 'marketing@core3.example.com', 'In Queue',
+          'scheduled', TIMESTAMP '2026-01-17 09:00:00', NULL, NULL,
+          'mailing.list', 'Mailing Contact', 'Customers', 'Mitchell Admin',
+          1250, 0, 1250, 1250, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 'Customers', 'Newsletter', '<p>Your quarterly product briefing is ready.</p>',
+          true, true, false, false, TIMESTAMP '2026-01-15 09:15:00', TIMESTAMP '2026-01-15 09:15:00'),
+        ('email-mailing-onboarding', 1, 'Customer Onboarding Tips', 'Five practical tips for a smooth start.', 'Core3 Marketing <marketing@core3.example.com>', 'marketing@core3.example.com', 'Sending',
+          'now', NULL, NULL, NULL,
+          'mailing.contact', 'Mailing Contact', 'Imported Contacts', 'Mitchell Admin',
+          240, 120, 0, 240, 0, 120, 120, 70, 12, 4, 3, 0,
+          50, 58.33, 3.33, 1.25, 10, 2, 'Imported Contacts', 'Customer Success', '<p>Welcome to Core3. Here are five practical tips.</p>',
+          true, true, true, false, TIMESTAMP '2026-01-15 09:20:00', TIMESTAMP '2026-01-15 09:20:00'),
+        ('email-mailing-archived-template', 1, 'Welcome Series Template', 'Reusable welcome message.', 'Core3 Marketing <marketing@core3.example.com>', 'marketing@core3.example.com', 'Sent',
+          'now', NULL, TIMESTAMP '2026-01-10 09:00:00', TIMESTAMP '2026-01-10 09:00:00',
+          'mailing.list', 'Mailing Contact', 'Customers', 'Mitchell Admin',
+          1250, 1250, 0, 1250, 0, 0, 1200, 840, 42, 80, 8, 0,
+          96, 70, 6.67, 0.64, 3.36, 3, 'Customers', 'Customer Success', '<p>Welcome to Core3.</p>',
+          true, false, true, false, TIMESTAMP '2026-01-10 08:00:00', TIMESTAMP '2026-01-10 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM email_mailings WHERE id IN (
+        'email-mailing-monthly-newsletter', 'email-mailing-lead-feedback',
+        'email-mailing-promotions', 'email-mailing-quarterly-briefing',
+        'email-mailing-onboarding', 'email-mailing-archived-template'
+      );
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

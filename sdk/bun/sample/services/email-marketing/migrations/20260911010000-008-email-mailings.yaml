@@ -1,0 +1,57 @@
+version: 0.0.8
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_mailings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        subject VARCHAR NOT NULL,
+        preview VARCHAR,
+        email_from VARCHAR NOT NULL,
+        reply_to VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Draft',
+        schedule_type VARCHAR NOT NULL DEFAULT 'now',
+        schedule_date TIMESTAMP,
+        sent_date TIMESTAMP,
+        calendar_date TIMESTAMP,
+        recipient_model VARCHAR NOT NULL,
+        recipient_model_label VARCHAR NOT NULL,
+        recipient_domain VARCHAR,
+        responsible VARCHAR NOT NULL,
+        recipient_count INTEGER NOT NULL DEFAULT 0,
+        sent INTEGER NOT NULL DEFAULT 0,
+        scheduled INTEGER NOT NULL DEFAULT 0,
+        expected INTEGER NOT NULL DEFAULT 0,
+        canceled INTEGER NOT NULL DEFAULT 0,
+        process INTEGER NOT NULL DEFAULT 0,
+        delivered INTEGER NOT NULL DEFAULT 0,
+        opened INTEGER NOT NULL DEFAULT 0,
+        clicked INTEGER NOT NULL DEFAULT 0,
+        replied INTEGER NOT NULL DEFAULT 0,
+        bounced INTEGER NOT NULL DEFAULT 0,
+        failed INTEGER NOT NULL DEFAULT 0,
+        received_ratio DOUBLE NOT NULL DEFAULT 0,
+        opened_ratio DOUBLE NOT NULL DEFAULT 0,
+        replied_ratio DOUBLE NOT NULL DEFAULT 0,
+        bounced_ratio DOUBLE NOT NULL DEFAULT 0,
+        clicks_ratio DOUBLE NOT NULL DEFAULT 0,
+        link_trackers_count INTEGER NOT NULL DEFAULT 0,
+        mailing_list_names VARCHAR,
+        campaign_name VARCHAR,
+        body VARCHAR NOT NULL DEFAULT '',
+        last_test_email VARCHAR,
+        mail_server_available BOOLEAN NOT NULL DEFAULT true,
+        active BOOLEAN NOT NULL DEFAULT true,
+        favorite BOOLEAN NOT NULL DEFAULT false,
+        ab_testing_enabled BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS email_mailings_state_idx ON email_mailings(state);
+      CREATE INDEX IF NOT EXISTS email_mailings_calendar_date_idx ON email_mailings(calendar_date);
+    down: |
+      DROP TABLE IF EXISTS email_mailings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

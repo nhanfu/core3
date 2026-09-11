@@ -1,0 +1,68 @@
+title: Mailing
+page: { id: email-mailing-detail, route: /email-mailings/detail, breadcrumb: [Marketing, Email Marketing, Mailings, Mailing], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: OdooFormView
+    source: email_mailing_detail
+    title_field: subject
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: In Queue, label: In Queue }, { value: Sending, label: Sending }, { value: Sent, label: Sent }]
+    status_colors: { Draft: blue, 'In Queue': blue, Sending: teal, Sent: green }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: new_email_mailing, label: New, variant: primary, permission: email_marketing.write }
+      - { id: send_email_mailing, label: Send, variant: primary, permission: email_marketing.write, show_if: "state.email_mailing_detail.state === 'Draft'" }
+      - { id: schedule_email_mailing, label: Schedule, variant: secondary, permission: email_marketing.write, show_if: "state.email_mailing_detail.state === 'Draft'" }
+      - { id: test_email_mailing, label: Test, variant: secondary, permission: email_marketing.write }
+      - { id: cancel_email_mailing, label: Cancel, variant: secondary, permission: email_marketing.write, show_if: "state.email_mailing_detail.state === 'In Queue'" }
+      - { id: retry_email_mailing, label: Retry, variant: primary, permission: email_marketing.write, show_if: "state.email_mailing_detail.state === 'Sent' && state.email_mailing_detail.failed > 0" }
+      - { id: add_email_mailing_template, label: Add to Templates, variant: secondary, permission: email_marketing.write, show_if: "state.email_mailing_detail.favorite !== true" }
+      - { id: remove_email_mailing_template, label: Remove from Templates, variant: secondary, permission: email_marketing.write, show_if: "state.email_mailing_detail.favorite === true" }
+    stat_buttons:
+      - { id: email_mailing_opened, label: Opened, value_field: opened_ratio }
+      - { id: email_mailing_replied, label: Replied, value_field: replied_ratio }
+      - { id: email_mailing_clicked, label: Clicked, value_field: clicks_ratio }
+      - { id: email_mailing_received, label: Received, value_field: received_ratio }
+    group_columns: 2
+    groups:
+      - title: Mailing
+        fields:
+          - { field: subject, label: Subject }
+          - { field: recipient_model_label, label: Recipients }
+          - { field: mailing_list_names, label: Mailing Lists }
+          - { field: recipient_domain, label: Domain, type: textarea, wide: true }
+          - { field: responsible, label: Responsible }
+      - title: Delivery
+        fields:
+          - { field: sent, label: Sent }
+          - { field: expected, label: Expected }
+          - { field: scheduled, label: Scheduled }
+          - { field: failed, label: Failed }
+          - { field: bounced, label: Bounced }
+          - { field: schedule_date, label: Scheduled for }
+          - { field: sent_date, label: Sent Date }
+      - title: Email Content
+        fields:
+          - { field: preview, label: Preview Text }
+          - { field: email_from, label: Send From }
+          - { field: reply_to, label: Reply To }
+          - { field: body, label: Body, type: textarea, wide: true }
+    notebook:
+      active: mail_body
+      tabs:
+        - { id: mail_body, label: Mail Body, content_slot: true }
+        - id: ab_testing
+          label: A/B Tests
+          groups:
+            - title: A/B Testing
+              fields:
+                - { field: ab_testing_enabled, label: Allow A/B Testing }
+        - id: settings
+          label: Settings
+          groups:
+            - title: Tracking
+              fields:
+                - { field: campaign_name, label: Campaign }
+                - { field: favorite, label: Favorite }
+                - { field: mail_server_available, label: Mail Server Available }

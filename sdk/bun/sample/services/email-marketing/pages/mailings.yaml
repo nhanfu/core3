@@ -1,0 +1,66 @@
+title: Mailings
+page: { id: email-mailings, route: /email-mailings, breadcrumb: [Marketing, Email Marketing, Mailings], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: email_mailings
+    create_action: create_email_mailing
+    create_label: New
+    search: { label: Search mailings, placeholder: Search Mailings... }
+    filters:
+      - { field: state, label: Status, options_source: email_mailing_states }
+      - { field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
+      - { field: sent_date, label: Sent Date, options: [{ id: this_month, label: 'This month' }, { id: last_month, label: 'Last month' }] }
+      - { field: ab_testing_enabled, label: A/B Tests, options: [{ id: 'true', label: A/B Tests }] }
+    group_by:
+      - { field: state, label: Status }
+      - { field: responsible, label: Sent By }
+      - { field: mailing_list_names, label: Mailing List }
+      - { field: sent_date, label: Sent Period }
+    default_group_by: state
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: state
+        groups_source: email_mailing_states
+        card:
+          compact: false
+          title: subject
+          subtitle: recipient_model_label
+          fields:
+            - { field: sent_date, label: Sent on }
+            - { field: schedule_date, label: Scheduled on }
+            - { field: recipient_count, label: Recipients }
+            - { field: responsible, label: Responsible }
+          footer:
+            - { field: state, label: Status }
+      - { id: form, label: Form, icon: form, mobile: false }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        mobile: false
+        date_field: calendar_date
+        card: { title: subject, subtitle: recipient_model_label, fields: [{ field: state, label: Status }, { field: responsible, label: Responsible }] }
+    columns:
+      - { field: calendar_date, label: Date, type: DateTime, mobile: false }
+      - { field: subject, label: Subject, type: PrimaryEntityCell, mobile: true }
+      - { field: responsible, label: Responsible, mobile: false }
+      - { field: sent, label: Sent, align: right, mobile: false }
+      - { field: received_ratio, label: Delivered (%), align: right, mobile: false }
+      - { field: opened_ratio, label: Opened (%), align: right, mobile: false }
+      - { field: clicks_ratio, label: Clicked (%), align: right, mobile: false }
+      - { field: replied_ratio, label: Replied (%), align: right, mobile: false }
+      - { field: state, label: Status, type: StatusChip, colors: { Draft: blue, 'In Queue': blue, Sending: teal, Sent: green } }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_open_action: view_email_mailing
+    row_double_click_action: view_email_mailing
+    row_actions: menu
+    form_view: { page: apps/services/email-marketing/pages/mailing-detail.yaml, side_panel: true }
+    empty_state: { title: No mailing found, description: Create a new mailing to reach your audience. }
