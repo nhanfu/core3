@@ -2,6 +2,59 @@
 
 Status: in-progress
 
+## Current batch: Event linked Sales Orders stat action
+
+The authenticated fresh Odoo database `core3_codex_demo` exposes a visible
+`Sales` stat button on the `Design Fair Los Angeles` event form. Its source
+button is `event.event.action_view_linked_orders`; it opens the dynamically
+filtered `sale.action_orders` action at `/odoo/events/1/orders`, restricted to
+confirmed orders whose order lines point to the active event, with creation
+disabled. The source event form shows `$ 2,300.00 Sales`, and the linked action
+shows `S00025`, `Wood Corner, Willie Burke`, `Mitchell Admin`, `My Company (San
+Francisco)`, `$ 2,300.00`, and `To Invoice`. Core3's event form previously had
+only Registration and Attendees stat buttons and no linked-sales action.
+
+This bounded slice adds the read-only `/events/sales-orders` action and wires it
+to the existing event-detail Sales stat button. The page YAML owns the list and
+responsive card layout; `api/event-sales-orders.yaml` owns the datasource and
+is joined by `page.id`. Migration
+`20260911200000-023-event-sales-orders.yaml` adds one fixed confirmed-order
+fixture for `event-demo-001`, anchored at `2026-01-15` seed data with stable
+IDs. The API requires `events.read` and explicitly covers empty, missing-event,
+transport-error, search, and no-CRUD behavior. The source Sales Orders action
+supports additional Sales-module list/kanban/form/calendar/pivot/graph/activity
+views; this Events slice intentionally implements the event-linked list and
+mobile card contract only, leaving the broader Sales Order form and mutations
+to the Sales module.
+
+Authenticated source comparison as `codex@core3.local` in
+`core3_codex_demo` (source revision `65975996`) and Core3 `admin@tms.local` in
+the isolated runtime used these captures. The Odoo desktop pass reached the
+action by opening the event form and clicking `Sales`; Odoo's mobile form hides
+that stat button at 390px, so the mobile pass opened the same authenticated
+action route directly.
+
+| Surface | Viewport | Route | Capture | SHA-256 | Browser checks |
+| --- | --- | --- | --- | --- | --- |
+| Odoo | 1440x900 | `/odoo/events/1/orders` | `/tmp/odoo-events-sales-orders-desktop-20260911.png` | `626f783763826e3d6c8b7063a0adc38e2316b23c4b50ce2feca278843a9421bb` | populated `S00025`; requestfailed/pageerror empty; widths 1440/1440/1440 |
+| Odoo | 390x844 | `/odoo/events/1/orders?view_type=kanban` | `/tmp/odoo-events-sales-orders-mobile-20260911.png` | `92f4716f858d1d440b0f653cc557d45ee0f9c203b4432a5db10334e0e14df91c` | populated responsive source state; requestfailed/pageerror empty; widths 390/390/390 |
+| Core3 | 1440x900 | `/events/sales-orders?event_id=event-demo-001` | `/tmp/core3-events-sales-orders-desktop-20260911.png` | `7e4b1ea618940ed51881bec32bf4002e51658997953112845a2c4f6a0de0e160` | populated `S00025`; requestfailed/pageerror empty; widths 1440/1440/1440 |
+| Core3 | 390x844 | `/events/sales-orders?event_id=event-demo-001` | `/tmp/core3-events-sales-orders-mobile-20260911.png` | `a7df1a8dea7229b58195bdd3d2c78fdfe9a8b7f12989a0049ec96069a9dd0149` | populated card; requestfailed/pageerror empty; widths 390/390/390 |
+
+The paired captures were visually inspected. Core3 reproduces the source
+order/customer/salesperson/company/total/invoice-status contract, visible
+search and readable mobile card content without horizontal overflow. The
+remaining differences are intentional bounded residuals: Core3 uses the shared
+Fluent shell and fixed January seed date, Odoo uses its purple shell and live
+September demo date, and the Odoo mobile form does not expose the Sales stat
+button at this breakpoint. No screenshot is committed.
+
+Validation for this batch: focused linked-sales test passes 3 tests and 17
+assertions; the full Events integration set passes 57 tests and 468 assertions;
+`bun run audit` passes with 499 pages, 506 routes, and 880 datasources; ESLint,
+global CSS compilation, and `git diff --check` pass. Implementation commit is
+`470d584d`; this evidence update is committed separately.
+
 ## Current batch: Attendee Send by Email composer
 
 The authenticated personal Odoo database `core3_personal` exposes the visible
