@@ -20,7 +20,7 @@ describe('Events registration statistics parity', () => {
     expect(page.page.breadcrumb).toEqual(['Marketing', 'Events', 'Event', 'Registration statistics']);
     expect(list).toMatchObject({ source: 'event_registration_statistics', view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['graph', 'pivot', 'kanban', 'list']);
-    expect(list.views.find((view: any) => view.id === 'graph')).toMatchObject({ category_field: 'registration_date', measure_field: 'registration_count', type: 'bar' });
+    expect(list.views.find((view: any) => view.id === 'graph')).toMatchObject({ category_field: 'registration_date_label', measure_field: 'registration_count', type: 'bar' });
     expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ mobile: true, group_by: 'registration_date_label' });
     expect(api.page.id).toBe('event-registration-statistics');
     expect(api.datasources.map((source: any) => source.id)).toEqual(['event_registration_statistics', 'event_registration_statistics_event']);
