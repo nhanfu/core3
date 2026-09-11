@@ -88,3 +88,40 @@ Capture Odoo 19 and Core3 at `1440x900` and `390x844` for every inventory item, 
 - Comparison captures at 390x844: Odoo `/tmp/odoo-base-contact-tags-mobile.png`; Core3 `/tmp/core3-base-contact-tags-mobile-final.png`.
 - Authenticated browser evidence: both Core3 viewports rendered all seven rows with no console errors, failed requests, or horizontal overflow. The dense list, search control, pager, New action, parent category, color swatches, and mobile overflow affordance follow the Odoo interaction shape; the existing Core3 shell palette and shared color palette remain product-level differences.
 - Verification: `bun run audit` reports 359 pages, 364 routes, and 637 datasources; `git diff --check` is clean. Screenshots remain in `/tmp` and are not committed.
+
+### Current batch evidence: Industries configuration (Odoo action 59)
+
+- Source reviewed: the live personal Odoo database `core3_personal` on
+  2026-09-11 and Odoo 19 source `odoo/addons/base/views/res_partner_views.xml`.
+  Contacts → Configuration → Industries is a visible list/form action with
+  editable `name` and `full_name` columns, search over both fields, and an
+  Archived filter. The live default list contained 21 catalog rows.
+- Core3 ownership: `pages/industries.yaml` is presentation-only and joins
+  `api/industries.yaml` through `page.id: industries`; migration
+  `20260911194000-007-industries.yaml` owns the deterministic Odoo-derived
+  21-row catalog plus one archived fixture. The manifest exposes
+  `/base-industries` under People → Configuration → Industries.
+- Covered behavior: default active list, search matching both name and full
+  name, empty fixture, Active/Archived status filter, inline create/update,
+  duplicate-name and required-name validation, optimistic row-version guard,
+  archive/restore, delete guard, and `base.reference.read` /
+  `base.reference.write` permission declarations. Focused test:
+  `test/base_industries.integration.test.ts` (3 tests, 25 assertions).
+- Authenticated Odoo captures at 1440×900 and 390×844:
+  `/tmp/odoo-base-industries-desktop-final-20260911.png` (SHA-256
+  `2907797704d9391a6adce0f10626794d830e538ce900d50406e1924c7487dc11`) and
+  `/tmp/odoo-base-industries-mobile-final-20260911.png` (SHA-256
+  `607e5e192e5e8b537040b6c3b8e9529feb6a6d353181a93a6bfd05fcc590e7ac`).
+- Authenticated Core3 captures at 1440×900 and 390×844:
+  `/tmp/core3-base-industries-desktop-final-20260911.png` (SHA-256
+  `8d4519d4f8339703691e3605491313d758dda9c062cee20ee01e13df93a6648a`) and
+  `/tmp/core3-base-industries-mobile-final-20260911.png` (SHA-256
+  `eb7e3e5f341616b4ddba99ef2f8acf5a09202d76d0260640895d74c32d78702e`).
+  Browser checks found no console/page/request errors and no horizontal
+  overflow at either viewport. Screenshots were inspected side by side;
+  catalog labels, row count, columns, search affordance, pager, and mobile
+  truncation match the Odoo interaction shape. The existing Fluent Core3
+  shell/palette and row-action kebab remain product-level visual differences.
+- Verification: `bun run audit` reports 460 pages, 467 routes, and 801
+  datasources; `git diff --check` is clean. Screenshots remain in `/tmp` and
+  are not committed.
