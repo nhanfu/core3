@@ -2,6 +2,41 @@
 
 Status: `in-progress`
 
+### Current batch evidence: Country Groups localization
+
+- Source reviewed in the authenticated Odoo 19 demo database: Contacts /
+  Configuration / Localization / Country Groups, action 63, with the
+  populated list, detail, and new-form states. Core3 owns separate layout and
+  API YAML fragments joined by `page.id`, deterministic ten-group fixtures,
+  country lookup data, read/write permissions, and guarded create/update/delete
+  actions.
+- Odoo captures remain outside Git: `/tmp/odoo-base-country-groups-desktop-20260911.png`,
+  `/tmp/odoo-base-country-groups-mobile-20260911.png`,
+  `/tmp/odoo-base-country-group-detail-desktop-20260911.png`,
+  `/tmp/odoo-base-country-group-detail-mobile-20260911.png`,
+  `/tmp/odoo-base-country-group-new-desktop-20260911.png`, and
+  `/tmp/odoo-base-country-group-new-mobile-20260911.png`. Core3 list/detail/new
+  captures are `/tmp/core3-base-country-groups-desktop-list-final-20260911.png`,
+  `/tmp/core3-base-country-groups-mobile-list-final-20260911.png`,
+  `/tmp/core3-base-country-group-detail-desktop-final-20260911.png`,
+  `/tmp/core3-base-country-group-detail-mobile-final-20260911.png`,
+  `/tmp/core3-base-country-group-new-desktop-final-20260911.png`, and
+  `/tmp/core3-base-country-group-new-mobile-final-20260911.png`.
+- The authenticated edit comparison initially exposed a real parity defect:
+  the country lookup defaulted to 25 rows and the multi-select initialized
+  only the first matching subset. The shared YAML API prefetch now requests up
+  to 100 option rows, and `AsyncSelect` preserves all initial values when
+  `multiple` is enabled. Post-fix edit captures show all 27 countries at both
+  1440x900 and 390x844: `/tmp/core3-base-country-group-edit-desktop-postfix2-20260911.png`
+  (SHA-256
+  `50f7bd833d8b0b960d1ac8c8589a039176e8a08b8cb766e7fbf32c47edf75e3e`) and
+  `/tmp/core3-base-country-group-edit-mobile-postfix2-20260911.png` (SHA-256
+  `9df5f24b48787df9325ee6f3a25689d701ef7654aff45fc9cfa86ac02c3a4e65`).
+  Both have no page/request errors and body/document widths equal the viewport.
+- Focused validation remains 3 tests / 31 assertions, UI audit passes, ESLint
+  passes, global CSS rebuild passes, and `git diff --check` passes. Images are
+  not committed.
+
 ## Reference and source availability
 
 - Odoo addons: `base`, `contacts`; supplied Odoo 19 source: available.
