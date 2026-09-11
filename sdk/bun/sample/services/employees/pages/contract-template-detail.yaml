@@ -1,0 +1,38 @@
+title: Contract Template
+page: { id: employee-contract-template-detail, route: /employees/contract-templates/detail, breadcrumb: [Human Resources, Configuration, Recruitment, Contract Templates, Contract Template], auth: { require: [employees.manage] } }
+components:
+  - type: OdooFormView
+    source: employee_contract_template_detail
+    title_field: name
+    status_field: status
+    status_colors: { Active: green, Archived: neutral }
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: edit_employee_contract_template, label: Edit, variant: secondary, permission: employees.manage }
+      - { id: archive_employee_contract_template, label: Archive, variant: danger, permission: employees.manage, show_if: "state.employee_contract_template_detail.active === true" }
+      - { id: restore_employee_contract_template, label: Restore, variant: secondary, permission: employees.manage, show_if: "state.employee_contract_template_detail.active === false" }
+      - { id: delete_employee_contract_template, label: Delete, variant: danger, permission: employees.manage, confirm: Delete this contract template? }
+    group_columns: 2
+    groups:
+      - title: Contract Template
+        fields:
+          - { field: job_position, label: Job Position }
+          - { field: department_name, label: Department }
+          - { field: hr_responsible_name, label: HR Responsible }
+          - { field: company_name, label: Company }
+          - { field: effective_date, label: Effective Date }
+    notebook:
+      active: information
+      tabs:
+        - id: information
+          label: Salary Information
+          groups:
+            - title: Contract Overview
+              fields:
+                - { field: wage, label: Wage, type: number, suffix: '/ month' }
+                - { field: contract_type, label: Contract Type }
+                - { field: pay_category, label: Pay Category }
+            - title: Schedule
+              fields:
+                - { field: working_schedule, label: Working Schedule }

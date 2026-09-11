@@ -1,0 +1,72 @@
+page: { id: employee-contract-template-detail }
+datasources:
+  - id: employee_contract_template_detail
+    single: true
+    permission: employees.manage
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_CONTRACT_TEMPLATE_DETAIL_UNAVAILABLE, message: Contract template details are temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.name, t.job_position, t.department_name, t.hr_responsible_name, t.wage, t.contract_type, t.pay_category, t.working_schedule, t.company_name, t.effective_date, t.active, CASE WHEN t.active THEN 'Active' ELSE 'Archived' END AS status FROM employee_contract_templates t WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :id"
+actions:
+  - id: edit_employee_contract_template
+    type: server_form
+    permission: employees.manage
+    title: Edit Contract Template
+    action: employees.contract_templates.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_contract_template_detail
+    params: { id: '{state.id}' }
+    refresh: [employee_contract_template_detail, employee_contract_templates]
+    mutation:
+      operation: update
+      table: employee_contract_templates
+      fields: [name, job_position, department_name, hr_responsible_name, wage, contract_type, pay_category, working_schedule, company_name, effective_date]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_contract_templates WHERE id = :id", status: 404, code: EMPLOYEES_CONTRACT_TEMPLATE_NOT_FOUND, message: Contract template not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_CONTRACT_TEMPLATE_NAME_REQUIRED, message: A contract template name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_contract_templates WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMPLOYEES_CONTRACT_TEMPLATE_EXISTS, message: A contract template with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:wage AS DECIMAL(18,2)), 0) >= 0", status: 422, code: EMPLOYEES_CONTRACT_TEMPLATE_WAGE_INVALID, message: Wage must be zero or greater. }
+      result: { query: "SELECT * FROM employee_contract_templates WHERE id = :id" }
+    fields:
+      - { field: name, label: Template Name, type: text, required: true }
+      - { field: job_position, label: Job Position, type: text }
+      - { field: department_name, label: Department, type: text }
+      - { field: hr_responsible_name, label: HR Responsible, type: text }
+      - { field: wage, label: Wage, type: number, min: 0 }
+      - { field: contract_type, label: Contract Type, type: text }
+      - { field: pay_category, label: Pay Category, type: text }
+      - { field: working_schedule, label: Working Schedule, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: effective_date, label: Effective Date, type: text }
+  - id: archive_employee_contract_template
+    type: server
+    permission: employees.manage
+    action: employees.contract_templates.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_contract_template_detail, employee_contract_templates]
+    mutation: { operation: update, table: employee_contract_templates, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_contract_templates WHERE id = :id AND active = true", status: 404, code: EMPLOYEES_CONTRACT_TEMPLATE_NOT_FOUND, message: Active contract template not found. }] }
+  - id: restore_employee_contract_template
+    type: server
+    permission: employees.manage
+    action: employees.contract_templates.restore
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_contract_template_detail, employee_contract_templates]
+    mutation: { operation: update, table: employee_contract_templates, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_contract_templates WHERE id = :id AND active = false", status: 404, code: EMPLOYEES_CONTRACT_TEMPLATE_NOT_FOUND, message: Archived contract template not found. }] }
+  - id: delete_employee_contract_template
+    type: server
+    permission: employees.manage
+    action: employees.contract_templates.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [employee_contract_templates]
+    mutation:
+      operation: delete
+      table: employee_contract_templates
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_contract_templates WHERE id = :id", status: 404, code: EMPLOYEES_CONTRACT_TEMPLATE_NOT_FOUND, message: Contract template not found. }

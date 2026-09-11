@@ -1,0 +1,38 @@
+title: Contract Templates
+page: { id: employee-contract-templates, route: /employees/contract-templates, breadcrumb: [Human Resources, Configuration, Recruitment, Contract Templates], auth: { require: [employees.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_contract_templates
+    create_action: create_employee_contract_template
+    create_label: New
+    search: { label: Contract Templates, placeholder: Search... }
+    default_filters: { active: 'true' }
+    filters:
+      - { field: job_position, label: Job Position, options: [{ id: all, label: All }, { id: Experienced Developer, label: Experienced Developer }, { id: Human Resources Manager, label: Human Resources Manager }] }
+      - { field: department_name, label: Department, options: [{ id: all, label: All }, { id: R&D USA, label: R&D USA }, { id: Administration, label: Administration }] }
+      - { field: contract_type, label: Contract Type, options: [{ id: all, label: All }, { id: Permanent, label: Permanent }] }
+      - { field: active, label: Records, options: [{ id: 'true', label: Current }, { id: 'false', label: Archived }] }
+    group_by:
+      - { field: job_position, label: Job Position }
+      - { field: department_name, label: Department }
+      - { field: working_schedule, label: Working Schedule }
+      - { field: contract_type, label: Contract Type }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+    columns:
+      - { field: name, label: Contract Template, type: PrimaryEntityCell, mobile: true }
+      - { field: job_position, label: Job Position }
+      - { field: department_name, label: Department }
+      - { field: wage, label: Wage, align: right }
+      - { field: contract_type, label: Contract Type, optional: hide }
+      - { field: pay_category, label: Pay Category, optional: hide }
+      - { field: working_schedule, label: Working Schedule, optional: hide }
+      - { field: company_name, label: Company, optional: hide }
+    page_size: 50
+    column_chooser: true
+    row_key: id
+    row_open_action: view_employee_contract_template
+    row_double_click_action: view_employee_contract_template
+    empty_state: { title: No contract templates found, description: Create a contract template or adjust your search. }

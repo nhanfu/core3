@@ -1,0 +1,35 @@
+version: 0.0.12
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_contract_templates (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        job_position VARCHAR,
+        department_name VARCHAR,
+        hr_responsible_name VARCHAR,
+        wage DECIMAL(18,2) NOT NULL DEFAULT 0,
+        contract_type VARCHAR,
+        pay_category VARCHAR,
+        working_schedule VARCHAR,
+        company_name VARCHAR,
+        effective_date DATE NOT NULL DEFAULT DATE '2026-01-15',
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO employee_contract_templates
+        (id, row_version, name, job_position, department_name, hr_responsible_name, wage, contract_type, pay_category, working_schedule, company_name, effective_date, active)
+      VALUES
+        ('contract-template-developer-usa', 1, 'Developer USA', 'Experienced Developer', 'R&D USA', 'OdooBot', 3000.00, 'Permanent', 'Employee', 'Standard 38 hours/week', 'My Company (San Francisco)', DATE '2026-09-09', true),
+        ('contract-template-hr-manager', 1, 'HR Manager', 'Human Resources Manager', 'Administration', 'OdooBot', 2000.00, 'Permanent', 'Employee', 'Standard 38 hours/week', 'My Company (San Francisco)', DATE '2026-09-09', true);
+      UPDATE employee_contract_templates
+      SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_contract_templates;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

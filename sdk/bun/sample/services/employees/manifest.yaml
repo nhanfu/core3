@@ -28,3 +28,4 @@ menu:
         - { path: /employees/working-schedules, label: Working Schedules, icon: calendar, permission: employees.read }
         - { path: /employees/departure-reasons, label: Departure Reasons, icon: list, permission: employees.manage }
         - { path: /employees/jobs, label: Job Positions, icon: briefcase, permission: employees.read }
+        - { path: /employees/contract-templates, label: Contract Templates, icon: file-text, permission: employees.manage }

@@ -1,0 +1,44 @@
+page: { id: employee-contract-templates }
+datasources:
+  - id: employee_contract_templates
+    permission: employees.manage
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_CONTRACT_TEMPLATES_UNAVAILABLE, message: Contract templates are temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.name, COALESCE(t.job_position, '') AS job_position, COALESCE(t.department_name, '') AS department_name, COALESCE(t.hr_responsible_name, '') AS hr_responsible_name, t.wage, COALESCE(t.contract_type, '') AS contract_type, COALESCE(t.pay_category, '') AS pay_category, COALESCE(t.working_schedule, '') AS working_schedule, COALESCE(t.company_name, 'Visible to all') AS company_name, t.effective_date, t.active, CASE WHEN t.active THEN 'Active' ELSE 'Archived' END AS status, CASE WHEN t.active THEN 'Current' ELSE 'Archived' END AS active_label FROM employee_contract_templates t WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND ((:active IS NULL AND t.active = true) OR (:active IS NOT NULL AND t.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR COALESCE(t.job_position, '') ILIKE '%' || :q || '%' OR COALESCE(t.department_name, '') ILIKE '%' || :q || '%' OR COALESCE(t.contract_type, '') ILIKE '%' || :q || '%' OR COALESCE(t.working_schedule, '') ILIKE '%' || :q || '%') AND (:job_position IS NULL OR :job_position = 'all' OR COALESCE(t.job_position, '') = :job_position) AND (:department_name IS NULL OR :department_name = 'all' OR COALESCE(t.department_name, '') = :department_name) AND (:contract_type IS NULL OR :contract_type = 'all' OR COALESCE(t.contract_type, '') = :contract_type) AND (:working_schedule IS NULL OR :working_schedule = 'all' OR COALESCE(t.working_schedule, '') = :working_schedule) ORDER BY t.name, t.id"
+actions:
+  - id: view_employee_contract_template
+    type: navigate
+    permission: employees.manage
+    navigate_to: /employees/contract-templates/detail
+    params: { id: '{row.id}' }
+  - id: create_employee_contract_template
+    type: server_form
+    permission: employees.manage
+    title: Create Contract Template
+    action: employees.contract_templates.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_contract_templates]
+    mutation:
+      operation: insert
+      table: employee_contract_templates
+      fields: [name, job_position, department_name, hr_responsible_name, wage, contract_type, pay_category, working_schedule, company_name, effective_date, active, row_version]
+      required: [name]
+      defaults: { job_position: null, department_name: null, hr_responsible_name: OdooBot, wage: 0, contract_type: Permanent, pay_category: Employee, working_schedule: Standard 38 hours/week, company_name: My Company (San Francisco), effective_date: '2026-01-15', active: true, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'contract-template-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_CONTRACT_TEMPLATE_NAME_REQUIRED, message: A contract template name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_contract_templates WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMPLOYEES_CONTRACT_TEMPLATE_EXISTS, message: A contract template with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:wage AS DECIMAL(18,2)), 0) >= 0", status: 422, code: EMPLOYEES_CONTRACT_TEMPLATE_WAGE_INVALID, message: Wage must be zero or greater. }
+      result: { query: "SELECT * FROM employee_contract_templates WHERE id = :id" }
+    fields:
+      - { field: name, label: Template Name, type: text, required: true, placeholder: e.g. Developer USA }
+      - { field: job_position, label: Job Position, type: text }
+      - { field: department_name, label: Department, type: text }
+      - { field: hr_responsible_name, label: HR Responsible, type: text, default: OdooBot }
+      - { field: wage, label: Wage, type: number, min: 0, default: 0 }
+      - { field: contract_type, label: Contract Type, type: text, default: Permanent }
+      - { field: pay_category, label: Pay Category, type: text, default: Employee }
+      - { field: working_schedule, label: Working Schedule, type: text, default: Standard 38 hours/week }
+      - { field: company_name, label: Company, type: text, default: My Company (San Francisco) }
+      - { field: effective_date, label: Effective Date, type: text, default: '2026-01-15' }
