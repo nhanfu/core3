@@ -4,9 +4,14 @@ datasources:
     permission: manufacturing.read
     error_states: { transport_error: { status: 503, code: MRP_OPERATIONS_UNAVAILABLE, message: Operations are temporarily unavailable. } }
     query: |
-      SELECT id, row_version, name, active, sequence, bom_id, bom_name, workcenter_id,
+      SELECT id, row_version, name, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label,
+        sequence, bom_id, bom_name, workcenter_id,
         workcenter_name, time_mode, time_mode_batch, time_cycle_manual, time_cycle,
-        time_total, cost_mode, cost, apply_on_variants, blocked_by_operations,
+        printf('%d:00', CAST(time_cycle AS INTEGER)) AS time_cycle_display,
+        time_total, printf('%d:00', CAST(time_total AS INTEGER)) AS time_total_display,
+        cost_mode, CASE cost_mode WHEN 'actual' THEN 'Actual time' ELSE 'Theorical time' END AS cost_mode_label,
+        time_mode, CASE time_mode WHEN 'manual' THEN 'Fixed' ELSE 'Computed' END AS time_mode_label,
+        cost, apply_on_variants, blocked_by_operations,
         company_name, workorder_count
       FROM mrp_routing_workcenters
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1

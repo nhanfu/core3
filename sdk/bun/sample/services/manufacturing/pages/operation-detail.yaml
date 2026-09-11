@@ -1,0 +1,45 @@
+title: Operation
+page: { id: manufacturing-operation-detail, route: /operations/detail, breadcrumb: [Supply Chain, Manufacturing, Configuration, Operations], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_operation_detail
+    title_field: name
+    subtitle_field: workcenter_name
+    status_field: active
+    status_colors: { true: green, false: red }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_mrp_operations, label: Back to Operations, icon: arrow-left, permission: manufacturing.read }
+      - { id: edit_mrp_operation, label: Edit, variant: primary, permission: manufacturing.write }
+      - { id: archive_mrp_operation, label: Archive, variant: secondary, permission: manufacturing.manage, show_if: 'record.active === true' }
+      - { id: unarchive_mrp_operation, label: Restore, variant: secondary, permission: manufacturing.manage, show_if: 'record.active === false' }
+      - { id: delete_mrp_operation, label: Delete, variant: danger, permission: manufacturing.manage, confirm: Delete this operation? }
+    group_columns: 2
+    groups:
+      - title: Operation
+        fields:
+          - { field: name, label: Operation }
+          - { field: bom_name, label: Bill of Material }
+          - { field: workcenter_name, label: Work Center }
+          - { field: sequence, label: Sequence }
+          - { field: apply_on_variants, label: Apply on Variants? }
+          - { field: blocked_by_operations, label: Blocked By }
+      - title: Work Order
+        fields:
+          - { field: cost_mode_label, label: Cost based on? }
+          - { field: time_mode_label, label: Duration Computation }
+          - { field: time_cycle_manual, label: Default Duration }
+          - { field: time_mode_batch, label: Based on }
+          - { field: time_cycle_display, label: Duration }
+          - { field: time_total_display, label: Total Duration }
+          - { field: workorder_count, label: Work Orders }
+          - { field: company_name, label: Company }
+    notebook:
+      active: details
+      tabs:
+        - id: details
+          label: Operation Details
+          groups:
+            - title: Status and revision
+              fields: [{ field: active_label, label: Active }, { field: row_version, label: Revision }]

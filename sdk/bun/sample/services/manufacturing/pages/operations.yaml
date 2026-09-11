@@ -17,9 +17,8 @@ components:
       - id: kanban
         label: Kanban
         icon: dashboard
-        mobile: true
         group_by: bom_name
-        card: { title: name, subtitle: workcenter_name, fields: [{ field: bom_name, label: Bill of Material }, { field: time_cycle, label: Duration (minutes) }, { field: cost_mode, label: Cost based on }, { field: active, label: Active }] }
+        card: { title: name, subtitle: workcenter_name, fields: [{ field: bom_name, label: Bill of Material }, { field: time_cycle_display, label: Duration (minutes) }, { field: cost_mode_label, label: Cost based on }, { field: active_label, label: Active }] }
     form_view: { page: apps/services/manufacturing/pages/operation-detail.yaml, side_panel: false }
     row_key: id
     row_open_action: view_mrp_operation
@@ -30,7 +29,7 @@ components:
       - { field: name, label: Operation, type: PrimaryEntityCell, mobile: true, mobile_secondary: workcenter_name, sortable: true }
       - { field: bom_name, label: Bill of Material, mobile: false }
       - { field: workcenter_name, label: Work Center, mobile: true }
-      - { field: time_cycle, label: Duration (minutes), align: right, mobile: true }
+      - { field: time_cycle_display, label: Duration (minutes), align: right, mobile: true }
       - { field: time_total, label: Total Duration (minutes), align: right, optional: hide, mobile: false }
       - { field: company_name, label: Company, optional: hide, mobile: false }
       - { field: active, label: Status, type: StatusChip, optional: hide, mobile: false }

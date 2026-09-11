@@ -55,7 +55,8 @@ describe('Manufacturing Operations Odoo action parity', () => {
     const list = yaml('pages/operations.yaml').components[0];
     expect(list).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'mrp_operations', create_action: 'create_mrp_operation', row_open_action: 'view_mrp_operation', view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
-    expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ label: 'Kanban', mobile: true });
+    expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ label: 'Kanban' });
+    expect(list.views.find((view: any) => view.id === 'kanban')).not.toHaveProperty('mobile', true);
     expect(list.columns.map((column: any) => column.label)).toEqual(['Operation', 'Bill of Material', 'Work Center', 'Duration (minutes)', 'Total Duration (minutes)', 'Company', 'Status', ' ']);
     expect(list.form_view.page).toBe('apps/services/manufacturing/pages/operation-detail.yaml');
 
@@ -85,7 +86,7 @@ describe('Manufacturing Operations Odoo action parity', () => {
     await expect(repository.querySource(list, { ...params, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'MRP_OPERATIONS_UNAVAILABLE' });
 
     const detail = detailApi().datasources[0];
-    expect((await repository.querySource(detail, { id: 'operation-manual-assembly', fixture_state: null }, 0, 1)).data).toMatchObject({ name: 'Manual Assembly', bom_name: '[FURN_8522] Table Top', time_cycle: 60 });
+    expect((await repository.querySource(detail, { id: 'operation-manual-assembly', fixture_state: null }, 0, 1)).data).toMatchObject({ name: 'Manual Assembly', bom_name: '[FURN_8522] Table Top', time_cycle: 60, time_cycle_display: '60:00', time_mode_label: 'Fixed', cost_mode_label: 'Actual time' });
     expect((await repository.querySource(detail, { id: 'missing-operation', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     await expect(repository.querySource(detail, { id: 'operation-manual-assembly', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'MRP_OPERATION_DETAIL_UNAVAILABLE' });
     database.close();
