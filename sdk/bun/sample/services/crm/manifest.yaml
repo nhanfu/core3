@@ -69,6 +69,10 @@ menu:
           label: Unassigned Leads
           icon: users
           permission: crm.read
+        - path: /activity-analysis
+          label: Activities
+          icon: chart
+          permission: crm.read
     - id: configuration
       label: Configuration
       items:

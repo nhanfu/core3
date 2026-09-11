@@ -1,0 +1,67 @@
+page: { id: crm-activity-report }
+
+datasources:
+  - id: crm_activity_report_types
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_activity_types WHERE active = true ORDER BY name"
+  - id: crm_activity_report_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_activity_report_authors
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT assigned_to AS value, assigned_to AS label FROM crm_activities WHERE state = 'done' AND NULLIF(TRIM(assigned_to), '') IS NOT NULL ORDER BY label"
+  - id: crm_activity_report_stages
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_stages WHERE active = true ORDER BY sequence, name"
+  - id: crm_activity_report
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_ACTIVITY_REPORT_UNAUTHORIZED, message: Sign in to view Activities Analysis. }
+      forbidden: { status: 403, code: CRM_ACTIVITY_REPORT_FORBIDDEN, message: You do not have permission to view Activities Analysis. }
+      conflict: { status: 409, code: CRM_ACTIVITY_REPORT_CONFLICT, message: The activity analysis changed. Refresh to continue. }
+      transport_error: { status: 503, code: CRM_ACTIVITY_REPORT_UNAVAILABLE, message: Activities Analysis is temporarily unavailable. }
+    pivot:
+      fields: [id, row_version, date, completion_month, author, activity_type, subtype, lead_id, opportunity, lead_type, salesperson, team, stage, body, tags, active, activity_count]
+    query: |
+      SELECT
+        a.id,
+        CAST(1 AS BIGINT) AS row_version,
+        CAST(a.completed_at AS VARCHAR) AS date,
+        strftime(a.completed_at, '%Y-%m') AS completion_month,
+        COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') AS author,
+        a.activity_type,
+        'Activity' AS subtype,
+        a.lead_id,
+        l.name AS opportunity,
+        CASE WHEN l.type = 'lead' THEN 'lead' ELSE 'opportunity' END AS lead_type,
+        COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson,
+        COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team,
+        l.stage,
+        a.summary AS body,
+        COALESCE(l.tags, '') AS tags,
+        true AS active,
+        1 AS activity_count
+      FROM crm_activities a
+      JOIN crm_leads l ON l.id = a.lead_id
+      WHERE a.state = 'done'
+        AND a.completed_at IS NOT NULL
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR a.activity_type ILIKE '%' || :q || '%'
+          OR a.summary ILIKE '%' || :q || '%'
+          OR l.name ILIKE '%' || :q || '%'
+          OR COALESCE(a.assigned_to, '') ILIKE '%' || :q || '%')
+        AND (:activity_type IS NULL OR a.activity_type = :activity_type)
+        AND (:lead_type IS NULL OR CASE WHEN l.type = 'lead' THEN 'lead' ELSE 'opportunity' END = :lead_type)
+        AND (:team IS NULL OR COALESCE(NULLIF(l.team, ''), 'Unassigned team') = :team)
+        AND (:author IS NULL OR COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') = :author)
+        AND (:stage IS NULL OR l.stage = :stage)
+        AND (:completion_period IS NULL OR :completion_period <> 'trailing_12_months'
+          OR CAST(a.completed_at AS DATE) >= CURRENT_DATE - INTERVAL '12 months')
+        AND (:from_date IS NULL OR CAST(a.completed_at AS DATE) >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR CAST(a.completed_at AS DATE) <= CAST(:to_date AS DATE))
+      ORDER BY a.completed_at DESC, a.id

@@ -1,0 +1,20 @@
+version: 0.0.21
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state, completed_at)
+      VALUES
+        ('crm-activity-report-001', 'crm-demo-001', 'Call', 'Reviewed renewal requirements', CURRENT_DATE - INTERVAL '1 month', 'Admin User', 'done', CURRENT_TIMESTAMP - INTERVAL '1 month'),
+        ('crm-activity-report-002', 'crm-demo-001', 'Meeting', 'Presented renewal proposal', CURRENT_DATE - INTERVAL '2 months', 'Admin User', 'done', CURRENT_TIMESTAMP - INTERVAL '2 months'),
+        ('crm-activity-report-003', 'crm-demo-002', 'Email', 'Sent onboarding introduction', CURRENT_DATE - INTERVAL '3 months', 'Dispatcher User', 'done', CURRENT_TIMESTAMP - INTERVAL '3 months'),
+        ('crm-activity-report-004', 'crm-forecast-001', 'Call', 'Confirmed expansion scope', CURRENT_DATE - INTERVAL '4 months', 'Admin User', 'done', CURRENT_TIMESTAMP - INTERVAL '4 months'),
+        ('crm-activity-report-005', 'crm-forecast-002', 'Meeting', 'Reviewed automation timeline', CURRENT_DATE - INTERVAL '5 months', 'Admin User', 'done', CURRENT_TIMESTAMP - INTERVAL '5 months'),
+        ('crm-activity-report-006', 'crm-forecast-003', 'To-Do', 'Prepared renewal briefing', CURRENT_DATE - INTERVAL '6 months', 'Admin User', 'done', CURRENT_TIMESTAMP - INTERVAL '6 months')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_activities WHERE id IN ('crm-activity-report-001', 'crm-activity-report-002', 'crm-activity-report-003', 'crm-activity-report-004', 'crm-activity-report-005', 'crm-activity-report-006');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

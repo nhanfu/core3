@@ -1,0 +1,76 @@
+title: Activities
+page: { id: crm-activity-report, route: /activity-analysis, breadcrumb: [CRM, Reporting, Activities], auth: { require: [crm.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_activity_report
+    search: { label: Search..., placeholder: Search activities... }
+    default_filters: { completion_period: trailing_12_months }
+    filters:
+      - { field: activity_type, label: Activity Type, options_source: crm_activity_report_types }
+      - { field: lead_type, label: Lead or Opportunity, options: [{ id: lead, label: Leads }, { id: opportunity, label: Opportunities }] }
+      - { field: team, label: Sales Team, options_source: crm_activity_report_teams }
+      - { field: author, label: Assigned To, options_source: crm_activity_report_authors }
+      - { field: stage, label: Stage, options_source: crm_activity_report_stages }
+      - { field: completion_period, label: Completion Date, options: [{ id: trailing_12_months, label: Trailing 12 months }] }
+    group_by:
+      - { field: activity_type, label: Activity }
+      - { field: subtype, label: Type }
+      - { field: author, label: Assigned To }
+      - { field: completion_month, label: Completion Date }
+      - { field: salesperson, label: Salesperson }
+      - { field: team, label: Sales Team }
+      - { field: stage, label: Stage }
+      - { field: lead_type, label: Lead or Opportunity }
+    default_group_by: completion_month
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: activity_type
+        measure_field: activity_count
+        measure_label: Activities
+        type: bar
+        measures:
+          - { field: activity_count, label: Activities, aggregate: sum }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: activity_type, column: Activity }
+            - { field: subtype, column: Type }
+            - { field: author, column: Assigned To }
+            - { field: completion_month, column: Completion Date, type: date }
+            - { field: salesperson, column: Salesperson }
+            - { field: team, column: Sales Team }
+            - { field: stage, column: Stage }
+            - { field: lead_type, column: Lead or Opportunity }
+            - { field: activity_count, column: Count }
+          default:
+            rows: [completion_month]
+            columns: [activity_type]
+            measures: [{ field: activity_count, aggregate: sum, column: Activities }]
+          date_ranges: { completion_month: month }
+      - { id: list, label: List, icon: table }
+    show_pager: true
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state:
+      title: Let's get to work!
+      description: Activities marked as Done on Leads will appear here, providing an overview of lead interactions.
+    labels: { selected: selected, filters: Filters, columns: Columns, clear_selection: Clear selection, select_all: Select all, select_row: Select row, previous_page: Previous page, next_page: Next page }
+    columns:
+      - { field: date, label: Completion Date, type: DateTime, mobile: true }
+      - { field: author, label: Assigned To, mobile: true }
+      - { field: activity_type, label: Activity Type, mobile: true }
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell, mobile: true }
+      - { field: body, label: Activity Description, mobile: false }
+      - { field: salesperson, label: Salesperson, mobile: false }
+      - { field: team, label: Sales Team, mobile: false }
+      - { field: stage, label: Stage, type: StatusChip, mobile: false }
+      - { field: tags, label: Lead Tags, mobile: false }
