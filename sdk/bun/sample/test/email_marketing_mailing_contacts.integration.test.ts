@@ -46,6 +46,7 @@ describe('Email Marketing mailing contacts and subscriptions slice', () => {
       'Customers:Carol Cartridge',
       'Customers:David Dawson',
       'Customers:Elsa Ericson',
+      'Imported Contacts:Aristide Antario',
       'Imported Contacts:Carol Cartridge',
       'Imported Contacts:Franz Faubourg',
       'Imported Contacts:Gilbert Gilson',
