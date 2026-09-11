@@ -32,7 +32,7 @@ describe('Inventory Moves History Odoo parity', () => {
 
     const list = page.components[0];
     expect(page.page).toMatchObject({ id: 'moves', route: '/moves', auth: { require: ['inventory.read'] } });
-    expect(list).toMatchObject({ source: 'inventory_move_lines', default_filters: { state: 'done' }, form_view: { side_panel: false } });
+    expect(list).toMatchObject({ source: 'inventory_move_lines', default_filters: { state: 'done' }, form_view: { side_panel: false }, view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'pivot', 'form']);
     expect(list.views[0]).toMatchObject({ id: 'list', mobile: false });
     expect(list.views[1]).toMatchObject({ id: 'kanban', mobile: true, group_by: 'movement_type' });

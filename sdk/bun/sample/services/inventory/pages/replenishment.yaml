@@ -19,7 +19,7 @@ components:
       - { field: location_name, label: Location }
       - { field: product_name, label: Product }
       - { field: category_name, label: Category }
-    view_navigation: icons
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table, mobile: false }
       - id: kanban

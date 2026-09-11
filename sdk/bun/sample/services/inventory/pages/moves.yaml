@@ -16,7 +16,7 @@ components:
       - { field: reference, label: Transfers }
       - { field: source_location, label: Location }
       - { field: product_category_name, label: Category }
-    view_navigation: icons
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table, mobile: false }
       - id: kanban

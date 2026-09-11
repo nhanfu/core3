@@ -34,7 +34,7 @@ describe('Inventory replenishment Odoo parity', () => {
     expect(api.page).toEqual({ id: 'replenishment' });
     expect(discovered.pageDatasources.get('replenishment')).toContain('inventory_replenishment_orderpoints');
     expect(discoverPageRoutes(discovered)).toContainEqual({ path: '/replenishment', page: 'replenishment', module: 'inventory' });
-    expect(list).toMatchObject({ source: 'inventory_replenishment_orderpoints', default_filters: { trigger: 'manual', status: 'to_reorder', snooze_status: 'not_snoozed', horizon_days: '365' }, row_actions: 'buttons' });
+    expect(list).toMatchObject({ source: 'inventory_replenishment_orderpoints', default_filters: { trigger: 'manual', status: 'to_reorder', snooze_status: 'not_snoozed', horizon_days: '365' }, row_actions: 'buttons', view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'form']);
     expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ mobile: true });
     expect(list.columns.map((column: any) => column.field)).toEqual(['product_name', 'on_hand', 'forecast', 'route', 'min_qty', 'max_qty', 'to_order', 'unit_name', 'actions']);
