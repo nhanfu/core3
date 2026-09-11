@@ -54,8 +54,8 @@ describe('Recruitment parity batch', () => {
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'recruitment_analysis_test_schema_migrations', ['schema', 'data']);
     const analysis = source('analysis.yaml', 'recruitment_analysis');
     const ready = await repository.querySource(analysis, { q: null, fixture_state: null }, 0, 50);
-    expect(ready.data).toHaveLength(3);
-    expect(ready.data.map((row: any) => row.stage)).toEqual(['New', 'Screening', 'Interview']);
+    expect(ready.data).toHaveLength(5);
+    expect(ready.data.map((row: any) => row.stage)).toEqual(['New', 'New', 'Screening', 'Screening', 'Interview']);
     expect((await repository.querySource(analysis, { q: 'Meldona', fixture_state: null }, 0, 50)).data).toHaveLength(1);
     expect((await repository.querySource(analysis, { q: null, stage: 'Interview', opening_name: null, recruiter: null, fixture_state: null }, 0, 50)).data).toMatchObject([{ stage: 'Interview', applicant_count: 1 }]);
     expect((await repository.querySource(analysis, { q: 'No matching applicant', fixture_state: null }, 0, 50)).data).toEqual([]);
