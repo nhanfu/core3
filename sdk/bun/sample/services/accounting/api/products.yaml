@@ -3,7 +3,8 @@ datasources:
   - id: accounting_products
     single: false
     permission: accounting.read
-    query: "SELECT id, row_version, default_code, name, product_type, price, cost, on_hand, variant_count, active FROM accounting_products WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(default_code, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR active = CAST(:active AS BOOLEAN)) ORDER BY name"
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_PRODUCTS_UNAVAILABLE, message: Accounting product data is temporarily unavailable } }
+    query: "SELECT id, row_version, default_code, name, product_type, price, cost, printf('$ %,.2f', CAST(price AS DOUBLE)) AS price_display, on_hand, printf('%,.2f Units', CAST(on_hand AS DOUBLE)) AS on_hand_display, variant_count, active FROM accounting_products WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(default_code, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR active = CAST(:active AS BOOLEAN)) ORDER BY name"
 actions:
   - id: create_accounting_product
     type: server_form
@@ -18,6 +19,11 @@ actions:
       fields: [default_code, name, product_type, price, cost, on_hand, variant_count]
       required: [name]
       defaults: { product_type: Goods, price: 0, cost: 0, on_hand: 0, variant_count: 1, active: true }
+      before_steps: [{ query: "SELECT 'accounting-product-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_PRODUCT_NAME_REQUIRED, message: Product name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_products WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: ACCOUNTING_PRODUCT_EXISTS, message: A product with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:price, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:cost, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:on_hand, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:variant_count, 1) AS INTEGER) > 0", status: 422, code: ACCOUNTING_PRODUCT_VALUES_INVALID, message: Price, cost, stock, and variants must be valid non-negative values. }
       result: { query: "SELECT * FROM accounting_products WHERE id = :id" }
     fields:
       - { field: default_code, label: Internal reference, type: text }

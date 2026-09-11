@@ -498,3 +498,31 @@ The bounded slice does not implement the full Odoo product form, variants,
 vendor pricelists, purchase taxes relations, or stock-detail navigation; those
 remain follow-up product-detail work. Authenticated Core3/Odoo desktop and
 mobile captures are temporary under `/tmp` and are not repository assets.
+
+## Current batch: customer Products Kanban parity
+
+The recovered authenticated `core3_personal` Odoo reference confirms the
+customer Products action as `account.product_product_menu_sellable` (action
+373, `/odoo/customer-products`). At both `1440x900` and `390x844`, Odoo opens
+the populated Sales product collection in Kanban, with `New`, product name,
+variant count, price, and on-hand card fields; the desktop view also exposes
+the List switch. Core3's existing `/accounting/products` counterpart now uses
+the same Kanban-first responsive contract, Odoo-shaped card amount strings,
+desktop List/Kanban tabs, and customer-product column labels.
+
+The page remains layout-only and joins `api/products.yaml` by the matching
+`page.id`. The Accounting-owned datasource now has deterministic formatted
+price/stock fields, an explicit transport-error state, and server-side write
+guards for permission, required names, duplicate names, and invalid
+non-negative numeric values. The focused suite covers seeded/search/empty/error
+reads and the guarded create path. Core3 and Odoo authenticated captures at
+both required viewports are temporary under `/tmp`:
+`accounting-customer-products-core3-{desktop,mobile}-final.png` and
+`accounting-customer-products-odoo-{desktop,mobile}-final.png`.
+
+The Odoo reference showed 153 demo products while this bounded Core3 fixture
+surface retains its eight deterministic Accounting rows. Core3 browser DOM
+checks confirmed the Kanban state, card fields, exact viewport width, and no
+failed requests. The Core3 PNGs are provisional because the isolated dev
+shell's launcher overlay remained visible in the screenshot despite the fully
+rendered authenticated DOM; Odoo PNGs are populated visual evidence.
