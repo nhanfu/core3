@@ -1,0 +1,55 @@
+title: POS Attribute
+page: { id: pos-attribute-detail, route: /point-of-sale/attribute-detail, breadcrumb: [Sales, Point of Sale, Products, Attributes, Attribute], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_attribute_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_pos_attributes, label: Attributes, variant: secondary, permission: pos.read }
+      - { id: new_pos_attribute_detail, label: New, variant: primary, permission: pos.manage }
+      - { id: edit_pos_attribute, label: Edit, variant: secondary, permission: pos.manage }
+      - { id: delete_pos_attribute, label: Delete, variant: danger, permission: pos.manage, confirm: Delete this attribute? }
+    group_columns: 2
+    groups:
+      - title: Attribute
+        wide: true
+        fields:
+          - { field: name, label: Attribute Name }
+          - { field: display_type, label: Display Type?, type: radio, options: [Radio, Pills, Select, Color, Multi-checkbox, Image] }
+          - { field: variant_creation, label: Variant Creation?, type: radio, options: [Instantly, Dynamically, Never] }
+
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: pos_attribute_values
+    parent_source: pos_attribute_detail
+    title: Attribute Values
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    actions:
+      - { id: add_pos_attribute_value, label: Add a line, variant: primary, permission: pos.manage }
+    empty_state: { title: No attribute values, description: Add a value to use this attribute on a product. }
+    children:
+      - { type: LineItemField, id: value, field: name, label: Value, input_type: text, required: true }
+      - { type: LineItemField, id: free_text, field: free_text_label, label: Free text, readonly: true }
+      - { type: LineItemField, id: default_extra_price, field: default_extra_price, label: Default Extra Price, input_type: money, decimals: 2 }
+      - type: LineItemActions
+        id: pos_attribute_value_actions
+        edit_action: edit_pos_attribute_value
+        create_action: add_pos_attribute_value
+        actions:
+          - { id: edit_pos_attribute_value, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_attribute_value, label: Delete, icon: trash, variant: danger, permission: pos.manage }
+    columns:
+      - { field: name, label: Value, width: 220 }
+      - { field: free_text_label, label: Free text, width: 140 }
+      - { field: default_extra_price, label: Default Extra Price, align: right, width: 180 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_pos_attribute_value, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_attribute_value, label: Delete, icon: trash, variant: danger, permission: pos.manage }

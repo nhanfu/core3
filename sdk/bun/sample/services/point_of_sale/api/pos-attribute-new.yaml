@@ -1,0 +1,38 @@
+page: { id: pos-attribute-new }
+datasources:
+  - id: pos_attribute_new
+    single: true
+    permission: pos.read
+    query: "SELECT NULL AS id, 1 AS row_version, 999 AS sequence, '' AS name, 'Radio' AS display_type, 'Instantly' AS variant_creation, 0 AS values_count, true AS active"
+actions:
+  - id: back_to_pos_attributes
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/attributes
+
+  - id: create_pos_attribute
+    type: server_form
+    permission: pos.manage
+    title: New Attribute
+    action: pos.attributes.create
+    handler: yaml_mutation
+    operation: insert
+    params: { id: '{state.id}' }
+    refresh: [pos_attributes]
+    mutation:
+      operation: insert
+      table: pos_attributes
+      generated: [id]
+      fields: [row_version, sequence, name, display_type, variant_creation, values_count, active]
+      required: [name, display_type, variant_creation]
+      defaults: { row_version: 1, sequence: 999, display_type: Radio, variant_creation: Instantly, values_count: 0, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: POS_ATTRIBUTE_NAME_REQUIRED, message: Attribute Name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:display_type AS VARCHAR) IN ('Radio', 'Pills', 'Select', 'Color', 'Multi-checkbox', 'Image')", status: 422, code: POS_ATTRIBUTE_DISPLAY_TYPE_INVALID, message: Choose a valid Display Type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:variant_creation AS VARCHAR) IN ('Instantly', 'Dynamically', 'Never')", status: 422, code: POS_ATTRIBUTE_VARIANT_CREATION_INVALID, message: Choose a valid Variant Creation option. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_attributes WHERE LOWER(name) = LOWER(trim(CAST(:name AS VARCHAR))))", status: 409, code: POS_ATTRIBUTE_NAME_EXISTS, message: An attribute with this name already exists. }
+      result: { query: "SELECT * FROM pos_attributes WHERE id = :id" }
+    fields:
+      - { field: name, label: Attribute Name, type: text, required: true }
+      - { field: display_type, label: Display Type?, type: radio, options: [Radio, Pills, Select, Color, Multi-checkbox, Image], required: true }
+      - { field: variant_creation, label: Variant Creation?, type: radio, options: [Instantly, Dynamically, Never], required: true }

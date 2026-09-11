@@ -1,0 +1,141 @@
+page: { id: pos-attribute-detail }
+datasources:
+  - id: pos_attribute_detail
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_ATTRIBUTE_DETAIL_UNAVAILABLE, message: Attribute details are temporarily unavailable. } }
+    query: "SELECT id, row_version, sequence, name, display_type, variant_creation, values_count, active FROM pos_attributes WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: pos_attribute_values
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_ATTRIBUTE_VALUES_UNAVAILABLE, message: Attribute values are temporarily unavailable. } }
+    query: "SELECT id, row_version, attribute_id, sequence, name, is_custom, CASE WHEN is_custom THEN 'Yes' ELSE '' END AS free_text_label, CAST(default_extra_price AS DOUBLE) AS default_extra_price, active FROM pos_attribute_values WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND attribute_id = :id ORDER BY sequence, id"
+actions:
+  - id: back_to_pos_attributes
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/attributes
+
+  - id: new_pos_attribute_detail
+    type: navigate
+    permission: pos.manage
+    navigate_to: /point-of-sale/attributes/new
+
+  - id: edit_pos_attribute
+    type: server_form
+    permission: pos.manage
+    title: Edit Attribute
+    action: pos.attributes.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.pos_attribute_detail
+    refresh: [pos_attribute_detail, pos_attributes, pos_attribute_values]
+    mutation:
+      operation: update
+      table: pos_attributes
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, display_type, variant_creation]
+      required: [name, display_type, variant_creation]
+      guards:
+        - { query: "SELECT id FROM pos_attributes WHERE id = :id", status: 404, code: POS_ATTRIBUTE_NOT_FOUND, message: Attribute not found. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: POS_ATTRIBUTE_NAME_REQUIRED, message: Attribute Name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:display_type AS VARCHAR) IN ('Radio', 'Pills', 'Select', 'Color', 'Multi-checkbox', 'Image')", status: 422, code: POS_ATTRIBUTE_DISPLAY_TYPE_INVALID, message: Choose a valid Display Type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:variant_creation AS VARCHAR) IN ('Instantly', 'Dynamically', 'Never')", status: 422, code: POS_ATTRIBUTE_VARIANT_CREATION_INVALID, message: Choose a valid Variant Creation option. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_attributes WHERE LOWER(name) = LOWER(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: POS_ATTRIBUTE_NAME_EXISTS, message: An attribute with this name already exists. }
+      result: { query: "SELECT * FROM pos_attributes WHERE id = :id" }
+    fields:
+      - { field: name, label: Attribute Name, type: text, required: true }
+      - { field: display_type, label: Display Type?, type: radio, options: [Radio, Pills, Select, Color, Multi-checkbox, Image], required: true }
+      - { field: variant_creation, label: Variant Creation?, type: radio, options: [Instantly, Dynamically, Never], required: true }
+
+  - id: delete_pos_attribute
+    type: server
+    permission: pos.manage
+    action: pos.attributes.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [pos_attributes]
+    mutation:
+      operation: delete
+      table: pos_attributes
+      key_field: id
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_attributes WHERE id = :id", status: 404, code: POS_ATTRIBUTE_NOT_FOUND, message: Attribute not found. }
+        - { query: "SELECT 1 AS ok FROM pos_attributes a WHERE a.id = :id AND NOT EXISTS (SELECT 1 FROM pos_attribute_values v WHERE v.attribute_id = a.id)", status: 409, code: POS_ATTRIBUTE_IN_USE, message: Attributes with values cannot be deleted. }
+
+  - id: add_pos_attribute_value
+    type: server_form
+    permission: pos.manage
+    title: Add a line
+    action: pos.attributes.values.create
+    handler: line_item
+    operation: create
+    domain: pos_attribute
+    params: { id: '{state.id}' }
+    refresh: [pos_attribute_detail, pos_attributes, pos_attribute_values]
+    fields:
+      - { field: name, label: Value, type: text, required: true }
+      - { field: is_custom, label: Free text, type: checkbox, default: false }
+      - { field: default_extra_price, label: Default Extra Price, type: number, default: 0, min: 0 }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence, 'pos-attribute-value-' || :id || '-' || CAST(COALESCE(MAX(sequence), 0) + 10 AS VARCHAR) AS line_id FROM pos_attribute_values WHERE attribute_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM pos_attributes WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The attribute changed. Reload it before adding a value. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80 AND CAST(:default_extra_price AS DECIMAL(18,2)) >= 0", status: 422, code: POS_ATTRIBUTE_VALUE_INVALID, message: Enter a value and a non-negative extra price. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_attribute_values WHERE attribute_id = :id AND LOWER(name) = LOWER(trim(CAST(:name AS VARCHAR))))", status: 409, code: POS_ATTRIBUTE_VALUE_EXISTS, message: This value already exists for the attribute. }
+      steps:
+        - { query: "INSERT INTO pos_attribute_values(id, attribute_id, row_version, sequence, name, is_custom, default_extra_price) VALUES(:line_id, :id, 1, :next_sequence, trim(CAST(:name AS VARCHAR)), CAST(:is_custom AS BOOLEAN), CAST(:default_extra_price AS DECIMAL(18,2)))" }
+        - { query: "UPDATE pos_attributes SET values_count = values_count + 1, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The attribute changed while adding a value. Reload it before saving. }
+      result: { query: "SELECT * FROM pos_attribute_values WHERE id = :line_id" }
+
+  - id: edit_pos_attribute_value
+    type: server_form
+    permission: pos.manage
+    title: Edit attribute value
+    action: pos.attributes.values.update
+    handler: line_item
+    operation: update
+    domain: pos_attribute
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [pos_attribute_detail, pos_attributes, pos_attribute_values]
+    fields:
+      - { field: name, label: Value, type: text, required: true }
+      - { field: is_custom, label: Free text, type: checkbox, default: false }
+      - { field: default_extra_price, label: Default Extra Price, type: number, default: 0, min: 0 }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_attributes WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The attribute changed. Reload it before saving. }
+        - { query: "SELECT id FROM pos_attribute_values WHERE id = :line_id AND attribute_id = :id AND row_version = :expected_row_version", status: 409, code: POS_ATTRIBUTE_VALUE_STALE, message: This value changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80 AND CAST(:default_extra_price AS DECIMAL(18,2)) >= 0", status: 422, code: POS_ATTRIBUTE_VALUE_INVALID, message: Enter a value and a non-negative extra price. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_attribute_values WHERE attribute_id = :id AND LOWER(name) = LOWER(trim(CAST(:name AS VARCHAR))) AND id <> :line_id)", status: 409, code: POS_ATTRIBUTE_VALUE_EXISTS, message: This value already exists for the attribute. }
+      steps:
+        - { query: "UPDATE pos_attribute_values SET row_version = row_version + 1, name = trim(CAST(:name AS VARCHAR)), is_custom = CAST(:is_custom AS BOOLEAN), default_extra_price = CAST(:default_extra_price AS DECIMAL(18,2)) WHERE id = :line_id AND attribute_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_ATTRIBUTE_VALUE_STALE, message: This value changed or was deleted. Reload before saving. }
+        - { query: "UPDATE pos_attributes SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The attribute changed while saving a value. Reload it before saving. }
+      result: { query: "SELECT * FROM pos_attribute_values WHERE id = :line_id" }
+
+  - id: delete_pos_attribute_value
+    type: server
+    permission: pos.manage
+    action: pos.attributes.values.delete
+    handler: line_item
+    operation: delete
+    domain: pos_attribute
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete value {{row.name}}?'
+    refresh: [pos_attribute_detail, pos_attributes, pos_attribute_values]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_attributes WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The attribute changed. Reload it before deleting a value. }
+        - { query: "SELECT id FROM pos_attribute_values WHERE id = :line_id AND attribute_id = :id AND row_version = :expected_row_version", status: 409, code: POS_ATTRIBUTE_VALUE_STALE, message: This value changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM pos_attribute_values WHERE id = :line_id AND attribute_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_ATTRIBUTE_VALUE_STALE, message: This value changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE pos_attributes SET values_count = CASE WHEN values_count > 0 THEN values_count - 1 ELSE 0 END, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The attribute changed while deleting a value. Reload it before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
