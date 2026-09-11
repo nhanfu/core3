@@ -87,4 +87,7 @@ menu:
         - path: /recurring-plans
           label: Recurring Plans
           icon: list
+        - path: /lost-reasons
+          label: Lost Reasons
+          icon: archive
           permission: crm.manage

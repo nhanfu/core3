@@ -1,0 +1,84 @@
+page: { id: crm-lost-reason-detail }
+datasources:
+  - id: crm_lost_reason_detail
+    permission: crm.manage
+    error_states: { transport_error: { status: 503, code: CRM_LOST_REASON_DETAIL_UNAVAILABLE, message: Lost reason details are temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.name, r.active, (SELECT COUNT(*) FROM crm_leads l WHERE l.lost_reason = r.id) AS leads_count FROM crm_lost_reasons r WHERE r.id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"
+actions:
+  - id: back_to_crm_lost_reasons
+    type: navigate
+    permission: crm.manage
+    navigate_to: /lost-reasons
+  - id: view_lost_reason_leads
+    type: navigate
+    permission: crm.read
+    navigate_to: /lost-opportunities
+    params: { lost_reason: '{state.crm_lost_reason_detail.id}' }
+  - id: edit_crm_lost_reason
+    type: server_form
+    permission: crm.manage
+    title: Edit Lost Reason
+    action: crm.lost_reasons.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.crm_lost_reason_detail
+    refresh: [crm_lost_reason_detail, crm_lost_reasons]
+    mutation:
+      operation: update
+      table: crm_lost_reasons
+      fields: [name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_lost_reasons WHERE id = :id", status: 404, code: CRM_LOST_REASON_NOT_FOUND, message: Lost reason was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: CRM_LOST_REASON_NAME_REQUIRED, message: Lost reason name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_lost_reasons WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: CRM_LOST_REASON_EXISTS, message: A lost reason with this name already exists. }
+      result: { query: "SELECT * FROM crm_lost_reasons WHERE id = :id" }
+    fields:
+      - { field: name, label: Description, type: text, required: true }
+  - id: archive_crm_lost_reason
+    type: server
+    permission: crm.manage
+    action: crm.lost_reasons.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_lost_reason_detail, crm_lost_reasons]
+    params: { values: { active: false } }
+    mutation:
+      operation: update
+      table: crm_lost_reasons
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_lost_reasons WHERE id = :id AND active = TRUE", status: 404, code: CRM_LOST_REASON_NOT_FOUND, message: Active lost reason was not found. }
+      result: { query: "SELECT * FROM crm_lost_reasons WHERE id = :id" }
+  - id: unarchive_crm_lost_reason
+    type: server
+    permission: crm.manage
+    action: crm.lost_reasons.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_lost_reason_detail, crm_lost_reasons]
+    params: { values: { active: true } }
+    mutation:
+      operation: update
+      table: crm_lost_reasons
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_lost_reasons WHERE id = :id AND active = FALSE", status: 404, code: CRM_LOST_REASON_NOT_FOUND, message: Archived lost reason was not found. }
+      result: { query: "SELECT * FROM crm_lost_reasons WHERE id = :id" }
+  - id: delete_crm_lost_reason
+    type: server
+    permission: crm.manage
+    action: crm.lost_reasons.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [crm_lost_reason_detail, crm_lost_reasons]
+    mutation:
+      operation: delete
+      table: crm_lost_reasons
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_lost_reasons WHERE id = :id", status: 404, code: CRM_LOST_REASON_NOT_FOUND, message: Lost reason was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_leads WHERE lost_reason = :id)", status: 409, code: CRM_LOST_REASON_IN_USE, message: A lost reason used by opportunities cannot be deleted; archive it instead. }
