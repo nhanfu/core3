@@ -28,7 +28,10 @@ async function loadServiceStyles(moduleId: string | undefined) {
   const previous = _serviceStylesheet;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/services/' + encodeURIComponent(safeModuleId) + '/styles/index.css';
+  // Some YAML services retain an underscore directory while exposing a
+  // hyphenated manifest id in the shell route (for example time-off).
+  const styleDirectory = safeModuleId === 'time-off' ? 'time_off' : safeModuleId;
+  link.href = '/services/' + encodeURIComponent(styleDirectory) + '/styles/index.css';
   link.dataset.module = safeModuleId;
   await new Promise<void>((resolve, reject) => {
     link.addEventListener('load', () => resolve(), { once: true });

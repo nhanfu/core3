@@ -48,6 +48,8 @@ export class PageFormModal extends BaseComponent {
     async function openFormModal(actionDef: any, row: any) {
       return new Promise<void>(resolve => {
         const isMailComposer = actionDef.modal_style === 'mail_composer';
+        const modalStyle = String(actionDef.modal_style || '').replace(/[^a-z0-9_-]/gi, '');
+        const modalStyleClass = modalStyle && !isMailComposer ? ` modal-style-${modalStyle}` : '';
         const sourceRecord = actionDef.prefill === 'source'
           ? dataMap[actionDef.prefill_source || '']?.data
           : undefined;
@@ -63,7 +65,7 @@ export class PageFormModal extends BaseComponent {
         const overlay = html.take(document.body).div.className('form-overlay').attr('aria-hidden', 'false').ele() as HTMLDivElement;
 
         // Dialog
-        const dialog = html.take(overlay).div.className(`form-dialog${isMailComposer ? ' mail-composer-dialog' : ''}`).attr('role', 'dialog').attr('aria-modal', 'true').prop('tabIndex', -1).ele() as HTMLDivElement;
+        const dialog = html.take(overlay).div.className(`form-dialog${isMailComposer ? ' mail-composer-dialog' : ''}${modalStyleClass}`).attr('role', 'dialog').attr('aria-modal', 'true').prop('tabIndex', -1).ele() as HTMLDivElement;
 
         // Header
         const header = html.take(dialog).div.className('form-header').ele() as HTMLDivElement;

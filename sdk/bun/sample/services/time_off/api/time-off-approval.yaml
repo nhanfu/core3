@@ -7,3 +7,45 @@ datasources:
   - id: time_off_approval_requests
     permission: time_off.manage
     query: "SELECT r.id, r.name, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.state, r.reason FROM leave_requests r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from DESC"
+  - id: multiple_request_types
+    permission: time_off.manage
+    single: false
+    query: "SELECT id AS value, name AS label FROM leave_types WHERE state = 'Active' AND requires_approval = TRUE ORDER BY name"
+  - id: multiple_request_employees
+    permission: time_off.manage
+    single: false
+    query: "SELECT id AS value, name AS label FROM time_off_multiple_request_employees WHERE active = TRUE ORDER BY name"
+  - id: multiple_request_modes
+    permission: time_off.manage
+    single: false
+    query: "SELECT value, label FROM (VALUES ('employee','By Employee'), ('company','By Company'), ('department','By Department'), ('category','By Employee Tag')) modes(value, label)"
+actions:
+  - id: create_multiple_requests
+    type: server_form
+    permission: time_off.manage
+    title: Multiple Requests
+    modal_style: time_off_multiple
+    submit_label: Generate Time Off
+    cancel_label: Discard
+    action: time_off.requests.generate_multiple
+    handler: yaml_mutation
+    refresh: [time_off_approval_requests, leave_requests]
+    success_message: Time off generated for the selected employees.
+    mutation:
+      steps:
+        - query: "INSERT INTO leave_requests(id, name, employee_id, employee_name, leave_type_id, leave_type_name, date_from, date_to, days, reason, approver, state) SELECT 'leave-request-group-' || e.id || '-' || CAST(:date_from AS DATE), 'LEAVE/GROUP/' || CAST(:date_from AS DATE) || '/' || e.id, e.id, e.name, t.id, t.name, CAST(:date_from AS DATE), CAST(:date_to AS DATE), CAST(CAST(:date_to AS DATE) - CAST(:date_from AS DATE) + 1 AS DECIMAL(18,3)), NULLIF(TRIM(CAST(:description AS VARCHAR)), ''), NULL, CASE WHEN t.requires_approval = FALSE THEN 'Approved' ELSE 'Submitted' END FROM time_off_multiple_request_employees e JOIN leave_types t ON t.id = :holiday_status_id WHERE e.active = TRUE AND e.id IN :employee_ids"
+      guards:
+        - { query: "SELECT 1 AS ok FROM leave_types WHERE id = :holiday_status_id AND state = 'Active' AND requires_approval = TRUE", status: 422, code: TIME_OFF_MULTI_TYPE_INVALID, message: Select an active Time Off Type. }
+        - { query: "SELECT 1 AS ok FROM (VALUES ('employee'), ('company'), ('department'), ('category')) modes(value) WHERE value = :allocation_mode", status: 422, code: TIME_OFF_MULTI_MODE_INVALID, message: Select a valid mode. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, code: TIME_OFF_MULTI_DATES_INVALID, message: Dates must be valid and the end date cannot be before the start date. }
+        - { query: "SELECT 1 AS ok FROM time_off_multiple_request_employees WHERE active = TRUE AND id IN :employee_ids", status: 422, code: TIME_OFF_MULTI_EMPLOYEES_INVALID, message: Select at least one active employee. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_requests r WHERE r.employee_id IN :employee_ids AND r.date_from <= CAST(:date_to AS DATE) AND r.date_to >= CAST(:date_from AS DATE) AND r.state NOT IN ('Refused', 'Cancelled'))", status: 409, code: TIME_OFF_MULTI_OVERLAP, message: One or more selected employees already have time off in the selected dates. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_requests r WHERE r.name IN (SELECT 'LEAVE/GROUP/' || CAST(:date_from AS DATE) || '/' || e.id FROM time_off_multiple_request_employees e WHERE e.id IN :employee_ids))", status: 409, code: TIME_OFF_MULTI_EXISTS, message: These multiple requests have already been generated. }
+      result: { query: "SELECT COUNT(*) AS generated_count FROM leave_requests WHERE name LIKE 'LEAVE/GROUP/' || CAST(:date_from AS DATE) || '/%'" }
+    fields:
+      - { field: holiday_status_id, label: Time Off Type, type: select, options_source: multiple_request_types, required: false }
+      - { field: allocation_mode, label: Mode ?, type: select, options_source: multiple_request_modes, required: false, default: employee }
+      - { field: employee_ids, label: Employees, type: multi-select, multiple: true, options_source: multiple_request_employees, placeholder: Everyone, required: true }
+      - { field: date_from, label: Dates, type: date, required: false }
+      - { field: date_to, label: Dates, type: date, required: false }
+      - { field: description, label: Description, type: textarea, placeholder: 'e.g. Extra recuperation, Company unavailability, ...' }

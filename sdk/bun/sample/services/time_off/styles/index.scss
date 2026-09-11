@@ -1,2 +1,109 @@
 .time-off-page { min-height: 100%; }
 .time-off-page .o-list-view__toolbar { gap: .65rem; }
+
+/* Odoo's multiple-request action is a wide, compact modal with inline labels. */
+.form-dialog.modal-style-time_off_multiple {
+  display: grid;
+  width: min(980px, calc(100vw - 32px));
+  max-height: calc(100vh - 60px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0;
+  overflow-y: auto;
+  padding: 0;
+  border: 1px solid #ced4da;
+  border-radius: 2px;
+  background: #fff;
+  color: #212529;
+}
+
+.modal-style-time_off_multiple .form-header,
+.modal-style-time_off_multiple .form-footer { grid-column: 1 / -1; }
+.modal-style-time_off_multiple .form-header {
+  margin: 0;
+  padding: 16px;
+  border-bottom: 1px solid #dee2e6;
+}
+.modal-style-time_off_multiple .form-title { font-size: 1.125rem; font-weight: 500; }
+.modal-style-time_off_multiple .form-close { font-size: 1.6rem; }
+.modal-style-time_off_multiple .form-field {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 7px 16px;
+}
+.modal-style-time_off_multiple .form-field:nth-child(2),
+.modal-style-time_off_multiple .form-field:nth-child(3),
+.modal-style-time_off_multiple .form-field:nth-child(4),
+.modal-style-time_off_multiple .form-field:nth-child(7) { grid-column: 1 / -1; }
+.modal-style-time_off_multiple .form-field:nth-child(5),
+.modal-style-time_off_multiple .form-field:nth-child(6) { width: 100%; box-sizing: border-box; }
+.modal-style-time_off_multiple .form-field:nth-child(6) .form-label { visibility: hidden; }
+.modal-style-time_off_multiple .form-field:nth-child(7) { grid-template-columns: 1fr; }
+.modal-style-time_off_multiple .form-field:nth-child(7) .form-label { display: none; }
+.modal-style-time_off_multiple .form-label {
+  margin: 0;
+  color: #212529;
+  font-size: .875rem;
+  font-weight: 400;
+}
+.modal-style-time_off_multiple select,
+.modal-style-time_off_multiple input:not([type='hidden']):not([type='search']),
+.modal-style-time_off_multiple textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 0;
+  border-bottom: 1px solid #7b5bb4;
+  border-radius: 0;
+  background: transparent;
+  color: #212529;
+  font: inherit;
+  font-size: .875rem;
+  outline: 0;
+}
+.modal-style-time_off_multiple select,
+.modal-style-time_off_multiple input:not([type='hidden']):not([type='search']) { min-height: 28px; padding: 4px; }
+.modal-style-time_off_multiple textarea { min-height: 52px; resize: vertical; padding: 4px; }
+.modal-style-time_off_multiple select:focus,
+.modal-style-time_off_multiple input:focus,
+.modal-style-time_off_multiple textarea:focus { border-bottom-color: #6845a5; }
+.modal-style-time_off_multiple .async-select { min-height: 32px; padding: 2px 4px; border: 0; border-bottom: 1px solid #7b5bb4; border-radius: 0; }
+.modal-style-time_off_multiple .async-select-search { min-height: 26px; padding: 4px; }
+.modal-style-time_off_multiple .form-footer {
+  align-items: center;
+  justify-content: flex-start;
+  margin: 18px 0 0;
+  padding: 16px;
+  border-top: 1px solid #dee2e6;
+}
+.modal-style-time_off_multiple .form-footer .btn,
+.modal-style-time_off_multiple .form-footer button {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  font: inherit;
+  font-size: .875rem;
+}
+.modal-style-time_off_multiple .form-footer .btn-primary { border-color: #71639e; background: #71639e; color: #fff; }
+.modal-style-time_off_multiple .form-footer .btn-secondary { border-color: #ced4da; background: #e9ecef; color: #212529; }
+.modal-style-time_off_multiple .form-footer .btn-primary { order: 1; }
+.modal-style-time_off_multiple .form-footer .btn-secondary { order: 2; }
+
+@media (max-width: 600px) {
+  .form-overlay:has(.modal-style-time_off_multiple) { align-items: flex-start; padding: 0; }
+  .form-dialog.modal-style-time_off_multiple {
+    width: 100vw;
+    min-height: 100vh;
+    max-height: 100vh;
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 2px;
+  }
+  .modal-style-time_off_multiple .form-field:nth-child(5),
+  .modal-style-time_off_multiple .form-field:nth-child(6) { grid-column: 1 / -1; }
+  .modal-style-time_off_multiple .form-footer { align-self: end; }
+}

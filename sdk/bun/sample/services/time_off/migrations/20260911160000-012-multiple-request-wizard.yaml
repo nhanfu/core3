@@ -1,0 +1,24 @@
+version: 0.0.12
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS time_off_multiple_request_employees (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL UNIQUE,
+        department_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        category_name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      INSERT OR IGNORE INTO time_off_multiple_request_employees(id, name, department_name, company_name, category_name, active) VALUES
+        ('employee-demo-001', 'Admin User', 'Management', 'YShip Demo Company', 'Administration', TRUE),
+        ('employee-demo-002', 'Marc Demo', 'Product', 'YShip Demo Company', 'Office Staff', TRUE),
+        ('employee-demo-003', 'Mitchell Admin', 'Management', 'YShip Demo Company', 'Administration', TRUE),
+        ('employee-demo-004', 'Paul Williams', 'Product', 'YShip Demo Company', 'Office Staff', TRUE);
+    down: |
+      DROP TABLE IF EXISTS time_off_multiple_request_employees;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
