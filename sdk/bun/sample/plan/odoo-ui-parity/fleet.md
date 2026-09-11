@@ -631,3 +631,66 @@ no page errors, settled request failures, or horizontal overflow. The bounded
 visual difference is the shared Core3 Fluent shell versus Odoo's purple shell;
 the exact tag labels, color swatches, list/detail structure, and responsive
 widths are retained.
+
+## Configuration > Vehicle > Activity Types checkpoint (2026-09-11)
+
+The next uncovered Fleet action was `mail_activity_type_action_config_fleet`,
+reached from `Fleet > Configuration > Vehicle > Activity Types`. The active
+reference was `http://localhost:8069`, database `core3_user_demo`,
+authenticated as `admin@core3.local`; the Odoo source was
+`/home/nhanjs/projects/odoo` at revision `659759969d53`. The live action is id
+766, model `mail.activity.type`, with `list,kanban,form` views, domain
+`res_model IS NULL OR res_model = fleet.vehicle.log.contract`, and context
+default `res_model=fleet.vehicle.log.contract`. Its menu is sequence 99 and
+restricted to `base.group_no_one`. The source list exposes sequence (handle),
+Name, Default Summary, Planned in, and Type; the kanban shows icon/name,
+summary, model, and default user; the form is grouped into Activity Settings
+and Next Activity with a Default Note section.
+
+The live filtered dataset has six rows in sequence order: To-Do (2), Email
+(3), Call (6), Meeting (9), Contract to Renew (10, Fleet contract model), and
+Document (25). The source access rows grant base users read-only access and
+Fleet managers full CRUD. Core3 therefore exposes reads under `fleet.read`
+and mutations under `fleet.manage`, with the To-Do archive guard and the
+source-protected To-Do/Call/Meeting delete guard. Model targeting is limited
+to global activity types or `fleet.vehicle.log.contract`, matching the Fleet
+action domain/default.
+
+Core3 adds `/fleet/config/activity-types` and
+`/fleet/config/activity-types/detail`. The page YAML files are
+presentation-only; `api/activity-types.yaml` and
+`api/activity-type-detail.yaml` own their datasources/actions and join their
+corresponding pages by `page.id`. Migrations
+`20260911260000-025-fleet-activity-types-schema.yaml` and
+`20260911261000-026-fleet-activity-types-data.yaml` provide an idempotent,
+service-owned table with six fixed live rows, icons, schedule metadata, row
+versions, and fixed timestamp `2026-01-15 00:00:00`. Empty, not-found,
+transport, 401/403, blank-name, unsupported-model, invalid-schedule,
+protected-standard-row, missing-record, and stale-row-version contracts are
+explicit in the API and focused tests. Existing Fleet status and tag routes
+are unchanged.
+
+Implementation commit: `e6f3ede6`
+(`feat(fleet): add activity types configuration parity`).
+
+Authenticated headless Odoo/Core3 evidence was captured at both required
+viewports. Odoo list and Core3 list/detail surfaces were visually inspected;
+the stable final matrix reported no console errors, page errors, failed
+requests, or horizontal overflow (`1440/1440` and `390/390` document/body
+widths). Screenshots remain outside Git:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Activity Types list | 1440x900 | `/tmp/odoo-fleet-activity-types-desktop-20260911.png` | `aca1d5a17a958607d47e88ebde526c52637376bb4edb37ce43f01bc8be8b4af8` |
+| Odoo Activity Types kanban | 390x844 | `/tmp/odoo-fleet-activity-types-mobile-20260911.png` | `486af6f634c76bc996fb1fe483b4cd034c5580f5cf3a55a4c2c0fdfe12cc68a4` |
+| Core3 Activity Types list | 1440x900 | `/tmp/core3-fleet-activity-types-desktop-20260911.png` | `8dac89fc1cf4a9043a66b299ee026c6e05bf0f4611f0ca3773a6e1aa068f3775` |
+| Core3 Activity Types cards | 390x844 | `/tmp/core3-fleet-activity-types-mobile-20260911.png` | `b07c5318d3d3edfd5219b012b5d0906e44ddc618a58d9bc648c33042631cdb3b` |
+| Core3 Activity Type form | 1440x900 | `/tmp/core3-fleet-activity-type-detail-desktop-20260911.png` | `5ff89d6d8694a64f4b90718c43f5810c56019ec4e094f5e93132b02f5afa8af5` |
+| Core3 Activity Type form | 390x844 | `/tmp/core3-fleet-activity-type-detail-mobile-20260911.png` | `69e6328503a375b883ec64e46752a272856d36a401f07a6c728c61e9f27dfa64` |
+
+Focused coverage passes 4 tests and 53 assertions. `bun run audit` passes
+with 519 pages, 526 routes, and 911 datasources; ESLint, the Fleet Sass
+build, and `git diff --check` pass. The expected bounded visual difference
+is the Core3 Fluent shell and blue accent versus Odoo's purple shell; row
+ordering, labels, schedule values, model targeting, pager/search affordance,
+responsive cards, and the source form grouping are represented.
