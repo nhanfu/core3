@@ -957,3 +957,30 @@ compared at 1440×900 for the Activity matrix and at 390×844 for the compact
 responsive product state, with zero unexpected responses, zero page errors, and
 no horizontal overflow. Screenshots remain under `/tmp` and are never
 committed.
+
+### Products Activity implementation handoff
+
+Implementation is committed as `b63c85ef7840bcfee64740c7fec7919c1f4bd62e`
+(`feat(pos): add products activity view`). It adds migration `0.0.37`, the
+service-owned activity-slot projection, the page/API view contract, guarded
+`pos.write` scheduling, and the shared ActivityView rule that excludes rows
+with no activity count/type. The earlier contract approval is committed
+separately as `a99f3227cfc6d51c3e36afd3dc12e90ccce88bf0`.
+
+Focused integration coverage passes 3 tests and 21 assertions. The UI audit
+passes with 513 pages, 520 routes, and 905 datasources; focused ESLint, POS
+CSS generation, and `git diff --check` pass. The authenticated browser pass
+has zero page errors and zero failed requests after the page settles. The
+footer schedule flow was exercised with a valid activity and with blank-form
+validation; the persisted activity refreshed into the To-Do cell. Empty and
+transport-error fixtures, invalid type, unknown product, blank summary, and
+stale version guards are covered by the focused contract suite.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Products Activity | 1440×900 | `/tmp/odoo-pos-products-activity-desktop-1440x900.png` | `fb80d86b0605570c7c13941275b0d5534d427077c822facb47996d51f3ab72c3` |
+| Odoo Products responsive kanban | 390×844 | `/tmp/odoo-pos-products-activity-mobile-390x844.png` | `389309c303646c87c850414c500600e435c3890e394d25590593e7968ecd18d8` |
+| Core3 Products Activity | 1440×900 | `/tmp/core3-pos-products-activity-final-desktop-1440x900.png` | `4c69bb325d0d0648565f1e1ff11aed00741c1cb02f6e2f05aab0cffcbc3e43a8` |
+| Core3 Products responsive kanban | 390×844 | `/tmp/core3-pos-products-activity-final-mobile-390x844.png` | `344c0f235105e3469c4e432990cf8eeb7a64890b9024a9afa6eea0a5011079d9` |
+
+Screenshots are temporary `/tmp` evidence and are not committed.
