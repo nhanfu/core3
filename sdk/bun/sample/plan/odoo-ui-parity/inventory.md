@@ -672,13 +672,14 @@ quant view and remains unchanged; this batch owns the explicit `/stock-report`
 route and changes the Reporting menu item to that route.
 
 The bounded surface is the authenticated stock report collection at 1440x900
-and 390x844. It includes the New and Inventory at Date entry points, category
-filter, product search, deterministic pager, and the stock columns Product,
+and 390x844. It includes the Inventory at Date entry point, category filter,
+product search, deterministic pager, and the stock columns Product,
 Unit Cost, Total Value, On Hand, Free to Use, Incoming, Outgoing, and Unit.
 History and Replenishment row links navigate to the already implemented
-read-only Moves History and manager-only Replenishment surfaces. Forecast,
-Locations, product create/edit, and the Inventory at Date result wizard are
-explicitly deferred beyond this list contract.
+read-only Moves History and manager-only Replenishment surfaces. Odoo's New
+product entry point, Forecast and Locations row links, product create/edit,
+and the Inventory at Date result wizard are explicitly deferred beyond this
+list contract.
 
 The implementation must keep `pages/stock-report.yaml` layout-only and bind it
 to `api/stock-report.yaml` through `page.id: stock-report`. A migration adds a
