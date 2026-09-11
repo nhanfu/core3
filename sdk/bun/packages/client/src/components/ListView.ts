@@ -23,6 +23,8 @@ export type ListViewColumn = {
   mobile?: boolean;
   width?: number;
   align?: 'left' | 'center' | 'right';
+  type?: string;
+  palette?: 'odoo';
   sortable?: boolean;
   optional?: 'show' | 'hide';
   render?: (container: HTMLElement, value: unknown, row: ListRow) => void;
@@ -60,6 +62,7 @@ export type ListViewInlineEditField = {
   placeholder?: string;
   default?: unknown;
   readonly?: boolean;
+  palette?: 'odoo';
   options?: Array<string | { value: string; label: string }>;
 };
 export type ListViewInlineEdit = {
@@ -1080,7 +1083,9 @@ export class ListView extends BaseComponent {
     const value = values[field.field] ?? '';
     const wrap = html.take(cell).div.className('o-list-inline-editor-wrap').ele();
     if (field.type === 'color') {
-      const palette = ['#ffffff', '#875A7B', '#00A09A', '#F0AD4E', '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12', '#D35400', '#34495E', '#7F8C8D'];
+      const palette = field.palette === 'odoo'
+        ? ['#ffffff', '#ee2d2d', '#dc8534', '#e8bb1d', '#5794dd', '#9f628f', '#db8865', '#41a9a2', '#304be0', '#ee2f8a', '#61c36e', '#9872e6']
+        : ['#ffffff', '#875A7B', '#00A09A', '#F0AD4E', '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12', '#D35400', '#34495E', '#7F8C8D'];
       const paletteWrap = html.take(wrap).div.className('o-list-inline-color-palette').ele();
       paletteWrap.style.display = 'flex';
       paletteWrap.style.flexWrap = 'wrap';

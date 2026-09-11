@@ -1,0 +1,29 @@
+title: Tags
+page: { id: fleet-tags, route: /fleet/config/tags, breadcrumb: [Human Resources, Fleet, Configuration, Vehicle, Tags], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_vehicle_tags
+    create_label: New
+    search: { label: Search tags, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    inline_edit:
+      create_action: create_fleet_vehicle_tag_inline
+      update_action: update_fleet_vehicle_tag_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, required: true, placeholder: Tag name }
+        - { field: color, type: color, palette: odoo, default: 0 }
+    columns:
+      - { field: name, label: Tag Name, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: color, label: Color, type: ColorCell, mobile: true, align: right, sortable: false }
+    row_key: id
+    row_open_action: edit_fleet_vehicle_tag
+    row_double_click_action: edit_fleet_vehicle_tag
+    form_view: { page: apps/services/fleet/pages/fleet-tag-detail.yaml, side_panel: false }
+    row_actions: menu
+    empty_state: { title: Create a new tag, description: Add tags to classify and organize your fleet vehicles. }

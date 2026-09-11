@@ -1,0 +1,18 @@
+version: 0.0.24
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_tags(id, name, color, row_version) VALUES
+        ('fleet-tag-001', 'Junior', 1, 1),
+        ('fleet-tag-002', 'Senior', 2, 1),
+        ('fleet-tag-003', 'Employee Car', 3, 1),
+        ('fleet-tag-004', 'Purchased', 4, 1)
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE fleet_vehicle_tags SET row_version = 1 WHERE id LIKE 'fleet-tag-%' AND row_version IS NULL;
+    down: |
+      DELETE FROM fleet_vehicle_tags WHERE id LIKE 'fleet-tag-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

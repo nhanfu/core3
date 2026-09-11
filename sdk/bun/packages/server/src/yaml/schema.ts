@@ -100,7 +100,7 @@ const DATASOURCE_KEYS = new Set(['id', 'type', 'single', 'permission', 'query', 
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
-const FIELD_KEYS = new Set(['field', 'label', 'type', 'required', 'readonly', 'options', 'options_source', 'multiple', 'default', 'tokens', 'show_if', 'placeholder', 'search_placeholder', 'currency', 'decimals', 'min', 'max', 'step', 'wide']);
+const FIELD_KEYS = new Set(['field', 'label', 'type', 'required', 'readonly', 'options', 'options_source', 'multiple', 'default', 'tokens', 'show_if', 'placeholder', 'search_placeholder', 'currency', 'decimals', 'min', 'max', 'step', 'wide', 'palette']);
 const COLUMN_KEYS = new Set([
   'field',
   'label',
@@ -118,6 +118,7 @@ const COLUMN_KEYS = new Set([
   'overdueField',
   'mobile',
   'optional',
+  'palette',
 ]);
 const ROW_ACTION_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'show_if']);
 const FORM_STAT_KEYS = new Set(['id', 'label', 'value_field', 'icon', 'permission', 'show_if', 'hide_value']);

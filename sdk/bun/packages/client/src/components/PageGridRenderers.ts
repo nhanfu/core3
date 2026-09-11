@@ -46,6 +46,12 @@ function renderAvatarCell(cell: HTMLElement, value: unknown, column: any) {
   cell.classList.add('o-list-avatar-cell-wrapper');
 }
 
+function colorPalette(palette?: string) {
+  return palette === 'odoo'
+    ? ['#ffffff', '#ee2d2d', '#dc8534', '#e8bb1d', '#5794dd', '#9f628f', '#db8865', '#41a9a2', '#304be0', '#ee2f8a', '#61c36e', '#9872e6']
+    : ['#ffffff', '#875A7B', '#00A09A', '#F0AD4E', '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12', '#D35400', '#34495E', '#7F8C8D'];
+}
+
 export class PageGridRenderers extends BaseComponent {
   readonly renderers: any;
 
@@ -223,6 +229,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     mobile: column.mobile,
     width: typeof column.width === 'number' ? column.width : undefined,
     align: column.align,
+    palette: column.palette,
     sortable: column.sortable !== false,
     rowActions: column.actions?.map((action: any) => ({
       ...action,
@@ -257,7 +264,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
         return;
       }
       if (column.type === 'ColorCell') {
-        const palette = ['#ffffff', '#875A7B', '#00A09A', '#F0AD4E', '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12', '#D35400', '#34495E', '#7F8C8D'];
+        const palette = colorPalette(column.palette);
         const color = palette[Math.max(0, Math.min(palette.length - 1, Number(value) || 0))];
         const swatch = document.createElement('span');
         swatch.className = 'o-list-color-cell-swatch';
@@ -615,7 +622,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         return;
       }
       if (column.type === 'ColorCell') {
-        const palette = ['#ffffff', '#875A7B', '#00A09A', '#F0AD4E', '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12', '#D35400', '#34495E', '#7F8C8D'];
+        const palette = colorPalette(column.palette);
         const color = palette[Math.max(0, Math.min(palette.length - 1, Number(value) || 0))];
         const swatch = document.createElement('span');
         swatch.className = 'o-list-color-cell-swatch';
@@ -934,6 +941,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         placeholder: field.placeholder,
         default: field.default,
         readonly: field.readonly,
+        palette: field.palette,
         options: field.options,
       })),
       saveLabel: inlineDefinition.save_label,

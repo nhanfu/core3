@@ -1,0 +1,45 @@
+page: { id: fleet-tag-detail }
+datasources:
+  - id: fleet_vehicle_tag_detail
+    single: true
+    permission: fleet.read
+    error_states:
+      unauthorized: { status: 401, code: FLEET_TAG_DETAIL_UNAUTHORIZED, message: Sign in to view the vehicle tag. }
+      forbidden: { status: 403, code: FLEET_TAG_DETAIL_FORBIDDEN, message: You do not have permission to view this vehicle tag. }
+      transport_error: { status: 503, code: FLEET_TAG_DETAIL_UNAVAILABLE, message: Vehicle tag details are temporarily unavailable. }
+    query: "SELECT id, row_version, name, color FROM fleet_vehicle_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_fleet_vehicle_tag_detail
+    type: server_form
+    permission: fleet.manage
+    title: Edit Vehicle Tag
+    action: fleet.vehicle_tags.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_vehicle_tag_detail, fleet_vehicle_tags]
+    mutation:
+      operation: update
+      table: fleet_vehicle_tags
+      fields: [name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_tags WHERE id = :id", status: 404, code: FLEET_TAG_NOT_FOUND, message: Vehicle tag was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: FLEET_TAG_NAME_REQUIRED, message: Vehicle tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: FLEET_TAG_EXISTS, message: A vehicle tag with this name already exists. }
+      result: { query: "SELECT * FROM fleet_vehicle_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Tag Name, type: text, required: true }
+  - id: delete_fleet_vehicle_tag_detail
+    type: server
+    permission: fleet.manage
+    action: fleet.vehicle_tags.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [fleet_vehicle_tag_detail, fleet_vehicle_tags]
+    mutation:
+      operation: delete
+      table: fleet_vehicle_tags
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_tags WHERE id = :id", status: 404, code: FLEET_TAG_NOT_FOUND, message: Vehicle tag was not found. }

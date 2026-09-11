@@ -1,0 +1,16 @@
+title: Vehicle Tag
+page: { id: fleet-tag-detail, route: /fleet/config/tags/detail, breadcrumb: [Human Resources, Fleet, Configuration, Vehicle, Tags], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_vehicle_tag_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Vehicle Tags
+        fields:
+          - { field: name, label: Tag Name }
+    header_actions:
+      - { id: edit_fleet_vehicle_tag_detail, label: Save, variant: primary }
+    action_menu:
+      actions:
+        - { id: delete_fleet_vehicle_tag_detail, label: Delete, variant: danger }
