@@ -18,30 +18,30 @@ workflow:
       to: Sent
       permission: purchase.write
       mutation:
-        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft purchase orders can be sent }]
-        steps: [{ query: "UPDATE purchase_orders SET state = 'Sent', row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Only unchanged draft purchase orders can be sent }]
+        steps: [{ query: "UPDATE purchase_orders SET state = 'Sent', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD }]
         result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
     - id: confirm
       from: [Sent]
       to: Confirmed
       permission: purchase.write
       mutation:
-        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Sent'", status: 409, message: Only sent purchase orders can be confirmed }]
-        steps: [{ query: "UPDATE purchase_orders SET state = 'Confirmed', row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Sent' AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Only unchanged sent purchase orders can be confirmed }]
+        steps: [{ query: "UPDATE purchase_orders SET state = 'Confirmed', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD }]
         result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
     - id: receive
       from: [Confirmed]
       to: Received
       permission: purchase.write
       mutation:
-        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Confirmed' AND quantity > 0", status: 409, message: Only confirmed orders with a positive quantity can be received }]
-        steps: [{ query: "UPDATE purchase_orders SET state = 'Received', qty_received = quantity, row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Confirmed' AND quantity > 0 AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Only unchanged confirmed orders with a positive quantity can be received }]
+        steps: [{ query: "UPDATE purchase_orders SET state = 'Received', qty_received = quantity, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD }]
         result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
     - id: cancel
       from: [Draft, Sent, Confirmed]
       to: Cancelled
       permission: purchase.write
       mutation:
-        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent', 'Confirmed')", status: 409, message: Only open purchase orders can be cancelled }]
-        steps: [{ query: "UPDATE purchase_orders SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent', 'Confirmed') AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Only unchanged open purchase orders can be cancelled }]
+        steps: [{ query: "UPDATE purchase_orders SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD }]
         result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }

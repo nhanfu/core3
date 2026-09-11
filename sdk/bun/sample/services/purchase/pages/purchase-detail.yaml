@@ -8,6 +8,11 @@ components:
     status_field: state
     statusbar: [{ value: Draft, label: Draft }, { value: Sent, label: Sent }, { value: To Approve, label: To Approve }, { value: Confirmed, label: Confirmed }, { value: Received, label: Received }, { value: Cancelled, label: Cancelled }]
     status_colors: { Draft: neutral, Sent: amber, 'To Approve': amber, Confirmed: blue, Received: green, Cancelled: red }
+    header_actions:
+      - { id: send_purchase_order_detail, label: Send RFQ, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft'" }
+      - { id: confirm_purchase_order_detail, label: Confirm Order, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Sent'" }
+      - { id: receive_purchase_order_detail, label: Receive, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed'" }
+      - { id: cancel_purchase_order_detail, label: Cancel, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent' || state.purchase_order_detail.state === 'Confirmed'" }
     editable: true
     group_columns: 2
     groups:
@@ -15,7 +20,55 @@ components:
         fields: [{ field: vendor_name, label: Vendor }, { field: contact_name, label: Contact }, { field: reference, label: Vendor reference }, { field: currency, label: Currency }, { field: company_name, label: Company }]
       - title: Order details
         fields: [{ field: name, label: Purchase order }, { field: buyer_name, label: Buyer }, { field: confirmation_date, label: Confirmation date }, { field: expected_arrival, label: Expected arrival }, { field: billing_status, label: Billing status }, { field: state, label: Status }]
-      - title: Products
-        fields: [{ field: product_name, label: Product }, { field: quantity, label: Ordered }, { field: qty_received, label: Received }, { field: unit_price, label: Unit price }, { field: total_amount_display, label: Total }]
-      - title: Notes
-        fields: [{ field: notes, label: Notes }, { field: locked, label: Locked }, { field: acknowledged, label: Acknowledged }]
+    notebook:
+      active: products
+      tabs:
+        - { id: products, label: Products, content_slot: true }
+        - id: other_information
+          label: Other Information
+          groups:
+            - title: Other Information
+              fields: [{ field: notes, label: Notes, type: textarea, wide: true }, { field: locked, label: Locked }, { field: acknowledged, label: Acknowledged }]
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: purchase_order_lines
+    parent_source: purchase_order_detail
+    title: Products
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_purchase_order_line, label: Add a product, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent'" }
+    empty_state: { title: No order lines, description: Add a product to calculate the purchase total. }
+    footer:
+      source: purchase_order_detail
+      stats:
+        - { label: Total, field: total_amount_display }
+    children:
+      - { type: LineItemField, id: product_name, field: product_name, label: Product, input_type: text, required: true }
+      - { type: LineItemField, id: quantity, field: quantity, display_field: quantity_display, label: Quantity, input_type: number, required: true }
+      - { type: LineItemField, id: uom, field: uom, label: Unit, input_type: text, required: true }
+      - { type: LineItemField, id: unit_price, field: unit_price, display_field: unit_price_display, label: Unit Price, input_type: money, required: true }
+      - { type: LineItemField, id: tax_rate, field: tax_rate, display_field: tax_rate_display, label: Taxes, input_type: number, decimals: 2 }
+      - { type: LineItemField, id: line_total, field: line_total, display_field: line_total_display, label: Amount, readonly: true }
+      - type: LineItemActions
+        id: purchase_order_line_actions
+        edit_action: edit_purchase_order_line
+        create_action: add_purchase_order_line
+        actions:
+          - { id: edit_purchase_order_line, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "row.parent_state === 'Draft' || row.parent_state === 'Sent'" }
+          - { id: delete_purchase_order_line, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "row.parent_state === 'Draft' || row.parent_state === 'Sent'" }
+    columns:
+      - { field: product_name, label: Product, width: 260 }
+      - { field: quantity_display, label: Quantity, align: right, width: 120 }
+      - { field: uom, label: Unit, width: 110 }
+      - { field: unit_price_display, label: Unit Price, align: right, width: 140 }
+      - { field: tax_rate_display, label: Taxes, align: right, width: 100 }
+      - { field: line_total_display, label: Amount, align: right, width: 150 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_purchase_order_line, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "row.parent_state === 'Draft' || row.parent_state === 'Sent'" }
+          - { id: delete_purchase_order_line, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "row.parent_state === 'Draft' || row.parent_state === 'Sent'" }

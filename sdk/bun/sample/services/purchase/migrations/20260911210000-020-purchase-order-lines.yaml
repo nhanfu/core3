@@ -1,0 +1,37 @@
+version: 0.0.20
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_order_lines (
+        id VARCHAR PRIMARY KEY,
+        order_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        display_type VARCHAR NOT NULL DEFAULT 'product',
+        product_name VARCHAR,
+        description VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+        qty_received DECIMAL(18,3) NOT NULL DEFAULT 0,
+        qty_billed DECIMAL(18,3) NOT NULL DEFAULT 0,
+        uom VARCHAR NOT NULL DEFAULT 'Units',
+        unit_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        tax_rate DECIMAL(9,4) NOT NULL DEFAULT 0,
+        line_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS purchase_order_lines_order_idx ON purchase_order_lines(order_id, sequence);
+      INSERT OR IGNORE INTO purchase_order_lines(id, order_id, sequence, display_type, product_name, description, quantity, qty_received, qty_billed, uom, unit_price, tax_rate, line_total)
+      VALUES
+        ('purchase-line-demo-001-10', 'po-demo-001', 10, 'product', 'Packaging cartons', 'Packaging cartons', 400, 0, 0, 'Units', 1.25, 0, 500.00),
+        ('purchase-line-demo-001-20', 'po-demo-001', 20, 'product', 'Packing labels', 'Packing labels', 10, 0, 0, 'Units', 12.50, 0, 125.00),
+        ('purchase-line-demo-005-10', 'po-demo-005', 10, 'product', 'Warehouse barcode scanners', 'Warehouse barcode scanners', 18, 6, 0, 'Units', 75.00, 0, 1350.00);
+    down: |
+      DELETE FROM purchase_order_lines WHERE id IN ('purchase-line-demo-001-10', 'purchase-line-demo-001-20', 'purchase-line-demo-005-10');
+      DROP INDEX IF EXISTS purchase_order_lines_order_idx;
+      DROP TABLE IF EXISTS purchase_order_lines;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
