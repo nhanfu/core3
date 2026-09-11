@@ -68,6 +68,14 @@ describe('Accounting Payment Tokens Odoo action parity', () => {
       failure = error;
     }
     expect(String((failure as any)?.message || failure)).toContain('Accounting data service is temporarily unavailable');
+
+    failure = undefined;
+    try {
+      await repository.querySource(detailSource, { id: 'payment-token-azure-card', fixture_state: 'transport_error' }, 0, 1);
+    } catch (error) {
+      failure = error;
+    }
+    expect(String((failure as any)?.message || failure)).toContain('Payment token details are temporarily unavailable');
   });
 
   test('keeps Odoo read-only creation/editing semantics while guarding writes', () => {
