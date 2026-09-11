@@ -111,9 +111,9 @@ describe('Manufacturing Operations Odoo action parity', () => {
     await expect(repository.executeMutation(edit.mutation, { id: 'operation-qa-finishing', expected_row_version: 1, values: { ...values, name: 'Stale Operation' } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
     await expect(repository.executeMutation(edit.mutation, { id: 'missing-operation', expected_row_version: 1, values })).rejects.toMatchObject({ status: 404, code: 'MRP_OPERATION_NOT_FOUND' });
 
-    await repository.executeMutation(archive.mutation, { id: 'operation-qa-finishing', expected_row_version: 2 });
-    await expect(repository.executeMutation(archive.mutation, { id: 'operation-qa-finishing', expected_row_version: 3 })).rejects.toMatchObject({ status: 409, code: 'MRP_OPERATION_ALREADY_ARCHIVED' });
-    await repository.executeMutation(unarchive.mutation, { id: 'operation-qa-finishing', expected_row_version: 3 });
+    await repository.executeMutation(archive.mutation, { id: 'operation-qa-finishing', expected_row_version: 2, values: { active: false } });
+    await expect(repository.executeMutation(archive.mutation, { id: 'operation-qa-finishing', expected_row_version: 3, values: { active: false } })).rejects.toMatchObject({ status: 409, code: 'MRP_OPERATION_ALREADY_ARCHIVED' });
+    await repository.executeMutation(unarchive.mutation, { id: 'operation-qa-finishing', expected_row_version: 3, values: { active: true } });
     await repository.executeMutation(remove.mutation, { id: 'operation-qa-finishing', expected_row_version: 4 });
     await expect(repository.executeMutation(remove.mutation, { id: 'operation-qa-finishing', expected_row_version: 4 })).rejects.toMatchObject({ status: 404, code: 'MRP_OPERATION_NOT_FOUND' });
     await expect(repository.executeMutation(remove.mutation, { id: 'operation-manual-assembly', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'MRP_OPERATION_IN_USE' });
