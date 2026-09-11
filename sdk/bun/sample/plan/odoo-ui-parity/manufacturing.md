@@ -2,6 +2,65 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-11 bounded Scrap Orders follow-up
+
+- Revalidated the next uncovered installed Manufacturing action in the
+  authenticated personal database `core3_personal`: Manufacturing / Operations
+  / Scrap is the duplicated `stock.menu_stock_scrap` surface, rendered by
+  runtime action `537` (`stock.action_stock_scrap`) for model `stock.scrap`.
+  The authenticated source route is `/odoo/scraps`; its action modes are
+  `list,form,kanban,pivot,graph`. The visible list labels are Reference, Date,
+  Product, Quantity, Unit, Company, and Status. The search contract exposes
+  Reference, Product, Location, Scrap Location, and Created on, with Product,
+  Location, Scrap Location, Transfer, Draft, Done, and Manufacturing Order
+  grouping/filter entries. The form exposes Product, Quantity, Replenish
+  Quantities, Scrap Reason, Source Document, Company, Draft/Done status, and
+  the Validate action.
+- The personal database has zero persisted `stock.scrap` rows. Odoo therefore
+  renders its installed `sample="1"` placeholder rows in the authenticated
+  list and kanban views; the evidence below intentionally preserves that live
+  behavior rather than mutating the reference database. At 390x844 Odoo
+  resolves the action to `/odoo/scraps?view_type=kanban`.
+- Core3 implements the bounded action at `/manufacturing/scraps` with detail
+  `/manufacturing/scraps/detail`, and adds the exact `Scrap` menu under
+  Manufacturing / Operations. Pages `manufacturing-scraps` and
+  `manufacturing-scrap-detail` remain presentation-only; `api/scraps.yaml`
+  and `api/scrap-detail.yaml` own the page-id-bound datasources and mutations.
+  The list provides List, Form, Kanban, Pivot, and Graph modes; a mobile-only
+  Kanban card view follows the shared responsive renderer used by the other
+  Odoo-style lists. Source/Scrap Location stay available in filters and the
+  detail form, while the visible list columns match the authenticated Odoo
+  user's current list.
+- Migration `0.0.12` seeds six stable Scrap Orders dated `2026-01-15` through
+  `2026-01-20`: three Draft and three Done rows across My Company (San
+  Francisco) and Core3 Vietnam, with products, quantities, locations, source
+  documents, manufacturing orders, lots, replenishment flags, and notes. The
+  API covers reference-ascending default/search/filter/group fixtures, empty,
+  not-found, and transport-error states with explicit 401/403/404/503
+  contracts. Mutations cover create/edit, duplicate-reference and positive
+  quantity validation, Draft -> Done Validate, row-version stale rejection,
+  and guards preventing Done edits or deletion.
+- Authenticated paired captures were inspected at 1440x900 and 390x844. Odoo
+  list/form evidence is `/tmp/odoo-manufacturing-scrap-desktop-1440x900-
+  {list,form}.png` and `/tmp/odoo-manufacturing-scrap-mobile-390x844-
+  {list,form}.png`. Core3 list/detail evidence is
+  `/tmp/core3-manufacturing-scrap-desktop-1440x900-
+  {list,detail}-final.png` and `/tmp/core3-manufacturing-scrap-mobile-
+  390x844-{list,detail}-final.png`. The final Core3 browser pass recorded no
+  failed requests or page errors and exact `390x390` / `1440x1440` document
+  widths with no horizontal overflow. Screenshots remain under `/tmp` and are
+  not committed.
+- The implementation checkpoint is `34e84d41`; responsive/list parity fixes
+  are `0dbf0f42` and `287996aa`. The focused suite is
+  `test/manufacturing_scrap_orders.integration.test.ts` (4 tests, 50
+  assertions), including idempotent migrations, page/API ownership, route
+  discovery, deterministic fixtures, workflow, stale-write, and delete guards.
+  The shared Core3 Fluent shell, fixed demo data, and detail-oriented location
+  fields differ from Odoo's purple shell, generated sample placeholders, and
+  user-group-dependent list visibility; chatter, scrap reason tags, Stock
+  Operation/Product Moves stat actions, and inventory move-line integrations
+  remain outside this bounded Manufacturing action slice.
+
 ## 2026-09-11 bounded Unbuild Orders follow-up
 
 - Revalidated the next installed visible Manufacturing action in the
