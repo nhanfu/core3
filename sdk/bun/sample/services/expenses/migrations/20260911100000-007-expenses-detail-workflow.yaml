@@ -43,6 +43,7 @@ type:
           ELSE 'sha256:' || REPLACE(receipt_reference, '.', '-')
         END
       WHERE id LIKE 'expense-demo-%';
+      UPDATE expenses SET reimbursement_status = 'Paid' WHERE id = 'expense-demo-paid';
       UPDATE expenses SET refusal_reason = 'Receipt was not attached before review' WHERE id = 'expense-demo-refused' AND (refusal_reason IS NULL OR refusal_reason = '');
       INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail, created_at) VALUES
         ('expense-activity-approved', 'expense-demo-approved', 'Operations Lead', 'expenses.approve', 'Approved', 'Approved for posting', TIMESTAMP '2026-09-03 09:00:00'),
