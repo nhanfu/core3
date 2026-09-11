@@ -346,6 +346,81 @@ existing generic client currently rejects returned datasource error metadata
 stable 503 API contract is tested and this shared-schema limitation is not
 changed in the Project-only slice.
 
+## Bounded slice: Project Dashboard and Updates (2026-09-11)
+
+This slice owns the next uncovered visible Project workflow: the project form's
+Dashboard stat action and its Project Updates records. Live authenticated Odoo
+19 exposed the record-linked action `project_update_all_action` from
+`/odoo/project/5` (`Home Construction`) at
+`/odoo/project/5/project-dashboard`. Its view order is `kanban,list,form` and
+the visible update contract includes Construction and Design Approval, author,
+status, progress, task/hour summaries, date, search, and On Track/At Risk/
+Off Track/On Hold filters. The action is intentionally record-linked rather
+than added as a duplicate top-level menu.
+
+Core3 implements the action at
+`/project/projects/detail/dashboard?id=project-demo-001`, reached from the
+Project detail Dashboard stat button. Layout-only pages
+`pages/project-dashboard.yaml` and `pages/project-update-detail.yaml` join
+page-id-owned API/action fragments `api/project-dashboard.yaml` and
+`api/project-update-detail.yaml`. The migration uses stable IDs and the
+`2026-01-15` seed date for two Home Construction updates and two Website
+Refresh updates. The dashboard preserves the Odoo view order and labels,
+provides stat cards, update kanban/list/form modes, milestones, search/filter/
+empty states, and responsive content-only scrolling. Server YAML owns create,
+edit, delete, navigation, required-title/progress validation, archived/template
+guards, project-read/project-write permissions, and row-version 409 conflicts.
+
+Implementation commit: `b7972403` (`feat(project): add dashboard updates
+parity`). Focused integration coverage is
+`test/project_dashboard_updates.integration.test.ts` (3 tests, 36
+assertions), covering discovery/page separation, Odoo labels/view modes,
+deterministic records, search/filter/empty, create/update/delete, validation,
+permissions, and stale-row conflicts. The related Project regression suite
+also passes (3 tests, 51 assertions).
+
+### Browser evidence
+
+Authenticated captures used Odoo credentials `codex@core3.local` /
+`Core3Odoo2026!` against `http://localhost:8069` and Core3 demo credentials
+`admin@tms.local` / `admin123` against the isolated runtime
+`http://localhost:3021`. Odoo desktop and mobile use the authenticated direct
+dashboard route because the responsive Odoo project form hides the Dashboard
+stat button at 390px; Core3 desktop navigation reached the project detail and
+the same action route, while the mobile capture used that authenticated route
+after login. All images remain under `/tmp` and are not committed.
+
+| Surface | Exact path | Dimensions | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo desktop | `/tmp/odoo-project-dashboard-updates-desktop-final-20260911.png` | 1440x900 | `8a0368b4eefcce326372d93b65754944d72a6606d92b81b37bc16ed2b61ff9c3` |
+| Odoo mobile | `/tmp/odoo-project-dashboard-updates-mobile-final-20260911.png` | 390x844 | `e9adbd7f9efa31e3b63ff0f0ea28a0970fd85997db65bef7c97e79c78c340169` |
+| Core3 desktop | `/tmp/core3-project-dashboard-updates-desktop-20260911.png` | 1440x900 | `8d057f6149c767177b974bde6c57f8117430bae115193b4a8eb2190ddf9ed5e3` |
+| Core3 mobile | `/tmp/core3-project-dashboard-updates-mobile-20260911.png` | 390x844 | `fff74ffe51616340cef1759b64edd9a128a6623a4ee557b0dd87094d91f41bf2` |
+
+The final browser pass reported zero non-navigation request failures and
+`scrollWidth === clientWidth` at both Core3 viewports; Odoo likewise reported
+no failed requests and no horizontal overflow. Odoo renders its purple shell,
+two-column dashboard, richer dependency/profitability metrics, and update
+rows. Core3 renders the Fluent shell, stat row, responsive update cards,
+milestones, search, filters, and the update form contract with deterministic
+project-local data. The parity fix was to add the missing record-linked
+action, split page/API ownership, reproduce the source view order and labels,
+and make the mobile route content-width safe. The captured Core3 PNGs also
+retain a shared shell/icon paint defect (large unstyled loading mark) even
+though the settled DOM contains `Project Dashboard`; this is recorded rather
+than misrepresented as pixel parity.
+
+Residual gaps are the Odoo profitability/burndown and live Timesheets/Sales/
+Purchase aggregates, update chatter/followers, and the shared Core3 shell
+paint defect. Odoo's mobile source form still hides the stat entry point, so
+mobile evidence is a post-authentication direct route. The Project action is
+record-linked by design and is not exposed as a new global menu. The generic
+client's existing datasource-error metadata schema limitation documented above
+also remains outside this Project-only slice.
+
+Evidence/docs commit: pending after this section is committed separately from
+`b7972403`.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:
