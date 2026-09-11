@@ -697,6 +697,49 @@ Core3 retains the shared Fluent shell while Odoo retains its purple shell;
 Core3's Pivot/Graph toolbar and seeded records are the bounded shared-component
 parity surface, not a claim that the two global shells are pixel-identical.
 
+## Purchase Product Variants detail bounded follow-up — 2026-09-11
+
+The next uncovered installed visible Purchase action was the Product Variants
+form behind Products → Product Variants. The authenticated personal Odoo
+action is `694` at `/odoo/action-694`; selecting the deterministic
+`FURN_6667` row opens `/odoo/action-694/38` and shows the variant form with
+Documents, In / Out, Reordering Rules, Bill of Materials, Purchased, and Sold
+stat buttons; General Information, Sales, Point of Sale, Purchase, and
+Inventory sections; and OdooBot internal-note history. The same detail route
+was captured directly at both target viewports because the mobile action uses
+Odoo's compact Kanban list before opening a record.
+
+Core3 now opens the existing Product Variants list rows at
+`/purchase/product-variants/detail?id=purchase-variant-purchase-product-acoustic`.
+The page/API pair is joined by `page.id: purchase-product-variant-detail`.
+Migration `20260911200000-018-purchase-product-variant-detail.yaml` adds the
+Odoo-shaped variant fields, deterministic `FURN_6667 / Acoustic Bloc Screens /
+Color: Black` data, and three dated internal-note fixtures. The form exposes
+the six Odoo stat values, responsive section/notebook hierarchy, and
+permissioned Edit, Archive, Send message, and Log note actions. Edit and
+Archive require `purchase.write`, reject blank or negative values, reject
+duplicate names, and require the current row version; all detail and message
+reads require `purchase.read`. Missing, empty, transport-error, and stale
+record contracts are covered by
+`test/purchase_product_variant_detail.integration.test.ts`.
+
+Focused validation is 3 tests and 25 assertions. Authenticated browser
+verification used Odoo `codex@core3.local` and Core3 `admin@tms.local` at
+1440×900 and 390×844. Both surfaces returned zero failed requests and no
+horizontal overflow; Core3 document/body widths were 1440/1440 on desktop
+and 390/390 on mobile. Core3 retains the shared Fluent shell and uses
+responsive information cards rather than Odoo's product image and purple
+shell; those are shared-shell/asset differences, while the variant identity,
+stats, field values, sections, chatter, and mobile stacking are the bounded
+parity surface.
+
+Evidence remains local and uncommitted:
+
+| Surface | Desktop | Mobile |
+| --- | --- | --- |
+| Odoo | `/tmp/odoo-purchase-product-variant-detail-desktop-1440x900.png`<br>SHA-256 `23ed8bc43eacd59a955b2ba23a4eb1ac332800c258d5f370ca664064f535dca1` | `/tmp/odoo-purchase-product-variant-detail-mobile-390x844.png`<br>SHA-256 `35081b0d14c1fff157dff928db22171d719234e3ebd6cf9b434f836047b87d83` |
+| Core3 | `/tmp/core3-purchase-product-variant-detail-desktop-1440x900.png`<br>SHA-256 `d362a2fdd7f57f4a170109ba76d9efa3ff8bdb1b166643dbff6aa4c9090307d5` | `/tmp/core3-purchase-product-variant-detail-mobile-390x844.png`<br>SHA-256 `4ed7ed10005e88659b31eadda4dc20019c3bc9cd905dd5686e78c14f3932cf16` |
+
 ## Acceptance gate
 
 - Every source-visible menu above has a Core3 route, or an explicit documented
