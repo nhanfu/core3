@@ -47,11 +47,14 @@ describe('Events Mail Schedulers parity slice', () => {
     const detailSource = yaml('api/event-mail-scheduler-detail.yaml').datasources.find((source: any) => source.id === 'event_mail_scheduler_detail');
     const initial = await repository.querySource(listSource, { q: null, fixture_state: null }, 0, 50);
     expect(initial.data).toHaveLength(21);
+    expect(initial.data.slice(0, 3).map((row: any) => row.event_name)).toEqual([
+      'Design Fair Los Angeles', 'Design Fair Los Angeles', 'Design Fair Los Angeles',
+    ]);
     expect(initial.data.slice(0, 3).map((row: any) => row.template_ref)).toEqual([
       'Event: Registration Confirmation', 'Event: Reminder', 'Event: Reminder',
     ]);
     expect(initial.data[0]).toMatchObject({
-      event_name: 'An unpublished event',
+      event_name: 'Design Fair Los Angeles',
       mail_state: 'running',
       mail_state_label: 'Running',
       interval_display: 'Immediately',
