@@ -1,6 +1,6 @@
 # Base and Contacts — UI-only sub-plan
 
-Status: `ready`
+Status: `in-progress`
 
 ## Reference and source availability
 
@@ -49,6 +49,35 @@ Capture Odoo 19 and Core3 at `1440x900` and `390x844` for every inventory item, 
 - Verified with authenticated browser: populated list, visible List/Cards/Kanban tabs, mobile Cards default, full detail navigation (no side panel), avatar initials, six smart buttons, notebook tabs, activities, chatter/follower/attachment tools, edit/save/discard, Activity composer, no unexpected responses >=400, and no horizontal overflow at either viewport.
 - API contract evidence: search `Leonie` returns one record, named `empty` returns zero records, named `transport_error` returns HTTP 503 with `BASE_CONTACTS_DATA_UNAVAILABLE`; detail `not_found` returns an empty single-record payload. Focused integration test: `test/base_contacts.integration.test.ts` (4 tests, 44 assertions).
 - Deferred scope: Odoo app-switcher/menu label parity (`People` remains the existing Core3 shell group), real binary contact avatars, Person/Company radio control, salesperson and richer relational popovers, import/export/archive/bulk confirmations, full chatter compose/send/note persistence, attachment upload/download, contact hierarchy editing, and the remaining Contacts/Companies configuration screens. Images remain in `/tmp` and are not committed.
+
+### Current batch evidence: archive and restore filter
+
+- Source reviewed: the live personal Odoo database `core3_personal` on
+  2026-09-11. The reference list exposes Active and Archived status filters;
+  the archived view contains `Archived Contact` and `Archived Directory
+  Contact`.
+- Core3 owns the same status filter through `contacts` datasource parameters
+  and the `base.contacts.archive` / `base.contacts.unarchive` actions. The
+  focused test now covers archive, restore, permission, and stale-row guards:
+  `test/base_contacts.integration.test.ts` (5 tests, 56 assertions).
+- Authenticated Odoo captures, deliberately excluded from Git:
+  `/tmp/odoo-base-contacts-archive-active-desktop-20260911.png`,
+  `/tmp/odoo-base-contacts-archive-active-mobile-20260911.png`,
+  `/tmp/odoo-base-contacts-archive-archived-desktop-20260911.png`, and
+  `/tmp/odoo-base-contacts-archive-archived-mobile-20260911.png`.
+- Authenticated Core3 captures used `admin@tms.local` / `admin123`, and were
+  recaptured after an earlier unauthenticated capture was rejected:
+  `/tmp/core3-base-contacts-archive-active-desktop-auth-20260911.png`,
+  `/tmp/core3-base-contacts-archive-active-mobile-auth-20260911.png`,
+  `/tmp/core3-base-contacts-archive-archived-desktop-auth-20260911.png`, and
+  `/tmp/core3-base-contacts-archive-archived-mobile-auth-20260911.png`.
+  They are 1440x900 and 390x844 captures respectively; the authenticated
+  browser pass loaded the nine active rows and two archived rows with no
+  horizontal overflow. Screenshots remain outside Git.
+- Known bounded visual differences remain the Fluent Core3 shell versus
+  Odoo's purple shell, Core3's deterministic nine-row fixture versus Odoo's
+  larger demo catalog, and shared filter/list density. The archive state,
+  labels, row counts, and responsive behavior are now directly evidenced.
 
 ### Current batch evidence: Contact Tags configuration
 
