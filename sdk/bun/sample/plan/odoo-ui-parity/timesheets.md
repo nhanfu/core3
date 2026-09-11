@@ -385,3 +385,84 @@ versus Core3's deterministic January 2026 rows), shell/icon styling, exact
 relational autocomplete and `00:00` time-input behavior, and Odoo's richer
 sales-order-item relationships. These are outside this bounded slice and are
 recorded rather than masked.
+
+## Batch 6 implementation record - All Timesheets
+
+Implementation commit: `8f665448` on branch
+`agent/odoo-ui-timesheets-all-20260911`, isolated worktree
+`/home/nhanjs/projects/core3-worktrees/odoo-ui-timesheets-all-20260911`.
+Fix commit: `32724f32` declares the datasource pivot field contract discovered
+by the authenticated browser pass. No files were changed in the parent
+checkout and no screenshots are tracked.
+
+This slice completes the approver-facing Odoo `timesheet_action_all` action at
+`/timesheets/all-timesheets`. The page remains layout-only and is joined to
+`api/all-timesheets.yaml` by `page.id`. It now declares List, Kanban, Form,
+Calendar, Activity, Pivot, and Graph modes where the shared ListView supports
+them; Odoo-labelled Date/Employee/Project/Task/Entry/Description/Sales Order
+Item/Time Spent columns; fixed Today/This Week/Last Week filters; Employee,
+Project, Task, Status, and Date groupings; and deterministic activity and
+pivot-ready fields. The seed contains 15 stable lines across Admin User,
+Morgan Taylor, and Priya Shah, two projects, and the semantic task fixtures.
+
+The new `/timesheets/all-timesheets/detail` page/API pair is separately
+joined by `page.id` and requires `timesheets.manage`, so a personal
+`timesheets.read` surface cannot widen its detail scope through a query
+parameter. Approver detail editing accepts non-cancelled rows, requires a row
+version, rejects invalid dates/projects/hours with `422`, rejects stale writes
+with `409`, and rejects missing/cancelled rows with `403`; personal edit scope
+remains limited to the current user's Draft/Rejected lines. Empty/not-found
+fixtures and route-specific transport `503` states are declared for list and
+detail sources. Approve/Reject remain approver-only workflow actions.
+
+Focused command and result:
+
+```
+bun test test/timesheets*.integration.test.ts
+14 pass, 0 fail, 193 expect() calls
+```
+
+The isolated audit passed with `474 pages, 481 routes, 825 datasources`;
+ESLint, `bun run css:build:global`, `bun run css:build:timesheets`, and
+`git diff --check` also passed. The standalone slice test is
+`bun test test/timesheets_all.integration.test.ts` (`3 pass`, `39 expect()`
+calls).
+
+Authenticated Odoo 19 was checked in the personal database
+`core3_personal` as `codex@core3.local` at `http://127.0.0.1:8069/odoo/all-timesheets`.
+The observed action returned 527 cross-employee rows and exposed List,
+Calendar, Kanban, Pivot, and Graph controls; Odoo source declares the
+approver-only All Timesheets menu and employee-aware primary form. The
+isolated Core3 runtime was checked as `admin@tms.local` at
+`http://localhost:3003/timesheets/all-timesheets` with backend `3121`.
+The desktop view matrix and Morgan Taylor detail route reported no failed
+requests, no page errors, and `scrollWidth === clientWidth` at 1440px.
+
+The required authenticated comparison captures are below. Every listed file
+is a PNG with the exact dimensions named in its path; hashes are SHA-256.
+
+| viewport/state | Odoo reference | Core3 isolated | SHA-256 (Odoo / Core3) |
+| --- | --- | --- | --- |
+| 1440x900 list | `/tmp/odoo-timesheets-all-list-desktop-1440x900-20260911.png` | `/tmp/core3-timesheets-all-list-desktop-1440x900-20260911.png` | `a0af1813c29aef47c8c728e54aaa76f5514a2e7fd8407d8d3f6ecaa68af5f878` / `837e2bc1db3ed6f0205dc7b1841f429d1eb88882f56b175d9fb4c02f30cde189` |
+| 390x844 list | `/tmp/odoo-timesheets-all-list-mobile-390x844-20260911.png` | `/tmp/core3-timesheets-all-list-mobile-390x844-20260911.png` | `6b532699393f7665d97ad1ee1a03b95ec2784808fd027a0295edaea5a234e38b` / `f4d256f71be209c599460ecbb5ddc9e275526ca4a22a04d782d5fb0cd7a6b124` |
+
+The supported desktop mode captures are also retained under `/tmp`:
+
+- Odoo: `/tmp/odoo-timesheets-all-calendar-desktop-1440x900-20260911.png`,
+  `/tmp/odoo-timesheets-all-kanban-desktop-1440x900-20260911.png`,
+  `/tmp/odoo-timesheets-all-pivot-desktop-1440x900-20260911.png`, and
+  `/tmp/odoo-timesheets-all-graph-desktop-1440x900-20260911.png`.
+- Core3: `/tmp/core3-timesheets-all-kanban-desktop-1440x900-20260911.png`,
+  `/tmp/core3-timesheets-all-calendar-desktop-1440x900-20260911.png`,
+  `/tmp/core3-timesheets-all-activity-desktop-1440x900-20260911.png`,
+  `/tmp/core3-timesheets-all-pivot-desktop-1440x900-20260911.png`, and
+  `/tmp/core3-timesheets-all-graph-desktop-1440x900-20260911.png`.
+
+The visual comparison is intentionally bounded: Odoo uses its purple shell,
+live September fixtures, avatar-backed relational widgets, and compact mobile
+Kanban; Core3 uses the existing Fluent shell, fixed January fixtures, shared
+YAML ListView renderers, and a protected detail form. At 390px the Core3
+compact layout hides the desktop mode switcher, so mobile evidence is the
+authenticated list state; desktop exercises the complete mode family. Rich
+Odoo relational autocomplete, chatter/attachments, calendar multi-create,
+full activity scheduling, and exact Odoo shell/icon styling remain deferred.
