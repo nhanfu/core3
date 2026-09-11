@@ -26,3 +26,4 @@ menu:
       items:
         - { path: /recruitment/degrees, label: Degrees, icon: list, permission: recruitment.manage }
         - { path: /recruitment/refuse-reasons, label: Refuse Reasons, icon: list, permission: recruitment.manage }
+        - { path: /recruitment/emails, label: Emails, icon: mail, permission: recruitment.manage }

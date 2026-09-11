@@ -1,0 +1,72 @@
+page: { id: recruitment-job-platforms }
+datasources:
+  - id: recruitment_job_platforms
+    permission: recruitment.manage
+    error_states:
+      forbidden: { status: 403, code: RECRUITMENT_JOB_PLATFORMS_FORBIDDEN, message: You do not have permission to manage job board emails. }
+      transport_error: { status: 503, code: RECRUITMENT_JOB_PLATFORMS_UNAVAILABLE, message: Recruitment job board emails are temporarily unavailable. }
+    query: "SELECT id, row_version, name, email, regex FROM recruitment_job_platforms WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%' OR COALESCE(regex, '') ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: create_recruitment_job_platform
+    type: server_form
+    permission: recruitment.manage
+    title: New Email Rule
+    action: recruitment.job_platforms.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_job_platforms]
+    mutation:
+      operation: insert
+      table: recruitment_job_platforms
+      generated: [id]
+      before_steps: [{ query: "SELECT 'job-platform-custom-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [name, email, regex]
+      required: [name, email]
+      defaults: { regex: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_JOB_PLATFORM_NAME_REQUIRED, message: A job board name is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:email AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:email AS VARCHAR)), '^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$')", status: 422, code: RECRUITMENT_JOB_PLATFORM_EMAIL_INVALID, message: Enter a valid email address. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_job_platforms WHERE LOWER(email) = LOWER(TRIM(:email)))", status: 409, code: RECRUITMENT_JOB_PLATFORM_EMAIL_EXISTS, message: The Email must be unique, this one already corresponds to another Job Platform. }
+      result: { query: "SELECT * FROM recruitment_job_platforms WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true, placeholder: e.g. Linkedin }
+      - { field: regex, label: Regex, type: text, placeholder: e.g. ^New application:.*from (.*) }
+      - { field: email, label: Email, type: email, required: true, placeholder: e.g. jobs-listings@linkedin.com }
+  - id: edit_recruitment_job_platform
+    type: server_form
+    permission: recruitment.manage
+    title: Edit Email Rule
+    action: recruitment.job_platforms.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [recruitment_job_platforms]
+    mutation:
+      operation: update
+      table: recruitment_job_platforms
+      fields: [name, email, regex]
+      required: [name, email]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_job_platforms WHERE id = :id", status: 404, code: RECRUITMENT_JOB_PLATFORM_NOT_FOUND, message: Job board email rule not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_JOB_PLATFORM_NAME_REQUIRED, message: A job board name is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:email AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:email AS VARCHAR)), '^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$')", status: 422, code: RECRUITMENT_JOB_PLATFORM_EMAIL_INVALID, message: Enter a valid email address. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_job_platforms WHERE LOWER(email) = LOWER(TRIM(:email)) AND id <> :id)", status: 409, code: RECRUITMENT_JOB_PLATFORM_EMAIL_EXISTS, message: The Email must be unique, this one already corresponds to another Job Platform. }
+      result: { query: "SELECT * FROM recruitment_job_platforms WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true, placeholder: e.g. Linkedin }
+      - { field: regex, label: Regex, type: text, placeholder: e.g. ^New application:.*from (.*) }
+      - { field: email, label: Email, type: email, required: true, placeholder: e.g. jobs-listings@linkedin.com }
+  - id: delete_recruitment_job_platform
+    type: server
+    permission: recruitment.manage
+    action: recruitment.job_platforms.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete email rule {{row.name}}?'
+    refresh: [recruitment_job_platforms]
+    mutation:
+      operation: delete
+      table: recruitment_job_platforms
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM recruitment_job_platforms WHERE id = :id", status: 404, code: RECRUITMENT_JOB_PLATFORM_NOT_FOUND, message: Job board email rule not found. }]

@@ -1,0 +1,19 @@
+title: Emails
+page: { id: recruitment-job-platforms, route: /recruitment/emails, breadcrumb: [Recruitment, Configuration, Job Boards, Emails], auth: { require: [recruitment.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_job_platforms
+    create_action: create_recruitment_job_platform
+    create_label: New
+    search: { label: Search emails, placeholder: Search emails... }
+    row_key: id
+    row_open_action: edit_recruitment_job_platform
+    row_actions: menu
+    empty_state: { title: No rules have been defined., description: Create a new rule to process emails from specific job boards. }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: email, label: Email, sortable: true, mobile: true }
+      - { field: regex, label: Regex, sortable: true, mobile: false }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_recruitment_job_platform, label: Edit, icon: edit }, { id: delete_recruitment_job_platform, label: Delete, icon: delete, variant: danger }] }
+    page_size: 25

@@ -1,0 +1,24 @@
+version: 0.0.7
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_job_platforms (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        email VARCHAR NOT NULL UNIQUE,
+        regex VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      INSERT OR IGNORE INTO recruitment_job_platforms(id, name, email, regex) VALUES
+        ('job-platform-linkedin', 'Linkedin', 'jobs-listings@linkedin.com', 'New application:.*from (.*)'),
+        ('job-platform-jobsdb', 'Jobsdb', 'cs@jobsdb.com', 'from (.+?) for'),
+        ('job-platform-indeed', 'Indeed', 'no-reply@indeed.com', '^([^ ]+ [^ ]+)');
+    down: |
+      DROP TABLE IF EXISTS recruitment_job_platforms;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
