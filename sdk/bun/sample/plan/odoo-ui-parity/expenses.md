@@ -394,3 +394,26 @@ Residuals and deferred scope:
   are covered, but pixel-level Odoo shell/icon parity is not claimed.
 - Receipt binaries are local runtime uploads only; no binary or screenshot is
   committed.
+
+## Duplicate receipt review follow-up (2026-09-11)
+
+The duplicate-review action is now implemented in the expense detail surface.
+It opens a guarded review modal with the deterministic similar-expense
+candidate, decision choices, and Apply decision action. The parent checkout
+verified the authenticated route `/expenses/detail?id=expense-demo-submitted-2`
+at desktop and 390px mobile; the action returned one modal and no failed
+requests or page errors. Rendered document widths matched both viewports.
+
+Core3 captures remain outside Git:
+
+- `/tmp/core3-expenses-duplicate-review-desktop-1440x900-20260911.png` —
+  1440x900 — `94729dafd2096ef32af68007d45df6fd9b6062f0b2cd8cb0b2010453bd0266cc`
+- `/tmp/core3-expenses-duplicate-review-mobile-390x844-20260911.png` —
+  390x844 — `b45f710b20598147b5473e94e0bc5b5b23dd8a11f5ae03bb9b4abfe17d4cb6dc`
+
+The source-backed Odoo reference modal was captured at
+`/tmp/odoo-expenses-review-split-20260911/odoo-split-desktop-1440x900.png`
+(`9ffac7a2…`). Odoo mobile comparison was not available from the reference
+run. Split-expense editing remains deferred because the reference run did not
+provide a valid split mutation flow; the duplicate decision contract is
+covered.

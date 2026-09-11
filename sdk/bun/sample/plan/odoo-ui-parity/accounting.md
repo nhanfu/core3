@@ -861,3 +861,29 @@ list and detail. Remaining differences are Odoo's purple shell versus Core3's
 Fluent shell, Odoo's empty mobile Kanban versus Core3's seeded responsive list,
 Core3 ISO timestamps versus Odoo localized dates, and lower-level Odoo
 relational widgets/chatter not included in this bounded read-only slice.
+
+## Linked payment transaction workflow follow-up (2026-09-11)
+
+The payment transaction detail now exposes the source-confirmed linked state:
+an unlinked transaction can be opened, a linked payment reference can be
+applied with the required row version, and the resulting payment reference is
+shown after reload. The bounded workflow is implemented as a service-owned
+state transition; Capture, Void, and Post-process remain deferred because the
+authenticated Odoo reference had no transaction/provider rows with which to
+validate those controls.
+
+Authenticated Core3 browser evidence covered the list, unlinked detail, and
+linked detail at 1440x900 and 390x844 with no failed requests/page errors and no
+horizontal overflow. Odoo's authenticated empty-state reference captures are
+`/tmp/odoo-payment-workflow-empty-desktop-1440x900-20260911.png` and
+`/tmp/odoo-payment-workflow-empty-mobile-390x844-20260911.png`. Core3 captures
+remain outside Git:
+
+- `/tmp/core3-accounting-payment-workflow-20260911/linked-desktop-1440x900.png`
+  — 1440x900 — `8d057f6149c767177b974bde6c57f8117430bae115193b4a8eb2190ddf9ed5e3`
+- `/tmp/core3-accounting-payment-workflow-20260911/linked-mobile-final-390x844.png`
+  — 390x844 — `83cc0bc718438bcdadc0c9fee292c530d85ecad6068875c19c63edd9b30c9387`
+- `/tmp/core3-accounting-payment-workflow-20260911/unlinked-desktop-1440x900.png`
+  — 1440x900 — same desktop digest as the linked capture
+- `/tmp/core3-accounting-payment-workflow-20260911/unlinked-mobile-390x844.png`
+  — 390x844 — same mobile digest as the linked capture
