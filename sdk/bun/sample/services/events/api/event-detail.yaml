@@ -17,6 +17,10 @@ datasources:
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_SLOTS_UNAVAILABLE, message: Event slots are temporarily unavailable. } }
     query: "SELECT id, row_version, event_id, name, CAST(start_at AS VARCHAR) AS start_at, CAST(end_at AS VARCHAR) AS end_at, seats, registration_count, state, date_tz, color FROM event_slots WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY start_at, id"
+  - id: event_detail_communications
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_COMMUNICATIONS_UNAVAILABLE, message: Event communications are temporarily unavailable. } }
+    query: "SELECT id, row_version, event_id, event_name, template_ref, interval_nbr, CASE interval_unit WHEN 'now' THEN 'Immediately' WHEN 'hours' THEN 'Hours' WHEN 'days' THEN 'Days' WHEN 'weeks' THEN 'Weeks' WHEN 'months' THEN 'Months' ELSE interval_unit END AS interval_unit, CASE interval_type WHEN 'after_sub' THEN 'After each registration' WHEN 'before_event' THEN 'Before the event starts' WHEN 'after_event_start' THEN 'After the event started' WHEN 'after_event' THEN 'After the event ended' WHEN 'before_event_end' THEN 'Before the event ends' ELSE interval_type END AS interval_type, CAST(scheduled_date AS VARCHAR) AS scheduled_date, mail_count_done, CASE mail_state WHEN 'running' THEN 'Running' WHEN 'scheduled' THEN 'Scheduled' WHEN 'sent' THEN 'Sent' WHEN 'error' THEN 'Error' WHEN 'cancelled' THEN 'Cancelled' ELSE mail_state END AS mail_state_label FROM event_mail_schedulers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY sequence, id"
 actions:
   - { id: event_sales_orders_detail, type: navigate, permission: events.read, navigate_to: /events/sales-orders, params: { event_id: '{row.id}' } }
   - id: add_event_detail_communication

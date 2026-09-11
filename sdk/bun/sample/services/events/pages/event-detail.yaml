@@ -69,10 +69,32 @@ components:
       - id: communication
         label: Communication
         components:
-          - type: Html
-            tag: p
-            class: event-detail-empty-tab
-            text: Automated emails and reminders will appear here.
+          - type: LineItemGrid
+            source: event_detail_communications
+            parent_source: event_detail
+            title: Communication
+            description: Automated emails and reminders for this event.
+            variant: odoo_x2many
+            page_size: 50
+            row_key: id
+            actions:
+              - { id: add_event_detail_communication, label: Add a line, variant: primary, permission: events.write }
+            empty_state: { title: No communication schedules, description: Add an email schedule for registrations and event reminders. }
+            children:
+              - { type: LineItemField, id: template_ref, field: template_ref, label: Template, input_type: select, options: ['Event: Registration Confirmation', 'Event: Reminder'], required: true }
+              - { type: LineItemField, id: interval_nbr, field: interval_nbr, label: Interval, input_type: number, required: true, min: 0 }
+              - { type: LineItemField, id: interval_unit, field: interval_unit, label: Unit, input_type: select, options: [Immediately, Hours, Days, Weeks, Months], required: true }
+              - { type: LineItemField, id: interval_type, field: interval_type, label: Trigger, input_type: select, options: ['After each registration', 'Before the event starts', 'After the event started', 'After the event ended', 'Before the event ends'], required: true }
+              - { type: LineItemField, id: scheduled_date, field: scheduled_date, label: Schedule Date, readonly: true }
+              - { type: LineItemField, id: mail_count_done, field: mail_count_done, label: '# Sent', readonly: true }
+              - { type: LineItemField, id: mail_state_label, field: mail_state_label, label: Status, readonly: true }
+              - type: LineItemActions
+                id: event_detail_communication_actions
+                edit_action: edit_event_detail_communication
+                create_action: add_event_detail_communication
+                actions:
+                  - { id: edit_event_detail_communication, label: Edit, icon: edit, variant: ghost, permission: events.write }
+                  - { id: delete_event_detail_communication, label: Delete, icon: trash, variant: danger, permission: events.write }
       - id: questions
         label: Questions
         components:
