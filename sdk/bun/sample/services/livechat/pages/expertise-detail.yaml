@@ -1,5 +1,5 @@
 title: Expertise
-page: { id: livechat-expertise-detail, route: /livechat/expertise/detail, breadcrumb: [Website, Live Chat, Configuration, Expertise], auth: { require: [livechat.read] } }
+page: { id: expertise-detail, route: /livechat/expertise/detail, breadcrumb: [Website, Live Chat, Configuration, Expertise], auth: { require: [livechat.read] } }
 
 components:
   - type: OdooFormView

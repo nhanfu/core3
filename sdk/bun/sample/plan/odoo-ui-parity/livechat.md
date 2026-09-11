@@ -339,7 +339,7 @@ the live action/menu records were verified in `core3_personal` (`ir.actions` 770
 This slice adds the disjoint Core3 route `/livechat/expertise` under Live Chat →
 Configuration → Expertise, with a side-panel detail route
 `/livechat/expertise/detail`. Page YAML and API YAML remain separate and join by
-`page.id` (`livechat-expertise` and `livechat-expertise-detail`). Fixtures are
+`page.id` (`livechat-expertise` and `expertise-detail`). Fixtures are
 idempotent and fixed to `Discuss`, `Livechat`, and `Mitchell Admin`; supported
 states include default, search no-results, explicit empty, missing detail, and
 transport error. Manager-only `livechat.manage` mutations cover create/update/

@@ -19,14 +19,14 @@ describe('Live Chat Expertise action parity', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
 
     expect(page.page).toMatchObject({ id: 'livechat-expertise', route: '/livechat/expertise', breadcrumb: ['Website', 'Live Chat', 'Configuration', 'Expertise'] });
-    expect(detailPage.page).toMatchObject({ id: 'livechat-expertise-detail', route: '/livechat/expertise/detail' });
+    expect(detailPage.page).toMatchObject({ id: 'expertise-detail', route: '/livechat/expertise/detail' });
     expect(api.page).toEqual({ id: page.page.id });
     expect(detailApi.page).toEqual({ id: detailPage.page.id });
     expect(discovered.pageDatasources.get('livechat-expertise')).toContain('livechat_expertises');
-    expect(discovered.pageDatasources.get('livechat-expertise-detail')).toContain('livechat_expertise_detail');
+    expect(discovered.pageDatasources.get('expertise-detail')).toContain('livechat_expertise_detail');
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/livechat/expertise', page: 'livechat-expertise', module: 'livechat' }),
-      expect.objectContaining({ path: '/livechat/expertise/detail', page: 'livechat-expertise-detail', module: 'livechat' }),
+      expect.objectContaining({ path: '/livechat/expertise/detail', page: 'expertise-detail', module: 'livechat' }),
     ]));
     expect(yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration').items)
       .toContainEqual({ path: '/livechat/expertise', label: 'Expertise', icon: 'users', permission: 'livechat.read' });

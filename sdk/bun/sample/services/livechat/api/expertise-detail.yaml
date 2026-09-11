@@ -1,4 +1,4 @@
-page: { id: livechat-expertise-detail }
+page: { id: expertise-detail }
 
 datasources:
   - id: livechat_expertise_detail
