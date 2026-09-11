@@ -916,3 +916,44 @@ and are not committed.
 | Core3 tax detail | 1440×900 | `/tmp/core3-pos-tax-distribution-detail-desktop-1440x900-20260911.png` | `8d057f6149c767177b974bde6c57f8117430bae115193b4a8eb2190ddf9ed5e3` |
 | Core3 edited invoice line | 1440×900 | `/tmp/core3-pos-tax-distribution-edited-desktop-1440x900-20260911.png` | `43df49382107c3eed0722e40f787aefd5bfb13f7b0a664637b6a748d0f34b6d3` |
 | Core3 edited invoice line | 390×844 | `/tmp/core3-pos-tax-distribution-edited-mobile-390x844-20260911.png` | `83cc0bc718438bcdadc0c9fee292c530d85ecad6068875c19c63edd9b30c9387` |
+
+## Approved bounded batch: Products Activity view
+
+The fresh authenticated Odoo 19 reference exposes Point of Sale → Products as
+action 916 (`product.template`) with `kanban,list,form,activity` views. The
+desktop Activity view is a matrix headed `To-Do`, `Email`, `Call`, `Meeting`,
+and `Document`, with a `Record` column, product name/internal reference rows,
+the pager, the Point of Sale search facet, and the footer action `Schedule
+activity`. The observed demo state contains `Office Lamp [FURN_8888]` and
+`Flipover [FURN_9001]` rows with empty activity cells. On the 390×844 reference,
+Odoo keeps the compact product kanban state and hides the desktop-only Activity
+view; the page remains exactly viewport width.
+
+The bounded Core3 contract is to add the Activity view to the existing
+`/point-of-sale/products` page without adding a second menu or route. Page YAML
+and API YAML remain separate and continue to join through `page.id`
+`pos-products`. The existing service-owned product fixtures provide the
+activity rows through a migration-owned `pos_product_activities` projection;
+no page-local records or images are allowed. The activity projection includes
+deterministic product id, name/reference, activity type, summary, due date,
+user, state, and count fields, and supports the existing search plus explicit
+empty and transport-error datasource states.
+
+The desktop view contract uses the existing `ListView` and `ActivityView`
+primitives with visible `Kanban`, `List`, and `Activity` tabs, the existing
+product row navigation, and `mobile: false` for Activity. Product list and
+detail reads require `pos.read`; `Schedule activity` requires `pos.write` and
+uses a guarded YAML mutation that validates the selected product, activity
+type, and non-empty note before persisting a deterministic activity fixture and
+refreshing the product source. Unknown products, invalid types, blank notes,
+forbidden writes, empty results, and a 503 datasource error are explicit
+contract states.
+
+Acceptance requires focused integration coverage for the exact page/API join,
+view/tab and activity-type labels, service-owned fixture projection, search,
+empty/error states, product row navigation, schedule permission/validation,
+and persistence/refresh. Authenticated Odoo and Core3 captures must be
+compared at 1440×900 for the Activity matrix and at 390×844 for the compact
+responsive product state, with zero unexpected responses, zero page errors, and
+no horizontal overflow. Screenshots remain under `/tmp` and are never
+committed.
