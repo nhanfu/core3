@@ -468,6 +468,62 @@ chatter, relational editors, and application/employee drill-down surfaces are
 represented by deterministic display fields and permissioned navigation
 actions in this slice; they remain follow-up parity work.
 
+## Bounded batch: Contract Templates
+
+This batch implements the next uncovered installed Employees configuration
+action after Job Positions: Employees > Configuration > Recruitment > Contract
+Templates. The live personal Odoo database `core3_personal` was inspected on
+2026-09-11. Menu id 310 resolves to `action_hr_contract_templates` (database
+action 432), model `hr.version`, and view mode `list,form`; the action domain
+limits records to templates with no employee assignment. The authenticated
+reference contains the two demo templates Developer USA and HR Manager.
+
+Core3 adds `/employees/contract-templates` and
+`/employees/contract-templates/detail` under the Employees Configuration menu.
+The layout pages are separate from service-owned API fragments and join by
+page IDs `employee-contract-templates` and
+`employee-contract-template-detail`. Migration
+`20260911193000-012-contract-templates.yaml` seeds the two Odoo-facing
+templates with stable job, department, HR responsible, wage, contract type,
+pay category, working schedule, company, and effective-date fields. The
+list contract mirrors Odoo's template columns and Current/Archived boundary;
+the detail contract provides the Contract Template and Salary Information
+sections with manager-only edit, archive, restore, and delete actions.
+
+All reads and mutations require `employees.manage`, matching Odoo's
+`group_hr_manager` visibility and `hr.version` manager access. Required-name,
+non-negative-wage, duplicate-name, missing-record, optimistic stale-write,
+archive/restore, and delete guards are explicit. The source query keeps
+employee-linked versions out of the template projection.
+
+Focused validation and static evidence:
+
+- `bun test test/employees_contract_templates.integration.test.ts`: 3 tests,
+  50 assertions passed.
+- `bun run audit`: 454 pages, 461 routes, and 789 datasources passed.
+- `git diff --check` passed before implementation commit `55768aa8`.
+- The implementation checkpoint contains only the Employees manifest,
+  page/API YAML, deterministic migration, and focused test; screenshots are
+  not tracked.
+
+Authenticated visual evidence is kept outside Git. Odoo action 432 and Core3
+were captured with authenticated sessions at 1440x900 and 390x844, then
+visually inspected. Both surfaces showed the two seeded templates and the
+Developer USA detail. The final Core3 run recorded no failed requests, no page
+errors, and no horizontal overflow; Core3's Fluent shell and top filter chip
+remain the known bounded differences from Odoo's purple shell and left search
+panel.
+
+| State | Odoo desktop | Odoo mobile |
+| --- | --- | --- |
+| Contract Templates list | `/tmp/odoo-employees-contract-templates-list-desktop-1440x900.png` (`450dbab0e46b448e7c2b9cccf0a41985baf6732e1fcfdaa4e2e1c3047ae36997`) | `/tmp/odoo-employees-contract-templates-list-mobile-390x844.png` (`9cbdb5ae5593957a1cf01388dfe284db81cbc17b994d78f7162acd64cf52fe14`) |
+| Contract Template detail | `/tmp/odoo-employees-contract-template-detail-desktop-1440x900.png` (`ff6192488c3fca20a4502ad47efca37f3f066e9238fcd709cd4ff8a45645e056`) | `/tmp/odoo-employees-contract-template-detail-mobile-390x844.png` (`913afe0847b61c483ca45163c1bb0321b4949bc7545941299554697f71556956`) |
+
+| State | Core3 desktop | Core3 mobile |
+| --- | --- | --- |
+| Contract Templates list | `/tmp/core3-employees-contract-templates-list-desktop-1440x900.png` (`ff95c3233371878820ca7369394ade5ab998b3b5273b05878017a96414970e9c`) | `/tmp/core3-employees-contract-templates-list-mobile-390x844.png` (`f67b6ad3c30fb88d091b91d03ca6527f83107af9d399ffc8d24dc9fa4a95db86`) |
+| Contract Template detail | `/tmp/core3-employees-contract-template-detail-desktop-1440x900.png` (`f8b34ddf655d48dde257d179e24e8d04cea3078c22cf14d11245e8585823ccca`) | `/tmp/core3-employees-contract-template-detail-mobile-390x844.png` (`86f7e7e610b821540657810abeeb960bc69159447b625650d83634727b829d4c`) |
+
 ## Acceptance
 
 - Source and manifest checks identify `hr`, version, dependencies, official
