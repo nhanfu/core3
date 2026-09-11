@@ -653,6 +653,54 @@ preserves the Core3 fixture graph rather than the reference's two section rows.
 Generic Odoo typography/chatter and the remaining Surveys menu/actions are
 outside this slice.
 
+## Print Survey form action parity slice — 2026-09-11
+
+The next genuinely uncovered visible Surveys action was the installed Odoo
+form Actions menu > `Print Survey` action on `Feedback Form`. The reference
+was audited at `http://localhost:8069/odoo/surveys/1` in database
+`core3_user_demo` as `admin@core3.local` after the official Surveys demo data
+was installed. Odoo opens the public token-scoped print route
+`/survey/print/<access_token>` in a new tab; the form menu label is exactly
+`Print Survey`, and the action is defined by Odoo's `action_survey_print`
+server action.
+
+Core3 adds the permissioned `print_survey_detail` client action to the
+`survey-detail` page's declarative form Actions menu. It requires
+`surveys.read`, reads the service-owned `access_token` from the selected row,
+and opens `/survey/print/<encoded-token>` with a new-tab target. The page
+contract remains separate from `services/surveys/api/survey-detail.yaml` and
+is joined through the shared `page.id: survey-detail`; no frontend-owned
+survey or token fixture was added. The existing public print API remains
+responsible for published/closed visibility, deterministic questions and
+answers, wrong-token/invalid-token errors, empty questions, review mode, and
+print rendering.
+
+The browser comparison also corrected the printable surface within this
+action's route: the default view no longer shows review-only `Take Again`,
+synthetic section headings, or a generic print-page heading, and its control
+uses the shared printer icon. Authenticated headless Chrome captured both
+the Odoo action menu and the resulting Core3 print route at exact 1440x900
+and 390x844 viewports. Both Core3 captures had zero failed requests and page
+errors after route load, and neither viewport had horizontal overflow.
+
+### Browser evidence
+
+Screenshots are evidence only and remain under `/tmp`; no image is committed.
+
+| State | Odoo path | SHA-256 | Dimensions | Core3 path | SHA-256 | Dimensions |
+| --- | --- | --- | --- | --- | --- | --- |
+| Actions menu, desktop | `/tmp/odoo-surveys-actions-menu-desktop-20260911.png` | `a8e3d0e542fe5e0ba8e6f0f9adf94e7b24b962b37c4fcfeabfcab0c2c11e271b` | 1440x900 | `/tmp/core3-surveys-print-action-menu-desktop-20260911.png` | `a3b50d7f37ac6d9434f4346f16ed89e1d97efbb62d25220bf51271dbba04a142` | 1440x900 |
+| Printable result, desktop | `/tmp/odoo-surveys-print-result-desktop-20260911.png` | `2ad38984e8afa923ff1eca97bbb6c7e67ce37fad280909322c32df4748b0a449` | 1440x900 | `/tmp/core3-surveys-print-action-result-desktop-20260911.png` | `ca48ec70ccf8420972104b1431e9b5ae9d5c45d52c59f964d6e00b9a539e624e` | 1440x900 |
+| Actions menu, mobile | `/tmp/odoo-surveys-actions-menu-mobile-20260911.png` | `afe678b8ba5348ab70b939d42f20819b0327ac4f6713c1cbb614f644c1b9a727` | 390x844 | `/tmp/core3-surveys-print-action-menu-mobile-20260911.png` | `411d5f73f139c0819f65a87e3d3a46ba3119dae339e3a12af0c35a178ea55493` | 390x844 |
+| Printable result, mobile | `/tmp/odoo-surveys-print-result-mobile-20260911.png` | `f5b8a38b8c34d1cbba5bae3fc2eea0878d7b9b8e703ed88b7180804771b05414` | 390x844 | `/tmp/core3-surveys-print-action-result-mobile-20260911.png` | `feff9cd292ef66ccb0022f6c6eb9cbbe27d3e83ecc05d2dfdccbbe5c8f31943d` | 390x844 |
+
+The bounded implementation does not claim Odoo's remaining `Archive` and
+`Delete` menu actions or its mobile bottom-sheet menu shell. The seeded
+Core3 Feedback Form also has its approved seven-question fixture without the
+reference demo's `About you` section rows; those are separate parity work.
+Focused coverage is in `test/surveys.integration.test.ts` and
+`test/surveys_print.integration.test.ts`.
+
 ## Acceptance and evidence required before `ready`
 
 The future audit must run clean install, migration, restart, upgrade, and demo
