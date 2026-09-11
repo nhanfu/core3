@@ -1,0 +1,134 @@
+page: { id: purchase-product-variant-detail }
+datasources:
+  - id: purchase_product_variant_detail
+    single: true
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_PRODUCT_VARIANT_DETAIL_UNAVAILABLE, message: This product variant is temporarily unavailable. } }
+    query: "SELECT id, row_version, product_id, default_code, name, variant_values, COALESCE(barcode, '') AS barcode, list_price, cost, uom, COALESCE(product_type, 'Goods') AS product_type, COALESCE(invoicing_policy, 'Ordered quantities') AS invoicing_policy, COALESCE(track_inventory, true) AS track_inventory, COALESCE(sales_taxes, '15%') AS sales_taxes, COALESCE(purchase_taxes, '15%') AS purchase_taxes, COALESCE(category, 'All') AS category, COALESCE(company_name, 'My Company (San Francisco)') AS company_name, COALESCE(internal_notes, '') AS internal_notes, COALESCE(sales, true) AS sales, COALESCE(pos_available, false) AS pos_available, COALESCE(expenses, false) AS expenses, COALESCE(purchase, true) AS purchase, on_hand, printf('%.2f %s', CAST(on_hand AS DOUBLE), uom) AS on_hand_display, COALESCE(forecasted, on_hand) AS forecasted, printf('%.2f %s', CAST(COALESCE(forecasted, on_hand) AS DOUBLE), uom) AS forecasted_display, active, 1 AS documents_count, printf('%.2f / %.2f', CAST(on_hand AS DOUBLE), CAST(COALESCE(forecasted, on_hand) AS DOUBLE)) AS stock_in_out, 0 AS reordering_rules_count, 0 AS bom_count, 20.00 AS purchased_qty, 47.00 AS sold_qty FROM purchase_product_variants WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: purchase_product_variant_messages
+    permission: purchase.read
+    query: "SELECT id, variant_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM purchase_product_variant_messages WHERE variant_id = :id ORDER BY created_at DESC, id DESC"
+actions:
+  - id: back_to_purchase_product_variants
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/product-variants
+  - id: open_purchase_variant_documents
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/product-variants
+  - id: open_purchase_variant_stock
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/product-variants
+  - id: open_purchase_variant_reordering
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/product-variants
+  - id: open_purchase_variant_boms
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/product-variants
+  - id: open_purchase_variant_purchases
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/product-variants
+  - id: open_purchase_variant_sales
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/product-variants
+  - id: edit_purchase_product_variant
+    type: server_form
+    permission: purchase.write
+    title: Edit Product Variant
+    action: purchase.product_variants.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.purchase_product_variant_detail
+    refresh: [purchase_product_variant_detail, purchase_product_variants]
+    mutation:
+      operation: update
+      table: purchase_product_variants
+      key: id
+      fields: [default_code, name, variant_values, barcode, list_price, cost, uom, product_type, invoicing_policy, track_inventory, sales_taxes, purchase_taxes, category, company_name, internal_notes, sales, pos_available, expenses, purchase]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_product_variants WHERE id = :id", status: 404, code: PURCHASE_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PURCHASE_PRODUCT_VARIANT_NAME_REQUIRED, message: A product variant name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:list_price AS DOUBLE), 0) >= 0 AND COALESCE(CAST(:cost AS DOUBLE), 0) >= 0", status: 422, code: PURCHASE_PRODUCT_VARIANT_VALUES_INVALID, message: Sales price and cost must be nonnegative. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_product_variants WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: PURCHASE_PRODUCT_VARIANT_NAME_EXISTS, message: A product variant with this name already exists. }
+      result: { query: "SELECT * FROM purchase_product_variants WHERE id = :id" }
+    fields:
+      - { field: default_code, label: Internal Reference, type: text }
+      - { field: name, label: Product, type: text, required: true }
+      - { field: variant_values, label: Variant Values, type: text }
+      - { field: barcode, label: Barcode?, type: text }
+      - { field: list_price, label: Sales Price?, type: number, min: 0 }
+      - { field: cost, label: Cost?, type: number, min: 0 }
+      - { field: uom, label: Unit of Measure, type: text }
+      - { field: product_type, label: Product Type?, type: select, options: [Goods, Service, Combo] }
+      - { field: invoicing_policy, label: Invoicing Policy?, type: text }
+      - { field: track_inventory, label: Track Inventory?, type: checkbox }
+      - { field: sales_taxes, label: Sales Taxes?, type: text }
+      - { field: purchase_taxes, label: Purchase Taxes?, type: text }
+      - { field: category, label: Category, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: internal_notes, label: Note, type: textarea }
+      - { field: sales, label: Sales, type: checkbox }
+      - { field: pos_available, label: Point of Sale?, type: checkbox }
+      - { field: expenses, label: Expenses?, type: checkbox }
+      - { field: purchase, label: Purchase, type: checkbox }
+  - id: archive_purchase_product_variant
+    type: server
+    permission: purchase.write
+    action: purchase.product_variants.archive
+    handler: yaml_mutation
+    operation: archive
+    params: { id: '{state.id}' }
+    refresh: [purchase_product_variant_detail, purchase_product_variants]
+    mutation:
+      operation: update
+      table: purchase_product_variants
+      key: id
+      fields: [active]
+      values: { active: false }
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_product_variants WHERE id = :id", status: 404, code: PURCHASE_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
+        - { query: "SELECT id FROM purchase_product_variants WHERE id = :id AND active = true", status: 409, code: PURCHASE_PRODUCT_VARIANT_ALREADY_ARCHIVED, message: Product variant is already archived. }
+      steps: [{ query: "UPDATE purchase_product_variants SET active = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id" }]
+      result: { query: "SELECT * FROM purchase_product_variants WHERE id = :id" }
+  - id: send_purchase_product_variant_message
+    type: server_form
+    permission: purchase.write
+    title: Send message
+    action: purchase.product_variants.message
+    handler: yaml_mutation
+    operation: message
+    params: { id: '{state.id}' }
+    refresh: [purchase_product_variant_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: PURCHASE_PRODUCT_VARIANT_MESSAGE_REQUIRED, message: Message content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM purchase_product_variants WHERE id = :id", status: 404, code: PURCHASE_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
+      steps: [{ query: "INSERT INTO purchase_product_variant_messages(id, variant_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, :current_user_name, 'purchase.product_variants.message', 'Message', :content, CURRENT_TIMESTAMP)" }]
+  - id: log_purchase_product_variant_note
+    type: server_form
+    permission: purchase.write
+    title: Log note
+    action: purchase.product_variants.note
+    handler: yaml_mutation
+    operation: note
+    params: { id: '{state.id}' }
+    refresh: [purchase_product_variant_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: PURCHASE_PRODUCT_VARIANT_NOTE_REQUIRED, message: Note content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM purchase_product_variants WHERE id = :id", status: 404, code: PURCHASE_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
+      steps: [{ query: "INSERT INTO purchase_product_variant_messages(id, variant_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, :current_user_name, 'purchase.product_variants.note', 'Internal note', :content, CURRENT_TIMESTAMP)" }]

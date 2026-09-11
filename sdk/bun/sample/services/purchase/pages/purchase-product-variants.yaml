@@ -19,6 +19,8 @@ components:
       - { field: list_price_display, label: Sales Price, align: right }
       - { field: on_hand_display, label: On hand, align: right }
       - { field: active, label: Active, type: StatusChip }
+    row_open_action: view_purchase_product_variant
+    row_double_click_action: view_purchase_product_variant
     page_size: 80
     row_key: id
     empty_state: { title: No product variants found, description: Product variants will appear here when products have attribute combinations. }

@@ -1,0 +1,111 @@
+title: Product Variant
+page: { id: purchase-product-variant-detail, route: /purchase/product-variants/detail, breadcrumb: [Supply Chain, Purchase, Products, Product Variants, Product Variant], auth: { require: [purchase.read] } }
+components:
+  - type: OdooFormView
+    source: purchase_product_variant_detail
+    title_field: name
+    subtitle_field: default_code
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    stat_buttons:
+      - { id: open_purchase_variant_documents, label: Documents, value_field: documents_count, permission: purchase.read }
+      - { id: open_purchase_variant_stock, label: In / Out, value_field: stock_in_out, permission: purchase.read }
+      - { id: open_purchase_variant_reordering, label: Reordering Rules, value_field: reordering_rules_count, permission: purchase.read }
+      - { id: open_purchase_variant_boms, label: Bill of Materials, value_field: bom_count, permission: purchase.read }
+      - { id: open_purchase_variant_purchases, label: Purchased, value_field: purchased_qty, permission: purchase.read }
+      - { id: open_purchase_variant_sales, label: Sold, value_field: sold_qty, permission: purchase.read }
+    header_actions:
+      - { id: back_to_purchase_product_variants, label: Product Variants, icon: arrow-left, permission: purchase.read }
+      - { id: edit_purchase_product_variant, label: Edit, variant: secondary, permission: purchase.write }
+      - { id: archive_purchase_product_variant, label: Archive, variant: danger, permission: purchase.write, show_if: "state.purchase_product_variant_detail.active === true" }
+    group_columns: 2
+    groups:
+      - title: Product
+        fields:
+          - { field: name, label: Product }
+          - { field: variant_values, label: Variant Values }
+      - title: General Information
+        fields:
+          - { field: product_type, label: Product Type? }
+          - { field: invoicing_policy, label: Invoicing Policy? }
+          - { field: track_inventory, label: Track Inventory?, type: checkbox }
+          - { field: uom, label: Unit of Measure }
+          - { field: list_price, label: Sales Price?, type: number }
+          - { field: sales_taxes, label: Sales Taxes? }
+          - { field: cost, label: Cost?, type: number }
+          - { field: default_code, label: Internal Reference }
+          - { field: barcode, label: Barcode? }
+          - { field: purchase_taxes, label: Purchase Taxes? }
+          - { field: category, label: Category }
+          - { field: company_name, label: Company }
+      - title: Inventory
+        fields:
+          - { field: on_hand_display, label: Quantity On Hand?, readonly: true }
+          - { field: forecasted_display, label: Forecasted, readonly: true }
+          - { field: row_version, label: Record version, readonly: true }
+    notebook:
+      active: general
+      tabs:
+        - id: general
+          label: General Information
+          groups:
+            - title: General Information
+              fields:
+                - { field: product_type, label: Product Type? }
+                - { field: invoicing_policy, label: Invoicing Policy? }
+                - { field: track_inventory, label: Track Inventory?, type: checkbox }
+                - { field: list_price, label: Sales Price?, type: number }
+                - { field: sales_taxes, label: Sales Taxes? }
+                - { field: cost, label: Cost?, type: number }
+                - { field: default_code, label: Internal Reference }
+                - { field: barcode, label: Barcode? }
+                - { field: purchase_taxes, label: Purchase Taxes? }
+                - { field: category, label: Category }
+                - { field: company_name, label: Company }
+            - title: INTERNAL NOTES
+              fields:
+                - { field: internal_notes, label: Note, type: textarea, wide: true }
+        - id: sales
+          label: Sales
+          groups:
+            - title: Sales
+              fields:
+                - { field: list_price, label: Sales Price?, type: number }
+                - { field: sales_taxes, label: Sales Taxes? }
+                - { field: sales, label: Sales, type: checkbox }
+        - id: point-of-sale
+          label: Point of Sale
+          groups:
+            - title: Point of Sale
+              fields:
+                - { field: pos_available, label: Point of Sale?, type: checkbox }
+                - { field: uom, label: Unit of Measure }
+        - id: purchase
+          label: Purchase
+          groups:
+            - title: Purchase
+              fields:
+                - { field: purchase, label: Purchase, type: checkbox }
+                - { field: purchase_taxes, label: Purchase Taxes? }
+        - id: inventory
+          label: Inventory
+          groups:
+            - title: Inventory
+              fields:
+                - { field: on_hand_display, label: Quantity On Hand?, readonly: true }
+                - { field: forecasted_display, label: Forecasted, readonly: true }
+                - { field: track_inventory, label: Track Inventory?, type: checkbox }
+        - id: chatter
+          label: Chatter
+          content_slot: true
+    message_source: purchase_product_variant_messages
+    chatter_label: Internal Notes
+    message_label: Send message
+    note_label: Log note
+    message_action: send_purchase_product_variant_message
+    note_action: log_purchase_product_variant_note
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    message_action_labels: { purchase.product_variants.message: Message, purchase.product_variants.note: Note, created: Product Variant created }
