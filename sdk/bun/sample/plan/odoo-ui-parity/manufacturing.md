@@ -2,6 +2,57 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-11 bounded Manufacturing Settings follow-up
+
+- Revalidated the next uncovered installed visible Manufacturing action in the
+  authenticated personal database `core3_personal`: Manufacturing /
+  Configuration / Settings is menu `mrp.menu_mrp_config` (runtime menu `559`),
+  action `action_mrp_configuration` (runtime action `862`), model
+  `res.config.settings`, and form-only. The live action defaults
+  `group_mrp_routings=true`; the other visible MRP feature flags are false.
+  Its current Community surface exposes Operations controls for Work Orders,
+  Work Order Dependencies, Subcontracting, Barcode Scanner, Quality, Unlock
+  Manufacturing Orders, By-Products, and Allocation Report for Manufacturing
+  Orders, plus Planning / Master Production Schedule. Conditional Quality
+  Control Worksheets are not visible because the corresponding module is not
+  installed in this personal database.
+- Core3 implements the bounded manager-only action at
+  `/manufacturing/settings`. `pages/settings.yaml` is presentation-only;
+  `api/settings.yaml` owns the `manufacturing-settings` page-id datasource and
+  save mutation. The exact Configuration / Settings menu is owned by
+  `manufacturing.manage`. Migration `0.0.13` adds one deterministic
+  `manufacturing-settings-demo` row dated `2026-01-15`, preserving the live
+  default flags and company. Save covers boolean updates with row-version
+  compare-and-swap; the focused test covers idempotent migration, page/API
+  separation, default and empty fixtures, successful save, stale-write `409`,
+  missing-record `404`, and explicit `401`/`403`/`503` datasource states.
+- Implementation checkpoint: `2f5a47bb` (`feat(manufacturing): add settings
+  parity slice`). Visual/contract refinement checkpoint follows as a separate
+  fix commit, keeping the implementation checkpoint intact. The focused
+  suite is `test/manufacturing_settings.integration.test.ts`: 3 tests and 19
+  assertions passed. Generated CSS was built with `bun run css:build` in the
+  isolated worktree; the Manufacturing stylesheet reuses the existing Odoo
+  SettingsView styling primitive.
+- Authenticated paired captures were inspected at 1440x900 and 390x844. Odoo
+  action `862` paths are `/tmp/odoo-manufacturing-settings-desktop-1440x900.png`
+  and `/tmp/odoo-manufacturing-settings-mobile-390x844.png`; Core3 paths are
+  `/tmp/core3-manufacturing-settings-desktop-1440x900.png` and
+  `/tmp/core3-manufacturing-settings-mobile-390x844.png`. All four captures
+  have exact viewport width with no horizontal overflow; both Core3 captures
+  recorded no failed requests or page errors, and both Odoo captures recorded
+  no failed requests, HTTP errors, or page errors.
+- SHA-256 evidence hashes:
+  - Odoo desktop: `d2030777e9024daac4e84b9cf3fe7bacd0f7c99733f6d22793f53613f0b0d698`
+  - Odoo mobile: `0ceee2192a11033d89c2a4137c852acc6a34b489d57343c56d343ac1ed23e7dc`
+  - Core3 desktop: `3ddbb395be550afdaa3457fd09694d261a19dad8d007ddac0a50b718d1880fff`
+  - Core3 mobile: `3b76e5c33f3331a349395cdb97fa9b38cfad25370195ec92ed9e77273cb0eca0`
+- Deliberate bounded visual limits: the live Odoo reference uses its purple
+  Settings shell and shows Enterprise badges for unavailable Enterprise
+  features; Core3 uses the shared Fluent shell and only renders the installed
+  Community controls. Chatter, module-install side effects, conditional
+  worksheet controls, and cross-module Work Center navigation remain outside
+  this settings slice. Images remain under `/tmp` and are not committed.
+
 ## 2026-09-11 bounded Scrap Orders follow-up
 
 - Revalidated the next uncovered installed Manufacturing action in the
