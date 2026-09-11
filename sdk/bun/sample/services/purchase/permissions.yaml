@@ -3,3 +3,4 @@ permissions:
   - purchase.write
   - purchase.manage
   - purchase.settings
+  - accounting.write
