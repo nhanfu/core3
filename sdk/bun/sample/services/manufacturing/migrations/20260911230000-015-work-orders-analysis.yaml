@@ -1,0 +1,65 @@
+version: 0.0.15
+description: Deterministic Work Orders Analysis report fixtures
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_workorder_analysis (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        operation_name VARCHAR NOT NULL,
+        workcenter VARCHAR NOT NULL,
+        production_name VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        quantity DECIMAL(18,2) NOT NULL DEFAULT 0,
+        expected_duration DECIMAL(18,2) NOT NULL DEFAULT 0,
+        duration DECIMAL(18,2) NOT NULL DEFAULT 0,
+        duration_per_unit DECIMAL(18,2) NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL,
+        planned_date DATE NOT NULL,
+        date_start TIMESTAMP,
+        date_finished TIMESTAMP,
+        production_state VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        blocked_reason VARCHAR,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00'
+      );
+      DELETE FROM mrp_workorder_analysis WHERE id LIKE 'wora-%';
+      INSERT INTO mrp_workorder_analysis (
+        id, row_version, operation_name, workcenter, production_name, product_name,
+        quantity, expected_duration, duration, duration_per_unit, state, planned_date,
+        date_start, date_finished, production_state, company_name, blocked_reason, sequence
+      ) VALUES
+        ('wora-ready-001', 1, 'Manual Assembly', 'Assembly 1', 'WH/MO/00001', '[FURN_7800] Desk Combination', 3, 180, 0, 0, 'Ready', DATE '2026-01-15', NULL, NULL, 'In Progress', 'My Company (San Francisco)', NULL, 10),
+        ('wora-progress-001', 1, 'Cut panels', 'Assembly 1', 'WH/MO/00003', '[FURN_7023] Wood Panel', 20, 45, 30, 1.5, 'Progress', DATE '2026-01-15', TIMESTAMP '2026-01-15 08:02:00', TIMESTAMP '2026-01-15 08:47:00', 'In Progress', 'My Company (San Francisco)', NULL, 20),
+        ('wora-finished-001', 1, 'Drawer assembly', 'Assembly 1', 'WH/MO/00004', '[FURN_8855] Drawer', 8, 30, 28, 3.5, 'Finished', DATE '2026-01-15', TIMESTAMP '2026-01-15 08:03:00', TIMESTAMP '2026-01-15 08:31:00', 'To Close', 'My Company (San Francisco)', NULL, 30),
+        ('wora-waiting-001', 1, 'Table top assembly', 'Assembly 2', 'WH/MO/00002', '[FURN_8522] Table Top', 12, 60, 0, 0, 'Waiting', DATE '2026-01-15', NULL, NULL, 'Confirmed', 'My Company (San Francisco)', NULL, 10),
+        ('wora-finished-002', 1, 'Table assembly', 'Assembly 2', 'WH/MO/00005', '[FURN_9666] Table', 3, 90, 88, 29.33, 'Finished', DATE '2026-01-15', TIMESTAMP '2026-01-15 08:04:00', TIMESTAMP '2026-01-15 09:32:00', 'Done', 'My Company (San Francisco)', NULL, 20),
+        ('wora-blocked-001', 1, 'Material replenishment', 'Drill 1', 'WH/MO/00003', '[FURN_7023] Wood Panel', 20, 25, 0, 0, 'Blocked', DATE '2026-01-15', NULL, NULL, 'In Progress', 'My Company (San Francisco)', 'Material shortage', 30),
+        ('wora-cancelled-001', 1, 'Kit preparation', 'Packaging 1', 'WH/MO/00006', '[FURN_78236] Table Kit', 2, 20, 0, 0, 'Cancelled', DATE '2026-01-15', NULL, NULL, 'Cancelled', 'Core3 Vietnam', NULL, 10)
+      ON CONFLICT(id) DO UPDATE SET
+        row_version = EXCLUDED.row_version,
+        operation_name = EXCLUDED.operation_name,
+        workcenter = EXCLUDED.workcenter,
+        production_name = EXCLUDED.production_name,
+        product_name = EXCLUDED.product_name,
+        quantity = EXCLUDED.quantity,
+        expected_duration = EXCLUDED.expected_duration,
+        duration = EXCLUDED.duration,
+        duration_per_unit = EXCLUDED.duration_per_unit,
+        state = EXCLUDED.state,
+        planned_date = EXCLUDED.planned_date,
+        date_start = EXCLUDED.date_start,
+        date_finished = EXCLUDED.date_finished,
+        production_state = EXCLUDED.production_state,
+        company_name = EXCLUDED.company_name,
+        blocked_reason = EXCLUDED.blocked_reason,
+        sequence = EXCLUDED.sequence;
+    down: |
+      DELETE FROM mrp_workorder_analysis WHERE id LIKE 'wora-%';
+      DROP TABLE IF EXISTS mrp_workorder_analysis;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

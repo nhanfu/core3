@@ -59,6 +59,10 @@ menu:
     - id: reporting
       label: Reporting
       items:
+        - path: /manufacturing/work-orders-analysis
+          label: Work Orders
+          icon: chart
+          permission: manufacturing.read
         - path: /manufacturing/oee
           label: Overall Equipment Effectiveness
           icon: chart

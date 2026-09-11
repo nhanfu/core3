@@ -1,0 +1,42 @@
+page: { id: manufacturing-work-orders-analysis-detail }
+
+datasources:
+  - id: mrp_workorder_analysis_detail
+    single: true
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_WORKORDER_ANALYSIS_DETAIL_UNAUTHORIZED, message: Sign in to view this Work Order. }
+      forbidden: { status: 403, code: MRP_WORKORDER_ANALYSIS_DETAIL_FORBIDDEN, message: You do not have permission to view this Work Order. }
+      missing_record: { status: 404, code: MRP_WORKORDER_ANALYSIS_DETAIL_NOT_FOUND, message: Work Order not found. }
+      transport_error: { status: 503, code: MRP_WORKORDER_ANALYSIS_DETAIL_UNAVAILABLE, message: This Work Order is temporarily unavailable. }
+    query: |
+      SELECT id, row_version,
+        production_name || ' - ' || operation_name AS record_title,
+        operation_name, workcenter, production_name, product_name,
+        CAST(quantity AS DOUBLE) AS quantity,
+        '' AS lot_serial_numbers,
+        CAST(date_start AS VARCHAR) AS date_start,
+        CAST(date_finished AS VARCHAR) AS date_finished,
+        CAST(expected_duration AS DOUBLE) AS expected_duration,
+        CAST(duration AS DOUBLE) AS duration,
+        state,
+        CASE state
+          WHEN 'Ready' THEN 'To Do'
+          WHEN 'Progress' THEN 'In Progress'
+          WHEN 'Finished' THEN 'Finished'
+          WHEN 'Blocked' THEN 'Blocked'
+          WHEN 'Cancelled' THEN 'Cancelled'
+          ELSE 'Waiting'
+        END AS status_label,
+        production_state, company_name, COALESCE(blocked_reason, '') AS blocked_reason,
+        'Report record; workflow actions remain on Operations / Work Orders.' AS description
+      FROM mrp_workorder_analysis
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'missing_record') THEN FALSE ELSE TRUE END
+        AND id = :id
+
+actions:
+  - id: back_to_mrp_workorder_analysis
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/work-orders-analysis
+    params: {}

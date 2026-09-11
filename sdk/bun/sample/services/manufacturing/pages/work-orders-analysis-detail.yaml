@@ -1,0 +1,54 @@
+title: Work Order Analysis
+page: { id: manufacturing-work-orders-analysis-detail, route: /manufacturing/work-orders-analysis/detail, breadcrumb: [Supply Chain, Manufacturing, Reporting, Work Orders, Detail], auth: { require: [manufacturing.read] } }
+
+components:
+  - type: OdooFormView
+    source: mrp_workorder_analysis_detail
+    title_field: record_title
+    subtitle_field: status_label
+    editable: false
+    group_columns: 2
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_mrp_workorder_analysis, label: Back to Work Orders Analysis, icon: arrow-left, permission: manufacturing.read }
+    groups:
+      - title: Work Order
+        fields:
+          - { field: operation_name, label: Work Order }
+          - { field: workcenter, label: Work Center }
+          - { field: product_name, label: Product }
+          - { field: quantity, label: Quantity }
+          - { field: lot_serial_numbers, label: Lot/Serial Numbers }
+      - title: Planning and time
+        fields:
+          - { field: date_start, label: Start Date }
+          - { field: date_finished, label: End Date }
+          - { field: expected_duration, label: Expected Duration }
+          - { field: production_name, label: Manufacturing Order }
+          - { field: duration, label: Real Duration }
+          - { field: company_name, label: Company }
+          - { field: status_label, label: Status, type: StatusChip }
+    status_field: state
+    statusbar:
+      - { value: Finished, label: Finished }
+      - { value: Progress, label: In Progress }
+      - { value: Ready, label: To Do }
+      - { value: Blocked, label: Blocked }
+    status_colors: { Finished: green, Progress: amber, Ready: neutral, Blocked: red }
+    notebook:
+      active: details
+      tabs:
+        - id: details
+          label: Work Order Details
+          groups:
+            - title: Notes
+              fields:
+                - { field: blocked_reason, label: Block Reason }
+                - { field: production_state, label: Manufacturing Order Status }
+                - { field: row_version, label: Revision }
+        - id: report_context
+          label: Report Context
+          groups:
+            - title: Read-only reporting boundary
+              fields:
+                - { field: description, label: Description, type: textarea, wide: true }

@@ -1,0 +1,73 @@
+title: Work Orders Analysis
+page: { id: manufacturing-work-orders-analysis, route: /manufacturing/work-orders-analysis, breadcrumb: [Supply Chain, Manufacturing, Reporting, Work Orders], auth: { require: [manufacturing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_workorder_analysis
+    search: { label: Search work orders analysis, placeholder: 'Search operations, work centers, manufacturing orders, or products...' }
+    default_filters: { report_scope: active }
+    filters:
+      - { field: state, label: Status, options_source: mrp_workorder_analysis_states }
+      - { field: workcenter, label: Work Center, options_source: mrp_workorder_analysis_workcenters }
+      - { field: production_name, label: Manufacturing Order, options_source: mrp_workorder_analysis_productions }
+    group_by:
+      - { field: workcenter, label: Work Center }
+      - { field: operation_name, label: Operation }
+      - { field: production_name, label: Manufacturing Order }
+      - { field: state, label: Status }
+      - { field: planned_date, label: Date }
+    default_group_by: workcenter
+    view_navigation: icons
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: workcenter
+        measure_field: expected_duration
+        measure_label: Expected Duration (minutes)
+        type: bar
+        measures:
+          - { field: expected_duration, label: Expected Duration (minutes), aggregate: sum }
+          - { field: duration, label: Duration (minutes), aggregate: sum }
+          - { field: duration_per_unit, label: Duration Per Unit, aggregate: sum }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: workcenter, column: Work Center }
+            - { field: operation_name, column: Operation }
+            - { field: production_name, column: Manufacturing Order }
+            - { field: state, column: Status }
+            - { field: planned_date, column: Start Date, type: date }
+            - { field: expected_duration, column: Expected Duration (minutes) }
+            - { field: duration, column: Duration (minutes) }
+            - { field: duration_per_unit, column: Duration Per Unit }
+            - { field: company_name, column: Company }
+          default:
+            rows: [workcenter]
+            measures:
+              - { field: duration, aggregate: sum, column: Duration (minutes) }
+              - { field: duration_per_unit, aggregate: sum, column: Duration Per Unit }
+              - { field: expected_duration, aggregate: sum, column: Expected Duration (minutes) }
+          date_ranges: { planned_date: day }
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+    form_view: { page: apps/services/manufacturing/pages/work-orders-analysis-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_workorder_analysis
+    row_double_click_action: view_mrp_workorder_analysis
+    row_actions: menu
+    show_pager: true
+    page_size: 50
+    empty_state: { title: No Work Orders Analysis data, description: Work Order reporting data appears after manufacturing operations are planned. }
+    columns:
+      - { field: operation_name, label: Operation, type: PrimaryEntityCell, mobile: true }
+      - { field: workcenter, label: Work Center, mobile: true }
+      - { field: product_name, label: Product, mobile: true }
+      - { field: quantity, label: Quantity, align: right, mobile: true }
+      - { field: expected_duration, label: Expected Duration, align: right, mobile: false }
+      - { field: duration, label: Real Duration, align: right, mobile: false }
+      - { field: status_label, label: Status, type: StatusChip, mobile: false }
