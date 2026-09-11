@@ -12,7 +12,6 @@ type:
         module_mrp_subcontracting BOOLEAN NOT NULL DEFAULT FALSE,
         module_stock_barcode BOOLEAN NOT NULL DEFAULT FALSE,
         module_quality_control BOOLEAN NOT NULL DEFAULT FALSE,
-        module_quality_control_worksheet BOOLEAN NOT NULL DEFAULT FALSE,
         group_unlocked_by_default BOOLEAN NOT NULL DEFAULT FALSE,
         group_mrp_byproducts BOOLEAN NOT NULL DEFAULT FALSE,
         group_mrp_reception_report BOOLEAN NOT NULL DEFAULT FALSE,
@@ -22,11 +21,11 @@ type:
       INSERT INTO mrp_settings (
         id, row_version, company_name, group_mrp_routings, group_mrp_workorder_dependencies,
         module_mrp_subcontracting, module_stock_barcode, module_quality_control,
-        module_quality_control_worksheet, group_unlocked_by_default, group_mrp_byproducts,
+        group_unlocked_by_default, group_mrp_byproducts,
         group_mrp_reception_report, module_mrp_mps, updated_at
       ) VALUES (
         'manufacturing-settings-demo', 1, 'My Company (San Francisco)', TRUE, FALSE,
-        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+        FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
         TIMESTAMP '2026-01-15 00:00:00'
       ) ON CONFLICT(id) DO NOTHING;
     down: |

@@ -17,12 +17,11 @@ components:
               - { field: group_mrp_routings, label: Work Orders, description: Process operations at specific work centers., type: checkbox, action_label: Work Centers }
               - { field: group_mrp_workorder_dependencies, label: Work Order Dependencies, description: Set the order that work orders should be processed in within each bill of materials., type: checkbox }
               - { field: module_mrp_subcontracting, label: Subcontracting, description: Delegate part of the production process to subcontractors., type: checkbox }
-              - { field: module_stock_barcode, label: Barcode, description: Process manufacturing orders from the barcode application., type: checkbox }
+              - { field: module_stock_barcode, label: Barcode Scanner, description: Process manufacturing orders from the barcode application., type: checkbox }
               - { field: module_quality_control, label: Quality, description: Add quality checks to your work orders., type: checkbox }
-              - { field: module_quality_control_worksheet, label: Quality Control Worksheets, description: Create customizable worksheets for your quality checks., type: checkbox, disabled: true }
-              - { field: group_unlocked_by_default, label: Unlock Manufacturing Order Quantity, description: Allow manufacturing users to modify quantities to consume without prior approval., type: checkbox }
+              - { field: group_unlocked_by_default, label: Unlock Manufacturing Orders, description: Allow manufacturing users to modify quantities to consume without prior approval., type: checkbox }
               - { field: group_mrp_byproducts, label: By-Products, description: Produce residual products in addition to the main finished product., type: checkbox }
-              - { field: group_mrp_reception_report, label: Reception Report, description: View and allocate production quantities to customer or manufacturing orders., type: checkbox }
+              - { field: group_mrp_reception_report, label: Allocation Report for Manufacturing Orders, description: View and allocate production quantities to customer or manufacturing orders., type: checkbox }
           - title: Planning
             fields:
               - { field: module_mrp_mps, label: Master Production Schedule, description: Plan manufacturing or purchase orders based on forecasts., type: checkbox }
@@ -43,7 +42,6 @@ actions:
               module_mrp_subcontracting: row.module_mrp_subcontracting,
               module_stock_barcode: row.module_stock_barcode,
               module_quality_control: row.module_quality_control,
-              module_quality_control_worksheet: row.module_quality_control_worksheet,
               group_unlocked_by_default: row.group_unlocked_by_default,
               group_mrp_byproducts: row.group_mrp_byproducts,
               group_mrp_reception_report: row.group_mrp_reception_report,

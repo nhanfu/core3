@@ -26,8 +26,8 @@ describe('Manufacturing Settings parity slice', () => {
     expect(view).toMatchObject({ source: 'manufacturing_settings', save_action: 'save_manufacturing_settings' });
     expect(view.tabs[0].sections.map((section: any) => section.title)).toEqual(['Operations', 'Planning']);
     expect(view.tabs[0].sections.flatMap((section: any) => section.fields.map((field: any) => field.label))).toEqual([
-      'Work Orders', 'Work Order Dependencies', 'Subcontracting', 'Barcode', 'Quality', 'Quality Control Worksheets',
-      'Unlock Manufacturing Order Quantity', 'By-Products', 'Reception Report', 'Master Production Schedule',
+      'Work Orders', 'Work Order Dependencies', 'Subcontracting', 'Barcode Scanner', 'Quality',
+      'Unlock Manufacturing Orders', 'By-Products', 'Allocation Report for Manufacturing Orders', 'Master Production Schedule',
     ]);
     expect(yaml('permissions.yaml').permissions).toContain('manufacturing.manage');
     expect(api.datasources[0].error_states).toMatchObject({ unauthorized: { status: 401 }, forbidden: { status: 403 } });
@@ -50,7 +50,7 @@ describe('Manufacturing Settings parity slice', () => {
     const mutation = api.actions.find((action: any) => action.id === 'manufacturing_settings_update_server').mutation;
     const values = {
       group_mrp_routings: true, group_mrp_workorder_dependencies: true, module_mrp_subcontracting: true,
-      module_stock_barcode: false, module_quality_control: true, module_quality_control_worksheet: false,
+      module_stock_barcode: false, module_quality_control: true,
       group_unlocked_by_default: true, group_mrp_byproducts: true, group_mrp_reception_report: true, module_mrp_mps: true,
     };
     const updated = await repository.executeMutation(mutation, { id: 'manufacturing-settings-demo', expected_row_version: 1, values });
