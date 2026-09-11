@@ -408,6 +408,58 @@ listed as All Sales Lines under Point of Sale Reporting. Authenticated desktop
 and mobile Core3/Odoo captures and focused test/audit evidence are retained
 outside Git; screenshots are never committed.
 
+## Current bounded batch: POS Taxes browser sign-off and active default
+
+The fresh `core3_codex_demo` Odoo 19 source audit on 2026-09-11 found 23
+visible Point of Sale leaf actions under Dashboard, Orders, Products,
+Reporting, and Configuration. Every leaf has a Core3 menu counterpart; no new
+absent action was invented. The materially incomplete action selected for this
+batch was Taxes: its page/API contracts, deterministic fixtures, guarded
+manager mutations, and static tests existed, but authenticated Core3 browser
+evidence was deferred. Odoo action 368 (`account.action_tax_form`) opens with
+inactive taxes hidden (`1-4 / 4`) while retaining the active/inactive filter.
+
+The bounded fix adds `default_filters: { active: 'true' }` to the existing
+`pos-taxes` ListView. Archived fixtures remain available through the Status
+filter. Page YAML/API YAML separation, matching `page.id` values, service-owned
+migrations, `pos.read` read access, `pos.manage` create/update/archive/restore/
+duplicate/delete access, optimistic row-version guards, and distribution-line
+guards remain in the existing POS Taxes contracts.
+
+Implementation checkpoint: `fdc22265` (`fix(pos): default taxes list to active
+records`). Focused validation passes 7 tests and 76 assertions across the tax
+list/detail and distribution-line suites. The full static gates for this
+handoff pass: `bun run audit` (498 pages, 505 routes, 879 datasources), ESLint,
+global CSS build, POS CSS build, and `git diff --check`.
+
+Authenticated browser verification used `admin@tms.local` / `admin123` in an
+isolated Core3 runtime and `codex@core3.local` / `Core3Odoo2026!` in the fresh
+Odoo database. List, existing-tax detail, and New states were captured and
+visually inspected at both requested viewports. All twelve captures reported
+zero `requestfailed` entries, zero `pageerror` entries, and exact body/document
+widths matching the viewport.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Taxes list | 1440×900 | `/tmp/odoo-codex-pos-taxes-list-desktop-final-20260911.png` | `b6e43e64131388edf3686b8c9755e012933e98b10e6a6b7f5ea8aceca08c6beb` |
+| Odoo Taxes detail | 1440×900 | `/tmp/odoo-codex-pos-taxes-detail-desktop-final-20260911.png` | `b9dd7a7931cc24b4a7dd9963467285e03f19060c11231c8cf88663cc6eabef19` |
+| Odoo New Tax | 1440×900 | `/tmp/odoo-codex-pos-taxes-new-desktop-final-20260911.png` | `8c1d2ec0f24fb47b396e300b362fab8bf271884b696fc6dc5f9ed40e3eb5377b` |
+| Core3 Taxes list | 1440×900 | `/tmp/core3-pos-taxes-list-desktop-final-20260911.png` | `35683d6852f9fbdb8582c01854812b2c0468af80a2dbba6f0fd0ee239ffd2d25` |
+| Core3 Tax detail | 1440×900 | `/tmp/core3-pos-taxes-detail-desktop-final-20260911.png` | `72e15e32dfe2134015981139a233b22e8e16ce3cef3cd4371da89179869bf204` |
+| Core3 New Tax | 1440×900 | `/tmp/core3-pos-taxes-new-desktop-final-20260911.png` | `584a4e72cd4455264171ba43039c03c7e0886dcf91e6d41b0df3fa9f0f28d422` |
+| Odoo Taxes list | 390×844 | `/tmp/odoo-codex-pos-taxes-list-mobile-final-20260911.png` | `60b960767c396b0cf6233358dab38a3459b884cae853255b428d156711a4aa58` |
+| Odoo Taxes detail | 390×844 | `/tmp/odoo-codex-pos-taxes-detail-mobile-final-20260911.png` | `7bd52fb8ee53abbfe3dc50a0a93e1adf64b973b424d560b9b8ba880594bc9e41` |
+| Odoo New Tax | 390×844 | `/tmp/odoo-codex-pos-taxes-new-mobile-final-20260911.png` | `dc5837e01a92c4593401ee034f7308403e618e2fda64f1ca83a11e50e3a5350f` |
+| Core3 Taxes list | 390×844 | `/tmp/core3-pos-taxes-list-mobile-final-20260911.png` | `88a3ab19ae69602d06a1f18d147c8200e3e5bea4cbdac99bfe46422ed9df2ac7` |
+| Core3 Tax detail | 390×844 | `/tmp/core3-pos-taxes-detail-mobile-final-20260911.png` | `b3d645181e707c1ac24f6b7fe0dd2b0460e6e06d05bb39a47f21fa338e909f66` |
+| Core3 New Tax | 390×844 | `/tmp/core3-pos-taxes-new-mobile-final-20260911.png` | `7f8a042477847aff5b4d1a924daa194871cb6ba7673a9c5bd4d28c7524c123a2` |
+
+The bounded comparison intentionally leaves the shared Core3 Fluent shell,
+plain numeric tax formatting, and compact Core3 mobile table/form composition
+as product-wide visual differences from Odoo's purple shell. Tax chatter and
+the full Odoo many2one/tag picker behavior are outside this action slice.
+Screenshots remain outside Git.
+
 ## Acceptance
 
 - Every listed Odoo menu has an explicit Core3 route or a documented deliberate
