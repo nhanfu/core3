@@ -64,6 +64,7 @@ describe('Manufacturing Productivity Losses Odoo action parity', () => {
     expect(list.columns.map((column: any) => column.label)).toEqual([
       'Start Date', 'End Date', 'Work Center', 'User', 'Loss Reason', 'Duration (minutes)', 'Company',
     ]);
+    expect(list.columns.filter((column: any) => column.mobile).map((column: any) => column.label)).toEqual(['Start Date', 'End Date']);
     expect(list.form_view.page).toBe('apps/services/manufacturing/pages/productivity-loss-detail.yaml');
     expect(form).toMatchObject({ type: 'OdooFormView', source: 'mrp_productivity_loss_detail', editable: true, title_field: 'loss_reason' });
     expect(form.groups.flatMap((group: any) => group.fields.map((field: any) => field.label))).toEqual([
@@ -97,6 +98,8 @@ describe('Manufacturing Productivity Losses Odoo action parity', () => {
 
     const reasons = api.datasources.find((candidate: any) => candidate.id === 'mrp_productivity_loss_reasons');
     expect((await repository.querySource(reasons, {}, 0, 50)).data).toHaveLength(6);
+    const workcenters = api.datasources.find((candidate: any) => candidate.id === 'mrp_productivity_loss_workcenters');
+    expect((await repository.querySource(workcenters, {}, 0, 50)).data[0]).toMatchObject({ value: 'Assembly 1', label: 'Assembly 1' });
     database.close();
   });
 

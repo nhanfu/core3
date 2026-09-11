@@ -3,7 +3,7 @@ datasources:
   - id: mrp_productivity_loss_workcenters
     single: false
     permission: manufacturing.read
-    query: "SELECT id AS value, name AS label FROM mrp_workcenters WHERE active = TRUE ORDER BY sequence, id"
+    query: "SELECT name AS value, name AS label FROM mrp_workcenters WHERE active = TRUE ORDER BY sequence, id"
   - id: mrp_productivity_loss_reasons
     single: false
     permission: manufacturing.read
