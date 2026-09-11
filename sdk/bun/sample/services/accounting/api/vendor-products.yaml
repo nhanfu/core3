@@ -5,6 +5,11 @@ datasources:
     error_states: { transport_error: { status: 503, code: ACCOUNTING_VENDOR_PRODUCTS_UNAVAILABLE, message: Vendor product data is temporarily unavailable. } }
     query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT id, row_version, default_code, name, product_type, cost, cost AS price, printf('$ %,.2f', CAST(cost AS DOUBLE)) AS cost_display, printf('$ %,.2f', CAST(cost AS DOUBLE)) AS price_display, purchase_taxes, on_hand, CASE WHEN on_hand > 0 THEN printf('%,.2f %s', CAST(on_hand AS DOUBLE), unit) ELSE '' END AS on_hand_display, forecasted, printf('%,.2f %s', CAST(forecasted AS DOUBLE), unit) AS forecasted_display, variant_count, unit, active FROM accounting_vendor_products CROSS JOIN request_guard WHERE request_guard.ok AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(default_code, '') ILIKE '%' || :q || '%' OR product_type ILIKE '%' || :q || '%') AND (:active IS NULL OR active = CAST(:active AS BOOLEAN)) ORDER BY name, id"
 actions:
+  - id: view_accounting_vendor_product
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/vendor-product-detail
+    params: { id: '{row.id}' }
   - id: create_accounting_vendor_product
     type: server_form
     permission: accounting.write
@@ -18,9 +23,9 @@ actions:
       table: accounting_vendor_products
       generated: [id]
       before_steps: [{ query: "SELECT 'accounting-vendor-product-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
-      fields: [default_code, name, product_type, cost, purchase_taxes, on_hand, forecasted, variant_count, unit, active]
+      fields: [default_code, name, product_type, cost, purchase_taxes, on_hand, forecasted, variant_count, unit, active, invoicing_policy, track_inventory, sales_price, sales_taxes, category, barcode, company, internal_notes]
       required: [name]
-      defaults: { default_code: '', product_type: Goods, cost: 0, purchase_taxes: 'No Tax', on_hand: 0, forecasted: 0, variant_count: 1, unit: Units, active: true }
+      defaults: { default_code: '', product_type: Goods, cost: 0, purchase_taxes: 'No Tax', on_hand: 0, forecasted: 0, variant_count: 1, unit: Units, active: true, invoicing_policy: 'Ordered quantities', track_inventory: false, sales_price: 0, sales_taxes: 'No Tax', category: All, barcode: '', company: 'My Company (San Francisco)', internal_notes: '' }
       guards:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_VENDOR_PRODUCT_NAME_REQUIRED, message: A product name is required. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_vendor_products WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: ACCOUNTING_VENDOR_PRODUCT_EXISTS, message: A vendor product with this name already exists. }
@@ -44,7 +49,7 @@ actions:
     mutation:
       operation: update
       table: accounting_vendor_products
-      fields: [default_code, name, product_type, cost, purchase_taxes, on_hand, forecasted, variant_count, unit]
+      fields: [default_code, name, product_type, cost, purchase_taxes, on_hand, forecasted, variant_count, unit, invoicing_policy, track_inventory, sales_price, sales_taxes, category, barcode, company, internal_notes]
       required: [name]
       concurrency: { required: true }
       guards:

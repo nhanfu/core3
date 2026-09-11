@@ -1,0 +1,31 @@
+version: 0.0.24
+description: Accounting Vendor Product detail fields and deterministic form fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_vendor_products ADD COLUMN IF NOT EXISTS invoicing_policy VARCHAR;
+      ALTER TABLE accounting_vendor_products ADD COLUMN IF NOT EXISTS track_inventory BOOLEAN;
+      ALTER TABLE accounting_vendor_products ADD COLUMN IF NOT EXISTS sales_price DECIMAL(18,2);
+      ALTER TABLE accounting_vendor_products ADD COLUMN IF NOT EXISTS sales_taxes VARCHAR;
+      ALTER TABLE accounting_vendor_products ADD COLUMN IF NOT EXISTS category VARCHAR;
+      ALTER TABLE accounting_vendor_products ADD COLUMN IF NOT EXISTS barcode VARCHAR;
+      ALTER TABLE accounting_vendor_products ADD COLUMN IF NOT EXISTS company VARCHAR;
+      ALTER TABLE accounting_vendor_products ADD COLUMN IF NOT EXISTS internal_notes VARCHAR;
+      UPDATE accounting_vendor_products SET invoicing_policy = 'Ordered quantities', track_inventory = (product_type = 'Goods'), sales_price = cost, sales_taxes = purchase_taxes, category = CASE WHEN product_type = 'Service' THEN 'Services' ELSE 'All' END, company = 'My Company (San Francisco)' WHERE id LIKE 'accounting-vendor-product-%';
+      UPDATE accounting_vendor_products SET barcode = '20133785543124', internal_notes = 'Stainless steel screw full (dia - 5mm, Length - 10mm)' WHERE id = 'accounting-vendor-product-001';
+      UPDATE accounting_vendor_products SET barcode = '1234567890123', internal_notes = 'Cabinet product fixture for vendor purchasing.' WHERE id = 'accounting-vendor-product-002';
+      UPDATE accounting_vendor_products SET barcode = '1234567890124', internal_notes = 'Service product fixture.' WHERE id = 'accounting-vendor-product-003';
+      UPDATE accounting_vendor_products SET barcode = '1234567890125', internal_notes = 'Food product fixture.' WHERE id = 'accounting-vendor-product-004';
+    down: |
+      ALTER TABLE accounting_vendor_products DROP COLUMN IF EXISTS invoicing_policy;
+      ALTER TABLE accounting_vendor_products DROP COLUMN IF EXISTS track_inventory;
+      ALTER TABLE accounting_vendor_products DROP COLUMN IF EXISTS sales_price;
+      ALTER TABLE accounting_vendor_products DROP COLUMN IF EXISTS sales_taxes;
+      ALTER TABLE accounting_vendor_products DROP COLUMN IF EXISTS category;
+      ALTER TABLE accounting_vendor_products DROP COLUMN IF EXISTS barcode;
+      ALTER TABLE accounting_vendor_products DROP COLUMN IF EXISTS company;
+      ALTER TABLE accounting_vendor_products DROP COLUMN IF EXISTS internal_notes;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

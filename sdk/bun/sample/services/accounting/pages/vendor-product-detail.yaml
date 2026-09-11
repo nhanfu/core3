@@ -1,0 +1,78 @@
+title: Product
+page: { id: accounting-vendor-product-detail, route: /accounting/vendor-product-detail, breadcrumb: [Finance, Vendors, Products, Product], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_vendor_product_detail
+    title_field: name
+    subtitle_field: default_code
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_accounting_vendor_products, label: Products, variant: secondary, permission: accounting.read }
+      - { id: edit_accounting_vendor_product_detail, label: Edit, variant: primary, permission: accounting.write }
+      - { id: archive_accounting_vendor_product_detail, label: Archive, variant: danger, permission: accounting.write, show_if: 'state.accounting_vendor_product_detail.active === true' }
+      - { id: restore_accounting_vendor_product_detail, label: Restore, variant: secondary, permission: accounting.write, show_if: 'state.accounting_vendor_product_detail.active === false' }
+      - { id: delete_accounting_vendor_product_detail, label: Delete, variant: danger, permission: accounting.write, confirm: Delete this product? }
+    stat_buttons:
+      - { id: view_accounting_vendor_product_stock, label: On hand, value_field: on_hand_display, permission: accounting.read }
+      - { id: view_accounting_vendor_product_variants, label: Variants, value_field: variant_count, permission: accounting.read }
+    group_columns: 2
+    groups:
+      - title: Product
+        fields:
+          - { field: product_type, label: Product Type }
+          - { field: invoicing_policy, label: Invoicing Policy }
+          - { field: track_inventory, label: Track Inventory, type: checkbox }
+          - { field: sales_price_display, label: Sales Price }
+          - { field: sales_taxes, label: Sales Taxes }
+          - { field: cost_display, label: Cost }
+          - { field: purchase_taxes, label: Purchase Taxes }
+      - title: Inventory
+        fields:
+          - { field: category, label: Category }
+          - { field: default_code, label: Reference }
+          - { field: barcode, label: Barcode }
+          - { field: unit, label: Unit }
+          - { field: company, label: Company }
+          - { field: forecasted_display, label: Forecasted }
+      - title: Internal Notes
+        fields:
+          - { field: internal_notes, label: Notes, type: textarea, wide: true }
+    notebook:
+      active: general-information
+      tabs:
+        - id: general-information
+          label: General Information
+          groups:
+            - title: Product
+              fields:
+                - { field: product_type, label: Product Type }
+                - { field: invoicing_policy, label: Invoicing Policy }
+                - { field: track_inventory, label: Track Inventory, type: checkbox }
+                - { field: sales_price_display, label: Sales Price }
+                - { field: sales_taxes, label: Sales Taxes }
+                - { field: cost_display, label: Cost }
+                - { field: purchase_taxes, label: Purchase Taxes }
+        - id: attributes-variants
+          label: 'Attributes & Variants'
+          fields:
+            - { field: variant_count, label: Variants }
+            - { field: variant_summary, label: Variant Configuration }
+        - id: sales
+          label: Sales
+          fields:
+            - { field: sales_price_display, label: Sales Price }
+            - { field: sales_taxes, label: Sales Taxes }
+        - id: purchase
+          label: Purchase
+          fields:
+            - { field: cost_display, label: Cost }
+            - { field: purchase_taxes, label: Purchase Taxes }
+        - id: inventory
+          label: Inventory
+          fields:
+            - { field: on_hand_display, label: On hand }
+            - { field: forecasted_display, label: Forecasted }
+            - { field: unit, label: Unit }

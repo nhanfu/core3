@@ -11,6 +11,9 @@ components:
     filters:
       - { field: active, label: Active, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
     view_navigation: tabs
+    row_open_action: view_accounting_vendor_product
+    row_double_click_action: view_accounting_vendor_product
+    form_view: { page: apps/services/accounting/pages/vendor-product-detail.yaml, side_panel: false }
     views:
       - id: card
         label: Kanban

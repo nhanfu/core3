@@ -1,0 +1,90 @@
+page: { id: accounting-vendor-product-detail }
+datasources:
+  - id: accounting_vendor_product_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_VENDOR_PRODUCT_DETAIL_UNAVAILABLE, message: Vendor product detail is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, default_code, product_type, invoicing_policy, track_inventory, sales_price, printf('$ %,.2f', CAST(sales_price AS DOUBLE)) AS sales_price_display, sales_taxes, cost, printf('$ %,.2f', CAST(cost AS DOUBLE)) AS cost_display, purchase_taxes, category, barcode, company, on_hand, CASE WHEN on_hand > 0 THEN printf('%,.2f %s', CAST(on_hand AS DOUBLE), unit) ELSE '0.00' END AS on_hand_display, forecasted, printf('%,.2f %s', CAST(forecasted AS DOUBLE), unit) AS forecasted_display, variant_count, CASE WHEN variant_count = 1 THEN 'Single variant' ELSE printf('%d variants', variant_count) END AS variant_summary, unit, active, internal_notes FROM accounting_vendor_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - { id: back_to_accounting_vendor_products, type: navigate, permission: accounting.read, navigate_to: /accounting/vendor-products }
+  - { id: view_accounting_vendor_product_stock, type: navigate, permission: accounting.read, navigate_to: /accounting/vendor-products }
+  - { id: view_accounting_vendor_product_variants, type: navigate, permission: accounting.read, navigate_to: /accounting/vendor-products }
+  - id: edit_accounting_vendor_product_detail
+    type: server_form
+    permission: accounting.write
+    title: Edit Product
+    action: accounting.vendor_products.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_vendor_product_detail
+    refresh: [accounting_vendor_product_detail, accounting_vendor_products]
+    mutation:
+      operation: update
+      table: accounting_vendor_products
+      fields: [default_code, name, product_type, invoicing_policy, track_inventory, sales_price, sales_taxes, cost, purchase_taxes, category, barcode, company, unit, internal_notes]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_vendor_products WHERE id = :id AND active = TRUE", status: 404, code: ACCOUNTING_VENDOR_PRODUCT_NOT_FOUND, message: Active vendor product not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_VENDOR_PRODUCT_NAME_REQUIRED, message: A product name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_vendor_products WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: ACCOUNTING_VENDOR_PRODUCT_EXISTS, message: A vendor product with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:sales_price, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:cost, 0) AS DECIMAL(18,2)) >= 0", status: 422, code: ACCOUNTING_VENDOR_PRODUCT_PRICE_INVALID, message: Sales price and cost cannot be negative. }
+      result: { query: "SELECT * FROM accounting_vendor_products WHERE id = :id" }
+    fields:
+      - { field: name, label: Product Name, type: text, required: true }
+      - { field: default_code, label: Reference, type: text }
+      - { field: product_type, label: Product Type, type: select, options: [Goods, Service, Combo] }
+      - { field: invoicing_policy, label: Invoicing Policy, type: text }
+      - { field: track_inventory, label: Track Inventory, type: checkbox }
+      - { field: sales_price, label: Sales Price, type: number }
+      - { field: sales_taxes, label: Sales Taxes, type: text }
+      - { field: cost, label: Cost, type: number }
+      - { field: purchase_taxes, label: Purchase Taxes, type: text }
+      - { field: category, label: Category, type: text }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: company, label: Company, type: text }
+      - { field: unit, label: Unit, type: text }
+      - { field: internal_notes, label: Notes, type: textarea }
+  - id: archive_accounting_vendor_product_detail
+    type: server
+    permission: accounting.write
+    action: accounting.vendor_products.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_vendor_product_detail, accounting_vendor_products]
+    params: { values: { active: false } }
+    mutation:
+      operation: update
+      table: accounting_vendor_products
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM accounting_vendor_products WHERE id = :id AND active = TRUE", status: 409, code: ACCOUNTING_VENDOR_PRODUCT_ARCHIVED, message: Vendor product is already archived or unavailable. }]
+      result: { query: "SELECT * FROM accounting_vendor_products WHERE id = :id" }
+  - id: restore_accounting_vendor_product_detail
+    type: server
+    permission: accounting.write
+    action: accounting.vendor_products.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_vendor_product_detail, accounting_vendor_products]
+    params: { values: { active: true } }
+    mutation:
+      operation: update
+      table: accounting_vendor_products
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM accounting_vendor_products WHERE id = :id AND active = FALSE", status: 409, code: ACCOUNTING_VENDOR_PRODUCT_ACTIVE, message: Vendor product is already active or unavailable. }]
+      result: { query: "SELECT * FROM accounting_vendor_products WHERE id = :id" }
+  - id: delete_accounting_vendor_product_detail
+    type: server
+    permission: accounting.write
+    action: accounting.vendor_products.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [accounting_vendor_products]
+    params: { id: '{state.accounting_vendor_product_detail.id}' }
+    mutation:
+      operation: delete
+      table: accounting_vendor_products
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM accounting_vendor_products WHERE id = :id", status: 404, code: ACCOUNTING_VENDOR_PRODUCT_NOT_FOUND, message: Vendor product not found. }]
