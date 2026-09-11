@@ -3,7 +3,10 @@ datasources:
   - id: pos_configs
     single: false
     permission: pos.read
-    query: "SELECT id, name, company, currency, receipt_header, receipt_footer, active FROM pos_configs ORDER BY name"
+    error_states:
+      forbidden: { status: 403, code: POS_CONFIGURATIONS_FORBIDDEN, message: You do not have permission to view Point of Sale configurations. }
+      transport_error: { status: 503, code: POS_CONFIGURATIONS_UNAVAILABLE, message: Point of Sale configurations are temporarily unavailable. }
+    query: "SELECT id, row_version, name, company, closing, CAST(closing_balance AS DOUBLE) AS balance, CASE WHEN active THEN 'Active' ELSE 'Inactive' END AS status, active FROM pos_configs WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR company ILIKE '%' || :q || '%') ORDER BY CASE name WHEN 'Furniture Shop' THEN 1 WHEN 'Clothes Shop' THEN 2 WHEN 'Bakery Shop' THEN 3 WHEN 'Restaurant' THEN 4 WHEN 'Bar' THEN 5 WHEN 'Kiosk' THEN 6 ELSE 99 END, name"
 actions:
   - id: create_pos_config
     type: server_form
@@ -16,9 +19,12 @@ actions:
     mutation:
       operation: insert
       table: pos_configs
-      fields: [name, company, currency, receipt_header, receipt_footer, active]
+      fields: [row_version, name, company, currency, receipt_header, receipt_footer, login_with_employees, epos_printer, iot_box, closing_balance, active]
       required: [name]
-      defaults: { currency: USD, active: true }
+      defaults: { row_version: 1, company: 'My Company (San Francisco)', currency: USD, login_with_employees: false, epos_printer: false, iot_box: false, closing_balance: 0, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_CONFIG_NAME_REQUIRED, message: Point of Sale name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_configs WHERE LOWER(name) = LOWER(:name))", status: 409, code: POS_CONFIG_NAME_EXISTS, message: A Point of Sale with this name already exists. }
       result: { query: "SELECT * FROM pos_configs WHERE id = :id" }
     fields:
       - { field: name, label: Point of Sale, type: text, required: true }
@@ -26,6 +32,9 @@ actions:
       - { field: currency, label: Currency, type: text, default: USD }
       - { field: receipt_header, label: Receipt header, type: textarea }
       - { field: receipt_footer, label: Receipt footer, type: textarea }
+      - { field: login_with_employees, label: Log in with Employees?, type: checkbox }
+      - { field: epos_printer, label: ePOS Printer?, type: checkbox }
+      - { field: iot_box, label: IoT Box, type: checkbox }
   - id: archive_pos_config
     type: server
     permission: pos.manage

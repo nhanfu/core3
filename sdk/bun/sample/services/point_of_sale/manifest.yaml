@@ -53,7 +53,7 @@ menu:
       label: Configuration & Reporting
       items:
         - path: /point-of-sale/configs
-          label: Configuration
+          label: Point of Sales
           icon: settings
           permission: pos.read
         - path: /point-of-sale/settings

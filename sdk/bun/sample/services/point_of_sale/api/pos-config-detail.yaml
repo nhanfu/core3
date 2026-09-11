@@ -3,4 +3,56 @@ datasources:
   - id: pos_config_detail
     single: true
     permission: pos.read
-    query: "SELECT id, name, company, currency, receipt_header, receipt_footer, active FROM pos_configs WHERE id = :id"
+    error_states:
+      forbidden: { status: 403, code: POS_CONFIG_DETAIL_FORBIDDEN, message: You do not have permission to view this Point of Sale configuration. }
+      not_found: { status: 404, code: POS_CONFIG_NOT_FOUND, message: Point of Sale configuration not found. }
+      transport_error: { status: 503, code: POS_CONFIG_DETAIL_UNAVAILABLE, message: Point of Sale configuration details are temporarily unavailable. }
+    query: "SELECT id, row_version, name, company, currency, receipt_header, receipt_footer, login_with_employees, epos_printer, iot_box, active, closing, CAST(closing_balance AS DOUBLE) AS balance FROM pos_configs WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_pos_config
+    type: server_form
+    permission: pos.manage
+    title: Edit Point of Sale
+    action: pos.configs.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.pos_config_detail
+    refresh: [pos_config_detail, pos_configs, pos_dashboard_configs]
+    mutation:
+      operation: update
+      table: pos_configs
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, login_with_employees, epos_printer, iot_box, active]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM pos_configs WHERE id = :id", status: 404, code: POS_CONFIG_NOT_FOUND, message: Point of Sale configuration not found. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_CONFIG_NAME_REQUIRED, message: Point of Sale name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_configs WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: POS_CONFIG_NAME_EXISTS, message: A Point of Sale with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_sessions s JOIN pos_configs c ON c.name = s.config WHERE c.id = :id AND s.state IN ('Opening Control', 'In Progress', 'Closing Control'))", status: 409, code: POS_CONFIG_SESSION_OPEN, message: Close the active session before changing this Point of Sale configuration. }
+      result: { query: "SELECT * FROM pos_configs WHERE id = :id" }
+    fields:
+      - { field: name, label: Point of Sale?, type: text, required: true }
+      - { field: login_with_employees, label: Log in with Employees?, type: checkbox }
+      - { field: epos_printer, label: ePOS Printer?, type: checkbox }
+      - { field: iot_box, label: IoT Box, type: checkbox }
+      - { field: active, label: Active, type: checkbox }
+
+  - id: delete_pos_config
+    type: server
+    permission: pos.manage
+    action: pos.configs.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [pos_configs]
+    mutation:
+      operation: delete
+      table: pos_configs
+      key_field: id
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_configs WHERE id = :id", status: 404, code: POS_CONFIG_NOT_FOUND, message: Point of Sale configuration not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_sessions s JOIN pos_configs c ON c.name = s.config WHERE c.id = :id)", status: 409, code: POS_CONFIG_IN_USE, message: A Point of Sale configuration with sessions cannot be deleted. }
+      result: { query: "SELECT * FROM pos_configs WHERE id = :id" }

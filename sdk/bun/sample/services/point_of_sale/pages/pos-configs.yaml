@@ -5,18 +5,25 @@ components:
     variant: odoo
     source: pos_configs
     create_action: create_pos_config
-    create_label: New configuration
+    create_label: New
+    search: { label: Search Point of Sale, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Cards, icon: grid, mobile: true, card: { title: name, subtitle: company, fields: [{ field: closing, label: Closing }, { field: balance, label: Balance }, { field: status, label: Status }] } }
+    responsive_card: true
     columns:
       - { field: name, label: Point of Sale, type: PrimaryEntityCell }
       - { field: company, label: Company }
-      - { field: currency, label: Currency }
-      - { field: receipt_header, label: Receipt header }
-      - { field: active, label: Active, type: StatusChip }
+      - { field: closing, label: Closing }
+      - { field: balance, label: Balance, type: Money }
+      - { field: status, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
     row_double_click_action: view_pos_config
-    form_view: { page: apps/services/point_of_sale/pages/pos-config-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/point_of_sale/pages/pos-config-detail.yaml, side_panel: false }
     row_actions: menu
+    empty_state: { title: No Point of Sale configurations, description: Create a Point of Sale configuration to start selling. }
     actions:
       - { id: archive_pos_config, label: Archive, permission: pos.manage, variant: danger, show_if: "row.active === true" }
 actions:

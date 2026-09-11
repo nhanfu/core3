@@ -4,15 +4,27 @@ components:
   - type: OdooFormView
     source: pos_config_detail
     title_field: name
-    group_columns: 2
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions:
+      - { id: back_to_pos_configs, label: Point of Sales, variant: secondary, permission: pos.read }
+      - { id: edit_pos_config, label: Edit, variant: primary, permission: pos.manage }
+      - { id: delete_pos_config, label: Delete, variant: danger, permission: pos.manage, confirm: Delete this Point of Sale configuration? }
+    group_columns: 1
     groups:
       - title: Point of Sale
         fields:
-          - { field: name, label: Point of Sale }
-          - { field: company, label: Company }
-          - { field: currency, label: Currency }
-          - { field: active, label: Active }
-      - title: Receipts
+          - { field: name, label: Point of Sale? }
+      - title: Configuration
         fields:
-          - { field: receipt_header, label: Receipt header }
-          - { field: receipt_footer, label: Receipt footer }
+          - { field: login_with_employees, label: Log in with Employees?, description: Allow staff to log in and switch between selected employees., type: checkbox }
+          - { field: epos_printer, label: ePOS Printer?, description: Connect a receipt printer without an IoT Box., type: checkbox }
+          - { field: iot_box, label: IoT Box, description: Connect devices using an IoT Box., type: checkbox }
+      - title: Status
+        fields:
+          - { field: active, label: Active, type: checkbox }
+actions:
+  - id: back_to_pos_configs
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/configs
