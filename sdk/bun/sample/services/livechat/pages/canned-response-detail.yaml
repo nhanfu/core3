@@ -1,0 +1,19 @@
+title: Canned Response
+page: { id: livechat-canned-response-detail, route: /livechat/canned-responses/detail, breadcrumb: [Website, Live Chat, Configuration, Canned Responses], auth: { require: [livechat.read] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_canned_response_detail
+    title_field: source
+    editable: true
+    groups:
+      - title: Canned Response
+        fields:
+          - { field: shortcut, label: Shortcut }
+          - { field: substitution, label: Substitution, type: textarea }
+          - { field: authorized_groups, label: Authorized Groups }
+          - { field: last_used, label: Last Used, readonly: true }
+          - { field: is_shared, label: Shared, readonly: true }
+          - { field: is_editable, label: Editable, readonly: true }
+    header_actions:
+      - { id: edit_livechat_canned_response, label: Save, variant: primary, permission: livechat.write }

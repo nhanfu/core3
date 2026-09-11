@@ -1,0 +1,31 @@
+version: 0.0.12
+kind: data
+description: Add deterministic Live Chat canned response fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_canned_responses (
+        id VARCHAR PRIMARY KEY,
+        row_version INTEGER NOT NULL DEFAULT 1,
+        source VARCHAR NOT NULL UNIQUE,
+        substitution VARCHAR NOT NULL,
+        authorized_groups VARCHAR NOT NULL DEFAULT '',
+        is_shared BOOLEAN NOT NULL DEFAULT FALSE,
+        is_editable BOOLEAN NOT NULL DEFAULT TRUE,
+        created_by VARCHAR NOT NULL DEFAULT 'user-admin',
+        last_used TIMESTAMP,
+        sort_order INTEGER NOT NULL DEFAULT 1000,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT INTO livechat_canned_responses(id, row_version, source, substitution, authorized_groups, is_shared, is_editable, created_by, last_used, sort_order, created_at)
+      VALUES
+        ('livechat-canned-hello', 1, 'hello', 'Hello, how may I help you?', 'Internal User', TRUE, TRUE, 'user-admin', TIMESTAMP '2026-09-05 09:30:00', 1, TIMESTAMP '2026-01-15 08:00:00'),
+        ('livechat-canned-bye', 1, 'bye', 'Thanks for your feedback. Goodbye!', 'Internal User', TRUE, TRUE, 'user-admin', NULL, 2, TIMESTAMP '2026-01-15 08:01:00'),
+        ('livechat-canned-private', 1, 'follow_up', 'I will follow up shortly.', '', FALSE, TRUE, 'user-admin', NULL, 3, TIMESTAMP '2026-01-15 08:02:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS livechat_canned_responses;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

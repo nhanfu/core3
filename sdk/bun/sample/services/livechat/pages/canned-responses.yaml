@@ -1,0 +1,34 @@
+title: Canned Responses
+page: { id: livechat-canned-responses, route: /livechat/canned-responses, breadcrumb: [Website, Live Chat, Configuration, Canned Responses], auth: { require: [livechat.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_canned_responses
+    create_action: create_livechat_canned_response
+    create_label: New
+    search: { label: Search..., placeholder: Search... }
+    filters:
+      - { field: visibility, label: Visibility, options: [{ id: shared, label: Shared }, { id: private, label: Private }] }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: ''
+        card: { title: shortcut, subtitle: substitution, fields: [{ field: authorized_groups, label: Authorized Groups }] }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/livechat/pages/canned-response-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_livechat_canned_response
+    row_double_click_action: view_livechat_canned_response
+    row_actions: menu
+    empty_state: { title: No canned response found. Let's create one!, description: 'Use canned responses to quickly insert prewritten messages with ::shortcut. You can edit the text before sending.' }
+    columns:
+      - { field: shortcut, label: Shortcut, type: PrimaryEntityCell, mobile: true }
+      - { field: substitution, label: Substitution, type: TextCell, mobile: true }
+      - { field: authorized_groups, label: Authorized Groups, type: TextCell, optional: hide }
+      - { field: last_used, label: Last Used, type: TextCell, optional: hide }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_livechat_canned_response, label: Edit, icon: edit }, { id: delete_livechat_canned_response, label: Delete, icon: trash, variant: danger }] }

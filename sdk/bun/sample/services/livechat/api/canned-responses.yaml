@@ -1,0 +1,95 @@
+page: { id: livechat-canned-responses }
+
+datasources:
+  - id: livechat_canned_responses
+    permission: livechat.read
+    error_states:
+      forbidden: { status: 403, code: LIVECHAT_CANNED_RESPONSES_FORBIDDEN, message: You do not have permission to view Live Chat canned responses. }
+      transport_error: { status: 503, code: LIVECHAT_CANNED_RESPONSES_UNAVAILABLE, message: Live Chat canned responses are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, source, '::' || source AS shortcut, substitution,
+        authorized_groups, is_shared, is_editable, created_by,
+        CAST(last_used AS VARCHAR) AS last_used
+      FROM livechat_canned_responses
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR source ILIKE '%' || :q || '%' OR substitution ILIKE '%' || :q || '%')
+        AND (:visibility IS NULL OR (:visibility = 'shared' AND is_shared = TRUE) OR (:visibility = 'private' AND is_shared = FALSE))
+        AND ((COALESCE(:fixture_state, '') NOT IN ('private', 'shared') AND is_shared = TRUE)
+          OR (:fixture_state = 'private' AND is_shared = FALSE)
+          OR (:fixture_state = 'shared' AND is_shared = TRUE))
+      ORDER BY sort_order, id
+
+actions:
+  - id: create_livechat_canned_response
+    type: server_form
+    permission: livechat.write
+    title: New Canned Response
+    action: im_livechat.canned_responses.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [livechat_canned_responses]
+    mutation:
+      operation: insert
+      table: livechat_canned_responses
+      generated: [id]
+      fields: [source, substitution, authorized_groups, is_shared, is_editable, created_by, created_at, last_used, sort_order]
+      required: [source, substitution]
+      defaults: { authorized_groups: '', is_shared: false, is_editable: true, created_by: user-admin, created_at: '2026-01-15 00:00:00', last_used: null, sort_order: 1000 }
+      before_steps: [{ query: "SELECT 'livechat-canned-' || lower(trim(CAST(:source AS VARCHAR))) AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(trim(CAST(:source AS VARCHAR)), '^[a-z0-9_-]{1,64}$')", status: 422, code: LIVECHAT_CANNED_RESPONSE_SHORTCUT_INVALID, message: Shortcut must use lowercase letters, numbers, underscores, or hyphens. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:substitution AS VARCHAR))) > 0", status: 422, code: LIVECHAT_CANNED_RESPONSE_SUBSTITUTION_REQUIRED, message: Substitution is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_canned_responses WHERE LOWER(source) = LOWER(TRIM(CAST(:source AS VARCHAR))))", status: 409, code: LIVECHAT_CANNED_RESPONSE_SHORTCUT_EXISTS, message: A canned response with this shortcut already exists. }
+      result: { query: "SELECT * FROM livechat_canned_responses WHERE id = :id" }
+    fields:
+      - { field: source, label: Shortcut, type: text, required: true }
+      - { field: substitution, label: Substitution, type: textarea, required: true }
+      - { field: authorized_groups, label: Authorized Groups, type: text }
+      - { field: is_shared, label: Shared, type: checkbox }
+
+  - id: edit_livechat_canned_response
+    type: server_form
+    permission: livechat.write
+    title: Edit Canned Response
+    action: im_livechat.canned_responses.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [livechat_canned_responses, livechat_canned_response_detail]
+    mutation:
+      operation: update
+      table: livechat_canned_responses
+      fields: [source, substitution, authorized_groups, is_shared]
+      required: [source, substitution]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_canned_responses WHERE id = :id", status: 404, code: LIVECHAT_CANNED_RESPONSE_NOT_FOUND, message: Canned response not found. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(trim(CAST(:source AS VARCHAR)), '^[a-z0-9_-]{1,64}$')", status: 422, code: LIVECHAT_CANNED_RESPONSE_SHORTCUT_INVALID, message: Shortcut must use lowercase letters, numbers, underscores, or hyphens. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:substitution AS VARCHAR))) > 0", status: 422, code: LIVECHAT_CANNED_RESPONSE_SUBSTITUTION_REQUIRED, message: Substitution is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_canned_responses WHERE LOWER(source) = LOWER(TRIM(CAST(:source AS VARCHAR))) AND id <> :id)", status: 409, code: LIVECHAT_CANNED_RESPONSE_SHORTCUT_EXISTS, message: A canned response with this shortcut already exists. }
+      result: { query: "SELECT * FROM livechat_canned_responses WHERE id = :id" }
+    fields:
+      - { field: source, label: Shortcut, type: text, required: true }
+      - { field: substitution, label: Substitution, type: textarea, required: true }
+      - { field: authorized_groups, label: Authorized Groups, type: text }
+      - { field: is_shared, label: Shared, type: checkbox }
+
+  - id: delete_livechat_canned_response
+    type: server
+    permission: livechat.write
+    action: im_livechat.canned_responses.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [livechat_canned_responses]
+    mutation:
+      operation: delete
+      table: livechat_canned_responses
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_canned_responses WHERE id = :id", status: 404, code: LIVECHAT_CANNED_RESPONSE_NOT_FOUND, message: Canned response not found. }
+
+  - id: view_livechat_canned_response
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat/canned-responses/detail
+    params: { id: '{row.id}' }
