@@ -30,5 +30,6 @@ menu:
               permission: base.reference.read
               children:
                 - { path: /base-country-groups, label: Country Group, icon: globe, permission: base.reference.read }
+                - { path: /base-fed-states, label: Fed. States, icon: map, permission: base.reference.read }
         - { path: /users, label: Users, icon: users, permission: auth.users.manage }
         - { path: /user-groups, label: User groups, icon: users, permission: auth.roles.manage }

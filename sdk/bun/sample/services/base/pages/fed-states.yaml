@@ -1,0 +1,28 @@
+title: Fed. States
+page: { id: fed-states, route: /base-fed-states, breadcrumb: [Contacts, Configuration, Localization, Fed. States], auth: { require: [base.reference.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fed_states
+    create_action: create_fed_state
+    create_label: New
+    search: { label: Search states, placeholder: 'Search state name, code, or country...' }
+    group_by: [{ field: country_name, label: Country }]
+    inline_edit:
+      create_action: create_fed_state
+      update_action: edit_fed_state
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, placeholder: 'e.g. California' }
+        - { field: code, type: text, placeholder: 'e.g. CA' }
+        - { field: country_code, type: select, options_source: state_countries }
+    columns:
+      - { field: name, label: State Name, type: PrimaryEntityCell }
+      - { field: code, label: State Code }
+      - { field: country_name, label: Country }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: delete_fed_state, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No federal states found, description: No states match the current search or country filter. }

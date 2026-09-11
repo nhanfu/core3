@@ -1,0 +1,76 @@
+page: { id: fed-states }
+datasources:
+  - id: state_countries
+    permission: base.reference.read
+    query: "SELECT code AS value, name AS label FROM base_countries ORDER BY name, code"
+  - id: fed_states
+    permission: base.reference.read
+    error_states: { transport_error: { status: 503, code: BASE_FED_STATES_UNAVAILABLE, message: Federal states are temporarily unavailable. } }
+    query: "SELECT s.code AS id, s.row_version, s.name, s.code, s.country_code, c.name AS country_name FROM base_states s LEFT JOIN base_countries c ON c.code = s.country_code WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.code ILIKE '%' || :q || '%' OR COALESCE(c.name, '') ILIKE '%' || :q || '%') AND (:country_code IS NULL OR s.country_code = :country_code) ORDER BY s.code"
+actions:
+  - id: create_fed_state
+    type: server_form
+    permission: base.reference.write
+    title: New State
+    action: base.reference.states.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fed_states]
+    mutation:
+      operation: insert
+      table: base_states
+      fields: [name, code, country_code]
+      required: [name, code, country_code]
+      defaults: { row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:code AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:country_code AS VARCHAR))) > 0", status: 422, code: BASE_STATE_FIELDS_REQUIRED, message: State Name, State Code, and Country are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_states WHERE code = TRIM(CAST(:code AS VARCHAR)))", status: 409, code: BASE_STATE_CODE_EXISTS, message: A state with this code already exists. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_states WHERE country_code = TRIM(CAST(:country_code AS VARCHAR)) AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: BASE_STATE_NAME_EXISTS, message: A state with this name already exists in the selected country. }
+        - { query: "SELECT code FROM base_countries WHERE code = TRIM(CAST(:country_code AS VARCHAR))", status: 422, code: BASE_STATE_COUNTRY_INVALID, message: Select a valid country. }
+      result: { query: "SELECT * FROM base_states WHERE code = :id" }
+    fields:
+      - { field: name, label: State Name, type: text, required: true, placeholder: 'e.g. California' }
+      - { field: code, label: State Code, type: text, required: true, placeholder: 'e.g. CA' }
+      - { field: country_code, label: Country, type: select, options_source: state_countries, required: true }
+  - id: edit_fed_state
+    type: server_form
+    permission: base.reference.write
+    title: Edit State
+    action: base.reference.states.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [fed_states]
+    mutation:
+      operation: update
+      table: base_states
+      key_field: code
+      fields: [name, code, country_code]
+      required: [name, code, country_code]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT code FROM base_states WHERE code = :id", status: 404, code: BASE_STATE_NOT_FOUND, message: State not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:code AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:country_code AS VARCHAR))) > 0", status: 422, code: BASE_STATE_FIELDS_REQUIRED, message: State Name, State Code, and Country are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_states WHERE code = TRIM(CAST(:code AS VARCHAR)) AND code <> :id)", status: 409, code: BASE_STATE_CODE_EXISTS, message: A state with this code already exists. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_states WHERE country_code = TRIM(CAST(:country_code AS VARCHAR)) AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND code <> :id)", status: 409, code: BASE_STATE_NAME_EXISTS, message: A state with this name already exists in the selected country. }
+        - { query: "SELECT code FROM base_countries WHERE code = TRIM(CAST(:country_code AS VARCHAR))", status: 422, code: BASE_STATE_COUNTRY_INVALID, message: Select a valid country. }
+      result: { query: "SELECT * FROM base_states WHERE code = :id" }
+    fields:
+      - { field: name, label: State Name, type: text, required: true }
+      - { field: code, label: State Code, type: text, required: true }
+      - { field: country_code, label: Country, type: select, options_source: state_countries, required: true }
+  - id: delete_fed_state
+    type: server
+    permission: base.reference.write
+    action: base.reference.states.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [fed_states]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      operation: delete
+      table: base_states
+      key_field: code
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT code FROM base_states WHERE code = :id", status: 404, code: BASE_STATE_NOT_FOUND, message: State not found. }
