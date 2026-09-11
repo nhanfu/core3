@@ -1,0 +1,47 @@
+version: 0.0.9
+description: Deterministic Operations action fixtures aligned with Odoo mrp.routing.workcenter
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_routing_workcenters (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        sequence INTEGER NOT NULL DEFAULT 100,
+        bom_id VARCHAR NOT NULL,
+        bom_name VARCHAR NOT NULL,
+        workcenter_id VARCHAR NOT NULL,
+        workcenter_name VARCHAR NOT NULL,
+        time_mode VARCHAR NOT NULL DEFAULT 'manual',
+        time_mode_batch INTEGER NOT NULL DEFAULT 10,
+        time_cycle_manual DECIMAL(18,2) NOT NULL DEFAULT 60,
+        time_cycle DECIMAL(18,2) NOT NULL DEFAULT 60,
+        time_total DECIMAL(18,2) NOT NULL DEFAULT 60,
+        cost_mode VARCHAR NOT NULL DEFAULT 'actual',
+        cost DECIMAL(18,2) NOT NULL DEFAULT 0,
+        apply_on_variants VARCHAR NOT NULL DEFAULT '',
+        blocked_by_operations VARCHAR NOT NULL DEFAULT '',
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        workorder_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        UNIQUE(name, bom_id)
+      );
+      INSERT INTO mrp_routing_workcenters (
+        id, row_version, name, active, sequence, bom_id, bom_name, workcenter_id,
+        workcenter_name, time_mode, time_mode_batch, time_cycle_manual, time_cycle,
+        time_total, cost_mode, cost, apply_on_variants, blocked_by_operations,
+        company_name, workorder_count, created_at
+      ) VALUES
+        ('operation-manual-assembly', 1, 'Manual Assembly', TRUE, 5, 'bom-table-top-odoo', '[FURN_8522] Table Top', 'workcenter-assembly-1', 'Assembly 1', 'manual', 10, 60, 60, 60, 'actual', 0, '', '', 'My Company (San Francisco)', 1, TIMESTAMP '2026-01-15 08:00:00'),
+        ('operation-packing', 1, 'Packing', TRUE, 5, 'bom-drawer-secondary', 'SEC-ASSEM: [FURN_8855] Drawer', 'workcenter-drill-1', 'Drill 1', 'manual', 10, 30, 30, 30, 'actual', 0, '', '', 'My Company (San Francisco)', 0, TIMESTAMP '2026-01-15 08:01:00'),
+        ('operation-testing', 1, 'Testing', TRUE, 10, 'bom-drawer-secondary', 'SEC-ASSEM: [FURN_8855] Drawer', 'workcenter-assembly-1', 'Assembly 1', 'manual', 10, 60, 60, 60, 'actual', 0, '', '', 'My Company (San Francisco)', 0, TIMESTAMP '2026-01-15 08:02:00'),
+        ('operation-long-time-assembly', 1, 'Long time assembly', TRUE, 15, 'bom-drawer-secondary', 'SEC-ASSEM: [FURN_8855] Drawer', 'workcenter-assembly-1', 'Assembly 1', 'manual', 10, 180, 180, 180, 'actual', 0, '', '', 'My Company (San Francisco)', 0, TIMESTAMP '2026-01-15 08:03:00'),
+        ('operation-assembly', 1, 'Assembly', TRUE, 10, 'bom-table-odoo', '[FURN_9666] Table', 'workcenter-assembly-1', 'Assembly 1', 'manual', 10, 120, 120, 120, 'actual', 0, '', '', 'My Company (San Francisco)', 0, TIMESTAMP '2026-01-15 08:04:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS mrp_routing_workcenters;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
