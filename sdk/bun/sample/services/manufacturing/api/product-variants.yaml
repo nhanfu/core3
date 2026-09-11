@@ -1,0 +1,75 @@
+page: { id: manufacturing-product-variants }
+datasources:
+  - id: mrp_product_variant_types
+    permission: manufacturing.read
+    query: "SELECT value, label FROM (VALUES ('Goods', 'Goods'), ('Consumable', 'Consumable'), ('Service', 'Service')) types(value, label)"
+  - id: mrp_product_variants
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_PRODUCT_VARIANTS_UNAUTHORIZED, message: Sign in to view product variants. }
+      forbidden: { status: 403, code: MRP_PRODUCT_VARIANTS_FORBIDDEN, message: You do not have permission to view product variants. }
+      transport_error: { status: 503, code: MRP_PRODUCT_VARIANTS_UNAVAILABLE, message: Product variants are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, name, COALESCE(default_code, '') AS default_code, COALESCE(barcode, '') AS barcode,
+        COALESCE(product_template, '') AS product_template, COALESCE(variant_values, '') AS variant_values,
+        COALESCE(category, '') AS category, product_type, uom, company_name,
+        list_price, standard_price, printf('$ %,.2f', CAST(list_price AS DOUBLE)) AS list_price_display,
+        printf('$ %,.2f', CAST(standard_price AS DOUBLE)) AS standard_price_display,
+        CAST(on_hand AS DOUBLE) AS on_hand, printf('%.2f %s', CAST(on_hand AS DOUBLE), uom) AS on_hand_display,
+        document_count, purchased_qty, active, sales_tax, purchase_tax, COALESCE(note, '') AS note,
+        CAST(created_at AS VARCHAR) AS created_at
+      FROM mrp_product_variants
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(default_code, '') ILIKE '%' || :q || '%'
+          OR COALESCE(barcode, '') ILIKE '%' || :q || '%' OR COALESCE(variant_values, '') ILIKE '%' || :q || '%')
+        AND (CAST(:product_type AS VARCHAR) IS NULL OR product_type = :product_type)
+        AND (CAST(:active AS BOOLEAN) IS NULL OR active = CAST(:active AS BOOLEAN))
+      ORDER BY name, variant_values, id
+actions:
+  - id: view_mrp_product_variant
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/product-variants/detail
+    params: { id: '{row.id}' }
+  - id: create_mrp_product_variant
+    type: server_form
+    permission: manufacturing.write
+    title: New Product Variant
+    action: manufacturing.product_variants.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mrp_product_variants]
+    success_message: Product variant created.
+    mutation:
+      operation: insert
+      table: mrp_product_variants
+      generated: [id]
+      fields: [name, product_template, variant_values, default_code, barcode, category, product_type, uom, company_name, list_price, standard_price, sales_tax, purchase_tax, note, on_hand, document_count, purchased_qty, active]
+      required: [name, product_template]
+      defaults: { product_type: Goods, uom: Units, company_name: 'My Company (San Francisco)', list_price: 0, standard_price: 0, sales_tax: '15%', purchase_tax: '15%', note: '', on_hand: 0, document_count: 0, purchased_qty: 0, active: true, created_at: '2026-01-15 12:00:00' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:product_template AS VARCHAR))) > 0", status: 422, code: MRP_PRODUCT_VARIANT_REQUIRED, message: Product and product template are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_product_variants WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND LOWER(COALESCE(variant_values, '')) = LOWER(COALESCE(CAST(:variant_values AS VARCHAR), '')))", status: 409, code: MRP_PRODUCT_VARIANT_EXISTS, message: This product variant already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:list_price, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:standard_price, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:on_hand, 0) AS DECIMAL(18,3)) >= 0", status: 422, code: MRP_PRODUCT_VARIANT_NUMERIC_INVALID, message: Price and on-hand quantity must be zero or greater. }
+      result: { query: "SELECT * FROM mrp_product_variants WHERE id = :id" }
+    fields:
+      - { field: name, label: Product, type: text, required: true }
+      - { field: product_template, label: Product Template, type: text, required: true }
+      - { field: variant_values, label: Attributes, type: text }
+      - { field: default_code, label: Internal Reference, type: text }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: product_type, label: Product Type?, type: select, options: [Goods, Service, Consumable] }
+      - { field: uom, label: Unit of Measure, type: text, default: Units }
+      - { field: list_price, label: Sales Price, type: number, min: 0 }
+      - { field: standard_price, label: Cost, type: number, min: 0 }
+      - { field: category, label: Category, type: text }
+      - { field: company_name, label: Company, type: text }
+  - id: archive_mrp_product_variant
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.product_variants.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { active: false } }
+    refresh: [mrp_product_variant_detail, mrp_product_variants]
+    mutation: { steps: [{ query: "UPDATE mrp_product_variants SET active = FALSE, row_version = row_version + 1 WHERE id = :id" }], concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_product_variants WHERE id = :id AND active = TRUE", status: 409, code: MRP_PRODUCT_VARIANT_ALREADY_ARCHIVED, message: Product variant is already archived. }], result: { query: "SELECT * FROM mrp_product_variants WHERE id = :id" } }

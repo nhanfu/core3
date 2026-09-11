@@ -37,6 +37,10 @@ menu:
           label: Products
           icon: package
           permission: manufacturing.read
+        - path: /manufacturing/product-variants
+          label: Product Variants
+          icon: package
+          permission: manufacturing.read
         - path: /boms
           label: Bills of Materials
           icon: components

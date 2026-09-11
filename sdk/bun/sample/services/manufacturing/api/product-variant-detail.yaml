@@ -1,0 +1,115 @@
+page: { id: manufacturing-product-variant-detail }
+datasources:
+  - id: mrp_product_variant_detail
+    single: true
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_PRODUCT_VARIANT_DETAIL_UNAUTHORIZED, message: Sign in to view this product variant. }
+      forbidden: { status: 403, code: MRP_PRODUCT_VARIANT_DETAIL_FORBIDDEN, message: You do not have permission to view this product variant. }
+      missing_record: { status: 404, code: MRP_PRODUCT_VARIANT_DETAIL_NOT_FOUND, message: Product variant not found. }
+      transport_error: { status: 503, code: MRP_PRODUCT_VARIANT_DETAIL_UNAVAILABLE, message: This product variant is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, name, COALESCE(default_code, '') AS default_code, COALESCE(barcode, '') AS barcode,
+        COALESCE(product_template, '') AS product_template, COALESCE(variant_values, '') AS variant_values,
+        COALESCE(category, '') AS category, product_type, uom, company_name, list_price, standard_price,
+        printf('$ %,.2f', CAST(list_price AS DOUBLE)) AS list_price_display,
+        printf('$ %,.2f', CAST(standard_price AS DOUBLE)) AS standard_price_display,
+        CAST(on_hand AS DOUBLE) AS on_hand, printf('%.2f %s', CAST(on_hand AS DOUBLE), uom) AS on_hand_display,
+        document_count, purchased_qty, active, sales_tax, purchase_tax, COALESCE(note, '') AS note
+      FROM mrp_product_variants
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id
+  - id: mrp_product_variant_messages
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_PRODUCT_VARIANT_MESSAGES_UNAVAILABLE, message: Product variant messages are temporarily unavailable. } }
+    query: "SELECT id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM mrp_product_variant_messages WHERE product_variant_id = :id ORDER BY created_at, id"
+actions:
+  - id: back_to_mrp_product_variants
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/product-variants
+  - id: mrp_variant_documents
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/product-variants/detail
+    params: { id: '{state.id}', tab: documents }
+  - id: mrp_variant_purchased
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/product-variants/detail
+    params: { id: '{state.id}', tab: purchase }
+  - id: edit_mrp_product_variant
+    type: server_form
+    permission: manufacturing.write
+    title: Edit Product Variant
+    action: manufacturing.product_variants.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.mrp_product_variant_detail
+    refresh: [mrp_product_variant_detail, mrp_product_variants, mrp_product_variant_messages]
+    success_message: Product variant updated.
+    fields:
+      - { field: name, label: Product, type: text, required: true }
+      - { field: product_template, label: Product Template, type: text, required: true }
+      - { field: variant_values, label: Attributes, type: text }
+      - { field: default_code, label: Internal Reference, type: text }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: product_type, label: Product Type?, type: select, options: [Goods, Service, Consumable] }
+      - { field: uom, label: Unit of Measure, type: text }
+      - { field: list_price, label: Sales Price, type: number, min: 0 }
+      - { field: standard_price, label: Cost, type: number, min: 0 }
+      - { field: category, label: Category, type: text }
+      - { field: company_name, label: Company, type: text }
+    mutation:
+      operation: update
+      table: mrp_product_variants
+      fields: [name, product_template, variant_values, default_code, barcode, category, product_type, uom, company_name, list_price, standard_price, sales_tax, purchase_tax, note, active]
+      required: [name, product_template]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_product_variants WHERE id = :id", status: 404, code: MRP_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:product_template AS VARCHAR))) > 0", status: 422, code: MRP_PRODUCT_VARIANT_REQUIRED, message: Product and product template are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_product_variants WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND LOWER(COALESCE(variant_values, '')) = LOWER(COALESCE(CAST(:variant_values AS VARCHAR), '')) AND id <> :id)", status: 409, code: MRP_PRODUCT_VARIANT_EXISTS, message: This product variant already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:list_price, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:standard_price, 0) AS DECIMAL(18,2)) >= 0", status: 422, code: MRP_PRODUCT_VARIANT_NUMERIC_INVALID, message: Price and cost must be zero or greater. }
+      result: { query: "SELECT * FROM mrp_product_variants WHERE id = :id" }
+  - id: archive_mrp_product_variant
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.product_variants.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { active: false } }
+    refresh: [mrp_product_variant_detail, mrp_product_variants]
+    mutation: { steps: [{ query: "UPDATE mrp_product_variants SET active = FALSE, row_version = row_version + 1 WHERE id = :id" }], concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_product_variants WHERE id = :id AND active = TRUE", status: 409, code: MRP_PRODUCT_VARIANT_ALREADY_ARCHIVED, message: Product variant is already archived. }], result: { query: "SELECT * FROM mrp_product_variants WHERE id = :id" } }
+  - id: delete_mrp_product_variant
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.product_variants.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [mrp_product_variants]
+    confirm: Delete this product variant?
+    mutation: { operation: delete, table: mrp_product_variants, concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_product_variants WHERE id = :id", status: 404, code: MRP_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }, { query: "SELECT 1 AS ok FROM mrp_product_variants WHERE id = :id AND on_hand = 0 AND document_count = 0 AND purchased_qty = 0", status: 409, code: MRP_PRODUCT_VARIANT_IN_USE, message: A product variant with stock or history cannot be deleted. Archive it instead. }] }
+  - id: send_mrp_product_variant_message
+    type: server_form
+    permission: manufacturing.write
+    title: Send message
+    action: manufacturing.product_variants.message
+    handler: order_chatter
+    operation: message
+    params: { id: '{row.id}' }
+    refresh: [mrp_product_variant_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation: { guards: [{ query: "SELECT id FROM mrp_product_variants WHERE id = :id", status: 404, code: MRP_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }], steps: [{ query: "INSERT INTO mrp_product_variant_messages(id, product_variant_id, actor_name, action, action_label, detail, created_at) VALUES(gen_random_uuid(), :id, :current_user_name, 'manufacturing.product_variants.message', 'Message', :content, CURRENT_TIMESTAMP)" }] }
+  - id: log_mrp_product_variant_note
+    type: server_form
+    permission: manufacturing.write
+    title: Log note
+    action: manufacturing.product_variants.note
+    handler: order_chatter
+    operation: note
+    params: { id: '{row.id}' }
+    refresh: [mrp_product_variant_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation: { guards: [{ query: "SELECT id FROM mrp_product_variants WHERE id = :id", status: 404, code: MRP_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }], steps: [{ query: "INSERT INTO mrp_product_variant_messages(id, product_variant_id, actor_name, action, action_label, detail, created_at) VALUES(gen_random_uuid(), :id, :current_user_name, 'manufacturing.product_variants.note', 'Note', :content, CURRENT_TIMESTAMP)" }] }

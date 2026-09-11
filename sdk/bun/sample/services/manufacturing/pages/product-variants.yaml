@@ -1,0 +1,38 @@
+title: Product Variants
+page: { id: manufacturing-product-variants, route: /manufacturing/product-variants, breadcrumb: [Supply Chain, Manufacturing, Products, Product Variants], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_product_variants
+    create_action: create_mrp_product_variant
+    create_label: New
+    search: { label: Search product variants, placeholder: 'Search by product, internal reference, barcode, or attribute value...' }
+    filters:
+      - { field: product_type, label: Product Type, options: [{ id: Goods, label: Goods }, { id: Consumable, label: Consumable }, { id: Service, label: Service }] }
+      - { field: active, label: Status, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: product_template
+        card: { title: name, subtitle: default_code, fields: [{ field: variant_values, label: Attributes }, { field: list_price_display, label: 'Price:' }, { field: on_hand_display, label: 'On hand:' }] }
+      - { id: list, label: List, icon: table }
+    form_view: { page: apps/services/manufacturing/pages/product-variant-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_product_variant
+    row_double_click_action: view_mrp_product_variant
+    row_actions: menu
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: default_code, label: Internal Reference, sortable: true, mobile: true }
+      - { field: variant_values, label: Attributes, mobile: true }
+      - { field: product_template, label: Product Template, mobile: false }
+      - { field: list_price_display, label: Sales Price, align: right, mobile: true }
+      - { field: standard_price_display, label: Cost, align: right, mobile: false }
+      - { field: uom, label: Unit of Measure, mobile: false }
+      - { field: category, label: Category, mobile: false, optional: hide }
+      - { field: company_name, label: Company, mobile: false, optional: hide }
+      - { field: active, label: Status, type: StatusChip, mobile: false, optional: hide }
+    page_size: 50
+    empty_state: { title: No product variants found, description: Create a product variant for a manufactured product or component. }

@@ -1,0 +1,69 @@
+title: Product Variant
+page: { id: manufacturing-product-variant-detail, route: /manufacturing/product-variants/detail, breadcrumb: [Supply Chain, Manufacturing, Products, Product Variants, Product Variant], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_product_variant_detail
+    title_field: name
+    subtitle_field: default_code
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    stat_buttons:
+      - { id: mrp_variant_documents, label: Documents, value_field: document_count }
+      - { id: mrp_variant_purchased, label: Purchased, value_field: purchased_qty }
+    header_actions:
+      - { id: back_to_mrp_product_variants, label: Product Variants, icon: arrow-left, permission: manufacturing.read }
+      - { id: edit_mrp_product_variant, label: Edit, variant: secondary, permission: manufacturing.write }
+      - { id: archive_mrp_product_variant, label: Archive, variant: danger, permission: manufacturing.manage, show_if: 'state.mrp_product_variant_detail.active === true' }
+      - { id: delete_mrp_product_variant, label: Delete, icon: trash, variant: danger, permission: manufacturing.manage, confirm: Delete this product variant? }
+    group_columns: 2
+    groups:
+      - title: Product
+        fields:
+          - { field: name, label: Product }
+          - { field: product_template, label: Product Template }
+          - { field: variant_values, label: Attributes }
+          - { field: company_name, label: Company }
+      - title: General Information
+        fields:
+          - { field: product_type, label: Product Type?, type: select }
+          - { field: uom, label: Unit of Measure }
+          - { field: default_code, label: Internal Reference }
+          - { field: barcode, label: Barcode }
+          - { field: category, label: Category }
+    notebook:
+      active: general
+      tabs:
+        - id: general
+          label: General Information
+          groups:
+            - title: Sales
+              fields:
+                - { field: list_price_display, label: Sales Price, readonly: true }
+                - { field: list_price, label: Sales Price Value }
+                - { field: sales_tax, label: Sales Taxes }
+                - { field: on_hand_display, label: Quantity On Hand, readonly: true }
+        - id: purchase
+          label: Purchase
+          groups:
+            - title: Purchase
+              fields:
+                - { field: standard_price_display, label: Cost, readonly: true }
+                - { field: standard_price, label: Cost Value }
+                - { field: purchase_tax, label: Purchase Taxes }
+                - { field: purchased_qty, label: Purchased, readonly: true }
+        - id: notes
+          label: INTERNAL NOTES
+          groups:
+            - title: Internal Notes
+              fields: [{ field: note, label: Internal Notes, type: textarea, wide: true }]
+    message_source: mrp_product_variant_messages
+    chatter_label: INTERNAL NOTES
+    message_label: Send message
+    note_label: Log note
+    message_action: send_mrp_product_variant_message
+    note_action: log_mrp_product_variant_note
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    message_action_labels: { manufacturing.product_variants.message: Message, manufacturing.product_variants.note: Note, created: Product Variant created }
