@@ -1,0 +1,37 @@
+version: 0.0.13
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_employment_types (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL UNIQUE,
+        code VARCHAR,
+        country_name VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO employee_employment_types (id, row_version, sequence, name, code, country_name)
+      VALUES
+        ('employment-type-permanent', 1, 1001, 'Permanent', NULL, NULL),
+        ('employment-type-temporary', 1, 1002, 'Temporary', NULL, NULL),
+        ('employment-type-interim', 1, 1003, 'Interim', NULL, NULL),
+        ('employment-type-seasonal', 1, 1004, 'Seasonal', NULL, NULL),
+        ('employment-type-full-time', 1, 1005, 'Full-Time', NULL, NULL),
+        ('employment-type-part-time', 1, 1006, 'Part-Time', NULL, NULL),
+        ('employment-type-intern', 1, 1007, 'Intern', NULL, NULL),
+        ('employment-type-student', 1, 1008, 'Student', NULL, NULL),
+        ('employment-type-apprenticeship', 1, 1009, 'Apprenticeship', NULL, NULL),
+        ('employment-type-thesis', 1, 1010, 'Thesis', NULL, NULL),
+        ('employment-type-statutory', 1, 1011, 'Statutory', NULL, NULL),
+        ('employment-type-employee', 1, 1012, 'Employee', NULL, NULL);
+      UPDATE employee_employment_types
+      SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_employment_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

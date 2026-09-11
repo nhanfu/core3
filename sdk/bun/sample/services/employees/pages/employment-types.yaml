@@ -1,0 +1,26 @@
+title: Employment Types
+page: { id: employee-employment-types, route: /employees/employment-types, breadcrumb: [Human Resources, Configuration, Recruitment, Employment Types], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_employment_types
+    search: { label: Search employment types, placeholder: Search... }
+    views:
+      - { id: list, label: List, icon: table }
+    inline_edit:
+      create_action: create_employee_employment_type_inline
+      update_action: update_employee_employment_type_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: sequence, type: number, default: 1013 }
+        - { field: name, type: text, required: true, placeholder: Employment type }
+        - { field: country_name, type: text, placeholder: Country }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: country_name, label: Country, optional: hide }
+      - { field: id, label: '', sortable: false, actions: [{ id: delete_employee_employment_type, label: Delete, icon: trash, variant: danger }] }
+    row_key: id
+    row_actions: menu
+    empty_state: { title: Create a new employment type, description: Add an employment type or adjust your search. }

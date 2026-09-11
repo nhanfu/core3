@@ -1,0 +1,67 @@
+page: { id: employee-employment-types }
+datasources:
+  - id: employee_employment_types
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_EMPLOYMENT_TYPES_UNAVAILABLE, message: Employment types are temporarily unavailable. } }
+    query: "SELECT id, row_version, sequence, name, code, country_name FROM employee_employment_types WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(code, '') ILIKE '%' || :q || '%' OR COALESCE(country_name, '') ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: create_employee_employment_type_inline
+    type: server_form
+    permission: employees.write
+    title: New employment type
+    action: employees.employment_types.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_employment_types]
+    mutation:
+      operation: insert
+      table: employee_employment_types
+      fields: [sequence, name, code, country_name]
+      required: [name]
+      defaults: { sequence: 1013, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'employment-type-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_EMPLOYMENT_TYPE_NAME_REQUIRED, message: An employment type name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_employment_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMPLOYEES_EMPLOYMENT_TYPE_EXISTS, message: An employment type with this name already exists. }
+      result: { query: "SELECT * FROM employee_employment_types WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 1013 }
+      - { field: name, label: Name, type: text, required: true, placeholder: Employment type }
+      - { field: country_name, label: Country, type: text, placeholder: Optional country }
+  - id: update_employee_employment_type_inline
+    type: server_form
+    permission: employees.write
+    title: Edit employment type
+    action: employees.employment_types.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [employee_employment_types]
+    mutation:
+      operation: update
+      table: employee_employment_types
+      fields: [sequence, name, code, country_name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_employment_types WHERE id = :id", status: 404, code: EMPLOYEES_EMPLOYMENT_TYPE_NOT_FOUND, message: Employment type not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_EMPLOYMENT_TYPE_NAME_REQUIRED, message: An employment type name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_employment_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMPLOYEES_EMPLOYMENT_TYPE_EXISTS, message: An employment type with this name already exists. }
+      result: { query: "SELECT * FROM employee_employment_types WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Name, type: text, required: true }
+      - { field: country_name, label: Country, type: text, placeholder: Optional country }
+  - id: delete_employee_employment_type
+    type: server
+    permission: employees.write
+    action: employees.employment_types.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [employee_employment_types]
+    mutation:
+      operation: delete
+      table: employee_employment_types
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_employment_types WHERE id = :id", status: 404, code: EMPLOYEES_EMPLOYMENT_TYPE_NOT_FOUND, message: Employment type not found. }
