@@ -20,13 +20,13 @@ describe('Email Marketing Mailings parity action', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
 
     expect(listPage.page.id).toBe('email-mailings');
-    expect(detailPage.page.id).toBe('email-mailing-detail');
+    expect(detailPage.page.id).toBe('mailing-detail');
     expect(listPage.datasources).toBeUndefined();
     expect(detailPage.datasources).toBeUndefined();
     expect(listApi.page.id).toBe(listPage.page.id);
     expect(detailApi.page.id).toBe(detailPage.page.id);
     expect(discovered.pageDatasources.get('email-mailings')).toEqual(['email_mailing_states', 'email_mailings']);
-    expect(discovered.pageDatasources.get('email-mailing-detail')).toEqual(['email_mailing_detail']);
+    expect(discovered.pageDatasources.get('mailing-detail')).toEqual(['email_mailing_detail']);
     expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'form', 'calendar']);
     expect(listPage.components[0].views.find((view: any) => view.id === 'calendar')).toMatchObject({ date_field: 'calendar_date', mobile: false });
     expect(listPage.components[0].columns.map((column: any) => column.label)).toEqual([

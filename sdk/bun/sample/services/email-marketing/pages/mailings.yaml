@@ -25,7 +25,6 @@ components:
       - id: kanban
         label: Kanban
         icon: dashboard
-        mobile: true
         group_by: state
         groups_source: email_mailing_states
         card:

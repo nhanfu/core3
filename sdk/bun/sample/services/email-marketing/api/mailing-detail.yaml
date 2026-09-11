@@ -1,4 +1,4 @@
-page: { id: email-mailing-detail }
+page: { id: mailing-detail }
 datasources:
   - id: email_mailing_detail
     single: true

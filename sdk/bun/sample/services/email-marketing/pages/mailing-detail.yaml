@@ -1,5 +1,5 @@
 title: Mailing
-page: { id: email-mailing-detail, route: /email-mailings/detail, breadcrumb: [Marketing, Email Marketing, Mailings, Mailing], auth: { require: [email_marketing.read] } }
+page: { id: mailing-detail, route: /email-mailings/detail, breadcrumb: [Marketing, Email Marketing, Mailings, Mailing], auth: { require: [email_marketing.read] } }
 
 components:
   - type: OdooFormView
