@@ -1,0 +1,40 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_cost_reports(id, vehicle_id, vehicle_name, driver_name, fuel_type, date_start, vehicle_type, cost, cost_type) VALUES
+        ('fleet-cost-report-001', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-01-01', 'Car', 400, 'contract'),
+        ('fleet-cost-report-002', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-01-01', 'Car', 650, 'service'),
+        ('fleet-cost-report-003', 'fleet-demo-002', 'City Bike 02', NULL, 'Electric', DATE '2026-01-01', 'Bike', 400, 'contract'),
+        ('fleet-cost-report-004', 'fleet-demo-002', 'City Bike 02', NULL, 'Electric', DATE '2026-02-01', 'Bike', 275, 'service'),
+        ('fleet-cost-report-005', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-02-01', 'Car', 400, 'contract'),
+        ('fleet-cost-report-006', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-02-01', 'Car', 350, 'service'),
+        ('fleet-cost-report-007', 'fleet-demo-002', 'City Bike 02', NULL, 'Electric', DATE '2026-03-01', 'Bike', 400, 'contract'),
+        ('fleet-cost-report-008', 'fleet-demo-002', 'City Bike 02', NULL, 'Electric', DATE '2026-03-01', 'Bike', 513, 'service'),
+        ('fleet-cost-report-009', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-03-01', 'Car', 400, 'contract'),
+        ('fleet-cost-report-010', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-03-01', 'Car', 412, 'service'),
+        ('fleet-cost-report-011', 'fleet-demo-002', 'City Bike 02', NULL, 'Electric', DATE '2026-04-01', 'Bike', 400, 'contract'),
+        ('fleet-cost-report-012', 'fleet-demo-002', 'City Bike 02', NULL, 'Electric', DATE '2026-04-01', 'Bike', 302, 'service'),
+        ('fleet-cost-report-013', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-04-01', 'Car', 400, 'contract'),
+        ('fleet-cost-report-014', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-05-01', 'Car', 400, 'contract'),
+        ('fleet-cost-report-015', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-05-01', 'Car', 275, 'service'),
+        ('fleet-cost-report-016', 'fleet-demo-002', 'City Bike 02', NULL, 'Electric', DATE '2026-05-01', 'Bike', 400, 'contract'),
+        ('fleet-cost-report-017', 'fleet-demo-001', 'Pool Vehicle 01', 'Admin User', 'Petrol', DATE '2026-06-01', 'Car', 400, 'contract'),
+        ('fleet-cost-report-018', 'fleet-demo-002', 'City Bike 02', NULL, 'Electric', DATE '2026-06-01', 'Bike', 400, 'contract')
+      ON CONFLICT (id) DO UPDATE SET
+        vehicle_id = excluded.vehicle_id,
+        vehicle_name = excluded.vehicle_name,
+        driver_name = excluded.driver_name,
+        fuel_type = excluded.fuel_type,
+        date_start = excluded.date_start,
+        vehicle_type = excluded.vehicle_type,
+        cost = excluded.cost,
+        cost_type = excluded.cost_type,
+        updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DELETE FROM fleet_vehicle_cost_reports WHERE id LIKE 'fleet-cost-report-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

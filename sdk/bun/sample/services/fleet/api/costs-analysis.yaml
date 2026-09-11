@@ -1,0 +1,9 @@
+page: { id: fleet-costs-analysis }
+datasources:
+  - id: fleet_costs_analysis
+    single: false
+    permission: fleet.manage
+    error_states: { transport_error: { status: 503, code: FLEET_COSTS_DATA_UNAVAILABLE, message: Fleet cost analysis is temporarily unavailable } }
+    pivot:
+      fields: [date_start, cost_type, vehicle_name, driver_name, fuel_type, cost]
+    query: "SELECT id, vehicle_id, vehicle_name, driver_name, fuel_type, CAST(date_start AS VARCHAR) AS date_start, vehicle_type, cost, cost_type FROM fleet_vehicle_cost_reports WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:cost_type IS NULL OR cost_type = :cost_type) AND (:date_period IS NULL OR :date_period = 'year') AND (:q IS NULL OR vehicle_name ILIKE '%' || :q || '%' OR COALESCE(driver_name, '') ILIKE '%' || :q || '%' OR fuel_type ILIKE '%' || :q || '%' OR cost_type ILIKE '%' || :q || '%') ORDER BY date_start, vehicle_name, cost_type, id"

@@ -22,6 +22,7 @@ menu:
       label: Reporting
       items:
         - { path: /fleet-analysis, label: Fleet Analysis, icon: chart, permission: fleet.read }
+        - { path: /fleet/reporting/costs, label: Costs, icon: chart, permission: fleet.manage }
     - id: configuration
       label: Configuration
       items:

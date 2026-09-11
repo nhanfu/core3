@@ -1,0 +1,28 @@
+version: 0.0.15
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_cost_reports (
+        id VARCHAR PRIMARY KEY,
+        vehicle_id VARCHAR NOT NULL,
+        vehicle_name VARCHAR NOT NULL,
+        driver_name VARCHAR,
+        fuel_type VARCHAR NOT NULL,
+        date_start DATE NOT NULL,
+        vehicle_type VARCHAR NOT NULL,
+        cost DECIMAL(18,2) NOT NULL DEFAULT 0,
+        cost_type VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        CONSTRAINT fleet_vehicle_cost_reports_cost_type_check CHECK (cost_type IN ('service', 'contract')),
+        CONSTRAINT fleet_vehicle_cost_reports_cost_check CHECK (cost >= 0)
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_cost_reports_date_idx ON fleet_vehicle_cost_reports(date_start, vehicle_name, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_cost_reports_type_idx ON fleet_vehicle_cost_reports(cost_type, date_start, id);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_cost_reports;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

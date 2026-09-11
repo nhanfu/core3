@@ -1,0 +1,45 @@
+title: Costs Analysis
+page: { id: fleet-costs-analysis, route: /fleet/reporting/costs, breadcrumb: [Human Resources, Fleet, Reporting, Costs], auth: { require: [fleet.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_costs_analysis
+    search: { label: "Search...", placeholder: "Search vehicles, drivers, or cost types..." }
+    filters:
+      - { field: cost_type, label: Cost Type, options: [{ id: service, label: Service }, { id: contract, label: Contract }] }
+    default_filters: { date_period: year }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: date_start
+        series_field: cost_type
+        measure_field: cost
+        measure_label: Cost
+        type: line
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: date_start, column: Date }
+            - { field: cost_type, column: Cost Type }
+            - { field: vehicle_name, column: Vehicle }
+            - { field: driver_name, column: Driver }
+            - { field: cost, column: Cost }
+          default:
+            rows: [vehicle_name]
+            columns: [date_start, cost_type]
+            measures: [{ field: cost, aggregate: sum, column: Cost }]
+    columns:
+      - { field: vehicle_name, label: Vehicle, type: PrimaryEntityCell }
+      - { field: driver_name, label: Driver }
+      - { field: fuel_type, label: Fuel Type }
+      - { field: date_start, label: Date }
+      - { field: cost, label: Cost, align: right }
+      - { field: cost_type, label: Cost Type }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No data found, description: No fleet costs match the selected filters. }
