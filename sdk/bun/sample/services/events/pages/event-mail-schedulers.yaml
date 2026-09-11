@@ -5,6 +5,21 @@ components:
     variant: odoo
     source: event_mail_schedulers
     search: { label: Search, placeholder: Search... }
+    views:
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: event_name
+          subtitle: template_ref
+          fields:
+            - { field: scheduled_date, label: Schedule Date }
+            - { field: mail_count_done, label: '# Sent' }
+            - { field: mail_state_label, label: Status }
     columns:
       - { field: event_name, label: Event, type: PrimaryEntityCell }
       - { field: template_ref, label: Template }

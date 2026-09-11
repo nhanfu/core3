@@ -24,6 +24,10 @@ describe('Events Mail Schedulers parity slice', () => {
     expect(list.page).toMatchObject({ id: 'event-mail-schedulers', route: '/events/mail-schedulers', auth: { require: ['events.settings'] } });
     expect(detail.page).toMatchObject({ id: 'event-mail-scheduler-detail', route: '/events/mail-schedulers/detail', auth: { require: ['events.settings'] } });
     expect(list.components[0]).toMatchObject({ source: 'event_mail_schedulers', row_open_action: 'view_event_mail_scheduler', row_double_click_action: 'view_event_mail_scheduler' });
+    expect(list.components[0].views).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'list', mobile: false }),
+      expect.objectContaining({ id: 'card', label: 'Cards', card: expect.objectContaining({ title: 'event_name', subtitle: 'template_ref' }) }),
+    ]));
     expect(list.components[0].columns.map((column: any) => column.label)).toEqual(['Event', 'Template', 'Schedule Date', '# Sent', 'Status']);
     expect(list.actions).toHaveLength(1);
     expect(detail.components[0]).toMatchObject({ source: 'event_mail_scheduler_detail', editable: false });
