@@ -793,3 +793,82 @@ the authenticated live addon status query, and Markdown whitespace validation.
   direct detail routing and double-click navigation remain valid. Cross-module
   forecast/document/reordering workflows and full variant editing remain
   outside this slice.
+
+## 2026-09-11 bounded Product Variants follow-up
+
+- The selected uncovered visible action is Manufacturing / Products / Product
+  Variants. The fresh authenticated Odoo 19 stack at `http://localhost:8069`
+  resolves runtime action `674`, model `product.product`, and modes
+  `kanban,list,form`; the source XML definitions are `mrp_product_variant_action`
+  and `product_variant_mrp` in `addons/mrp/views/product_views.xml`. The live
+  action opens at `/odoo/action-674`, shows `1-80 / 192`, and exposes New,
+  Product Variants, Kanban, and List. Its editable variant form exposes
+  Product, Product Type, Sales Price, Sales Taxes, Cost, Internal Reference,
+  Barcode, Purchase Taxes, Category, Company, General Information, Purchase,
+  and internal notes/chatter.
+- This action was not present in Manufacturing source or history. The nearby
+  Manufacturing Lots / Serial Numbers action was excluded because the
+  repository already implements that action in the Inventory lots slice.
+- Core3 implements the bounded action at
+  `/manufacturing/product-variants` with detail
+  `/manufacturing/product-variants/detail?id={id}`. Pages
+  `product-variants.yaml` and `product-variant-detail.yaml` are
+  presentation-only; `api/product-variants.yaml` and
+  `api/product-variant-detail.yaml` own page-id-bound queries and mutations.
+  The manifest adds Product Variants under Manufacturing / Master Data. The
+  list provides source-visible Kanban-first and List modes, search by
+  product/reference/barcode/attribute, Product Type and Active/Archived
+  filters, and responsive mobile Kanban. The detail form covers the visible
+  source fields, General Information/Purchase/INTERNAL NOTES tabs, stat
+  buttons, edit/archive/delete, and messages.
+- Migration `0.0.17` seeds 14 deterministic variants dated `2026-01-15`,
+  including multi-attribute desks, chairs, screens, stocked/history-bearing
+  records, and one archived legacy component. The API declares explicit 401,
+  403, 404, and 503 states. Mutations cover create/edit, required-field and
+  non-negative numeric validation, duplicate variant detection, row-version
+  stale rejection, archive idempotency, in-use delete protection, and
+  manufacturing.read/write/manage permission boundaries.
+- Authenticated source captures are under `/tmp` and are not committed:
+  `/tmp/odoo-manufacturing-product-variants-desktop-{kanban,list,form}-1440x900.png`
+  and `/tmp/odoo-manufacturing-product-variants-mobile-{kanban,form}-390x844.png`.
+  Odoo mobile resolves this action to Kanban and does not expose the List
+  switch at 390px. SHA-256 hashes are:
+  `b347bc854e32143664562070d9a8911aed9a7c4be17b4fcf6e750adb29125303`
+  (desktop Kanban),
+  `81429ef819bf3e15273ad3f5890efdd39447fa596aaf61e1d0b1b17deed28d96`
+  (desktop List),
+  `7ec8e9802f54550d911040b45fee01960d6aae92f7d93962778eff8631de6f5f`
+  (desktop form),
+  `02ab1ab449693e37f7b991501fec91d7952d9b94db0a740d53083dabd802e099`
+  (mobile Kanban), and
+  `09314abb4b80075be52d2f0bc298f0f244962ebe44d00700bab8bd882857999`
+  (mobile form).
+- Authenticated Core3 captures are under `/tmp` and are not committed:
+  `/tmp/core3-manufacturing-product-variants-desktop-{kanban,list,form}-1440x900.png`
+  and `/tmp/core3-manufacturing-product-variants-mobile-{kanban,form}-390x844.png`.
+  The browser pass authenticated as `admin@tms.local`, exercised the route,
+  List switch, `FURN_0096` reference search, and populated detail route. Both
+  viewports reported exact document/body width equal to the viewport (`1440`
+  and `390`) with no page errors. SHA-256 hashes are:
+  `06dcc0358107d0ef28c5f245dcb5c1ee158f282c918922a1dee6e318df7b22cd`
+  (desktop Kanban),
+  `d9611b1e9535a96e9a17fcd250e4854ca68b3c174ea0cd5b77921985a308d5b9`
+  (desktop List),
+  `8f626a572fd08d204ab8f1fa36560dbf028585ba78c7e947c8bc0948d1e70b8a`
+  (desktop form),
+  `091576d4a014008b3b969c889eca6ec0bdb72a617a3689f8451ae3ff31a91641`
+  (mobile Kanban), and
+  `bd06e611012e6bf9cdd770a05565c1ccced82b53fdb2d4d7a59ac18b6a26023d`
+  (mobile form).
+- Visual comparison found and fixed one parity issue: Core3 initially added
+  synthetic Product Template Kanban columns, while Odoo renders a flat
+  four-column Kanban grid. The page now uses the renderer's explicit empty
+  `group_by` contract for the ungrouped source state. Remaining bounded
+  differences are Odoo's purple shell and live 192-row dataset versus the
+  shared Fluent shell and 14 deterministic fixtures, plus shared Core3
+  form/chatter rendering. Product template workflows, attribute editing, and
+  downstream stock/sales integrations remain outside this bounded action.
+- Commits: `bd1a8b77` (page/API contract), `58e635e5` (fixtures, mutations,
+  and focused test), `945d344d` (visual Kanban refinement), and the separate
+  documentation/evidence commit recorded after this entry. The focused suite
+  is `test/manufacturing_product_variants.integration.test.ts`.
