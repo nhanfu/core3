@@ -1,0 +1,48 @@
+version: 0.0.11
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_job_positions (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL UNIQUE,
+        department_name VARCHAR,
+        company_name VARCHAR,
+        employment_type VARCHAR,
+        recruiter_name VARCHAR,
+        interviewer_names VARCHAR,
+        no_of_recruitment INTEGER NOT NULL DEFAULT 0,
+        open_application_count INTEGER NOT NULL DEFAULT 0,
+        application_count INTEGER NOT NULL DEFAULT 0,
+        employee_count INTEGER NOT NULL DEFAULT 0,
+        no_of_hired_employee INTEGER NOT NULL DEFAULT 0,
+        expected_degree VARCHAR,
+        expected_skills VARCHAR,
+        job_location VARCHAR,
+        description VARCHAR,
+        requirements VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO employee_job_positions
+        (id, row_version, sequence, name, department_name, company_name, employment_type, recruiter_name, interviewer_names, no_of_recruitment, open_application_count, application_count, employee_count, no_of_hired_employee, expected_degree, expected_skills, job_location, description, requirements, active)
+      VALUES
+        ('job-chief-technical-officer', 1, 1, 'Chief Technical Officer', 'Management / Research & Development', NULL, 'Permanent', 'Mitchell Admin', 'Mitchell Admin', 1, 5, 6, 2, 0, 'Master Degree', 'Leadership: Expert, Stress management: Expert, Decision-Making: Advanced, Python: Expert, Scrum Master: Certified', 'My Company (San Francisco) / 8000 Marina Blvd, Suite 300 / Brisbane / California Vietnam', 'Lead the technical direction of the company.', 'Build a reliable product and guide the engineering organization.', true),
+        ('job-consultant', 1, 2, 'Consultant', 'Management / Professional Services', NULL, 'Permanent', 'Mitchell Admin', NULL, 1, 4, 5, 0, 0, 'Bachelor Degree', 'Project management: Advanced', 'Remote', 'Support customer delivery and implementation projects.', 'Experience in professional services.', true),
+        ('job-experienced-developer', 1, 3, 'Experienced Developer', 'Management / Research & Development', NULL, 'Permanent', 'Mitchell Admin', NULL, 4, 5, 7, 1, 0, 'Bachelor Degree', 'Python: Expert, JavaScript: Advanced', 'Remote', 'Design and build Core3 product capabilities.', 'Strong software engineering experience.', true),
+        ('job-human-resources-manager', 1, 4, 'Human Resources Manager', 'Management / Administration', NULL, 'Permanent', 'Mitchell Admin', NULL, 1, 4, 5, 1, 0, 'Bachelor Degree', 'People operations: Advanced', 'My Company (San Francisco)', 'Own the people operations function.', 'Experience with employee lifecycle management.', true),
+        ('job-marketing-community-manager', 1, 5, 'Marketing and Community Manager', 'Management / Sales', NULL, 'Permanent', 'Mitchell Admin', NULL, 3, 4, 6, 1, 0, 'Bachelor Degree', 'Marketing: Advanced', 'My Company (San Francisco)', 'Grow the community and product awareness.', 'Experience in marketing and community programs.', true),
+        ('job-trainee', 1, 6, 'Trainee', NULL, NULL, 'Permanent', 'Mitchell Admin', NULL, 6, 4, 4, 0, 0, 'Bachelor Degree', 'Learning mindset', 'Remote', 'Learn the product and customer delivery practices.', 'Entry-level position.', true),
+        ('job-interior-designer', 1, 7, 'Interior Designer', NULL, 'My Company (San Francisco)', 'Permanent', 'Mitchell Admin', NULL, 5, 0, 0, 0, 0, 'Bachelor Degree', 'Design: Advanced', 'My Company (San Francisco)', 'Create thoughtful workplace and customer environments.', 'Portfolio required.', true),
+        ('job-site-manager', 1, 8, 'Site Manager', NULL, 'My Company (San Francisco)', 'Permanent', 'Mitchell Admin', NULL, 7, 0, 0, 0, 0, 'Bachelor Degree', 'Operations: Advanced', 'My Company (San Francisco)', 'Coordinate site operations and vendors.', 'Operations leadership experience.', true),
+        ('job-handyman', 1, 9, 'Handyman', NULL, 'My Company (San Francisco)', 'Permanent', 'Mitchell Admin', NULL, 10, 0, 0, 0, 0, 'Bachelor Degree', 'Facilities: Advanced', 'My Company (San Francisco)', 'Maintain facilities and equipment.', 'Practical maintenance experience.', true);
+      UPDATE employee_job_positions SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_job_positions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

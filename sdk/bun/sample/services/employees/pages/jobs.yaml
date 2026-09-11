@@ -1,0 +1,36 @@
+title: Job Positions
+page: { id: employee-job-positions, route: /employees/jobs, breadcrumb: [Human Resources, Configuration, Recruitment, Job Positions], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_job_positions
+    create_action: create_employee_job
+    create_label: New
+    search: { label: Jobs, placeholder: Search... }
+    default_filters: { active: 'true' }
+    filters:
+      - { field: company_name, label: Company, options: [{ id: all, label: All }, { id: 'Visible to all', label: Visible to all }, { id: 'My Company (San Francisco)', label: My Company (San Francisco) }] }
+      - { field: department_name, label: Department, options: [{ id: all, label: All }, { id: Management, label: Management }] }
+      - { field: active, label: Records, options: [{ id: 'true', label: Current }, { id: 'false', label: Archived }] }
+    group_by:
+      - { field: department_name, label: Department }
+      - { field: company_name, label: Company }
+      - { field: employment_type, label: Employment Type }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Job Position, type: PrimaryEntityCell, mobile: true }
+      - { field: department_name, label: Department }
+      - { field: open_application_count, label: Open Applications, align: right }
+      - { field: no_of_recruitment, label: Target, align: right }
+      - { field: employee_count, label: Number of Employees, optional: hide, align: right }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: employment_type, label: Employment Type, optional: hide }
+    page_size: 50
+    column_chooser: true
+    row_key: id
+    row_open_action: view_employee_job
+    row_double_click_action: view_employee_job
+    empty_state: { title: No job positions found, description: Create a job position or adjust your search. }

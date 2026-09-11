@@ -1,0 +1,44 @@
+page: { id: employee-job-positions }
+datasources:
+  - id: employee_job_positions
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_JOB_POSITIONS_UNAVAILABLE, message: Job positions are temporarily unavailable. } }
+    query: "SELECT j.id, j.row_version, j.sequence, j.name, COALESCE(j.department_name, '') AS department_name, COALESCE(j.company_name, 'Visible to all') AS company_name, COALESCE(j.employment_type, '') AS employment_type, j.recruiter_name, j.interviewer_names, j.no_of_recruitment, j.open_application_count, j.application_count, j.employee_count, j.no_of_hired_employee, j.expected_degree, j.expected_skills, j.job_location, j.active, CASE WHEN j.active THEN 'Active' ELSE 'Archived' END AS status, CASE WHEN j.active THEN 'Current' ELSE 'Archived' END AS active_label FROM employee_job_positions j WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND ((:active IS NULL AND j.active = true) OR (:active IS NOT NULL AND j.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR j.name ILIKE '%' || :q || '%' OR COALESCE(j.department_name, '') ILIKE '%' || :q || '%' OR COALESCE(j.company_name, '') ILIKE '%' || :q || '%') AND (:company_name IS NULL OR :company_name = 'all' OR COALESCE(j.company_name, 'Visible to all') = :company_name) AND (:department_name IS NULL OR :department_name = 'all' OR COALESCE(j.department_name, '') ILIKE '%' || :department_name || '%') AND (:employment_type IS NULL OR j.employment_type = :employment_type) ORDER BY j.sequence, j.id"
+actions:
+  - id: view_employee_job
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/jobs/detail
+    params: { id: '{row.id}' }
+  - id: create_employee_job
+    type: server_form
+    permission: employees.write
+    title: Create a Job Position
+    action: employees.jobs.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_job_positions]
+    mutation:
+      operation: insert
+      table: employee_job_positions
+      fields: [sequence, name, department_name, company_name, employment_type, recruiter_name, interviewer_names, no_of_recruitment, open_application_count, application_count, employee_count, no_of_hired_employee, expected_degree, expected_skills, job_location, description, requirements, active, row_version]
+      required: [name]
+      defaults: { sequence: 10, department_name: null, company_name: null, employment_type: Permanent, recruiter_name: Mitchell Admin, interviewer_names: null, no_of_recruitment: 0, open_application_count: 0, application_count: 0, employee_count: 0, no_of_hired_employee: 0, expected_degree: null, expected_skills: null, job_location: Remote, description: null, requirements: null, active: true, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'job-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_JOB_NAME_REQUIRED, message: A job position name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_job_positions WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMPLOYEES_JOB_EXISTS, message: A job position with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:no_of_recruitment AS INTEGER), 0) >= 0", status: 422, code: EMPLOYEES_JOB_TARGET_INVALID, message: The recruitment target must be zero or greater. }
+      result: { query: "SELECT * FROM employee_job_positions WHERE id = :id" }
+    fields:
+      - { field: name, label: Job Position, type: text, required: true, placeholder: e.g. Sales Manager }
+      - { field: department_name, label: Department, type: text }
+      - { field: company_name, label: Company, type: text, placeholder: Visible to all }
+      - { field: employment_type, label: Employment Type, type: text, default: Permanent }
+      - { field: no_of_recruitment, label: Target, type: number, min: 0, default: 0 }
+      - { field: expected_degree, label: Expected Degree, type: text }
+      - { field: expected_skills, label: Expected Skills, type: text }
+      - { field: job_location, label: Job Location, type: text, default: Remote }
+      - { field: description, label: Job Description, type: textarea }
+      - { field: requirements, label: Requirements, type: textarea }

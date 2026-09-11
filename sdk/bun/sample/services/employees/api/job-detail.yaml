@@ -1,0 +1,75 @@
+page: { id: employee-job-position-detail }
+datasources:
+  - id: employee_job_position_detail
+    single: true
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_JOB_POSITION_DETAIL_UNAVAILABLE, message: Job position details are temporarily unavailable. } }
+    query: "SELECT j.id, j.row_version, j.sequence, j.name, j.department_name, COALESCE(j.company_name, 'Visible to all') AS company_name, j.employment_type, j.recruiter_name, j.interviewer_names, j.no_of_recruitment, j.open_application_count, j.application_count, j.employee_count, j.no_of_hired_employee, j.expected_degree, j.expected_skills, j.job_location, j.description, j.requirements, j.active, CASE WHEN j.active THEN 'Active' ELSE 'Archived' END AS status, CASE WHEN j.active THEN 'Current' ELSE 'Archived' END AS active_label, 'jobs@core3.local' AS alias_name, 'core3.local' AS alias_domain, 'Recruitment pipeline is configured for this position.' AS tracker_summary FROM employee_job_positions j WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND j.id = :id"
+actions:
+  - id: new_employee_job
+    type: navigate
+    permission: employees.write
+    navigate_to: /employees/jobs
+  - id: view_employee_job_applications
+    type: navigate
+    permission: employees.read
+    navigate_to: /recruitment/applicants
+    params: { opening_name: '{row.name}' }
+  - id: view_employee_job_employees
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees
+    params: { job_title: '{row.name}' }
+  - id: edit_employee_job
+    type: server_form
+    permission: employees.write
+    title: Edit Job Position
+    action: employees.jobs.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_job_position_detail
+    params: { id: '{state.id}' }
+    refresh: [employee_job_position_detail, employee_job_positions]
+    mutation:
+      operation: update
+      table: employee_job_positions
+      fields: [name, department_name, company_name, employment_type, recruiter_name, interviewer_names, no_of_recruitment, expected_degree, expected_skills, job_location, description, requirements]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_job_positions WHERE id = :id", status: 404, code: EMPLOYEES_JOB_NOT_FOUND, message: Job position not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_JOB_NAME_REQUIRED, message: A job position name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_job_positions WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMPLOYEES_JOB_EXISTS, message: A job position with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:no_of_recruitment AS INTEGER), 0) >= 0", status: 422, code: EMPLOYEES_JOB_TARGET_INVALID, message: The recruitment target must be zero or greater. }
+      result: { query: "SELECT * FROM employee_job_positions WHERE id = :id" }
+    fields:
+      - { field: name, label: Job Position, type: text, required: true }
+      - { field: department_name, label: Department, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: employment_type, label: Employment Type, type: text }
+      - { field: recruiter_name, label: Recruiter?, type: text }
+      - { field: interviewer_names, label: Interviewers?, type: text }
+      - { field: no_of_recruitment, label: Target?, type: number, min: 0 }
+      - { field: expected_degree, label: Expected Degree, type: text }
+      - { field: expected_skills, label: Expected Skills, type: text }
+      - { field: job_location, label: Job Location?, type: text }
+      - { field: description, label: Job Description, type: textarea }
+      - { field: requirements, label: Requirements, type: textarea }
+  - id: archive_employee_job
+    type: server
+    permission: employees.write
+    action: employees.jobs.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_job_position_detail, employee_job_positions]
+    mutation: { operation: update, table: employee_job_positions, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_job_positions WHERE id = :id AND active = true", status: 404, code: EMPLOYEES_JOB_NOT_FOUND, message: Active job position not found. }] }
+  - id: restore_employee_job
+    type: server
+    permission: employees.write
+    action: employees.jobs.restore
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_job_position_detail, employee_job_positions]
+    mutation: { operation: update, table: employee_job_positions, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_job_positions WHERE id = :id AND active = false", status: 404, code: EMPLOYEES_JOB_NOT_FOUND, message: Archived job position not found. }] }

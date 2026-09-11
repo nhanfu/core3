@@ -1,0 +1,43 @@
+title: Job Position
+page: { id: employee-job-position-detail, route: /employees/jobs/detail, breadcrumb: [Human Resources, Configuration, Recruitment, Job Positions, Job Position], auth: { require: [employees.read] } }
+components:
+  - type: OdooFormView
+    source: employee_job_position_detail
+    title_field: name
+    status_field: status
+    status_colors: { Active: green, Archived: neutral }
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: new_employee_job, label: New, variant: primary, permission: employees.write }
+      - { id: edit_employee_job, label: Edit, variant: secondary, permission: employees.write }
+      - { id: archive_employee_job, label: Archive, variant: danger, permission: employees.write, show_if: "state.employee_job_position_detail.active === true" }
+      - { id: restore_employee_job, label: Restore, variant: secondary, permission: employees.write, show_if: "state.employee_job_position_detail.active === false" }
+    stat_buttons:
+      - { id: view_employee_job_applications, label: Applications, value_field: application_count, permission: employees.read }
+      - { id: view_employee_job_employees, label: Employees, value_field: employee_count, permission: employees.read }
+    group_columns: 2
+    notebook:
+      active: details
+      tabs:
+        - id: details
+          label: Details
+          groups:
+            - title: Hiring Process
+              fields: [{ field: recruiter_name, label: Recruiter? }, { field: interviewer_names, label: Interviewers? }, { field: alias_name, label: Email Alias? }, { field: alias_domain, label: '@' }]
+            - title: Job Posting
+              fields: [{ field: no_of_recruitment, label: Target?, type: number }, { field: expected_skills, label: Expected Skills }, { field: expected_degree, label: Expected Degree }]
+            - title: Job
+              fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_location, label: Job Location? }]
+            - title: Contract
+              fields: [{ field: employment_type, label: Employment Type }]
+        - id: summary
+          label: Summary
+          groups:
+            - title: Job Description
+              fields: [{ field: description, label: Job Description, type: textarea }, { field: requirements, label: Requirements, type: textarea }]
+        - id: trackers
+          label: Trackers
+          groups:
+            - title: Trackers
+              fields: [{ field: tracker_summary, label: Trackers }]
