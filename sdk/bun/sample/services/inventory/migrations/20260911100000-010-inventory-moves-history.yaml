@@ -1,0 +1,42 @@
+version: 0.0.10
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_move_lines (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        date TIMESTAMP NOT NULL, reference VARCHAR NOT NULL, product_id VARCHAR,
+        product_name VARCHAR NOT NULL, product_category_name VARCHAR NOT NULL,
+        lot_serial_number VARCHAR, source_package VARCHAR, result_package VARCHAR,
+        source_location_id VARCHAR NOT NULL, destination_location_id VARCHAR NOT NULL,
+        picking_partner_name VARCHAR, company_name VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL, quantity_product_uom DECIMAL(18,3) NOT NULL,
+        unit_name VARCHAR NOT NULL, state VARCHAR NOT NULL, done_by VARCHAR,
+        origin VARCHAR, movement_type VARCHAR NOT NULL, created_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_move_lines_date ON inventory_move_lines(date, id);
+      CREATE INDEX IF NOT EXISTS idx_inventory_move_lines_state ON inventory_move_lines(state);
+      INSERT INTO inventory_move_lines(id, date, reference, product_id, product_name, product_category_name, lot_serial_number, source_package, result_package, source_location_id, destination_location_id, picking_partner_name, company_name, quantity, quantity_product_uom, unit_name, state, done_by, origin, movement_type, created_at) VALUES
+        ('move-line-0001', TIMESTAMP '2026-01-15 08:00:00', 'Product Quantity Updated', 'product-desk-black', 'Customizable Desk (Black)', 'Furniture', NULL, NULL, NULL, 'location-loss', 'location-stock', NULL, 'My Company (San Francisco)', 70, 70, 'Units', 'Done', 'Mitchell Admin', 'Inventory adjustment', 'internal', TIMESTAMP '2026-01-15 08:00:00'),
+        ('move-line-0002', TIMESTAMP '2026-01-15 08:05:00', 'WH/IN/00005', 'product-desk-white', 'Customizable Desk (White)', 'Furniture', NULL, NULL, NULL, 'location-supplier', 'location-stock', 'Wood Corner', 'My Company (San Francisco)', 65, 65, 'Units', 'Done', 'Mitchell Admin', 'PO/00005', 'incoming', TIMESTAMP '2026-01-15 08:05:00'),
+        ('move-line-0003', TIMESTAMP '2026-01-14 10:00:00', 'WH/IN/00006', 'product-desk-combination', 'Desk Combination', 'Furniture', NULL, 'PACK-IN-0006', NULL, 'location-supplier', 'location-stock', 'Wood Corner', 'My Company (San Francisco)', 20, 20, 'Units', 'Done', 'Mitchell Admin', 'PO/00006', 'incoming', TIMESTAMP '2026-01-14 10:00:00'),
+        ('move-line-0004', TIMESTAMP '2026-01-13 14:30:00', 'WH/OUT/00001', 'product-desk-combination', 'Desk Combination', 'Furniture', NULL, NULL, 'PACK-OUT-0001', 'location-stock', 'location-customer', 'Gemini Furniture', 'My Company (San Francisco)', 12, 12, 'Units', 'Done', 'Mitchell Admin', 'SO/00021', 'outgoing', TIMESTAMP '2026-01-13 14:30:00'),
+        ('move-line-0005', TIMESTAMP '2026-01-12 09:15:00', 'WH/OUT/00002', 'product-storage-box', 'Storage Box', 'Office Supplies', NULL, NULL, NULL, 'location-stock', 'location-customer', 'Wood Corner', 'My Company (San Francisco)', 8, 8, 'Units', 'Done', 'Mitchell Admin', 'SO/00022', 'outgoing', TIMESTAMP '2026-01-12 09:15:00'),
+        ('move-line-0006', TIMESTAMP '2026-01-11 11:00:00', 'WH/INT/00001', 'product-office-chair', 'Office Chair', 'Furniture', NULL, 'PACK-0001', 'PACK-0002', 'location-stock', 'location-stock-shelf-1', NULL, 'My Company (San Francisco)', 18, 18, 'Units', 'Done', 'Mitchell Admin', 'Replenish stock shelf', 'internal', TIMESTAMP '2026-01-11 11:00:00'),
+        ('move-line-0007', TIMESTAMP '2026-01-10 16:20:00', 'WH/INT/00002', 'product-storage-box', 'Storage Box', 'Office Supplies', NULL, NULL, NULL, 'location-stock-shelf-1', 'location-stock-shelf-2', NULL, 'My Company (San Francisco)', 25, 25, 'Units', 'Done', 'Mitchell Admin', 'Shelf transfer', 'internal', TIMESTAMP '2026-01-10 16:20:00'),
+        ('move-line-0008', TIMESTAMP '2026-01-09 13:45:00', 'WH/OUT/00003', 'product-desk-combination', 'Desk Combination', 'Furniture', 'LOT-DESK-0003', NULL, NULL, 'location-stock', 'location-customer', 'Gemini Furniture', 'My Company (San Francisco)', 6, 6, 'Units', 'Done', 'Mitchell Admin', 'SO/00023', 'outgoing', TIMESTAMP '2026-01-09 13:45:00'),
+        ('move-line-0009', TIMESTAMP '2026-01-08 08:30:00', 'WH/IN/00007', 'product-cable-box', 'Cable Management Box', 'Office Supplies', 'CM-BOX-00001', NULL, NULL, 'location-supplier', 'location-stock', 'Wood Corner', 'My Company (San Francisco)', 50, 50, 'Units', 'Done', 'Mitchell Admin', 'PO/00007', 'incoming', TIMESTAMP '2026-01-08 08:30:00'),
+        ('move-line-0010', TIMESTAMP '2026-01-07 15:00:00', 'WH/OUT/00004', 'product-office-chair', 'Office Chair', 'Furniture', NULL, NULL, NULL, 'location-stock', 'location-customer', 'Gemini Furniture', 'My Company (San Francisco)', 4, 4, 'Units', 'Done', 'Mitchell Admin', 'SO/00024', 'outgoing', TIMESTAMP '2026-01-07 15:00:00'),
+        ('move-line-0011', TIMESTAMP '2026-01-15 12:00:00', 'WH/IN/00008', 'product-conference-table', 'Conference Table', 'Furniture', NULL, NULL, NULL, 'location-supplier', 'location-stock', 'Wood Corner', 'My Company (San Francisco)', 4, 4, 'Units', 'Waiting', NULL, 'PO/00008', 'incoming', TIMESTAMP '2026-01-15 12:00:00'),
+        ('move-line-0012', TIMESTAMP '2026-01-15 12:30:00', 'WH/OUT/00005', 'product-desk-combination', 'Desk Combination', 'Furniture', NULL, NULL, NULL, 'location-stock', 'location-customer', 'Gemini Furniture', 'My Company (San Francisco)', 10, 10, 'Units', 'Assigned', NULL, 'SO/00025', 'outgoing', TIMESTAMP '2026-01-15 12:30:00'),
+        ('move-line-0013', TIMESTAMP '2026-01-15 13:00:00', 'WH/INT/00003', 'product-storage-box', 'Storage Box', 'Office Supplies', NULL, NULL, NULL, 'location-stock', 'location-stock-shelf-1', NULL, 'My Company (San Francisco)', 15, 15, 'Units', 'Waiting', NULL, 'Shelf transfer', 'internal', TIMESTAMP '2026-01-15 13:00:00'),
+        ('move-line-0014', TIMESTAMP '2026-01-15 13:30:00', 'WH/OUT/00006', 'product-office-chair', 'Office Chair', 'Furniture', NULL, NULL, NULL, 'location-stock', 'location-customer', 'Gemini Furniture', 'My Company (San Francisco)', 3, 3, 'Units', 'Cancelled', NULL, 'SO/00026', 'outgoing', TIMESTAMP '2026-01-15 13:30:00'),
+        ('move-line-0015', TIMESTAMP '2026-01-15 14:00:00', 'WH/IN/00009', 'product-drawer', 'Drawer', 'Furniture', 'SN-DRAWER-0001', NULL, NULL, 'location-supplier', 'location-stock', 'Wood Corner', 'My Company (San Francisco)', 1, 1, 'Units', 'Assigned', NULL, 'PO/00009', 'incoming', TIMESTAMP '2026-01-15 14:00:00'),
+        ('move-line-0016', TIMESTAMP '2026-01-15 14:30:00', 'WH/INT/00004', 'product-desk-black', 'Customizable Desk (Black)', 'Furniture', NULL, NULL, NULL, 'location-stock', 'location-stock-shelf-2', NULL, 'My Company (San Francisco)', 7, 7, 'Units', 'Waiting', NULL, 'Shelf transfer', 'internal', TIMESTAMP '2026-01-15 14:30:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_move_lines;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

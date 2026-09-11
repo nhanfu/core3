@@ -1,0 +1,45 @@
+page: { id: moves }
+datasources:
+  - id: inventory_move_states
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('Draft', 'Draft'), ('Waiting', 'Waiting'), ('Done', 'Done'), ('Cancelled', 'Cancelled')) states(value, label)"
+  - id: inventory_move_history_states
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('todo', 'To Do'), ('done', 'Done')) states(value, label)"
+  - id: inventory_move_history_types
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('incoming', 'Incoming'), ('outgoing', 'Outgoing'), ('internal', 'Internal')) types(value, label)"
+  - id: inventory_move_lines
+    single: false
+    permission: inventory.read
+    pivot: { fields: [id, date, reference, product_name, product_category_name, movement_type, quantity, quantity_product_uom, unit_name, state, source_location, destination_location] }
+    error_states: { transport_error: { status: 503, code: INVENTORY_MOVE_HISTORY_UNAVAILABLE, message: Moves History data is temporarily unavailable. } }
+    query: |
+      SELECT m.id, m.row_version, CAST(m.date AS VARCHAR) AS date, m.reference,
+        m.product_id, m.product_name, m.product_category_name, m.lot_serial_number,
+        m.source_package, m.result_package, sl.name AS source_location,
+        dl.name AS destination_location, m.picking_partner_name, m.company_name,
+        CAST(m.quantity AS DOUBLE) AS quantity, CAST(m.quantity_product_uom AS DOUBLE) AS quantity_product_uom,
+        m.unit_name, m.state, m.done_by, m.origin, m.movement_type
+      FROM inventory_move_lines m
+      LEFT JOIN inventory_locations sl ON sl.id = m.source_location_id
+      LEFT JOIN inventory_locations dl ON dl.id = m.destination_location_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR m.reference ILIKE '%' || :q || '%' OR m.product_name ILIKE '%' || :q || '%'
+          OR COALESCE(sl.name, '') ILIKE '%' || :q || '%' OR COALESCE(dl.name, '') ILIKE '%' || :q || '%'
+          OR COALESCE(m.lot_serial_number, '') ILIKE '%' || :q || '%' OR COALESCE(m.source_package, '') ILIKE '%' || :q || '%'
+          OR COALESCE(m.result_package, '') ILIKE '%' || :q || '%' OR COALESCE(m.product_category_name, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR :state = '' OR (:state = 'done' AND m.state = 'Done') OR (:state = 'todo' AND m.state NOT IN ('Done', 'Draft', 'Cancelled')))
+        AND (:movement_type IS NULL OR :movement_type = '' OR m.movement_type = :movement_type)
+        AND (:from_date IS NULL OR :from_date = '' OR CAST(m.date AS DATE) >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR :to_date = '' OR CAST(m.date AS DATE) <= CAST(:to_date AS DATE))
+      ORDER BY m.date DESC, m.id DESC
+actions:
+  - id: view_inventory_move_line
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves/detail
+    params: { id: '{row.id}' }

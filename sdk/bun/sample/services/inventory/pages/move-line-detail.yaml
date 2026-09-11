@@ -1,0 +1,33 @@
+title: Move Line
+page: { id: move-line-detail, route: /moves/detail, breadcrumb: [Supply Chain, Inventory, Reporting, Moves History, Move Line], auth: { require: [inventory.read] } }
+components:
+  - type: OdooFormView
+    source: inventory_move_line_detail
+    title_field: reference
+    subtitle_field: product_name
+    status_field: state
+    editable: false
+    labels: { workflowStatus: Status }
+    header_actions:
+      - { id: back_to_inventory_move_history, label: Back to Moves History, variant: secondary, permission: inventory.read }
+    statusbar: [{ value: Draft, label: Draft }, { value: Waiting, label: Waiting }, { value: Assigned, label: Assigned }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Waiting: amber, Assigned: blue, Done: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Move Line
+        fields:
+          - { field: date, label: Date }
+          - { field: reference, label: Reference }
+          - { field: origin, label: Source }
+          - { field: product_name, label: Product }
+          - { field: source_location, label: From }
+          - { field: destination_location, label: To }
+      - title: Quantity and tracking
+        fields:
+          - { field: quantity, label: Quantity }
+          - { field: unit_name, label: Unit }
+          - { field: lot_serial_number, label: Lot/Serial Number }
+          - { field: source_package, label: Source Package }
+          - { field: result_package, label: Destination Package }
+          - { field: done_by, label: Done By }
+          - { field: company_name, label: Company }

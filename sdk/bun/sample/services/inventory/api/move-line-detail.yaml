@@ -1,0 +1,22 @@
+page: { id: move-line-detail }
+datasources:
+  - id: inventory_move_line_detail
+    single: true
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_MOVE_LINE_DETAIL_UNAVAILABLE, message: Move line details are temporarily unavailable. } }
+    query: |
+      SELECT m.id, m.row_version, CAST(m.date AS VARCHAR) AS date, m.reference,
+        m.product_name, m.lot_serial_number, m.source_package, m.result_package,
+        sl.name AS source_location, dl.name AS destination_location,
+        CAST(m.quantity AS DOUBLE) AS quantity, m.unit_name, m.state, m.done_by,
+        m.origin, m.company_name
+      FROM inventory_move_lines m
+      LEFT JOIN inventory_locations sl ON sl.id = m.source_location_id
+      LEFT JOIN inventory_locations dl ON dl.id = m.destination_location_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND m.id = :id
+actions:
+  - id: back_to_inventory_move_history
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves

@@ -431,3 +431,49 @@ Focused evidence:
   and table checks for this file, the relevant Core3 audit/tests, authenticated
   browser smoke, and `git diff --check`. Screenshots remain under `/tmp`; the
   implementation commit may contain only YAML/TS/docs needed for the batch.
+
+## Bounded batch: Reporting > Moves History (2026-09-11)
+
+The live `core3_owned` Odoo 19 reference was rechecked at
+`http://localhost:8069` as `codex@core3.local`. JSON-RPC action 455 confirms
+`Moves History`, model `stock.move.line`, path `moves-history`, view order
+`list,kanban,pivot,form`, default `Done` filter, and `create: 0`. The source
+view also confirms the read-only list fields, To Do/Done plus incoming,
+outgoing, internal filters, date filter, location/product/transfer/reference/
+lot/package search fields, six group-by choices, mobile kanban, and the
+read-only form field groups.
+
+Core3 replaces the old page-local `inventory_moves` workflow list at `/moves`
+with the service-owned move-line report. `pages/moves.yaml` is layout-only and
+binds by page id to `api/moves.yaml`; the row-open form is separately declared
+as `pages/move-line-detail.yaml` and `api/move-line-detail.yaml`. Migration
+`0.0.10` adds 16 stable move-line fixtures dated around `2026-01-15`, covering
+done, assigned, waiting, cancelled, incoming, outgoing, internal,
+lot/package, inventory adjustment, search, and deterministic pivot totals.
+The desktop default is List; mobile excludes List and defaults to Kanban to
+match Odoo's responsive action; Pivot and read-only Form are available from
+the same action. No create, edit, delete, stale-write, or workflow mutation
+actions are exposed; all sources/actions require `inventory.read`.
+
+Focused evidence:
+
+- `bun test test/inventory_moves_history.integration.test.ts`: 3 tests,
+  42 assertions passed. The suite proves matching page/API ids and routes,
+  idempotent migration, stable ordering, Done/To Do/search/operation/date
+  filters, empty and 503 states, pivot aggregation, detail/not-found, and
+  explicit read-only CRUD/stale boundaries.
+- Authenticated Core3 shell-Playwright captures (1440x900 and 390x844):
+  `/tmp/core3-owned-moves-history-desktop-20260911.png` and
+  `/tmp/core3-owned-moves-history-mobile-20260911.png`. Both had zero failed
+  requests/page errors and document/body width 1440/1440 and 390/390.
+- Authenticated Odoo shell-Playwright captures (1440x900 and 390x844):
+  `/tmp/core3-owned-odoo-moves-history-desktop-20260911.png` and
+  `/tmp/core3-owned-odoo-moves-history-mobile-20260911.png`. Both rendered
+  the expected list/kanban action at document/body width 1440/1440 and
+  390/390. The capture logged two `net::ERR_ABORTED` asset requests for
+  Odoo's web JS/print CSS during navigation; no HTTP error response or route
+  data failure occurred, and the screenshots are usable. This is the only
+  deliberate browser-evidence limitation for this batch.
+- Authenticated Core3 smoke also loaded `/moves?view=pivot` with a pivot
+  table and `/moves/detail?id=move-line-0002` with a read-only form; both had
+  no HTTP errors. Screenshots remain under `/tmp` and are not committed.
