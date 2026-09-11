@@ -309,3 +309,88 @@ bounded acceptance, and authenticated desktop/mobile evidence.
 - YAML validation, `bun run audit`, focused route/schema checks, authenticated
   browser smoke, and `git diff --check` pass. The implementation commit may
   contain YAML/TS/docs only; screenshots remain under `/tmp`.
+
+## Batch 4: core expense detail and workflow evidence (2026-09-11)
+
+Status: implemented and verified in isolated worktree
+`/home/nhanjs/projects/core3-worktrees/odoo-ui-expenses-detail-20260911` on
+branch `agent/odoo-ui-expenses-detail-20260911`.
+
+Reference discovery used the installed addon at
+`/home/nhanjs/projects/odoo/addons/hr_expense` and the disposable demo database
+`core3_expenses_demo` in the temporary authenticated Odoo container at
+`http://127.0.0.1:8070`. Odoo reference forms were checked for draft, submitted,
+approved, and refused records. Core3 keeps frontend page YAML and backend API
+YAML separate and joins them through the expense detail `page.id`.
+
+The bounded implementation adds Odoo-shaped deterministic detail metadata
+(product, quantity, unit, vendor, manager, receipt fingerprint), attachment
+listing/upload/download contracts, stable activity history, and guarded
+Draft → Submitted → Approved → Posted → In Payment → Paid plus Refused/Reset
+transitions. Edit, refusal, receipt upload, state, row-version, permission,
+missing, stale, validation, error, and empty states are represented in the
+service-owned YAML/API surface. No page-local SQL, moving fixture timestamps,
+random fixture IDs, remote assets, or screenshots were added to Git.
+
+Verification:
+
+- `bun test test/expenses_next.integration.test.ts`: 6 pass, 0 fail, 30
+  assertions.
+- `bun run audit`: passed; 473 pages, 480 routes, 825 datasources.
+- `bunx eslint packages/client/src/components/PageRoot.ts
+  packages/client/src/components/PageDetailRenderers.ts`: passed with no
+  output.
+- `bun run css:build:global && bun run css:build:expenses`: passed.
+- `git diff --check`: passed.
+- Authenticated headless Chrome (`/usr/bin/google-chrome`) loaded the Core3
+  detail matrix and Odoo reference forms with no failed requests/page errors;
+  desktop and mobile document widths matched their viewports. An authenticated
+  browser upload of `browser-receipt.pdf` returned HTTP 200 and showed the
+  filename and `Receipt attached` after reload.
+
+Comparison captures are intentionally outside Git. Every file below is a
+non-full-page viewport capture at the stated dimensions.
+
+Odoo reference captures (`/tmp/odoo-expenses-detail-20260911/`):
+
+| File | Dimensions | SHA-256 |
+| --- | --- | --- |
+| `odoo-approved-desktop-1440x900.png` | 1440x900 | `d6db06310814aa413962b3e87ed10be8a52846b1147f10cb0fb04e03f035e448` |
+| `odoo-approved-mobile-390x844.png` | 390x844 | `604bbc5f5111254e3021f9f488c4c69fc72095c85a1f10ee6a3efd8c4ac11074` |
+| `odoo-draft-desktop-1440x900.png` | 1440x900 | `737063e7e83ab680de778b339c593157e30d1e024b845d32a0dfa564ffe6b076` |
+| `odoo-draft-mobile-390x844.png` | 390x844 | `a11e71d5852f9b6342d58c46f12023634b6d8777b5fde07e0bf4801888fa370b` |
+| `odoo-refused-desktop-1440x900.png` | 1440x900 | `982cb35604853f4809bbaf7f4b040aed29beb3088c1aaf5b8a1a9d7bac6075f4` |
+| `odoo-refused-mobile-390x844.png` | 390x844 | `16368d689fd31ca7fd2c4d4b6c68d02dfc883df0897ef628c58cf026c08096f4` |
+| `odoo-submitted-desktop-1440x900.png` | 1440x900 | `1ae1a8b93d6b3665e5511494ed3b90938d3285c8ac7ee640294efcc941db32c8` |
+| `odoo-submitted-mobile-390x844.png` | 390x844 | `adb722db6f280e0e2fb452b9e63c2da2d48a6f7c60861073f71968d96111842c` |
+
+Core3 captures (`/tmp/core3-expenses-detail-20260911/`):
+
+| File | Dimensions | SHA-256 |
+| --- | --- | --- |
+| `core3-approved-desktop-1440x900.png` | 1440x900 | `8d022053f103ded1b3336b87e73f96681b1f8476dff2fb91fd5595961ebbfcef` |
+| `core3-draft-desktop-1440x900.png` | 1440x900 | `56cfe7a10d5cb00b1ef5e3f345504cbd63218650b670659c512485de496eaa9c` |
+| `core3-draft-mobile-390x844.png` | 390x844 | `0598afddc650d923ca2ca8050174d46381dbd00db962003c39989ff16c7c1b8c` |
+| `core3-duplicate-desktop-1440x900.png` | 1440x900 | `00d382004fbdcd231ca518552f2f4aca97f5db62ea55951e812c6283f012d2a7` |
+| `core3-duplicate-mobile-390x844.png` | 390x844 | `6d9daa5b0c868e4cd7610556ea0f43297d4f403c74ed2933fdeac7b211529ca7` |
+| `core3-in-payment-desktop-1440x900.png` | 1440x900 | `60b81b9ffcec51f507bc60194a76e59dc77e9752f533dad89f3d2312996720ca` |
+| `core3-paid-desktop-1440x900.png` | 1440x900 | `ebc085b840707d6301ac8272daf570381b71b49aafce7a13713d8e929a8eff6e` |
+| `core3-paid-mobile-390x844.png` | 390x844 | `c7061be85c524a779a0d4640b50c8579eeb5a7d27477cfe9bb20a3efc2f788b2` |
+| `core3-posted-desktop-1440x900.png` | 1440x900 | `80c3ab7fa0b64e6c3354575958620279c58665a174301290c99b8a173a7581c0` |
+| `core3-refused-desktop-1440x900.png` | 1440x900 | `68e900205d3af46084bff57d152490a4fba1dbd7e81111b965d0ad793fefc226` |
+| `core3-refused-mobile-390x844.png` | 390x844 | `e3c29640d5ddc7b607b1738fbc2b26b9e07cb8ab94e36672a66d3965ac61cb91` |
+| `core3-submitted-desktop-1440x900.png` | 1440x900 | `50cad653dacc3c285a5ac3f52270ed0a0685083dd541d750d5095aa7546857fe` |
+| `core3-submitted-mobile-390x844.png` | 390x844 | `2da5ca241d6f433e9183627e6d4c50023407266bbcf0d226da1063007e7d4620` |
+
+Residuals and deferred scope:
+
+- Full Odoo accounting move creation, payment reconciliation, and payment
+  wizard are deferred; this slice provides deterministic journal/payment state
+  actions and stable journal references.
+- Split-expense editing, duplicate-review dialogs, full tax/analytic widgets,
+  and full chatter composition/follower management remain deferred.
+- Core3 uses shared text/select form primitives for several Odoo many2one and
+  specialized accounting widgets; responsive layout and state/action semantics
+  are covered, but pixel-level Odoo shell/icon parity is not claimed.
+- Receipt binaries are local runtime uploads only; no binary or screenshot is
+  committed.
