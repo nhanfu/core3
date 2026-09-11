@@ -36,6 +36,10 @@ menu:
     - id: configuration
       label: Configuration
       items:
+        - path: /operations
+          label: Operations
+          icon: tools
+          permission: manufacturing.read
         - path: /work-centers
           label: Work Centers
           icon: tools
