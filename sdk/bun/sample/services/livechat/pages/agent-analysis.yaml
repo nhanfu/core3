@@ -1,0 +1,87 @@
+title: Agents
+page: { id: livechat-agent-analysis, route: /livechat/agent-analysis, breadcrumb: [Website, Live Chat, Reporting, Agents], auth: { require: [livechat.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_agent_history
+    search: { label: Search Agent, placeholder: Search... }
+    date_range:
+      label: Date
+      from_field: from_date
+      to_field: to_date
+      default_preset: last_month
+      presets: [last_month, week, month, year]
+      preset_labels: { last_month: 'Date: Last month', week: 'Date: Last week', month: 'Date: This month', year: 'Date: This year' }
+    filters:
+      - { field: agent_name, label: Agent, options: [OdooBot, 'Marc Demo', 'Mitchell Admin'] }
+      - { field: channel_name, label: Channel, options: [Website Support] }
+      - { field: country_name, label: Country, options: ['United States', Belgium, France] }
+      - { field: rating_text, label: Rating, options: [Happy, Neutral, Unhappy] }
+      - { field: session_outcome, label: Status, options: [Success, Escalated, 'No one Available', 'Never Answered'] }
+      - { field: help_status, label: 'Help Status', options: ['Help Requested', 'Help Provided'] }
+    group_by:
+      - { field: channel_name, label: Channel }
+      - { field: agent_name, label: Agent }
+      - { field: help_status, label: 'Help Status' }
+      - { field: rating_text, label: Rating }
+      - { field: country_name, label: Country }
+      - { field: session_outcome, label: Status }
+      - { field: expertise_names, label: Expertise }
+      - { field: tag_names, label: Tags }
+      - { field: session_start_hour, label: 'Hour of Day' }
+      - { field: session_week_day, label: 'Day of Week' }
+      - { field: session_date_month, label: Date }
+    default_group_by: agent_name
+    view_navigation: tabs
+    views:
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: agent_name, column: Agent }
+            - { field: channel_name, column: Channel }
+            - { field: session_date, column: Date, type: date }
+            - { field: session_date_month, column: Date }
+            - { field: session_start_hour, column: 'Hour of Day' }
+            - { field: session_week_day, column: 'Day of Week' }
+            - { field: country_name, column: Country }
+            - { field: expertise_names, column: Expertise }
+            - { field: tag_names, column: Tags }
+            - { field: help_status, column: 'Help Status' }
+            - { field: rating_text, column: Rating }
+            - { field: session_outcome, column: Status }
+            - { field: session_count, column: Count }
+            - { field: response_time_hour, column: 'Response Time' }
+            - { field: session_duration_hour, column: 'Session Duration' }
+            - { field: rating, column: 'Rating (%)' }
+            - { field: call_count, column: '# of Sessions with Calls' }
+            - { field: call_percentage, column: 'Sessions with Calls (%)' }
+            - { field: call_duration_hour, column: 'Call Duration' }
+          default:
+            rows: [agent_name]
+            measures:
+              - { field: session_count, aggregate: sum, column: Count }
+              - { field: response_time_hour, aggregate: avg, column: 'Response Time' }
+              - { field: session_duration_hour, aggregate: avg, column: 'Session Duration' }
+              - { field: rating, aggregate: avg, column: 'Rating (%)' }
+              - { field: call_count, aggregate: sum, column: '# of Sessions with Calls' }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: agent_name
+        measure_field: session_count
+        measure_label: Count
+        type: line
+        measures:
+          - { field: session_count, label: Count, aggregate: sum }
+          - { field: response_time_hour, label: 'Response Time', aggregate: avg }
+          - { field: session_duration_hour, label: 'Session Duration', aggregate: avg }
+          - { field: rating, label: 'Rating (%)', aggregate: avg }
+          - { field: call_count, label: '# of Sessions with Calls', aggregate: sum }
+    show_pager: false
+    empty_state:
+      title: No data yet!
+      description: 'Track and improve live chat performance with insights on session activity, response times, customer ratings, and call interactions.'

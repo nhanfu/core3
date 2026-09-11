@@ -1,0 +1,33 @@
+page: { id: livechat-agent-analysis }
+
+datasources:
+  - id: livechat_agent_history
+    single: false
+    permission: livechat.read
+    pivot:
+      fields: [id, agent_name, session_date, session_date_month, session_start_hour, session_week_day, channel_name, country_name, expertise_names, tag_names, session_outcome, help_status, rating_text, session_count, response_time_hour, session_duration_hour, rating, call_count, call_percentage, call_duration_hour]
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_AGENT_HISTORY_UNAUTHORIZED, message: Sign in to view live chat agent reporting. }
+      forbidden: { status: 403, code: LIVECHAT_AGENT_HISTORY_FORBIDDEN, message: You do not have permission to view live chat agent reporting. }
+      transport_error: { status: 503, code: LIVECHAT_AGENT_HISTORY_UNAVAILABLE, message: Live chat agent reporting is temporarily unavailable. }
+    query: |
+      SELECT id, agent_name, CAST(session_date AS VARCHAR) AS session_date,
+        strftime(session_date, '%Y-%m') AS session_date_month,
+        session_start_hour, session_week_day, channel_name, country_name,
+        expertise_names, tag_names, session_outcome, help_status, rating_text,
+        session_count, response_time_hour, session_duration_hour, rating,
+        call_count, call_percentage, call_duration_hour
+      FROM livechat_agent_history
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR agent_name ILIKE '%' || :q || '%' OR channel_name ILIKE '%' || :q || '%'
+          OR country_name ILIKE '%' || :q || '%' OR expertise_names ILIKE '%' || :q || '%'
+          OR tag_names ILIKE '%' || :q || '%')
+        AND (:agent_name IS NULL OR agent_name = :agent_name)
+        AND (:channel_name IS NULL OR channel_name = :channel_name)
+        AND (:country_name IS NULL OR country_name = :country_name)
+        AND (:rating_text IS NULL OR rating_text = :rating_text)
+        AND (:session_outcome IS NULL OR session_outcome = :session_outcome)
+        AND (:help_status IS NULL OR help_status = :help_status)
+        AND (:from_date IS NULL OR session_date >= CAST(:from_date AS TIMESTAMP))
+        AND (:to_date IS NULL OR session_date < CAST(:to_date AS TIMESTAMP) + INTERVAL '1' DAY)
+      ORDER BY agent_name, session_date, id
