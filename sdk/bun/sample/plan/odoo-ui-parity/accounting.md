@@ -1089,3 +1089,44 @@ Accounting contracts; `bun run audit` passed with 498 pages, 505 routes, and
 879 datasources; ESLint, the global Sass rebuild, and `git diff --check` also
 passed. Implementation/test commits are `22a2b896` and `bcf8df22`; this
 evidence update is committed separately.
+
+## Current batch: Bank Statements action (2026-09-11)
+
+The fresh Odoo 19 source is `account.action_bank_statement_tree` in
+`addons/account/views/account_bank_statement_views.xml` (action name `Bank
+Statements`, model `account.bank.statement`, view modes `list,pivot,graph,form`,
+and domain `journal_id.type = bank`). The rendered list is
+`account.bank.statement.list`, the search view is
+`account.bank.statement.search`, the pivot is `account.bank.statement.pivot`,
+and the graph is `account.bank.statement.graph`. The visible entry is the
+Accounting journal dashboard's `Statements` object action in
+`account_journal_dashboard_view.xml`; the authenticated web-client route was
+`/odoo/action-417` in `core3_codex_demo`.
+
+Core3 adds the module-qualified route `/accounting/bank-statements` and the
+row detail route `/accounting/bank-statement-detail`, with presentation-only
+page YAML joined to API YAML by `page.id`. The list preserves the Odoo labels
+`Reference`, `Date`, `Journal`, `Company`, `Starting Balance`, and `Ending
+Balance`, plus List/Pivot/Graph tabs, Empty/Invalid filters, search, row
+navigation, and the Odoo registration empty copy. The read-only detail keeps
+the Statement and Accounting groups and Statement lines/Attachments notebook
+tabs. The migration is deterministic and idempotent, and the API contract
+covers accounting.read, forbidden/transport/missing states, search, empty
+filters, and stable row data.
+
+Authenticated evidence used the isolated runtime (`3051`/`3052`) after global
+and Accounting Sass rebuilds. Every saved capture was viewport-bounded, waited
+for visible seeded content, checked document/body width equality, and reported
+no failed responses or page errors. Images remain outside Git:
+
+- Desktop list: `/tmp/core3-accounting-bank-statements-desktop-final-20260911.png`
+- Desktop pivot: `/tmp/core3-accounting-bank-statements-desktop-pivot-final-20260911.png`
+- Desktop graph: `/tmp/core3-accounting-bank-statements-desktop-graph-final-20260911.png`
+- Desktop detail: `/tmp/core3-accounting-bank-statements-desktop-detail-final-20260911.png`
+- Mobile list: `/tmp/core3-accounting-bank-statements-mobile-final-20260911.png`
+- Mobile detail: `/tmp/core3-accounting-bank-statements-mobile-detail-final-20260911.png`
+
+The remaining visual differences are the expected Core3 Fluent shell versus
+Odoo's purple shell, compact mobile navigation hiding Odoo's desktop
+breadcrumbs/view controls, and the bounded fixture rows versus the live Odoo
+database's current bank-statement population.
