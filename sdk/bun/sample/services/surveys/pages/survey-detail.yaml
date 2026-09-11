@@ -84,6 +84,7 @@ actions:
       async ({ row }) => {
         if (!row.access_token) throw new Error('This survey does not have a printable link.');
         window.open(`/survey/print/${encodeURIComponent(row.access_token)}`, '_blank', 'noopener');
+      }
   - id: delete_survey_detail
     type: client
     permission: surveys.write
@@ -101,7 +102,6 @@ actions:
         });
         const app = await import('/app.ts');
         await app.navigate('/surveys');
-      }
       }
   - id: test_survey_detail
     type: navigate
