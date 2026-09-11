@@ -25,6 +25,7 @@ describe('Accounting Journal Items view parity', () => {
       category_field: 'item_month',
       measure_field: 'balance',
       measure_label: 'Balance',
+      show_zero_data: true,
       type: 'line',
     });
     expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({

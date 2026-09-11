@@ -6,7 +6,7 @@ export type GraphMeasureDefinition = { field?: string; label?: string; aggregate
 export type GraphSeriesDefinition = { value: string; label: string; color?: string };
 export type GraphViewDefinition = {
   id: 'graph'; label: string; icon?: string; categoryField: string; measureField?: string; measureLabel?: string;
-  dateField?: string; type?: 'bar' | 'line'; seriesField?: string; series?: GraphSeriesDefinition[]; measures?: GraphMeasureDefinition[];
+  dateField?: string; type?: 'bar' | 'line'; seriesField?: string; series?: GraphSeriesDefinition[]; measures?: GraphMeasureDefinition[]; showZeroData?: boolean;
 };
 
 type GraphDateRange = { from?: string; to?: string };
@@ -26,7 +26,7 @@ export class GraphView extends BaseComponent {
     const values = this.aggregate(rows, categories, series, view, measure);
     const root = html.take(container).div.className('o-graph-view').ele() as HTMLDivElement;
     this.drawToolbar(root, view, measure);
-    if (!categories.length || !values.some(item => item.points.some(point => point.value !== 0))) {
+    if (!categories.length || (!view.showZeroData && !values.some(item => item.points.some(point => point.value !== 0)))) {
       html.take(root).toggleClass('o-analytics-empty', true);
       const empty = this.options.emptyState || {};
       html.take(root).h3.replaceText(empty.title || i18n.tKey('analytics.no_data', {}, 'No data'));

@@ -682,6 +682,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     seriesField: view.series_field,
     series: view.series,
     type: view.type,
+    showZeroData: view.show_zero_data === true,
     labelField: view.label_field,
     subtitleField: view.subtitle_field,
     latitudeField: view.latitude_field,
