@@ -1,0 +1,18 @@
+title: Add Email Blacklist
+page: { id: email-blacklist-detail, route: /email-blacklist/detail, breadcrumb: [Marketing, Email Marketing, Configuration, Blacklisted Email Addresses, Email], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: OdooFormView
+    source: email_blacklist_detail
+    title_field: email
+    group_columns: 1
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Details }
+    header_actions:
+      - { id: blacklist_email_detail, label: Blacklist, variant: primary, permission: email_marketing.write, show_if: "state.email_blacklist_detail.active === false" }
+      - { id: unblacklist_email_detail, label: Unblacklist, variant: primary, permission: email_marketing.write, show_if: "state.email_blacklist_detail.active === true" }
+    groups:
+      - title: Email Address
+        fields:
+          - { field: email, label: Email, type: email }
+          - { field: active, label: Status, type: checkbox }

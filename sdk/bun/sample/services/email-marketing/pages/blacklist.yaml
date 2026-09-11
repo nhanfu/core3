@@ -1,0 +1,25 @@
+title: Blacklisted Email Addresses
+page: { id: email-blacklist, route: /email-blacklist, breadcrumb: [Marketing, Email Marketing, Configuration, Blacklisted Email Addresses], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: email_blacklist_records
+    create_action: create_email_blacklist
+    create_label: New
+    search: { label: Search blacklisted email addresses, placeholder: Search email address... }
+    filters: [{ field: active, label: Archived, options: [{ id: 'archived', label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/email-marketing/pages/email-blacklist-detail.yaml, side_panel: false }
+    columns:
+      - { field: created_at, label: Blacklist Date, type: Date }
+      - { field: email, label: Email, type: PrimaryEntityCell, mobile: true }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_email_blacklist, label: Edit, icon: edit }, { id: delete_email_blacklist, label: Delete, icon: trash, variant: danger }] }
+    row_key: id
+    row_open_action: edit_email_blacklist
+    row_double_click_action: edit_email_blacklist
+    row_actions: menu
+    empty_state: { title: Add an email address to the blacklist, description: Email addresses that are blacklisted won't receive Email mailings anymore. }
