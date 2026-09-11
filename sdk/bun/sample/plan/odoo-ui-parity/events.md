@@ -2,6 +2,79 @@
 
 Status: in-progress
 
+## Current batch: Attendee Send by Email composer
+
+The authenticated personal Odoo database `core3_personal` exposes the visible
+attendee form action `Send by Email` (`action_send_badge_email`) at
+`/odoo/action-287/32`. The form is reached from `Events > Reporting >
+Attendees`; the reference record is `Unconfirmed Guest`. Odoo opens a
+`Compose Email` modal with `To`, `Subject`, the rendered registration email,
+the generated badge PDF attachment, and `Send` / `Discard` controls. At
+390x844 the composer becomes a full-height mobile sheet with the action footer
+fixed at the bottom.
+
+This bounded slice adds the exact `Send by Email` header action to the existing
+layout-only `event-attendee-detail` page. Its page.id-owned API fragment adds
+`send_attendee_email` as a permissioned `server_form` action with the
+`mail_composer` modal style, hidden registration identity, deterministic
+recipient/subject/body/attachment prefill, and Odoo labels. Migration
+`20260911190000-022-event-attendee-email.yaml` adds the event-owned
+`event_registration_emails` audit table and a deterministic sent fixture. The
+mutation requires `events.write`, validates the registration and recipient
+email, rejects cancelled registrations, generates stable audit ids, and uses a
+fixed sent timestamp. It does not claim SMTP delivery or generate a binary
+PDF; those transport/report concerns remain outside this bounded UI action.
+
+Reference and implementation evidence was captured authenticated as Odoo
+`codex@core3.local` in `core3_personal` and Core3 `admin@tms.local` against
+the isolated worktree runtime. The installed Odoo reference captures are:
+
+| Viewport | Odoo route | Capture | SHA-256 | Dimensions |
+| --- | --- | --- | --- | --- |
+| 1440x900 | `/odoo/action-287/32` | `/tmp/odoo-events-send-email-modal-1440-20260911.png` | `7af79f45a178e975db22e13afd135fd81de8913ba54fb4143d610b26f9ddeeff` | 1440x900 |
+| 390x844 | `/odoo/action-287/32` | `/tmp/odoo-events-send-email-modal-390-20260911.png` | `1939533be971cd0d07f826c66e2b75061041b47cd49e3ea37193770e4efbe841` | 390x844 |
+
+The Core3 captures use the isolated frontend origin
+`http://localhost:3016/events/attendees/detail?id=registration-demo-unconfirmed`
+because the shared 3002 runtime was already occupied. They were taken after
+the authenticated route opened the composer and after rebuilding the ignored
+global CSS asset:
+
+| Viewport | Capture | SHA-256 | Dimensions |
+| --- | --- | --- | --- |
+| 1440x900 | `/tmp/core3-events-attendee-send-email-modal-desktop-1440x900-20260911.png` | `65dbaffc0b37a83990e5b4bc517c4b6f9af1050c45d5bcf2f228136ccffb5721` | 1440x900 |
+| 390x844 | `/tmp/core3-events-attendee-send-email-modal-mobile-390x844-20260911.png` | `01c64c52108c1b04ae3f2060e545f32366a128e334dfd18d856733640f4b6e02` | 390x844 |
+
+The paired comparison confirms the same visible contract: `Compose Email`,
+recipient chip, event-specific subject, registration message, badge PDF chip,
+and Send/Discard footer. The implementation fixes introduced the
+Odoo-shaped composer container, scrollable message preview, mobile full-height
+sheet, fixed mobile footer, deterministic event schedule/venue content, and a
+hidden submitted registration id. Core3 retains its Fluent shell and compact
+native text controls, while Odoo retains its purple shell, richer mail editor,
+calendar links, attachment actions, and actual badge generation. These are
+intentional bounded residuals.
+
+The capture-only browser pass verified authenticated route resolution and
+composer content at both viewports; both images are outside Git. The send
+mutation is covered by the focused integration suite and the deterministic
+fixture is idempotent. A live click in the dev stack closed neither composer
+nor emitted the success toast within the short scripted wait, so asynchronous
+send completion is recorded as a residual for a future transport-backed slice;
+the focused server mutation itself passes with the expected sent audit row and
+404/400 validation boundaries. The requested persistent `js_repl` runtime was
+unavailable, so shell Playwright with headless Chromium was used for these
+captures.
+
+Validation for this batch: `bun test
+test/events_attendee_email.integration.test.ts` passes 3 tests and 16
+assertions; targeted ESLint passes for the changed client/server/test files;
+Sass global compilation passes; `bun run audit` passes with 470 pages, 477
+routes, and 820 datasources; and `git diff --check` passes. Implementation
+commits are `7e120b8b` (`feat(events): add attendee email composer`) and
+`c3df0401` (`fix(events): submit attendee id with email`). This evidence and
+plan update is committed separately; no screenshots are committed.
+
 ## Current batch: Event-scoped Registration statistics
 
 The authenticated personal Odoo database `core3_personal` exposes the installed
