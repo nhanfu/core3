@@ -489,6 +489,48 @@ deterministic step type only; public widget transport, chatbot execution,
 conversation/lead integration, reports, member history, and transcript/user
 integration remain planned follow-up slices.
 
+## Bounded implementation slice: Configuration — Canned Responses (2026-09-11)
+
+The next uncovered visible Live Chat action is Configuration → Canned Responses.
+The active authenticated reference database `core3_user_demo` exposes this as
+`/odoo/action-126`, action `mail.mail_canned_response_action`, model
+`mail.canned.response`, with `list,form,kanban` view modes. The live menu audit
+showed it beneath Live Chat → Configuration alongside the already-covered
+Chatbots, Expertise, and Tags actions.
+
+The source contract is in
+`/home/nhanjs/projects/odoo/addons/mail/views/mail_canned_response_views.xml`
+and `/home/nhanjs/projects/odoo/addons/mail/models/mail_canned_response.py`:
+the list is editable at the bottom and shows Shortcut, Substitution, optional
+Authorized Groups, and optional Last Used; the form edits Shortcut,
+Substitution, and Authorized Groups; the mobile kanban shows the shortcut,
+substitution, and authorized-group tags. Search supports Shortcut and
+Substitution, with Private/Shared filters and Authorized Groups grouping. The
+empty help copy is “No canned response found. Let's create one!” followed by
+the `::shortcut` usage guidance. Seed data from `mail_canned_response_data.xml`
+and `mail_canned_response_demo.xml` establishes `hello` and `bye` responses.
+
+Core3 will expose only this action at `/livechat/canned-responses` with a
+side-panel detail route `/livechat/canned-responses/detail`. Page YAML and API
+YAML remain separate and join through page ids
+`livechat-canned-responses` and `livechat-canned-response-detail`. The
+service-owned datasource will provide stable ids, `::` shortcut display,
+substitution, authorized groups, shared/editable flags, creator, and a
+relative-date Last Used value. Deterministic default, private/shared,
+no-results, empty, missing, forbidden, and transport-error profiles are
+required; migrations must be idempotent and avoid runtime timestamps or random
+ids.
+
+CRUD uses `livechat.write`, while reads use `livechat.read`. Create/update
+requires a lowercase shortcut token (`[a-z0-9_-]`, max 64), non-empty
+substitution, duplicate-name protection, missing-record protection, and
+optimistic row-version guards. Shared rows are readable but not editable by a
+read-only user; deleting a missing or stale row is rejected. The focused test
+must cover the page/API join, source-backed list/form/kanban contract,
+search/filter/empty/error states, deterministic migration, CRUD and stale/
+validation/permission boundaries. Authenticated Odoo/Core3 browser evidence
+must compare the action at 1440x900 and 390x844, with captures only in `/tmp`.
+
 ## Bounded implementation slice: Reporting — Agents (2026-09-11)
 
 The next uncovered installed visible action is Live Chat → Reporting → Agents.
