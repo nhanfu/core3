@@ -773,3 +773,36 @@ lists under `/tmp` only.
 Keep this file and the parent register at `in-progress` until the remaining
 acceptance checks pass; do not use the fallback Discuss screenshots as
 installed UI evidence.
+
+## Bounded slice: Survey Delete action (2026-09-11)
+
+The active Odoo 19 Survey form exposes Delete in the Actions menu for the
+selected survey. Core3 adds the matching `delete_survey_detail` action to the
+existing `survey-detail` page/API pair, requiring `surveys.write`, optimistic
+row-version checks, and dependent-graph cleanup for questions, participants,
+responses, detailed answers, invitations, suggested values, and live sessions.
+The page/API ownership remains joined by `page.id`; no new route or page
+renderer is introduced.
+
+Implementation commit: `ce155916` (`feat(surveys): add guarded delete action`)
+after contract commit `dbc98d90`. Focused coverage passes 2 tests and 25
+assertions, covering the visible Actions menu contract, successful graph
+deletion, empty-list behavior, missing records, stale writes, and the
+permission boundary.
+
+Authenticated Core3 browser verification used `admin@tms.local` against
+`/surveys/detail?id=survey-demo-feedback` at 1440x900 and 390x844. The detail
+form and Actions menu visibly include Delete, both viewports have exact
+document/body widths, and no page errors, failed requests, or HTTP error
+responses were observed. Odoo reference captures cover the corresponding
+menu at both target viewports; images remain outside Git:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Survey Actions menu | 1440x900 | `/tmp/odoo-surveys-delete-menu-desktop-20260911.png` | `0c25d6b2af48f56d6aea2e4a3a9506673a8a29db7d628226503861c3029d9876` |
+| Odoo Survey Actions menu | 390x844 | `/tmp/odoo-surveys-delete-menu-mobile-20260911.png` | `cf29e9316443f74026ee7e2360d0d32aaea7de74fc6a020b9f7c8449e35359fa` |
+| Core3 Survey detail/actions | 1440x900 | `/tmp/core3-surveys-delete-menu-current-1440x900.png` | `41b47b90c3b62c1ec2287d5eac2e63307afc11c4f43036fa7b03bd509c6f0262` |
+| Core3 Survey detail/actions | 390x844 | `/tmp/core3-surveys-delete-menu-current-390x844.png` | `61eb3c71b53205a84b2cfbf8903bc1efe900b9f7808078e023a4d528edfc2702` |
+
+The documented residual is Odoo's native confirmation/menu shell versus the
+shared Core3 Actions menu and confirmation flow. Images are not committed.
