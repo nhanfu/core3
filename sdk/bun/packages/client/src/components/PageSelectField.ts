@@ -7,6 +7,7 @@ export class PageSelectField extends PageField {
     const { field, fieldId, initialValue } = this.state;
     const select = html.take(container).select.ele() as HTMLSelectElement;
     html.take(select).className(`form-select form-control${field.multiple ? ' form-control-multiple' : ''}`).prop('id', fieldId);
+    if (field.readonly) html.take(select).prop('disabled', true).prop('ariaReadOnly', 'true');
     if (field.multiple) html.take(select).prop('multiple', true);
     if (!field.multiple) html.take(select).option.prop('value', '').replaceText(i18n.tKey('labels.select', {}, 'Chọn…'));
     for (const option of this.sourceOptions()) {

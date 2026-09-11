@@ -217,7 +217,7 @@ export class PageFormModal extends BaseComponent {
 
         const saveBtn = html.take(footer).button.ele() as HTMLButtonElement;
         html.take(saveBtn).type('button');
-        html.take(saveBtn).className('btn btn-primary').replaceText(i18n.tKey('labels.save', {}, 'Save'));
+        html.take(saveBtn).className('btn btn-primary').replaceText(String(actionDef.submit_label || i18n.tKey('labels.save', {}, 'Save')));
         if (isMailComposer) {
           html.take(cancelBtn).replaceText(String(actionDef.cancel_label || 'Discard'));
           html.take(saveBtn).replaceText(String(actionDef.submit_label || 'Send'));
@@ -325,7 +325,7 @@ export class PageFormModal extends BaseComponent {
           } catch (err: any) {
             console.error('[page-renderer] patch error:', err);
             showToast(err.message || 'Lưu thất bại. Vui lòng thử lại.', toastTypeForError(err));
-            html.take(saveBtn).prop('disabled', false).replaceText(i18n.tKey('labels.save', {}, 'Save'));
+            html.take(saveBtn).prop('disabled', false).replaceText(String(actionDef.submit_label || i18n.tKey('labels.save', {}, 'Save')));
           }
         });
       });

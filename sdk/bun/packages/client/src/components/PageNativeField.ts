@@ -10,6 +10,7 @@ export class PageNativeField extends PageField {
       html.take(input).prop('inputMode', 'numeric').prop('placeholder', field.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm');
     }
     html.take(input).className('form-input form-control').prop('id', fieldId).prop('value', String(initialValue ?? ''));
+    if (field.readonly) html.take(input).prop('readOnly', true).prop('ariaReadOnly', 'true');
     this.element = input;
   }
 }

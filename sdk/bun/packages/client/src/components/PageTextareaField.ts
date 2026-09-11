@@ -6,6 +6,7 @@ export class PageTextareaField extends PageField {
     const { fieldId, initialValue } = this.state;
     const textarea = html.take(container).textarea.ele() as HTMLTextAreaElement;
     html.take(textarea).className('form-input form-control form-textarea').prop('id', fieldId).prop('value', String(initialValue ?? ''));
+    if (this.state.field.readonly) html.take(textarea).prop('readOnly', true).prop('ariaReadOnly', 'true');
     this.element = textarea;
   }
 }
