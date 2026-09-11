@@ -735,13 +735,13 @@ sessions-desktop-list-20260911.png` (1440x900, SHA-256
 `/tmp/odoo-livechat-ongoing-sessions-mobile-detail-20260911.png` (390x844,
 `88db3c2e563e875a3210caba85b887ee83a3fd805cb43bab1ff9bd5704ad8342`).
 
-Core3 captures are `/tmp/core3-livechat-ongoing-sessions-desktop-list-final-
-20260911.png` (1440x900, `2b9a2589e16c6c013e46fbc1f1f0deedbc59ced8fd46a5ee97929123edc4efb7`),
-`/tmp/core3-livechat-ongoing-sessions-mobile-list-final-20260911.png`
-(390x844, `7d7faafb462e1dc36315b4808fc5cb48a35d0987171f48545fef1c5320cdf156`),
-`/tmp/core3-livechat-ongoing-sessions-desktop-detail-final-20260911.png`
+Core3 post-fix captures are `/tmp/core3-livechat-ongoing-sessions-desktop-list-postfix-20260911.png`
+(1440x900, `0c94cec70200d412311eba65ff0455243f0f8cba6883b89e758c400044fa2e57`),
+`/tmp/core3-livechat-ongoing-sessions-mobile-list-postfix-20260911.png`
+(390x844, `2ef510374dffc171c7949e5a3aa32c5123295fe03f3f1ccfc63caab4de38e499`),
+`/tmp/core3-livechat-ongoing-sessions-desktop-detail-postfix-20260911.png`
 (1440x900, `5fc72a87cf4d7a4734e78aff0f970b9b014ae1a84009787318bdc3cc8fc36878`),
-and `/tmp/core3-livechat-ongoing-sessions-mobile-detail-final-20260911.png`
+and `/tmp/core3-livechat-ongoing-sessions-mobile-detail-postfix-20260911.png`
 (390x844, `e5f4bb54d306b9e424c17e0e1c37ffd94773973349aa9a095d87a41acc8d5dfb`).
 The visual review found that Odoo exposes the active `Ongoing` search facet;
 Core3 now declares the same default facet visibly while retaining the
