@@ -1,0 +1,88 @@
+version: 0.0.28
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE fleet_service_types SET name = 'Summer tires', category = 'service', active = TRUE, row_version = 1 WHERE id = 'fleet-service-type-tires';
+      UPDATE fleet_service_types SET name = 'Snow tires', category = 'service', active = TRUE, row_version = 1 WHERE id = 'fleet-service-type-inspection';
+      INSERT INTO fleet_service_types(id, name, category, active, row_version, created_at, updated_at) VALUES
+        ('fleet-service-type-ac-compressor-replacement', 'A/C Compressor Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-ac-condenser-replacement', 'A/C Condenser Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-ac-diagnosis', 'A/C Diagnosis', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-ac-evaporator-replacement', 'A/C Evaporator Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-ac-recharge', 'A/C Recharge', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-air-filter-replacement', 'Air Filter Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-assistance', 'Assistance', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-ball-joint-replacement', 'Ball Joint Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-battery-inspection', 'Battery Inspection', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-battery-replacement', 'Battery Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-brake-caliper-replacement', 'Brake Caliper Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-brake-inspection', 'Brake Inspection', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-brake-pads-replacement', 'Brake Pad(s) Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-calculation-benefit-in-kind', 'Calculation Benefit In Kind', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-car-wash', 'Car Wash', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-catalytic-converter-replacement', 'Catalytic Converter Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-charging-system-diagnosis', 'Charging System Diagnosis', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-depreciation-and-interests', 'Depreciation and Interests', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-door-window-motor-regulator-replacement', 'Door Window Motor/Regulator Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-emissions', 'Emissions', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-engine-belt-inspection', 'Engine Belt Inspection', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-engine-coolant-replacement', 'Engine Coolant Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-engine-drive-belts-replacement', 'Engine/Drive Belt(s) Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-entry-into-service-tax', 'Entry into service tax', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-exhaust-manifold-replacement', 'Exhaust Manifold Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-fuel-injector-replacement', 'Fuel Injector Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-fuel-pump-replacement', 'Fuel Pump Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-head-gaskets-replacement', 'Head Gasket(s) Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-heater-blower-motor-replacement', 'Heater Blower Motor Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-heater-control-valve-replacement', 'Heater Control Valve Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-heater-core-replacement', 'Heater Core Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-heater-hose-replacement', 'Heater Hose Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-ignition-coil-replacement', 'Ignition Coil Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-intake-manifold-gasket-replacement', 'Intake Manifold Gasket Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-leasing', 'Leasing', 'contract', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-management-fee', 'Management Fee', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-oil-change', 'Oil Change', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-oil-pump-replacement', 'Oil Pump Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-omnium', 'Omnium', 'contract', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-options', 'Options', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-other-maintenance', 'Other Maintenance', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-oxygen-sensor-replacement', 'Oxygen Sensor Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-power-steering-hose-replacement', 'Power Steering Hose Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-power-steering-pump-replacement', 'Power Steering Pump Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-radiator-repair', 'Radiator Repair', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-rent-excluding-vat', 'Rent (Excluding VAT)', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-repairing', 'Repairing', 'contract', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-replacement-vehicle', 'Replacement Vehicle', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-residual-value-excluding-vat', 'Residual value (Excluding VAT)', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-residual-value-in-percent', 'Residual value in %', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-resurface-rotors', 'Resurface Rotors', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-rotate-tires', 'Rotate Tires', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-rotor-replacement', 'Rotor Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-spark-plug-replacement', 'Spark Plug Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-starter-replacement', 'Starter Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-tax-roll', 'Tax roll', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-thermostat-replacement', 'Thermostat Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-tie-rod-end-replacement', 'Tie Rod End Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-tire-replacement', 'Tire Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-tire-service', 'Tire Service', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-total-expenses-excluding-vat', 'Total expenses (Excluding VAT)', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-touring-assistance', 'Touring Assistance', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-transmission-filter-replacement', 'Transmission Filter Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-transmission-fluid-replacement', 'Transmission Fluid Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-transmission-replacement', 'Transmission Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-vendor-bill', 'Vendor Bill', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-water-pump-replacement', 'Water Pump Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-wheel-alignment', 'Wheel Alignment', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-wheel-bearing-replacement', 'Wheel Bearing Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-windshield-wipers-replacement', 'Windshield Wiper(s) Replacement', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (id) DO UPDATE SET name = excluded.name, category = excluded.category, active = excluded.active, row_version = 1, updated_at = excluded.updated_at;
+      UPDATE fleet_service_types SET row_version = 1, created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id LIKE 'fleet-service-type-%';
+    down: |
+      DELETE FROM fleet_service_types WHERE id LIKE 'fleet-service-type-%' AND id NOT IN ('fleet-service-type-repair', 'fleet-service-type-refueling', 'fleet-service-type-tires', 'fleet-service-type-inspection');
+      UPDATE fleet_service_types SET name = 'Tires' WHERE id = 'fleet-service-type-tires';
+      UPDATE fleet_service_types SET name = 'Inspection' WHERE id = 'fleet-service-type-inspection';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

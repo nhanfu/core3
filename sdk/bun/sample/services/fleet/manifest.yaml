@@ -33,4 +33,5 @@ menu:
         - { path: /fleet/config/model-categories, label: Categories, icon: car, permission: fleet.manage }
         - { path: /fleet/config/statuses, label: Status, icon: workflow, permission: fleet.manage }
         - { path: /fleet/config/tags, label: Tags, icon: tag, permission: fleet.manage }
+        - { path: /fleet/config/service-types, label: Types, icon: tools, permission: fleet.manage }
         - { path: /fleet/config/activity-types, label: Activity Types, icon: activity, permission: fleet.manage }

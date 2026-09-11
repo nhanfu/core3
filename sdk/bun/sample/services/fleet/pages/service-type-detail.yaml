@@ -1,0 +1,17 @@
+title: Service Type
+page: { id: fleet-service-type-detail, route: /fleet/config/service-types/detail, breadcrumb: [Human Resources, Fleet, Configuration, Services, Types], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_service_type_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Service Type
+        fields:
+          - { field: name, label: Name }
+          - { field: category, label: Category }
+    header_actions:
+      - { id: edit_fleet_service_type_detail, label: Save, variant: primary, permission: fleet.manage }
+    action_menu:
+      actions:
+        - { id: delete_fleet_service_type_detail, label: Delete, variant: danger, permission: fleet.manage }

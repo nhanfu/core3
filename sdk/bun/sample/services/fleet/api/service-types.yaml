@@ -1,0 +1,77 @@
+page: { id: fleet-service-types }
+datasources:
+  - id: fleet_config_service_types
+    permission: fleet.read
+    error_states:
+      unauthorized: { status: 401, code: FLEET_SERVICE_TYPES_UNAUTHORIZED, message: Sign in to view fleet service types. }
+      forbidden: { status: 403, code: FLEET_SERVICE_TYPES_FORBIDDEN, message: You do not have permission to view fleet service types. }
+      transport_error: { status: 503, code: FLEET_SERVICE_TYPES_UNAVAILABLE, message: Fleet service types are temporarily unavailable. }
+    query: "SELECT id, row_version, name, category, active, CASE category WHEN 'contract' THEN 'Contract' ELSE 'Service' END AS category_label FROM fleet_service_types WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:category IS NULL OR category = :category) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR category ILIKE '%' || :q || '%') ORDER BY category, name, id"
+actions:
+  - id: create_fleet_service_type_inline
+    type: server_form
+    permission: fleet.manage
+    title: New Service Type
+    action: fleet.service_types.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fleet_config_service_types]
+    mutation:
+      operation: insert
+      table: fleet_service_types
+      fields: [row_version, name, category]
+      required: [name, category]
+      defaults: { row_version: 1, category: service }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'fleet-service-type-custom-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: FLEET_SERVICE_TYPE_NAME_REQUIRED, message: Service type name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:category, 'service') IN ('service', 'contract')", status: 422, code: FLEET_SERVICE_TYPE_CATEGORY_INVALID, message: Category must be Service or Contract. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_service_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: FLEET_SERVICE_TYPE_EXISTS, message: A service type with this name already exists. }
+      result: { query: "SELECT * FROM fleet_service_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: category, label: Category, type: select, required: true, options: [{ value: contract, label: Contract }, { value: service, label: Service }], default: service }
+  - id: edit_fleet_service_type
+    type: navigate
+    permission: fleet.read
+    navigate_to: /fleet/config/service-types/detail
+    params: { id: '{row.id}' }
+  - id: update_fleet_service_type_inline
+    type: server_form
+    permission: fleet.manage
+    title: Edit Service Type
+    action: fleet.service_types.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_config_service_types]
+    mutation:
+      operation: update
+      table: fleet_service_types
+      fields: [name, category]
+      required: [name, category]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_service_types WHERE id = :id", status: 404, code: FLEET_SERVICE_TYPE_NOT_FOUND, message: Service type was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: FLEET_SERVICE_TYPE_NAME_REQUIRED, message: Service type name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:category, '') IN ('service', 'contract')", status: 422, code: FLEET_SERVICE_TYPE_CATEGORY_INVALID, message: Category must be Service or Contract. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_service_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: FLEET_SERVICE_TYPE_EXISTS, message: A service type with this name already exists. }
+      result: { query: "SELECT * FROM fleet_service_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: category, label: Category, type: select, required: true, options: [{ value: contract, label: Contract }, { value: service, label: Service }] }
+  - id: delete_fleet_service_type
+    type: server
+    permission: fleet.manage
+    action: fleet.service_types.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [fleet_config_service_types]
+    params: { id: '{row.id}' }
+    mutation:
+      operation: delete
+      table: fleet_service_types
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_service_types WHERE id = :id", status: 404, code: FLEET_SERVICE_TYPE_NOT_FOUND, message: Service type was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_services WHERE service_type_id = :id)", status: 409, code: FLEET_SERVICE_TYPE_IN_USE, message: This service type is used by vehicle service logs. }

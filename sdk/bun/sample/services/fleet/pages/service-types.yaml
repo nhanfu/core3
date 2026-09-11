@@ -1,0 +1,33 @@
+title: Types
+page: { id: fleet-service-types, route: /fleet/config/service-types, breadcrumb: [Human Resources, Fleet, Configuration, Services, Types], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_config_service_types
+    create_action: create_fleet_service_type_inline
+    create_label: New
+    search: { label: Search service types, placeholder: Search... }
+    filters: [{ field: category, label: Category, options: [{ id: contract, label: Contract }, { id: service, label: Service }] }]
+    group_by: [{ field: category, label: Category }]
+    default_group_by: category
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    inline_edit:
+      create_action: create_fleet_service_type_inline
+      update_action: update_fleet_service_type_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, required: true, placeholder: Service type name }
+        - { field: category, type: select, required: true, options: [{ value: contract, label: Contract }, { value: service, label: Service }] }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: category_label, label: Category, mobile: true, sortable: true }
+    row_key: id
+    row_open_action: edit_fleet_service_type
+    row_double_click_action: edit_fleet_service_type
+    form_view: { page: apps/services/fleet/pages/service-type-detail.yaml, side_panel: false }
+    row_actions: menu
+    empty_state: { title: Create a new type of service, description: 'Each service can be used in contracts, as a standalone service, or both.' }
