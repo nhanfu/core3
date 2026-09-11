@@ -1,5 +1,5 @@
 title: Favorite Filter
-page: { id: email-favorite-filter-detail, route: /email-favorite-filters/detail, breadcrumb: [Marketing, Email Marketing, Configuration, Favorite Filters, Filter], auth: { require: [email_marketing.read] } }
+page: { id: favorite-filter-detail, route: /email-favorite-filters/detail, breadcrumb: [Marketing, Email Marketing, Configuration, Favorite Filters, Filter], auth: { require: [email_marketing.read] } }
 
 components:
   - type: OdooFormView

@@ -1,4 +1,4 @@
-page: { id: email-favorite-filter-detail }
+page: { id: favorite-filter-detail }
 datasources:
   - id: email_favorite_filter_detail
     single: true

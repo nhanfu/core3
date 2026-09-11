@@ -18,14 +18,14 @@ describe('Email Marketing Favorite Filters parity action', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
 
     expect(listPage.page.id).toBe('email-favorite-filters');
-    expect(detailPage.page.id).toBe('email-favorite-filter-detail');
+    expect(detailPage.page.id).toBe('favorite-filter-detail');
     expect(listPage.page.auth.require).toEqual(['email_marketing.read']);
     expect(listPage.components[0].default_filters).toEqual({ saved_by_me: 'true' });
     expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list', 'form']);
     expect(yaml('api/favorite-filters.yaml').page.id).toBe(listPage.page.id);
     expect(yaml('api/favorite-filter-detail.yaml').page.id).toBe(detailPage.page.id);
     expect(discovered.pageDatasources.get('email-favorite-filters')).toContain('email_favorite_filters');
-    expect(discovered.pageDatasources.get('email-favorite-filter-detail')).toContain('email_favorite_filter_detail');
+    expect(discovered.pageDatasources.get('favorite-filter-detail')).toContain('email_favorite_filter_detail');
     expect(yaml('manifest.yaml').menu['email-marketing'].groups.find((group: any) => group.id === 'configuration').items)
       .toEqual(expect.arrayContaining([expect.objectContaining({ path: '/email-favorite-filters', permission: 'email_marketing.read' })]));
   });
