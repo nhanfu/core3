@@ -475,6 +475,52 @@ The implementation/test commits are `02e5aa6b` (`feat(time-off): add group
 allocation wizard parity`) and `d152e454` (`fix(time-off): expose group
 allocation header action`).
 
+The next uncovered visible workflow is Odoo's `Multiple Requests` action,
+shown as `New Group Time Off` on the Time Off Approval list. The authenticated
+reference was inspected in `core3_personal` as `codex@core3.local` at
+`/odoo/time-off-approval`; its runtime action is 617,
+`action_hr_leave_generate_multi_wizard`, backed by
+`hr.leave.generate.multi.wizard`. The source form is manager-only through
+`hr_holidays.group_hr_holidays_responsible` and contains Time Off Type, Mode,
+Employees, a date range, description, and Generate Time Off/Discard. The
+bounded Core3 slice keeps that visible contract and implements explicit
+By Employee generation for the four deterministic employees. The other Odoo
+mode choices remain visible for contract parity; this slice does not yet add
+their conditional company, department, or employee-tag selectors.
+
+Core3 adds the manager-only `create_multiple_requests` server form to
+`/time-off/time-off-approval`, with its API fragment joined to the layout by
+`page.id: time-off-approval`. Migration 0.0.12 seeds the employee lookup table
+idempotently. Successful rows use stable
+`LEAVE/GROUP/<date>/<employee-id>` names and generate one Submitted request
+per selected employee. Server guards cover inactive or non-approval types,
+invalid modes and dates, inactive/unknown employees, overlaps, and duplicate
+batch requests; the action and lookup sources require `time_off.manage`.
+The focused suite passes 3 tests and 24 assertions, including migration
+idempotency, deterministic generation, validation, stale-like duplicate/
+overlap conflicts, and permission denial.
+
+The visual pass used the authenticated Odoo reference and Core3 at 1440x900
+and 390x844. Core3's opt-in `modal_style: time_off_multiple` reproduces the
+wide Odoo desktop dialog, stacked mobile layout, compact inline labels, date
+pair, purple action treatment, and viewport-safe full-width mobile modal. The
+style loader also resolves the existing `time-off` manifest to its
+underscore-named `time_off` service directory. The successful desktop flow
+selected Marc Demo and Paul Williams for 2026-09-15 through 2026-09-16 and
+persisted two deterministic requests with the success toast. Captures are
+local-only under `/tmp` and are not committed:
+
+- Odoo pre-coding desktop wizard: `/tmp/odoo-timeoff-multiple-wizard-desktop-pre-coding-1440x900.png`, SHA-256 `3cbe3f2e3a10c1ca1952b88a31de2b6b5b0040523e146bfedfb4136f47e1170b`
+- Odoo pre-coding mobile wizard: `/tmp/odoo-timeoff-multiple-wizard-mobile-pre-coding-390x844.png`, SHA-256 `ba463f4033667088d957e639f0a0713bac90c7dee4b10bd5f0aa121c92c7cdc4`
+- Core3 final mobile wizard: `/tmp/core3-timeoff-multiple-wizard-initial-mobile-390x844.png`, SHA-256 `dc65f3ba94b071a2ba614dec03342888b78b88c8162ef011d494529ac0e66fb0`
+- Core3 final populated desktop wizard: `/tmp/core3-timeoff-multiple-wizard-populated-desktop-1440x900.png`, SHA-256 `651eec3a02da4a7adcc4086167ed94542466012d36e9dad434719ddfd123a244`
+- Core3 final generated desktop list: `/tmp/core3-timeoff-multiple-wizard-generated-desktop-1440x900.png`, SHA-256 `0c94304abc02979c5146b88cc841fbb4fcc7383e39da20456f3653e3851a8b54`
+
+The authenticated browser flow had no page errors, no horizontal overflow, and
+the only aborted page refresh request was the expected list refresh race after
+the successful mutation; the final list and success toast loaded correctly.
+No mutation was made in Odoo.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
