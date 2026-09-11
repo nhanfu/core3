@@ -701,6 +701,41 @@ reference demo's `About you` section rows; those are separate parity work.
 Focused coverage is in `test/surveys.integration.test.ts` and
 `test/surveys_print.integration.test.ts`.
 
+## Delete Survey form action parity contract — 2026-09-11
+
+The next genuinely uncovered visible action is the installed Odoo Surveys
+form Actions menu > `Delete` action. The live reference was verified in
+`core3_user_demo` at `http://localhost:8069/odoo/surveys/6` as
+`admin@core3.local`; the temporary copy was removed after inspection. Odoo's
+form menu exposes `Delete` beside `Duplicate`, `Archive`, and `Print Survey`,
+and clicking it opens the confirmation copy `Bye-bye, record!`,
+`Ready to make your record disappear into thin air? Are you sure?`, and
+`It will be gone forever!`. Confirming invokes the generic ORM `unlink` on
+`survey.survey`; the source model has cascade relations for questions,
+responses, and answer lines, so the bounded Core3 action must remove the
+survey-owned definition graph atomically.
+
+The slice will add only `Delete` to the existing `survey-detail` Actions menu.
+The layout page remains presentation-only and keeps `page.id: survey-detail`;
+the matching `api/survey-detail.yaml` owns the permissioned
+`surveys.records.delete` mutation. A small client action will confirm the
+row-scoped deletion, invoke the named API action, and return to `/surveys` so
+a deleted detail record cannot remain mounted. It requires `surveys.write`,
+passes the selected `id` and `expected_row_version`, and refreshes through the
+existing Surveys list route. It does not add bulk deletion, archive behavior,
+trash/recovery, or a new renderer.
+
+Deterministic migration fixtures will add one `Delete Candidate Survey` with
+one question, one suggested value, no responses, and a fixed token. The
+mutation contract covers successful graph deletion, missing survey (404),
+stale row version (409), and permission denial (403); the list contract covers
+the post-delete empty/search-no-match state. Focused tests will verify the
+page/API `page.id` join, confirmation/action labels, fixture graph, child
+cascade, guards, no-op preservation after stale/denied requests, and empty
+list query. Browser evidence must capture the authenticated Odoo menu and
+confirmation plus authenticated Core3 menu, confirmation, and post-delete
+list at 1440x900 and 390x844. Screenshots remain under `/tmp` only.
+
 ## Acceptance and evidence required before `ready`
 
 The future audit must run clean install, migration, restart, upgrade, and demo
