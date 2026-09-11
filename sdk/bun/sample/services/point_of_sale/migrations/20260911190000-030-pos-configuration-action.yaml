@@ -13,7 +13,7 @@ type:
       UPDATE pos_configs SET name = 'Furniture Shop' WHERE id = 'pos-config-main' AND name = 'Main Shop';
       UPDATE pos_sessions SET config = 'Furniture Shop' WHERE config = 'Main Shop';
       UPDATE pos_configs SET row_version = COALESCE(row_version, 1), login_with_employees = COALESCE(login_with_employees, false), epos_printer = COALESCE(epos_printer, false), iot_box = COALESCE(iot_box, false), closing_balance = COALESCE(closing_balance, 0);
-      UPDATE pos_configs SET company = COALESCE(company, 'My Company (San Francisco)'), currency = COALESCE(currency, 'USD') WHERE id = 'pos-config-main';
+      UPDATE pos_configs SET company = 'My Company (San Francisco)', currency = COALESCE(currency, 'USD') WHERE id = 'pos-config-main';
       UPDATE pos_configs SET closing = 'Sep 10', closing_balance = 2243.57 WHERE id = 'pos-config-main';
       UPDATE pos_configs SET company = 'My Company (San Francisco)', closing = NULL, closing_balance = 0 WHERE id IN ('pos-config-clothes', 'pos-config-bakery');
       INSERT INTO pos_configs(id, row_version, name, company, currency, receipt_header, receipt_footer, active, login_with_employees, epos_printer, iot_box, closing, closing_balance)

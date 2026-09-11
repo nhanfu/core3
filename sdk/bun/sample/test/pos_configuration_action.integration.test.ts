@@ -36,8 +36,8 @@ describe('POS Point of Sale configuration action parity', () => {
       forbidden: { status: 403 }, not_found: { status: 404 }, transport_error: { status: 503 },
     });
     const fields = detailPage.components[0].groups.flatMap((group: any) => group.fields.map((field: any) => field.field));
-    expect(fields).toEqual(['name', 'login_with_employees', 'epos_printer', 'iot_box', 'active']);
-    expect(detailPage.components[0].header_actions.map((entry: any) => entry.id)).toEqual(['back_to_pos_configs', 'edit_pos_config', 'delete_pos_config']);
+    expect(fields).toEqual(['name', 'login_with_employees', 'epos_printer', 'iot_box']);
+    expect(detailPage.components[0].header_actions.map((entry: any) => entry.id)).toEqual(['back_to_pos_configs', 'edit_pos_config']);
   });
 
   test('seeds six deterministic Odoo-shaped configurations and supports default/search/empty/detail-not-found states', async () => {

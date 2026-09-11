@@ -27,11 +27,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_configs WHERE LOWER(name) = LOWER(:name))", status: 409, code: POS_CONFIG_NAME_EXISTS, message: A Point of Sale with this name already exists. }
       result: { query: "SELECT * FROM pos_configs WHERE id = :id" }
     fields:
-      - { field: name, label: Point of Sale, type: text, required: true }
-      - { field: company, label: Company, type: text }
-      - { field: currency, label: Currency, type: text, default: USD }
-      - { field: receipt_header, label: Receipt header, type: textarea }
-      - { field: receipt_footer, label: Receipt footer, type: textarea }
+      - { field: name, label: Point of Sale?, type: text, required: true }
       - { field: login_with_employees, label: Log in with Employees?, type: checkbox }
       - { field: epos_printer, label: ePOS Printer?, type: checkbox }
       - { field: iot_box, label: IoT Box, type: checkbox }
