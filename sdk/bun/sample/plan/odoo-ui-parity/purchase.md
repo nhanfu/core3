@@ -740,6 +740,85 @@ Evidence remains local and uncommitted:
 | Odoo | `/tmp/odoo-purchase-product-variant-detail-desktop-1440x900.png`<br>SHA-256 `23ed8bc43eacd59a955b2ba23a4eb1ac332800c258d5f370ca664064f535dca1` | `/tmp/odoo-purchase-product-variant-detail-mobile-390x844.png`<br>SHA-256 `35081b0d14c1fff157dff928db22171d719234e3ebd6cf9b434f836047b87d83` |
 | Core3 | `/tmp/core3-purchase-product-variant-detail-desktop-1440x900.png`<br>SHA-256 `d362a2fdd7f57f4a170109ba76d9efa3ff8bdb1b166643dbff6aa4c9090307d5` | `/tmp/core3-purchase-product-variant-detail-mobile-390x844.png`<br>SHA-256 `4ed7ed10005e88659b31eadda4dc20019c3bc9cd905dd5686e78c14f3932cf16` |
 
+## Purchase order line editor and RFQ workflow bounded follow-up — 2026-09-11
+
+The next uncovered high-value Purchase form seam was the order-line editor on
+the RFQ/Purchase Order form. The authenticated Odoo 19 reference was checked
+in the personal `core3_personal` database as `codex@core3.local` at
+`/odoo/purchase/7` (`P00007`, RFQ), with the confirmed-order family also
+checked at `/odoo/purchase/12` (`P00012`). Odoo exposes the form actions
+`Send RFQ`, `Confirm Order`, `Cancel`, and, for the confirmed family,
+`Receive`; its Products tab contains product, quantity, unit, unit price,
+taxes, amount, add-product/section/note/catalog controls, totals, and the
+Other Information tab. The reference has two live lines in each capture and
+no failed responses or page overflow.
+
+Core3 now exposes the same bounded form seam at
+`/purchase/detail?id=po-demo-001`. The page remains layout-only and is joined
+to page-scoped API/action fragments by `page.id: purchase-detail`; the new
+`purchase_order_lines` datasource and line-item mutations stay in
+`services/purchase/api/purchase-detail.yaml`. Migration
+`20260911210000-020-purchase-order-lines.yaml` owns the independent line
+table and stable fixtures `purchase-line-demo-001-10`,
+`purchase-line-demo-001-20`, and `purchase-line-demo-005-10`; canonical
+`purchase_orders` list rows and totals are unchanged. The page adds the
+Products/Other Information notebook, responsive line grid, Add/Edit/Delete
+line actions, total calculation, and guarded Draft → Sent → Confirmed
+workflow actions. The browser payload normalization fix is in `dab532de`.
+
+Focused verification from `sdk/bun/sample` after the implementation and fix:
+
+```text
+17 pass
+0 fail
+172 expect() calls
+4 files: purchase.integration.test.ts, purchase_order_lines.integration.test.ts,
+purchase_product_detail.integration.test.ts, purchase_product_variant_detail.integration.test.ts
+git diff --check: pass
+```
+
+The authenticated Core3 browser pass returned zero failed requests and zero
+page errors for the clean initial desktop/mobile loads. It also verified
+visible Add a product → Save behavior (the deterministic total changed from
+USD 625.00 to USD 635.00), the Send RFQ action exposing Confirm Order and
+Sent, and Confirm Order exposing Receive and Confirmed. The focused API test
+covers Edit, Delete, stale line/order versions, locked-state rejection,
+empty/not-found/transport states, permission boundaries, and the unchanged
+canonical list totals.
+
+Evidence is local only and deliberately uncommitted. The Core3 runtime was
+the isolated worktree server at `http://localhost:3002` with backend
+`http://localhost:3221`; Odoo was the authenticated personal server at
+`http://localhost:8069`.
+
+| Surface | Desktop 1440×900 | Mobile 390×844 |
+| --- | --- | --- |
+| Odoo P00007 RFQ | `/tmp/odoo-purchase-rfq-P00007-desktop-1440x900-20260911.png`<br>SHA-256 `383ba0a82dc80272dda605ea3159b8ade0b0065d93862a047fc377841390f381` | `/tmp/odoo-purchase-rfq-P00007-mobile-390x844-20260911.png`<br>SHA-256 `f12f8f51ab982c015859fadd518173953e1bde75a90665ab7c54aee2c021a272` |
+| Core3 initial Draft | `/tmp/core3-purchase-order-lines-desktop-1440x900-final-20260911.png`<br>SHA-256 `e1d7aadda918cbebae33385194c48c156d25e64e2d89b75b7be74e44a080650d` | `/tmp/core3-purchase-order-lines-mobile-390x844-final-20260911.png`<br>SHA-256 `0af224cb4a3b9e9bf6debe059fd81f48cb7764b4710d5aa4c1bfa0c54786675a` |
+| Core3 mobile Products tab scrolled into view | — | `/tmp/core3-purchase-order-lines-mobile-lines-390x844-20260911.png`<br>SHA-256 `5cf9860ff034f6101855f90b1d54edbcfe1017df6898476bfd532f3de6a6fe68` |
+| Core3 confirmed state | `/tmp/core3-purchase-order-lines-confirmed-1440x900-20260911.png`<br>SHA-256 `e02037c52033e1f33f7fde88b4641481f50baf7cbbc297902c2668867ce1d9a2` | — |
+
+Comparison and fixes: the Core3 desktop form now matches the reference's
+vendor/order-detail hierarchy, Products and Other Information tabs, six
+line-grid fields, row edit/delete affordances, Add a product control, and
+right-aligned total. The deterministic two-line fixture is structurally
+equivalent to Odoo's two-line RFQ and retains the page width at 1440px. The
+Core3 mobile capture retains a 390px body width with no horizontal page
+overflow; the scrolled Products capture shows the compact responsive grid and
+total. Core3 intentionally keeps the existing Fluent shell while Odoo keeps
+its purple shell. Odoo's mobile line cards expose more fields in the first
+viewport, while Core3's shared grid places the dense columns below the
+stacked form and clips them within the grid; this is a documented shared
+LineItemGrid density follow-up, not a page-width overflow.
+
+Residuals: this bounded slice does not yet add Odoo's section/note/Catalog
+line types, chatter/activity panel, receipt/bill/approval actions, or Odoo's
+mobile card-level field density. During exploratory browser replay, a
+post-delete refresh could surface the intended stale-row notification
+(`This purchase order changed or is no longer editable`) before a second
+action; the API row-version guard is covered and safe, but the page refresh
+coordination remains a follow-up. No screenshots are tracked in Git.
+
 ## Acceptance gate
 
 - Every source-visible menu above has a Core3 route, or an explicit documented
