@@ -1,6 +1,6 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-5-implemented`
+Status: `batch-6-implemented`
 
 This document remains the implementation gate and evidence record. Batch 1
 implements the coherent Core3 job-position/openings and applicant queues,
@@ -8,6 +8,83 @@ including list/kanban/detail/filter/workflow states. Batch 2 adds the
 Recruitment Analysis graph/pivot action with deterministic report fixtures,
 search filters, and explicit empty/failed datasource states. Batch 4 adds the
 bounded Talent Pools list/kanban/form and applicant-membership action.
+
+## Batch 6 — Configuration → Applications → Tags
+
+Implemented in the isolated worktree
+`/home/nhanjs/projects/core3-worktrees/odoo-ui-recruitment-next-20260911`.
+The live authenticated Odoo 19 `core3_codex_demo` reference was inspected as
+`codex@core3.local` on 2026-09-11. The selected uncovered action is Recruitment
+→ Configuration → Applications → Tags, menu `hr_applicant_category_menu`,
+action `hr_applicant_category_action`, model `hr.applicant.category`, and live
+action URL `/odoo/action-719`. The source XML
+`addons/hr_recruitment/views/hr_applicant_category_views.xml` defines a Tags
+list with `name` and `color` (`color_picker`), editable at the bottom, plus a
+two-field Tags form. The demo list is ordered Reserve, Manager, IT, Sales with
+color indexes 3, 10, 1, and 3 respectively.
+
+Core3 adds `/recruitment/tags` with page id `recruitment-tags`, a page-local
+ListView fragment, and a matching API fragment joined by `page.id`. The
+service-owned migration `20260912090000-009-recruitment-tags.yaml` creates
+`recruitment_tags`, seeds the four deterministic reference records, and keeps
+an internal display sequence so the live Odoo order is stable. Manager-only
+read/create/update/delete permissions are enforced through
+`recruitment.manage`; duplicate names, blank names, color indexes outside
+0–11, missing rows, and stale row versions are guarded. Search, empty,
+transport-error, forbidden, and CRUD contracts are covered by the focused
+integration test.
+
+The page now uses the existing shared `ListView.inline_edit` contract. Its
+bottom editor is wired to `create_recruitment_tag` and
+`edit_recruitment_tag`, exposes the two source fields (`name` and the
+0–11 `color` picker), and renders Save/Discard controls. The existing mobile
+inline-edit behavior wraps the color palette at 390px; the non-source id/action
+column remains hidden on mobile while row tap still opens edit. No new shared
+component or modal variant was added for this correction.
+
+Implementation commit:
+
+- `c49927b1` — add Recruitment Tags page/API, migration,
+  permissions/guards, focused tests, manifest entry, and inline bottom editing
+
+### Batch 6 browser comparison evidence
+
+Authenticated Odoo and Core3 captures were inspected at exact 1440×900 and
+390×844 viewports. Core3 used `admin@tms.local` on the isolated runtime at
+`http://localhost:3006/recruitment/tags`; Odoo used `codex@core3.local` on
+`http://localhost:8069/odoo/action-719`. Both surfaces showed four populated
+rows, matched order/color semantics, and zero `requestfailed` or `pageerror`
+events. Core3 browser QA exercised bottom-row create, inline rename/color
+update, and delete. Document and table widths were exact at both viewports
+with no browser-level horizontal overflow; the mobile create capture shows
+the 12-color palette wrapping inside the 390px viewport.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Tags list | 1440×900 | `/tmp/odoo-recruitment-tags-inline-desktop-1440x900-20260911.png` | `74738ed6e55519db73118d0d9b7b6a3669f485e7d40a512442739dd078ad7091` |
+| Odoo Tags list | 390×844 | `/tmp/odoo-recruitment-tags-inline-mobile-390x844-20260911.png` | `6a4a5ee25972e90bf14a917568763ba299c6d577c2c07607f84b6d8e95179520` |
+| Odoo bottom-create editor | 1440×900 | `/tmp/odoo-recruitment-tags-inline-create-desktop-1440x900-20260911.png` | `071c89ed13482aa382fa45bef52002a1f994b5ee074330a483c980a9e5d22ee4` |
+| Odoo bottom-create editor | 390×844 | `/tmp/odoo-recruitment-tags-inline-create-mobile-390x844-20260911.png` | `7324270e2b41f89c700d6d2ba2f65b4f6984f21e8fb6608c0dcdb0092888530c` |
+| Core3 Tags list | 1440×900 | `/tmp/core3-recruitment-tags-inline-desktop-1440x900-20260911.png` | `1fadee85c933ffe375ae703db0e26c21cf913b53cbf4932fe27cd8c489d458a9` |
+| Core3 Tags list | 390×844 | `/tmp/core3-recruitment-tags-inline-mobile-390x844-20260911.png` | `05bd2444c138b8efa4ff2190ed047fdab68a5eaec1cd3d4238f4414f0b9c4164` |
+| Core3 bottom-create editor | 1440×900 | `/tmp/core3-recruitment-tags-inline-create-desktop-1440x900-20260911.png` | `885c3ed4aa66278a29be0bccb58f4622d36b0fa9ed2090aa43cb1a759db7afa7` |
+| Core3 bottom-create editor | 390×844 | `/tmp/core3-recruitment-tags-inline-create-mobile-390x844-20260911.png` | `09527938f3b57d86e8ee7a2a4da14230209dde8bbe70fb0d979544c02ccef8a6` |
+
+The docs/evidence commit for this batch is recorded after the implementation
+commit. Screenshots remain under `/tmp` and are not committed. The remaining
+visual differences are limited to the surrounding Odoo/Core3 application shell
+and swatch palette styling; the source action's inline editing interaction is
+implemented by the shared Core3 ListView contract.
+
+### Batch 6 focused verification
+
+- `bun test test/recruitment_tags.integration.test.ts` — 3 passed, 0 failed,
+  37 assertions
+- `bun run audit` — passed: 504 pages, 511 routes, 888 datasources
+- `bun run lint` from `sdk/bun` — passed
+- `bun run css:build:global` and `bun run css:build:recruitment` — passed
+- `git diff --check` — passed
+- Isolated runtime was stopped after browser QA
 
 ## Batch 5 — Configuration → Applications → Refuse Reasons
 
