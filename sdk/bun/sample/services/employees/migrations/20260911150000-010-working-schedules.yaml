@@ -1,0 +1,67 @@
+version: 0.0.10
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_working_schedules (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        schedule_type VARCHAR NOT NULL DEFAULT 'fully_fixed',
+        flexible_hours BOOLEAN NOT NULL DEFAULT false,
+        duration_based BOOLEAN NOT NULL DEFAULT false,
+        full_time_required_hours DOUBLE NOT NULL DEFAULT 40,
+        work_time_rate DOUBLE NOT NULL DEFAULT 100,
+        hours_per_day DOUBLE NOT NULL DEFAULT 8,
+        hours_per_week DOUBLE NOT NULL DEFAULT 40,
+        company_name VARCHAR,
+        timezone VARCHAR NOT NULL DEFAULT 'UTC',
+        two_weeks_calendar BOOLEAN NOT NULL DEFAULT false,
+        work_resources_count INTEGER NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS employee_work_schedule_attendances (
+        id VARCHAR PRIMARY KEY,
+        schedule_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL,
+        name VARCHAR NOT NULL,
+        day_of_week INTEGER NOT NULL,
+        day_period VARCHAR NOT NULL,
+        hour_from DOUBLE NOT NULL,
+        hour_to DOUBLE NOT NULL,
+        duration_days DOUBLE NOT NULL DEFAULT 0
+      );
+      INSERT OR IGNORE INTO employee_working_schedules(id, row_version, name, schedule_type, flexible_hours, duration_based, full_time_required_hours, work_time_rate, hours_per_day, hours_per_week, company_name, timezone, two_weeks_calendar, work_resources_count, active) VALUES
+        ('working-schedule-standard-40', 1, 'Standard 40 hours/week', 'fully_fixed', false, false, 40, 100, 8, 40, 'My Company (San Francisco)', 'UTC', false, 5, true),
+        ('working-schedule-standard-35', 1, 'Standard 35 hours/week', 'fully_fixed', false, false, 40, 87.5, 7, 35, 'My Company (San Francisco)', 'UTC', false, 0, true),
+        ('working-schedule-standard-38', 1, 'Standard 38 hours/week', 'fully_fixed', false, false, 38, 100, 7.6, 38, NULL, 'UTC', false, 0, true),
+        ('working-schedule-flexible-40', 1, 'Flexible 40 hours/week', 'flexible', true, false, 40, 100, 8, 40, 'My Company (San Francisco)', 'UTC', false, 0, true),
+        ('working-schedule-standard-20', 1, 'Standard 20 hours/week', 'fully_fixed', false, false, 40, 50, 4, 20, 'My Company (San Francisco)', 'UTC', false, 0, true);
+      INSERT OR IGNORE INTO employee_work_schedule_attendances(id, schedule_id, row_version, sequence, name, day_of_week, day_period, hour_from, hour_to, duration_days) VALUES
+        ('working-attendance-standard-40-001', 'working-schedule-standard-40', 1, 1, 'Monday Morning', 0, 'morning', 8, 12, 0.5),
+        ('working-attendance-standard-40-002', 'working-schedule-standard-40', 1, 2, 'Monday Lunch', 0, 'lunch', 12, 13, 0),
+        ('working-attendance-standard-40-003', 'working-schedule-standard-40', 1, 3, 'Monday Afternoon', 0, 'afternoon', 13, 17, 0.5),
+        ('working-attendance-standard-40-004', 'working-schedule-standard-40', 1, 4, 'Tuesday Morning', 1, 'morning', 8, 12, 0.5),
+        ('working-attendance-standard-40-005', 'working-schedule-standard-40', 1, 5, 'Tuesday Lunch', 1, 'lunch', 12, 13, 0),
+        ('working-attendance-standard-40-006', 'working-schedule-standard-40', 1, 6, 'Tuesday Afternoon', 1, 'afternoon', 13, 17, 0.5),
+        ('working-attendance-standard-40-007', 'working-schedule-standard-40', 1, 7, 'Wednesday Morning', 2, 'morning', 8, 12, 0.5),
+        ('working-attendance-standard-40-008', 'working-schedule-standard-40', 1, 8, 'Wednesday Lunch', 2, 'lunch', 12, 13, 0),
+        ('working-attendance-standard-40-009', 'working-schedule-standard-40', 1, 9, 'Wednesday Afternoon', 2, 'afternoon', 13, 17, 0.5),
+        ('working-attendance-standard-40-010', 'working-schedule-standard-40', 1, 10, 'Thursday Morning', 3, 'morning', 8, 12, 0.5),
+        ('working-attendance-standard-40-011', 'working-schedule-standard-40', 1, 11, 'Thursday Lunch', 3, 'lunch', 12, 13, 0),
+        ('working-attendance-standard-40-012', 'working-schedule-standard-40', 1, 12, 'Thursday Afternoon', 3, 'afternoon', 13, 17, 0.5),
+        ('working-attendance-standard-40-013', 'working-schedule-standard-40', 1, 13, 'Friday Morning', 4, 'morning', 8, 12, 0.5),
+        ('working-attendance-standard-40-014', 'working-schedule-standard-40', 1, 14, 'Friday Lunch', 4, 'lunch', 12, 13, 0),
+        ('working-attendance-standard-40-015', 'working-schedule-standard-40', 1, 15, 'Friday Afternoon', 4, 'afternoon', 13, 17, 0.5);
+      UPDATE employee_working_schedules SET flexible_hours = schedule_type = 'flexible';
+      UPDATE employee_working_schedules SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_work_schedule_attendances;
+      DROP TABLE IF EXISTS employee_working_schedules;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

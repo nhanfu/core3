@@ -1,0 +1,107 @@
+import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
+import { migrateDatabase } from '@core3/server/migrations';
+import { YamlRepository } from '@core3/server/database/yaml-repository';
+
+const root = join(import.meta.dir, '../services/employees');
+const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
+const action = (definition: any, id: string) => definition.actions.find((entry: any) => entry.id === id);
+
+describe('Employees Working Schedules bounded parity', () => {
+  test('maps Odoo source action/menu and keeps page/API ownership explicit', () => {
+    const odooMenu = readFileSync('/home/nhanjs/projects/odoo/addons/hr/views/hr_views.xml', 'utf8');
+    const odooViews = readFileSync('/home/nhanjs/projects/odoo/addons/resource/views/resource_calendar_views.xml', 'utf8');
+    const odooDemo = readFileSync('/home/nhanjs/projects/odoo/addons/resource/data/resource_demo.xml', 'utf8');
+    const odooAccess = readFileSync('/home/nhanjs/projects/odoo/addons/resource/security/ir.model.access.csv', 'utf8');
+    expect(odooMenu).toContain('id="menu_resource_calendar_view"');
+    expect(odooMenu).toContain('action="resource.action_resource_calendar_form"');
+    expect(odooViews).toContain('<field name="name">Working Schedules</field>');
+    expect(odooViews).toContain('<field name="res_model">resource.calendar</field>');
+    expect(odooViews).toContain('<field name="view_mode">list,form</field>');
+    expect(odooViews).toContain('name="inactive"');
+    expect(odooViews).toContain('name="partial_working_schedules"');
+    expect(odooViews).toContain('name="groupby_flexible_hours"');
+    expect(odooDemo).toContain('Standard 35 hours/week');
+    expect(odooDemo).toContain('Flexible 40 hours/week');
+    expect(odooAccess).toContain('access_resource_calendar_user,resource.calendar.user,model_resource_calendar,base.group_user,1,0,0,0');
+
+    const listPage = yaml('pages/working-schedules.yaml');
+    const detailPage = yaml('pages/working-schedule-detail.yaml');
+    const listApi = yaml('api/working-schedules.yaml');
+    const detailApi = yaml('api/working-schedule-detail.yaml');
+    expect(listPage.datasources).toBeUndefined();
+    expect(detailPage.datasources).toBeUndefined();
+    expect(listPage.page).toMatchObject({ id: 'employee-working-schedules', route: '/employees/working-schedules', auth: { require: ['employees.read'] } });
+    expect(detailPage.page).toMatchObject({ id: 'employee-working-schedule-detail', route: '/employees/working-schedules/detail', auth: { require: ['employees.read'] } });
+    expect(listApi.page.id).toBe(listPage.page.id);
+    expect(detailApi.page.id).toBe(detailPage.page.id);
+    expect(listPage.components[0]).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'employee_working_schedules' });
+    expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list']);
+    expect(listPage.components[0].columns.slice(0, 4).map((column: any) => column.label)).toEqual(['Working Time', 'Schedule Total Time', 'Work Time Rate', 'Schedule Type']);
+    expect(detailPage.components[1]).toMatchObject({ type: 'LineItemGrid', source: 'employee_working_schedule_attendances', variant: 'odoo_x2many' });
+    expect(listApi.datasources[0].permission).toBe('employees.read');
+    expect(detailApi.datasources.every((source: any) => source.permission === 'employees.read')).toBe(true);
+    expect(detailApi.actions.filter((entry: any) => entry.type !== 'navigate').every((entry: any) => entry.permission === 'employees.manage')).toBe(true);
+    expect(yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration').items).toContainEqual({ path: '/employees/working-schedules', label: 'Working Schedules', icon: 'calendar', permission: 'employees.read' });
+  });
+
+  test('seeds deterministic list/detail, filter, empty, and error states idempotently', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_working_schedules_acceptance', ['schema', 'data']);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_working_schedules_acceptance', ['schema', 'data']);
+    const list = yaml('api/working-schedules.yaml').datasources[0];
+    expect((await repository.querySource(list, { q: null, active: null, partial_working_schedules: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Flexible 40 hours/week', 'Standard 20 hours/week', 'Standard 35 hours/week', 'Standard 38 hours/week', 'Standard 40 hours/week']);
+    expect((await repository.querySource(list, { q: '35', active: null, partial_working_schedules: null, fixture_state: null }, 0, 50)).data).toMatchObject([{ name: 'Standard 35 hours/week', work_time_rate: 87.5, schedule_type_label: 'Fully Fixed' }]);
+    expect((await repository.querySource(list, { q: null, active: null, partial_working_schedules: 'true', fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Standard 20 hours/week', 'Standard 35 hours/week']);
+    expect((await repository.querySource(list, { q: null, active: null, partial_working_schedules: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+    await expect(repository.querySource(list, { q: null, active: null, partial_working_schedules: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'EMPLOYEES_WORKING_SCHEDULES_UNAVAILABLE' });
+    const detailApi = yaml('api/working-schedule-detail.yaml');
+    const detail = await repository.querySource(detailApi.datasources[0], { id: 'working-schedule-standard-40', fixture_state: null }, 0, 1);
+    expect(detail.data).toMatchObject({ name: 'Standard 40 hours/week', hours_per_week: 40, work_time_rate: 100, schedule_type: 'fully_fixed' });
+    const hours = await repository.querySource(detailApi.datasources[1], { id: 'working-schedule-standard-40', fixture_state: null }, 0, 100);
+    expect(hours.data).toHaveLength(15);
+    expect(hours.data[0]).toMatchObject({ name: 'Monday Morning', day_of_week_label: 'Monday', day_period_label: 'Morning', work_from: '08:00', work_to: '12:00' });
+    expect((await repository.querySource(detailApi.datasources[0], { id: 'missing-working-schedule', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
+    await database.close();
+  });
+
+  test('enforces manager CRUD, duplicate, validation, stale, and in-use guards', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_working_schedules_mutation', ['schema', 'data']);
+    const listApi = yaml('api/working-schedules.yaml');
+    const detailApi = yaml('api/working-schedule-detail.yaml');
+    const create = action(listApi, 'create_employee_working_schedule');
+    const update = action(detailApi, 'edit_employee_working_schedule');
+    const archive = action(detailApi, 'archive_employee_working_schedule');
+    const restore = action(detailApi, 'restore_employee_working_schedule');
+    const remove = action(detailApi, 'delete_employee_working_schedule');
+    const addHour = action(detailApi, 'add_employee_working_schedule_attendance');
+    const editHour = action(detailApi, 'edit_employee_working_schedule_attendance');
+    const deleteHour = action(detailApi, 'delete_employee_working_schedule_attendance');
+    expect([create, update, archive, restore, remove, addHour, editHour, deleteHour].every((entry: any) => entry.permission === 'employees.manage')).toBe(true);
+    expect(update.mutation.concurrency).toMatchObject({ required: true });
+    expect(remove.mutation.guards.map((guard: any) => guard.status)).toEqual([404, 409]);
+    const created = await repository.executeMutation(create.mutation, { values: { name: 'Evening Shift', schedule_type: 'fully_fixed', work_time_rate: 75, hours_per_day: 6, hours_per_week: 30 } });
+    expect(created).toMatchObject({ id: 'working-schedule-evening-shift', name: 'Evening Shift', row_version: 1 });
+    await expect(repository.executeMutation(create.mutation, { values: { name: ' evening shift ', schedule_type: 'fully_fixed', work_time_rate: 75, hours_per_day: 6, hours_per_week: 30 } })).rejects.toMatchObject({ status: 409, code: 'EMPLOYEES_WORKING_SCHEDULE_EXISTS' });
+    await expect(repository.executeMutation(create.mutation, { values: { name: ' ', schedule_type: 'fully_fixed' } })).rejects.toMatchObject({ status: 422, code: 'EMPLOYEES_WORKING_SCHEDULE_NAME_REQUIRED' });
+    const edited = await repository.executeMutation(update.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Evening Shift Updated', schedule_type: 'fully_fixed', flexible_hours: false, work_time_rate: 75, hours_per_day: 6, hours_per_week: 30, full_time_required_hours: 40, duration_based: false, company_name: 'My Company (San Francisco)', timezone: 'UTC', two_weeks_calendar: false } });
+    expect(edited).toMatchObject({ name: 'Evening Shift Updated', row_version: 2 });
+    await expect(repository.executeMutation(update.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Stale', schedule_type: 'fully_fixed', work_time_rate: 75, hours_per_day: 6, hours_per_week: 30 } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await repository.executeMutation(archive.mutation, { id: created.id, expected_row_version: 2, values: { active: false } });
+    await repository.executeMutation(restore.mutation, { id: created.id, expected_row_version: 3, values: { active: true } });
+    const added = await repository.executeMutation(addHour.mutation, { id: created.id, parent_expected_row_version: 4, values: { name: 'Monday Evening', sequence: 1, day_of_week: 0, day_period: 'afternoon', hour_from: 18, hour_to: 24, duration_days: 0.25 } });
+    expect(added).toMatchObject({ name: 'Monday Evening', row_version: 1 });
+    await expect(repository.executeMutation(editHour.mutation, { id: created.id, line_id: added.id, parent_expected_row_version: 5, expected_row_version: 1, values: { name: 'Monday Evening Updated', sequence: 1, day_of_week: 0, day_period: 'afternoon', hour_from: 18, hour_to: 23, duration_days: 0.25 } })).resolves.toMatchObject({ row_version: 2 });
+    await expect(repository.executeMutation(editHour.mutation, { id: created.id, line_id: added.id, parent_expected_row_version: 5, expected_row_version: 1, values: { name: 'Stale', sequence: 1, day_of_week: 0, day_period: 'afternoon', hour_from: 18, hour_to: 23, duration_days: 0.25 } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await repository.executeMutation(deleteHour.mutation, { id: created.id, line_id: added.id, parent_expected_row_version: 6, expected_row_version: 2 });
+    await repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 7 });
+    await expect(repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 7 })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_WORKING_SCHEDULE_NOT_FOUND' });
+    await expect(repository.executeMutation(remove.mutation, { id: 'working-schedule-standard-40', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'EMPLOYEES_WORKING_SCHEDULE_IN_USE' });
+    await database.close();
+  });
+});

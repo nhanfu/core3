@@ -1,0 +1,157 @@
+page: { id: employee-working-schedule-detail }
+datasources:
+  - id: employee_working_schedule_detail
+    single: true
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_WORKING_SCHEDULE_DETAIL_UNAVAILABLE, message: Working schedule details are temporarily unavailable. } }
+    query: "SELECT s.id, s.row_version, s.name, s.hours_per_week, s.work_time_rate, s.schedule_type, CASE s.schedule_type WHEN 'flexible' THEN 'Flexible' ELSE 'Fully Fixed' END AS schedule_type_label, s.schedule_type = 'flexible' AS flexible_hours, s.full_time_required_hours, s.work_resources_count, s.company_name, s.timezone, s.hours_per_day, s.duration_based, s.two_weeks_calendar, s.active, CASE WHEN s.active THEN 'Active' ELSE 'Archived' END AS status FROM employee_working_schedules s WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND s.id = :id"
+  - id: employee_working_schedule_attendances
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_WORKING_HOURS_UNAVAILABLE, message: Working hours are temporarily unavailable. } }
+    query: "SELECT a.id, a.row_version, a.schedule_id, a.sequence, a.name, a.day_of_week, CASE a.day_of_week WHEN 0 THEN 'Monday' WHEN 1 THEN 'Tuesday' WHEN 2 THEN 'Wednesday' WHEN 3 THEN 'Thursday' WHEN 4 THEN 'Friday' WHEN 5 THEN 'Saturday' ELSE 'Sunday' END AS day_of_week_label, a.day_period, CASE a.day_period WHEN 'morning' THEN 'Morning' WHEN 'afternoon' THEN 'Afternoon' WHEN 'lunch' THEN 'Break' ELSE 'Other' END AS day_period_label, a.hour_from, a.hour_to, printf('%02d:%02d', CAST(FLOOR(a.hour_from) AS INTEGER), CAST(ROUND((a.hour_from - FLOOR(a.hour_from)) * 60) AS INTEGER)) AS work_from, printf('%02d:%02d', CAST(FLOOR(a.hour_to) AS INTEGER), CAST(ROUND((a.hour_to - FLOOR(a.hour_to)) * 60) AS INTEGER)) AS work_to, a.duration_days FROM employee_work_schedule_attendances a WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND a.schedule_id = :id ORDER BY a.sequence, a.id"
+actions:
+  - id: edit_employee_working_schedule
+    type: server_form
+    permission: employees.manage
+    title: Edit working schedule
+    action: employees.working_schedules.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.employee_working_schedule_detail
+    refresh: [employee_working_schedule_detail, employee_working_schedules, employee_working_schedule_attendances]
+    mutation:
+      operation: update
+      table: employee_working_schedules
+      fields: [name, schedule_type, duration_based, full_time_required_hours, work_time_rate, hours_per_day, hours_per_week, company_name, timezone, two_weeks_calendar]
+      required: [name, schedule_type]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_working_schedules WHERE id = :id", status: 404, code: EMPLOYEES_WORKING_SCHEDULE_NOT_FOUND, message: Working schedule not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_working_schedules WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMPLOYEES_WORKING_SCHEDULE_EXISTS, message: A working schedule with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:schedule_type AS VARCHAR) IN ('flexible', 'fully_fixed')", status: 422, code: EMPLOYEES_WORKING_SCHEDULE_VALUES_INVALID, message: Enter a name and choose a supported schedule type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:work_time_rate AS DOUBLE) >= 0 AND CAST(:work_time_rate AS DOUBLE) <= 100 AND CAST(:hours_per_day AS DOUBLE) >= 0 AND CAST(:hours_per_week AS DOUBLE) >= 0", status: 422, code: EMPLOYEES_WORKING_SCHEDULE_HOURS_INVALID, message: Working time values must be non-negative and the rate must be between 0 and 100. }
+      result: { query: "SELECT * FROM employee_working_schedules WHERE id = :id" }
+    fields:
+      - { field: name, label: Working Time, type: text, required: true }
+      - { field: schedule_type, label: Schedule Type?, type: select, options: [{ value: flexible, label: Flexible }, { value: fully_fixed, label: Fully Fixed }] }
+      - { field: duration_based, label: Attendance based on duration, type: checkbox }
+      - { field: full_time_required_hours, label: Full Time Equivalent, type: number }
+      - { field: work_time_rate, label: Work Time Rate, type: number }
+      - { field: hours_per_day, label: Average Hour per Day, type: number }
+      - { field: hours_per_week, label: Hours per Week, type: number }
+      - { field: company_name, label: Company, type: text }
+      - { field: timezone, label: Timezone, type: text }
+      - { field: two_weeks_calendar, label: 2 Week's Calendar, type: checkbox }
+  - id: archive_employee_working_schedule
+    type: server
+    permission: employees.manage
+    action: employees.working_schedules.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_working_schedule_detail, employee_working_schedules]
+    mutation: { operation: update, table: employee_working_schedules, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_working_schedules WHERE id = :id AND active = true", status: 404, code: EMPLOYEES_WORKING_SCHEDULE_NOT_FOUND, message: Active working schedule not found. }] }
+  - id: restore_employee_working_schedule
+    type: server
+    permission: employees.manage
+    action: employees.working_schedules.restore
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_working_schedule_detail, employee_working_schedules]
+    mutation: { operation: update, table: employee_working_schedules, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_working_schedules WHERE id = :id AND active = false", status: 404, code: EMPLOYEES_WORKING_SCHEDULE_NOT_FOUND, message: Archived working schedule not found. }] }
+  - id: delete_employee_working_schedule
+    type: server
+    permission: employees.manage
+    action: employees.working_schedules.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [employee_working_schedules]
+    mutation:
+      operation: delete
+      table: employee_working_schedules
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_working_schedules WHERE id = :id", status: 404, code: EMPLOYEES_WORKING_SCHEDULE_NOT_FOUND, message: Working schedule not found. }
+        - { query: "SELECT 1 AS ok FROM employee_working_schedules WHERE id = :id AND COALESCE(work_resources_count, 0) = 0 AND NOT EXISTS (SELECT 1 FROM employee_work_schedule_attendances WHERE schedule_id = :id)", status: 409, code: EMPLOYEES_WORKING_SCHEDULE_IN_USE, message: A working schedule assigned to resources or containing working hours cannot be deleted. }
+  - id: add_employee_working_schedule_attendance
+    type: server_form
+    permission: employees.manage
+    title: Add working time
+    action: employees.working_schedules.attendances.create
+    handler: line_item
+    operation: create
+    domain: employee_working_schedule
+    params: { id: '{state.id}' }
+    refresh: [employee_working_schedule_detail, employee_working_schedules, employee_working_schedule_attendances]
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 10, min: 1 }
+      - { field: day_of_week, label: Day of Week, type: select, options: [{ value: 0, label: Monday }, { value: 1, label: Tuesday }, { value: 2, label: Wednesday }, { value: 3, label: Thursday }, { value: 4, label: Friday }, { value: 5, label: Saturday }, { value: 6, label: Sunday }] }
+      - { field: day_period, label: Day Period, type: select, options: [{ value: morning, label: Morning }, { value: lunch, label: Break }, { value: afternoon, label: Afternoon }, { value: other, label: Other }] }
+      - { field: hour_from, label: Work from, type: number, required: true }
+      - { field: hour_to, label: Work to, type: number, required: true }
+      - { field: duration_days, label: Duration (days), type: number, required: true }
+    mutation:
+      generated: [attendance_id]
+      before_steps: [{ query: "SELECT 'working-attendance-' || :id || '-' || CAST(COALESCE(:sequence, 10) AS VARCHAR) AS attendance_id", assign: true }]
+      guards:
+        - { query: "SELECT id FROM employee_working_schedules WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The working schedule changed. Reload it before adding working time. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:hour_from AS DOUBLE) >= 0 AND CAST(:hour_to AS DOUBLE) <= 24 AND CAST(:hour_to AS DOUBLE) > CAST(:hour_from AS DOUBLE) AND CAST(:duration_days AS DOUBLE) >= 0", status: 422, code: EMPLOYEES_WORKING_HOURS_INVALID, message: Enter a name and valid working time values. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_work_schedule_attendances WHERE schedule_id = :id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMPLOYEES_WORKING_HOURS_EXISTS, message: A working time with this name already exists in this schedule. }
+      steps:
+        - { query: "INSERT INTO employee_work_schedule_attendances(id, schedule_id, row_version, sequence, name, day_of_week, day_period, hour_from, hour_to, duration_days) VALUES(:attendance_id, :id, 1, CAST(:sequence AS INTEGER), TRIM(:name), CAST(:day_of_week AS INTEGER), CAST(:day_period AS VARCHAR), CAST(:hour_from AS DOUBLE), CAST(:hour_to AS DOUBLE), CAST(:duration_days AS DOUBLE))" }
+        - { query: "UPDATE employee_working_schedules SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The working schedule changed while adding working time. Reload it before saving. }
+      result: { query: "SELECT * FROM employee_work_schedule_attendances WHERE id = :attendance_id" }
+  - id: edit_employee_working_schedule_attendance
+    type: server_form
+    permission: employees.manage
+    title: Edit working time
+    action: employees.working_schedules.attendances.update
+    handler: line_item
+    operation: update
+    domain: employee_working_schedule
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [employee_working_schedule_detail, employee_working_schedules, employee_working_schedule_attendances]
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 1 }
+      - { field: day_of_week, label: Day of Week, type: select, options: [{ value: 0, label: Monday }, { value: 1, label: Tuesday }, { value: 2, label: Wednesday }, { value: 3, label: Thursday }, { value: 4, label: Friday }, { value: 5, label: Saturday }, { value: 6, label: Sunday }] }
+      - { field: day_period, label: Day Period, type: select, options: [{ value: morning, label: Morning }, { value: lunch, label: Break }, { value: afternoon, label: Afternoon }, { value: other, label: Other }] }
+      - { field: hour_from, label: Work from, type: number, required: true }
+      - { field: hour_to, label: Work to, type: number, required: true }
+      - { field: duration_days, label: Duration (days), type: number, required: true }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_working_schedules WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The working schedule changed. Reload it before saving. }
+        - { query: "SELECT id FROM employee_work_schedule_attendances WHERE id = :line_id AND schedule_id = :id AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_WORKING_HOURS_STALE, message: This working time changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:hour_from AS DOUBLE) >= 0 AND CAST(:hour_to AS DOUBLE) <= 24 AND CAST(:hour_to AS DOUBLE) > CAST(:hour_from AS DOUBLE) AND CAST(:duration_days AS DOUBLE) >= 0", status: 422, code: EMPLOYEES_WORKING_HOURS_INVALID, message: Enter a name and valid working time values. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_work_schedule_attendances WHERE schedule_id = :id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :line_id)", status: 409, code: EMPLOYEES_WORKING_HOURS_EXISTS, message: A working time with this name already exists in this schedule. }
+      steps:
+        - { query: "UPDATE employee_work_schedule_attendances SET row_version = row_version + 1, sequence = CAST(:sequence AS INTEGER), name = TRIM(:name), day_of_week = CAST(:day_of_week AS INTEGER), day_period = CAST(:day_period AS VARCHAR), hour_from = CAST(:hour_from AS DOUBLE), hour_to = CAST(:hour_to AS DOUBLE), duration_days = CAST(:duration_days AS DOUBLE) WHERE id = :line_id AND schedule_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMPLOYEES_WORKING_HOURS_STALE, message: This working time changed or was deleted. Reload before saving. }
+        - { query: "UPDATE employee_working_schedules SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The working schedule changed while saving working time. Reload before saving. }
+      result: { query: "SELECT * FROM employee_work_schedule_attendances WHERE id = :line_id" }
+  - id: delete_employee_working_schedule_attendance
+    type: server
+    permission: employees.manage
+    action: employees.working_schedules.attendances.delete
+    handler: line_item
+    operation: delete
+    domain: employee_working_schedule
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete working time {{row.name}}?'
+    refresh: [employee_working_schedule_detail, employee_working_schedules, employee_working_schedule_attendances]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_working_schedules WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The working schedule changed. Reload before deleting. }
+        - { query: "SELECT id FROM employee_work_schedule_attendances WHERE id = :line_id AND schedule_id = :id AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_WORKING_HOURS_STALE, message: This working time changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM employee_work_schedule_attendances WHERE id = :line_id AND schedule_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMPLOYEES_WORKING_HOURS_STALE, message: This working time changed or was deleted. }
+        - { query: "UPDATE employee_working_schedules SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The working schedule changed while deleting working time. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }

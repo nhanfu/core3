@@ -1,0 +1,32 @@
+title: Working Schedules
+page: { id: employee-working-schedules, route: /employees/working-schedules, breadcrumb: [Human Resources, Configuration, Employee, Working Schedules], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_working_schedules
+    create_action: create_employee_working_schedule
+    create_label: New
+    search: { label: Search Working Time, placeholder: 'Search working schedules...' }
+    filters:
+      - { field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
+      - { field: partial_working_schedules, label: Partial working schedules, options: [{ id: 'true', label: Partial working schedules }] }
+    group_by:
+      - { field: flexible_hours, label: Flexible }
+      - { field: company_name, label: Company }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+    columns:
+      - { field: name, label: Working Time, type: PrimaryEntityCell }
+      - { field: hours_per_week, label: Schedule Total Time, optional: hide, align: right }
+      - { field: work_time_rate, label: Work Time Rate, align: right }
+      - { field: schedule_type_label, label: Schedule Type }
+      - { field: full_time_required_hours, label: Full Time Equivalent, optional: hide, align: right }
+      - { field: work_resources_count, label: '# Work Resources', optional: hide, align: right }
+      - { field: company_name, label: Company, optional: hide }
+    page_size: 50
+    column_chooser: true
+    row_key: id
+    row_open_action: view_employee_working_schedule
+    row_double_click_action: view_employee_working_schedule
+    empty_state: { title: No working schedules found, description: Define working hours and time tables for your people. }

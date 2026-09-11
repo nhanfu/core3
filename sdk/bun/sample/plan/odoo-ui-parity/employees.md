@@ -357,6 +357,52 @@ errors, create/update/archive/restore, required-name validation, duplicate
 names, optimistic stale writes, and the `employees.read` versus
 `employees.manage` boundary.
 
+## Bounded batch: Working Schedules
+
+This batch implements the next uncovered visible Employees configuration
+action after Work Locations: Employees > Configuration > Employee > Working
+Schedules. The source action is `resource.action_resource_calendar_form` from
+the installed Odoo Resource addon, linked by `hr.menu_resource_calendar_view`.
+Odoo resolves the action to `/odoo/action-178` in `core3_owned`; its contract
+is `resource.calendar`, `list,form`, five demo schedules, Archived and Partial
+working schedules filters, Flexible and Company group-by filters, and a form
+with schedule type, rate, company/timezone, hours, archive state, and inline
+working-hour rows.
+
+Core3 adds `/employees/working-schedules` and
+`/employees/working-schedules/detail` under the Employees Configuration menu.
+Pages are layout-only and join their service-owned API fragments by page ID.
+The fixture migration `20260911150000-010-working-schedules.yaml` seeds the
+five Odoo schedule names, stable rates, fixed/flexible values, the Standard 40
+hours/week five-day working-time rows, and deterministic `2026-01-15` times.
+Read/list/detail/working-hour datasources require `employees.read`; create,
+edit, archive, restore, delete, and working-hour mutations require
+`employees.manage`. Duplicate, required-value, invalid-hours, missing-record,
+in-use, parent-stale, and line-stale guards are explicit.
+
+Authenticated browser evidence, kept outside Git under `/tmp`:
+
+- Odoo `/odoo/action-178`: `/tmp/odoo-employees-working-schedules-desktop-1440x900.png`, `/tmp/odoo-employees-working-schedule-detail-desktop-1440x900.png`, `/tmp/odoo-employees-working-schedules-mobile-390x844.png`, and `/tmp/odoo-employees-working-schedule-detail-mobile-390x844.png`.
+- Core3 provisional DOM-smoke captures are in `/tmp/core3-employees-working-schedules-desktop-1440x900.png`, `/tmp/core3-employees-working-schedule-detail-desktop-1440x900.png`, `/tmp/core3-employees-working-schedules-mobile-390x844.png`, and `/tmp/core3-employees-working-schedule-detail-mobile-390x844.png`, but they are not valid visual evidence: the fresh worktree initially had no generated CSS, so these PNGs captured the unstyled launcher/loading state.
+
+The shell Playwright fallback used `domcontentloaded` plus fixed waits, as the
+persistent browser REPL was unavailable in this session. Odoo loaded the five
+rows and Standard 40 form at both viewports with no non-static failed
+responses. Core3 authenticated as `admin@tms.local` and the pre-CSS DOM smoke
+loaded five rows and 15 working-hour rows at both viewports with no page errors
+or horizontal overflow. A CSS-aware recapture was then blocked: after building
+the standard global/auth/Employees CSS, the isolated dev supervisor repeatedly
+dropped its backend listener and Vite returned 502 for `/api/modules`,
+`/api/apps`, and page requests. Therefore Core3 styled visual QA remains an
+explicit limitation and must be rerun against a stable restarted server; the
+Odoo-auth credentials are not accepted by Core3, whose demo credentials were
+used for the DOM smoke.
+
+The focused `employees_working_schedules.integration.test.ts` suite passes 3
+tests and 47 assertions; `bun run audit` passes with 415 pages, 421 routes,
+and 726 datasources. Existing Employees action, Departments, Departure
+Reasons, and Work Locations suites also pass.
+
 ## Acceptance
 
 - Source and manifest checks identify `hr`, version, dependencies, official

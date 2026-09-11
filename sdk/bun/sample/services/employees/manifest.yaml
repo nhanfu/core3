@@ -25,4 +25,5 @@ menu:
       label: Configuration
       items:
         - { path: /employees/work-locations, label: Work Locations, icon: location, permission: employees.manage }
+        - { path: /employees/working-schedules, label: Working Schedules, icon: calendar, permission: employees.read }
         - { path: /employees/departure-reasons, label: Departure Reasons, icon: list, permission: employees.manage }

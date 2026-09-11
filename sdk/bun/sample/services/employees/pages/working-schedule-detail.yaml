@@ -1,0 +1,75 @@
+title: Working Schedule
+page: { id: employee-working-schedule-detail, route: /employees/working-schedules/detail, breadcrumb: [Human Resources, Configuration, Employee, Working Schedules, Working Schedule], auth: { require: [employees.read] } }
+components:
+  - type: OdooFormView
+    source: employee_working_schedule_detail
+    title_field: name
+    subtitle_field: schedule_type_label
+    status_field: status
+    status_colors: { Active: green, Archived: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: edit_employee_working_schedule, label: Edit, variant: secondary, permission: employees.manage }
+      - { id: archive_employee_working_schedule, label: Archive, variant: danger, permission: employees.manage, show_if: "state.employee_working_schedule_detail.active === true" }
+      - { id: restore_employee_working_schedule, label: Restore, variant: secondary, permission: employees.manage, show_if: "state.employee_working_schedule_detail.active === false" }
+      - { id: delete_employee_working_schedule, label: Delete, variant: danger, permission: employees.manage, confirm: Delete this working schedule? }
+    group_columns: 2
+    groups:
+      - title: Resource Working Hours
+        fields:
+          - { field: schedule_type, label: Schedule Type?, type: select, options: [{ value: flexible, label: Flexible }, { value: fully_fixed, label: Fully Fixed }] }
+          - { field: duration_based, label: Attendance based on duration, type: checkbox }
+          - { field: full_time_required_hours, label: Full Time Equivalent, suffix: 'hours/week' }
+          - { field: work_time_rate, label: Work Time Rate, suffix: '%' }
+          - { field: hours_per_day, label: Average Hour per Day, suffix: 'hours/day' }
+          - { field: hours_per_week, label: Total, suffix: 'hours/week' }
+      - title: Resource Company
+        fields:
+          - { field: company_name, label: Company }
+          - { field: timezone, label: Timezone }
+          - { field: two_weeks_calendar, label: 2 Week's Calendar, type: checkbox }
+          - { field: work_resources_count, label: Work Resources }
+          - { field: status, label: Status, type: StatusChip }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: employee_working_schedule_attendances
+    parent_source: employee_working_schedule_detail
+    title: Working Hours
+    description: Define the days, periods, and start and end times for each working period.
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    actions:
+      - { id: add_employee_working_schedule_attendance, label: Add a line, variant: primary, permission: employees.manage }
+    empty_state: { title: No working hours, description: Add a working period to this schedule. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: name, field: name, label: Name, input_type: text, required: true }
+      - { type: LineItemField, id: day_of_week, field: day_of_week_label, label: Day of Week, readonly: true }
+      - { type: LineItemField, id: day_period, field: day_period_label, label: Day Period, readonly: true }
+      - { type: LineItemField, id: hour_from, field: work_from, label: Work from, readonly: true }
+      - { type: LineItemField, id: hour_to, field: work_to, label: Work to, readonly: true }
+      - { type: LineItemField, id: duration_days, field: duration_days, label: Duration (days), readonly: true }
+      - type: LineItemActions
+        id: working_schedule_attendance_actions
+        edit_action: edit_employee_working_schedule_attendance
+        create_action: add_employee_working_schedule_attendance
+        actions:
+          - { id: edit_employee_working_schedule_attendance, label: Edit, icon: edit, variant: ghost, permission: employees.manage }
+          - { id: delete_employee_working_schedule_attendance, label: Delete, icon: trash, variant: danger, permission: employees.manage }
+    columns:
+      - { field: sequence, label: '#', align: right, width: 64 }
+      - { field: name, label: Name, width: 220 }
+      - { field: day_of_week_label, label: Day of Week, width: 120 }
+      - { field: day_period_label, label: Day Period, width: 110 }
+      - { field: work_from, label: Work from, width: 96 }
+      - { field: work_to, label: Work to, width: 96 }
+      - { field: duration_days, label: Duration (days), align: right, width: 120 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_employee_working_schedule_attendance, label: Edit, icon: edit, variant: ghost, permission: employees.manage }
+          - { id: delete_employee_working_schedule_attendance, label: Delete, icon: trash, variant: danger, permission: employees.manage }

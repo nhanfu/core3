@@ -1,0 +1,45 @@
+page: { id: employee-working-schedules }
+datasources:
+  - id: employee_working_schedules
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_WORKING_SCHEDULES_UNAVAILABLE, message: Working schedules are temporarily unavailable. } }
+    query: "SELECT s.id, s.row_version, s.name, s.hours_per_week, s.work_time_rate, s.schedule_type, CASE s.schedule_type WHEN 'flexible' THEN 'Flexible' ELSE 'Fully Fixed' END AS schedule_type_label, s.schedule_type = 'flexible' AS flexible_hours, s.full_time_required_hours, s.work_resources_count, s.company_name, s.timezone, s.hours_per_day, s.duration_based, s.two_weeks_calendar, s.active, CASE WHEN s.active THEN 'Active' ELSE 'Archived' END AS status FROM employee_working_schedules s WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND ((:active IS NULL AND COALESCE(s.active, true) = true) OR (:active IS NOT NULL AND s.active = CAST(:active AS BOOLEAN))) AND (:partial_working_schedules IS NULL OR (:partial_working_schedules = 'true' AND s.work_time_rate < 100)) AND (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.company_name ILIKE '%' || :q || '%') ORDER BY s.name, s.id"
+actions:
+  - id: view_employee_working_schedule
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/working-schedules/detail
+    params: { id: '{row.id}' }
+  - id: create_employee_working_schedule
+    type: server_form
+    permission: employees.manage
+    title: New working schedule
+    action: employees.working_schedules.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_working_schedules]
+    mutation:
+      operation: insert
+      table: employee_working_schedules
+      fields: [name, schedule_type, duration_based, full_time_required_hours, work_time_rate, hours_per_day, hours_per_week, company_name, timezone, two_weeks_calendar, work_resources_count, active, row_version]
+      required: [name, schedule_type]
+      defaults: { schedule_type: fully_fixed, flexible_hours: false, duration_based: false, full_time_required_hours: 40, work_time_rate: 100, hours_per_day: 8, hours_per_week: 40, company_name: 'My Company (San Francisco)', timezone: UTC, two_weeks_calendar: false, work_resources_count: 0, active: true, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'working-schedule-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_WORKING_SCHEDULE_NAME_REQUIRED, message: A working schedule name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_working_schedules WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMPLOYEES_WORKING_SCHEDULE_EXISTS, message: A working schedule with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:schedule_type AS VARCHAR) IN ('flexible', 'fully_fixed')", status: 422, code: EMPLOYEES_WORKING_SCHEDULE_TYPE_INVALID, message: Select a supported schedule type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:work_time_rate AS DOUBLE) >= 0 AND CAST(:work_time_rate AS DOUBLE) <= 100 AND CAST(:hours_per_day AS DOUBLE) >= 0 AND CAST(:hours_per_week AS DOUBLE) >= 0", status: 422, code: EMPLOYEES_WORKING_SCHEDULE_HOURS_INVALID, message: Working time values must be non-negative and the rate must be between 0 and 100. }
+      result: { query: "SELECT * FROM employee_working_schedules WHERE id = :id" }
+    fields:
+      - { field: name, label: Working Time, type: text, required: true }
+      - { field: schedule_type, label: Schedule Type?, type: select, options: [{ value: flexible, label: Flexible }, { value: fully_fixed, label: Fully Fixed }] }
+      - { field: duration_based, label: Attendance based on duration, type: checkbox }
+      - { field: full_time_required_hours, label: Full Time Equivalent, type: number, default: 40 }
+      - { field: work_time_rate, label: Work Time Rate, type: number, default: 100 }
+      - { field: hours_per_day, label: Average Hour per Day, type: number, default: 8 }
+      - { field: hours_per_week, label: Hours per Week, type: number, default: 40 }
+      - { field: company_name, label: Company, type: text, default: 'My Company (San Francisco)' }
+      - { field: timezone, label: Timezone, type: text, default: UTC }
+      - { field: two_weeks_calendar, label: 2 Week's Calendar, type: checkbox }
