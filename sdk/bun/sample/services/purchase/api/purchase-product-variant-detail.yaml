@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_PRODUCT_VARIANT_DETAIL_UNAVAILABLE, message: This product variant is temporarily unavailable. } }
-    query: "SELECT id, row_version, product_id, default_code, name, variant_values, COALESCE(barcode, '') AS barcode, list_price, cost, uom, COALESCE(product_type, 'Goods') AS product_type, COALESCE(invoicing_policy, 'Ordered quantities') AS invoicing_policy, COALESCE(track_inventory, true) AS track_inventory, COALESCE(sales_taxes, '15%') AS sales_taxes, COALESCE(purchase_taxes, '15%') AS purchase_taxes, COALESCE(category, 'All') AS category, COALESCE(company_name, 'My Company (San Francisco)') AS company_name, COALESCE(internal_notes, '') AS internal_notes, COALESCE(sales, true) AS sales, COALESCE(pos_available, false) AS pos_available, COALESCE(expenses, false) AS expenses, COALESCE(purchase, true) AS purchase, on_hand, printf('%.2f %s', CAST(on_hand AS DOUBLE), uom) AS on_hand_display, COALESCE(forecasted, on_hand) AS forecasted, printf('%.2f %s', CAST(COALESCE(forecasted, on_hand) AS DOUBLE), uom) AS forecasted_display, active, 1 AS documents_count, printf('%.2f / %.2f', CAST(on_hand AS DOUBLE), CAST(COALESCE(forecasted, on_hand) AS DOUBLE)) AS stock_in_out, 0 AS reordering_rules_count, 0 AS bom_count, 20.00 AS purchased_qty, 47.00 AS sold_qty FROM purchase_product_variants WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT v.id, d.row_version, v.product_id, COALESCE(d.default_code, v.default_code) AS default_code, COALESCE(d.name, v.name) AS name, COALESCE(d.variant_values, v.variant_values) AS variant_values, COALESCE(d.barcode, v.barcode, '') AS barcode, COALESCE(d.list_price, v.list_price) AS list_price, COALESCE(d.cost, v.cost, 0) AS cost, COALESCE(d.uom, v.uom) AS uom, COALESCE(d.product_type, 'Goods') AS product_type, COALESCE(d.invoicing_policy, 'Ordered quantities') AS invoicing_policy, COALESCE(d.track_inventory, true) AS track_inventory, COALESCE(d.sales_taxes, '15%') AS sales_taxes, COALESCE(d.purchase_taxes, '15%') AS purchase_taxes, COALESCE(d.category, 'All') AS category, COALESCE(d.company_name, 'My Company (San Francisco)') AS company_name, COALESCE(d.internal_notes, '') AS internal_notes, COALESCE(d.sales, true) AS sales, COALESCE(d.pos_available, false) AS pos_available, COALESCE(d.expenses, false) AS expenses, COALESCE(d.purchase, true) AS purchase, COALESCE(d.on_hand, v.on_hand) AS on_hand, printf('%.2f %s', CAST(COALESCE(d.on_hand, v.on_hand) AS DOUBLE), COALESCE(d.uom, v.uom)) AS on_hand_display, COALESCE(d.forecasted, d.on_hand, v.on_hand) AS forecasted, printf('%.2f %s', CAST(COALESCE(d.forecasted, d.on_hand, v.on_hand) AS DOUBLE), COALESCE(d.uom, v.uom)) AS forecasted_display, COALESCE(d.active, v.active) AS active, 1 AS documents_count, printf('%.2f / %.2f', CAST(COALESCE(d.on_hand, v.on_hand) AS DOUBLE), CAST(COALESCE(d.forecasted, d.on_hand, v.on_hand) AS DOUBLE)) AS stock_in_out, 0 AS reordering_rules_count, 0 AS bom_count, 20.00 AS purchased_qty, 47.00 AS sold_qty FROM purchase_product_variants v LEFT JOIN purchase_product_variant_detail_overrides d ON d.variant_id = v.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND v.id = :id"
   - id: purchase_product_variant_messages
     permission: purchase.read
     query: "SELECT id, variant_id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM purchase_product_variant_messages WHERE variant_id = :id ORDER BY created_at DESC, id DESC"
@@ -49,17 +49,17 @@ actions:
     refresh: [purchase_product_variant_detail, purchase_product_variants]
     mutation:
       operation: update
-      table: purchase_product_variants
+      table: purchase_product_variant_detail_overrides
       key: id
       fields: [default_code, name, variant_values, barcode, list_price, cost, uom, product_type, invoicing_policy, track_inventory, sales_taxes, purchase_taxes, category, company_name, internal_notes, sales, pos_available, expenses, purchase]
       required: [name]
       concurrency: { required: true }
       guards:
-        - { query: "SELECT id FROM purchase_product_variants WHERE id = :id", status: 404, code: PURCHASE_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
+        - { query: "SELECT id FROM purchase_product_variant_detail_overrides WHERE id = :id", status: 404, code: PURCHASE_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PURCHASE_PRODUCT_VARIANT_NAME_REQUIRED, message: A product variant name is required. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:list_price AS DOUBLE), 0) >= 0 AND COALESCE(CAST(:cost AS DOUBLE), 0) >= 0", status: 422, code: PURCHASE_PRODUCT_VARIANT_VALUES_INVALID, message: Sales price and cost must be nonnegative. }
-        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_product_variants WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: PURCHASE_PRODUCT_VARIANT_NAME_EXISTS, message: A product variant with this name already exists. }
-      result: { query: "SELECT * FROM purchase_product_variants WHERE id = :id" }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_product_variant_detail_overrides WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: PURCHASE_PRODUCT_VARIANT_NAME_EXISTS, message: A product variant with this name already exists. }
+      result: { query: "SELECT * FROM purchase_product_variant_detail_overrides WHERE id = :id" }
     fields:
       - { field: default_code, label: Internal Reference, type: text }
       - { field: name, label: Product, type: text, required: true }
@@ -90,16 +90,15 @@ actions:
     refresh: [purchase_product_variant_detail, purchase_product_variants]
     mutation:
       operation: update
-      table: purchase_product_variants
+      table: purchase_product_variant_detail_overrides
       key: id
       fields: [active]
       values: { active: false }
       concurrency: { required: true }
       guards:
-        - { query: "SELECT id FROM purchase_product_variants WHERE id = :id", status: 404, code: PURCHASE_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
-        - { query: "SELECT id FROM purchase_product_variants WHERE id = :id AND active = true", status: 409, code: PURCHASE_PRODUCT_VARIANT_ALREADY_ARCHIVED, message: Product variant is already archived. }
-      steps: [{ query: "UPDATE purchase_product_variants SET active = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id" }]
-      result: { query: "SELECT * FROM purchase_product_variants WHERE id = :id" }
+        - { query: "SELECT id FROM purchase_product_variant_detail_overrides WHERE id = :id", status: 404, code: PURCHASE_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
+        - { query: "SELECT id FROM purchase_product_variant_detail_overrides WHERE id = :id AND active = true", status: 409, code: PURCHASE_PRODUCT_VARIANT_ALREADY_ARCHIVED, message: Product variant is already archived. }
+      result: { query: "SELECT * FROM purchase_product_variant_detail_overrides WHERE id = :id" }
   - id: send_purchase_product_variant_message
     type: server_form
     permission: purchase.write

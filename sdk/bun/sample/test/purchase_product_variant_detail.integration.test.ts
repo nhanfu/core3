@@ -34,7 +34,9 @@ describe('Purchase product variant detail parity', () => {
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_product_variant_detail_schema_migrations', ['schema', 'data']);
     const detail = api.datasources.find((source: any) => source.id === 'purchase_product_variant_detail');
     const messages = api.datasources.find((source: any) => source.id === 'purchase_product_variant_messages');
+    const list = yaml('api/purchase-product-variants.yaml').datasources.find((source: any) => source.id === 'purchase_product_variants');
     const params = { id: 'purchase-variant-purchase-product-acoustic', fixture_state: null };
+    expect((await repository.querySource(list, { q: null, active: null, fixture_state: null }, 0, 1)).data[0]).toMatchObject({ name: 'Acoustic Bloc Screens / Standard', default_code: 'FURN-001-V1', variant_values: 'Standard' });
     expect((await repository.querySource(detail, params, 0, 1)).data).toMatchObject({ default_code: 'FURN_6667', name: 'Acoustic Bloc Screens', variant_values: 'Color: Black', on_hand_display: '16.00 Units', forecasted_display: '16.00 Units', purchased_qty: 20, sold_qty: 47 });
     expect((await repository.querySource(messages, { id: params.id }, 0, 10)).data).toHaveLength(3);
     expect((await repository.querySource(detail, { ...params, fixture_state: 'empty' }, 0, 1)).data).toEqual({});
@@ -52,6 +54,7 @@ describe('Purchase product variant detail parity', () => {
     for (const id of ['edit_purchase_product_variant', 'archive_purchase_product_variant', 'send_purchase_product_variant_message', 'log_purchase_product_variant_note']) expect(action(id).permission).toBe('purchase.write');
 
     const edit = action('edit_purchase_product_variant');
+    expect(edit.mutation.table).toBe('purchase_product_variant_detail_overrides');
     const values = { default_code: 'FURN_6667', name: 'Acoustic Bloc Screens', variant_values: 'Color: Black', barcode: '', list_price: 295, cost: 1, uom: 'Units', product_type: 'Goods', invoicing_policy: 'Ordered quantities', track_inventory: true, sales_taxes: '15%', purchase_taxes: '15%', category: 'All', company_name: 'My Company (San Francisco)', internal_notes: 'Updated internal note', sales: true, pos_available: false, expenses: false, purchase: true };
     const updated = await repository.executeMutation(edit.mutation, { id: 'purchase-variant-purchase-product-acoustic', expected_row_version: 1, values });
     expect(updated).toMatchObject({ name: 'Acoustic Bloc Screens', row_version: 2, cost: 1 });

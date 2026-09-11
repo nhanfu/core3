@@ -21,7 +21,6 @@ type:
         action VARCHAR NOT NULL, action_label VARCHAR NOT NULL, detail VARCHAR NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
-      UPDATE purchase_product_variants SET default_code = 'FURN_6667', name = 'Acoustic Bloc Screens', variant_values = 'Color: Black', list_price = 295, on_hand = 16, forecasted = 16, cost = 0, product_type = 'Goods', invoicing_policy = 'Ordered quantities', track_inventory = true, sales_taxes = '15%', purchase_taxes = '15%', category = 'All', company_name = 'My Company (San Francisco)', internal_notes = 'This note is only for internal purposes.', sales = true, pos_available = false, expenses = false, purchase = true WHERE product_id = 'purchase-product-acoustic';
       INSERT OR IGNORE INTO purchase_product_variant_messages(id, variant_id, actor_name, action, action_label, detail, created_at)
       SELECT 'purchase-variant-message-acoustic-created', id, 'OdooBot', 'created', 'Product Variant created', 'Product Variant created', TIMESTAMP '2026-09-10 06:56:00' FROM purchase_product_variants WHERE product_id = 'purchase-product-acoustic';
       INSERT OR IGNORE INTO purchase_product_variant_messages(id, variant_id, actor_name, action, action_label, detail, created_at)

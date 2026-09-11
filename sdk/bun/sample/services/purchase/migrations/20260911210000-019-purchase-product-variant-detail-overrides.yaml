@@ -1,0 +1,42 @@
+version: 0.0.19
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_product_variant_detail_overrides (
+        id VARCHAR PRIMARY KEY, variant_id VARCHAR NOT NULL UNIQUE, row_version BIGINT NOT NULL DEFAULT 1,
+        default_code VARCHAR, name VARCHAR, variant_values VARCHAR, barcode VARCHAR,
+        list_price DECIMAL(18,2), cost DECIMAL(18,2), uom VARCHAR, product_type VARCHAR,
+        invoicing_policy VARCHAR, track_inventory BOOLEAN, sales_taxes VARCHAR,
+        purchase_taxes VARCHAR, category VARCHAR, company_name VARCHAR, internal_notes VARCHAR,
+        sales BOOLEAN, pos_available BOOLEAN, expenses BOOLEAN, purchase BOOLEAN,
+        on_hand DECIMAL(18,2), forecasted DECIMAL(18,2), active BOOLEAN,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      UPDATE purchase_product_variants
+      SET default_code = 'FURN-001-V1', name = 'Acoustic Bloc Screens / Standard', variant_values = 'Standard', list_price = 295, on_hand = 16
+      WHERE product_id = 'purchase-product-acoustic';
+      INSERT OR IGNORE INTO purchase_product_variant_detail_overrides(
+        id, variant_id, row_version, default_code, name, variant_values, barcode, list_price, cost, uom,
+        product_type, invoicing_policy, track_inventory, sales_taxes, purchase_taxes, category, company_name,
+        internal_notes, sales, pos_available, expenses, purchase, on_hand, forecasted, active
+      )
+      SELECT id, id, row_version, default_code, name, variant_values, barcode, list_price, cost, uom,
+        COALESCE(product_type, 'Goods'), COALESCE(invoicing_policy, 'Ordered quantities'), COALESCE(track_inventory, true),
+        COALESCE(sales_taxes, '15%'), COALESCE(purchase_taxes, '15%'), COALESCE(category, 'All'),
+        COALESCE(company_name, 'My Company (San Francisco)'), COALESCE(internal_notes, ''), COALESCE(sales, true),
+        COALESCE(pos_available, false), COALESCE(expenses, false), COALESCE(purchase, true), on_hand,
+        COALESCE(forecasted, on_hand), active
+      FROM purchase_product_variants;
+      UPDATE purchase_product_variant_detail_overrides
+      SET default_code = 'FURN_6667', name = 'Acoustic Bloc Screens', variant_values = 'Color: Black', list_price = 295,
+        on_hand = 16, forecasted = 16, cost = 0, product_type = 'Goods', invoicing_policy = 'Ordered quantities',
+        track_inventory = true, sales_taxes = '15%', purchase_taxes = '15%', category = 'All',
+        company_name = 'My Company (San Francisco)', internal_notes = 'This note is only for internal purposes.',
+        sales = true, pos_available = false, expenses = false, purchase = true
+      WHERE variant_id = (SELECT id FROM purchase_product_variants WHERE product_id = 'purchase-product-acoustic');
+    down: |
+      DROP TABLE IF EXISTS purchase_product_variant_detail_overrides;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
