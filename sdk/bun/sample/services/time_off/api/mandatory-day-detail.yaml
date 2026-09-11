@@ -1,0 +1,37 @@
+page: { id: mandatory-day-detail }
+datasources:
+  - id: mandatory_day_detail
+    single: true
+    permission: time_off.manage
+    error_states: { transport_error: { status: 503, code: TIME_OFF_MANDATORY_DAY_DETAIL_UNAVAILABLE, message: Mandatory day details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, color, company, department_names, job_names FROM mandatory_days WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_mandatory_day
+    type: server_form
+    permission: time_off.manage
+    title: Edit mandatory day
+    action: time_off.mandatory_days.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.mandatory_day_detail
+    refresh: [mandatory_day_detail, mandatory_days]
+    mutation:
+      operation: update
+      table: mandatory_days
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, date_from, date_to, color, company, department_names, job_names]
+      required: [name, date_from, date_to]
+      guards:
+        - { query: "SELECT id FROM mandatory_days WHERE id = :id", status: 404, code: TIME_OFF_MANDATORY_DAY_NOT_FOUND, message: Mandatory day not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, code: TIME_OFF_MANDATORY_DAY_INVALID, message: A name and valid date range are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mandatory_days other WHERE other.id <> :id AND LOWER(other.name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: TIME_OFF_MANDATORY_DAY_EXISTS, message: A mandatory day with this name already exists. }
+      result: { query: "SELECT * FROM mandatory_days WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: date_from, label: Start date, type: date, required: true }
+      - { field: date_to, label: End date, type: date, required: true }
+      - { field: color, label: Color, type: text }
+      - { field: company, label: Company, type: text }
+      - { field: department_names, label: Departments, type: text }
+      - { field: job_names, label: Job Position, type: text }

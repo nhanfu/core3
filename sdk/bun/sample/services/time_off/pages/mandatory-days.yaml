@@ -6,36 +6,37 @@ components:
   - type: ListView
     variant: odoo
     source: mandatory_days
+    responsive_card: true
     create_action: create_mandatory_day
     create_label: New mandatory day
     search: { label: Search mandatory days, placeholder: Search mandatory days... }
+    date_range:
+      label: Period
+      from_field: date_from
+      to_field: date_to
+      presets: [year, last_12_months, all]
+      default_preset: year
+      preset_labels: { year: This year, last_12_months: Last 12 months, all: All dates }
+      validation_messages:
+        invalid: Enter valid dates in YYYY-MM-DD format.
+        start_before_end: The start date must be before the end date.
+    empty_state: { title: No mandatory days found, description: Create a mandatory day or adjust your search or period. }
     columns:
       - { field: name, label: Name, type: PrimaryEntityCell }
-      - { field: date_from, label: Start date }
-      - { field: date_to, label: End date }
-      - { field: color, label: Color }
       - { field: company, label: Company }
+      - { field: date_from, label: Start Date }
+      - { field: date_to, label: End Date }
+      - { field: color_index, label: Color, type: ColorCell, align: right }
+      - { field: department_names, label: Departments, optional: hide }
+      - { field: job_names, label: Job Position, optional: hide }
     page_size: 50
     row_key: id
-actions:
-  - id: create_mandatory_day
-    type: server_form
-    permission: time_off.manage
-    title: New mandatory day
-    action: time_off.mandatory_days.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [mandatory_days]
-    mutation:
-      operation: insert
-      table: mandatory_days
-      fields: [name, date_from, date_to, color, company]
-      required: [name, date_from, date_to]
-      defaults: { color: violet, company: YShip Demo Company }
-      result: { query: "SELECT * FROM mandatory_days WHERE id = :id" }
-    fields:
-      - { field: name, label: Name, type: text, required: true }
-      - { field: date_from, label: Start date, type: date, required: true }
-      - { field: date_to, label: End date, type: date, required: true }
-      - { field: color, label: Color, type: text }
-      - { field: company, label: Company, type: text }
+    row_open_action: view_mandatory_day
+    row_double_click_action: view_mandatory_day
+    row_actions: menu
+    group_by:
+      - { field: department_names, label: Department }
+      - { field: job_names, label: Job Position }
+      - { field: company, label: Company }
+    actions:
+      - { id: delete_mandatory_day, label: Delete, permission: time_off.manage, variant: danger }

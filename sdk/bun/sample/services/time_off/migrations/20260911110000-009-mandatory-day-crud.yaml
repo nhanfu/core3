@@ -1,0 +1,19 @@
+version: 0.0.9
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE mandatory_days ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE mandatory_days ADD COLUMN IF NOT EXISTS department_names VARCHAR;
+      ALTER TABLE mandatory_days ADD COLUMN IF NOT EXISTS job_names VARCHAR;
+      ALTER TABLE mandatory_days ALTER COLUMN row_version SET DEFAULT 1;
+      UPDATE mandatory_days SET row_version = 1 WHERE row_version IS NULL;
+      UPDATE mandatory_days SET department_names = '' WHERE department_names IS NULL;
+      UPDATE mandatory_days SET job_names = '' WHERE job_names IS NULL;
+      CREATE INDEX IF NOT EXISTS mandatory_days_date_idx ON mandatory_days(date_from, date_to);
+    down: |
+      DROP INDEX IF EXISTS mandatory_days_date_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,18 @@
+title: Mandatory Day
+page: { id: mandatory-day-detail, route: /mandatory-days/detail, breadcrumb: [Human Resources, Time Off, Mandatory Days, Mandatory Day], auth: { require: [time_off.manage] } }
+components:
+  - type: OdooFormView
+    source: mandatory_day_detail
+    title_field: name
+    editable: true
+    header_actions:
+      - { id: edit_mandatory_day, label: Edit, variant: secondary, permission: time_off.manage }
+    group_columns: 2
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Details }
+    groups:
+      - title: Mandatory Day
+        fields: [{ field: name, label: Name }, { field: company, label: Company }]
+      - title: Dates
+        fields: [{ field: date_from, label: Start date }, { field: date_to, label: End date }]
+      - title: Appearance
+        fields: [{ field: color, label: Color }]

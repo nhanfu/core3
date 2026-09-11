@@ -364,10 +364,11 @@ the existing allocation detail workflow supplies row-version-protected Submit,
 Approve, Refuse, and Cancel transitions. Create guards reject archived or
 mismatched types, non-positive amounts, reversed dates, and duplicate titles
 with deterministic 422/409 responses. The live `core3_owned` reference was
-authenticated successfully but currently reports `hr_holidays` as
-`uninstalled`, so Odoo screenshots for this action are unavailable; Core3
-desktop/mobile captures and focused YAML/mutation tests are the evidence for
-this batch. Batch allocation and multiple-request wizards remain deferred.
+authenticated successfully against the refreshed `core3_personal` database
+with `hr_holidays` installed and demo data available. Batch allocation and
+multiple-request wizards remain deferred.
+
+The Mandatory Days follow-up now completes the installed `hr_leave_mandatory_day_action` list/form contract. The layout/API fragments remain joined by `page.id`, and the list now has the Odoo current-year Period filter, search/date scoping, hidden optional department/job columns, row navigation, and manager-only delete. `/mandatory-days/detail` provides the OdooFormView for Name, dates, Color, and Company; create/update/delete are deterministic service mutations with row-version stale protection and 404/409/422 guards. The 0.0.9 migration adds row versions, optional department/job scope fields, and a date index idempotently while preserving the fixed `Company Celebration` fixture. Authenticated personal-Odoo evidence used `/odoo/action-633` (database `core3_personal`) and was captured with empty failed-request lists at 1440x900 and 390x844. Core3 evidence is `/tmp/core3-timeoff-mandatory-days-{desktop,mobile}-{list,detail}.png`; Odoo comparison evidence is `/tmp/odoo-timeoff-personal-{desktop,mobile}-{mandatory-days,mandatory-day-detail}.png`. Final Core3 list/detail browser checks report exact viewport fit and no horizontal overflow; focused Time Off tests pass.
 
 ### Source and navigation
 

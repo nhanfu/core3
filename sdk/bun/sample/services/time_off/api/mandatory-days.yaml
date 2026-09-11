@@ -2,4 +2,53 @@ page: { id: mandatory-days }
 datasources:
   - id: mandatory_days
     permission: time_off.manage
-    query: "SELECT id, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, color, company FROM mandatory_days ORDER BY date_from"
+    error_states: { transport_error: { status: 503, code: TIME_OFF_MANDATORY_DAYS_UNAVAILABLE, message: Mandatory day data is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, color, CASE LOWER(color) WHEN 'violet' THEN 6 WHEN 'blue' THEN 5 WHEN 'green' THEN 7 WHEN 'red' THEN 4 ELSE 0 END AS color_index, company, department_names, job_names FROM mandatory_days WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR company ILIKE '%' || :q || '%' OR department_names ILIKE '%' || :q || '%' OR job_names ILIKE '%' || :q || '%') AND (:from_date IS NULL OR date_to >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR date_from <= CAST(:to_date AS DATE)) ORDER BY date_from, date_to, id"
+actions:
+  - id: view_mandatory_day
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /mandatory-days/detail
+    params: { id: '{row.id}' }
+  - id: create_mandatory_day
+    type: server_form
+    permission: time_off.manage
+    title: New mandatory day
+    action: time_off.mandatory_days.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mandatory_days]
+    mutation:
+      operation: insert
+      table: mandatory_days
+      fields: [name, date_from, date_to, color, company, department_names, job_names]
+      required: [name, date_from, date_to]
+      defaults: { color: violet, company: YShip Demo Company, department_names: '', job_names: '', row_version: 1 }
+      before_steps:
+        - { query: "SELECT 'mandatory-day-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') || '-' || CAST(:date_from AS DATE) AS id", assign: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:date_to AS DATE) >= CAST(:date_from AS DATE)", status: 422, code: TIME_OFF_MANDATORY_DAY_INVALID, message: A name and valid date range are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mandatory_days WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: TIME_OFF_MANDATORY_DAY_EXISTS, message: A mandatory day with this name already exists. }
+      result: { query: "SELECT * FROM mandatory_days WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: date_from, label: Start date, type: date, required: true }
+      - { field: date_to, label: End date, type: date, required: true }
+      - { field: color, label: Color, type: text }
+      - { field: company, label: Company, type: text }
+      - { field: department_names, label: Departments, type: text }
+      - { field: job_names, label: Job Position, type: text }
+  - id: delete_mandatory_day
+    type: server
+    permission: time_off.manage
+    action: time_off.mandatory_days.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete mandatory day {{row.name}}?'
+    refresh: [mandatory_days]
+    mutation:
+      operation: delete
+      table: mandatory_days
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mandatory_days WHERE id = :id", status: 404, code: TIME_OFF_MANDATORY_DAY_NOT_FOUND, message: Mandatory day not found. }
