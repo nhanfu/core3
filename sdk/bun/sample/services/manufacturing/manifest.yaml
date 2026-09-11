@@ -22,6 +22,10 @@ menu:
           label: Work Orders
           icon: tools
           permission: manufacturing.read
+        - path: /unbuild-orders
+          label: Unbuild Orders
+          icon: undo
+          permission: manufacturing.read
     - id: master-data
       label: Master Data
       items:

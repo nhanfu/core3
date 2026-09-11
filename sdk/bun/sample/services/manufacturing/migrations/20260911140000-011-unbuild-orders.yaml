@@ -1,0 +1,51 @@
+version: 0.0.11
+description: Deterministic Unbuild Orders action fixtures and workflow fields
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_unbuild_orders (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        product_id VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        bom_id VARCHAR,
+        bom_name VARCHAR,
+        mo_id VARCHAR,
+        mo_name VARCHAR,
+        lot_id VARCHAR,
+        lot_name VARCHAR,
+        product_qty DECIMAL(18,3) NOT NULL DEFAULT 1,
+        product_uom VARCHAR NOT NULL DEFAULT 'Units',
+        source_location VARCHAR NOT NULL DEFAULT 'WH/Stock',
+        destination_location VARCHAR NOT NULL DEFAULT 'WH/Stock',
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        state VARCHAR NOT NULL DEFAULT 'Draft',
+        activity_state VARCHAR NOT NULL DEFAULT 'planned',
+        activity_date DATE,
+        activity_user VARCHAR,
+        move_count INTEGER NOT NULL DEFAULT 0,
+        note VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS idx_mrp_unbuild_orders_state ON mrp_unbuild_orders(state);
+      CREATE INDEX IF NOT EXISTS idx_mrp_unbuild_orders_product ON mrp_unbuild_orders(product_name);
+      INSERT INTO mrp_unbuild_orders (
+        id, row_version, name, product_id, product_name, bom_id, bom_name, mo_id, mo_name,
+        lot_id, lot_name, product_qty, product_uom, source_location, destination_location,
+        company_name, state, activity_state, activity_date, activity_user, move_count, note, created_at
+      ) VALUES
+        ('unbuild-table-draft', 1, 'UB/2026/0001', 'product-furn-9666', '[FURN_9666] Table', 'bom-table-odoo', '[FURN_9666] Table BoM', 'mo-done-001', 'MO/2026/0005', 'lot-table-001', 'LOT-TABLE-001', 1, 'Units', 'WH/Stock', 'WH/Stock', 'My Company (San Francisco)', 'Draft', 'planned', DATE '2026-01-16', 'Mitchell Admin', 0, 'Table returned for component recovery', TIMESTAMP '2026-01-15 08:20:00'),
+        ('unbuild-drawer-done', 1, 'UB/2026/0002', 'product-furn-8855', '[FURN_8855] Drawer', 'bom-drawer-primary', '[FURN_8855] Drawer PRIM-ASSEM BoM', 'mo-to-close-001', 'MO/2026/0004', NULL, NULL, 2, 'Units', 'WH/Stock', 'WH/Stock', 'My Company (San Francisco)', 'Done', 'done', DATE '2026-01-15', 'Mitchell Admin', 4, 'Disassembly completed', TIMESTAMP '2026-01-15 09:40:00'),
+        ('unbuild-panel-draft', 1, 'UB/2026/0003', 'product-furn-7023', '[FURN_7023] Wood Panel', 'bom-table-kit', '[FURN_7023] Wood Panel BoM', 'mo-done-001', 'MO/2026/0005', NULL, NULL, 3, 'Units', 'WH/Stock', 'WH/Stock', 'My Company (San Francisco)', 'Draft', 'today', DATE '2026-01-17', 'Alice Mitchell', 0, NULL, TIMESTAMP '2026-01-15 08:30:00'),
+        ('unbuild-desk-done', 1, 'UB/2026/0004', 'product-furn-7800', '[FURN_7800] Desk Combination', 'bom-desk-combination', '[FURN_7800] Desk Combination BoM', 'mo-done-001', 'MO/2026/0005', 'lot-desk-001', 'LOT-DESK-001', 1, 'Units', 'WH/Stock', 'Components', 'My Company (San Francisco)', 'Done', 'overdue', DATE '2026-01-10', 'Mitchell Admin', 6, 'Components returned to stock', TIMESTAMP '2026-01-15 08:40:00'),
+        ('unbuild-kit-draft', 1, 'UB/2026/0005', 'product-furn-78236', '[FURN_78236] Table Kit', 'bom-table-kit-odoo', '[FURN_78236] Table Kit BoM', NULL, NULL, NULL, NULL, 4, 'Units', 'WH/Stock', 'WH/Stock', 'My Company (San Francisco)', 'Draft', 'planned', DATE '2026-01-20', 'Alice Mitchell', 0, 'Awaiting finished manufacturing order', TIMESTAMP '2026-01-15 08:50:00'),
+        ('unbuild-secondary-done', 1, 'UB/2026/0006', 'product-furn-8855-sec', '[FURN_8855] Drawer (SEC-ASSEM)', 'bom-drawer-secondary', '[FURN_8855] Drawer SEC-ASSEM BoM', 'mo-done-001', 'MO/2026/0005', 'lot-drawer-001', 'LOT-DRAWER-001', 2, 'Units', 'WH/Stock', 'Components', 'Core3 Vietnam', 'Done', 'done', DATE '2026-01-15', 'Alice Mitchell', 4, 'Second-company fixture for record-rule coverage', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM mrp_unbuild_orders WHERE id IN ('unbuild-table-draft', 'unbuild-drawer-done', 'unbuild-panel-draft', 'unbuild-desk-done', 'unbuild-kit-draft', 'unbuild-secondary-done');
+      DROP TABLE IF EXISTS mrp_unbuild_orders;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

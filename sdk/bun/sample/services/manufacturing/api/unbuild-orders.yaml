@@ -1,0 +1,87 @@
+page: { id: manufacturing-unbuild-orders }
+datasources:
+  - id: mrp_unbuild_states
+    single: false
+    permission: manufacturing.read
+    query: "SELECT * FROM (VALUES ('Draft', 'Draft'), ('Done', 'Done')) AS states(value, label)"
+  - id: mrp_unbuild_products
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT product_id AS value, product_name AS label FROM mrp_unbuild_orders ORDER BY product_name"
+  - id: mrp_unbuild_boms
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT bom_id AS value, bom_name AS label FROM mrp_unbuild_orders WHERE bom_id IS NOT NULL ORDER BY bom_name"
+  - id: mrp_unbuild_orders
+    single: false
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_UNBUILD_UNAUTHORIZED, message: Sign in to view Unbuild Orders. }
+      forbidden: { status: 403, code: MRP_UNBUILD_FORBIDDEN, message: You do not have permission to view Unbuild Orders. }
+      transport_error: { status: 503, code: MRP_UNBUILD_UNAVAILABLE, message: Unbuild Orders are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, name, product_id, product_name, bom_id, bom_name, mo_id, mo_name,
+        lot_id, lot_name, CAST(product_qty AS DOUBLE) AS product_qty, product_uom,
+        source_location, destination_location, company_name, state, activity_state,
+        CAST(activity_date AS VARCHAR) AS activity_date, COALESCE(activity_user, '') AS activity_user,
+        move_count, COALESCE(note, '') AS note
+      FROM mrp_unbuild_orders
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%'
+          OR COALESCE(bom_name, '') ILIKE '%' || :q || '%' OR COALESCE(mo_name, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR state = :state)
+        AND (:company_name IS NULL OR company_name = :company_name)
+      ORDER BY created_at DESC, id
+actions:
+  - id: view_mrp_unbuild
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /unbuild-orders/detail
+    params: { id: '{row.id}' }
+  - id: create_mrp_unbuild
+    type: server_form
+    permission: manufacturing.write
+    title: New Unbuild Order
+    action: manufacturing.unbuild_orders.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mrp_unbuild_orders]
+    mutation:
+      operation: insert
+      table: mrp_unbuild_orders
+      generated: [id]
+      fields: [name, product_id, product_name, bom_id, bom_name, mo_id, mo_name, lot_id, lot_name, product_qty, product_uom, source_location, destination_location, company_name, state, activity_state, activity_date, activity_user, move_count, note]
+      required: [name, product_name, bom_name, product_qty, product_uom, company_name]
+      defaults: { product_id: product-furn-9666, product_uom: Units, source_location: WH/Stock, destination_location: WH/Stock, company_name: 'My Company (San Francisco)', state: Draft, activity_state: planned, move_count: 0, row_version: 1, created_at: '2026-01-15 10:00:00' }
+      before_steps: [{ query: "SELECT 'unbuild-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:product_name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:bom_name AS VARCHAR))) > 0 AND CAST(:product_qty AS DECIMAL(18,3)) > 0", status: 422, code: MRP_UNBUILD_REQUIRED_FIELDS, message: Reference, product, bill of material, and a positive quantity are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_unbuild_orders WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: MRP_UNBUILD_REFERENCE_EXISTS, message: An Unbuild Order with this reference already exists. }
+      result: { query: "SELECT * FROM mrp_unbuild_orders WHERE id = :id" }
+    fields:
+      - { field: name, label: Reference, type: text, required: true, default: 'UB/2026/NEW' }
+      - { field: product_name, label: Product, type: select, options_source: mrp_unbuild_products, required: true }
+      - { field: bom_name, label: Bill of Material, type: select, options_source: mrp_unbuild_boms, required: true }
+      - { field: product_qty, label: Quantity, type: number, required: true, min: 0.001, default: 1 }
+      - { field: product_uom, label: Unit, type: text, required: true, default: Units }
+      - { field: mo_name, label: Manufacturing Order, type: text }
+      - { field: lot_name, label: Lot/Serial Number, type: text }
+      - { field: source_location, label: Source Location, type: text, default: WH/Stock }
+      - { field: destination_location, label: Destination Location, type: text, default: WH/Stock }
+      - { field: company_name, label: Company, type: select, options: [{ value: 'My Company (San Francisco)', label: 'My Company (San Francisco)' }, { value: 'Core3 Vietnam', label: 'Core3 Vietnam' }], default: 'My Company (San Francisco)' }
+      - { field: note, label: Notes, type: textarea }
+  - id: delete_mrp_unbuild
+    type: server
+    permission: manufacturing.write
+    action: manufacturing.unbuild_orders.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [mrp_unbuild_orders]
+    mutation:
+      operation: delete
+      table: mrp_unbuild_orders
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id", status: 404, code: MRP_UNBUILD_NOT_FOUND, message: Unbuild Order not found. }
+        - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id AND state = 'Draft'", status: 409, code: MRP_UNBUILD_DONE_DELETE, message: A Done Unbuild Order cannot be deleted. }

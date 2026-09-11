@@ -1,0 +1,46 @@
+title: Unbuild Orders
+page: { id: manufacturing-unbuild-order-detail, route: /unbuild-orders/detail, breadcrumb: [Supply Chain, Manufacturing, Operations, Unbuild Orders], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_unbuild_order_detail
+    title_field: name
+    subtitle_field: product_name
+    status_field: state
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_mrp_unbuild_orders, label: Back to Unbuild Orders, icon: arrow-left, permission: manufacturing.read }
+      - { id: unbuild_mrp_order, label: Unbuild, variant: primary, permission: manufacturing.write, show_if: "record.state === 'Draft'" }
+      - { id: edit_mrp_unbuild, label: Edit, variant: secondary, permission: manufacturing.write, show_if: "record.state === 'Draft'" }
+      - { id: delete_mrp_unbuild_detail, label: Delete, variant: danger, permission: manufacturing.write, show_if: "record.state === 'Draft'", confirm: Delete this Unbuild Order? }
+    statusbar: [{ value: Draft, label: Draft }, { value: Done, label: Done }]
+    status_colors: { Draft: neutral, Done: green }
+    group_columns: 2
+    groups:
+      - title: Unbuild Order
+        fields:
+          - { field: name, label: Reference }
+          - { field: product_name, label: Product }
+          - { field: bom_name, label: Bill of Material }
+          - { field: product_qty, label: Quantity }
+          - { field: product_uom, label: Unit }
+      - title: Traceability
+        fields:
+          - { field: mo_name, label: Manufacturing Order }
+          - { field: lot_name, label: Lot/Serial Number }
+          - { field: source_location, label: Source Location }
+          - { field: destination_location, label: Destination Location }
+          - { field: company_name, label: Company }
+          - { field: move_count, label: Product Moves }
+    notebook:
+      active: details
+      tabs:
+        - id: details
+          label: Additional Information
+          groups:
+            - title: Activity
+              fields:
+                - { field: activity_user, label: Activity User }
+                - { field: activity_date, label: Activity Date }
+                - { field: note, label: Notes }
+                - { field: row_version, label: Revision }

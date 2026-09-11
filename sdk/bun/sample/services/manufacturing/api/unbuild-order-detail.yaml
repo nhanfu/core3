@@ -1,0 +1,90 @@
+page: { id: manufacturing-unbuild-order-detail }
+datasources:
+  - id: mrp_unbuild_order_detail
+    single: true
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_UNBUILD_DETAIL_UNAUTHORIZED, message: Sign in to view this Unbuild Order. }
+      forbidden: { status: 403, code: MRP_UNBUILD_DETAIL_FORBIDDEN, message: You do not have permission to view this Unbuild Order. }
+      missing_record: { status: 404, code: MRP_UNBUILD_NOT_FOUND, message: Unbuild Order not found. }
+      transport_error: { status: 503, code: MRP_UNBUILD_DETAIL_UNAVAILABLE, message: This Unbuild Order is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, name, product_id, product_name, bom_id, bom_name, mo_id, mo_name,
+        lot_id, lot_name, CAST(product_qty AS DOUBLE) AS product_qty, product_uom,
+        source_location, destination_location, company_name, state, activity_state,
+        CAST(activity_date AS VARCHAR) AS activity_date, COALESCE(activity_user, '') AS activity_user,
+        move_count, COALESCE(note, '') AS note
+      FROM mrp_unbuild_orders
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND id = :id
+actions:
+  - id: back_to_mrp_unbuild_orders
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /unbuild-orders
+  - id: edit_mrp_unbuild
+    type: server_form
+    permission: manufacturing.write
+    title: Edit Unbuild Order
+    action: manufacturing.unbuild_orders.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.mrp_unbuild_order_detail
+    refresh: [mrp_unbuild_order_detail, mrp_unbuild_orders]
+    mutation:
+      operation: update
+      table: mrp_unbuild_orders
+      fields: [name, product_id, product_name, bom_id, bom_name, mo_id, mo_name, lot_id, lot_name, product_qty, product_uom, source_location, destination_location, company_name, note]
+      required: [name, product_name, bom_name, product_qty, product_uom, company_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id", status: 404, code: MRP_UNBUILD_NOT_FOUND, message: Unbuild Order not found. }
+        - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id AND state = 'Draft'", status: 409, code: MRP_UNBUILD_DONE_EDIT, message: A Done Unbuild Order cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:product_name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:bom_name AS VARCHAR))) > 0 AND CAST(:product_qty AS DECIMAL(18,3)) > 0", status: 422, code: MRP_UNBUILD_REQUIRED_FIELDS, message: Reference, product, bill of material, and a positive quantity are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_unbuild_orders WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: MRP_UNBUILD_REFERENCE_EXISTS, message: An Unbuild Order with this reference already exists. }
+      result: { query: "SELECT * FROM mrp_unbuild_orders WHERE id = :id" }
+    fields:
+      - { field: name, label: Reference, type: text, required: true }
+      - { field: product_name, label: Product, type: select, options_source: mrp_unbuild_products, required: true }
+      - { field: bom_name, label: Bill of Material, type: select, options_source: mrp_unbuild_boms, required: true }
+      - { field: product_qty, label: Quantity, type: number, required: true, min: 0.001 }
+      - { field: product_uom, label: Unit, type: text, required: true }
+      - { field: mo_name, label: Manufacturing Order, type: text }
+      - { field: lot_name, label: Lot/Serial Number, type: text }
+      - { field: source_location, label: Source Location, type: text }
+      - { field: destination_location, label: Destination Location, type: text }
+      - { field: company_name, label: Company, type: text, required: true }
+      - { field: note, label: Notes, type: textarea }
+  - id: unbuild_mrp_order
+    type: server
+    permission: manufacturing.write
+    action: manufacturing.unbuild_orders.validate
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.mrp_unbuild_order_detail.row_version}' }
+    refresh: [mrp_unbuild_order_detail, mrp_unbuild_orders]
+    mutation:
+      operation: update
+      table: mrp_unbuild_orders
+      fields: [state, activity_state, move_count]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id", status: 404, code: MRP_UNBUILD_NOT_FOUND, message: Unbuild Order not found. }
+        - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: MRP_UNBUILD_NOT_DRAFT, message: Only a current Draft Unbuild Order can be unbuilt. }
+        - { query: "SELECT 1 AS ok FROM mrp_unbuild_orders WHERE id = :id AND product_qty > 0 AND product_name <> '' AND bom_name <> ''", status: 422, code: MRP_UNBUILD_INVALID, message: A positive quantity, product, and bill of material are required before unbuilding. }
+      steps: [{ query: "UPDATE mrp_unbuild_orders SET state = 'Done', activity_state = 'done', move_count = GREATEST(move_count, 2), row_version = row_version + 1 WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The Unbuild Order changed. Reload it before unbuilding. }]
+      result: { query: "SELECT * FROM mrp_unbuild_orders WHERE id = :id" }
+  - id: delete_mrp_unbuild_detail
+    type: server
+    permission: manufacturing.write
+    action: manufacturing.unbuild_orders.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}', expected_row_version: '{state.mrp_unbuild_order_detail.row_version}' }
+    refresh: [mrp_unbuild_orders]
+    mutation:
+      operation: delete
+      table: mrp_unbuild_orders
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id", status: 404, code: MRP_UNBUILD_NOT_FOUND, message: Unbuild Order not found. }
+        - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id AND state = 'Draft'", status: 409, code: MRP_UNBUILD_DONE_DELETE, message: A Done Unbuild Order cannot be deleted. }

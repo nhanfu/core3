@@ -1,0 +1,53 @@
+title: Unbuild Orders
+page: { id: manufacturing-unbuild-orders, route: /unbuild-orders, breadcrumb: [Supply Chain, Manufacturing, Operations, Unbuild Orders], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_unbuild_orders
+    create_action: create_mrp_unbuild
+    create_label: New
+    search: { label: Search Unbuild Orders, placeholder: 'Search product, manufacturing order, or reference...' }
+    filters:
+      - { field: state, label: Status, options_source: mrp_unbuild_states }
+      - { field: company_name, label: Company, options: [{ id: 'My Company (San Francisco)', label: 'My Company (San Francisco)' }, { id: 'Core3 Vietnam', label: 'Core3 Vietnam' }] }
+    group_by:
+      - { field: product_name, label: Product }
+      - { field: mo_name, label: Manufacturing Order }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: mrp_unbuild_states
+        card: { title: name, subtitle: product_name, fields: [{ field: product_qty, label: Quantity }, { field: product_uom, label: Unit }, { field: state, label: Status }] }
+      - { id: form, label: Form, icon: form }
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: product_name
+        record_date_field: activity_date
+        activity_types: [{ id: todo, label: To-Do, icon: check }, { id: done, label: Done, icon: check }]
+    form_view: { page: apps/services/manufacturing/pages/unbuild-order-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_unbuild
+    row_double_click_action: view_mrp_unbuild
+    row_actions: menu
+    actions:
+      - { id: delete_mrp_unbuild, label: Delete, permission: manufacturing.write, variant: danger, show_if: "row.state === 'Draft'" }
+    empty_state: { title: No unbuild order found, description: An unbuild order is used to break down a finished product into its components. }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: product_name, label: Product, mobile: true, mobile_secondary: state }
+      - { field: bom_name, label: Bill of Material, mobile: false }
+      - { field: mo_name, label: Manufacturing Order, mobile: false }
+      - { field: lot_name, label: Lot/Serial Number, mobile: false }
+      - { field: product_qty, label: Quantity, align: right, mobile: true }
+      - { field: product_uom, label: Unit, mobile: true }
+      - { field: company_name, label: Company, mobile: false, optional: hide }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_mrp_unbuild, label: Open, icon: eye }, { id: delete_mrp_unbuild, label: Delete, icon: trash, variant: danger, show_if: 'row.state === "Draft"' }] }
+    page_size: 50
