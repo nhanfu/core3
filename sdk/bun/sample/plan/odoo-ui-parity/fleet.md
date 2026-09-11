@@ -581,3 +581,52 @@ and `git diff --check` pass. The expected visual difference is the Core3
 Fluent shell and blue accent versus Odoo's purple application shell; table
 labels, status ordering, drag handles, checkboxes, responsive widths, and
 the Odoo list/form control structure are matched.
+
+## Configuration > Vehicle > Tags checkpoint (2026-09-11)
+
+The next uncovered Fleet action was `fleet_vehicle_tag_action`, reached from
+the technical `Fleet > Configuration > Vehicle > Tags` menu. The active Odoo
+reference is `http://localhost:8069`, database `core3_user_demo`, authenticated
+as `admin@core3.local`; the source is
+`/home/nhanjs/projects/odoo/addons/fleet/views/fleet_vehicle_views.xml` at
+revision `65975996`. The action is list/form for `fleet.vehicle.tag`, with an
+editable `Vehicle Tags` list containing `Tag Name` and `Color`; the source menu
+is restricted to `base.group_no_one`, while Fleet users have read access and
+Fleet managers have full CRUD access. The seeded reference rows are Junior,
+Senior, Employee Car, and Purchased with Odoo color indexes 1 through 4.
+
+Core3 adds `/fleet/config/tags` and `/fleet/config/tags/detail`. The
+presentation-only `pages/tags.yaml` and `pages/fleet-tag-detail.yaml` are
+joined to service-owned `api/tags.yaml` and `api/tag-detail.yaml` by matching
+`page.id`. Migrations `20260911242000-023-fleet-tags-schema.yaml` and
+`20260911243000-024-fleet-tags-data.yaml` provide four deterministic rows with
+fixed timestamps. The list supports inline creation/editing, detail
+navigation, search, and explicit empty, not-found, transport, 401, and 403
+states. Manager-only mutations validate non-blank names and Odoo color indexes
+0 through 11, reject duplicates, missing rows, and stale row versions, and
+support delete. Shared list/grid YAML now supports the Odoo color palette while
+remaining backward-compatible with existing color cells.
+
+Implementation commit: `543a5fe7` (`feat(fleet): add vehicle tags parity`).
+
+Authenticated headless browser evidence used the active Odoo reference and an
+isolated Core3 runtime. The Odoo and Core3 list surfaces were checked at both
+required viewports; Core3 also navigated to the detail route. Captures are
+temporary, remain under `/tmp`, and are not committed:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Vehicle Tags list | 1440x900 | `/tmp/odoo-fleet-tags-desktop-20260911.png` | `710c0f7aec551690ed528090fa175890bf8e50e52b1a23a7da79d6f864d9cbc1` |
+| Odoo Vehicle Tags list | 390x844 | `/tmp/odoo-fleet-tags-mobile-20260911.png` | `2c7f6137f68db1dc494add8eca07ba09c723113eeb032a508b1ee34a909c91e1` |
+| Core3 Vehicle Tags list | 1440x900 | `/tmp/core3-fleet-tags-desktop-20260911.png` | `4b7c9af74191160d9bc54e9658eb7ba94b0dc3f3b3f7f19cde24824fda2933a3` |
+| Core3 Vehicle Tags list | 390x844 | `/tmp/core3-fleet-tags-mobile-20260911.png` | `10942f099eece1309d973ba694367dc59c2e1afb9dfb24dd22826ca67386b72c` |
+| Core3 Vehicle Tag form | 1440x900 | `/tmp/core3-fleet-tag-detail-desktop-final-20260911.png` | `b5df21ce3dacccfe82544d6d3ac3d0fe1234a0381289de6efa02c1a7c3de05d1` |
+| Core3 Vehicle Tag form | 390x844 | `/tmp/core3-fleet-tag-detail-mobile-final-20260911.png` | `7e7fea2cd16fcc36ea9416c3c6ea23356587a51412106b6b81e982e173da8c78` |
+
+Focused coverage passes 4 tests and 54 assertions after correcting the
+unsupported `palette` column schema key. The UI audit, ESLint, global and
+Fleet CSS builds, and `git diff --check` pass. The browser evidence reported
+no page errors, settled request failures, or horizontal overflow. The bounded
+visual difference is the shared Core3 Fluent shell versus Odoo's purple shell;
+the exact tag labels, color swatches, list/detail structure, and responsive
+widths are retained.
