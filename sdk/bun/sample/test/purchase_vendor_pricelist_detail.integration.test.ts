@@ -32,8 +32,8 @@ describe('Purchase Vendor Pricelist detail parity', () => {
     expect(form.groups.map((group: any) => group.title)).toEqual(['VENDOR', 'PRICELIST']);
     expect(form.groups.flatMap((group: any) => group.fields.map((field: any) => field.label))).toEqual([
       'Vendor', 'Vendor Product Name?', 'Vendor Product Code?', 'Lead Time?',
-      'Product', 'Product Variant?', 'Quantity?', 'Unit Price', 'Currency',
-      'Validity', 'To', 'Discount (%)', 'Company',
+      'Product', 'Product Variant?', 'Quantity?', 'Unit Price?', 'Currency',
+      'Validity?', 'To', 'Discount (%)', 'Company',
     ]);
     expect(detailApi.datasources[0]).toMatchObject({ id: 'purchase_vendor_pricelist_detail', single: true, permission: 'purchase.read' });
     expect(detailApi.datasources[0].error_states.transport_error).toMatchObject({ status: 503, code: 'PURCHASE_VENDOR_PRICELIST_DETAIL_UNAVAILABLE' });
