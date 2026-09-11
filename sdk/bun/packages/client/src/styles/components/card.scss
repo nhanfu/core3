@@ -63,4 +63,4 @@
 .o-card-view-group { grid-column: 1 / -1; }
 .o-card-view-group-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 8px; }
 .o-card-view-item { flex: 0 0 auto; }
-@media (max-width: 720px) { .o-kanban-board.is-ungrouped { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px; } .o-kanban-board.is-ungrouped .o-kanban-card.is-compact { min-height: 170px; } }
+@media (max-width: 720px) { .o-kanban-board.is-ungrouped { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px; } .o-kanban-board.is-ungrouped .o-kanban-card.is-compact { min-height: 170px; } .o-card-view.is-compact .o-kanban-board.is-ungrouped { gap: 0; padding: 0; } .o-card-view.is-compact .o-kanban-board.is-ungrouped .o-kanban-card.is-compact { border-right: 0; border-bottom: 1px solid var(--o-list-border); border-left: 0; border-radius: 0; } }
