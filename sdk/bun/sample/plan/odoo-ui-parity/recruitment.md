@@ -527,3 +527,57 @@ Commits: `4449a7c9` implementation, `dc290ba8` portable email-validation fix.
 Screenshots remain outside Git. Deferred: mail-template integration, inbound
 email execution, applicant auto-creation, and any job-opening-specific
 platform relation not present in the installed Odoo model.
+
+## Batch 6 implementation record — Recruitment Settings
+
+The installed Odoo source and authenticated personal reference were inspected
+before implementation. Odoo places Settings under `Recruitment → Configuration`
+and restricts the menu action to `base.group_system`; the settings app itself
+shows a manager-visible Recruitment tab. The tab contains exactly three
+checkbox settings: `Online Posting` under `Job Posting`, `Send Interview
+Survey` under `Process`, and `Résumé Digitization (OCR)` under `In-App
+Purchases`. `Send SMS` is an informational setting without a checkbox. In the
+personal reference all three optional-module checkboxes were enabled controls
+and initially unchecked; OCR displayed the `Enterprise` marker. Checking a
+module marks the form as having unsaved changes; Save persists/installs the
+module setting and Discard restores the loaded values.
+
+Core3 adds page id `recruitment-settings` at `/recruitment/settings`, a
+system-equivalent `recruitment.settings` permission, the shared SettingsView,
+page.id-owned API/action YAML, and a fixed singleton fixture. The API covers
+valid saves, invalid boolean values, stale-row conflicts, missing records,
+empty/not-found, unauthorized, forbidden, and transport-error states. No
+module installation is performed by the YAML fixture; the three booleans are
+the bounded UI contract.
+
+### Evidence
+
+| Surface | State | Viewport | Path | SHA-256 |
+| --- | --- | --- | --- | --- |
+| Odoo | Recruitment settings | 1440×900 | `/tmp/odoo-recruitment-settings-1440x900-20260911.png` | `17541351ebeb78142fc03640c77b6b3f07f287d3c2fab3af13eef5c569548f67` |
+| Core3 | Recruitment settings | 1440×900 | `/tmp/core3-recruitment-settings-1440x900-20260911.png` | `e290c405c008fef20927501eea32edafc9dc365bd0cdb47c074e67c2be0fc0e0` |
+| Odoo | Recruitment settings | 390×844 | `/tmp/odoo-recruitment-settings-390x844-20260911.png` | `a79bf5ac51c4fee8180e7143b28262d586814270aaa73df8cd12405438925958` |
+| Core3 | Recruitment settings | 390×844 | `/tmp/core3-recruitment-settings-390x844-20260911.png` | `3e46175278d7e49ae59784e9209045352b9dcb89b0a890579a649d5bf458e3cb` |
+
+Authenticated captures were inspected as Odoo/Core3 pairs at both target
+viewports. Core3 matches the three section headings, labels, descriptions,
+checkbox placement, Enterprise marker, fixed toolbar, vertical tab, and
+content-only scrolling. The browser matrix reported zero failed responses,
+zero page errors, and exact document/body widths of 1440/1440 and 390/390.
+The intentional visual residuals are Core3's Fluent/blue application shell
+versus Odoo's purple shell, the compact Core3 mobile shell/header, and simpler
+icons/checkbox styling. Screenshots remain outside Git.
+
+### Verification and commits
+
+- `bun test test/recruitment_settings.integration.test.ts` — 4 passed, 0 failed, 28 assertions.
+- `bun run audit` — pending final handoff run in this worktree.
+- `bunx eslint test/recruitment_settings.integration.test.ts` — pending final handoff run in this worktree.
+- `bun run css:build:global` and `bun run css:build:recruitment` — passed.
+- `git diff --check` — passed before implementation commit.
+
+Commit: `e1e03b17` implementation. The additive shared SettingsView Enterprise
+badge support is included in that implementation commit; no separate fix was
+needed after browser verification. Deferred: real Odoo module installation,
+module-specific post-install screens, Website Recruitment/Survey/OCR feature
+workflows, and non-system permission administration.
