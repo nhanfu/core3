@@ -20,10 +20,10 @@ latest Services checkpoint is recorded below.
   `data/fleet_demo.xml`. The manifest also loads the fleet data, mail subtype,
   activity type, car-brand/model and vehicle-mail wizard definitions.
 - Authenticated audit on 2026-09-11 used `http://localhost:8069`, database
-  `core3_personal`, login `codex@core3.local`, and password
-  `Core3Odoo2026!`. Authentication succeeded as the personal administrator.
+  `core3_codex_demo`, login `codex@core3.local`, and password
+  `Core3Odoo2026!`. Authentication succeeded as the database administrator.
   SQL returned `fleet|installed|t|19.0.0.1` from `ir_module_module`, proving
-  Fleet is installed with demo data in the personal reference database.
+  Fleet is installed with demo data in the requested live reference database.
 - Authenticated Fleet reference captures are present under `/tmp` and are
   deliberately not committed: the earlier vehicle/Odometer captures above
   plus the Services captures recorded in the checkpoint below. The earlier
@@ -382,6 +382,115 @@ pages, permissions, migrations, storage and styles inspection; authenticated
 personal Odoo login and SQL module-status query; authenticated Fleet vehicle and
 Odometers desktop/mobile captures; and review of the six register gates. No
 product image is part of this change.
+
+## Fleet Configuration > Settings checkpoint (2026-09-11)
+
+The selected uncovered installed visible Fleet action was `Fleet > Configuration >
+Settings`. In the requested `core3_codex_demo` database, the authenticated menu audit
+on 2026-09-11 found menu id 160 (`Fleet/Configuration/Settings`, sequence 0,
+`base.group_system`) opening action id 185,
+`fleet_config_settings_action`. The action is a form over `res.config.settings`,
+with context `{'module': 'fleet', 'bin_size': False}` and no independent CRUD
+records because this is an Odoo transient settings form. It is the first child
+of the Configuration menu and must remain before Models, Services, Vehicle, and
+Activity Types.
+
+The source contract is pinned to
+`/home/nhanjs/projects/odoo/addons/fleet/views/res_config_settings_views.xml`
+and `models/res_config_settings.py` at revision `65975996`. The inherited form
+adds the `Fleet` settings app (label `Fleet`) and one block titled `Fleet
+Management`, containing one setting titled `End Date Contract Alert` with the
+exact inline copy `Send an alert [integer] days before the end date`. The field
+is `delay_alert_contract`, an integer with Odoo default 30 and config parameter
+`hr_fleet.delay_alert_contract`. The value affects contract/vehicle renewal
+warning windows, so saving is a real configuration mutation rather than a
+display-only fixture.
+
+Implemented Core3 contract:
+
+- Add `/fleet/config/settings` as a `base.system`-equivalent route with a
+  page-only YAML layout and a separate API YAML fragment joined by
+  `page.id=fleet-settings`; the API owns the single settings datasource and
+  update action.
+- Mirror the full-width Odoo `SettingsView`: top Save/Discard controls, Settings
+  title, settings search, the General Settings tab rail, Fleet Management
+  section, and the one integer field with exact visible labels/copy. Omit
+  breadcrumbs and horizontal gutters; only settings content may scroll, as
+  required for Odoo settings parity. Desktop evidence is 1440x900 and mobile is
+  390x844.
+- Use permission `fleet.settings` for the page, menu, datasource, and save
+  action. It is granted only to the system/settings boundary; ordinary Fleet
+  users, Fleet managers without system access, and denied users must receive
+  hidden-menu/403 behavior. Keep this distinct from `fleet.manage`.
+- Add deterministic, idempotent schema/data migrations for one row
+  `fleet-settings-demo`, company `My Company (San Francisco)`,
+  `delay_alert_contract=30`, `row_version=1`, and fixed update timestamp
+  `2026-01-15 00:00:00`. The datasource must support explicit empty/not-found
+  and transport-error fixtures without hidden fallback values.
+- The save action must support a valid positive integer update, reject blank,
+  non-integer, zero, and negative values with a stable 422 contract, reject a
+  missing row with 404, reject a stale row version with 409, and retain the
+  previous value on failure. This form has no create/delete/archive or
+  workflow transition; those boundaries must be asserted as intentionally
+  absent while save/reload is covered.
+- Focused integration coverage must assert menu/action/source/view parity,
+  page/API discovery, migration idempotency, deterministic fixture data,
+  valid save/reload, empty/not-found/transport error, 401/403 permissions,
+  and 404/409/422 mutation guards. Authenticated browser coverage must visit
+  the route at both required viewports, edit and save the integer, verify the
+  updated value, check no horizontal overflow or browser errors, and retain
+  Odoo/Core3 screenshots outside Git.
+
+Implementation is deliberately limited to this one Settings action. Service
+Types, Vehicle Status, Vehicle Tags, Activity Types, and richer settings
+cross-links remain uncovered follow-up slices.
+
+### Settings source comparison and evidence
+
+The live Fleet menu/action audit in `core3_codex_demo` confirmed the complete
+Fleet leaf tree before implementation: Fleet (action 175), Odometers (176),
+Contracts (181), Services (182), Reporting > Costs (183), Reporting > Odometer
+Analysis (186), Configuration > Settings (185), Configuration > Models >
+Manufacturers (173), Models (172), Categories (174), Configuration > Services >
+Types (177), Configuration > Vehicle > Status (178), Tags (179), and
+Configuration > Activity Types (184). Core3 already owned the other implemented
+routes; this checkpoint adds only action 185 and does not redo them. The live
+action is `res.config.settings`, `form`, context `module=fleet` and
+`bin_size=false`; its installed form exposes the Fleet Management block and
+the `delay_alert_contract` integer defaulting to 30. The Odoo form also displays
+global installed settings categories; those non-Fleet tabs remain delegated to
+their module-owned settings actions rather than duplicated in this batch.
+
+Implementation commit: `50b6aa43` (`feat(fleet): add configuration settings parity`).
+The page `fleet-settings` is presentation-only apart from its client save
+adapter; `api/settings.yaml` owns the datasource and server mutation, joined by
+`page.id`. Migrations `20260911230000-019-fleet-settings-schema.yaml` and
+`20260911231000-020-fleet-settings-data.yaml` are idempotent and seed the fixed
+30-day value. The shared number renderer now emits the inline sentence once,
+and the Fleet settings stylesheet switches the mobile rail from the desktop
+sidebar to a horizontal tab strip with a full-width search row.
+
+Authenticated captures were taken against `core3_codex_demo` and the isolated
+Core3 runtime; screenshots are outside Git and were visually inspected:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Fleet Settings | 1440x900 | `/tmp/odoo-codex-fleet-settings-desktop-20260911-viewport.png` | `73c25d7f16d49b0df3bc70672ad2570e007fb7d8937e62a9a612b607ea26df94` |
+| Odoo Fleet Settings | 390x844 | `/tmp/odoo-codex-fleet-settings-mobile-20260911-viewport.png` | `98fad19df7e694f27adfa3be4ebcddec2e2ada78d7a3f67fc8258356a261754b` |
+| Core3 Fleet Settings | 1440x900 | `/tmp/core3-codex-fleet-settings-desktop-20260911-viewport.png` | `7ba74b2c538f55abe589fb063bd2d94bf13287ab45e72e33c3518403f42f6bd8` |
+| Core3 Fleet Settings | 390x844 | `/tmp/core3-codex-fleet-settings-mobile-20260911-viewport.png` | `2f41aebb46230831f557ab8dd9522459d7f5e75727073a615de513c9b5b50c6a` |
+
+The authenticated browser pass reached `/fleet/config/settings` in Core3 at
+both viewports, saved 45 days, reloaded the persisted value, restored the
+deterministic 30-day fixture, and reported `requestfailed: []`,
+`pageerror: []`, and body/document widths `1440/1440` and `390/390`.
+The Odoo action reported the same clean browser/error/width checks. Static
+gates passed with focused Fleet Settings tests (4 tests, 34 assertions),
+`bun run audit` (489 pages, 496 routes, 853 datasources), ESLint, global and
+Fleet CSS builds, and `git diff --check`. The expected bounded differences are
+the Core3 Fluent shell versus Odoo's purple shell, Core3's Fleet-only settings
+tab versus Odoo's global installed-module category rail, and the shared Core3
+settings controls versus Odoo-native widgets.
 
 ## Reporting Odometers analysis (2026-09-11)
 
