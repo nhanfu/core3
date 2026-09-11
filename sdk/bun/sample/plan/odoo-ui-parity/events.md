@@ -885,6 +885,53 @@ multi-slot record, so the Odoo pair proves the event form/action context while
 the Core3 pair proves the deterministic Slots tab. Images remain outside the
 repository.
 
+## Deliberate defer: registration products, sales, and slot availability
+
+The requested follow-up was audited against Odoo revision `65975996` and the
+authenticated owned reference database `core3_personal` on 2026-09-11 as
+`codex@core3.local`. The installed source does support a meaningful
+registration-product and sales contract: `event_product` links event tickets
+to `service_tracking = event` products, `event_sale` adds event, ticket, and
+slot fields to sale-order lines, and the event form displays product, price,
+sales start/end, maximum, and registration columns. Odoo also exposes a Sales
+stat action for confirmed orders linked to the event.
+
+The live reference contains those non-slot examples. Design Fair Los Angeles
+has three registration products/tickets (Free, Event Registration - Standard,
+and Event Registration - VIP), one confirmed linked sales order totaling
+$2,300.00, 13 event-linked sale-order lines across the database, and three
+event-registration products. The authenticated event form and linked Sales
+Orders action were reached without failed application requests or horizontal
+overflow:
+
+| Viewport | Route | Capture | SHA-256 | Dimensions |
+| --- | --- | --- | --- | --- |
+| 1440x900 | `/odoo/events/1` | `/tmp/odoo-events-registration-products-sales-desktop-1440x900-reference.png` | `f320bf9b38c2f82e08408b92f57e4177fe3bdddda4b776bb32ccf48fc998f596` | 1440x900 |
+| 390x844 | `/odoo/events/1` | `/tmp/odoo-events-registration-products-sales-mobile-390x844-reference.png` | `78f3b4184d4a1bf4e5b37b20ccd646e2eb72fff5e0c57bc8be6bbe037e5a094d` | 390x844 |
+| 1440x900 | `/odoo/events/1/orders` | `/tmp/odoo-events-linked-sales-desktop-1440x900.png` | `df63a07237d8212cd2186a25e3d34463d18460e3cad158fe0898b30f58c2c893` | 1440x900 |
+
+The slot portion is not supportable from this reference. An authenticated
+`event.slot.search_count([])` returns `0`; all eight seeded events report
+`is_multi_slots = false` and `event_slot_count = 0`; and the Design Fair form
+does not expose the slot action because the source view hides the slot-count
+button unless `is_multi_slots` is enabled. Therefore there is no live
+slot/ticket combination from which to validate slot-specific sales-line
+selection, per-slot capacity, sold-out transitions, stale/over-capacity
+registration behavior, or desktop/mobile workflow captures. The Odoo source
+requires `event_slot_id` on event-product sale lines only for multi-slot events
+and calculates availability across slot/ticket combinations, but creating
+synthetic reference records would not be an owned demo-data validation.
+
+This batch is deliberately deferred and contains no Core3 implementation,
+fixture, or screenshot assets. Do not add a partial product/sales slice under
+this batch: the existing ticket and slot CRUD surfaces remain bounded to their
+already documented contracts, while product linkage, confirmed sale-order
+creation, slot-aware sale-line validation, and slot-specific availability stay
+deferred until the owned Odoo reference has at least one multi-slot event with
+products, tickets, slots, and registrations. Reopen this batch after seeding
+or installing that source-backed reference data and repeat the authenticated
+desktop/mobile audit before implementing YAML/API fragments and mutations.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and
