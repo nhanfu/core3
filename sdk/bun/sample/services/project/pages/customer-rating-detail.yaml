@@ -1,0 +1,21 @@
+title: Customer Rating
+page: { id: project-customer-rating-detail, route: /customer-ratings/detail, breadcrumb: [Project, Reporting, Customer Ratings], auth: { require: [project.read] } }
+components:
+  - type: OdooFormView
+    source: project_customer_rating_detail
+    title_field: res_name
+    subtitle_field: parent_res_name
+    editable: false
+    group_columns: 2
+    groups:
+      - title: Rating
+        fields:
+          - { field: rated_partner_name, label: Assigned to }
+          - { field: parent_res_name, label: Project }
+          - { field: res_name, label: Task }
+          - { field: rating_text, label: Rating }
+      - title: Feedback
+        fields:
+          - { field: rated_on, label: Rated On }
+          - { field: partner_name, label: Customer }
+          - { field: feedback, label: Comment, type: textarea, wide: true }

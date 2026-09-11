@@ -307,6 +307,45 @@ the account lacks `project.group_project_stages`; the source XML action and
 group restriction remain the comparison contract. Screenshots are under
 `/tmp` only and are not committed.
 
+## Bounded slice: Customer Ratings (2026-09-11)
+
+The next genuinely uncovered visible Project action after the completed Tasks
+Analysis and grouped-stage slices is Reporting > Customer Ratings. Authenticated
+inspection of the owned Odoo 19 database `core3_owned` selected the exact
+installed action `project.rating_rating_action_project_report`, menu
+`rating_rating_menu_project`, and web-client path `/odoo/task-ratings`. Odoo
+rendered six records with default `Rated On: Last 30 Days` and view modes
+`kanban,list,pivot,graph,form`. Its list labels are `Submitted on`, `Assigned
+to`, `Customer`, `Project`, `Task`, and `Rating`; the pivot exposes `Count` and
+`Rating (1-5)`; rating forms are read-only and show Assigned to, Project, Task,
+Rating, Rated On, Customer, and Comment.
+
+Core3 maps the action to `/project/customer-ratings` (page route
+`/customer-ratings`) under Reporting, with page `project-customer-ratings` and
+API fragment `api/customer-ratings.yaml` joined by the exact `page.id`. The
+read-only report includes the Odoo view order, deterministic six-record
+fixtures, fixed 2026-01-15 creation timestamps, realistic project/customer/
+task/comment values, period/rating filters, search, pivot and graph measures,
+read-only form navigation, mobile-safe columns, and explicit empty/not-found
+and 503 transport contracts. Detail layout/API are separately joined by
+`project-customer-rating-detail`.
+
+Focused coverage is `test/project_customer_ratings.integration.test.ts` (3
+tests, 34 assertions), covering discovery, menu/page/API separation, exact
+view labels and measures, deterministic ordering, search/filter/empty/not-found
+states, permission guards, and stable transport-error codes. Authenticated
+browser evidence was captured with `domcontentloaded` plus fixed waits: Odoo is
+`/tmp/odoo-project-customer-ratings-desktop.png` and
+`/tmp/odoo-project-customer-ratings-mobile.png`; Core3 is
+`/tmp/core3-project-customer-ratings-desktop.png` and
+`/tmp/core3-project-customer-ratings-mobile.png`. Screenshots remain in `/tmp`.
+The Core3 desktop pass exercised Kanban, List, Pivot, Graph, and row detail;
+both viewports reported no horizontal overflow and no failed responses. The
+existing generic client currently rejects returned datasource error metadata
+(`datasources[0].error is not allowed`) before rendering the error state; the
+stable 503 API contract is tested and this shared-schema limitation is not
+changed in the Project-only slice.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:

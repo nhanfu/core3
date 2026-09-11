@@ -1,0 +1,25 @@
+version: 0.0.7
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS project_customer_ratings (
+        id VARCHAR PRIMARY KEY, rated_partner_name VARCHAR NOT NULL, partner_name VARCHAR,
+        parent_res_name VARCHAR, res_name VARCHAR NOT NULL, feedback VARCHAR,
+        rating DECIMAL(18,3) NOT NULL, rating_text VARCHAR NOT NULL,
+        rated_on TIMESTAMP NOT NULL, created_at TIMESTAMP NOT NULL
+      );
+      INSERT INTO project_customer_ratings(id, rated_partner_name, partner_name, parent_res_name, res_name, feedback, rating, rating_text, rated_on, created_at) VALUES
+        ('rating-demo-001', 'Mitchell Admin', 'Ready Mat', 'DPC - S00036 - Sales Order', 'Electricity', 'Everything is working fine, but there are some loose cables', 3, 'ok', TIMESTAMP '2026-09-10 21:20:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('rating-demo-002', 'Mitchell Admin', 'Acme Corporation', 'AGR - S00035 - Sales Order', 'Decoration', 'This is already looking very promising, thanks for the good work!', 5, 'top', TIMESTAMP '2026-09-10 21:20:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('rating-demo-003', 'OdooBot', 'YourCompany, Joel Willis', 'Office Design', 'Lunch Room: kitchen', 'There must have been some miscomunication, because the result is not quite what I had in mind. I would like to request some modifications.', 1, 'ko', TIMESTAMP '2026-09-10 21:19:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('rating-demo-004', 'OdooBot', 'YourCompany, Joel Willis', 'Office Design', 'Modifications asked by the customer', 'Exactly what I asked for, thank you!', 5, 'top', TIMESTAMP '2026-09-10 21:19:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('rating-demo-005', 'Marc Demo', 'YourCompany, Marc Demo', 'Research & Development', 'New portal system', 'Not as good as expected', 1, 'ko', TIMESTAMP '2026-09-10 21:19:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('rating-demo-006', 'OdooBot', 'YourCompany, Joel Willis', 'Office Design', 'Noise Reduction', 'Good Job', 5, 'top', TIMESTAMP '2026-09-10 21:19:00', TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS project_customer_ratings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

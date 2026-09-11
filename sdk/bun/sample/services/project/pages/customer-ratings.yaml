@@ -1,0 +1,81 @@
+title: Customer Ratings
+page: { id: project-customer-ratings, route: /customer-ratings, breadcrumb: [Project, Reporting, Customer Ratings], auth: { require: [project.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_customer_ratings
+    search: { label: Search customer ratings, placeholder: 'Search...' }
+    default_filters: { rated_on_period: last_30_days }
+    filters:
+      - { field: rated_on_period, label: Rated On, options: [{ id: last_30_days, label: Last 30 Days }, { id: last_365_days, label: Last 365 Days }, { id: all, label: All }] }
+      - { field: rating_text, label: Rating, options: [{ id: top, label: Happy }, { id: ok, label: Neutral }, { id: ko, label: Unhappy }] }
+    group_by:
+      - { field: rated_partner_name, label: Assigned to }
+      - { field: partner_name, label: Customer }
+      - { field: rating_text, label: Rating }
+      - { field: parent_res_name, label: Project }
+      - { field: res_name, label: Task }
+      - { field: rated_on, label: Submitted on }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: ''
+        card:
+          title: rated_partner_name
+          subtitle: partner_name
+          fields:
+            - { field: res_name, label: Task }
+            - { field: parent_res_name, label: Project }
+            - { field: rated_on, label: Submitted on }
+            - { field: rating_text, label: Rating }
+            - { field: feedback, label: Comment }
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: rated_partner_name, column: Assigned to }
+            - { field: partner_name, column: Customer }
+            - { field: parent_res_name, column: Project }
+            - { field: res_name, column: Task }
+            - { field: rating_text, column: Rating }
+            - { field: rated_on, column: Submitted on, type: date }
+            - { field: rating, column: Rating (1-5) }
+            - { field: id, column: Count }
+          default:
+            rows: [rated_partner_name]
+            columns: []
+            measures:
+              - { field: id, aggregate: count, column: Count }
+              - { field: rating, aggregate: avg, column: Rating (1-5) }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: rated_partner_name
+        measure_field: rating
+        measure_label: Rating (1-5)
+        type: bar
+        measures:
+          - { field: rating, aggregate: avg, label: Rating (1-5) }
+          - { field: id, aggregate: count, label: Count }
+      - { id: form, label: Form, icon: edit }
+    columns:
+      - { field: rated_on, label: Submitted on, type: DateCell }
+      - { field: rated_partner_name, label: Assigned to, type: PrimaryEntityCell, mobile: true }
+      - { field: partner_name, label: Customer, mobile: false }
+      - { field: parent_res_name, label: Project, mobile: true }
+      - { field: res_name, label: Task, mobile: true }
+      - { field: rating_text, label: Rating, type: StatusChip, colors: { top: green, ok: amber, ko: red } }
+      - { field: feedback, label: Comment, optional: hide, mobile: false }
+    page_size: 50
+    row_key: id
+    row_open_action: view_customer_rating
+    row_double_click_action: view_customer_rating
+    form_view: { page: apps/services/project/pages/customer-rating-detail.yaml, side_panel: false }
+    empty_state: { title: No customer ratings yet, description: Measure customer satisfaction by reviewing feedback from completed project tasks. }
+actions:
+  - { id: view_customer_rating, type: navigate, permission: project.read, navigate_to: /customer-ratings/detail, params: { id: '{row.id}' } }

@@ -1,0 +1,7 @@
+page: { id: project-customer-rating-detail }
+datasources:
+  - id: project_customer_rating_detail
+    single: true
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_CUSTOMER_RATING_DETAIL_UNAVAILABLE, message: Customer rating details are temporarily unavailable. } }
+    query: "SELECT id, rated_partner_name, partner_name, parent_res_name, res_name, feedback, rating, rating_text, CAST(rated_on AS VARCHAR) AS rated_on, CAST(created_at AS VARCHAR) AS created_at FROM project_customer_ratings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"

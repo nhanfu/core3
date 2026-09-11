@@ -1,0 +1,9 @@
+page: { id: project-customer-ratings }
+datasources:
+  - id: project_customer_ratings
+    single: false
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_CUSTOMER_RATINGS_UNAVAILABLE, message: Customer ratings are temporarily unavailable. } }
+    query: "SELECT id, rated_partner_name, partner_name, parent_res_name, res_name, feedback, rating, rating_text, CAST(rated_on AS VARCHAR) AS rated_on, CAST(created_at AS VARCHAR) AS created_at FROM project_customer_ratings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR rated_partner_name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR parent_res_name ILIKE '%' || :q || '%' OR res_name ILIKE '%' || :q || '%' OR feedback ILIKE '%' || :q || '%' OR rating_text ILIKE '%' || :q || '%') AND (:rating_text IS NULL OR rating_text = :rating_text) AND (:rated_on_period IS NULL OR :rated_on_period = 'all' OR (:rated_on_period = 'last_30_days' AND CAST(rated_on AS DATE) >= DATE '2026-08-11') OR (:rated_on_period = 'last_365_days' AND CAST(rated_on AS DATE) >= DATE '2025-09-10')) ORDER BY rated_on DESC, id"
+    pivot:
+      fields: [id, rated_partner_name, partner_name, parent_res_name, res_name, feedback, rating, rating_text, rated_on]

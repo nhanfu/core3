@@ -21,6 +21,7 @@ menu:
       label: Reporting
       items:
         - { path: /tasks-analysis, label: Tasks Analysis, icon: chart, permission: project.read }
+        - { path: /customer-ratings, label: Customer Ratings, icon: star, permission: project.read }
     - id: configuration
       label: Configuration
       items:
