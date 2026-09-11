@@ -648,3 +648,36 @@ page/API joins, migration idempotence, permissions, and failure states.
 
 Authenticated Odoo/Core3 comparisons are required at 1440x900 and 390x844 for
 the list and read-only detail route. Captures remain in `/tmp` only.
+
+## Bounded implementation slice: Technical — Member History (2026-09-11)
+
+Implementation and evidence are complete in the isolated worktree
+`/home/nhanjs/projects/core3-worktrees/odoo-ui-livechat-canned-responses-20260911`.
+The contract was approved in `7ea4eabb`; implementation is in `9ee7ff11`, and
+the comparison-driven duration normalization fix is in `2726cf9b`. The slice
+adds only the Technical → Member History route, with `livechat.technical` on
+the menu/page and the source-accurate `livechat.read` read-only datasource.
+There are no create, update, or delete actions.
+
+The final authenticated browser pass used Odoo 19 at
+`http://localhost:8069`, database `core3_user_demo`, action `/odoo/action-800`,
+and Core3 at the isolated runtime `http://localhost:3022`. Both list and first
+record detail routes were exercised at both required viewports. Captures are
+only in `/tmp` and are not committed:
+
+| View | Odoo reference | Core3 implementation |
+| --- | --- | --- |
+| Desktop 1440x900 list | `/tmp/odoo-livechat-member-history-desktop-list-final-20260911.png` — `6ca9dc6e12dcd07e63217c84bc1306c10cdd53cdb51395d9752177205c31e0c9` | `/tmp/core3-livechat-member-history-desktop-list-final-20260911.png` — `bc43c3822bc6ca3109e3ce8663f333828cdfe40189d93eb9f2480f8730123490` |
+| Desktop 1440x900 read-only form | `/tmp/odoo-livechat-member-history-desktop-detail-final-20260911.png` — `dfd7acf62ba22af7e5300275062c79fbe931f84875112c57fb4bdcfcd662dbfd` | `/tmp/core3-livechat-member-history-desktop-detail-final-20260911.png` — `5fb65616445e2d2b151306bee33b5fc12a42c7952f9d5ebe7141f4da27665fad` |
+| Mobile 390x844 list | `/tmp/odoo-livechat-member-history-mobile-list-final-20260911.png` — `5631a76540c65b44ff339cf15a2953ec5f9b151a3fbccafa7a1cf333228b11dc` | `/tmp/core3-livechat-member-history-mobile-list-final-20260911.png` — `ed990156987a41cb6ae396a829ad532168fa377d0fa515b6ccd17fe8dd8298e0` |
+| Mobile 390x844 read-only form | `/tmp/odoo-livechat-member-history-mobile-detail-final-20260911.png` — `1cc433a4e2f10a025f74a4d92501fb95c4a8c9fd7779faaa6dccf9224bebaa5c` | `/tmp/core3-livechat-member-history-mobile-detail-final-20260911.png` — `d11be44d64c880df7c11bf5a947ebd3d9b1ab9fb4f5cfb8f1abbe4288f87caa9` |
+
+Both authenticated browser passes reported zero page errors, failed requests,
+or HTTP responses at least 400. Body and document widths matched the viewport
+at desktop (1440/1440) and mobile (390/390). The final focused suite passed
+3/3 with 34 assertions. The UI audit passed with 517 pages, 524 routes, and
+909 datasources; ESLint passed; global and Live Chat Sass builds passed; and
+`git diff --check` passed. The worktree is clean and no image is tracked.
+There are no pre-existing blockers for this bounded slice; the overall Live
+Chat plan remains planned because its other inventory surfaces are follow-up
+work.
