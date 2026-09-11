@@ -488,3 +488,61 @@ full many2many expertise/triggering-answer branch editor. `Create Lead` is a
 deterministic step type only; public widget transport, chatbot execution,
 conversation/lead integration, reports, member history, and transcript/user
 integration remain planned follow-up slices.
+
+## Bounded implementation slice: Reporting — Agents (2026-09-11)
+
+The next uncovered installed visible action is Live Chat → Reporting → Agents.
+The authenticated `core3_personal` database exposes it at `/odoo/action-772`
+with action name `Agents`, model `im_livechat.channel.member.history`, view
+mode `pivot,graph`, and the domain `livechat_member_type = agent`. The source
+records are in
+`/home/nhanjs/projects/odoo/addons/im_livechat/views/im_livechat_channel_member_history_views.xml`:
+menu `menu_reporting_livechat_agent` (parent `menu_reporting_livechat`,
+sequence 10), action `im_livechat_agent_history_action`, search view
+`im_livechat_agent_history_view_search`, graph view
+`im_livechat_agent_history_view_graph`, and pivot view
+`im_livechat_agent_history_view_pivot`. The live desktop and mobile states
+show the default `Date: Last month` filter, `Agent` grouping, and the
+`Livechat Support Statistics` pivot with `Total`, `OdooBot`, `Marc Demo`, and
+`Mitchell Admin` rows.
+
+The action is read-only for Live Chat users and managers. Source ACL
+`access_im_livechat_channel_member_history_user` grants read only to
+`im_livechat_group_user`; there are no create, write, or unlink operations.
+Core3 therefore exposes `/livechat/agent-analysis` under Reporting → Agents
+with `livechat.read`, no CRUD or row navigation, and separate page/API YAML
+fragments joined by page id `livechat-agent-analysis`.
+
+The API datasource `livechat_agent_history` must provide deterministic,
+query-replaceable agent rows with `id`, `agent_name`, `session_date`,
+`session_date_month`, `session_start_hour`, `session_week_day`, `channel_name`,
+`country_name`, `expertise_names`, `tag_names`, `session_outcome`,
+`help_status`, `rating_text`, `session_count`, `response_time_hour`,
+`session_duration_hour`, `rating`, `call_count`, `call_percentage`, and
+`call_duration_hour`. The fixture profile mirrors the visible reference totals:
+13 agent histories overall, with OdooBot 1, Marc Demo 1, and Mitchell Admin 11;
+the seeded measures must aggregate to 30 seconds response time, 55 seconds
+session duration, 58.3 rating percent, and 4 sessions with calls. It also
+defines deterministic last-month, search no-results, explicit empty, missing,
+transport-error, and forbidden profiles. The default report groups by Agent;
+the supported filters/groupings are Agent, channel, country, expertise, tags,
+status, rating, help status, hour of day, day of week, and Date.
+
+The page must reproduce Odoo's report title, `Measures` control, `Total` row,
+visible agent rows, pivot/graph tabs, date filter, search, and responsive
+mobile drawer/content behavior at 1440x900 and 390x844. The focused test must
+assert the action/menu/page/API contract, exact aggregations, empty/error/
+permission states, and the no-create/no-write/no-unlink boundary. Odoo
+captures are outside Git at `/tmp/odoo-livechat-agents-desktop-1440x900-
+20260911.png` (SHA-256 `633912d9d0a58a4d895dedd432831566bf400cb9ab65fb601f8ca7799cddbace`, 1440x900) and `/tmp/odoo-livechat-agents-mobile-1440x900-20260911.png` (SHA-256 `122c3a96a138423dde67c4b3a5fd71455984334d825fa272a5ce0e7da59400e7`, 390x844; the historical filename retains `1440x900`).
+
+The authenticated Core3 comparison used the isolated runtime after rebuilding the global Sass bundle. Fixed viewport captures are:
+
+| View | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Core3 Agents Pivot | 1440x900 | `/tmp/core3-livechat-agents-desktop-pivot-final-20260911.png` | `775d2534bdcd3d767fcadb543661c0166b39a3d630a693cc8b8be539abe64a19` |
+| Core3 Agents Graph | 1440x900 | `/tmp/core3-livechat-agents-desktop-graph-final-20260911.png` | `e706216e8651f5c7177f63b4a560eca5932f74b39587dde2d28c2ad63098f216` |
+| Core3 Agents Pivot | 390x844 | `/tmp/core3-livechat-agents-mobile-pivot-final-20260911.png` | `88390c0b953958d14b221c44b44e7fe6184610ee1db4af8259b22a030922cb03` |
+| Core3 Agents Graph | 390x844 | `/tmp/core3-livechat-agents-mobile-graph-final-20260911.png` | `09682a90fb3c0b8ae58eb435087b3f13e88cef0e515d9223d402286632ac8285` |
+
+Both Core3 modes were populated with the seeded agent rows at both viewports; the browser pass had no failed requests or page errors, and document/body width matched the configured viewport (1440/1440 and 390/390). The compact mobile Pivot table preserves Odoo's report columns inside its own table viewport while the page remains responsive. Core3 retains the shared Fluent shell and renderer formatting differences from Odoo's purple shell; the action is read-only as in the source ACL.
