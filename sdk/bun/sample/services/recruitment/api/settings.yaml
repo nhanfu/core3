@@ -1,0 +1,28 @@
+page: { id: recruitment-settings }
+datasources:
+  - id: recruitment_settings
+    single: true
+    permission: recruitment.settings
+    error_states:
+      unauthorized: { status: 401, code: RECRUITMENT_SETTINGS_UNAUTHORIZED, message: Sign in to view Recruitment settings. }
+      forbidden: { status: 403, code: RECRUITMENT_SETTINGS_FORBIDDEN, message: You do not have permission to manage Recruitment settings. }
+      transport_error: { status: 503, code: RECRUITMENT_SETTINGS_UNAVAILABLE, message: Recruitment settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, module_website_hr_recruitment, module_hr_recruitment_survey, module_hr_recruitment_extract FROM recruitment_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = 'recruitment-settings'"
+actions:
+  - id: recruitment_settings_update_server
+    type: server
+    permission: recruitment.settings
+    action: recruitment.settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: recruitment_settings
+      key_field: id
+      fields: [module_website_hr_recruitment, module_hr_recruitment_survey, module_hr_recruitment_extract]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_settings WHERE id = :id", status: 404, code: RECRUITMENT_SETTINGS_NOT_FOUND, message: Recruitment settings no longer exist. }
+        - { query: "SELECT id FROM recruitment_settings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: RECRUITMENT_SETTINGS_STALE, message: Recruitment settings changed elsewhere. Reload before saving. }
+        - { query: "SELECT 1 AS ok FROM recruitment_settings WHERE id = :id AND TRY_CAST(:module_website_hr_recruitment AS BOOLEAN) IS NOT NULL AND TRY_CAST(:module_hr_recruitment_survey AS BOOLEAN) IS NOT NULL AND TRY_CAST(:module_hr_recruitment_extract AS BOOLEAN) IS NOT NULL", status: 422, code: RECRUITMENT_SETTINGS_VALUES_INVALID, message: Recruitment settings values must be boolean. }
+      result: { query: "SELECT * FROM recruitment_settings WHERE id = :id" }

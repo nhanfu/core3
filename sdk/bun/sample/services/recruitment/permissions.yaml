@@ -2,3 +2,4 @@ permissions:
   - recruitment.read
   - recruitment.write
   - recruitment.manage
+  - recruitment.settings

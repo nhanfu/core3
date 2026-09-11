@@ -1,2 +1,53 @@
 .recruitment-page { min-height: 100%; }
 .recruitment-page .o-list-view__toolbar { gap: .65rem; }
+
+/* Recruitment Settings follows Odoo's full-width, fixed-toolbar settings shell. */
+.app-content:has(.o-settings-view) { height: calc(100dvh - 64px); padding: 0; overflow: hidden; }
+.app-content:has(.o-settings-view) > .page { height: 100%; min-height: 0; }
+.app-content:has(.o-settings-view) .page-header { display: none; }
+.app-content:has(.o-settings-view) .page > div[style*='margin-bottom'] { height: 100%; margin-bottom: 0 !important; }
+.app-content:has(.o-settings-view) > #outlet { width: 100%; max-width: none; margin: 0; }
+.o-settings-view {
+  --settings-accent: #71639e;
+  --settings-accent-soft: #ddd9ea;
+  --settings-bg: var(--color-bg);
+  --settings-surface: var(--color-surface);
+  --settings-surface-muted: var(--color-surface-muted);
+  --settings-border: var(--color-border);
+  --settings-border-light: var(--color-border-light);
+  --settings-text: var(--color-text);
+  --settings-text-secondary: var(--color-text-secondary);
+  width: 100%; height: 100%; min-height: 0; display: flex; flex-direction: column;
+  overflow: hidden; background: var(--settings-bg); color: var(--settings-text);
+}
+:root[data-theme='dim'] .o-settings-view { --settings-accent: #b8a8e6; --settings-accent-soft: #332d4d; }
+.o-settings-toolbar { position: relative; flex: 0 0 auto; display: flex; align-items: center; gap: 8px; min-height: 58px; padding: 10px 16px; border-bottom: 1px solid var(--settings-border); background: var(--settings-surface); }
+.o-settings-toolbar-title { margin-left: 4px; font-size: 17px; font-weight: 500; }
+.o-settings-button { padding: 7px 13px; border: 1px solid transparent; border-radius: 4px; font-size: 14px; cursor: pointer; }
+.o-settings-button-primary { background: var(--settings-accent); color: #fff; }
+.o-settings-button-secondary { border-color: var(--settings-border); background: var(--settings-surface-muted); color: var(--settings-text); }
+.o-settings-button:disabled { cursor: wait; opacity: .65; }
+.o-settings-search { position: absolute; left: 50%; width: min(520px, 42vw); padding: 8px 14px; border: 1px solid var(--settings-accent); border-radius: 4px; background: var(--settings-surface); color: var(--settings-text); font-size: 14px; transform: translateX(-50%); }
+.o-settings-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 176px minmax(0, 1fr); }
+.o-settings-nav { min-height: 0; overflow: hidden; border-right: 1px solid var(--settings-border); background: var(--settings-surface-muted); }
+.o-settings-nav-item { display: flex; align-items: center; gap: 9px; width: 100%; padding: 15px 16px; border: 0; border-bottom: 1px solid var(--settings-border-light); border-left: 3px solid transparent; background: transparent; color: var(--settings-text-secondary); text-align: left; font-size: 14px; cursor: pointer; }
+.o-settings-nav-icon { display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; align-items: center; justify-content: center; }
+.o-settings-nav-icon .svg-icon, .o-settings-nav-icon svg { width: 16px; height: 16px; }
+.o-settings-nav-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-settings-nav-item:hover, .o-settings-nav-item.is-active { border-left-color: var(--settings-accent); background: var(--settings-accent-soft); color: var(--settings-text); font-weight: 600; }
+.o-settings-content { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; background: var(--settings-surface); }
+.o-settings-section-title { margin: 0; padding: 8px 32px; border-bottom: 1px solid var(--settings-border); background: var(--settings-surface-muted); font-size: 14px; font-weight: 600; }
+.o-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 32px; padding: 18px 32px 26px; }
+.o-settings-card { display: grid; grid-template-columns: 28px minmax(0, 1fr); min-height: 76px; padding: 9px 0 13px; border-left: 1px solid var(--settings-border); }
+.o-settings-card-control { padding-top: 3px; text-align: center; }
+.o-settings-checkbox { width: 15px; height: 15px; accent-color: var(--settings-accent); }
+.o-settings-card-content { padding-right: 10px; }
+.o-settings-card-content h3 { margin: 0 0 3px; font-size: 14px; font-weight: 600; }
+.o-settings-card-content p { max-width: 520px; margin: 0; color: var(--settings-text-secondary); font-size: 14px; line-height: 1.45; }
+.o-settings-card-badge { display: block; margin: 0 0 4px; color: var(--settings-text-secondary); font-size: 13px; }
+@media (max-width: 900px) {
+  .o-settings-body { grid-template-columns: 142px minmax(0, 1fr); }
+  .o-settings-grid { grid-template-columns: 1fr; padding-inline: 20px; }
+  .o-settings-section-title { padding-inline: 20px; }
+  .o-settings-search { position: static; width: 34vw; margin-left: auto; transform: none; }
+}

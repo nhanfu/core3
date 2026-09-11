@@ -24,6 +24,7 @@ menu:
     - id: configuration
       label: Configuration
       items:
+        - { path: /recruitment/settings, label: Settings, icon: settings, permission: recruitment.settings }
         - { path: /recruitment/degrees, label: Degrees, icon: list, permission: recruitment.manage }
         - { path: /recruitment/refuse-reasons, label: Refuse Reasons, icon: list, permission: recruitment.manage }
         - { path: /recruitment/emails, label: Emails, icon: mail, permission: recruitment.manage }

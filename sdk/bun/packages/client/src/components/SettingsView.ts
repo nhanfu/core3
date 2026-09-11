@@ -9,6 +9,7 @@ type SettingField = {
   options?: Array<{ value: string; label: string }>;
   disabled?: boolean;
   action_label?: string;
+  badge?: string;
 };
 
 type SettingsTab = {
@@ -170,6 +171,12 @@ export class SettingsView extends BaseComponent {
       const description = document.createElement('p');
       description.textContent = field.description;
       content.appendChild(description);
+    }
+    if (field.badge) {
+      const badge = document.createElement('span');
+      badge.className = 'o-settings-card-badge';
+      badge.textContent = field.badge;
+      content.insertBefore(badge, content.querySelector('p'));
     }
     if (field.action_label) {
       const action = document.createElement('a');

@@ -1,0 +1,43 @@
+title: Recruitment Settings
+page: { id: recruitment-settings, route: /recruitment/settings, auth: { require: [recruitment.settings] } }
+components:
+  - type: SettingsView
+    id: recruitment-settings-view
+    source: recruitment_settings
+    title: Settings
+    save_action: save_recruitment_settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: recruitment
+        label: Recruitment
+        icon: recruitment
+        sections:
+          - title: Job Posting
+            fields:
+              - { field: module_website_hr_recruitment, label: Online Posting, description: Publish job offers on your website, type: checkbox }
+          - title: Process
+            fields:
+              - { field: module_hr_recruitment_survey, label: Send Interview Survey, description: Send an Interview Survey to the applicant during the recruitment process, type: checkbox }
+          - title: In-App Purchases
+            fields:
+              - { label: Send SMS, description: Send texts to your contacts, type: info }
+              - { field: module_hr_recruitment_extract, label: Résumé Digitization (OCR), description: Digitize your résumé to extract name and email automatically., badge: Enterprise, type: checkbox }
+actions:
+  - id: save_recruitment_settings
+    type: client
+    permission: recruitment.settings
+    script: |
+      async ({ row, request }) => {
+        return request('/api/actions/recruitment.settings.update', {
+          method: 'POST',
+          body: {
+            id: row.id,
+            expected_row_version: row.row_version,
+            values: {
+              module_website_hr_recruitment: row.module_website_hr_recruitment,
+              module_hr_recruitment_survey: row.module_hr_recruitment_survey,
+              module_hr_recruitment_extract: row.module_hr_recruitment_extract,
+            },
+          },
+        });
+      }

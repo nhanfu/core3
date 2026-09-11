@@ -1,0 +1,28 @@
+version: 0.0.8
+description: Deterministic Recruitment settings fixture
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_settings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        module_website_hr_recruitment BOOLEAN NOT NULL DEFAULT FALSE,
+        module_hr_recruitment_survey BOOLEAN NOT NULL DEFAULT FALSE,
+        module_hr_recruitment_extract BOOLEAN NOT NULL DEFAULT FALSE,
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO recruitment_settings (
+        id, row_version, company_name, module_website_hr_recruitment,
+        module_hr_recruitment_survey, module_hr_recruitment_extract, updated_at
+      ) VALUES (
+        'recruitment-settings', 1, 'My Company (San Francisco)', FALSE, FALSE, FALSE,
+        TIMESTAMP '2026-01-15 00:00:00'
+      );
+    down: |
+      DROP TABLE IF EXISTS recruitment_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
