@@ -1,0 +1,54 @@
+title: POS Tax
+page: { id: pos-tax-detail, route: /point-of-sale/tax-detail, breadcrumb: [Sales, Point of Sale, Configuration, Taxes, Tax], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_tax_detail
+    title_field: name
+    subtitle_field: invoice_label
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_pos_taxes, label: Taxes, variant: secondary, permission: pos.read }
+      - { id: edit_pos_tax, label: Edit, variant: primary, permission: pos.manage }
+      - { id: archive_pos_tax, label: Archive, variant: danger, permission: pos.manage, show_if: 'record.active === true' }
+      - { id: unarchive_pos_tax, label: Restore, variant: secondary, permission: pos.manage, show_if: 'record.active === false' }
+      - { id: duplicate_pos_tax, label: Duplicate, variant: secondary, permission: pos.manage }
+      - { id: delete_pos_tax, label: Delete, variant: danger, permission: pos.manage, confirm: Delete this tax? }
+    group_columns: 2
+    groups:
+      - title: Tax
+        fields:
+          - { field: name, label: Tax Name }
+          - { field: tax_type, label: Tax Computation? }
+          - { field: active, label: Active? }
+      - title: Tax Use
+        fields:
+          - { field: tax_use, label: Tax Type? }
+          - { field: tax_scope, label: Tax Scope }
+          - { field: amount, label: Amount }
+          - { field: fiscal_position, label: Fiscal Position }
+          - { field: domestic, label: Domestic }
+          - { field: replaces, label: Replaces? }
+    notebook:
+      active: definition
+      tabs:
+        - id: definition
+          label: Definition
+          groups:
+            - title: Distribution for Invoices
+              fields: [{ field: invoice_distribution, label: Distribution }]
+            - title: Distribution for Refunds
+              fields: [{ field: refund_distribution, label: Distribution }]
+        - id: advanced-options
+          label: Advanced Options
+          groups:
+            - title: Advanced Options
+              fields:
+                - { field: invoice_label, label: Label on Invoices }
+                - { field: description, label: Description, type: textarea }
+                - { field: tax_group, label: Tax Group }
+                - { field: company, label: Company }
+                - { field: country, label: Country }
+                - { field: invoice_legal_notes, label: Legal Notes, type: textarea }

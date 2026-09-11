@@ -1,0 +1,132 @@
+page: { id: pos-tax-detail }
+datasources:
+  - id: pos_tax_detail
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_TAX_DETAIL_UNAVAILABLE, message: This POS tax is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, description, tax_type, tax_scope, CASE WHEN tax_scope = 'Sale' THEN 'Sales' ELSE 'Purchases' END AS tax_use, amount, fiscal_position, domestic, replaces, invoice_label, company, active, price_include, include_base_amount, tax_group, country, invoice_legal_notes, invoice_distribution, refund_distribution FROM pos_taxes WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - { id: back_to_pos_taxes, type: navigate, permission: pos.read, navigate_to: /point-of-sale/taxes }
+  - id: edit_pos_tax
+    type: server_form
+    permission: pos.manage
+    title: Edit POS tax
+    action: pos.taxes.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.pos_tax_detail
+    refresh: [pos_tax_detail, pos_taxes]
+    mutation:
+      operation: update
+      table: pos_taxes
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, description, tax_type, tax_scope, amount, fiscal_position, domestic, replaces, invoice_label, company, active, price_include, include_base_amount, tax_group, country, invoice_legal_notes, invoice_distribution, refund_distribution]
+      required: [name, tax_type, tax_scope]
+      guards:
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id", status: 404, code: POS_TAX_NOT_FOUND, message: POS tax not found. }
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: This tax changed. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_TAX_NAME_REQUIRED, message: Tax name is required. }
+        - { query: "SELECT 1 AS ok WHERE :tax_type IN ('Percentage', 'Fixed', 'Division') AND :tax_scope IN ('Sale', 'Purchase')", status: 422, code: POS_TAX_TYPE_INVALID, message: Select a valid tax computation and scope. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:amount AS DOUBLE), 0) >= 0 AND (:tax_type = 'Fixed' OR COALESCE(CAST(:amount AS DOUBLE), 0) <= 100)", status: 422, code: POS_TAX_AMOUNT_INVALID, message: Tax amount must be valid for the selected computation. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_taxes WHERE LOWER(name) = LOWER(:name) AND tax_scope = :tax_scope AND id <> :id)", status: 409, code: POS_TAX_NAME_EXISTS, message: A tax with this name and scope already exists. }
+      result: { query: "SELECT * FROM pos_taxes WHERE id = :id" }
+    fields:
+      - { field: name, label: Tax Name, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: tax_type, label: Tax Computation?, type: select, options: [Percentage, Fixed, Division], required: true }
+      - { field: tax_scope, label: Tax Scope, type: select, options: [Sale, Purchase], required: true }
+      - { field: amount, label: Amount, type: number, min: 0 }
+      - { field: fiscal_position, label: Fiscal Position, type: text }
+      - { field: domestic, label: Domestic, type: checkbox }
+      - { field: replaces, label: Replaces?, type: text }
+      - { field: invoice_label, label: Label on Invoices, type: text }
+      - { field: company, label: Company, type: text }
+      - { field: active, label: Active?, type: checkbox }
+      - { field: price_include, label: Price Included, type: checkbox }
+      - { field: include_base_amount, label: Included in Base, type: checkbox }
+      - { field: tax_group, label: Tax Group, type: text }
+      - { field: country, label: Country, type: text }
+      - { field: invoice_legal_notes, label: Legal Notes, type: textarea }
+      - { field: invoice_distribution, label: Invoice Distribution, type: text }
+      - { field: refund_distribution, label: Refund Distribution, type: text }
+  - id: archive_pos_tax
+    type: server
+    permission: pos.manage
+    action: pos.taxes.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', expected_row_version: '{state.pos_tax_detail.row_version}', values: { active: false } }
+    refresh: [pos_tax_detail, pos_taxes]
+    mutation:
+      operation: update
+      table: pos_taxes
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id", status: 404, code: POS_TAX_NOT_FOUND, message: POS tax not found. }
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id AND active = true AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: This tax is already archived or stale. }
+      result: { query: "SELECT * FROM pos_taxes WHERE id = :id" }
+  - id: unarchive_pos_tax
+    type: server
+    permission: pos.manage
+    action: pos.taxes.unarchive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', expected_row_version: '{state.pos_tax_detail.row_version}', values: { active: true } }
+    refresh: [pos_tax_detail, pos_taxes]
+    mutation:
+      operation: update
+      table: pos_taxes
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id", status: 404, code: POS_TAX_NOT_FOUND, message: POS tax not found. }
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id AND active = false AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: This tax is already active or stale. }
+      result: { query: "SELECT * FROM pos_taxes WHERE id = :id" }
+  - id: duplicate_pos_tax
+    type: server_form
+    permission: pos.manage
+    title: Duplicate POS tax
+    action: pos.taxes.duplicate
+    handler: yaml_mutation
+    operation: insert
+    params: { source_id: '{state.id}', expected_row_version: '{state.pos_tax_detail.row_version}' }
+    prefill: state.pos_tax_detail
+    refresh: [pos_taxes]
+    mutation:
+      operation: insert
+      table: pos_taxes
+      generated: [id]
+      fields: [row_version, name, description, tax_type, tax_scope, amount, fiscal_position, domestic, replaces, invoice_label, company, active, price_include, include_base_amount, tax_group, country, invoice_legal_notes, invoice_distribution, refund_distribution]
+      required: [name, tax_type, tax_scope]
+      defaults: { row_version: 1, active: true, company: My Company (San Francisco), country: United States, invoice_distribution: '100.00% of tax', refund_distribution: '100.00% of tax' }
+      guards:
+        - { query: "SELECT id FROM pos_taxes WHERE id = :source_id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: This tax changed. Reload before duplicating. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_TAX_NAME_REQUIRED, message: Tax name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_taxes WHERE LOWER(name) = LOWER(:name) AND tax_scope = :tax_scope)", status: 409, code: POS_TAX_NAME_EXISTS, message: A tax with this name and scope already exists. }
+      result: { query: "SELECT * FROM pos_taxes WHERE id = :id" }
+    fields:
+      - { field: name, label: Tax Name, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: tax_type, label: Tax Computation?, type: select, options: [Percentage, Fixed, Division] }
+      - { field: tax_scope, label: Tax Scope, type: select, options: [Sale, Purchase] }
+      - { field: amount, label: Amount, type: number, min: 0 }
+      - { field: invoice_label, label: Label on Invoices, type: text }
+      - { field: company, label: Company, type: text }
+  - id: delete_pos_tax
+    type: server
+    permission: pos.manage
+    action: pos.taxes.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}', expected_row_version: '{state.pos_tax_detail.row_version}' }
+    refresh: [pos_taxes]
+    mutation:
+      operation: delete
+      table: pos_taxes
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id", status: 404, code: POS_TAX_NOT_FOUND, message: POS tax not found. }
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: This tax changed. Reload before deleting. }

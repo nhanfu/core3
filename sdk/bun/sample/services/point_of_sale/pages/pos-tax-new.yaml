@@ -1,0 +1,45 @@
+title: New Tax
+page: { id: pos-tax-new, route: /point-of-sale/taxes/new, breadcrumb: [Sales, Point of Sale, Configuration, Taxes, New], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_tax_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_pos_taxes, label: Taxes, variant: secondary, permission: pos.read }
+      - { id: create_pos_tax, label: Save, variant: primary, permission: pos.manage }
+    group_columns: 2
+    groups:
+      - title: Tax
+        fields:
+          - { field: name, label: Tax Name, type: text, required: true }
+          - { field: tax_type, label: Tax Computation?, type: select, options: [Percentage, Fixed, Division], default: Percentage }
+          - { field: active, label: Active?, type: checkbox, default: true }
+      - title: Tax Use
+        fields:
+          - { field: tax_scope, label: Tax Scope, type: select, options: [Sale, Purchase], default: Sale }
+          - { field: amount, label: Amount, type: number, default: 0, min: 0 }
+          - { field: fiscal_position, label: Fiscal Position, type: text }
+    notebook:
+      active: advanced-options
+      tabs:
+        - id: definition
+          label: Definition
+          groups:
+            - title: Distribution for Invoices
+              fields: [{ field: invoice_distribution, label: Distribution, type: text, default: '100.00% of tax' }]
+            - title: Distribution for Refunds
+              fields: [{ field: refund_distribution, label: Distribution, type: text, default: '100.00% of tax' }]
+        - id: advanced-options
+          label: Advanced Options
+          groups:
+            - title: Advanced Options
+              fields:
+                - { field: invoice_label, label: Label on Invoices, type: text }
+                - { field: description, label: Description, type: textarea }
+                - { field: tax_group, label: Tax Group, type: text, default: Tax Received }
+                - { field: company, label: Company, type: text, default: My Company (San Francisco) }
+                - { field: country, label: Country, type: text, default: United States }
+                - { field: invoice_legal_notes, label: Legal Notes, type: textarea }

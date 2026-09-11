@@ -1,0 +1,28 @@
+version: 0.0.35
+kind: data
+description: Expand POS tax fixtures for Odoo list, kanban, and form parity
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS amount DECIMAL(18,4) DEFAULT 0;
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS fiscal_position VARCHAR DEFAULT '';
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS domestic BOOLEAN DEFAULT false;
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS replaces VARCHAR DEFAULT '';
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS price_include BOOLEAN DEFAULT false;
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS include_base_amount BOOLEAN DEFAULT false;
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS tax_group VARCHAR DEFAULT 'Tax Received';
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS country VARCHAR DEFAULT 'United States';
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS invoice_legal_notes VARCHAR DEFAULT '';
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS invoice_distribution VARCHAR DEFAULT '100.00% of tax';
+      ALTER TABLE pos_taxes ADD COLUMN IF NOT EXISTS refund_distribution VARCHAR DEFAULT '100.00% of tax';
+      UPDATE pos_taxes SET row_version = COALESCE(row_version, 1), amount = CASE WHEN name LIKE '15%' THEN 15 ELSE 0 END, fiscal_position = COALESCE(fiscal_position, ''), domestic = COALESCE(domestic, false), replaces = COALESCE(replaces, ''), price_include = COALESCE(price_include, false), include_base_amount = COALESCE(include_base_amount, false), tax_group = COALESCE(tax_group, 'Tax Received'), country = COALESCE(country, 'United States'), invoice_legal_notes = COALESCE(invoice_legal_notes, ''), invoice_distribution = COALESCE(invoice_distribution, '100.00% of tax'), refund_distribution = COALESCE(refund_distribution, '100.00% of tax');
+      INSERT INTO pos_taxes(id, name, description, tax_type, tax_scope, invoice_label, company, active, row_version, amount, fiscal_position, domestic, replaces, tax_group, country, invoice_distribution, refund_distribution)
+      VALUES ('pos-tax-archived-demo', 'Archived Demo Tax', 'Archived tax for the inactive filter.', 'Percentage', 'Sale', 'Archived', 'My Company (San Francisco)', false, 1, 5, '', false, '', 'Tax Received', 'United States', '100.00% of tax', '100.00% of tax')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_taxes WHERE id = 'pos-tax-archived-demo';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

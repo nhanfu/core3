@@ -1,0 +1,49 @@
+page: { id: pos-tax-new }
+datasources:
+  - id: pos_tax_new
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_TAX_NEW_UNAVAILABLE, message: The new POS tax form is temporarily unavailable. } }
+    query: "SELECT NULL AS id, 1 AS row_version, '' AS name, '' AS description, 'Percentage' AS tax_type, 'Sale' AS tax_scope, 'Sales' AS tax_use, 0 AS amount, '' AS fiscal_position, false AS domestic, '' AS replaces, '' AS invoice_label, 'My Company (San Francisco)' AS company, true AS active, false AS price_include, false AS include_base_amount, 'Tax Received' AS tax_group, 'United States' AS country, '' AS invoice_legal_notes, '100.00% of tax' AS invoice_distribution, '100.00% of tax' AS refund_distribution"
+actions:
+  - { id: back_to_pos_taxes, type: navigate, permission: pos.read, navigate_to: /point-of-sale/taxes }
+  - id: create_pos_tax
+    type: server_form
+    permission: pos.manage
+    title: New POS tax
+    action: pos.taxes.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [pos_taxes]
+    mutation:
+      operation: insert
+      table: pos_taxes
+      generated: [id]
+      fields: [row_version, name, description, tax_type, tax_scope, amount, fiscal_position, domestic, replaces, invoice_label, company, active, price_include, include_base_amount, tax_group, country, invoice_legal_notes, invoice_distribution, refund_distribution]
+      required: [name, tax_type, tax_scope]
+      defaults: { row_version: 1, description: '', amount: 0, fiscal_position: '', domestic: false, replaces: '', invoice_label: '', company: My Company (San Francisco), active: true, price_include: false, include_base_amount: false, tax_group: Tax Received, country: United States, invoice_legal_notes: '', invoice_distribution: '100.00% of tax', refund_distribution: '100.00% of tax' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_TAX_NAME_REQUIRED, message: Tax name is required. }
+        - { query: "SELECT 1 AS ok WHERE :tax_type IN ('Percentage', 'Fixed', 'Division') AND :tax_scope IN ('Sale', 'Purchase')", status: 422, code: POS_TAX_TYPE_INVALID, message: Select a valid tax computation and scope. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:amount AS DOUBLE), 0) >= 0 AND (:tax_type = 'Fixed' OR COALESCE(CAST(:amount AS DOUBLE), 0) <= 100)", status: 422, code: POS_TAX_AMOUNT_INVALID, message: Tax amount must be valid for the selected computation. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_taxes WHERE LOWER(name) = LOWER(:name) AND tax_scope = :tax_scope)", status: 409, code: POS_TAX_NAME_EXISTS, message: A tax with this name and scope already exists. }
+      result: { query: "SELECT * FROM pos_taxes WHERE id = :id" }
+    fields:
+      - { field: name, label: Tax Name, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: tax_type, label: Tax Computation?, type: select, options: [Percentage, Fixed, Division], default: Percentage }
+      - { field: tax_scope, label: Tax Scope, type: select, options: [Sale, Purchase], default: Sale }
+      - { field: amount, label: Amount, type: number, default: 0, min: 0 }
+      - { field: fiscal_position, label: Fiscal Position, type: text }
+      - { field: domestic, label: Domestic, type: checkbox, default: false }
+      - { field: replaces, label: Replaces?, type: text }
+      - { field: invoice_label, label: Label on Invoices, type: text }
+      - { field: company, label: Company, type: text, default: My Company (San Francisco) }
+      - { field: active, label: Active?, type: checkbox, default: true }
+      - { field: price_include, label: Price Included, type: checkbox, default: false }
+      - { field: include_base_amount, label: Included in Base, type: checkbox, default: false }
+      - { field: tax_group, label: Tax Group, type: text, default: Tax Received }
+      - { field: country, label: Country, type: text, default: United States }
+      - { field: invoice_legal_notes, label: Legal Notes, type: textarea }
+      - { field: invoice_distribution, label: Invoice Distribution, type: text, default: '100.00% of tax' }
+      - { field: refund_distribution, label: Refund Distribution, type: text, default: '100.00% of tax' }

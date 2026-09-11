@@ -2,10 +2,21 @@ page: { id: pos-taxes }
 datasources:
   - id: pos_taxes
     permission: pos.read
-    query: "SELECT id, 1 AS row_version, name, description, tax_type, tax_scope, invoice_label, company, active FROM pos_taxes WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%' OR invoice_label ILIKE '%' || :q || '%') AND (:tax_scope IS NULL OR tax_scope = :tax_scope) AND (:active IS NULL OR active = :active) ORDER BY name, tax_scope"
+    error_states: { transport_error: { status: 503, code: POS_TAXES_UNAVAILABLE, message: POS taxes are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, description, tax_type, tax_scope, CASE WHEN tax_scope = 'Sale' THEN 'Sales' ELSE 'Purchases' END AS tax_use, amount, fiscal_position, domestic, replaces, invoice_label, company, active FROM pos_taxes WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%' OR invoice_label ILIKE '%' || :q || '%') AND (:tax_scope IS NULL OR tax_scope = :tax_scope) AND (:active IS NULL OR active = :active) ORDER BY name, tax_scope, id"
   - id: pos_tax_scopes
     permission: pos.read
     query: "SELECT value, label FROM (VALUES ('Sale', 'Sale'), ('Purchase', 'Purchase')) scopes(value, label)"
   - id: pos_tax_active
     permission: pos.read
     query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"
+actions:
+  - id: new_pos_tax
+    type: navigate
+    permission: pos.manage
+    navigate_to: /point-of-sale/taxes/new
+  - id: view_pos_tax
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/tax-detail
+    params: { id: '{row.id}' }
