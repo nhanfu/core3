@@ -5,3 +5,81 @@ datasources:
     permission: events.read
     error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_DETAIL_UNAVAILABLE, message: Event template details are temporarily unavailable. } }
     query: "SELECT id, row_version, name, seats, active, 'Event Template' AS template_label FROM event_templates WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: event_template_communications
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_TEMPLATE_COMMUNICATIONS_UNAVAILABLE, message: Template communication schedules are temporarily unavailable. } }
+    query: "SELECT id, row_version, template_id, sequence, template_name, interval_nbr, CASE interval_unit WHEN 'now' THEN 'Immediately' WHEN 'hours' THEN 'Hours' WHEN 'days' THEN 'Days' WHEN 'weeks' THEN 'Weeks' WHEN 'months' THEN 'Months' ELSE interval_unit END AS interval_unit, CASE interval_type WHEN 'after_sub' THEN 'After each registration' WHEN 'before_event' THEN 'Before the event starts' WHEN 'after_event_start' THEN 'After the event started' WHEN 'after_event' THEN 'After the event ended' WHEN 'before_event_end' THEN 'Before the event ends' ELSE interval_type END AS interval_type FROM event_template_communications WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND template_id = :id ORDER BY sequence, id"
+actions:
+  - id: add_event_template_communication
+    type: server_form
+    permission: events.write
+    title: Add a line
+    action: events.templates.communications.create
+    handler: line_item
+    operation: create
+    domain: event_template
+    params: { id: '{state.id}' }
+    refresh: [event_template_detail, event_template_communications]
+    fields:
+      - { field: template_name, label: Template, type: select, options: ['Event: Registration Confirmation', 'Event: Reminder'], required: true }
+      - { field: interval_nbr, label: Interval, type: number, min: 0, required: true }
+      - { field: interval_unit, label: Unit, type: select, options: [Immediately, Hours, Days, Weeks, Months], required: true }
+      - { field: interval_type, label: Trigger, type: select, options: ['After each registration', 'Before the event starts', 'After the event started', 'After the event ended', 'Before the event ends'], required: true }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT 'event-template-mail-' || :id || '-' || CAST(COALESCE(MAX(sequence), 0) + 10 AS VARCHAR) AS line_id, COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM event_template_communications WHERE template_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before adding a communication schedule. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:template_name AS VARCHAR) IN ('Event: Registration Confirmation', 'Event: Reminder') AND CAST(:interval_unit AS VARCHAR) IN ('Immediately', 'Hours', 'Days', 'Weeks', 'Months') AND CAST(:interval_type AS VARCHAR) IN ('After each registration', 'Before the event starts', 'After the event started', 'After the event ended', 'Before the event ends') AND CAST(:interval_nbr AS INTEGER) >= 0 AND (CAST(:interval_unit AS VARCHAR) <> 'Immediately' OR CAST(:interval_nbr AS INTEGER) = 0) AND (CAST(:interval_unit AS VARCHAR) = 'Immediately' OR CAST(:interval_nbr AS INTEGER) > 0)", status: 422, code: EVENT_TEMPLATE_COMMUNICATION_INVALID, message: Enter a valid template, interval, unit, and trigger. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_template_communications WHERE template_id = :id AND template_name = :template_name AND interval_nbr = CAST(:interval_nbr AS INTEGER) AND interval_unit = CASE CAST(:interval_unit AS VARCHAR) WHEN 'Immediately' THEN 'now' ELSE lower(CAST(:interval_unit AS VARCHAR)) END AND interval_type = CASE CAST(:interval_type AS VARCHAR) WHEN 'After each registration' THEN 'after_sub' WHEN 'Before the event starts' THEN 'before_event' WHEN 'After the event started' THEN 'after_event_start' WHEN 'After the event ended' THEN 'after_event' WHEN 'Before the event ends' THEN 'before_event_end' END)", status: 409, code: EVENT_TEMPLATE_COMMUNICATION_EXISTS, message: This communication schedule already exists for the template. }
+      steps:
+        - { query: "INSERT INTO event_template_communications(id, template_id, sequence, template_name, interval_nbr, interval_unit, interval_type, row_version) VALUES(:line_id, :id, :next_sequence, :template_name, CAST(:interval_nbr AS INTEGER), CASE CAST(:interval_unit AS VARCHAR) WHEN 'Immediately' THEN 'now' ELSE lower(CAST(:interval_unit AS VARCHAR)) END, CASE CAST(:interval_type AS VARCHAR) WHEN 'After each registration' THEN 'after_sub' WHEN 'Before the event starts' THEN 'before_event' WHEN 'After the event started' THEN 'after_event_start' WHEN 'After the event ended' THEN 'after_event' WHEN 'Before the event ends' THEN 'before_event_end' END, 1)" }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The event template changed while adding a communication schedule. Reload before saving. }
+      result: { query: "SELECT * FROM event_template_communications WHERE id = :line_id" }
+  - id: edit_event_template_communication
+    type: server_form
+    permission: events.write
+    title: Edit communication schedule
+    action: events.templates.communications.update
+    handler: line_item
+    operation: update
+    domain: event_template
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [event_template_detail, event_template_communications]
+    fields:
+      - { field: template_name, label: Template, type: select, options: ['Event: Registration Confirmation', 'Event: Reminder'], required: true }
+      - { field: interval_nbr, label: Interval, type: number, min: 0, required: true }
+      - { field: interval_unit, label: Unit, type: select, options: [Immediately, Hours, Days, Weeks, Months], required: true }
+      - { field: interval_type, label: Trigger, type: select, options: ['After each registration', 'Before the event starts', 'After the event started', 'After the event ended', 'Before the event ends'], required: true }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before saving the communication schedule. }
+        - { query: "SELECT id FROM event_template_communications WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_TEMPLATE_COMMUNICATION_STALE, message: This communication schedule changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:template_name AS VARCHAR) IN ('Event: Registration Confirmation', 'Event: Reminder') AND CAST(:interval_unit AS VARCHAR) IN ('Immediately', 'Hours', 'Days', 'Weeks', 'Months') AND CAST(:interval_type AS VARCHAR) IN ('After each registration', 'Before the event starts', 'After the event started', 'After the event ended', 'Before the event ends') AND CAST(:interval_nbr AS INTEGER) >= 0 AND (CAST(:interval_unit AS VARCHAR) <> 'Immediately' OR CAST(:interval_nbr AS INTEGER) = 0) AND (CAST(:interval_unit AS VARCHAR) = 'Immediately' OR CAST(:interval_nbr AS INTEGER) > 0)", status: 422, code: EVENT_TEMPLATE_COMMUNICATION_INVALID, message: Enter a valid template, interval, unit, and trigger. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_template_communications WHERE template_id = :id AND template_name = :template_name AND interval_nbr = CAST(:interval_nbr AS INTEGER) AND interval_unit = CASE CAST(:interval_unit AS VARCHAR) WHEN 'Immediately' THEN 'now' ELSE lower(CAST(:interval_unit AS VARCHAR)) END AND interval_type = CASE CAST(:interval_type AS VARCHAR) WHEN 'After each registration' THEN 'after_sub' WHEN 'Before the event starts' THEN 'before_event' WHEN 'After the event started' THEN 'after_event_start' WHEN 'After the event ended' THEN 'after_event' WHEN 'Before the event ends' THEN 'before_event_end' END AND id <> :line_id)", status: 409, code: EVENT_TEMPLATE_COMMUNICATION_EXISTS, message: This communication schedule already exists for the template. }
+      steps:
+        - { query: "UPDATE event_template_communications SET template_name = :template_name, interval_nbr = CAST(:interval_nbr AS INTEGER), interval_unit = CASE CAST(:interval_unit AS VARCHAR) WHEN 'Immediately' THEN 'now' ELSE lower(CAST(:interval_unit AS VARCHAR)) END, interval_type = CASE CAST(:interval_type AS VARCHAR) WHEN 'After each registration' THEN 'after_sub' WHEN 'Before the event starts' THEN 'before_event' WHEN 'After the event started' THEN 'after_event_start' WHEN 'After the event ended' THEN 'after_event' WHEN 'Before the event ends' THEN 'before_event_end' END, row_version = row_version + 1 WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EVENT_TEMPLATE_COMMUNICATION_STALE, message: This communication schedule changed or was deleted. Reload before saving. }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The event template changed while saving the communication schedule. Reload before saving. }
+      result: { query: "SELECT * FROM event_template_communications WHERE id = :line_id" }
+  - id: delete_event_template_communication
+    type: server
+    permission: events.write
+    action: events.templates.communications.delete
+    handler: line_item
+    operation: delete
+    domain: event_template
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete this communication schedule?'
+    refresh: [event_template_detail, event_template_communications]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_templates WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The event template changed. Reload before deleting the communication schedule. }
+        - { query: "SELECT id FROM event_template_communications WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_TEMPLATE_COMMUNICATION_STALE, message: This communication schedule changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM event_template_communications WHERE id = :line_id AND template_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EVENT_TEMPLATE_COMMUNICATION_STALE, message: This communication schedule changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE event_templates SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The event template changed while deleting the communication schedule. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }

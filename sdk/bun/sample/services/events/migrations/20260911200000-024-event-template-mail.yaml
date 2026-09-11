@@ -1,0 +1,35 @@
+version: 0.0.24
+description: Deterministic event template communication schedule fixtures
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_template_communications (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        template_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        template_name VARCHAR NOT NULL,
+        interval_nbr INTEGER NOT NULL DEFAULT 1,
+        interval_unit VARCHAR NOT NULL DEFAULT 'hours',
+        interval_type VARCHAR NOT NULL DEFAULT 'before_event'
+      );
+      INSERT OR IGNORE INTO event_template_communications
+        (id, template_id, sequence, template_name, interval_nbr, interval_unit, interval_type)
+      VALUES
+        ('event-template-mail-exhibition-registration', 'template-exhibition', 10, 'Event: Registration Confirmation', 0, 'now', 'after_sub'),
+        ('event-template-mail-exhibition-hours', 'template-exhibition', 20, 'Event: Reminder', 1, 'hours', 'before_event'),
+        ('event-template-mail-exhibition-days', 'template-exhibition', 30, 'Event: Reminder', 3, 'days', 'before_event'),
+        ('event-template-mail-training-registration', 'template-training', 10, 'Event: Registration Confirmation', 0, 'now', 'after_sub'),
+        ('event-template-mail-training-hours', 'template-training', 20, 'Event: Reminder', 1, 'hours', 'before_event'),
+        ('event-template-mail-training-days', 'template-training', 30, 'Event: Reminder', 3, 'days', 'before_event'),
+        ('event-template-mail-sport-registration', 'template-sport', 10, 'Event: Registration Confirmation', 0, 'now', 'after_sub'),
+        ('event-template-mail-sport-hours', 'template-sport', 20, 'Event: Reminder', 1, 'hours', 'before_event'),
+        ('event-template-mail-sport-days', 'template-sport', 30, 'Event: Reminder', 3, 'days', 'before_event');
+    down: |
+      DELETE FROM event_template_communications WHERE id LIKE 'event-template-mail-%';
+      DROP TABLE IF EXISTS event_template_communications;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -6,6 +6,7 @@ components:
     title_field: name
     subtitle_field: template_label
     editable: true
+    content_slot: true
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
       - { id: back_to_event_templates, label: Back to event templates, variant: secondary, permission: events.read }
@@ -17,6 +18,50 @@ components:
           - { field: name, label: Event Template }
           - { field: seats, label: Seats }
           - { field: active, label: Active }
+    notebook:
+      active: communication
+      tabs:
+        - { id: tickets, label: Tickets }
+        - { id: communication, label: Communication, content_slot: true }
+        - { id: questions, label: Questions }
+        - { id: notes, label: Notes }
+
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: event_template_communications
+    parent_source: event_template_detail
+    title: Communication
+    description: Schedule the emails copied to each event created from this template.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_event_template_communication, label: Add a line, variant: primary, permission: events.write }
+    empty_state: { title: No communication schedules, description: Add an email schedule for registrations and event reminders. }
+    children:
+      - { type: LineItemField, id: template_name, field: template_name, label: Template, input_type: select, options: ['Event: Registration Confirmation', 'Event: Reminder'], required: true }
+      - { type: LineItemField, id: interval_nbr, field: interval_nbr, label: Interval, input_type: number, required: true, min: 0 }
+      - { type: LineItemField, id: interval_unit, field: interval_unit, label: Unit, input_type: select, options: [Immediately, Hours, Days, Weeks, Months], required: true }
+      - { type: LineItemField, id: interval_type, field: interval_type, label: Trigger, input_type: select, options: ['After each registration', 'Before the event starts', 'After the event started', 'After the event ended', 'Before the event ends'], required: true }
+      - type: LineItemActions
+        id: event_template_communication_actions
+        edit_action: edit_event_template_communication
+        create_action: add_event_template_communication
+        actions:
+          - { id: edit_event_template_communication, label: Edit, icon: edit, variant: ghost, permission: events.write }
+          - { id: delete_event_template_communication, label: Delete, icon: trash, variant: danger, permission: events.write }
+    columns:
+      - { field: template_name, label: Template, width: 360 }
+      - { field: interval_nbr, label: Interval, align: right, width: 120 }
+      - { field: interval_unit, label: Unit, width: 180 }
+      - { field: interval_type, label: Trigger, width: 260 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_event_template_communication, label: Edit, icon: edit, variant: ghost, permission: events.write }
+          - { id: delete_event_template_communication, label: Delete, icon: trash, variant: danger, permission: events.write }
 actions:
   - id: back_to_event_templates
     type: navigate
