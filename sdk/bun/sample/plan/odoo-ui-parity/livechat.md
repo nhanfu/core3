@@ -316,6 +316,50 @@ The shared Fluent shell versus Odoo's purple shell remains an intentional
 global residual; any slice-specific visual mismatch is fixed before evidence
 sign-off.
 
+Implementation and evidence are complete in the isolated worktree in four
+separate commits:
+
+- `9dc7d32b` — contract and live source/database action inventory.
+- `ce31e1be` — page-only YAML, separate API fragments, manifest route,
+  deterministic migration, and focused integration tests.
+- `f12c6d49` — comparison fix for the Escalated facet, Odoo optional-column
+  defaults, and the corresponding query/test parameter.
+- The evidence commit records the final captures and verification below.
+
+Focused validation is
+`test/livechat_technical_escalated_sessions.integration.test.ts`: 3 tests
+passed, 0 failed, and 40 expect assertions. It verifies the action/menu
+contract, matching page/API ids and discovered routes, five matching rows
+against nonmatching ongoing/closed rows, idempotent migration, search/rating/
+country/empty/no-results/detail/error states, and the read-only permission/no
+CRUD boundary. Discovery audit passed with 541 pages, 548 routes, and 942
+datasources. `bun run lint`, the full `bun run frontend:build` (including all
+CSS builds and a 179-module Vite production build), and `git diff --check`
+passed.
+
+Authenticated headless comparison evidence is outside Git under `/tmp` and
+was checked after the comparison fix. Every PNG is the stated viewport size:
+
+| Viewport and state | Odoo reference | Core3 implementation |
+| --- | --- | --- |
+| Desktop 1440x900, list | `/tmp/odoo-livechat-escalated-sessions-1440x900.png` — `2d0084a3671d7bf1dddf45be44e63b8323cc5ef432a35611512ec19201135f93` | `/tmp/core3-livechat-escalated-sessions-1440x900.png` — `a75d6bd8d124a9af52159d19a8a7be3904ddce33d356e1a9b6103e2e299c81a2` |
+| Mobile 390x844, list | `/tmp/odoo-livechat-escalated-sessions-390x844.png` — `d4a231112844a63ea25ffe7510ee56b01d87b24717ff8fb34b2d86d37bbed4ba` | `/tmp/core3-livechat-escalated-sessions-390x844.png` — `f8c60ab0f860391e8cf794b28527da9883c963bb1a39b47ee4281d8622d6fbcc` |
+| Desktop 1440x900, read-only form | `/tmp/odoo-livechat-escalated-session-detail-1440x900.png` — `757d7d8e8f37d59a501416ab3014bc375995c44553d16f4c27b8d14874b87b05` | `/tmp/core3-livechat-escalated-session-detail-1440x900.png` — `122d2ee7fc74a0655a5e76fc5e8a417dc4884bacadfb4b8e5c314456a098cc5b` |
+| Mobile 390x844, read-only form | `/tmp/odoo-livechat-escalated-session-detail-390x844.png` — `bf1220979c2dcc9118aabafc70ea6769c400f5d685781a2339b6bd457c37df68` | `/tmp/core3-livechat-escalated-session-detail-390x844.png` — `3af20c1f1ad56c34a98a1f56dd04e8e5d610ff71b2d956d9723db1017c4ca5f7` |
+
+The browser pass reached both authenticated surfaces, exercised the first
+record into the form state, and confirmed exact 1440/390 document widths with
+no Core3 page errors or failed requests. Odoo reported only teardown-aborted
+background requests (`mail/data`: one desktop and one mobile; two mobile
+avatar requests); there were no non-aborted Odoo request failures or page
+errors. The live Odoo database has one current matching demo session, while
+Core3 intentionally renders five stable matching fixtures for deterministic
+search/filter coverage. Odoo hides the filter chips on its mobile toolbar, as
+shown in the reference capture. The shared Fluent shell versus Odoo's purple
+shell and the richer Odoo conversation/status pane remain documented global/
+follow-up differences; the bounded route, list columns, facets, permissions,
+and data semantics are aligned.
+
 ## Bounded implementation slice: Conversations — Looking for Help (2026-09-10)
 
 The owned Odoo reference exposes `menu_livechat_looking_for_help` through
