@@ -5,15 +5,49 @@ components:
     variant: odoo
     source: accounting_journal_items
     search: { label: Search Journal Items, placeholder: 'Search journal entries, partners, or labels...' }
-    view_navigation: tabs
+    view_navigation: icons
     views:
-      - { id: list, label: List, icon: table }
+      - { id: list, label: List, icon: table, mobile: false }
       - id: pivot
         label: Pivot
         icon: pivot
+        mobile: false
         pivot:
           fields: [{ field: partner_name, column: Partner }, { field: debit, column: Debit }, { field: credit, column: Credit }]
           default: { rows: [partner_name], measures: [{ field: debit, aggregate: sum, column: Debit }, { field: credit, aggregate: sum, column: Credit }] }
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: item_month
+        measure_field: balance
+        measure_label: Balance
+        measures:
+          - { field: balance, label: Balance, aggregate: sum }
+          - { field: debit, label: Debit, aggregate: sum }
+          - { field: credit, label: Credit, aggregate: sum }
+        type: line
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: ''
+        card:
+          title: account_name
+          subtitle: label
+          fields:
+            - { field: item_date }
+            - { field: amount_display }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card:
+          title: account_name
+          subtitle: label
+          fields:
+            - { field: item_date }
+            - { field: amount_display }
     filters: [{ field: state, label: Status, options: [{ id: Posted, label: Posted }]}]
     selectable: true
     column_chooser: true
