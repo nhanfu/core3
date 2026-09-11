@@ -5,6 +5,14 @@ datasources:
     permission: pos.read
     error_states: { transport_error: { status: 503, code: POS_TAX_DETAIL_UNAVAILABLE, message: This POS tax is temporarily unavailable. } }
     query: "SELECT id, row_version, name, description, tax_type, tax_scope, CASE WHEN tax_scope = 'Sale' THEN 'Sales' ELSE 'Purchases' END AS tax_use, amount, fiscal_position, domestic, replaces, invoice_label, company, active, price_include, include_base_amount, tax_group, country, invoice_legal_notes, invoice_distribution, refund_distribution FROM pos_taxes WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: pos_tax_invoice_distribution_lines
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_TAX_INVOICE_DISTRIBUTION_UNAVAILABLE, message: Invoice distribution lines are temporarily unavailable. } }
+    query: "SELECT id, row_version, tax_id, sequence, factor_percent, printf('%.2f', CAST(factor_percent AS DOUBLE)) || '%' AS factor_display, repartition_type, account, tax_grids, use_in_tax_closing FROM pos_tax_distribution_lines WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND tax_id = :id AND document_type = 'invoice' ORDER BY sequence, id"
+  - id: pos_tax_refund_distribution_lines
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_TAX_REFUND_DISTRIBUTION_UNAVAILABLE, message: Refund distribution lines are temporarily unavailable. } }
+    query: "SELECT id, row_version, tax_id, sequence, factor_percent, printf('%.2f', CAST(factor_percent AS DOUBLE)) || '%' AS factor_display, repartition_type, account, tax_grids, use_in_tax_closing FROM pos_tax_distribution_lines WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND tax_id = :id AND document_type = 'refund' ORDER BY sequence, id"
 actions:
   - { id: back_to_pos_taxes, type: navigate, permission: pos.read, navigate_to: /point-of-sale/taxes }
   - id: edit_pos_tax
@@ -51,6 +59,105 @@ actions:
       - { field: invoice_legal_notes, label: Legal Notes, type: textarea }
       - { field: invoice_distribution, label: Invoice Distribution, type: text }
       - { field: refund_distribution, label: Refund Distribution, type: text }
+  - id: add_pos_tax_invoice_distribution_line
+    type: server_form
+    permission: pos.manage
+    title: Add invoice distribution line
+    action: pos.taxes.distribution_lines.create
+    handler: line_item
+    operation: create
+    domain: pos_tax
+    params: { id: '{state.id}', document_type: invoice }
+    refresh: [pos_tax_detail, pos_tax_invoice_distribution_lines, pos_tax_refund_distribution_lines]
+    fields:
+      - { field: factor_percent, label: '%', type: number, default: 100, min: 0, max: 100 }
+      - { field: repartition_type, label: Based On, type: select, options: [Base, of tax], required: true, default: of tax }
+      - { field: account, label: Account, type: select, options: ['', Tax Received, Tax Paid] }
+      - { field: tax_grids, label: Tax Grids, type: text }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT 'pos-tax-distribution-' || :id || '-' || :document_type || '-' || CAST(COALESCE(MAX(sequence), 0) + 1 AS VARCHAR) AS line_id, COALESCE(MAX(sequence), 0) + 1 AS next_sequence FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = :document_type", assign: true }
+      guards:
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The tax changed. Reload it before adding a distribution line. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:factor_percent AS DECIMAL(18,4)) BETWEEN 0 AND 100 AND CAST(:repartition_type AS VARCHAR) IN ('Base', 'of tax') AND (CAST(:repartition_type AS VARCHAR) = 'Base' OR COALESCE(CAST(:account AS VARCHAR), '') IN ('', 'Tax Received', 'Tax Paid'))", status: 422, code: POS_TAX_DISTRIBUTION_INVALID, message: Enter a valid percentage, basis, and account. }
+      steps:
+        - { query: "INSERT INTO pos_tax_distribution_lines(id, tax_id, document_type, sequence, factor_percent, repartition_type, account, tax_grids, use_in_tax_closing, row_version) VALUES(:line_id, :id, :document_type, :next_sequence, CAST(:factor_percent AS DECIMAL(16,12)), CAST(:repartition_type AS VARCHAR), CASE WHEN CAST(:repartition_type AS VARCHAR) = 'Base' THEN '' ELSE COALESCE(CAST(:account AS VARCHAR), '') END, COALESCE(CAST(:tax_grids AS VARCHAR), ''), CASE WHEN CAST(:repartition_type AS VARCHAR) = 'of tax' AND COALESCE(CAST(:account AS VARCHAR), '') <> '' THEN true ELSE false END, 1)" }
+        - { query: "UPDATE pos_taxes SET invoice_distribution = (SELECT string_agg(printf('%.2f', CAST(factor_percent AS DOUBLE)) || '% ' || repartition_type, ', ' ORDER BY sequence, id) FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = 'invoice'), refund_distribution = (SELECT string_agg(printf('%.2f', CAST(factor_percent AS DOUBLE)) || '% ' || repartition_type, ', ' ORDER BY sequence, id) FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = 'refund'), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The tax changed while adding the distribution line. Reload before saving. }
+      result: { query: "SELECT * FROM pos_tax_distribution_lines WHERE id = :line_id" }
+  - id: add_pos_tax_refund_distribution_line
+    type: server_form
+    permission: pos.manage
+    title: Add refund distribution line
+    action: pos.taxes.distribution_lines.create
+    handler: line_item
+    operation: create
+    domain: pos_tax
+    params: { id: '{state.id}', document_type: refund }
+    refresh: [pos_tax_detail, pos_tax_invoice_distribution_lines, pos_tax_refund_distribution_lines]
+    fields:
+      - { field: factor_percent, label: '%', type: number, default: 100, min: 0, max: 100 }
+      - { field: repartition_type, label: Based On, type: select, options: [Base, of tax], required: true, default: of tax }
+      - { field: account, label: Account, type: select, options: ['', Tax Received, Tax Paid] }
+      - { field: tax_grids, label: Tax Grids, type: text }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT 'pos-tax-distribution-' || :id || '-' || :document_type || '-' || CAST(COALESCE(MAX(sequence), 0) + 1 AS VARCHAR) AS line_id, COALESCE(MAX(sequence), 0) + 1 AS next_sequence FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = :document_type", assign: true }
+      guards:
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The tax changed. Reload it before adding a distribution line. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:factor_percent AS DECIMAL(18,4)) BETWEEN 0 AND 100 AND CAST(:repartition_type AS VARCHAR) IN ('Base', 'of tax') AND (CAST(:repartition_type AS VARCHAR) = 'Base' OR COALESCE(CAST(:account AS VARCHAR), '') IN ('', 'Tax Received', 'Tax Paid'))", status: 422, code: POS_TAX_DISTRIBUTION_INVALID, message: Enter a valid percentage, basis, and account. }
+      steps:
+        - { query: "INSERT INTO pos_tax_distribution_lines(id, tax_id, document_type, sequence, factor_percent, repartition_type, account, tax_grids, use_in_tax_closing, row_version) VALUES(:line_id, :id, :document_type, :next_sequence, CAST(:factor_percent AS DECIMAL(16,12)), CAST(:repartition_type AS VARCHAR), CASE WHEN CAST(:repartition_type AS VARCHAR) = 'Base' THEN '' ELSE COALESCE(CAST(:account AS VARCHAR), '') END, COALESCE(CAST(:tax_grids AS VARCHAR), ''), CASE WHEN CAST(:repartition_type AS VARCHAR) = 'of tax' AND COALESCE(CAST(:account AS VARCHAR), '') <> '' THEN true ELSE false END, 1)" }
+        - { query: "UPDATE pos_taxes SET invoice_distribution = (SELECT string_agg(printf('%.2f', CAST(factor_percent AS DOUBLE)) || '% ' || repartition_type, ', ' ORDER BY sequence, id) FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = 'invoice'), refund_distribution = (SELECT string_agg(printf('%.2f', CAST(factor_percent AS DOUBLE)) || '% ' || repartition_type, ', ' ORDER BY sequence, id) FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = 'refund'), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The tax changed while adding the distribution line. Reload before saving. }
+      result: { query: "SELECT * FROM pos_tax_distribution_lines WHERE id = :line_id" }
+  - id: edit_pos_tax_distribution_line
+    type: server_form
+    permission: pos.manage
+    title: Edit tax distribution line
+    action: pos.taxes.distribution_lines.update
+    handler: line_item
+    operation: update
+    domain: pos_tax
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [pos_tax_detail, pos_tax_invoice_distribution_lines, pos_tax_refund_distribution_lines]
+    fields:
+      - { field: factor_percent, label: '%', type: number, min: 0, max: 100 }
+      - { field: repartition_type, label: Based On, type: select, options: [Base, of tax], required: true }
+      - { field: account, label: Account, type: select, options: ['', Tax Received, Tax Paid] }
+      - { field: tax_grids, label: Tax Grids, type: text }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The tax changed. Reload before saving. }
+        - { query: "SELECT id FROM pos_tax_distribution_lines WHERE id = :line_id AND tax_id = :id AND row_version = :expected_row_version", status: 409, code: POS_TAX_DISTRIBUTION_STALE, message: This distribution line changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:factor_percent AS DECIMAL(18,4)) BETWEEN 0 AND 100 AND CAST(:repartition_type AS VARCHAR) IN ('Base', 'of tax') AND (CAST(:repartition_type AS VARCHAR) = 'Base' OR COALESCE(CAST(:account AS VARCHAR), '') IN ('', 'Tax Received', 'Tax Paid'))", status: 422, code: POS_TAX_DISTRIBUTION_INVALID, message: Enter a valid percentage, basis, and account. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:repartition_type AS VARCHAR) <> 'Base' OR (COALESCE(CAST(:account AS VARCHAR), '') = '' AND CAST(:factor_percent AS DECIMAL(18,4)) = 100)", status: 422, code: POS_TAX_DISTRIBUTION_BASE_INVALID, message: Base lines must be 100% and cannot target an account. }
+      steps:
+        - { query: "UPDATE pos_tax_distribution_lines SET factor_percent = CAST(:factor_percent AS DECIMAL(16,12)), repartition_type = CAST(:repartition_type AS VARCHAR), account = CASE WHEN CAST(:repartition_type AS VARCHAR) = 'Base' THEN '' ELSE COALESCE(CAST(:account AS VARCHAR), '') END, tax_grids = COALESCE(CAST(:tax_grids AS VARCHAR), ''), use_in_tax_closing = CASE WHEN CAST(:repartition_type AS VARCHAR) = 'of tax' AND COALESCE(CAST(:account AS VARCHAR), '') <> '' THEN true ELSE false END, row_version = row_version + 1 WHERE id = :line_id AND tax_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_TAX_DISTRIBUTION_STALE, message: This distribution line changed or was deleted. Reload before saving. }
+        - { query: "UPDATE pos_taxes SET invoice_distribution = (SELECT string_agg(printf('%.2f', CAST(factor_percent AS DOUBLE)) || '% ' || repartition_type, ', ' ORDER BY sequence, id) FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = 'invoice'), refund_distribution = (SELECT string_agg(printf('%.2f', CAST(factor_percent AS DOUBLE)) || '% ' || repartition_type, ', ' ORDER BY sequence, id) FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = 'refund'), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The tax changed while saving the distribution line. Reload before saving. }
+      result: { query: "SELECT * FROM pos_tax_distribution_lines WHERE id = :line_id" }
+  - id: delete_pos_tax_distribution_line
+    type: server
+    permission: pos.manage
+    action: pos.taxes.distribution_lines.delete
+    handler: line_item
+    operation: delete
+    domain: pos_tax
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete this tax distribution line?'
+    refresh: [pos_tax_detail, pos_tax_invoice_distribution_lines, pos_tax_refund_distribution_lines]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_taxes WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The tax changed. Reload before deleting. }
+        - { query: "SELECT id FROM pos_tax_distribution_lines WHERE id = :line_id AND tax_id = :id AND row_version = :expected_row_version", status: 409, code: POS_TAX_DISTRIBUTION_STALE, message: This distribution line changed or was deleted. Reload before deleting. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = (SELECT document_type FROM pos_tax_distribution_lines WHERE id = :line_id) AND repartition_type = 'of tax' AND id <> :line_id)", status: 409, code: POS_TAX_DISTRIBUTION_REQUIRED, message: Keep at least one tax distribution line for each document type. }
+      steps:
+        - { query: "DELETE FROM pos_tax_distribution_lines WHERE id = :line_id AND tax_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_TAX_DISTRIBUTION_STALE, message: This distribution line changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE pos_taxes SET invoice_distribution = (SELECT string_agg(printf('%.2f', CAST(factor_percent AS DOUBLE)) || '% ' || repartition_type, ', ' ORDER BY sequence, id) FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = 'invoice'), refund_distribution = (SELECT string_agg(printf('%.2f', CAST(factor_percent AS DOUBLE)) || '% ' || repartition_type, ', ' ORDER BY sequence, id) FROM pos_tax_distribution_lines WHERE tax_id = :id AND document_type = 'refund'), row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The tax changed while deleting the distribution line. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }
   - id: archive_pos_tax
     type: server
     permission: pos.manage

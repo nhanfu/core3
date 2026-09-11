@@ -1,0 +1,42 @@
+version: 0.0.36
+kind: data
+description: Add deterministic POS tax distribution-line fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_tax_distribution_lines (
+        id VARCHAR PRIMARY KEY,
+        tax_id VARCHAR NOT NULL,
+        document_type VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 1,
+        factor_percent DECIMAL(16,12) NOT NULL DEFAULT 100,
+        repartition_type VARCHAR NOT NULL,
+        account VARCHAR,
+        tax_grids VARCHAR DEFAULT '',
+        use_in_tax_closing BOOLEAN NOT NULL DEFAULT false,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      INSERT INTO pos_tax_distribution_lines(id, tax_id, document_type, sequence, factor_percent, repartition_type, account, tax_grids, use_in_tax_closing) VALUES
+        ('pos-tax-sale-15-invoice-base', 'pos-tax-sale-15', 'invoice', 1, 100, 'Base', '', '', false),
+        ('pos-tax-sale-15-invoice-tax', 'pos-tax-sale-15', 'invoice', 1, 100, 'of tax', 'Tax Received', '', true),
+        ('pos-tax-sale-15-refund-base', 'pos-tax-sale-15', 'refund', 1, 100, 'Base', '', '', false),
+        ('pos-tax-sale-15-refund-tax', 'pos-tax-sale-15', 'refund', 1, 100, 'of tax', 'Tax Received', '', true),
+        ('pos-tax-purchase-15-invoice-base', 'pos-tax-purchase-15', 'invoice', 1, 100, 'Base', '', '', false),
+        ('pos-tax-purchase-15-invoice-tax', 'pos-tax-purchase-15', 'invoice', 1, 100, 'of tax', 'Tax Paid', '', true),
+        ('pos-tax-purchase-15-refund-base', 'pos-tax-purchase-15', 'refund', 1, 100, 'Base', '', '', false),
+        ('pos-tax-purchase-15-refund-tax', 'pos-tax-purchase-15', 'refund', 1, 100, 'of tax', 'Tax Paid', '', true),
+        ('pos-tax-export-zero-invoice-base', 'pos-tax-export-zero', 'invoice', 1, 100, 'Base', '', '', false),
+        ('pos-tax-export-zero-invoice-tax', 'pos-tax-export-zero', 'invoice', 1, 100, 'of tax', '', '', false),
+        ('pos-tax-export-zero-refund-base', 'pos-tax-export-zero', 'refund', 1, 100, 'Base', '', '', false),
+        ('pos-tax-export-zero-refund-tax', 'pos-tax-export-zero', 'refund', 1, 100, 'of tax', '', '', false),
+        ('pos-tax-import-zero-invoice-base', 'pos-tax-import-zero', 'invoice', 1, 100, 'Base', '', '', false),
+        ('pos-tax-import-zero-invoice-tax', 'pos-tax-import-zero', 'invoice', 1, 100, 'of tax', '', '', false),
+        ('pos-tax-import-zero-refund-base', 'pos-tax-import-zero', 'refund', 1, 100, 'Base', '', '', false),
+        ('pos-tax-import-zero-refund-tax', 'pos-tax-import-zero', 'refund', 1, 100, 'of tax', '', '', false)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_tax_distribution_lines;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

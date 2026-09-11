@@ -52,3 +52,79 @@ components:
                 - { field: company, label: Company }
                 - { field: country, label: Country }
                 - { field: invoice_legal_notes, label: Legal Notes, type: textarea }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: pos_tax_invoice_distribution_lines
+    parent_source: pos_tax_detail
+    title: Distribution for Invoices
+    description: Allocate invoice base and tax amounts across accounts and tax grids.
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    actions:
+      - { id: add_pos_tax_invoice_distribution_line, label: Add a line, variant: primary, permission: pos.manage }
+    empty_state: { title: No invoice distribution lines, description: Add a line to define the invoice tax distribution. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: Sequence, readonly: true }
+      - { type: LineItemField, id: factor_percent, field: factor_percent, display_field: factor_display, label: '%', input_type: number, min: 0, max: 100, decimals: 2 }
+      - { type: LineItemField, id: repartition_type, field: repartition_type, label: Based On, input_type: select, options: [Base, of tax], required: true }
+      - { type: LineItemField, id: account, field: account, label: Account, input_type: select, options: ['', Tax Received, Tax Paid] }
+      - { type: LineItemField, id: tax_grids, field: tax_grids, label: Tax Grids, input_type: text }
+      - type: LineItemActions
+        id: pos_tax_invoice_distribution_line_actions
+        edit_action: edit_pos_tax_distribution_line
+        create_action: add_pos_tax_invoice_distribution_line
+        actions:
+          - { id: edit_pos_tax_distribution_line, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_tax_distribution_line, label: Delete, icon: trash, variant: danger, permission: pos.manage }
+    columns:
+      - { field: sequence, label: Sequence, width: 100 }
+      - { field: factor_percent, label: '%', width: 110 }
+      - { field: repartition_type, label: Based On, width: 140 }
+      - { field: account, label: Account, width: 220 }
+      - { field: tax_grids, label: Tax Grids, width: 220 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_pos_tax_distribution_line, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_tax_distribution_line, label: Delete, icon: trash, variant: danger, permission: pos.manage }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: pos_tax_refund_distribution_lines
+    parent_source: pos_tax_detail
+    title: Distribution for Refunds
+    description: Keep refund distributions aligned with the invoice tax definition.
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    actions:
+      - { id: add_pos_tax_refund_distribution_line, label: Add a line, variant: primary, permission: pos.manage }
+    empty_state: { title: No refund distribution lines, description: Add a line to define the refund tax distribution. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: Sequence, readonly: true }
+      - { type: LineItemField, id: factor_percent, field: factor_percent, display_field: factor_display, label: '%', input_type: number, min: 0, max: 100, decimals: 2 }
+      - { type: LineItemField, id: repartition_type, field: repartition_type, label: Based On, input_type: select, options: [Base, of tax], required: true }
+      - { type: LineItemField, id: account, field: account, label: Account, input_type: select, options: ['', Tax Received, Tax Paid] }
+      - { type: LineItemField, id: tax_grids, field: tax_grids, label: Tax Grids, input_type: text }
+      - type: LineItemActions
+        id: pos_tax_refund_distribution_line_actions
+        edit_action: edit_pos_tax_distribution_line
+        create_action: add_pos_tax_refund_distribution_line
+        actions:
+          - { id: edit_pos_tax_distribution_line, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_tax_distribution_line, label: Delete, icon: trash, variant: danger, permission: pos.manage }
+    columns:
+      - { field: sequence, label: Sequence, width: 100 }
+      - { field: factor_percent, label: '%', width: 110 }
+      - { field: repartition_type, label: Based On, width: 140 }
+      - { field: account, label: Account, width: 220 }
+      - { field: tax_grids, label: Tax Grids, width: 220 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_pos_tax_distribution_line, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_tax_distribution_line, label: Delete, icon: trash, variant: danger, permission: pos.manage }
