@@ -2,6 +2,33 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-11 fresh-reference revalidation
+
+- The bounded Work Orders Analysis slice was rechecked against the newly
+  initialized `core3_codex_demo` database in `odoo-core3-codex` at
+  `http://localhost:8069`, authenticated as `codex@core3.local`. The source
+  XML ID `mrp.mrp_workorder_report` resolves to action 778 in this database
+  and renders the same `graph,pivot,list,form` action contract. Fresh source
+  captures are `/tmp/odoo-codex-manufacturing-work-orders-analysis-desktop-20260911.png`
+  (1440x900, SHA-256
+  `cd62c6a4e422041de0350f7bee38cb9232e0eaa63faba103bae720be3617fc89`) and
+  `/tmp/odoo-codex-manufacturing-work-orders-analysis-mobile-20260911.png`
+  (390x844, SHA-256
+  `9fdfdfa8338fb3f19c72f90585e3c269ce932ee9a1b02dd3d9793bd874a072ea`).
+- Core3 now explicitly sets `view_navigation: tabs`, matching the source's
+  visible Graph, Pivot, and List navigation. Authenticated captures are
+  `/tmp/core3-manufacturing-work-orders-analysis-desktop-postfix-20260911.png`
+  (1440x900, SHA-256
+  `f3626c996a2211feef43fe52f451c562a22ea54339576ccb8d2233779e5a454d`) and
+  `/tmp/core3-manufacturing-work-orders-analysis-mobile-postfix-20260911.png`
+  (390x844, SHA-256
+  `7e491edc9975604dbdb793b3501d9873ee6902d8cd2524a57d56de9b05ec88e1`).
+  Both Core3 captures show seeded report data, no page errors or failed
+  requests, and body/document widths equal the viewport.
+- Verification after the navigation correction: focused integration test 4
+  pass / 44 assertions, UI audit 491 pages / 498 routes / 858 datasources,
+  ESLint passed, global CSS rebuilt, and `git diff --check` passed.
+
 ## 2026-09-11 bounded Work Orders Analysis contract
 
 - Source inspection was completed first against the authenticated personal
