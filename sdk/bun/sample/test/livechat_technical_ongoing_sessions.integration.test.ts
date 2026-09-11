@@ -31,7 +31,8 @@ describe('Live Chat Technical Ongoing Sessions action parity', () => {
       expect.objectContaining({ path: '/livechat/technical/ongoing-sessions/detail', page: 'livechat-technical-ongoing-session-detail', module: 'livechat' }),
     ]));
     expect(technical.items).toContainEqual({ path: '/livechat/technical/ongoing-sessions', label: 'Ongoing Sessions', icon: 'message', permission: 'livechat.manage' });
-    expect(page.components[0]).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'livechat_technical_ongoing_sessions', row_open_action: 'view_livechat_technical_ongoing_session' });
+    expect(page.components[0]).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'livechat_technical_ongoing_sessions', row_open_action: 'view_livechat_technical_ongoing_session', default_filters: { status: 'ongoing' } });
+    expect(page.components[0].filters).toContainEqual({ field: 'status', label: 'Status', options: [{ id: 'ongoing', label: 'Ongoing' }] });
     expect(page.components[0].create_action).toBeUndefined();
     expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'form']);
     expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'livechat_technical_ongoing_session_detail', editable: false });

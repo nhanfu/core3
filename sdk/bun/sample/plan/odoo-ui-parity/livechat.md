@@ -714,3 +714,35 @@ must prove the no-create/no-write/no-unlink boundary, default ongoing domain,
 source columns, page/API joins, idempotent fixtures, permissions, and
 read-only detail behavior. Authenticated Odoo/Core3 comparisons are required
 at 1440x900 and 390x844, with captures only in `/tmp`.
+
+### Evidence and acceptance — Technical Ongoing Sessions (2026-09-11)
+
+The implementation is committed in `b65ffdc7` after the contract approval in
+`7e2dc3e2`. The focused integration contract passes 3 tests with 35
+assertions. The page/API separation, default `Ongoing` facet, manager-only
+menu, read-only list/detail behavior, deterministic 12-row fixture, and
+unauthorized/forbidden/empty/no-results/not-found/transport states are all
+covered by `test/livechat_technical_ongoing_sessions.integration.test.ts`.
+
+The browser comparison used the authenticated `admin@core3.local` account in
+`core3_user_demo`. Odoo source captures are `/tmp/odoo-livechat-ongoing-
+sessions-desktop-list-20260911.png` (1440x900, SHA-256
+`54b4ed33d20dcedb7a91818bb7ecaae93ae47ee5b8d2007929972daf9f97f5a6`),
+`/tmp/odoo-livechat-ongoing-sessions-mobile-list-20260911.png` (390x844,
+`3ac9735a8e2a6dc74db1206bcd4f3c521ade0006fdad794e628bb0f631a00a6f`),
+`/tmp/odoo-livechat-ongoing-sessions-desktop-detail-20260911.png` (1440x900,
+`87889e4a964a303a28166a0778aaa10ef01a217e521587f6e3e974fd75c4a654`), and
+`/tmp/odoo-livechat-ongoing-sessions-mobile-detail-20260911.png` (390x844,
+`88db3c2e563e875a3210caba85b887ee83a3fd805cb43bab1ff9bd5704ad8342`).
+
+Core3 captures are `/tmp/core3-livechat-ongoing-sessions-desktop-list-final-
+20260911.png` (1440x900, `2b9a2589e16c6c013e46fbc1f1f0deedbc59ced8fd46a5ee97929123edc4efb7`),
+`/tmp/core3-livechat-ongoing-sessions-mobile-list-final-20260911.png`
+(390x844, `7d7faafb462e1dc36315b4808fc5cb48a35d0987171f48545fef1c5320cdf156`),
+`/tmp/core3-livechat-ongoing-sessions-desktop-detail-final-20260911.png`
+(1440x900, `5fc72a87cf4d7a4734e78aff0f970b9b014ae1a84009787318bdc3cc8fc36878`),
+and `/tmp/core3-livechat-ongoing-sessions-mobile-detail-final-20260911.png`
+(390x844, `e5f4bb54d306b9e424c17e0e1c37ffd94773973349aa9a095d87a41acc8d5dfb`).
+The visual review found that Odoo exposes the active `Ongoing` search facet;
+Core3 now declares the same default facet visibly while retaining the
+server-side ongoing domain. No screenshots are tracked in Git.

@@ -6,7 +6,9 @@ components:
     variant: odoo
     source: livechat_technical_ongoing_sessions
     search: { label: Search history, placeholder: Search... }
+    default_filters: { status: ongoing }
     filters:
+      - { field: status, label: Status, options: [{ id: ongoing, label: Ongoing }] }
       - { field: country_name, label: Country, options: ['United States', Belgium, France] }
       - { field: rating_text, label: Rating, options: [Happy, Neutral, Unhappy, Unrated] }
     view_navigation: tabs

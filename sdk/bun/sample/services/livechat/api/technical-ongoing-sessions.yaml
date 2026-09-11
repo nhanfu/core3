@@ -17,6 +17,7 @@ datasources:
         message_count, rating_text, status
       FROM livechat_technical_ongoing_sessions
       WHERE status = 'ongoing'
+        AND (:status IS NULL OR status = :status)
         AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
         AND (:q IS NULL OR customer_name ILIKE '%' || :q || '%' OR agents_name ILIKE '%' || :q || '%'
           OR country_name ILIKE '%' || :q || '%' OR language_name ILIKE '%' || :q || '%'
