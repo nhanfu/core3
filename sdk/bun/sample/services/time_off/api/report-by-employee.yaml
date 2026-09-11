@@ -7,5 +7,36 @@ datasources:
   - id: time_off_employee_report
     permission: time_off.read
     pivot:
-      fields: [employee_name, leave_type_name, date_from, days, request_count, state]
-    query: "SELECT r.id, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.state, r.approver, 1 AS request_count FROM leave_requests r WHERE r.state IN ('Submitted', 'Approved') AND r.date_from >= DATE '2026-01-01' AND r.date_from < DATE '2027-01-01' AND (:q IS NULL OR r.employee_name ILIKE '%' || :q || '%' OR r.leave_type_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from, r.employee_name, r.leave_type_name"
+      fields: [employee_id, employee_name, leave_type_name, date_from, days, request_count, state]
+    query: "SELECT r.id, r.employee_id, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.state, r.approver, 1 AS request_count FROM leave_requests r WHERE r.state IN ('Submitted', 'Approved') AND r.date_from >= DATE '2026-01-01' AND r.date_from < DATE '2027-01-01' AND (:q IS NULL OR r.employee_name ILIKE '%' || :q || '%' OR r.leave_type_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from, r.employee_name, r.leave_type_name"
+actions:
+  - id: print_time_off_summary
+    type: server_form
+    permission: time_off.read
+    title: Time Off Summary
+    submit_label: Print
+    cancel_label: Cancel
+    success_message: Time Off Summary printed.
+    action: time_off.summary.print
+    handler: yaml_mutation
+    operation: create
+    prefill:
+      employee_id: '{row.employee_id}'
+      employee_name: '{row.employee_name}'
+    mutation:
+      operation: insert
+      table: time_off_summary_runs
+      generated: [id]
+      fields: [employee_id, employee_name, date_from, holiday_type]
+      required: [employee_id, employee_name, date_from, holiday_type]
+      defaults: { date_from: '2026-09-01', holiday_type: Approved }
+      guards:
+        - { query: "SELECT id FROM leave_requests WHERE employee_id = :employee_id LIMIT 1", status: 404, code: TIME_OFF_SUMMARY_EMPLOYEE_NOT_FOUND, message: Employee not found for this summary. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:date_from AS DATE) >= DATE '2026-01-01' AND CAST(:date_from AS DATE) < DATE '2027-01-01'", status: 422, code: TIME_OFF_SUMMARY_DATE_INVALID, message: Summary date must be in 2026. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:holiday_type AS VARCHAR) IN ('Approved', 'Confirmed', 'both')", status: 422, code: TIME_OFF_SUMMARY_TYPE_INVALID, message: Select an approved, confirmed, or combined time off type. }
+      result: { query: "SELECT * FROM time_off_summary_runs WHERE id = :id" }
+    fields:
+      - { field: employee_id, label: Employee, type: hidden, required: true }
+      - { field: employee_name, label: Employee, type: hidden, required: true }
+      - { field: date_from, label: From, type: date, required: true, default: '2026-09-01' }
+      - { field: holiday_type, label: Select Time Off Type, type: select, required: true, default: Approved, options_source: time_off_summary_types }

@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: time_off_employee_report
+    header_actions:
+      - { id: print_time_off_summary, label: Time Off Summary, permission: time_off.read, variant: secondary }
     search: { label: Search employee report, placeholder: Search employee or time off type... }
     empty_state: { title: No time off records found, description: Try adjusting your search or filters. }
     filters: [{ field: state, label: Status, options_source: time_off_report_states }]
@@ -45,5 +47,11 @@ components:
       - { field: days, label: Duration (Days), align: right }
       - { field: state, label: Status, type: StatusChip }
       - { field: approver, label: Approver }
+      - field: actions
+        label: ' '
+        sortable: false
+        width: 150
+        actions:
+          - { id: print_time_off_summary, label: Time Off Summary, icon: print, permission: time_off.read }
     page_size: 50
     row_key: id
