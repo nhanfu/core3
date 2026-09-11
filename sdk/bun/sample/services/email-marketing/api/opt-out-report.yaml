@@ -1,0 +1,49 @@
+page: { id: email-opt-out-report }
+
+datasources:
+  - id: email_opt_out_report_lists
+    permission: email_marketing.read
+    query: "SELECT id AS value, name AS label FROM mailing_lists WHERE active = true ORDER BY name, id"
+  - id: email_opt_out_report_contacts
+    permission: email_marketing.read
+    query: "SELECT id AS value, name || ' <' || email || '>' AS label FROM mailing_contacts WHERE active = true ORDER BY name, id"
+  - id: email_opt_out_report_reasons
+    permission: email_marketing.read
+    query: "SELECT id AS value, name AS label FROM email_marketing_optout_reasons ORDER BY sequence, id"
+  - id: email_opt_out_report
+    single: false
+    permission: email_marketing.read
+    error_states:
+      unauthorized: { status: 401, code: EMAIL_OPTOUT_REPORT_UNAUTHORIZED, message: Sign in to view the Opt-Out Report. }
+      forbidden: { status: 403, code: EMAIL_OPTOUT_REPORT_FORBIDDEN, message: You do not have permission to view the Opt-Out Report. }
+      transport_error: { status: 503, code: EMAIL_OPTOUT_REPORT_UNAVAILABLE, message: The Opt-Out Report is temporarily unavailable. }
+    pivot:
+      fields: [id, row_version, subscription_date, contact_id, contact_name, email, is_blacklisted, list_id, list_name, opt_out, opt_out_datetime, opt_out_reason_id, opt_out_reason, message_bounce, subscription_count]
+    query: |
+      SELECT s.id, s.row_version,
+        CAST(s.subscription_date AS VARCHAR) AS subscription_date,
+        s.contact_id, c.name AS contact_name, c.email, c.is_blacklisted,
+        s.list_id, l.name AS list_name, s.opt_out,
+        CAST(s.opt_out_datetime AS VARCHAR) AS opt_out_datetime,
+        s.opt_out_reason_id, COALESCE(r.name, 'Other') AS opt_out_reason,
+        c.message_bounce, 1 AS subscription_count
+      FROM mailing_subscriptions s
+      JOIN mailing_contacts c ON c.id = s.contact_id
+      JOIN mailing_lists l ON l.id = s.list_id
+      LEFT JOIN email_marketing_optout_reasons r ON r.id = s.opt_out_reason_id
+      WHERE s.opt_out = true
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN false ELSE true END
+        AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%' OR COALESCE(r.name, 'Other') ILIKE '%' || :q || '%')
+        AND (:list_id IS NULL OR s.list_id = :list_id)
+        AND (:contact_id IS NULL OR s.contact_id = :contact_id)
+        AND (:opt_out_reason_id IS NULL OR s.opt_out_reason_id = :opt_out_reason_id)
+        AND (:from_date IS NULL OR CAST(s.opt_out_datetime AS DATE) >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR CAST(s.opt_out_datetime AS DATE) <= CAST(:to_date AS DATE))
+      ORDER BY s.opt_out_datetime, l.name, c.name, s.id
+
+actions:
+  - id: view_email_opt_out_subscription
+    type: navigate
+    permission: email_marketing.read
+    navigate_to: /email-opt-out-report/detail
+    params: { id: '{row.id}' }

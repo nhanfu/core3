@@ -1,0 +1,74 @@
+title: Opt-Out Report
+page: { id: email-opt-out-report, route: /email-opt-out-report, breadcrumb: [Marketing, Email Marketing, Reporting, Opt-Out Report], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: email_opt_out_report
+    default_group_by: opt_out_reason
+    search: { label: Search Mailing List Subscriptions, placeholder: 'Search contacts, lists, or reasons...' }
+    filters:
+      - { field: list_id, label: Mailing list, options_source: email_opt_out_report_lists }
+      - { field: contact_id, label: Mailing contact, options_source: email_opt_out_report_contacts }
+      - { field: opt_out_reason_id, label: Reason, options_source: email_opt_out_report_reasons }
+    date_range:
+      label: Unsubscription Date
+      from_field: from_date
+      to_field: to_date
+      presets: [today, week, month, year]
+      preset_labels: { today: 'Date: Today', week: 'Date: This week', month: 'Date: This month', year: 'Date: This year' }
+    group_by:
+      - { field: opt_out_reason, label: Reason }
+      - { field: list_name, label: Mailing List }
+      - { field: contact_name, label: Mailing Contact }
+      - { field: opt_out_datetime, label: Unsubscription Date }
+      - { field: subscription_date, label: Subscription Date }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: opt_out_reason
+        measure_field: subscription_count
+        measure_label: Subscriptions
+        type: pie
+        measures:
+          - { field: subscription_count, label: Subscriptions, aggregate: sum }
+          - { field: message_bounce, label: Bounces, aggregate: sum }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: opt_out_reason, column: Reason }
+            - { field: list_name, column: Mailing List }
+            - { field: contact_name, column: Mailing Contact }
+            - { field: subscription_date, column: Subscription Date, type: date }
+            - { field: opt_out_datetime, column: Unsubscription Date, type: date }
+            - { field: subscription_count, column: Subscriptions }
+            - { field: message_bounce, column: Bounces }
+          default:
+            rows: [opt_out_reason]
+            measures:
+              - { field: subscription_count, aggregate: sum, column: Subscriptions }
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/email-marketing/pages/opt-out-report-detail.yaml, side_panel: true }
+    show_pager: true
+    page_size: 50
+    row_key: id
+    row_open_action: view_email_opt_out_subscription
+    row_double_click_action: view_email_opt_out_subscription
+    row_actions: menu
+    empty_state:
+      title: No data yet.
+      description: 'Come back later to discover why contacts unsubscribe.'
+    columns:
+      - { field: subscription_date, label: Subscription Date, type: DateTime, mobile: true }
+      - { field: contact_name, label: Mailing Contact, type: PrimaryEntityCell, mobile: true }
+      - { field: is_blacklisted, label: Blacklisted, type: StatusChip, optional: true, mobile: false }
+      - { field: list_name, label: Mailing List, mobile: true }
+      - { field: opt_out_datetime, label: Unsubscription Date, type: DateTime, mobile: true }
+      - { field: opt_out_reason, label: Opt-out Reason, mobile: true }
+      - { field: message_bounce, label: Bounces, align: right, optional: true, mobile: false }

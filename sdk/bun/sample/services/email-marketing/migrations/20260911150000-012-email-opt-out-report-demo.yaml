@@ -1,0 +1,18 @@
+version: 0.0.12
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO mailing_subscriptions(id, row_version, contact_id, list_id, opt_out, opt_out_reason_id, opt_out_datetime, subscription_date, created_at, updated_at) VALUES
+        ('mailing-subscription-aristide-imported-optout', 1, 'mailing-contact-aristide-001', 'mailing-list-imported-001', true, 'email-optout-changed-mind', TIMESTAMP '2026-01-15 10:15:00', TIMESTAMP '2026-01-15 09:31:00', TIMESTAMP '2026-01-15 09:31:00', TIMESTAMP '2026-01-15 10:15:00')
+      ON CONFLICT (id) DO UPDATE SET contact_id = EXCLUDED.contact_id, list_id = EXCLUDED.list_id, opt_out = EXCLUDED.opt_out, opt_out_reason_id = EXCLUDED.opt_out_reason_id, opt_out_datetime = EXCLUDED.opt_out_datetime, subscription_date = EXCLUDED.subscription_date, row_version = EXCLUDED.row_version, updated_at = EXCLUDED.updated_at;
+      UPDATE mailing_subscriptions SET opt_out_reason_id = 'email-optout-not-relevant', updated_at = TIMESTAMP '2026-01-15 10:05:00' WHERE id = 'mailing-subscription-elsa-customers';
+      UPDATE mailing_lists SET subscriber_count = 8, contact_count = 8, optout_count = 2, updated_at = TIMESTAMP '2026-01-15 10:15:00' WHERE id = 'mailing-list-imported-001';
+    down: |
+      DELETE FROM mailing_subscriptions WHERE id = 'mailing-subscription-aristide-imported-optout';
+      UPDATE mailing_subscriptions SET opt_out_reason_id = 'email-optout-too-many-emails', updated_at = TIMESTAMP '2026-01-15 10:05:00' WHERE id = 'mailing-subscription-elsa-customers';
+      UPDATE mailing_lists SET subscriber_count = 7, contact_count = 7, optout_count = 1, updated_at = TIMESTAMP '2026-01-15 09:29:00' WHERE id = 'mailing-list-imported-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

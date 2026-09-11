@@ -1,0 +1,23 @@
+title: Opt-Out Subscription
+page: { id: opt-out-report-detail, route: /email-opt-out-report/detail, breadcrumb: [Marketing, Email Marketing, Reporting, Opt-Out Report, Subscription], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: OdooFormView
+    source: email_opt_out_report_detail
+    title_field: contact_name
+    editable: false
+    labels: { editDetails: Details, workflowStatus: Subscription }
+    group_columns: 2
+    groups:
+      - title: Subscription
+        fields:
+          - { field: contact_name, label: Mailing Contact }
+          - { field: email, label: Email }
+          - { field: list_name, label: Mailing List }
+          - { field: opt_out_reason, label: Opt-out Reason }
+      - title: Unsubscription
+        fields:
+          - { field: subscription_date, label: Subscription Date }
+          - { field: opt_out_datetime, label: Unsubscription Date }
+          - { field: message_bounce, label: Bounces }
+          - { field: is_blacklisted, label: Blacklisted }

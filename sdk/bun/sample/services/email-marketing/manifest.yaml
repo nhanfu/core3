@@ -25,6 +25,7 @@ menu:
       label: Reporting
       items:
         - { path: /email-analysis, label: Mass Mailing Analysis, icon: chart, permission: email_marketing.read }
+        - { path: /email-opt-out-report, label: Opt-Out Report, icon: chart, permission: email_marketing.read }
     - id: configuration
       label: Configuration
       items:

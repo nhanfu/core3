@@ -33,4 +33,19 @@ describe('GraphView', () => {
     expect(host.querySelectorAll('.o-graph-gridline')).toHaveLength(5);
     expect(host.querySelector('.o-graph-mark')?.getAttribute('data-category')).toBe('Acme Corporation');
   });
+
+  it('renders pie slices and a category legend for distribution reports', () => {
+    const host = document.createElement('div');
+    new GraphView('opt-out-report', {
+      rows: [
+        { reason: 'I changed my mind', count: 2 },
+        { reason: 'Too many emails', count: 1 },
+      ],
+    }, { view: { id: 'graph', label: 'Opt-Out Report', categoryField: 'reason', measureField: 'count', type: 'pie' } }).mount(host);
+
+    expect(host.querySelectorAll('.o-graph-pie-slice')).toHaveLength(2);
+    expect(host.querySelector('.o-graph-pie-legend')?.textContent).toContain('I changed my mind (2)');
+    expect(host.querySelectorAll('.o-graph-gridline')).toHaveLength(0);
+    expect(host.querySelector('[data-graph-type="pie"]')?.getAttribute('aria-label')).toBe('Pie chart');
+  });
 });

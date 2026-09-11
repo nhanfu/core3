@@ -1,0 +1,26 @@
+page: { id: opt-out-report-detail }
+
+datasources:
+  - id: email_opt_out_report_detail
+    single: true
+    permission: email_marketing.read
+    error_states:
+      unauthorized: { status: 401, code: EMAIL_OPTOUT_REPORT_DETAIL_UNAUTHORIZED, message: Sign in to view this opt-out subscription. }
+      forbidden: { status: 403, code: EMAIL_OPTOUT_REPORT_DETAIL_FORBIDDEN, message: You do not have permission to view this opt-out subscription. }
+      not_found: { status: 404, code: EMAIL_OPTOUT_REPORT_DETAIL_NOT_FOUND, message: Opt-out subscription not found. }
+      transport_error: { status: 503, code: EMAIL_OPTOUT_REPORT_DETAIL_UNAVAILABLE, message: This opt-out subscription is temporarily unavailable. }
+    query: |
+      SELECT s.id, s.row_version,
+        CAST(s.subscription_date AS VARCHAR) AS subscription_date,
+        s.contact_id, c.name AS contact_name, c.email, c.is_blacklisted,
+        s.list_id, l.name AS list_name, s.opt_out,
+        CAST(s.opt_out_datetime AS VARCHAR) AS opt_out_datetime,
+        s.opt_out_reason_id, COALESCE(r.name, 'Other') AS opt_out_reason,
+        c.message_bounce, 1 AS subscription_count
+      FROM mailing_subscriptions s
+      JOIN mailing_contacts c ON c.id = s.contact_id
+      JOIN mailing_lists l ON l.id = s.list_id
+      LEFT JOIN email_marketing_optout_reasons r ON r.id = s.opt_out_reason_id
+      WHERE s.opt_out = true
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN false ELSE true END
+        AND s.id = :id

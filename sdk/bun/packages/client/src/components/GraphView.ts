@@ -6,7 +6,7 @@ export type GraphMeasureDefinition = { field?: string; label?: string; aggregate
 export type GraphSeriesDefinition = { value: string; label: string; color?: string };
 export type GraphViewDefinition = {
   id: 'graph'; label: string; icon?: string; categoryField: string; measureField?: string; measureLabel?: string;
-  dateField?: string; type?: 'bar' | 'line'; seriesField?: string; series?: GraphSeriesDefinition[]; measures?: GraphMeasureDefinition[]; showZeroData?: boolean;
+  dateField?: string; type?: 'bar' | 'line' | 'pie'; seriesField?: string; series?: GraphSeriesDefinition[]; measures?: GraphMeasureDefinition[]; showZeroData?: boolean;
 };
 
 type GraphDateRange = { from?: string; to?: string };
@@ -46,6 +46,10 @@ export class GraphView extends BaseComponent {
     const max = Math.max(...values.flatMap(item => item.points.map(point => point.value)), 1);
     const chartType = this.state.chartType || view.type || 'bar';
     const svg = html.take(root).svg(SvgTag.Svg).attr('class', isMobile ? 'is-mobile' : 'is-desktop').attr('viewBox', `0 0 ${width} ${height}`).attr('role', 'img').attr('aria-label', view.label).ele() as SVGSVGElement;
+    if (chartType === 'pie') {
+      this.drawPie(svg, categories, values[0]?.points || [], isMobile, width, height);
+      return;
+    }
     this.drawLegend(svg, values, plotLeft, legendColumns, isMobile);
     for (let tick = 0; tick <= 4; tick += 1) {
       const value = Math.round((max * tick) / 4);
@@ -94,8 +98,10 @@ export class GraphView extends BaseComponent {
       html.take(button).event('click', () => { this.setState({ measureField: candidate.field }); details.open = false; });
     });
     const types = html.take(toolbar).div.className('o-graph-type-controls').attr('role', 'group').attr('aria-label', 'Chart type').ele();
-    for (const type of ['bar', 'line'] as const) {
-      const button = html.take(types).button.type('button').className((this.state.chartType || view.type || 'bar') === type ? 'is-active' : '').dataAttr('graph-type', type).attr('aria-label', type === 'line' ? 'Line chart' : 'Bar chart').text(type === 'line' ? '╱' : '▥').ele();
+    for (const type of ['bar', 'line', 'pie'] as const) {
+      const label = type === 'line' ? 'Line chart' : type === 'pie' ? 'Pie chart' : 'Bar chart';
+      const glyph = type === 'line' ? '╱' : type === 'pie' ? '◔' : '▥';
+      const button = html.take(types).button.type('button').className((this.state.chartType || view.type || 'bar') === type ? 'is-active' : '').dataAttr('graph-type', type).attr('aria-label', label).text(glyph).ele();
       html.take(button).event('click', () => this.setState({ chartType: type }));
     }
   }
@@ -133,6 +139,37 @@ export class GraphView extends BaseComponent {
       const y = 24 + Math.floor(index / columns) * 20;
       html.take(legend).svg(SvgTag.Circle).attr('cx', String(x)).attr('cy', String(y)).attr('r', '5').attr('fill', this.resolveColor(item.color));
       html.take(legend).svg(SvgTag.Text).attr('x', String(x + 12)).attr('y', String(y + 4)).text(item.label);
+    });
+  }
+
+  private drawPie(svg: SVGSVGElement, categories: string[], points: Point[], mobile: boolean, width: number, height: number) {
+    const palette = ['green', 'amber', 'red', 'blue', 'indigo', 'teal'];
+    const positive = points.map(point => Math.max(0, point.value));
+    const total = positive.reduce((sum, value) => sum + value, 0) || 1;
+    const centerX = width * (mobile ? 0.37 : 0.36);
+    const centerY = height * (mobile ? 0.38 : 0.52);
+    const radius = Math.min(height * (mobile ? 0.24 : 0.42), width * 0.28);
+    let angle = -Math.PI / 2;
+    const group = html.take(svg).svg(SvgTag.Group).attr('class', 'o-graph-pie').ele() as SVGGElement;
+    positive.forEach((value, index) => {
+      const slice = (value / total) * Math.PI * 2;
+      if (slice <= 0) return;
+      const end = angle + slice;
+      const startX = centerX + radius * Math.cos(angle);
+      const startY = centerY + radius * Math.sin(angle);
+      const endX = centerX + radius * Math.cos(end);
+      const endY = centerY + radius * Math.sin(end);
+      const path = `M ${centerX} ${centerY} L ${startX} ${startY} A ${radius} ${radius} 0 ${slice > Math.PI ? 1 : 0} 1 ${endX} ${endY} Z`;
+      html.take(group).svg(SvgTag.Path).attr('class', 'o-graph-pie-slice').attr('data-category', categories[index] || '—').attr('data-value', String(value)).attr('d', path).attr('fill', this.resolveColor(palette[index % palette.length]));
+      angle = end;
+    });
+    const legend = html.take(svg).svg(SvgTag.Group).attr('class', 'o-graph-pie-legend').ele() as SVGGElement;
+    const legendX = width * (mobile ? 0.08 : 0.67);
+    const legendY = mobile ? height * 0.68 : 28;
+    categories.forEach((label, index) => {
+      const y = legendY + index * 22;
+      html.take(legend).svg(SvgTag.Circle).attr('cx', String(legendX)).attr('cy', String(y - 4)).attr('r', '5').attr('fill', this.resolveColor(palette[index % palette.length]));
+      html.take(legend).svg(SvgTag.Text).attr('x', String(legendX + 12)).attr('y', String(y)).text(`${label} (${positive[index] || 0})`);
     });
   }
 
