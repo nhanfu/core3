@@ -343,3 +343,85 @@ compact responsive cards while Odoo uses its purple shell and Forecast Kanban
 month columns by default. The Core3 desktop List tab and mobile Kanban tab are
 deliberate supported representations of the same installed action. All four
 captures and their hashes remain outside Git.
+
+## Batch: Reporting -> Activities Analysis
+
+Status: `implemented`; bounded checkpoint for the previously uncovered CRM
+activity report action.
+
+Reference evidence (authenticated Odoo 19, database `core3_codex_demo`, user
+`codex@core3.local`):
+
+- Menu: `CRM -> Reporting -> Activities`; source menu
+  `/home/nhanjs/projects/odoo/addons/crm/views/crm_menu_views.xml`, XML ID
+  `crm.crm_activity_report_menu`, sequence 4, action `crm_activity_report_action`.
+- Action source
+  `/home/nhanjs/projects/odoo/addons/crm/report/crm_activity_report_views.xml`
+  (`crm.crm_activity_report_action`), resolved live to action ID `417`, name
+  `Activities`, model `crm.activity.report`, route
+  `/odoo/action-417`, and view modes `graph,pivot,list`. Its context defaults
+  `Trailing 12 months`, groups the pivot by completion month and activity type,
+  and uses a bar graph grouped by month and subtype.
+- The graph view is `crm_activity_report_view_graph`; the pivot view is
+  `crm_activity_report_view_pivot` with activity type columns and month rows;
+  the list view is `crm_activity_report_view_tree` with Date, Assigned To,
+  Activity Type, optional Body/Company, and Lead Tags. The search view
+  `crm_activity_report_view_search` exposes Activity Type, Opportunity,
+  Salesperson, Team, Assigned To, Lead Tags, Leads, Opportunities, Won, Lost,
+  Trailing 12 months, Archived, and the reporting group-bys.
+- Odoo interaction: the view switcher changes Graph/Pivot/List in place;
+  Measures and chart controls change the analytic presentation; search facets
+  and the `Trailing 12 months` filter update the report without leaving the
+  action. The empty state text is `Let's get to work!` followed by
+  `Activities marked as Done on Leads will appear here, providing an overview
+  of lead interactions.`
+
+Core3 implementation and evidence:
+
+- Page/API contracts join through page ID `crm-activity-report`:
+  `services/crm/pages/activity-report.yaml` is presentation-only and
+  `services/crm/api/activity-report.yaml` owns the page-bound datasource,
+  filters, pivot query, permissions, and failure contracts. Route:
+  `/crm/activity-analysis`; manifest label `Activities` under CRM -> Reporting;
+  datasource `crm_activity_report`.
+- Migration
+  `services/crm/migrations/20260911200000-021-activity-report-fixtures.yaml`
+  is deterministic and idempotent. It provides six completed activities with
+  stable IDs, dates, activity types, opportunities, authors, teams, stages,
+  and descriptions. The slice supports default trailing-year results, search,
+  activity type filtering, completion-month grouping, no-results/empty states,
+  `crm.read` authorization, and explicit unauthorized, forbidden, conflict,
+  and transport-error contracts.
+- Browser evidence used the isolated runtime `http://localhost:3072` with
+  backend `http://127.0.0.1:3071` and event mediator `ws://127.0.0.1:3073`.
+  The fresh authenticated Core3 context showed all six report rows and passed
+  `fullPage: false` captures at exact 1440x900 and 390x844 viewports:
+  `/tmp/core3-odoo-parity/crm-activity-report-20260911/core3-activity-report-list-desktop.png`,
+  `/tmp/core3-odoo-parity/crm-activity-report-20260911/core3-activity-report-pivot-desktop.png`,
+  and `/tmp/core3-odoo-parity/crm-activity-report-20260911/core3-activity-report-mobile.png`.
+  The corresponding Odoo references are
+  `/tmp/core3-odoo-parity/crm-activity-report-20260911/odoo-activity-report-list-desktop.png`,
+  `/tmp/core3-odoo-parity/crm-activity-report-20260911/odoo-activity-report-pivot-desktop.png`,
+  and `/tmp/core3-odoo-parity/crm-activity-report-20260911/odoo-activity-report-mobile.png`.
+  All captures are outside Git and are not evidence from the rejected raw
+  `/tmp/core3-odoo-parity/crm-activity-report-{desktop,mobile}.png` files.
+- CSS gate: generated ignored artifacts with `bun run css:build:global` and
+  `bun run css:build:crm`. The shared base stylesheet no longer imports the
+  unavailable Google Fonts URL; this is retained because that import was the
+  only Core3 failed request in the rejected runtime evidence, while the
+  declared system font fallback preserves the rendered surface and lets the
+  authenticated browser gate complete without external font traffic.
+- Final browser checks reported no Core3 page errors, no failed requests, and
+  no document/body horizontal overflow at either viewport. Visual review
+  confirmed styled shell, tabs, filters, six visible list rows, and populated
+  pivot measures. Focused validation: `bun test
+  test/crm_activity_report.integration.test.ts` — 3 tests passed, 19
+  assertions. `bun run audit` passed with 509 pages, 516 routes, and 897
+  datasources; `bun run lint` and `git diff --check` passed.
+
+Known visual limits: Odoo's live report has no persisted completed activity
+rows in this database and therefore shows its sample/empty analytic canvas,
+while Core3 deliberately seeds six deterministic rows so the parity slice is
+testable. Core3 uses the shared Fluent shell instead of Odoo's purple shell;
+the mobile list preserves the shared table's compact horizontal presentation
+within a viewport-bounded document rather than adding a bespoke renderer.
