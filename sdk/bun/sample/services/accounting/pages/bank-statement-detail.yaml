@@ -1,0 +1,44 @@
+title: Bank Statement
+page: { id: accounting-bank-statement-detail, route: /accounting/bank-statement-detail, breadcrumb: [Finance, Accounting, Bank Statements, Detail], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_bank_statement_detail
+    title_field: reference
+    subtitle_field: journal
+    editable: false
+    group_columns: 2
+    groups:
+      - title: Statement
+        fields:
+          - { field: reference, label: Reference }
+          - { field: date_display, label: Date }
+          - { field: starting_balance_display, label: Starting Balance }
+          - { field: ending_balance_display, label: Ending Balance }
+          - { field: currency, label: Currency }
+          - { field: external_reference, label: External Reference }
+          - { field: first_line_index, label: First Line Index }
+          - { field: computed_balance_display, label: Computed Balance }
+      - title: Accounting
+        fields:
+          - { field: company, label: Company? }
+          - { field: journal, label: Journal }
+          - { field: is_complete_label, label: Is Complete }
+          - { field: has_invalid_statements_label, label: Has Invalid Statements }
+          - { field: is_valid_label, label: Is Valid }
+          - { field: problem_description, label: Problem Description }
+    notebook:
+      active: statement-lines
+      tabs:
+        - id: statement-lines
+          label: Statement lines
+          fields:
+            - { field: line_numbers, label: Number }
+        - id: attachments
+          label: Attachments
+          fields:
+            - { field: attachment_name, label: Name }
+            - { field: attachment_type, label: Type }
+            - { field: attachment_size, label: File Size }
+            - { field: attachment_company, label: Company }
+            - { field: attachment_created_by, label: Created by }
+            - { field: attachment_created_on, label: Created on }

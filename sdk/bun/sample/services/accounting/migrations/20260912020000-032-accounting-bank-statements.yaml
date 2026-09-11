@@ -1,0 +1,42 @@
+version: 0.0.32
+description: Accounting bank statement action fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_bank_statements (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        reference VARCHAR NOT NULL,
+        date DATE NOT NULL,
+        journal VARCHAR NOT NULL,
+        company VARCHAR NOT NULL,
+        currency VARCHAR NOT NULL DEFAULT 'USD',
+        starting_balance DECIMAL(18, 2) NOT NULL DEFAULT 0,
+        ending_balance DECIMAL(18, 2) NOT NULL DEFAULT 0,
+        computed_balance DECIMAL(18, 2) NOT NULL DEFAULT 0,
+        external_reference VARCHAR,
+        first_line_index VARCHAR,
+        line_numbers VARCHAR NOT NULL DEFAULT '',
+        is_complete BOOLEAN NOT NULL DEFAULT TRUE,
+        has_invalid_statements BOOLEAN NOT NULL DEFAULT FALSE,
+        is_valid BOOLEAN NOT NULL DEFAULT TRUE,
+        problem_description VARCHAR NOT NULL DEFAULT '',
+        attachment_name VARCHAR,
+        attachment_type VARCHAR,
+        attachment_size VARCHAR,
+        attachment_company VARCHAR,
+        attachment_created_by VARCHAR,
+        attachment_created_on VARCHAR
+      );
+      INSERT INTO accounting_bank_statements (id, row_version, sequence, reference, date, journal, company, currency, starting_balance, ending_balance, computed_balance, external_reference, first_line_index, line_numbers, is_complete, has_invalid_statements, is_valid, problem_description, attachment_name, attachment_type, attachment_size, attachment_company, attachment_created_by, attachment_created_on)
+      VALUES
+        ('accounting-bank-statement-002', 1, 10, 'Bank - 2026-08-11', DATE '2026-08-11', 'Bank', 'My Company (San Francisco)', 'USD', 4253.00, 6678.00, 6678.00, NULL, '2026080221474836460000000004', 'BNK1/2026/00004, BNK1/2026/00003, BNK1/2026/00002', TRUE, FALSE, TRUE, '', 'bank_statement_one_month_old.pdf', 'File', '21,856', 'My Company (San Francisco)', 'OdooBot', 'Sep 11, 3:47 PM'),
+        ('accounting-bank-statement-001', 1, 20, 'Opening Statement: First Synchronization', DATE '2026-07-11', 'Bank', 'My Company (San Francisco)', 'USD', 5103.00, 4253.00, 4253.00, NULL, '2026071121474836460000000001', 'BNK1/2026/00001', TRUE, FALSE, TRUE, '', 'bank_statement_opening.pdf', 'File', '21,856', 'My Company (San Francisco)', 'OdooBot', 'Sep 11, 3:47 PM')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS accounting_bank_statements;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

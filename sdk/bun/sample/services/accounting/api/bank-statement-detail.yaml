@@ -1,0 +1,9 @@
+page: { id: accounting-bank-statement-detail }
+datasources:
+  - id: accounting_bank_statement_detail
+    single: true
+    permission: accounting.read
+    error_states:
+      forbidden: { status: 403, code: ACCOUNTING_BANK_STATEMENT_DETAIL_FORBIDDEN, message: You do not have access to this bank statement. }
+      transport_error: { status: 503, code: ACCOUNTING_BANK_STATEMENT_DETAIL_UNAVAILABLE, message: Bank statement details are temporarily unavailable. }
+    query: "SELECT id, row_version, reference, date, strftime(date, '%b') || ' ' || CAST(EXTRACT(DAY FROM date) AS VARCHAR) AS date_display, journal, company, currency, starting_balance, ending_balance, printf('$ %,.2f', CAST(starting_balance AS DOUBLE)) AS starting_balance_display, printf('$ %,.2f', CAST(ending_balance AS DOUBLE)) AS ending_balance_display, computed_balance, printf('$ %,.2f', CAST(computed_balance AS DOUBLE)) AS computed_balance_display, external_reference, first_line_index, line_numbers, is_complete, has_invalid_statements, is_valid, CASE WHEN is_complete THEN 'Yes' ELSE 'No' END AS is_complete_label, CASE WHEN has_invalid_statements THEN 'Yes' ELSE 'No' END AS has_invalid_statements_label, CASE WHEN is_valid THEN 'Yes' ELSE 'No' END AS is_valid_label, problem_description, attachment_name, attachment_type, attachment_size, attachment_company, attachment_created_by, attachment_created_on FROM accounting_bank_statements WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND id = :id"

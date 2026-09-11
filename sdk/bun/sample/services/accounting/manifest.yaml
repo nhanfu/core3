@@ -89,6 +89,10 @@ menu:
           label: Analytic Items
           icon: ledger
           permission: accounting.read
+        - path: /accounting/bank-statements
+          label: Bank Statements
+          icon: bank
+          permission: accounting.read
         - path: /accounting/reconciliation
           label: Reconciliation
           icon: bank
