@@ -35,7 +35,6 @@ actions:
       - { field: name, label: Description, type: text, required: true }
       - { field: template_name, label: Email Template, type: select, options: [{ value: 'Recruitment: Refuse', label: 'Recruitment: Refuse' }, { value: 'Recruitment: Not interested anymore', label: 'Recruitment: Not interested anymore' }] }
       - { field: sequence, label: Sequence, type: number, required: true, min: 1, step: 1 }
-      - { field: active, label: Active, type: checkbox, default: true }
   - id: edit_recruitment_refuse_reason
     type: server_form
     permission: recruitment.manage
@@ -61,7 +60,6 @@ actions:
       - { field: name, label: Description, type: text, required: true }
       - { field: template_name, label: Email Template, type: select, options: [{ value: 'Recruitment: Refuse', label: 'Recruitment: Refuse' }, { value: 'Recruitment: Not interested anymore', label: 'Recruitment: Not interested anymore' }] }
       - { field: sequence, label: Sequence, type: number, required: true, min: 1, step: 1 }
-      - { field: active, label: Active, type: checkbox }
   - id: archive_recruitment_refuse_reason
     type: server
     permission: recruitment.manage

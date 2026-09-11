@@ -23,6 +23,8 @@ describe('Recruitment Refuse Reasons parity action', () => {
     expect(discovered.pageDatasources.get('recruitment-refuse-reasons')).toContain('recruitment_refuse_reasons');
     expect(page.components[0]).toMatchObject({ source: 'recruitment_refuse_reasons', create_action: 'create_recruitment_refuse_reason', row_open_action: 'edit_recruitment_refuse_reason' });
     expect(page.components[0].columns.map((column: any) => column.field)).toEqual(['sequence', 'name', 'template_name', 'active_label', 'id']);
+    expect(action('create_recruitment_refuse_reason').fields.map((field: any) => field.field)).toEqual(['name', 'template_name', 'sequence']);
+    expect(action('edit_recruitment_refuse_reason').fields.map((field: any) => field.field)).toEqual(['name', 'template_name', 'sequence']);
     expect(yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration').items)
       .toEqual(expect.arrayContaining([expect.objectContaining({ path: '/recruitment/refuse-reasons', label: 'Refuse Reasons', permission: 'recruitment.manage' })]));
   });
