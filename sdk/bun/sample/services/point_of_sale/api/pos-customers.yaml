@@ -2,8 +2,13 @@ page: { id: pos-customers }
 datasources:
   - id: pos_customer_directory
     permission: pos.read
-    query: "SELECT MIN(o.partner_name) AS id, o.partner_name AS partner_name, COUNT(*) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total_sales, MAX(CAST(o.date_order AS VARCHAR)) AS last_order FROM pos_orders o WHERE o.partner_name IS NOT NULL AND (:q IS NULL OR o.partner_name ILIKE '%' || :q || '%') GROUP BY o.partner_name ORDER BY o.partner_name"
+    query: "SELECT c.id, c.name AS partner_name, COUNT(o.id) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total_sales, MAX(CAST(o.date_order AS VARCHAR)) AS last_order FROM pos_customers c LEFT JOIN pos_orders o ON o.partner_name = c.name WHERE c.active = true AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR c.phone ILIKE '%' || :q || '%') GROUP BY c.id, c.name, c.email, c.phone ORDER BY c.name"
 actions:
+  - id: new_pos_customer
+    type: navigate
+    permission: pos.write
+    navigate_to: /point-of-sale/customer-new
+
   - id: view_pos_customer
     type: navigate
     permission: pos.read

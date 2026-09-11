@@ -1,0 +1,36 @@
+title: New Customer
+page: { id: pos-customer-new, route: /point-of-sale/customer-new, breadcrumb: [Sales, Point of Sale, Customers, New], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_customer_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    group_columns: 2
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_pos_customers, label: Customers, variant: secondary, permission: pos.read }
+      - { id: create_pos_customer, label: Save, variant: primary, permission: pos.write }
+    groups:
+      - title: Contact
+        fields:
+          - { field: name, label: Name, type: text, required: true, placeholder: 'e.g. Lumber Inc' }
+          - { field: company_type, label: Type, type: radio, options: [{ value: person, label: Person }, { value: company, label: Company }], default: company }
+          - { field: email, label: Email, type: text, placeholder: Email }
+          - { field: phone, label: Phone, type: text, placeholder: Phone }
+          - { field: website, label: Website, type: text, placeholder: 'e.g. https://www.odoo.com' }
+          - { field: tags, label: Tags, type: text, placeholder: 'e.g. "B2B", "VIP", "Consulting", ...' }
+      - title: Address
+        fields:
+          - { field: street, label: Street, type: text, placeholder: Street... }
+          - { field: street2, label: Street 2, type: text, placeholder: Street 2... }
+          - { field: city, label: City, type: text, placeholder: City }
+          - { field: state_name, label: State, type: text, placeholder: State }
+          - { field: zip, label: ZIP, type: text, placeholder: ZIP }
+          - { field: country_name, label: Country, type: text, placeholder: Country }
+    notebook:
+      tabs:
+        - { id: contacts, label: Contacts }
+        - { id: sales-purchase, label: Sales & Purchase, fields: [{ field: is_company, label: Is a company, type: checkbox }] }
+        - { id: invoicing, label: Invoicing, fields: [{ field: currency_code, label: Currency }] }
+        - { id: notes, label: Notes, fields: [{ field: notes, label: Notes, type: textarea, wide: true }] }

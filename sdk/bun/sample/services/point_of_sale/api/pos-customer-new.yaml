@@ -1,0 +1,50 @@
+page: { id: pos-customer-new }
+datasources:
+  - id: pos_customer_new
+    single: true
+    permission: pos.read
+    query: "SELECT NULL AS id, 1 AS row_version, '' AS name, 'company' AS company_type, '' AS email, '' AS phone, '' AS street, '' AS street2, '' AS city, '' AS state_name, '' AS zip, '' AS country_name, '' AS website, '' AS tags, '' AS notes, true AS is_company, 'USD' AS currency_code, true AS active"
+actions:
+  - id: back_to_pos_customers
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/customers
+
+  - id: create_pos_customer
+    type: server_form
+    permission: pos.write
+    title: New Customer
+    action: pos.customers.create
+    handler: yaml_mutation
+    operation: insert
+    params: { id: '{state.id}' }
+    refresh: [pos_customer_directory]
+    mutation:
+      operation: insert
+      table: pos_customers
+      generated: [id]
+      fields: [row_version, name, company_type, email, phone, street, street2, city, state_name, zip, country_name, website, tags, notes, is_company, currency_code, active]
+      required: [name]
+      defaults: { row_version: 1, company_type: company, email: '', phone: '', street: '', street2: '', city: '', state_name: '', zip: '', country_name: '', website: '', tags: '', notes: '', is_company: true, currency_code: USD, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 160", status: 422, code: POS_CUSTOMER_NAME_REQUIRED, message: Customer name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_type, 'company') IN ('person', 'company')", status: 422, code: POS_CUSTOMER_TYPE_INVALID, message: Select Person or Company. }
+        - { query: "SELECT 1 AS ok WHERE :email IS NULL OR trim(CAST(:email AS VARCHAR)) = '' OR CAST(:email AS VARCHAR) LIKE '%@%.%'", status: 422, code: POS_CUSTOMER_EMAIL_INVALID, message: Enter a valid email address. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_customers WHERE active = true AND lower(name) = lower(:name))", status: 409, code: POS_CUSTOMER_NAME_EXISTS, message: A customer with this name already exists. }
+      result: { query: "SELECT * FROM pos_customers WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: company_type, label: Type, type: radio, options: [{ value: person, label: Person }, { value: company, label: Company }], default: company }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: street, label: Street, type: text }
+      - { field: street2, label: Street 2, type: text }
+      - { field: city, label: City, type: text }
+      - { field: state_name, label: State, type: text }
+      - { field: zip, label: ZIP, type: text }
+      - { field: country_name, label: Country, type: text }
+      - { field: website, label: Website, type: text }
+      - { field: tags, label: Tags, type: text }
+      - { field: notes, label: Notes, type: textarea }
+      - { field: is_company, label: Is a company, type: checkbox, default: true }
+      - { field: currency_code, label: Currency, type: text, default: USD }
