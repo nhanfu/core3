@@ -88,9 +88,6 @@ describe('Live Chat Chatbots parity', () => {
 
   test('enforces manager-only chatbot, step, and answer CRUD with validation and optimistic guards', async () => {
     const { database, repository } = await repositoryForTest();
-    const listApi = yaml('api/chatbots.yaml');
-    const detailApi = yaml('api/chatbot-detail.yaml');
-    const stepApi = yaml('api/chatbot-step-detail.yaml');
     const create = action('api/chatbots.yaml', 'create_livechat_chatbot');
     const edit = action('api/chatbot-detail.yaml', 'edit_livechat_chatbot');
     const remove = action('api/chatbot-detail.yaml', 'delete_livechat_chatbot');
