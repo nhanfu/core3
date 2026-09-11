@@ -53,7 +53,7 @@ describe('Events attendee parity batch', () => {
     expect(tabs).toMatchObject({ mount_in: 'previous-panel' });
     expect(tabs.tabs.map((tab: any) => tab.label)).toEqual(['Tickets', 'Communication', 'Questions', 'Notes & Documents', 'Slots']);
     expect(yaml('api/event-detail.yaml').datasources.map((source: any) => source.id)).toEqual([
-      'event_detail', 'event_registrations', 'event_tickets', 'event_detail_questions', 'event_detail_slots',
+      'event_detail', 'event_registrations', 'event_tickets', 'event_detail_questions', 'event_detail_slots', 'event_detail_communications',
     ]);
     expect(tabs.tabs.find((tab: any) => tab.id === 'tickets').components[0].source).toBe('event_tickets');
     expect(tabs.tabs.find((tab: any) => tab.id === 'questions').components[0].source).toBe('event_detail_questions');
