@@ -521,6 +521,53 @@ the only aborted page refresh request was the expected list refresh race after
 the successful mutation; the final list and success toast loaded correctly.
 No mutation was made in Odoo.
 
+### Current batch: employee Time Off Summary print action
+
+The live Odoo source audit selected one uncovered visible action outside the
+existing allocations, group-allocation, and public-holiday slices:
+`Employees -> Marc Demo -> Actions -> Print -> Time Off Summary`. The source
+contract is in
+`/home/nhanjs/projects/odoo/addons/hr_holidays/wizard/hr_holidays_summary_employees_views.xml`
+and `hr_holidays_summary_employees.py`: a modal titled `Time Off Summary`
+with `From` defaulting to the first day of the current month, `Select Time Off
+Type` defaulting to `Approved`, and `Print`/`Cancel` buttons. The report binding
+is `action_hr_holidays_summary_employee` and the report is the
+`hr_holidays.report_holidayssummary` QWeb PDF action.
+
+Core3 implements the bounded row-scoped action on the existing Reporting -> By
+Employee surface. The page remains
+`/time-off/time-off-reporting/by-employee` with page id
+`time-off-report-by-employee`; its page YAML and API YAML are separate and the
+API fragment joins by that id. The employee row supplies hidden active-employee
+context, while the visible form matches the Odoo labels and choices. `Print`
+records a deterministic `time_off_summary_runs` intent through the YAML
+mutation, and `Cancel` closes the form. The page, action, and type lookup are
+bound to `time_off.read`; migration 0.0.13 is idempotent, fixed to 2026
+fixtures, and validates missing employees, dates outside 2026, and unsupported
+summary types with 404/422 guards.
+
+Focused verification passes 31 tests and 405 assertions across the nine Time
+Off integration files, including page/API separation, deterministic migration
+and fixtures, valid summary-run insertion, action permission, and validation
+guards. The authenticated Core3 browser pass used `admin@tms.local` on the
+isolated server, opened the first employee row action, verified `2026-09-01`
+and `Approved`, printed successfully with `Time Off Summary printed.`, and
+verified Cancel. There were no page errors, failed requests, or horizontal
+overflow at either viewport. The authenticated Odoo pass used
+`admin@core3.local` in `core3_personal`, followed the employee Actions/Print
+menus, and verified the same modal contract at both viewports; no Odoo
+mutation was made.
+
+Captures remain local-only under `/tmp` and are not committed. The Odoo/Core3
+comparison shows the same title, labels, default values, action ordering, and
+responsive behavior: wide compact dialog on desktop and full-width dialog on
+mobile.
+
+- Odoo desktop 1440x900: `/tmp/odoo-time-off-summary-desktop-1440x900.png`, SHA-256 `aed1730e0ed431a862d52332fbcf2cfd212f2bef3d04be4695e217a392616d59`
+- Odoo mobile 390x844: `/tmp/odoo-time-off-summary-mobile-390x844.png`, SHA-256 `43990491fe2ab81d0406f87e30ef6e05600650146db3720ae0bea0d3708cdd7c`
+- Core3 desktop 1440x900: `/tmp/core3-time-off-summary-desktop-1440x900.png`, SHA-256 `04b3d0dae282d84c85645d6f47ea96cff45600ffbc9507577575a2415e40dd84`
+- Core3 mobile 390x844: `/tmp/core3-time-off-summary-mobile-390x844.png`, SHA-256 `333a1cef0403c810e1ea6d5bb7280762b84c5ecbace64f389eedf517680329e5`
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
