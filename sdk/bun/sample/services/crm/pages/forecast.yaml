@@ -1,0 +1,44 @@
+title: Forecast
+page: { id: forecast, route: /forecast, breadcrumb: [Sales, CRM, Forecast], auth: { require: [crm.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_forecast_opportunities
+    search: { label: Search Opportunities, placeholder: Search opportunities and customers... }
+    filters:
+      - { field: forecast_scope, label: Forecast, options: [{ id: upcoming, label: Upcoming Closings }, { id: all, label: All Opportunities }] }
+      - { field: team, label: Sales team, options_source: crm_forecast_teams }
+      - { field: salesperson, label: Salesperson, options_source: crm_forecast_salespeople }
+    default_filters: { forecast_scope: upcoming, salesperson: Admin User }
+    group_by: [{ field: expected_closing, label: Expected Closing }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        group_by: expected_closing
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: stage, label: Stage }
+            - { field: expected_closing, label: Expected Closing }
+            - { field: probability, label: Probability }
+            - { field: prorated_revenue, label: Prorated Revenue }
+            - { field: salesperson, label: Salesperson }
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: salesperson, label: Salesperson }
+      - { field: team, label: Sales Team }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: expected_closing, label: Expected Closing }
+      - { field: probability, label: Probability, align: right }
+      - { field: prorated_revenue, label: Prorated Revenue, align: right }
+    row_key: id
+    selectable: true
+    row_open_action: view_forecast_opportunity
+    row_double_click_action: view_forecast_opportunity
+    form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
+    empty_state: { title: No opportunity to display!, description: Easily set expected closing dates and overview your revenue streams. }

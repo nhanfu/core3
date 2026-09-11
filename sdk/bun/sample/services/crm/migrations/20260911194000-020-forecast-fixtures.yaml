@@ -1,0 +1,18 @@
+version: 0.0.20
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO crm_leads(id, name, type, partner_name, email, source, expected_revenue, stage, probability, salesperson, team, expected_closing)
+      VALUES
+        ('crm-forecast-001', 'Strategic Office Expansion', 'opportunity', 'Acme Corporation', 'procurement@acme.test', 'Website', 125000, 'Qualified', 40, 'Admin User', 'North America', DATE '2026-09-16'),
+        ('crm-forecast-002', 'Warehouse Automation', 'opportunity', 'Globex Industries', 'ops@globex.test', 'Email', 88000, 'Proposition', 65, 'Admin User', 'Enterprise', DATE '2026-10-07'),
+        ('crm-forecast-003', 'Annual Services Renewal', 'opportunity', 'Initech', 'renewals@initech.test', 'Partner Referral', 42000, 'New', 20, 'Admin User', 'North America', DATE '2026-11-18'),
+        ('crm-forecast-004', 'Retail Rollout', 'opportunity', 'Umbrella Group', 'buying@umbrella.test', 'Conference', 76000, 'Proposition', 80, 'Admin User', 'Enterprise', DATE '2026-12-04')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_leads WHERE id IN ('crm-forecast-001', 'crm-forecast-002', 'crm-forecast-003', 'crm-forecast-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

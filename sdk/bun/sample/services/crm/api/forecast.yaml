@@ -1,0 +1,23 @@
+page: { id: forecast }
+datasources:
+  - id: crm_forecast_opportunities
+    single: false
+    permission: crm.read
+    error_states:
+      forbidden: { status: 403, code: CRM_FORECAST_FORBIDDEN, message: You do not have permission to view the CRM forecast. }
+      transport_error: { status: 503, code: CRM_FORECAST_UNAVAILABLE, message: Forecast data is temporarily unavailable. }
+    query: "SELECT id, row_version, name, COALESCE(partner_name, '') AS partner_name, COALESCE(salesperson, '') AS salesperson, COALESCE(team, '') AS team, stage, CAST(expected_closing AS VARCHAR) AS expected_closing, probability, expected_revenue, CAST(expected_revenue * probability / 100 AS DOUBLE) AS prorated_revenue FROM crm_leads WHERE type = 'opportunity' AND expected_closing IS NOT NULL AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN 0 ELSE 1 END = 1 AND (COALESCE(:forecast_scope, 'upcoming') = 'all' OR expected_closing >= DATE '2026-09-11') AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:team IS NULL OR team = :team) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR salesperson ILIKE '%' || :q || '%' OR team ILIKE '%' || :q || '%') ORDER BY expected_closing, id"
+  - id: crm_forecast_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_forecast_salespeople
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT salesperson AS value, salesperson AS label FROM crm_leads WHERE type = 'opportunity' AND salesperson IS NOT NULL AND salesperson <> '' ORDER BY salesperson"
+actions:
+  - id: view_forecast_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }

@@ -41,6 +41,10 @@ menu:
     - id: reporting
       label: Reporting
       items:
+        - path: /forecast
+          label: Forecast
+          icon: chart
+          permission: crm.read
         - path: /analysis
           label: Pipeline Analysis
           icon: chart
