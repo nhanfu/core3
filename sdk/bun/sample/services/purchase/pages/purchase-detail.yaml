@@ -10,6 +10,7 @@ components:
     status_colors: { Draft: neutral, Sent: amber, 'To Approve': amber, Confirmed: blue, Received: green, Cancelled: red }
     stat_buttons:
       - { id: open_purchase_bill_matching, label: Bill Matching, value_field: line_count, hide_value: true, permission: accounting.write, show_if: "state.purchase_order_detail.state === 'Confirmed' || state.purchase_order_detail.state === 'Received'" }
+      - { id: open_purchase_receipt, label: Receipt, value_field: receipt_count, permission: purchase.read, show_if: "(state.purchase_order_detail.state === 'Confirmed' || state.purchase_order_detail.state === 'Received') && state.purchase_order_detail.receipt_count > 0" }
     header_actions:
       - { id: send_purchase_order_detail, label: Send RFQ, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft'" }
       - { id: confirm_purchase_order_detail, label: Confirm Order, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Sent'" }

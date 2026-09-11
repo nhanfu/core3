@@ -9,7 +9,9 @@ import { YamlRepository } from '@core3/server/database/yaml-repository';
 const root = join(import.meta.dir, '../services/purchase');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 const source = (id: string) => yaml('api/purchase-receipt.yaml').datasources.find((item: any) => item.id === id);
+const purchaseDetailSource = (id: string) => yaml('api/purchase-detail.yaml').datasources.find((item: any) => item.id === id);
 const action = (id: string) => yaml('api/purchase-receipt.yaml').actions.find((item: any) => item.id === id);
+const purchaseDetailAction = (id: string) => yaml('api/purchase-detail.yaml').actions.find((item: any) => item.id === id);
 
 describe('Purchase receipt stat action parity', () => {
   test('keeps the action-only page/API boundary and Odoo form contract explicit', () => {
@@ -28,6 +30,8 @@ describe('Purchase receipt stat action parity', () => {
     expect(form.header_actions.map((item: any) => item.label)).toEqual(['Validate', 'Cancel']);
     expect(grid).toMatchObject({ type: 'LineItemGrid', source: 'purchase_receipt_lines', parent_source: 'purchase_receipt_detail', variant: 'odoo_x2many' });
     expect(grid.columns.map((item: any) => item.label)).toEqual(['Product', 'Demand', 'Quantity', 'Unit', '']);
+    expect(yaml('pages/purchase-detail.yaml').components[0].stat_buttons).toContainEqual(expect.objectContaining({ id: 'open_purchase_receipt', label: 'Receipt', value_field: 'receipt_count', permission: 'purchase.read' }));
+    expect(purchaseDetailAction('open_purchase_receipt')).toMatchObject({ type: 'navigate', permission: 'purchase.read', navigate_to: '/purchase/receipt', params: { id: '{row.receipt_id}' } });
     expect(action('validate_purchase_receipt')).toMatchObject({ permission: 'purchase.write', handler: 'yaml_mutation' });
     expect(action('add_purchase_receipt_line')).toMatchObject({ permission: 'purchase.write', handler: 'line_item', operation: 'create' });
     expect(action('edit_purchase_receipt_line')).toMatchObject({ permission: 'purchase.write', handler: 'line_item', operation: 'update' });
@@ -46,6 +50,7 @@ describe('Purchase receipt stat action parity', () => {
       { product_name: '[FURN_9001] Flipover', demand: 10, quantity: 10, uom: 'Units' },
     ]);
     expect((await repository.querySource(source('purchase_receipt_timeline'), { id: 'purchase-receipt-p00012', fixture_state: null }, 0, 50)).data).toMatchObject([{ action_label: 'Transfer created', detail: 'This transfer has been created from: P00012' }]);
+    expect(await repository.querySource(purchaseDetailSource('purchase_order_detail'), { id: 'po-demo-006', fixture_state: null }, 0, 1)).toMatchObject({ data: { name: 'PO/2026/0006', receipt_count: 1, receipt_id: 'purchase-receipt-p00012' } });
     expect((await repository.querySource(source('purchase_receipt_lines'), { id: 'purchase-receipt-p00012', fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source('purchase_receipt_detail'), { id: 'purchase-receipt-p00012', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'PURCHASE_RECEIPT_DETAIL_UNAVAILABLE' });
     database.close();
