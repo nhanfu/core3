@@ -1,0 +1,26 @@
+title: Bank Account
+page: { id: accounting-bank-account-detail, route: /accounting/bank-account-detail, breadcrumb: [Finance, Configuration, Bank Accounts, Detail], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_bank_account_detail
+    title_field: account_number
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: edit_accounting_bank_account, label: Edit, variant: secondary, permission: accounting.write }
+      - { id: delete_accounting_bank_account, label: Delete, variant: danger, permission: accounting.write }
+    group_columns: 2
+    groups:
+      - title: Bank Account
+        fields:
+          - { field: account_number, label: Account Number }
+          - { field: clearing_number, label: Clearing Number }
+          - { field: account_holder, label: Account Holder }
+          - { field: account_holder_name, label: Account Holder Name? }
+          - { field: bank_name, label: Bank }
+          - { field: send_money, label: Send Money? }
+          - { field: company, label: Company }
+          - { field: currency, label: Currency }
+      - title: Notes
+        fields:
+          - { field: note, label: Note, type: textarea, wide: true }

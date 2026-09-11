@@ -1,0 +1,35 @@
+version: 0.0.26
+description: Accounting bank accounts action fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_bank_accounts (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        account_number VARCHAR NOT NULL,
+        clearing_number VARCHAR,
+        account_holder VARCHAR NOT NULL,
+        account_holder_name VARCHAR,
+        bank_name VARCHAR,
+        send_money BOOLEAN NOT NULL DEFAULT FALSE,
+        company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        currency VARCHAR NOT NULL DEFAULT 'USD',
+        note VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      INSERT INTO accounting_bank_accounts (id, row_version, sequence, account_number, clearing_number, account_holder, account_holder_name, bank_name, send_money, company, currency, note, active)
+      VALUES
+        ('accounting-bank-account-001', 1, 10, '60-16-13 31926819', NULL, 'YourCompany, Marc Demo', 'Marc Demo', NULL, FALSE, 'My Company (San Francisco)', 'USD', NULL, TRUE),
+        ('accounting-bank-account-002', 1, 20, 'BANK134567890', NULL, 'My Company (San Francisco)', 'My Company (San Francisco)', NULL, TRUE, 'My Company (San Francisco)', 'USD', NULL, TRUE),
+        ('accounting-bank-account-003', 1, 30, 'BE39 1031 2345 6719', NULL, 'Wood Corner', 'Wood Corner', 'BNP Paribas', FALSE, 'My Company (San Francisco)', 'EUR', NULL, TRUE),
+        ('accounting-bank-account-004', 1, 40, 'SI56 1910 0000 0123 438', NULL, 'Gemini Furniture', 'Gemini Furniture', 'BNP Paribas', FALSE, 'My Company (San Francisco)', 'EUR', NULL, TRUE),
+        ('accounting-bank-account-005', 1, 50, 'BE61 3101 2698 5517', NULL, 'Ready Mat', 'Ready Mat', 'ING', FALSE, 'My Company (San Francisco)', 'EUR', NULL, TRUE),
+        ('accounting-bank-account-006', 1, 60, 'BANK334567890', NULL, 'VN Company', 'VN Company', NULL, TRUE, 'My Company (San Francisco)', 'USD', NULL, TRUE)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS accounting_bank_accounts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

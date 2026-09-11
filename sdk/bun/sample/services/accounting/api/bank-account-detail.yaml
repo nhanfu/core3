@@ -1,0 +1,51 @@
+page: { id: accounting-bank-account-detail }
+datasources:
+  - id: accounting_bank_account_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_BANK_ACCOUNT_DETAIL_UNAVAILABLE, message: Bank account details are temporarily unavailable. } }
+    query: "SELECT id, row_version, account_number, clearing_number, account_holder, account_holder_name, bank_name, send_money, company, currency, note, active FROM accounting_bank_accounts WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_accounting_bank_account
+    type: server_form
+    permission: accounting.write
+    title: Edit Bank Account
+    action: accounting.bank_accounts.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_bank_account_detail
+    refresh: [accounting_bank_account_detail, accounting_bank_accounts]
+    mutation:
+      operation: update
+      table: accounting_bank_accounts
+      fields: [account_number, clearing_number, account_holder, account_holder_name, bank_name, send_money, company, currency, note]
+      required: [account_number, account_holder, company, currency]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_bank_accounts WHERE id = :id AND active = TRUE", status: 404, code: ACCOUNTING_BANK_ACCOUNT_NOT_FOUND, message: Bank account not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:account_number AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_BANK_ACCOUNT_NUMBER_REQUIRED, message: An account number is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:account_holder AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_BANK_ACCOUNT_HOLDER_REQUIRED, message: An account holder is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_bank_accounts WHERE LOWER(account_number) = LOWER(TRIM(CAST(:account_number AS VARCHAR))) AND active = TRUE AND id <> :id)", status: 409, code: ACCOUNTING_BANK_ACCOUNT_EXISTS, message: A bank account with this number already exists. }
+      result: { query: "SELECT * FROM accounting_bank_accounts WHERE id = :id" }
+    fields:
+      - { field: account_number, label: Account Number, type: text, required: true }
+      - { field: clearing_number, label: Clearing Number, type: text }
+      - { field: account_holder, label: Account Holder, type: text, required: true }
+      - { field: account_holder_name, label: Account Holder Name?, type: text }
+      - { field: bank_name, label: Bank, type: text }
+      - { field: send_money, label: Send Money?, type: checkbox }
+      - { field: company, label: Company, type: text, required: true }
+      - { field: currency, label: Currency, type: text, required: true }
+      - { field: note, label: Note, type: textarea }
+  - id: delete_accounting_bank_account
+    type: server
+    permission: accounting.write
+    action: accounting.bank_accounts.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [accounting_bank_accounts]
+    mutation:
+      operation: delete
+      table: accounting_bank_accounts
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM accounting_bank_accounts WHERE id = :id", status: 404, code: ACCOUNTING_BANK_ACCOUNT_NOT_FOUND, message: Bank account not found. }]

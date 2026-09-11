@@ -1,0 +1,20 @@
+title: Bank Accounts
+page: { id: accounting-bank-accounts, route: /accounting/bank-accounts, breadcrumb: [Finance, Configuration, Bank Accounts], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_bank_accounts
+    create_action: create_accounting_bank_account
+    create_label: New
+    search: { label: Search bank accounts, placeholder: Search bank accounts... }
+    columns:
+      - { field: account_number, label: Account Number, type: PrimaryEntityCell }
+      - { field: bank_name, label: Bank }
+      - { field: send_money, label: Send Money?, type: BooleanToggle }
+    page_size: 50
+    responsive_card: true
+    row_key: id
+    row_actions: menu
+    row_open_action: view_accounting_bank_account
+    row_double_click_action: view_accounting_bank_account
+    empty_state: { title: No bank accounts found, description: Create a bank account or adjust your search. }

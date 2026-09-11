@@ -1,0 +1,43 @@
+page: { id: accounting-bank-accounts }
+datasources:
+  - id: accounting_bank_accounts
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "SELECT id, row_version, account_number, clearing_number, account_holder, account_holder_name, bank_name, send_money, company, currency, note, active FROM accounting_bank_accounts WHERE active = TRUE AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR account_number ILIKE '%' || :q || '%' OR COALESCE(account_holder, '') ILIKE '%' || :q || '%' OR COALESCE(account_holder_name, '') ILIKE '%' || :q || '%' OR COALESCE(bank_name, '') ILIKE '%' || :q || '%' OR COALESCE(company, '') ILIKE '%' || :q || '%') ORDER BY sequence, account_number"
+actions:
+  - id: view_accounting_bank_account
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/bank-account-detail
+    params: { id: '{row.id}' }
+  - id: create_accounting_bank_account
+    type: server_form
+    permission: accounting.write
+    title: New Bank Account
+    action: accounting.bank_accounts.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_bank_accounts]
+    mutation:
+      operation: insert
+      table: accounting_bank_accounts
+      generated: [id]
+      before_steps: [{ query: "SELECT 'accounting-bank-account-' || regexp_replace(lower(trim(CAST(:account_number AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [account_number, clearing_number, account_holder, account_holder_name, bank_name, send_money, company, currency, note]
+      required: [account_number, account_holder, company, currency]
+      defaults: { send_money: false, company: 'My Company (San Francisco)', currency: USD, account_holder_name: '', bank_name: '', clearing_number: '', note: '', active: true, sequence: 1000 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:account_number AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_BANK_ACCOUNT_NUMBER_REQUIRED, message: An account number is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:account_holder AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_BANK_ACCOUNT_HOLDER_REQUIRED, message: An account holder is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_bank_accounts WHERE LOWER(account_number) = LOWER(TRIM(CAST(:account_number AS VARCHAR))) AND active = TRUE)", status: 409, code: ACCOUNTING_BANK_ACCOUNT_EXISTS, message: A bank account with this number already exists. }
+      result: { query: "SELECT * FROM accounting_bank_accounts WHERE id = :id" }
+    fields:
+      - { field: account_number, label: Account Number, type: text, required: true }
+      - { field: clearing_number, label: Clearing Number, type: text }
+      - { field: account_holder, label: Account Holder, type: text, required: true }
+      - { field: account_holder_name, label: Account Holder Name?, type: text }
+      - { field: bank_name, label: Bank, type: text }
+      - { field: send_money, label: Send Money?, type: checkbox }
+      - { field: company, label: Company, type: text, required: true, default: 'My Company (San Francisco)' }
+      - { field: currency, label: Currency, type: text, required: true, default: USD }
+      - { field: note, label: Note, type: textarea }

@@ -152,6 +152,10 @@ menu:
           label: Currencies
           icon: globe
           permission: accounting.read
+        - path: /accounting/bank-accounts
+          label: Bank Accounts
+          icon: bank
+          permission: accounting.read
         - path: /accounting/analytic-accounts
           label: Analytic Accounts
           icon: ledger
