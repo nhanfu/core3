@@ -1,0 +1,13 @@
+version: 0.0.6
+type:
+  postgres:
+    up: |
+      INSERT INTO base_contacts(id, name, company_type, email, phone, street, city, state_name, zip, country_name, currency_code, is_company, active, parent_company_id, website, language_code)
+      VALUES ('contact-archive-filter', 'Archived Directory Contact', 'person', 'archived.directory@core3.local', '+1 555 0198', 'Old Directory Road', 'San Francisco', 'California', '94105', 'United States', 'USD', false, false, NULL, NULL, 'en_US')
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, active = false, updated_at = EXCLUDED.updated_at;
+    down: |
+      DELETE FROM base_contacts WHERE id = 'contact-archive-filter';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

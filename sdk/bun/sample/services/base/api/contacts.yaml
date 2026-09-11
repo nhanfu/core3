@@ -1,9 +1,12 @@
 page: { id: contacts }
 datasources:
+  - id: contact_active_states
+    permission: base.contacts.read
+    query: "SELECT value, label FROM (VALUES ('active', 'Active'), ('archived', 'Archived')) states(value, label)"
   - id: contacts
     permission: base.contacts.read
     error_states: { transport_error: { status: 503, code: BASE_CONTACTS_DATA_UNAVAILABLE, message: Contacts data is temporarily unavailable } }
-    query: "SELECT c.id, c.row_version, c.name, c.company_type, c.email, c.phone, c.city, c.country_name, c.is_company, c.active, c.created_at, c.parent_company_id, parent.name AS parent_company_name, c.website, c.language_code, CAST(NULL AS VARCHAR) AS avatar_url, upper(substr(c.name, 1, 1)) AS avatar_initials, (SELECT COUNT(*) FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS category_count, (SELECT COUNT(*) FROM base_activities a WHERE a.contact_id = c.id AND a.state = 'planned') AS activity_count FROM base_contacts c LEFT JOIN base_contacts parent ON parent.id = c.parent_company_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND c.active = true AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR c.phone ILIKE '%' || :q || '%') AND (:company_type IS NULL OR c.company_type = :company_type) AND (:country_name IS NULL OR c.country_name = :country_name) ORDER BY COALESCE(parent.name, c.name), c.name"
+    query: "SELECT c.id, c.row_version, c.name, c.company_type, c.email, c.phone, c.city, c.country_name, c.is_company, c.active, c.created_at, c.parent_company_id, parent.name AS parent_company_name, c.website, c.language_code, CAST(NULL AS VARCHAR) AS avatar_url, upper(substr(c.name, 1, 1)) AS avatar_initials, (SELECT COUNT(*) FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS category_count, (SELECT COUNT(*) FROM base_activities a WHERE a.contact_id = c.id AND a.state = 'planned') AS activity_count FROM base_contacts c LEFT JOIN base_contacts parent ON parent.id = c.parent_company_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((COALESCE(:active, '') IN ('', 'active') AND c.active = true) OR (:active = 'archived' AND c.active = false)) AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR c.phone ILIKE '%' || :q || '%') AND (:company_type IS NULL OR c.company_type = :company_type) AND (:country_name IS NULL OR c.country_name = :country_name) ORDER BY COALESCE(parent.name, c.name), c.name"
   - id: contact_types
     permission: base.contacts.read
     query: "SELECT value, label FROM (VALUES ('person','Person'), ('company','Company'), ('other','Other')) types(value, label)"
@@ -83,4 +86,29 @@ actions:
     refresh: [contacts]
     mutation: { operation: insert, table: base_contacts, fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, currency_code, is_company, notes], required: [name], defaults: { active: true } }
     fields: [{ field: name, label: Name, type: text, required: true }, { field: company_type, label: Type, type: select, options_source: contact_types }, { field: email, label: Email, type: text }, { field: phone, label: Phone, type: text }, { field: street, label: Street, type: text }, { field: city, label: City, type: text }, { field: country_name, label: Country, type: text }, { field: notes, label: Notes, type: textarea }]
-  - { id: archive_contact, type: server, permission: base.contacts.write, action: base.contacts.archive, handler: order_transition, workflow: base_contacts, operation: archive, refresh: [contacts] }
+  - id: archive_contact
+    type: server
+    permission: base.contacts.write
+    action: base.contacts.archive
+    handler: yaml_mutation
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [contacts]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM base_contacts WHERE id = :id", status: 404, code: BASE_CONTACT_NOT_FOUND, message: Contact not found. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true AND row_version = :expected_row_version", status: 409, code: BASE_CONTACT_ALREADY_ARCHIVED, message: Contact is already archived or stale. }
+      steps: [{ query: "UPDATE base_contacts SET active = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Contact was changed by another user. Reload it before archiving. }]
+      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
+  - id: unarchive_contact
+    type: server
+    permission: base.contacts.write
+    action: base.contacts.unarchive
+    handler: yaml_mutation
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [contacts]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM base_contacts WHERE id = :id", status: 404, code: BASE_CONTACT_NOT_FOUND, message: Contact not found. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = false AND row_version = :expected_row_version", status: 409, code: BASE_CONTACT_ALREADY_ACTIVE, message: Contact is already active or stale. }
+      steps: [{ query: "UPDATE base_contacts SET active = true, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = false AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Contact was changed by another user. Reload it before restoring. }]
+      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }

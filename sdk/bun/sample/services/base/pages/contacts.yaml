@@ -8,6 +8,7 @@ components:
     create_label: New contact
     search: { label: Search contacts, placeholder: 'Search name, email, or phone...' }
     filters:
+      - { field: active, label: Status, options_source: contact_active_states }
       - { field: company_type, label: Type, options_source: contact_types }
       - { field: country_name, label: Country, options_source: contact_countries }
     group_by:
@@ -65,6 +66,12 @@ components:
       - { field: parent_company_name, label: Company, optional: hide }
       - { field: category_count, label: Tags }
       - { field: activity_count, label: Activities }
+      - field: id
+        label: ' '
+        sortable: false
+        actions:
+          - { id: archive_contact, label: Archive, icon: archive, variant: danger, show_if: 'row.active === true' }
+          - { id: unarchive_contact, label: Unarchive, icon: refresh, show_if: 'row.active === false' }
     page_size: 50
     row_key: id
     row_actions: menu
