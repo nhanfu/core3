@@ -377,6 +377,54 @@ rendering, or actual email delivery is claimed. The Core3 list action remains
 in the generic list utility menu; the detail-form `Share` action is the
 row-scoped evidence path. Screenshots are evidence only and are not committed.
 
+## Certified stat cohort parity slice — 2026-09-11
+
+The selected gap was the installed Odoo `Certified` stat on the survey form.
+The live `core3_codex_demo` audit verified `survey` is installed with demo data;
+action 278 is `Certifications Succeeded` on `survey.user_input`, with
+`view_mode: list,form` and context `{'search_default_scoring_success': 1}`.
+Survey 2, `MyCompany Vendor Certification`, reports `success_count: 2`.
+Clicking its `Certified` stat at `/odoo/surveys/2` opens the Participants action
+with the visible `Quiz passed` filter and exactly `1-2 / 2` successful attempts.
+
+Before this slice Core3's `survey_certified_stats_detail` action navigated to
+`/surveys/participants` with only `survey_id`, so it showed all attempts for
+the certification rather than Odoo's succeeded cohort. The implementation is
+limited to that proven action gap: the detail page now passes
+`quiz_status: Passed` alongside `survey_id`. The existing page/API pair stays
+separate (`pages/participants.yaml` and `api/participants.yaml`, both bound to
+`survey-participants`), and the API already enforces the filter server-side
+through its `:quiz_status` predicate and `surveys.read` permission. The two
+passed certification fixtures remain deterministic in migration
+`20260910193000-004-survey-participant-fixtures.yaml`; no new data or renderer
+was invented for this action.
+
+### Evidence and corrected runtime assets
+
+All captures used authenticated headless Chrome at 1440x900 and 390x844. The
+initial fresh-worktree Core3 mobile capture was invalid: generated ignored CSS
+outputs were absent, so `/styles/global.css` returned the Vite HTML fallback
+and the page rendered raw controls. Running `bun run css:build:global` and
+`bun run css:build:surveys`, then restarting the isolated runtime with
+`--css`, restored the global and Surveys styles. The corrected browser check
+confirmed both stylesheets loaded, computed Inter typography and the Core3
+surface background, `requestfailed: []`, `pageerror: []`, and exact body,
+document, and viewport widths for every Core3 target.
+
+| State | Odoo capture | SHA-256 | Core3 capture | SHA-256 |
+| --- | --- | --- | --- | --- |
+| Survey detail, desktop | `/tmp/odoo-surveys-certified-stat-detail-desktop-fresh-20260911.png` | `7719501ebcfb986bc760365f52575efd0c29362092249606269db9d25ab39f12` | `/tmp/core3-surveys-certified-stat-detail-desktop-styled-20260911.png` | `31e6f0c29d42a965f52d205f246f7324ccbe429d78377e733313356f14e1c925` |
+| Survey detail, mobile | `/tmp/odoo-surveys-certified-stat-detail-mobile-fresh-20260911.png` | `7d9c3a78870dff2bdeb75fe69a8707d173a82185071a40b50a625514a4a65e6b` | `/tmp/core3-surveys-certified-stat-detail-mobile-styled-20260911.png` | `ed522c4bb94f8487114646732bb3b5cadb0ce365e76de3f6716596c9c9807c0f` |
+| Certified cohort, desktop | `/tmp/odoo-surveys-certified-stat-desktop-fresh-20260911.png` | `0be123c7d0a0f3e875688779e0b30cef77b11264c63dd272d2f488de76d50aa4` | `/tmp/core3-surveys-certified-stat-desktop-styled-20260911.png` | `4d996f948982695c781caab241b3a81fc213b90e425561735b6d7c37c070498d` |
+| Certified cohort, mobile | `/tmp/odoo-surveys-certified-stat-mobile-fresh-20260911.png` | `fe295d02ab144bab1249f761d1a5aba308ea34c99d9c53833afc45aaf8c5075e` | `/tmp/core3-surveys-certified-stat-mobile-styled-20260911.png` | `bfbdf520abf693bf1c8aceb1c3db8a7bdf9c4a89fd923ce7c86d53e412d78259` |
+
+The corrected Core3 cohort route is
+`/surveys/participants?survey_id=survey-demo-certification&quiz_status=Passed`
+and renders two populated passed rows at both sizes. The responsive Core3
+shell and Odoo purple shell remain intentional platform-level visual
+differences; Odoo also switches its mobile participant action to a compact
+list presentation. Screenshots remain outside Git.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
@@ -386,6 +434,7 @@ in the other view files are:
 | --- | --- | --- | --- |
 | Surveys > Surveys | `action_survey_form` / `survey.survey` | `kanban,list,form,activity`; source also defines graph and pivot views for the model | `/surveys` |
 | Surveys > Participants | `action_survey_user_input` / `survey.user_input` | `list,kanban,form`; default group by Survey; create disabled | `/surveys/participants` (route to be confirmed from installed Odoo) |
+| Survey form > Certified | `action_survey_user_input_certified` / action 278 `Certifications Succeeded` | `list,form`; context `search_default_scoring_success: 1` | `/surveys/participants?survey_id=<id>&quiz_status=Passed` |
 | Surveys > Questions & Answers > Questions | `action_survey_question_form` / `survey.question` | `list,form`; grouped by page; excludes section rows | `/surveys/questions` (confirm) |
 | Surveys > Questions & Answers > Suggested Values | `survey_question_answer_action` / `survey.question.answer` | `list,form`; grouped by question | `/surveys/suggested-values` (confirm) |
 | Surveys > Questions & Answers > Detailed Answers | `survey_user_input_line_action` / `survey.user_input.line` | `list,form`; grouped by survey and user input; technical detailed answers | `/surveys/detailed-answers` (confirm) |
