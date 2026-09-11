@@ -365,3 +365,58 @@ The Odoo list uses native many2many chips and an inline bottom editor. Core3
 matches the action hierarchy, density, labels, rows, responsive shell, and
 manager/read-only boundaries, but intentionally documents the bounded display
 editor limitation above; screenshots are evidence only and are not committed.
+
+## Bounded implementation slice: Conversations — Channels (2026-09-11)
+
+The installed Odoo reference exposes Live Chat → Conversations → Channels as
+the `im_livechat_channel_action` kanban/form action at `/odoo/livechat`. The
+visible list is `Live Chat Channels` with `New`, search, pager, and channel
+cards for `YourWebsite.com` (`18 Sessions`, `Leave`, `81%`) and `Support`
+(`7 Sessions`, `Join`, `50%`). The configured channel form is at
+`/odoo/livechat/1` and visibly contains `Channel Name`, the `Agents`,
+`Options`, `Rules`, and `Widget` tabs, plus `Join Channel`/`Leave Channel`.
+
+Core3 implements the bounded action at `/livechat` and the detail route
+`/livechat/channel/detail?id=livechat-channel-demo-002`. The page-only YAML
+fragments use page ids `livechat` and `livechat-channel-detail`; the matching
+API fragments provide the list/detail datasources, deterministic fixtures,
+manager create/edit permissions, `livechat.write` Join/Leave mutations,
+optimistic row-version guards, search/empty/forbidden/transport-error
+boundaries, and Sessions/Happy navigation actions. The migration seeds the two
+reference channels and the detail tabs use the exact Odoo labels `Agents`,
+`Options`, `Rules`, and `Widget`.
+
+Focused validation:
+
+```text
+bun test test/livechat_channels.integration.test.ts
+4 pass, 0 fail, 38 expect() calls
+```
+
+Authenticated paired captures were taken outside Git at 1440x900 and 390x844.
+Each file is a PNG with the stated dimensions; SHA-256 values are recorded so
+the evidence can be checked without committing screenshots.
+
+| Viewport | Odoo reference | Core3 implementation |
+| --- | --- | --- |
+| Desktop 1440x900, channels | `/tmp/odoo-livechat-channels-desktop-1440x900-20260911.png` — `217ae2ba5b3f6883a9475460b28ff54bd9829524166cd658a31211f1a31204e4` — 1440×900 | `/tmp/core3-livechat-channels-desktop-1440x900-20260911-final.png` — `8d6b536e3569e7d216e5e08b63a81e1fbe3d1588621a67d94854164343a5cc85` — 1440×900 |
+| Desktop 1440x900, channel form | `/tmp/odoo-livechat-channel-form-desktop-1440x900-20260911.png` — `7505d0a4734dfaafc4fbac5fc3d4729da6205609bc69e4eedc0d4b2460bad6be` — 1440×900 | `/tmp/core3-livechat-channel-form-desktop-1440x900-20260911-final.png` — `a94a15d430516996fb620c6f999b729018bc4c951e273c4859fabb60cb388cd6` — 1440×900 |
+| Mobile 390x844, channels | `/tmp/odoo-livechat-channels-mobile-390x844-20260911.png` — `28624885ec1099ae52e8b849f60e835f832dba7d2185e13c1a0c32d5fcd4ebb1` — 390×844 | `/tmp/core3-livechat-channels-mobile-390x844-20260911-final.png` — `31ff5d1637c37b261944a999330d5289343d1cb91c5c6568cc437d33248c1a55` — 390×844 |
+| Mobile 390x844, channel form | `/tmp/odoo-livechat-channel-form-mobile-390x844-20260911.png` — `63b1b6de002e8004714ad864567e12e20fcbd0d54a6f4c97fc3a6119a53dddde` — 390×844 | `/tmp/core3-livechat-channel-form-mobile-390x844-20260911-final.png` — `124c76ca8678b9178e12cf22adbab469f8062c9574e9dd177772305c1102aaf8` — 390×844 |
+
+Comparison and fixes: the first Core3 captures exposed missing generated
+global/auth/Live Chat CSS in the fresh worktree; the final captures were
+re-rendered after the CSS build and inspected with Inter styles, no page or
+request errors, and no horizontal overflow at either viewport. The refinement
+commits changed the channel view id to the card renderer, removed the desktop
+mobile-only flag, removed duplicate raw form fields before the notebook, and
+aligned the two-agent deterministic fixture (`Marc Demo, Mitchell Admin`).
+
+Residual mismatches: Core3 uses the shared Fluent shell rather than Odoo's
+purple shell; the generic card renderer displays `Join`/`Leave` as card text
+rather than Odoo's inline card buttons; the generic form displays the two
+agents as a deterministic text value rather than Odoo's many2many operator
+rows; and the list currently orders `Support` before `YourWebsite.com` while
+the reference orders `YourWebsite.com` first. The Options/Rules/Widget content
+is a bounded read/display surface; Odoo exposes richer editable controls there.
+These are recorded as follow-up parity work, not hidden by the evidence.
