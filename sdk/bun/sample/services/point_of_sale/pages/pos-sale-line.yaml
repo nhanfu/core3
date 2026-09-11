@@ -1,0 +1,26 @@
+title: Sale line
+page: { id: pos-sale-line, route: /point-of-sale/sale-line, breadcrumb: [Point of Sale, Sale line], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    scroll: body
+    source: pos_sale_lines
+    create_action: create_pos_sale_line_action
+    create_label: New
+    row_open_action: view_pos_sale_line_action
+    row_double_click_action: view_pos_sale_line_action
+    row_actions: menu
+    search: { label: Search sale lines, placeholder: 'Search product or order line...' }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: discount, label: 'Discount (%) ', align: right }
+      - { field: unit_price, label: Unit Price, align: right }
+      - { field: subtotal, label: Tax Excl., align: right }
+      - { field: total, label: Tax Incl., align: right }
+      - { field: created_on, label: Created on }
+    actions:
+      - { id: delete_pos_sale_line_action, label: Delete, permission: pos.manage, variant: danger }
+    empty_state: { title: No sale lines, description: No sale lines match the current search. }
+    page_size: 50
+    row_key: id

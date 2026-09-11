@@ -1,0 +1,38 @@
+version: 0.0.33
+kind: data
+description: Deterministic standalone Sale line action fixtures
+type:
+  postgres:
+    up: |
+      UPDATE pos_order_lines
+      SET created_at = TIMESTAMP '2026-09-10 06:59:00', discount = 0
+      WHERE id IN ('pos-sales-line-demo-001', 'pos-sales-line-demo-002', 'pos-sales-line-demo-003', 'pos-sales-line-demo-004');
+      INSERT INTO pos_order_lines(id, order_id, product_name, quantity, price_unit, discount, tax_rate, price_subtotal, price_tax, price_total, row_version, created_at)
+      VALUES
+        ('pos-sale-line-action-005', 'pos-order-demo-001', 'Letter Tray', 1, 4.80, 0, 0, 4.80, 0, 4.80, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-006', 'pos-order-demo-001', 'Desk Organizer', 1, 5.10, 0, 0, 5.10, 0, 5.10, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-007', 'pos-order-demo-001', 'Magnetic Board', 1, 1.98, 0, 0, 1.98, 0, 1.98, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-008', 'pos-order-demo-001', 'Monitor Stand', 2, 3.19, 0, 0, 6.38, 0, 6.38, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-009', 'pos-order-demo-001', 'Pizza Margherita', 1, 7.00, 0, 0, 7.00, 0, 7.00, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-010', 'pos-order-demo-001', 'Funghi', 1, 7.00, 0, 0, 7.00, 0, 7.00, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-011', 'pos-order-demo-001', 'Pizza Vegetarian', 1, 7.00, 0, 0, 7.00, 0, 7.00, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-012', 'pos-order-demo-001', 'Water', 1, 2.20, 0, 0, 2.20, 0, 2.20, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-013', 'pos-order-demo-001', 'Pasta Bolognese', 1, 4.50, 0, 0, 4.50, 0, 4.50, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-014', 'pos-order-demo-001', 'Cheese Burger', 4, 7.00, 0, 0, 28.00, 0, 28.00, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-015', 'pos-order-demo-001', 'Coca-Cola', 2, 2.20, 0, 0, 4.40, 0, 4.40, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-016', 'pos-order-demo-001', 'Salmon and Avocado', 2, 9.25, 0, 0, 18.50, 0, 18.50, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-017', 'pos-order-demo-001', 'Lunch Temaki mix 3pc', 1, 14.00, 0, 0, 14.00, 0, 14.00, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-018', 'pos-order-demo-001', 'Mozzarella Sandwich', 2, 3.90, 0, 0, 7.80, 0, 7.80, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-019', 'pos-order-demo-001', 'Chicken Curry Sandwich', 1, 3.00, 0, 0, 3.00, 0, 3.00, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-020', 'pos-order-demo-001', 'Bacon Burger', 1, 7.50, 0, 0, 7.50, 0, 7.50, 1, TIMESTAMP '2026-09-10 06:59:00'),
+        ('pos-sale-line-action-021', 'pos-order-demo-001', 'Pasta 4 Formaggi', 1, 5.50, 0, 0, 5.50, 0, 5.50, 1, TIMESTAMP '2026-09-10 06:59:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_order_lines WHERE id LIKE 'pos-sale-line-action-%';
+      UPDATE pos_order_lines
+      SET created_at = TIMESTAMP '2026-01-15 10:15:00'
+      WHERE id IN ('pos-sales-line-demo-001', 'pos-sales-line-demo-002', 'pos-sales-line-demo-003', 'pos-sales-line-demo-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
