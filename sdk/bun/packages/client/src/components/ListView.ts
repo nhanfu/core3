@@ -110,6 +110,8 @@ export type ListViewOptions = {
   headerActions?: ListViewAction[];
   favorites?: ListViewFavorite[];
   bulkActions?: ListViewAction[];
+  footerStats?: Array<{ label?: string; field: string }>;
+  footerRecord?: ListRow;
   rowKey?: string;
   tree?: { parentField?: string };
   selectable?: boolean;
@@ -557,6 +559,14 @@ export class ListView extends BaseComponent {
     if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (rows.length || this.state.formRowId === '__new__')) {
       await this.drawFormPanel(content, rows);
       if (version !== this.drawVersion) return;
+    }
+    if (this.options.footerStats?.length) {
+      const footer = html.take(content).div.className('o-document-totals').ele();
+      for (const stat of this.options.footerStats) {
+        const item = html.take(footer).div.className('o-document-total').ele();
+        html.take(item).span.className('o-document-total-label').text(String(stat.label || stat.field));
+        html.take(item).strong.className('o-document-total-value').text(String(this.options.footerRecord?.[stat.field] ?? '0.00'));
+      }
     }
   }
 

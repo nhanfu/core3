@@ -309,6 +309,7 @@ export class PageFormModal extends BaseComponent {
                 id: actionParams.id ?? formRecord.id ?? null,
                 expected_row_version: formRecord.row_version,
                 parent_expected_row_version: dataMap.order_detail?.data?.row_version,
+                ...(Array.isArray(row?.selectedIds) ? { selectedIds: row.selectedIds } : {}),
                 values: Object.fromEntries(changes.map(change => [change.field, change.value])),
               });
             } else {

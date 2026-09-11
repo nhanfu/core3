@@ -1,0 +1,30 @@
+title: Bill Matching
+page: { id: purchase-bill-matching, route: /purchase/bill-matching, breadcrumb: [Supply Chain, Purchase, Bill Matching], auth: { require: [purchase.read] } }
+components:
+  - type: ListView
+    source: purchase_bill_line_matches
+    variant: odoo
+    page_size: 50
+    row_key: id
+    responsive_card: false
+    selectable: true
+    search: { label: Search, placeholder: Search products or references... }
+    breadcrumbs: [Supply Chain, Purchase, Bill Matching]
+    bulk_actions:
+      - { id: match_purchase_bill_lines, label: Match, permission: accounting.write }
+      - { id: add_purchase_bill_lines_to_po, label: Add to PO, permission: purchase.write }
+    footer:
+      source: purchase_bill_matching_summary
+      stats:
+        - { label: Billed, field: billed_total_display }
+        - { label: Purchased, field: purchased_total_display }
+    empty_state: { title: No bill lines to match, description: There are no purchase or vendor bill lines waiting for matching. }
+    columns:
+      - { field: reference, label: Reference, width: 180 }
+      - { field: product_description, label: Product Description, width: 320 }
+      - { field: quantity_display, label: Quantity, align: right, width: 110 }
+      - { field: qty_to_invoice_display, label: Qty to invoice, align: right, width: 130 }
+      - { field: unit, label: Unit, width: 100 }
+      - { field: price_display, label: Price, align: right, width: 120 }
+      - { field: billed_amount_display, label: Billed, align: right, width: 130 }
+      - { field: purchased_amount_display, label: Purchased, align: right, width: 140 }

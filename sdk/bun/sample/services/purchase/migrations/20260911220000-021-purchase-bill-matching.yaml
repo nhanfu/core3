@@ -1,0 +1,45 @@
+version: 0.0.21
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_bill_line_matches (
+        id VARCHAR PRIMARY KEY,
+        purchase_order_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL,
+        source_kind VARCHAR NOT NULL,
+        reference VARCHAR NOT NULL,
+        product_description VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+        qty_to_invoice DECIMAL(18,3) NOT NULL DEFAULT 0,
+        unit VARCHAR NOT NULL DEFAULT 'Units',
+        price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        billed_amount DECIMAL(18,2),
+        purchased_amount DECIMAL(18,2),
+        match_key VARCHAR NOT NULL,
+        matched BOOLEAN NOT NULL DEFAULT false,
+        added_to_po BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS purchase_bill_line_matches_order_idx ON purchase_bill_line_matches(purchase_order_id, sequence);
+      INSERT OR IGNORE INTO purchase_bill_line_matches(id, purchase_order_id, sequence, source_kind, reference, product_description, quantity, qty_to_invoice, unit, price, billed_amount, purchased_amount, match_key)
+      VALUES
+        ('purchase-bill-match-006-001', 'po-demo-006', 10, 'purchase', 'P00012', '[FURN_6667] Acoustic Bloc Screens (Black)', 20, 0, 'Units', 286.80, NULL, 5736.00, 'acoustic-screens'),
+        ('purchase-bill-match-006-002', 'po-demo-006', 20, 'bill-refund', 'RBILL/2026/09/0001', '[FURN_7777] Office Chair', 1, 0, 'Units', 10.00, -10.00, NULL, 'office-chair'),
+        ('purchase-bill-match-006-003', 'po-demo-006', 30, 'bill', 'BILL/2026/09/0001', '[FURN_7777] Office Chair', 5, 0, 'Units', 4.00, 20.00, NULL, 'office-chair'),
+        ('purchase-bill-match-006-004', 'po-demo-006', 40, 'purchase', 'P00012', '[FURN_9001] Flipover', 10, 0, 'Units', 120.00, NULL, 1200.00, 'flipover'),
+        ('purchase-bill-match-006-005', 'po-demo-006', 50, 'bill-refund', 'RBILL/2026/09/0001', '[FURN_9999] Office Design Software', 5, 0, 'Units', 4.00, -20.00, NULL, 'office-software'),
+        ('purchase-bill-match-006-006', 'po-demo-006', 60, 'bill', 'BILL/2026/09/0001', '[FURN_9999] Office Design Software', 1, 0, 'Units', 10.00, 10.00, NULL, 'office-software'),
+        ('purchase-bill-match-005-001', 'po-demo-005', 10, 'purchase', 'PO/2026/0005', 'Warehouse barcode scanners', 18, 0, 'Units', 75.00, NULL, 1350.00, 'barcode-scanners'),
+        ('purchase-bill-match-005-002', 'po-demo-005', 20, 'bill', 'BILL/2026/09/0002', 'Warehouse barcode scanners', 6, 0, 'Units', 75.00, 450.00, NULL, 'barcode-scanners'),
+        ('purchase-bill-match-005-003', 'po-demo-005', 30, 'bill', 'BILL/2026/09/0002', 'Packing labels', 10, 0, 'Units', 12.50, 125.00, NULL, 'packing-labels');
+    down: |
+      DELETE FROM purchase_bill_line_matches WHERE id LIKE 'purchase-bill-match-%';
+      DROP INDEX IF EXISTS purchase_bill_line_matches_order_idx;
+      DROP TABLE IF EXISTS purchase_bill_line_matches;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

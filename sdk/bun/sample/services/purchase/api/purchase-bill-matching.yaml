@@ -1,0 +1,53 @@
+page: { id: purchase-bill-matching }
+datasources:
+  - id: purchase_bill_line_matches
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_BILL_MATCHING_UNAVAILABLE, message: Bill matching is temporarily unavailable. } }
+    query: "SELECT id, row_version, purchase_order_id, source_kind, reference, product_description, CAST(quantity AS DOUBLE) AS quantity, printf('%,.2f', CAST(quantity AS DOUBLE)) AS quantity_display, CAST(qty_to_invoice AS DOUBLE) AS qty_to_invoice, printf('%,.2f', CAST(qty_to_invoice AS DOUBLE)) AS qty_to_invoice_display, unit, CAST(price AS DOUBLE) AS price, printf('%,.2f', CAST(price AS DOUBLE)) AS price_display, billed_amount, CASE WHEN billed_amount IS NULL THEN '' ELSE printf('$ %,.2f', CAST(billed_amount AS DOUBLE)) END AS billed_amount_display, purchased_amount, CASE WHEN purchased_amount IS NULL THEN '' ELSE printf('$ %,.2f', CAST(purchased_amount AS DOUBLE)) END AS purchased_amount_display, match_key, matched, added_to_po FROM purchase_bill_line_matches WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND purchase_order_id = :id AND (:q IS NULL OR reference ILIKE '%' || :q || '%' OR product_description ILIKE '%' || :q || '%') ORDER BY sequence, id"
+  - id: purchase_bill_matching_summary
+    single: true
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_BILL_MATCHING_SUMMARY_UNAVAILABLE, message: Bill matching totals are temporarily unavailable. } }
+    query: "SELECT purchase_order_id, printf('$ %,.2f', CAST(COALESCE(SUM(billed_amount), 0) AS DOUBLE)) AS billed_total_display, printf('$ %,.2f', CAST(COALESCE(SUM(purchased_amount), 0) AS DOUBLE)) AS purchased_total_display FROM purchase_bill_line_matches WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND purchase_order_id = :id GROUP BY purchase_order_id"
+  - id: purchase_bill_matching_purchase_orders
+    permission: purchase.read
+    query: "SELECT id AS value, name AS label FROM purchase_orders WHERE state IN ('Draft', 'Sent', 'Confirmed', 'Received') AND COALESCE(locked, false) = false ORDER BY name"
+actions:
+  - { id: open_purchase_bill_matching, type: navigate, permission: accounting.write, navigate_to: /purchase/bill-matching, params: { id: '{row.id}' } }
+  - id: match_purchase_bill_lines
+    type: server
+    permission: accounting.write
+    action: purchase.bill_line_matches.match
+    handler: yaml_mutation
+    params: { purchase_order_id: '{state.id}' }
+    refresh: [purchase_bill_line_matches, purchase_bill_matching_summary]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM purchase_bill_line_matches WHERE id IN :selectedIds) >= 2", status: 409, code: PURCHASE_BILL_MATCHING_LINES_INVALID, message: Select a purchase line and at least one bill line to match. }
+        - { query: "SELECT 1 AS ok FROM purchase_bill_line_matches WHERE id IN :selectedIds AND purchase_order_id = :purchase_order_id AND matched = false GROUP BY purchase_order_id HAVING COUNT(*) >= 2", status: 409, code: PURCHASE_BILL_MATCHING_LINES_INVALID, message: Selected lines are not available for this purchase order. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM purchase_bill_line_matches p WHERE p.id IN :selectedIds AND p.source_kind = 'purchase' AND EXISTS (SELECT 1 FROM purchase_bill_line_matches b WHERE b.id IN :selectedIds AND b.source_kind IN ('bill', 'bill-refund') AND b.match_key = p.match_key))", status: 409, code: PURCHASE_BILL_MATCHING_LINES_INVALID, message: Select matching purchase and bill lines. }
+      steps:
+        - { query: "UPDATE purchase_bill_line_matches SET matched = true, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id IN :selectedIds AND purchase_order_id = :purchase_order_id AND matched = false", expect_changed: true, code: PURCHASE_BILL_MATCHING_STALE, message: These bill lines changed. Reload before matching. }
+      result: { query: "SELECT id, matched, row_version FROM purchase_bill_line_matches WHERE id IN :selectedIds ORDER BY sequence" }
+  - id: add_purchase_bill_lines_to_po
+    type: server_form
+    permission: purchase.write
+    title: Add to PO
+    submit_label: Add Products
+    cancel_label: Cancel
+    action: purchase.bill_line_matches.add_to_po
+    handler: yaml_mutation
+    params: { source_purchase_order_id: '{state.id}' }
+    refresh: [purchase_bill_line_matches, purchase_bill_matching_summary, purchase_order_detail, purchase_order_lines]
+    fields:
+      - { field: purchase_order_id, label: Purchase Order, type: select, options_source: purchase_bill_matching_purchase_orders, required: true }
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM purchase_bill_line_matches WHERE id IN :selectedIds) >= 1", status: 409, code: PURCHASE_BILL_MATCHING_LINES_INVALID, message: Select at least one bill line. }
+        - { query: "SELECT 1 AS ok FROM purchase_bill_line_matches WHERE id IN :selectedIds AND purchase_order_id = :source_purchase_order_id AND source_kind IN ('bill', 'bill-refund') AND added_to_po = false GROUP BY purchase_order_id HAVING COUNT(*) >= 1", status: 409, code: PURCHASE_BILL_MATCHING_LINES_INVALID, message: Only unmatched bill lines from this purchase order can be added. }
+        - { query: "SELECT id FROM purchase_orders WHERE id = :purchase_order_id AND state IN ('Draft', 'Sent', 'Confirmed', 'Received') AND COALESCE(locked, false) = false", status: 409, code: PURCHASE_BILL_MATCHING_PO_STALE, message: The target purchase order is no longer editable. }
+      steps:
+        - { query: "INSERT INTO purchase_order_lines(id, order_id, row_version, sequence, display_type, product_name, description, quantity, qty_received, qty_billed, uom, unit_price, tax_rate, line_total) SELECT 'purchase-bill-line-' || m.id, :purchase_order_id, 1, COALESCE((SELECT MAX(sequence) FROM purchase_order_lines WHERE order_id = :purchase_order_id), 0) + 10 * ROW_NUMBER() OVER (ORDER BY m.sequence, m.id), 'product', m.product_description, m.product_description, m.quantity, 0, 0, m.unit, m.price, 0, ROUND(m.quantity * m.price, 2) FROM purchase_bill_line_matches m WHERE m.id IN :selectedIds AND m.added_to_po = false", expect_changed: true, code: PURCHASE_BILL_MATCHING_STALE, message: These bill lines changed. Reload before adding them to the purchase order. }
+        - { query: "UPDATE purchase_bill_line_matches SET added_to_po = true, matched = true, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id IN :selectedIds AND purchase_order_id = :source_purchase_order_id AND added_to_po = false", expect_changed: true, code: PURCHASE_BILL_MATCHING_STALE, message: These bill lines changed. Reload before adding them to the purchase order. }
+        - { query: "UPDATE purchase_orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM purchase_order_lines WHERE order_id = :purchase_order_id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :purchase_order_id AND COALESCE(locked, false) = false", expect_changed: true, code: PURCHASE_BILL_MATCHING_PO_STALE, message: The target purchase order changed. Reload before saving. }
+      result: { query: "SELECT id, order_id, line_total FROM purchase_order_lines WHERE id IN (SELECT 'purchase-bill-line-' || id FROM purchase_bill_line_matches WHERE id IN :selectedIds) ORDER BY id" }

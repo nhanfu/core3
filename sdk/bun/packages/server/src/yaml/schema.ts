@@ -120,7 +120,7 @@ const COLUMN_KEYS = new Set([
   'optional',
 ]);
 const ROW_ACTION_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'show_if']);
-const FORM_STAT_KEYS = new Set(['id', 'label', 'value_field', 'icon', 'permission', 'show_if']);
+const FORM_STAT_KEYS = new Set(['id', 'label', 'value_field', 'icon', 'permission', 'show_if', 'hide_value']);
 const FORM_ACTION_MENU_KEYS = new Set(['label', 'icon', 'aria_label', 'actions']);
 const TAB_KEYS = new Set(['id', 'label', 'icon', 'components', 'permission', 'count', 'sections']);
 const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color', 'navigate_to']);
@@ -172,7 +172,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['PageIntro', new Set(['type', 'greeting', 'title', 'description', 'action_label', 'greeting_side', 'compact'])],
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
   ['DataGrid', new Set(['type', 'source', 'page_size', 'page_size_options', 'row_key', 'row_numbers', 'empty_state', 'columns', 'selectable', 'column_chooser', 'reorder', 'tree'])],
-  ['ListView', new Set(['type', 'source', 'variant', 'scroll', 'create_action', 'create_label', 'create_mobile_only', 'show_pager', 'breadcrumbs', 'search', 'date_range', 'filter_sources', 'filters', 'actions', 'header_actions', 'default_filters', 'default_group_by', 'group_by', 'favorites', 'bulk_actions', 'labels', 'views', 'view_navigation', 'responsive_card', 'form_view', 'page_size', 'row_key', 'tree', 'parent_field', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_double_click_action', 'row_actions', 'inline_edit', 'mount_in'])],
+  ['ListView', new Set(['type', 'source', 'variant', 'scroll', 'create_action', 'create_label', 'create_mobile_only', 'show_pager', 'breadcrumbs', 'search', 'date_range', 'filter_sources', 'filters', 'actions', 'header_actions', 'default_filters', 'default_group_by', 'group_by', 'favorites', 'bulk_actions', 'footer', 'labels', 'views', 'view_navigation', 'responsive_card', 'form_view', 'page_size', 'row_key', 'tree', 'parent_field', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_double_click_action', 'row_actions', 'inline_edit', 'mount_in'])],
   ['ScheduleGrid', new Set(['type', 'source', 'title', 'date_field', 'resource_field', 'resource_label_field', 'title_field', 'subtitle_field', 'status_field', 'empty_state'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'empty_state', 'labels', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'search_button', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help', 'actions_inline'])],
@@ -659,6 +659,14 @@ function validateComponents(
       }
     }
     if (component.type === 'ListView') {
+      if (component.footer !== undefined) {
+        requireRecord(component.footer, `${path}.footer`, issues);
+        if (isRecord(component.footer)) {
+          requireString(component.footer.source, `${path}.footer.source`, issues);
+          requireSource(component.footer.source, `${path}.footer.source`, datasourceIds, options, issues);
+          if (!Array.isArray(component.footer.stats) || !component.footer.stats.length) issues.push(`${path}.footer.stats must be a non-empty array`);
+        }
+      }
       if (component.variant !== 'odoo') issues.push(`${path}.variant must be odoo`);
       if (component.scroll !== undefined && !['list', 'body'].includes(String(component.scroll))) {
         issues.push(`${path}.scroll must be list or body`);

@@ -548,13 +548,14 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
   mountOwned(comp, slot);
 
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
-  bindSource(footerSourceId, data => _origSetState({ footerRecord: data.data || {} }, true));
   return slot;
 }
 
 async function renderListView(def: any, targetContainer: HTMLElement) {
   const { ListView } = await import('@core3/client/components/ListView');
   const sourceId = def.source;
+  const footerSourceId = typeof def.footer?.source === 'string' ? def.footer.source : undefined;
+  const footerResult = footerSourceId ? (dataMap[footerSourceId] || { data: {} }) : { data: {} };
   const sourceWorkflow = (config.datasources || []).find((source: any) => source.id === sourceId)?.workflow;
   const sourceDefinition = (config.datasources || []).find((source: any) => source.id === sourceId);
   const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
@@ -999,6 +1000,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       groupBy,
       favorites,
       bulkActions,
+      footerStats: Array.isArray(def.footer?.stats) ? def.footer.stats : undefined,
+      footerRecord: footerResult.data || {},
       rowKey: def.row_key || 'id',
       tree: def.tree ? { parentField: def.parent_field || 'parent_id' } : undefined,
       selectable: def.selectable === true,
@@ -1219,6 +1222,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   const slot = html.take(targetContainer).div.className('o-list-view-slot').ele() as HTMLElement;
   mountOwned(comp, slot);
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
+  if (footerSourceId) bindSource(footerSourceId, data => _origSetState({ footerRecord: data.data || {} }, true));
 }
 
 async function renderScheduleGrid(def: any, targetContainer: HTMLElement) {
