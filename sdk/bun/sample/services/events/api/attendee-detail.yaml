@@ -4,11 +4,61 @@ datasources:
     single: true
     permission: events.read
     error_states: { missing_record: { status: 404, code: EVENT_ATTENDEE_NOT_FOUND, message: Attendee registration not found. }, transport_error: { status: 503, code: EVENT_ATTENDEE_DETAIL_UNAVAILABLE, message: Attendee registration is temporarily unavailable. } }
-    query: "SELECT id, COALESCE(row_version, 1) AS row_version, attendee_name, COALESCE(attendee_email, '') AS attendee_email, COALESCE(attendee_phone, '') AS attendee_phone, COALESCE(company_name, '') AS company_name, event_name, COALESCE(ticket_type, '') AS ticket_type, COALESCE(booked_by, '') AS booked_by, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT r.id, COALESCE(r.row_version, 1) AS row_version, r.attendee_name, COALESCE(r.attendee_email, '') AS attendee_email, COALESCE(r.attendee_phone, '') AS attendee_phone, COALESCE(r.company_name, '') AS company_name, r.event_name, COALESCE(r.ticket_type, '') AS ticket_type, COALESCE(r.booked_by, '') AS booked_by, r.state, CAST(r.registered_at AS VARCHAR) AS registered_at, COALESCE(strftime(e.start_at, '%d %b %Y %H:%M'), '') || ' - ' || COALESCE(strftime(e.end_at, '%H:%M'), '') AS event_schedule, COALESCE(e.venue, '') AS event_venue FROM event_registrations r LEFT JOIN events e ON e.id = r.event_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id"
   - id: event_attendee_answers
     permission: events.read
     query: "SELECT id, question, question_type, COALESCE(suggested_answer, '') AS suggested_answer, COALESCE(text_answer, '') AS text_answer FROM event_registration_answers WHERE registration_id = :id ORDER BY id"
 actions:
+  - id: send_attendee_email
+    type: server_form
+    modal_style: mail_composer
+    permission: events.write
+    title: Compose Email
+    submit_label: Send
+    cancel_label: Discard
+    success_message: Registration email sent.
+    action: events.registrations.send_email
+    handler: yaml_mutation
+    operation: create
+    params: { id: '', registration_id: '{row.id}' }
+    prefill:
+      recipient_name: '{row.attendee_name}'
+      recipient_email: '{row.attendee_email}'
+      subject: 'Your badge for {row.event_name}'
+      body_html: |
+        <p><span class="mail-kicker">Your registration</span></p>
+        <h2>{row.attendee_name}</h2>
+        <hr>
+        <p>Hello {row.attendee_name},</p>
+        <p>Please find attached your badge for <strong>{row.event_name}</strong>.</p>
+        <p><strong>Add this event to your calendar</strong> &nbsp; ◉ &nbsp; ◉</p>
+        <p>See you soon,<br>--<br>{row.booked_by}</p>
+        <hr>
+        <p>▣ &nbsp; {row.event_schedule}<br><em>(UTC)</em></p>
+        <p>⌖ &nbsp; {row.event_venue}</p>
+        <hr>
+        <p>Questions about this event?<br>Please contact the organizer:<br>• {row.booked_by}<br>• Mail: codex@core3.local</p>
+      attachment_name: 'Badge - {row.event_name} - {row.attendee_name}.pdf'
+    refresh: [event_attendee_detail]
+    mutation:
+      operation: insert
+      table: event_registration_emails
+      generated: [id]
+      fields: [registration_id, recipient_name, recipient_email, subject, body_html, attachment_name]
+      required: [registration_id, recipient_name, recipient_email, subject, body_html, attachment_name]
+      defaults: { state: Sent, sent_at: '2026-01-15 09:05:00' }
+      before_steps: [{ query: "SELECT 'event-registration-email-' || CAST(:registration_id AS VARCHAR) || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM event_registration_emails WHERE registration_id = :registration_id", assign: true }]
+      guards:
+        - { query: "SELECT id FROM event_registrations WHERE id = :registration_id", status: 404, code: EVENT_ATTENDEE_NOT_FOUND, message: Attendee registration not found. }
+        - { query: "SELECT id FROM event_registrations WHERE id = :registration_id AND state <> 'Cancelled'", status: 409, code: EVENT_ATTENDEE_EMAIL_CANCELLED, message: Cancelled attendee registrations cannot receive event emails. }
+        - { query: "SELECT id FROM event_registrations WHERE id = :registration_id AND LENGTH(TRIM(COALESCE(attendee_email, ''))) > 0", status: 422, code: EVENT_ATTENDEE_EMAIL_REQUIRED, message: An attendee email address is required before sending. }
+      result: { query: "SELECT * FROM event_registration_emails WHERE id = :id" }
+    fields:
+      - { field: recipient_name, label: To, type: mail_recipient, required: true }
+      - { field: recipient_email, label: Recipient email, type: hidden, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body_html, label: Message, type: mail_body, required: true }
+      - { field: attachment_name, label: Attachments, type: mail_attachment, required: true }
   - id: confirm_attendee_detail
     type: server
     permission: events.write

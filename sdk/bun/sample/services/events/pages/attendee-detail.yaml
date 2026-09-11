@@ -9,6 +9,7 @@ components:
     editable: false
     labels: { workflowStatus: Status }
     header_actions:
+      - { id: send_attendee_email, label: Send by Email, variant: primary, permission: events.write }
       - { id: confirm_attendee_detail, label: Registered, variant: primary, permission: events.write, show_if: "record.state === 'Unconfirmed'" }
       - { id: mark_attendee_attended_detail, label: Attended, variant: primary, permission: events.write, show_if: "record.state === 'Registered'" }
       - { id: cancel_event_attendee_detail, label: Cancel Registration, variant: secondary, permission: events.write, show_if: "record.state !== 'Cancelled'" }

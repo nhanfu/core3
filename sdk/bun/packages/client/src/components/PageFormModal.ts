@@ -6,6 +6,30 @@ import { i18n } from '@core3/client/i18n';
 import { html } from '@core3/client/html';
 import { ComLoader } from '@core3/client/components/ComLoader';
 
+function safeMailPreview(value: unknown) {
+  const template = document.createElement('template');
+  template.innerHTML = String(value ?? '');
+  const allowed = new Set(['A', 'BR', 'DIV', 'EM', 'H2', 'HR', 'LI', 'P', 'SPAN', 'STRONG', 'UL']);
+  for (const element of Array.from(template.content.querySelectorAll('*'))) {
+    if (!allowed.has(element.tagName)) {
+      element.replaceWith(...Array.from(element.childNodes));
+      continue;
+    }
+    for (const attribute of Array.from(element.attributes)) {
+      if (attribute.name.toLowerCase().startsWith('on') || (element.tagName !== 'A' && attribute.name !== 'class')) {
+        element.removeAttribute(attribute.name);
+      }
+    }
+    if (element.tagName === 'A') {
+      const href = element.getAttribute('href') || '';
+      if (!/^https?:\/\//i.test(href)) element.removeAttribute('href');
+      element.setAttribute('rel', 'noreferrer');
+      element.setAttribute('target', '_blank');
+    }
+  }
+  return template.innerHTML;
+}
+
 export class PageFormModal extends BaseComponent {
   private readonly componentLoader = new ComLoader();
   readonly openFormModal: any;
@@ -23,6 +47,7 @@ export class PageFormModal extends BaseComponent {
 
     async function openFormModal(actionDef: any, row: any) {
       return new Promise<void>(resolve => {
+        const isMailComposer = actionDef.modal_style === 'mail_composer';
         const sourceRecord = actionDef.prefill === 'source'
           ? dataMap[actionDef.prefill_source || '']?.data
           : undefined;
@@ -38,7 +63,7 @@ export class PageFormModal extends BaseComponent {
         const overlay = html.take(document.body).div.className('form-overlay').attr('aria-hidden', 'false').ele() as HTMLDivElement;
 
         // Dialog
-        const dialog = html.take(overlay).div.className('form-dialog').attr('role', 'dialog').attr('aria-modal', 'true').prop('tabIndex', -1).ele() as HTMLDivElement;
+        const dialog = html.take(overlay).div.className(`form-dialog${isMailComposer ? ' mail-composer-dialog' : ''}`).attr('role', 'dialog').attr('aria-modal', 'true').prop('tabIndex', -1).ele() as HTMLDivElement;
 
         // Header
         const header = html.take(dialog).div.className('form-header').ele() as HTMLDivElement;
@@ -72,9 +97,60 @@ export class PageFormModal extends BaseComponent {
           entry.el.removeAttribute('aria-invalid');
           entry.group.querySelector('.form-field-error')?.remove();
         };
+        const fieldTarget = isMailComposer
+          ? html.take(dialog).div.className('mail-composer-body').ele() as HTMLDivElement
+          : dialog;
         for (const fieldDef of (actionDef.fields || [])) {
           if (fieldDef.show_if && !evalExpr(fieldDef.show_if, { ...ctx, row: row || {} })) continue;
-          const group = html.take(dialog).div.className('form-field').ele() as HTMLDivElement;
+          const rawFieldType = String(fieldDef.type || 'text');
+          const initialValue = (() => {
+            let value: any = fieldDef.default ?? '';
+            const prefillRecord = actionDef.prefill === 'source' ? sourceRecord : row;
+            if ((actionDef.prefill === 'row' || actionDef.prefill === 'source' || Object.keys(mappedPrefill).length) && prefillRecord) {
+              value = formRecord[fieldDef.field] ?? fieldDef.default ?? '';
+            }
+            return value;
+          })();
+          if (rawFieldType === 'hidden') {
+            const hidden = html.take(fieldTarget).input.type('hidden').prop('value', String(initialValue ?? '')).ele() as HTMLInputElement;
+            inputs[fieldDef.field] = { el: hidden, fieldDef, group: fieldTarget };
+            continue;
+          }
+          const group = html.take(fieldTarget).div.className('form-field').ele() as HTMLDivElement;
+
+          if (isMailComposer && rawFieldType === 'mail_recipient') {
+            html.take(group).className('form-field mail-composer-field mail-composer-recipient');
+            html.take(group).label.className('form-label').replaceText(String(fieldDef.label || 'To'));
+            const value = html.take(group).div.className('mail-composer-recipient-value').ele() as HTMLDivElement;
+            html.take(value).span.className('mail-recipient-chip').replaceText(String(initialValue || '—'));
+            const hidden = html.take(value).input.type('hidden').prop('value', String(initialValue ?? '')).ele() as HTMLInputElement;
+            inputs[fieldDef.field] = { el: hidden, fieldDef, group };
+            continue;
+          }
+
+          if (isMailComposer && rawFieldType === 'mail_attachment') {
+            html.take(group).className('form-field mail-composer-field mail-composer-attachment');
+            const attachment = html.take(group).div.className('mail-attachment-chip').ele() as HTMLDivElement;
+            html.take(attachment).span.className('mail-attachment-icon').replaceText('PDF');
+            html.take(attachment).span.className('mail-attachment-name').replaceText(String(initialValue || 'Attachment'));
+            const hidden = html.take(group).input.type('hidden').prop('value', String(initialValue ?? '')).ele() as HTMLInputElement;
+            inputs[fieldDef.field] = { el: hidden, fieldDef, group };
+            continue;
+          }
+
+          if (isMailComposer && rawFieldType === 'mail_body') {
+            html.take(group).className('form-field mail-composer-field mail-composer-body-field');
+            html.take(group).label.className('form-label').replaceText(String(fieldDef.label || 'Message'));
+            const preview = html.take(group).div.className('mail-composer-preview').attr('contenteditable', 'true').attr('role', 'textbox').attr('aria-label', String(fieldDef.label || 'Message')).ele() as HTMLDivElement;
+            preview.innerHTML = safeMailPreview(initialValue);
+            const hidden = html.take(group).textarea.className('sr-only').prop('value', String(initialValue ?? '')).ele() as HTMLTextAreaElement;
+            inputs[fieldDef.field] = { el: hidden, fieldDef, group };
+            html.take(preview).event('input', () => {
+              hidden.value = safeMailPreview(preview.innerHTML);
+              clearFieldError(inputs[fieldDef.field]);
+            });
+            continue;
+          }
 
           const label = html.take(group).label.className('form-label').replaceText(fieldDef.label + (fieldDef.required ? ' *' : '')).ele() as HTMLLabelElement;
           const fieldId = `form-field-${fieldDef.field}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -82,20 +158,20 @@ export class PageFormModal extends BaseComponent {
 
           // Determine initial value before constructing either a native control
           // or a searchable lookup adapter.
-          let initialValue = fieldDef.default ?? '';
+          let fieldInitialValue = initialValue;
           const prefillRecord = actionDef.prefill === 'source' ? sourceRecord : row;
           if ((actionDef.prefill === 'row' || actionDef.prefill === 'source' || Object.keys(mappedPrefill).length) && prefillRecord) {
-            initialValue = formRecord[fieldDef.field] ?? fieldDef.default ?? '';
+            fieldInitialValue = formRecord[fieldDef.field] ?? fieldDef.default ?? '';
           }
-          if (fieldDef.type === 'date' && initialValue && typeof initialValue === 'string') {
-            initialValue = initialValue.slice(0, 10);
-          } else if (fieldDef.type === 'datetime' && initialValue && typeof initialValue === 'string') {
-            initialValue = initialValue.replace('Z', '').slice(0, 16);
+          if (fieldDef.type === 'date' && fieldInitialValue && typeof fieldInitialValue === 'string') {
+            fieldInitialValue = fieldInitialValue.slice(0, 10);
+          } else if (fieldDef.type === 'datetime' && fieldInitialValue && typeof fieldInitialValue === 'string') {
+            fieldInitialValue = fieldInitialValue.replace('Z', '').slice(0, 16);
           }
 
           const conventionPart = String(fieldDef.type || 'native').split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('');
           const requestedFieldType = `Page${conventionPart}Field`;
-          const fieldType = (() => {
+          const fieldComponentType = (() => {
             try {
               componentLoader.resolveSync(requestedFieldType);
               return requestedFieldType;
@@ -103,10 +179,10 @@ export class PageFormModal extends BaseComponent {
               return 'PageNativeField';
             }
           })();
-          const fieldComponent = componentLoader.createSync(fieldType, fieldId, {
+          const fieldComponent = componentLoader.createSync(fieldComponentType, fieldId, {
             field: fieldDef,
             fieldId,
-            initialValue,
+            initialValue: fieldInitialValue,
             dataMap,
           });
           mountChild(fieldComponent, group);
@@ -142,6 +218,15 @@ export class PageFormModal extends BaseComponent {
         const saveBtn = html.take(footer).button.ele() as HTMLButtonElement;
         html.take(saveBtn).type('button');
         html.take(saveBtn).className('btn btn-primary').replaceText(i18n.tKey('labels.save', {}, 'Save'));
+        if (isMailComposer) {
+          html.take(cancelBtn).replaceText(String(actionDef.cancel_label || 'Discard'));
+          html.take(saveBtn).replaceText(String(actionDef.submit_label || 'Send'));
+          const toolBar = html.take(footer).div.className('mail-composer-footer-tools').ele() as HTMLDivElement;
+          for (const tool of [{ label: 'Attach files', icon: '⌕' }, { label: 'More', icon: '⋮' }, { label: 'Schedule send', icon: '◷' }]) {
+            const button = html.take(toolBar).button.type('button').className('mail-composer-footer-tool').attr('aria-label', tool.label).prop('title', tool.label).replaceText(tool.icon).ele() as HTMLButtonElement;
+            html.take(button).event('click', () => showToast(`${tool.label} is not available for this deterministic event fixture.`, 'info'));
+          }
+        }
 
 
         // Error banner (created lazily)

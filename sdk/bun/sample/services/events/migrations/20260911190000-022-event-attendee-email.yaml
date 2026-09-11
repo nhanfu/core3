@@ -1,0 +1,28 @@
+version: 0.0.22
+description: Deterministic Odoo-style attendee registration email composer audit
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_registration_emails (
+        id VARCHAR PRIMARY KEY,
+        registration_id VARCHAR NOT NULL,
+        recipient_name VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL,
+        attachment_name VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Sent',
+        sent_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:05:00',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      INSERT INTO event_registration_emails(id, registration_id, recipient_name, recipient_email, subject, body_html, attachment_name, state, sent_at, row_version)
+      VALUES ('event-registration-email-demo-001', 'registration-demo-001', 'Alex Morgan', 'alex@example.com', 'Your badge for Conference for Architects', '<p>Your registration confirmation.</p>', 'Badge - Conference for Architects - Alex Morgan.pdf', 'Sent', TIMESTAMP '2026-01-15 09:05:00', 1)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_registration_emails WHERE id = 'event-registration-email-demo-001';
+      DROP TABLE IF EXISTS event_registration_emails;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
