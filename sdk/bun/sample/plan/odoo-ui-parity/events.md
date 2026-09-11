@@ -250,6 +250,30 @@ create/edit/delete/workflow controls are intentionally absent. Screenshots
 remain outside Git. The requested `js_repl` browser runtime was unavailable;
 the evidence used shell Playwright with headless Chromium instead.
 
+Fresh-stack re-audit on 2026-09-11 used `core3_user_demo` with
+`admin@core3.local`. Database-local Odoo metadata resolves the same contract as
+action `event.action_event_mail` ID `243`, menu
+`Events/Configuration/Mail Schedulers` ID `174` with group ID `7`, and list/form
+views `event.mail.list`/`event.mail.form` IDs `734`/`733`. The menu is correctly
+hidden from the ordinary Events Configuration dropdown because it is technical
+only; the authenticated admin action opened directly at `/odoo/action-243`
+and its first scheduler at `/odoo/action-243/3`, rendering 21 rows and the
+Design Fair detail at both requested viewports.
+
+Fresh Odoo captures and hashes are:
+
+| Viewport | Capture | SHA-256 |
+| --- | --- | --- |
+| 1440x900 | `/tmp/odoo-events-mail-schedulers-admin-1440x900-list.png` | `b31d03d776b7d8023dad97e3a40b1721a4e052912b1877fe9101ec20ffd2348e` |
+| 1440x900 | `/tmp/odoo-events-mail-schedulers-admin-1440x900-detail.png` | `64ac3cbbf97ac9eb3d6c82f976de90396d6a3ecc042785e69fb555268876ddb2` |
+| 390x844 | `/tmp/odoo-events-mail-schedulers-admin-390x844-list.png` | `44320d8492079373ae6781f38409267089ff951ecd285ac98594ee90779d8d7b` |
+| 390x844 | `/tmp/odoo-events-mail-schedulers-admin-390x844-detail.png` | `903c66224176e1f1b649b82ac750db6decb9469224ddce5b825ddd312b1efd57` |
+
+The previously captured authenticated Core3 comparison remains at the paths
+above; all eight comparison captures are 1440x900 or 390x844 PNGs and remain
+outside Git. The fresh Odoo UI pass recorded no failed non-static requests,
+and the visual comparison found no clipping or viewport overflow.
+
 ## Current batch: Attendee registration confirmation
 
 The authenticated personal Odoo reference is healthy at
