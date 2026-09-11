@@ -7,6 +7,8 @@ components:
     status_field: active
     status_colors: { true: green, false: red }
     editable: true
+    stat_buttons:
+      - { id: open_mrp_productivity_losses, label: Lost, value_field: productivity_loss_count, icon: chart, permission: manufacturing.read }
     group_columns: 2
     groups:
       - title: Work Center

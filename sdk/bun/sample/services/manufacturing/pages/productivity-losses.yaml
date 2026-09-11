@@ -1,0 +1,57 @@
+title: Productivity Losses
+page: { id: manufacturing-productivity-losses, route: /manufacturing/productivity-losses, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers, Productivity Losses], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_productivity_loss_logs
+    create_action: create_mrp_productivity_loss
+    create_label: New
+    search: { label: Search productivity losses, placeholder: 'Search work centers, loss reasons, or manufacturing orders...' }
+    filters:
+      - { field: workcenter_name, label: Work Center, options_source: mrp_productivity_loss_workcenters }
+      - { field: loss_reason, label: Loss Reason, options_source: mrp_productivity_loss_reasons }
+      - { field: loss_type, label: Effectiveness, options: [{ id: Availability, label: Availability Losses }, { id: Performance, label: Performance Losses }, { id: Quality, label: Quality Losses }, { id: Productive, label: Fully Productive }] }
+    date_range: { label: Date, from_field: from_date, to_field: to_date, presets: [month, year, all], preset_style: select }
+    view_navigation: icons
+    views:
+      - { id: list, label: List, icon: table }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: loss_reason
+        series_field: workcenter_name
+        measure_field: duration_minutes
+        measure_label: Duration (minutes)
+        type: bar
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: date_start, column: Start Date, type: date }
+            - { field: loss_type, column: Effectiveness }
+            - { field: workcenter_name, column: Work Center }
+            - { field: loss_reason, column: Loss Reason }
+            - { field: duration_minutes, column: Duration (minutes) }
+            - { field: company_name, column: Company }
+          default:
+            rows: [date_start]
+            columns: [loss_type]
+            measures: [{ field: duration_minutes, aggregate: sum, column: Duration (minutes) }]
+          date_ranges: { date_start: day }
+      - { id: form, label: Form, icon: form }
+    form_view: { page: apps/services/manufacturing/pages/productivity-loss-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_productivity_loss
+    row_double_click_action: view_mrp_productivity_loss
+    row_actions: menu
+    empty_state: { title: No productivity loss for this equipment, description: Productivity losses will appear here when a work center records blocked or ineffective time. }
+    columns:
+      - { field: date_start, label: Start Date, mobile: true }
+      - { field: date_end, label: End Date, mobile: false }
+      - { field: workcenter_name, label: Work Center, type: PrimaryEntityCell, mobile: true }
+      - { field: user_name, label: User, mobile: false }
+      - { field: loss_reason, label: Loss Reason, mobile: true }
+      - { field: duration_minutes, label: Duration (minutes), align: right, mobile: true }
+      - { field: company_name, label: Company, mobile: false }

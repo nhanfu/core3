@@ -1,0 +1,109 @@
+page: { id: manufacturing-productivity-losses }
+datasources:
+  - id: mrp_productivity_loss_workcenters
+    single: false
+    permission: manufacturing.read
+    query: "SELECT id AS value, name AS label FROM mrp_workcenters WHERE active = TRUE ORDER BY sequence, id"
+  - id: mrp_productivity_loss_reasons
+    single: false
+    permission: manufacturing.read
+    query: "SELECT name AS value, name AS label, loss_type FROM mrp_productivity_loss_reasons ORDER BY sequence, id"
+  - id: mrp_productivity_loss_logs
+    single: false
+    permission: manufacturing.read
+    pivot:
+      fields: [id, row_version, workcenter_id, workcenter_name, loss_id, loss_reason, loss_type, date_start, date_end, duration_minutes, manufacturing_order_id, manufacturing_order_name, workorder_id, workorder_name, user_name, company_name, description]
+    error_states:
+      unauthorized: { status: 401, code: MRP_PRODUCTIVITY_LOSSES_UNAUTHORIZED, message: Sign in to view productivity losses. }
+      forbidden: { status: 403, code: MRP_PRODUCTIVITY_LOSSES_FORBIDDEN, message: You do not have permission to view productivity losses. }
+      transport_error: { status: 503, code: MRP_PRODUCTIVITY_LOSSES_UNAVAILABLE, message: Productivity loss data is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, workcenter_id, workcenter_name, loss_id, loss_reason, loss_type,
+        CAST(date_start AS VARCHAR) AS date_start, CAST(date_end AS VARCHAR) AS date_end,
+        CAST(duration_minutes AS DOUBLE) AS duration_minutes, manufacturing_order_id,
+        manufacturing_order_name, workorder_id, workorder_name, COALESCE(user_name, '') AS user_name,
+        company_name, COALESCE(description, '') AS description
+      FROM mrp_workcenter_productivity
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND ((:loss_type IS NULL AND LOWER(loss_type) <> 'productive') OR LOWER(loss_type) = LOWER(:loss_type))
+        AND (:workcenter_id IS NULL OR workcenter_id = :workcenter_id OR workcenter_name = :workcenter_id)
+        AND (:q IS NULL OR workcenter_name ILIKE '%' || :q || '%' OR loss_reason ILIKE '%' || :q || '%' OR COALESCE(manufacturing_order_name, '') ILIKE '%' || :q || '%')
+        AND (:workcenter_name IS NULL OR workcenter_name = :workcenter_name)
+        AND (:loss_reason IS NULL OR loss_reason = :loss_reason)
+        AND (:from_date IS NULL OR CAST(date_start AS DATE) >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR CAST(date_start AS DATE) <= CAST(:to_date AS DATE))
+      ORDER BY date_start, id
+    
+actions:
+  - id: view_mrp_productivity_loss
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/productivity-losses/detail
+    params: { id: '{row.id}', workcenter_id: '{row.workcenter_id}' }
+  - id: create_mrp_productivity_loss
+    type: server_form
+    permission: manufacturing.write
+    title: New Productivity Loss
+    action: manufacturing.productivity_losses.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mrp_productivity_loss_logs]
+    mutation:
+      operation: insert
+      table: mrp_workcenter_productivity
+      generated: [id]
+      fields: [workcenter_name, loss_reason, loss_type, date_start, date_end, description, workcenter_id, loss_id, company_name, user_name, manufacturing_order_id, manufacturing_order_name, workorder_id, workorder_name, duration_minutes]
+      required: [workcenter_name, loss_reason, loss_type, date_start]
+      defaults: { row_version: 1, workcenter_id: workcenter-assembly-1, loss_id: loss-material-availability, company_name: 'My Company (San Francisco)', user_name: 'Admin User', duration_minutes: 0 }
+      guards:
+        - { query: "SELECT id FROM mrp_workcenters WHERE name = :workcenter_name AND active = TRUE", status: 422, code: MRP_PRODUCTIVITY_LOSS_WORKCENTER_INVALID, message: Select an active work center. }
+        - { query: "SELECT id FROM mrp_productivity_loss_reasons WHERE name = :loss_reason", status: 422, code: MRP_PRODUCTIVITY_LOSS_REASON_INVALID, message: Select a valid loss reason. }
+        - { query: "SELECT 1 AS ok WHERE :date_end IS NULL OR CAST(:date_end AS TIMESTAMP) >= CAST(:date_start AS TIMESTAMP)", status: 422, code: MRP_PRODUCTIVITY_LOSS_DATES_INVALID, message: End Date must be on or after Start Date. }
+      result: { query: "SELECT * FROM mrp_workcenter_productivity WHERE id = :id" }
+    fields:
+      - { field: workcenter_name, label: Work Center, type: select, options_source: mrp_productivity_loss_workcenters, required: true }
+      - { field: loss_reason, label: Loss Reason, type: select, options_source: mrp_productivity_loss_reasons, required: true }
+      - { field: loss_type, label: Effectiveness, type: select, options: [{ value: Availability, label: Availability }, { value: Performance, label: Performance }, { value: Quality, label: Quality }, { value: Productive, label: Productive }], required: true }
+      - { field: date_start, label: Start Date, type: text, required: true, placeholder: 'YYYY-MM-DD HH:MM:SS' }
+      - { field: date_end, label: End Date, type: text, placeholder: 'YYYY-MM-DD HH:MM:SS' }
+      - { field: description, label: Description, type: textarea }
+  - id: edit_mrp_productivity_loss
+    type: server_form
+    permission: manufacturing.write
+    title: Edit Productivity Loss
+    action: manufacturing.productivity_losses.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.mrp_productivity_loss_detail
+    refresh: [mrp_productivity_loss_detail, mrp_productivity_loss_logs]
+    mutation:
+      operation: update
+      table: mrp_workcenter_productivity
+      fields: [workcenter_name, loss_reason, loss_type, date_start, date_end, description]
+      required: [workcenter_name, loss_reason, loss_type, date_start]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_workcenter_productivity WHERE id = :id", status: 404, code: MRP_PRODUCTIVITY_LOSS_NOT_FOUND, message: Productivity loss not found. }
+        - { query: "SELECT id FROM mrp_workcenters WHERE name = :workcenter_name AND active = TRUE", status: 422, code: MRP_PRODUCTIVITY_LOSS_WORKCENTER_INVALID, message: Select an active work center. }
+        - { query: "SELECT id FROM mrp_productivity_loss_reasons WHERE name = :loss_reason", status: 422, code: MRP_PRODUCTIVITY_LOSS_REASON_INVALID, message: Select a valid loss reason. }
+        - { query: "SELECT 1 AS ok WHERE :date_end IS NULL OR CAST(:date_end AS TIMESTAMP) >= CAST(:date_start AS TIMESTAMP)", status: 422, code: MRP_PRODUCTIVITY_LOSS_DATES_INVALID, message: End Date must be on or after Start Date. }
+      result: { query: "SELECT * FROM mrp_workcenter_productivity WHERE id = :id" }
+    fields:
+      - { field: workcenter_name, label: Work Center, type: select, options_source: mrp_productivity_loss_workcenters, required: true }
+      - { field: loss_reason, label: Loss Reason, type: select, options_source: mrp_productivity_loss_reasons, required: true }
+      - { field: loss_type, label: Effectiveness, type: select, options: [{ value: Availability, label: Availability }, { value: Performance, label: Performance }, { value: Quality, label: Quality }, { value: Productive, label: Productive }], required: true }
+      - { field: date_start, label: Start Date, type: text, required: true }
+      - { field: date_end, label: End Date, type: text }
+      - { field: description, label: Description, type: textarea }
+  - id: delete_mrp_productivity_loss
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.productivity_losses.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [mrp_productivity_loss_logs]
+    mutation:
+      operation: delete
+      table: mrp_workcenter_productivity
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM mrp_workcenter_productivity WHERE id = :id", status: 404, code: MRP_PRODUCTIVITY_LOSS_NOT_FOUND, message: Productivity loss not found. }]

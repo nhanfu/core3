@@ -1,0 +1,32 @@
+version: 0.0.14
+description: Deterministic productivity loss reasons for the Work Center report
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_productivity_loss_reasons (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        loss_type VARCHAR NOT NULL,
+        manual BOOLEAN NOT NULL DEFAULT TRUE,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        UNIQUE(name, loss_type)
+      );
+      CREATE INDEX IF NOT EXISTS idx_mrp_productivity_loss_reasons_type
+        ON mrp_productivity_loss_reasons(loss_type, sequence, id);
+      INSERT INTO mrp_productivity_loss_reasons (id, name, loss_type, manual, sequence) VALUES
+        ('loss-equipment-failure', 'Equipment Failure', 'Availability', TRUE, 10),
+        ('loss-material-availability', 'Material Availability', 'Availability', TRUE, 20),
+        ('loss-maintenance', 'Maintenance', 'Availability', TRUE, 30),
+        ('loss-slow-cycle', 'Slow Cycle', 'Performance', TRUE, 40),
+        ('loss-quality-check', 'Quality Check', 'Quality', TRUE, 50),
+        ('loss-fully-productive', 'Fully Productive Time', 'Productive', FALSE, 60)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM mrp_productivity_loss_reasons
+      WHERE id IN ('loss-equipment-failure', 'loss-material-availability', 'loss-maintenance', 'loss-slow-cycle', 'loss-quality-check', 'loss-fully-productive');
+      DROP TABLE IF EXISTS mrp_productivity_loss_reasons;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
