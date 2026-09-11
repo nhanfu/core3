@@ -124,6 +124,80 @@ subscription is added or removed. No screenshots are committed; installed
 Odoo visual evidence remains limited by the plan's `mass_mailing` uninstalled
 database gate unless a disposable installed reference is available.
 
+## Implemented action slice — Mailings (2026-09-11)
+
+This slice covers the installed Odoo `mass_mailing.mailing` action
+`mass_mailing.mailing_mailing_action_mail` (action 789), whose live contract is
+`list,kanban,form,calendar` with the mail-only domain and the default My
+Mailings filter. The disposable personal Odoo 19 database was used because the
+original plan database is still uninstalled: Odoo was authenticated as
+`codex@core3.local` at `http://localhost:8069`, and Core3 was authenticated as
+`admin@tms.local` at the isolated runtime `http://localhost:32615`.
+
+The bounded Core3 implementation keeps the layout and API fragments separate,
+joined by page ownership:
+
+- Layout: `services/email-marketing/pages/mailings.yaml` and
+  `services/email-marketing/pages/mailing-detail.yaml` (`page.id:
+  email-mailings` and `mailing-detail`).
+- API: `services/email-marketing/api/mailings.yaml` and
+  `services/email-marketing/api/mailing-detail.yaml`.
+- Schema/fixtures: migrations `20260911010000-008-email-mailings.yaml` and
+  `20260911011000-009-email-mailings-demo.yaml`.
+- Focused contract test: `test/email_marketing_mailings.integration.test.ts`.
+
+The fixed seed date is `2026-01-15`, with six stable, idempotent mailing
+fixtures covering Draft, In Queue, Sending, Sent, archived/favorite, realistic
+recipient models, schedule/sent dates, delivery metrics, mailing lists, body,
+and send/test/schedule/cancel/retry/archive/restore/favorite action contracts.
+The focused test result is **4 pass, 0 fail, 61 expect() calls**. The follow-up
+implementation fix is commit `8ac1ad98`, which binds the detail page basename
+correctly and exposes desktop Kanban; the original implementation is
+`67b65620`.
+
+### Authenticated visual evidence
+
+All captures were inspected as PNGs. Odoo action route was
+`/odoo/action-789` (landing at `/odoo/email-marketing`); Core3 route was
+`/email-marketing/email-mailings`. Both desktop captures used `1440x900` and
+both mobile captures used `390x844`. Browser target-route request failures were
+empty for the final Core3 desktop/mobile checks and the Odoo desktop/mobile
+checks. `scrollWidth` equaled the viewport width in all final checks (Core3:
+1440/390; Odoo: 1440/390).
+
+| Surface | Viewport | Path | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Mailings list | 1440x900 | `/tmp/odoo-email-marketing-mailings-list-desktop-20260911.png` | `767273f28267b6e0f7e39da90602d19a1a073f29030025b5c5d836f18f6e0594` |
+| Core3 Mailings list + detail side panel | 1440x900 | `/tmp/core3-email-marketing-mailings-list-desktop-20260911.png` | `f8e4d48d403f12b3055dda23bac474452cd22f68efac053a810d0e5d1929601b` |
+| Odoo Mailings Kanban | 1440x900 | `/tmp/odoo-email-marketing-mailings-kanban-desktop-20260911.png` | `6880ca9f4c7ad5e6d501c0c7680634f951f58520eff8b1386f2ccfe34c7a7e6f` |
+| Core3 Mailings Kanban | 1440x900 | `/tmp/core3-email-marketing-mailings-kanban-desktop-20260911.png` | `cced3119b4ed5c14bdbfd565207876194f45c3550219a9669f0b53afd7429fe9` |
+| Odoo Mailings Calendar | 1440x900 | `/tmp/odoo-email-marketing-mailings-calendar-desktop-20260911.png` | `23b517282e282bcd8e5826b1a9e87621244749272ffbaba592c9a1d2b8984ad2` |
+| Core3 Mailings Calendar | 1440x900 | `/tmp/core3-email-marketing-mailings-calendar-desktop-20260911.png` | `78dd324c5ca5e04f5292b7293110149e574ee2bc3373d98ce7f9083b0c310525` |
+| Odoo draft mailing form | 1440x900 | `/tmp/odoo-email-marketing-mailings-draft-form-desktop-20260911.png` | `7407a3c329153cc2988c3442094ebe8ec8b79836ca8a225edd02668319f217e1` |
+| Core3 draft mailing form | 1440x900 | `/tmp/core3-email-marketing-mailings-draft-form-desktop-20260911.png` | `930fd2ec44e496ab09e49e4fc671e99e445d3145b6c32c4ab223a4e0a2fd749f` |
+| Odoo Mailings mobile Kanban | 390x844 | `/tmp/odoo-email-marketing-mailings-list-mobile-20260911.png` | `fdd368e9eacc280f93740c17dccc7c31a24e5b735a0c2a7b3d05c96376244e51` |
+| Core3 Mailings mobile Kanban | 390x844 | `/tmp/core3-email-marketing-mailings-list-mobile-20260911.png` | `160a43da38e360768a9269a44dc8e7763429bfb1e56845a8b4ecfe3d9b7afb8c` |
+| Odoo mobile Kanban reference | 390x844 | `/tmp/odoo-email-marketing-mailings-kanban-mobile-20260911.png` | `5c9fc4bf627e94124c76cf108f55e92cd35f4d701e9eae9f18c7b5f88f21626e` |
+| Odoo draft mailing form | 390x844 | `/tmp/odoo-email-marketing-mailings-draft-form-mobile-20260911.png` | `3cfc1dc077512a291b54d85b3585c50c4ea0657ac99cf59e942423ba9a26965e` |
+| Core3 draft mailing form | 390x844 | `/tmp/core3-email-marketing-mailings-draft-form-mobile-20260911.png` | `976af036698490d312d9ec66334e2e4fbd7c39040fad52832e09172f93db83b5` |
+
+Comparison: the Core3 list, Kanban columns, Calendar month, state/statusbar,
+exact column labels, draft actions, recipient metrics, and responsive mobile
+cards/detail hierarchy match the selected Odoo action contract. Core3 adds the
+deterministic five-record fixture set so every workflow state is visible;
+Odoo's personal demo has three records and current-relative dates. Residuals
+are the expected shell and renderer differences: Core3 uses the Fluent shell
+instead of Odoo's purple shell, Core3's mail body is safe metadata/text rather
+than Odoo's full HTML builder with Blocks/Style/Design panels, Core3's desktop
+form is a side panel while Odoo opens a full form with chatter, and Core3's
+calendar is a presentation-only month grid without Odoo's right-side filter
+drawer. Chatter/activity, rich HTML builder/preview, and Odoo-specific avatars
+remain deferred shared primitives; no horizontal mobile overflow was observed.
+
+Images remain under `/tmp` and are not committed. The Email Marketing register
+status remains `planned`; this slice does not claim completion of the other
+actions or the shared gates.
+
 ## Source menu, action, view, and route inventory
 
 The source-defined visible menu tree is:
