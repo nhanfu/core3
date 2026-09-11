@@ -1,0 +1,82 @@
+version: 0.0.8
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_country_group_countries (
+        code VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL UNIQUE,
+        currency_code VARCHAR NOT NULL DEFAULT 'EUR'
+      );
+      CREATE TABLE IF NOT EXISTS base_country_groups (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 999,
+        name VARCHAR NOT NULL UNIQUE,
+        code VARCHAR UNIQUE,
+        country_codes VARCHAR NOT NULL DEFAULT '',
+        country_names VARCHAR NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 11:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 11:00:00'
+      );
+      INSERT INTO base_country_group_countries(code, name, currency_code) VALUES
+        ('ad', 'Andorra', 'EUR'), ('am', 'Armenia', 'AMD'), ('ar', 'Argentina', 'ARS'),
+        ('at', 'Austria', 'EUR'), ('ax', 'Åland Islands', 'EUR'), ('be', 'Belgium', 'EUR'),
+        ('bg', 'Bulgaria', 'EUR'), ('bh', 'Bahrain', 'BHD'), ('bl', 'Saint Barthélémy', 'EUR'),
+        ('bo', 'Bolivia', 'BOB'), ('br', 'Brazil', 'BRL'), ('by', 'Belarus', 'BYN'),
+        ('ch', 'Switzerland', 'CHF'), ('cl', 'Chile', 'CLP'), ('co', 'Colombia', 'COP'),
+        ('cz', 'Czech Republic', 'CZK'), ('cy', 'Cyprus', 'EUR'), ('de', 'Germany', 'EUR'),
+        ('dk', 'Denmark', 'DKK'), ('ec', 'Ecuador', 'USD'), ('ee', 'Estonia', 'EUR'),
+        ('es', 'Spain', 'EUR'), ('fi', 'Finland', 'EUR'), ('fk', 'Falkland Islands', 'FKP'),
+        ('fr', 'France', 'EUR'), ('gf', 'French Guiana', 'EUR'), ('gi', 'Gibraltar', 'GBP'),
+        ('gg', 'Guernsey', 'GBP'), ('gp', 'Guadeloupe', 'EUR'), ('gr', 'Greece', 'EUR'),
+        ('gs', 'South Georgia and the South Sandwich Islands', 'GBP'), ('gy', 'Guyana', 'GYD'),
+        ('hr', 'Croatia', 'EUR'), ('hu', 'Hungary', 'HUF'), ('ie', 'Ireland', 'EUR'),
+        ('im', 'Isle of Man', 'GBP'), ('is', 'Iceland', 'ISK'), ('it', 'Italy', 'EUR'),
+        ('je', 'Jersey', 'GBP'), ('kg', 'Kyrgyzstan', 'KGS'), ('kz', 'Kazakhstan', 'KZT'),
+        ('kw', 'Kuwait', 'KWD'), ('li', 'Liechtenstein', 'CHF'), ('lt', 'Lithuania', 'EUR'),
+        ('lu', 'Luxembourg', 'EUR'), ('lv', 'Latvia', 'EUR'), ('mc', 'Monaco', 'EUR'),
+        ('mf', 'Saint Martin (French part)', 'EUR'), ('mq', 'Martinique', 'EUR'),
+        ('mt', 'Malta', 'EUR'), ('nc', 'New Caledonia', 'XPF'), ('nl', 'Netherlands', 'EUR'),
+        ('no', 'Norway', 'NOK'), ('om', 'Oman', 'OMR'), ('pe', 'Peru', 'PEN'),
+        ('pf', 'French Polynesia', 'XPF'), ('pl', 'Poland', 'PLN'), ('pm', 'Saint Pierre and Miquelon', 'EUR'),
+        ('pt', 'Portugal', 'EUR'), ('py', 'Paraguay', 'PYG'), ('qa', 'Qatar', 'QAR'),
+        ('re', 'Réunion', 'EUR'), ('ro', 'Romania', 'RON'), ('ru', 'Russian Federation', 'RUB'),
+        ('sa', 'Saudi Arabia', 'SAR'), ('se', 'Sweden', 'SEK'), ('si', 'Slovenia', 'EUR'),
+        ('sk', 'Slovakia', 'EUR'), ('sm', 'San Marino', 'EUR'), ('sr', 'Suriname', 'SRD'),
+        ('uy', 'Uruguay', 'UYU'), ('va', 'Holy See (Vatican City State)', 'EUR'),
+        ('ve', 'Venezuela', 'VES'), ('uk', 'United Kingdom', 'GBP'), ('ae', 'United Arab Emirates', 'AED'),
+        ('yt', 'Mayotte', 'EUR'), ('za', 'South Africa', 'ZAR'), ('xi', 'Northern Ireland', 'GBP')
+      ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, currency_code = EXCLUDED.currency_code;
+      INSERT INTO base_country_groups(id, name, code, country_codes, created_at, updated_at) VALUES
+        ('country-group-europe', 'European Union', 'EU', 'at,be,bg,hr,cy,cz,dk,ee,fi,fr,de,gr,hu,ie,it,lv,lt,lu,mt,nl,pl,pt,ro,sk,si,es,se', TIMESTAMP '2026-01-15 11:00:00', TIMESTAMP '2026-01-15 11:00:00'),
+        ('country-group-europe-prefix', 'European Union Prefixed Countries', 'EU_PREFIX', 'at,be,bg,hr,cy,cz,dk,ee,fi,fr,de,gr,hu,ie,it,lv,lt,lu,mt,nl,pl,pt,ro,sk,si,es,se,ch,no,uk,sm', TIMESTAMP '2026-01-15 11:01:00', TIMESTAMP '2026-01-15 11:01:00'),
+        ('country-group-south-america', 'South America', 'SA', 'ar,bo,br,cl,co,ec,fk,gs,gf,gy,py,pe,sr,uy,ve', TIMESTAMP '2026-01-15 11:02:00', TIMESTAMP '2026-01-15 11:02:00'),
+        ('country-group-sepa', 'SEPA Countries', 'SEPA', 'ad,at,ax,be,bg,bl,ch,cy,cz,de,dk,ee,es,fi,fr,uk,gf,gg,gi,gp,gr,hr,hu,ie,im,is,it,je,li,lt,lu,lv,mc,mf,mq,mt,nl,no,pl,pm,pt,re,ro,se,si,sk,sm,va,yt', TIMESTAMP '2026-01-15 11:03:00', TIMESTAMP '2026-01-15 11:03:00'),
+        ('country-group-gcc', 'Gulf Cooperation Council (GCC)', 'GCC', 'sa,ae,bh,om,qa,kw', TIMESTAMP '2026-01-15 11:04:00', TIMESTAMP '2026-01-15 11:04:00'),
+        ('country-group-eurasia', 'Eurasian Economic Union', 'EEU', 'ru,by,am,kg,kz', TIMESTAMP '2026-01-15 11:05:00', TIMESTAMP '2026-01-15 11:05:00'),
+        ('country-group-ch-li', 'Switzerland and Liechtenstein', 'CH-LI', 'ch,li', TIMESTAMP '2026-01-15 11:06:00', TIMESTAMP '2026-01-15 11:06:00'),
+        ('country-group-dom-tom', 'DOM-TOM', 'DOM-TOM', 'yt,gp,mq,gf,re,pf,pm,mf,bl,nc', TIMESTAMP '2026-01-15 11:07:00', TIMESTAMP '2026-01-15 11:07:00'),
+        ('country-group-eu-vat', 'European Union VAT', 'EU-VAT', 'at,be,bg,hr,cy,cz,dk,ee,fi,fr,de,gr,hu,ie,it,lv,lt,lu,mt,mc,nl,pl,pt,ro,sk,si,es,se', TIMESTAMP '2026-01-15 11:08:00', TIMESTAMP '2026-01-15 11:08:00'),
+        ('country-group-intrastat', 'Intrastat', 'INTRASTAT', 'at,be,bg,hr,cy,cz,dk,ee,fi,fr,de,gr,hu,ie,it,lv,lt,lu,mt,nl,no,xi,pl,pt,ro,sk,si,es,se,uk', TIMESTAMP '2026-01-15 11:09:00', TIMESTAMP '2026-01-15 11:09:00')
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, code = EXCLUDED.code, country_codes = EXCLUDED.country_codes, updated_at = EXCLUDED.updated_at;
+      UPDATE base_country_groups SET sequence = CASE id
+        WHEN 'country-group-europe' THEN 1
+        WHEN 'country-group-europe-prefix' THEN 2
+        WHEN 'country-group-south-america' THEN 3
+        WHEN 'country-group-sepa' THEN 4
+        WHEN 'country-group-gcc' THEN 5
+        WHEN 'country-group-eurasia' THEN 6
+        WHEN 'country-group-ch-li' THEN 7
+        WHEN 'country-group-dom-tom' THEN 8
+        WHEN 'country-group-eu-vat' THEN 9
+        WHEN 'country-group-intrastat' THEN 10
+        ELSE sequence
+      END;
+      UPDATE base_country_groups g SET country_names = COALESCE((SELECT STRING_AGG(c.name, ', ' ORDER BY c.name) FROM base_country_group_countries c WHERE POSITION(',' || c.code || ',' IN ',' || g.country_codes || ',') > 0), '');
+    down: |
+      DROP TABLE IF EXISTS base_country_groups;
+      DROP TABLE IF EXISTS base_country_group_countries;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

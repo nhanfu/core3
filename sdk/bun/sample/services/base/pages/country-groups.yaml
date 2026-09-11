@@ -1,0 +1,17 @@
+title: Country Group
+page: { id: country-groups, route: /base-country-groups, breadcrumb: [Contacts, Configuration, Localization, Country Group], auth: { require: [base.reference.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: country_groups
+    search: { label: Search country groups, placeholder: 'Search...' }
+    create_action: new_country_group
+    create_label: New
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: code, label: Code }
+    page_size: 80
+    row_key: id
+    row_open_action: view_country_group
+    row_double_click_action: view_country_group
+    empty_state: { title: No country groups found, description: Create a Country Group to organize countries that are frequently selected together. }

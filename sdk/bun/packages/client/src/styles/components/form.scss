@@ -97,6 +97,7 @@
 .o-form-field input[type="checkbox"].o-form-inline-editor { width: 15px; height: 15px; margin: 3px 0 0; accent-color: var(--o-form-action); }
 .o-permission-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .o-permission-chip { padding: 4px 8px; border: 1px solid var(--o-form-border); border-radius: 999px; background: var(--o-form-muted-bg); color: var(--o-form-text); font-size: 12px; }
+.o-form-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .o-permission-grid-group { margin-top: 10px; padding: 10px; border: 1px solid var(--o-form-border); border-radius: 6px; background: var(--o-form-muted-bg); }
 .o-permission-grid-title { margin: 0 0 8px; color: var(--o-form-text); font-size: 12px; font-weight: 600; text-transform: capitalize; }
 .o-permission-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; }

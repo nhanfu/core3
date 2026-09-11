@@ -1,0 +1,35 @@
+page: { id: country-group-new }
+datasources:
+  - id: country_group_new_countries
+    permission: base.reference.read
+    query: "SELECT name AS value, name AS label FROM base_country_group_countries ORDER BY name, code"
+  - id: country_group_new
+    single: true
+    permission: base.reference.read
+    query: "SELECT CAST(NULL AS VARCHAR) AS id, 1 AS row_version, '' AS name, '' AS code, '' AS country_names, ' ' AS fiscal_exception_names"
+actions:
+  - { id: back_to_country_groups, type: navigate, permission: base.reference.read, navigate_to: /base-country-groups }
+  - id: create_country_group
+    type: server_form
+    permission: base.reference.write
+    title: New Country Group
+    action: base.reference.country_groups.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [country_groups]
+    mutation:
+      operation: insert
+      table: base_country_groups
+      generated: [id]
+      fields: [name, code, country_names]
+      required: [name]
+      defaults: { row_version: 1, country_names: '', country_codes: '', created_at: '2026-01-15 11:30:00', updated_at: '2026-01-15 11:30:00' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: BASE_COUNTRY_GROUP_NAME_REQUIRED, message: Group Name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_country_groups WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: BASE_COUNTRY_GROUP_NAME_EXISTS, message: A country group with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(TRIM(CAST(:code AS VARCHAR)), ''), '') = '' OR NOT EXISTS (SELECT 1 FROM base_country_groups WHERE LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))))", status: 409, code: BASE_COUNTRY_GROUP_CODE_EXISTS, message: A country group with this code already exists. }
+      result: { query: "SELECT * FROM base_country_groups WHERE id = :id" }
+    fields:
+      - { field: name, label: Group Name, type: text, required: true, placeholder: 'e.g. Europe' }
+      - { field: code, label: Code, type: text }
+      - { field: country_names, label: Countries, type: multi-select, options_source: country_group_new_countries, wide: true }

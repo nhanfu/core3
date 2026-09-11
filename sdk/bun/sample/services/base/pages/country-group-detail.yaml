@@ -1,0 +1,21 @@
+title: Country Group
+page: { id: country-group-detail, route: /base-country-group-detail, breadcrumb: [Contacts, Configuration, Localization, Country Group], auth: { require: [base.reference.read] } }
+components:
+  - type: OdooFormView
+    source: country_group_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: new_country_group, label: New, variant: secondary, permission: base.reference.write }
+      - { id: back_to_country_groups, label: Country Group, variant: secondary, permission: base.reference.read }
+      - { id: edit_country_group, label: Edit, variant: primary, permission: base.reference.write }
+    action_menu:
+      label: Actions
+      aria_label: Actions menu
+      actions: [{ id: delete_country_group, label: Delete, icon: trash, variant: danger }]
+    fields:
+      - { field: name, label: Group Name }
+      - { field: code, label: Code }
+      - { field: country_names, label: Countries, type: multi-select, wide: true }
+      - { field: fiscal_exception_names, label: 'Fiscal Exceptions?' }

@@ -1,0 +1,17 @@
+title: New Country Group
+page: { id: country-group-new, route: /base-country-groups/new, breadcrumb: [Contacts, Configuration, Localization, Country Group, New], auth: { require: [base.reference.read] } }
+components:
+  - type: OdooFormView
+    source: country_group_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_country_groups, label: Country Group, variant: secondary, permission: base.reference.read }
+      - { id: create_country_group, label: Save, variant: primary, permission: base.reference.write }
+    fields:
+      - { field: name, label: Group Name, type: text, required: true, placeholder: 'e.g. Europe' }
+      - { field: code, label: Code, type: text }
+      - { field: country_names, label: Countries, type: multi-select, options_source: country_group_new_countries, wide: true }
+      - { field: fiscal_exception_names, label: 'Fiscal Exceptions?' }

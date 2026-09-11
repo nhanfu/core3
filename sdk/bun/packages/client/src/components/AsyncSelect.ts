@@ -29,13 +29,13 @@ export class AsyncSelect extends BaseComponent {
     if (this.rootElement && !this.rootElement.contains(event.target as Node)) this.setOpen(false);
   };
 
-  constructor(id: string, state: { value?: unknown } = {}, def: AsyncSelectDefinition = {}) {
+  constructor(id: string, state: { value?: unknown; multiple?: boolean } = {}, def: AsyncSelectDefinition = {}) {
     super(id, state);
-    this.def = def;
+    this.def = { ...def, multiple: def.multiple ?? Boolean(state.multiple) };
     const initial = Array.isArray(state.value)
       ? state.value
       : String(state.value ?? '').split(',').map(value => value.trim()).filter(Boolean);
-    this.selected = (def.multiple ? initial : initial.slice(0, 1)).map(String);
+    this.selected = (this.def.multiple ? initial : initial.slice(0, 1)).map(String);
   }
 
   private options(): AsyncSelectOption[] {

@@ -89,11 +89,21 @@ export function createYamlApi(ctx: YamlApiContext) {
 
   function sourcePageSizes(page: any): Map<string, number> {
     const sizes = new Map<string, number>();
+    const visitFields = (fields: any[] = []) => {
+      for (const field of fields) {
+        if (field?.options_source && !sizes.has(String(field.options_source))) {
+          sizes.set(String(field.options_source), 100);
+        }
+      }
+    };
     const visit = (components: any[] = []) => {
       for (const component of components) {
         if (component.source && (component.type === 'ListView' || component.page_size)) {
           sizes.set(component.source, Number(component.page_size || 25));
         }
+        visitFields(component.fields);
+        visitFields(component.edit_fields);
+        for (const group of component.groups || []) visitFields(group.fields);
         if (component.message_source && component.message_page_size) sizes.set(component.message_source, Number(component.message_page_size));
         if (component.attachment_source && component.attachment_page_size) sizes.set(component.attachment_source, Number(component.attachment_page_size));
         if (component.follower_candidates_source) sizes.set(component.follower_candidates_source, Number(component.follower_candidates_page_size || 100));
@@ -101,6 +111,7 @@ export function createYamlApi(ctx: YamlApiContext) {
       }
     };
     visit(page.components);
+    for (const action of page.actions || []) visitFields(action.fields);
     return sizes;
   }
 

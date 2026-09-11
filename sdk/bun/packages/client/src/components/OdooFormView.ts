@@ -221,6 +221,16 @@ export class OdooFormView extends BaseComponent {
           for (const [index, item] of [...ancestors, current].filter(Boolean).entries()) {
             html.take(tree).div.className(`o-form-hierarchy-node${index === ancestors.length ? ' is-current' : ''}`).text(item);
           }
+        } else if (field.type === 'multi-select') {
+          const selected = Array.isArray(record[field.field])
+            ? record[field.field].map((item: unknown) => String(item).trim()).filter(Boolean)
+            : String(record[field.field] ?? '').split(',').map(item => item.trim()).filter(Boolean);
+          if (!selected.length) {
+            html.take(value).replaceText('—');
+          } else {
+            const tags = html.take(value).div.className('o-form-tags').ele();
+            for (const item of selected) html.take(tags).span.className('async-select-chip').text(item);
+          }
         } else {
           html.take(value).replaceText(record[field.field] == null || record[field.field] === '' ? '—' : String(record[field.field]));
         }

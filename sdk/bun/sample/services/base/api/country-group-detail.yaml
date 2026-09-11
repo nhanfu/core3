@@ -1,0 +1,50 @@
+page: { id: country-group-detail }
+datasources:
+  - id: country_group_detail_countries
+    permission: base.reference.read
+    query: "SELECT name AS value, name AS label FROM base_country_group_countries ORDER BY name, code"
+  - id: country_group_detail
+    single: true
+    permission: base.reference.read
+    error_states: { transport_error: { status: 503, code: BASE_COUNTRY_GROUP_DETAIL_UNAVAILABLE, message: Country group details are temporarily unavailable. } }
+    query: "SELECT g.id, g.row_version, g.name, g.code, g.country_names, ' ' AS fiscal_exception_names FROM base_country_groups g WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND g.id = :id"
+actions:
+  - { id: back_to_country_groups, type: navigate, permission: base.reference.read, navigate_to: /base-country-groups }
+  - { id: new_country_group, type: navigate, permission: base.reference.write, navigate_to: /base-country-groups/new }
+  - id: edit_country_group
+    type: server_form
+    permission: base.reference.write
+    title: Edit Country Group
+    action: base.reference.country_groups.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.country_group_detail
+    refresh: [country_group_detail, country_groups]
+    mutation:
+      operation: update
+      table: base_country_groups
+      fields: [name, code, country_names]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM base_country_groups WHERE id = :id", status: 404, code: BASE_COUNTRY_GROUP_NOT_FOUND, message: Country group not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: BASE_COUNTRY_GROUP_NAME_REQUIRED, message: Group Name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_country_groups WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: BASE_COUNTRY_GROUP_NAME_EXISTS, message: A country group with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(NULLIF(TRIM(CAST(:code AS VARCHAR)), ''), '') = '' OR NOT EXISTS (SELECT 1 FROM base_country_groups WHERE LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))) AND id <> :id)", status: 409, code: BASE_COUNTRY_GROUP_CODE_EXISTS, message: A country group with this code already exists. }
+      result: { query: "SELECT * FROM base_country_groups WHERE id = :id" }
+    fields:
+      - { field: name, label: Group Name, type: text, required: true, placeholder: 'e.g. Europe' }
+      - { field: code, label: Code, type: text }
+      - { field: country_names, label: Countries, type: multi-select, options_source: country_group_detail_countries, wide: true }
+  - id: delete_country_group
+    type: server
+    permission: base.reference.write
+    action: base.reference.country_groups.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [country_groups]
+    mutation:
+      operation: delete
+      table: base_country_groups
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM base_country_groups WHERE id = :id", status: 404, code: BASE_COUNTRY_GROUP_NOT_FOUND, message: Country group not found. }]

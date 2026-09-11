@@ -17,8 +17,18 @@ menu:
       items:
         - { path: /contacts, label: Contacts, icon: users, permission: base.contacts.read }
         - { path: /companies, label: Companies, icon: building, permission: base.companies.read }
-        - { path: /base-contact-tags, label: Contact Tags, icon: tag, permission: base.reference.read }
-        - { path: /base-industries, label: Industries, icon: briefcase, permission: base.reference.read }
+        - path: /base-reference-data
+          label: Configuration
+          icon: settings
+          permission: base.reference.read
+          children:
+            - { path: /base-contact-tags, label: Contact Tags, icon: tag, permission: base.reference.read }
+            - { path: /base-industries, label: Industries, icon: briefcase, permission: base.reference.read }
+            - path: /base-reference-data
+              label: Localization
+              icon: globe
+              permission: base.reference.read
+              children:
+                - { path: /base-country-groups, label: Country Group, icon: globe, permission: base.reference.read }
         - { path: /users, label: Users, icon: users, permission: auth.users.manage }
         - { path: /user-groups, label: User groups, icon: users, permission: auth.roles.manage }
-        - { path: /base-reference-data, label: Configuration, icon: settings, permission: base.reference.read }

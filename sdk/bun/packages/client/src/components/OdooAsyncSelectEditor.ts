@@ -6,6 +6,7 @@ export class OdooAsyncSelectEditor extends OdooFieldEditor {
   draw(container: HTMLElement) {
     const select = this.createChild(AsyncSelect, `select-${this.id}`, {
       value: this.currentValue(),
+      multiple: this.def.type === 'multi-select',
       onChange: this.onChange,
     });
     select.def.options = (this.def.options || []).map(option => ({
