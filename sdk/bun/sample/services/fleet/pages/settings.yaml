@@ -1,0 +1,32 @@
+title: Settings
+page: { id: fleet-settings, route: /fleet/config/settings, auth: { require: [fleet.settings] } }
+components:
+  - type: SettingsView
+    id: fleet-settings-view
+    source: fleet_settings
+    title: Settings
+    save_action: save_fleet_settings
+    search_placeholder: Search...
+    tabs:
+      - id: general
+        label: General Settings
+        icon: settings
+        sections:
+          - title: Fleet Management
+            fields:
+              - { field: delay_alert_contract, label: End Date Contract Alert, description: Send an alert, suffix: days before the end date, type: number }
+actions:
+  - id: save_fleet_settings
+    type: client
+    permission: fleet.settings
+    script: |
+      async ({ row, request }) => {
+        return request('/api/actions/fleet.settings.update', {
+          method: 'POST',
+          body: {
+            id: row.id,
+            expected_row_version: row.row_version,
+            values: { delay_alert_contract: row.delay_alert_contract },
+          },
+        });
+      }

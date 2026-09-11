@@ -1,0 +1,37 @@
+page: { id: fleet-settings }
+datasources:
+  - id: fleet_settings
+    single: true
+    permission: fleet.settings
+    error_states:
+      unauthorized: { status: 401, code: FLEET_SETTINGS_UNAUTHORIZED, message: Sign in to view Fleet settings. }
+      forbidden: { status: 403, code: FLEET_SETTINGS_FORBIDDEN, message: You do not have permission to manage Fleet settings. }
+      transport_error: { status: 503, code: FLEET_SETTINGS_UNAVAILABLE, message: Fleet settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, delay_alert_contract FROM fleet_settings WHERE id = 'fleet-settings-demo' AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found')"
+actions:
+  - id: fleet_settings_update_server
+    type: server
+    permission: fleet.settings
+    action: fleet.settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: fleet_settings
+      key_field: id
+      fields: [delay_alert_contract]
+      concurrency: { required: true }
+      guards:
+        - query: "SELECT id FROM fleet_settings WHERE id = :id"
+          status: 404
+          code: FLEET_SETTINGS_NOT_FOUND
+          message: Fleet settings no longer exist.
+        - query: "SELECT id FROM fleet_settings WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: FLEET_SETTINGS_STALE
+          message: Fleet settings were changed by another user. Reload before saving.
+        - query: "SELECT id FROM fleet_settings WHERE id = :id AND regexp_matches(trim(CAST(:delay_alert_contract AS VARCHAR)), '^[1-9][0-9]*$')"
+          status: 422
+          code: FLEET_SETTINGS_VALUES_INVALID
+          message: End Date Contract Alert must be a positive whole number of days.
+      result: { query: "SELECT id, row_version, company_name, delay_alert_contract FROM fleet_settings WHERE id = :id" }

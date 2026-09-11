@@ -1,0 +1,14 @@
+version: 0.0.20
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_settings (id, row_version, company_name, delay_alert_contract, updated_at)
+      VALUES ('fleet-settings-demo', 1, 'My Company (San Francisco)', 30, TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM fleet_settings WHERE id = 'fleet-settings-demo';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -5,11 +5,12 @@ type SettingField = {
   field?: string;
   label: string;
   description?: string;
-  type?: 'checkbox' | 'select' | 'info';
+  type?: 'checkbox' | 'select' | 'number' | 'info';
   options?: Array<{ value: string; label: string }>;
   disabled?: boolean;
   action_label?: string;
   badge?: string;
+  suffix?: string;
 };
 
 type SettingsTab = {
@@ -167,7 +168,7 @@ export class SettingsView extends BaseComponent {
     const label = document.createElement('h3');
     label.textContent = field.label;
     content.appendChild(label);
-    if (field.description) {
+    if (field.description && field.type !== 'number') {
       const description = document.createElement('p');
       description.textContent = field.description;
       content.appendChild(description);
@@ -188,6 +189,33 @@ export class SettingsView extends BaseComponent {
     }
     if (field.type === 'info' || !field.field) {
       card.append(control, content);
+      return card;
+    }
+    if (field.type === 'number') {
+      card.classList.add('o-settings-number-card');
+      const inline = document.createElement('div');
+      inline.className = 'o-settings-inline-field';
+      if (field.description) {
+        const prefix = document.createElement('span');
+        prefix.textContent = field.description;
+        inline.appendChild(prefix);
+      }
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'o-settings-number';
+      input.value = this.state.draft[field.field] == null ? '' : String(this.state.draft[field.field]);
+      input.disabled = field.disabled === true;
+      input.addEventListener('input', () => {
+        this.state.draft[field.field!] = input.value === '' ? '' : Number(input.value);
+      });
+      inline.appendChild(input);
+      if (field.suffix) {
+        const suffix = document.createElement('span');
+        suffix.textContent = field.suffix;
+        inline.appendChild(suffix);
+      }
+      content.appendChild(inline);
+      card.replaceChildren(content);
       return card;
     }
     if (field.type === 'select') {
