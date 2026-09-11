@@ -19,7 +19,8 @@ components:
     header_actions:
       - { id: edit_expense_detail, label: Edit, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft'" }
       - { id: submit_expense_detail, label: Submit, variant: primary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft'" }
-      - { id: approve_expense_detail, label: Approve, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Submitted'" }
+      - { id: review_duplicate_expense, label: Review duplicate, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Submitted' && state.expense_detail.duplicate_candidate" }
+      - { id: approve_expense_detail, label: Approve, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Submitted' && !state.expense_detail.duplicate_candidate" }
       - { id: post_expense_detail, label: Post journal entry, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Approved'" }
       - { id: mark_expense_in_payment, label: Register payment, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Posted'" }
       - { id: pay_expense_detail, label: Mark paid, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'In Payment'" }

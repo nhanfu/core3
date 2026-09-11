@@ -33,6 +33,22 @@ datasources:
       SELECT id, expense_id, file_name, mime_type, size_bytes, uploaded_by,
         CAST(created_at AS VARCHAR) AS created_at
       FROM expense_attachments WHERE expense_id = :id ORDER BY created_at DESC, id
+  - id: expense_duplicate_review
+    single: true
+    permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_DUPLICATE_REVIEW_UNAVAILABLE, message: Duplicate receipt review data is temporarily unavailable } }
+    query: |
+      SELECT e.id, e.row_version,
+        'The following expenses have similar employee, amount, and category. Please verify this expense is not a duplicate.' AS review_message,
+        COALESCE(string_agg(
+          c.candidate_name || ' | ' || c.candidate_employee || ' | ' || c.candidate_category || ' | ' || printf('$%,.2f', c.candidate_amount) || ' | ' || CAST(c.candidate_date AS VARCHAR) || ' | Manager: ' || COALESCE(c.candidate_manager, '—'),
+          chr(10) ORDER BY c.sequence, c.id
+        ), 'No matching expense found') AS candidate_summary
+      FROM expenses e
+      LEFT JOIN expense_duplicate_candidates c ON c.expense_id = e.id
+      WHERE e.id = :id
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+      GROUP BY e.id, e.row_version
 actions:
   - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
   - id: edit_expense_detail
@@ -100,6 +116,34 @@ actions:
         - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-approve-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.approve', 'Approved', 'Approved for posting')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     refresh: [expense_detail, expense_detail_activity]
+  - id: review_duplicate_expense
+    type: server_form
+    permission: expenses.manage
+    title: Validate Duplicate Expenses
+    submit_label: Apply decision
+    cancel_label: Cancel
+    action: expenses.detail.duplicate_review
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Submitted' AND row_version = :expected_row_version", status: 409, code: EXPENSE_DUPLICATE_REVIEW_STALE, message: This submitted expense changed before duplicate review. Reload it and try again. }
+        - { query: "SELECT id FROM expense_duplicate_candidates WHERE expense_id = :id", status: 409, code: EXPENSE_DUPLICATE_REVIEW_EMPTY, message: No duplicate candidate is available for this expense. }
+        - { query: "SELECT 1 AS ok WHERE :decision IN ('approve', 'refuse')", status: 400, code: EXPENSE_DUPLICATE_DECISION_INVALID, message: Choose Approve or Refuse before applying the review. }
+      steps:
+        - query: "UPDATE expenses SET state = CASE WHEN :decision = 'approve' THEN 'Approved' ELSE 'Refused' END, refusal_reason = CASE WHEN :decision = 'refuse' THEN 'Duplicate Expense' ELSE NULL END, row_version = row_version + 1 WHERE id = :id AND state = 'Submitted' AND row_version = :expected_row_version"
+          expect_changed: true
+          code: EXPENSE_DUPLICATE_REVIEW_STALE
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-duplicate-review-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, CASE WHEN :decision = 'approve' THEN 'expenses.duplicate_approve' ELSE 'expenses.duplicate_refuse' END, CASE WHEN :decision = 'approve' THEN 'Approved after duplicate review' ELSE 'Refused as duplicate' END, CASE WHEN :decision = 'approve' THEN 'Confirmed this expense is not a duplicate' ELSE 'Duplicate Expense' END)"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expense_detail, expense_detail_activity, expense_duplicate_review]
+    prefill: source
+    prefill_source: expense_duplicate_review
+    params: { id: '{state.id}' }
+    fields:
+      - { field: review_message, label: Review, type: textarea, readonly: true }
+      - { field: candidate_summary, label: Similar expenses, type: textarea, readonly: true }
+      - { field: decision, label: Decision, type: select, required: true, options: [{ value: approve, label: Approve }, { value: refuse, label: Refuse }] }
   - id: post_expense_detail
     type: server
     permission: expenses.manage

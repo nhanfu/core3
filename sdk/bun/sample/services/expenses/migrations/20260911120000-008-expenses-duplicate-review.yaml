@@ -1,0 +1,34 @@
+version: 0.0.8
+description: Deterministic duplicate receipt review candidates for expense approval
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS expense_duplicate_candidates (
+        id VARCHAR PRIMARY KEY,
+        expense_id VARCHAR NOT NULL,
+        candidate_expense_id VARCHAR NOT NULL,
+        candidate_name VARCHAR NOT NULL,
+        candidate_employee VARCHAR NOT NULL,
+        candidate_category VARCHAR NOT NULL,
+        candidate_amount DECIMAL(18, 2) NOT NULL,
+        candidate_date DATE NOT NULL,
+        candidate_manager VARCHAR,
+        candidate_approval_date DATE,
+        sequence INTEGER NOT NULL DEFAULT 10
+      );
+      INSERT INTO expense_duplicate_candidates(
+        id, expense_id, candidate_expense_id, candidate_name, candidate_employee,
+        candidate_category, candidate_amount, candidate_date, candidate_manager,
+        candidate_approval_date, sequence
+      ) VALUES (
+        'expense-duplicate-submitted-2-1', 'expense-demo-submitted-2',
+        'expense-demo-submitted', 'Hotel Expenses', 'Brandon Freeman',
+        'Travel & accommodation', 180.00, DATE '2026-09-07',
+        'Operations Lead', DATE '2026-09-09', 10
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS expense_duplicate_candidates;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
