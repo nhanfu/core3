@@ -27,6 +27,7 @@ components:
       - id: kanban
         label: Kanban
         icon: dashboard
+        mobile: true
         group_by: state
         groups_source: stock_scrap_states
         card: { title: name, subtitle: product_name, fields: [{ field: date_done, label: Date }, { field: scrap_qty, label: Quantity }, { field: product_uom, label: Unit }, { field: state, label: Status }] }
@@ -63,8 +64,6 @@ components:
       - { field: product_name, label: Product, mobile: true, mobile_secondary: state }
       - { field: scrap_qty, label: Quantity, align: right, mobile: true }
       - { field: product_uom, label: Unit, mobile: true }
-      - { field: source_location, label: Location, mobile: false }
-      - { field: scrap_location, label: Scrap Location, mobile: false }
       - { field: company_name, label: Company, mobile: false }
       - { field: state, label: Status, type: StatusChip, mobile: true }
       - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_stock_scrap, label: Open, icon: eye }, { id: delete_stock_scrap, label: Delete, icon: trash, variant: danger, show_if: 'row.state === "Draft"' }] }

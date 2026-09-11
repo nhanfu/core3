@@ -54,10 +54,10 @@ describe('Manufacturing Scrap Orders Odoo action parity', () => {
     const list = yaml('pages/scraps.yaml').components[0];
     expect(list).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'stock_scraps', create_action: 'create_stock_scrap', row_open_action: 'view_stock_scrap', view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'form', 'kanban', 'pivot', 'graph']);
-    expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ label: 'Kanban', group_by: 'state' });
+    expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ label: 'Kanban', mobile: true, group_by: 'state' });
     expect(list.views.find((view: any) => view.id === 'pivot')).toMatchObject({ label: 'Pivot' });
     expect(list.views.find((view: any) => view.id === 'graph')).toMatchObject({ label: 'Graph', category_field: 'product_name', measure_field: 'scrap_qty' });
-    expect(list.columns.map((column: any) => column.label)).toEqual(['Reference', 'Date', 'Product', 'Quantity', 'Unit', 'Location', 'Scrap Location', 'Company', 'Status', ' ']);
+    expect(list.columns.map((column: any) => column.label)).toEqual(['Reference', 'Date', 'Product', 'Quantity', 'Unit', 'Company', 'Status', ' ']);
     expect(list.form_view.page).toBe('apps/services/manufacturing/pages/scrap-detail.yaml');
 
     const detail = yaml('pages/scrap-detail.yaml').components[0];
