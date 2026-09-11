@@ -566,3 +566,56 @@ timeline; its deterministic form presents the shared scalar fields and
 permissioned lifecycle controls. Odoo's authenticated browser also reports
 normal aborted lazy avatar/mail-image requests while the visible form remains
 rendered.
+
+## Current batch: Bills Analysis report action
+
+The live personal `core3_personal` Odoo 19 database exposes the next uncovered
+Accounting report action as `account.action_account_invoice_report_all_supp`
+(window action 376). Its exact action label is `Bills Analysis`, its model is
+`account.invoice.report`, its view modes are `graph,pivot`, and its live path is
+`/odoo/vendor-bills-analysis`. The action is not menu-bound in this Community
+demo, but is reachable from the installed Invoicing reporting surface. The
+authenticated reference defaults to Graph at both `1440x900` and `390x844`,
+shows the `Invoiced` and `Vendors` facets and `Measures` control on desktop,
+and exposes the Pivot view with `Invoice Date`, `Product Category`, and
+`Untaxed Amount` labels. Odoo's vendor report explanation is:
+`From this report, you can have an overview of the amount invoiced from your
+vendors. The search tool can also be used to personalise your Invoices reports
+and so, match this analysis to your needs.`
+
+Core3 adds the explicit Reporting menu entry `Bills Analysis` at
+`/accounting/reports/vendor-bills-analysis`. The page-only
+`pages/bills-analysis.yaml` is joined to `api/bills-analysis.yaml` through
+`page.id: bills-analysis`; the read datasource requires `accounting.read` and
+declares the stable `ACCOUNTING_DATA_UNAVAILABLE` transport error. Migration
+`20260911200000-025-accounting-bills-analysis.yaml` owns four fixed August and
+September 2026 vendor-bill/refund fixtures, including the observed
+`Furniture / Office`, `None`, `Gemini Furniture`, and `Ready Mat` values. This
+is a read-only report action, so no CRUD/workflow mutation is exposed; the
+permission boundary, default query, search, empty, and transport-error paths
+are covered by `test/accounting_bills_analysis.integration.test.ts`.
+
+Authenticated comparison evidence is temporary and not committed:
+
+- Odoo Graph: `/tmp/odoo-accounting-bills-analysis-desktop-final.png` and
+  `/tmp/odoo-accounting-bills-analysis-mobile-final.png`.
+- Odoo Pivot: `/tmp/odoo-accounting-bills-analysis-desktop-pivot-final.png` and
+  `/tmp/odoo-accounting-bills-analysis-mobile-pivot-final.png`.
+- Core3 Graph: `/tmp/core3-accounting-bills-analysis-desktop-final.png` and
+  `/tmp/core3-accounting-bills-analysis-mobile-final.png`.
+- Core3 Pivot: `/tmp/core3-accounting-bills-analysis-desktop-pivot-final.png`
+  and `/tmp/core3-accounting-bills-analysis-mobile-pivot-final.png`.
+- Core3 search-empty state: `/tmp/core3-accounting-bills-analysis-desktop-empty-final.png`
+  and `/tmp/core3-accounting-bills-analysis-mobile-empty-final.png`.
+
+The bounded implementation uses the shared Core3 Graph/Pivot renderer, so its
+toolbar has the available Bar/Line controls rather than Odoo's Pie,
+Cumulative, and sort controls. Core3 displays deterministic report amounts
+from its owned fixtures rather than the live Odoo moving demo totals, and the
+shared pivot formatter uses the current `vi-VN` decimal presentation. Core3's
+scope facets include their field labels (`Invoiced: Invoiced` and
+`Vendors: Vendors`), while Odoo renders the shorter facet labels. Odoo's
+authenticated reference still reports the known aborted web-asset requests
+`/web/assets/3270cb7/web.assets_web.min.js` and
+`/web/assets/4a0b86f/web.assets_web_print.min.css`; the visible report rendered
+and met the width checks.
