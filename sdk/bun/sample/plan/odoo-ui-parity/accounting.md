@@ -619,3 +619,57 @@ authenticated reference still reports the known aborted web-asset requests
 `/web/assets/3270cb7/web.assets_web.min.js` and
 `/web/assets/4a0b86f/web.assets_web_print.min.css`; the visible report rendered
 and met the width checks.
+
+## Current batch: Bank Accounts action
+
+The live personal `core3_personal` Odoo database exposes Accounting action 371,
+`Bank Accounts` (`res.partner.bank`, `list,form`), at `/odoo/action-371`.
+The authenticated list contains six records and the observed columns are
+`Account Number`, `Bank`, and `Send Money`. Opening the first record reaches
+`/odoo/action-371/1`; its form exposes Account Number, Clearing Number,
+Account Holder, Account Holder Name?, Bank, Send Money?, Company, Currency,
+and Note. Odoo's New route is `/odoo/action-371/new`.
+
+Core3 adds `/accounting/bank-accounts` and
+`/accounting/bank-account-detail?id=accounting-bank-account-001`, with layout
+YAML separated from page-ID-matched API fragments. Migration
+`20260911210000-026-accounting-bank-accounts.yaml` owns six deterministic
+rows copied from the observed contract, including BNP Paribas, ING, company,
+currency, holder, and send-money states. Reads require `accounting.read`;
+create, edit, and delete mutations require `accounting.write` and enforce
+required account numbers/holders, duplicate protection, missing-record, and
+optimistic row-version guards.
+
+Focused validation is `test/accounting_bank_accounts.integration.test.ts`:
+3 tests and 37 assertions passed after the mobile-column refinement. The
+implementation commits are `a7d719a95b6ee108f35b8314d6d0fa886de11186` and
+`c4591e65ff1d6ee64fc415259153d20f09481fe4`. The follow-up visual correction
+marks Bank and Send Money? as mobile-visible; the shared table renderer still
+uses a 760px internal table at 390px, so those two columns are clipped in the
+Core3 mobile PNG even though the page-level scroll width remains 390px. This
+bounded evidence records that remaining renderer-level visual difference.
+
+Authenticated comparison captures were taken at 1440x900 and 390x844 and
+remain outside Git:
+
+- Odoo list: `/tmp/odoo-accounting-bank-accounts-desktop-list-20260911.png`
+  (`ba33bbd21432a4bedf3316b8c8be35a5b162cb93de217145d5980774b7a15158`) and
+  `/tmp/odoo-accounting-bank-accounts-mobile-list-20260911.png`
+  (`950a866096c4210e4b8eb3d4c80a8de1c0fc08c0f0885e4986e35c39714ad24d`)
+- Odoo form: `/tmp/odoo-accounting-bank-accounts-desktop-detail-20260911.png`
+  (`c54816cd1859c66b037f3ea7befa2f284beec1e3a33ac8dfa4a82a54c2a9762`) and
+  `/tmp/odoo-accounting-bank-accounts-mobile-detail-20260911.png`
+  (`b3d676de5cd06d0aa76144a10513cb2a1d3fae2e8d5fd18935fe1ab3605feb58`)
+- Core3 list: `/tmp/core3-accounting-bank-accounts-desktop-list-20260911.png`
+  (`9287622ceb0128e24f68789f92e3bd9332af7ad5a82ddf19687fdd5816f0e040`) and
+  `/tmp/core3-accounting-bank-accounts-mobile-list-20260911.png`
+  (`1d1adae7250eb7b1ee09134a2861a4218f96eabce7eb034a24c956c0a99e04c9`)
+- Core3 form: `/tmp/core3-accounting-bank-accounts-desktop-detail-20260911.png`
+  (`fdc366a48b3d2b0106517b44b8cf95893b66eb5766a284821fd06bc1186a2eb5`) and
+  `/tmp/core3-accounting-bank-accounts-mobile-detail-20260911.png`
+  (`af4f734b36521b2917a6cf4faee306b4a1c21c9990d6617b8af80e6a232efef0`)
+
+All eight authenticated routes rendered with no unexpected failed requests or
+page-level horizontal overflow. The Odoo reference and Core3 list both show
+six rows; the Core3 form presents the same scalar field contract, while Odoo's
+employee relation/chatter presentation remains outside this bounded action.
