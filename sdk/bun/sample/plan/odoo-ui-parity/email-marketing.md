@@ -667,8 +667,9 @@ duplicate, missing-record, and row-version guards.
 Focused validation passes 3 tests with 42 assertions; `bun run audit` reports
 541 pages, 548 routes, and 942 datasources; ESLint, shared and Email Marketing
 Sass builds, and `git diff --check` pass. Authenticated Core3 browser checks
-created a new address through the New form and opened the detail form at both
-target viewports with no page errors, failed requests, or horizontal overflow.
+created a new address through the New form on desktop and opened the detail
+form at both target viewports with no page errors, failed requests, or
+horizontal overflow.
 Core3 captures are local-only under `/tmp`:
 
 - Odoo list: `/tmp/odoo-email-blacklist-desktop-final.png` (`2e7fff98aed871d243c9aa44154eb222d7ec08ad40bf6e499cda5ceb5459ecf5`) and `/tmp/odoo-email-blacklist-mobile-final.png` (`c7bae5c26bb2e9e3166de88514c59814a1fd4f6ab446a30a10da83f8cff3c69b`)
