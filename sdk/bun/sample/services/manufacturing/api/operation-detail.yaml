@@ -1,60 +1,15 @@
-page: { id: manufacturing-operations }
+page: { id: manufacturing-operation-detail }
 datasources:
-  - id: mrp_operations
+  - id: mrp_operation_detail
+    single: true
     permission: manufacturing.read
-    error_states: { transport_error: { status: 503, code: MRP_OPERATIONS_UNAVAILABLE, message: Operations are temporarily unavailable. } }
-    query: |
-      SELECT id, row_version, name, active, sequence, bom_id, bom_name, workcenter_id,
-        workcenter_name, time_mode, time_mode_batch, time_cycle_manual, time_cycle,
-        time_total, cost_mode, cost, apply_on_variants, blocked_by_operations,
-        company_name, workorder_count
-      FROM mrp_routing_workcenters
-      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
-        AND (CAST(:active AS VARCHAR) IS NULL OR (CAST(:active AS VARCHAR) = 'active' AND active = TRUE) OR (CAST(:active AS VARCHAR) = 'archived' AND active = FALSE))
-        AND (CAST(:time_mode AS VARCHAR) IS NULL OR time_mode = :time_mode)
-        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR bom_name ILIKE '%' || :q || '%' OR workcenter_name ILIKE '%' || :q || '%')
-      ORDER BY created_at, id
+    error_states: { transport_error: { status: 503, code: MRP_OPERATION_DETAIL_UNAVAILABLE, message: This operation is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, active, sequence, bom_id, bom_name, workcenter_id, workcenter_name, time_mode, time_mode_batch, time_cycle_manual, time_cycle, time_total, cost_mode, cost, apply_on_variants, blocked_by_operations, company_name, workorder_count FROM mrp_routing_workcenters WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
 actions:
-  - id: view_mrp_operation
+  - id: back_to_mrp_operations
     type: navigate
     permission: manufacturing.read
-    navigate_to: /operations/detail
-    params: { id: '{row.id}' }
-  - id: create_mrp_operation
-    type: server_form
-    permission: manufacturing.write
-    title: New Operation
-    action: manufacturing.operations.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [mrp_operations]
-    mutation:
-      operation: insert
-      table: mrp_routing_workcenters
-      generated: [id]
-      fields: [name, active, sequence, bom_id, bom_name, workcenter_id, workcenter_name, time_mode, time_mode_batch, time_cycle_manual, time_cycle, time_total, cost_mode, cost, apply_on_variants, blocked_by_operations, company_name, workorder_count]
-      required: [name, bom_name, workcenter_name]
-      defaults: { active: true, sequence: 100, time_mode: manual, time_mode_batch: 10, time_cycle_manual: 60, time_cycle: 60, time_total: 60, cost_mode: actual, cost: 0, apply_on_variants: '', blocked_by_operations: '', company_name: My Company (San Francisco), workorder_count: 0 }
-      guards:
-        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_routing_workcenters WHERE LOWER(name) = LOWER(:name) AND bom_id = COALESCE(:bom_id, ''))", status: 409, code: MRP_OPERATION_NAME_EXISTS, message: An operation with this name already exists for this bill of material. }
-        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:time_cycle_manual, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:time_mode_batch, 10) AS INTEGER) >= 1", status: 422, code: MRP_OPERATION_DURATION_INVALID, message: Duration must be zero or greater and the computed sample must be at least one work order. }
-        - { query: "SELECT 1 AS ok WHERE COALESCE(:time_mode, 'manual') IN ('manual', 'auto') AND COALESCE(:cost_mode, 'actual') IN ('actual', 'estimated')", status: 422, code: MRP_OPERATION_MODE_INVALID, message: Select valid duration and cost modes. }
-      result: { query: "SELECT * FROM mrp_routing_workcenters WHERE id = :id" }
-    fields:
-      - { field: name, label: Operation, type: text, required: true }
-      - { field: bom_name, label: Bill of Material, type: text, required: true }
-      - { field: bom_id, label: Bill of Material ID, type: text }
-      - { field: workcenter_name, label: Work Center, type: text, required: true }
-      - { field: workcenter_id, label: Work Center ID, type: text }
-      - { field: sequence, label: Sequence, type: number, default: 100 }
-      - { field: time_mode, label: Duration Computation, type: select, options: [{ value: manual, label: Fixed }, { value: auto, label: Computed }] }
-      - { field: time_cycle_manual, label: Default Duration, type: number, required: true, min: 0 }
-      - { field: time_mode_batch, label: Based on, type: number, default: 10, min: 1 }
-      - { field: cost_mode, label: Cost based on, type: select, options: [{ value: actual, label: Actual time }, { value: estimated, label: Theorical time }] }
-      - { field: apply_on_variants, label: Apply on Variants?, type: text }
-      - { field: blocked_by_operations, label: Blocked By, type: text }
-      - { field: company_name, label: Company, type: text }
-      - { field: active, label: Active, type: checkbox, default: true }
+    navigate_to: /operations
   - id: edit_mrp_operation
     type: server_form
     permission: manufacturing.write
@@ -62,8 +17,8 @@ actions:
     action: manufacturing.operations.update
     handler: yaml_mutation
     operation: update
-    prefill: row
-    refresh: [mrp_operations]
+    prefill: state.mrp_operation_detail
+    refresh: [mrp_operation_detail, mrp_operations]
     mutation:
       operation: update
       table: mrp_routing_workcenters
@@ -98,7 +53,7 @@ actions:
     handler: yaml_mutation
     operation: update
     params: { values: { active: false } }
-    refresh: [mrp_operations]
+    refresh: [mrp_operation_detail, mrp_operations]
     mutation: { operation: update, table: mrp_routing_workcenters, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_routing_workcenters WHERE id = :id AND active = TRUE", status: 409, code: MRP_OPERATION_ALREADY_ARCHIVED, message: Operation is already archived. }], result: { query: "SELECT * FROM mrp_routing_workcenters WHERE id = :id" } }
   - id: unarchive_mrp_operation
     type: server
@@ -107,7 +62,7 @@ actions:
     handler: yaml_mutation
     operation: update
     params: { values: { active: true } }
-    refresh: [mrp_operations]
+    refresh: [mrp_operation_detail, mrp_operations]
     mutation: { operation: update, table: mrp_routing_workcenters, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_routing_workcenters WHERE id = :id AND active = FALSE", status: 409, code: MRP_OPERATION_ALREADY_ACTIVE, message: Operation is already active. }], result: { query: "SELECT * FROM mrp_routing_workcenters WHERE id = :id" } }
   - id: delete_mrp_operation
     type: server
@@ -115,7 +70,7 @@ actions:
     action: manufacturing.operations.delete
     handler: yaml_mutation
     operation: delete
-    params: { id: '{row.id}' }
+    params: { id: '{state.id}' }
     refresh: [mrp_operations]
     mutation:
       operation: delete
