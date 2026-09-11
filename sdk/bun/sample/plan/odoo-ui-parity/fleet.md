@@ -694,3 +694,38 @@ build, and `git diff --check` pass. The expected bounded visual difference
 is the Core3 Fluent shell and blue accent versus Odoo's purple shell; row
 ordering, labels, schedule values, model targeting, pager/search affordance,
 responsive cards, and the source form grouping are represented.
+
+## Configuration > Services > Types checkpoint (2026-09-11)
+
+The active Odoo 19 Fleet reference exposes `fleet_vehicle_service_types_action`
+(action 759) under Fleet > Configuration > Services > Types. It is a
+`fleet.service.type` list/form action with default grouping by Category,
+editable-bottom list behavior, Name and Category columns, and the standard
+`Contract` / `Service` selection. The live dataset contains 3 Contract and 71
+Service rows. Fleet users can read; Fleet managers can create, edit, and
+delete, with service-log relation guards on deletion.
+
+Core3 adds `/fleet/config/service-types` and the explicit detail route
+`/fleet/config/service-types/detail`. Page and API YAML remain separate and
+join through `page.id`. Migrations `20260911270000-027` and
+`20260911271000-028` provide 74 deterministic rows with fixed timestamps,
+stable ordering, idempotent installation, and row-versioned manager CRUD.
+The service contract covers search, category filtering/grouping, empty,
+not-found, unauthorized, forbidden, transport, duplicate, invalid-category,
+missing-record, stale-write, and in-use-delete states.
+
+Focused coverage passes 4 tests and 56 assertions. Authenticated Odoo and
+Core3 browser checks covered 1440x900 and 390x844. The Core3 runtime showed
+the expected collapsed Contract (3) and Service (71) groups, exact viewport
+widths, and no page errors or HTTP error responses. Images remain outside Git:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Fleet service types | 1440x900 | `/tmp/odoo-fleet-service-types-desktop-20260911.png` | `9eb50e4a138f8e71a637b23f7fe6a663cbe77cca0c3cdb77025044f4f8f7a098` |
+| Odoo Fleet service types | 390x844 | `/tmp/odoo-fleet-service-types-mobile-20260911.png` | `6cd66e642ea7d243d6a392c113af22568b2a5a5c6773bf6c3536049454e71483` |
+| Core3 Fleet service types | 1440x900 | `/tmp/core3-fleet-service-types-current-1440x900.png` | `8be8bd1222856cfca3d01a055451e6be889785805546a179fc5c798d54373857` |
+| Core3 Fleet service types | 390x844 | `/tmp/core3-fleet-service-types-current-390x844.png` | `49a7a81390fb0ab81d7f64535cb588740e2919293635b69944b4b106c4e75c7b` |
+
+The bounded visual residual is the shared Core3 Fluent shell versus Odoo's
+purple shell; labels, grouping, row ordering, responsive width, and form
+transition are preserved. Images remain under `/tmp` and are not committed.
