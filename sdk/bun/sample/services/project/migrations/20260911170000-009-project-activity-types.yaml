@@ -1,0 +1,32 @@
+version: 0.0.9
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS project_activity_types (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT TRUE, summary VARCHAR,
+        category VARCHAR NOT NULL DEFAULT 'default',
+        default_user_name VARCHAR, res_model VARCHAR,
+        delay_count INTEGER NOT NULL DEFAULT 0,
+        delay_unit VARCHAR NOT NULL DEFAULT 'days',
+        delay_from VARCHAR NOT NULL DEFAULT 'previous_activity',
+        chaining_type VARCHAR NOT NULL DEFAULT 'suggest',
+        suggested_next_summary VARCHAR, default_note VARCHAR
+      );
+      INSERT INTO project_activity_types
+        (id, name, sequence, active, summary, category, res_model, delay_count, delay_unit, delay_from, chaining_type, default_note)
+      VALUES
+        ('project-activity-type-todo', 'To-Do', 2, TRUE, 'To-Do', 'default', NULL, 5, 'days', 'previous_activity', 'suggest', NULL),
+        ('project-activity-type-email', 'Email', 3, TRUE, 'Email', 'default', NULL, 0, 'days', 'previous_activity', 'suggest', NULL),
+        ('project-activity-type-call', 'Call', 6, TRUE, 'Call', 'phonecall', NULL, 2, 'days', 'previous_activity', 'suggest', NULL),
+        ('project-activity-type-meeting', 'Meeting', 9, TRUE, 'Meeting', 'default', NULL, 0, 'days', 'previous_activity', 'suggest', NULL),
+        ('project-activity-type-document', 'Document', 25, TRUE, 'Document', 'upload_file', NULL, 5, 'days', 'previous_activity', 'suggest', NULL)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS project_activity_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
