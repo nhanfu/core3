@@ -63,10 +63,6 @@ actions:
     params: { id: '{state.id}', expected_row_version: '{state.mrp_unbuild_order_detail.row_version}' }
     refresh: [mrp_unbuild_order_detail, mrp_unbuild_orders]
     mutation:
-      operation: update
-      table: mrp_unbuild_orders
-      fields: [state, activity_state, move_count]
-      concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id", status: 404, code: MRP_UNBUILD_NOT_FOUND, message: Unbuild Order not found. }
         - { query: "SELECT id FROM mrp_unbuild_orders WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: MRP_UNBUILD_NOT_DRAFT, message: Only a current Draft Unbuild Order can be unbuilt. }
