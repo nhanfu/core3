@@ -1009,6 +1009,45 @@ passes 3 tests and 26 assertions; global and Events CSS builds pass;
 `bun run audit`, ESLint, and `git diff --check` pass. Implementation commit
 is `0d4d7909`; this evidence update is committed separately.
 
+## Bounded batch: Event communication schedules
+
+The installed Odoo 19 event form exposes the event-owned Communication
+x2many on `event.event` record 1 (`Design Fair Los Angeles`). The live source
+resolves `action_event_view` to action 269 and redirects to `/odoo/events/1`.
+The authenticated tab shows the exact source columns `Template`, `Interval`,
+`Unit`, `Trigger`, and `# Sent`, three deterministic schedules, and `Add a
+line`, edit, and delete controls.
+
+Core3 keeps the event form presentation in `pages/event-detail.yaml` and the
+Communication datasource and mutations in the matching
+`api/event-detail.yaml` page contract. The slice adds permissioned create,
+update, and delete actions, validates templates/intervals/triggers and
+duplicate schedules, calculates the scheduled timestamp from the event dates,
+and increments both parent and line row versions. The CRUD test also proves a
+stale parent is rejected before deletion. The page/API join remains by
+`page.id` (`event-detail`); no page-owned datasource was added.
+
+Authenticated paired captures were taken after opening the populated event
+and selecting Communication:
+
+| Surface | Viewport | Route | Capture | SHA-256 | Checks |
+| --- | --- | --- | --- | --- | --- |
+| Odoo | 1440x900 | `/odoo/events/1` (from action 269) | `/tmp/odoo-events-event-communication-desktop-1440x900.png` | `bcaf451bda38c5be388efa6fc692928879c32717ed51e6ca3e144ad712bd5219beba` | 3 populated rows; no page errors; source shell/chatter visible |
+| Odoo | 390x844 | `/odoo/events/1` (from action 269) | `/tmp/odoo-events-event-communication-mobile-390x844.png` | `9a0abc9f650a55aeff53516005ee3e22afd16e1496225fd75c2374cd613931c8` | 3 populated rows; source responsive column projection |
+| Core3 | 1440x900 | `/events/event-detail?id=event-demo-001` | `/tmp/core3-events-event-communication-desktop-1440x900.png` | `e7c2f85448d2e636d7bf70b6f551416180d566a3cf62bc7a69900ef365bc9b9e` | 3 populated rows; 1440/1440 widths; no page errors or failed requests |
+| Core3 | 390x844 | `/events/event-detail?id=event-demo-001` | `/tmp/core3-events-event-communication-mobile-390x844.png` | `d55f275f65e1c45bb9e1eca5f729789f7b41e4f4f1ecac047a3a8e88d37865f1` | 3 populated rows; 390/390 widths; no page errors or failed requests |
+
+The paired images were visually inspected. Core3 reproduces the source
+notebook placement, schedule columns, populated fixture values, Add a line
+control, and responsive mobile projection. Odoo retains its purple shell and
+right-side chatter panel; Core3 retains the shared Fluent shell and event
+detail layout. Screenshots remain local-only and are not committed.
+
+Validation: the focused Events set passes 11 tests and 102 assertions,
+including the create/edit/stale/delete CRUD path; `bun run audit` reports 543
+pages, 550 routes, and 945 datasources; CSS build, ESLint, and
+`git diff --check` pass.
+
 ## Deliberate defer: registration products, sales, and slot availability
 
 The requested follow-up was audited against Odoo revision `65975996` and the
