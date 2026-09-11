@@ -1,8 +1,8 @@
 # Odoo 19 UI parity — Fleet
 
 Status: in progress; vehicle, Odometers, Contracts, Manufacturers, Models,
-and the Services checkpoint below are implemented, with remaining Fleet
-surfaces explicitly deferred below.
+and the Services checkpoint below are implemented in isolated worktrees, with
+remaining Fleet surfaces explicitly deferred below.
 
 This plan remains the source of truth for the complete Fleet parity scope.
 The Models checkpoint is recorded in `odoo-ui-parity/fleet-batch-5.md`; the
@@ -113,10 +113,11 @@ the columns Date, Description, Service Type, Vehicle, Driver, Vendor, Notes,
 Cost, and Stage, and the form fields Description, Service Type, Date, Cost,
 Vendor, Vehicle, Driver, Odometer Value, Unit, and Notes.
 
-Integrated checkpoint: `869774ed` (`feat(fleet): add services logs parity
-slice`). Core3 exposes `/fleet/services` and `/fleet/services/detail`; page
-YAML is presentation-only and the API fragments `services.yaml` and
-`service-detail.yaml` join by `page.id`. Migrations
+Checkpoint commit: `8bc316dd` (`feat(fleet): add services logs parity slice`)
+plus visual correction commit `6725a8c9` (`fix(fleet): open service logs as
+full forms`). Core3 exposes `/fleet/services` and
+`/fleet/services/detail`; page YAML is presentation-only and the API fragments
+`services.yaml` and `service-detail.yaml` join by `page.id`. Migrations
 `20260911190000-011-fleet-services-schema.yaml` and
 `20260911191000-012-fleet-services-data.yaml` provide idempotent service type
 and service-log tables with the fixed reference date `2026-01-15`. The six
