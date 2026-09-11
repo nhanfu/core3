@@ -637,3 +637,42 @@ unscoped public endpoint.
   source/live limitation checks, and `git diff --check`. Screenshots stay
   under `/tmp`; the implementation commit may contain only the approved
   Project YAML/TS/docs for its batch.
+
+## Bounded slice: Activity Plans implementation (2026-09-11)
+
+The active Odoo 19 Project reference exposes Configuration > Activity Plans as
+the `mail_activity_plan_action_config_project_task` list/kanban/form action.
+The bounded Core3 slice adds the module-qualified route
+`/project/project-activity-plans` and its detail route, with List and Kanban
+states, search, active/archived filtering, model grouping, a New form, and an
+Activities To Create child grid. Page YAML is layout-only; matching API
+fragments join by `page.id` and own deterministic project/task plan and step
+fixtures.
+
+Implementation commit: `4dfcd1eb` (`feat(project): add activity plans parity`)
+after contract commit `3dc6821e` (`docs(project): define activity plans parity
+contract`). The migration is idempotent and fixed-date; manager-only create,
+archive/restore, delete, and child-step boundaries use row versions and
+stable duplicate, invalid-model, missing-record, empty, and transport states.
+Focused coverage passes 3 tests and 36 assertions.
+
+Authenticated Core3 browser verification used `admin@tms.local` on the active
+parent runtime at 1440x900 and 390x844. The populated list, New modal, and
+responsive cards rendered with exact document/body widths and no page errors,
+failed requests, or HTTP error responses. Odoo reference captures cover the
+corresponding list and New form states; screenshots remain outside Git:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Activity Plans list | 1440x900 | `/tmp/odoo-project-activity-plans-desktop-live.png` | `7615982fd01f0c184432611e16bd8731cd371c63af07a027b05c09afd19bb8ea` |
+| Odoo Activity Plans list | 390x844 | `/tmp/odoo-project-activity-plans-mobile-live.png` | `5c79077e64138f57db7407fecba503ccb9fbedf5c7bad4c311f3940e1dae013e` |
+| Odoo Activity Plans New | 1440x900 | `/tmp/odoo-project-activity-plans-create-desktop-live.png` | `a304112bc9ae0a29c94e04e21bb1d65ba803f4251c3c9ac9f00a31bb232656e7` |
+| Odoo Activity Plans New | 390x844 | `/tmp/odoo-project-activity-plans-create-mobile-live.png` | `45d5d60dc1be88cba2116a33da66e342bff7b31903241cc0e28d3fa675d5bac9` |
+| Core3 Activity Plans list | 1440x900 | `/tmp/core3-project-activity-plans-current-1440x900.png` | `00289ebbc190b83760f65b5e986ff891262c1ae32d7bd2b9504f8138c285efef` |
+| Core3 Activity Plans New | 1440x900 | `/tmp/core3-project-activity-plans-create-current-1440x900.png` | `05e444f6138460468707c0c4f1c39aee0b4566a0479789e0bb8e1a41f7b949ff` |
+| Core3 Activity Plans list | 390x844 | `/tmp/core3-project-activity-plans-current-390x844.png` | `d47798f2c4417309ba987c563d0f6d7a98dde0fa0fc33c4a0c497b4fdba2aa21` |
+| Core3 Activity Plans New | 390x844 | `/tmp/core3-project-activity-plans-create-current-390x844.png` | `c056b8142c17154a6ec5a6deb1781967c60335a1f299f219d0f8c2d69a000eb0` |
+
+The documented residual is Odoo's purple shell and full-page form treatment
+versus Core3's Fluent shell and shared modal New action. Images are not
+committed.
