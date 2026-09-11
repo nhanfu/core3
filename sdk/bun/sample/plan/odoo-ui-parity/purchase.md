@@ -532,7 +532,9 @@ and `/tmp/parity-vendors-odoo-mobile.png`. Core3 reported exact 1440px and
 390px document/body widths with no failed requests. Odoo reported the same
 viewport widths; its missing web asset requests are an environment-level
 reference limitation, while the authenticated populated list/kanban DOM was
-still captured. The remaining deliberate difference is Odoo's live contact
+still captured. The shared compact-card mobile contract now uses Odoo-like
+edge-to-edge rows with separators instead of an outer card gutter. The
+remaining deliberate difference is Odoo's live contact
 logos, colored vendor-tag chips, and activity-icon chips; Core3 now matches the
 card hierarchy and responsive information density using the available shared
 primitive. Live contact logos and activity-icon chips remain a future shared
