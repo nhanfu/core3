@@ -1,0 +1,35 @@
+version: 0.0.11
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_orderpoints (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        rule_name VARCHAR NOT NULL, product_id VARCHAR, product_name VARCHAR NOT NULL,
+        category_name VARCHAR NOT NULL, location_name VARCHAR NOT NULL,
+        warehouse_name VARCHAR NOT NULL, on_hand DECIMAL(18,3) NOT NULL DEFAULT 0,
+        forecast DECIMAL(18,3) NOT NULL DEFAULT 0, route VARCHAR NOT NULL DEFAULT 'Buy',
+        min_qty DECIMAL(18,3) NOT NULL DEFAULT 0, max_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        to_order DECIMAL(18,3) NOT NULL DEFAULT 0, unit_name VARCHAR NOT NULL DEFAULT 'Units',
+        trigger VARCHAR NOT NULL DEFAULT 'manual', state VARCHAR NOT NULL DEFAULT 'Open',
+        snoozed_until DATE, order_reference VARCHAR, active BOOLEAN NOT NULL DEFAULT TRUE,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)', lead_days INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(product_name, location_name, company_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_orderpoints_trigger ON inventory_orderpoints(trigger, active);
+      CREATE INDEX IF NOT EXISTS idx_inventory_orderpoints_category ON inventory_orderpoints(category_name);
+      INSERT INTO inventory_orderpoints (id, rule_name, product_id, product_name, category_name, location_name, warehouse_name, on_hand, forecast, route, min_qty, max_qty, to_order, unit_name, trigger, state, snoozed_until, active, company_name, lead_days, created_at, updated_at) VALUES
+        ('orderpoint-drawer-black', 'Replenishment Report', 'product-furn-8900', '[FURN_8900] Drawer Black', 'Furniture / Office', 'WH/Stock', 'WH', 0, -3, 'Buy', 0, 0, 3, 'Units', 'manual', 'Open', NULL, TRUE, 'My Company (San Francisco)', 7, TIMESTAMP '2026-01-15 08:00:00', TIMESTAMP '2026-01-15 08:00:00'),
+        ('orderpoint-desk-right', 'Replenishment Report', 'product-e-com06', '[E-COM06] Corner Desk Right Sit', 'Furniture / Office', 'WH/Stock', 'WH', 0, -10, 'Buy', 0, 0, 10, 'Units', 'manual', 'Open', NULL, TRUE, 'My Company (San Francisco)', 14, TIMESTAMP '2026-01-15 08:01:00', TIMESTAMP '2026-01-15 08:01:00'),
+        ('orderpoint-desk-left', 'Replenishment Report', 'product-furn-1118', '[FURN_1118] Corner Desk Left Sit', 'Furniture / Office', 'WH/Stock', 'WH', 2, -1, 'Buy', 0, 0, 1, 'Units', 'manual', 'Open', NULL, TRUE, 'My Company (San Francisco)', 3, TIMESTAMP '2026-01-15 08:02:00', TIMESTAMP '2026-01-15 08:02:00'),
+        ('orderpoint-storage-box-auto', 'Replenishment Report', 'product-storage-box', '[E-COM08] Storage Box', 'Office Supplies', 'WH/Stock/Shelf 1', 'WH', 12, 8, 'Buy', 5, 20, 12, 'Units', 'auto', 'Open', NULL, TRUE, 'My Company (San Francisco)', 5, TIMESTAMP '2026-01-15 08:03:00', TIMESTAMP '2026-01-15 08:03:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_orderpoints WHERE id IN ('orderpoint-drawer-black', 'orderpoint-desk-right', 'orderpoint-desk-left', 'orderpoint-storage-box-auto');
+      DROP TABLE IF EXISTS inventory_orderpoints;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,120 @@
+page: { id: replenishment }
+datasources:
+  - id: inventory_replenishment_categories
+    single: false
+    permission: inventory.manage
+    query: "SELECT DISTINCT category_name AS value, category_name AS label FROM inventory_orderpoints WHERE active = TRUE ORDER BY category_name"
+  - id: inventory_replenishment_orderpoints
+    single: false
+    permission: inventory.manage
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_REPLENISHMENT_FORBIDDEN, message: You do not have permission to view replenishment proposals. }
+      transport_error: { status: 503, code: INVENTORY_REPLENISHMENT_UNAVAILABLE, message: Replenishment data is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, rule_name, product_id, product_name, category_name,
+        location_name, warehouse_name, CAST(on_hand AS DOUBLE) AS on_hand,
+        CAST(forecast AS DOUBLE) AS forecast, route,
+        CAST(min_qty AS DOUBLE) AS min_qty, CAST(max_qty AS DOUBLE) AS max_qty,
+        CAST(to_order AS DOUBLE) AS to_order, unit_name,
+        CASE trigger WHEN 'auto' THEN 'Automatic' ELSE 'Manual' END AS trigger,
+        trigger AS trigger_value, state, snoozed_until, order_reference,
+        company_name, lead_days
+      FROM inventory_orderpoints
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1
+        AND active = TRUE
+        AND (:q IS NULL OR rule_name ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%'
+          OR category_name ILIKE '%' || :q || '%' OR location_name ILIKE '%' || :q || '%'
+          OR warehouse_name ILIKE '%' || :q || '%' OR route ILIKE '%' || :q || '%')
+        AND (:trigger IS NULL OR :trigger = '' OR trigger = :trigger)
+        AND (:category_name IS NULL OR :category_name = '' OR category_name = :category_name)
+        AND (COALESCE(:status, 'to_reorder') = 'all'
+          OR (COALESCE(:status, 'to_reorder') = 'to_reorder' AND to_order > 0)
+          OR (COALESCE(:status, 'to_reorder') = 'snoozed' AND snoozed_until > DATE '2026-01-15'))
+        AND (COALESCE(:snooze_status, 'not_snoozed') = 'all'
+          OR (COALESCE(:snooze_status, 'not_snoozed') = 'not_snoozed' AND (snoozed_until IS NULL OR snoozed_until <= DATE '2026-01-15'))
+          OR (COALESCE(:snooze_status, 'not_snoozed') = 'snoozed' AND snoozed_until > DATE '2026-01-15'))
+        AND lead_days <= COALESCE(CAST(NULLIF(CAST(:horizon_days AS VARCHAR), '') AS INTEGER), 365)
+      ORDER BY location_name, company_name, id
+actions:
+  - id: create_inventory_replenishment_rule
+    type: server_form
+    permission: inventory.manage
+    title: New Replenishment Rule
+    action: inventory.replenishment.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_replenishment_orderpoints]
+    success_message: Replenishment rule created.
+    mutation:
+      operation: insert
+      table: inventory_orderpoints
+      generated: [id]
+      before_steps: [{ query: "SELECT 'orderpoint-' || regexp_replace(lower(trim(CAST(:product_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') || '-' || regexp_replace(lower(trim(CAST(:location_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [rule_name, product_name, category_name, location_name, warehouse_name, on_hand, forecast, route, min_qty, max_qty, to_order, unit_name, trigger, active, state, company_name, lead_days, created_at]
+      required: [product_name, location_name, min_qty, max_qty]
+      defaults: { rule_name: Replenishment Rule, category_name: Furniture / Office, warehouse_name: WH, on_hand: 0, forecast: 0, route: Buy, to_order: 0, unit_name: Units, trigger: manual, active: true, state: Open, company_name: My Company (San Francisco), lead_days: 1, created_at: '2026-01-15 08:00:00' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:product_name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:location_name AS VARCHAR))) > 0", status: 422, code: INVENTORY_REPLENISHMENT_PRODUCT_REQUIRED, message: A product and location are required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:min_qty AS DECIMAL(18,3)) >= 0 AND CAST(:max_qty AS DECIMAL(18,3)) >= CAST(:min_qty AS DECIMAL(18,3))", status: 422, code: INVENTORY_REPLENISHMENT_RANGE_INVALID, message: Maximum quantity must be greater than or equal to minimum quantity. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_orderpoints WHERE LOWER(product_name) = LOWER(TRIM(CAST(:product_name AS VARCHAR))) AND LOWER(location_name) = LOWER(TRIM(CAST(:location_name AS VARCHAR))) AND active = TRUE)", status: 409, code: INVENTORY_REPLENISHMENT_EXISTS, message: A replenishment rule already exists for this product and location. }
+      result: { query: "SELECT * FROM inventory_orderpoints WHERE id = :id" }
+    fields:
+      - { field: product_name, label: Product, type: text, required: true, placeholder: Product name }
+      - { field: location_name, label: Location, type: text, required: true, placeholder: WH/Stock }
+      - { field: category_name, label: Category, type: text, default: Furniture / Office }
+      - { field: min_qty, label: Minimum Quantity, type: number, required: true, min: 0, default: 0 }
+      - { field: max_qty, label: Maximum Quantity, type: number, required: true, min: 0, default: 0 }
+      - { field: route, label: Route, type: select, options: [{ value: Buy, label: Buy }, { value: Manufacture, label: Manufacture }], default: Buy }
+      - { field: trigger, label: Trigger, type: select, options: [{ value: manual, label: Manual }, { value: auto, label: Automatic }], default: manual }
+  - id: order_inventory_replenishment
+    type: server
+    permission: inventory.manage
+    action: inventory.replenishment.order
+    handler: yaml_mutation
+    operation: order
+    result: alert
+    result_field: message
+    refresh: [inventory_replenishment_orderpoints]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM inventory_orderpoints WHERE id = :id", status: 404, code: INVENTORY_REPLENISHMENT_NOT_FOUND, message: Replenishment proposal not found. }
+        - { query: "SELECT id FROM inventory_orderpoints WHERE id = :id AND active = TRUE AND to_order > 0 AND row_version = :expected_row_version", status: 409, code: INVENTORY_REPLENISHMENT_STALE, message: This replenishment proposal changed. Reload before ordering. }
+      steps:
+        - { query: "UPDATE inventory_orderpoints SET state = 'Ordered', to_order = 0, order_reference = 'PO/REPL/' || id, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 08:00:00' WHERE id = :id AND active = TRUE AND to_order > 0 AND row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_REPLENISHMENT_STALE, message: This replenishment proposal changed. Reload before ordering. }
+      result: { query: "SELECT id, order_reference, 'Replenishment order generated: ' || order_reference AS message FROM inventory_orderpoints WHERE id = :id" }
+  - id: automate_inventory_replenishment
+    type: server
+    permission: inventory.manage
+    action: inventory.replenishment.automate
+    handler: yaml_mutation
+    operation: automate
+    result: alert
+    result_field: message
+    refresh: [inventory_replenishment_orderpoints]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM inventory_orderpoints WHERE id = :id AND active = TRUE AND to_order > 0 AND trigger = 'manual' AND row_version = :expected_row_version", status: 409, code: INVENTORY_REPLENISHMENT_STALE, message: Only a current manual proposal can be automated. }
+      steps:
+        - { query: "UPDATE inventory_orderpoints SET trigger = 'auto', row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 08:00:00' WHERE id = :id AND active = TRUE AND to_order > 0 AND trigger = 'manual' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_REPLENISHMENT_STALE, message: This replenishment proposal changed. Reload before automating. }
+      result: { query: "SELECT id, 'Replenishment rule automated.' AS message FROM inventory_orderpoints WHERE id = :id" }
+  - id: snooze_inventory_replenishment
+    type: server_form
+    permission: inventory.manage
+    title: Snooze Replenishment
+    action: inventory.replenishment.snooze
+    handler: yaml_mutation
+    operation: snooze
+    refresh: [inventory_replenishment_orderpoints]
+    success_message: Replenishment proposal snoozed.
+    mutation:
+      operation: update
+      table: inventory_orderpoints
+      fields: [snoozed_until]
+      required: [snoozed_until]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_orderpoints WHERE id = :id AND active = TRUE AND to_order > 0 AND trigger = 'manual' AND row_version = :expected_row_version", status: 409, code: INVENTORY_REPLENISHMENT_NOT_SNOOZABLE, message: Only a current manual proposal can be snoozed. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:snoozed_until AS DATE) > DATE '2026-01-15'", status: 422, code: INVENTORY_REPLENISHMENT_SNOOZE_DATE_INVALID, message: Choose a date after the planning date. }
+      result: { query: "SELECT * FROM inventory_orderpoints WHERE id = :id" }
+    fields:
+      - { field: snoozed_until, label: Snooze Date, type: date, required: true, default: '2026-01-22' }

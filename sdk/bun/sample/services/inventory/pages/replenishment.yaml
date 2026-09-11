@@ -1,0 +1,53 @@
+title: Replenishment
+page: { id: replenishment, route: /replenishment, breadcrumb: [Supply Chain, Inventory, Procurement, Replenishment], auth: { require: [inventory.manage] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_replenishment_orderpoints
+    create_action: create_inventory_replenishment_rule
+    create_label: New
+    search: { label: Search replenishment, placeholder: 'Search products, routes, or locations...' }
+    default_filters: { trigger: manual, status: to_reorder, snooze_status: not_snoozed, horizon_days: '365' }
+    filters:
+      - { field: trigger, label: Trigger, options: [{ id: manual, label: Manual }, { id: auto, label: Automatic }] }
+      - { field: category_name, label: Category, options_source: inventory_replenishment_categories }
+      - { field: status, label: Status, options: [{ id: to_reorder, label: To Reorder }, { id: all, label: All Rules }, { id: snoozed, label: Snoozed }] }
+      - { field: snooze_status, label: Snooze, options: [{ id: not_snoozed, label: Not Snoozed }, { id: all, label: All }, { id: snoozed, label: Snoozed }] }
+    group_by:
+      - { field: warehouse_name, label: Warehouse }
+      - { field: location_name, label: Location }
+      - { field: product_name, label: Product }
+      - { field: category_name, label: Category }
+    view_navigation: icons
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: ''
+        card: { title: rule_name, subtitle: product_name, fields: [{ field: min_qty, label: Min qty }, { field: max_qty, label: Max qty }] }
+      - { id: form, label: Form, icon: form, mobile: false }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: on_hand, label: On Hand, align: right, mobile: true }
+      - { field: forecast, label: Forecast, align: right, mobile: true }
+      - { field: route, label: Route, mobile: false }
+      - { field: min_qty, label: Min, align: right, mobile: true }
+      - { field: max_qty, label: Max, align: right, mobile: true }
+      - { field: to_order, label: To Order, align: right, mobile: true }
+      - { field: unit_name, label: Unit, mobile: true }
+      - field: actions
+        label: ''
+        sortable: false
+        mobile: false
+        actions:
+          - { id: order_inventory_replenishment, label: Order, icon: truck, permission: inventory.manage, show_if: "row.to_order > 0" }
+          - { id: automate_inventory_replenishment, label: Automate, icon: refresh, permission: inventory.manage, show_if: "row.to_order > 0 && row.trigger === 'manual'" }
+          - { id: snooze_inventory_replenishment, label: Snooze, icon: bell-off, permission: inventory.manage, show_if: "row.to_order > 0 && row.trigger === 'manual'" }
+    page_size: 50
+    row_key: id
+    row_actions: buttons
+    selectable: false
+    empty_state: { title: 'You are good, no replenishment to perform!', description: 'Replenishment propositions appear here when inventory forecasts fall below a minimum. Adjust the filters or create a reordering rule.' }
