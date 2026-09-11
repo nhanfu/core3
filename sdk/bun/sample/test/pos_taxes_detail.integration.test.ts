@@ -36,7 +36,7 @@ describe('POS Taxes list, form, and permission parity', () => {
 
   test('matches Odoo Taxes list, kanban, and form labels', () => {
     const list = yaml('pages/pos-taxes.yaml').components[0];
-    expect(list).toMatchObject({ type: 'ListView', source: 'pos_taxes', create_action: 'new_pos_tax', row_open_action: 'view_pos_tax', row_double_click_action: 'view_pos_tax' });
+    expect(list).toMatchObject({ type: 'ListView', source: 'pos_taxes', create_action: 'new_pos_tax', row_open_action: 'view_pos_tax', row_double_click_action: 'view_pos_tax', default_filters: { active: 'true' } });
     expect(list.columns.map((column: any) => column.label)).toEqual(['Tax Name', 'Description', 'Tax Type', 'Tax Scope', 'Label on Invoices', 'Company', 'Active']);
     expect(list.empty_state).toEqual({ title: 'Create a new tax', description: 'Define the taxes used on Point of Sale products and orders.' });
     expect(action('api/pos-taxes.yaml', 'view_pos_tax')).toMatchObject({ permission: 'pos.read', navigate_to: '/point-of-sale/tax-detail', params: { id: '{row.id}' } });

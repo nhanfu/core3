@@ -18,6 +18,7 @@ components:
       - { field: invoice_label, label: Label on Invoices }
       - { field: company, label: Company }
       - { field: active, label: Active, type: StatusChip }
+    default_filters: { active: 'true' }
     page_size: 50
     row_key: id
     row_open_action: view_pos_tax
