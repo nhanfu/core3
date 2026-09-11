@@ -2,6 +2,52 @@
 
 Status: in-progress
 
+## Current batch: Event Mail Schedulers
+
+The next uncovered visible Events action in the live personal Odoo database is
+`Events > Configuration > Mail Schedulers`. The installed Odoo 19 source
+revision is `65975996`; `event.menu_event_mail_schedulers` is restricted to
+the `Technical Features` group (`base.group_no_one`) and opens
+`event.action_event_mail` as `/odoo/action-282`. Its model is `event.mail`,
+its exact action name is `Events Mail Schedulers`, its view order is
+`list,form`, and its action context is `{'create': False}`. The list view is
+`event.mail.list` (view 897) and shows `Event`, `Template`, `Schedule Date`,
+`# Sent`, and the unlabeled communication-status icon. Its empty help is
+`Nothing Scheduled yet!` followed by `Under this technical menu you will find
+all scheduled communication related to your events.`
+
+The authenticated `core3_personal` reference contains 21 schedulers across
+the official demo events. The first record is the `Event: Registration
+Confirmation` scheduler for `Design Fair Los Angeles`; its form is titled
+`Event Mail Scheduler` and exposes `Event`, `Template`, `Global communication
+Status`, `Interval`, `Trigger`, and `Schedule Date`, with `Mail` as the
+notification type and `After each registration` as the trigger. The form's
+technical `Registration Mails` notebook is source-defined but hidden unless
+the technical group is granted in the current user context.
+
+This bounded slice adds `/events/mail-schedulers` and
+`/events/mail-schedulers/detail`, joined by `page.id`. The page YAML owns the
+Odoo list/form presentation and navigation; `api/event-mail-schedulers.yaml`
+owns the list/detail datasources. Migration
+`20260911170000-020-event-mail-schedulers.yaml` seeds 21 fixed schedulers and
+three registration-mail rows using `2026-01-15`-anchored timestamps. The
+action is intentionally read-only: create is disabled in Odoo and computed
+mail state/schedule fields expose no edit, delete, or workflow control, so no
+Core3 CRUD mutation is declared. `events.settings` maps to the existing
+system-only permission boundary for the technical Odoo menu; empty, missing,
+transport-error, and forbidden contracts are explicit.
+
+Reference evidence captured through the authenticated Odoo menu/action:
+`/tmp/odoo-events-mail-schedulers-desktop-reference.png`,
+`/tmp/odoo-events-mail-schedulers-mobile-reference.png`,
+`/tmp/odoo-events-mail-scheduler-detail-desktop-reference.png`, and
+`/tmp/odoo-events-mail-scheduler-detail-mobile-reference.png`. Core3 evidence
+will use matching 1440x900 and 390x844 captures under `/tmp`. The deterministic
+Core3 dates intentionally differ from Odoo's moving demo dates; Odoo renders
+its icon-only status widget and richer reference/template widgets, while the
+bounded Core3 form uses labeled status text and does not reproduce the hidden
+registration-mail one-to-many grid. Screenshots remain outside Git.
+
 ## Current batch: Attendee registration confirmation
 
 The authenticated personal Odoo reference is healthy at
