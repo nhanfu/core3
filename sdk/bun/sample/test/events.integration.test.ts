@@ -60,27 +60,29 @@ describe('Events attendee parity batch', () => {
   test('opens attendee rows on a service-owned detail route', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const attendees = yaml('pages/attendees.yaml');
+    const attendeesApi = yaml('api/attendees.yaml');
     expect(attendees.components[0]).toMatchObject({ row_open_action: 'view_event_attendee', row_double_click_action: 'view_event_attendee' });
-    expect(attendees.actions.find((action: any) => action.id === 'view_event_attendee')).toMatchObject({ navigate_to: '/events/attendees/detail', params: { id: '{row.id}' } });
+    expect(attendeesApi.actions.find((action: any) => action.id === 'view_event_attendee')).toMatchObject({ navigate_to: '/events/attendees/detail', params: { id: '{row.id}' } });
     expect(yaml('pages/attendee-detail.yaml').page.route).toBe('/events/attendees/detail');
     expect(discovered.pages.get('event-attendee-detail')?.config.components[0].source).toBe('event_attendee_detail');
     expect(discovered.pageDatasources.get('event-attendee-detail')).toContain('event_attendee_answers');
   });
 
   test('matches the Odoo attendee form sections and lifecycle controls', () => {
-    const form = yaml('pages/attendee-detail.yaml').components.find((component: any) => component.type === 'OdooFormView');
-    expect(form.statusbar.map((state: any) => state.value)).toEqual(['Registered', 'Attended', 'Cancelled']);
+    const page = yaml('pages/attendee-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    expect(form.statusbar.map((state: any) => state.value)).toEqual(['Unconfirmed', 'Registered', 'Attended', 'Cancelled']);
     expect(form.groups.map((group: any) => group.title)).toEqual(['Attendee', 'Event Information']);
-    expect(form.header_actions.map((action: any) => action.id)).toEqual(['mark_attendee_attended_detail', 'cancel_event_attendee_detail']);
+    expect(form.header_actions.map((action: any) => action.id)).toEqual(['confirm_attendee_detail', 'mark_attendee_attended_detail', 'cancel_event_attendee_detail']);
   });
 
   test('guards attendee transitions and seeds answer-line fields', () => {
-    const page = yaml('pages/attendee-detail.yaml');
+    const api = yaml('api/attendee-detail.yaml');
     for (const id of ['mark_attendee_attended_detail', 'cancel_event_attendee_detail']) {
-      const action = page.actions.find((candidate: any) => candidate.id === id);
+      const action = api.actions.find((candidate: any) => candidate.id === id);
       expect(action.permission).toBe('events.write');
       expect(action.mutation.guards[0].status).toBe(409);
-      expect(action.mutation.steps[0].query).toContain('row_version = row_version + 1');
+      expect(action.mutation.steps[0].query).toContain('row_version = COALESCE(row_version, 0) + 1');
     }
     const migration = yaml('migrations/20260910110000-004-attendee-detail.yaml');
     expect(migration.type.postgres.up).toContain('CREATE TABLE IF NOT EXISTS event_registration_answers');

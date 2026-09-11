@@ -5,7 +5,7 @@ components:
     variant: odoo
     source: event_attendees
     search: { label: Search attendees, placeholder: Search attendees or events... }
-    filters: [{ field: state, label: Status, options: [{ id: Registered, label: Registered }, { id: Attended, label: Attended }, { id: Cancelled, label: Cancelled }]}]
+    filters: [{ field: state, label: Status, options: [{ id: Unconfirmed, label: Unconfirmed }, { id: Registered, label: Registered }, { id: Attended, label: Attended }, { id: Cancelled, label: Cancelled }]}]
     page_size: 50
     row_key: id
     row_actions: menu
@@ -21,33 +21,6 @@ components:
         label: ''
         sortable: false
         actions:
+          - { id: confirm_event_attendee, label: Registered, variant: primary, permission: events.write, show_if: "row.state === 'Unconfirmed'" }
           - { id: mark_attendee_attended, label: Mark attended, variant: primary, permission: events.write, show_if: "row.state === 'Registered'" }
           - { id: cancel_event_attendee, label: Cancel registration, variant: danger, permission: events.write, show_if: "row.state !== 'Cancelled'" }
-actions:
-  - id: view_event_attendee
-    type: navigate
-    permission: events.read
-    navigate_to: /events/attendees/detail
-    params: { id: '{row.id}' }
-  - id: mark_attendee_attended
-    type: server
-    permission: events.write
-    action: events.registrations.check_in
-    handler: yaml_mutation
-    params: { id: '{row.id}' }
-    refresh: [event_attendees]
-    mutation:
-      guards: [{ query: "SELECT id FROM event_registrations WHERE id = :id AND state = 'Registered'", status: 409, message: Only registered attendees can be marked attended }]
-      steps: [{ query: "UPDATE event_registrations SET state = 'Attended' WHERE id = :id" }]
-      result: { query: "SELECT * FROM event_registrations WHERE id = :id" }
-  - id: cancel_event_attendee
-    type: server
-    permission: events.write
-    action: events.registrations.cancel
-    handler: yaml_mutation
-    params: { id: '{row.id}' }
-    refresh: [event_attendees]
-    mutation:
-      guards: [{ query: "SELECT id FROM event_registrations WHERE id = :id AND state <> 'Cancelled'", status: 409, message: Only active registrations can be cancelled }]
-      steps: [{ query: "UPDATE event_registrations SET state = 'Cancelled' WHERE id = :id" }]
-      result: { query: "SELECT * FROM event_registrations WHERE id = :id" }

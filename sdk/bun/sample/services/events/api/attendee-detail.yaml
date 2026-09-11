@@ -3,7 +3,44 @@ datasources:
   - id: event_attendee_detail
     single: true
     permission: events.read
-    query: "SELECT id, row_version, attendee_name, COALESCE(attendee_email, '') AS attendee_email, COALESCE(attendee_phone, '') AS attendee_phone, COALESCE(company_name, '') AS company_name, event_name, COALESCE(ticket_type, '') AS ticket_type, COALESCE(booked_by, '') AS booked_by, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE id = :id"
+    error_states: { missing_record: { status: 404, code: EVENT_ATTENDEE_NOT_FOUND, message: Attendee registration not found. }, transport_error: { status: 503, code: EVENT_ATTENDEE_DETAIL_UNAVAILABLE, message: Attendee registration is temporarily unavailable. } }
+    query: "SELECT id, COALESCE(row_version, 1) AS row_version, attendee_name, COALESCE(attendee_email, '') AS attendee_email, COALESCE(attendee_phone, '') AS attendee_phone, COALESCE(company_name, '') AS company_name, event_name, COALESCE(ticket_type, '') AS ticket_type, COALESCE(booked_by, '') AS booked_by, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
   - id: event_attendee_answers
     permission: events.read
     query: "SELECT id, question, question_type, COALESCE(suggested_answer, '') AS suggested_answer, COALESCE(text_answer, '') AS text_answer FROM event_registration_answers WHERE registration_id = :id ORDER BY id"
+actions:
+  - id: confirm_attendee_detail
+    type: server
+    permission: events.write
+    action: events.registrations.confirm
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.event_attendee_detail.row_version}' }
+    refresh: [event_attendee_detail]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM event_registrations WHERE id = :id", status: 404, code: EVENT_ATTENDEE_NOT_FOUND, message: Attendee registration not found. }
+        - { query: "SELECT id FROM event_registrations WHERE id = :id AND state = 'Unconfirmed' AND COALESCE(row_version, 1) = :expected_row_version", status: 409, code: EVENT_ATTENDEE_STALE_OR_INVALID, message: Only unconfirmed attendees can be registered, and the record must be current. }
+      steps: [{ query: "UPDATE event_registrations SET state = 'Registered', row_version = COALESCE(row_version, 0) + 1 WHERE id = :id AND state = 'Unconfirmed' AND COALESCE(row_version, 1) = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Attendee registration was changed by another user. Reload it before registering. }]
+      result: { query: "SELECT * FROM event_registrations WHERE id = :id" }
+  - id: mark_attendee_attended_detail
+    type: server
+    permission: events.write
+    action: events.registrations.check_in
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.event_attendee_detail.row_version}' }
+    refresh: [event_attendee_detail]
+    mutation:
+      guards: [{ query: "SELECT id FROM event_registrations WHERE id = :id AND state = 'Registered' AND COALESCE(row_version, 1) = :expected_row_version", status: 409, code: EVENT_ATTENDEE_STALE_OR_INVALID, message: Only current registered attendees can be marked attended }]
+      steps: [{ query: "UPDATE event_registrations SET state = 'Attended', row_version = COALESCE(row_version, 0) + 1 WHERE id = :id AND state = 'Registered' AND COALESCE(row_version, 1) = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Attendee registration was changed by another user. Reload it before marking attended. }]
+      result: { query: "SELECT * FROM event_registrations WHERE id = :id" }
+  - id: cancel_event_attendee_detail
+    type: server
+    permission: events.write
+    action: events.registrations.cancel
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.event_attendee_detail.row_version}' }
+    refresh: [event_attendee_detail]
+    mutation:
+      guards: [{ query: "SELECT id FROM event_registrations WHERE id = :id AND state <> 'Cancelled' AND COALESCE(row_version, 1) = :expected_row_version", status: 409, code: EVENT_ATTENDEE_STALE_OR_INVALID, message: Only current active registrations can be cancelled }]
+      steps: [{ query: "UPDATE event_registrations SET state = 'Cancelled', row_version = COALESCE(row_version, 0) + 1 WHERE id = :id AND state <> 'Cancelled' AND COALESCE(row_version, 1) = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: Attendee registration was changed by another user. Reload it before cancelling. }]
+      result: { query: "SELECT * FROM event_registrations WHERE id = :id" }

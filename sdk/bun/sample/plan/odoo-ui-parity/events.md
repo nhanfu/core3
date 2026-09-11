@@ -2,6 +2,45 @@
 
 Status: in-progress
 
+## Current batch: Attendee registration confirmation
+
+The authenticated personal Odoo reference is healthy at
+`http://localhost:8069/core3_personal`, using `codex@core3.local` in the
+`core3_personal` database with demo data and the newly installed addon set.
+Through the Events menu, Reporting > Attendees resolves to
+`/odoo/action-287`; Odoo's `event.registration` form exposes an `Unconfirmed`
+state with a `Registered` transition, followed by `Attended` and
+`Cancelled`. A disposable reference attendee, `Unconfirmed Guest`, was
+created at `/odoo/action-287/32` for authenticated comparison evidence.
+
+This bounded Core3 slice adds that previously uncovered confirmation state and
+action. The attendee list and detail page YAML remain presentation-only; the
+page-id-bound API fragments own their datasources and server actions. The
+fixed migration `20260911160000-019-event-registration-confirmation.yaml`
+adds `registration-demo-unconfirmed` for `An unpublished event`, with fixed
+identity/contact/registration values and no current-time or random seed
+values. Confirmation, check-in, and cancellation all require `events.write`,
+validate the current state, and compare/increment `row_version`; missing,
+invalid, stale, empty, and transport-error contracts are explicit.
+
+Acceptance evidence for this batch:
+
+- Focused registration-confirmation integration tests: 4 tests, 34
+  assertions.
+- Full Events integration tests: 44 tests, 378 assertions; lint and
+  `git diff --check` are clean.
+- Authenticated Odoo captures: `/tmp/odoo-events-registration-confirmation-
+  desktop-final.png` and `mobile-final.png`.
+- Authenticated Core3 captures: `/tmp/core3-events-registration-confirmation-
+  list-desktop-final.png`, `detail-desktop-final.png`,
+  `list-mobile-final.png`, and `detail-mobile-final.png`.
+- Both authenticated browser passes used 1440x900 and 390x844, reported no
+  failed same-origin requests, and measured no horizontal overflow. The
+  exact limitation is that the requested `js_repl` browser skill runtime was
+  unavailable, so shell Playwright with headless Chromium was used instead.
+  Odoo includes its chatter/email-preview area; this bounded Core3 slice does
+  not reproduce chatter, attachments, or the email composer.
+
 ## Current batch: Lead Generation Rules
 
 The next uncovered visible Events action is Odoo `Configuration > Lead
