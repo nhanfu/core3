@@ -2,6 +2,61 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-11 bounded Unbuild Orders follow-up
+
+- Revalidated the next installed visible Manufacturing action in the
+  authenticated personal database `core3_personal`: Manufacturing / Operations
+  / Unbuild Orders is menu `mrp.menu_mrp_unbuild` (runtime menu `558`), action
+  `mrp.mrp_unbuild` (runtime action `861`), model `mrp.unbuild`, and the live
+  action path is `/odoo/unbuild-orders`. Its exact modes are
+  `list,kanban,form,activity`; the search view exposes Product, Manufacturing
+  Order, Draft, Done, Product grouping, and Manufacturing Order grouping. The
+  list labels are Reference, Product, Bill of Material, Manufacturing Order,
+  Lot/Serial Number, Quantity, Unit, Company, and Status. The form exposes the
+  same fields plus Source Location, Destination Location, the Draft/Done
+  statusbar, the `Unbuild` button, and the post-completion `Product Moves`
+  stat button. Source view records are `mrp_unbuild_search_view`,
+  `mrp_unbuild_kanban_view`, `mrp_unbuild_form_view`, and
+  `mrp_unbuild_tree_view`.
+- The live database has zero persisted `mrp.unbuild` rows; Odoo therefore
+  renders its `sample="1"` demonstration rows in the list and kanban views.
+  The authenticated Odoo captures intentionally preserve that behavior rather
+  than creating a record in the reference database. Mobile Odoo resolves the
+  action to Kanban, matching the responsive source view behavior.
+- Core3 implements the bounded action at `/manufacturing/unbuild-orders` with
+  detail `/manufacturing/unbuild-orders/detail`, and exposes the exact
+  `Unbuild Orders` menu under Manufacturing / Operations. The presentation-only
+  pages are `manufacturing-unbuild-orders` and
+  `manufacturing-unbuild-order-detail`; `api/unbuild-orders.yaml` and
+  `api/unbuild-order-detail.yaml` own all datasources and mutations and join
+  the pages by matching `page.id`.
+- Migration `0.0.11` seeds six stable rows at `2026-01-15`: three Draft and
+  three Done orders, two companies, products/BOMs, manufacturing orders,
+  lots, locations, activity fields, and product-move counts. The list covers
+  default, search, Status/Company filters, empty, not-found, and transport
+  error fixtures. Datasources declare explicit 401, 403, 404, and 503 states;
+  mutations cover create/edit validation, duplicate references, Draft → Done
+  `Unbuild`, row-version stale rejection, and guards preventing Done edits or
+  deletion. The focused suite is
+  `test/manufacturing_unbuild_orders.integration.test.ts` (4 tests, 47
+  assertions), including idempotent migration and route discovery checks.
+- Authenticated paired captures (all images remain under `/tmp`) are:
+  `/tmp/odoo-manufacturing-unbuild-orders-desktop-1440x900-{list,kanban,form}.png`,
+  `/tmp/odoo-manufacturing-unbuild-orders-mobile-390x844-{list,kanban,form}.png`,
+  `/tmp/core3-manufacturing-unbuild-orders-desktop-1440x900-{list,kanban,form}-final.png`,
+  and `/tmp/core3-manufacturing-unbuild-orders-mobile-390x844-{list,kanban,form}-final.png`.
+  The browser matrix reported no failed requests, page errors, or horizontal
+  overflow at either viewport. The authenticated desktop workflow capture
+  `/tmp/core3-manufacturing-unbuild-orders-desktop-done-final.png` records a
+  Draft row changing to Done with revision 2 and two Product Moves.
+- Deliberate bounded limits: Odoo's persisted reference is empty and its
+  generated sample values are not deterministic; Core3 uses fixed fixtures for
+  reproducible comparisons. Core3 renders Product Moves as the exact count
+  field but does not add the separate Stock Moves action, and it does not
+  synthesize Odoo chatter, attachments, component move lines, or the
+  simplified MO-launched wizard. Those cross-module and wizard surfaces remain
+  outside this one installed action slice.
+
 ## 2026-09-11 bounded Overall Equipment Effectiveness follow-up
 
 - Revalidated the next uncovered visible Manufacturing action in the

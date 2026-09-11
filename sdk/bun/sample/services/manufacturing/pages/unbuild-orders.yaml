@@ -47,7 +47,7 @@ components:
       - { field: lot_name, label: Lot/Serial Number, mobile: false }
       - { field: product_qty, label: Quantity, align: right, mobile: true }
       - { field: product_uom, label: Unit, mobile: true }
-      - { field: company_name, label: Company, mobile: false, optional: hide }
+      - { field: company_name, label: Company, mobile: false }
       - { field: state, label: Status, type: StatusChip, mobile: true }
       - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_mrp_unbuild, label: Open, icon: eye }, { id: delete_mrp_unbuild, label: Delete, icon: trash, variant: danger, show_if: 'row.state === "Draft"' }] }
     page_size: 50
