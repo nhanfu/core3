@@ -724,3 +724,67 @@ The remaining visual difference is the shared Core3 Fluent shell and compact
 mobile table clipping versus Odoo's purple shell and formatted currency cells;
 the action columns, row count, search/New controls, responsive composition,
 and viewport fit are otherwise aligned for this bounded slice.
+
+## Current batch: Combo Choice detail, options, and New form
+
+The authenticated personal Odoo 19 reference exposes Point of Sale → Product
+Catalog → Combo Choices at `/odoo/combo-choices`. The bounded action includes
+the eight-row list (`Name`, `Combo Price`, `Product Count`), the
+`Desk Accessories Combo` form (`Combo Choice`, `Maximum items?`, `Includes
+items?`, `Combo Price?`, `Company`), its Options x2many grid (`Options`,
+`Original Price`, `Extra Price`), and the New form with an empty Options grid.
+The live reference was checked against `core3_personal` on 2026-09-11 at
+1440×900 and 390×844.
+
+Core3 now completes the action at `/point-of-sale/combo-choices`,
+`/point-of-sale/combo-choice-detail?id=pos-combo-oat-milk`, and
+`/point-of-sale/combo-choices/new`. Frontend page YAML remains separate from
+backend API/action YAML and joins through `pos-combo-choices`,
+`pos-combo-choice-detail`, and `pos-combo-choice-new` page IDs. Migration `034`
+owns the deterministic eight-choice catalog, detail projections, and option
+rows. The service contract covers `pos.read` list/detail access,
+`pos.manage` parent and option CRUD, required/duplicate/value validation,
+in-use deletion protection, missing/empty/transport states, and optimistic
+parent/line stale guards. The New Options `Add a line` control is visible but
+disabled until the unsaved parent is saved, matching the bounded x2many
+workflow used by the existing POS detail slices.
+
+Implementation checkpoints are `c094def7` (`feat(pos): add combo choice detail
+parity`) and `78a9227d` (`fix(pos): keep combo choice columns responsive`). The
+focused integration suite passes 4 tests and 43 assertions. ESLint passes with
+no warnings; the UI audit passes with 465 pages, 472 routes, and 809
+datasources; `git diff --check` is clean.
+
+Authenticated browser evidence was captured and visually inspected on
+2026-09-11. Odoo used the personal `http://localhost:8069` reference and Core3
+used the isolated branch runtime from this worktree (`http://localhost:3014`,
+backend `3121`) so the screenshots exercise the committed branch without
+modifying the parent checkout. Both viewports reached the list through the
+authenticated app, opened `Desk Accessories Combo` by row action, and loaded
+the New form. The browser run recorded zero unexpected responses, zero console
+errors, no horizontal overflow, all three list columns at mobile width, and
+all three option-grid columns at mobile width.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Combo Choices list | 1440×900 | `/tmp/odoo-pos-combo-choices-list-desktop-20260911.png` | `6f3e22dc6be236ed9ac69bfc2cac2f90327b21fc3b9bd64f4541124159223cc2` |
+| Odoo Combo Choice detail | 1440×900 | `/tmp/odoo-pos-combo-choices-detail-desktop-20260911.png` | `f0444a50ae4bfbfee7c0df3da8375bf0e85c4a4f77903c62035993ccb9f68d5b` |
+| Odoo Combo Choice New | 1440×900 | `/tmp/odoo-pos-combo-choices-new-desktop-20260911.png` | `f5921177c125115e5abcff36f43cab49a928a6028866c90e62929a16d1e596d6` |
+| Core3 Combo Choices list | 1440×900 | `/tmp/core3-pos-combo-choices-list-desktop-20260911-fixed.png` | `842e725fcc8e72821e32120e922dcc387c27939d864a63fa6693556f6d6f0bc7` |
+| Core3 Combo Choice detail | 1440×900 | `/tmp/core3-pos-combo-choices-detail-desktop-20260911-fixed.png` | `39a9f4e04112bff5f7a80688759362c6787d24c5a43cea0bdae5ac9ff99be417` |
+| Core3 Combo Choice New | 1440×900 | `/tmp/core3-pos-combo-choices-new-desktop-20260911-fixed.png` | `e3c6156c2e66235a37f67f51d91033b2af401dbf62cf2a1faa02d18a5af3c82f` |
+| Odoo Combo Choices list | 390×844 | `/tmp/odoo-pos-combo-choices-list-mobile-20260911.png` | `c980cacc0c34f98175dc48673f08698cfe0ab1fe9b310759fdceb5f5fa9882b4` |
+| Odoo Combo Choice detail | 390×844 | `/tmp/odoo-pos-combo-choices-detail-mobile-20260911.png` | `033ca95bb670fbee8bc4efde70c285f1943f841c15cc4b4792833d258821f3b6` |
+| Odoo Combo Choice New | 390×844 | `/tmp/odoo-pos-combo-choices-new-mobile-20260911.png` | `c2baa86798ad7e06fa4e617ec71b347c6182b75b581270037ceeb379b63b5494` |
+| Core3 Combo Choices list | 390×844 | `/tmp/core3-pos-combo-choices-list-mobile-20260911-fixed.png` | `bea6dead81f3caf24473681ab904c54640034aa214c631ed2350478918e3c20b` |
+| Core3 Combo Choice detail | 390×844 | `/tmp/core3-pos-combo-choices-detail-mobile-20260911-fixed.png` | `d66fc7ad5aeda726a6770de03c7fc7f250d1688388c6909d33ac61de8689ab82` |
+| Core3 Combo Choice New | 390×844 | `/tmp/core3-pos-combo-choices-new-mobile-20260911-fixed.png` | `45ded701ba2edcb60491bc13335e4d2cf37f1d766387927fa500672802761e75` |
+
+The remaining visual differences are intentional shared-product gaps: Odoo
+uses its purple shell and flat form sheet, while Core3 uses the Fluent shell,
+breadcrumbs, and OdooFormView card; Core3 shows plain numeric currency values
+where Odoo formats currency with a symbol and fixed decimals; and Core3's
+mobile detail form continues below the viewport while Odoo's compact form fits
+more rows. The responsive fix keeps the Odoo list's three columns visible at
+390px and keeps the Options price columns visible in Core3. All screenshots
+remain under `/tmp` and are not committed.
