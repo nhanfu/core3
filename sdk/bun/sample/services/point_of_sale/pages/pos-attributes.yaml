@@ -4,13 +4,29 @@ components:
   - type: ListView
     variant: odoo
     source: pos_attributes
+    create_action: new_pos_attribute
+    create_label: New
+    responsive_card: true
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: name
+          subtitle: display_type
+          fields:
+            - { field: variant_creation, label: Variant Creation }
+            - { field: values_count, label: Values }
+    row_open_action: view_pos_attribute
+    row_double_click_action: view_pos_attribute
+    form_view: { page: apps/services/point_of_sale/pages/pos-attribute-detail.yaml, side_panel: false }
     search: { label: Search attributes, placeholder: 'Search attribute or display type...' }
-    filters: [{ field: active, label: Status, options_source: pos_attribute_active }]
     columns:
       - { field: name, label: Attribute, type: PrimaryEntityCell }
       - { field: display_type, label: Display Type }
       - { field: variant_creation, label: Variant Creation }
-      - { field: values_count, label: Values, align: right }
-      - { field: active, label: Active, type: StatusChip }
     page_size: 50
     row_key: id
+    empty_state: { title: No attributes, description: Create an attribute to add variants to your products. }

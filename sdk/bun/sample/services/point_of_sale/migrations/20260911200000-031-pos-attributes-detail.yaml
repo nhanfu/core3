@@ -25,6 +25,8 @@ type:
         default_extra_price DECIMAL(18,2) NOT NULL DEFAULT 0,
         active BOOLEAN NOT NULL DEFAULT true
       );
+      DELETE FROM pos_attribute_values WHERE attribute_id IN ('pos-attr-milk', 'pos-attr-roast', 'pos-attr-archived');
+      DELETE FROM pos_attributes WHERE id IN ('pos-attr-milk', 'pos-attr-roast', 'pos-attr-archived');
       INSERT INTO pos_attributes(id, row_version, sequence, name, display_type, variant_creation, values_count, active) VALUES
         ('pos-attr-brand', 1, 10, 'Brand', 'Radio', 'Instantly', 0, true),
         ('pos-attr-shoes-size', 1, 30, 'Shoes size', 'Pills', 'Never', 0, true),
