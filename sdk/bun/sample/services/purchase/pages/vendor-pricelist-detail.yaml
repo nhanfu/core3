@@ -25,9 +25,9 @@ components:
           - { field: product_name, label: Product }
           - { field: product_variant_name, label: Product Variant? }
           - { field: min_qty, label: Quantity? }
-          - { field: unit_price, label: Unit Price }
+          - { field: unit_price, label: Unit Price? }
           - { field: currency, label: Currency }
-          - { field: date_start, label: Validity }
+          - { field: date_start, label: Validity? }
           - { field: date_end, label: To }
           - { field: discount, label: Discount (%) }
           - { field: company_name, label: Company }
