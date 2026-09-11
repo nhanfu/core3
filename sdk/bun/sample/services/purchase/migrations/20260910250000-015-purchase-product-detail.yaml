@@ -1,0 +1,21 @@
+version: 0.0.15
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_product_messages (
+        id VARCHAR PRIMARY KEY, product_id VARCHAR NOT NULL,
+        actor_name VARCHAR NOT NULL, action VARCHAR NOT NULL,
+        action_label VARCHAR NOT NULL, detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL
+      );
+      INSERT OR IGNORE INTO purchase_product_messages(id, product_id, actor_name, action, action_label, detail, created_at)
+      VALUES
+        ('purchase-product-message-acoustic-created', 'purchase-product-acoustic', 'OdooBot', 'created', 'Product created', 'Product created', TIMESTAMP '2026-01-15 09:00:00'),
+        ('purchase-product-message-acoustic-purchase', 'purchase-product-acoustic', 'OdooBot', 'purchase.info', 'Purchase information', 'Purchase settings are ready for this catalog product.', TIMESTAMP '2026-01-15 09:05:00');
+    down: |
+      DROP TABLE IF EXISTS purchase_product_messages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
