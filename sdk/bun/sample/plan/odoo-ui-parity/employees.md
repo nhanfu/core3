@@ -723,3 +723,39 @@ shell, Core3's card-based responsive settings renderer versus Odoo's native
 settings blocks, and deterministic service-owned settings storage versus
 Odoo's transient `res.config.settings` persistence. No Discuss fallback image
 is used as evidence.
+
+## Bounded batch: All activities (2026-09-11)
+
+The active Odoo 19 Employees action `action_hr_employee_all_activities` is the
+Reporting > All activities surface with `activity,list,kanban,form,graph,pivot`
+views and the `activity_ids != False` domain. Core3 keeps the existing
+`/employees/activities` route, preserves visible List, Kanban, Activity,
+Graph, and Pivot tabs, and uses the service-owned `employee_activities`
+datasource. The list now projects one row per active employee with activities,
+activity count, next deadline, department, and job; the responsive Kanban
+state exposes work contact and activity summary fields.
+
+The page remains layout-only and joins `api/activities.yaml` by
+`page.id: employee-activities`. Migration `20260911220000-015` adds the
+idempotent projection index and normalizes row versions. The action is
+read-only under `employees.read`; search, timing/type filters, empty results,
+transport errors, active-employee scope, and employee-row navigation are
+covered by `test/employees_all_activities.integration.test.ts` (3 tests, 23
+assertions). The follow-up guard fix ensures inactive employees are excluded
+from the action projection.
+
+Authenticated Core3 browser verification used `admin@tms.local` at 1440x900
+and 390x844 through the current runtime. Both states rendered the three
+activity-bearing employees with exact body/document viewport widths and no
+page errors, failed requests, or HTTP error responses. Odoo reference captures
+were taken at the same viewports; screenshots stay under `/tmp`:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo All activities | 1440x900 | `/tmp/odoo-employees-all-activities-desktop-1440x900.png` | `9af62c94040873f2c067504ccc16d7438fc4f560916a2f91a1e578caa600378a` |
+| Odoo All activities | 390x844 | `/tmp/odoo-employees-all-activities-mobile-390x844.png` | `5e9452fe6de9b0193fb3967275b0804d8aa1893b63f4e65619f07fe8e87ba7d2` |
+| Core3 All activities | 1440x900 | `/tmp/core3-employees-all-activities-current-1440x900.png` | `93456d5e84bb98059fb1daf2ebd4a4e4e0fb7eaa8cad725a4e5da9ff982ab1f5` |
+| Core3 All activities | 390x844 | `/tmp/core3-employees-all-activities-current-390x844.png` | `7596401e975744305c9f22be42622504fa375c6fbcaf418e91d04688512101af` |
+
+The bounded visual residual is the Core3 Fluent shell and responsive employee
+cards versus Odoo's purple shell/activity matrix. Images are not committed.
