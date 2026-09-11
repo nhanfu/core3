@@ -59,15 +59,20 @@ their volumes preserved for rollback. The active `odoo-core3-user` pair is a
 freshly provisioned Odoo 19 reference database initialized with official demo
 data for the installed CRM, Sales, Accounting, Project, Event, Inventory,
 Manufacturing, Maintenance, Expenses, Time Off, and Calendar applications.
+The database was subsequently extended with Purchase, Point of Sale, Surveys,
+Fleet, Recruitment, Timesheets, Email Marketing, and Live Chat, each with its
+official demo data.
 Historical capture notes that name an older database remain tied to that
 database; new parity captures must use the active credentials above. Keep
 credentials out of source code outside this local parity plan.
 
 The `core3_user_demo` database has demo-enabled Odoo modules installed,
-including CRM, Sales, Accounting, Inventory, Events, Expenses, Time Off,
-Project, Maintenance, Manufacturing, and Calendar. Its verified demo data
-includes partners, products, CRM leads, events, sales orders, projects,
-expenses, leave records, and maintenance requests.
+including CRM, Sales, Purchase, Accounting, Inventory, Point of Sale, Events,
+Surveys, Employees, Recruitment, Expenses, Time Off, Timesheets, Project,
+Maintenance, Fleet, Manufacturing, Email Marketing, Live Chat, and Calendar.
+Its verified demo data includes partners, products, CRM leads, events, sales
+orders, projects, expenses, leave records, maintenance requests, fleet
+vehicles, surveys, and POS catalog records.
 
 ## Module register
 
