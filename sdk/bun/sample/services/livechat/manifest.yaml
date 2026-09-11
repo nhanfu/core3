@@ -26,3 +26,4 @@ menu:
       items:
         - { path: /livechat/tags, label: Tags, icon: tag, permission: livechat.read }
         - { path: /livechat/expertise, label: Expertise, icon: users, permission: livechat.read }
+        - { path: /livechat/chatbots, label: Chatbots, icon: bot, permission: livechat.manage }

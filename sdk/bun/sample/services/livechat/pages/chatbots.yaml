@@ -1,0 +1,20 @@
+title: Chatbot
+page: { id: livechat-chatbots, route: /livechat/chatbots, breadcrumb: [Website, Live Chat, Configuration, Chatbots], auth: { require: [livechat.manage] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    scroll: body
+    source: livechat_chatbots
+    search: { label: Search..., placeholder: Search... }
+    create_label: New
+    create_action: create_livechat_chatbot
+    columns:
+      - { field: title, label: Title, type: PrimaryEntityCell }
+    row_key: id
+    page_size: 50
+    row_open_action: view_livechat_chatbot
+    row_double_click_action: view_livechat_chatbot
+    empty_state:
+      title: Create a Chatbot
+      description: You can create a new Chatbot with a defined script to speak to your website visitors.

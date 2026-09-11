@@ -1,0 +1,48 @@
+page: { id: livechat-chatbots }
+
+datasources:
+  - id: livechat_chatbots
+    single: false
+    permission: livechat.manage
+    error_states:
+      forbidden: { status: 403, code: LIVECHAT_CHATBOTS_FORBIDDEN, message: You do not have permission to manage Live Chat chatbots. }
+      transport_error: { status: 503, code: LIVECHAT_CHATBOTS_UNAVAILABLE, message: Chatbots are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, title, active, operator_name, livechat_channel_count,
+        first_step_warning,
+        CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status_label
+      FROM livechat_chatbots
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR title ILIKE '%' || :q || '%' OR operator_name ILIKE '%' || :q || '%')
+      ORDER BY title, id
+
+actions:
+  - id: view_livechat_chatbot
+    type: navigate
+    permission: livechat.manage
+    navigate_to: /livechat/chatbots/detail
+    params: { id: '{row.id}' }
+
+  - id: create_livechat_chatbot
+    type: server_form
+    permission: livechat.manage
+    title: New Chatbot
+    action: im_livechat.chatbot.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [livechat_chatbots]
+    mutation:
+      operation: insert
+      table: livechat_chatbots
+      generated: [id]
+      fields: [title, active, operator_name, livechat_channel_count, first_step_warning]
+      required: [title]
+      defaults: { active: true, livechat_channel_count: 0, first_step_warning: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:title AS VARCHAR), ''))) BETWEEN 1 AND 120", status: 422, code: LIVECHAT_CHATBOT_TITLE_REQUIRED, message: Chatbot Name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_chatbots WHERE LOWER(title) = LOWER(TRIM(CAST(:title AS VARCHAR))))", status: 409, code: LIVECHAT_CHATBOT_TITLE_EXISTS, message: A chatbot with this name already exists. }
+      result: { query: "SELECT * FROM livechat_chatbots WHERE id = :id" }
+    fields:
+      - { field: title, label: Chatbot Name, type: text, required: true, placeholder: 'e.g. "Meeting Scheduler Bot"' }
+      - { field: operator_name, label: Bot Operator, type: text }
+      - { field: active, label: Active, type: checkbox, default: true }

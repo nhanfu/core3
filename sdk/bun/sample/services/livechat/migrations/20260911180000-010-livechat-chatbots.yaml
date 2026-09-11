@@ -1,0 +1,80 @@
+version: 0.0.10
+kind: data
+description: Add deterministic Odoo Live Chat chatbot scripts, steps, and answers
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_chatbots (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        title VARCHAR NOT NULL UNIQUE,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        operator_name VARCHAR NOT NULL DEFAULT '',
+        livechat_channel_count INTEGER NOT NULL DEFAULT 0,
+        first_step_warning VARCHAR NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS livechat_bot_steps (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        chatbot_id VARCHAR NOT NULL REFERENCES livechat_chatbots(id),
+        sequence INTEGER NOT NULL,
+        title VARCHAR NOT NULL,
+        message VARCHAR NOT NULL DEFAULT '',
+        step_type VARCHAR NOT NULL,
+        operator_expertise_names VARCHAR NOT NULL DEFAULT '',
+        triggering_answer_names VARCHAR NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        UNIQUE(chatbot_id, sequence)
+      );
+      CREATE TABLE IF NOT EXISTS livechat_bot_answers (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        step_id VARCHAR NOT NULL REFERENCES livechat_bot_steps(id),
+        sequence INTEGER NOT NULL,
+        name VARCHAR NOT NULL,
+        redirect_link VARCHAR NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        UNIQUE(step_id, sequence)
+      );
+      INSERT INTO livechat_chatbots(id, row_version, title, active, operator_name, livechat_channel_count, first_step_warning)
+      VALUES
+        ('livechat-chatbot-lead-generation', 1, 'Lead Generation Bot', TRUE, 'Lead Generation Bot', 0, ''),
+        ('livechat-chatbot-odoo', 1, 'Odoo', TRUE, 'Odoo', 1, ''),
+        ('livechat-chatbot-support', 1, 'Support Bot', TRUE, 'Support Bot', 0, ''),
+        ('livechat-chatbot-welcome', 1, 'Welcome Bot', TRUE, 'Welcome Bot', 0, '')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO livechat_bot_steps(id, row_version, chatbot_id, sequence, title, message, step_type, operator_expertise_names, triggering_answer_names)
+      VALUES
+        ('livechat-bot-step-lead-1', 1, 'livechat-chatbot-lead-generation', 1, 'Lead Generation Bot', 'Hi there, what brings you to our website today? 👋', 'Free Input (Multi-Line)', '', ''),
+        ('livechat-bot-step-lead-2', 1, 'livechat-chatbot-lead-generation', 2, 'Lead Generation Bot', '', 'Forward to Operator', 'Discuss, Livechat', ''),
+        ('livechat-bot-step-lead-3', 1, 'livechat-chatbot-lead-generation', 3, 'Lead Generation Bot', 'Hu-ho, it looks like none of our operators are available 🙁', 'Text', '', ''),
+        ('livechat-bot-step-lead-4', 1, 'livechat-chatbot-lead-generation', 4, 'Lead Generation Bot', 'Would you mind leaving your email address so that we can reach you back?', 'Email', '', ''),
+        ('livechat-bot-step-lead-5', 1, 'livechat-chatbot-lead-generation', 5, 'Lead Generation Bot', 'Thank you, you should hear back from us very soon!', 'Create Lead', '', ''),
+        ('livechat-bot-step-odoo-1', 1, 'livechat-chatbot-odoo', 1, 'Odoo', 'Welcome to CompanyName! 👋', 'Text', '', ''),
+        ('livechat-bot-step-odoo-2', 1, 'livechat-chatbot-odoo', 2, 'Odoo', 'What are you looking for?', 'Question', '', ''),
+        ('livechat-bot-step-support-1', 1, 'livechat-chatbot-support', 1, 'Support Bot', 'Hello! How can we help?', 'Text', '', ''),
+        ('livechat-bot-step-support-2', 1, 'livechat-chatbot-support', 2, 'Support Bot', 'Please describe your issue.', 'Free Input', '', ''),
+        ('livechat-bot-step-support-3', 1, 'livechat-chatbot-support', 3, 'Support Bot', 'Thanks, an operator will be with you shortly.', 'Forward to Operator', 'Discuss, Livechat', ''),
+        ('livechat-bot-step-welcome-1', 1, 'livechat-chatbot-welcome', 1, 'Welcome Bot', 'Welcome to our website!', 'Text', '', ''),
+        ('livechat-bot-step-welcome-2', 1, 'livechat-chatbot-welcome', 2, 'Welcome Bot', 'What can we help you with?', 'Question', '', '')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO livechat_bot_answers(id, row_version, step_id, sequence, name, redirect_link, created_at, updated_at)
+      VALUES
+        ('livechat-bot-answer-odoo-pricing', 1, 'livechat-bot-step-odoo-2', 1, 'I have a pricing question', '', TIMESTAMP '2026-01-15 08:00:00', TIMESTAMP '2026-01-15 08:00:00'),
+        ('livechat-bot-answer-odoo-documentation', 1, 'livechat-bot-step-odoo-2', 2, 'I am looking for your documentation', '/', TIMESTAMP '2026-01-15 08:01:00', TIMESTAMP '2026-01-15 08:01:00'),
+        ('livechat-bot-answer-odoo-looking', 1, 'livechat-bot-step-odoo-2', 3, 'I am just looking around', '', TIMESTAMP '2026-01-15 08:02:00', TIMESTAMP '2026-01-15 08:02:00'),
+        ('livechat-bot-answer-welcome-pricing', 1, 'livechat-bot-step-welcome-2', 1, 'Products and pricing', '', TIMESTAMP '2026-01-15 08:03:00', TIMESTAMP '2026-01-15 08:03:00'),
+        ('livechat-bot-answer-welcome-support', 1, 'livechat-bot-step-welcome-2', 2, 'Technical support', '', TIMESTAMP '2026-01-15 08:04:00', TIMESTAMP '2026-01-15 08:04:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS livechat_bot_answers;
+      DROP TABLE IF EXISTS livechat_bot_steps;
+      DROP TABLE IF EXISTS livechat_chatbots;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

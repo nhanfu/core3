@@ -1,0 +1,57 @@
+title: Chatbot Step
+page: { id: livechat-chatbot-step-detail, route: /livechat/chatbots/steps/detail, breadcrumb: [Website, Live Chat, Configuration, Chatbots, Script Step], auth: { require: [livechat.manage] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_bot_step_detail
+    title_field: step_name
+    subtitle_field: step_type_label
+    editable: true
+    content_slot: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_livechat_chatbot_detail, label: Chatbot, variant: secondary, permission: livechat.manage }
+      - { id: edit_livechat_bot_step, label: Edit, variant: primary, permission: livechat.manage }
+      - { id: delete_livechat_bot_step, label: Delete, variant: danger, permission: livechat.manage, confirm: Delete this script step? }
+    groups:
+      - title: Script Step
+        fields:
+          - { field: message, label: Message, type: textarea, required: true }
+          - { field: step_type, label: Step Type, type: select, options: [Text, Question, Email, Phone, 'Forward to Operator', 'Free Input', 'Free Input (Multi-Line)', 'Create Lead'] }
+          - { field: operator_expertise_names, label: Operator Expertise, type: text }
+          - { field: triggering_answer_names, label: Only If, type: text }
+          - { field: sequence, label: Sequence, type: number, readonly: true }
+    notebook:
+      active: answers
+      tabs:
+        - { id: answers, label: Answers, content_slot: true }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: livechat_bot_answers
+    parent_source: livechat_bot_step_detail
+    title: Answers
+    variant: odoo_x2many
+    page_size: 100
+    actions:
+      - { id: add_livechat_bot_answer, label: Add a line, variant: primary, permission: livechat.manage, show_if: "state.livechat_bot_step_detail.step_type === 'Question'" }
+    empty_state: { title: No answers, description: Add answer choices when this step asks a question. }
+    children:
+      - { type: LineItemField, id: name, field: name, label: Answer, input_type: text, required: true }
+      - { type: LineItemField, id: redirect_link, field: redirect_link, label: Optional Link, input_type: text }
+      - type: LineItemActions
+        id: livechat_bot_answer_actions
+        edit_action: edit_livechat_bot_answer
+        create_action: add_livechat_bot_answer
+        actions:
+          - { id: edit_livechat_bot_answer, label: Edit, icon: edit, variant: ghost, permission: livechat.manage }
+          - { id: delete_livechat_bot_answer, label: Delete, icon: trash, variant: danger, permission: livechat.manage }
+    columns:
+      - { field: name, label: Answer, width: 420 }
+      - { field: redirect_link, label: Optional Link, width: 280 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 72
+        actions:
+          - { id: edit_livechat_bot_answer, label: Edit, icon: edit, variant: ghost, permission: livechat.manage }
+          - { id: delete_livechat_bot_answer, label: Delete, icon: trash, variant: danger, permission: livechat.manage }

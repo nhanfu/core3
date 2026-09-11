@@ -1,0 +1,61 @@
+title: Chatbot
+page: { id: livechat-chatbot-detail, route: /livechat/chatbots/detail, breadcrumb: [Website, Live Chat, Configuration, Chatbots, Chatbot], auth: { require: [livechat.manage] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_chatbot_detail
+    title_field: title
+    editable: true
+    content_slot: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_livechat_chatbots, label: Chatbot, variant: secondary, permission: livechat.manage }
+      - { id: new_livechat_chatbot, label: New, variant: primary, permission: livechat.manage }
+      - { id: edit_livechat_chatbot, label: Edit, variant: secondary, permission: livechat.manage }
+      - { id: delete_livechat_chatbot, label: Delete, variant: danger, permission: livechat.manage, confirm: Delete this chatbot? }
+    groups:
+      - title: ''
+        fields:
+          - { field: title, label: Chatbot Name, type: text, required: true }
+    notebook:
+      active: script
+      tabs:
+        - { id: script, label: Script, content_slot: true }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: livechat_bot_steps
+    parent_source: livechat_chatbot_detail
+    title: Script
+    description: Define the steps the bot uses to speak to website visitors.
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    actions:
+      - { id: add_livechat_bot_step, label: Add Script Steps, variant: primary, permission: livechat.manage }
+    empty_state: { title: No script steps, description: Add a line to define the chatbot conversation. }
+    children:
+      - { type: LineItemField, id: step_name, field: step_name, label: Step, readonly: true }
+      - { type: LineItemField, id: message, field: message, label: Message, input_type: text }
+      - { type: LineItemField, id: step_type_label, field: step_type_label, label: Step Type, readonly: true }
+      - { type: LineItemField, id: answer_names, field: answer_names, label: Answers, readonly: true }
+      - { type: LineItemField, id: triggering_answer_names, field: triggering_answer_names, label: Only If, readonly: true }
+      - type: LineItemActions
+        id: livechat_bot_step_actions
+        edit_action: edit_livechat_bot_step
+        create_action: add_livechat_bot_step
+        actions:
+          - { id: edit_livechat_bot_step, label: Edit, icon: edit, variant: ghost, permission: livechat.manage }
+          - { id: delete_livechat_bot_step, label: Delete, icon: trash, variant: danger, permission: livechat.manage }
+    columns:
+      - { field: step_name, label: Step, optional: hide }
+      - { field: message, label: Message, width: 560 }
+      - { field: step_type_label, label: Step Type, width: 230 }
+      - { field: answer_names, label: Answers, width: 270 }
+      - { field: triggering_answer_names, label: Only If, width: 190 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 72
+        actions:
+          - { id: edit_livechat_bot_step, label: Edit, icon: edit, variant: ghost, permission: livechat.manage }
+          - { id: delete_livechat_bot_step, label: Delete, icon: trash, variant: danger, permission: livechat.manage }

@@ -1,0 +1,155 @@
+page: { id: livechat-chatbot-step-detail }
+
+datasources:
+  - id: livechat_bot_step_detail
+    single: true
+    permission: livechat.manage
+    error_states:
+      forbidden: { status: 403, code: LIVECHAT_BOT_STEP_DETAIL_FORBIDDEN, message: You do not have permission to view this script step. }
+      transport_error: { status: 503, code: LIVECHAT_BOT_STEP_DETAIL_UNAVAILABLE, message: Script step details are temporarily unavailable. }
+    query: |
+      SELECT s.id, s.row_version, s.chatbot_id, s.sequence, s.title AS chatbot_title,
+        s.title || ' - Step ' || CAST(s.sequence AS VARCHAR) AS step_name,
+        s.message, s.step_type, s.step_type AS step_type_label,
+        s.operator_expertise_names, s.triggering_answer_names
+      FROM livechat_bot_steps s
+      WHERE s.id = :id
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+
+  - id: livechat_bot_answers
+    single: false
+    permission: livechat.manage
+    error_states:
+      forbidden: { status: 403, code: LIVECHAT_BOT_ANSWERS_FORBIDDEN, message: You do not have permission to view chatbot answers. }
+      transport_error: { status: 503, code: LIVECHAT_BOT_ANSWERS_UNAVAILABLE, message: Chatbot answers are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, step_id, sequence, name, redirect_link
+      FROM livechat_bot_answers
+      WHERE step_id = :id
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+      ORDER BY sequence, id
+
+actions:
+  - id: back_to_livechat_chatbot_detail
+    type: navigate
+    permission: livechat.manage
+    navigate_to: /livechat/chatbots/detail
+    params: { id: '{state.livechat_bot_step_detail.chatbot_id}' }
+
+  - id: edit_livechat_bot_step
+    type: server_form
+    permission: livechat.manage
+    title: Edit Script Step
+    action: im_livechat.chatbot.steps.update
+    handler: line_item
+    operation: update
+    domain: livechat_chatbot_step
+    params: { id: '{state.livechat_bot_step_detail.chatbot_id}', line_id: '{state.id}' }
+    prefill: state.livechat_bot_step_detail
+    refresh: [livechat_bot_step_detail, livechat_bot_steps, livechat_chatbot_detail, livechat_chatbots]
+    fields:
+      - { field: message, label: Message, type: textarea }
+      - { field: step_type, label: Step Type, type: select, options: [Text, Question, Email, Phone, 'Forward to Operator', 'Free Input', 'Free Input (Multi-Line)', 'Create Lead'] }
+      - { field: operator_expertise_names, label: Operator Expertise, type: text }
+      - { field: triggering_answer_names, label: Only If, type: text }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_chatbots WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The chatbot changed. Reload before saving this step. }
+        - { query: "SELECT id FROM livechat_bot_steps WHERE id = :line_id AND chatbot_id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_BOT_STEP_STALE, message: This script step changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:step_type, '') IN ('Text', 'Question', 'Email', 'Phone', 'Forward to Operator', 'Free Input', 'Free Input (Multi-Line)', 'Create Lead') AND (COALESCE(:step_type, '') = 'Forward to Operator' OR LENGTH(TRIM(COALESCE(CAST(:message AS VARCHAR), ''))) > 0)", status: 422, code: LIVECHAT_BOT_STEP_INVALID, message: Enter a message and supported step type. }
+      steps:
+        - { query: "UPDATE livechat_bot_steps SET message = COALESCE(:message, ''), step_type = :step_type, operator_expertise_names = COALESCE(:operator_expertise_names, ''), triggering_answer_names = COALESCE(:triggering_answer_names, ''), row_version = row_version + 1 WHERE id = :line_id AND chatbot_id = :id AND row_version = :expected_row_version", expect_changed: true, code: LIVECHAT_BOT_STEP_STALE, message: This script step changed or was deleted. Reload before saving. }
+        - { query: "UPDATE livechat_chatbots SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The chatbot changed while saving this step. Reload before saving. }
+      result: { query: "SELECT * FROM livechat_bot_steps WHERE id = :line_id" }
+
+  - id: delete_livechat_bot_step
+    type: server
+    permission: livechat.manage
+    action: im_livechat.chatbot.steps.delete
+    handler: line_item
+    operation: delete
+    domain: livechat_chatbot
+    params: { id: '{state.livechat_bot_step_detail.chatbot_id}', line_id: '{state.id}' }
+    refresh: [livechat_bot_steps, livechat_chatbot_detail, livechat_chatbots]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_chatbots WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The chatbot changed. Reload before deleting this step. }
+        - { query: "SELECT id FROM livechat_bot_steps WHERE id = :line_id AND chatbot_id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_BOT_STEP_STALE, message: This script step changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM livechat_bot_answers WHERE step_id = :line_id" }
+        - { query: "DELETE FROM livechat_bot_steps WHERE id = :line_id AND chatbot_id = :id AND row_version = :expected_row_version", expect_changed: true, code: LIVECHAT_BOT_STEP_STALE, message: This script step changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE livechat_chatbots SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The chatbot changed while deleting this step. Reload before saving. }
+
+  - id: add_livechat_bot_answer
+    type: server_form
+    permission: livechat.manage
+    title: Add Answer
+    action: im_livechat.chatbot.answers.create
+    handler: line_item
+    operation: create
+    domain: livechat_bot_step
+    params: { id: '{state.id}' }
+    refresh: [livechat_bot_step_detail, livechat_bot_answers, livechat_bot_steps]
+    fields:
+      - { field: name, label: Answer, type: text, required: true }
+      - { field: redirect_link, label: Optional Link, type: text }
+      - { field: sequence, label: Sequence, type: number, min: 1 }
+    mutation:
+      generated: [line_id]
+      guards:
+        - { query: "SELECT s.id FROM livechat_bot_steps s WHERE s.id = :id AND s.step_type = 'Question' AND s.row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: Only current Question steps can receive answers. Reload before adding an answer. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:name AS VARCHAR), ''))) BETWEEN 1 AND 180", status: 422, code: LIVECHAT_BOT_ANSWER_REQUIRED, message: Answer is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_bot_answers WHERE step_id = :id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: LIVECHAT_BOT_ANSWER_EXISTS, message: This answer already exists for the step. }
+      steps:
+        - { query: "INSERT INTO livechat_bot_answers(id, step_id, row_version, sequence, name, redirect_link) VALUES(:line_id, :id, 1, COALESCE(CAST(:sequence AS INTEGER), (SELECT COALESCE(MAX(sequence), 0) + 1 FROM livechat_bot_answers WHERE step_id = :id)), TRIM(:name), COALESCE(:redirect_link, ''))" }
+        - { query: "UPDATE livechat_bot_steps SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The step changed while adding an answer. Reload before saving. }
+      result: { query: "SELECT * FROM livechat_bot_answers WHERE id = :line_id" }
+
+  - id: edit_livechat_bot_answer
+    type: server_form
+    permission: livechat.manage
+    title: Edit Answer
+    action: im_livechat.chatbot.answers.update
+    handler: line_item
+    operation: update
+    domain: livechat_bot_step
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [livechat_bot_step_detail, livechat_bot_answers, livechat_bot_steps]
+    fields:
+      - { field: name, label: Answer, type: text, required: true }
+      - { field: redirect_link, label: Optional Link, type: text }
+      - { field: sequence, label: Sequence, type: number, min: 1 }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_bot_steps WHERE id = :id AND row_version = :parent_expected_row_version AND step_type = 'Question'", status: 409, code: STALE_RECORD, message: The step changed or no longer accepts answers. Reload before saving. }
+        - { query: "SELECT id FROM livechat_bot_answers WHERE id = :line_id AND step_id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_BOT_ANSWER_STALE, message: This answer changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:name AS VARCHAR), ''))) BETWEEN 1 AND 180 AND COALESCE(CAST(:sequence AS INTEGER), 0) > 0", status: 422, code: LIVECHAT_BOT_ANSWER_INVALID, message: Enter an answer and a positive sequence. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_bot_answers WHERE step_id = :id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :line_id)", status: 409, code: LIVECHAT_BOT_ANSWER_EXISTS, message: This answer already exists for the step. }
+      steps:
+        - { query: "UPDATE livechat_bot_answers SET name = TRIM(:name), redirect_link = COALESCE(:redirect_link, ''), sequence = CAST(:sequence AS INTEGER), row_version = row_version + 1 WHERE id = :line_id AND step_id = :id AND row_version = :expected_row_version", expect_changed: true, code: LIVECHAT_BOT_ANSWER_STALE, message: This answer changed or was deleted. Reload before saving. }
+        - { query: "UPDATE livechat_bot_steps SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The step changed while saving an answer. Reload before saving. }
+      result: { query: "SELECT * FROM livechat_bot_answers WHERE id = :line_id" }
+
+  - id: delete_livechat_bot_answer
+    type: server
+    permission: livechat.manage
+    action: im_livechat.chatbot.answers.delete
+    handler: line_item
+    operation: delete
+    domain: livechat_bot_step
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete answer {{row.name}}?'
+    refresh: [livechat_bot_step_detail, livechat_bot_answers, livechat_bot_steps]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_bot_steps WHERE id = :id AND row_version = :parent_expected_row_version AND step_type = 'Question'", status: 409, code: STALE_RECORD, message: The step changed or no longer accepts answers. Reload before deleting. }
+        - { query: "SELECT id FROM livechat_bot_answers WHERE id = :line_id AND step_id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_BOT_ANSWER_STALE, message: This answer changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM livechat_bot_answers WHERE id = :line_id AND step_id = :id AND row_version = :expected_row_version", expect_changed: true, code: LIVECHAT_BOT_ANSWER_STALE, message: This answer changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE livechat_bot_steps SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The step changed while deleting an answer. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }

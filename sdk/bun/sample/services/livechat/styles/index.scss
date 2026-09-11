@@ -1,1 +1,27 @@
 .livechat-page { min-height: 100%; }
+
+// The chatbot editor uses the same x2many line contract as Odoo's script
+// editor. Keep the wide desktop table, then collapse ordered steps/answers to
+// touch-friendly record cards at the mobile breakpoint.
+.o-line-grid-cards { display: none; }
+.o-line-grid-table { max-width: 100%; overflow-x: auto; }
+.o-line-grid-table .token-table { width: max-content; min-width: 100%; table-layout: auto; }
+.o-line-grid-table .token-header th, .o-line-grid-table .token-cell { min-width: max-content; white-space: nowrap; }
+.o-line-grid-table [data-column='step_name'] { display: none; }
+.o-line-grid-table .o-line-field, .o-line-grid-table .o-line-input { min-width: 100%; }
+.o-line-card { border: 1px solid var(--o-form-border); border-radius: 6px; padding: 12px; background: var(--o-form-surface); }
+.o-line-card-title { margin: 0 0 8px; color: var(--o-form-text); font-size: 13px; font-weight: 600; }
+.o-line-card-field { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; color: var(--o-form-muted); font-size: 12px; }
+.o-line-card-value { color: var(--o-form-text); text-align: right; }
+.o-line-card-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 8px; }
+
+// Odoo's mobile chatbot one2many shows ordered step names as a compact list;
+// keep the other desktop-only columns discoverable through the row editor.
+@media (max-width: 768px) {
+  .o-line-grid-table { display: none; }
+  .o-line-grid-cards { display: grid !important; gap: 12px; padding: 0; }
+  .o-line-card { padding: 14px 8px; border-radius: 0; border-width: 1px 0; box-shadow: none; }
+  .o-line-card-title { margin: 0; font-size: 14px; font-weight: 500; }
+  .o-line-card-field { display: none; }
+  .o-line-card-actions { margin-top: 8px; }
+}
