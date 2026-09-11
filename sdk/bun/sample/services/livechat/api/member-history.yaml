@@ -12,9 +12,10 @@ datasources:
       SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at,
         member_display_name, channel_name, partner_name, chatbot_script_name,
         guest_name, session_duration_hour,
-        printf('%02d:%02d:%02d', CAST(session_duration_hour * 3600 / 3600 AS INTEGER),
-          CAST((session_duration_hour * 3600 % 3600) / 60 AS INTEGER),
-          CAST(session_duration_hour * 3600 % 60 AS INTEGER)) AS session_duration_display,
+        printf('%02d:%02d:%02d',
+          CAST(FLOOR(CAST(ROUND(session_duration_hour * 3600) AS INTEGER) / 3600.0) AS INTEGER),
+          CAST(FLOOR((CAST(ROUND(session_duration_hour * 3600) AS INTEGER) % 3600) / 60.0) AS INTEGER),
+          CAST(ROUND(session_duration_hour * 3600) AS INTEGER) % 60) AS session_duration_display,
         livechat_member_type, session_outcome, country_name
       FROM livechat_member_history
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
