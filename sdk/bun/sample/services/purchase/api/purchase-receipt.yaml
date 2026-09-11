@@ -1,0 +1,148 @@
+page: { id: purchase-receipt }
+datasources:
+  - id: purchase_receipt_detail
+    single: true
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_RECEIPT_DETAIL_UNAVAILABLE, message: Receipt details are temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.name, r.vendor_name, r.operation_type, r.company_name, CAST(r.scheduled_date AS VARCHAR) AS scheduled_date, CAST(r.deadline AS VARCHAR) AS deadline, r.source_document, r.state, r.note, (SELECT COUNT(*) FROM purchase_receipt_lines l WHERE l.receipt_id = r.id) AS move_count FROM purchase_receipts r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id"
+  - id: purchase_receipt_lines
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_RECEIPT_LINES_UNAVAILABLE, message: Receipt move lines are temporarily unavailable. } }
+    query: "SELECT l.id, l.row_version, l.receipt_id, l.product_name, l.description, CAST(l.demand AS DOUBLE) AS demand, printf('%,.2f', CAST(l.demand AS DOUBLE)) AS demand_display, CAST(l.quantity AS DOUBLE) AS quantity, printf('%,.2f', CAST(l.quantity AS DOUBLE)) AS quantity_display, l.uom, r.state AS parent_state, r.row_version AS parent_row_version FROM purchase_receipt_lines l JOIN purchase_receipts r ON r.id = l.receipt_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.receipt_id = :id ORDER BY l.sequence, l.id"
+  - id: purchase_receipt_timeline
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_RECEIPT_TIMELINE_UNAVAILABLE, message: Receipt history is temporarily unavailable. } }
+    query: "SELECT actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM purchase_receipt_messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND receipt_id = :id UNION ALL SELECT 'OdooBot', 'purchase.receipt.created', 'Transfer created', 'This transfer has been created from: ' || r.source_document, CAST(r.scheduled_date AS VARCHAR) FROM purchase_receipts r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id AND NOT EXISTS (SELECT 1 FROM purchase_receipt_messages m WHERE m.receipt_id = r.id) ORDER BY created_at DESC"
+actions:
+  - { id: open_purchase_receipt_moves, type: navigate, permission: purchase.read, navigate_to: /purchase/receipt, params: { id: '{row.id}' } }
+  - id: validate_purchase_receipt
+    type: server
+    permission: purchase.write
+    action: purchase.receipts.validate
+    handler: yaml_mutation
+    operation: validate
+    params: { id: '{state.id}' }
+    refresh: [purchase_receipt_detail, purchase_receipt_lines, purchase_receipt_timeline]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND state = 'Ready' AND row_version = :expected_row_version", status: 409, code: PURCHASE_RECEIPT_NOT_READY, message: Only ready receipts can be validated. }
+        - { query: "SELECT id FROM purchase_receipt_lines WHERE receipt_id = :id AND demand > 0", status: 422, code: PURCHASE_RECEIPT_NO_LINES, message: A receipt needs at least one product line. }
+      generated: [message_id]
+      steps:
+        - { query: "UPDATE purchase_receipt_lines SET quantity = demand, row_version = row_version + 1 WHERE receipt_id = :id" }
+        - { query: "UPDATE purchase_receipts SET state = 'Done', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_RECEIPT_STALE, message: This receipt changed. Reload before validating. }
+        - { query: "INSERT INTO purchase_receipt_messages(id, receipt_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, :current_user_name, 'purchase.receipt.validated', 'Validated', 'Receipt validated', TIMESTAMP '2026-09-11 13:10:00')" }
+      result: { query: "SELECT * FROM purchase_receipts WHERE id = :id" }
+  - id: cancel_purchase_receipt
+    type: server
+    permission: purchase.write
+    action: purchase.receipts.cancel
+    handler: yaml_mutation
+    operation: cancel
+    params: { id: '{state.id}' }
+    refresh: [purchase_receipt_detail, purchase_receipt_lines, purchase_receipt_timeline]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND state IN ('Draft', 'Ready') AND row_version = :expected_row_version", status: 409, code: PURCHASE_RECEIPT_NOT_OPEN, message: Only open receipts can be cancelled. }
+      steps:
+        - { query: "UPDATE purchase_receipts SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_RECEIPT_STALE, message: This receipt changed. Reload before cancelling. }
+      result: { query: "SELECT * FROM purchase_receipts WHERE id = :id" }
+  - id: add_purchase_receipt_line
+    type: server_form
+    permission: purchase.write
+    title: Add a Product
+    action: purchase.receipts.lines.create
+    handler: line_item
+    operation: create
+    domain: purchase_receipt
+    params: { id: '{state.id}' }
+    refresh: [purchase_receipt_detail, purchase_receipt_lines]
+    fields:
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: demand, label: Demand, type: number, required: true, default: 1 }
+      - { field: quantity, label: Quantity, type: number, required: true, default: 0 }
+      - { field: uom, label: Unit, type: text, required: true, default: Units }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence, 'purchase-receipt-line-' || :id || '-' || CAST(COALESCE(MAX(sequence), 0) + 10 AS VARCHAR) AS line_id FROM purchase_receipt_lines WHERE receipt_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND state IN ('Draft', 'Ready') AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_RECEIPT_PARENT_STALE, message: This receipt changed or is no longer editable. Reload before adding a product. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:product_name AS VARCHAR))) BETWEEN 1 AND 200 AND CAST(:demand AS DECIMAL(18,3)) > 0 AND CAST(:quantity AS DECIMAL(18,3)) >= 0", status: 422, code: PURCHASE_RECEIPT_LINE_INVALID, message: Product, demand, and quantity must be valid. }
+      steps:
+        - { query: "INSERT INTO purchase_receipt_lines(id, receipt_id, row_version, sequence, product_name, description, demand, quantity, uom) VALUES(:line_id, :id, 1, :next_sequence, trim(CAST(:product_name AS VARCHAR)), COALESCE(NULLIF(trim(CAST(:description AS VARCHAR)), ''), trim(CAST(:product_name AS VARCHAR))), CAST(:demand AS DECIMAL(18,3)), CAST(:quantity AS DECIMAL(18,3)), COALESCE(NULLIF(trim(CAST(:uom AS VARCHAR)), ''), 'Units'))" }
+        - { query: "UPDATE purchase_receipts SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_RECEIPT_PARENT_STALE, message: This receipt changed while adding the product. Reload before saving. }
+      result: { query: "SELECT * FROM purchase_receipt_lines WHERE id = :line_id" }
+  - id: edit_purchase_receipt_line
+    type: server_form
+    permission: purchase.write
+    title: Edit Product
+    action: purchase.receipts.lines.update
+    handler: line_item
+    operation: update
+    domain: purchase_receipt
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [purchase_receipt_detail, purchase_receipt_lines]
+    fields:
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: demand, label: Demand, type: number, required: true }
+      - { field: quantity, label: Quantity, type: number, required: true }
+      - { field: uom, label: Unit, type: text, required: true }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND state IN ('Draft', 'Ready') AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_RECEIPT_PARENT_STALE, message: This receipt changed or is no longer editable. Reload before saving the line. }
+        - { query: "SELECT id FROM purchase_receipt_lines WHERE id = :line_id AND receipt_id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_RECEIPT_LINE_STALE, message: This product line changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:product_name AS VARCHAR))) BETWEEN 1 AND 200 AND CAST(:demand AS DECIMAL(18,3)) > 0 AND CAST(:quantity AS DECIMAL(18,3)) >= 0", status: 422, code: PURCHASE_RECEIPT_LINE_INVALID, message: Product, demand, and quantity must be valid. }
+      steps:
+        - { query: "UPDATE purchase_receipt_lines SET product_name = trim(CAST(:product_name AS VARCHAR)), description = COALESCE(NULLIF(trim(CAST(:description AS VARCHAR)), ''), trim(CAST(:product_name AS VARCHAR))), demand = CAST(:demand AS DECIMAL(18,3)), quantity = CAST(:quantity AS DECIMAL(18,3)), uom = trim(CAST(:uom AS VARCHAR)), row_version = row_version + 1 WHERE id = :line_id AND receipt_id = :id AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_RECEIPT_LINE_STALE, message: This product line changed while saving. }
+        - { query: "UPDATE purchase_receipts SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_RECEIPT_PARENT_STALE, message: This receipt changed while saving the line. }
+      result: { query: "SELECT * FROM purchase_receipt_lines WHERE id = :line_id" }
+  - id: delete_purchase_receipt_line
+    type: server
+    permission: purchase.write
+    action: purchase.receipts.lines.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [purchase_receipt_detail, purchase_receipt_lines]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND state IN ('Draft', 'Ready') AND row_version = :parent_expected_row_version", status: 409, code: PURCHASE_RECEIPT_PARENT_STALE, message: This receipt changed or is no longer editable. Reload before deleting the line. }
+        - { query: "SELECT id FROM purchase_receipt_lines WHERE id = :line_id AND receipt_id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_RECEIPT_LINE_STALE, message: This product line changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM purchase_receipt_lines WHERE id = :line_id AND receipt_id = :id AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_RECEIPT_LINE_STALE, message: This product line changed while deleting. }
+        - { query: "UPDATE purchase_receipts SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PURCHASE_RECEIPT_PARENT_STALE, message: This receipt changed while deleting the line. }
+  - id: send_purchase_receipt_message
+    type: server_form
+    permission: purchase.write
+    title: Send message
+    action: purchase.receipts.message
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [purchase_receipt_timeline]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000", status: 422, code: PURCHASE_RECEIPT_MESSAGE_REQUIRED, message: Message content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id", status: 404, code: PURCHASE_RECEIPT_NOT_FOUND, message: Receipt not found. }
+      steps: [{ query: "INSERT INTO purchase_receipt_messages(id, receipt_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, :current_user_name, 'purchase.receipt.message', 'Message', :content, TIMESTAMP '2026-09-11 13:11:00')" }]
+  - id: log_purchase_receipt_note
+    type: server_form
+    permission: purchase.write
+    title: Log note
+    action: purchase.receipts.note
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [purchase_receipt_timeline]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      generated: [message_id]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000", status: 422, code: PURCHASE_RECEIPT_NOTE_REQUIRED, message: Note content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id", status: 404, code: PURCHASE_RECEIPT_NOT_FOUND, message: Receipt not found. }
+      steps: [{ query: "INSERT INTO purchase_receipt_messages(id, receipt_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, :current_user_name, 'purchase.receipt.note', 'Note', :content, TIMESTAMP '2026-09-11 13:12:00')" }]

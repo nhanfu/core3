@@ -1,0 +1,73 @@
+title: Receipt
+page: { id: purchase-receipt, route: /purchase/receipt, breadcrumb: [Supply Chain, Purchase, Purchase Order, Receipt], auth: { require: [purchase.read] } }
+components:
+  - type: OdooFormView
+    source: purchase_receipt_detail
+    title_field: name
+    subtitle_field: vendor_name
+    status_field: state
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    status_colors: { Draft: neutral, Ready: teal, Done: green, Cancelled: red }
+    stat_buttons: [{ id: open_purchase_receipt_moves, label: Moves, value_field: move_count, permission: purchase.read }]
+    header_actions:
+      - { id: validate_purchase_receipt, label: Validate, variant: primary, permission: purchase.write, show_if: "state.purchase_receipt_detail.state === 'Ready'" }
+      - { id: cancel_purchase_receipt, label: Cancel, variant: secondary, permission: purchase.write, show_if: "state.purchase_receipt_detail.state !== 'Done' && state.purchase_receipt_detail.state !== 'Cancelled'" }
+    message_source: purchase_receipt_timeline
+    chatter_label: Messages and activities
+    message_label: Send message
+    note_label: Log note
+    message_action: send_purchase_receipt_message
+    note_action: log_purchase_receipt_note
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    message_action_labels:
+      purchase.receipt.created: Transfer created
+      purchase.receipt.validated: Validated
+      purchase.receipt.message: Message
+      purchase.receipt.note: Note
+    content_slot: true
+    group_columns: 2
+    groups:
+      - title: Receipt
+        fields: [{ field: name, label: Reference }, { field: vendor_name, label: Receive From }, { field: operation_type, label: Operation Type }, { field: company_name, label: Company }]
+      - title: Scheduling
+        fields: [{ field: scheduled_date, label: Scheduled Date }, { field: deadline, label: Deadline }, { field: source_document, label: Source Document }, { field: state, label: Status }]
+    notebook:
+      active: operations
+      tabs:
+        - { id: operations, label: Operations, content_slot: true }
+        - id: additional_information
+          label: Additional Info
+          groups:
+            - title: Additional Information
+              fields: [{ field: source_document, label: Source Document }, { field: move_count, label: Move lines, readonly: true }]
+        - id: note
+          label: Note
+          groups:
+            - title: Note
+              fields: [{ field: note, label: Note, type: textarea, wide: true }]
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: purchase_receipt_lines
+    parent_source: purchase_receipt_detail
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_purchase_receipt_line, label: Add a Product, variant: secondary, permission: purchase.write, show_if: "state.purchase_receipt_detail.state !== 'Done' && state.purchase_receipt_detail.state !== 'Cancelled'" }
+    empty_state: { title: No move lines, description: Add a product to define the received quantity for this receipt. }
+    columns:
+      - { field: product_name, label: Product, width: 300 }
+      - { field: demand_display, label: Demand, align: right, width: 120 }
+      - { field: quantity_display, label: Quantity, align: right, width: 120 }
+      - { field: uom, label: Unit, width: 120 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_purchase_receipt_line, label: Edit, icon: edit, variant: ghost, permission: purchase.write, show_if: "row.parent_state !== 'Done' && row.parent_state !== 'Cancelled'" }
+          - { id: delete_purchase_receipt_line, label: Delete, icon: trash, variant: danger, permission: purchase.write, show_if: "row.parent_state !== 'Done' && row.parent_state !== 'Cancelled'" }

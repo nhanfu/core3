@@ -1,0 +1,44 @@
+version: 0.0.22
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_receipts (
+        id VARCHAR PRIMARY KEY, purchase_order_id VARCHAR NOT NULL, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, vendor_name VARCHAR NOT NULL, operation_type VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL, scheduled_date TIMESTAMP NOT NULL, deadline TIMESTAMP NOT NULL,
+        source_document VARCHAR NOT NULL, state VARCHAR NOT NULL, note VARCHAR NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS purchase_receipt_lines (
+        id VARCHAR PRIMARY KEY, receipt_id VARCHAR NOT NULL, row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL, product_name VARCHAR NOT NULL, description VARCHAR NOT NULL,
+        demand DECIMAL(18,3) NOT NULL DEFAULT 0, quantity DECIMAL(18,3) NOT NULL DEFAULT 0, uom VARCHAR NOT NULL DEFAULT 'Units'
+      );
+      CREATE TABLE IF NOT EXISTS purchase_receipt_messages (
+        id VARCHAR PRIMARY KEY, receipt_id VARCHAR NOT NULL, actor_name VARCHAR NOT NULL,
+        action VARCHAR NOT NULL, action_label VARCHAR NOT NULL, detail VARCHAR NOT NULL, created_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS purchase_receipts_order_idx ON purchase_receipts(purchase_order_id);
+      CREATE INDEX IF NOT EXISTS purchase_receipt_lines_receipt_idx ON purchase_receipt_lines(receipt_id, sequence);
+      INSERT OR IGNORE INTO purchase_receipts(id, purchase_order_id, name, vendor_name, operation_type, company_name, scheduled_date, deadline, source_document, state, note)
+      VALUES ('purchase-receipt-p00012', 'po-demo-006', 'WH/IN/00006', 'Ready Mat', 'YourCompany: Receipts', 'My Company (San Francisco)', TIMESTAMP '2026-09-11 13:04:45', TIMESTAMP '2026-09-11 13:04:45', 'P00012', 'Ready', '');
+      INSERT OR IGNORE INTO purchase_receipt_lines(id, receipt_id, sequence, product_name, description, demand, quantity, uom)
+      VALUES
+        ('purchase-receipt-line-0001', 'purchase-receipt-p00012', 10, '[FURN_6667] Acoustic Bloc Screens (Black)', '[FURN_6667] Acoustic Bloc Screens (Black)', 20, 20, 'Units'),
+        ('purchase-receipt-line-0002', 'purchase-receipt-p00012', 20, '[FURN_9001] Flipover', '[FURN_9001] Flipover', 10, 10, 'Units');
+      INSERT OR IGNORE INTO purchase_receipt_messages(id, receipt_id, actor_name, action, action_label, detail, created_at)
+      VALUES ('purchase-receipt-message-0001', 'purchase-receipt-p00012', 'OdooBot', 'purchase.receipt.created', 'Transfer created', 'This transfer has been created from: P00012', TIMESTAMP '2026-09-11 13:04:45');
+    down: |
+      DELETE FROM purchase_receipt_messages WHERE receipt_id = 'purchase-receipt-p00012';
+      DELETE FROM purchase_receipt_lines WHERE receipt_id = 'purchase-receipt-p00012';
+      DELETE FROM purchase_receipts WHERE id = 'purchase-receipt-p00012';
+      DROP INDEX IF EXISTS purchase_receipt_lines_receipt_idx;
+      DROP INDEX IF EXISTS purchase_receipts_order_idx;
+      DROP TABLE IF EXISTS purchase_receipt_messages;
+      DROP TABLE IF EXISTS purchase_receipt_lines;
+      DROP TABLE IF EXISTS purchase_receipts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
