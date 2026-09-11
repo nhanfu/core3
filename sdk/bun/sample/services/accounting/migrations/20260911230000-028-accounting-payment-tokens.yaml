@@ -1,0 +1,31 @@
+version: 0.0.28
+description: Accounting Odoo payment token catalog fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_payment_tokens (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        payment_details VARCHAR NOT NULL,
+        partner VARCHAR NOT NULL,
+        payment_method VARCHAR NOT NULL,
+        provider VARCHAR NOT NULL,
+        provider_reference VARCHAR NOT NULL,
+        company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        transaction_count INTEGER NOT NULL DEFAULT 0,
+        provider_active BOOLEAN NOT NULL DEFAULT TRUE,
+        payment_method_active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      INSERT INTO accounting_payment_tokens (id, payment_details, partner, payment_method, provider, provider_reference, company, active, transaction_count, provider_active, payment_method_active) VALUES
+        ('payment-token-gemini-card', '•••• 4242', 'Gemini Furniture', 'Card', 'Demo', 'demo-card-4242', 'My Company (San Francisco)', TRUE, 0, TRUE, TRUE),
+        ('payment-token-acme-sepa', '•••• 9876', 'Acme Corporation', 'SEPA Direct Debit', 'Demo', 'demo-sepa-9876', 'My Company (San Francisco)', TRUE, 0, TRUE, TRUE),
+        ('payment-token-azure-card', '•••• 1111', 'Azure Interior', 'Card', 'Stripe', 'stripe-azure-1111', 'My Company (San Francisco)', TRUE, 2, TRUE, TRUE),
+        ('payment-token-deco-archived', '•••• 0005', 'Deco Addict', 'Card', 'Demo', 'demo-card-0005', 'My Company (San Francisco)', FALSE, 0, TRUE, TRUE),
+        ('payment-token-inactive-provider', '•••• 2222', 'Ready Mat', 'Card', 'Legacy Gateway', 'legacy-card-2222', 'My Company (San Francisco)', FALSE, 0, FALSE, TRUE)
+      ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS accounting_payment_tokens;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

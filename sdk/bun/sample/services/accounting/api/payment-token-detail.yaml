@@ -1,0 +1,7 @@
+page: { id: payment-token-detail }
+datasources:
+  - id: accounting_payment_token_detail
+    single: true
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_PAYMENT_TOKEN_DETAIL_UNAVAILABLE, message: Payment token details are temporarily unavailable. } }
+    query: "SELECT id, row_version, payment_details, partner, payment_method, provider, provider_reference, company, active, transaction_count, provider_active, payment_method_active FROM accounting_payment_tokens WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND id = :id"

@@ -1,10 +1,22 @@
 title: Payment Tokens
-page: { id: payment-tokens, route: /accounting/payment-tokens, breadcrumb: [Finance, Configuration, Payment Tokens], auth: { require: [accounting.read] } }
+page: { id: payment-tokens, route: /accounting/payment-tokens, breadcrumb: [], auth: { require: [accounting.read] } }
 components:
   - type: ListView
     variant: odoo
     source: accounting_payment_tokens
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
     search: { label: Search payment tokens, placeholder: Search partner or provider... }
     empty_state: { title: There is no token created yet. }
-    columns: [{ field: payment_details, label: Payment Details }, { field: partner, label: Partner }, { field: payment_method, label: Payment Method }, { field: provider, label: Provider }]
-    row_key: payment_details
+    columns:
+      - { field: payment_details, label: Payment Details, type: PrimaryEntityCell }
+      - { field: partner, label: Partner }
+      - { field: payment_method, label: Payment Method }
+      - { field: provider, label: Provider }
+      - { field: provider_reference, label: Provider Reference }
+      - { field: company, label: Company, optional: show }
+    row_key: id
+    row_open_action: view_accounting_payment_token
+    row_double_click_action: view_accounting_payment_token
+    row_actions: menu
+    page_size: 50
+    responsive_card: true

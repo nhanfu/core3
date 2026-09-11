@@ -1,0 +1,20 @@
+title: Payment Token
+page: { id: payment-token-detail, route: /accounting/payment-token-detail, breadcrumb: [], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_payment_token_detail
+    title_field: payment_details
+    subtitle_field: partner
+    editable: false
+    group_columns: 2
+    groups:
+      - title: General Information
+        fields:
+          - { field: payment_details, label: Payment Details }
+          - { field: payment_method, label: Payment Method }
+          - { field: partner, label: Partner }
+      - title: Technical Information
+        fields:
+          - { field: provider, label: Provider }
+          - { field: provider_reference, label: Provider Reference }
+          - { field: company, label: Company }
