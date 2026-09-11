@@ -2,6 +2,58 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-11 bounded Overall Equipment Effectiveness follow-up
+
+- Revalidated the next uncovered visible Manufacturing action in the
+  authenticated personal database `core3_personal`: Reporting / Overall
+  Equipment Effectiveness is runtime menu `549`
+  (`menu_mrp_workcenter_productivity_report`), action `836`
+  (`mrp_workcenter_productivity_report`), model
+  `mrp.workcenter.productivity`, and route
+  `/odoo/equipement-effectiveness` (the Odoo route intentionally uses the
+  source spelling `equipement`). Its modes are `graph,pivot,list,form`; the
+  context groups by Workcenter and Loss Reason and disables create/edit. The
+  list exposes Start Date, End Date, Work Center, User, Loss Reason, Duration
+  (minutes), and Company. The read-only form exposes Manufacturing Order, Work
+  Order, Work Center, Loss Reason, Start Date, End Date, Duration, Company,
+  and Description. Live demo data rendered Assembly 1 and Drill 1 with
+  7,200 total productive minutes.
+- Core3 implements the bounded report at `/manufacturing/oee` and its
+  read-only detail at `/manufacturing/oee/detail`. Frontend pages
+  `manufacturing-oee` and `manufacturing-oee-detail` remain presentation-only;
+  `api/oee.yaml` and `api/oee-detail.yaml` own the report/detail queries and
+  are joined by matching `page.id`. Migration `0.0.10` seeds six stable
+  productivity rows dated from `2026-01-10` through `2026-01-13`, two work
+  centers, productive/availability losses, manufacturing/work-order links,
+  and the exact 7,200-minute aggregate. The report supports default grouped
+  rows, search, work-center/loss/effectiveness filters, date range filtering,
+  graph/pivot/list/form navigation, empty results, and explicit 401/403/503
+  datasource errors; the detail supports 401/403/404/503 boundaries.
+- Because Odoo sets `create:False,edit:False`, this slice intentionally adds no
+  CRUD, workflow, or stale-write mutation. All report/detail datasources and
+  navigation require `manufacturing.read`; the focused suite verifies the
+  read-only permission boundary and no mutation actions are exposed.
+- Authenticated paired viewport captures are under `/tmp` and are not
+  committed. Odoo paths are
+  `/tmp/odoo-manufacturing-oee-{desktop,mobile}-{graph,pivot,list,form}-final.png`;
+  Core3 paths are
+  `/tmp/core3-manufacturing-oee-{desktop,mobile}-{graph,pivot,list,detail}-final.png`.
+  The browser matrix covered all four modes at 1440x900 and 390x844. Core3
+  had no relevant failed requests or page errors and `scrollWidth` equaled
+  the viewport width on every capture; Odoo had no page errors and also fit
+  both viewports, with mobile-only aborted background mail/avatar requests
+  during rapid view navigation.
+- Known bounded visual limits: Odoo's official demo productivity timestamps
+  are generated from the current date while Core3 is intentionally fixed for
+  deterministic fixtures, so displayed dates differ. Odoo collapses grouped
+  mobile list headers while the shared Core3 list keeps the report rows
+  expanded. Core3 uses the shared responsive pivot/table renderer rather than
+  Odoo's exact canvas/table chrome, and the read-only detail does not synthesize
+  chatter or mutation controls that the live OEE form does not expose. No
+  worksheet control was added because the installed OEE action exposes no
+  worksheet field; separate Productivity Losses, Work Orders Performance,
+  Unbuild, and other report actions remain outside this slice.
+
 ## 2026-09-11 bounded Operations follow-up
 
 - Revalidated the live personal reference before implementation against
