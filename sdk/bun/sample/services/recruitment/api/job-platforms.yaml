@@ -25,7 +25,7 @@ actions:
       defaults: { regex: '' }
       guards:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_JOB_PLATFORM_NAME_REQUIRED, message: A job board name is required. }
-        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:email AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:email AS VARCHAR)), '^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$')", status: 422, code: RECRUITMENT_JOB_PLATFORM_EMAIL_INVALID, message: Enter a valid email address. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:email AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:email AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$')", status: 422, code: RECRUITMENT_JOB_PLATFORM_EMAIL_INVALID, message: Enter a valid email address. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_job_platforms WHERE LOWER(email) = LOWER(TRIM(:email)))", status: 409, code: RECRUITMENT_JOB_PLATFORM_EMAIL_EXISTS, message: The Email must be unique, this one already corresponds to another Job Platform. }
       result: { query: "SELECT * FROM recruitment_job_platforms WHERE id = :id" }
     fields:
@@ -50,7 +50,7 @@ actions:
       guards:
         - { query: "SELECT id FROM recruitment_job_platforms WHERE id = :id", status: 404, code: RECRUITMENT_JOB_PLATFORM_NOT_FOUND, message: Job board email rule not found. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_JOB_PLATFORM_NAME_REQUIRED, message: A job board name is required. }
-        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:email AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:email AS VARCHAR)), '^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$')", status: 422, code: RECRUITMENT_JOB_PLATFORM_EMAIL_INVALID, message: Enter a valid email address. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:email AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:email AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$')", status: 422, code: RECRUITMENT_JOB_PLATFORM_EMAIL_INVALID, message: Enter a valid email address. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_job_platforms WHERE LOWER(email) = LOWER(TRIM(:email)) AND id <> :id)", status: 409, code: RECRUITMENT_JOB_PLATFORM_EMAIL_EXISTS, message: The Email must be unique, this one already corresponds to another Job Platform. }
       result: { query: "SELECT * FROM recruitment_job_platforms WHERE id = :id" }
     fields:
