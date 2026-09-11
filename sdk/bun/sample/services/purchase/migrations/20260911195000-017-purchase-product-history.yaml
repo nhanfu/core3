@@ -1,0 +1,33 @@
+version: 0.0.17
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS purchase_product_history (
+        id VARCHAR PRIMARY KEY,
+        product_id VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        order_name VARCHAR NOT NULL,
+        order_date DATE NOT NULL,
+        confirmation_date DATE,
+        vendor_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        quantity DECIMAL(18,3) NOT NULL,
+        unit_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        total_untaxed DECIMAL(18,2) NOT NULL DEFAULT 0,
+        currency VARCHAR NOT NULL DEFAULT 'USD',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS purchase_product_history_product_idx ON purchase_product_history(product_id, order_date);
+      INSERT OR IGNORE INTO purchase_product_history(id, product_id, product_name, order_name, order_date, confirmation_date, vendor_name, company_name, quantity, unit_price, total_untaxed, currency)
+      VALUES
+        ('purchase-history-acoustic-001', 'purchase-product-acoustic', 'Acoustic Bloc Screens', 'PO/2026/0001', DATE '2026-09-03', DATE '2026-09-03', 'Wood Corner', 'My Company (San Francisco)', 20, 286.80, 5736.00, 'USD'),
+        ('purchase-history-desk-001', 'purchase-product-001', 'Purchase Catalog Product 001', 'PO/2026/0002', DATE '2026-08-28', DATE '2026-08-28', 'Ready Mat', 'My Company (San Francisco)', 12, 26.00, 312.00, 'USD'),
+        ('purchase-history-bagel-001', 'purchase-product-bagel', 'Bagel', 'PO/2026/0003', DATE '2026-08-24', DATE '2026-08-25', 'Gemini Furniture', 'My Company (San Francisco)', 48, 0.60, 28.80, 'USD'),
+        ('purchase-history-shirt-001', 'purchase-product-black-shirt', 'Black embroidered t-shirt', 'PO/2026/0004', DATE '2026-08-18', DATE '2026-08-19', 'Acme Corporation', 'My Company (San Francisco)', 16, 14.00, 224.00, 'USD');
+    down: |
+      DROP TABLE IF EXISTS purchase_product_history;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

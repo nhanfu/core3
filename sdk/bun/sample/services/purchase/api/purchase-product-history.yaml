@@ -1,0 +1,8 @@
+page: { id: purchase-product-history }
+datasources:
+  - id: purchase_product_history
+    permission: purchase.read
+    pivot:
+      fields: [product_name, order_name, order_date, confirmation_date, vendor_name, company_name, quantity, unit_price, total_untaxed]
+    error_states: { transport_error: { status: 503, code: PURCHASE_PRODUCT_HISTORY_UNAVAILABLE, message: Purchase history is temporarily unavailable. } }
+    query: "SELECT id, product_id, product_name, order_name, CAST(order_date AS VARCHAR) AS order_date, CAST(confirmation_date AS VARCHAR) AS confirmation_date, vendor_name, company_name, quantity, printf('$ %,.2f', CAST(unit_price AS DOUBLE)) AS unit_price_display, total_untaxed, printf('$ %,.2f', CAST(total_untaxed AS DOUBLE)) AS total_untaxed_display, currency FROM purchase_product_history WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:product_name IS NULL OR product_name = :product_name) AND (:q IS NULL OR order_name ILIKE '%' || :q || '%' OR vendor_name ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%') ORDER BY order_date DESC, id"

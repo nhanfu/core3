@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_PRODUCT_DETAIL_UNAVAILABLE, message: This product is temporarily unavailable. } }
-    query: "SELECT p.id, p.row_version, p.default_code, p.name, COALESCE(p.product_tags, '') AS product_tags, COALESCE(p.barcode, '') AS barcode, p.company_name, p.list_price, p.cost_price, printf('$ %,.2f', CAST(p.list_price AS DOUBLE)) AS list_price_display, printf('$ %,.2f', CAST(p.cost_price AS DOUBLE)) AS cost_price_display, p.category, p.product_type, p.uom, p.purchase_ok, p.active, p.on_hand, printf('%.2f %s', CAST(p.on_hand AS DOUBLE), p.uom) AS on_hand_display, (SELECT COUNT(*) FROM purchase_product_variants v WHERE v.product_id = p.id) AS variant_count, COALESCE((SELECT SUM(o.quantity) FROM purchase_orders o WHERE o.product_name = p.name AND o.state <> 'Cancelled'), 0) AS purchased_qty FROM purchase_products p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id"
+    query: "SELECT p.id, p.row_version, p.default_code, p.name, COALESCE(p.product_tags, '') AS product_tags, COALESCE(p.barcode, '') AS barcode, p.company_name, p.list_price, p.cost_price, printf('$ %,.2f', CAST(p.list_price AS DOUBLE)) AS list_price_display, printf('$ %,.2f', CAST(p.cost_price AS DOUBLE)) AS cost_price_display, p.category, p.product_type, p.uom, p.purchase_ok, p.active, p.on_hand, printf('%.2f %s', CAST(p.on_hand AS DOUBLE), p.uom) AS on_hand_display, (SELECT COUNT(*) FROM purchase_product_variants v WHERE v.product_id = p.id) AS variant_count, COALESCE((SELECT SUM(h.quantity) FROM purchase_product_history h WHERE h.product_id = p.id), 0) + COALESCE((SELECT SUM(o.quantity) FROM purchase_orders o WHERE o.product_name = p.name AND o.state <> 'Cancelled'), 0) AS purchased_qty FROM purchase_products p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id"
   - id: purchase_product_messages
     permission: purchase.read
     query: "SELECT id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM purchase_product_messages WHERE product_id = :id ORDER BY created_at, id"
@@ -21,7 +21,7 @@ actions:
   - id: purchase_product_orders
     type: navigate
     permission: purchase.read
-    navigate_to: /purchase
+    navigate_to: /purchase/products/history
     params: { product_name: '{row.name}' }
   - id: edit_purchase_product_detail
     type: server_form
