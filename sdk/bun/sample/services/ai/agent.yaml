@@ -228,6 +228,21 @@ operations:
     method: POST
     permission: crm.manage
     preview: false
+  - id: crm.stages.archive
+    route: /api/actions/crm.stages.archive
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.stages.unarchive
+    route: /api/actions/crm.stages.unarchive
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.stages.delete
+    route: /api/actions/crm.stages.delete
+    method: POST
+    permission: crm.manage
+    preview: false
   - id: crm.team_members.create
     route: /api/actions/crm.team_members.create
     method: POST
