@@ -219,7 +219,7 @@ describe('Time Off Odoo view navigation', () => {
     const api = apiYaml('report-by-employee.yaml');
     expect(api.page.id).toBe('time-off-report-by-employee');
     expect(api.datasources.find((source: any) => source.id === 'time_off_employee_report')?.pivot.fields)
-      .toEqual(['employee_name', 'leave_type_name', 'date_from', 'days', 'request_count', 'state']);
+      .toEqual(['employee_id', 'employee_name', 'leave_type_name', 'date_from', 'days', 'request_count', 'state']);
     expect(api.datasources.find((source: any) => source.id === 'time_off_employee_report')?.query)
       .toContain("r.state IN ('Submitted', 'Approved')");
     expect(api.datasources.find((source: any) => source.id === 'time_off_employee_report')?.query)
