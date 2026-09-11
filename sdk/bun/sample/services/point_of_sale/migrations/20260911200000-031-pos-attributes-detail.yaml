@@ -1,0 +1,150 @@
+version: 0.0.31
+kind: data
+description: Odoo POS Attributes list and form fixtures with attribute values
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_attributes ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE pos_attributes ADD COLUMN IF NOT EXISTS sequence INTEGER;
+      UPDATE pos_attributes
+      SET row_version = COALESCE(row_version, 1), sequence = CASE id
+        WHEN 'pos-attr-size' THEN 20
+        WHEN 'pos-attr-color' THEN 40
+        WHEN 'pos-attr-milk' THEN 60
+        WHEN 'pos-attr-roast' THEN 50
+        WHEN 'pos-attr-archived' THEN 130
+        ELSE COALESCE(sequence, 100)
+      END;
+      CREATE TABLE IF NOT EXISTS pos_attribute_values (
+        id VARCHAR PRIMARY KEY,
+        attribute_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL,
+        is_custom BOOLEAN NOT NULL DEFAULT false,
+        default_extra_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_attributes(id, row_version, sequence, name, display_type, variant_creation, values_count, active) VALUES
+        ('pos-attr-brand', 1, 10, 'Brand', 'Radio', 'Instantly', 0, true),
+        ('pos-attr-shoes-size', 1, 30, 'Shoes size', 'Pills', 'Never', 0, true),
+        ('pos-attr-height', 1, 50, 'Height', 'Select', 'Instantly', 0, true),
+        ('pos-attr-length', 1, 70, 'Length', 'Pills', 'Dynamically', 0, true),
+        ('pos-attr-duration', 1, 80, 'Duration', 'Select', 'Never', 0, true),
+        ('pos-attr-extras', 1, 90, 'Extras', 'Multi-checkbox', 'Never', 0, true),
+        ('pos-attr-fabric', 1, 100, 'Fabric', 'Color', 'Instantly', 0, true),
+        ('pos-attr-legs', 1, 110, 'Legs', 'Radio', 'Instantly', 0, true),
+        ('pos-attr-sides', 1, 120, 'Sides', 'Pills', 'Never', 0, true),
+        ('pos-attr-options', 1, 140, 'Options', 'Multi-checkbox', 'Never', 0, true),
+        ('pos-attr-customization', 1, 150, 'Customization', 'Radio', 'Never', 0, true)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_attribute_values(id, attribute_id, sequence, name, is_custom, default_extra_price) VALUES
+        ('pos-attr-brand-adidas', 'pos-attr-brand', 10, 'Adidas', false, 0),
+        ('pos-attr-brand-apple', 'pos-attr-brand', 20, 'Apple', false, 0),
+        ('pos-attr-brand-ariel', 'pos-attr-brand', 30, 'Ariel', false, 0),
+        ('pos-attr-brand-canon', 'pos-attr-brand', 40, 'Canon', false, 0),
+        ('pos-attr-brand-coca-cola', 'pos-attr-brand', 50, 'Coca-Cola', false, 0),
+        ('pos-attr-brand-colgate', 'pos-attr-brand', 60, 'Colgate', false, 0),
+        ('pos-attr-brand-dell', 'pos-attr-brand', 70, 'Dell', false, 0),
+        ('pos-attr-brand-dove', 'pos-attr-brand', 80, 'Dove', false, 0),
+        ('pos-attr-brand-dyson', 'pos-attr-brand', 90, 'Dyson', false, 0),
+        ('pos-attr-brand-gillette', 'pos-attr-brand', 100, 'Gillette', false, 0),
+        ('pos-attr-brand-h-and-m', 'pos-attr-brand', 110, 'H&M', false, 0),
+        ('pos-attr-brand-head-and-shoulders', 'pos-attr-brand', 120, 'Head & Shoulders', false, 0),
+        ('pos-attr-brand-loreal', 'pos-attr-brand', 130, 'L''Oréal', false, 0),
+        ('pos-attr-brand-lenovo', 'pos-attr-brand', 140, 'Lenovo', false, 0),
+        ('pos-attr-brand-levis', 'pos-attr-brand', 150, 'Levi''s', false, 0),
+        ('pos-attr-brand-lg', 'pos-attr-brand', 160, 'LG', false, 0),
+        ('pos-attr-brand-maybelline', 'pos-attr-brand', 170, 'Maybelline', false, 0),
+        ('pos-attr-brand-montblanc', 'pos-attr-brand', 180, 'Montblanc', false, 0),
+        ('pos-attr-brand-nestle', 'pos-attr-brand', 190, 'Nestlé', false, 0),
+        ('pos-attr-brand-new-balance', 'pos-attr-brand', 200, 'New Balance', false, 0),
+        ('pos-attr-brand-nike', 'pos-attr-brand', 210, 'Nike', false, 0),
+        ('pos-attr-brand-nikon', 'pos-attr-brand', 220, 'Nikon', false, 0),
+        ('pos-attr-brand-nivea', 'pos-attr-brand', 230, 'Nivea', false, 0),
+        ('pos-attr-brand-olay', 'pos-attr-brand', 240, 'Olay', false, 0),
+        ('pos-attr-brand-oral-b', 'pos-attr-brand', 250, 'Oral-B', false, 0),
+        ('pos-attr-brand-panasonic', 'pos-attr-brand', 260, 'Panasonic', false, 0),
+        ('pos-attr-brand-pantene', 'pos-attr-brand', 270, 'Pantene', false, 0),
+        ('pos-attr-brand-pepsi', 'pos-attr-brand', 280, 'Pepsi', false, 0),
+        ('pos-attr-brand-philips', 'pos-attr-brand', 290, 'Philips', false, 0),
+        ('pos-attr-brand-puma', 'pos-attr-brand', 300, 'Puma', false, 0),
+        ('pos-attr-brand-ray-ban', 'pos-attr-brand', 310, 'Ray-Ban', false, 0),
+        ('pos-attr-brand-reebok', 'pos-attr-brand', 320, 'Reebok', false, 0),
+        ('pos-attr-brand-rolex', 'pos-attr-brand', 330, 'Rolex', false, 0),
+        ('pos-attr-brand-samsung', 'pos-attr-brand', 340, 'Samsung', false, 0),
+        ('pos-attr-brand-sony', 'pos-attr-brand', 350, 'Sony', false, 0),
+        ('pos-attr-brand-tide', 'pos-attr-brand', 360, 'Tide', false, 0),
+        ('pos-attr-brand-under-armour', 'pos-attr-brand', 370, 'Under Armour', false, 0),
+        ('pos-attr-brand-uniqlo', 'pos-attr-brand', 380, 'Uniqlo', false, 0),
+        ('pos-attr-brand-whirlpool', 'pos-attr-brand', 390, 'Whirlpool', false, 0),
+        ('pos-attr-brand-zara', 'pos-attr-brand', 400, 'Zara', false, 0),
+        ('pos-attr-size-xs', 'pos-attr-size', 10, 'XS', false, 0),
+        ('pos-attr-size-s', 'pos-attr-size', 20, 'S', false, 0),
+        ('pos-attr-size-m', 'pos-attr-size', 30, 'M', false, 0),
+        ('pos-attr-size-l', 'pos-attr-size', 40, 'L', false, 0),
+        ('pos-attr-size-xl', 'pos-attr-size', 50, 'XL', false, 0),
+        ('pos-attr-size-2xl', 'pos-attr-size', 60, '2XL', false, 2),
+        ('pos-attr-size-3xl', 'pos-attr-size', 70, '3XL', false, 3),
+        ('pos-attr-size-4xl', 'pos-attr-size', 80, '4XL', false, 4),
+        ('pos-attr-size-5xl', 'pos-attr-size', 90, '5XL', false, 5),
+        ('pos-attr-shoes-size-36', 'pos-attr-shoes-size', 10, '36', false, 0),
+        ('pos-attr-shoes-size-38', 'pos-attr-shoes-size', 20, '38', false, 0),
+        ('pos-attr-shoes-size-40', 'pos-attr-shoes-size', 30, '40', false, 0),
+        ('pos-attr-shoes-size-42', 'pos-attr-shoes-size', 40, '42', false, 0),
+        ('pos-attr-shoes-size-44', 'pos-attr-shoes-size', 50, '44', false, 0),
+        ('pos-attr-color-white', 'pos-attr-color', 10, 'White', false, 0),
+        ('pos-attr-color-black', 'pos-attr-color', 20, 'Black', false, 0),
+        ('pos-attr-color-red', 'pos-attr-color', 30, 'Red', false, 0),
+        ('pos-attr-color-blue', 'pos-attr-color', 40, 'Blue', false, 0),
+        ('pos-attr-color-green', 'pos-attr-color', 50, 'Green', false, 0),
+        ('pos-attr-height-short', 'pos-attr-height', 10, 'Short', false, 0),
+        ('pos-attr-height-standard', 'pos-attr-height', 20, 'Standard', false, 0),
+        ('pos-attr-height-tall', 'pos-attr-height', 30, 'Tall', false, 0),
+        ('pos-attr-length-short', 'pos-attr-length', 10, 'Short', false, 0),
+        ('pos-attr-length-medium', 'pos-attr-length', 20, 'Medium', false, 0),
+        ('pos-attr-length-long', 'pos-attr-length', 30, 'Long', false, 0),
+        ('pos-attr-length-extra-long', 'pos-attr-length', 40, 'Extra Long', false, 0),
+        ('pos-attr-duration-15', 'pos-attr-duration', 10, '15 minutes', false, 0),
+        ('pos-attr-duration-30', 'pos-attr-duration', 20, '30 minutes', false, 0),
+        ('pos-attr-duration-60', 'pos-attr-duration', 30, '1 hour', false, 0),
+        ('pos-attr-duration-90', 'pos-attr-duration', 40, '90 minutes', false, 0),
+        ('pos-attr-duration-120', 'pos-attr-duration', 50, '2 hours', false, 0),
+        ('pos-attr-extras-standard', 'pos-attr-extras', 10, 'Standard', false, 0),
+        ('pos-attr-extras-premium', 'pos-attr-extras', 20, 'Premium', false, 1.5),
+        ('pos-attr-extras-gift', 'pos-attr-extras', 30, 'Gift wrap', false, 2),
+        ('pos-attr-extras-rush', 'pos-attr-extras', 40, 'Rush', false, 4),
+        ('pos-attr-extras-custom', 'pos-attr-extras', 50, 'Custom', true, 0),
+        ('pos-attr-fabric-cotton', 'pos-attr-fabric', 10, 'Cotton', false, 0),
+        ('pos-attr-fabric-linen', 'pos-attr-fabric', 20, 'Linen', false, 1),
+        ('pos-attr-fabric-wool', 'pos-attr-fabric', 30, 'Wool', false, 2),
+        ('pos-attr-fabric-silk', 'pos-attr-fabric', 40, 'Silk', false, 4),
+        ('pos-attr-fabric-denim', 'pos-attr-fabric', 50, 'Denim', false, 1.5),
+        ('pos-attr-fabric-leather', 'pos-attr-fabric', 60, 'Leather', false, 6),
+        ('pos-attr-legs-1', 'pos-attr-legs', 10, '1', false, 0),
+        ('pos-attr-legs-2', 'pos-attr-legs', 20, '2', false, 0),
+        ('pos-attr-legs-3', 'pos-attr-legs', 30, '3', false, 0),
+        ('pos-attr-legs-4', 'pos-attr-legs', 40, '4', false, 0),
+        ('pos-attr-sides-left', 'pos-attr-sides', 10, 'Left', false, 0),
+        ('pos-attr-sides-right', 'pos-attr-sides', 20, 'Right', false, 0),
+        ('pos-attr-sides-both', 'pos-attr-sides', 30, 'Both', false, 0),
+        ('pos-attr-sides-front', 'pos-attr-sides', 40, 'Front', false, 0),
+        ('pos-attr-sides-back', 'pos-attr-sides', 50, 'Back', false, 0),
+        ('pos-attr-options-basic', 'pos-attr-options', 10, 'Basic', false, 0),
+        ('pos-attr-options-standard', 'pos-attr-options', 20, 'Standard', false, 0),
+        ('pos-attr-options-premium', 'pos-attr-options', 30, 'Premium', false, 2),
+        ('pos-attr-options-custom', 'pos-attr-options', 40, 'Custom', true, 0),
+        ('pos-attr-customization-none', 'pos-attr-customization', 10, 'None', false, 0)
+      ON CONFLICT(id) DO NOTHING;
+      UPDATE pos_attributes
+      SET row_version = COALESCE(row_version, 1),
+          values_count = (SELECT COUNT(*) FROM pos_attribute_values v WHERE v.attribute_id = pos_attributes.id);
+    down: |
+      DROP TABLE IF EXISTS pos_attribute_values;
+      DELETE FROM pos_attributes WHERE id IN ('pos-attr-brand', 'pos-attr-shoes-size', 'pos-attr-height', 'pos-attr-length', 'pos-attr-duration', 'pos-attr-extras', 'pos-attr-fabric', 'pos-attr-legs', 'pos-attr-sides', 'pos-attr-options', 'pos-attr-customization');
+      ALTER TABLE pos_attributes DROP COLUMN IF EXISTS sequence;
+      ALTER TABLE pos_attributes DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
