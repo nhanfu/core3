@@ -19,7 +19,9 @@ describe('Events Event Templates configuration slice', () => {
     expect(list.components[0]).toMatchObject({ row_open_action: 'view_event_template', row_double_click_action: 'view_event_template' });
     expect(list.actions.find((candidate: any) => candidate.id === 'view_event_template')).toMatchObject({ navigate_to: '/events/templates/detail', permission: 'events.read' });
     expect(discovered.pages.get('event-template-detail')?.config.page.route).toBe('/events/templates/detail');
-    expect(discovered.pageDatasources.get('event-template-detail')).toEqual(['event_template_detail']);
+    expect(discovered.pageDatasources.get('event-template-detail')).toEqual([
+      'event_template_detail', 'event_template_communications',
+    ]);
     expect(detail.components[0].header_actions.map((candidate: any) => candidate.id)).toEqual([
       'back_to_event_templates', 'edit_event_template', 'delete_event_template',
     ]);
