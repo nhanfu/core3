@@ -590,3 +590,57 @@ Known visual limits are the shared Core3 shell/breadcrumbs, Core3’s Edit actio
 and modal New presentation, plain numeric Balance instead of Odoo currency
 formatting, boolean read-only values rendered as text instead of disabled
 checkbox glyphs, and Core3 mobile cards versus the captured Odoo mobile list.
+
+## Current batch: Attributes action 234
+
+The authenticated personal Odoo 19 reference exposes Point of Sale →
+Configuration → Products → Attributes as action 234 (`product.attribute`) with
+`list,form` modes. The live list contains 13 demo attributes and exactly these
+columns: Attribute, Display Type, and Variant Creation. The Size form exposes
+Attribute Name, Display Type? (Radio, Pills, Select, Color, Multi-checkbox,
+Image), Variant Creation? (Instantly, Dynamically, Never), and an Attribute
+Values x2many grid with Value, Free text, Default Extra Price, and Add a line.
+The reference was checked at 1440x900 and 390x844; it had no HTTP error
+responses, console errors, or horizontal overflow. The mobile list navigation
+cancels one background `/mail/data` poll while changing views; the action
+itself remains rendered and healthy.
+
+Core3 now completes the bounded action at `/point-of-sale/attributes`,
+`/point-of-sale/attribute-detail?id=pos-attr-size`, and
+`/point-of-sale/attributes/new`. Page YAML and service API YAML are separate
+and join through `pos-attributes`, `pos-attribute-detail`, and
+`pos-attribute-new` page IDs. Migration `031` adds a sequence-ordered set of
+13 deterministic Odoo-shaped attributes plus 96 deterministic attribute values,
+row versions, and count projections. The list supports the Odoo columns,
+responsive cards, search, empty state, and transport-error metadata. Detail and
+New support the exact radio choices, permissioned attribute/value CRUD,
+required/duplicate/invalid-value validation, in-use delete protection, missing
+record handling, and parent/line optimistic stale guards. New attribute values
+are added after the parent attribute is saved, matching the bounded x2many
+workflow used by the existing POS Floor Plans slice.
+
+Focused coverage passes 4 tests and 58 assertions, including action/menu
+registration, `page.id` joins, deterministic default/search/empty/error/missing
+states, permissions, CRUD, validation, duplicate/in-use guards, and stale
+parent/line mutations. Authenticated browser evidence passes at both requested
+viewports with zero Core3 failed requests, zero console errors, and no
+horizontal overflow. The paired captures are:
+
+- Odoo: `/tmp/odoo-pos-attributes-list-desktop-20260911-final.png`,
+  `/tmp/odoo-pos-attributes-detail-desktop-20260911-final.png`,
+  `/tmp/odoo-pos-attributes-new-desktop-20260911-final.png`,
+  `/tmp/odoo-pos-attributes-list-mobile-20260911-final.png`,
+  `/tmp/odoo-pos-attributes-detail-mobile-20260911-final.png`, and
+  `/tmp/odoo-pos-attributes-new-mobile-20260911-final.png`.
+- Core3: `/tmp/core3-pos-attributes-list-desktop-20260911-final.png`,
+  `/tmp/core3-pos-attributes-detail-desktop-20260911-final.png`,
+  `/tmp/core3-pos-attributes-new-desktop-20260911-final.png`,
+  `/tmp/core3-pos-attributes-list-mobile-20260911-final.png`,
+  `/tmp/core3-pos-attributes-detail-mobile-20260911-final.png`, and
+  `/tmp/core3-pos-attributes-new-mobile-20260911-final.png`.
+
+Known visual limits are Core3’s shared shell and breadcrumb/header composition,
+the Core3 inline radio layout versus Odoo’s compact form sheet, the current
+line grid’s em dash/empty Free text rendering and plain numeric extra-price
+formatting, and the intentionally deferred add-line interaction on an unsaved
+New parent. Screenshots remain under `/tmp` and are not committed.
