@@ -2,6 +2,42 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-11 bounded Operations follow-up
+
+- Revalidated the live personal reference before implementation against
+  `core3_personal` at `http://localhost:8069`: `mrp` is installed
+  (`19.0.2.0`, demo enabled), `mrp.mrp_routing_action` is runtime action 855,
+  `mrp.menu_mrp_routing_action` is runtime menu 554, and the model is
+  `mrp.routing.workcenter`. The action exposes `list,kanban,form`; the
+  authenticated action URL is `/odoo/action-855`. In this Odoo build the
+  friendly `/odoo/operations` URL redirects to Discuss, so it is not used as
+  screenshot evidence.
+- The five live demo rows are represented in Core3 `/manufacturing/operations`
+  with Odoo-visible Operation, Bill of Material, Work Center, Duration
+  (minutes), Duration Computation, Default Duration, Cost based on, Company,
+  active/archive, and dependency fields. The list and detail pages are
+  presentation-only; `api/operations.yaml` and `api/operation-detail.yaml`
+  own all queries and mutations and join the pages by `page.id`.
+- Migration `0.0.9` seeds stable `2026-01-15` Operations fixtures. Focused
+  coverage includes active/search/empty/not-found/transport-error states,
+  create/edit, duplicate-name `409`, invalid-duration/mode `422`, stale-row
+  `409`, missing `404`, archive/restore, and in-use delete `409` guards with
+  explicit read/write/manage permissions.
+- Authenticated paired captures were performed at 1440x900 and 390x844 using
+  the live personal Odoo action and the isolated Core3 runtime. Odoo list,
+  kanban, and populated form paths are `/tmp/odoo-manufacturing-operations-
+  {desktop-1440x900,mobile-390x844}-{list,kanban,form}.png`; Core3 paths are
+  `/tmp/core3-manufacturing-operations-
+  {desktop-1440x900,mobile-390x844}-{list,kanban,form}.png`. The final rerun
+  reported zero failed/4xx+ responses and no horizontal overflow on every
+  surface. Images remain under `/tmp` and are not committed.
+- Deliberate bounded limitations: the current live action has no worksheet
+  field in its installed `mrp.routing.workcenter` form, so no synthetic
+  worksheet control was added; inline dependency/variant relation editors,
+  chatter data, cross-company record rules, and the separate OEE/Unbuild/report
+  actions remain outside this slice. The full Manufacturing readiness gate
+  remains open.
+
 ## 2026-09-11 bounded Work Centers follow-up
 
 - Revalidated the installed Odoo contract against `core3_owned`: `mrp.mrp_workcenter_action` (runtime action 839), menu `mrp.menu_view_resource_search_mrp` (runtime menu 519), model `mrp.workcenter`, route `/odoo/workcenters`, and `list,kanban,form` modes. The list uses sequence/name/code/tags/alternatives/productive time/cost/hourly efficiency/OEE/setup/cleanup/company; the form uses `General Information` and `Product Capacities` notebook tabs plus the OEE/Lost/Load/Performance stat buttons and chatter.
