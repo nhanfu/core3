@@ -767,3 +767,49 @@ its incorrect zero-balance `No data` state. Remaining bounded differences
 are the live Odoo's 85 rows versus Core3's four deterministic review fixtures,
 Odoo's purple shell and compact localized dates versus Core3's Fluent shell
 and ISO dates, and the shared Core3 mobile card styling/fixture density.
+
+## Current batch: Payment Tokens action
+
+The installed Odoo 19 source confirms `payment.action_payment_token` as the
+Payment Tokens window action with `list,form` modes. Its list is create-disabled
+and exposes Payment Details, Partner, Payment Method, Provider, Provider
+Reference, and Company. Its form is both create- and edit-disabled, with
+General Information and Technical Information groups; the source also defines
+an Archived search filter and a conditional Payments stat action. The normal
+authenticated personal menu hides Payment Tokens and Payment Transactions
+behind `base.group_no_one`; authenticated developer-mode reference QA at
+`/odoo/payment-tokens?debug=1` exposed both actions. The reference database had
+no token records, so its Odoo captures intentionally show the installed empty
+state.
+
+Core3 implements `/accounting/payment-tokens` and the read-only
+`/accounting/payment-token-detail` page as separate YAML page/API fragments
+joined by `page.id`. The migration owns deterministic active and archived
+masked-token fixtures shaped like Odoo's payment.token fields. The list
+defaults to active records, supports partner/provider search and Archived
+filtering, and opens the read-only form. Server-side actions are limited to
+accounting.write archive, restore, and delete contracts with required
+row-version concurrency, missing-record guards, restore validation for
+inactive providers/payment methods, and transport/missing/empty states. Token
+creation and editing are deliberately absent because Odoo's installed action
+sets `create="false"` and `edit="false"`.
+
+Authenticated comparisons used Odoo `codex@core3.local` in `core3_personal`
+and Core3 `admin@tms.local`. Screenshots remain outside Git:
+
+- Odoo empty list desktop: `/tmp/odoo-accounting-payment-tokens-20260911/desktop.png` — `aaa73a54d16bd40208f1131e9983a2609f1f1bc8eaad0c9435c83f95a3c298e0`
+- Odoo empty list mobile: `/tmp/odoo-accounting-payment-tokens-20260911/mobile.png` — `8dfd7f0587cfd217ba8366aac00c63e0090b0ee4e9526e7fe633164b592ed0d2`
+- Core3 seeded list desktop: `/tmp/core3-accounting-payment-tokens-20260911/list-final-desktop.png` — `153984de0ee91c3314e519f141fc452484656d23de0c8c12d62b29930df530eb`
+- Core3 seeded list mobile: `/tmp/core3-accounting-payment-tokens-20260911/list-final-mobile.png` — `395af4b661af23e5270a89374985742d1cea4ff48d8b9afe7db81711e14cd316`
+- Core3 read-only detail desktop: `/tmp/core3-accounting-payment-tokens-20260911/detail-final-desktop.png` — `a82634dc11e9d58a345aa982516b218fef8639128a15b897d5bff4e05dcbe2b4`
+- Core3 read-only detail mobile: `/tmp/core3-accounting-payment-tokens-20260911/detail-final-mobile.png` — `8242642948fe6a4d4b0ae23b1cf9f7aa7398dc48b90be2137586da7020cb2253`
+
+The four desktop/mobile viewport captures are exact 1440x900 and 390x844.
+Authenticated Core3 list-to-detail navigation returned no failed requests or
+page errors and measured `scrollWidth === clientWidth` at both viewports. The
+remaining visual differences are the empty Odoo reference versus seeded Core3
+review data, Odoo's purple shell versus Core3's Fluent shell, and shared
+renderer differences in navigation density and mobile column clipping. The
+conditional linked-Payments stat and the separately visible Payment
+Transactions action are deferred to a later transaction batch; no transaction
+behavior is claimed here.
