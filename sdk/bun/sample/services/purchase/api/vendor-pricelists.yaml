@@ -5,4 +5,5 @@ datasources:
     query: "SELECT value, label FROM (VALUES (true, 'Active Products'), (false, 'Archived Products')) states(value, label)"
   - id: purchase_vendor_pricelists
     permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_VENDOR_PRICELISTS_UNAVAILABLE, message: Vendor pricelists are temporarily unavailable. } }
     query: "SELECT id, row_version, vendor_name, product_name, company_name, uom, unit_price, printf('$ %,.2f', CAST(unit_price AS DOUBLE)) AS unit_price_display, min_qty, printf('%.2f', CAST(min_qty AS DOUBLE)) AS min_qty_display, lead_time_days, CAST(lead_time_days AS VARCHAR) || CASE WHEN lead_time_days = 1 THEN ' day' ELSE ' days' END AS lead_time_display, active, CAST(created_at AS VARCHAR) AS created_at FROM purchase_vendor_pricelists WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR vendor_name ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY vendor_name, product_name, unit_price, id"

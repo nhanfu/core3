@@ -1,0 +1,25 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE purchase_vendor_pricelists ADD COLUMN IF NOT EXISTS vendor_product_name VARCHAR DEFAULT '';
+      ALTER TABLE purchase_vendor_pricelists ADD COLUMN IF NOT EXISTS vendor_product_code VARCHAR DEFAULT '';
+      ALTER TABLE purchase_vendor_pricelists ADD COLUMN IF NOT EXISTS product_variant_name VARCHAR DEFAULT '';
+      ALTER TABLE purchase_vendor_pricelists ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'USD';
+      ALTER TABLE purchase_vendor_pricelists ADD COLUMN IF NOT EXISTS date_start DATE;
+      ALTER TABLE purchase_vendor_pricelists ADD COLUMN IF NOT EXISTS date_end DATE;
+      ALTER TABLE purchase_vendor_pricelists ADD COLUMN IF NOT EXISTS discount DECIMAL(18,2) DEFAULT 0;
+      UPDATE purchase_vendor_pricelists SET vendor_product_name = COALESCE(vendor_product_name, ''), vendor_product_code = COALESCE(vendor_product_code, ''), product_variant_name = COALESCE(product_variant_name, ''), currency = COALESCE(currency, 'USD'), discount = COALESCE(discount, 0);
+    down: |
+      ALTER TABLE purchase_vendor_pricelists DROP COLUMN IF EXISTS vendor_product_name;
+      ALTER TABLE purchase_vendor_pricelists DROP COLUMN IF EXISTS vendor_product_code;
+      ALTER TABLE purchase_vendor_pricelists DROP COLUMN IF EXISTS product_variant_name;
+      ALTER TABLE purchase_vendor_pricelists DROP COLUMN IF EXISTS currency;
+      ALTER TABLE purchase_vendor_pricelists DROP COLUMN IF EXISTS date_start;
+      ALTER TABLE purchase_vendor_pricelists DROP COLUMN IF EXISTS date_end;
+      ALTER TABLE purchase_vendor_pricelists DROP COLUMN IF EXISTS discount;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

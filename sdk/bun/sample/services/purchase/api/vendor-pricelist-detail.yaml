@@ -1,0 +1,87 @@
+page: { id: purchase-vendor-pricelist-detail }
+datasources:
+  - id: purchase_vendor_pricelist_detail
+    single: true
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_VENDOR_PRICELIST_DETAIL_UNAVAILABLE, message: This vendor information is temporarily unavailable. } }
+    query: "SELECT id, row_version, vendor_name, COALESCE(vendor_product_name, '') AS vendor_product_name, COALESCE(vendor_product_code, '') AS vendor_product_code, product_name, COALESCE(product_variant_name, '') AS product_variant_name, company_name, uom, COALESCE(currency, 'USD') AS currency, unit_price, min_qty, lead_time_days, COALESCE(CAST(date_start AS VARCHAR), '') AS date_start, COALESCE(CAST(date_end AS VARCHAR), '') AS date_end, COALESCE(discount, 0) AS discount, active FROM purchase_vendor_pricelists WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: back_to_purchase_vendor_pricelists
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/vendor-pricelists
+  - id: edit_purchase_vendor_pricelist
+    type: server_form
+    permission: purchase.write
+    title: Edit Vendor Information
+    action: purchase.vendor_pricelists.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.purchase_vendor_pricelist_detail
+    refresh: [purchase_vendor_pricelist_detail, purchase_vendor_pricelists]
+    mutation:
+      operation: update
+      table: purchase_vendor_pricelists
+      key: id
+      fields: [vendor_name, vendor_product_name, vendor_product_code, product_name, product_variant_name, company_name, uom, currency, unit_price, min_qty, lead_time_days, date_start, date_end, discount]
+      required: [vendor_name, product_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_vendor_pricelists WHERE id = :id", status: 404, code: PURCHASE_VENDOR_PRICELIST_NOT_FOUND, message: Vendor pricelist not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:vendor_name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:product_name AS VARCHAR))) > 0", status: 422, code: SUPPLIER_INFO_NAMES_REQUIRED, message: Vendor and product are required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:unit_price, 0) >= 0 AND COALESCE(:min_qty, 0) > 0 AND COALESCE(:lead_time_days, 0) >= 0 AND COALESCE(:discount, 0) BETWEEN 0 AND 100", status: 422, code: SUPPLIER_INFO_VALUES_INVALID, message: Unit price, quantity, lead time, and discount must be valid. }
+      result: { query: "SELECT * FROM purchase_vendor_pricelists WHERE id = :id" }
+    fields:
+      - { field: vendor_name, label: Vendor, type: text, required: true }
+      - { field: vendor_product_name, label: Vendor Product Name?, type: text }
+      - { field: vendor_product_code, label: Vendor Product Code?, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: product_variant_name, label: Product Variant?, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: uom, label: Unit, type: text }
+      - { field: currency, label: Currency, type: text }
+      - { field: unit_price, label: Unit Price, type: number, min: 0 }
+      - { field: min_qty, label: Quantity?, type: number, min: 1 }
+      - { field: lead_time_days, label: Lead Time?, type: number, min: 0 }
+      - { field: date_start, label: Validity, type: text }
+      - { field: date_end, label: To, type: text }
+      - { field: discount, label: Discount (%), type: number, min: 0, max: 100 }
+  - id: duplicate_purchase_vendor_pricelist
+    type: server_form
+    permission: purchase.write
+    title: Duplicate Vendor Information
+    action: purchase.vendor_pricelists.duplicate
+    handler: yaml_mutation
+    operation: create
+    prefill: state.purchase_vendor_pricelist_detail
+    refresh: [purchase_vendor_pricelists]
+    mutation:
+      operation: insert
+      table: purchase_vendor_pricelists
+      generated: [id]
+      fields: [vendor_name, vendor_product_name, vendor_product_code, product_name, product_variant_name, company_name, uom, currency, unit_price, min_qty, lead_time_days, date_start, date_end, discount, active]
+      required: [vendor_name, product_name]
+      defaults: { active: true }
+      result: { query: "SELECT * FROM purchase_vendor_pricelists WHERE id = :id" }
+    fields:
+      - { field: vendor_name, label: Vendor, type: text, required: true }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: unit_price, label: Unit Price, type: number, min: 0 }
+      - { field: min_qty, label: Quantity?, type: number, min: 1 }
+      - { field: lead_time_days, label: Lead Time?, type: number, min: 0 }
+  - id: delete_purchase_vendor_pricelist
+    type: server
+    permission: purchase.write
+    action: purchase.vendor_pricelists.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    confirm: 'Delete vendor information for {{row.vendor_name}}?'
+    refresh: [purchase_vendor_pricelists]
+    mutation:
+      operation: delete
+      table: purchase_vendor_pricelists
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_vendor_pricelists WHERE id = :id", status: 404, code: PURCHASE_VENDOR_PRICELIST_NOT_FOUND, message: Vendor pricelist not found. }

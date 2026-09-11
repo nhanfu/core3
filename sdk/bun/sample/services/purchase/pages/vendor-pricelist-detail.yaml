@@ -1,0 +1,33 @@
+title: Vendor Information
+page: { id: purchase-vendor-pricelist-detail, route: /purchase/vendor-pricelists/detail, breadcrumb: [Supply Chain, Purchase, Configuration, Vendor Pricelists, Vendor Information], auth: { require: [purchase.read] } }
+components:
+  - type: OdooFormView
+    source: purchase_vendor_pricelist_detail
+    title_field: vendor_name
+    subtitle_field: product_name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_purchase_vendor_pricelists, label: Vendor Pricelists, icon: arrow-left, permission: purchase.read }
+      - { id: edit_purchase_vendor_pricelist, label: Edit, variant: primary, permission: purchase.write }
+      - { id: duplicate_purchase_vendor_pricelist, label: Duplicate, icon: copy, permission: purchase.write }
+      - { id: delete_purchase_vendor_pricelist, label: Delete, icon: trash, variant: danger, permission: purchase.write }
+    group_columns: 2
+    groups:
+      - title: VENDOR
+        fields:
+          - { field: vendor_name, label: Vendor }
+          - { field: vendor_product_name, label: Vendor Product Name? }
+          - { field: vendor_product_code, label: Vendor Product Code? }
+          - { field: lead_time_days, label: Lead Time? }
+      - title: PRICELIST
+        fields:
+          - { field: product_name, label: Product }
+          - { field: product_variant_name, label: Product Variant? }
+          - { field: min_qty, label: Quantity? }
+          - { field: unit_price, label: Unit Price }
+          - { field: currency, label: Currency }
+          - { field: date_start, label: Validity }
+          - { field: date_end, label: To }
+          - { field: discount, label: Discount (%) }
+          - { field: company_name, label: Company }
