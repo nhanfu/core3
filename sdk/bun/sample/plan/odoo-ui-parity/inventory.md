@@ -688,3 +688,36 @@ and forecasted quantities plus category values. The API must expose stable
 search/category filtering, an explicit empty/no-result state, 403 permission
 state, and 503 transport state; the report is read-only and must not expose
 CRUD or stale-write mutations.
+
+## Bounded batch: Reporting > Stock implementation (2026-09-11)
+
+The active Odoo 19 Inventory reference exposes `stock.menu_product_stock` /
+`action_product_stock_view` as the Reporting > Stock list action. Core3 adds
+the module-qualified route `/inventory/stock-report` with the Inventory at
+Date entry point, product/category search, stock quantities, unit cost, total
+value, and responsive mobile columns. Page YAML is layout-only and binds to
+`api/stock-report.yaml` through `page.id: stock-report`.
+
+Implementation commit: `469fd8e7` (`feat(inventory): add stock report parity`)
+after contract commit `5a2d4a5c`. Migration `20260911290000-012` provides ten
+stable storable-product rows with deterministic quantities and values. The
+read-only `inventory.read` contract covers category filters, empty results,
+transport errors, and the guarded Inventory at Date action; row actions link
+to existing stock history and replenishment surfaces. Focused coverage passes
+3 tests and 33 assertions.
+
+Authenticated Core3 browser verification used `admin@tms.local` at 1440x900
+and 390x844. Both states rendered ten stock rows/cards with exact
+document/body widths and no page errors, failed requests, or HTTP error
+responses. Odoo reference and Core3 captures remain under `/tmp`:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Stock report | 1440x900 | `/tmp/odoo-inventory-stock-report-desktop-20260911.png` | `3c337ebeeafcab66f9bc3864f2059513820d4ef6f7347dcd932fd63659f4083a` |
+| Odoo Stock report | 390x844 | `/tmp/odoo-inventory-stock-report-mobile-20260911.png` | `7fcaf26bf7c18f050c1be68df07970f7716e2c8edfdfd0994f95f2dac54cf795` |
+| Core3 Stock report | 1440x900 | `/tmp/core3-inventory-stock-report-current-1440x900.png` | `e29447066de5452f7b0b7806df9419ec68088899e0087cc31e1787ce557638ab` |
+| Core3 Stock report | 390x844 | `/tmp/core3-inventory-stock-report-current-390x844.png` | `b52b570312d663661e1b29983471845fbacc28c1215d262a8fe9d853bbb406e1` |
+
+The bounded residual is the Odoo purple shell/search panel and Inventory at
+Date wizard versus Core3's Fluent shell and shared date entry point. Images
+are not committed.
