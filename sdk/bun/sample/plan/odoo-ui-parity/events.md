@@ -938,6 +938,53 @@ multi-slot record, so the Odoo pair proves the event form/action context while
 the Core3 pair proves the deterministic Slots tab. Images remain outside the
 repository.
 
+## Bounded batch: Event Template communication schedules
+
+The installed Odoo 19 `event` addon exposes the Communication x2many on the
+Event Template form reached from `Configuration > Event Templates`. The live
+reference uses action `action_event_type` (action 290 in
+`core3_codex_demo`) and record `/odoo/action-290/1`; the source form contains
+the `Tickets`, `Communication`, `Questions`, and `Notes` tabs. Communication
+rows use the exact visible columns `Template`, `Interval`, `Unit`, and
+`Trigger`, with `Add a line`, edit, and delete controls. The authenticated
+Exhibition fixture showed Registration Confirmation immediately, plus Reminder
+rows at 1 hour and 3 days before the event starts.
+
+Core3 extends the existing `event-template-detail` page/API pair through the
+matching `page.id`. The page keeps the form presentation-only and mounts the
+service-owned `LineItemGrid` into the Communication tab; the API owns the
+`event_template_communications` datasource and permissioned create/update/
+delete actions. Migration `20260911200000-024-event-template-mail.yaml`
+creates deterministic Exhibition schedules with stable IDs, supports explicit
+empty and 503 transport states, and guards active-template membership,
+interval/trigger validation, duplicate schedules, parent and line
+row-version concurrency, and `events.write` permissions. A regression
+assertion ensures only the Communication tab owns the embedded content slot,
+so the shared form does not move the grid into Notes when the other notebook
+tabs render.
+
+Authenticated paired captures were taken after a fresh token-seeded browser
+context loaded the populated detail route and the Communication tab:
+
+| Surface | Viewport | Route | Capture | SHA-256 | Checks |
+| --- | --- | --- | --- | --- | --- |
+| Odoo | 1440x900 | `/odoo/action-290/1` | `/tmp/odoo-events-template-communication-desktop-1440x900.png` | `e59d2fc052cfed5c6c5f90fd6b821cb5b6b5687cf31393ffc646e141e3ef3b06` | 3 populated rows; optional avatar image requests were missing; document width 1440 |
+| Odoo | 390x844 | `/odoo/action-290/1` | `/tmp/odoo-events-template-communication-mobile-390x844.png` | `f3bb31553b3b95df9329196c4c2d1441f3f294210874d08687d7e7776914b334` | 3 populated rows; optional avatar image requests were missing; document width 390 |
+| Core3 | 1440x900 | `/events/templates/detail?id=template-exhibition` | `/tmp/core3-events-template-communication-desktop-1440x900.png` | `ee67f3e814be6f67ff0ba98b85d52b23a625bb397706d4293fe27814eaa6704b` | 3 populated rows; requestfailed/pageerror/HTTP>=400 empty; widths 1440/1440/1440 |
+| Core3 | 390x844 | `/events/templates/detail?id=template-exhibition` | `/tmp/core3-events-template-communication-mobile-390x844.png` | `d26630d49de8e5c195061d3d746e68a663c2ff37e2680bab711b383778f5a533` | 3 populated rows; requestfailed/pageerror/HTTP>=400 empty; widths 390/390/390 |
+
+The paired images were visually inspected. Core3 reproduces the populated
+schedule rows, Communication-tab placement, Add a line control, and the
+responsive table/card fallback. Odoo retains its purple shell and wider
+native relational grid; Core3 retains the shared Fluent shell and compact
+mobile column projection. Screenshots remain local-only and are not
+committed.
+
+Validation: `bun test test/events_template_communication.integration.test.ts`
+passes 3 tests and 26 assertions; global and Events CSS builds pass;
+`bun run audit`, ESLint, and `git diff --check` pass. Implementation commit
+is `0d4d7909`; this evidence update is committed separately.
+
 ## Deliberate defer: registration products, sales, and slot availability
 
 The requested follow-up was audited against Odoo revision `65975996` and the
