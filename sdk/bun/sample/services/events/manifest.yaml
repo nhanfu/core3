@@ -33,3 +33,4 @@ menu:
         - { path: /events/questions, label: Event Questions, icon: question, permission: events.read }
         - { path: /events/settings, label: Settings, icon: settings, permission: events.settings }
         - { path: /events/lead-generation, label: Lead Generation, icon: users, permission: events.manage }
+        - { path: /events/mail-schedulers, label: Mail Schedulers, icon: mail, permission: events.settings }

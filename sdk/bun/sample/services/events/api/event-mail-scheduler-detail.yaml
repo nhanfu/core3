@@ -1,0 +1,10 @@
+page: { id: event-mail-scheduler-detail }
+datasources:
+  - id: event_mail_scheduler_detail
+    single: true
+    permission: events.settings
+    error_states:
+      missing_record: { status: 404, code: EVENT_MAIL_SCHEDULER_NOT_FOUND, message: Event mail scheduler not found. }
+      transport_error: { status: 503, code: EVENT_MAIL_SCHEDULER_DETAIL_UNAVAILABLE, message: Event mail scheduler details are temporarily unavailable. }
+      forbidden: { status: 403, code: EVENT_MAIL_SCHEDULER_FORBIDDEN, message: You do not have permission to view this event mail scheduler. }
+    query: "SELECT id, row_version, event_name, template_ref, 'Event Mail Scheduler' AS scheduler_label, CASE mail_state WHEN 'running' THEN 'Running' WHEN 'scheduled' THEN 'Scheduled' WHEN 'sent' THEN 'Sent' WHEN 'error' THEN 'Error' WHEN 'cancelled' THEN 'Cancelled' ELSE mail_state END AS mail_state_label, CASE interval_unit WHEN 'now' THEN 'Immediately' WHEN 'hours' THEN CAST(interval_nbr AS VARCHAR) || ' Hours' WHEN 'days' THEN CAST(interval_nbr AS VARCHAR) || ' Days' WHEN 'weeks' THEN CAST(interval_nbr AS VARCHAR) || ' Weeks' WHEN 'months' THEN CAST(interval_nbr AS VARCHAR) || ' Months' ELSE interval_unit END AS interval_display, CASE interval_type WHEN 'after_sub' THEN 'After each registration' WHEN 'before_event' THEN 'Before the event starts' WHEN 'after_event_start' THEN 'After the event started' WHEN 'after_event' THEN 'After the event ended' WHEN 'before_event_end' THEN 'Before the event ends' ELSE interval_type END AS interval_type_label, CAST(scheduled_date AS VARCHAR) AS scheduled_date, mail_count_done, notification_type, mail_done, registration_mail_count FROM event_mail_schedulers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"

@@ -1,0 +1,25 @@
+title: Event Mail Scheduler
+page: { id: event-mail-scheduler-detail, route: /events/mail-schedulers/detail, breadcrumb: [Marketing, Events, Configuration, Mail Schedulers], auth: { require: [events.settings] } }
+components:
+  - type: OdooFormView
+    source: event_mail_scheduler_detail
+    title_field: event_name
+    subtitle_field: scheduler_label
+    editable: false
+    labels: { workflowStatus: Status }
+    header_actions:
+      - { id: back_to_event_mail_schedulers, label: Back to mail schedulers, variant: secondary, permission: events.settings }
+    groups:
+      - fields:
+          - { field: event_name, label: Event }
+          - { field: template_ref, label: Template }
+          - { field: mail_state_label, label: Global communication Status, type: StatusChip }
+      - fields:
+          - { field: interval_display, label: Interval }
+          - { field: interval_type_label, label: Trigger }
+          - { field: scheduled_date, label: Schedule Date }
+actions:
+  - id: back_to_event_mail_schedulers
+    type: navigate
+    permission: events.settings
+    navigate_to: /events/mail-schedulers

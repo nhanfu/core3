@@ -1,0 +1,24 @@
+title: Events Mail Schedulers
+page: { id: event-mail-schedulers, route: /events/mail-schedulers, breadcrumb: [Marketing, Events, Configuration, Mail Schedulers], auth: { require: [events.settings] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_mail_schedulers
+    search: { label: Search, placeholder: Search... }
+    columns:
+      - { field: event_name, label: Event, type: PrimaryEntityCell }
+      - { field: template_ref, label: Template }
+      - { field: scheduled_date, label: Schedule Date }
+      - { field: mail_count_done, label: '# Sent', align: right }
+      - { field: mail_state_label, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_event_mail_scheduler
+    row_double_click_action: view_event_mail_scheduler
+    empty_state: { title: Nothing Scheduled yet!, description: Under this technical menu you will find all scheduled communication related to your events. }
+actions:
+  - id: view_event_mail_scheduler
+    type: navigate
+    permission: events.settings
+    navigate_to: /events/mail-schedulers/detail
+    params: { id: '{row.id}' }

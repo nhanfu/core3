@@ -1,0 +1,67 @@
+version: 0.0.20
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_mail_schedulers (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        event_id VARCHAR NOT NULL,
+        event_name VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 0,
+        template_ref VARCHAR NOT NULL,
+        interval_nbr INTEGER NOT NULL DEFAULT 1,
+        interval_unit VARCHAR NOT NULL,
+        interval_type VARCHAR NOT NULL,
+        scheduled_date TIMESTAMP NOT NULL,
+        mail_count_done INTEGER NOT NULL DEFAULT 0,
+        mail_state VARCHAR NOT NULL DEFAULT 'scheduled',
+        notification_type VARCHAR NOT NULL DEFAULT 'mail',
+        mail_done BOOLEAN NOT NULL DEFAULT FALSE,
+        error_datetime TIMESTAMP,
+        last_registration_id VARCHAR,
+        registration_mail_count INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE TABLE IF NOT EXISTS event_mail_scheduler_registrations (
+        id VARCHAR PRIMARY KEY,
+        scheduler_id VARCHAR NOT NULL,
+        attendee_name VARCHAR NOT NULL,
+        scheduled_date TIMESTAMP NOT NULL,
+        mail_sent BOOLEAN NOT NULL DEFAULT FALSE
+      );
+      INSERT OR IGNORE INTO event_mail_schedulers
+        (id, event_id, event_name, sequence, template_ref, interval_nbr, interval_unit, interval_type, scheduled_date, mail_count_done, mail_state, notification_type, mail_done, registration_mail_count)
+      VALUES
+        ('event-mail-design-fair-registration', 'event-demo-001', 'Design Fair Los Angeles', 0, 'Event: Registration Confirmation', 0, 'now', 'after_sub', TIMESTAMP '2026-01-15 10:00:00', 3, 'running', 'mail', FALSE, 3),
+        ('event-mail-design-fair-hours', 'event-demo-001', 'Design Fair Los Angeles', 1, 'Event: Reminder', 1, 'hours', 'before_event', TIMESTAMP '2026-10-09 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-design-fair-days', 'event-demo-001', 'Design Fair Los Angeles', 2, 'Event: Reminder', 3, 'days', 'before_event', TIMESTAMP '2026-10-06 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-reno-registration', 'event-demo-002', 'Great Reno Ballon Race', 0, 'Event: Registration Confirmation', 0, 'now', 'after_sub', TIMESTAMP '2026-01-15 10:00:00', 6, 'running', 'mail', FALSE, 6),
+        ('event-mail-reno-hours', 'event-demo-002', 'Great Reno Ballon Race', 1, 'Event: Reminder', 1, 'hours', 'before_event', TIMESTAMP '2026-12-19 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-reno-days', 'event-demo-002', 'Great Reno Ballon Race', 2, 'Event: Reminder', 3, 'days', 'before_event', TIMESTAMP '2026-12-16 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-music-registration', 'event-demo-004', 'Live Music Festival', 0, 'Event: Registration Confirmation', 0, 'now', 'after_sub', TIMESTAMP '2026-01-15 10:00:00', 6, 'running', 'mail', FALSE, 6),
+        ('event-mail-music-hours', 'event-demo-004', 'Live Music Festival', 1, 'Event: Reminder', 1, 'hours', 'before_event', TIMESTAMP '2027-01-18 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-music-days', 'event-demo-004', 'Live Music Festival', 2, 'Event: Reminder', 3, 'days', 'before_event', TIMESTAMP '2027-01-15 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-business-registration', 'event-demo-005', 'Business workshops', 0, 'Event: Registration Confirmation', 0, 'now', 'after_sub', TIMESTAMP '2026-01-15 10:00:00', 0, 'running', 'mail', FALSE, 0),
+        ('event-mail-business-hours', 'event-demo-005', 'Business workshops', 1, 'Event: Reminder', 1, 'hours', 'before_event', TIMESTAMP '2026-09-05 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-business-days', 'event-demo-005', 'Business workshops', 2, 'Event: Reminder', 3, 'days', 'before_event', TIMESTAMP '2026-09-02 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-hockey-registration', 'event-demo-006', 'Hockey Tournament', 0, 'Event: Registration Confirmation', 0, 'now', 'after_sub', TIMESTAMP '2026-01-15 10:00:00', 2, 'running', 'mail', FALSE, 2),
+        ('event-mail-hockey-hours', 'event-demo-006', 'Hockey Tournament', 1, 'Event: Reminder', 1, 'hours', 'before_event', TIMESTAMP '2027-09-14 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-hockey-days', 'event-demo-006', 'Hockey Tournament', 2, 'Event: Reminder', 3, 'days', 'before_event', TIMESTAMP '2027-09-11 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-unpublished-registration', 'event-demo-007', 'An unpublished event', 0, 'Event: Registration Confirmation', 0, 'now', 'after_sub', TIMESTAMP '2026-01-15 10:00:00', 3, 'running', 'mail', FALSE, 3),
+        ('event-mail-unpublished-hours', 'event-demo-007', 'An unpublished event', 1, 'Event: Reminder', 1, 'hours', 'before_event', TIMESTAMP '2026-10-09 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-unpublished-days', 'event-demo-007', 'An unpublished event', 2, 'Event: Reminder', 3, 'days', 'before_event', TIMESTAMP '2026-10-06 15:30:00', 0, 'scheduled', 'mail', FALSE, 0),
+        ('event-mail-openwood-registration', 'event-demo-008', 'OpenWood Collection Online Reveal', 0, 'Event: Registration Confirmation', 0, 'now', 'after_sub', TIMESTAMP '2026-01-15 10:00:00', 4, 'running', 'mail', FALSE, 4),
+        ('event-mail-openwood-hours', 'event-demo-008', 'OpenWood Collection Online Reveal', 1, 'Event: Reminder', 1, 'hours', 'before_event', TIMESTAMP '2026-01-14 10:00:00', 4, 'sent', 'mail', TRUE, 4),
+        ('event-mail-openwood-days', 'event-demo-008', 'OpenWood Collection Online Reveal', 2, 'Event: Reminder', 3, 'days', 'before_event', TIMESTAMP '2026-01-12 10:00:00', 4, 'sent', 'mail', TRUE, 4);
+      INSERT OR IGNORE INTO event_mail_scheduler_registrations (id, scheduler_id, attendee_name, scheduled_date, mail_sent)
+      VALUES
+        ('event-mail-registration-001', 'event-mail-design-fair-registration', 'Taylor Kim', TIMESTAMP '2026-01-15 10:00:00', TRUE),
+        ('event-mail-registration-002', 'event-mail-design-fair-registration', 'Jamie Lee', TIMESTAMP '2026-01-15 10:00:00', TRUE),
+        ('event-mail-registration-003', 'event-mail-design-fair-registration', 'Edwin Hansen', TIMESTAMP '2026-01-15 10:00:00', TRUE);
+    down: |
+      DROP TABLE IF EXISTS event_mail_scheduler_registrations;
+      DROP TABLE IF EXISTS event_mail_schedulers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

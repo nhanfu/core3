@@ -1,0 +1,8 @@
+page: { id: event-mail-schedulers }
+datasources:
+  - id: event_mail_schedulers
+    permission: events.settings
+    error_states:
+      transport_error: { status: 503, code: EVENT_MAIL_SCHEDULERS_UNAVAILABLE, message: Event mail schedulers are temporarily unavailable. }
+      forbidden: { status: 403, code: EVENT_MAIL_SCHEDULERS_FORBIDDEN, message: You do not have permission to view event mail schedulers. }
+    query: "SELECT id, row_version, event_name, template_ref, CAST(scheduled_date AS VARCHAR) AS scheduled_date, mail_count_done, mail_state, CASE mail_state WHEN 'running' THEN 'Running' WHEN 'scheduled' THEN 'Scheduled' WHEN 'sent' THEN 'Sent' WHEN 'error' THEN 'Error' WHEN 'cancelled' THEN 'Cancelled' ELSE mail_state END AS mail_state_label, CASE interval_unit WHEN 'now' THEN 'Immediately' WHEN 'hours' THEN CAST(interval_nbr AS VARCHAR) || ' Hours' WHEN 'days' THEN CAST(interval_nbr AS VARCHAR) || ' Days' WHEN 'weeks' THEN CAST(interval_nbr AS VARCHAR) || ' Weeks' WHEN 'months' THEN CAST(interval_nbr AS VARCHAR) || ' Months' ELSE interval_unit END AS interval_display, CASE interval_type WHEN 'after_sub' THEN 'After each registration' WHEN 'before_event' THEN 'Before the event starts' WHEN 'after_event_start' THEN 'After the event started' WHEN 'after_event' THEN 'After the event ended' WHEN 'before_event_end' THEN 'Before the event ends' ELSE interval_type END AS interval_type_label FROM event_mail_schedulers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR event_name ILIKE '%' || :q || '%' OR template_ref ILIKE '%' || :q || '%' OR interval_type ILIKE '%' || :q || '%') ORDER BY event_name, sequence, id"
