@@ -20,6 +20,7 @@ actions:
     title: Time Off Summary
     submit_label: Print
     cancel_label: Cancel
+    modal_style: time_off_summary
     success_message: Time Off Summary printed.
     action: time_off.summary.print
     handler: yaml_mutation
@@ -27,6 +28,7 @@ actions:
     prefill:
       employee_id: '{row.employee_id}'
       employee_name: '{row.employee_name}'
+      date_from: '2026-09-01'
     mutation:
       operation: insert
       table: time_off_summary_runs

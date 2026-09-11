@@ -1,6 +1,10 @@
 .time-off-page { min-height: 100%; }
 .time-off-page .o-list-view__toolbar { gap: .65rem; }
 
+/* The employee Print action keeps Odoo's primary-before-secondary footer order. */
+.form-dialog.modal-style-time_off_summary .form-footer .btn-primary { order: 1; }
+.form-dialog.modal-style-time_off_summary .form-footer .btn-secondary { order: 2; }
+
 /* Odoo's multiple-request action is a wide, compact modal with inline labels. */
 .form-dialog.modal-style-time_off_multiple {
   display: grid;

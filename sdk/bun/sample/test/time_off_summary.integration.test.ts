@@ -25,8 +25,9 @@ describe('Time Off Summary report action parity', () => {
     expect(list.columns.find((column: any) => column.field === 'actions').actions).toContainEqual(expect.objectContaining({ id: 'print_time_off_summary', label: 'Time Off Summary' }));
     expect(action).toMatchObject({
       type: 'server_form', title: 'Time Off Summary', permission: 'time_off.read',
-      submit_label: 'Print', cancel_label: 'Cancel', handler: 'yaml_mutation', operation: 'create',
+      submit_label: 'Print', cancel_label: 'Cancel', modal_style: 'time_off_summary', handler: 'yaml_mutation', operation: 'create',
     });
+    expect(action.prefill).toMatchObject({ employee_id: '{row.employee_id}', employee_name: '{row.employee_name}', date_from: '2026-09-01' });
     expect(action.fields.map((field: any) => field.label)).toEqual(['Employee', 'Employee', 'From', 'Select Time Off Type']);
     expect(action.mutation).toMatchObject({ operation: 'insert', table: 'time_off_summary_runs' });
     expect(action.mutation.guards.map((guard: any) => guard.status)).toEqual([404, 422, 422]);
