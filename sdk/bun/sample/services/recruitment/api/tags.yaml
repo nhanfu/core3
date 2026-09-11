@@ -1,0 +1,66 @@
+page: { id: recruitment-tags }
+datasources:
+  - id: recruitment_tags
+    permission: recruitment.manage
+    error_states:
+      forbidden: { status: 403, code: RECRUITMENT_TAGS_FORBIDDEN, message: You do not have permission to manage recruitment tags. }
+      transport_error: { status: 503, code: RECRUITMENT_TAGS_UNAVAILABLE, message: Recruitment tags are temporarily unavailable. }
+    query: "SELECT id, row_version, name, color FROM recruitment_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: create_recruitment_tag
+    type: server_form
+    permission: recruitment.manage
+    title: New Tag
+    action: recruitment.tags.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_tags]
+    mutation:
+      operation: insert
+      table: recruitment_tags
+      generated: [id]
+      before_steps: [{ query: "SELECT 'recruitment-tag-custom-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [name, color]
+      required: [name]
+      defaults: { color: 0 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_TAG_NAME_REQUIRED, message: A tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:color AS INTEGER) >= 0 AND TRY_CAST(:color AS INTEGER) <= 11", status: 422, code: RECRUITMENT_TAG_COLOR_INVALID, message: Color index must be between 0 and 11. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: RECRUITMENT_TAG_NAME_EXISTS, message: A recruitment tag with this name already exists. }
+      result: { query: "SELECT * FROM recruitment_tags WHERE id = :id" }
+    fields: [{ field: name, label: Tag Name, type: text, required: true, placeholder: Tag name }, { field: color, label: Color Index, type: number, required: true, min: 0, max: 11, step: 1 }]
+  - id: edit_recruitment_tag
+    type: server_form
+    permission: recruitment.manage
+    title: Edit Tag
+    action: recruitment.tags.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [recruitment_tags]
+    mutation:
+      operation: update
+      table: recruitment_tags
+      fields: [name, color]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_tags WHERE id = :id", status: 404, code: RECRUITMENT_TAG_NOT_FOUND, message: Recruitment tag not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_TAG_NAME_REQUIRED, message: A tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:color AS INTEGER) >= 0 AND TRY_CAST(:color AS INTEGER) <= 11", status: 422, code: RECRUITMENT_TAG_COLOR_INVALID, message: Color index must be between 0 and 11. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: RECRUITMENT_TAG_NAME_EXISTS, message: A recruitment tag with this name already exists. }
+      result: { query: "SELECT * FROM recruitment_tags WHERE id = :id" }
+    fields: [{ field: name, label: Tag Name, type: text, required: true, placeholder: Tag name }, { field: color, label: Color Index, type: number, required: true, min: 0, max: 11, step: 1 }]
+  - id: delete_recruitment_tag
+    type: server
+    permission: recruitment.manage
+    action: recruitment.tags.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete tag {{row.name}}?'
+    refresh: [recruitment_tags]
+    mutation:
+      operation: delete
+      table: recruitment_tags
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM recruitment_tags WHERE id = :id", status: 404, code: RECRUITMENT_TAG_NOT_FOUND, message: Recruitment tag not found. }]

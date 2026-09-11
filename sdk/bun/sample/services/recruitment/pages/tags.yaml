@@ -1,0 +1,26 @@
+title: Tags
+page: { id: recruitment-tags, route: /recruitment/tags, breadcrumb: [Recruitment, Configuration, Applications, Tags], auth: { require: [recruitment.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_tags
+    create_action: create_recruitment_tag
+    create_label: New
+    search: { label: Search tags, placeholder: Search tags... }
+    row_key: id
+    row_open_action: edit_recruitment_tag
+    row_actions: menu
+    inline_edit:
+      create_action: create_recruitment_tag
+      update_action: edit_recruitment_tag
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, required: true, placeholder: Tag name }
+        - { field: color, type: color, default: 0 }
+    empty_state: { title: No tags, description: Create a tag to organize recruitment applications. }
+    columns:
+      - { field: name, label: Tag Name, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: color, label: Color Index, type: ColorCell, sortable: true, align: right, mobile: true }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: edit_recruitment_tag, label: Edit, icon: edit }, { id: delete_recruitment_tag, label: Delete, icon: delete, variant: danger }] }
+    page_size: 25
