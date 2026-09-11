@@ -194,6 +194,39 @@ calendar is a presentation-only month grid without Odoo's right-side filter
 drawer. Chatter/activity, rich HTML builder/preview, and Odoo-specific avatars
 remain deferred shared primitives; no horizontal mobile overflow was observed.
 
+## Mass Mailing Analysis action 783
+
+The next bounded slice implements the installed Odoo `mailing_trace_report_action_mail`
+(`mailing.trace.report`) action as a separate page/API contract. Core3 exposes the
+Odoo-style Graph, Pivot, and List tabs, the `Date: This year` range, mailing/campaign
+grouping fields, sent/delivered/opened/replied/clicked measures, status filtering,
+pagination, the Odoo empty-state copy, and the `email_marketing.read` permission
+boundary. The deterministic report migration seeds five mailings, including the
+Odoo-visible `Newsletter 1` category and realistic delivery counters.
+
+During authenticated browser comparison, the first Graph implementation returned
+five rows from the API but rendered the empty state because `date_field:
+scheduled_date` made the shared graph renderer expand daily date buckets while the
+report aggregate was grouped by mailing name. Removing that incompatible date
+override keeps the graph category and aggregate keys aligned; Graph, Pivot, and
+List now render populated values in both desktop and mobile viewports.
+
+| Capture | Viewport | Evidence | SHA-256 |
+| --- | --- | --- | --- |
+| Authenticated Odoo Mass Mailing Analysis Graph | 1440x900 | `/tmp/odoo-email-analysis-desktop-1440x900-20260911.png` | `e4fce03ec6658c860066dde719a331769e0f07562b038922c8c2f6b13414497a` |
+| Authenticated Core3 Analysis Graph | 1440x900 | `/tmp/core3-email-analysis-desktop-graph-20260911.png` | `769cd21710b65fdd102a2727f6ba96848b1b1dac64c97d227b5b59a3991e53b2` |
+| Authenticated Core3 Analysis Pivot | 1440x900 | `/tmp/core3-email-analysis-desktop-pivot-20260911.png` | `03f6e98ff151e91b2eb9d63506adfe3790dbad26f536850cc3f39b236f8e7c1a` |
+| Authenticated Core3 Analysis List | 1440x900 | `/tmp/core3-email-analysis-desktop-list-20260911.png` | `251159d3c76d5417dd146d6e3851d15731f6461c1a8f9bfeabd129831ff7fcb1` |
+| Authenticated Core3 Analysis Graph | 390x844 | `/tmp/core3-email-analysis-mobile-graph-20260911.png` | `4bcfdbe0da92c41ceaa1c1b83198fefb15d03ddd581be7d0784052895a02b8ee` |
+| Authenticated Core3 Analysis Pivot | 390x844 | `/tmp/core3-email-analysis-mobile-pivot-20260911.png` | `ae47872cc5f53c6c73d8a05a827e7472da2f4f41a591010a3779896f07530c8f` |
+| Authenticated Core3 Analysis List | 390x844 | `/tmp/core3-email-analysis-mobile-list-20260911.png` | `5e8f97e97ea2fe31ede4e2769c4d3eed5a22251f1cc16c4162c668065ed0b881` |
+
+The authenticated checks had no failed requests, page errors, or horizontal
+overflow. Remaining differences are the expected Core3 Fluent shell and shared
+renderer styling versus Odoo's purple shell and graph toolbar; rich Odoo report
+customization, saved filters, and technical trace drill-down remain separate
+actions. Captures stay under `/tmp` and are not committed.
+
 Images remain under `/tmp` and are not committed. The Email Marketing register
 status remains `planned`; this slice does not claim completion of the other
 actions or the shared gates.
