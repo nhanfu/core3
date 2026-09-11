@@ -28,9 +28,9 @@ actions:
       result: { query: "SELECT * FROM pos_configs WHERE id = :id" }
     fields:
       - { field: name, label: Point of Sale?, type: text, required: true }
-      - { field: login_with_employees, label: Log in with Employees?, type: checkbox }
-      - { field: epos_printer, label: ePOS Printer?, type: checkbox }
-      - { field: iot_box, label: IoT Box, type: checkbox }
+      - { field: login_with_employees, label: Log in with Employees?, type: checkbox, default: false }
+      - { field: epos_printer, label: ePOS Printer?, type: checkbox, default: false }
+      - { field: iot_box, label: IoT Box, type: checkbox, default: false }
   - id: archive_pos_config
     type: server
     permission: pos.manage
