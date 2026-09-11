@@ -1,0 +1,63 @@
+version: 0.0.9
+kind: data
+description: Add deterministic Odoo Live Chat channel kanban and configuration fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS website_name VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS joined BOOLEAN;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS session_count INTEGER;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS rating_percentage INTEGER;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS operator_names VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS language_names VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS expertise_names VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS ongoing_sessions INTEGER;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS notification_text VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS button_color VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS window_color VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS review_link VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS session_limit_label VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS limited_sessions_label VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS no_chats_during_call_label VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS rule_button_label VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS rule_chatbot_label VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS rule_url_regex VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS rule_countries VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS rules_help VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS widget_help VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS widget_script VARCHAR;
+      ALTER TABLE livechat_channels ADD COLUMN IF NOT EXISTS widget_support_url VARCHAR;
+      UPDATE livechat_channels
+      SET name = 'Support', website_name = 'Your Website', button_text = 'Chat with us',
+          welcome_message = 'Hello, how can we help you today?', joined = FALSE,
+          session_count = 7, rating_percentage = 50, operator_names = 'Marc Demo, Mitchell Admin',
+          language_names = 'English', expertise_names = 'Discuss, Livechat', ongoing_sessions = 0,
+          notification_text = 'Welcome!', button_color = 'Blue', window_color = 'Blue',
+          review_link = '', session_limit_label = 'Unlimited', limited_sessions_label = 'Limited',
+          no_chats_during_call_label = 'No', rule_button_label = 'Show', rule_chatbot_label = 'None',
+          rule_url_regex = '', rule_countries = '',
+          rules_help = 'To apply the rule only to certain pages of your website, enter a URL regex like /shop.',
+          widget_help = 'Learn how to display a live chat bubble on your website and start chatting with visitors.',
+          widget_script = '<script defer="defer" type="text/javascript" src="http://localhost:3002/livechat/widget.js"></script>',
+          widget_support_url = 'http://localhost:3002/livechat/support/livechat-channel-demo-001'
+      WHERE id = 'livechat-channel-demo-001';
+      INSERT INTO livechat_channels
+        (id, name, website_name, button_text, welcome_message, active, joined, session_count,
+         rating_percentage, operator_names, language_names, expertise_names, ongoing_sessions,
+         notification_text, button_color, window_color, review_link, session_limit_label,
+         limited_sessions_label, no_chats_during_call_label, rule_button_label, rule_chatbot_label,
+         rule_url_regex, rule_countries, rules_help, widget_help, widget_script, widget_support_url)
+      SELECT 'livechat-channel-demo-002', 'YourWebsite.com', 'YourWebsite.com', 'Have a question?',
+        'Hello, how can we help you today?', TRUE, TRUE, 18, 81, 'Mitchell Admin', 'English',
+        'Discuss, Livechat', 0, 'Welcome!', 'Blue', 'Blue', '', 'Unlimited', 'Limited', 'No',
+        'Show', 'None', '', '', 'To apply the rule only to certain pages of your website, enter a URL regex like /shop.',
+        'Learn how to display a live chat bubble on your website and start chatting with visitors.',
+        '<script defer="defer" type="text/javascript" src="http://localhost:3002/livechat/widget.js"></script>',
+        'http://localhost:3002/livechat/support/livechat-channel-demo-002'
+      WHERE NOT EXISTS (SELECT 1 FROM livechat_channels WHERE id = 'livechat-channel-demo-002');
+    down: |
+      DELETE FROM livechat_channels WHERE id = 'livechat-channel-demo-002';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

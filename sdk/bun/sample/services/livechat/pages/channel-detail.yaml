@@ -1,0 +1,85 @@
+title: Live Chat Channel
+page: { id: livechat-channel-detail, route: /livechat/channel/detail, breadcrumb: [Website, Live Chat, Channels, Channel], auth: { require: [livechat.read] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_channel_detail
+    title_field: name
+    subtitle_field: session_summary
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_livechat_channels, label: Channels, variant: secondary, permission: livechat.read }
+      - { id: join_livechat_channel, label: Join Channel, variant: primary, permission: livechat.write, show_if: 'record.joined === false' }
+      - { id: leave_livechat_channel, label: Leave Channel, variant: secondary, permission: livechat.write, show_if: 'record.joined === true' }
+      - { id: edit_livechat_channel, label: Edit, variant: primary, permission: livechat.manage }
+    stat_buttons:
+      - { id: view_livechat_channel_sessions, label: Sessions, value_field: session_count, permission: livechat.read }
+      - { id: view_livechat_channel_rating, label: Happy, value_field: rating_percentage, permission: livechat.read }
+    group_columns: 2
+    groups:
+      - title: Channel Name
+        fields:
+          - { field: name, label: Channel Name }
+          - { field: active_label, label: Active }
+      - title: Agents
+        fields:
+          - { field: operator_names, label: Agent }
+          - { field: language_names, label: Languages }
+          - { field: expertise_names, label: Expertise }
+          - { field: ongoing_sessions, label: Ongoing Sessions }
+    notebook:
+      active: agents
+      tabs:
+        - id: agents
+          label: Agents
+          groups:
+            - title: Agents
+              fields:
+                - { field: operator_names, label: Agent }
+                - { field: language_names, label: Languages }
+                - { field: expertise_names, label: Expertise }
+                - { field: ongoing_sessions, label: Ongoing Sessions }
+                - { field: add_agents_label, label: '' }
+            - title: Odoo availability
+              fields:
+                - { field: inactive_agent_help, label: '' }
+                - { field: ongoing_session_summary, label: Number of Ongoing Sessions }
+        - id: options
+          label: Options
+          groups:
+            - title: LIVE CHAT BUTTON
+              fields:
+                - { field: notification_text, label: Notification Text }
+                - { field: button_color, label: Button Colors? }
+            - title: LIVE CHAT WINDOW
+              fields:
+                - { field: welcome_message, label: Welcome Message? }
+                - { field: window_color, label: Window Colors? }
+                - { field: review_link, label: Review Link? }
+            - title: SESSION LIMITS
+              fields:
+                - { field: session_limit_label, label: Sessions per Operator? }
+                - { field: limited_sessions_label, label: '' }
+                - { field: no_chats_during_call_label, label: No Chats During Call? }
+        - id: rules
+          label: Rules
+          groups:
+            - title: Rules
+              fields:
+                - { field: rule_button_label, label: Live Chat Button }
+                - { field: rule_chatbot_label, label: Chatbot }
+                - { field: rule_url_regex, label: URL Regex }
+                - { field: rule_countries, label: Countries }
+                - { field: add_rule_label, label: '' }
+                - { field: rules_help, label: '' }
+        - id: widget
+          label: Widget
+          groups:
+            - title: Widget
+              fields:
+                - { field: widget_help, label: '' }
+                - { field: widget_script, label: '' }
+                - { field: widget_support_url, label: '' }

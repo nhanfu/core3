@@ -1,0 +1,164 @@
+page: { id: livechat }
+
+datasources:
+  - id: livechat_channels
+    permission: livechat.read
+    error_states:
+      forbidden: { status: 403, code: LIVECHAT_CHANNELS_FORBIDDEN, message: You do not have permission to view Live Chat channels. }
+      transport_error: { status: 503, code: LIVECHAT_CHANNELS_UNAVAILABLE, message: Live Chat channels are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, name, website_name, active, joined, session_count,
+        rating_percentage, operator_names, language_names, expertise_names,
+        ongoing_sessions, notification_text, button_color, welcome_message,
+        window_color, review_link, session_limit_label, limited_sessions_label,
+        no_chats_during_call_label, rule_button_label, rule_chatbot_label,
+        rule_url_regex, rule_countries, rules_help, widget_help, widget_script,
+        widget_support_url,
+        CAST(session_count AS VARCHAR) || ' Sessions' AS session_summary,
+        CASE WHEN joined THEN 'Leave' ELSE 'Join' END AS join_label,
+        CAST(rating_percentage AS VARCHAR) || '% Happy' AS rating_summary,
+        CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label,
+        'Add Agents' AS add_agents_label,
+        'Agents who are inactive in Odoo for more than 30 minutes will be considered disconnected.' AS inactive_agent_help,
+        CAST(ongoing_sessions AS VARCHAR) AS ongoing_session_summary,
+        'Add a line' AS add_rule_label
+      FROM livechat_channels
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN FALSE ELSE TRUE END = TRUE
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%')
+      ORDER BY name, id
+
+actions:
+  - id: create_livechat_channel
+    type: server_form
+    permission: livechat.manage
+    title: New Live Chat Channel
+    action: im_livechat.channel.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [livechat_channels]
+    mutation:
+      operation: insert
+      table: livechat_channels
+      generated: [id]
+      fields: [name, website_name, button_text, welcome_message, active]
+      required: [name]
+      defaults:
+        active: true
+        website_name: Your Website
+        button_text: Have a question?
+        welcome_message: Hello, how can we help you today?
+        joined: false
+        session_count: 0
+        rating_percentage: 0
+        operator_names: ''
+        language_names: ''
+        expertise_names: ''
+        ongoing_sessions: 0
+        notification_text: Welcome!
+        button_color: Blue
+        window_color: Blue
+        review_link: ''
+        rule_button_label: Show
+        rule_chatbot_label: None
+        rule_url_regex: ''
+        rule_countries: ''
+        rules_help: Leave the field empty to apply the rule to all pages.
+        widget_help: Learn how to display a live chat bubble on your website and start chatting with visitors.
+        widget_script: ''
+        widget_support_url: ''
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_channels WHERE LOWER(name) = LOWER(:name))", status: 409, code: LIVECHAT_CHANNEL_NAME_EXISTS, message: A live chat channel with this name already exists. }]
+      result: { query: "SELECT * FROM livechat_channels WHERE id = :id" }
+    fields:
+      - { field: name, label: Channel Name, type: text, required: true }
+      - { field: website_name, label: Website, type: text }
+      - { field: button_text, label: Button Text, type: text }
+      - { field: welcome_message, label: Welcome Message, type: textarea }
+      - { field: active, label: Active, type: checkbox }
+
+  - id: edit_livechat_channel
+    type: server_form
+    permission: livechat.manage
+    title: Edit Live Chat Channel
+    action: im_livechat.channel.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [livechat_channels, livechat_channel_detail]
+    mutation:
+      operation: update
+      table: livechat_channels
+      fields: [name, website_name, button_text, welcome_message, active, notification_text, button_color, window_color, review_link, session_limit_label, limited_sessions_label, no_chats_during_call_label, rule_button_label, rule_chatbot_label, rule_url_regex, rule_countries]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_channels WHERE id = :id", status: 404, code: LIVECHAT_CHANNEL_NOT_FOUND, message: Live Chat channel not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_channels WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: LIVECHAT_CHANNEL_NAME_EXISTS, message: A live chat channel with this name already exists. }
+      result: { query: "SELECT * FROM livechat_channels WHERE id = :id" }
+    fields:
+      - { field: name, label: Channel Name, type: text, required: true }
+      - { field: website_name, label: Website, type: text }
+      - { field: button_text, label: Button Text, type: text }
+      - { field: welcome_message, label: Welcome Message, type: textarea }
+      - { field: active, label: Active, type: checkbox }
+      - { field: notification_text, label: Notification Text, type: text }
+      - { field: button_color, label: Button Colors?, type: text }
+      - { field: window_color, label: Window Colors?, type: text }
+      - { field: review_link, label: Review Link?, type: text }
+      - { field: rule_url_regex, label: URL Regex, type: text }
+      - { field: rule_countries, label: Countries, type: text }
+
+  - id: join_livechat_channel
+    type: server
+    permission: livechat.write
+    action: im_livechat.channel.join
+    handler: yaml_mutation
+    operation: update
+    params: { values: { joined: true } }
+    refresh: [livechat_channels, livechat_channel_detail]
+    mutation:
+      operation: update
+      table: livechat_channels
+      fields: [joined]
+      defaults: { joined: true }
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_channels WHERE id = :id", status: 404, code: LIVECHAT_CHANNEL_NOT_FOUND, message: Live Chat channel not found. }
+        - { query: "SELECT 1 AS ok FROM livechat_channels WHERE id = :id AND joined = FALSE", status: 409, code: LIVECHAT_CHANNEL_ALREADY_JOINED, message: You already joined this Live Chat channel. }
+      result: { query: "SELECT * FROM livechat_channels WHERE id = :id" }
+
+  - id: leave_livechat_channel
+    type: server
+    permission: livechat.write
+    action: im_livechat.channel.leave
+    handler: yaml_mutation
+    operation: update
+    params: { values: { joined: false } }
+    refresh: [livechat_channels, livechat_channel_detail]
+    mutation:
+      operation: update
+      table: livechat_channels
+      fields: [joined]
+      defaults: { joined: false }
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_channels WHERE id = :id", status: 404, code: LIVECHAT_CHANNEL_NOT_FOUND, message: Live Chat channel not found. }
+        - { query: "SELECT 1 AS ok FROM livechat_channels WHERE id = :id AND joined = TRUE", status: 409, code: LIVECHAT_CHANNEL_ALREADY_LEFT, message: You already left this Live Chat channel. }
+      result: { query: "SELECT * FROM livechat_channels WHERE id = :id" }
+
+  - id: view_livechat_channel
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat/channel/detail
+    params: { id: '{row.id}' }
+
+  - id: view_livechat_channel_sessions
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat-sessions
+    params: { channel_id: '{record.id}' }
+
+  - id: view_livechat_channel_rating
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat-analysis
+    params: { channel_id: '{record.id}' }
