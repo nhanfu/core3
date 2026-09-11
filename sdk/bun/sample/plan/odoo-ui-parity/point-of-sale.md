@@ -788,3 +788,42 @@ mobile detail form continues below the viewport while Odoo's compact form fits
 more rows. The responsive fix keeps the Odoo list's three columns visible at
 390px and keeps the Options price columns visible in Core3. All screenshots
 remain under `/tmp` and are not committed.
+
+## Current bounded batch: POS Taxes list, detail, and form
+
+The local Odoo 19 source confirms `point_of_sale` adds Configuration → Taxes as
+menu record 479, using the shared `account.action_tax_form` window action 368.
+The action exposes `list,kanban,form` and includes inactive records. The list
+shows Tax Name, Description, Tax Type, Tax Scope, Label on Invoices, Company,
+and Active. The form exposes Tax Name, Tax Computation?, Active?, Tax Type?,
+Tax Scope, Amount, Fiscal Position, Replaces?, Definition, and Advanced
+Options, with invoice/refund distribution grids and chatter. The Odoo source
+also makes configuration mutations manager-only; POS users retain read access.
+
+Core3 keeps the existing `/point-of-sale/taxes` menu and adds the separate
+`pos-tax-detail` and `pos-tax-new` page/API pairs, joined by matching
+`page.id`. The bounded service-owned fixture migration keeps the four fixed
+Odoo-shaped rows, adds one deterministic archived row, and adds row-versioned
+amount, distribution, company, country, and advanced tax fields. Read uses
+`pos.read`; create, update, archive/restore, duplicate, and delete use
+`pos.manage`. Focused coverage includes search, active filtering, empty and
+missing states, transport declarations, validation, duplicate-name guards,
+stale writes, and all requested mutation boundaries.
+
+Authenticated Odoo reference captures were taken at both target viewports. The
+Core3 browser capture was not completed before the user-requested interruption;
+it is explicitly deferred rather than represented as verified evidence.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Taxes list | 1440×900 | `/tmp/odoo-pos-taxes-list-desktop-1440x900-20260911.png` | `849bfa312efc0759e33bd2760868df637eb48e948a4f4713d5579c0cffea34dc` |
+| Odoo Taxes list | 390×844 | `/tmp/odoo-pos-taxes-list-mobile-390x844-20260911.png` | `204faba11e779d39133a4d0cba70c1edc82694765ac7fd53d88a723a28c60a9b` |
+| Odoo Tax detail | 1440×900 | `/tmp/odoo-pos-taxes-detail-desktop-1440x900-20260911.png` | `e020d8529467b8a52f1f8e9e114db36fe27f886251829cb8735326be92c3ea43` |
+| Odoo Tax detail | 390×844 | `/tmp/odoo-pos-taxes-detail-mobile-390x844-20260911.png` | `bc227eb0e9fb6adebedc0cd22fb1b55291f012402e37fc2ddc4a4a0a27c2d43a` |
+| Odoo New Tax | 1440×900 | `/tmp/odoo-pos-taxes-new-desktop-1440x900-20260911.png` | `3cf5026b45ad9216a041cd001bde61a84ec39382bfc567ff6e2265612be3dd4b` |
+| Odoo New Tax | 390×844 | `/tmp/odoo-pos-taxes-new-mobile-390x844-20260911.png` | `b043d2d22b8eacc1aa9ecfd6112ef7e6334765d6198c8f6cdc39a6ec7a7a5368` |
+
+Residuals and deferred evidence: Core3 list/detail/new paired screenshots,
+authenticated cashier-vs-manager browser proof, exact Odoo shell/icon parity,
+tax distribution line editing, and chatter are deferred. No screenshots are
+committed.
