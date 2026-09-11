@@ -262,3 +262,55 @@ Comparison and fixes:
 - Odoo timestamps, avatars, and stage/chatter chrome differ from Core3’s fixed
   fixture values. No browser errors, failed requests, or viewport overflow were
   found in the final pass.
+
+## Bounded batch: Maintenance Activity Types (2026-09-11)
+
+Implementation commit: `55b2166a` (`feat(maintenance): add activity types
+parity`). This batch closes the group-restricted Odoo Configuration > Activity
+Types action, `mail_activity_type_action_config_maintenance`, reached at
+`/odoo/maintenance-activity-types`. The live `core3_codex_demo` reference
+showed a six-row list (To-Do, Email, Call, Meeting, Maintenance Request, and
+Document), a New action, search, list/kanban controls, and a standard activity
+type form.
+
+Core3 adds the menu leaf and normalized service routes
+`/maintenance/maintenance-activity-types` and
+`/maintenance/maintenance-activity-types/detail`. Page YAML owns the ListView
+and OdooFormView presentation; `api/activity-types.yaml` and
+`api/activity-type-detail.yaml` own the matching page-id datasources and
+mutations. Migration `20260911190000-006-maintenance-activity-types.yaml`
+creates deterministic, idempotent fixtures for all six rows. Create, edit,
+archive, restore, and delete are protected by `maintenance.settings`; standard
+To-Do and Maintenance Request rows cannot be deleted, duplicate names return
+409, negative schedules return 422, and updates require row versions.
+
+Focused verification:
+
+- `bun test test/maintenance_activity_types.integration.test.ts` — **3 passed,
+  0 failed, 31 assertions**; this covers page/API joins, list/form contracts,
+  deterministic ordering, filters, empty/not-found states, permission binding,
+  idempotent DuckDB migration, and standard-row guards.
+- `bun run audit` — passed, **508 pages / 515 routes / 892 datasources**.
+- `bun run lint` from `sdk/bun` — passed.
+- `bun run css:build:global && bun run css:build:maintenance` — passed.
+- `git diff --check` — passed.
+
+Authenticated browser evidence was captured against Odoo at
+`http://localhost:8069` with `codex@core3.local` and against an isolated Core3
+runtime at `http://localhost:3016` using `admin@tms.local`. Images remain under
+`/tmp` and are not committed:
+
+- Odoo list: `/tmp/odoo-maintenance-activity-types-desktop-1440x900.png` and
+  `/tmp/odoo-maintenance-activity-types-mobile-390x844-20260911.png`.
+- Core3 list: `/tmp/core3-maintenance-activity-types-desktop-1440x900-20260911.png`
+  and `/tmp/core3-maintenance-activity-types-mobile-390x844-20260911.png`.
+- Core3 detail: `/tmp/core3-maintenance-activity-type-detail-desktop-1440x900-20260911.png`
+  and `/tmp/core3-maintenance-activity-type-detail-mobile-390x844-20260911.png`.
+
+The authenticated Core3 list and detail checks recorded no failed requests or
+page errors and no horizontal overflow at 1440x900 or 390x844. Odoo mobile
+automatically selects its kanban presentation, while Core3 uses the existing
+responsive card fallback; Odoo’s purple shell, activity icons, and richer form
+widgets remain shared-shell/rendering residuals rather than page-specific
+workarounds. Core3 preserves the six names, summaries, planned delays, and
+activity-type form fields.
