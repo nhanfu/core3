@@ -39,7 +39,7 @@ describe('Fleet Vehicle Tags configuration parity', () => {
     expect(page.components[0]).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'fleet_vehicle_tags', row_open_action: 'edit_fleet_vehicle_tag', form_view: { side_panel: false } });
     expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'form']);
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Tag Name', 'Color']);
-    expect(page.components[0].columns.find((column: any) => column.field === 'color')).toMatchObject({ type: 'ColorCell' });
+    expect(page.components[0].columns.find((column: any) => column.field === 'color')).toMatchObject({ type: 'ColorCell', palette: 'odoo' });
     expect(page.components[0].inline_edit.fields.find((field: any) => field.field === 'color')).toMatchObject({ type: 'color', palette: 'odoo' });
     expect(page.components[0].inline_edit.fields.map((field: any) => field.field)).toEqual(['name', 'color']);
     expect(detail.components[0]).toMatchObject({ type: 'OdooFormView', source: 'fleet_vehicle_tag_detail', editable: true });

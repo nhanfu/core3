@@ -20,7 +20,7 @@ components:
         - { field: color, type: color, palette: odoo, default: 0 }
     columns:
       - { field: name, label: Tag Name, type: PrimaryEntityCell, mobile: true, sortable: true }
-      - { field: color, label: Color, type: ColorCell, mobile: true, align: right, sortable: false }
+      - { field: color, label: Color, type: ColorCell, palette: odoo, mobile: true, align: right, sortable: false }
     row_key: id
     row_open_action: edit_fleet_vehicle_tag
     row_double_click_action: edit_fleet_vehicle_tag
