@@ -1,0 +1,45 @@
+page: { id: event-registration-statistics }
+datasources:
+  - id: event_registration_statistics
+    permission: events.read
+    pivot:
+      fields: [registration_date, registration_date_label, attendee_name, attendee_email, ticket_type, state, registration_count]
+    error_states:
+      transport_error: { status: 503, code: EVENT_REGISTRATION_STATISTICS_UNAVAILABLE, message: Registration statistics are temporarily unavailable. }
+      not_found: { status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+    query: |
+      SELECT r.id,
+        COALESCE(r.row_version, 1) AS row_version,
+        r.event_id,
+        e.name AS event_name,
+        r.attendee_name,
+        COALESCE(r.attendee_email, '') AS attendee_email,
+        COALESCE(r.ticket_type, '') AS ticket_type,
+        r.state,
+        CAST(r.registered_at AS DATE) AS registration_date,
+        strftime(r.registered_at, '%d %b %Y') AS registration_date_label,
+        CAST(r.registered_at AS VARCHAR) AS registered_at,
+        1 AS registration_count
+      FROM event_registrations r
+      JOIN events e ON e.id = r.event_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1
+        AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1
+        AND e.id = COALESCE(NULLIF(:event_id, ''), 'event-demo-001')
+        AND (:q IS NULL OR r.attendee_name ILIKE '%' || :q || '%' OR r.ticket_type ILIKE '%' || :q || '%' OR r.state ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR r.state = :state)
+      ORDER BY r.registered_at, r.attendee_name, r.id
+  - id: event_registration_statistics_event
+    single: true
+    permission: events.read
+    error_states:
+      transport_error: { status: 503, code: EVENT_REGISTRATION_STATISTICS_UNAVAILABLE, message: Registration statistics are temporarily unavailable. }
+      not_found: { status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+    query: |
+      SELECT e.id, e.name AS event_name, e.registration_count,
+        CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE COUNT(r.id) END AS visible_registration_count
+      FROM events e
+      LEFT JOIN event_registrations r ON r.event_id = e.id
+        AND (:state IS NULL OR r.state = :state)
+      WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1
+        AND e.id = COALESCE(NULLIF(:event_id, ''), 'event-demo-001')
+      GROUP BY e.id, e.name, e.registration_count

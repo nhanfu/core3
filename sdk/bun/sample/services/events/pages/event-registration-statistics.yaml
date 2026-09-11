@@ -1,0 +1,73 @@
+title: Registration statistics
+page: { id: event-registration-statistics, route: /events/registration-statistics, breadcrumb: [Marketing, Events, Event, Registration statistics], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_registration_statistics
+    default_filters: { event_id: event-demo-001, state: Registered }
+    search: { label: Search, placeholder: Search... }
+    filters:
+      - { field: state, label: Status, options: [{ id: Registered, label: Registered }, { id: Unconfirmed, label: Unconfirmed }, { id: Attended, label: Attended }, { id: Cancelled, label: Cancelled }] }
+    group_by:
+      - { field: registration_date_label, label: Registration Date }
+      - { field: state, label: Status }
+      - { field: ticket_type, label: Ticket Type }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: registration_date
+        measure_field: registration_count
+        measures:
+          - { field: null, label: Count, aggregate: count }
+          - { field: registration_count, label: Registrations, aggregate: sum }
+        type: bar
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        show_leaf_rows: false
+        pivot:
+          config_label: Measures
+          fields:
+            - { field: registration_date, column: Registration Date, type: date }
+            - { field: registration_date_label, column: Registration Day }
+            - { field: attendee_name, column: Attendee }
+            - { field: ticket_type, column: Ticket Type }
+            - { field: state, column: Status }
+            - { field: registration_count, column: Registrations }
+          default:
+            rows: [registration_date_label]
+            columns: []
+            measures: [{ field: registration_count, aggregate: sum, column: Registrations }]
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: registration_date_label
+        card:
+          title: attendee_name
+          subtitle: ticket_type
+          fields:
+            - { field: state, label: Status, type: StatusChip }
+            - { field: registered_at, label: Registration Date }
+      - { id: list, label: List, icon: table, mobile: false }
+    columns:
+      - { field: attendee_name, label: Attendee, type: PrimaryEntityCell, mobile: true }
+      - { field: ticket_type, label: Ticket Type, mobile: true }
+      - { field: registration_date_label, label: Registration Date, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: attendee_email, label: Email, mobile: false, optional: hide }
+    page_size: 50
+    row_key: id
+    row_open_action: view_event_registration_statistic
+    row_double_click_action: view_event_registration_statistic
+    empty_state: { title: No registrations yet, description: Registration statistics will appear here after attendees register for this event. }
+actions:
+  - id: view_event_registration_statistic
+    type: navigate
+    permission: events.read
+    navigate_to: /events/attendees/detail
+    params: { id: '{row.id}' }

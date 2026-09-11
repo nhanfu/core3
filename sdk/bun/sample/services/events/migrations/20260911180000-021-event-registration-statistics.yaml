@@ -1,0 +1,20 @@
+version: 0.0.21
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO event_registrations
+        (id, event_id, event_name, attendee_name, attendee_email, ticket_type, state, registered_at, row_version)
+      VALUES
+        ('registration-statistics-design-fair-001', 'event-demo-001', 'Design Fair Los Angeles', 'Ron Gibson', 'ron.gibson@example.com', 'Standard', 'Registered', TIMESTAMP '2026-09-08 10:00:00', 1),
+        ('registration-statistics-design-fair-002', 'event-demo-001', 'Design Fair Los Angeles', 'Samar Basra', 'samar.basra@example.com', 'Free', 'Registered', TIMESTAMP '2026-09-08 10:00:00', 1),
+        ('registration-statistics-design-fair-003', 'event-demo-001', 'Design Fair Los Angeles', 'Willie Burke', 'willie.burke@example.com', 'Standard', 'Registered', TIMESTAMP '2026-09-08 10:00:00', 1)
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE events SET registration_count = 3, row_version = COALESCE(row_version, 1) + 1 WHERE id = 'event-demo-001' AND registration_count < 3;
+    down: |
+      DELETE FROM event_registrations WHERE id IN ('registration-statistics-design-fair-001', 'registration-statistics-design-fair-002', 'registration-statistics-design-fair-003');
+      UPDATE events SET registration_count = (SELECT COUNT(*) FROM event_registrations WHERE event_id = 'event-demo-001') WHERE id = 'event-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

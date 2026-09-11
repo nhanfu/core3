@@ -129,7 +129,7 @@ components:
     empty_state: { title: No registrations, description: Attendees will appear here after registration. }
 actions:
   - { id: registration_desk_event_detail, type: navigate, permission: events.read, navigate_to: /events/registration-desk }
-  - { id: event_registration_stats_detail, type: navigate, permission: events.read, navigate_to: /events/attendees, params: { event_id: '{row.id}' } }
+  - { id: event_registration_stats_detail, type: navigate, permission: events.read, navigate_to: /events/registration-statistics, params: { event_id: '{row.id}' } }
   - { id: event_attendee_stats_detail, type: navigate, permission: events.read, navigate_to: /events/attendees, params: { event_id: '{row.id}' } }
   - id: view_event_ticket
     type: navigate
