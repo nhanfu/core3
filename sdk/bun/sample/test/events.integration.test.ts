@@ -38,7 +38,7 @@ describe('Events attendee parity batch', () => {
       'complete_event_detail',
       'cancel_event_detail',
     ]);
-    expect(form.stat_buttons.map((action: any) => action.value_field)).toEqual(['registration_count', 'attendee_count']);
+    expect(form.stat_buttons.map((action: any) => action.value_field)).toEqual(['registration_count', 'attendee_count', 'sale_price_total_display']);
     expect(page.actions.find((action: any) => action.id === 'event_registration_stats_detail')).toMatchObject({
       navigate_to: '/events/registration-statistics',
       params: { event_id: '{row.id}' },

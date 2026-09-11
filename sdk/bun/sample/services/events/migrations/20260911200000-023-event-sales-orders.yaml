@@ -1,0 +1,32 @@
+version: 0.0.23
+description: Deterministic confirmed sales orders linked to the Events sales stat action
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_sales_orders (
+        id VARCHAR PRIMARY KEY,
+        event_id VARCHAR NOT NULL,
+        event_name VARCHAR NOT NULL,
+        order_reference VARCHAR NOT NULL,
+        order_date TIMESTAMP NOT NULL,
+        customer_name VARCHAR NOT NULL,
+        salesperson_name VARCHAR NOT NULL,
+        activity_count INTEGER NOT NULL DEFAULT 0,
+        company_name VARCHAR NOT NULL,
+        total DECIMAL(12, 2) NOT NULL DEFAULT 0,
+        invoice_status VARCHAR NOT NULL DEFAULT 'to invoice',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      INSERT INTO event_sales_orders
+        (id, event_id, event_name, order_reference, order_date, customer_name, salesperson_name, activity_count, company_name, total, invoice_status, row_version)
+      VALUES
+        ('event-sale-order-design-fair-001', 'event-demo-001', 'Design Fair Los Angeles', 'S00025', TIMESTAMP '2026-01-09 15:51:15', 'Wood Corner, Willie Burke', 'Mitchell Admin', 0, 'My Company (San Francisco)', 2300.00, 'to invoice', 1)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_sales_orders WHERE id = 'event-sale-order-design-fair-001';
+      DROP TABLE IF EXISTS event_sales_orders;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

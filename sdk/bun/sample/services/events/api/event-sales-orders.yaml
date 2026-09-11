@@ -1,0 +1,28 @@
+page: { id: event-sales-orders }
+datasources:
+  - id: event_sales_orders
+    permission: events.read
+    error_states:
+      transport_error: { status: 503, code: EVENT_SALES_ORDERS_UNAVAILABLE, message: Event sales orders are temporarily unavailable. }
+      not_found: { status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+    query: |
+      SELECT id, row_version, event_id, event_name, order_reference,
+        strftime(order_date, '%d %b %Y %H:%M') AS order_date_label,
+        CAST(order_date AS VARCHAR) AS order_date,
+        customer_name, salesperson_name, activity_count, company_name,
+        CAST(total AS DECIMAL(12, 2)) AS total,
+        printf('$ %,.2f', CAST(total AS DOUBLE)) AS total_display,
+        invoice_status,
+        CASE invoice_status
+          WHEN 'to invoice' THEN 'To Invoice'
+          WHEN 'invoiced' THEN 'Invoiced'
+          WHEN 'no' THEN 'Nothing to Invoice'
+          ELSE invoice_status
+        END AS invoice_status_label
+      FROM event_sales_orders
+      WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1
+        AND event_id = COALESCE(NULLIF(:event_id, ''), 'event-demo-001')
+        AND (:q IS NULL OR order_reference ILIKE '%' || :q || '%'
+          OR customer_name ILIKE '%' || :q || '%'
+          OR salesperson_name ILIKE '%' || :q || '%')
+      ORDER BY order_date DESC, order_reference, id

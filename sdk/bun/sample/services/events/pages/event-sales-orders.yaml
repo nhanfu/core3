@@ -1,0 +1,37 @@
+title: Sales Orders
+page: { id: event-sales-orders, route: /events/sales-orders, breadcrumb: [Marketing, Events, Event, Sales Orders], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_sales_orders
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: order_reference
+          subtitle: customer_name
+          fields:
+            - { field: order_date_label, label: Order Date }
+            - { field: salesperson_name, label: Salesperson }
+            - { field: total_display, label: Total }
+            - { field: invoice_status_label, label: Invoice Status, type: StatusChip }
+    search: { label: Search, placeholder: Search orders... }
+    columns:
+      - { field: order_reference, label: Number, type: PrimaryEntityCell }
+      - { field: order_date_label, label: Order Date }
+      - { field: customer_name, label: Customer }
+      - { field: salesperson_name, label: Salesperson }
+      - { field: activity_count, label: Activities, align: right }
+      - { field: company_name, label: Company }
+      - { field: total_display, label: Total, align: right }
+      - { field: invoice_status_label, label: Invoice Status, type: StatusChip }
+    page_size: 80
+    row_key: id
+    empty_state: { title: No sales orders yet, description: Confirmed sales orders linked to this event will appear here. }
