@@ -864,3 +864,75 @@ Core3 implements the same action at `/purchase/bill-matching?id=po-demo-006`, jo
 
 Shared declarative runtime support adds ListView footer totals, Odoo stat buttons without a synthetic numeric value, and selected-ID transport for `server_form`. Focused integration coverage is in `test/purchase_bill_matching.integration.test.ts`; it verifies page/API discovery, permissions, six-row/empty/search/summary reads, matching stale guards, adding bill lines, total updates, and locked target rejection. Odoo’s separate vendor-bill-side `action_purchase_matching` and the wizard’s down-payment branch remain follow-up actions outside this bounded slice.
 Authenticated Core3 evidence was completed from the isolated worktree runtime as `admin@tms.local` / `admin123` on `http://localhost:3275`: the Purchase Order stat button navigated to `/purchase/bill-matching?id=po-demo-006`, and the direct action route rendered all six rows. Desktop capture `/tmp/core3-purchase-bill-matching-desktop-1440x900-20260911.png` is 1440x900, SHA-256 `66d85fc00ae1a1605dbc43f65d0cb0fbdcd7e8b5358ca5628365fd095a832a67`; mobile capture `/tmp/core3-purchase-bill-matching-mobile-390x844-20260911.png` is 390x844, SHA-256 `c05c209ce0da9fdea608e6a20a8ad92746f838cbee2b7b382f0da6cd259929ac`. Both captures reported `body.scrollWidth` and `document.documentElement.scrollWidth` equal to the viewport width, with zero `requestfailed` and zero `pageerror` entries. The selected-row flow also exposed `Add to PO` and its Odoo-shaped form (`Purchase Order`, `Add Products`). Runtime startup initially failed because `accounting.write` was absent from the Purchase permission catalog; declaring that existing cross-module permission fixed startup and is included in the implementation follow-up commit.
+## Receipt stat action — 2026-09-11
+
+The selected uncovered Purchase action is the Purchase Order stat action
+`action_view_picking`, shown as `Receipt` on Odoo order `P00012`. The live
+authenticated audit used database `core3_user_demo` at
+`http://127.0.0.1:8069`. Purchase > Orders > Purchase Orders remains the
+owning menu; `Receipt` is not a new menu item. On the order form, Odoo shows a
+count of `1` and opens the single linked receipt directly at
+`/odoo/stock.picking/18` (`WH/IN/00006`) with Odoo's
+`stock.view_picking_form`. The source behavior is
+`addons/purchase_stock/models/purchase_order.py::action_view_picking` and
+`addons/purchase_stock/views/purchase_views.xml`: a single picking receives
+the form action and `res_id`, while the multi-picking case uses the receipt
+list action.
+
+The reference form contract is `Validate`, `Print`, `Return`, and `Cancel`
+header actions; Draft/Ready/Done status; `Moves` count; Receive From, Operation
+Type, Scheduled Date, Deadline, Source Document, Operations/Additional Info/
+Note tabs; two receipt lines; and the OdooBot creation chatter. The deterministic
+fixture mirrors this as `purchase-receipt-p00012`, `WH/IN/00006`, vendor
+`Ready Mat`, operation type `YourCompany: Receipts`, source `P00012`, Ready
+state, and the two Odoo-shaped lines `[FURN_6667] Acoustic Bloc Screens
+(Black)` (20) and `[FURN_9001] Flipover` (10).
+
+Reference captures, authenticated against the live Odoo instance, are local
+and not tracked in Git:
+
+| Surface | Desktop 1440×900 | Mobile 390×844 |
+| --- | --- | --- |
+| Odoo receipt form | `/tmp/odoo-purchase-receipt-form-desktop.png`<br>SHA-256 `29aa79104ee78d0de4afd8e09e44c4be0d169b1463666f4411a8676b18f1fc94` | `/tmp/odoo-purchase-receipt-mobile-20260911.png`<br>SHA-256 `9c20e6f3ea369ed8e970287834af74dcc223b98be106edf9040dbd8db1043b7f` |
+| Core3 receipt detail | `/tmp/core3-purchase-receipt-desktop-final-20260911.png`<br>SHA-256 `c528e8eab421c4bf02fc7c33068d6a08ddca4cc45dd16e6add1cfcb385e28b19` | `/tmp/core3-purchase-receipt-mobile-final-20260911.png`<br>SHA-256 `2b42fe7e610c789efe3ede614ed1dcf4273c1dfec0f23a217de2aa392a52d9f1` |
+
+Core3 implements the action-only route `/purchase/receipt?id=purchase-receipt-p00012`.
+The layout contract is `pages/purchase-receipt.yaml`, and the API/action
+contract is `api/purchase-receipt.yaml`; both join on
+`page.id: purchase-receipt`, keeping page and API `page.id` concerns separate.
+The Purchase Order page/API remain `purchase-detail` and expose the `Receipt`
+stat only when a linked receipt exists and the order is Confirmed or Received.
+The action transports the receipt ID and navigates to the direct detail route,
+matching Odoo's single-picking behavior. Migration
+`20260911230000-022-purchase-receipt.yaml` owns the receipt, line, and chatter
+tables and stable fixture data. Read access is `purchase.read`; Validate,
+Cancel, message/note, and line create/update/delete require `purchase.write`.
+The API includes empty/error states, not-found handling, stale row guards, and
+locked-state rejection at the mutation boundary.
+
+Authenticated Core3 browser replay used the isolated worktree runtime at
+`http://localhost:3022` as `admin@tms.local` / `admin123`. At both viewports,
+the Purchase Order `Receipt` stat was clicked and navigated to the exact route
+above. Required receipt content was present, including `WH/IN/00006`, `Ready
+Mat`, `YourCompany: Receipts`, `Validate`, `Moves`, both products, and
+`Transfer created`. Desktop reported `innerWidth/body.scrollWidth/
+document.scrollWidth = 1440/1440/1440`; mobile reported `390/390/390`.
+Both runs had zero request failures and zero page errors.
+
+Focused verification from `sdk/bun/sample`:
+
+```text
+14 pass
+0 fail
+148 expect() calls
+bun run audit: 524 pages, 531 routes, 918 datasources; audit passed
+git diff --check: pass
+```
+
+The bounded slice intentionally does not add Odoo's Print/Return controls or
+a separate Moves destination. The Moves stat is represented on the receipt
+detail, while broader receipt operations remain a follow-up. Core3 retains the
+shared Fluent shell. On mobile, the shared dense LineItemGrid is narrower than
+Odoo's card presentation and its quantity columns are visually clipped inside
+the grid; the page itself has no horizontal overflow. Screenshots remain in
+`/tmp` only and no image files are committed.
