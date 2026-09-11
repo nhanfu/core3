@@ -13,7 +13,6 @@ components:
     group_columns: 2
     groups:
       - title: Combo Choice
-        wide: true
         fields:
           - { field: name, label: Combo Choice, type: text, required: true }
           - { field: maximum_items, label: Maximum items?, type: number, required: true, default: 1, min: 1 }
@@ -22,3 +21,24 @@ components:
         fields:
           - { field: combo_price, label: Combo Price?, type: number, required: true, default: 0, min: 0 }
           - { field: company, label: Company, type: text, default: 'Visible to all' }
+
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: pos_combo_choice_new_items
+    parent_source: pos_combo_choice_new
+    title: Options
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    actions:
+      - { id: add_pos_combo_choice_item, label: Add a line, variant: primary, permission: pos.manage, disabled: true }
+    empty_state: { title: No options, description: Save the combo choice before adding products. }
+    children:
+      - { type: LineItemField, id: product, field: product, label: Product, input_type: text, required: true }
+      - { type: LineItemField, id: original_price, field: original_price, label: Original Price, input_type: money, decimals: 2 }
+      - { type: LineItemField, id: extra_price, field: extra_price, label: Extra Price, input_type: money, decimals: 2 }
+    columns:
+      - { field: product, label: Options, width: 120 }
+      - { field: original_price, label: Original Price, align: right, width: 90 }
+      - { field: extra_price, label: Extra Price, align: right, width: 90 }
+      - { field: actions, label: '', sortable: false, width: 40 }

@@ -4,6 +4,9 @@ datasources:
     single: true
     permission: pos.read
     query: "SELECT NULL AS id, 1 AS row_version, '' AS name, 1 AS maximum_items, 1 AS included_items, CAST(0 AS DOUBLE) AS combo_price, 'Visible to all' AS company, true AS active"
+  - id: pos_combo_choice_new_items
+    permission: pos.read
+    query: "SELECT NULL AS id, 1 AS row_version, NULL AS combo_choice_id, 10 AS sequence, '' AS product, CAST(0 AS DOUBLE) AS original_price, CAST(0 AS DOUBLE) AS extra_price WHERE 1 = 0"
 actions:
   - id: back_to_pos_combo_choices
     type: navigate

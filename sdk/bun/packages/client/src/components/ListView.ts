@@ -21,6 +21,7 @@ export type ListViewColumn = {
   field: string;
   label: string;
   mobile?: boolean;
+  width?: number;
   align?: 'left' | 'center' | 'right';
   sortable?: boolean;
   optional?: 'show' | 'hide';
@@ -440,6 +441,11 @@ export class ListView extends BaseComponent {
     const content = html.take(root).div.className('o-list-content').ele();
     const viewport = html.take(content).div.className('o-list-table-viewport').ele();
     const table = html.take(viewport).table.className('o-list-table').ele();
+    if (visibleColumns.some(column => typeof column.width === 'number')) {
+      table.style.tableLayout = 'fixed';
+      table.style.width = '100%';
+      table.style.minWidth = '0';
+    }
     const headRow = html.take(table).thead.trow.ele();
 
     if (this.options.selectable) {
@@ -453,6 +459,10 @@ export class ListView extends BaseComponent {
       const align = column.align === 'right' ? 'is-right' : column.align === 'center' ? 'is-center' : '';
       const th = html.take(headRow).th.className(`o-list-column ${align}`).ele();
       th.dataset.column = column.id || column.field;
+      if (typeof column.width === 'number') {
+        th.style.width = `${column.width}px`;
+        th.style.minWidth = `${column.width}px`;
+      }
       if (column.sortable === false || column.rowActions?.length) {
         html.take(th).replaceText(column.label);
         continue;
@@ -961,6 +971,11 @@ export class ListView extends BaseComponent {
       const align = column.align === 'right' ? 'is-right' : column.align === 'center' ? 'is-center' : '';
       const cell = html.take(tr).tdata.className(`o-list-cell ${align}`).ele();
       cell.dataset.column = column.id || column.field;
+      if (typeof column.width === 'number') {
+        cell.style.width = `${column.width}px`;
+        cell.style.minWidth = `${column.width}px`;
+        cell.style.maxWidth = `${column.width}px`;
+      }
       if (columnIndex === 0 && this.options.openAction) {
         html.take(cell).toggleClass('o-list-open-cell', true);
         html.take(cell).prop('tabIndex', 0).attr('role', 'link').event('keydown', (event: KeyboardEvent) => {

@@ -14,7 +14,6 @@ components:
     group_columns: 2
     groups:
       - title: Combo Choice
-        wide: true
         fields:
           - { field: name, label: Combo Choice, type: text, required: true }
           - { field: maximum_items, label: Maximum items?, type: number, required: true }
@@ -47,13 +46,13 @@ components:
           - { id: edit_pos_combo_choice_item, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
           - { id: delete_pos_combo_choice_item, label: Delete, icon: trash, variant: danger, permission: pos.manage }
     columns:
-      - { field: product, label: Options, width: 420 }
-      - { field: original_price, label: Original Price, align: right, width: 180 }
-      - { field: extra_price, label: Extra Price, align: right, width: 160 }
+      - { field: product, label: Options, width: 120 }
+      - { field: original_price, label: Original Price, align: right, width: 90 }
+      - { field: extra_price, label: Extra Price, align: right, width: 90 }
       - field: actions
         label: ''
         sortable: false
-        width: 84
+        width: 40
         actions:
           - { id: edit_pos_combo_choice_item, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
           - { id: delete_pos_combo_choice_item, label: Delete, icon: trash, variant: danger, permission: pos.manage }

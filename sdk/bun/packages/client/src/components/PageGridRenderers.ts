@@ -582,6 +582,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     field: column.field,
     label: column.label || '',
     mobile: column.mobile,
+    width: typeof column.width === 'number' ? column.width : undefined,
     align: column.align,
     sortable: column.sortable !== false,
     optional: column.optional,

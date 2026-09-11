@@ -11,9 +11,9 @@ components:
     row_double_click_action: view_pos_combo_choice
     search: { label: Search combo choices, placeholder: 'Search choice or product...' }
     columns:
-      - { field: name, label: Name, type: PrimaryEntityCell }
-      - { field: combo_price, label: Combo Price, type: money, align: right }
-      - { field: combo_item_count, label: Product Count, align: right }
+      - { field: name, label: Name, type: PrimaryEntityCell, width: 150 }
+      - { field: combo_price, label: Combo Price, type: money, align: right, width: 110 }
+      - { field: combo_item_count, label: Product Count, align: right, width: 100 }
     page_size: 50
     row_key: id
     empty_state: { title: No combo choices, description: Create a combo choice to offer configurable products at the Point of Sale. }
