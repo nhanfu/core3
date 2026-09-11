@@ -1,0 +1,69 @@
+page: { id: maintenance-activity-type-detail }
+datasources:
+  - id: maintenance_activity_type_detail
+    single: true
+    permission: maintenance.settings
+    error_states: { transport_error: { status: 503, code: MAINTENANCE_ACTIVITY_TYPE_DETAIL_UNAVAILABLE, message: This maintenance activity type is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, sequence, active, summary, default_user_name, res_model, delay_count, delay_unit, delay_from, chaining_type, suggested_next_summary, default_note FROM maintenance_activity_types WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_maintenance_activity_type
+    type: server_form
+    permission: maintenance.settings
+    title: Edit Activity Type
+    action: maintenance.activity_types.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.maintenance_activity_type_detail
+    refresh: [maintenance_activity_type_detail, maintenance_activity_types]
+    mutation:
+      operation: update
+      table: maintenance_activity_types
+      fields: [name, sequence, active, summary, default_user_name, res_model, delay_count, delay_unit, delay_from, chaining_type, suggested_next_summary, default_note]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_activity_types WHERE id = :id", status: 404, code: MAINTENANCE_ACTIVITY_TYPE_NOT_FOUND, message: Activity type not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_activity_types WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: MAINTENANCE_ACTIVITY_TYPE_NAME_EXISTS, message: An activity type with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:delay_count AS INTEGER), 0) >= 0", status: 422, code: MAINTENANCE_ACTIVITY_TYPE_DELAY_INVALID, message: Schedule must be zero or greater. }
+      result: { query: "SELECT * FROM maintenance_activity_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number }
+      - { field: summary, label: Default Summary, type: text }
+      - { field: default_user_name, label: Default User, type: text }
+      - { field: delay_count, label: Schedule, type: number, min: 0 }
+      - { field: delay_unit, label: Delay Units, type: select, options: [days, weeks, months] }
+      - { field: delay_from, label: Delay Type, type: select, options: [{ value: current_date, label: after previous activity completion date }, { value: previous_activity, label: after previous activity deadline }] }
+      - { field: chaining_type, label: Chaining Type, type: select, options: [{ value: suggest, label: Suggest Next Activity }, { value: trigger, label: Trigger Next Activity }] }
+      - { field: suggested_next_summary, label: Suggest, type: text }
+      - { field: default_note, label: Default Note, type: textarea }
+  - id: archive_maintenance_activity_type
+    type: server
+    permission: maintenance.settings
+    action: maintenance.activity_types.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [maintenance_activity_type_detail, maintenance_activity_types]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: maintenance_activity_types, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_activity_types WHERE id = :id" } }
+  - id: restore_maintenance_activity_type
+    type: server
+    permission: maintenance.settings
+    action: maintenance.activity_types.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [maintenance_activity_type_detail, maintenance_activity_types]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: maintenance_activity_types, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_activity_types WHERE id = :id" } }
+  - id: delete_maintenance_activity_type
+    type: server
+    permission: maintenance.settings
+    action: maintenance.activity_types.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [maintenance_activity_types]
+    mutation:
+      operation: delete
+      table: maintenance_activity_types
+      concurrency: { required: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE :id NOT IN ('maintenance-activity-type-todo', 'maintenance-activity-type-maintenance-request')", status: 422, code: MAINTENANCE_ACTIVITY_TYPE_PROTECTED, message: A standard maintenance activity type cannot be deleted. }]

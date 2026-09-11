@@ -1,0 +1,40 @@
+title: Activity Type
+page: { id: maintenance-activity-type-detail, route: /maintenance-activity-types/detail, breadcrumb: [Supply Chain, Maintenance, Configuration, Activity Types, Activity Type], auth: { require: [maintenance.settings] } }
+components:
+  - type: OdooFormView
+    source: maintenance_activity_type_detail
+    title_field: name
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_maintenance_activity_types, label: Activity Types, variant: secondary, permission: maintenance.settings }
+      - { id: edit_maintenance_activity_type, label: Edit, variant: primary, permission: maintenance.settings }
+      - { id: archive_maintenance_activity_type, label: Archive, variant: danger, permission: maintenance.settings, show_if: 'record.active === true' }
+      - { id: restore_maintenance_activity_type, label: Restore, variant: secondary, permission: maintenance.settings, show_if: 'record.active === false' }
+      - { id: delete_maintenance_activity_type, label: Delete, variant: danger, permission: maintenance.settings, confirm: Delete this activity type? }
+    group_columns: 2
+    groups:
+      - title: Activity Settings
+        fields:
+          - { field: name, label: Name }
+          - { field: summary, label: Default Summary }
+          - { field: default_user_name, label: Default User }
+          - { field: delay_count, label: Schedule, type: number }
+          - { field: delay_unit, label: Delay Units }
+          - { field: delay_from, label: Delay Type }
+      - title: Next Activity
+        fields:
+          - { field: res_model, label: Model }
+          - { field: chaining_type, label: Chaining Type }
+          - { field: suggested_next_summary, label: Suggest }
+    notebook:
+      active: note
+      tabs:
+        - { id: note, label: Default Note, fields: [{ field: default_note, label: Default Note, type: textarea, wide: true }] }
+actions:
+  - id: back_to_maintenance_activity_types
+    type: navigate
+    permission: maintenance.settings
+    navigate_to: /maintenance-activity-types

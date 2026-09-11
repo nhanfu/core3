@@ -1,0 +1,31 @@
+version: 0.0.6
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS maintenance_activity_types (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT TRUE, summary VARCHAR,
+        default_user_name VARCHAR, res_model VARCHAR,
+        delay_count INTEGER NOT NULL DEFAULT 0,
+        delay_unit VARCHAR NOT NULL DEFAULT 'days',
+        delay_from VARCHAR NOT NULL DEFAULT 'previous_activity',
+        chaining_type VARCHAR NOT NULL DEFAULT 'suggest',
+        suggested_next_summary VARCHAR, default_note VARCHAR
+      );
+      INSERT INTO maintenance_activity_types
+        (id, name, sequence, active, summary, res_model, delay_count, delay_unit, delay_from, chaining_type)
+      VALUES
+        ('maintenance-activity-type-todo', 'To-Do', 2, TRUE, 'To-Do', NULL, 5, 'days', 'previous_activity', 'suggest'),
+        ('maintenance-activity-type-email', 'Email', 3, TRUE, 'Email', NULL, 0, 'days', 'previous_activity', 'suggest'),
+        ('maintenance-activity-type-call', 'Call', 6, TRUE, 'Call', NULL, 2, 'days', 'previous_activity', 'suggest'),
+        ('maintenance-activity-type-meeting', 'Meeting', 9, TRUE, 'Meeting', NULL, 0, 'days', 'previous_activity', 'suggest'),
+        ('maintenance-activity-type-maintenance-request', 'Maintenance Request', 12, TRUE, 'Maintenance Request', 'maintenance.request', 0, 'days', 'previous_activity', 'suggest'),
+        ('maintenance-activity-type-document', 'Document', 25, TRUE, 'Document', NULL, 5, 'days', 'previous_activity', 'suggest')
+      ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS maintenance_activity_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
