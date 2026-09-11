@@ -25,6 +25,7 @@ describe('Accounting Payment Transactions Odoo action parity', () => {
     expect(list.source).toBe('accounting_payment_transactions');
     expect(list.view_navigation).toBe('tabs');
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'graph', 'pivot']);
+    expect(list.views.find((view: any) => view.id === 'kanban')).not.toHaveProperty('mobile', true);
     expect(list.columns.map((column: any) => column.label)).toEqual([
       'Reference', 'Created on', 'Payment Method', 'Provider', 'Customer', 'Partner Name', 'Amount', 'Status', 'Company',
     ]);

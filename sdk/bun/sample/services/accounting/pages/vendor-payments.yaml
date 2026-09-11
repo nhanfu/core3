@@ -16,6 +16,7 @@ components:
       - { field: payment_method, label: Payment Method }
       - { field: state, label: Status }
       - { field: payment_date, label: Payment Date }
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table, mobile: false }
       - id: card

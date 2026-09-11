@@ -10,7 +10,7 @@ describe('Accounting vendor payments parity', () => {
     const page = yaml('pages/vendor-payments.yaml');
     const list = page.components.find((component: any) => component.type === 'ListView');
     expect(page.page).toMatchObject({ id: 'vendor-payments', route: '/accounting/vendor-payments' });
-    expect(list.view_navigation || 'icons').toBe('icons');
+    expect(list.view_navigation).toBe('tabs');
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'card', 'kanban', 'graph', 'activity']);
     expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: true, label: 'Kanban' });
     expect(list.views.find((view: any) => view.id === 'list')).toMatchObject({ mobile: false });
