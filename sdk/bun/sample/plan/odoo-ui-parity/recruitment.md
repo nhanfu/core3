@@ -1,6 +1,6 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-4-implemented`
+Status: `batch-5-implemented`
 
 This document remains the implementation gate and evidence record. Batch 1
 implements the coherent Core3 job-position/openings and applicant queues,
@@ -8,6 +8,83 @@ including list/kanban/detail/filter/workflow states. Batch 2 adds the
 Recruitment Analysis graph/pivot action with deterministic report fixtures,
 search filters, and explicit empty/failed datasource states. Batch 4 adds the
 bounded Talent Pools list/kanban/form and applicant-membership action.
+
+## Batch 5 — Configuration → Applications → Refuse Reasons
+
+Implemented in the isolated worktree
+`/home/nhanjs/projects/core3-worktrees/odoo-ui-recruitment-refuse-reasons-20260911`.
+The source-confirmed action is available in the authenticated personal
+reference: Recruitment → Configuration → Applications → Refuse Reasons,
+action `hr_applicant_refuse_reason_action`, model
+`hr.applicant.refuse.reason`, and view modes `list,form`. Odoo resolves the
+installed action to `/odoo/action-649` in database `core3_personal`.
+
+The Odoo list contains six deterministic reference records ordered by
+sequence: `Refused by applicant: salary`, `Refused by applicant: job fit`,
+`Does not fit the job requirements`, `Job already fulfilled`, `Duplicate`, and
+`Spam`. The source form exposes Description and the applicant email-template
+relation; sequence is list ordering and active is kept invisible in the form.
+The source access file gives recruitment users CRUD and interviewers read-only
+access. Core3 deliberately maps this configuration route to the existing
+manager permission `recruitment.manage`, keeping the menu, list datasource,
+create/edit/archive/restore/delete actions, and page authorization manager-only.
+
+Core3 adds `/recruitment/refuse-reasons` with page id
+`recruitment-refuse-reasons`, a page-local list YAML fragment and a matching
+API fragment. Migration `20260911150000-006-recruitment-refuse-reasons.yaml`
+adds stable IDs, fixed templates, an archived legacy fixture, and the
+`recruitment_applicants.refuse_reason_id` / `refused_date` linkage. Applicant
+detail now displays the linked reason and offers a manager-only reasoned Refuse
+form. That form validates an active reason, rejects invalid/stale/closed
+applications, archives the applicant, and writes the fixed seed date
+`2026-01-15`. No page-local SQL, current/random fixture values, or screenshots
+are committed.
+
+Commits for this batch:
+
+- `b51bad18` — implementation, migration, page/API fragments, applicant linkage, and focused tests
+- `3b41fd0e` — isolate the reason-aware refusal action from the existing workflow action name
+- `44a4f3a6` — align create/edit form fields with Odoo's invisible active field
+
+### Browser comparison evidence
+
+Authenticated Odoo and Core3 captures were inspected at 1440×900 and
+390×844. Core3 used `admin@tms.local` on the isolated runtime at
+`http://localhost:3004`; the desktop refusal flow was submitted through the
+visible form and verified as `Rejected`, reason `Spam`, and refused date
+`2026-01-15`. Every capture below is outside Git.
+
+| Surface | Viewport | Exact path | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo list | 1440×900 | `/tmp/odoo-recruitment-refuse-reasons-20260911/list-desktop.png` | `f6c25e5ca9edf30a32e5af07c443ca5da27530d0847d08c4de8da259325cd42c` |
+| Odoo form | 1440×900 | `/tmp/odoo-recruitment-refuse-reasons-20260911/form-desktop.png` | `3b23e146e099348dd6dc8a6478641953d4fc50c29b1f8b8c999cb545f38fc1eb` |
+| Odoo list | 390×844 | `/tmp/odoo-recruitment-refuse-reasons-20260911/list-mobile-390x844.png` | `55845a5988bd611b3d7681a345f330ed839f548c7abb16bec7cb8020f0b79855` |
+| Odoo form | 390×844 | `/tmp/odoo-recruitment-refuse-reasons-20260911/form-mobile-390x844.png` | `5882ff0c6f2c37f2a0c1f718c29009d1ecfba782e59f6f70b19e87c67a5f8130` |
+| Core3 list | 1440×900 | `/tmp/core3-recruitment-refuse-reasons-20260911/core3-list-desktop-1440x900-final.png` | `7ff0278a76c1aa203012dd3767ccac518bfa1ada057b9af29a1d779032d4f2fc` |
+| Core3 form | 1440×900 | `/tmp/core3-recruitment-refuse-reasons-20260911/core3-form-desktop-1440x900-final.png` | `15206f547e6f4484b25f9b356feee560fc69a798167b3df6b3fb73ba9f1d45cd` |
+| Core3 applicant refusal modal | 1440×900 | `/tmp/core3-recruitment-refuse-reasons-20260911/core3-refuse-modal-desktop-1440x900-final.png` | `74a05a78d88e64dcbfc1d4c863b0d889a003604d2ca6ba21b8ec453dfe21bd32` |
+| Core3 list | 390×844 | `/tmp/core3-recruitment-refuse-reasons-20260911/core3-list-mobile-390x844-final.png` | `70f86685a487261a735ba48cf28764c1e85a297330946812d5d47cb3a31cce60` |
+| Core3 form | 390×844 | `/tmp/core3-recruitment-refuse-reasons-20260911/core3-form-mobile-390x844-final.png` | `5b50c423ad3f6ca84e966aa178fe312881c61fc135fd48dea36afe20260567c2` |
+| Core3 applicant refusal modal | 390×844 | `/tmp/core3-recruitment-refuse-reasons-20260911/core3-refuse-modal-mobile-390x844-final.png` | `ab8bc501719a04b1e4c8c0a3002d8bade6559b4f3a6ba07983ef2c8a4b79039e` |
+
+The visual residuals are the shared Core3 shell versus Odoo's purple shell,
+Core3's centered modal edit form versus Odoo's inline editable list, and
+different toolbar/icon density. Both mobile layouts use truncation for long
+descriptions/templates; Core3 hides sequence on mobile as Odoo does. Core3's
+template selector is a fixed service-owned label list rather than the full
+`mail.template` relation. The applicant refusal scope is intentionally the
+reason-selection/archive linkage only: Odoo's duplicate-applicant, email
+delivery, no-email, refusal-mail-template, chatter, and bulk-wizard flows are
+deferred.
+
+### Focused verification
+
+- `bun test test/recruitment_refuse_reasons.integration.test.ts` — 4 passed, 0 failed, 52 assertions
+- `bun run audit` — passed: 478 pages, 485 routes, 834 datasources
+- `bunx eslint test/recruitment_refuse_reasons.integration.test.ts` — passed
+- `bun run css:build:global` and `bun run css:build:recruitment` — passed
+- `git diff --check` — passed
+- Authenticated browser — populated/search/form/refusal submission on desktop, populated/form/refusal modal on mobile; no failed responses, page errors, or viewport overflow
 
 ## Reference gate and exact limitation
 
