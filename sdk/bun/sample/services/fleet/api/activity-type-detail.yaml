@@ -1,0 +1,92 @@
+page: { id: fleet-activity-type-detail }
+datasources:
+  - id: fleet_activity_type_detail
+    single: true
+    permission: fleet.read
+    error_states:
+      unauthorized: { status: 401, code: FLEET_ACTIVITY_TYPE_DETAIL_UNAUTHORIZED, message: Sign in to view the fleet activity type. }
+      forbidden: { status: 403, code: FLEET_ACTIVITY_TYPE_DETAIL_FORBIDDEN, message: You do not have permission to view this fleet activity type. }
+      transport_error: { status: 503, code: FLEET_ACTIVITY_TYPE_DETAIL_UNAVAILABLE, message: Fleet activity type details are temporarily unavailable. }
+    query: "SELECT id, row_version, name, sequence, active, summary, category, default_user_name, res_model, delay_count, delay_unit, delay_from, chaining_type, triggered_next_name, suggested_next_summary, icon, default_note FROM fleet_activity_types WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (res_model IS NULL OR res_model = 'fleet.vehicle.log.contract') AND id = :id"
+actions:
+  - id: back_to_fleet_activity_types
+    type: navigate
+    permission: fleet.read
+    navigate_to: /fleet/config/activity-types
+  - id: edit_fleet_activity_type_detail
+    type: server_form
+    permission: fleet.manage
+    title: Edit Activity Type
+    action: fleet.activity_types.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_activity_type_detail, fleet_activity_types]
+    mutation:
+      operation: update
+      table: fleet_activity_types
+      fields: [name, sequence, active, summary, category, default_user_name, res_model, delay_count, delay_unit, delay_from, chaining_type, triggered_next_name, suggested_next_summary, icon, default_note]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_activity_types WHERE id = :id", status: 404, code: FLEET_ACTIVITY_TYPE_NOT_FOUND, message: Activity type was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: FLEET_ACTIVITY_TYPE_NAME_REQUIRED, message: Activity type name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:res_model, '') IN ('', 'fleet.vehicle.log.contract')", status: 422, code: FLEET_ACTIVITY_TYPE_MODEL_INVALID, message: Activity types in this Fleet action must be global or target fleet contracts. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:delay_count AS INTEGER), 0) >= 0", status: 422, code: FLEET_ACTIVITY_TYPE_DELAY_INVALID, message: Schedule must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:delay_unit, 'days') IN ('days', 'weeks', 'months') AND COALESCE(:delay_from, 'previous_activity') IN ('current_date', 'previous_activity')", status: 422, code: FLEET_ACTIVITY_TYPE_SCHEDULE_INVALID, message: Delay units or type are invalid. }
+      result: { query: "SELECT * FROM fleet_activity_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number }
+      - { field: summary, label: Default Summary, type: text }
+      - { field: category, label: Action, type: select, options: [{ value: default, label: None }, { value: upload_file, label: Upload Document }, { value: phonecall, label: Phonecall }, { value: meeting, label: Meeting }] }
+      - { field: default_user_name, label: Default User, type: text }
+      - { field: res_model, label: Model, type: select, options: [{ value: fleet.vehicle.log.contract, label: Fleet Contract }] }
+      - { field: delay_count, label: Schedule, type: number }
+      - { field: delay_unit, label: Delay Units, type: select, options: [days, weeks, months] }
+      - { field: delay_from, label: Delay Type, type: select, options: [{ value: current_date, label: after previous activity completion date }, { value: previous_activity, label: after previous activity deadline }] }
+      - { field: chaining_type, label: Chaining Type, type: select, options: [{ value: suggest, label: Suggest Next Activity }, { value: trigger, label: Trigger Next Activity }] }
+      - { field: triggered_next_name, label: Trigger, type: text }
+      - { field: suggested_next_summary, label: Suggest, type: text }
+      - { field: icon, label: Icon, type: text }
+      - { field: default_note, label: Default Note, type: textarea }
+  - id: archive_fleet_activity_type_detail
+    type: server
+    permission: fleet.manage
+    action: fleet.activity_types.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_activity_type_detail, fleet_activity_types]
+    params: { values: { active: false } }
+    mutation:
+      operation: update
+      table: fleet_activity_types
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_activity_types WHERE id = :id AND active = TRUE", status: 404, code: FLEET_ACTIVITY_TYPE_NOT_FOUND, message: Active activity type was not found. }
+        - { query: "SELECT 1 AS ok WHERE :id <> 'fleet-activity-type-todo'", status: 422, code: FLEET_ACTIVITY_TYPE_PROTECTED, message: The To-Do activity type cannot be archived. }
+      result: { query: "SELECT * FROM fleet_activity_types WHERE id = :id" }
+  - id: restore_fleet_activity_type_detail
+    type: server
+    permission: fleet.manage
+    action: fleet.activity_types.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_activity_type_detail, fleet_activity_types]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: fleet_activity_types, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_activity_types WHERE id = :id AND active = FALSE", status: 404, code: FLEET_ACTIVITY_TYPE_NOT_FOUND, message: Archived activity type was not found. }], result: { query: "SELECT * FROM fleet_activity_types WHERE id = :id" } }
+  - id: delete_fleet_activity_type_detail
+    type: server
+    permission: fleet.manage
+    action: fleet.activity_types.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [fleet_activity_types]
+    params: { id: '{state.id}' }
+    mutation:
+      operation: delete
+      table: fleet_activity_types
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_activity_types WHERE id = :id", status: 404, code: FLEET_ACTIVITY_TYPE_NOT_FOUND, message: Activity type was not found. }
+        - { query: "SELECT 1 AS ok WHERE :id NOT IN ('fleet-activity-type-todo', 'fleet-activity-type-call', 'fleet-activity-type-meeting')", status: 422, code: FLEET_ACTIVITY_TYPE_PROTECTED, message: This standard activity type cannot be deleted. }

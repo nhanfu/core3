@@ -1,0 +1,38 @@
+title: Activity Type
+page: { id: fleet-activity-type-detail, route: /fleet/config/activity-types/detail, breadcrumb: [Human Resources, Fleet, Configuration, Vehicle, Activity Types, Activity Type], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_activity_type_detail
+    title_field: name
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_fleet_activity_types, label: Activity Types, variant: secondary, permission: fleet.read }
+      - { id: edit_fleet_activity_type_detail, label: Edit, variant: primary, permission: fleet.manage }
+      - { id: archive_fleet_activity_type_detail, label: Archive, variant: danger, permission: fleet.manage, show_if: 'record.active === true && record.id !== "fleet-activity-type-todo"' }
+      - { id: restore_fleet_activity_type_detail, label: Restore, variant: secondary, permission: fleet.manage, show_if: 'record.active === false' }
+      - { id: delete_fleet_activity_type_detail, label: Delete, variant: danger, permission: fleet.manage, confirm: Delete this activity type?, show_if: 'record.id !== "fleet-activity-type-todo"' }
+    group_columns: 2
+    groups:
+      - title: Activity Settings
+        fields:
+          - { field: name, label: Name }
+          - { field: category, label: Action }
+          - { field: default_user_name, label: Default User }
+          - { field: res_model, label: Model }
+          - { field: summary, label: Default Summary }
+          - { field: icon, label: Icon }
+          - { field: delay_count, label: Schedule, type: number }
+          - { field: delay_unit, label: Delay Units }
+          - { field: delay_from, label: Delay Type }
+      - title: Next Activity
+        fields:
+          - { field: chaining_type, label: Chaining Type }
+          - { field: triggered_next_name, label: Trigger }
+          - { field: suggested_next_summary, label: Suggest }
+    notebook:
+      active: note
+      tabs:
+        - { id: note, label: Default Note, fields: [{ field: default_note, label: Default Note, type: textarea, wide: true }] }

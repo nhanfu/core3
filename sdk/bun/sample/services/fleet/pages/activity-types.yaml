@@ -1,0 +1,32 @@
+title: Activity Types
+page: { id: fleet-activity-types, route: /fleet/config/activity-types, breadcrumb: [Human Resources, Fleet, Configuration, Vehicle, Activity Types], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_activity_types
+    create_action: create_fleet_activity_type
+    create_label: New
+    search: { label: Search activity types, placeholder: 'Search activity types...' }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card: { title: name, subtitle: summary, fields: [{ field: planned_in, label: Planned in }, { field: delay_from_label, label: Type }] }
+      - { id: form, label: Form, icon: edit }
+    row_key: id
+    row_open_action: view_fleet_activity_type
+    row_double_click_action: view_fleet_activity_type
+    row_actions: menu
+    empty_state: { title: No activity types found. Let's create one!, description: Activity types organize follow-up work for fleet contracts. }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: summary, label: Default Summary }
+      - { field: planned_in, label: Planned in }
+      - { field: delay_from_label, label: Type }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_fleet_activity_type, label: Edit, icon: edit }, { id: archive_fleet_activity_type, label: Archive, icon: archive, show_if: 'row.active === true && row.id !== "fleet-activity-type-todo"' }, { id: restore_fleet_activity_type, label: Restore, icon: archive, show_if: 'row.active === false' }, { id: delete_fleet_activity_type, label: Delete, icon: trash, variant: danger, show_if: 'row.id !== "fleet-activity-type-todo"' }] }
+    form_view: { page: apps/services/fleet/pages/activity-type-detail.yaml, side_panel: false }

@@ -1,0 +1,21 @@
+version: 0.0.26
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_activity_types
+        (id, name, sequence, active, summary, category, res_model, delay_count, delay_unit, delay_from, chaining_type, icon)
+      VALUES
+        ('fleet-activity-type-todo', 'To-Do', 2, TRUE, 'To-Do', 'default', NULL, 5, 'days', 'previous_activity', 'suggest', 'fa-check'),
+        ('fleet-activity-type-email', 'Email', 3, TRUE, 'Email', 'default', NULL, 0, 'days', 'previous_activity', 'suggest', 'fa-envelope'),
+        ('fleet-activity-type-call', 'Call', 6, TRUE, 'Call', 'phonecall', NULL, 2, 'days', 'previous_activity', 'suggest', 'fa-phone'),
+        ('fleet-activity-type-meeting', 'Meeting', 9, TRUE, 'Meeting', 'meeting', NULL, 0, 'days', 'previous_activity', 'suggest', 'fa-users'),
+        ('fleet-activity-type-contract-renew', 'Contract to Renew', 10, TRUE, 'Contract to Renew', 'default', 'fleet.vehicle.log.contract', 0, 'days', 'previous_activity', 'suggest', 'fa-car'),
+        ('fleet-activity-type-document', 'Document', 25, TRUE, 'Document', 'upload_file', NULL, 5, 'days', 'previous_activity', 'suggest', 'fa-upload')
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE fleet_activity_types SET row_version = 1 WHERE id LIKE 'fleet-activity-type-%' AND row_version IS NULL;
+    down: DELETE FROM fleet_activity_types WHERE id LIKE 'fleet-activity-type-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
