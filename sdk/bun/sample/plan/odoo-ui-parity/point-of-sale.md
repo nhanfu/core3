@@ -541,3 +541,52 @@ provisional only because this isolated runtime captured the transient
 launcher/loading glyph instead of the rendered page. Therefore there is no
 Core3 visual sign-off for this batch. The Odoo PNGs are valid paired reference
 evidence. All captures remain in `/tmp` and are not committed.
+
+## Current batch: Point of Sale configuration action 747
+
+The authenticated personal Odoo 19 reference exposes Configuration → Point of
+Sale as action 747 (`pos.config`, list and form). At 1440x900 the list has six
+demo configurations—Furniture Shop, Clothes Shop, Bakery Shop, Restaurant, Bar,
+and Kiosk—with Point of Sale, Company, Closing, Balance, and Status columns.
+The detail/New form exposes Point of Sale and the configuration checklist fields
+Log in with Employees?, ePOS Printer?, and IoT Box. At 390x844 the authenticated
+Odoo action remains usable without horizontal overflow. Reference captures are
+`/tmp/odoo-pos-config-desktop-list-final.png`,
+`/tmp/odoo-pos-config-desktop-detail-final.png`,
+`/tmp/odoo-pos-config-desktop-new-final.png`,
+`/tmp/odoo-pos-config-mobile-list-final.png`,
+`/tmp/odoo-pos-config-mobile-detail-final.png`, and
+`/tmp/odoo-pos-config-mobile-new-final.png`.
+
+Core3 now exposes the bounded action at `/point-of-sale/configs` and
+`/point-of-sale/config-detail`, with New opened from the list. Page YAML and
+service API YAML remain separate and join through `pos-configs` and
+`pos-config-detail` page IDs. Migration `030` owns the six deterministic
+configuration fixtures, checklist flags, closing/balance fields, and optimistic
+`row_version` support. The list provides Odoo-shaped columns, responsive cards,
+search, explicit empty state, and transport/forbidden error metadata. Detail
+and New provide required-name, duplicate, stale-write, active-session, and
+in-use-delete guards; create/update/delete actions require `pos.manage`, while
+read routes require `pos.read`.
+
+Focused integration coverage passes 3 tests and 30 assertions for menu/action
+registration, page/API joins, fixture/search/empty/detail-not-found states,
+transport and forbidden errors, permissioned CRUD, validation, active-session
+and in-use guards, and optimistic concurrency. Authenticated Core3 browser
+evidence passes at 1440x900 and 390x844 for list, detail, and New with no failed
+requests or horizontal overflow. Captures are
+`/tmp/core3-pos-config-desktop-list-final.png`,
+`/tmp/core3-pos-config-desktop-detail-final.png`,
+`/tmp/core3-pos-config-desktop-new-final.png`,
+`/tmp/core3-pos-config-mobile-list-final.png`,
+`/tmp/core3-pos-config-mobile-detail-final.png`, and
+`/tmp/core3-pos-config-mobile-new-final.png`. Successful authenticated create
+evidence is `/tmp/core3-pos-config-desktop-created-final.png`; guarded edit
+evidence is `/tmp/core3-pos-config-desktop-edit-guard-final.png` and
+`/tmp/core3-pos-config-mobile-edit-guard-final.png`. All captures remain in
+`/tmp` and are not committed.
+
+Known visual limits are the shared Core3 shell/breadcrumbs, Core3’s Edit action
+and modal New presentation, plain numeric Balance instead of Odoo currency
+formatting, boolean read-only values rendered as text instead of disabled
+checkbox glyphs, and Core3 mobile cards versus the captured Odoo mobile list.
