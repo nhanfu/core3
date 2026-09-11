@@ -29,6 +29,40 @@ Status: in-progress (live reference addon is available; full parity remains inco
   pass / 44 assertions, UI audit 491 pages / 498 routes / 858 datasources,
   ESLint passed, global CSS rebuilt, and `git diff --check` passed.
 
+## 2026-09-11 Manufacturing navigation-fidelity batch
+
+- The live `core3_codex_demo` Odoo 19 reference was inspected and authenticated
+  before implementation. The source contracts are:
+
+  | Odoo menu/action | Runtime action | Model | Modes | Source route/state |
+  | --- | ---: | --- | --- | --- |
+  | Manufacturing / Operations / Manufacturing Orders (`mrp.menu_mrp_production_action` / `mrp.mrp_production_action`) | 796 | `mrp.production` | `list,kanban,form,calendar,pivot,graph,activity` | `/odoo/manufacturing`, 4 populated To Do rows |
+  | Manufacturing / Products / Bills of Materials (`mrp.menu_mrp_bom_form_action` / `mrp.mrp_bom_form_action`) | 783 | `mrp.bom` | `list,kanban,form` | `/odoo/boms`, 8 populated rows |
+  | Manufacturing / Configuration / Work Centers (`mrp.menu_view_resource_search_mrp` / `mrp.mrp_workcenter_action`) | 779 | `mrp.workcenter` | `list,kanban,form` | `/odoo/workcenters`, 3 populated rows |
+  | Work Center `Assembly 1` → Productivity Losses (`mrp.mrp_workcenter_productivity_report_blocked`) | 776 | `mrp.workcenter.productivity` | `list,form,graph,pivot` | `/odoo/1/action-776` with 2 populated loss rows and active work-center context |
+
+- The three menu entries were confirmed at runtime as `Manufacturing/Operations/Manufacturing Orders` (menu 522), `Manufacturing/Products/Bills of Materials` (menu 521), and `Manufacturing/Configuration/Work Centers` (menu 519). Productivity Losses has no standalone menu; Odoo launches action 776 from a Work Center. The source desktop surfaces expose text-labelled view controls; the mobile surfaces collapse their shell and retain populated responsive content without horizontal overflow.
+- Core3 page YAML remains presentation-only and API YAML remains page-id-bound. The four affected presentation files now use `view_navigation: tabs`; Work Centers no longer marks Kanban as mobile-only, because Odoo exposes both List and Kanban in the desktop action. The Manufacturing Orders status lookup was changed from unsupported `data:` to deterministic `mock_data:`. The latter fixed the actual route failure (`SELECT COUNT(*) FROM ()`) when the page loaded its static status datasource.
+- Core3 browser routes are module-qualified by the shell router while the page contracts retain their declared routes: `/manufacturing/manufacturing-orders` (`/manufacturing-orders`), `/manufacturing/boms` (`/boms`), `/manufacturing/work-centers` (`/work-centers`), and `/manufacturing/productivity-losses` (`/manufacturing/productivity-losses`). Each final capture was authenticated as `admin@tms.local`, populated from the isolated runtime, and inspected visually.
+
+### Final paired capture matrix
+
+All captures are PNGs under `/tmp` and are intentionally not committed. Every
+final Core3 route reported `requestfailed=0`, `pageerror=0`, and exact
+`documentWidth=bodyWidth=innerWidth` (`1440` or `390`). The visible tab labels
+were `List/Kanban` for Manufacturing Orders, Bills of Materials, and Work
+Centers, and `List/Graph/Pivot` for Productivity Losses.
+
+| Surface | Odoo 1440x900 | Core3 1440x900 | Odoo 390x844 | Core3 390x844 |
+| --- | --- | --- | --- | --- |
+| Manufacturing Orders | `/tmp/odoo-codex-manufacturing-navigation-manufacturing-orders-1440x900.png` (`cc01a510e649ad3bfc99306d033c8f44e046717bbce56ad1a60626f8cb2f141e`) | `/tmp/core3-manufacturing-navigation-fidelity-manufacturing-orders-1440x900.png` (`ad12c140c93c6af46478c8fe8ed2cf1d25e5472285d4454f1d19240948d5bf82`) | `/tmp/odoo-codex-manufacturing-navigation-manufacturing-orders-390x844.png` (`48cd9d8a12fd98d1b62c384102861f44ec8477533b0657de32e6dbc2ca7e12e4`) | `/tmp/core3-manufacturing-navigation-fidelity-manufacturing-orders-390x844.png` (`885c3e2d11d7a82afe229312a8f538d0b5151a17cc26fb7b2be1d0012b3f4c78`) |
+| Bills of Materials | `/tmp/odoo-codex-manufacturing-navigation-boms-1440x900.png` (`c4790a04a96040237ad41e920c45c47cc384a95cdf424977f95cb1cadf34d5b1`) | `/tmp/core3-manufacturing-navigation-fidelity-boms-1440x900.png` (`de0bd4914fc6dc8620c2c6bf1c1aa36d11497c480c7d5ed557a6ebc4510f7ca5`) | `/tmp/odoo-codex-manufacturing-navigation-boms-390x844.png` (`5272c080025bcc034d4116e324801b820312f883678568a13d3b3f6f78d979c9`) | `/tmp/core3-manufacturing-navigation-fidelity-boms-390x844.png` (`2229a1b30944f334c8ec3f557713ec06694eb582382721fe62dfca914f46a006`) |
+| Work Centers | `/tmp/odoo-codex-manufacturing-navigation-work-centers-1440x900.png` (`e952b1d72af970fa7541a5092ab1ba800ca4cb54bec4ad2bdfba290105d1c590`) | `/tmp/core3-manufacturing-navigation-fidelity-work-centers-1440x900.png` (`39441bb2837870d8107457fc887f648941542186c6f75c5b0cfbfc1bf5b46cb1`) | `/tmp/odoo-codex-manufacturing-navigation-work-centers-390x844.png` (`31d2e768fb6a184b910802c426dacd08df09ebc44da6f5bfcc0d1c7f451ebd6e`) | `/tmp/core3-manufacturing-navigation-fidelity-work-centers-390x844.png` (`ed08803af57b6527dee0ba68cd8c4271b7081bd4f2900475bcd66697fb9e0078`) |
+| Productivity Losses | `/tmp/odoo-codex-manufacturing-navigation-productivity-losses-1440x900.png` (`660749b265e555fd5f4486188fede0826f91700617192329581c1a8dfb00c962`) | `/tmp/core3-manufacturing-navigation-fidelity-productivity-losses-1440x900.png` (`e3c36e49301a4e11dc904153fa328dc20252297d551334c740b57c0b88dc0fa9`) | `/tmp/odoo-codex-manufacturing-navigation-productivity-losses-390x844.png` (`3e4b3902528b7f369c76d250e32961de53273067bbc9f97f478984144fb6ae48`) | `/tmp/core3-manufacturing-navigation-fidelity-productivity-losses-390x844.png` (`91259dc6fd95d3617c201eab6bb2280ed360498564438e7ccfe72d6410de5ac0`) |
+
+- Final isolated-worktree verification: focused Manufacturing tests `15 pass / 188 assertions`; YAML audit `498 pages / 505 routes / 879 datasources`; ESLint passed; `bun run css:build:global` passed; and `git diff --check` passed. The test contracts assert `view_navigation: tabs`, the corrected Work Center desktop-visible Kanban mode, static status fixtures, source modes/menu placement, page/API separation, and the existing CRUD/permission boundaries.
+- Remaining bounded difference: Core3 intentionally uses the shared Fluent shell and deterministic YAML fixtures, while Odoo uses its purple shell and live/demo ORM data. This batch verifies the populated initial list state and visible mode navigation at both viewports; it does not claim parity for unrelated form/chatter workflows or every secondary Odoo report state.
+
 ## 2026-09-11 bounded Work Orders Analysis contract
 
 - Source inspection was completed first against the authenticated personal
