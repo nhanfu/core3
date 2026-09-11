@@ -12,7 +12,10 @@ datasources:
         printf('$%,.2f', COALESCE(e.tax_amount, 0)) AS tax_display,
         e.payment_method AS payment_mode,
         CASE e.payment_method WHEN 'Company' THEN 'Paid by Company' ELSE 'Paid by Employee' END AS payment_mode_label,
-        e.receipt_reference, e.receipt_label, e.company_name, e.department_name,
+        e.product_name, e.quantity, e.unit_name,
+        printf('%,.3f %s', COALESCE(e.quantity, 1), COALESCE(e.unit_name, 'Units')) AS quantity_display,
+        e.manager_name, e.vendor_name, e.receipt_reference, e.receipt_label, e.receipt_checksum,
+        e.company_name, e.department_name,
         e.analytic_distribution, e.journal_entry, e.duplicate_candidate,
         e.reimbursement_status, e.refusal_reason, e.state AS status
       FROM expenses e WHERE e.id = :id AND (:fixture_state IS NULL OR :fixture_state <> 'empty')
@@ -22,13 +25,21 @@ datasources:
     query: |
       SELECT actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at
       FROM expense_activity WHERE expense_id = :id ORDER BY created_at DESC
+  - id: expense_detail_attachments
+    single: false
+    permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_ATTACHMENTS_UNAVAILABLE, message: Expense receipt data is temporarily unavailable } }
+    query: |
+      SELECT id, expense_id, file_name, mime_type, size_bytes, uploaded_by,
+        CAST(created_at AS VARCHAR) AS created_at
+      FROM expense_attachments WHERE expense_id = :id ORDER BY created_at DESC, id
 actions:
   - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
   - id: edit_expense_detail
     type: server_form
     permission: expenses.write
     title: Edit expense
-    action: expenses.update
+    action: expenses.detail.update
     handler: yaml_mutation
     operation: update
     prefill: row
@@ -36,10 +47,13 @@ actions:
     mutation:
       operation: update
       table: expenses
+      concurrency: { field: row_version, input: expected_row_version, required: true }
       fields: [name, category, expense_date, description, amount, payment_method, receipt_reference, receipt_label, tax_amount, analytic_distribution]
       required: [name, category, expense_date, amount]
       guards:
-        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft expenses can be edited }
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Only the current draft can be edited }
+        - { query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0", status: 400, code: EXPENSE_AMOUNT_INVALID, message: Expense total must be greater than zero }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:expense_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 400, code: EXPENSE_DATE_INVALID, message: Expense date must use YYYY-MM-DD }
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     fields:
       - { field: name, label: Expense, type: text, required: true }
@@ -54,93 +68,141 @@ actions:
   - id: submit_expense_detail
     type: server
     permission: expenses.write
-    action: expenses.submit
+    action: expenses.detail.submit
     handler: order_transition
     workflow: expense_items
     operation: submit
     params: { id: '{state.id}' }
     mutation:
       guards:
-        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft' AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, message: Attach a receipt before submitting this expense }
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, code: EXPENSE_SUBMIT_GUARD, message: Attach a receipt before submitting this expense }
       steps:
-        - query: "UPDATE expenses SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id"
-        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.submit', 'Submitted', 'Submitted for manager approval')"
+        - query: "UPDATE expenses SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-submit-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.submit', 'Submitted', 'Submitted for manager approval')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     refresh: [expense_detail, expense_detail_activity]
   - id: approve_expense_detail
     type: server
     permission: expenses.manage
-    action: expenses.approve
+    action: expenses.detail.approve
     handler: yaml_mutation
     operation: approve
     params: { id: '{state.id}' }
     mutation:
       guards:
-        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Submitted' AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, message: Attach a receipt before approving this expense }
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Submitted' AND row_version = :expected_row_version AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, code: EXPENSE_APPROVE_GUARD, message: Attach a receipt before approving this expense }
       steps:
-        - query: "UPDATE expenses SET state = 'Approved', row_version = row_version + 1 WHERE id = :id"
-        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.approve', 'Approved', 'Approved for posting')"
+        - query: "UPDATE expenses SET state = 'Approved', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-approve-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.approve', 'Approved', 'Approved for posting')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     refresh: [expense_detail, expense_detail_activity]
   - id: post_expense_detail
     type: server
     permission: expenses.manage
-    action: expenses.post
+    action: expenses.detail.post
     handler: yaml_mutation
     operation: post
     params: { id: '{state.id}' }
     mutation:
       guards:
-        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Approved' AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, message: Attach a receipt before posting this expense }
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Approved' AND row_version = :expected_row_version AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, code: EXPENSE_POST_GUARD, message: Attach a receipt before posting this expense }
       steps:
-        - query: "UPDATE expenses SET state = 'Posted', row_version = row_version + 1 WHERE id = :id"
-        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.post', 'Posted', 'Journal entry posted')"
+        - query: "UPDATE expenses SET state = 'Posted', row_version = row_version + 1, journal_entry = COALESCE(journal_entry, 'MISC/2026/EXPENSE') WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-post-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.post', 'Posted', 'Journal entry posted')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    refresh: [expense_detail, expense_detail_activity]
+  - id: mark_expense_in_payment
+    type: server
+    permission: expenses.manage
+    action: expenses.detail.in_payment
+    handler: yaml_mutation
+    operation: in_payment
+    params: { id: '{state.id}' }
+    mutation:
+      guards: [{ query: "SELECT id FROM expenses WHERE id = :id AND state = 'Posted' AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Only the current posted expense can be registered for payment }]
+      steps:
+        - query: "UPDATE expenses SET state = 'In Payment', reimbursement_status = 'In payment', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-in-payment-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.pay', 'In payment', 'Reimbursement payment initiated')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     refresh: [expense_detail, expense_detail_activity]
   - id: pay_expense_detail
     type: server
     permission: expenses.manage
-    action: expenses.pay
+    action: expenses.detail.pay
     handler: yaml_mutation
     operation: pay
     params: { id: '{state.id}' }
     mutation:
-      guards: [{ query: "SELECT id FROM expenses WHERE id = :id AND state IN ('Posted', 'In Payment')", status: 409, message: Only posted or in-payment expenses can be paid }]
+      guards: [{ query: "SELECT id FROM expenses WHERE id = :id AND state = 'In Payment' AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Only the current in-payment expense can be marked paid }]
       steps:
-        - query: "UPDATE expenses SET state = 'Paid', reimbursement_status = 'Paid', row_version = row_version + 1 WHERE id = :id"
-        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.pay', 'Paid', 'Reimbursement marked paid')"
+        - query: "UPDATE expenses SET state = 'Paid', reimbursement_status = 'Paid', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-paid-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.pay', 'Paid', 'Reimbursement marked paid')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     refresh: [expense_detail, expense_detail_activity]
   - id: refuse_expense_detail
     type: server_form
     permission: expenses.manage
-    action: expenses.refuse
+    action: expenses.detail.refuse
     handler: yaml_mutation
     operation: refuse
     title: Refuse Expense
     params: { id: '{state.id}' }
     fields: [{ field: reason, label: Reason, type: text, required: true, placeholder: Explain why this expense is being refused... }]
     mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state IN ('Submitted', 'Approved') AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Only the current submitted or approved expense can be refused }
+        - { query: "SELECT 1 AS ok WHERE length(trim(:reason)) BETWEEN 3 AND 500", status: 400, code: EXPENSE_REFUSAL_REASON_INVALID, message: A refusal reason between 3 and 500 characters is required }
       steps:
-        - query: "UPDATE expenses SET state = 'Refused', refusal_reason = :reason, row_version = row_version + 1 WHERE id = :id AND state IN ('Submitted', 'Approved')"
+        - query: "UPDATE expenses SET state = 'Refused', refusal_reason = :reason, row_version = row_version + 1 WHERE id = :id AND state IN ('Submitted', 'Approved') AND row_version = :expected_row_version"
           expect_changed: true
           status: 409
           message: Only submitted or approved expenses can be refused
-        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.refuse', 'Refused', :reason)"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-refuse-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.refuse', 'Refused', :reason)"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     refresh: [expense_detail, expense_detail_activity]
   - id: reset_expense_detail
     type: server
     permission: expenses.write
-    action: expenses.reset
+    action: expenses.detail.reset
     handler: order_transition
     workflow: expense_items
     operation: reset
     params: { id: '{state.id}' }
     mutation:
-      guards: [{ query: "SELECT id FROM expenses WHERE id = :id AND state = 'Refused'", status: 409, message: Only refused expenses can be reset }]
+      guards: [{ query: "SELECT id FROM expenses WHERE id = :id AND state = 'Refused' AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Only the current refused expense can be reset }]
       steps:
-        - query: "UPDATE expenses SET state = 'Draft', refusal_reason = NULL, row_version = row_version + 1 WHERE id = :id"
-        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.reset', 'Reset', 'Reset to draft')"
+        - query: "UPDATE expenses SET state = 'Draft', refusal_reason = NULL, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-reset-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.reset', 'Reset', 'Reset to draft')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     refresh: [expense_detail, expense_detail_activity]
+  - id: upload_expense_attachment
+    type: upload
+    action: expenses.detail.attach
+    handler: attachment_metadata
+    permission: expenses.write
+    kind: expense_attachment
+    params: { id: '{row.id}' }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft'", status: 409, message: Receipts can only be attached to draft expenses }
+      steps:
+        - query: "INSERT INTO expense_attachments(id, expense_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)"
+        - query: "UPDATE expenses SET receipt_reference = :fileName, receipt_label = 'Receipt attached', receipt_checksum = 'uploaded:' || :attachment_id, row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-attachment-' || :attachment_id, :id, :current_user_name, 'expenses.attachments.upload', 'Receipt attached', :fileName)"
+      result: { query: "SELECT id, expense_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM expense_attachments WHERE id = :attachment_id" }
+  - id: download_expense_attachment
+    type: download
+    permission: expenses.read
+    kind: expense_attachment

@@ -555,6 +555,11 @@ export class PageRuntime extends BaseComponent {
               actionDef.params || { order_id: '{row.id}' },
               rowCtx,
             ).order_id;
+          } else if (actionDef.kind === 'expense_attachment') {
+            uploadMeta.id = resolveActionParams(
+              actionDef.params || { id: '{row.id}' },
+              rowCtx,
+            ).id;
           } else if (actionDef.kind === 'employee_document') {
             uploadMeta.employee_id = resolveActionParams(actionDef.params || { employee_id: '{state.id}' }, { ...ctx, row: row || {} }).employee_id;
           } else if (actionDef.kind === 'contract_document') {
@@ -582,11 +587,13 @@ export class PageRuntime extends BaseComponent {
             ? `/hr/employee-documents/${encodeURIComponent(String(row.id))}`
             : actionDef.kind === 'contract_document'
               ? `/hr/contract-documents/${encodeURIComponent(String(row.id))}`
-              : actionDef.kind === 'company_document'
-                ? `/org/company-documents/${encodeURIComponent(String(row.id))}`
-                : actionDef.kind === 'order_attachment'
-                  ? `/orders/attachments/${encodeURIComponent(String(row.id))}`
-                  : `/chat/attachments/${encodeURIComponent(String(row.id))}`;
+            : actionDef.kind === 'company_document'
+              ? `/org/company-documents/${encodeURIComponent(String(row.id))}`
+              : actionDef.kind === 'order_attachment'
+                ? `/orders/attachments/${encodeURIComponent(String(row.id))}`
+                : actionDef.kind === 'expense_attachment'
+                  ? `/expenses/attachments/${encodeURIComponent(String(row.id))}`
+                : `/chat/attachments/${encodeURIComponent(String(row.id))}`;
           await client.downloadFile(
             path,
             String(row.file_name || 'attachment'),

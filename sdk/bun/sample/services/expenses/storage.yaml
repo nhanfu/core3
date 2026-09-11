@@ -1,3 +1,15 @@
 database:
   storage:
     driver: duckdb
+
+files:
+  driver: local
+  path: ${EXPENSES_UPLOAD_ROOT:-.data/uploads}
+  credentials: {}
+
+attachments:
+  expense_attachment:
+    download:
+      route: /api/expenses/attachments
+      permission: expenses.read
+      query: SELECT * FROM expense_attachments WHERE id = :attachment_id

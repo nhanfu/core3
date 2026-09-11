@@ -1,0 +1,65 @@
+version: 0.0.7
+description: Deterministic expense detail metadata, workflow history, and receipt attachments
+type:
+  postgres:
+    up: |
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS product_name VARCHAR;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS quantity DECIMAL(18, 3) DEFAULT 1;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS unit_name VARCHAR DEFAULT 'Units';
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS manager_name VARCHAR;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS vendor_name VARCHAR;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt_checksum VARCHAR;
+      CREATE TABLE IF NOT EXISTS expense_attachments (
+        id VARCHAR PRIMARY KEY,
+        expense_id VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR NOT NULL,
+        uploaded_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_expense_attachments_expense ON expense_attachments(expense_id);
+      UPDATE expenses SET
+        product_name = CASE category
+          WHEN 'Meals' THEN 'Meals'
+          WHEN 'Mileage' THEN 'Mileage'
+          WHEN 'Travel & accommodation' THEN 'Travel & Accommodation'
+          ELSE 'Expenses'
+        END,
+        unit_name = CASE WHEN category = 'Mileage' THEN 'Kilometers' ELSE 'Units' END,
+        quantity = CASE WHEN category = 'Mileage' THEN ROUND(amount / 0.70, 3) ELSE 1 END,
+        manager_name = CASE employee_name
+          WHEN 'Admin User' THEN 'Operations Lead'
+          WHEN 'Brandon Freeman' THEN 'Operations Lead'
+          WHEN 'Chloe Martin' THEN 'Operations Lead'
+          WHEN 'Diego Santos' THEN 'Finance Manager'
+          ELSE 'Operations Lead'
+        END,
+        vendor_name = CASE payment_method WHEN 'Company' THEN 'Core3 Demo Vendor' ELSE NULL END,
+        receipt_checksum = CASE
+          WHEN receipt_reference IS NULL THEN NULL
+          WHEN id = 'expense-demo-submitted-2' THEN 'sha256:receipt-air-duplicate'
+          ELSE 'sha256:' || REPLACE(receipt_reference, '.', '-')
+        END
+      WHERE id LIKE 'expense-demo-%';
+      UPDATE expenses SET refusal_reason = 'Receipt was not attached before review' WHERE id = 'expense-demo-refused' AND (refusal_reason IS NULL OR refusal_reason = '');
+      INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail, created_at) VALUES
+        ('expense-activity-approved', 'expense-demo-approved', 'Operations Lead', 'expenses.approve', 'Approved', 'Approved for posting', TIMESTAMP '2026-09-03 09:00:00'),
+        ('expense-activity-posted', 'expense-demo-posted', 'Finance Manager', 'expenses.post', 'Posted', 'Journal entry MISC/2026/0079 posted', TIMESTAMP '2026-08-29 09:00:00'),
+        ('expense-activity-in-payment', 'expense-demo-in-payment', 'Finance Manager', 'expenses.pay', 'In payment', 'Reimbursement payment initiated', TIMESTAMP '2026-08-26 09:00:00'),
+        ('expense-activity-paid', 'expense-demo-paid', 'Finance Manager', 'expenses.pay', 'Paid', 'Reimbursement marked paid', TIMESTAMP '2026-08-22 09:00:00'),
+        ('expense-activity-refused', 'expense-demo-refused', 'Operations Lead', 'expenses.refuse', 'Refused', 'Receipt was not attached before review', TIMESTAMP '2026-08-20 09:00:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS expense_attachments;
+      ALTER TABLE expenses DROP COLUMN IF EXISTS product_name;
+      ALTER TABLE expenses DROP COLUMN IF EXISTS quantity;
+      ALTER TABLE expenses DROP COLUMN IF EXISTS unit_name;
+      ALTER TABLE expenses DROP COLUMN IF EXISTS manager_name;
+      ALTER TABLE expenses DROP COLUMN IF EXISTS vendor_name;
+      ALTER TABLE expenses DROP COLUMN IF EXISTS receipt_checksum;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
