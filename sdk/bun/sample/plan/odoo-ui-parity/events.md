@@ -37,16 +37,37 @@ Core3 CRUD mutation is declared. `events.settings` maps to the existing
 system-only permission boundary for the technical Odoo menu; empty, missing,
 transport-error, and forbidden contracts are explicit.
 
-Reference evidence captured through the authenticated Odoo menu/action:
-`/tmp/odoo-events-mail-schedulers-desktop-reference.png`,
-`/tmp/odoo-events-mail-schedulers-mobile-reference.png`,
-`/tmp/odoo-events-mail-scheduler-detail-desktop-reference.png`, and
-`/tmp/odoo-events-mail-scheduler-detail-mobile-reference.png`. Core3 evidence
-will use matching 1440x900 and 390x844 captures under `/tmp`. The deterministic
-Core3 dates intentionally differ from Odoo's moving demo dates; Odoo renders
-its icon-only status widget and richer reference/template widgets, while the
-bounded Core3 form uses labeled status text and does not reproduce the hidden
-registration-mail one-to-many grid. Screenshots remain outside Git.
+Reference evidence captured through the authenticated Odoo menu/action at
+1440x900 and 390x844 is `/tmp/odoo-events-mail-schedulers-list-desktop-final.png`,
+`/tmp/odoo-events-mail-schedulers-list-mobile-final.png`,
+`/tmp/odoo-events-mail-scheduler-detail-desktop-final.png`, and
+`/tmp/odoo-events-mail-scheduler-detail-mobile-final.png`. Both Odoo browser
+passes reached `/odoo/action-282` and `/odoo/action-282/3` with no failed
+application requests or HTTP errors. Authenticated Core3 evidence is
+`/tmp/core3-events-mail-schedulers-list-desktop-final.png`,
+`/tmp/core3-events-mail-schedulers-list-mobile-final.png`,
+`/tmp/core3-events-mail-schedulers-search-desktop-final.png`,
+`/tmp/core3-events-mail-schedulers-search-mobile-final.png`,
+`/tmp/core3-events-mail-schedulers-empty-desktop-final.png`,
+`/tmp/core3-events-mail-schedulers-empty-mobile-final.png`,
+`/tmp/core3-events-mail-scheduler-detail-desktop-final.png`, and
+`/tmp/core3-events-mail-scheduler-detail-mobile-final.png`. The desktop
+Core3 pass navigated through `Events > Configuration > Mail Schedulers`; the
+responsive menu is hidden at 390px, so the mobile pass opened the same
+authenticated route directly. Core3 returned 21 rows, `OpenWood` returned 3,
+the no-result state rendered the exact Odoo help copy, and the Design Fair
+detail rendered all six fields. Both Core3 viewports measured
+`scrollWidth === innerWidth` and had no unexpected application failures or
+HTTP errors (navigation-aborted notification/page requests were excluded).
+
+The deterministic Core3 dates intentionally differ from Odoo's moving demo
+dates; Odoo renders its icon-only status widget and richer
+reference/template widgets, while the bounded Core3 list uses readable status
+text/cards and the form does not reproduce the hidden registration-mail
+one-to-many grid. The Odoo source/action is read-only in this context, so
+create/edit/delete/workflow controls are intentionally absent. Screenshots
+remain outside Git. The requested `js_repl` browser runtime was unavailable;
+the evidence used shell Playwright with headless Chromium instead.
 
 ## Current batch: Attendee registration confirmation
 
