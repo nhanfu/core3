@@ -1,0 +1,31 @@
+title: Expertise
+page: { id: livechat-expertise, route: /livechat/expertise, breadcrumb: [Website, Live Chat, Configuration, Expertise], auth: { require: [livechat.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_expertises
+    create_action: create_livechat_expertise
+    create_label: New
+    search: { label: Search, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+    form_view: { page: apps/services/livechat/pages/expertise-detail.yaml, side_panel: true }
+    inline_edit:
+      create_action: create_livechat_expertise
+      update_action: edit_livechat_expertise
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, required: true, placeholder: Expertise name }
+        - { field: operator_names, type: text, placeholder: 'Operator names, separated by commas' }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: operator_names, label: Operators, type: TextCell, mobile: true }
+    row_key: id
+    row_open_action: edit_livechat_expertise
+    row_double_click_action: edit_livechat_expertise
+    row_actions: menu
+    empty_state: { title: No expertise found, description: Create expertise to route conversations to the right operators. }

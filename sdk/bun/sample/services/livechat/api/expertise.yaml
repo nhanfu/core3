@@ -1,0 +1,82 @@
+page: { id: livechat-expertise }
+
+datasources:
+  - id: livechat_expertises
+    permission: livechat.read
+    single: false
+    error_states: { transport_error: { status: 503, code: LIVECHAT_EXPERTISE_UNAVAILABLE, message: Live Chat expertise is temporarily unavailable. } }
+    query: |
+      SELECT id, row_version, name, operator_names
+      FROM livechat_expertise
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR operator_names ILIKE '%' || :q || '%')
+      ORDER BY name, id
+
+actions:
+  - id: create_livechat_expertise
+    type: server_form
+    permission: livechat.manage
+    title: New Expertise
+    action: im_livechat.expertise.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [livechat_expertises]
+    mutation:
+      operation: insert
+      table: livechat_expertise
+      generated: [id]
+      fields: [name, operator_names]
+      required: [name]
+      defaults: { operator_names: '', row_version: 1, created_at: '2026-01-15 00:00:00', updated_at: '2026-01-15 00:00:00' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: LIVECHAT_EXPERTISE_NAME_REQUIRED, message: Expertise name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_expertise WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: LIVECHAT_EXPERTISE_EXISTS, message: An expertise with this name already exists. }
+      result: { query: "SELECT * FROM livechat_expertise WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: operator_names, label: Operators, type: text, placeholder: 'Operator names, separated by commas' }
+
+  - id: edit_livechat_expertise
+    type: server_form
+    permission: livechat.manage
+    title: Edit Expertise
+    action: im_livechat.expertise.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [livechat_expertises, livechat_expertise_detail]
+    mutation:
+      operation: update
+      table: livechat_expertise
+      fields: [name, operator_names]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_expertise WHERE id = :id", status: 404, code: LIVECHAT_EXPERTISE_NOT_FOUND, message: Live Chat expertise was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: LIVECHAT_EXPERTISE_NAME_REQUIRED, message: Expertise name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_expertise WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: LIVECHAT_EXPERTISE_EXISTS, message: An expertise with this name already exists. }
+      result: { query: "SELECT * FROM livechat_expertise WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: operator_names, label: Operators, type: text, placeholder: 'Operator names, separated by commas' }
+
+  - id: delete_livechat_expertise
+    type: server
+    permission: livechat.manage
+    action: im_livechat.expertise.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [livechat_expertises]
+    mutation:
+      operation: delete
+      table: livechat_expertise
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_expertise WHERE id = :id", status: 404, code: LIVECHAT_EXPERTISE_NOT_FOUND, message: Live Chat expertise was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_expertise_operators WHERE expertise_id = :id)", status: 409, code: LIVECHAT_EXPERTISE_IN_USE, message: Expertise assigned to operators cannot be deleted. }
+
+  - id: view_livechat_expertise
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat/expertise/detail
+    params: { id: '{row.id}' }

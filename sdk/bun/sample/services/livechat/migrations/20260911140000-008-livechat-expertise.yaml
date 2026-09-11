@@ -1,0 +1,37 @@
+version: 0.0.8
+kind: data
+description: Add deterministic Live Chat expertise fixtures and operator assignments
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_expertise (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        operator_names VARCHAR NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS livechat_expertise_operators (
+        expertise_id VARCHAR NOT NULL REFERENCES livechat_expertise(id),
+        operator_id VARCHAR NOT NULL,
+        operator_name VARCHAR NOT NULL,
+        PRIMARY KEY (expertise_id, operator_id)
+      );
+      INSERT INTO livechat_expertise(id, row_version, name, operator_names, created_at, updated_at)
+      VALUES
+        ('livechat-expertise-discuss', 1, 'Discuss', 'Mitchell Admin', TIMESTAMP '2026-01-15 08:00:00', TIMESTAMP '2026-01-15 08:00:00'),
+        ('livechat-expertise-livechat', 1, 'Livechat', 'Mitchell Admin', TIMESTAMP '2026-01-15 08:05:00', TIMESTAMP '2026-01-15 08:05:00')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO livechat_expertise_operators(expertise_id, operator_id, operator_name)
+      VALUES
+        ('livechat-expertise-discuss', 'livechat-operator-mitchell-admin', 'Mitchell Admin'),
+        ('livechat-expertise-livechat', 'livechat-operator-mitchell-admin', 'Mitchell Admin')
+      ON CONFLICT (expertise_id, operator_id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS livechat_expertise_operators;
+      DROP TABLE IF EXISTS livechat_expertise;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

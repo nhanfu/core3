@@ -1,15 +1,11 @@
 # Live Chat — Odoo UI parity gate sub-plan
 
-Status: `planned`
+Status: `planned` (incremental parity slices in progress)
 
-This plan is not ready for implementation. The Odoo source is available, but
-the authenticated reference database at `http://localhost:8069` does not have
-`im_livechat` installed: login succeeds as `admin@core3.local`, the home menu
-contains Discuss and its Channels action only, and the live configuration menu
-contains Notifications, Voice & Video, and Canned Responses. No Live Chat app,
-`/odoo/livechat` action, Live Chat configuration tree, or Live Chat report was
-available to capture. Install/enable the addon in the reference database and
-repeat the route and screenshot gate before changing this status to `ready`.
+The personal authenticated reference database at `http://localhost:8069` now
+has `im_livechat` installed with demo data. The slices below are independently
+gated; the overall plan remains planned until the complete authenticated and
+public-widget inventory is covered.
 
 ## Reference and evidence
 
@@ -21,7 +17,7 @@ repeat the route and screenshot gate before changing this status to `ready`.
 - Official demo data is present: one channel, chatbot, chatbot sessions, and
   live chat sessions in `demo/im_livechat_channel/*.xml` (30 files in the
   manifest list). Preserve demo-off and demo-on fixture modes.
-- Authenticated reference evidence captured without claiming Live Chat parity:
+- Authenticated reference evidence from the earlier pre-install baseline:
   `/tmp/odoo-livechat-auth-1440x900.png`,
   `/tmp/odoo-livechat-discuss-1440x900.png`,
   `/tmp/odoo-livechat-channels-1440x900.png`,
@@ -38,8 +34,8 @@ repeat the route and screenshot gate before changing this status to `ready`.
 | Gate | Evidence and result |
 | --- | --- |
 | 1. Addon/version/demo | Pass from pinned manifest and demo XML; see `__manifest__.py` and `demo/im_livechat_channel/`. |
-| 2. Menus/actions/views | Pass from source inventory below; live visibility remains unverified because the addon is uninstalled. |
-| 3. Routes and 1440x900/390x844 reference UI | Blocked by the exact uninstalled limitation above. Current authenticated screenshots prove only the fallback Discuss shell, not Live Chat. |
+| 2. Menus/actions/views | Pass from source inventory below and the installed personal database; each bounded slice records its action id and visible labels. |
+| 3. Routes and 1440x900/390x844 reference UI | Pass incrementally for installed slices; the complete inventory remains open. |
 | 4. Core3 datasource fixtures | Planned below; current service has only partial channel/session/report tables and no truthful Odoo-shaped fixtures for most surfaces. |
 | 5. Shared primitives | Planned below; primitives must be approved before implementation. |
 | 6. Visual/fixture/security acceptance | Planned below; cannot pass until the addon is installed and both reference viewports are captured. |
@@ -329,3 +325,43 @@ Odoo/Core3 captures for 1440x900 and 390x844 are stored outside Git under
 - Core3 detail/search-empty evidence:
   `/tmp/core3-livechat-session-detail-desktop.png` and
   `/tmp/core3-livechat-sessions-empty-desktop.png`
+
+## Bounded implementation slice: Configuration — Expertise (2026-09-11)
+
+The personal Odoo reference exposes Live Chat → Configuration → Expertise as
+action `770`, model `im_livechat.expertise`, with `list,form` modes. Its list is
+inline editable and visibly contains the exact columns `Name` and `Operators`;
+the seeded rows are `Discuss` and `Livechat`, each assigned to `Mitchell Admin`.
+The source view is `addons/im_livechat/views/im_livechat_expertise_views.xml` and
+the live action/menu records were verified in `core3_personal` (`ir.actions` 770,
+`ir.ui.menu` 505).
+
+This slice adds the disjoint Core3 route `/livechat/expertise` under Live Chat →
+Configuration → Expertise, with a side-panel detail route
+`/livechat/expertise/detail`. Page YAML and API YAML remain separate and join by
+`page.id` (`livechat-expertise` and `livechat-expertise-detail`). Fixtures are
+idempotent and fixed to `Discuss`, `Livechat`, and `Mitchell Admin`; supported
+states include default, search no-results, explicit empty, missing detail, and
+transport error. Manager-only `livechat.manage` mutations cover create/update/
+delete, duplicate and required-name validation, in-use protection for assigned
+expertise, and optimistic row-version conflicts. The visible operator assignment
+is represented as a deterministic comma-separated operator display in this
+bounded slice; a future slice can replace it with a true many2many operator
+editor once the shared relation mutation contract is approved.
+
+Focused validation is `test/livechat_expertise.integration.test.ts`. Authenticated
+desktop/mobile captures are stored outside Git under `/tmp`:
+
+- Odoo: `/tmp/odoo-livechat-expertise-desktop-list.png`,
+  `/tmp/odoo-livechat-expertise-desktop-form.png`,
+  `/tmp/odoo-livechat-expertise-mobile-list.png`, and
+  `/tmp/odoo-livechat-expertise-mobile-form.png`
+- Core3: `/tmp/core3-livechat-expertise-desktop-list.png`,
+  `/tmp/core3-livechat-expertise-desktop-detail.png`,
+  `/tmp/core3-livechat-expertise-mobile-list.png`, and
+  `/tmp/core3-livechat-expertise-mobile-detail.png`
+
+The Odoo list uses native many2many chips and an inline bottom editor. Core3
+matches the action hierarchy, density, labels, rows, responsive shell, and
+manager/read-only boundaries, but intentionally documents the bounded display
+editor limitation above; screenshots are evidence only and are not committed.

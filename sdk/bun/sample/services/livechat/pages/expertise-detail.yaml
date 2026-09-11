@@ -1,0 +1,19 @@
+title: Expertise
+page: { id: livechat-expertise-detail, route: /livechat/expertise/detail, breadcrumb: [Website, Live Chat, Configuration, Expertise], auth: { require: [livechat.read] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_expertise_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_livechat_expertise, label: Expertise, variant: secondary, permission: livechat.read }
+      - { id: edit_livechat_expertise, label: Edit, variant: primary, permission: livechat.manage }
+      - { id: delete_livechat_expertise, label: Delete, variant: danger, permission: livechat.manage, confirm: Delete this expertise? }
+    group_columns: 1
+    groups:
+      - title: Expertise
+        fields:
+          - { field: name, label: Name }
+          - { field: operator_names, label: Operators }

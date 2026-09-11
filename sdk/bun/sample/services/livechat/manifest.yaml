@@ -25,3 +25,4 @@ menu:
       label: Configuration
       items:
         - { path: /livechat/tags, label: Tags, icon: tag, permission: livechat.read }
+        - { path: /livechat/expertise, label: Expertise, icon: users, permission: livechat.read }
