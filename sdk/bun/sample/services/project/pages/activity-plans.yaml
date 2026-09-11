@@ -1,0 +1,33 @@
+title: Activity Plans
+page: { id: project-activity-plans, route: /project-activity-plans, breadcrumb: [Project, Configuration, Activity Plans], auth: { require: [project.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_activity_plans
+    create_action: create_project_activity_plan
+    create_label: New
+    search: { label: Search activity plans, placeholder: 'Search plans...' }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    group_by: [{ field: res_model_label, label: Model }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: res_model_label
+        card: { title: name, subtitle: res_model_label, fields: [{ field: steps_count, label: Steps Count }] }
+      - { id: card, label: Kanban, icon: dashboard, mobile: true, group_by: res_model_label, card: { title: name, subtitle: res_model_label, fields: [{ field: steps_count, label: Steps Count }] } }
+      - { id: form, label: Form, icon: edit }
+    row_key: id
+    row_open_action: view_project_activity_plan
+    row_double_click_action: view_project_activity_plan
+    row_actions: menu
+    empty_state: { title: No activity plans found. Let's create one!, description: Activity plans assign a list of activities in a few clicks. }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: res_model_label, label: Applies to }
+      - { field: steps_count, label: Steps Count }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_project_activity_plan, label: Edit, icon: edit }, { id: archive_project_activity_plan, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_project_activity_plan, label: Unarchive, icon: archive, show_if: 'row.active === false' }, { id: delete_project_activity_plan, label: Delete, icon: trash, variant: danger }] }

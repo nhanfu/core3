@@ -1,0 +1,70 @@
+page: { id: project-activity-plans }
+datasources:
+  - id: project_activity_plans
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_ACTIVITY_PLANS_UNAVAILABLE, message: Project activity plans are temporarily unavailable. } }
+    query: "SELECT p.id, p.row_version, p.name, p.res_model, CASE p.res_model WHEN 'project.task' THEN 'Task' WHEN 'project.project' THEN 'Project' ELSE p.res_model END AS res_model_label, p.company_name, p.active, (SELECT COUNT(*) FROM project_activity_plan_steps s WHERE s.plan_id = p.id) AS steps_count, COALESCE((SELECT STRING_AGG(s.activity_type_name || ': ' || COALESCE(s.summary, ''), ', ' ORDER BY s.sequence, s.id) FROM project_activity_plan_steps s WHERE s.plan_id = p.id), '') AS steps_summary FROM project_activity_plans p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((:active IS NULL AND p.active = TRUE) OR (:active = 'active' AND p.active = TRUE) OR (:active = 'archived' AND p.active = FALSE)) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.res_model ILIKE '%' || :q || '%') ORDER BY p.name, p.id"
+actions:
+  - id: create_project_activity_plan
+    type: server_form
+    permission: project.manage
+    title: New Activity Plan
+    action: project.activity_plans.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [project_activity_plans]
+    mutation:
+      operation: insert
+      table: project_activity_plans
+      generated: [id]
+      fields: [name, res_model, company_name, active]
+      required: [name, res_model]
+      defaults: { res_model: project.task, company_name: My Company, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_activity_plans WHERE LOWER(name) = LOWER(TRIM(:name)))", status: 409, code: PROJECT_ACTIVITY_PLAN_NAME_EXISTS, message: An activity plan with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE :res_model IN ('project.project', 'project.task')", status: 422, code: PROJECT_ACTIVITY_PLAN_MODEL_INVALID, message: Activity plans can apply only to projects or tasks. }
+      result: { query: "SELECT * FROM project_activity_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan Name, type: text, required: true }
+      - { field: res_model, label: Model, type: select, options: [{ value: project.task, label: Task }, { value: project.project, label: Project }], default: project.task, required: true }
+      - { field: company_name, label: Company, type: text, default: My Company }
+  - id: view_project_activity_plan
+    type: navigate
+    permission: project.manage
+    navigate_to: /project-activity-plans/detail
+    params: { id: '{row.id}' }
+  - id: edit_project_activity_plan
+    type: navigate
+    permission: project.manage
+    navigate_to: /project-activity-plans/detail
+    params: { id: '{row.id}' }
+  - id: archive_project_activity_plan
+    type: server
+    permission: project.manage
+    action: project.activity_plans.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_activity_plans, project_activity_plan_detail]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: project_activity_plans, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM project_activity_plans WHERE id = :id" } }
+  - id: unarchive_project_activity_plan
+    type: server
+    permission: project.manage
+    action: project.activity_plans.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_activity_plans, project_activity_plan_detail]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: project_activity_plans, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM project_activity_plans WHERE id = :id" } }
+  - id: delete_project_activity_plan
+    type: server
+    permission: project.manage
+    action: project.activity_plans.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [project_activity_plans]
+    mutation:
+      operation: delete
+      table: project_activity_plans
+      concurrency: { required: true }
+      steps: [{ query: "DELETE FROM project_activity_plan_steps WHERE plan_id = :id" }]

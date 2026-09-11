@@ -29,3 +29,4 @@ menu:
         - { path: /task-tags, label: Tags, icon: tag, permission: project.manage }
         - { path: /project-roles, label: Project Roles, icon: users, permission: project.manage }
         - { path: /project-activity-types, label: Activity Types, icon: activity, permission: project.manage }
+        - { path: /project-activity-plans, label: Activity Plans, icon: activity, permission: project.manage }

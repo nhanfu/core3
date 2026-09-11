@@ -1,0 +1,146 @@
+page: { id: project-activity-plan-detail }
+datasources:
+  - id: project_activity_plan_detail
+    single: true
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_ACTIVITY_PLAN_DETAIL_UNAVAILABLE, message: Project activity plan details are temporarily unavailable. } }
+    query: "SELECT p.id, p.row_version, p.name, p.res_model, CASE p.res_model WHEN 'project.task' THEN 'Task' WHEN 'project.project' THEN 'Project' ELSE p.res_model END AS res_model_label, p.company_name, p.active, (SELECT COUNT(*) FROM project_activity_plan_steps s WHERE s.plan_id = p.id) AS steps_count FROM project_activity_plans p WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1 AND p.id = :id"
+  - id: project_activity_plan_steps
+    permission: project.manage
+    error_states: { transport_error: { status: 503, code: PROJECT_ACTIVITY_PLAN_STEPS_UNAVAILABLE, message: Activity plan steps are temporarily unavailable. } }
+    query: "SELECT s.id, s.plan_id, s.row_version, s.sequence, s.activity_type_name, s.summary, s.responsible_type, CASE s.responsible_type WHEN 'on_demand' THEN 'Ask at launch' WHEN 'other' THEN 'Default user' ELSE s.responsible_type END AS responsible_type_label, s.responsible_name, s.delay_count, s.delay_unit, CASE s.delay_from WHEN 'before_plan_date' THEN 'Before Plan Date' ELSE 'After Plan Date' END AS delay_from_label, s.next_activities FROM project_activity_plan_steps s WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 AND s.plan_id = :id ORDER BY s.sequence, s.id"
+actions:
+  - id: back_to_project_activity_plans
+    type: navigate
+    permission: project.manage
+    navigate_to: /project-activity-plans
+  - id: edit_project_activity_plan
+    type: server_form
+    permission: project.manage
+    title: Edit Activity Plan
+    action: project.activity_plans.update
+    handler: yaml_mutation
+    operation: update
+    prefill: source
+    prefill_source: project_activity_plan_detail
+    refresh: [project_activity_plan_detail, project_activity_plans]
+    mutation:
+      operation: update
+      table: project_activity_plans
+      fields: [name, res_model, company_name]
+      required: [name, res_model]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM project_activity_plans WHERE id = :id", status: 404, code: PROJECT_ACTIVITY_PLAN_NOT_FOUND, message: Activity plan not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_activity_plans WHERE LOWER(name) = LOWER(TRIM(:name)) AND id <> :id)", status: 409, code: PROJECT_ACTIVITY_PLAN_NAME_EXISTS, message: An activity plan with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE :res_model IN ('project.project', 'project.task')", status: 422, code: PROJECT_ACTIVITY_PLAN_MODEL_INVALID, message: Activity plans can apply only to projects or tasks. }
+      result: { query: "SELECT * FROM project_activity_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan Name, type: text, required: true }
+      - { field: res_model, label: Model, type: select, options: [{ value: project.task, label: Task }, { value: project.project, label: Project }], required: true }
+      - { field: company_name, label: Company, type: text }
+  - id: archive_project_activity_plan
+    type: server
+    permission: project.manage
+    action: project.activity_plans.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_activity_plan_detail, project_activity_plans]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: project_activity_plans, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM project_activity_plans WHERE id = :id" } }
+  - id: unarchive_project_activity_plan
+    type: server
+    permission: project.manage
+    action: project.activity_plans.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [project_activity_plan_detail, project_activity_plans]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: project_activity_plans, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM project_activity_plans WHERE id = :id" } }
+  - id: delete_project_activity_plan
+    type: server
+    permission: project.manage
+    action: project.activity_plans.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [project_activity_plans]
+    mutation:
+      operation: delete
+      table: project_activity_plans
+      concurrency: { required: true }
+      steps: [{ query: "DELETE FROM project_activity_plan_steps WHERE plan_id = :id" }]
+  - id: add_project_activity_plan_step
+    type: server_form
+    permission: project.manage
+    title: Add Activity
+    action: project.activity_plans.steps.create
+    handler: line_item
+    operation: create
+    domain: project_activity_plan
+    params: { id: '{state.id}' }
+    refresh: [project_activity_plan_detail, project_activity_plans, project_activity_plan_steps]
+    fields:
+      - { field: activity_type_name, label: Activity Type, type: text, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: responsible_type, label: Assignment, type: select, options: [{ value: on_demand, label: Ask at launch }, { value: other, label: Default user }], default: on_demand }
+      - { field: responsible_name, label: Assigned to, type: text }
+      - { field: delay_count, label: Interval, type: number, default: 0, min: 0 }
+      - { field: delay_unit, label: Unit, type: select, options: [days, weeks, months], default: days }
+      - { field: delay_from, label: Trigger, type: select, options: [{ value: before_plan_date, label: Before Plan Date }, { value: after_plan_date, label: After Plan Date }], default: before_plan_date }
+    mutation:
+      generated: [line_id]
+      guards:
+        - { query: "SELECT id FROM project_activity_plans WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: PROJECT_ACTIVITY_PLAN_STALE, message: The activity plan changed. Reload before adding an activity. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:activity_type_name, ''))) > 0 AND LENGTH(TRIM(COALESCE(:summary, ''))) > 0 AND COALESCE(CAST(:delay_count AS INTEGER), 0) >= 0", status: 422, code: PROJECT_ACTIVITY_PLAN_STEP_INVALID, message: Enter an activity type, summary, and non-negative interval. }
+      steps:
+        - { query: "INSERT INTO project_activity_plan_steps(id, plan_id, row_version, sequence, activity_type_name, summary, responsible_type, responsible_name, delay_count, delay_unit, delay_from) VALUES(:line_id, :id, 1, COALESCE((SELECT MAX(sequence) + 10 FROM project_activity_plan_steps WHERE plan_id = :id), 10), TRIM(:activity_type_name), TRIM(:summary), COALESCE(:responsible_type, 'on_demand'), NULLIF(TRIM(COALESCE(:responsible_name, '')), ''), COALESCE(CAST(:delay_count AS INTEGER), 0), COALESCE(:delay_unit, 'days'), COALESCE(:delay_from, 'before_plan_date'))" }
+        - { query: "UPDATE project_activity_plans SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PROJECT_ACTIVITY_PLAN_STALE, message: The activity plan changed while adding an activity. Reload before saving. }
+      result: { query: "SELECT * FROM project_activity_plan_steps WHERE id = :line_id" }
+  - id: edit_project_activity_plan_step
+    type: server_form
+    permission: project.manage
+    title: Edit Activity
+    action: project.activity_plans.steps.update
+    handler: line_item
+    operation: update
+    domain: project_activity_plan
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [project_activity_plan_detail, project_activity_plans, project_activity_plan_steps]
+    fields:
+      - { field: activity_type_name, label: Activity Type, type: text, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: responsible_type, label: Assignment, type: select, options: [{ value: on_demand, label: Ask at launch }, { value: other, label: Default user }] }
+      - { field: responsible_name, label: Assigned to, type: text }
+      - { field: delay_count, label: Interval, type: number, min: 0 }
+      - { field: delay_unit, label: Unit, type: select, options: [days, weeks, months] }
+      - { field: delay_from, label: Trigger, type: select, options: [{ value: before_plan_date, label: Before Plan Date }, { value: after_plan_date, label: After Plan Date }] }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM project_activity_plans WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: PROJECT_ACTIVITY_PLAN_STALE, message: The activity plan changed. Reload before saving this activity. }
+        - { query: "SELECT id FROM project_activity_plan_steps WHERE id = :line_id AND plan_id = :id AND row_version = :expected_row_version", status: 409, code: PROJECT_ACTIVITY_PLAN_STEP_STALE, message: This activity changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:activity_type_name, ''))) > 0 AND LENGTH(TRIM(COALESCE(:summary, ''))) > 0 AND COALESCE(CAST(:delay_count AS INTEGER), 0) >= 0", status: 422, code: PROJECT_ACTIVITY_PLAN_STEP_INVALID, message: Enter an activity type, summary, and non-negative interval. }
+      steps:
+        - { query: "UPDATE project_activity_plan_steps SET row_version = row_version + 1, activity_type_name = TRIM(:activity_type_name), summary = TRIM(:summary), responsible_type = COALESCE(:responsible_type, 'on_demand'), responsible_name = NULLIF(TRIM(COALESCE(:responsible_name, '')), ''), delay_count = COALESCE(CAST(:delay_count AS INTEGER), 0), delay_unit = COALESCE(:delay_unit, 'days'), delay_from = COALESCE(:delay_from, 'before_plan_date') WHERE id = :line_id AND plan_id = :id AND row_version = :expected_row_version", expect_changed: true, code: PROJECT_ACTIVITY_PLAN_STEP_STALE, message: This activity changed or was deleted. Reload before saving. }
+        - { query: "UPDATE project_activity_plans SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PROJECT_ACTIVITY_PLAN_STALE, message: The activity plan changed while saving this activity. Reload before saving. }
+      result: { query: "SELECT * FROM project_activity_plan_steps WHERE id = :line_id" }
+  - id: delete_project_activity_plan_step
+    type: server
+    permission: project.manage
+    action: project.activity_plans.steps.delete
+    handler: line_item
+    operation: delete
+    domain: project_activity_plan
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete activity {{row.summary}}?'
+    refresh: [project_activity_plan_detail, project_activity_plans, project_activity_plan_steps]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM project_activity_plans WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: PROJECT_ACTIVITY_PLAN_STALE, message: The activity plan changed. Reload before deleting this activity. }
+        - { query: "SELECT id FROM project_activity_plan_steps WHERE id = :line_id AND plan_id = :id AND row_version = :expected_row_version", status: 409, code: PROJECT_ACTIVITY_PLAN_STEP_STALE, message: This activity changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM project_activity_plan_steps WHERE id = :line_id AND plan_id = :id AND row_version = :expected_row_version", expect_changed: true, code: PROJECT_ACTIVITY_PLAN_STEP_STALE, message: This activity changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE project_activity_plans SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: PROJECT_ACTIVITY_PLAN_STALE, message: The activity plan changed while deleting this activity. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }

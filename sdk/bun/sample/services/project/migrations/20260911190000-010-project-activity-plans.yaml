@@ -1,0 +1,51 @@
+version: 0.0.10
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS project_activity_plans (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        res_model VARCHAR NOT NULL,
+        company_name VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS project_activity_plan_steps (
+        id VARCHAR PRIMARY KEY,
+        plan_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        activity_type_name VARCHAR NOT NULL,
+        summary VARCHAR,
+        responsible_type VARCHAR NOT NULL DEFAULT 'on_demand',
+        responsible_name VARCHAR,
+        delay_count INTEGER NOT NULL DEFAULT 0,
+        delay_unit VARCHAR NOT NULL DEFAULT 'days',
+        delay_from VARCHAR NOT NULL DEFAULT 'before_plan_date',
+        next_activities VARCHAR
+      );
+      INSERT INTO project_activity_plans
+        (id, name, res_model, company_name, active, created_at)
+      VALUES
+        ('project-activity-plan-kickoff', 'Project Kickoff', 'project.project', 'My Company', TRUE, TIMESTAMP '2026-01-15 09:00:00'),
+        ('project-activity-plan-follow-up', 'Task Follow-up', 'project.task', 'My Company', TRUE, TIMESTAMP '2026-01-15 09:05:00'),
+        ('project-activity-plan-retro', 'Project Retrospective', 'project.project', 'My Company', FALSE, TIMESTAMP '2026-01-15 09:10:00')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO project_activity_plan_steps
+        (id, plan_id, sequence, activity_type_name, summary, responsible_type, responsible_name, delay_count, delay_unit, delay_from, next_activities)
+      VALUES
+        ('project-activity-plan-kickoff-step-10', 'project-activity-plan-kickoff', 10, 'Meeting', 'Schedule project kickoff', 'on_demand', NULL, 0, 'days', 'before_plan_date', 'Email'),
+        ('project-activity-plan-kickoff-step-20', 'project-activity-plan-kickoff', 20, 'Email', 'Send kickoff agenda', 'other', 'Core3 Administrator', 1, 'days', 'after_plan_date', NULL),
+        ('project-activity-plan-follow-up-step-10', 'project-activity-plan-follow-up', 10, 'To-Do', 'Review task progress', 'on_demand', NULL, 2, 'days', 'after_plan_date', 'Call'),
+        ('project-activity-plan-follow-up-step-20', 'project-activity-plan-follow-up', 20, 'Call', 'Call the task owner', 'other', 'Core3 Administrator', 5, 'days', 'after_plan_date', NULL),
+        ('project-activity-plan-retro-step-10', 'project-activity-plan-retro', 10, 'Meeting', 'Hold a retrospective', 'on_demand', NULL, 3, 'days', 'before_plan_date', NULL)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS project_activity_plan_steps;
+      DROP TABLE IF EXISTS project_activity_plans;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

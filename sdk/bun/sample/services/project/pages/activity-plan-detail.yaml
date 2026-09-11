@@ -1,0 +1,56 @@
+title: Activity Plan
+page: { id: project-activity-plan-detail, route: /project-activity-plans/detail, breadcrumb: [Project, Configuration, Activity Plans, Activity Plan], auth: { require: [project.manage] } }
+components:
+  - type: OdooFormView
+    source: project_activity_plan_detail
+    title_field: name
+    editable: true
+    content_slot: true
+    header_actions:
+      - { id: back_to_project_activity_plans, label: Activity Plans, variant: secondary, permission: project.manage }
+      - { id: edit_project_activity_plan, label: Edit, variant: primary, permission: project.manage }
+      - { id: archive_project_activity_plan, label: Archive, variant: secondary, permission: project.manage, show_if: 'state.project_activity_plan_detail.active === true' }
+      - { id: unarchive_project_activity_plan, label: Restore, variant: secondary, permission: project.manage, show_if: 'state.project_activity_plan_detail.active === false' }
+      - { id: delete_project_activity_plan, label: Delete, variant: danger, permission: project.manage, confirm: Delete this activity plan? }
+    groups:
+      - title: Activity Plan
+        fields:
+          - { field: name, label: Plan Name }
+          - { field: res_model_label, label: Model }
+          - { field: company_name, label: Company }
+          - { field: steps_count, label: Steps Count }
+    notebook:
+      active: activities
+      tabs: [{ id: activities, label: Activities To Create, content_slot: true }]
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: project_activity_plan_steps
+    parent_source: project_activity_plan_detail
+    title: Activities To Create
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions: [{ id: add_project_activity_plan_step, label: Add a line, variant: primary, permission: project.manage }]
+    empty_state: { title: No activities, description: Add a line to define the activity plan. }
+    children:
+      - { type: LineItemField, id: activity_type_name, field: activity_type_name, label: Activity Type, readonly: true }
+      - { type: LineItemField, id: summary, field: summary, label: Summary, readonly: true }
+      - { type: LineItemField, id: responsible_type_label, field: responsible_type_label, label: Assignment, readonly: true }
+      - { type: LineItemField, id: responsible_name, field: responsible_name, label: Assigned to, readonly: true }
+      - { type: LineItemField, id: delay_count, field: delay_count, label: Interval, readonly: true }
+      - { type: LineItemField, id: delay_unit, field: delay_unit, label: Unit, readonly: true }
+      - { type: LineItemField, id: delay_from_label, field: delay_from_label, label: Trigger, readonly: true }
+      - type: LineItemActions
+        id: project_activity_plan_step_actions
+        actions:
+          - { id: edit_project_activity_plan_step, label: Edit, icon: edit, variant: ghost, permission: project.manage }
+          - { id: delete_project_activity_plan_step, label: Delete, icon: trash, variant: danger, permission: project.manage }
+    columns:
+      - { field: activity_type_name, label: Activity Type, width: 180 }
+      - { field: summary, label: Summary, width: 280 }
+      - { field: responsible_type_label, label: Assignment, width: 170 }
+      - { field: responsible_name, label: Assigned to, width: 180 }
+      - { field: delay_count, label: Interval, width: 90 }
+      - { field: delay_unit, label: Unit, width: 90 }
+      - { field: delay_from_label, label: Trigger, width: 170 }
+      - { field: actions, label: '', sortable: false, width: 72, actions: [{ id: edit_project_activity_plan_step, label: Edit, icon: edit, variant: ghost, permission: project.manage }, { id: delete_project_activity_plan_step, label: Delete, icon: trash, variant: danger, permission: project.manage }] }
