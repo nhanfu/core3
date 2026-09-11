@@ -1,12 +1,12 @@
 # Odoo 19 UI parity — Fleet
 
-Status: ready; vehicle, Odometers, Contracts, Manufacturers, and Models batches
-implemented in isolated worktrees, with remaining Fleet surfaces explicitly
-deferred below.
+Status: in progress; vehicle, Odometers, Contracts, Manufacturers, Models,
+and the Services checkpoint below are implemented, with remaining Fleet
+surfaces explicitly deferred below.
 
 This plan remains the source of truth for the complete Fleet parity scope.
-The current bounded implementation is recorded in
-`odoo-ui-parity/fleet-batch-5.md`.
+The Models checkpoint is recorded in `odoo-ui-parity/fleet-batch-5.md`; the
+latest Services checkpoint is recorded below.
 
 ## Reference gate and limitation
 
@@ -19,16 +19,15 @@ The current bounded implementation is recorded in
   security/views/configuration, and official demo data
   `data/fleet_demo.xml`. The manifest also loads the fleet data, mail subtype,
   activity type, car-brand/model and vehicle-mail wizard definitions.
-- Authenticated audit on 2026-09-10 used `http://localhost:8069`, database
-  `core3_owned`, login `codex@core3.local`, and password
+- Authenticated audit on 2026-09-11 used `http://localhost:8069`, database
+  `core3_personal`, login `codex@core3.local`, and password
   `Core3Odoo2026!`. Authentication succeeded as the personal administrator.
   SQL returned `fleet|installed|t|19.0.0.1` from `ir_module_module`, proving
   Fleet is installed with demo data in the personal reference database.
 - Authenticated Fleet reference captures are present under `/tmp` and are
   deliberately not committed: the earlier vehicle/Odometer captures above
-  plus `/tmp/odoo-owned-fleet-contracts-desktop.png` (1440x900) and
-  `/tmp/odoo-owned-fleet-contracts-mobile.png` (390x844). The Contracts
-  captures were re-authenticated against `core3_owned` after Fleet install.
+  plus the Services captures recorded in the checkpoint below. The earlier
+  Contracts captures remain historical evidence from the owned reference.
 
 ## Source menu, action, route, and view inventory
 
@@ -101,6 +100,59 @@ though they are not separate menus.
   setting: `delay_alert_contract`, the number of days before contract end to
   send an alert. Settings follows the full-width Odoo settings convention:
   no breadcrumb or horizontal content gutter; only content scrolls.
+
+## Services checkpoint: `fleet_vehicle_log_services_action`
+
+Source inspection on 2026-09-11 used the live personal database. Odoo menu id
+156 (`Fleet / Services`, parent menu 147) opens action id 182,
+`fleet_vehicle_log_services_action`, model `fleet.vehicle.log.services`, with
+view order `list,kanban,form,graph,pivot,activity` and context
+`search_default_groupby_service_type_id=1`. The live action exposes the
+`Services` label, the `Service Type` default grouping, six `Done` demo logs,
+the columns Date, Description, Service Type, Vehicle, Driver, Vendor, Notes,
+Cost, and Stage, and the form fields Description, Service Type, Date, Cost,
+Vendor, Vehicle, Driver, Odometer Value, Unit, and Notes.
+
+Integrated checkpoint: `869774ed` (`feat(fleet): add services logs parity
+slice`). Core3 exposes `/fleet/services` and `/fleet/services/detail`; page
+YAML is presentation-only and the API fragments `services.yaml` and
+`service-detail.yaml` join by `page.id`. Migrations
+`20260911190000-011-fleet-services-schema.yaml` and
+`20260911191000-012-fleet-services-data.yaml` provide idempotent service type
+and service-log tables with the fixed reference date `2026-01-15`. The six
+default logs are all `Done` and grouped under `Repair and maintenance` to
+match the installed Odoo reference; New, Running, Cancelled, and Archived
+states are available through deterministic mutation tests and guarded actions.
+
+Supported in this bounded slice: Odoo list/kanban/form/graph/pivot/activity
+declarations; default Service Type grouping; search; service-type and vehicle
+filters; group-by Fleet Manager, Model, and Manufacturer; list/detail
+navigation; manager-only create/edit; relation and value validation; New to
+Running to Done and cancellation/reset guards; archive/restore; protected
+active delete; stale row-version rejection; and explicit empty, not-found,
+transport-error, 401/403 permission, 404 relation, 409 conflict, and 422
+validation contracts. Ordinary Fleet users retain read access while the
+mutations use the manager permission, matching the installed access CSV.
+
+Authenticated comparison captures, deliberately excluded from Git:
+
+- Odoo personal desktop list: `/tmp/odoo-personal-fleet-services-desktop-list-final-20260911.png` (1440x900)
+- Odoo personal mobile list: `/tmp/odoo-personal-fleet-services-mobile-list-final-20260911.png` (390x844)
+- Odoo personal desktop detail: `/tmp/odoo-personal-fleet-services-desktop-detail-final-20260911.png` (1440x900)
+- Odoo personal mobile detail: `/tmp/odoo-personal-fleet-services-mobile-detail-final-20260911.png` (390x844)
+- Core3 desktop list: `/tmp/core3-fleet-services-desktop-list-final-20260911.png` (1440x900)
+- Core3 mobile list: `/tmp/core3-fleet-services-mobile-list-final-20260911.png` (390x844)
+- Core3 desktop detail: `/tmp/core3-fleet-services-desktop-detail-final-20260911.png` (1440x900)
+- Core3 mobile detail: `/tmp/core3-fleet-services-mobile-detail-final-20260911.png` (390x844)
+
+The authenticated browser pass found no failed responses, page errors, or
+horizontal overflow on the Core3 list/detail routes and the Odoo reference
+captures. Known visual limits are the Fluent Core3 shell versus Odoo's purple
+shell, Core3's local vehicle names and absence of Odoo vehicle/driver images,
+ISO dates versus Odoo's localized dates, and the bounded form's placeholder
+Messages and activities area rather than native chatter/activity composition.
+The activity view and richer many2one/avatar behavior are declared for the
+screen contract but remain deferred shared-primitive work.
 
 ## Source data and behavior contract
 
