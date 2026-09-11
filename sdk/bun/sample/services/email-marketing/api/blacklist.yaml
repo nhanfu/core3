@@ -1,0 +1,95 @@
+page: { id: email-blacklist }
+datasources:
+  - id: email_blacklist_records
+    permission: email_marketing.read
+    error_states: { transport_error: { status: 503, code: EMAIL_BLACKLIST_UNAVAILABLE, message: Blacklisted email addresses are temporarily unavailable. } }
+    query: "SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at, email, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label FROM email_marketing_blacklist WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((COALESCE(:active, '') = '') OR (:active = 'archived' AND active = false)) AND (:q IS NULL OR email ILIKE '%' || :q || '%') ORDER BY created_at DESC, id"
+actions:
+  - id: create_email_blacklist
+    type: server_form
+    permission: email_marketing.write
+    title: Add Email Blacklist
+    action: email_marketing.blacklist.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [email_blacklist_records]
+    mutation:
+      operation: insert
+      table: email_marketing_blacklist
+      fields: [email, active]
+      required: [email]
+      defaults: { active: true, row_version: 1, created_at: '2026-01-15 09:00:00', updated_at: '2026-01-15 09:00:00' }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'email-blacklist-' || regexp_replace(lower(trim(CAST(:email AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE position('@' IN trim(CAST(:email AS VARCHAR))) > 1 AND trim(CAST(:email AS VARCHAR)) LIKE '%@%.%' AND trim(CAST(:email AS VARCHAR)) NOT LIKE '% %'", status: 422, code: EMAIL_BLACKLIST_EMAIL_INVALID, message: Enter a valid email address. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_blacklist WHERE lower(email) = lower(trim(CAST(:email AS VARCHAR))))", status: 409, code: EMAIL_BLACKLIST_EXISTS, message: This email address is already blacklisted. }
+      result: { query: "SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at, email, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label FROM email_marketing_blacklist WHERE id = :id" }
+    fields:
+      - { field: email, label: Email, type: email, required: true }
+  - id: edit_email_blacklist
+    type: server_form
+    permission: email_marketing.write
+    title: Edit Email Blacklist
+    action: email_marketing.blacklist.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [email_blacklist_records, email_blacklist_detail]
+    mutation:
+      operation: update
+      table: email_marketing_blacklist
+      fields: [email]
+      required: [email]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_marketing_blacklist WHERE id = :id", status: 404, code: EMAIL_BLACKLIST_NOT_FOUND, message: Blacklisted email address not found. }
+        - { query: "SELECT 1 AS ok WHERE position('@' IN trim(CAST(:email AS VARCHAR))) > 1 AND trim(CAST(:email AS VARCHAR)) LIKE '%@%.%' AND trim(CAST(:email AS VARCHAR)) NOT LIKE '% %'", status: 422, code: EMAIL_BLACKLIST_EMAIL_INVALID, message: Enter a valid email address. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_blacklist WHERE lower(email) = lower(trim(CAST(:email AS VARCHAR))) AND id <> :id)", status: 409, code: EMAIL_BLACKLIST_EXISTS, message: This email address is already blacklisted. }
+      result: { query: "SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at, email, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label FROM email_marketing_blacklist WHERE id = :id" }
+    fields:
+      - { field: email, label: Email, type: email, required: true }
+  - id: blacklist_email_detail
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.blacklist.activate
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: true } }
+    refresh: [email_blacklist_detail, email_blacklist_records]
+    mutation:
+      operation: update
+      table: email_marketing_blacklist
+      fields: [active]
+      defaults: { active: true }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM email_marketing_blacklist WHERE id = :id", status: 404, code: EMAIL_BLACKLIST_NOT_FOUND, message: Blacklisted email address not found. }]
+      result: { query: "SELECT * FROM email_marketing_blacklist WHERE id = :id" }
+  - id: unblacklist_email_detail
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.blacklist.remove
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    refresh: [email_blacklist_detail, email_blacklist_records]
+    mutation:
+      operation: update
+      table: email_marketing_blacklist
+      fields: [active]
+      defaults: { active: false }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM email_marketing_blacklist WHERE id = :id", status: 404, code: EMAIL_BLACKLIST_NOT_FOUND, message: Blacklisted email address not found. }]
+      result: { query: "SELECT * FROM email_marketing_blacklist WHERE id = :id" }
+  - id: delete_email_blacklist
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.blacklist.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [email_blacklist_records]
+    mutation:
+      operation: delete
+      table: email_marketing_blacklist
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM email_marketing_blacklist WHERE id = :id", status: 404, code: EMAIL_BLACKLIST_NOT_FOUND, message: Blacklisted email address not found. }]

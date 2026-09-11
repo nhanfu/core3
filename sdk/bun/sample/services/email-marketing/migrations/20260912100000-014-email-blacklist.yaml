@@ -1,0 +1,24 @@
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_marketing_blacklist (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        email VARCHAR NOT NULL UNIQUE,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      INSERT INTO email_marketing_blacklist(id, row_version, email, active, created_at, updated_at) VALUES
+        ('email-blacklist-elsa-ericson', 1, 'elsa.ericson@example.com', true, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'),
+        ('email-blacklist-info-example', 1, 'info@example.com', true, TIMESTAMP '2026-01-15 09:01:00', TIMESTAMP '2026-01-15 09:01:00'),
+        ('email-blacklist-legacy-example', 1, 'legacy@example.com', false, TIMESTAMP '2026-01-15 09:02:00', TIMESTAMP '2026-01-15 09:02:00')
+      ON CONFLICT (id) DO UPDATE SET row_version = EXCLUDED.row_version, email = EXCLUDED.email, active = EXCLUDED.active, updated_at = EXCLUDED.updated_at;
+    down: |
+      DROP TABLE IF EXISTS email_marketing_blacklist;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
