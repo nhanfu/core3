@@ -218,6 +218,43 @@ Discuss surface and must not be used for parity sign-off.
   CRM integration tests and authenticated Playwright checks pass. Run the
   repository's markdown/YAML checks, `bun test test/crm.integration.test.ts`
   from `sdk/bun/sample` when implementation exists, and `git diff --check`.
+
+## 2026-09-12 Pipeline Stages action evidence
+
+The first bounded configuration slice for the technical-only source action is
+implemented and kept separate from the existing combined Configuration page:
+
+| Odoo action | Core3 page/API | Route | Contract |
+| --- | --- | --- | --- |
+| `crm.crm_stage_action` (fresh demo action id `381`) | `crm-stages` / `crm-stage-detail` | `/crm/stages` / `/crm/stages/detail` | `pages/stages.yaml` + `api/stages.yaml`, joined by `page.id` |
+
+The source was checked against `addons/crm/views/crm_stage_views.xml`: sequence
+handle, stage name, won flag, sales teams, folded state, color, rotting
+threshold, and requirements are represented. Core3 adds explicit guarded
+archive/restore/delete actions and optimistic concurrency for the existing CRM
+stage projection. The migration is `20260912130000-023-crm-stage-action.yaml`.
+
+Authenticated visual evidence was captured from the fresh Odoo 19 demo database
+`core3_codex_demo_20260912` as `codex@core3.local` (action 381), and from the
+Core3 authenticated memory runtime as `admin@tms.local` (page `crm-stages`):
+
+| Surface | Viewport | Screenshot | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Stages | 1440x900 | `/tmp/odoo-crm-stages-desktop.png` | `681bf4db5d5ededf5ca2962267cfa5088c2d71ba21976c65b3b9ca72b11011b7` |
+| Odoo Stages | 390x844 | `/tmp/odoo-crm-stages-mobile.png` | `d883844edcdc319170fd73b001e24ac0f95a076cfab70d1629db54f15bbfb99b` |
+| Core3 Stages | 1440x900 | `/tmp/core3-crm-stages-desktop-boolean.png` | `1164e93caf5d65ecefad7d04c17672c88774904bb28caebdc8151b4b0234d108` |
+| Core3 Stages | 390x844 | `/tmp/core3-crm-stages-mobile-boolean.png` | `73f02d73f786d3799948e697578150295ec6a221a55014cecd4c54d5a763f3c5` |
+
+The source has four default demo stages while Core3 retains its existing six
+realistic CRM stage fixtures; this is a data-fixture difference, not a route or
+layout fallback. Both Core3 captures rendered the expected stage columns with
+no page errors or failed requests after the BooleanToggle and optional-column
+comparison fix.
+
+Verification: `bun test test/crm.integration.test.ts`
+and `test/crm_stages_action.integration.test.ts` pass with 39 tests and 188
+assertions; `bun run audit` reports 545 pages, 552 routes, and 946 datasources;
+`bun run lint`, frontend build, and `git diff --check` pass.
 - Comparison review signs off labels, menu order, view defaults, columns,
   status colors, totals, dialogs, fixed/mobile navigation, and content-only
   scrolling at both reference viewports. Screenshots stay in `/tmp` and are
