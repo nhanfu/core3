@@ -1,0 +1,78 @@
+page: { id: fleet-statuses }
+datasources:
+  - id: fleet_vehicle_statuses
+    permission: fleet.read
+    error_states:
+      unauthorized: { status: 401, code: FLEET_STATUS_UNAUTHORIZED, message: Sign in to view vehicle statuses. }
+      forbidden: { status: 403, code: FLEET_STATUS_FORBIDDEN, message: You do not have permission to view vehicle statuses. }
+      transport_error: { status: 503, code: FLEET_STATUS_DATA_UNAVAILABLE, message: Vehicle status data is temporarily unavailable. }
+    query: "SELECT id, row_version, sequence, name, fold FROM fleet_vehicle_statuses WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: create_fleet_vehicle_status_inline
+    type: server_form
+    permission: fleet.manage
+    title: New Vehicle Status
+    action: fleet.vehicle_statuses.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fleet_vehicle_statuses]
+    mutation:
+      operation: insert
+      table: fleet_vehicle_statuses
+      fields: [row_version, sequence, name, fold]
+      required: [name]
+      defaults: { row_version: 1, sequence: 10, fold: false }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'fleet-status-custom-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: FLEET_STATUS_NAME_REQUIRED, message: Vehicle status name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_statuses WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: FLEET_STATUS_EXISTS, message: A vehicle status with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:sequence, 0) AS INTEGER) >= 0", status: 422, code: FLEET_STATUS_SEQUENCE_INVALID, message: Sequence must be zero or greater. }
+      result: { query: "SELECT * FROM fleet_vehicle_statuses WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 10 }
+      - { field: name, label: Name, type: text, required: true }
+      - { field: fold, label: Folded in Kanban, type: checkbox, default: false }
+  - id: update_fleet_vehicle_status_inline
+    type: server_form
+    permission: fleet.manage
+    title: Edit Vehicle Status
+    action: fleet.vehicle_statuses.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_vehicle_statuses]
+    mutation:
+      operation: update
+      table: fleet_vehicle_statuses
+      fields: [sequence, name, fold]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_statuses WHERE id = :id", status: 404, code: FLEET_STATUS_NOT_FOUND, message: Vehicle status was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: FLEET_STATUS_NAME_REQUIRED, message: Vehicle status name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_statuses WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: FLEET_STATUS_EXISTS, message: A vehicle status with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:sequence, 0) AS INTEGER) >= 0", status: 422, code: FLEET_STATUS_SEQUENCE_INVALID, message: Sequence must be zero or greater. }
+      result: { query: "SELECT * FROM fleet_vehicle_statuses WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Name, type: text, required: true }
+      - { field: fold, label: Folded in Kanban, type: checkbox }
+  - id: edit_fleet_vehicle_status
+    type: navigate
+    permission: fleet.read
+    navigate_to: /fleet/config/statuses/detail
+    params: { id: '{row.id}' }
+  - id: delete_fleet_vehicle_status
+    type: server
+    permission: fleet.manage
+    action: fleet.vehicle_statuses.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [fleet_vehicle_statuses]
+    params: { id: '{row.id}' }
+    mutation:
+      operation: delete
+      table: fleet_vehicle_statuses
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_statuses WHERE id = :id", status: 404, code: FLEET_STATUS_NOT_FOUND, message: Vehicle status was not found. }

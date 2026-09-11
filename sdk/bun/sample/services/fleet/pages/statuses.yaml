@@ -1,0 +1,31 @@
+title: Status
+page: { id: fleet-statuses, route: /fleet/config/statuses, breadcrumb: [Human Resources, Fleet, Configuration, Vehicle, Status], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_vehicle_statuses
+    create_label: New
+    search: { label: Search statuses, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    inline_edit:
+      create_action: create_fleet_vehicle_status_inline
+      update_action: update_fleet_vehicle_status_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: sequence, type: number, default: 10 }
+        - { field: name, type: text, required: true, placeholder: Status name }
+        - { field: fold, type: checkbox, default: false }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: true, sortable: false }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: fold, label: Folded in Kanban, type: BooleanToggle, mobile: true, sortable: false }
+    row_key: id
+    row_open_action: edit_fleet_vehicle_status
+    row_double_click_action: edit_fleet_vehicle_status
+    form_view: { page: apps/services/fleet/pages/fleet-status-detail.yaml, side_panel: false }
+    row_actions: menu
+    empty_state: { title: Create a new vehicle status, description: You can customize available status to track the evolution of each vehicle. }

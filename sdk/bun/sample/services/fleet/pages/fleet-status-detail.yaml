@@ -1,0 +1,18 @@
+title: Vehicle Status
+page: { id: fleet-status-detail, route: /fleet/config/statuses/detail, breadcrumb: [Human Resources, Fleet, Configuration, Vehicle, Status], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_vehicle_status_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Vehicle Status
+        fields:
+          - { field: name, label: Name }
+          - { field: sequence, label: Sequence }
+          - { field: fold, label: Folded in Kanban }
+    header_actions:
+      - { id: edit_fleet_vehicle_status_detail, label: Save, variant: primary }
+    action_menu:
+      actions:
+        - { id: delete_fleet_vehicle_status_detail, label: Delete, variant: danger }

@@ -1,0 +1,21 @@
+version: 0.0.22
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_statuses(id, name, sequence, fold, row_version) VALUES
+        ('fleet-status-001', 'New Request', 4, FALSE, 1),
+        ('fleet-status-002', 'To Order', 5, FALSE, 1),
+        ('fleet-status-003', 'Ordered', 6, FALSE, 1),
+        ('fleet-status-004', 'Registered', 7, FALSE, 1),
+        ('fleet-status-005', 'Downgraded', 8, FALSE, 1),
+        ('fleet-status-006', 'Reserve', 9, FALSE, 1),
+        ('fleet-status-007', 'Waiting List', 10, FALSE, 1)
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE fleet_vehicle_statuses SET row_version = 1 WHERE id LIKE 'fleet-status-%' AND row_version IS NULL;
+    down: |
+      DELETE FROM fleet_vehicle_statuses WHERE id LIKE 'fleet-status-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
