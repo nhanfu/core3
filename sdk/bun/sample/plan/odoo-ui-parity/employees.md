@@ -583,6 +583,48 @@ represented in the paired states below.
 | Employment Types list | `/tmp/core3-odoo-employees-employment-types-list-desktop-1440x900.png` (`23baa35ba9abe75e806d2978706862412080c552815fe42f13dff26ced6b8298`) | `/tmp/core3-odoo-employees-employment-types-list-mobile-390x844.png` (`b50fb8791f2470a83516c8730d6450bba94e2ea5c9ce6b1c8bd5b5169743efcd`) |
 | Employment Types inline New | `/tmp/core3-odoo-employees-employment-types-inline-desktop-1440x900.png` (`49c8f34409e1b2bdc86a339ae2c087e6c4da33e7486279824533297ad4a6b681`) | `/tmp/core3-odoo-employees-employment-types-inline-mobile-390x844.png` (`0b9adbd13f1c915f24352e198977ea1a4f6d98e135e5393269edb08e3bf0ffde`) |
 
+## Bounded batch: All activities
+
+This batch hardens the next genuinely uncovered Employees action: Employees
+Reporting / All activities. The live Odoo 19 user database was inspected on
+2026-09-11. The source action `action_hr_employee_all_activities` resolves to
+database action 404 and route `/odoo/all_activities`; it uses model
+`hr.employee`, the domain `activity_ids != False` within the allowed company
+set, and view order `activity,list,kanban,form,graph,pivot`. Its activity list
+view shows employee, activity deadline/type/user, department, job, optional
+contact/contract/pay fields, and supports multi-edit; opening a row enters the
+employee form rather than an activity CRUD form. The live database contains 24
+employees, of which three have three employee activities, so the reference
+action is a populated read/report surface rather than an activity creation
+screen.
+
+Core3 already has the initial `employee-activities` page/API scaffold. This
+bounded slice makes it an accepted, independently tested action: the page
+remains layout-only and binds to `api/activities.yaml` by `page.id`, while the
+service-owned datasource projects stable activity-bearing employee rows and
+the existing activity/card/kanban/graph/pivot modes. Reads require
+`employees.read`; the action intentionally has no create/update/archive/delete
+mutation because the Odoo action exposes employee navigation and report
+views, not activity CRUD. Empty, transport-error, missing employee, search,
+timing/type filters, deterministic ordering, and employee-row navigation are
+explicit contracts, with stable `2026-01-15` fixture dates and no remote
+assets.
+
+Authenticated evidence is kept outside Git and must be captured afresh for
+this batch:
+
+- Odoo action 404: `/tmp/odoo-employees-all-activities-desktop-1440x900.png`
+  and `/tmp/odoo-employees-all-activities-mobile-390x844.png`.
+- Core3: `/tmp/core3-employees-all-activities-desktop-1440x900.png` and
+  `/tmp/core3-employees-all-activities-mobile-390x844.png`.
+
+The browser matrix must use authenticated sessions at 1440x900 and 390x844,
+assert the action title and visible activity-bearing employees, exercise
+search/filter/navigation plus empty and transport-error states, record zero
+application failures/page errors, and prove exact viewport fit. Known bounded
+differences may include Core3's Fluent shell and its service-owned activity
+row projection versus Odoo's native employee list/activity widgets.
+
 ## Acceptance
 
 - Source and manifest checks identify `hr`, version, dependencies, official
