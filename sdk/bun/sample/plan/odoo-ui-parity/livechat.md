@@ -681,3 +681,36 @@ at desktop (1440/1440) and mobile (390/390). The final focused suite passed
 There are no pre-existing blockers for this bounded slice; the overall Live
 Chat plan remains planned because its other inventory surfaces are follow-up
 work.
+
+## Bounded implementation contract: Technical — Ongoing Sessions (2026-09-11)
+
+The next uncovered visible action in the active `core3_user_demo` database is
+Technical → Ongoing Sessions. The recursive menu audit found
+`Live Chat > Technical > Ongoing Sessions` (menu id 570), backed by live action
+877 (`ongoing_sessions_all_action`) from the installed
+`spreadsheet_dashboard_im_livechat` module. Its action name is `Sessions`, model
+`discuss.channel`, view modes `list,form`, domain `channel_type = livechat`,
+and context `search_default_ongoing = 1`. This is a distinct manager-only
+technical action and is not the already-covered general Sessions route.
+
+The source contract is
+`/home/nhanjs/projects/odoo/addons/spreadsheet_dashboard_im_livechat/data/livechat_ongoing_sessions_actions.xml`
+plus `addons/im_livechat/views/discuss_channel_views.xml`. The list is
+read-only (`create="false"`) and shows Date, Customer, Agents, Country,
+Language, Expertise, Duration, Messages, and Rating, with Ongoing as the
+active state. Its form is also read-only (`create="false"`, `edit="false"`) and
+shows Participants, Session Date, rating image, and rating feedback.
+
+Core3 will expose exactly this action at
+`/livechat/technical/ongoing-sessions` with a separate read-only detail route.
+Page and API YAML remain separate and join by page ids
+`livechat-technical-ongoing-sessions` and
+`livechat-technical-ongoing-session-detail`. The manager-only menu/page uses
+`livechat.manage`; the named list/detail datasources use `livechat.read` to
+match the underlying model read ACL. Deterministic service-owned fixtures
+provide ongoing live-chat rows, search/filter no-results, empty, missing,
+forbidden, and transport-error states. No mutation actions are allowed; tests
+must prove the no-create/no-write/no-unlink boundary, default ongoing domain,
+source columns, page/API joins, idempotent fixtures, permissions, and
+read-only detail behavior. Authenticated Odoo/Core3 comparisons are required
+at 1440x900 and 390x844, with captures only in `/tmp`.
