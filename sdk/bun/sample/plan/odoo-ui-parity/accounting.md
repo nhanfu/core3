@@ -887,3 +887,109 @@ remain outside Git:
   — 1440x900 — same desktop digest as the linked capture
 - `/tmp/core3-accounting-payment-workflow-20260911/unlinked-mobile-390x844.png`
   — 390x844 — same mobile digest as the linked capture
+
+## Current batch: Internal Transfers action 324
+
+The fresh owned Odoo 19 reference confirms `account.action_account_payments_transfer`
+(`Internal Transfers`, action 324, model `account.payment`) with list, Kanban,
+form, and graph modes. It is opened from the journal dashboard with the transfer
+filter and outbound payment context. Its list uses Date, Number, Journal, Payment
+Method, Vendor, Amount in Currency, Amount, and State, and its form uses the
+Payment, Payment information, Other Info, and chatter sections. The new
+`core3_codex_demo` database currently has no rows matching Odoo's transfer filter,
+so the authenticated reference renders its exact empty-state helper over the
+generic payment rows; this is recorded as a source-data limitation rather than
+silently treating generic payments as transfers.
+
+Core3 implements the bounded YAML-first surface at `/accounting/internal-transfers`,
+`/accounting/internal-transfer-detail`, and `/accounting/internal-transfers/new`.
+Page and API fragments are separate. The migration seeds four stable rows across
+Draft, In Process, Paid, and Canceled. List, card/Kanban, graph, read-only detail,
+new/edit, Confirm, Paid, Cancel, search, empty, stale-write, validation,
+permission, message, note, and activity states are explicit. Paired accounting
+entries and external payment processing remain outside this UI batch.
+
+Authenticated evidence used the fresh Odoo database (`core3_codex_demo`) and the
+isolated Core3 runtime. All images remain outside Git:
+
+- Odoo desktop list: `/tmp/odoo-codex-internal-transfers-desktop-empty-final-20260911.png`
+  — 1440x900 — `8546d9bd3d606d7317d7dfc7f7f2fedc632e95a8229f3a5db22c20133d0126d47`
+- Odoo mobile Kanban: `/tmp/odoo-codex-internal-transfers-mobile-final-20260911.png`
+  — 390x844 — `a4ba8f13fc112a767f41a296d522426d8a53b1df6b43650dcbf26540596f26d6`
+- Core3 desktop list/detail/new: `/tmp/core3-accounting-internal-transfers-desktop-{list,detail,new}-final-20260911.png`
+  — 1440x900 — hashes `f062da27de8cbb68319f429f2debb4b3a48ccadf4b807c9a7b87458d28dc63fa`,
+  `0d219ec02daa3f93eeb905145d23f71c764059d8f8317340c1c5970f35b9e388`, and
+  `52e9829217b3d1bf7a64045b4137369503b9ff77841a04283211b17d7`
+- Core3 mobile list/detail/new: `/tmp/core3-accounting-internal-transfers-mobile-{list,detail,new}-final-20260911.png`
+  — 390x844 — hashes `59ba25167b32e36f7132bcea88f9cb4e9320e9a764b4366e63f662eb3766b435`,
+  `8da6659771364d807d8a5132c1351e2a7ec02b173626308e863737639e85829a`, and
+  `967f27e4db196605f92d3a6414d92d2ea31efde1f54db3a34ab6c549bd300fd6`
+
+The Core3 captures had no page errors, no failed requests, and document/body
+width equal to the viewport at both sizes. The remaining visible differences are
+the expected Odoo purple shell versus Core3 Fluent shell, Odoo's empty filtered
+reference versus deterministic Core3 transfer fixtures, and compact mobile action
+overflow behavior; these are documented limitations, not unverified claims.
+
+Focused validation passed: 3 tests and 21 assertions, YAML audit (492 pages,
+499 routes, 862 datasources), ESLint, global Sass build, and `git diff --check`.
+
+## Next batch contract: Internal Transfers action
+
+The authenticated Odoo 19 source and `core3_personal` database identify the
+next uncovered payment action as `account.action_account_payments_transfer`
+(window action 324), titled `Internal Transfers`. It targets
+`account.payment`, declares `list,kanban,form,graph`, an empty domain, and the
+context `default_payment_type=outbound`, `search_default_transfers_filter=1`,
+and `display_account_trust=True`. The action has no direct `ir.ui.menu`
+binding in the installed database; it is opened from an Accounting journal
+dashboard through `account.journal.open_payments_action(payment_type='transfer')`.
+The source path exposed by the Odoo web client is `/odoo/action-324`.
+
+The list uses primary view `account.supplier.payment.list`, which inherits
+`account.payment.list` and renames `partner_id` to `Vendor`. It is
+`edit="false"`, has a list-header `Confirm` action, and exposes Date, Number,
+Journal, Payment Method, Vendor, Amount in Currency, Amount, and State. The
+action's view modes are List, Kanban, Form, and Graph; the installed mobile
+client switches to Kanban with cards containing journal/partner, amount,
+number, date, activity, and state. The list has `New`, and the Odoo empty
+help copy is `Register a payment` followed by `Payments are used to register
+liquidity movements. You can process those payments by your own means or by
+using installed facilities.`
+
+The source form is `account.payment.form`. Its visible header is Confirm with
+the Draft, In Process, and Paid statusbar. The rendered new-record contract
+shows title `Draft Payment`, `Payment Type?` with Send/Receive radio choices
+(Send selected), `Customer?`, `Amount?`, `Date?`, `Memo?`, `Journal?`,
+`Payment Method?`, `Customer Bank Account?`, and the chatter controls `Send
+message`, `Log note`, and `Activity`. The account-payment access rows grant
+read to the Accounting read-only group and full read/write/create/delete to
+the Invoicing group; the Core3 mapping is `accounting.read` for reads and
+`accounting.write` for New, edit, workflow, and chatter mutations.
+
+The owned live reference currently has no paired internal-transfer records.
+Because the installed action's `transfers_filter` context does not correspond
+to a named filter in its installed search view, Odoo renders the two available
+customer payments (`PBNK1/2026/00001` and `PBNK1/2026/00002`) in this action.
+The authenticated evidence is `/tmp/odoo-accounting-internal-transfers-desktop-1440x900-final.png`
+(`000bceea992d39c17f94e4d5a8b46cbc813de917336a7cff7f3bce985b361ea8`) and
+`/tmp/odoo-accounting-internal-transfers-mobile-390x844-final.png`
+(`793592755408120709fc947fba7f1d5891b9f16f7ce1c17bd5a99f80c54fd263`), both
+with exact viewport widths and no failed requests. The exploratory unsaved
+draft created while inspecting New was removed from the reference database.
+
+Core3 implementation now adds `/accounting/internal-transfers`,
+`/accounting/internal-transfer-detail`, and
+`/accounting/internal-transfers/new` under the Invoicing/Accounting payment
+surface. Page YAML will contain layout only; list, detail, options, chatter,
+and mutations will be owned by page-ID-matched API fragments. The migration
+will seed explicit paired-transfer-shaped rows with stable dates, journals,
+amounts, and Draft/In Process/Paid/Canceled states. The bounded workflow is
+New/save, edit while Draft, Confirm (Draft → In Process), Paid (In Process →
+Paid), Cancel (Draft/In Process → Canceled), and chatter; every mutation will
+require `accounting.write`, validate positive amount/date/journal/payment
+method, and enforce missing-record and expected-row-version guards. Empty,
+transport-error, denied, search-empty, and stale states are acceptance cases.
+The Core3 form preserves the source's customer/payment fields because that is
+what the installed Odoo action renders; destination-journal and cryptographic
+paired-entry behavior are outside this UI slice.
