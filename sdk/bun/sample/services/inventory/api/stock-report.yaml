@@ -1,0 +1,48 @@
+page: { id: stock-report }
+datasources:
+  - id: inventory_stock_report_categories
+    single: false
+    permission: inventory.read
+    query: "SELECT DISTINCT category_name AS value, category_name AS label FROM inventory_stock_report WHERE active = TRUE ORDER BY category_name"
+  - id: inventory_stock_report
+    single: false
+    permission: inventory.read
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_STOCK_REPORT_FORBIDDEN, message: You do not have permission to view the stock report. }
+      transport_error: { status: 503, code: INVENTORY_STOCK_REPORT_UNAVAILABLE, message: Stock report data is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, default_code, product_name, category_name,
+        CAST(unit_cost AS DOUBLE) AS unit_cost, CAST(total_value AS DOUBLE) AS total_value,
+        CAST(on_hand AS DOUBLE) AS on_hand, CAST(free_to_use AS DOUBLE) AS free_to_use,
+        CAST(incoming_qty AS DOUBLE) AS incoming_qty, CAST(outgoing_qty AS DOUBLE) AS outgoing_qty,
+        CAST(forecasted AS DOUBLE) AS forecasted, unit_name
+      FROM inventory_stock_report
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1
+        AND active = TRUE
+        AND (:q IS NULL OR default_code ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%' OR category_name ILIKE '%' || :q || '%')
+        AND (:category_name IS NULL OR :category_name = '' OR category_name = :category_name)
+      ORDER BY default_code, product_name, id
+actions:
+  - id: inventory_stock_at_date
+    type: server_form
+    permission: inventory.read
+    title: Inventory at Date
+    action: inventory.stock.at_date
+    handler: yaml_mutation
+    operation: report
+    fields:
+      - { field: inventory_date, label: Inventory Date, type: date, required: true, default: '2026-01-15' }
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE CAST(:inventory_date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2100-12-31'", status: 422, code: INVENTORY_STOCK_REPORT_DATE_INVALID, message: Enter an inventory date between 2000 and 2100. }
+      result: { query: "SELECT 'Stock report date selected: ' || CAST(:inventory_date AS VARCHAR) AS message" }
+  - id: view_inventory_stock_history
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves
+    params: { q: '{row.product_name}' }
+  - id: view_inventory_stock_replenishment
+    type: navigate
+    permission: inventory.read
+    navigate_to: /replenishment
+    params: { q: '{row.product_name}' }

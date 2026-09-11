@@ -1,0 +1,35 @@
+version: 0.0.12
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_stock_report (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        default_code VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        category_name VARCHAR NOT NULL, unit_cost DECIMAL(18,2) NOT NULL DEFAULT 0,
+        total_value DECIMAL(18,2) NOT NULL DEFAULT 0, on_hand DECIMAL(18,3) NOT NULL DEFAULT 0,
+        free_to_use DECIMAL(18,3) NOT NULL DEFAULT 0, incoming_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        outgoing_qty DECIMAL(18,3) NOT NULL DEFAULT 0, forecasted DECIMAL(18,3) NOT NULL DEFAULT 0,
+        unit_name VARCHAR NOT NULL DEFAULT 'Units', active BOOLEAN NOT NULL DEFAULT TRUE,
+        stock_date DATE NOT NULL DEFAULT DATE '2026-01-15', created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(default_code)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_stock_report_category ON inventory_stock_report(category_name, default_code);
+      INSERT INTO inventory_stock_report (id, default_code, product_name, category_name, unit_cost, total_value, on_hand, free_to_use, incoming_qty, outgoing_qty, forecasted, unit_name, stock_date) VALUES
+        ('stock-report-desk-white', 'DESK0005', '[DESK0005] Customizable Desk (White, Custom)', 'Furniture', 0, 0, 65, 65, 0, 0, 65, 'Units', DATE '2026-01-15'),
+        ('stock-report-desk-black', 'DESK0006', '[DESK0006] Customizable Desk (Black, Custom)', 'Furniture', 0, 0, 70, 70, 0, 0, 70, 'Units', DATE '2026-01-15'),
+        ('stock-report-corner-desk', 'E-COM06', '[E-COM06] Corner Desk Right Sit', 'Furniture', 600, 0, 0, 0, 0, 10, -10, 'Units', DATE '2026-01-15'),
+        ('stock-report-cabinet', 'E-COM07', '[E-COM07] Large Cabinet', 'Furniture', 800, 400000, 500, 270, 0, 230, 270, 'Units', DATE '2026-01-15'),
+        ('stock-report-storage-box', 'E-COM08', '[E-COM08] Storage Box', 'Office Supplies', 14, 252, 18, 18, 0, 0, 18, 'Units', DATE '2026-01-15'),
+        ('stock-report-cabinet-doors', 'E-COM11', '[E-COM11] Cabinet with Doors', 'Furniture', 120.50, 3976.50, 33, 18, 120, 15, 138, 'Units', DATE '2026-01-15'),
+        ('stock-report-desk-left', 'FURN_1118', '[FURN_1118] Corner Desk Left Sit', 'Furniture', 78, 156, 2, 0, 0, 3, -1, 'Units', DATE '2026-01-15'),
+        ('stock-report-drawer-black', 'FURN_2100', '[FURN_2100] Drawer Black', 'Furniture', 20, 900, 45, 40, 0, 5, 40, 'Units', DATE '2026-01-15'),
+        ('stock-report-screens-black', 'FURN_6667', '[FURN_6667] Acoustic Bloc Screens (Black)', 'Furniture', 0, 0, 16, 0, 20, 20, 16, 'Units', DATE '2026-01-15'),
+        ('stock-report-pedal-bin', 'E-COM10', '[E-COM10] Pedal Bin', 'Office Supplies', 10, 0, 0, 0, 0, 0, 0, 'Units', DATE '2026-01-15')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_stock_report;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

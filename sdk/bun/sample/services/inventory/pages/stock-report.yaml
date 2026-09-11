@@ -1,0 +1,35 @@
+title: Stock
+page: { id: stock-report, route: /stock-report, breadcrumb: [Supply Chain, Inventory, Reporting, Stock], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_stock_report
+    header_actions:
+      - { id: inventory_stock_at_date, label: Inventory at Date, variant: primary, permission: inventory.read }
+    search: { label: Search stock, placeholder: Search products or references... }
+    filters:
+      - { field: category_name, label: Category, options_source: inventory_stock_report_categories }
+    views:
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: unit_cost, label: Unit Cost, align: right, mobile: true, sortable: true }
+      - { field: total_value, label: Total Value, align: right, mobile: true, sortable: true }
+      - { field: on_hand, label: On Hand, align: right, mobile: true, sortable: true }
+      - { field: free_to_use, label: Free to Use, align: right, mobile: false }
+      - { field: incoming_qty, label: Incoming, align: right, mobile: false }
+      - { field: outgoing_qty, label: Outgoing, align: right, mobile: false }
+      - { field: forecasted, label: Forecasted, align: right, mobile: false }
+      - { field: unit_name, label: Unit, mobile: true }
+      - field: actions
+        label: ''
+        sortable: false
+        mobile: false
+        actions:
+          - { id: view_inventory_stock_history, label: History, icon: history, permission: inventory.read }
+          - { id: view_inventory_stock_replenishment, label: Replenishment, icon: refresh, permission: inventory.read }
+    page_size: 50
+    row_key: id
+    row_actions: buttons
+    selectable: false
+    empty_state: { title: No stock to show, description: Create storable products or adjust your filters to see stock information. }

@@ -36,7 +36,7 @@ menu:
     - id: reporting
       label: Reporting
       items:
-        - path: /stock
+        - path: /stock-report
           label: Stock
           icon: boxes
           permission: inventory.read
