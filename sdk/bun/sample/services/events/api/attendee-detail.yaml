@@ -54,6 +54,7 @@ actions:
         - { query: "SELECT id FROM event_registrations WHERE id = :registration_id AND LENGTH(TRIM(COALESCE(attendee_email, ''))) > 0", status: 422, code: EVENT_ATTENDEE_EMAIL_REQUIRED, message: An attendee email address is required before sending. }
       result: { query: "SELECT * FROM event_registration_emails WHERE id = :id" }
     fields:
+      - { field: registration_id, label: Registration, type: hidden, required: true }
       - { field: recipient_name, label: To, type: mail_recipient, required: true }
       - { field: recipient_email, label: Recipient email, type: hidden, required: true }
       - { field: subject, label: Subject, type: text, required: true }

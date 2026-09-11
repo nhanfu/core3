@@ -36,6 +36,7 @@ describe('Events attendee email parity', () => {
       operation: 'create',
     });
     expect(send.fields.map((field: any) => [field.field, field.type])).toEqual([
+      ['registration_id', 'hidden'],
       ['recipient_name', 'mail_recipient'],
       ['recipient_email', 'hidden'],
       ['subject', 'text'],
