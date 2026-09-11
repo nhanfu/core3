@@ -20,20 +20,26 @@ components:
       - { field: production_name, label: Manufacturing Order }
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
+      - { id: list, label: List, icon: table, mobile: false }
       - id: form
         label: Form
         icon: form
       - id: kanban
         label: Kanban
         icon: dashboard
-        mobile: true
+        mobile: false
         group_by: state
         groups_source: stock_scrap_states
+        card: { title: name, subtitle: product_name, fields: [{ field: date_done, label: Date }, { field: scrap_qty, label: Quantity }, { field: product_uom, label: Unit }, { field: state, label: Status }] }
+      - id: card
+        label: Kanban
+        icon: grid
+        mobile: true
         card: { title: name, subtitle: product_name, fields: [{ field: date_done, label: Date }, { field: scrap_qty, label: Quantity }, { field: product_uom, label: Unit }, { field: state, label: Status }] }
       - id: pivot
         label: Pivot
         icon: pivot
+        mobile: false
         pivot:
           fields:
             - { field: date_done, column: Date, type: date }
@@ -46,6 +52,7 @@ components:
       - id: graph
         label: Graph
         icon: graph
+        mobile: false
         category_field: product_name
         measure_field: scrap_qty
         measure_label: Quantity
