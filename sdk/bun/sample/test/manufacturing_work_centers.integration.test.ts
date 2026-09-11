@@ -34,9 +34,10 @@ describe('Manufacturing Work Centers parity slice', () => {
   test('matches the Odoo work center action modes and responsive cards', () => {
     const list = yaml('pages/work-centers.yaml').components[0];
     expect(list.source).toBe('mrp_workcenters');
-    expect(list.view_navigation).toBe('icons');
+    expect(list.view_navigation).toBe('tabs');
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
-    expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ label: 'Kanban', mobile: true });
+    expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ label: 'Kanban' });
+    expect(list.views.find((view: any) => view.id === 'kanban')).not.toHaveProperty('mobile');
     expect(list.responsive_card).toBeUndefined();
     expect(list.form_view).toEqual({ page: 'apps/services/manufacturing/pages/work-center-detail.yaml', side_panel: false });
     expect(yaml('api/work-centers.yaml').actions.find((action: any) => action.id === 'view_mrp_workcenter')).toMatchObject({ type: 'navigate', navigate_to: '/work-centers/detail', permission: 'manufacturing.read' });

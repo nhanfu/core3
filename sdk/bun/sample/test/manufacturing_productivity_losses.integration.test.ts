@@ -58,7 +58,7 @@ describe('Manufacturing Productivity Losses Odoo action parity', () => {
     const form = yaml('pages/productivity-loss-detail.yaml').components[0];
     const report = listApi();
 
-    expect(list).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'mrp_productivity_loss_logs', create_action: 'create_mrp_productivity_loss', view_navigation: 'icons' });
+    expect(list).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'mrp_productivity_loss_logs', create_action: 'create_mrp_productivity_loss', view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'graph', 'pivot', 'form']);
     expect(list.filters.map((filter: any) => filter.label)).toEqual(['Work Center', 'Loss Reason', 'Effectiveness']);
     expect(list.columns.map((column: any) => column.label)).toEqual([

@@ -3,7 +3,8 @@ datasources:
   - id: mrp_production_states
     single: false
     permission: manufacturing.read
-    data: [{ value: Draft, label: Draft }, { value: Confirmed, label: Confirmed }, { value: In Progress, label: In Progress }, { value: To Close, label: To Close }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
+    mock_data:
+      default: [{ value: Draft, label: Draft }, { value: Confirmed, label: Confirmed }, { value: In Progress, label: In Progress }, { value: To Close, label: To Close }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
   - id: mrp_bom_lookup
     single: false
     permission: manufacturing.read

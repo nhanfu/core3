@@ -12,7 +12,7 @@ components:
       - { field: loss_reason, label: Loss Reason, options_source: mrp_productivity_loss_reasons }
       - { field: loss_type, label: Effectiveness, options: [{ id: Availability, label: Availability Losses }, { id: Performance, label: Performance Losses }, { id: Quality, label: Quality Losses }, { id: Productive, label: Fully Productive }] }
     date_range: { label: Date, from_field: from_date, to_field: to_date, presets: [month, year, all], preset_style: select }
-    view_navigation: icons
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
       - id: graph

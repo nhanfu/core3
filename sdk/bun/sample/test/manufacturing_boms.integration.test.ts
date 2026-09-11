@@ -36,7 +36,7 @@ describe('Manufacturing Bills of Materials parity slice', () => {
     expect(listPage.page).toMatchObject({ id: 'boms', route: '/boms', auth: { require: ['manufacturing.read'] } });
     expect(detailPage.page).toMatchObject({ id: 'bom-detail', route: '/boms/detail', auth: { require: ['manufacturing.read'] } });
     expect(list).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'mrp_boms', row_open_action: 'view_mrp_bom' });
-    expect(list).toMatchObject({ view_navigation: 'icons' });
+    expect(list).toMatchObject({ view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
     expect(list.views.find((view: any) => view.id === 'list')).not.toHaveProperty('mobile', false);
     expect(list.views.find((view: any) => view.id === 'kanban')).not.toHaveProperty('mobile', false);

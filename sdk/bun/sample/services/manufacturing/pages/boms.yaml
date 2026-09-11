@@ -10,7 +10,7 @@ components:
     filters:
       - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }
       - { field: bom_type, label: BoM Type, options: [{ id: Manufacture this product, label: Manufacture this product }, { id: Kit, label: Kit }] }
-    view_navigation: icons
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
       - id: kanban

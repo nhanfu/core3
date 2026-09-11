@@ -10,7 +10,7 @@ components:
     filters:
       - { field: state, label: Status, options_source: mrp_production_states }
       - { field: priority, label: Priority, options: [{ id: Urgent, label: Urgent }, { id: Normal, label: Normal }] }
-    view_navigation: icons
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
       - id: kanban

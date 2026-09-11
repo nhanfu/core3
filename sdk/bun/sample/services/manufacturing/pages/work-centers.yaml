@@ -8,14 +8,13 @@ components:
     create_label: New
     search: { label: Search work centers, placeholder: Search work centers or codes... }
     filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
-    view_navigation: icons
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
       - id: kanban
         label: Kanban
         icon: dashboard
         group_by: working_state
-        mobile: true
         card: { title: name, subtitle: code, fields: [{ field: time_efficiency, label: Time Efficiency }, { field: oee_target, label: OEE Target }] }
     form_view: { page: apps/services/manufacturing/pages/work-center-detail.yaml, side_panel: false }
     row_key: id

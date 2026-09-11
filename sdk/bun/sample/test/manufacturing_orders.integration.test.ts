@@ -34,11 +34,15 @@ describe('Manufacturing Orders parity slice', () => {
     expect(detailPage.actions).toBeUndefined();
     expect(listPage.page).toMatchObject({ id: 'manufacturing-orders', route: '/manufacturing-orders' });
     expect(detailPage.page).toMatchObject({ id: 'manufacturing-detail', route: '/manufacturing-orders/detail' });
-    expect(listPage.components[0]).toMatchObject({ source: 'mrp_productions', row_open_action: 'view_mrp_production', view_navigation: 'icons' });
+    expect(listPage.components[0]).toMatchObject({ source: 'mrp_productions', row_open_action: 'view_mrp_production', view_navigation: 'tabs' });
     expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
     expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'mrp_production_detail' });
     expect(detailPage.components[0].notebook.tabs.map((tab: any) => tab.label)).toEqual(['Components', 'Work Orders', 'Miscellaneous']);
     expect(discovered.pageDatasources.get('manufacturing-orders')).toEqual(['mrp_production_states', 'mrp_bom_lookup', 'mrp_productions']);
+    expect(listApi().datasources.find((source: any) => source.id === 'mrp_production_states')).toMatchObject({
+      mock_data: { default: expect.arrayContaining([{ value: 'Draft', label: 'Draft' }, { value: 'Done', label: 'Done' }]) },
+    });
+    expect(listApi().datasources.find((source: any) => source.id === 'mrp_production_states')).not.toHaveProperty('data');
     expect(discovered.pageDatasources.get('manufacturing-detail')).toEqual(['mrp_production_detail', 'mrp_production_workorders', 'mrp_production_moves']);
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/manufacturing-orders', page: 'manufacturing-orders', module: 'manufacturing' }),
@@ -49,12 +53,14 @@ describe('Manufacturing Orders parity slice', () => {
   test('seeds all MO states, work orders, moves, search, empty, detail, and error fixtures deterministically', async () => {
     const { database, repository } = await repositoryForTest();
     const list = listApi().datasources.find((source: any) => source.id === 'mrp_productions');
+    const states = listApi().datasources.find((source: any) => source.id === 'mrp_production_states');
     const detail = detailApi().datasources.find((source: any) => source.id === 'mrp_production_detail');
     const workorders = detailApi().datasources.find((source: any) => source.id === 'mrp_production_workorders');
     const moves = detailApi().datasources.find((source: any) => source.id === 'mrp_production_moves');
     const params = { q: null, state: null, priority: null, fixture_state: null };
 
     expect((await repository.querySource(list, params, 0, 50)).data.map((row: any) => row.state)).toEqual(['Cancelled', 'Done', 'To Close', 'In Progress', 'Confirmed', 'Draft']);
+    expect((await repository.querySource(states, {}, 0, 50)).data.map((row: any) => row.value)).toEqual(['Draft', 'Confirmed', 'In Progress', 'To Close', 'Done', 'Cancelled']);
     expect((await repository.querySource(list, { ...params, q: 'Wood Panel' }, 0, 50)).data).toMatchObject([{ id: 'mo-progress-001', workorder_count: 3 }]);
     expect((await repository.querySource(list, { ...params, state: 'To Close' }, 0, 50)).data).toMatchObject([{ id: 'mo-to-close-001', qty_produced: 8 }]);
     expect((await repository.querySource(list, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
