@@ -1,12 +1,13 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-2-implemented`
+Status: `batch-4-implemented`
 
 This document remains the implementation gate and evidence record. Batch 1
 implements the coherent Core3 job-position/openings and applicant queues,
 including list/kanban/detail/filter/workflow states. Batch 2 adds the
 Recruitment Analysis graph/pivot action with deterministic report fixtures,
-search filters, and explicit empty/failed datasource states.
+search filters, and explicit empty/failed datasource states. Batch 4 adds the
+bounded Talent Pools list/kanban/form and applicant-membership action.
 
 ## Reference gate and exact limitation
 
@@ -323,3 +324,78 @@ against the installed reference:
   `/tmp/odoo-recruitment/degrees-mobile.png`.
 
 Screenshots are intentionally not committed.
+
+## Batch 4 implementation record — Recruitment Talent Pools
+
+The installed personal Odoo reference was inspected from
+`/home/nhanjs/projects/odoo` at revision
+`659759969d535d286b656c96b675e4612b925ddd` and from the authenticated
+`http://127.0.0.1:8069` instance in database `core3_personal` on 2026-09-11.
+The source contract is `action_hr_talent_pool` with `kanban,list,form` and
+the linked `talent_pool_add_applicants` dialog. The live reference showed the
+Developer pool, manager/company/tags, three talents, and the Add Applicants
+dialog. The Odoo action routes observed were `/odoo/talent-pool`,
+`/odoo/talent-pool/1`, and the runtime-generated
+`/odoo/talent-pool/1/action-651`.
+
+Core3 implements `/recruitment/talent-pools`,
+`/recruitment/talent-pools/detail?id=talent-pool-developers`, and
+`/recruitment/talent-pools/talents?pool_id=talent-pool-developers`. The page
+YAML remains layout-only and the page-scoped API YAML is joined by matching
+`page.id`. The migration seeds stable Developer, Engineering Bench,
+Leadership Shortlist, and archived 2025 Archive pools, deterministic
+memberships, and two unpooled active applicants for the add-membership flow.
+Create/edit/archive/restore/delete and membership add/remove actions use the
+existing recruitment service with recruitment-manager permissions, duplicate
+and validation guards, missing/transport/empty states, and row-version
+concurrency checks. No page-local SQL or generated/current-time fixture data
+was added.
+
+Authenticated browser evidence was captured and inspected at exact viewport
+sizes. Screenshots are outside Git under `/tmp`:
+
+| System | State | Path | Dimensions | SHA-256 |
+| --- | --- | --- | --- | --- |
+| Odoo | kanban desktop | `/tmp/odoo-recruitment/talent-pools-kanban-desktop-1440x900-20260911.png` | 1440x900 | `46609fe882e08e2b3e5137aef2a3b39cdee7774243bf7df29a6f85d21c2661e8` |
+| Odoo | list desktop | `/tmp/odoo-recruitment/talent-pools-list-desktop-1440x900-20260911.png` | 1440x900 | `592153d157e694fc098e74dc37d18736a703d6dc65c6c6cfc9c7bc935f762e0d` |
+| Odoo | detail desktop | `/tmp/odoo-recruitment/talent-pool-detail-desktop-1440x900-20260911.png` | 1440x900 | `aa63aaedb01f0272c3f5ef1218f76e3c867d292055dd4c75f5fc06dbf2eef363` |
+| Odoo | talents desktop | `/tmp/odoo-recruitment/talent-pool-talents-desktop-1440x900-20260911.png` | 1440x900 | `cace04918d9b2d179eeafbc832c94e3e701fb3699a74667400e004f8de019b20` |
+| Odoo | add-applicant desktop | `/tmp/odoo-recruitment/talent-pool-add-applicant-desktop-1440x900-20260911.png` | 1440x900 | `448e1ea894df45f384b2e1e1c032cd8b8a08afbf8d7302ae534fa2a916c16839` |
+| Odoo | kanban mobile | `/tmp/odoo-recruitment/talent-pools-kanban-mobile-390x844-20260911.png` | 390x844 | `2b167a49d34133f44fc0d0d708d74e5bcef00c0fe3a103ab424cb3e1e15f5e37` |
+| Odoo | detail mobile | `/tmp/odoo-recruitment/talent-pool-detail-mobile-390x844-20260911.png` | 390x844 | `32b659832cc4e0ea92a3857b161b23da90d6654389704b819453cad83d311a01` |
+| Odoo | talents mobile | `/tmp/odoo-recruitment/talent-pool-talents-mobile-390x844-20260911.png` | 390x844 | `821a6857d71d1705585cb20080864351558053da16e5f251b3a6f5085b93aafc` |
+| Core3 | kanban desktop | `/tmp/core3-recruitment/talent-pools-kanban-desktop-1440x900-20260911.png` | 1440x900 | `b62da99e2544686773ba665147ef384547ab509461292789812ba4d1642bedbf` |
+| Core3 | detail desktop | `/tmp/core3-recruitment/talent-pool-detail-desktop-1440x900-20260911.png` | 1440x900 | `7004533bb639bf1e1490915305304fe0b04e77885e7bdbcc807aa9d265fc1f21` |
+| Core3 | talents desktop | `/tmp/core3-recruitment/talent-pool-talents-desktop-1440x900-20260911.png` | 1440x900 | `74a8db86d000e5d866e7318b3cfdb24144450f5b3b39b29a6fb620f2ca01205f` |
+| Core3 | add-applicant desktop | `/tmp/core3-recruitment/talent-pool-add-applicant-desktop-1440x900-20260911.png` | 1440x900 | `e54d7a086b67267fa7b4f93684efe0d5d84794073f51aa029ccef1bd9749eb44` |
+| Core3 | kanban mobile | `/tmp/core3-recruitment/talent-pools-kanban-mobile-390x844-20260911.png` | 390x844 | `6ec96abefe4b29462bb1ed5c679b05b9025a0f1a3e32e25aa9bf45475fb7ebbc` |
+| Core3 | detail mobile | `/tmp/core3-recruitment/talent-pool-detail-mobile-390x844-20260911.png` | 390x844 | `fa2f2ac92168f48ff1a0126cfff760c0a019c8f125c74469387d86f77725cf8e` |
+| Core3 | talents mobile | `/tmp/core3-recruitment/talent-pool-talents-mobile-390x844-20260911.png` | 390x844 | `4ba81890c3510aab048aece7cf7ad8d5bd5ff32395704c5020e910cc4ba2a197` |
+| Core3 | add-applicant mobile | `/tmp/core3-recruitment/talent-pool-add-applicant-mobile-390x844-20260911.png` | 390x844 | `119ceb07f4d2c92b7b9689cc83a44768b2741086ddc0629beea7f918c0356369` |
+
+The final Core3 browser pass reported zero page errors, zero failed requests,
+and `scrollWidth === clientWidth` at 390x844. The add-applicant options were
+the stable unpooled applicants Jordan Lee and Riley Morgan. The Core3 visual
+residuals are the Fluent shell versus Odoo's purple shell, simpler projected
+tag/company/color controls, and the absence of Odoo's chatter, matching-star
+widget, and graph/calendar/activity applicant views. The linked-membership
+route is canonical Core3 navigation rather than Odoo's runtime-generated
+action suffix.
+
+Focused verification from `sdk/bun/sample`:
+
+```text
+bun test test/recruitment_talent_pools.integration.test.ts
+4 passed, 0 failed, 55 expect calls
+bun run audit
+UI audit: 476 pages, 483 routes, 829 datasources
+bunx eslint test/recruitment_talent_pools.integration.test.ts
+passed
+git diff --check
+passed
+```
+
+Deferred: full applicant view-mode parity from the talent-pool action
+(graph/calendar/pivot/activity), native many-to-many/tag and color widgets,
+CV/chatter/followers, richer applicant/job propagation, and additional
+interviewer/company-specific policy variants.
