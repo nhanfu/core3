@@ -1,0 +1,95 @@
+page: { id: industries }
+datasources:
+  - id: industry_states
+    permission: base.reference.read
+    query: "SELECT value, label FROM (VALUES ('active', 'Active'), ('archived', 'Archived')) states(value, label)"
+  - id: industries
+    permission: base.reference.read
+    error_states: { transport_error: { status: 503, code: BASE_INDUSTRIES_UNAVAILABLE, message: Industries are temporarily unavailable. } }
+    query: "SELECT i.id, i.row_version, i.name, i.full_name, i.active FROM base_industries i WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((COALESCE(:active, '') IN ('', 'active') AND i.active = true) OR (:active = 'archived' AND i.active = false)) AND (:q IS NULL OR i.name ILIKE '%' || :q || '%' OR COALESCE(i.full_name, '') ILIKE '%' || :q || '%') ORDER BY i.name, i.id"
+actions:
+  - id: create_industry
+    type: server_form
+    permission: base.reference.write
+    title: New Industry
+    action: base.reference.industries.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [industries]
+    mutation:
+      operation: insert
+      table: base_industries
+      generated: [id]
+      fields: [name, full_name]
+      required: [name]
+      defaults: { active: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_industries WHERE LOWER(name) = LOWER(:name))", status: 409, code: BASE_INDUSTRY_NAME_EXISTS, message: An industry with this name already exists. }]
+      result: { query: "SELECT * FROM base_industries WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: full_name, label: Full Name, type: text }
+  - id: edit_industry
+    type: server_form
+    permission: base.reference.write
+    title: Edit Industry
+    action: base.reference.industries.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [industries]
+    mutation:
+      operation: update
+      table: base_industries
+      fields: [name, full_name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM base_industries WHERE id = :id AND active = true", status: 404, code: BASE_INDUSTRY_NOT_FOUND, message: Active industry not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_industries WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: BASE_INDUSTRY_NAME_EXISTS, message: An industry with this name already exists. }
+      result: { query: "SELECT * FROM base_industries WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: full_name, label: Full Name, type: text }
+  - id: archive_industry
+    type: server
+    permission: base.reference.write
+    action: base.reference.industries.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [industries]
+    params: { values: { active: false } }
+    mutation:
+      operation: update
+      table: base_industries
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM base_industries WHERE id = :id AND active = true", status: 409, code: BASE_INDUSTRY_ALREADY_ARCHIVED, message: Industry is already archived or unavailable. }]
+      result: { query: "SELECT * FROM base_industries WHERE id = :id" }
+  - id: unarchive_industry
+    type: server
+    permission: base.reference.write
+    action: base.reference.industries.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [industries]
+    params: { values: { active: true } }
+    mutation:
+      operation: update
+      table: base_industries
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM base_industries WHERE id = :id AND active = false", status: 409, code: BASE_INDUSTRY_ALREADY_ACTIVE, message: Industry is already active or unavailable. }]
+      result: { query: "SELECT * FROM base_industries WHERE id = :id" }
+  - id: delete_industry
+    type: server
+    permission: base.reference.write
+    action: base.reference.industries.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [industries]
+    params: { id: '{row.id}' }
+    mutation:
+      operation: delete
+      table: base_industries
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM base_industries WHERE id = :id", status: 404, code: BASE_INDUSTRY_NOT_FOUND, message: Industry not found. }]

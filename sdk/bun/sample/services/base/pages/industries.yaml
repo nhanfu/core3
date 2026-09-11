@@ -1,0 +1,24 @@
+title: Industries
+page: { id: industries, route: /base-industries, breadcrumb: [Contacts, Configuration, Industries], auth: { require: [base.reference.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: industries
+    search: { label: Search industries, placeholder: 'Search...' }
+    filters: [{ field: active, label: Status, options_source: industry_states }]
+    inline_edit:
+      create_action: create_industry
+      update_action: edit_industry
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, placeholder: 'e.g. Software' }
+        - { field: full_name, type: text, placeholder: 'Full industry description' }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: full_name, label: Full Name }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: archive_industry, label: Archive, icon: archive, variant: danger, show_if: 'row.active === true' }, { id: unarchive_industry, label: Unarchive, icon: refresh, show_if: 'row.active === false' }, { id: delete_industry, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No industries found, description: No industries match the current search or filter. }

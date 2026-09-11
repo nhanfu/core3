@@ -1,0 +1,47 @@
+version: 0.0.7
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_industries (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        full_name VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 10:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 10:00:00'
+      );
+      INSERT INTO base_industries(id, name, full_name, active, created_at, updated_at) VALUES
+        ('industry-administrative', 'Administrative/Utilities', 'N - ADMINISTRATIVE AND SUPPORT SERVICE ACTIVITIES', true, TIMESTAMP '2026-01-15 10:00:00', TIMESTAMP '2026-01-15 10:00:00'),
+        ('industry-agriculture', 'Agriculture', 'A - AGRICULTURE, FORESTRY AND FISHING', true, TIMESTAMP '2026-01-15 10:01:00', TIMESTAMP '2026-01-15 10:01:00'),
+        ('industry-construction', 'Construction', 'F - CONSTRUCTION', true, TIMESTAMP '2026-01-15 10:02:00', TIMESTAMP '2026-01-15 10:02:00'),
+        ('industry-education', 'Education', 'P - EDUCATION', true, TIMESTAMP '2026-01-15 10:03:00', TIMESTAMP '2026-01-15 10:03:00'),
+        ('industry-energy', 'Energy supply', 'D - ELECTRICITY, GAS, STEAM AND AIR CONDITIONING SUPPLY', true, TIMESTAMP '2026-01-15 10:04:00', TIMESTAMP '2026-01-15 10:04:00'),
+        ('industry-entertainment', 'Entertainment', 'R - ARTS, ENTERTAINMENT AND RECREATION', true, TIMESTAMP '2026-01-15 10:05:00', TIMESTAMP '2026-01-15 10:05:00'),
+        ('industry-extraterritorial', 'Extraterritorial', 'U - ACTIVITIES OF EXTRATERRITORIAL ORGANISATIONS AND BODIES', true, TIMESTAMP '2026-01-15 10:06:00', TIMESTAMP '2026-01-15 10:06:00'),
+        ('industry-finance', 'Finance/Insurance', 'K - FINANCIAL AND INSURANCE ACTIVITIES', true, TIMESTAMP '2026-01-15 10:07:00', TIMESTAMP '2026-01-15 10:07:00'),
+        ('industry-food', 'Food/Hospitality', 'I - ACCOMMODATION AND FOOD SERVICE ACTIVITIES', true, TIMESTAMP '2026-01-15 10:08:00', TIMESTAMP '2026-01-15 10:08:00'),
+        ('industry-health', 'Health/Social', 'Q - HUMAN HEALTH AND SOCIAL WORK ACTIVITIES', true, TIMESTAMP '2026-01-15 10:09:00', TIMESTAMP '2026-01-15 10:09:00'),
+        ('industry-households', 'Households', 'T - ACTIVITIES OF HOUSEHOLDS AS EMPLOYERS' || chr(59) || ' UNDIFFERENTIATED GOODS- AND SERVICES-PRODUCING ACTIVITIES OF HOUSEHOLDS FOR OWN USE', true, TIMESTAMP '2026-01-15 10:10:00', TIMESTAMP '2026-01-15 10:10:00'),
+        ('industry-it', 'IT/Communication', 'J - INFORMATION AND COMMUNICATION', true, TIMESTAMP '2026-01-15 10:11:00', TIMESTAMP '2026-01-15 10:11:00'),
+        ('industry-manufacturing', 'Manufacturing', 'C - MANUFACTURING', true, TIMESTAMP '2026-01-15 10:12:00', TIMESTAMP '2026-01-15 10:12:00'),
+        ('industry-mining', 'Mining', 'B - MINING AND QUARRYING', true, TIMESTAMP '2026-01-15 10:13:00', TIMESTAMP '2026-01-15 10:13:00'),
+        ('industry-other-services', 'Other Services', 'S - OTHER SERVICE ACTIVITIES', true, TIMESTAMP '2026-01-15 10:14:00', TIMESTAMP '2026-01-15 10:14:00'),
+        ('industry-public-admin', 'Public Administration', 'O - PUBLIC ADMINISTRATION AND DEFENCE' || chr(59) || ' COMPULSORY SOCIAL SECURITY', true, TIMESTAMP '2026-01-15 10:15:00', TIMESTAMP '2026-01-15 10:15:00'),
+        ('industry-real-estate', 'Real Estate', 'L - REAL ESTATE', true, TIMESTAMP '2026-01-15 10:16:00', TIMESTAMP '2026-01-15 10:16:00'),
+        ('industry-scientific', 'Scientific', 'M - PROFESSIONAL, SCIENTIFIC AND TECHNICAL ACTIVITIES', true, TIMESTAMP '2026-01-15 10:17:00', TIMESTAMP '2026-01-15 10:17:00'),
+        ('industry-transportation', 'Transportation/Logistics', 'H - TRANSPORTATION AND STORAGE', true, TIMESTAMP '2026-01-15 10:18:00', TIMESTAMP '2026-01-15 10:18:00'),
+        ('industry-water', 'Water supply', 'E - WATER SUPPLY' || chr(59) || ' SEWERAGE, WASTE MANAGEMENT AND REMEDIATION ACTIVITIES', true, TIMESTAMP '2026-01-15 10:19:00', TIMESTAMP '2026-01-15 10:19:00'),
+        ('industry-wholesale', 'Wholesale/Retail', 'G - WHOLESALE AND RETAIL TRADE' || chr(59) || ' REPAIR OF MOTOR VEHICLES AND MOTORCYCLES', true, TIMESTAMP '2026-01-15 10:20:00', TIMESTAMP '2026-01-15 10:20:00'),
+        ('industry-archived-fixture', 'Archived Industry', 'Z - ARCHIVED INDUSTRY FIXTURE', false, TIMESTAMP '2026-01-15 10:21:00', TIMESTAMP '2026-01-15 10:21:00')
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        full_name = EXCLUDED.full_name,
+        active = EXCLUDED.active,
+        updated_at = EXCLUDED.updated_at;
+    down: |
+      DROP TABLE IF EXISTS base_industries;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
