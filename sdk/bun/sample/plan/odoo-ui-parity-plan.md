@@ -46,23 +46,24 @@ but its menu structure or visual/UX details remain approximate.
 ## Live Odoo reference environment
 
 - URL: `http://localhost:8069`
-- Database: `core3_personal`
+- Database: `core3_codex_demo`
 - Login email: `codex@core3.local`
 - Login password: `Core3Odoo2026!`
-- Docker Compose file: `/home/nhanjs/projects/odoo-core3-personal/docker-compose.yml`
-- Restore/start command: `docker compose -f /home/nhanjs/projects/odoo-core3-personal/docker-compose.yml up -d`
-- Stop command: `docker compose -f /home/nhanjs/projects/odoo-core3-personal/docker-compose.yml stop`
+- Odoo container: `odoo-core3-codex`
+- PostgreSQL container: `odoo-core3-codex-db`
+- Start command: `docker start odoo-core3-codex-db odoo-core3-codex`
+- Stop command: `docker stop odoo-core3-codex odoo-core3-codex-db`
 
-The former `odoo-core3-reference` stack is stopped. The active Compose project
-contains the owned Odoo 19 container, PostgreSQL service, and disposable demo
-database used for UI comparison. Keep credentials out of source code outside
-this local parity plan.
+The former `odoo-core3-personal` pair is stopped with its volumes preserved for
+rollback. The active `odoo-core3-codex` pair is a separately provisioned Odoo
+19 reference database, initialized with demo data and the local parity addons.
+Keep credentials out of source code outside this local parity plan.
 
-The personal `core3_personal` database has demo-enabled parity reference modules
+The `core3_codex_demo` database has demo-enabled parity reference modules
 installed, including CRM, Sales, Purchase, Accounting, Inventory, POS, Events,
 Surveys, Employees, Expenses, Time Off, Timesheets, Project, Maintenance,
-Fleet, Manufacturing, Email Marketing, and Live Chat. The Compose init command
-keeps this module set reproducible for a fresh owned reference database.
+Fleet, Manufacturing, Email Marketing, and Live Chat. Its verified demo data
+includes partners, products, CRM leads, events, and sales orders.
 
 ## Module register
 
