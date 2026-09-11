@@ -2,6 +2,63 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-11 bounded Work Orders Analysis contract
+
+- Source inspection was completed first against the authenticated personal
+  database `core3_personal` at `http://localhost:8069` with the configured
+  `codex@core3.local` account. The next uncovered action is Manufacturing /
+  Reporting / Work Orders: menu `mrp.menu_mrp_work_order_report` (database ID
+  553, parent Reporting ID 543), action `mrp.mrp_workorder_report` (database
+  action ID 833), model `mrp.workorder`, and route
+  `/odoo/work-orders-analysis`. The menu is restricted to
+  `mrp.group_mrp_routings` (database group ID 91, “Manage Work Order
+  Operations”); the model access rule grants the MRP user/administrator read,
+  write, create, and delete, while this report action itself has no create or
+  delete controls.
+- The action declares `graph,pivot,list,form` and defaults to the OR-combined
+  To Do (`ready`), Blocked, and In Progress (`progress`) filters plus Work
+  center grouping. The source search view `mrp.view_mrp_production_work_order_search`
+  (view 2454) exposes Work Order, Work Center, Manufacturing Order, Product,
+  Component, To Do, Blocked, In Progress, Finished, Cancelled, Late, and
+  Work Center/Manufacturing Order/Status/Date groupings. The report list view
+  `mrp.mrp_production_workorder_tree_view` (view 2457, inheriting editable
+  view 2455) uses Operation, Work Center, Product, Quantity, Expected
+  Duration, Real Duration, action controls, and Status. The report graph is
+  `mrp.workcenter_line_graph` (view 2461), with Duration (minutes), Duration
+  Per Unit, and Expected Duration measures; the pivot is
+  `mrp.workcenter_line_pivot` (view 2462). The form is
+  `mrp.mrp_production_workorder_form_view_inherit` (view 2458): statusbar,
+  Work Order, Work Center, Product, Quantity, Lot/Serial Numbers, Start Date,
+  Expected Duration, Manufacturing Order, Time Tracking, and Components. It
+  has `create="0"` and `delete="0"`; existing records open in the source
+  editable form, but no new report records can be created from this action.
+- The live personal database contains three work orders, all under Assembly 1
+  in the default report scope. The authenticated reference renders one
+  populated Assembly 1 group (three rows), empty Drill 1 and Assembly 2
+  groups, a 360:00 Expected Duration total, and 00:00 Real Duration. The
+  mobile source keeps the graph toolbar and collapses the shell/search
+  controls while retaining the same 390px-wide report surface.
+- Authenticated source captures were captured at exact 1440x900 and 390x844:
+  `/tmp/odoo-manufacturing-work-orders-analysis-20260911/desktop-{graph,pivot,list-clean,form}.png`
+  and
+  `/tmp/odoo-manufacturing-work-orders-analysis-20260911/mobile-{graph,pivot,list,form-clean}.png`.
+  All captures fit their viewport and had no HTTP errors or page errors; Odoo
+  emitted only a benign aborted background `/mail/data` request while the
+  page context closed. Hashes are recorded here before implementation so the
+  later Core3 comparison remains reproducible:
+
+  | Capture | Dimensions | SHA-256 |
+  | --- | --- | --- |
+  | Odoo desktop graph | 1440x900 | `cb5672384403eabf109816e2d1f7721afa57adc63ed2416e5f6bdb15f9eb647` |
+  | Odoo desktop pivot | 1440x900 | `54ca3bb1235db0bbdb326652a0a8b79154aa8075f258874f71f6b6371b6e1e34` |
+  | Odoo desktop list | 1440x900 | `02c32e0535a2a4ad74f8276b65d71c377b9b5ec2bcbed6beceee92a463c58bca` |
+  | Odoo desktop form | 1440x900 | `0b420e6d36b58827462eea46edfff58da4891318b0ae74c04f5d1614ae37cc1e` |
+  | Odoo mobile graph | 390x844 | `56ef5bf287db44723c043682160b32de0c29d0c2767c922686a0d8170912e232` |
+  | Odoo mobile pivot | 390x844 | `a128e896c5fdd613de38ecf28f214f0655224c09b2121ba28343256f9a9df4ac` |
+  | Odoo mobile list | 390x844 | `b5a85ab9f20172c76b26ef47c9257013de12bec7ceb8e6677491af30fd8adf55` |
+  | Odoo mobile form | 390x844 | `69597e50b6cf962bf5b1c5c17193e6ef6376dd34ba64100a5c41efdd3b167c13` |
+
+
 ## 2026-09-11 bounded Manufacturing Settings follow-up
 
 - Revalidated the next uncovered installed visible Manufacturing action in the
