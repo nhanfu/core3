@@ -1,0 +1,43 @@
+title: Talent Pool
+page: { id: recruitment-talent-pool-detail, route: /recruitment/talent-pools/detail, breadcrumb: [Recruitment, Applications, By Talent Pools, Talent Pool], auth: { require: [recruitment.read] } }
+components:
+  - type: OdooFormView
+    source: recruitment_talent_pool_detail
+    title_field: name
+    subtitle_field: pool_manager
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_recruitment_talent_pools, label: Talent Pools, variant: secondary, permission: recruitment.read }
+      - { id: add_recruitment_pool_talent, label: Add Talent, variant: primary, permission: recruitment.manage }
+      - { id: edit_recruitment_talent_pool, label: Edit, variant: primary, permission: recruitment.manage }
+      - { id: archive_recruitment_talent_pool, label: Archive, variant: danger, permission: recruitment.manage, show_if: 'record.active === true' }
+      - { id: restore_recruitment_talent_pool, label: Restore, variant: secondary, permission: recruitment.manage, show_if: 'record.active === false' }
+      - { id: delete_recruitment_talent_pool, label: Delete, variant: danger, permission: recruitment.manage, confirm: Delete this talent pool? }
+    stat_buttons:
+      - { id: view_recruitment_talent_pool_talents, label: Talents, value_field: talent_count, permission: recruitment.read }
+    group_columns: 2
+    groups:
+      - title: Talent Pool
+        fields:
+          - { field: name, label: Title }
+          - { field: pool_manager, label: Pool Manager }
+          - { field: tags, label: Tags }
+          - { field: company_name, label: Company }
+      - title: Overview
+        fields:
+          - { field: talent_count, label: '# Talents' }
+          - { field: active_label, label: Status }
+          - { field: description, label: Description, type: textarea, wide: true }
+    notebook:
+      active: talents
+      tabs:
+        - id: talents
+          label: Talents
+          groups:
+            - title: Pool membership
+              fields:
+                - { field: talent_summary, label: '' }
+                - { field: membership_help, label: '' }

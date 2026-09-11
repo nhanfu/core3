@@ -1,0 +1,51 @@
+page: { id: recruitment-talent-pool-talents }
+datasources:
+  - id: recruitment_talent_pool_members
+    permission: recruitment.read
+    error_states:
+      forbidden: { status: 403, code: RECRUITMENT_TALENT_POOL_MEMBERS_FORBIDDEN, message: You do not have permission to view pool talents. }
+      transport_error: { status: 503, code: RECRUITMENT_TALENT_POOL_MEMBERS_UNAVAILABLE, message: Pool talents are temporarily unavailable. }
+    query: "SELECT m.id, m.row_version, m.pool_id, p.name AS pool_name, a.id AS applicant_id, a.name AS applicant_name, CAST(a.applied_date AS VARCHAR) AS applied_date, a.stage, COALESCE(a.rating, 'Not rated') AS matching, COALESCE(a.source, '—') AS tags, COALESCE(a.recruiter, 'Unassigned') AS recruiter FROM recruitment_talent_pool_members m JOIN recruitment_talent_pools p ON p.id = m.pool_id JOIN recruitment_applicants a ON a.id = m.applicant_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND m.pool_id = :pool_id AND (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR COALESCE(a.recruiter, '') ILIKE '%' || :q || '%' OR COALESCE(a.source, '') ILIKE '%' || :q || '%') ORDER BY a.name, a.id"
+  - id: recruitment_pool_member_applicant_options
+    permission: recruitment.manage
+    error_states: { transport_error: { status: 503, code: RECRUITMENT_POOL_APPLICANTS_UNAVAILABLE, message: Applicant choices are temporarily unavailable. } }
+    query: "SELECT a.id AS value, a.name || ' — ' || COALESCE(a.opening_name, 'No opening') AS label FROM recruitment_applicants a WHERE a.archived = FALSE AND NOT EXISTS (SELECT 1 FROM recruitment_talent_pool_members m WHERE m.pool_id = :pool_id AND m.applicant_id = a.id) ORDER BY a.name, a.id"
+actions:
+  - { id: view_recruitment_pool_applicant, type: navigate, permission: recruitment.read, navigate_to: /applicants/detail, params: { id: '{row.applicant_id}' } }
+  - id: add_recruitment_pool_talent
+    type: server_form
+    permission: recruitment.manage
+    title: Add applicant(s) to the pool
+    action: recruitment.talent_pools.add_applicant
+    handler: yaml_mutation
+    operation: create
+    params: { pool_id: '{state.pool_id}' }
+    prefill: { pool_id: '{state.pool_id}' }
+    refresh: [recruitment_talent_pool_members, recruitment_pool_member_applicant_options, recruitment_talent_pool_detail]
+    mutation:
+      operation: insert
+      table: recruitment_talent_pool_members
+      generated: [id]
+      fields: [pool_id, applicant_id]
+      required: [pool_id, applicant_id]
+      guards:
+        - { query: "SELECT id FROM recruitment_talent_pools WHERE id = :pool_id AND active = TRUE", status: 404, code: RECRUITMENT_TALENT_POOL_NOT_FOUND, message: Active talent pool not found. }
+        - { query: "SELECT id FROM recruitment_applicants WHERE id = :applicant_id AND archived = FALSE", status: 404, code: RECRUITMENT_APPLICANT_NOT_FOUND, message: Applicant not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_talent_pool_members WHERE pool_id = :pool_id AND applicant_id = :applicant_id)", status: 409, code: RECRUITMENT_TALENT_POOL_MEMBER_EXISTS, message: This applicant is already in the talent pool. }
+      result: { query: "SELECT * FROM recruitment_talent_pool_members WHERE id = :id" }
+    fields:
+      - { field: pool_id, label: Talent Pool, type: hidden }
+      - { field: applicant_id, label: Applicants, type: select, options_source: recruitment_pool_member_applicant_options, required: true }
+  - id: remove_recruitment_pool_talent
+    type: server
+    permission: recruitment.manage
+    action: recruitment.talent_pools.remove_applicant
+    handler: yaml_mutation
+    operation: delete
+    refresh: [recruitment_talent_pool_members, recruitment_talent_pool_detail]
+    mutation:
+      operation: delete
+      table: recruitment_talent_pool_members
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_talent_pool_members WHERE id = :id", status: 404, code: RECRUITMENT_TALENT_POOL_MEMBER_NOT_FOUND, message: Talent pool membership not found. }

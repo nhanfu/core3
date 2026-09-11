@@ -16,6 +16,7 @@ menu:
       items:
         - { path: /applicants, label: Applicants, icon: users, permission: recruitment.read }
         - { path: /openings, label: Job Openings, icon: briefcase, permission: recruitment.read }
+        - { path: /recruitment/talent-pools, label: By Talent Pools, icon: users, permission: recruitment.read }
     - id: reporting
       label: Reporting
       items:

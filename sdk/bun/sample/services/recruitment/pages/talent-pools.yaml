@@ -1,0 +1,39 @@
+title: Talent Pools
+page: { id: recruitment-talent-pools, route: /recruitment/talent-pools, breadcrumb: [Recruitment, Applications, By Talent Pools], auth: { require: [recruitment.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_talent_pools
+    create_action: create_recruitment_talent_pool
+    create_label: New
+    search: { label: Search talent pools, placeholder: Search talent pools... }
+    filters:
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }
+    view_navigation: tabs
+    views:
+      - id: card
+        label: Kanban
+        icon: dashboard
+        card:
+          title: name
+          subtitle: pool_manager
+          fields:
+            - { field: company_name, label: '' }
+            - { field: talent_count_label, label: '' }
+            - { field: tags, label: '' }
+      - { id: list, label: List, icon: list }
+    form_view: { page: apps/services/recruitment/pages/talent-pool-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: view_recruitment_talent_pool
+    row_double_click_action: view_recruitment_talent_pool
+    row_actions: menu
+    columns:
+      - { field: name, label: Title, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: pool_manager, label: Pool Manager, sortable: true, mobile: true }
+      - { field: talent_count, label: '# Talents', align: right, mobile: true }
+      - { field: tags, label: Tags, mobile: true }
+      - { field: company_name, label: Company, optional: hide, mobile: false }
+      - { field: active_label, label: Status, optional: hide, mobile: false }
+      - { field: id, label: '', sortable: false, actions: [{ id: view_recruitment_talent_pool_talents, label: Talents, icon: users }, { id: edit_recruitment_talent_pool, label: Configuration, icon: settings, permission: recruitment.manage }, { id: archive_recruitment_talent_pool, label: Archive, icon: archive, permission: recruitment.manage, show_if: 'row.active === true' }, { id: restore_recruitment_talent_pool, label: Restore, icon: refresh, permission: recruitment.manage, show_if: 'row.active === false' }, { id: delete_recruitment_talent_pool, label: Delete, icon: delete, permission: recruitment.manage, variant: danger }] }
+    page_size: 25
+    empty_state: { title: No talent pools yet, description: Create a talent pool to keep promising applicants ready for future openings. }

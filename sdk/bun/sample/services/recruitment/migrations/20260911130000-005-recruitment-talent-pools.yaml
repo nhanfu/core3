@@ -1,0 +1,64 @@
+version: 0.0.5
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_talent_pools (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        pool_manager VARCHAR NOT NULL DEFAULT 'Recruitment Team',
+        tags VARCHAR,
+        company_name VARCHAR NOT NULL DEFAULT 'Visible to all',
+        color INTEGER NOT NULL DEFAULT 4,
+        description VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS recruitment_talent_pool_members (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        pool_id VARCHAR NOT NULL,
+        applicant_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        UNIQUE (pool_id, applicant_id)
+      );
+      CREATE INDEX IF NOT EXISTS recruitment_talent_pool_members_pool_idx
+        ON recruitment_talent_pool_members(pool_id);
+      CREATE INDEX IF NOT EXISTS recruitment_talent_pool_members_applicant_idx
+        ON recruitment_talent_pool_members(applicant_id);
+      INSERT OR IGNORE INTO recruitment_talent_pools
+        (id, name, pool_manager, tags, company_name, color, description, active)
+      VALUES
+        ('talent-pool-developers', 'Developer', 'Recruitment Team', 'IT', 'Visible to all', 4,
+         'Developers available for future engineering opportunities.', TRUE),
+        ('talent-pool-engineering', 'Engineering Bench', 'Alex Chen', 'Engineering, Immediate', 'Visible to all', 6,
+         'Candidates with strong systems and product engineering backgrounds.', TRUE),
+        ('talent-pool-leadership', 'Leadership Shortlist', 'Maya Singh', 'Leadership', 'Visible to all', 7,
+         'Experienced candidates suitable for people and delivery leadership roles.', TRUE),
+        ('talent-pool-archived', '2025 Archive', 'Recruitment Team', 'Archive', 'Visible to all', 2,
+         'Historical pool retained for audit and reporting.', FALSE);
+      INSERT OR IGNORE INTO recruitment_talent_pool_members (id, pool_id, applicant_id)
+      VALUES
+        ('talent-member-developers-001', 'talent-pool-developers', 'applicant-demo-001'),
+        ('talent-member-developers-002', 'talent-pool-developers', 'applicant-demo-002'),
+        ('talent-member-developers-003', 'talent-pool-developers', 'applicant-demo-003'),
+        ('talent-member-engineering-002', 'talent-pool-engineering', 'applicant-demo-002'),
+        ('talent-member-engineering-004', 'talent-pool-engineering', 'applicant-demo-004'),
+        ('talent-member-leadership-003', 'talent-pool-leadership', 'applicant-demo-003');
+    down: |
+      DELETE FROM recruitment_talent_pool_members
+        WHERE id IN ('talent-member-developers-001', 'talent-member-developers-002',
+          'talent-member-developers-003', 'talent-member-engineering-002',
+          'talent-member-engineering-004', 'talent-member-leadership-003');
+      DELETE FROM recruitment_talent_pools
+        WHERE id IN ('talent-pool-developers', 'talent-pool-engineering',
+          'talent-pool-leadership', 'talent-pool-archived');
+      DROP TABLE IF EXISTS recruitment_talent_pool_members;
+      DROP TABLE IF EXISTS recruitment_talent_pools;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

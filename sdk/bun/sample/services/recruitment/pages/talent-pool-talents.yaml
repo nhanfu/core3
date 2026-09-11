@@ -1,0 +1,23 @@
+title: Talents
+page: { id: recruitment-talent-pool-talents, route: /recruitment/talent-pools/talents, breadcrumb: [Recruitment, Applications, By Talent Pools, Talents], auth: { require: [recruitment.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_talent_pool_members
+    create_action: add_recruitment_pool_talent
+    create_label: Add Applicants
+    search: { label: Search talents, placeholder: Search applicants... }
+    row_key: id
+    row_open_action: view_recruitment_pool_applicant
+    row_double_click_action: view_recruitment_pool_applicant
+    row_actions: menu
+    columns:
+      - { field: applicant_name, label: Name, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: applied_date, label: Applied on, sortable: true, mobile: true }
+      - { field: stage, label: Stage, mobile: true }
+      - { field: matching, label: Matching, mobile: true }
+      - { field: tags, label: Tags, mobile: true }
+      - { field: recruiter, label: Recruiter, mobile: true }
+      - { field: id, label: '', sortable: false, actions: [{ id: view_recruitment_pool_applicant, label: Open Applicant, icon: external-link }, { id: remove_recruitment_pool_talent, label: Remove from Pool, icon: delete, permission: recruitment.manage, variant: danger }] }
+    page_size: 25
+    empty_state: { title: No Talents in the pool yet, description: Add applicants to keep a shortlist ready for future openings. }

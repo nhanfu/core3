@@ -1,0 +1,99 @@
+page: { id: recruitment-talent-pools }
+datasources:
+  - id: recruitment_talent_pools
+    permission: recruitment.read
+    error_states:
+      forbidden: { status: 403, code: RECRUITMENT_TALENT_POOLS_FORBIDDEN, message: You do not have permission to view talent pools. }
+      transport_error: { status: 503, code: RECRUITMENT_TALENT_POOLS_UNAVAILABLE, message: Recruitment talent pools are temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.name, p.pool_manager, p.tags, p.company_name, p.color, p.description, p.active, CASE WHEN p.active THEN 'Active' ELSE 'Archived' END AS active_label, COUNT(m.id) AS talent_count, CAST(COUNT(m.id) AS VARCHAR) || ' Talents' AS talent_count_label FROM recruitment_talent_pools p LEFT JOIN recruitment_talent_pool_members m ON m.pool_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND ((:active IS NULL AND p.active = TRUE) OR (:active = 'active' AND p.active = TRUE) OR (:active = 'archived' AND p.active = FALSE)) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.pool_manager, '') ILIKE '%' || :q || '%' OR COALESCE(p.tags, '') ILIKE '%' || :q || '%') GROUP BY p.id, p.row_version, p.name, p.pool_manager, p.tags, p.company_name, p.color, p.description, p.active ORDER BY p.active DESC, p.name, p.id"
+actions:
+  - { id: view_recruitment_talent_pool, type: navigate, permission: recruitment.read, navigate_to: /recruitment/talent-pools/detail, params: { id: '{row.id}' } }
+  - { id: view_recruitment_talent_pool_talents, type: navigate, permission: recruitment.read, navigate_to: /recruitment/talent-pools/talents, params: { pool_id: '{row.id}' } }
+  - id: create_recruitment_talent_pool
+    type: server_form
+    permission: recruitment.manage
+    title: New Talent Pool
+    action: recruitment.talent_pools.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_talent_pools]
+    mutation:
+      operation: insert
+      table: recruitment_talent_pools
+      generated: [id]
+      fields: [name, pool_manager, tags, company_name, color, description, active]
+      required: [name]
+      defaults: { pool_manager: Recruitment Team, company_name: Visible to all, color: 4, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_TALENT_POOL_NAME_REQUIRED, message: A talent pool title is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_talent_pools WHERE LOWER(name) = LOWER(:name))", status: 409, code: RECRUITMENT_TALENT_POOL_NAME_EXISTS, message: A talent pool with this title already exists. }
+      result: { query: "SELECT * FROM recruitment_talent_pools WHERE id = :id" }
+    fields:
+      - { field: name, label: Title, type: text, required: true }
+      - { field: pool_manager, label: Pool Manager, type: text }
+      - { field: tags, label: Tags, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: color, label: Color, type: number, min: 0, max: 11 }
+      - { field: description, label: Description, type: textarea }
+      - { field: active, label: Active, type: checkbox }
+  - id: edit_recruitment_talent_pool
+    type: server_form
+    permission: recruitment.manage
+    title: Edit Talent Pool
+    action: recruitment.talent_pools.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [recruitment_talent_pools, recruitment_talent_pool_detail]
+    mutation:
+      operation: update
+      table: recruitment_talent_pools
+      fields: [name, pool_manager, tags, company_name, color, description, active]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_talent_pools WHERE id = :id", status: 404, code: RECRUITMENT_TALENT_POOL_NOT_FOUND, message: Talent pool not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_TALENT_POOL_NAME_REQUIRED, message: A talent pool title is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_talent_pools WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: RECRUITMENT_TALENT_POOL_NAME_EXISTS, message: A talent pool with this title already exists. }
+      result: { query: "SELECT * FROM recruitment_talent_pools WHERE id = :id" }
+    fields:
+      - { field: name, label: Title, type: text, required: true }
+      - { field: pool_manager, label: Pool Manager, type: text }
+      - { field: tags, label: Tags, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: color, label: Color, type: number, min: 0, max: 11 }
+      - { field: description, label: Description, type: textarea }
+      - { field: active, label: Active, type: checkbox }
+  - id: archive_recruitment_talent_pool
+    type: server
+    permission: recruitment.manage
+    action: recruitment.talent_pools.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [recruitment_talent_pools, recruitment_talent_pool_detail]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: recruitment_talent_pools, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM recruitment_talent_pools WHERE id = :id", status: 404, code: RECRUITMENT_TALENT_POOL_NOT_FOUND, message: Talent pool not found. }], result: { query: "SELECT * FROM recruitment_talent_pools WHERE id = :id" } }
+  - id: restore_recruitment_talent_pool
+    type: server
+    permission: recruitment.manage
+    action: recruitment.talent_pools.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [recruitment_talent_pools, recruitment_talent_pool_detail]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: recruitment_talent_pools, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM recruitment_talent_pools WHERE id = :id", status: 404, code: RECRUITMENT_TALENT_POOL_NOT_FOUND, message: Talent pool not found. }], result: { query: "SELECT * FROM recruitment_talent_pools WHERE id = :id" } }
+  - id: delete_recruitment_talent_pool
+    type: server
+    permission: recruitment.manage
+    action: recruitment.talent_pools.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete talent pool {{row.name}}?'
+    refresh: [recruitment_talent_pools]
+    mutation:
+      operation: delete
+      table: recruitment_talent_pools
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_talent_pools WHERE id = :id", status: 404, code: RECRUITMENT_TALENT_POOL_NOT_FOUND, message: Talent pool not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_talent_pool_members WHERE pool_id = :id)", status: 409, code: RECRUITMENT_TALENT_POOL_HAS_TALENTS, message: Remove all talents before deleting this pool. }
