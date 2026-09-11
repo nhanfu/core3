@@ -10,7 +10,7 @@ components:
     search: { label: Search channels, placeholder: Search... }
     view_navigation: tabs
     views:
-      - id: kanban
+      - id: card
         label: Kanban
         icon: dashboard
         mobile: true

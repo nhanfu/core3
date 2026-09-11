@@ -48,7 +48,7 @@ type:
          limited_sessions_label, no_chats_during_call_label, rule_button_label, rule_chatbot_label,
          rule_url_regex, rule_countries, rules_help, widget_help, widget_script, widget_support_url)
       SELECT 'livechat-channel-demo-002', 'YourWebsite.com', 'YourWebsite.com', 'Have a question?',
-        'Hello, how can we help you today?', TRUE, TRUE, 18, 81, 'Mitchell Admin', 'English',
+        'Hello, how can we help you today?', TRUE, TRUE, 18, 81, 'Marc Demo, Mitchell Admin', 'English',
         'Discuss, Livechat', 0, 'Welcome!', 'Blue', 'Blue', '', 'Unlimited', 'Limited', 'No',
         'Show', 'None', '', '', 'To apply the rule only to certain pages of your website, enter a URL regex like /shop.',
         'Learn how to display a live chat bubble on your website and start chatting with visitors.',

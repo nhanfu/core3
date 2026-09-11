@@ -51,7 +51,7 @@ describe('Live Chat channels parity', () => {
     expect((await repository.querySource(source, { q: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
 
     const detail = yaml('api/channel-detail.yaml').datasources[0];
-    expect(await repository.querySource(detail, { id: 'livechat-channel-demo-002', fixture_state: null }, 0, 1)).toMatchObject({ data: { name: 'YourWebsite.com', operator_names: 'Mitchell Admin' } });
+    expect(await repository.querySource(detail, { id: 'livechat-channel-demo-002', fixture_state: null }, 0, 1)).toMatchObject({ data: { name: 'YourWebsite.com', operator_names: 'Marc Demo, Mitchell Admin' } });
     expect(await repository.querySource(detail, { id: 'missing-livechat-channel', fixture_state: 'not_found' }, 0, 1)).toMatchObject({ data: {} });
     database.close();
   });
@@ -61,6 +61,7 @@ describe('Live Chat channels parity', () => {
     const detail = yaml('pages/channel-detail.yaml');
     const api = yaml('api/channels.yaml');
     expect(page.components[0].views.map((view: any) => view.label)).toEqual(['Kanban', 'Form']);
+    expect(page.components[0].views[0].id).toBe('card');
     expect(page.components[0].row_open_action).toBe('view_livechat_channel');
     expect(detail.components[0].notebook.tabs.map((tab: any) => tab.label)).toEqual(['Agents', 'Options', 'Rules', 'Widget']);
     expect(api.datasources[0]).toMatchObject({ permission: 'livechat.read', error_states: { transport_error: { status: 503, code: 'LIVECHAT_CHANNELS_UNAVAILABLE' } } });

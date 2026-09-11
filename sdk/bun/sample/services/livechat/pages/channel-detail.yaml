@@ -6,8 +6,6 @@ components:
     source: livechat_channel_detail
     title_field: name
     subtitle_field: session_summary
-    status_field: active
-    status_colors: { true: green, false: neutral }
     editable: true
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
@@ -19,17 +17,6 @@ components:
       - { id: view_livechat_channel_sessions, label: Sessions, value_field: session_count, permission: livechat.read }
       - { id: view_livechat_channel_rating, label: Happy, value_field: rating_percentage, permission: livechat.read }
     group_columns: 2
-    groups:
-      - title: Channel Name
-        fields:
-          - { field: name, label: Channel Name }
-          - { field: active_label, label: Active }
-      - title: Agents
-        fields:
-          - { field: operator_names, label: Agent }
-          - { field: language_names, label: Languages }
-          - { field: expertise_names, label: Expertise }
-          - { field: ongoing_sessions, label: Ongoing Sessions }
     notebook:
       active: agents
       tabs:
