@@ -416,6 +416,65 @@ desktop list search is exercised directly; on mobile the compact toolbar
 collapses the text input behind its search button. No mutation was made in
 the live Odoo database.
 
+The next uncovered installed visible action is Odoo's `New Group Allocation`
+wizard from `Allocations`. The live personal database (`core3_personal`) was
+checked at `/odoo/action-631` (`hr_leave_allocation_action_approve_department`);
+its visible button opens action 618,
+`action_hr_leave_allocation_generate_multi_wizard`. The authenticated desktop
+wizard contract is `Grant?`, employee selection, Time Off Type, Regular or
+Accrual allocation, validity dates, allocation days, reason, and Allocate Time
+Off/Discard. This action was selected directly from the live Time Off menu
+inventory; Time Off Types was already covered by the existing configuration
+tests.
+
+Core3 implements the bounded manager-only slice at
+`/time-off/time-off-allocations`, page/API `page.id: time-off-allocations`.
+The responsive ListView exposes `New Group Allocation` in its header and the
+service-owned API adds employee, active-type, and active-accrual-plan lookups
+plus the `time_off.allocations.group_create` server form. Migration 0.0.11
+adds allocation metadata and the deterministic employee fixture table for
+Admin User, Marc Demo, Mitchell Admin, and Paul Williams. A successful
+submission inserts one `Submitted` allocation per selected employee with the
+stable `ALLOC/GROUP/<date>/<employee-id>` name. The focused guards reject an
+inactive type, non-positive days or reversed dates, unknown employees, and a
+duplicate employee/date submission with deterministic 422/409 responses;
+the action and all lookup sources require `time_off.manage`. The focused
+suite passes 3 tests with 20 `expect()` calls, including migration
+idempotency, deterministic rows, duplicate/invalid-input guards, and the
+permission/workflow contract.
+
+Authenticated evidence was captured and visually inspected without mutating
+the live Odoo database. Core3 used `admin@tms.local` at 1440x1000 and
+390x844; both viewports showed the list and wizard, and both reported
+`scrollWidth === viewport width`, with no failed requests or console errors.
+Odoo used `codex@core3.local` against `core3_personal`. The desktop reference
+shows the group wizard; Odoo's responsive mobile allocation screen hides the
+group button and opens the regular allocation form instead. This is recorded
+as a known responsive reference difference; Core3 keeps the installed action
+reachable on mobile so the bounded action remains usable. The images are
+local-only evidence under `/tmp` and are not committed:
+
+- Odoo desktop list: `/tmp/odoo-time-off-group-allocation-desktop-list-final.png`
+  SHA-256 `9b2a63f820440ae2d60cd14ab8b027e0fac92262936d13fbf3d10ffd6406f261`
+- Odoo desktop group wizard: `/tmp/odoo-time-off-group-allocation-desktop-final.png`
+  SHA-256 `0cc323286bd37d82fa255e2e7bb1cbd379eefc6c04346a94e5c690e539033c09`
+- Odoo mobile list: `/tmp/odoo-time-off-group-allocation-mobile-list-final.png`
+  SHA-256 `925b2311987c1febbf8f66d8d7eb7806584593b4e98c39b2b53a3d2a79bf9221`
+- Odoo mobile regular allocation reference: `/tmp/odoo-time-off-group-allocation-mobile-final.png`
+  SHA-256 `a101cd6e82f6df8c709d278ba3c07e74a287acd85d15157b0de81f4e69c20758`
+- Core3 desktop list: `/tmp/core3-time-off-group-allocation-desktop-list-final.png`
+  SHA-256 `5f01f74a1df65e1ee8d3fed1bc73fcffcb50c71b4d3de34974619d8c3b013044`
+- Core3 desktop group wizard: `/tmp/core3-time-off-group-allocation-desktop-final.png`
+  SHA-256 `3541686dce2d35eac76481192bad4caea1826d75c2629be1f6fd9978e54a90f0`
+- Core3 mobile list: `/tmp/core3-time-off-group-allocation-mobile-list-final.png`
+  SHA-256 `31bf969e9e474c8e327d57aae67bb8e3c000a0277e963536d477142423769a0e`
+- Core3 mobile group wizard: `/tmp/core3-time-off-group-allocation-mobile-final.png`
+  SHA-256 `69d013eddc07802a7c7282358bd0b2e0399d42ed509cecc0b7be0da90b43139f`
+
+The implementation/test commits are `02e5aa6b` (`feat(time-off): add group
+allocation wizard parity`) and `d152e454` (`fix(time-off): expose group
+allocation header action`).
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
