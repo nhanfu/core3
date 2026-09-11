@@ -7,4 +7,41 @@ datasources:
   - id: surveys
     permission: surveys.read
     workflow: surveys
-    query: "SELECT s.id, s.row_version, s.name, s.title, s.owner, s.response_count, s.state, s.access_token, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.title ILIKE '%' || :q || '%') AND (:state IS NULL OR s.state = :state) ORDER BY s.created_at DESC, s.id"
+    query: "SELECT s.id, s.row_version, s.name, s.title, s.owner, s.response_count, s.state, s.access_token, CASE WHEN s.access_token IS NULL OR s.access_token = '' THEN NULL ELSE '/survey/start/' || s.access_token END AS share_url, 'Participate to ' || s.title || ' survey' AS invite_subject, CASE WHEN s.title ILIKE '%certification%' THEN 'Dear participant\n\nYou have been invited to take a new certification.\n\nStart Certification\n\nWe wish you good luck!' ELSE 'Dear participant\n\nWe are conducting a survey and your response would be appreciated.\n\nStart Survey\n\nThank you in advance for your participation.' END AS invite_body, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.title ILIKE '%' || :q || '%') AND (:state IS NULL OR s.state = :state) ORDER BY s.created_at DESC, s.id"
+actions:
+  - id: share_survey
+    type: server_form
+    permission: surveys.write
+    title: Share a Survey
+    action: surveys.invites.send
+    handler: yaml_mutation
+    operation: create
+    params: { id: '', survey_id: '{row.id}', survey_name: '{row.title}', survey_link: '{row.share_url}' }
+    prefill: { survey_link: '{row.share_url}', subject: '{row.invite_subject}', body: '{row.invite_body}' }
+    refresh: [surveys]
+    mutation:
+      operation: insert
+      table: survey_invites
+      generated: [id]
+      fields: [survey_link, send_email, recipients, additional_emails, subject, body, attachment_names, deadline, mail_template]
+      required: [survey_link, send_email]
+      defaults: { state: Link ready, attachment_names: '', deadline: '', mail_template: 'Survey: Invite', created_at: '2026-01-15 09:00:00' }
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :survey_id AND row_version = :expected_row_version AND state <> 'Archived'", status: 409, code: SURVEY_INVITE_SURVEY_CHANGED, message: This survey changed or is archived. Reload it before sharing. }
+        - { query: "SELECT id FROM surveys WHERE id = :survey_id AND access_token IS NOT NULL AND LENGTH(TRIM(access_token)) > 0", status: 422, code: SURVEY_INVITE_TOKEN_REQUIRED, message: This survey does not have a share link yet. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:send_email AS BOOLEAN) = FALSE OR LENGTH(TRIM(COALESCE(CAST(:recipients AS VARCHAR), ''))) > 0 OR LENGTH(TRIM(COALESCE(CAST(:additional_emails AS VARCHAR), ''))) > 0", status: 422, code: SURVEY_INVITE_RECIPIENTS_REQUIRED, message: Add at least one recipient or additional email before sending. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:send_email AS BOOLEAN) = FALSE OR (LENGTH(TRIM(COALESCE(CAST(:subject AS VARCHAR), ''))) > 0 AND LENGTH(TRIM(COALESCE(CAST(:body AS VARCHAR), ''))) > 0)", status: 422, code: SURVEY_INVITE_MESSAGE_REQUIRED, message: Subject and message are required when sending by email. }
+      steps:
+        - { query: "UPDATE survey_invites SET survey_id = :survey_id, survey_name = :survey_name, state = CASE WHEN CAST(:send_email AS BOOLEAN) THEN 'Sent' ELSE 'Link ready' END, sent_at = CASE WHEN CAST(:send_email AS BOOLEAN) THEN TIMESTAMP '2026-01-15 09:05:00' ELSE NULL END WHERE id = :id" }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :survey_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SURVEY_INVITE_SURVEY_CHANGED, message: This survey changed before the share was saved. Reload it before sharing. }
+      result: { query: "SELECT CASE WHEN send_email THEN 'Invitation sent' ELSE 'Survey link ready' END AS message, id, survey_id, survey_name, state, send_email, recipients, additional_emails, subject, deadline, mail_template FROM survey_invites WHERE id = :id" }
+    fields:
+      - { field: survey_link, label: Survey Link, type: text, required: true }
+      - { field: send_email, label: Send by Email, type: checkbox, default: false }
+      - { field: recipients, label: Recipients, type: text }
+      - { field: additional_emails, label: Additional emails, type: textarea, placeholder: "e.g. 'Rick Sanchez' <rick_sanchez@example.com>, hictor_vugo@example.com" }
+      - { field: subject, label: Subject, type: text, required: false }
+      - { field: body, label: Message, type: textarea }
+      - { field: attachment_names, label: Attachments, type: text }
+      - { field: deadline, label: Answer deadline, type: text, placeholder: 'YYYY-MM-DD' }
+      - { field: mail_template, label: Mail Template, type: select, default: 'Survey: Invite', options: [{ value: 'Survey: Invite', label: 'Survey: Invite' }] }

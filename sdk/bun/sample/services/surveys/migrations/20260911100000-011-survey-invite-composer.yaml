@@ -1,0 +1,41 @@
+version: 0.0.12
+description: Deterministic Odoo-style survey share and invite composer fixtures
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_invites (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        survey_id VARCHAR,
+        survey_name VARCHAR,
+        survey_link VARCHAR NOT NULL,
+        send_email BOOLEAN NOT NULL DEFAULT FALSE,
+        recipients VARCHAR,
+        additional_emails VARCHAR,
+        subject VARCHAR,
+        body VARCHAR,
+        attachment_names VARCHAR NOT NULL DEFAULT '',
+        deadline VARCHAR,
+        mail_template VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Link ready',
+        sent_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      UPDATE surveys SET access_token = CASE id
+        WHEN 'survey-demo-001' THEN '7c4e2d91-4f76-4cae-9f3b-1f18c1b6d001'
+        WHEN 'survey-demo-conditional' THEN '7c4e2d91-4f76-4cae-9f3b-1f18c1b6d002'
+        ELSE access_token
+      END
+      WHERE id IN ('survey-demo-001', 'survey-demo-conditional')
+        AND (access_token IS NULL OR access_token = '');
+      INSERT INTO survey_invites(id, row_version, survey_id, survey_name, survey_link, send_email, recipients, additional_emails, subject, body, deadline, mail_template, state, sent_at) VALUES
+        ('invite-feedback-link', 1, 'survey-demo-feedback', 'Feedback Form', '/survey/start/b135640d-14d4-4748-9ef6-344ca256531e', FALSE, NULL, NULL, 'Participate to Feedback Form survey', 'Dear participant\n\nWe are conducting a survey and your response would be appreciated.\n\nStart Survey', DATE '2026-01-30', 'Survey: Invite', 'Link ready', NULL),
+        ('invite-certification-sent', 1, 'survey-demo-certification', 'MyCompany Vendor Certification', '/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac', TRUE, 'certification@example.com', NULL, 'Participate to MyCompany Vendor Certification survey', 'Dear participant\n\nYou have been invited to take a new certification.\n\nStart Certification', DATE '2026-01-30', 'Survey: Invite', 'Sent', TIMESTAMP '2026-01-15 09:05:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS survey_invites;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -36,6 +36,7 @@ components:
     row_actions: menu
     row_double_click_action: view_survey_detail
     actions:
+      - { id: share_survey, label: Share, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
       - { id: test_survey, label: Test, permission: surveys.write, variant: secondary, show_if: "row.state !== 'Archived'" }
       - { id: publish_survey, label: Publish, permission: surveys.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: close_survey, label: Close, permission: surveys.manage, variant: secondary, show_if: "row.state === 'Published'" }

@@ -342,6 +342,41 @@ results, or an inferred Back action. Focused coverage is in
 where captured, and Core3 comparison evidence is retained under `/tmp` after
 runtime verification.
 
+The Share/invite follow-up implements the next Surveys-owned visible action
+verified in the live personal Odoo database `core3_personal` as user
+`codex@core3.local`: each survey card exposes `Share`, and the survey form
+opens the `Share a Survey` composer. The initial Odoo modal shows `Survey Link`,
+`Send by Email`, and `Close`; enabling email reveals `Recipients`,
+`Additional emails`, `Subject`, the invitation message, `Attachments`,
+`Answer deadline`, `Mail Template`, `Send`, and `Close`. Core3 now exposes the
+same `Share` label from `/surveys` and `/surveys/detail?id=<survey_id>` through
+the page/API pairs `surveys` and `survey-detail`. Both actions use the
+`surveys.invites.send` server-form contract and exact field labels above, with
+deterministic `Link ready` and `Sent` invite records from migration `0.0.12`.
+
+The mutation requires `surveys.write`, rejects archived or stale survey rows
+with `SURVEY_INVITE_SURVEY_CHANGED` (409), rejects a missing survey access
+token with `SURVEY_INVITE_TOKEN_REQUIRED` (422), requires a recipient and
+complete subject/message when `Send by Email` is selected (422), and increments
+the survey `row_version` only after the invite insert succeeds. The focused
+contract is `test/surveys_invite.integration.test.ts`: it verifies page/API
+`page.id` joins, idempotent memory migration, seeded link/sent states, success,
+recipient/message validation, archived, and stale-version responses. The
+authenticated browser comparison used Odoo/Core3 at 1440x1000 and 390x844;
+Odoo and Core3 Share modals have zero non-aborted failed requests. Captures
+are retained under `/tmp/odoo-surveys-share-{desktop,mobile}[-email].png` and
+`/tmp/core3-surveys-share-{desktop,mobile}[-email].png`.
+
+Known visual/behavior limits for this bounded slice: Core3 uses the generic
+server-form modal, so `Save` is shown instead of Odoo's email-only `Send`, all
+composer fields are visible before the checkbox is selected, and the link and
+message render as plain text controls rather than Odoo's clipboard/rich-mail
+widgets. Recipients are deterministic text input and attachments are a
+placeholder field; no contact many2many lookup, mail transport, template
+rendering, or actual email delivery is claimed. The Core3 list action remains
+in the generic list utility menu; the detail-form `Share` action is the
+row-scoped evidence path. Screenshots are evidence only and are not committed.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
