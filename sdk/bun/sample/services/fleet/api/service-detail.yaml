@@ -1,0 +1,112 @@
+page: { id: service-detail }
+datasources:
+  - id: fleet_service_detail_types
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_service_types WHERE active = TRUE ORDER BY name, id"
+  - id: fleet_service_detail_vehicles
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_vehicles WHERE COALESCE(archived, FALSE) = FALSE ORDER BY name, id"
+  - id: fleet_service_detail
+    single: true
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_SERVICE_DETAIL_UNAVAILABLE, message: Fleet service details are temporarily unavailable. } }
+    query: "SELECT s.id, s.row_version, CAST(s.date AS VARCHAR) AS date, s.description, s.service_type_id, st.name AS service_type_name, s.vehicle_id, v.name AS vehicle_name, COALESCE(s.purchaser, 'Unassigned') AS purchaser_name, COALESCE(s.vendor, '—') AS vendor, COALESCE(s.notes, '') AS notes, s.amount, s.odometer, s.odometer_unit AS unit, COALESCE(s.manager_name, v.driver_name, 'Unassigned') AS manager_name, COALESCE(v.model, 'Unknown') AS model_name, COALESCE(v.manufacturer, 'Unknown') AS manufacturer_name, s.state, s.active, CASE WHEN s.active THEN 'Active' ELSE 'Archived' END AS active_label, COALESCE(s.inv_ref, '') AS inv_ref FROM fleet_vehicle_services s JOIN fleet_vehicles v ON v.id = s.vehicle_id JOIN fleet_service_types st ON st.id = s.service_type_id WHERE CASE WHEN COALESCE(CAST(:fixture_state AS VARCHAR), '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND s.id = :id"
+actions:
+  - { id: back_to_fleet_services, type: navigate, permission: fleet.read, navigate_to: /fleet/services }
+  - id: edit_fleet_service
+    type: server_form
+    permission: fleet.manage
+    title: Edit service entry
+    action: fleet.services.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.fleet_service_detail
+    refresh: [fleet_service_detail, fleet_services]
+    mutation:
+      operation: update
+      table: fleet_vehicle_services
+      key: id
+      fields: [vehicle_id, service_type_id, description, date, amount, purchaser, vendor, odometer, odometer_unit, manager_name, inv_ref, notes]
+      required: [vehicle_id, service_type_id, date]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_services WHERE id = :id", status: 404, code: FLEET_SERVICE_NOT_FOUND, message: Service log was not found. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id AND COALESCE(archived, FALSE) = FALSE", status: 404, code: FLEET_SERVICE_VEHICLE_NOT_FOUND, message: Vehicle was not found or is archived. }
+        - { query: "SELECT id FROM fleet_service_types WHERE id = :service_type_id AND active = TRUE", status: 404, code: FLEET_SERVICE_TYPE_NOT_FOUND, message: Service type was not found or is archived. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2100-12-31' AND CAST(:amount AS DECIMAL(18,2)) >= 0 AND (CAST(:odometer AS DECIMAL(18,2)) IS NULL OR CAST(:odometer AS DECIMAL(18,2)) >= 0)", status: 422, code: FLEET_SERVICE_VALUES_INVALID, message: Date, cost, or odometer values are invalid. }
+      result: { query: "SELECT * FROM fleet_vehicle_services WHERE id = :id" }
+    fields:
+      - { field: vehicle_id, label: Vehicle, type: select, options_source: fleet_service_detail_vehicles, required: true }
+      - { field: service_type_id, label: Service Type, type: select, options_source: fleet_service_detail_types, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: date, label: Date, type: text, required: true }
+      - { field: amount, label: Cost, type: number }
+      - { field: purchaser, label: Driver, type: text }
+      - { field: vendor, label: Vendor, type: text }
+      - { field: odometer, label: Odometer Value, type: number }
+      - { field: odometer_unit, label: Unit, type: text }
+      - { field: manager_name, label: Fleet Manager, type: text }
+      - { field: inv_ref, label: Vendor Reference, type: text }
+      - { field: notes, label: Notes, type: textarea }
+  - id: start_fleet_service
+    type: server
+    permission: fleet.manage
+    action: fleet.services.start
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { state: Running } }
+    refresh: [fleet_service_detail, fleet_services]
+    mutation: { operation: update, table: fleet_vehicle_services, fields: [state], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_services WHERE id = :id AND state = 'New' AND active = TRUE", status: 409, code: FLEET_SERVICE_START_NOT_ALLOWED, message: Only a new active service can be started. }], result: { query: "SELECT * FROM fleet_vehicle_services WHERE id = :id" } }
+  - id: complete_fleet_service
+    type: server
+    permission: fleet.manage
+    action: fleet.services.complete
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { state: Done } }
+    refresh: [fleet_service_detail, fleet_services]
+    mutation: { operation: update, table: fleet_vehicle_services, fields: [state], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_services WHERE id = :id AND state = 'Running' AND active = TRUE", status: 409, code: FLEET_SERVICE_COMPLETE_NOT_ALLOWED, message: Only a running active service can be completed. }], result: { query: "SELECT * FROM fleet_vehicle_services WHERE id = :id" } }
+  - id: cancel_fleet_service
+    type: server
+    permission: fleet.manage
+    action: fleet.services.cancel
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { state: Cancelled } }
+    refresh: [fleet_service_detail, fleet_services]
+    mutation: { operation: update, table: fleet_vehicle_services, fields: [state], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_services WHERE id = :id AND state IN ('New', 'Running') AND active = TRUE", status: 409, code: FLEET_SERVICE_CANCEL_NOT_ALLOWED, message: Only an open active service can be cancelled. }], result: { query: "SELECT * FROM fleet_vehicle_services WHERE id = :id" } }
+  - id: reset_fleet_service
+    type: server
+    permission: fleet.manage
+    action: fleet.services.reset
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { state: New } }
+    refresh: [fleet_service_detail, fleet_services]
+    mutation: { operation: update, table: fleet_vehicle_services, fields: [state], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_services WHERE id = :id AND state = 'Cancelled' AND active = TRUE", status: 409, code: FLEET_SERVICE_RESET_NOT_ALLOWED, message: Only a cancelled active service can be reset. }], result: { query: "SELECT * FROM fleet_vehicle_services WHERE id = :id" } }
+  - id: archive_fleet_service
+    type: server
+    permission: fleet.manage
+    action: fleet.services.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { active: false } }
+    refresh: [fleet_service_detail, fleet_services]
+    mutation: { operation: update, table: fleet_vehicle_services, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_services WHERE id = :id AND active = TRUE", status: 404, code: FLEET_SERVICE_NOT_FOUND, message: Active service log was not found. }], result: { query: "SELECT * FROM fleet_vehicle_services WHERE id = :id" } }
+  - id: unarchive_fleet_service
+    type: server
+    permission: fleet.manage
+    action: fleet.services.unarchive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { active: true } }
+    refresh: [fleet_service_detail, fleet_services]
+    mutation: { operation: update, table: fleet_vehicle_services, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_services WHERE id = :id AND active = FALSE", status: 404, code: FLEET_SERVICE_NOT_FOUND, message: Archived service log was not found. }], result: { query: "SELECT * FROM fleet_vehicle_services WHERE id = :id" } }
+  - id: delete_fleet_service
+    type: server
+    permission: fleet.manage
+    action: fleet.services.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [fleet_services]
+    mutation: { operation: delete, table: fleet_vehicle_services, concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_services WHERE id = :id", status: 404, code: FLEET_SERVICE_NOT_FOUND, message: Service log was not found. }, { query: "SELECT id FROM fleet_vehicle_services WHERE id = :id AND active = FALSE", status: 409, code: FLEET_SERVICE_ACTIVE_DELETE, message: Archive a service log before deleting it. }] }

@@ -1,0 +1,41 @@
+title: Services Logs
+page: { id: service-detail, route: /fleet/services/detail, breadcrumb: [Human Resources, Fleet, Services, Services Logs], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_service_detail
+    title_field: service_type_name
+    subtitle_field: vehicle_name
+    status_field: state
+    statusbar: [{ value: New, label: New }, { value: Running, label: Running }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
+    statusbar_actions: { Running: start_fleet_service, Done: complete_fleet_service, Cancelled: cancel_fleet_service, New: reset_fleet_service }
+    status_colors: { New: amber, Running: blue, Done: green, Cancelled: red }
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Stage }
+    editable: true
+    group_columns: 2
+    header_actions:
+      - { id: back_to_fleet_services, label: Services, variant: secondary, permission: fleet.read }
+      - { id: edit_fleet_service, label: Edit, variant: secondary, permission: fleet.manage }
+      - { id: start_fleet_service, label: Start, variant: primary, permission: fleet.manage, show_if: "state.fleet_service_detail.state === 'New'" }
+      - { id: complete_fleet_service, label: Mark Done, variant: primary, permission: fleet.manage, show_if: "state.fleet_service_detail.state === 'Running'" }
+      - { id: cancel_fleet_service, label: Cancel, variant: danger, permission: fleet.manage, show_if: "state.fleet_service_detail.state === 'New' || state.fleet_service_detail.state === 'Running'" }
+      - { id: reset_fleet_service, label: Reset to New, variant: secondary, permission: fleet.manage, show_if: "state.fleet_service_detail.state === 'Cancelled'" }
+      - { id: archive_fleet_service, label: Archive, variant: danger, permission: fleet.manage, show_if: 'state.fleet_service_detail.active === true' }
+      - { id: unarchive_fleet_service, label: Restore, variant: secondary, permission: fleet.manage, show_if: 'state.fleet_service_detail.active === false' }
+      - { id: delete_fleet_service, label: Delete, variant: danger, permission: fleet.manage, confirm: Archive this service log before deleting it. }
+    groups:
+      - title: Services Logs
+        fields: [{ field: description, label: Description }, { field: service_type_name, label: Service Type }, { field: date, label: Date }, { field: amount, label: Cost, type: money }, { field: vendor, label: Vendor }]
+      - title: Vehicle
+        fields: [{ field: vehicle_name, label: Vehicle }, { field: purchaser_name, label: Driver }, { field: odometer, label: Odometer Value }, { field: unit, label: Unit }]
+    notebook:
+      active: notes
+      tabs:
+        - { id: information, label: Information, content_slot: true }
+        - id: notes
+          label: Notes
+          fields: [{ field: notes, label: Notes, type: textarea, wide: true }]
+        - id: references
+          label: References
+          fields: [{ field: manager_name, label: Fleet Manager }, { field: inv_ref, label: Vendor Reference }, { field: active_label, label: Active }]
+    chatter_label: Messages and activities
+    chatter_empty: No messages or activities yet.

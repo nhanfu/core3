@@ -1,0 +1,45 @@
+version: 0.0.11
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_service_types (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        category VARCHAR NOT NULL DEFAULT 'service',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS fleet_service_types_category_idx ON fleet_service_types(category, name, id);
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_services (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        vehicle_id VARCHAR NOT NULL,
+        service_type_id VARCHAR NOT NULL,
+        description VARCHAR NOT NULL DEFAULT '',
+        date DATE NOT NULL,
+        amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        purchaser VARCHAR,
+        vendor VARCHAR,
+        odometer DECIMAL(18,2),
+        odometer_unit VARCHAR NOT NULL DEFAULT 'km',
+        manager_name VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'New',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        inv_ref VARCHAR,
+        notes VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_services_date_idx ON fleet_vehicle_services(date, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_services_vehicle_idx ON fleet_vehicle_services(vehicle_id, date, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_services_state_idx ON fleet_vehicle_services(state, active, id);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_services;
+      DROP TABLE IF EXISTS fleet_service_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

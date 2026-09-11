@@ -1,0 +1,26 @@
+version: 0.0.12
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_service_types(id, name, category, active, row_version, created_at, updated_at) VALUES
+        ('fleet-service-type-repair', 'Repair and maintenance', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-refueling', 'Refueling', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-tires', 'Tires', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-type-inspection', 'Inspection', 'service', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (id) DO UPDATE SET name = excluded.name, category = excluded.category, active = excluded.active;
+      INSERT INTO fleet_vehicle_services(id, vehicle_id, service_type_id, description, date, amount, purchaser, vendor, odometer, odometer_unit, manager_name, state, active, inv_ref, notes, row_version, created_at, updated_at) VALUES
+        ('fleet-service-001', 'fleet-demo-001', 'fleet-service-type-repair', '', DATE '2026-07-11', 650, 'Admin User', 'Acme Corporation', 4586, 'km', 'Admin User', 'Done', TRUE, '4586', 'Usual vehicle repairing', 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-002', 'fleet-demo-001', 'fleet-service-type-repair', '', DATE '2026-08-10', 350, 'Admin User', 'Acme Corporation', 4814, 'km', 'Admin User', 'Done', TRUE, '4814', 'After crash repairing', 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-003', 'fleet-demo-002', 'fleet-service-type-repair', '', DATE '2026-08-25', 513, 'Admin User', 'Acme Corporation', 124, 'km', 'Admin User', 'Done', TRUE, '124', 'Maintenance', 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-004', 'fleet-demo-001', 'fleet-service-type-repair', '', DATE '2026-05-12', 412, 'Admin User', 'Acme Corporation', 20984, 'km', 'Admin User', 'Done', TRUE, '20984', 'Maintenance', 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-005', 'fleet-demo-002', 'fleet-service-type-repair', '', DATE '2026-06-01', 275, 'Admin User', 'Acme Corporation', 241, 'km', 'Admin User', 'Done', TRUE, '241', 'Maintenance', 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-service-006', 'fleet-demo-001', 'fleet-service-type-repair', '', DATE '2026-07-06', 302, 'Admin User', 'Acme Corporation', 22513, 'km', 'Admin User', 'Done', TRUE, '22513', 'Maintenance', 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (id) DO UPDATE SET vehicle_id = excluded.vehicle_id, service_type_id = excluded.service_type_id, description = excluded.description, date = excluded.date, amount = excluded.amount, purchaser = excluded.purchaser, vendor = excluded.vendor, odometer = excluded.odometer, odometer_unit = excluded.odometer_unit, manager_name = excluded.manager_name, state = excluded.state, active = excluded.active, inv_ref = excluded.inv_ref, notes = excluded.notes;
+    down: |
+      DELETE FROM fleet_vehicle_services WHERE id LIKE 'fleet-service-%';
+      DELETE FROM fleet_service_types WHERE id LIKE 'fleet-service-type-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

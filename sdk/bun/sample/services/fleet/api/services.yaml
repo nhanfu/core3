@@ -1,0 +1,44 @@
+page: { id: fleet-services }
+datasources:
+  - id: fleet_service_types
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_service_types WHERE active = TRUE ORDER BY name, id"
+  - id: fleet_service_vehicles
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_vehicles WHERE COALESCE(archived, FALSE) = FALSE ORDER BY name, id"
+  - id: fleet_services
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_SERVICE_DATA_UNAVAILABLE, message: Fleet service data is temporarily unavailable. } }
+    query: "SELECT s.id, s.row_version, CAST(s.date AS VARCHAR) AS date, s.description, s.service_type_id, st.name AS service_type_name, s.vehicle_id, v.name AS vehicle_name, COALESCE(s.purchaser, 'Unassigned') AS purchaser_name, COALESCE(s.vendor, '—') AS vendor, COALESCE(s.notes, '') AS notes, s.amount, s.odometer, s.odometer_unit AS unit, COALESCE(s.manager_name, v.driver_name, 'Unassigned') AS manager_name, COALESCE(v.model, 'Unknown') AS model_name, COALESCE(v.manufacturer, 'Unknown') AS manufacturer_name, s.state, s.active, CASE WHEN s.active THEN 'Active' ELSE 'Archived' END AS active_label FROM fleet_vehicle_services s JOIN fleet_vehicles v ON v.id = s.vehicle_id JOIN fleet_service_types st ON st.id = s.service_type_id WHERE CASE WHEN COALESCE(CAST(:fixture_state AS VARCHAR), '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((COALESCE(CAST(:active AS VARCHAR), 'active') = 'active' AND s.active = TRUE) OR (CAST(:active AS VARCHAR) = 'archived' AND s.active = FALSE)) AND (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR st.name ILIKE '%' || :q || '%' OR COALESCE(s.description, '') ILIKE '%' || :q || '%' OR COALESCE(s.notes, '') ILIKE '%' || :q || '%') AND (:service_type_id IS NULL OR s.service_type_id = :service_type_id) AND (:vehicle_id IS NULL OR s.vehicle_id = :vehicle_id) AND (:state IS NULL OR s.state = :state) ORDER BY s.id"
+actions:
+  - { id: view_fleet_service, type: navigate, permission: fleet.read, navigate_to: /fleet/services/detail, params: { id: '{row.id}' } }
+  - id: create_fleet_service
+    type: server_form
+    permission: fleet.manage
+    title: New service entry
+    action: fleet.services.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fleet_services]
+    mutation:
+      operation: insert
+      table: fleet_vehicle_services
+      fields: [vehicle_id, service_type_id, description, date, amount, purchaser, vendor, odometer, odometer_unit, manager_name, state, active, inv_ref, notes]
+      required: [vehicle_id, service_type_id, date]
+      defaults: { description: '', amount: 0, odometer_unit: km, state: New, active: true, manager_name: Admin User }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id AND COALESCE(archived, FALSE) = FALSE", status: 404, code: FLEET_SERVICE_VEHICLE_NOT_FOUND, message: Vehicle was not found or is archived. }
+        - { query: "SELECT id FROM fleet_service_types WHERE id = :service_type_id AND active = TRUE", status: 404, code: FLEET_SERVICE_TYPE_NOT_FOUND, message: Service type was not found or is archived. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2100-12-31' AND CAST(:amount AS DECIMAL(18,2)) >= 0 AND (CAST(:odometer AS DECIMAL(18,2)) IS NULL OR CAST(:odometer AS DECIMAL(18,2)) >= 0)", status: 422, code: FLEET_SERVICE_VALUES_INVALID, message: Date, cost, or odometer values are invalid. }
+      result: { query: "SELECT * FROM fleet_vehicle_services WHERE id = :id" }
+    fields:
+      - { field: vehicle_id, label: Vehicle, type: select, options_source: fleet_service_vehicles, required: true }
+      - { field: service_type_id, label: Service Type, type: select, options_source: fleet_service_types, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: date, label: Date, type: text, required: true, default: '2026-01-15' }
+      - { field: amount, label: Cost, type: number, default: 0 }
+      - { field: purchaser, label: Driver, type: text }
+      - { field: vendor, label: Vendor, type: text }
+      - { field: odometer, label: Odometer Value, type: number }
+      - { field: odometer_unit, label: Unit, type: text, default: km }
+      - { field: notes, label: Notes, type: textarea }

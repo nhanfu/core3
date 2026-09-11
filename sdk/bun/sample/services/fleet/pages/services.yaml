@@ -1,0 +1,82 @@
+title: Services Logs
+page: { id: fleet-services, route: /fleet/services, breadcrumb: [Human Resources, Fleet, Services], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_services
+    create_action: create_fleet_service
+    create_label: New
+    search: { label: Search services, placeholder: 'Search vehicle, service type, or description...' }
+    filters:
+      - { field: service_type_id, label: Service Type, options_source: fleet_service_types }
+      - { field: vehicle_id, label: Vehicle, options_source: fleet_service_vehicles }
+      - { field: active, label: Archived, options: [{ id: archived, label: Archived }] }
+    group_by:
+      - { field: service_type_name, label: Service Type }
+      - { field: manager_name, label: Fleet Manager }
+      - { field: model_name, label: Model }
+      - { field: manufacturer_name, label: Manufacturer }
+    default_group_by: service_type_name
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: state
+        card: { title: vehicle_name, subtitle: service_type_name, fields: [{ field: state, label: Stage }, { field: purchaser_name, label: Driver }, { field: vendor, label: Vendor }, { field: date, label: Date }, { field: amount, label: Cost, type: money }] }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card: { title: vehicle_name, subtitle: service_type_name, fields: [{ field: state, label: Stage }, { field: vendor, label: Vendor }, { field: amount, label: Cost, type: money }] }
+      - { id: form, label: Form, icon: form }
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: date
+        measure_field: amount
+        type: line
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: service_type_name, column: Service Type }
+            - { field: vendor, column: Vendor }
+            - { field: vehicle_name, column: Vehicle }
+            - { field: amount, column: Cost }
+          default:
+            rows: [vendor, vehicle_name]
+            columns: [service_type_name]
+            measures: [{ field: amount, aggregate: sum, column: Cost }]
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: vehicle_name
+        subtitle_field: description
+        record_date_field: date
+        activity_types: [{ id: todo, label: To-Do, icon: check }]
+    columns:
+      - { field: date, label: Date, type: DateCell, sortable: true }
+      - { field: description, label: Description }
+      - { field: service_type_name, label: Service Type }
+      - { field: vehicle_name, label: Vehicle, type: PrimaryEntityCell }
+      - { field: purchaser_name, label: Driver }
+      - { field: vendor, label: Vendor }
+      - { field: notes, label: Notes, optional: show }
+      - { field: amount, label: Cost, type: money, align: right }
+      - { field: state, label: Stage, type: StatusChip }
+      - { field: id, label: '', sortable: false, actions: [{ id: view_fleet_service, label: Open, icon: eye }] }
+    page_size: 50
+    row_key: id
+    row_open_action: view_fleet_service
+    row_double_click_action: view_fleet_service
+    form_view: { page: apps/services/fleet/pages/service-detail.yaml, side_panel: true }
+    row_actions: menu
+    empty_state: { title: No service logs, description: Create a new service entry or adjust your search and filters. }
