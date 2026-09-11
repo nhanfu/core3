@@ -573,3 +573,91 @@ Visual comparison and residual mismatches:
 
 Evidence/docs commit is the commit immediately following implementation
 commit `edc9e84a`; implementation code and tests remain separate.
+
+## Bounded batch: Inventory view navigation tabs (2026-09-11)
+
+This navigation-fidelity batch uses the fresh authenticated Odoo 19 reference
+database `core3_codex_demo` at `http://localhost:8069` as
+`codex@core3.local`. Before the Core3 change, JSON-RPC confirmed that
+`stock.stock_move_line_action` is action `579` (`stock.move.line`,
+`list,kanban,pivot,form`, default Done filter, `create: 0`) and that
+`stock.menu_reordering_rules_replenish` invokes server action `622`, which
+opens `action_orderpoint_replenish` action `620` (`stock.warehouse.orderpoint`,
+`list,kanban,form`) with manual and non-snoozed reorder context. The live
+reference contained 102 move lines (76 Done rows) and four replenishment rules.
+
+Implementation commit: `a92285f5` (`fix(inventory): use visible tabs for
+reports`). It changes the only two remaining explicit Inventory
+`ListView.view_navigation: icons` declarations in `pages/moves.yaml` and
+`pages/replenishment.yaml` to `tabs`, and adds only the corresponding matching
+contract assertions in `inventory_moves_history.integration.test.ts` and
+`inventory_replenishment.integration.test.ts`. No API YAML, Accounting file,
+or Manufacturing file was changed; the existing page/API `page.id` split is
+preserved. `rg` confirms no `view_navigation: icons` remains under
+`services/inventory`.
+
+Authenticated Odoo captures, loaded from the action routes and inspected:
+
+- Moves History: `/odoo/action-579` resolved to `/odoo/moves-history`; desktop
+  `/tmp/odoo-codex-inventory-moves-history-desktop-1440x900-final-20260911.png`
+  (1440x900, SHA-256
+  `00531546f1d348e03421ac762b85a1571ee90e32c8c7f936a22a75c566e3b6a0`) and
+  mobile `/tmp/odoo-codex-inventory-moves-history-mobile-390x844-final-20260911.png`
+  (390x844, SHA-256
+  `1f30cf228220308505e9a6c50fd13e98d8116df1049a6132d5508e37d42ae300`).
+- Replenishment: `/odoo/action-620`; desktop
+  `/tmp/odoo-codex-inventory-replenishment-desktop-1440x900-final-20260911.png`
+  (1440x900, SHA-256
+  `e80b68bdfac854341d209e992a4bd543723b5810b964cc32eb5dc758318e34cf`) and
+  mobile `/tmp/odoo-codex-inventory-replenishment-mobile-390x844-final-20260911.png`
+  (390x844, SHA-256
+  `33fcf6bfdd43166d6499f9adbb56f8e1d9f54805ceacaa99708302b47be5954a`).
+
+Authenticated Core3 captures used `admin@tms.local / admin123` on the isolated
+runtime (`backend: 3238`, Vite frontend: 3004) and were inspected:
+
+- Moves History contract route `/moves` rendered at
+  `/inventory/moves`; desktop
+  `/tmp/core3-inventory-navigation-tabs-moves-history-desktop-1440x900-20260911.png`
+  (1440x900, SHA-256
+  `6a6cce0f8084ae0410bd10197c1540d04a37d70b427499bbb57e995bd566ca5f`) and
+  mobile
+  `/tmp/core3-inventory-navigation-tabs-moves-history-mobile-390x844-20260911.png`
+  (390x844, SHA-256
+  `1607d328e028da3211d85ae610349228282a9838aee68db0b7c4576e68d7cc66`).
+  The default Done report rendered 10 seeded rows; desktop visibly showed
+  `List` and `Pivot` text tabs, and mobile rendered the populated Kanban card
+  mode.
+- Replenishment contract route `/replenishment` rendered at
+  `/inventory/replenishment`; desktop
+  `/tmp/core3-inventory-navigation-tabs-replenishment-desktop-1440x900-20260911.png`
+  (1440x900, SHA-256
+  `2002faec318db62804af3df161a3828591af6bdb22ca016e978d15ee01028c02`) and
+  mobile
+  `/tmp/core3-inventory-navigation-tabs-replenishment-mobile-390x844-20260911.png`
+  (390x844, SHA-256
+  `c2150571801d91c490ebeb15ffbb4af5dc7b54679cb967fb19cd4312d38b4b15`).
+  The default manager report rendered three seeded rows/cards with Manual,
+  To Reorder, and Not Snoozed filters.
+
+For every capture, the browser recorded `requestfailed: []`, `pageerror: []`,
+and no HTTP response at or above 400. Odoo and Core3 document/body widths were
+respectively `1440/1440/1440` at desktop and `390/390/390` at mobile. The
+Odoo mobile captures use its observed `?view_type=kanban` responsive state.
+Core3's shared `ListView` excludes views marked `mobile: true` from the
+desktop tab set; therefore Replenishment has one desktop collection view and
+does not render a tab strip there, while its mobile Kanban and the populated
+responsive state remain usable. Changing that existing view-availability
+contract would exceed this batch's explicit navigation-mode scope.
+
+Verification:
+
+- `bun test test/inventory_moves_history.integration.test.ts
+  test/inventory_replenishment.integration.test.ts`: 6 tests, 73 assertions
+  passed.
+- `bun run audit`: passed — 498 pages, 505 routes, 879 datasources.
+- `bun run lint`: passed; `bun run css:build:global` passed; `git diff --check`
+  passed.
+
+Evidence/docs commit is separate from implementation commit `a92285f5`;
+screenshots remain under `/tmp` and are not committed.
