@@ -1,0 +1,24 @@
+title: Categories
+page: { id: fleet-model-categories, route: /fleet/config/model-categories, breadcrumb: [Human Resources, Fleet, Configuration, Models, Categories], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_model_category_records
+    create_label: New
+    search: { label: Search categories, placeholder: Search... }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+    inline_edit:
+      create_action: create_fleet_model_category_inline
+      update_action: update_fleet_model_category_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: sequence, type: number, default: 10 }
+        - { field: name, type: text, required: true, placeholder: Category name }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: true }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true, sortable: true }
+    row_key: id
+    row_actions: menu
+    empty_state: { title: Create a new category, description: Categories help organize your vehicle models. }

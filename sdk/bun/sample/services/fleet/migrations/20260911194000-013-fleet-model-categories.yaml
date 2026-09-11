@@ -1,0 +1,17 @@
+version: 0.0.13
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE fleet_vehicle_model_categories ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      UPDATE fleet_vehicle_model_categories SET row_version = 1 WHERE row_version IS NULL;
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_model_categories_sequence_idx ON fleet_vehicle_model_categories(sequence, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_models_category_id_idx ON fleet_vehicle_models(category_id, id);
+    down: |
+      DROP INDEX IF EXISTS fleet_vehicle_models_category_id_idx;
+      DROP INDEX IF EXISTS fleet_vehicle_model_categories_sequence_idx;
+      ALTER TABLE fleet_vehicle_model_categories DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

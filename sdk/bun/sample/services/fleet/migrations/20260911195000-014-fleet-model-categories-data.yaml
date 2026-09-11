@@ -1,0 +1,26 @@
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_model_categories(id, name, sequence, row_version) VALUES
+        ('fleet-category-001', 'Sedan', 10, 1),
+        ('fleet-category-002', 'Estate', 20, 1),
+        ('fleet-category-003', 'Compact', 30, 1),
+        ('fleet-category-004', 'SUV', 40, 1),
+        ('fleet-category-005', 'Coupe', 50, 1),
+        ('fleet-category-006', 'Convertible', 60, 1),
+        ('fleet-category-007', 'MPU', 70, 1),
+        ('fleet-category-008', 'BMX', 80, 1),
+        ('fleet-category-009', 'VTT', 90, 1),
+        ('fleet-category-010', 'City', 100, 1)
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE fleet_vehicle_model_categories AS category
+      SET row_version = COALESCE(category.row_version, 1)
+      WHERE category.id LIKE 'fleet-category-%';
+    down: |
+      DELETE FROM fleet_vehicle_model_categories WHERE id LIKE 'fleet-category-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

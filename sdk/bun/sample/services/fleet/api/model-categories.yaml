@@ -1,0 +1,67 @@
+page: { id: fleet-model-categories }
+datasources:
+  - id: fleet_model_category_records
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_MODEL_CATEGORIES_UNAVAILABLE, message: Category data is temporarily unavailable. } }
+    query: "SELECT category.id, category.row_version, category.sequence, category.name FROM fleet_vehicle_model_categories AS category WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR category.name ILIKE '%' || :q || '%') ORDER BY category.sequence, category.id"
+actions:
+  - id: create_fleet_model_category_inline
+    type: server_form
+    permission: fleet.manage
+    title: New Category
+    action: fleet.model_categories.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fleet_model_category_records]
+    mutation:
+      operation: insert
+      table: fleet_vehicle_model_categories
+      fields: [row_version, sequence, name]
+      required: [name]
+      defaults: { row_version: 1, sequence: 10 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'fleet-category-custom-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: FLEET_MODEL_CATEGORY_NAME_REQUIRED, message: Category name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_model_categories WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: FLEET_MODEL_CATEGORY_EXISTS, message: A category with this name already exists. }
+      result: { query: "SELECT * FROM fleet_vehicle_model_categories WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 10 }
+      - { field: name, label: Name, type: text, required: true }
+  - id: update_fleet_model_category_inline
+    type: server_form
+    permission: fleet.manage
+    title: Edit Category
+    action: fleet.model_categories.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_model_category_records]
+    mutation:
+      operation: update
+      table: fleet_vehicle_model_categories
+      fields: [sequence, name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_model_categories WHERE id = :id", status: 404, code: FLEET_MODEL_CATEGORY_NOT_FOUND, message: Category was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: FLEET_MODEL_CATEGORY_NAME_REQUIRED, message: Category name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_model_categories WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: FLEET_MODEL_CATEGORY_EXISTS, message: A category with this name already exists. }
+      result: { query: "SELECT * FROM fleet_vehicle_model_categories WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Name, type: text, required: true }
+  - id: delete_fleet_model_category
+    type: server
+    permission: fleet.manage
+    action: fleet.model_categories.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [fleet_model_category_records]
+    params: { id: '{row.id}' }
+    mutation:
+      operation: delete
+      table: fleet_vehicle_model_categories
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_model_categories WHERE id = :id", status: 404, code: FLEET_MODEL_CATEGORY_NOT_FOUND, message: Category was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_models WHERE category_id = :id)", status: 409, code: FLEET_MODEL_CATEGORY_IN_USE, message: A category assigned to models cannot be deleted. }

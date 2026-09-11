@@ -1,2 +1,9 @@
 .fleet-page { min-height: 100%; }
 .fleet-page .o-list-view__toolbar { gap: .65rem; }
+.o-list-view-inline-edit .o-list-table [data-column='sequence'] {
+  width: 44px;
+}
+
+.o-list-view-inline-edit .o-list-table [data-column='name'] {
+  width: calc(100% - 44px);
+}
