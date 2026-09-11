@@ -661,3 +661,30 @@ Verification:
 
 Evidence/docs commit is separate from implementation commit `a92285f5`;
 screenshots remain under `/tmp` and are not committed.
+
+## Bounded batch: Reporting > Stock contract (2026-09-11)
+
+The next uncovered visible Inventory action is Reporting > Stock: Odoo XML ID
+`stock.menu_product_stock` invokes `stock.action_product_stock_view` (live
+action 540, model `product.product`, path `stock-report`, `list,form`, domain
+`is_storable = True`). The existing Core3 `/stock` page is the separate On Hand
+quant view and remains unchanged; this batch owns the explicit `/stock-report`
+route and changes the Reporting menu item to that route.
+
+The bounded surface is the authenticated stock report collection at 1440x900
+and 390x844. It includes the New and Inventory at Date entry points, category
+filter, product search, deterministic pager, and the stock columns Product,
+Unit Cost, Total Value, On Hand, Free to Use, Incoming, Outgoing, and Unit.
+History and Replenishment row links navigate to the already implemented
+read-only Moves History and manager-only Replenishment surfaces. Forecast,
+Locations, product create/edit, and the Inventory at Date result wizard are
+explicitly deferred beyond this list contract.
+
+The implementation must keep `pages/stock-report.yaml` layout-only and bind it
+to `api/stock-report.yaml` through `page.id: stock-report`. A migration adds a
+service-owned, deterministic stock-report projection dated `2026-01-15`, with
+storable products covering zero, on-hand, reserved/free, incoming, outgoing,
+and forecasted quantities plus category values. The API must expose stable
+search/category filtering, an explicit empty/no-result state, 403 permission
+state, and 503 transport state; the report is read-only and must not expose
+CRUD or stale-write mutations.
