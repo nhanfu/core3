@@ -6,7 +6,7 @@ datasources:
     query: |
       SELECT id, row_version, name, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label,
         sequence, bom_id, bom_name, workcenter_id,
-        workcenter_name, time_mode, time_mode_batch, time_cycle_manual, time_cycle,
+        workcenter_name, time_mode_batch, time_cycle_manual, time_cycle,
         printf('%d:00', CAST(time_cycle AS INTEGER)) AS time_cycle_display,
         time_total, printf('%d:00', CAST(time_total AS INTEGER)) AS time_total_display,
         cost_mode, CASE cost_mode WHEN 'actual' THEN 'Actual time' ELSE 'Theorical time' END AS cost_mode_label,
