@@ -526,3 +526,43 @@ checks confirmed the Kanban state, card fields, exact viewport width, and no
 failed requests. The Core3 PNGs are provisional because the isolated dev
 shell's launcher overlay remained visible in the screenshot despite the fully
 rendered authenticated DOM; Odoo PNGs are populated visual evidence.
+
+## Current batch: Vendor Product detail follow-up
+
+The authenticated personal Odoo database confirms Vendors → Products uses the
+`account.product_product_menu_purchasable` action at `/odoo/vendor-products`;
+opening the deterministic `Bolt` record reaches `/odoo/vendor-products/128`.
+The detail form exposes the Product, Sales, Expenses, Point of Sale, and
+Purchase switches; General Information, Attributes & Variants, Sales,
+Purchase, and Inventory tabs; product type, invoicing policy, inventory
+tracking, sales price/taxes, cost, purchase taxes, category, reference,
+barcode, company, inventory totals, internal notes, and chatter.
+
+Core3 now opens vendor-product rows through
+`view_accounting_vendor_product` to `/accounting/vendor-product-detail?id=...`.
+The page is layout-only (`accounting-vendor-product-detail`) and joins
+`api/vendor-product-detail.yaml` by the same `page.id`. Migration
+`20260911190000-024-accounting-vendor-product-detail.yaml` adds deterministic
+pricing, tax, inventory, reference, company, barcode, and notes fields to the
+existing vendor-product fixtures. The detail read requires `accounting.read`
+and has explicit empty, missing, and transport-error behavior. Edit, archive,
+restore, and delete require `accounting.write`, validate required names and
+non-negative prices, and use optimistic row-version guards; the list create
+contract now also initializes the detail fields.
+
+Focused coverage is `test/accounting_vendor_product_detail.integration.test.ts`
+(3 tests, 33 assertions in this batch) plus the existing vendor-product suite.
+Authenticated comparison captures are temporary and not committed:
+`/tmp/core3-accounting-vendor-product-detail-desktop-final.png`,
+`/tmp/core3-accounting-vendor-product-detail-mobile-final.png`,
+`/tmp/odoo-accounting-vendor-product-detail-desktop-final.png`, and
+`/tmp/odoo-accounting-vendor-product-detail-mobile-final.png`. Browser checks
+covered the populated detail at 1440x900 and 390x844; Core3 and Odoo had no
+unexpected HTTP error responses and no horizontal overflow.
+
+The bounded Core3 form does not implement Odoo's product image, relational
+variant/attribute editors, tax widgets, product-stat drilldowns, or chatter
+timeline; its deterministic form presents the shared scalar fields and
+permissioned lifecycle controls. Odoo's authenticated browser also reports
+normal aborted lazy avatar/mail-image requests while the visible form remains
+rendered.
