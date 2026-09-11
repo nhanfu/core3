@@ -421,6 +421,84 @@ also remains outside this Project-only slice.
 Evidence/docs commit: pending after this section is committed separately from
 `b7972403`.
 
+## Bounded slice: Project Activity Types (2026-09-11)
+
+The next uncovered visible Project-owned action is Configuration > Activity
+Types. The live authenticated Odoo 19 `core3_codex_demo` audit exposed
+`project_menu_config_activity_type` ->
+`mail_activity_type_action_config_project_types` at
+`/odoo/project-activity-types`; the source action is defined in
+`/home/nhanjs/projects/odoo/addons/project/views/mail_activity_type_views.xml`.
+It uses model `mail.activity.type`, view order `list,kanban,form`, the domain
+`res_model = False OR res_model = project.task`, and a default `project.task`
+context. The installed demo surface has five active rows: To-Do, Email, Call,
+Meeting, and Document. Its list columns are Name, Default Summary, Planned in,
+and Type; mobile uses the activity cards; the form has Activity Settings and
+Next Activity sections plus Default Note.
+
+Core3 maps this one action to the module-qualified list route
+`/project/project-activity-types` (manifest path `/project-activity-types`) and
+adds it under Project > Configuration with `project.manage`. The layout-only
+page is `pages/activity-types.yaml` (`page.id: project-activity-types`) and
+the service-owned list API is `api/activity-types.yaml` with the same page id.
+Rows now navigate to `/project/project-activity-types/detail?id={id}` instead
+of opening a generic form modal or side panel. The full-page detail uses
+`pages/activity-type-detail.yaml` and `api/activity-type-detail.yaml`, joined
+by `page.id: activity-type-detail` as required by the renderer's detail-page
+basename lookup. This uses the shared route renderer and `OdooFormView`, so the
+same Activity Settings, Next Activity, Default Note, edit, archive/restore,
+delete, and back actions remain available at both desktop and mobile widths.
+
+Migration `20260911170000-009-project-activity-types.yaml` owns the stable
+`project_activity_types` projection and five rows seeded with the Odoo order,
+the `2026-01-15`-compatible deterministic contract, and no browser or remote
+fixtures. The action supports create, edit, archive/restore, and delete with
+`project.manage`, duplicate-name and non-negative-schedule validation,
+row-version concurrency for state mutations, stable empty/not-found/503
+branches, and a To-Do guard matching Odoo's protected master activity type.
+Activity Plans and other Project configuration actions remain outside this
+bounded slice.
+
+Focused coverage is `test/project_activity_types.integration.test.ts` (3
+tests, 35 assertions): it verifies the manifest action, page/API/detail
+separation and discovery, explicit navigated detail route, source
+view/field/guard contracts, deterministic fixtures, active/archived/search/
+empty/not-found branches, permissions, and stable transport errors.
+Authenticated browser QA additionally created
+`Field Review QA`, edited its summary, archived it, and verified the inactive
+detail; the clean final runtime was restarted before screenshot capture.
+
+### Browser evidence
+
+Reference Odoo used `codex@core3.local` / `Core3Odoo2026!` against
+`http://localhost:8069`, database `core3_codex_demo`. Core3 used
+`admin@tms.local` / `admin123` against the isolated runtime
+`http://localhost:3122`. All final captures were visually inspected. Core3
+had zero failed requests and page errors; Odoo had no HTTP failures or page
+errors, with only expected navigation-aborted `/mail/data` background calls.
+The detail route was exercised by clicking a populated list/card row, then the
+canonical mobile and desktop detail captures were recaptured directly from
+that route after restarting the updated runtime. Both surfaces reported exact
+`scrollWidth === 1440` or `390` as applicable. Images remain under `/tmp` and
+are not committed.
+
+| Surface | Exact path | Dimensions | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo list | `/tmp/odoo-project-activity-types-list-desktop-route-final-20260911.png` | 1440x900 | `a841fe7ba1c88f04bcc9a847b9ca3137b7ff67fde1a6d3c0d8f1a18df798d067` |
+| Odoo mobile kanban | `/tmp/odoo-project-activity-types-list-mobile-route-final-20260911.png` | 390x844 | `286a37524f7f020813f6787d85b80cae7986995f986e8b2d652f326de577da7a` |
+| Odoo detail | `/tmp/odoo-project-activity-types-detail-desktop-route-final-20260911.png` | 1440x900 | `caaeeb268180152facb06a8e7724d8c5307819ec122574afbfd6fbbdc33e2c91` |
+| Odoo mobile detail | `/tmp/odoo-project-activity-types-detail-mobile-route-final-20260911.png` | 390x844 | `53d8f7e4a83e9b51b57052b91a2b673d11a25670e3a29f7459399ad48f715f72` |
+| Core3 navigated list | `/tmp/core3-project-activity-types-list-desktop-route-final-20260911.png` | 1440x900 | `bcaa8b5fd912ea8f17453c52db6dd667ac037aecd02f34095e0d300812a2dd3a` |
+| Core3 full-page detail | `/tmp/core3-project-activity-types-detail-desktop-final-20260911.png` | 1440x900 | `8c4c2af1bbd61eab87df57b247e8d53af09071e90eaee95889631d9f9296c4cb` |
+| Core3 mobile cards | `/tmp/core3-project-activity-types-list-mobile-route-final-20260911.png` | 390x844 | `c42c473a60700ff2533d3133eb69fd7ffc8011036662da235f4095696e0fda51` |
+| Core3 mobile full-page form | `/tmp/core3-project-activity-types-detail-mobile-final-20260911.png` | 390x844 | `8b90ffafc181b2c567e64afb8b616d8f4d56b1034bfda50dbce3c2bc755fee9e` |
+
+The implementation commit is `1b6f8f5d816b1286c628664b6a2776c6e7c73d68` (`feat(project): add activity types
+parity`); this route/evidence documentation section is committed separately.
+Validation on the isolated worktree passed: focused tests 3/3 with 35
+assertions, UI audit 505 pages / 512 routes / 889 datasources, ESLint, global
+and Project CSS builds, and `git diff --check`.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:
