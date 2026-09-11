@@ -208,6 +208,55 @@ toolbar are represented in both captures. Verification passed with
 assertions), `bun run audit` (453 pages, 460 routes, 788 datasources), and
 `git diff --check`. Evidence documentation checkpoint follows this section.
 
+## Costs Analysis checkpoint: `fleet_costs_reporting_action`
+
+The installed personal Odoo database exposes Fleet > Reporting > Costs as menu
+id 158 and action id 183 (`fleet_costs_reporting_action`), named `Costs
+Analysis`, model `fleet.vehicle.cost.report`, with `graph,pivot` view order and
+context `search_default_filter_date_start=1`. The live report contains 91 rows
+across five vehicles for the seeded current-year view; its search contract
+includes vehicle/name, driver, date, Service, Contract, and Vehicle/Driver
+grouping. The source graph groups by month and cost type with Cost as the
+measure; the pivot groups Vehicle by Date and Cost Type.
+
+Implementation checkpoint: `28139df3` (`feat(fleet): add costs analysis parity
+slice`). Core3 exposes `/fleet/reporting/costs` from the page-id/API pair
+`fleet-costs-analysis`; the page remains presentation-only and
+`api/costs-analysis.yaml` owns the manager-only report datasource. Migrations
+`20260911210000-015-fleet-cost-report-schema.yaml` and
+`20260911211000-016-fleet-cost-report-data.yaml` add stable report rows for
+service and contract costs, with the fixed fixture date `2026-01-15`. The
+report supports graph/pivot tabs, search, Cost Type filtering, deterministic
+ordering, and explicit empty and transport-error states.
+
+Verification passed with `bun test test/fleet_costs_analysis.integration.test.ts`
+(2 tests, 27 assertions), `bun run audit` (460 pages, 467 routes, 800
+datasources), and `git diff --check`. The focused test proves migration
+idempotency, page/API discovery, stable rows, search/filter behavior, empty
+data, and the `FLEET_COSTS_DATA_UNAVAILABLE` transport contract.
+
+Authenticated visual evidence, captured and inspected on 2026-09-11 using the
+personal Odoo administrator and the isolated Core3 runtime, is kept outside
+Git:
+
+- Odoo desktop 1440x900: `/tmp/odoo-personal-fleet-costs-desktop-20260911.png`
+  SHA-256 `f69c1b9ee77a5857019aa69ffe229d7d3dece8b52c4eba9858ac179b2df2e3e9`
+- Odoo mobile 390x844: `/tmp/odoo-personal-fleet-costs-mobile-20260911.png`
+  SHA-256 `978de6afd8a91931e0469a773327575fb750a375c4cb10cbbf853d1ed787c3f0`
+- Core3 desktop 1440x900: `/tmp/core3-fleet-costs-desktop-20260911.png`
+  SHA-256 `d0ed5e56b2b84b9dbd238c1520f55a234efb7d41518ff41aee3f4413143c87d7`
+- Core3 mobile 390x844: `/tmp/core3-fleet-costs-mobile-20260911.png`
+  SHA-256 `9f544ba239dc193e1c884a9ce70fb7b1b5e5a8c8b5a2e7b96263928a22bee95c`
+
+The browser pass found no page errors, failed requests, or horizontal overflow
+(1440/1440 and 390/390 document widths) on either implementation. The Core3
+bar graph matches Odoo's graph-mode affordance and monthly cost-type series;
+known bounded visual differences are the Fluent versus purple application
+shell, ISO dates and local six-month fixtures versus Odoo's localized nine-
+month demo series, and the shared Core3 renderer's grouped bars without
+Odoo's stacked total overlay. Pivot mode and richer report grouping remain
+shared-renderer follow-up work.
+
 ## Source data and behavior contract
 
 The source models are `fleet.vehicle`, `fleet.vehicle.model`,
