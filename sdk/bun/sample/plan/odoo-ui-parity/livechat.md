@@ -341,8 +341,8 @@ Configuration → Expertise, with a side-panel detail route
 `/livechat/expertise/detail`. Page YAML and API YAML remain separate and join by
 `page.id` (`livechat-expertise` and `expertise-detail`). Fixtures are
 idempotent and fixed to `Discuss`, `Livechat`, and `Mitchell Admin`; supported
-states include default, search no-results, explicit empty, missing detail, and
-transport error. Manager-only `livechat.manage` mutations cover create/update/
+states include default, search no-results, explicit empty, forbidden, missing
+detail, and transport error. Manager-only `livechat.manage` mutations cover create/update/
 delete, duplicate and required-name validation, in-use protection for assigned
 expertise, and optimistic row-version conflicts. The visible operator assignment
 is represented as a deterministic comma-separated operator display in this
@@ -353,9 +353,9 @@ Focused validation is `test/livechat_expertise.integration.test.ts`. Authenticat
 desktop/mobile captures are stored outside Git under `/tmp`:
 
 - Odoo: `/tmp/odoo-livechat-expertise-desktop-list.png`,
-  `/tmp/odoo-livechat-expertise-desktop-form.png`,
+  `/tmp/odoo-livechat-expertise-desktop-detail.png`,
   `/tmp/odoo-livechat-expertise-mobile-list.png`, and
-  `/tmp/odoo-livechat-expertise-mobile-form.png`
+  `/tmp/odoo-livechat-expertise-mobile-detail.png`
 - Core3: `/tmp/core3-livechat-expertise-desktop-list.png`,
   `/tmp/core3-livechat-expertise-desktop-detail.png`,
   `/tmp/core3-livechat-expertise-mobile-list.png`, and

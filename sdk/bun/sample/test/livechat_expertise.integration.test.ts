@@ -50,8 +50,12 @@ describe('Live Chat Expertise action parity', () => {
     expect((await repository.querySource(source, { q: 'missing', fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { q: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { q: null, fixture_state: 'no_results' }, 0, 50)).data).toEqual([]);
+    await expect(repository.querySource(source, { q: null, fixture_state: 'forbidden' }, 0, 50)).rejects.toMatchObject({ status: 403, code: 'LIVECHAT_EXPERTISE_FORBIDDEN' });
+    await expect(repository.querySource(source, { q: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'LIVECHAT_EXPERTISE_UNAVAILABLE' });
     expect(await repository.querySource(detail, { id: 'livechat-expertise-discuss', fixture_state: null }, 0, 1)).toMatchObject({ data: { name: 'Discuss', operator_names: 'Mitchell Admin' } });
     expect(await repository.querySource(detail, { id: 'missing-livechat-expertise', fixture_state: 'not_found' }, 0, 1)).toMatchObject({ data: {} });
+    await expect(repository.querySource(detail, { id: 'livechat-expertise-discuss', fixture_state: 'forbidden' }, 0, 1)).rejects.toMatchObject({ status: 403, code: 'LIVECHAT_EXPERTISE_DETAIL_FORBIDDEN' });
+    await expect(repository.querySource(detail, { id: 'livechat-expertise-discuss', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'LIVECHAT_EXPERTISE_DETAIL_UNAVAILABLE' });
 
     const create = action('create_livechat_expertise');
     const created = await repository.executeMutation(create.mutation, { values: { name: 'Technical Support', operator_names: 'Mitchell Admin, Maya Chen' } });
@@ -75,7 +79,7 @@ describe('Live Chat Expertise action parity', () => {
     const api = yaml('api/expertise.yaml');
     expect(page.search).toEqual({ label: 'Search', placeholder: 'Search...' });
     expect(page.columns.map((column: any) => column.label)).toEqual(['Name', 'Operators']);
-    expect(api.datasources.find((item: any) => item.id === 'livechat_expertises')).toMatchObject({ permission: 'livechat.read', error_states: { transport_error: { status: 503, code: 'LIVECHAT_EXPERTISE_UNAVAILABLE' } } });
+    expect(api.datasources.find((item: any) => item.id === 'livechat_expertises')).toMatchObject({ permission: 'livechat.read', error_states: { forbidden: { status: 403, code: 'LIVECHAT_EXPERTISE_FORBIDDEN' }, transport_error: { status: 503, code: 'LIVECHAT_EXPERTISE_UNAVAILABLE' } } });
     for (const id of ['create_livechat_expertise', 'edit_livechat_expertise', 'delete_livechat_expertise']) {
       expect(action(id).permission, id).toBe('livechat.manage');
       expect(action(id).handler, id).toBe('yaml_mutation');

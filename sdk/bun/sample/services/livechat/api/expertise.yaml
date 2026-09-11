@@ -4,7 +4,9 @@ datasources:
   - id: livechat_expertises
     permission: livechat.read
     single: false
-    error_states: { transport_error: { status: 503, code: LIVECHAT_EXPERTISE_UNAVAILABLE, message: Live Chat expertise is temporarily unavailable. } }
+    error_states:
+      forbidden: { status: 403, code: LIVECHAT_EXPERTISE_FORBIDDEN, message: You do not have permission to view Live Chat expertise. }
+      transport_error: { status: 503, code: LIVECHAT_EXPERTISE_UNAVAILABLE, message: Live Chat expertise is temporarily unavailable. }
     query: |
       SELECT id, row_version, name, operator_names
       FROM livechat_expertise
