@@ -170,13 +170,16 @@ export class PageFormModal extends BaseComponent {
           // Reset error
           // Validate required fields
           let firstInvalid: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null = null;
+          const readFieldValue = (entry: InputEntry) => {
+            const { el, fieldDef } = entry;
+            if (el instanceof HTMLInputElement && el.type === 'checkbox') return el.checked;
+            if (fieldDef.type === 'multi-select' || fieldDef.type === 'permission-grid') return el.value.split(',').map(value => value.trim()).filter(Boolean);
+            if (el instanceof HTMLSelectElement && el.multiple) return Array.from(el.selectedOptions).map(option => option.value);
+            return el.value?.trim() ?? '';
+          };
           for (const entry of Object.values(inputs)) {
             const { el, fieldDef } = entry;
-            const v = fieldDef.type === 'multi-select' || fieldDef.type === 'permission-grid'
-              ? el.value.split(',').map(value => value.trim()).filter(Boolean)
-              : el instanceof HTMLSelectElement && el.multiple
-                ? Array.from(el.selectedOptions).map(option => option.value)
-                : el.value?.trim() ?? '';
+            const v = readFieldValue(entry);
             const label = String(fieldDef.label || fieldDef.field);
             if (fieldDef.required && (Array.isArray(v) ? v.length === 0 : !v)) {
               setFieldError(entry, `${label} is required.`);
@@ -204,13 +207,9 @@ export class PageFormModal extends BaseComponent {
             return;
           }
 
-          const changes = Object.entries(inputs).map(([field, { el }]) => ({
+          const changes = Object.entries(inputs).map(([field, entry]) => ({
             field,
-            value: inputs[field].fieldDef.type === 'multi-select' || inputs[field].fieldDef.type === 'permission-grid'
-              ? el.value.split(',').map(value => value.trim()).filter(Boolean)
-              : el instanceof HTMLSelectElement && el.multiple
-                ? Array.from(el.selectedOptions).map(option => option.value)
-                : el.value,
+            value: readFieldValue(entry),
           }));
 
               html.take(saveBtn).prop('disabled', true).replaceText(i18n.tKey('labels.saving', {}, 'Saving…'));
