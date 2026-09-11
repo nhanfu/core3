@@ -1,0 +1,24 @@
+title: New POS Combo Choice
+page: { id: pos-combo-choice-new, route: /point-of-sale/combo-choices/new, breadcrumb: [Sales, Point of Sale, Products, Combo Choices, New], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_combo_choice_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions:
+      - { id: back_to_pos_combo_choices, label: Combo Choices, variant: secondary, permission: pos.read }
+      - { id: create_pos_combo_choice, label: Save, variant: primary, permission: pos.manage }
+    group_columns: 2
+    groups:
+      - title: Combo Choice
+        wide: true
+        fields:
+          - { field: name, label: Combo Choice, type: text, required: true }
+          - { field: maximum_items, label: Maximum items?, type: number, required: true, default: 1, min: 1 }
+          - { field: included_items, label: Includes items?, type: number, required: true, default: 1, min: 0 }
+      - title: Details
+        fields:
+          - { field: combo_price, label: Combo Price?, type: number, required: true, default: 0, min: 0 }
+          - { field: company, label: Company, type: text, default: 'Visible to all' }

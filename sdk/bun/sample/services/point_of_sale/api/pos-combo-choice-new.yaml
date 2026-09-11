@@ -1,0 +1,39 @@
+page: { id: pos-combo-choice-new }
+datasources:
+  - id: pos_combo_choice_new
+    single: true
+    permission: pos.read
+    query: "SELECT NULL AS id, 1 AS row_version, '' AS name, 1 AS maximum_items, 1 AS included_items, CAST(0 AS DOUBLE) AS combo_price, 'Visible to all' AS company, true AS active"
+actions:
+  - id: back_to_pos_combo_choices
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/combo-choices
+
+  - id: create_pos_combo_choice
+    type: server_form
+    permission: pos.manage
+    title: New POS Combo Choice
+    action: pos.combo_choices.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [pos_combo_choices]
+    mutation:
+      operation: insert
+      table: pos_combo_choices
+      generated: [id]
+      fields: [row_version, name, product, category, price_extra, maximum_items, included_items, combo_price, company, active]
+      required: [name, maximum_items, included_items]
+      defaults: { row_version: 1, product: '', category: '', price_extra: 0, maximum_items: 1, included_items: 1, combo_price: 0, company: 'Visible to all', active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: POS_COMBO_CHOICE_NAME_REQUIRED, message: Combo Choice is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:maximum_items AS INTEGER) >= 1 AND CAST(:included_items AS INTEGER) >= 0 AND CAST(:included_items AS INTEGER) <= CAST(:maximum_items AS INTEGER) AND CAST(:combo_price AS DECIMAL(18,2)) >= 0", status: 422, code: POS_COMBO_CHOICE_VALUES_INVALID, message: Enter valid item counts and a non-negative combo price. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_combo_choices WHERE LOWER(name) = LOWER(trim(CAST(:name AS VARCHAR))))", status: 409, code: POS_COMBO_CHOICE_NAME_EXISTS, message: A combo choice with this name already exists. }
+      result: { query: "SELECT * FROM pos_combo_choices WHERE id = :id" }
+    fields:
+      - { field: name, label: Combo Choice, type: text, required: true }
+      - { field: maximum_items, label: Maximum items?, type: number, required: true, default: 1, min: 1 }
+      - { field: included_items, label: Includes items?, type: number, required: true, default: 1, min: 0 }
+      - { field: combo_price, label: Combo Price?, type: number, required: true, default: 0, min: 0 }
+      - { field: company, label: Company, type: text, default: 'Visible to all' }
+      - { field: active, label: Active, type: checkbox, default: true }

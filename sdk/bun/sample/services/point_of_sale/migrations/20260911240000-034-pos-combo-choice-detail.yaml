@@ -1,0 +1,48 @@
+version: 0.0.34
+kind: data
+description: POS Combo Choice detail, options, and Odoo-shaped demo catalog
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_combo_choices ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE pos_combo_choices ADD COLUMN IF NOT EXISTS maximum_items INTEGER;
+      ALTER TABLE pos_combo_choices ADD COLUMN IF NOT EXISTS included_items INTEGER;
+      ALTER TABLE pos_combo_choices ADD COLUMN IF NOT EXISTS combo_price DECIMAL(18,2);
+      ALTER TABLE pos_combo_choices ADD COLUMN IF NOT EXISTS company VARCHAR;
+      UPDATE pos_combo_choices SET row_version = COALESCE(row_version, 1), maximum_items = COALESCE(maximum_items, 1), included_items = COALESCE(included_items, 1), combo_price = COALESCE(combo_price, price_extra), company = COALESCE(company, 'Visible to all');
+      UPDATE pos_combo_choices SET name = 'Desk Accessories Combo', product = 'Desk Accessories Combo', category = 'Furniture', combo_price = 1.98 WHERE id = 'pos-combo-oat-milk';
+      UPDATE pos_combo_choices SET name = 'Desks Combo', product = 'Desks Combo', category = 'Furniture', combo_price = 147.00 WHERE id = 'pos-combo-almond-milk';
+      UPDATE pos_combo_choices SET name = 'Chairs Combo', product = 'Chairs Combo', category = 'Furniture', combo_price = 33.00 WHERE id = 'pos-combo-extra-shot';
+      UPDATE pos_combo_choices SET name = 'Jeans Combo', product = 'Jeans Combo', category = 'Apparel', combo_price = 70.00 WHERE id = 'pos-combo-fries';
+      UPDATE pos_combo_choices SET name = 'T-shirt Combo', product = 'T-shirt Combo', category = 'Apparel', combo_price = 15.00 WHERE id = 'pos-combo-salad';
+      INSERT INTO pos_combo_choices(id, name, product, category, price_extra, row_version, maximum_items, included_items, combo_price, company, active) VALUES
+        ('pos-combo-burgers', 'Burgers', 'Burgers', 'Food', 13.00, 1, 1, 1, 13.00, 'Visible to all', true),
+        ('pos-combo-sushi', 'Sushi', 'Sushi', 'Food', 9.25, 1, 1, 1, 9.25, 'Visible to all', true),
+        ('pos-combo-drinks', 'Drinks', 'Drinks', 'Food', 2.20, 1, 1, 1, 2.20, 'Visible to all', true)
+      ON CONFLICT(id) DO NOTHING;
+      CREATE TABLE IF NOT EXISTS pos_combo_choice_items (
+        id VARCHAR PRIMARY KEY,
+        combo_choice_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        product VARCHAR NOT NULL,
+        original_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        extra_price DECIMAL(18,2) NOT NULL DEFAULT 0
+      );
+      INSERT INTO pos_combo_choice_items(id, combo_choice_id, row_version, sequence, product, original_price, extra_price) VALUES
+        ('pos-combo-desk-item-1', 'pos-combo-oat-milk', 1, 10, '[FURN_0001] Desk Organizer', 5.10, 0),
+        ('pos-combo-desk-item-2', 'pos-combo-oat-milk', 1, 20, '[FURN_0002] Desk Pad', 1.98, 0),
+        ('pos-combo-desk-item-3', 'pos-combo-oat-milk', 1, 30, '[FURN_0006] Monitor Stand', 3.19, 2.00)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_combo_choice_items;
+      DELETE FROM pos_combo_choices WHERE id IN ('pos-combo-burgers', 'pos-combo-sushi', 'pos-combo-drinks');
+      ALTER TABLE pos_combo_choices DROP COLUMN IF EXISTS company;
+      ALTER TABLE pos_combo_choices DROP COLUMN IF EXISTS combo_price;
+      ALTER TABLE pos_combo_choices DROP COLUMN IF EXISTS included_items;
+      ALTER TABLE pos_combo_choices DROP COLUMN IF EXISTS maximum_items;
+      ALTER TABLE pos_combo_choices DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,59 @@
+title: POS Combo Choice
+page: { id: pos-combo-choice-detail, route: /point-of-sale/combo-choice-detail, breadcrumb: [Sales, Point of Sale, Products, Combo Choices, Combo Choice], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_combo_choice_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions:
+      - { id: back_to_pos_combo_choices, label: Combo Choices, variant: secondary, permission: pos.read }
+      - { id: new_pos_combo_choice, label: New, variant: primary, permission: pos.manage }
+      - { id: edit_pos_combo_choice, label: Edit, variant: secondary, permission: pos.manage }
+      - { id: delete_pos_combo_choice, label: Delete, variant: danger, permission: pos.manage, confirm: Delete this combo choice? }
+    group_columns: 2
+    groups:
+      - title: Combo Choice
+        wide: true
+        fields:
+          - { field: name, label: Combo Choice, type: text, required: true }
+          - { field: maximum_items, label: Maximum items?, type: number, required: true }
+          - { field: included_items, label: Includes items?, type: number, required: true }
+      - title: Details
+        fields:
+          - { field: combo_price, label: Combo Price?, type: number, required: true }
+          - { field: company, label: Company, type: text }
+
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: pos_combo_choice_items
+    parent_source: pos_combo_choice_detail
+    title: Options
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    actions:
+      - { id: add_pos_combo_choice_item, label: Add a line, variant: primary, permission: pos.manage }
+    empty_state: { title: No options, description: Add products that can be selected in this combo choice. }
+    children:
+      - { type: LineItemField, id: product, field: product, label: Product, input_type: text, required: true }
+      - { type: LineItemField, id: original_price, field: original_price, label: Original Price, input_type: money, decimals: 2 }
+      - { type: LineItemField, id: extra_price, field: extra_price, label: Extra Price, input_type: money, decimals: 2 }
+      - type: LineItemActions
+        id: pos_combo_choice_item_actions
+        edit_action: edit_pos_combo_choice_item
+        create_action: add_pos_combo_choice_item
+        actions:
+          - { id: edit_pos_combo_choice_item, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_combo_choice_item, label: Delete, icon: trash, variant: danger, permission: pos.manage }
+    columns:
+      - { field: product, label: Options, width: 420 }
+      - { field: original_price, label: Original Price, align: right, width: 180 }
+      - { field: extra_price, label: Extra Price, align: right, width: 160 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_pos_combo_choice_item, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_combo_choice_item, label: Delete, icon: trash, variant: danger, permission: pos.manage }

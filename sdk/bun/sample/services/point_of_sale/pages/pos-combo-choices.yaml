@@ -4,13 +4,16 @@ components:
   - type: ListView
     variant: odoo
     source: pos_combo_choices
+    responsive_card: true
+    create_action: new_pos_combo_choice
+    create_label: New
+    row_open_action: view_pos_combo_choice
+    row_double_click_action: view_pos_combo_choice
     search: { label: Search combo choices, placeholder: 'Search choice or product...' }
-    filters: [{ field: active, label: Status, options_source: pos_catalog_active }]
     columns:
-      - { field: name, label: Combo Choice, type: PrimaryEntityCell }
-      - { field: product, label: Product }
-      - { field: category, label: Category }
-      - { field: price_extra, label: Extra Price, align: right }
-      - { field: active, label: Active, type: StatusChip }
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: combo_price, label: Combo Price, type: money, align: right }
+      - { field: combo_item_count, label: Product Count, align: right }
     page_size: 50
     row_key: id
+    empty_state: { title: No combo choices, description: Create a combo choice to offer configurable products at the Point of Sale. }

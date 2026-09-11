@@ -2,7 +2,16 @@ page: { id: pos-combo-choices }
 datasources:
   - id: pos_combo_choices
     permission: pos.read
-    query: "SELECT id, 1 AS row_version, name, product, category, CAST(price_extra AS DOUBLE) AS price_extra, active FROM pos_combo_choices WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR product ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY product, name"
-  - id: pos_catalog_active
+    error_states: { transport_error: { status: 503, code: POS_COMBO_CHOICES_UNAVAILABLE, message: Combo choices are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, CAST(combo_price AS DOUBLE) AS combo_price, (SELECT COUNT(*) FROM pos_combo_choice_items i WHERE i.combo_choice_id = c.id) AS combo_item_count, active FROM pos_combo_choices c WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') AND CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 ORDER BY name"
+actions:
+  - id: new_pos_combo_choice
+    type: navigate
+    permission: pos.manage
+    navigate_to: /point-of-sale/combo-choices/new
+
+  - id: view_pos_combo_choice
+    type: navigate
     permission: pos.read
-    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"
+    navigate_to: /point-of-sale/combo-choice-detail
+    params: { id: '{row.id}' }
