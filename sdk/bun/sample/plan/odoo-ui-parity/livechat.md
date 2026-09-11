@@ -420,3 +420,71 @@ rows; and the list currently orders `Support` before `YourWebsite.com` while
 the reference orders `YourWebsite.com` first. The Options/Rules/Widget content
 is a bounded read/display surface; Odoo exposes richer editable controls there.
 These are recorded as follow-up parity work, not hidden by the evidence.
+
+## Bounded implementation slice: Configuration — Chatbots (2026-09-11)
+
+The installed Odoo 19 reference exposes Live Chat → Configuration → Chatbots
+as menu id `503`, action id `764`, model `chatbot.script`, and view mode
+`list,form`. The menu is restricted to `im_livechat_group_manager`. The source
+contracts are in `/home/nhanjs/projects/odoo/addons/im_livechat/views/
+chatbot_script_views.xml`, `chatbot_script_step_views.xml`, and
+`chatbot_script_answer_views.xml`. The live database contains four scripts:
+`Lead Generation Bot`, `Odoo`, `Support Bot`, and `Welcome Bot`.
+
+Core3 implements the source-backed action as three joined page/API fragments:
+
+- `/livechat/chatbots`, page id `livechat-chatbots`, list of deterministic
+  chatbot titles with Odoo's `Create a Chatbot` empty help text and manager-only
+  create/navigation.
+- `/livechat/chatbots/detail`, page id `livechat-chatbot-detail`, editable
+  `Chatbot Name` form and `Script` line grid with `Message`, `Step Type`,
+  `Answers`, `Only If`, and add/edit/delete step actions.
+- `/livechat/chatbots/steps/detail`, page id
+  `livechat-chatbot-step-detail`, editable step fields and answer rows with
+  `Answer`, `Optional Link`, and add/edit/delete answer actions.
+
+Page YAML and API YAML are separate and joined by matching `page.id`. The
+manager permission is `livechat.manage`. The API contracts cover deterministic
+fixtures, ordered search, explicit empty/no-results, missing detail, forbidden,
+transport failure, required/duplicate validation, parent/child ownership,
+optimistic row-version stale guards, and foreign-key-safe delete ordering.
+The fixtures mirror the Odoo-visible `Lead Generation Bot` five-step script,
+including its free-input, forward-to-operator, text, email, and create-lead
+steps; Odoo's three demo answer choices are also seeded deterministically.
+
+Focused validation:
+
+```text
+bun test test/livechat_chatbots.integration.test.ts
+4 pass, 0 fail, 75 expect() calls
+```
+
+Authenticated paired captures were taken against the owned Odoo 19 instance
+and the isolated Core3 runtime at 1440x900 and 390x844. Screenshots are under
+`/tmp`, are not committed, and have these verified dimensions and SHA-256
+values:
+
+| Viewport | Odoo reference | Core3 implementation |
+| --- | --- | --- |
+| Desktop 1440x900, chatbot list | `/tmp/odoo-livechat-chatbots-desktop-1440x900-20260911.png` — `72ab492704dec3685db11e06207f4a7cea4220beb305c8072a23ac7d8897c040` — 1440×900 | `/tmp/core3-livechat-chatbots-desktop-final2-1440x900-20260911.png` — `ffdc09c8ba4cd74ad027a6f83be5d185395cf752689bc292cd18a2655b9ef2ec` — 1440×900 |
+| Desktop 1440x900, chatbot form | `/tmp/odoo-livechat-chatbot-form-1440x900-20260911.png` — `17fb43cc25a53612c2018dab1ce779abf8ec83b1b3dc793bd41c636638227c1e` — 1440×900 | `/tmp/core3-livechat-chatbot-detail-desktop-final2-1440x900-20260911.png` — `4a26f394291b569fb007aef648ff490c7f98db30a71ea94f1a8ae4106ca94e50` — 1440×900 |
+| Desktop 1440x900, step form | same Odoo chatbot form capture — 1440×900 | `/tmp/core3-livechat-chatbot-step-desktop-final2-1440x900-20260911.png` — `f442e1fded3948ef43261e2fa4ee4531d0e15011b154cf36a1a5a0e4cfb85156` — 1440×900 |
+| Mobile 390x844, chatbot list | `/tmp/odoo-livechat-chatbots-mobile-390x844-20260911.png` — `a5a505b93403fc42d42a3bdc8b3d443d4a67d4dd640c93bb527d8aaac5b91ed5` — 390×844 | `/tmp/core3-livechat-chatbots-mobile-final2-390x844-20260911.png` — `b12a12dfdc0e316363f488524307eb4564aa8da16e5d1712078064e66cfb0867` — 390×844 |
+| Mobile 390x844, chatbot form | `/tmp/odoo-livechat-chatbot-form-390x844-20260911.png` — `6383caa26c9bd76fa71f7bda005c4175d295e50f079327b29a6af8bde7079d8f` — 390×844 | `/tmp/core3-livechat-chatbot-detail-mobile-final2-390x844-20260911.png` — `f8619ee6137f1c357734542fec9429de152bb3123fad274e97edaf311c5b5717` — 390×844 |
+| Mobile 390x844, step form | same Odoo chatbot form capture — 390×844 | `/tmp/core3-livechat-chatbot-step-mobile-final2-390x844-20260911.png` — `229ee3efa55105632aa9e91442d63f9c5e84e8b6de84fef7cef0898d2984e558` — 390×844 |
+
+Comparison-driven fixes included rebuilding the isolated global and Live Chat
+CSS after the initial loader capture, hiding the helper `step_name` column from
+the desktop grid while retaining ordered `Step 1`…`Step 5` mobile cards, and
+removing Core3-only Bot Operator, Active, and zero-valued Channels controls
+that were not visible in the Odoo source form. The final authenticated browser
+pass reached all six routes, matched seeded body text, reported no non-aborted
+request/page failures, and had no horizontal overflow at either viewport.
+
+Residual scope is explicit: Core3 retains the shared Fluent shell instead of
+Odoo's purple shell, has no Odoo bot avatar, and uses generic icon edit/delete
+affordances. The step editor is a bounded field/display contract rather than a
+full many2many expertise/triggering-answer branch editor. `Create Lead` is a
+deterministic step type only; public widget transport, chatbot execution,
+conversation/lead integration, reports, member history, and transcript/user
+integration remain planned follow-up slices.
