@@ -644,3 +644,43 @@ the Core3 inline radio layout versus Odoo’s compact form sheet, the current
 line grid’s em dash/empty Free text rendering and plain numeric extra-price
 formatting, and the intentionally deferred add-line interaction on an unsaved
 New parent. Screenshots remain under `/tmp` and are not committed.
+
+## Current batch: Session Report action 723
+
+The authenticated personal Odoo 19 reference exposes Reporting → Session
+Report as action 723 (`pos.session`). It is a wizard rather than a report
+list: the form title is `Session Report`, the selector is `Pos Session`, the
+`Add a report per each employee` checkbox is enabled by default, and the
+available controls are `Print` and `Cancel`. The action was checked against
+`core3_personal` at 1440×900 and 390×844 with no failed responses or horizontal
+overflow.
+
+Core3 now implements the bounded wizard at `/point-of-sale/session-report`.
+The page/API fragments join through `pos-session-report`; migration `032`
+owns the deterministic `pos_session_report_wizards` record and the session
+lookup is projected from service-owned `pos_sessions`. Both datasources and
+both actions require `pos.read`, with explicit empty, missing, and transport
+error coverage. There is no independent CRUD surface for this Odoo wizard;
+the focused test verifies the permission boundary and safe read-only controls.
+
+Implementation checkpoint: `b3ede7e2` (`feat(pos): add session report wizard parity`).
+Focused validation passes 4 tests and 20 assertions; the UI audit passes with
+452 pages, 459 routes, and 788 datasources; `git diff --check` is clean.
+
+Authenticated evidence captured and visually inspected on 2026-09-11:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo action 723 | 1440×900 | `/tmp/odoo-pos-session-report-desktop-1440x900-20260911.png` | `17f6186e048b0be179dfc7a7ece04da148fb0774e3eed6951f564e3efeb38138` |
+| Odoo action 723 | 390×844 | `/tmp/odoo-pos-session-report-mobile-390x844-20260911.png` | `7ec26d1295982d907feccdb7e20bf9b8509884885535af7e269a754c2748004c` |
+| Core3 Session Report | 1440×900 | `/tmp/core3-pos-session-report-desktop-1440x900-20260911-final.png` | `ec3ca8bc56f9fa46ca53fa98ccea2c891b95cf9e65da76c0dc52fd1045717db9` |
+| Core3 Session Report | 390×844 | `/tmp/core3-pos-session-report-mobile-390x844-20260911-final.png` | `645ab008643a5707f5cc301c21b73e166cd20ca6fafa716ebd431530c1c32072` |
+
+The Core3 route was reached through the authenticated app launcher and POS
+menu before capture. The route rendered with zero unexpected responses, zero
+console errors, and `document.documentElement.scrollWidth` equal to the
+viewport at both sizes. The deliberate visual gap is that Odoo presents a
+purple-shell modal over the dashboard, while Core3 uses its shared Fluent
+shell and an in-page OdooFormView card; Core3 also currently renders the
+header actions alongside the form edit footer, so Print and Cancel appear in
+both locations. Screenshots remain outside Git.
