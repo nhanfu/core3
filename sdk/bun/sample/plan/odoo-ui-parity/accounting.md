@@ -813,3 +813,51 @@ renderer differences in navigation density and mobile column clipping. The
 conditional linked-Payments stat and the separately visible Payment
 Transactions action are deferred to a later transaction batch; no transaction
 behavior is claimed here.
+
+## Current batch: Payment Transactions action
+
+The installed Odoo 19 source confirms `payment.action_payment_transaction` as
+the Payment Transactions window action with `list,kanban,form,graph,pivot`
+modes. Its list is create-disabled and exposes Reference, Created on, Payment
+Method, Provider, Customer, Partner Name, Amount, Status, Company, and the
+optional Production Environment field. Its form is create- and edit-disabled,
+with a transaction-details group, customer-address group, statusbar, and
+conditional Capture/Void/Post-process controls. The model access CSV grants
+these records only to `base.group_system`. Authenticated developer-mode QA in
+the personal `core3_personal` database confirmed the action is visible at
+`/odoo/payment-transactions?debug=1`, but the database contains no transaction
+records, so Odoo renders its empty state and provides no source-confirmed row
+workflow to exercise.
+
+Core3 implements the smallest bounded source-confirmed surface: a separate
+`/accounting/payment-transactions` list/API and read-only
+`/accounting/payment-transaction-detail` form/API joined by `page.id`. The
+list declares Odoo's list, Kanban, Graph, and Pivot modes and exact source
+fields; the migration seeds six fixed transactions covering Draft, Pending,
+Authorized, Confirmed, Canceled, and Error. Search, empty, missing, forbidden,
+and transport states are explicit. Creation, editing, Capture, Void, and
+Post-process are deliberately deferred because Odoo's installed form forbids
+create/edit and the authenticated reference has no transaction/provider data
+with which to validate external payment workflows.
+
+Authenticated comparisons used Odoo `codex@core3.local` in `core3_personal`
+and Core3 `admin@tms.local`. All screenshots remain outside Git. The Odoo
+detail view is unavailable in the empty reference; Core3 detail captures are
+paired with the Odoo empty list to make that limitation explicit.
+
+Evidence captures and SHA-256 hashes:
+
+- Odoo empty list desktop: `/tmp/odoo-payment-transactions-auth-desktop-1440x900-20260911.png` — `e4f2d8a5d3fff0fe3e7e1cc1867ccce92bac41d7075b0651fe2aebfcb5a9b313` — 1440x900
+- Odoo empty Kanban mobile: `/tmp/odoo-payment-transactions-auth-mobile-390x844-20260911.png` — `ba423c9b8fea796cb9c1a4e451d3dd5e15674a872e6a49894b03cea92b748e27` — 390x844
+- Core3 seeded list desktop: `/tmp/core3-accounting-payment-transactions-20260911/desktop-list.png` — `047f358ee05124c3996bfaf34523e490040060590d9a499174f0d92725ea967c` — 1440x900
+- Core3 read-only detail desktop: `/tmp/core3-accounting-payment-transactions-20260911/desktop-detail.png` — `38b0fb79f9259b38c1fe2a63093cea1b35e2326f87b7189257511d14401b0613` — 1440x900
+- Core3 seeded responsive list: `/tmp/core3-accounting-payment-transactions-20260911/mobile-list.png` — `b79cd9337520b9faf36dd2334eb27f0392dd39ea928b1cd16f472b823b6545b9` — 390x844
+- Core3 read-only detail mobile: `/tmp/core3-accounting-payment-transactions-20260911/mobile-detail.png` — `4a50281fc7bc462b448cd9962bcb846e6b186196b4cea2e19a5a581ad9906799` — 390x844
+
+The inspected pairs matched the source labels, status states, fixed fixture
+values, and read-only detail layout. Core3 returned no failed responses or
+page errors; body width equaled the viewport at 1440 and 390 pixels for both
+list and detail. Remaining differences are Odoo's purple shell versus Core3's
+Fluent shell, Odoo's empty mobile Kanban versus Core3's seeded responsive list,
+Core3 ISO timestamps versus Odoo localized dates, and lower-level Odoo
+relational widgets/chatter not included in this bounded read-only slice.
