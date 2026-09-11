@@ -1,0 +1,92 @@
+page: { id: manufacturing-scraps }
+datasources:
+  - id: stock_scrap_states
+    single: false
+    permission: manufacturing.read
+    query: "SELECT * FROM (VALUES ('Draft', 'Draft'), ('Done', 'Done')) AS states(value, label)"
+  - id: stock_scrap_products
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT product_name AS value, product_name AS label FROM stock_scraps ORDER BY product_name"
+  - id: stock_scrap_locations
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT location AS value, location AS label FROM (SELECT source_location AS location FROM stock_scraps UNION SELECT scrap_location AS location FROM stock_scraps) locations ORDER BY location"
+  - id: stock_scraps
+    single: false
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: STOCK_SCRAP_UNAUTHORIZED, message: Sign in to view Scrap Orders. }
+      forbidden: { status: 403, code: STOCK_SCRAP_FORBIDDEN, message: You do not have permission to view Scrap Orders. }
+      transport_error: { status: 503, code: STOCK_SCRAP_UNAVAILABLE, message: Scrap Orders are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, name, CAST(date_done AS VARCHAR) AS date_done, product_id, product_name,
+        CAST(scrap_qty AS DOUBLE) AS scrap_qty, product_uom, source_location, scrap_location,
+        company_name, state, COALESCE(origin, '') AS origin, COALESCE(production_name, '') AS production_name,
+        COALESCE(lot_name, '') AS lot_name, should_replenish, COALESCE(note, '') AS note
+      FROM stock_scraps
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%'
+          OR source_location ILIKE '%' || :q || '%' OR scrap_location ILIKE '%' || :q || '%'
+          OR COALESCE(origin, '') ILIKE '%' || :q || '%' OR COALESCE(production_name, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR state = :state)
+        AND (:product_name IS NULL OR product_name = :product_name)
+        AND (:source_location IS NULL OR source_location = :source_location)
+        AND (:scrap_location IS NULL OR scrap_location = :scrap_location)
+        AND (:company_name IS NULL OR company_name = :company_name)
+      ORDER BY name ASC, id
+actions:
+  - id: view_stock_scrap
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /scraps/detail
+    params: { id: '{row.id}' }
+  - id: create_stock_scrap
+    type: server_form
+    permission: manufacturing.write
+    title: New Scrap Order
+    action: manufacturing.scraps.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [stock_scraps]
+    mutation:
+      operation: insert
+      table: stock_scraps
+      generated: [id]
+      fields: [name, date_done, product_id, product_name, scrap_qty, product_uom, source_location, scrap_location, company_name, state, origin, production_name, lot_name, should_replenish, note]
+      required: [name, product_name, scrap_qty, product_uom, company_name]
+      defaults: { date_done: '2026-01-21', product_id: product-furn-9666, product_uom: Units, source_location: WH/Stock, scrap_location: Virtual Locations/Scrap, company_name: 'My Company (San Francisco)', state: Draft, should_replenish: false, row_version: 1, created_at: '2026-01-21 10:00:00' }
+      before_steps: [{ query: "SELECT 'scrap-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:product_name AS VARCHAR))) > 0 AND CAST(:scrap_qty AS DECIMAL(18,3)) > 0", status: 422, code: STOCK_SCRAP_REQUIRED_FIELDS, message: Reference, product, and a positive quantity are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM stock_scraps WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: STOCK_SCRAP_REFERENCE_EXISTS, message: A Scrap Order with this reference already exists. }
+      result: { query: "SELECT * FROM stock_scraps WHERE id = :id" }
+    fields:
+      - { field: name, label: Reference, type: text, required: true, default: 'SCRAP/2026/NEW' }
+      - { field: date_done, label: Date, type: date, required: true, default: '2026-01-21' }
+      - { field: product_name, label: Product, type: select, options_source: stock_scrap_products, required: true }
+      - { field: scrap_qty, label: Quantity, type: number, required: true, min: 0.001, default: 1 }
+      - { field: product_uom, label: Unit, type: text, required: true, default: Units }
+      - { field: source_location, label: Source Location, type: select, options_source: stock_scrap_locations, default: WH/Stock }
+      - { field: scrap_location, label: Scrap Location, type: select, options_source: stock_scrap_locations, default: Virtual Locations/Scrap }
+      - { field: company_name, label: Company, type: select, options: [{ value: 'My Company (San Francisco)', label: 'My Company (San Francisco)' }, { value: 'Core3 Vietnam', label: 'Core3 Vietnam' }], default: 'My Company (San Francisco)' }
+      - { field: origin, label: Source Document, type: text }
+      - { field: production_name, label: Manufacturing Order, type: text }
+      - { field: lot_name, label: Lot/Serial Number, type: text }
+      - { field: should_replenish, label: Replenish Quantities, type: boolean }
+      - { field: note, label: Notes, type: textarea }
+  - id: delete_stock_scrap
+    type: server
+    permission: manufacturing.write
+    action: manufacturing.scraps.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [stock_scraps]
+    mutation:
+      operation: delete
+      table: stock_scraps
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM stock_scraps WHERE id = :id", status: 404, code: STOCK_SCRAP_NOT_FOUND, message: Scrap Order not found. }
+        - { query: "SELECT id FROM stock_scraps WHERE id = :id AND state = 'Draft'", status: 409, code: STOCK_SCRAP_DONE_DELETE, message: A Done Scrap Order cannot be deleted. }

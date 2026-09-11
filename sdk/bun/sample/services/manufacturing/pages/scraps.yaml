@@ -1,0 +1,71 @@
+title: Scrap Orders
+page: { id: manufacturing-scraps, route: /scraps, breadcrumb: [Supply Chain, Manufacturing, Operations, Scrap], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: stock_scraps
+    create_action: create_stock_scrap
+    create_label: New
+    search: { label: Search Scrap, placeholder: 'Search reference, product, or source document...' }
+    filters:
+      - { field: state, label: Status, options_source: stock_scrap_states }
+      - { field: product_name, label: Product, options_source: stock_scrap_products }
+      - { field: source_location, label: Location, options_source: stock_scrap_locations }
+      - { field: scrap_location, label: Scrap Location, options_source: stock_scrap_locations }
+      - { field: company_name, label: Company, options: [{ id: 'My Company (San Francisco)', label: 'My Company (San Francisco)' }, { id: 'Core3 Vietnam', label: 'Core3 Vietnam' }] }
+    group_by:
+      - { field: product_name, label: Product }
+      - { field: source_location, label: Location }
+      - { field: scrap_location, label: Scrap Location }
+      - { field: production_name, label: Manufacturing Order }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: form
+        label: Form
+        icon: form
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: stock_scrap_states
+        card: { title: name, subtitle: product_name, fields: [{ field: date_done, label: Date }, { field: scrap_qty, label: Quantity }, { field: product_uom, label: Unit }, { field: state, label: Status }] }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: date_done, column: Date, type: date }
+            - { field: product_name, column: Product }
+            - { field: source_location, column: Location }
+            - { field: scrap_location, column: Scrap Location }
+            - { field: scrap_qty, column: Quantity }
+            - { field: company_name, column: Company }
+          default: { rows: [product_name], columns: [state], measures: [{ field: scrap_qty, aggregate: sum, column: Quantity }] }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: product_name
+        measure_field: scrap_qty
+        measure_label: Quantity
+        type: bar
+    form_view: { page: apps/services/manufacturing/pages/scrap-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_stock_scrap
+    row_double_click_action: view_stock_scrap
+    row_actions: menu
+    actions:
+      - { id: delete_stock_scrap, label: Delete, permission: manufacturing.write, variant: danger, show_if: "row.state === 'Draft'" }
+    empty_state: { title: No scrap order found, description: Scrap products to remove damaged or unusable stock and send it to a scrap location. }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: date_done, label: Date, mobile: true, sortable: true }
+      - { field: product_name, label: Product, mobile: true, mobile_secondary: state }
+      - { field: scrap_qty, label: Quantity, align: right, mobile: true }
+      - { field: product_uom, label: Unit, mobile: true }
+      - { field: source_location, label: Location, mobile: false }
+      - { field: scrap_location, label: Scrap Location, mobile: false }
+      - { field: company_name, label: Company, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_stock_scrap, label: Open, icon: eye }, { id: delete_stock_scrap, label: Delete, icon: trash, variant: danger, show_if: 'row.state === "Draft"' }] }
+    page_size: 50

@@ -26,6 +26,10 @@ menu:
           label: Unbuild Orders
           icon: undo
           permission: manufacturing.read
+        - path: /scraps
+          label: Scrap
+          icon: delete
+          permission: manufacturing.read
     - id: master-data
       label: Master Data
       items:
