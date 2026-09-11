@@ -1,0 +1,29 @@
+title: New Model
+page: { id: model-new, route: /fleet/config/models/new, breadcrumb: [Human Resources, Fleet, Configuration, Models, New], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_model_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_fleet_models, label: Models, variant: secondary, permission: fleet.read }
+      - { id: create_fleet_model, label: Save, variant: primary, permission: fleet.manage }
+    group_columns: 2
+    groups:
+      - title: Model
+        fields:
+          - { field: name, label: Model name, type: text, required: true, placeholder: 'e.g. Model S' }
+          - { field: brand_id, label: Manufacturer, type: select, options_source: fleet_model_manufacturers, required: true }
+          - { field: vehicle_type, label: Vehicle Type, type: select, options: [{ value: car, label: Car }, { value: bike, label: Bike }], required: true }
+          - { field: category_id, label: Category, type: select, options_source: fleet_model_categories }
+      - title: Model
+        fields: [{ field: model_year, label: Model Year, type: text }, { field: seats, label: Seating Capacity, type: number }, { field: doors, label: Number of Doors, type: number }, { field: color, label: Color, type: text }, { field: trailer_hook, label: Trailer Hitch, type: checkbox }]
+    notebook:
+      active: information
+      tabs:
+        - id: information
+          label: Information
+          fields: [{ field: default_fuel_type, label: Fuel Type, type: select, options: [{ value: diesel, label: Diesel }, { value: gasoline, label: Gasoline }, { value: full_hybrid, label: Full Hybrid }, { value: electric, label: Electric }] }, { field: transmission, label: Transmission, type: select, options: [{ value: manual, label: Manual }, { value: automatic, label: Automatic }] }, { field: power, label: Power, type: number }, { field: power_unit, label: Power Unit, type: select, options: [{ value: power, label: kW }, { value: horsepower, label: Horsepower (hp) }] }, { field: vehicle_range, label: Range, type: number }, { field: range_unit, label: Range Unit, type: select, options: [{ value: km, label: km }, { value: mi, label: mi }] }, { field: default_co2, label: CO₂ Emissions, type: number }, { field: co2_standard, label: Emission Standard, type: text }]
+        - { id: vendors, label: Vendors, fields: [{ field: vendor_summary, label: Vendors }] }

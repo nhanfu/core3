@@ -1,0 +1,44 @@
+title: Models
+page: { id: fleet-models, route: /fleet/config/models, breadcrumb: [Human Resources, Fleet, Configuration, Models], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_models
+    create_action: new_fleet_model
+    create_label: New
+    search: { label: Search models, placeholder: Search models... }
+    filters:
+      - { field: vehicle_type, label: Vehicle Type, options: [{ id: car, label: Car }, { id: bike, label: Bike }] }
+      - { field: category_id, label: Category, options_source: fleet_model_categories }
+      - { field: contains_vehicle, label: Vehicles, options: [{ id: 'true', label: Contains Vehicle }] }
+      - { field: active, label: Status, options: [{ id: archived, label: Archived }] }
+    group_by:
+      - { field: brand_name, label: Manufacturers }
+      - { field: category_name, label: Category }
+      - { field: vehicle_type_label, label: Vehicle Type }
+    default_group_by: brand_name
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: brand_name
+        card: { title: name, subtitle: brand_name, fields: [{ field: category_name, label: Category }, { field: vehicle_count, label: Vehicles }, { field: vehicle_type_label, label: Vehicle Type }] }
+      - { id: form, label: Form, icon: form }
+    row_key: id
+    row_open_action: view_fleet_model
+    row_double_click_action: view_fleet_model
+    form_view: { page: apps/services/fleet/pages/model-detail.yaml, side_panel: true }
+    row_actions: menu
+    columns:
+      - { field: brand_name, label: Manufacturer, mobile: true, sortable: true }
+      - { field: name, label: Model name, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: vehicle_count, label: Vehicles, align: right }
+      - { field: category_name, label: Category, optional: show }
+      - { field: vehicle_type_label, label: Vehicle Type, optional: show }
+      - { field: active_label, label: Active, optional: hide }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_fleet_model, label: Edit, icon: edit }, { id: archive_fleet_model, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_fleet_model, label: Restore, icon: refresh, show_if: 'row.active === false' }, { id: delete_fleet_model, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    empty_state: { title: Create a new model, description: No vehicle models match your search or filters. }

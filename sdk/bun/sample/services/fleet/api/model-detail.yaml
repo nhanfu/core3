@@ -1,0 +1,78 @@
+page: { id: model-detail }
+datasources:
+  - id: fleet_model_detail_manufacturers
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_vehicle_model_brands WHERE active = TRUE ORDER BY name, id"
+  - id: fleet_model_detail_categories
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_vehicle_model_categories WHERE active = TRUE ORDER BY sequence, name, id"
+  - id: fleet_model_detail
+    single: true
+    permission: fleet.read
+    error_states: { transport_error: { status: 503, code: FLEET_MODEL_DETAIL_UNAVAILABLE, message: Model details are temporarily unavailable. } }
+    query: "SELECT model.id, model.row_version, model.brand_id, brand.name AS brand_name, model.category_id, category.name AS category_name, model.name, model.vehicle_count, model.vehicle_type, CASE model.vehicle_type WHEN 'bike' THEN 'Bike' ELSE 'Car' END AS vehicle_type_label, model.model_year, model.seats, model.doors, model.color, model.trailer_hook, model.electric_assistance, model.default_fuel_type, model.transmission, model.drive_type, model.power, model.power_unit, model.vehicle_range, model.range_unit, model.default_co2, model.co2_emission_unit, model.co2_standard, model.active, CASE WHEN model.active THEN 'Active' ELSE 'Archived' END AS active_label, 'No vendor records in this bounded slice' AS vendor_summary FROM fleet_vehicle_models AS model JOIN fleet_vehicle_model_brands AS brand ON brand.id = model.brand_id LEFT JOIN fleet_vehicle_model_categories AS category ON category.id = model.category_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND model.id = :id"
+actions:
+  - { id: back_to_fleet_models, type: navigate, permission: fleet.read, navigate_to: /fleet/config/models }
+  - id: edit_fleet_model
+    type: server_form
+    permission: fleet.manage
+    title: Edit Model
+    action: fleet.models.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.fleet_model_detail
+    refresh: [fleet_model_detail, fleet_models, fleet_model_manufacturers]
+    mutation:
+      operation: update
+      table: fleet_vehicle_models
+      fields: [brand_id, category_id, name, vehicle_type, model_year, seats, doors, color, trailer_hook, electric_assistance, default_fuel_type, transmission, drive_type, power, power_unit, vehicle_range, range_unit, default_co2, co2_emission_unit, co2_standard]
+      required: [brand_id, name, vehicle_type]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_models WHERE id = :id", status: 404, code: FLEET_MODEL_NOT_FOUND, message: Model was not found. }
+        - { query: "SELECT id FROM fleet_vehicle_model_brands WHERE id = :brand_id AND active = TRUE", status: 404, code: FLEET_MODEL_MANUFACTURER_NOT_FOUND, message: Manufacturer was not found or is archived. }
+        - { query: "SELECT 1 AS ok WHERE :category_id IS NULL OR EXISTS (SELECT 1 FROM fleet_vehicle_model_categories WHERE id = :category_id AND active = TRUE)", status: 404, code: FLEET_MODEL_CATEGORY_NOT_FOUND, message: Category was not found or is archived. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: FLEET_MODEL_NAME_REQUIRED, message: Model name is required. }
+        - { query: "SELECT 1 AS ok WHERE :vehicle_type IN ('car', 'bike')", status: 422, code: FLEET_MODEL_VEHICLE_TYPE_INVALID, message: Vehicle Type must be Car or Bike. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicle_models WHERE brand_id = :brand_id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: FLEET_MODEL_EXISTS, message: A model with this name already exists for this manufacturer. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:seats, 0) AS INTEGER) >= 0 AND CAST(COALESCE(:doors, 0) AS INTEGER) >= 0 AND CAST(COALESCE(:power, 0) AS DECIMAL(12,2)) >= 0 AND CAST(COALESCE(:vehicle_range, 0) AS INTEGER) >= 0 AND CAST(COALESCE(:default_co2, 0) AS DECIMAL(12,2)) >= 0", status: 422, code: FLEET_MODEL_METRICS_INVALID, message: Model measurements cannot be negative. }
+      before_steps: [{ query: "SELECT brand_id AS old_brand_id, active AS old_active FROM fleet_vehicle_models WHERE id = :id", assign: true }]
+      steps: [{ query: "UPDATE fleet_vehicle_model_brands SET model_count = model_count - 1 WHERE id = :old_brand_id AND :old_brand_id <> :brand_id AND :old_active = TRUE" }, { query: "UPDATE fleet_vehicle_model_brands SET model_count = model_count + 1 WHERE id = :brand_id AND :old_brand_id <> :brand_id AND active = TRUE" }]
+      result: { query: "SELECT * FROM fleet_vehicle_models WHERE id = :id" }
+    fields: [{ field: name, label: Model name, type: text, required: true }, { field: brand_id, label: Manufacturer, type: select, options_source: fleet_model_detail_manufacturers, required: true }, { field: category_id, label: Category, type: select, options_source: fleet_model_detail_categories }, { field: vehicle_type, label: Vehicle Type, type: select, options: [{ value: car, label: Car }, { value: bike, label: Bike }], required: true }, { field: model_year, label: Model Year, type: text }, { field: seats, label: Seating Capacity, type: number }, { field: doors, label: Number of Doors, type: number }, { field: color, label: Color, type: text }, { field: trailer_hook, label: Trailer Hitch, type: checkbox }, { field: electric_assistance, label: Electric Assistance, type: checkbox }, { field: default_fuel_type, label: Fuel Type, type: select, options: [{ value: diesel, label: Diesel }, { value: gasoline, label: Gasoline }, { value: full_hybrid, label: Full Hybrid }, { value: electric, label: Electric }] }, { field: transmission, label: Transmission, type: select, options: [{ value: manual, label: Manual }, { value: automatic, label: Automatic }] }, { field: drive_type, label: Drive Type, type: select, options: [{ value: fwd, label: Front-Wheel Drive (FWD) }, { value: awd, label: All-Wheel Drive (AWD) }, { value: rwd, label: Rear-Wheel Drive (RWD) }, { value: 4wd, label: Four-Wheel Drive (4WD) }] }, { field: power, label: Power, type: number }, { field: power_unit, label: Power Unit, type: select, options: [{ value: power, label: kW }, { value: horsepower, label: Horsepower (hp) }] }, { field: vehicle_range, label: Range, type: number }, { field: range_unit, label: Range Unit, type: select, options: [{ value: km, label: km }, { value: mi, label: mi }] }, { field: default_co2, label: CO₂ Emissions, type: number }, { field: co2_emission_unit, label: Emission Unit, type: text }, { field: co2_standard, label: Emission Standard, type: text }]
+  - id: archive_fleet_model
+    type: server
+    permission: fleet.manage
+    action: fleet.models.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_model_detail, fleet_models]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: fleet_vehicle_models, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_models WHERE id = :id AND active = TRUE", status: 404, code: FLEET_MODEL_NOT_FOUND, message: Active model was not found. }], before_steps: [{ query: "SELECT brand_id FROM fleet_vehicle_models WHERE id = :id", assign: true }], steps: [{ query: "UPDATE fleet_vehicle_model_brands SET model_count = model_count - 1 WHERE id = :brand_id AND model_count > 0" }], result: { query: "SELECT * FROM fleet_vehicle_models WHERE id = :id" } }
+  - id: unarchive_fleet_model
+    type: server
+    permission: fleet.manage
+    action: fleet.models.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_model_detail, fleet_models]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: fleet_vehicle_models, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM fleet_vehicle_models WHERE id = :id AND active = FALSE", status: 404, code: FLEET_MODEL_NOT_FOUND, message: Archived model was not found. }], before_steps: [{ query: "SELECT brand_id FROM fleet_vehicle_models WHERE id = :id", assign: true }], steps: [{ query: "UPDATE fleet_vehicle_model_brands SET model_count = model_count + 1 WHERE id = :brand_id" }], result: { query: "SELECT * FROM fleet_vehicle_models WHERE id = :id" } }
+  - id: delete_fleet_model
+    type: server
+    permission: fleet.manage
+    action: fleet.models.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [fleet_models, fleet_model_manufacturers]
+    params: { id: '{row.id}' }
+    mutation:
+      operation: delete
+      table: fleet_vehicle_models
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_models WHERE id = :id", status: 404, code: FLEET_MODEL_NOT_FOUND, message: Model was not found. }
+        - { query: "SELECT 1 AS ok FROM fleet_vehicle_models WHERE id = :id AND vehicle_count = 0", status: 409, code: FLEET_MODEL_IN_USE, message: A model assigned to vehicles cannot be deleted; archive it instead. }
+      before_steps: [{ query: "SELECT brand_id AS old_brand_id, active AS old_active FROM fleet_vehicle_models WHERE id = :id", assign: true }]
+      steps: [{ query: "UPDATE fleet_vehicle_model_brands SET model_count = model_count - 1 WHERE id = :old_brand_id AND model_count > 0 AND :old_active = TRUE" }]
+  - { id: view_fleet_model_vehicles, type: navigate, permission: fleet.read, navigate_to: /vehicles, params: { model: '{state.fleet_model_detail.name}' } }

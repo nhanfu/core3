@@ -1,0 +1,35 @@
+version: 0.0.10
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_model_categories(id, name, sequence) VALUES
+        ('fleet-category-001', 'Sedan', 10),
+        ('fleet-category-002', 'Estate', 20),
+        ('fleet-category-003', 'Compact', 30),
+        ('fleet-category-004', 'SUV', 40),
+        ('fleet-category-005', 'Coupe', 50),
+        ('fleet-category-006', 'Convertible', 60),
+        ('fleet-category-007', 'MPU', 70),
+        ('fleet-category-008', 'BMX', 80),
+        ('fleet-category-009', 'VTT', 90),
+        ('fleet-category-010', 'City', 100)
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO fleet_vehicle_models(id, brand_id, category_id, name, vehicle_count, vehicle_type, model_year, seats, doors, color, trailer_hook, electric_assistance, default_fuel_type, transmission, drive_type, power, power_unit, vehicle_range, range_unit, default_co2, co2_emission_unit, co2_standard, active) VALUES
+        ('fleet-model-001', 'fleet-brand-020', 'fleet-category-001', 'Focus', 1, 'car', '2024', 5, 5, '', FALSE, FALSE, 'diesel', 'manual', '', 85, 'power', 0, 'km', 134, 'g/km', 'WLTP', TRUE),
+        ('fleet-model-002', 'fleet-brand-046', 'fleet-category-003', 'Micra', 1, 'car', '2022', 5, 5, '', FALSE, FALSE, 'gasoline', 'manual', '', 89, 'power', 0, 'km', 95, 'g/km', 'WLTP', TRUE),
+        ('fleet-model-003', 'fleet-brand-053', 'fleet-category-003', 'Clio', 1, 'car', '2023', 5, 5, '', FALSE, FALSE, 'gasoline', '', '', 49, 'power', 0, 'km', 118, 'g/km', 'WLTP', TRUE),
+        ('fleet-model-004', 'fleet-brand-062', 'fleet-category-002', 'Corolla TS', 1, 'car', '0', 5, 5, '', FALSE, FALSE, 'full_hybrid', 'automatic', '', 90, 'power', 0, 'km', 102, 'g/km', 'WLTP', TRUE),
+        ('fleet-model-005', 'fleet-brand-064', 'fleet-category-003', 'Golf 8', 1, 'car', '2024', 5, 5, '', FALSE, FALSE, 'gasoline', 'manual', '', 81, 'power', 0, 'km', 117, 'g/km', 'WLTP', TRUE),
+        ('fleet-model-006', 'fleet-brand-020', 'fleet-category-004', 'Legacy 4x4', 0, 'car', '2018', 5, 5, 'Black', TRUE, FALSE, 'diesel', 'manual', '4wd', 110, 'power', 0, 'km', 165, 'g/km', 'Euro 6', FALSE)
+      ON CONFLICT (id) DO NOTHING;
+      UPDATE fleet_vehicle_model_brands AS brand
+      SET model_count = (SELECT COUNT(*) FROM fleet_vehicle_models AS model WHERE model.brand_id = brand.id AND model.active = TRUE)
+      WHERE EXISTS (SELECT 1 FROM fleet_vehicle_models AS model WHERE model.brand_id = brand.id);
+    down: |
+      DELETE FROM fleet_vehicle_models WHERE id LIKE 'fleet-model-%';
+      DELETE FROM fleet_vehicle_model_categories WHERE id LIKE 'fleet-category-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

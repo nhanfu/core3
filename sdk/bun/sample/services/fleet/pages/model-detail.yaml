@@ -1,0 +1,48 @@
+title: Model
+page: { id: model-detail, route: /fleet/config/models/detail, breadcrumb: [Human Resources, Fleet, Configuration, Models, Model], auth: { require: [fleet.read] } }
+components:
+  - type: OdooFormView
+    source: fleet_model_detail
+    title_field: name
+    subtitle_field: brand_name
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_fleet_models, label: Models, variant: secondary, permission: fleet.read }
+      - { id: edit_fleet_model, label: Edit, variant: primary, permission: fleet.manage }
+      - { id: archive_fleet_model, label: Archive, variant: danger, permission: fleet.manage, show_if: 'state.fleet_model_detail.active === true' }
+      - { id: unarchive_fleet_model, label: Restore, variant: secondary, permission: fleet.manage, show_if: 'state.fleet_model_detail.active === false' }
+      - { id: delete_fleet_model, label: Delete, variant: danger, permission: fleet.manage, confirm: Delete this model? }
+    stat_buttons:
+      - { id: view_fleet_model_vehicles, label: Vehicles, value_field: vehicle_count, permission: fleet.read }
+    group_columns: 2
+    groups:
+      - title: Model
+        fields:
+          - { field: name, label: Model name }
+          - { field: brand_id, label: Manufacturer, type: select, options_source: fleet_model_manufacturers }
+          - { field: vehicle_type, label: Vehicle Type, type: select, options: [{ value: car, label: Car }, { value: bike, label: Bike }] }
+          - { field: category_id, label: Category, type: select, options_source: fleet_model_categories }
+          - { field: active_label, label: Active }
+      - title: Model
+        fields:
+          - { field: model_year, label: Model Year }
+          - { field: seats, label: Seating Capacity, type: number }
+          - { field: doors, label: Number of Doors, type: number }
+          - { field: color, label: Color }
+          - { field: trailer_hook, label: Trailer Hitch, type: checkbox }
+    notebook:
+      active: information
+      tabs:
+        - id: information
+          label: Information
+          groups:
+            - title: Model
+              fields: [{ field: model_year, label: Model Year }, { field: seats, label: Seating Capacity, type: number }, { field: doors, label: Number of Doors, type: number }, { field: color, label: Color }, { field: trailer_hook, label: Trailer Hitch, type: checkbox }]
+            - title: Engine
+              fields: [{ field: default_fuel_type, label: Fuel Type, type: select, options: [{ value: diesel, label: Diesel }, { value: gasoline, label: Gasoline }, { value: full_hybrid, label: Full Hybrid }, { value: electric, label: Electric }] }, { field: transmission, label: Transmission, type: select, options: [{ value: manual, label: Manual }, { value: automatic, label: Automatic }] }, { field: drive_type, label: Drive Type, type: select, options: [{ value: fwd, label: Front-Wheel Drive (FWD) }, { value: awd, label: All-Wheel Drive (AWD) }, { value: rwd, label: Rear-Wheel Drive (RWD) }, { value: 4wd, label: Four-Wheel Drive (4WD) }] }, { field: power, label: Power, type: number }, { field: power_unit, label: Power Unit, type: select, options: [{ value: power, label: kW }, { value: horsepower, label: Horsepower (hp) }] }, { field: vehicle_range, label: Range, type: number }, { field: range_unit, label: Range Unit, type: select, options: [{ value: km, label: km }, { value: mi, label: mi }] }, { field: default_co2, label: CO₂ Emissions, type: number }, { field: co2_emission_unit, label: Emission Unit }, { field: co2_standard, label: Emission Standard }]
+        - id: vendors
+          label: Vendors
+          fields: [{ field: vendor_summary, label: Vendors }]

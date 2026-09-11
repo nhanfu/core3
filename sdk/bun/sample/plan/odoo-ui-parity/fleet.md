@@ -1,11 +1,12 @@
 # Odoo 19 UI parity — Fleet
 
-Status: ready; vehicle batch 1 and Odometers batch 2 implemented in isolated
-worktrees, with remaining Fleet surfaces explicitly deferred below.
+Status: ready; vehicle, Odometers, Contracts, Manufacturers, and Models batches
+implemented in isolated worktrees, with remaining Fleet surfaces explicitly
+deferred below.
 
 This plan remains the source of truth for the complete Fleet parity scope.
 The current bounded implementation is recorded in
-`odoo-ui-parity/fleet-batch-3.md`.
+`odoo-ui-parity/fleet-batch-5.md`.
 
 ## Reference gate and limitation
 

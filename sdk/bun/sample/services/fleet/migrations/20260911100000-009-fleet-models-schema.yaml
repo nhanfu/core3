@@ -1,0 +1,51 @@
+version: 0.0.9
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_model_categories (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL UNIQUE,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_models (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        brand_id VARCHAR NOT NULL,
+        category_id VARCHAR,
+        name VARCHAR NOT NULL,
+        vehicle_count INTEGER NOT NULL DEFAULT 0,
+        vehicle_type VARCHAR NOT NULL DEFAULT 'car',
+        model_year VARCHAR NOT NULL DEFAULT '0',
+        seats INTEGER NOT NULL DEFAULT 0,
+        doors INTEGER NOT NULL DEFAULT 0,
+        color VARCHAR NOT NULL DEFAULT '',
+        trailer_hook BOOLEAN NOT NULL DEFAULT FALSE,
+        electric_assistance BOOLEAN NOT NULL DEFAULT FALSE,
+        default_fuel_type VARCHAR NOT NULL DEFAULT 'electric',
+        transmission VARCHAR NOT NULL DEFAULT '',
+        drive_type VARCHAR NOT NULL DEFAULT '',
+        power DECIMAL(12,2) NOT NULL DEFAULT 0,
+        power_unit VARCHAR NOT NULL DEFAULT 'power',
+        vehicle_range INTEGER NOT NULL DEFAULT 0,
+        range_unit VARCHAR NOT NULL DEFAULT 'km',
+        default_co2 DECIMAL(12,2) NOT NULL DEFAULT 0,
+        co2_emission_unit VARCHAR NOT NULL DEFAULT 'g/km',
+        co2_standard VARCHAR NOT NULL DEFAULT '',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_models_brand_idx ON fleet_vehicle_models(brand_id, name, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_models_active_idx ON fleet_vehicle_models(active, name, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_models_category_idx ON fleet_vehicle_models(category_id, name, id);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_models;
+      DROP TABLE IF EXISTS fleet_vehicle_model_categories;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
