@@ -57,12 +57,12 @@ describe('Timesheets reporting parity slice', () => {
     await migrateDatabase(repository, migrations, undefined, 'timesheets_reports_schema_migrations', ['schema', 'data']);
 
     const sourceRows = await repository.query('SELECT COUNT(*) AS count, SUM(hours) AS hours FROM timesheet_entries WHERE project_name IS NOT NULL');
-    expect(sourceRows[0]).toMatchObject({ count: 8, hours: 43.5 });
+    expect(sourceRows[0]).toMatchObject({ count: 15, hours: 64.75 });
 
     for (const [, pageFile, sourceId, dimension] of reportPages) {
       const source = yaml(`api/${pageFile}`).datasources.find((candidate: any) => candidate.id === sourceId);
       const result = await repository.querySource(source, { q: null, fixture_state: null }, 0, 50);
-      expect(result.meta.total, sourceId).toBe(8);
+      expect(result.meta.total, sourceId).toBe(15);
       expect(result.data[0]).toEqual(expect.objectContaining({ date: '2026-01-15T00:00:00.000Z', [dimension]: expect.any(String), unit_amount: 8 }));
       expect(result.data.every((row: any) => row.amount <= 0), sourceId).toBe(true);
       const expectedValues = dimension === 'employee_name'
@@ -94,7 +94,7 @@ describe('Timesheets reporting parity slice', () => {
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'timesheets_billing_report_migrations', ['schema', 'data']);
     const source = yaml('api/timesheets-billing.yaml').datasources[0];
     const result = await repository.querySource(source, { q: null, fixture_state: null }, 0, 50);
-    expect(result.meta.total).toBe(8);
+    expect(result.meta.total).toBe(15);
     expect(result.data.map((row: any) => row.billing_type)).toEqual(expect.arrayContaining([
       'Billed at a Fixed Price', 'Billed Manually', 'Billed on Milestones', 'Billed on Timesheets', 'Non-Billable',
     ]));

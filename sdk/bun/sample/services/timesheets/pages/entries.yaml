@@ -1,15 +1,15 @@
-title: Timesheets
-page: { id: timesheets, route: /timesheets, breadcrumb: [Services, Timesheets], auth: { require: [timesheets.read] } }
+title: My Timesheets
+page: { id: timesheets, route: /timesheets, breadcrumb: [Timesheets, My Timesheets], auth: { require: [timesheets.read] } }
 components:
   - type: ListView
     variant: odoo
     source: timesheet_entries
     create_action: create_timesheet_entry
-    create_label: New timesheet entry
-    search: { label: Search timesheets, placeholder: 'Search employee, project, or entry...' }
+    create_label: New
+    search: { label: Search, placeholder: 'Search...' }
     filters:
       - { field: state, label: Status, options_source: timesheet_states }
-      - { field: work_date, label: Date, options: [Today, 'This Week', 'Last Week'] }
+      - { field: work_date, label: Date, options: [{ id: today, label: Today }, { id: this_week, label: This Week }, { id: last_week, label: Last Week }] }
     group_by:
       - { field: employee_name, label: Employee }
       - { field: project_name, label: Project }
@@ -17,13 +17,18 @@ components:
       - { field: state, label: Status }
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: work_date
+        card: { title: project_name, subtitle: time_spent_display, fields: [{ field: task_name, label: Task }, { field: description, label: Description }] }
       - id: kanban
         label: Kanban
         icon: dashboard
         group_by: state
         groups_source: timesheet_states
-        card: { title: name, subtitle: project_name, fields: [{ field: employee_name, label: Employee }, { field: task_name, label: Task }, { field: work_date, label: Date }, { field: hours, label: Time Spent }, { field: state, label: Status }] }
+        card: { title: project_name, subtitle: time_spent_display, fields: [{ field: task_name, label: Task }, { field: description, label: Description }, { field: work_date, label: Date }] }
       - { id: form, label: Form, icon: form }
     form_view: { page: apps/services/timesheets/pages/timesheet-detail.yaml, side_panel: true }
     row_open_action: view_timesheet_entry
@@ -31,14 +36,21 @@ components:
     column_chooser: true
     selectable: true
     columns:
-      - { field: name, label: Entry, type: PrimaryEntityCell }
-      - { field: employee_name, label: Employee }
       - { field: project_name, label: Project }
       - { field: task_name, label: Task }
       - { field: work_date, label: Date }
-      - { field: hours, label: Hours, align: right }
-      - { field: billable, label: Billable }
-      - { field: state, label: Status, type: StatusChip }
+      - { field: description, label: Description }
+      - { field: sales_order_item, label: Sales Order Item, optional: hide }
+      - { field: time_spent_display, label: Time Spent, align: right }
+      - field: id
+        label: ' '
+        sortable: false
+        width: 52
+        actions:
+          - { id: edit_timesheet_entry, label: Edit, icon: edit, show_if: "row.state === 'Draft' || row.state === 'Rejected'" }
+          - { id: delete_timesheet_entry, label: Delete, icon: trash, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Rejected'" }
+          - { id: submit_timesheet_entry, label: Submit, icon: send, show_if: "row.state === 'Draft' || row.state === 'Rejected'" }
+          - { id: cancel_timesheet_entry, label: Cancel, icon: x, variant: danger, show_if: "row.state !== 'Approved' && row.state !== 'Cancelled'" }
     page_size: 25
     row_key: id
     row_actions: menu

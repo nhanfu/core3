@@ -1,0 +1,29 @@
+version: 0.0.6
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE timesheet_entries ADD COLUMN IF NOT EXISTS sales_order_item VARCHAR;
+      UPDATE timesheet_entries SET sales_order_item = CASE id
+        WHEN 'timesheet-demo-001' THEN 'Core3 Implementation (Module Migration)'
+        WHEN 'timesheet-report-005' THEN 'Delivery Enablement (Delivery)'
+        WHEN 'timesheet-report-008' THEN 'Delivery Enablement (Sprint)'
+        ELSE sales_order_item
+      END;
+      INSERT OR IGNORE INTO timesheet_entries(id, name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, billable, unit_amount, state, sales_order_item, approver, approved_at)
+      VALUES
+        ('timesheet-my-009', 'TS/2026/0009', 'employee-demo-001', 'Admin User', 'project-demo-001', 'Core3 Implementation', 'task-my-009', 'Stakeholder review', DATE '2026-01-14', 'Stakeholder review', 2.5, TRUE, 125, 'Draft', 'Core3 Implementation (Stakeholder review)', NULL, NULL),
+        ('timesheet-my-010', 'TS/2026/0010', 'employee-demo-001', 'Admin User', 'project-demo-001', 'Core3 Implementation', 'task-my-010', 'Design QA', DATE '2026-01-13', 'Design QA', 3.25, TRUE, 125, 'Submitted', 'Core3 Implementation (Design QA)', NULL, NULL),
+        ('timesheet-my-011', 'TS/2026/0011', 'employee-demo-001', 'Admin User', 'project-demo-002', 'Delivery Enablement', 'task-my-011', 'Customer workshop', DATE '2026-01-12', 'Customer workshop', 4, TRUE, 125, 'Approved', 'Delivery Enablement (Customer workshop)', 'Admin User', TIMESTAMP '2026-01-15 00:00:00'),
+        ('timesheet-my-012', 'TS/2026/0012', 'employee-demo-001', 'Admin User', 'project-demo-002', 'Delivery Enablement', 'task-my-012', 'Documentation', DATE '2026-01-11', 'Documentation', 5, FALSE, 125, 'Draft', NULL, NULL, NULL),
+        ('timesheet-my-013', 'TS/2026/0013', 'employee-demo-001', 'Admin User', 'project-demo-001', 'Core3 Implementation', 'task-my-013', 'Release planning', DATE '2026-01-10', 'Release planning', 2, TRUE, 125, 'Approved', 'Core3 Implementation (Release planning)', 'Admin User', TIMESTAMP '2026-01-15 00:00:00'),
+        ('timesheet-my-014', 'TS/2026/0014', 'employee-demo-001', 'Admin User', 'project-demo-002', 'Delivery Enablement', 'task-my-014', 'Sprint retrospective', DATE '2026-01-08', 'Sprint retrospective', 1.5, TRUE, 125, 'Submitted', 'Delivery Enablement (Sprint retrospective)', NULL, NULL),
+        ('timesheet-my-015', 'TS/2026/0015', 'employee-demo-001', 'Admin User', 'project-demo-001', 'Core3 Implementation', 'task-my-015', 'Acceptance review', DATE '2026-01-07', 'Acceptance review', 3, TRUE, 125, 'Draft', 'Core3 Implementation (Acceptance review)', NULL, NULL);
+      UPDATE timesheet_entries SET updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id LIKE 'timesheet-my-%';
+    down: |
+      DELETE FROM timesheet_entries WHERE id LIKE 'timesheet-my-%';
+      ALTER TABLE timesheet_entries DROP COLUMN IF EXISTS sales_order_item;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

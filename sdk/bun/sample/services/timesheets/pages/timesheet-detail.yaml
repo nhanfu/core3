@@ -1,5 +1,5 @@
 title: Timesheet Entry
-page: { id: timesheet-detail, route: /timesheets/detail, breadcrumb: [Services, Timesheets, Detail], auth: { require: [timesheets.read] } }
+page: { id: timesheet-detail, route: /timesheets/detail, breadcrumb: [Timesheets, My Timesheets, Entry], auth: { require: [timesheets.read] } }
 components:
   - type: OdooFormView
     source: timesheet_detail
@@ -7,9 +7,15 @@ components:
     status_field: state
     statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Submitted }, { value: Approved, label: Approved }, { value: Rejected, label: Rejected }, { value: Cancelled, label: Cancelled }]
     status_colors: { Draft: neutral, Submitted: amber, Approved: green, Rejected: red, Cancelled: violet }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: edit_timesheet_detail, label: Edit, variant: secondary, permission: timesheets.write, show_if: "state.timesheet_detail.state === 'Draft' || state.timesheet_detail.state === 'Rejected'" }
+      - { id: submit_timesheet_detail, label: Submit, variant: primary, permission: timesheets.write, show_if: "state.timesheet_detail.state === 'Draft' || state.timesheet_detail.state === 'Rejected'" }
+      - { id: cancel_timesheet_detail, label: Cancel, variant: danger, permission: timesheets.write, show_if: "state.timesheet_detail.state !== 'Approved' && state.timesheet_detail.state !== 'Cancelled'" }
     group_columns: 2
     groups:
       - title: Work
-        fields: [{ field: name, label: Entry }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: project_name, label: Project }, { field: task_name, label: Task }]
+        fields: [{ field: name, label: Entry }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: project_name, label: Project }, { field: task_name, label: Task }, { field: description, label: Description, type: textarea, wide: true }]
       - title: Time and approval
-        fields: [{ field: work_date, label: Date }, { field: hours, label: Hours }, { field: billable, label: Billable }, { field: unit_amount, label: Unit amount }, { field: description, label: Description }, { field: approver, label: Approver }, { field: approved_at, label: Approved at }]
+        fields: [{ field: work_date, label: Date }, { field: time_spent_display, label: Time Spent }, { field: hours, label: Hours }, { field: billable, label: Billable }, { field: unit_amount, label: Unit amount }, { field: sales_order_item, label: Sales Order Item }, { field: approver, label: Approver }, { field: approved_at, label: Approved at }]
