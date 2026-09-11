@@ -1,0 +1,49 @@
+title: Draft Payment
+page: { id: accounting-internal-transfer-detail, route: /accounting/internal-transfer-detail, breadcrumb: [Accounting, Internal Transfers, Payment], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_internal_transfer_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: In Process, label: In Process }, { value: Paid, label: Paid }, { value: Canceled, label: Canceled }]
+    status_colors: { Draft: neutral, In Process: blue, Paid: green, Canceled: red }
+    editable: false
+    header_actions:
+      - { id: back_to_accounting_internal_transfers, label: Internal Transfers, variant: secondary, permission: accounting.read }
+      - { id: edit_accounting_internal_transfer, label: Edit, variant: secondary, permission: accounting.write, show_if: "state.accounting_internal_transfer_detail.state === 'Draft'" }
+      - { id: confirm_accounting_internal_transfer, label: Confirm, variant: primary, permission: accounting.write, show_if: "state.accounting_internal_transfer_detail.state === 'Draft'" }
+      - { id: mark_accounting_internal_transfer_paid, label: Paid, variant: primary, permission: accounting.write, show_if: "state.accounting_internal_transfer_detail.state === 'In Process'" }
+      - { id: cancel_accounting_internal_transfer, label: Cancel, variant: danger, permission: accounting.write, show_if: "state.accounting_internal_transfer_detail.state === 'Draft' || state.accounting_internal_transfer_detail.state === 'In Process'" }
+    group_columns: 2
+    groups:
+      - title: Payment
+        fields:
+          - { field: payment_type, label: Payment Type?, type: radio, options: [{ value: Outbound, label: Send }, { value: Inbound, label: Receive }] }
+          - { field: partner_name, label: Customer?, type: select, options_source: accounting_internal_transfer_detail_partners }
+          - { field: amount, label: Amount?, type: money }
+          - { field: payment_date, label: Date?, type: date }
+          - { field: reference, label: Memo?, type: text }
+      - title: Payment information
+        fields:
+          - { field: journal, label: Journal?, type: select, options: [Bank, Cash, Miscellaneous] }
+          - { field: payment_method, label: Payment Method?, type: select, options: [Manual Payment, Check, Card, Other] }
+          - { field: destination_journal, label: Destination Journal, type: select, options: [Bank, Cash, Miscellaneous] }
+          - { field: currency, label: Currency, type: text }
+    notebook:
+      active: other-info
+      tabs:
+        - id: other-info
+          label: Other Info
+          fields: [{ field: name, label: Payment Number }, { field: reference, label: Memo }, { field: currency, label: Currency }]
+    message_source: accounting_internal_transfer_messages
+    chatter_label: Messages and activities
+    chatter_empty: No messages or activities yet.
+    message_label: Send message
+    note_label: Log note
+    activity_label: Activity
+    message_action: send_accounting_internal_transfer_message
+    note_action: log_accounting_internal_transfer_note
+    activity_action: schedule_accounting_internal_transfer_activity
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at

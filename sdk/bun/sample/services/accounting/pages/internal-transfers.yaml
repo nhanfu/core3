@@ -1,0 +1,47 @@
+title: Internal Transfers
+page: { id: accounting-internal-transfers, route: /accounting/internal-transfers, breadcrumb: [Accounting, Internal Transfers], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_internal_transfers
+    create_action: new_accounting_internal_transfer
+    create_label: New
+    search: { label: Search payments, placeholder: Search... }
+    filters:
+      - { field: state, label: Status, options: [Draft, In Process, Paid, Canceled] }
+    group_by:
+      - { field: journal, label: Journal }
+      - { field: partner_name, label: Customer }
+      - { field: state, label: State }
+      - { field: payment_date, label: Date }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card:
+          title: journal
+          subtitle: amount_display
+          fields: [{ field: name, label: Number }, { field: partner_name, label: Customer }, { field: payment_date_display, label: Date }, { field: state, label: State }]
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: state
+        card: { title: journal, subtitle: amount_display, fields: [{ field: name, label: Number }, { field: partner_name, label: Customer }, { field: payment_date, label: Date }, { field: state, label: State }] }
+      - { id: form, label: Form, icon: form, mobile: false }
+      - { id: graph, label: Graph, icon: graph, category_field: journal, measure_field: amount, measure_label: Amount, type: bar, mobile: false }
+    columns:
+      - { field: payment_date_display, label: Date, sortable: true }
+      - { field: name, label: Number, type: PrimaryEntityCell }
+      - { field: journal, label: Journal }
+      - { field: payment_method, label: Payment Method }
+      - { field: partner_name, label: Customer }
+      - { field: amount_display, label: Amount, align: right }
+      - { field: state, label: State, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_accounting_internal_transfer
+    row_double_click_action: view_accounting_internal_transfer
+    form_view: { page: apps/services/accounting/pages/internal-transfer-detail.yaml, side_panel: false }

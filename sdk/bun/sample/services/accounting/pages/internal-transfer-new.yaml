@@ -1,0 +1,33 @@
+title: Draft Payment
+page: { id: accounting-internal-transfer-new, route: /accounting/internal-transfers/new, breadcrumb: [Accounting, Internal Transfers, New], auth: { require: [accounting.write] } }
+components:
+  - type: OdooFormView
+    source: accounting_internal_transfer_new
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: In Process, label: In Process }, { value: Paid, label: Paid }, { value: Canceled, label: Canceled }]
+    editable: true
+    header_actions: [{ id: back_to_accounting_internal_transfers_new, label: Internal Transfers, variant: secondary, permission: accounting.read }]
+    group_columns: 2
+    groups:
+      - title: Payment
+        fields:
+          - { field: payment_type, label: Payment Type?, type: radio, options: [{ value: Outbound, label: Send }, { value: Inbound, label: Receive }], default: Outbound }
+          - { field: partner_name, label: Customer?, type: select, options_source: accounting_internal_transfer_new_partners }
+          - { field: amount, label: Amount?, type: money, required: true }
+          - { field: payment_date, label: Date?, type: date, required: true }
+          - { field: reference, label: Memo?, type: text }
+      - title: Payment information
+        fields:
+          - { field: journal, label: Journal?, type: select, options: [Bank, Cash, Miscellaneous], required: true }
+          - { field: payment_method, label: Payment Method?, type: select, options: [Manual Payment, Check, Card, Other], required: true }
+          - { field: destination_journal, label: Destination Journal, type: select, options: [Bank, Cash, Miscellaneous] }
+          - { field: currency, label: Currency, type: text, default: USD }
+    message_source: accounting_internal_transfer_new_messages
+    chatter_label: Messages and activities
+    message_label: Send message
+    note_label: Log note
+    activity_label: Activity
+    message_action: send_accounting_internal_transfer_message
+    note_action: log_accounting_internal_transfer_note
+    activity_action: schedule_accounting_internal_transfer_activity

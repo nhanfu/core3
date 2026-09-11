@@ -1,0 +1,24 @@
+page: { id: accounting-internal-transfers }
+datasources:
+  - id: accounting_internal_transfer_states
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('In Process','In Process'), ('Paid','Paid'), ('Canceled','Canceled')) states(value, label)"
+  - id: accounting_internal_transfers
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, name, partner_name, payment_type, amount, printf('$ %,.2f', CAST(amount AS DOUBLE)) AS amount_display, payment_method, journal, destination_journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, strftime(payment_date, '%b %-d') AS payment_date_display, state, reference FROM accounting_internal_transfers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty','not_found','no_results') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR journal ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY payment_date DESC"
+  - id: accounting_internal_transfer_partners
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Acme Corporation','Acme Corporation'), ('Azure Interior','Azure Interior'), ('Gemini Furniture','Gemini Furniture'), ('Lumber Inc','Lumber Inc')) partners(value, label) ORDER BY label"
+actions:
+  - id: view_accounting_internal_transfer
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/internal-transfer-detail
+    params: { id: '{row.id}' }
+  - id: new_accounting_internal_transfer
+    type: navigate
+    permission: accounting.write
+    navigate_to: /accounting/internal-transfers/new

@@ -1,0 +1,64 @@
+page: { id: accounting-internal-transfer-new }
+datasources:
+  - id: accounting_internal_transfer_new
+    single: true
+    permission: accounting.write
+    query: "SELECT CAST(NULL AS VARCHAR) AS id, 1 AS row_version, 'Draft Payment' AS name, CAST(NULL AS VARCHAR) AS partner_name, 'Outbound' AS payment_type, CAST(0 AS DECIMAL(18,2)) AS amount, 'Manual Payment' AS payment_method, 'Bank' AS journal, 'Cash' AS destination_journal, 'USD' AS currency, CAST('2026-09-11' AS VARCHAR) AS payment_date, 'Draft' AS state, '' AS reference"
+  - id: accounting_internal_transfer_new_partners
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Acme Corporation','Acme Corporation'), ('Azure Interior','Azure Interior'), ('Gemini Furniture','Gemini Furniture'), ('Lumber Inc','Lumber Inc')) partners(value, label) ORDER BY label"
+  - id: accounting_internal_transfer_new_messages
+    single: false
+    permission: accounting.read
+    query: "SELECT CAST(NULL AS VARCHAR) AS id, CAST(NULL AS VARCHAR) AS actor_name, CAST(NULL AS VARCHAR) AS action, CAST(NULL AS VARCHAR) AS action_label, CAST(NULL AS VARCHAR) AS detail, CAST(NULL AS VARCHAR) AS created_at WHERE FALSE"
+actions:
+  - id: back_to_accounting_internal_transfers_new
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/internal-transfers
+  - id: create_accounting_internal_transfer
+    type: server_form
+    permission: accounting.write
+    title: New Internal Transfer
+    action: accounting.internal_transfers.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [accounting_internal_transfer_new]
+    mutation:
+      operation: insert
+      table: accounting_internal_transfers
+      generated: [id]
+      fields: [name, partner_name, payment_type, amount, payment_method, journal, destination_journal, currency, payment_date, reference]
+      defaults: { row_version: 1, name: Draft Payment, payment_type: Outbound, payment_method: Manual Payment, journal: Bank, destination_journal: Cash, currency: USD, payment_date: '2026-09-11', reference: '', state: Draft }
+      required: [partner_name, amount, payment_date, journal, destination_journal, payment_method]
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0 AND :journal <> :destination_journal", status: 422, code: ACCOUNTING_INTERNAL_TRANSFER_VALUES_INVALID, message: Transfer amount must be positive and journals must differ. }]
+      result: { query: "SELECT * FROM accounting_internal_transfers WHERE id = :id" }
+    fields: [{ field: name, label: Payment, type: text, default: Draft Payment }, { field: payment_type, label: Payment Type?, type: radio, options: [{ value: Outbound, label: Send }, { value: Inbound, label: Receive }], default: Outbound }, { field: partner_name, label: Customer?, type: select, options_source: accounting_internal_transfer_new_partners, required: true }, { field: amount, label: Amount?, type: money, required: true }, { field: payment_date, label: Date?, type: date, required: true, default: '2026-09-11' }, { field: reference, label: Memo?, type: text }, { field: journal, label: Journal?, type: select, options: [Bank, Cash, Miscellaneous], required: true, default: Bank }, { field: destination_journal, label: Destination Journal, type: select, options: [Bank, Cash, Miscellaneous], required: true, default: Cash }, { field: payment_method, label: Payment Method?, type: select, options: [Manual Payment, Check, Card, Other], required: true, default: Manual Payment }, { field: currency, label: Currency, type: text, default: USD }]
+  - id: send_accounting_internal_transfer_message
+    type: server_form
+    permission: accounting.write
+    title: Send message
+    action: accounting.internal_transfers.message
+    handler: yaml_mutation
+    operation: message
+    params: { id: '{state.id}' }
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+  - id: log_accounting_internal_transfer_note
+    type: server_form
+    permission: accounting.write
+    title: Log note
+    action: accounting.internal_transfers.note
+    handler: yaml_mutation
+    operation: note
+    params: { id: '{state.id}' }
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+  - id: schedule_accounting_internal_transfer_activity
+    type: server_form
+    permission: accounting.write
+    title: Schedule activity
+    action: accounting.internal_transfers.activity
+    handler: yaml_mutation
+    operation: activity
+    params: { id: '{state.id}' }
+    fields: [{ field: content, label: Activity, type: textarea, required: true }]

@@ -1,0 +1,107 @@
+page: { id: accounting-internal-transfer-detail }
+datasources:
+  - id: accounting_internal_transfer_detail
+    single: true
+    permission: accounting.read
+    error_states: { forbidden: { status: 403, code: ACCOUNTING_INTERNAL_TRANSFER_FORBIDDEN, message: You do not have access to internal transfers. }, transport_error: { status: 503, code: ACCOUNTING_INTERNAL_TRANSFER_UNAVAILABLE, message: Internal transfer details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, partner_name, payment_type, amount, payment_method, journal, destination_journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, state, reference FROM accounting_internal_transfers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty','not_found') THEN FALSE ELSE TRUE END AND id = :id"
+  - id: accounting_internal_transfer_detail_partners
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Acme Corporation','Acme Corporation'), ('Azure Interior','Azure Interior'), ('Gemini Furniture','Gemini Furniture'), ('Lumber Inc','Lumber Inc')) partners(value, label) ORDER BY label"
+  - id: accounting_internal_transfer_messages
+    single: false
+    permission: accounting.read
+    query: "SELECT id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM accounting_internal_transfer_messages WHERE payment_id = :id ORDER BY created_at DESC"
+actions:
+  - id: back_to_accounting_internal_transfers
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/internal-transfers
+  - id: edit_accounting_internal_transfer
+    type: server_form
+    permission: accounting.write
+    title: Edit Internal Transfer
+    action: accounting.internal_transfers.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_internal_transfer_detail
+    refresh: [accounting_internal_transfer_detail]
+    mutation:
+      operation: update
+      table: accounting_internal_transfers
+      fields: [partner_name, payment_type, amount, payment_method, journal, destination_journal, currency, payment_date, reference]
+      required: [partner_name, amount, payment_date, journal, destination_journal, payment_method]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_internal_transfers WHERE id = :id AND state = 'Draft'", status: 404, code: ACCOUNTING_INTERNAL_TRANSFER_NOT_FOUND, message: Internal transfer was not found or is no longer editable. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0 AND :journal <> :destination_journal", status: 422, code: ACCOUNTING_INTERNAL_TRANSFER_VALUES_INVALID, message: Transfer amount must be positive and journals must differ. }
+        - { query: "SELECT id FROM accounting_internal_transfers WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INTERNAL_TRANSFER_STALE, message: This transfer changed elsewhere. Reload before saving. }
+      result: { query: "SELECT * FROM accounting_internal_transfers WHERE id = :id" }
+    fields: [{ field: partner_name, label: Customer?, type: select, options_source: accounting_internal_transfer_partners, required: true }, { field: payment_type, label: Payment Type?, type: radio, options: [{ value: Outbound, label: Send }, { value: Inbound, label: Receive }] }, { field: amount, label: Amount?, type: money, required: true }, { field: payment_date, label: Date?, type: date, required: true }, { field: reference, label: Memo?, type: text }, { field: journal, label: Journal?, type: select, options: [Bank, Cash, Miscellaneous], required: true }, { field: destination_journal, label: Destination Journal, type: select, options: [Bank, Cash, Miscellaneous], required: true }, { field: payment_method, label: Payment Method?, type: select, options: [Manual Payment, Check, Card, Other], required: true }, { field: currency, label: Currency, type: text }]
+  - id: confirm_accounting_internal_transfer
+    type: server
+    permission: accounting.write
+    action: accounting.internal_transfers.confirm
+    handler: yaml_mutation
+    operation: confirm
+    params: { id: '{state.id}', values: { state: In Process } }
+    refresh: [accounting_internal_transfer_detail]
+    mutation: { operation: update, table: accounting_internal_transfers, fields: [state], concurrency: { required: true }, guards: [{ query: "SELECT id FROM accounting_internal_transfers WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INTERNAL_TRANSFER_STALE, message: Only an unchanged draft transfer can be confirmed. }], result: { query: "SELECT * FROM accounting_internal_transfers WHERE id = :id" } }
+  - id: mark_accounting_internal_transfer_paid
+    type: server
+    permission: accounting.write
+    action: accounting.internal_transfers.paid
+    handler: yaml_mutation
+    operation: paid
+    params: { id: '{state.id}', values: { state: Paid } }
+    refresh: [accounting_internal_transfer_detail]
+    mutation: { operation: update, table: accounting_internal_transfers, fields: [state], concurrency: { required: true }, guards: [{ query: "SELECT id FROM accounting_internal_transfers WHERE id = :id AND state = 'In Process' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INTERNAL_TRANSFER_STALE, message: Only an unchanged in-process transfer can be paid. }], result: { query: "SELECT * FROM accounting_internal_transfers WHERE id = :id" } }
+  - id: cancel_accounting_internal_transfer
+    type: server
+    permission: accounting.write
+    action: accounting.internal_transfers.cancel
+    handler: yaml_mutation
+    operation: cancel
+    params: { id: '{state.id}', values: { state: Canceled } }
+    refresh: [accounting_internal_transfer_detail]
+    mutation: { operation: update, table: accounting_internal_transfers, fields: [state], concurrency: { required: true }, guards: [{ query: "SELECT id FROM accounting_internal_transfers WHERE id = :id AND state IN ('Draft','In Process') AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_INTERNAL_TRANSFER_STALE, message: This transfer is no longer cancellable. }], result: { query: "SELECT * FROM accounting_internal_transfers WHERE id = :id" } }
+  - id: send_accounting_internal_transfer_message
+    type: server_form
+    permission: accounting.write
+    title: Send message
+    action: accounting.internal_transfers.message
+    handler: yaml_mutation
+    operation: message
+    params: { id: '{state.id}' }
+    refresh: [accounting_internal_transfer_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_INTERNAL_TRANSFER_MESSAGE_INVALID, message: Message content must be between 1 and 4000 characters. }]
+      steps: [{ query: "INSERT INTO accounting_internal_transfer_messages(id, payment_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'message', 'Message', :content)" }]
+  - id: log_accounting_internal_transfer_note
+    type: server_form
+    permission: accounting.write
+    title: Log note
+    action: accounting.internal_transfers.note
+    handler: yaml_mutation
+    operation: note
+    params: { id: '{state.id}' }
+    refresh: [accounting_internal_transfer_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_INTERNAL_TRANSFER_NOTE_INVALID, message: Note content must be between 1 and 4000 characters. }]
+      steps: [{ query: "INSERT INTO accounting_internal_transfer_messages(id, payment_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'note', 'Note', :content)" }]
+  - id: schedule_accounting_internal_transfer_activity
+    type: server_form
+    permission: accounting.write
+    title: Schedule activity
+    action: accounting.internal_transfers.activity
+    handler: yaml_mutation
+    operation: activity
+    params: { id: '{state.id}' }
+    refresh: [accounting_internal_transfer_messages]
+    fields: [{ field: content, label: Activity, type: textarea, required: true }]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_INTERNAL_TRANSFER_ACTIVITY_INVALID, message: Activity content must be between 1 and 4000 characters. }]
+      steps: [{ query: "INSERT INTO accounting_internal_transfer_messages(id, payment_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'activity', 'Activity', :content)" }]

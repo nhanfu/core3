@@ -1,0 +1,31 @@
+version: 0.0.31
+kind: data
+description: Add deterministic Internal Transfers payment action fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_internal_transfers (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL,
+        partner_name VARCHAR NOT NULL, payment_type VARCHAR NOT NULL DEFAULT 'Outbound',
+        amount DECIMAL(18,2) NOT NULL, journal VARCHAR NOT NULL, destination_journal VARCHAR NOT NULL,
+        payment_method VARCHAR NOT NULL, currency VARCHAR NOT NULL DEFAULT 'USD',
+        payment_date DATE NOT NULL, reference VARCHAR NOT NULL DEFAULT '', state VARCHAR NOT NULL DEFAULT 'Draft'
+      );
+      CREATE TABLE IF NOT EXISTS accounting_internal_transfer_messages (
+        id VARCHAR PRIMARY KEY, payment_id VARCHAR NOT NULL, actor_name VARCHAR NOT NULL,
+        action VARCHAR NOT NULL, action_label VARCHAR NOT NULL, detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO accounting_internal_transfers (id, row_version, name, partner_name, payment_type, amount, journal, destination_journal, payment_method, currency, payment_date, reference, state) VALUES
+        ('accounting-internal-transfer-001', 1, 'BNK1/2026/00001', 'Acme Corporation', 'Outbound', 2500.00, 'Bank', 'Cash', 'Manual Payment', 'USD', DATE '2026-01-15', 'Office liquidity', 'Draft'),
+        ('accounting-internal-transfer-002', 1, 'BNK1/2026/00002', 'Azure Interior', 'Outbound', 875.50, 'Cash', 'Bank', 'Check', 'USD', DATE '2026-02-03', 'Petty cash replenishment', 'In Process'),
+        ('accounting-internal-transfer-003', 1, 'BNK1/2026/00003', 'Gemini Furniture', 'Outbound', 4300.00, 'Bank', 'Miscellaneous', 'Manual Payment', 'USD', DATE '2026-03-12', 'Project float', 'Paid'),
+        ('accounting-internal-transfer-004', 1, 'BNK1/2026/00004', 'Lumber Inc', 'Outbound', 1100.00, 'Miscellaneous', 'Bank', 'Card', 'USD', DATE '2026-04-18', 'Returned transfer', 'Canceled')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS accounting_internal_transfer_messages;
+      DROP TABLE IF EXISTS accounting_internal_transfers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
