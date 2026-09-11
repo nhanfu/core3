@@ -280,3 +280,66 @@ purple shell/top bar, and Core3's compact mobile control bar is denser than
 Odoo's. Odoo's generic selected-row archive menu is represented by explicit
 guarded archive/unarchive actions in the Core3 contract. The reference and
 Core3 screenshots remain outside Git.
+
+## Batch: Reporting -> Forecast
+
+Status: `implemented`; bounded checkpoint for the installed Odoo Forecast
+action, outside the already-covered CRM lifecycle, configuration, tags, teams,
+activities, Sales Teams, and Recurring Plans slices.
+
+Reference evidence (personal live database):
+
+- Database: `core3_personal`; Odoo 19 Community; CRM module installed at
+  version `19.0.1.9`; authenticated user `Mitchell Admin`
+  (`codex@core3.local`), with the administrator role and CRM reporting access.
+- Odoo menu: `CRM -> Reporting -> Forecast`; XML action
+  `crm.action_opportunity_forecast`, resolved in this database to action ID
+  `412`, model `crm.lead`, view modes `kanban,graph,pivot,list,form`.
+- The action defaults to `Upcoming Closings`, `My Pipeline`, and
+  `Expected Closing: Month`. The live Forecast kanban showed deterministic
+  month columns from September through December 2026, including prorated
+  revenue and won/opportunity cards.
+- Authenticated Odoo captures, inspected at the requested viewports:
+  `/tmp/odoo-crm-forecast/odoo-forecast-desktop-20260911.png` at 1440x900
+  (SHA-256 `cc85f2f8255ae0fc6f4ac63f73c56daec0880908c4db9ee7117aedf87880c75e`)
+  and `/tmp/odoo-crm-forecast/odoo-forecast-mobile-20260911.png` at 390x844
+  (SHA-256 `6b3da217da795159fa016b6ee19e22f52b04004091788b349f291593ab26e17f`).
+
+Core3 implementation and evidence:
+
+- Page/API contracts join through page ID `forecast`: layout
+  `services/crm/pages/forecast.yaml`; datasource, option sources, navigation
+  action, and error states `services/crm/api/forecast.yaml`.
+- Route: `/crm/forecast`; manifest label `Forecast` under CRM -> Reporting;
+  datasource `crm_forecast_opportunities`; deterministic migration
+  `20260911194000-020-forecast-fixtures.yaml` (`0.0.20`). The page exposes
+  Odoo-style List and Kanban tabs, Upcoming Closings/All Opportunities,
+  Sales team and Salesperson filters, expected-closing grouping, prorated
+  revenue, row navigation to the existing lead form, and `crm.read` access.
+- The migration adds four stable upcoming opportunities alongside the existing
+  CRM demo opportunity. The datasource covers default, search, team filter,
+  empty, no-results, forbidden, and transport-error states without using
+  current-date or generated-ID fixtures.
+- Focused validation: `bun test test/crm_forecast.integration.test.ts` — 2
+  tests passed, 33 assertions. The UI audit passed with 460 pages, 467 routes,
+  and 802 datasources; `git diff --check` passed.
+- Authenticated Core3 evidence used `admin@tms.local` / `admin123` and reached
+  `/crm/forecast`. The desktop List capture was taken with the optional side
+  FormView panel closed so the default list geometry is directly comparable to
+  the Odoo action. Core3 captures, inspected at the requested viewports:
+  `/tmp/core3-crm-forecast/core3-forecast-desktop-20260911.png` at 1440x900
+  (SHA-256 `b3b3962dbb21a015bfe2e90a0bf63e4245859ae94c0c4b46b288ce6819367d4e`)
+  and `/tmp/core3-crm-forecast/core3-forecast-mobile-20260911.png` at 390x844
+  (SHA-256 `1422a0f4725afbd590128d1c2520314db952352625fb03f2f59e7dda90fa6f6f`).
+- Final authenticated browser checks reported no Core3 console errors or
+  failed requests, exact viewport width (`scrollWidth === innerWidth`) at
+  both viewports, five deterministic rows, and visible mobile Kanban cards.
+  The Odoo mobile pass had no console errors; three image/action requests were
+  browser-aborted while the responsive view settled and did not affect the
+  captured Forecast surface.
+
+Known visual limits for this slice: Core3 uses the shared Fluent shell and
+compact responsive cards while Odoo uses its purple shell and Forecast Kanban
+month columns by default. The Core3 desktop List tab and mobile Kanban tab are
+deliberate supported representations of the same installed action. All four
+captures and their hashes remain outside Git.
