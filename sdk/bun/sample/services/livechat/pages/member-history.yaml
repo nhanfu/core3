@@ -1,0 +1,28 @@
+title: Member History
+page: { id: livechat-member-history, route: /livechat/member-history, breadcrumb: [Website, Live Chat, Technical, Member History], auth: { require: [livechat.technical] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_member_history
+    search: { label: Search History, placeholder: Search... }
+    filters:
+      - { field: livechat_member_type, label: Member Type, options: [Agent, Visitor, Chatbot] }
+      - { field: session_outcome, label: Outcome, options: [Success, Escalated, 'No one Available', 'Never Answered'] }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/livechat/pages/member-history-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_livechat_member_history
+    row_double_click_action: view_livechat_member_history
+    empty_state: { title: No member history found, description: Member history is created from Live Chat participants and is read-only. }
+    columns:
+      - { field: created_at, label: Created on, type: TextCell, mobile: true }
+      - { field: channel_name, label: Channel, type: TextCell, mobile: true }
+      - { field: partner_name, label: Partner, type: TextCell, mobile: true }
+      - { field: chatbot_script_name, label: Chatbot Script, type: TextCell, mobile: true }
+      - { field: guest_name, label: Guest, type: TextCell, mobile: true }
+      - { field: session_duration_display, label: Session Duration, type: TextCell, mobile: true }
+      - { field: livechat_member_type, label: Member Type, type: StatusBadge, mobile: true }

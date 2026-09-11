@@ -1,0 +1,34 @@
+page: { id: livechat-member-history }
+
+datasources:
+  - id: livechat_member_history
+    single: false
+    permission: livechat.read
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_MEMBER_HISTORY_UNAUTHORIZED, message: Sign in to view Live Chat member history. }
+      forbidden: { status: 403, code: LIVECHAT_MEMBER_HISTORY_FORBIDDEN, message: You do not have permission to view Live Chat member history. }
+      transport_error: { status: 503, code: LIVECHAT_MEMBER_HISTORY_UNAVAILABLE, message: Live Chat member history is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at,
+        member_display_name, channel_name, partner_name, chatbot_script_name,
+        guest_name, session_duration_hour,
+        printf('%02d:%02d:%02d', CAST(session_duration_hour * 3600 / 3600 AS INTEGER),
+          CAST((session_duration_hour * 3600 % 3600) / 60 AS INTEGER),
+          CAST(session_duration_hour * 3600 % 60 AS INTEGER)) AS session_duration_display,
+        livechat_member_type, session_outcome, country_name
+      FROM livechat_member_history
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR member_display_name ILIKE '%' || :q || '%'
+          OR channel_name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%'
+          OR chatbot_script_name ILIKE '%' || :q || '%' OR guest_name ILIKE '%' || :q || '%'
+          OR livechat_member_type ILIKE '%' || :q || '%')
+        AND (:livechat_member_type IS NULL OR livechat_member_type = :livechat_member_type)
+        AND (:session_outcome IS NULL OR session_outcome = :session_outcome)
+      ORDER BY created_at DESC, id
+
+actions:
+  - id: view_livechat_member_history
+    type: navigate
+    permission: livechat.technical
+    navigate_to: /livechat/member-history/detail
+    params: { id: '{row.id}' }

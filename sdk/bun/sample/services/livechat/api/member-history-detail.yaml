@@ -1,0 +1,32 @@
+page: { id: livechat-member-history-detail }
+
+datasources:
+  - id: livechat_member_history_detail
+    single: true
+    permission: livechat.read
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_MEMBER_HISTORY_DETAIL_UNAUTHORIZED, message: Sign in to view this Live Chat member history record. }
+      forbidden: { status: 403, code: LIVECHAT_MEMBER_HISTORY_DETAIL_FORBIDDEN, message: You do not have permission to view this Live Chat member history record. }
+      transport_error: { status: 503, code: LIVECHAT_MEMBER_HISTORY_DETAIL_UNAVAILABLE, message: This Live Chat member history record is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at,
+        member_display_name, channel_name, partner_name, livechat_member_type,
+        guest_name, chatbot_script_name, agent_expertise_names,
+        conversation_tag_names, country_name, session_outcome,
+        session_week_day, rating_text, session_livechat_channel_name,
+        session_start_hour, session_duration_hour,
+        printf('%02d:%02d:%02d', CAST(session_duration_hour * 3600 / 3600 AS INTEGER),
+          CAST((session_duration_hour * 3600 % 3600) / 60 AS INTEGER),
+          CAST(session_duration_hour * 3600 % 60 AS INTEGER)) AS session_duration_display,
+        rating, has_call, call_percentage, message_count, response_time_hour,
+        printf('%02d:%02d:%02d', CAST(response_time_hour * 3600 / 3600 AS INTEGER),
+          CAST((response_time_hour * 3600 % 3600) / 60 AS INTEGER),
+          CAST(response_time_hour * 3600 % 60 AS INTEGER)) AS response_time_display,
+        call_count, call_duration_hour,
+        printf('%02d:%02d:%02d', CAST(call_duration_hour * 3600 / 3600 AS INTEGER),
+          CAST((call_duration_hour * 3600 % 3600) / 60 AS INTEGER),
+          CAST(call_duration_hour * 3600 % 60 AS INTEGER)) AS call_duration_display,
+        help_status
+      FROM livechat_member_history
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND id = :id

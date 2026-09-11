@@ -1,0 +1,41 @@
+title: Member History
+page: { id: livechat-member-history-detail, route: /livechat/member-history/detail, breadcrumb: [Website, Live Chat, Technical, Member History], auth: { require: [livechat.technical] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_member_history_detail
+    title_field: member_display_name
+    editable: false
+    labels: { editDetails: Details }
+    group_columns: 2
+    groups:
+      - title: Member
+        fields:
+          - { field: member_display_name, label: Member }
+          - { field: channel_name, label: Channel }
+          - { field: partner_name, label: Partner }
+          - { field: livechat_member_type, label: Livechat Member Type }
+          - { field: guest_name, label: Guest }
+          - { field: chatbot_script_name, label: Chatbot Script }
+      - title: Classification
+        fields:
+          - { field: agent_expertise_names, label: Agent Expertise }
+          - { field: conversation_tag_names, label: Live Chat Conversation Tags }
+          - { field: country_name, label: Country }
+          - { field: session_outcome, label: Livechat Outcome }
+          - { field: session_week_day, label: Day of the Week }
+          - { field: rating_text, label: Rating }
+      - title: Session
+        fields:
+          - { field: session_livechat_channel_name, label: Live chat channel }
+          - { field: session_start_hour, label: Session Start Hour }
+          - { field: session_duration_display, label: Session Duration }
+          - { field: message_count, label: '# of Messages per Session' }
+          - { field: response_time_display, label: Response Time }
+          - { field: help_status, label: Help Status }
+      - title: Calls
+        fields:
+          - { field: has_call, label: Has Call }
+          - { field: call_percentage, label: 'Session with Calls (%)' }
+          - { field: call_count, label: '# of Sessions with Calls' }
+          - { field: call_duration_display, label: Call Duration }

@@ -29,3 +29,7 @@ menu:
         - { path: /livechat/tags, label: Tags, icon: tag, permission: livechat.read }
         - { path: /livechat/expertise, label: Expertise, icon: users, permission: livechat.read }
         - { path: /livechat/chatbots, label: Chatbots, icon: bot, permission: livechat.manage }
+    - id: technical
+      label: Technical
+      items:
+        - { path: /livechat/member-history, label: Member History, icon: history, permission: livechat.technical }

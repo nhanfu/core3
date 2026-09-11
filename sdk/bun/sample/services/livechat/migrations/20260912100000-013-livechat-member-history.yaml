@@ -1,0 +1,92 @@
+version: 0.0.13
+kind: data
+description: Add deterministic read-only Live Chat member history fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_member_history (
+        id VARCHAR PRIMARY KEY,
+        row_version INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL,
+        member_display_name VARCHAR NOT NULL,
+        channel_name VARCHAR NOT NULL DEFAULT '',
+        partner_name VARCHAR NOT NULL DEFAULT '',
+        chatbot_script_name VARCHAR NOT NULL DEFAULT '',
+        guest_name VARCHAR NOT NULL DEFAULT '',
+        session_duration_hour DOUBLE NOT NULL DEFAULT 0,
+        livechat_member_type VARCHAR NOT NULL,
+        agent_expertise_names VARCHAR NOT NULL DEFAULT '',
+        conversation_tag_names VARCHAR NOT NULL DEFAULT '',
+        country_name VARCHAR NOT NULL DEFAULT '',
+        session_outcome VARCHAR NOT NULL DEFAULT '',
+        session_week_day VARCHAR NOT NULL DEFAULT '',
+        rating_text VARCHAR NOT NULL DEFAULT '',
+        session_livechat_channel_name VARCHAR NOT NULL DEFAULT '',
+        session_start_hour DOUBLE NOT NULL DEFAULT 0,
+        rating DOUBLE NOT NULL DEFAULT 0,
+        has_call DOUBLE NOT NULL DEFAULT 0,
+        call_percentage DOUBLE NOT NULL DEFAULT 0,
+        message_count INTEGER NOT NULL DEFAULT 0,
+        response_time_hour DOUBLE NOT NULL DEFAULT 0,
+        call_count DOUBLE NOT NULL DEFAULT 0,
+        call_duration_hour DOUBLE NOT NULL DEFAULT 0,
+        help_status VARCHAR NOT NULL DEFAULT ''
+      );
+      INSERT INTO livechat_member_history(
+        id, row_version, created_at, member_display_name, channel_name,
+        partner_name, chatbot_script_name, guest_name, session_duration_hour,
+        livechat_member_type, agent_expertise_names, conversation_tag_names,
+        country_name, session_outcome, session_week_day, rating_text,
+        session_livechat_channel_name, session_start_hour, rating, has_call,
+        call_percentage, message_count, response_time_hour, call_count,
+        call_duration_hour, help_status
+      ) VALUES
+        ('livechat-member-history-001', 1, TIMESTAMP '2026-09-11 13:03:00', 'Visitor, Mitchell Admin', 'Visiteur, Mitchell Admin', 'YourCompany, Marc Demo', '', '', 0.000000, 'Agent', 'Livechat', 'Support', 'Belgium', 'Success', 'Friday', '', 'YourWebsite.com', 13.00, 0.0, 0.0, 0.0, 1, 0.0, 0.0, 0.0, 'Help Provided'),
+        ('livechat-member-history-002', 1, TIMESTAMP '2026-09-11 13:02:00', 'Visitor #234, Odoo', '', 'Odoo', 'Odoo', '', -743.931944, 'Chatbot', '', '', '', '', 'Friday', '', '', 13.00, 0.0, 0.0, 0.0, 1, 0.0, 0.0, 0.0, ''),
+        ('livechat-member-history-003', 1, TIMESTAMP '2026-09-11 13:01:00', 'Visitor #306, Support', 'Visitor #306, Support', 'YourCompany, Core3 Administrator', '', '', 0.007778, 'Agent', 'Discuss, Livechat', 'Support', 'United States', 'Success', 'Friday', 'Happy', 'YourWebsite.com', 13.00, 1.0, 1.0, 1.0, 4, 0.008333, 1.0, 0.005556, 'Help Provided'),
+        ('livechat-member-history-004', 1, TIMESTAMP '2026-09-11 13:00:00', 'Joel Willis, Mitchell Admin', 'Joel Willis, Mitchell Admin', 'YourCompany, Joel Willis', '', '', 0.004722, 'Visitor', '', 'Support', 'Belgium', 'Success', 'Friday', '', 'YourWebsite.com', 13.00, 0.0, 0.0, 1.0, 2, 0.0, 0.0, 0.0, ''),
+        ('livechat-member-history-005', 1, TIMESTAMP '2026-09-10 13:03:00', 'Visitor #301, Support', '', '', 'Support Bot', 'Visitor #301', 0.068333, 'Chatbot', '', 'Support', 'France', 'Escalated', 'Thursday', '', 'YourWebsite.com', 13.00, 0.0, 0.0, 1.0, 2, 0.0, 0.0, 0.0, 'Help Requested'),
+        ('livechat-member-history-006', 1, TIMESTAMP '2026-09-10 13:02:00', 'Visitor, Mitchell Admin', 'Visitor, Mitchell Admin', 'YourCompany, Core3 Administrator', '', '', 0.014444, 'Agent', 'Discuss', '', 'Belgium', 'Success', 'Thursday', 'Neutral', 'YourWebsite.com', 13.00, 0.5, 0.0, 0.0, 3, 0.008333, 0.0, 0.0, 'Help Provided'),
+        ('livechat-member-history-007', 1, TIMESTAMP '2026-09-10 13:01:00', 'Visitor #305, Support', '', '', '', 'Visitor #305', 0.033333, 'Visitor', '', '', 'United States', '', 'Thursday', '', 'YourWebsite.com', 13.00, 0.0, 0.0, 0.0, 1, 0.0, 0.0, 0.0, '')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO livechat_member_history(
+        id, row_version, created_at, member_display_name, channel_name,
+        partner_name, chatbot_script_name, guest_name, session_duration_hour,
+        livechat_member_type, agent_expertise_names, conversation_tag_names,
+        country_name, session_outcome, session_week_day, rating_text,
+        session_livechat_channel_name, session_start_hour, rating, has_call,
+        call_percentage, message_count, response_time_hour, call_count,
+        call_duration_hour, help_status
+      )
+      SELECT 'livechat-member-history-' || LPAD(CAST(n AS VARCHAR), 3, '0'), 1,
+        TIMESTAMP '2026-09-09 13:00:00' - (n * INTERVAL '1 day'),
+        CASE WHEN n % 3 = 0 THEN 'Visitor #' || CAST(300 + n AS VARCHAR) ELSE 'Visitor, Mitchell Admin' END,
+        CASE WHEN n % 3 = 0 THEN 'Visitor #' || CAST(300 + n AS VARCHAR) || ', Support' ELSE 'Visitor, Mitchell Admin' END,
+        CASE WHEN n % 3 = 0 THEN '' ELSE 'YourCompany, Core3 Administrator' END,
+        CASE WHEN n % 3 = 0 THEN 'Support Bot' ELSE '' END,
+        CASE WHEN n % 3 = 0 THEN 'Visitor #' || CAST(300 + n AS VARCHAR) ELSE '' END,
+        CASE WHEN n % 3 = 0 THEN 0.066667 ELSE 0.014444 END,
+        CASE WHEN n % 3 = 0 THEN 'Chatbot' ELSE 'Agent' END,
+        CASE WHEN n % 3 = 0 THEN '' ELSE 'Discuss, Livechat' END,
+        CASE WHEN n % 2 = 0 THEN 'Support' ELSE '' END,
+        CASE WHEN n % 2 = 0 THEN 'United States' ELSE 'Belgium' END,
+        CASE WHEN n % 3 = 0 THEN 'Escalated' ELSE 'Success' END,
+        CASE WHEN n % 2 = 0 THEN 'Wednesday' ELSE 'Tuesday' END,
+        CASE WHEN n % 4 = 0 THEN 'Happy' ELSE '' END,
+        'YourWebsite.com', 13.00, CASE WHEN n % 4 = 0 THEN 1.0 ELSE 0.0 END,
+        CASE WHEN n % 5 = 0 THEN 1.0 ELSE 0.0 END,
+        CASE WHEN n % 5 = 0 THEN 1.0 ELSE 0.0 END,
+        CASE WHEN n % 3 = 0 THEN 1 ELSE 2 END,
+        CASE WHEN n % 5 = 0 THEN 0.008333 ELSE 0.0 END,
+        CASE WHEN n % 5 = 0 THEN 1.0 ELSE 0.0 END,
+        CASE WHEN n % 5 = 0 THEN 0.005556 ELSE 0.0 END,
+        CASE WHEN n % 3 = 0 THEN 'Help Requested' ELSE 'Help Provided' END
+      FROM (WITH RECURSIVE history_numbers(n) AS (
+        SELECT 8 UNION ALL SELECT n + 1 FROM history_numbers WHERE n < 55
+      ) SELECT n FROM history_numbers) seeded;
+    down: |
+      DROP TABLE IF EXISTS livechat_member_history;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
