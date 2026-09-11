@@ -540,6 +540,70 @@ contracts. If a primitive is absent, document its generic API and isolate its
 test before adding a Surveys-specific renderer. Preserve Odoo content-only
 mobile scrolling and no horizontal overflow.
 
+## Duplicate action parity slice — 2026-09-11
+
+The selected uncovered authenticated action was the Odoo Surveys form Actions
+menu > Duplicate action on `Feedback Form`. The installed Odoo reference was
+`http://localhost:8069/odoo/surveys/1`, database `core3_personal`, authenticated
+as `codex@core3.local`; the isolated Core3 capture used the worktree runtime at
+`http://localhost:3003/surveys/detail?id=survey-demo-feedback`, backend port
+3013, authenticated as `admin@tms.local`. The active parent checkout retained
+port 3002, so it was not disturbed. Temporary Odoo copies were deleted after
+the desktop and mobile reference captures. Screenshots remain under `/tmp`
+only and are not repository artifacts.
+
+Implementation is YAML-first and page/API separated: `page.id: survey-detail`
+owns the declarative `action_menu` and permissioned client action
+`duplicate_survey_detail`; `services/surveys/api/survey-detail.yaml` owns the
+permissioned `duplicate_survey` server action at
+`surveys.records.duplicate`. The transaction copies the survey definition,
+ordered questions, and suggested values, while assigning a fresh ID/token,
+resetting Draft/response count/dates, and enforcing not-found, archived, and
+stale-row guards. The generic OdooFormView action-menu primitive filters
+permissioned actions before render; its mobile overflow/stacking refinement is
+included in the implementation commit.
+
+Focused verification: `bun test test/surveys.integration.test.ts` — **15 pass,
+0 fail, 155 expect() calls**. The test asserts YAML page/API wiring, action
+labels, deterministic duplicate title/state/token, copied question and answer
+counts, source immutability, and 404/409 archived/stale guards.
+
+### Browser evidence
+
+All captures used authenticated headless Chrome at the exact viewport shown;
+the four Core3 result captures navigated to a new `Feedback Form (copy)` in
+Draft with zero responses. The Odoo menu exposes `Duplicate`, `Archive`,
+`Delete`, and `Print Survey`; Core3 exposes the selected permissioned
+`Duplicate` action. Desktop Core3 captures had no horizontal overflow and the
+final mobile result capture had no horizontal overflow; no failed requests or
+page errors were recorded after entering the Surveys route.
+
+| State | Odoo path | SHA-256 | Dimensions | Core3 path | SHA-256 | Dimensions |
+| --- | --- | --- | --- | --- | --- | --- |
+| Actions menu, desktop | `/tmp/odoo-surveys-duplicate-menu-desktop-20260911.png` | `cd6c02092d48cb584f8fc80459034d374fb20050733e15463f2f9463420e0d60` | 1440x900 | `/tmp/core3-surveys-duplicate-menu-desktop-20260911.png` | `1a4b2889f21b7ab9eea049c9fdd61120b10020c21b8631c91d4f065da19b4fc8` | 1440x900 |
+| Duplicate result, desktop | `/tmp/odoo-surveys-duplicate-result-desktop-20260911.png` | `a9857eb293ce6e15ca9a8115463907734cfaaeea36b2067d9cb35aa5544ee1a0` | 1440x900 | `/tmp/core3-surveys-duplicate-result-desktop-20260911.png` | `8f389372dc768f07232158b1557767887c555fc7a62cb481d112ba8096a062be` | 1440x900 |
+| Actions menu, mobile | `/tmp/odoo-surveys-duplicate-menu-mobile-20260911.png` | `4c50b1320a2e5ec4af079fed5b865d2f20476cf85447fc37fc4fd2b36cf1edeb` | 390x844 | `/tmp/core3-surveys-duplicate-menu-mobile-20260911.png` | `7da97dcebc609865d11be20918946f6a45c71cd368120c16a91c9dca23af9d78` | 390x844 |
+| Duplicate result, mobile | `/tmp/odoo-surveys-duplicate-result-mobile-20260911.png` | `686133b7ee8353d108cefff8d7cb22c6db085a0c5385161b54c2567f00afa4e7` | 390x844 | `/tmp/core3-surveys-duplicate-result-mobile-20260911.png` | `b8bff92698643df276a1bdf88146d67f892c74aefa26a1727825c151e70a9d8b` | 390x844 |
+
+Behavior comparison: both authenticated forms keep the source survey intact,
+create a new route/record titled `Feedback Form (copy)`, preserve the ordered
+question definition, and reset participants/responses to zero and state to
+Draft. Odoo presents the action menu as a desktop dropdown and mobile bottom
+sheet; Core3 presents the same action through the reusable OdooFormView menu,
+with the desktop dropdown and result navigation captured. Core3's compact
+mobile action strip keeps the Actions control visible, but the captured mobile
+menu frame does not visibly show the dropdown item; this remains a visual
+residual for the next slice despite the focused action and mobile result
+behavior passing.
+
+Residual mismatches: Core3 currently exposes only Duplicate in this bounded
+menu, while Odoo also exposes Archive, Delete, and Print Survey (existing Core3
+archive/lifecycle actions remain in the form action bar). Core3's seeded
+Feedback Form has seven questions and no Odoo section rows, so duplication
+preserves the Core3 fixture graph rather than the reference's two section rows.
+Generic Odoo typography/chatter and the remaining Surveys menu/actions are
+outside this slice.
+
 ## Acceptance and evidence required before `ready`
 
 The future audit must run clean install, migration, restart, upgrade, and demo
