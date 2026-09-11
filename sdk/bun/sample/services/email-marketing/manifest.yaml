@@ -30,3 +30,4 @@ menu:
       label: Configuration
       items:
         - { path: /email-optout-reasons, label: Optout Reasons, icon: settings, permission: email_marketing.manage }
+        - { path: /email-favorite-filters, label: Favorite Filters, icon: filter, permission: email_marketing.read }

@@ -1,0 +1,33 @@
+title: Favorite Filters
+page: { id: email-favorite-filters, route: /email-favorite-filters, breadcrumb: [Marketing, Email Marketing, Configuration, Favorite Filters], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: email_favorite_filters
+    default_filters: { saved_by_me: 'true' }
+    create_action: create_email_favorite_filter
+    create_label: New
+    search: { label: Search favorite filters, placeholder: Search filters... }
+    filters:
+      - { field: saved_by_me, label: My Filters, options: [{ id: 'true', label: My Filters }, { id: 'false', label: All Filters }] }
+      - { field: recipient_model, label: Recipients, options_source: email_favorite_filter_models }
+    group_by:
+      - { field: recipient_model_label, label: Recipients }
+    default_group_by: recipient_model_label
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: form, label: Form, icon: edit, mobile: true }
+    form_view: { page: apps/services/email-marketing/pages/favorite-filter-detail.yaml, side_panel: true }
+    columns:
+      - { field: name, label: Filter Name, type: PrimaryEntityCell, mobile: true }
+      - { field: saved_by, label: Saved by, mobile: false }
+      - { field: recipient_model_label, label: Recipients, mobile: true }
+      - { field: mailing_domain, label: Domain, optional: true, mobile: false }
+    page_size: 50
+    row_key: id
+    row_open_action: edit_email_favorite_filter
+    row_double_click_action: edit_email_favorite_filter
+    row_actions: menu
+    empty_state: { title: No saved filter yet!, description: Save recipient rules from a mailing to reuse them here. }

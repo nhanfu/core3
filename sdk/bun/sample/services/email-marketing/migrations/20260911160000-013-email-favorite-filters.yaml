@@ -1,0 +1,37 @@
+version: 0.0.13
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_marketing_favorite_filters (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        saved_by VARCHAR NOT NULL,
+        recipient_model VARCHAR NOT NULL,
+        recipient_model_label VARCHAR NOT NULL,
+        mailing_domain VARCHAR NOT NULL,
+        saved_by_me BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      INSERT INTO email_marketing_favorite_filters(id, row_version, name, saved_by, recipient_model, recipient_model_label, mailing_domain, saved_by_me, created_at, updated_at) VALUES
+        ('email-filter-active-newsletter', 1, 'Active newsletter subscribers', 'admin@core3.local', 'res.partner', 'Contacts', 'Active newsletter subscribers', true, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00'),
+        ('email-filter-vip-contacts', 1, 'VIP customer contacts', 'admin@core3.local', 'res.partner', 'Contacts', 'Customer rank is greater than zero', true, TIMESTAMP '2026-01-15 09:01:00', TIMESTAMP '2026-01-15 09:01:00'),
+        ('email-filter-bounced-mailing-contacts', 1, 'Bounced mailing contacts', 'admin@core3.local', 'mailing.contact', 'Mailing Contacts', 'Bounced contacts requiring review', true, TIMESTAMP '2026-01-15 09:02:00', TIMESTAMP '2026-01-15 09:02:00'),
+        ('email-filter-account-managers', 1, 'Account managers', 'campaign.manager@core3.local', 'res.users', 'Users', 'Users assigned to account management', false, TIMESTAMP '2026-01-15 09:03:00', TIMESTAMP '2026-01-15 09:03:00')
+      ON CONFLICT (id) DO UPDATE SET
+        row_version = EXCLUDED.row_version,
+        name = EXCLUDED.name,
+        saved_by = EXCLUDED.saved_by,
+        recipient_model = EXCLUDED.recipient_model,
+        recipient_model_label = EXCLUDED.recipient_model_label,
+        mailing_domain = EXCLUDED.mailing_domain,
+        saved_by_me = EXCLUDED.saved_by_me,
+        updated_at = EXCLUDED.updated_at;
+    down: |
+      DROP TABLE IF EXISTS email_marketing_favorite_filters;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

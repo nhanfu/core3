@@ -1,0 +1,34 @@
+page: { id: email-favorite-filter-detail }
+datasources:
+  - id: email_favorite_filter_detail
+    single: true
+    permission: email_marketing.read
+    error_states: { transport_error: { status: 503, code: EMAIL_FAVORITE_FILTER_UNAVAILABLE, message: This favorite filter is temporarily unavailable. } }
+    query: "SELECT f.id, f.row_version, f.name, f.saved_by, f.recipient_model, f.recipient_model_label, f.mailing_domain, f.saved_by_me FROM email_marketing_favorite_filters f WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND f.id = :id"
+actions:
+  - id: edit_email_favorite_filter_detail
+    type: server_form
+    permission: email_marketing.write
+    title: Edit Favorite Filter
+    action: email_marketing.favorite_filters.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.email_favorite_filter_detail
+    refresh: [email_favorite_filter_detail, email_favorite_filters]
+    mutation:
+      operation: update
+      table: email_marketing_favorite_filters
+      fields: [name, recipient_model, recipient_model_label, mailing_domain]
+      required: [name, recipient_model, mailing_domain]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_marketing_favorite_filters WHERE id = :id", status: 404, code: EMAIL_FAVORITE_FILTER_NOT_FOUND, message: Favorite filter not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:recipient_model AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:mailing_domain AS VARCHAR))) > 0", status: 422, code: EMAIL_FAVORITE_FILTER_REQUIRED_FIELDS, message: Filter name, recipients model, and domain are required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:recipient_model AS VARCHAR) IN ('res.partner', 'mailing.contact', 'res.users')", status: 422, code: EMAIL_FAVORITE_FILTER_MODEL_UNSUPPORTED, message: Select a supported recipients model. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_favorite_filters WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMAIL_FAVORITE_FILTER_EXISTS, message: A favorite filter with this name already exists. }
+      result: { query: "SELECT * FROM email_marketing_favorite_filters WHERE id = :id" }
+    fields:
+      - { field: name, label: Filter Name, type: text, required: true }
+      - { field: recipient_model, label: Recipients Model, type: select, options_source: email_favorite_filter_models, required: true }
+      - { field: recipient_model_label, label: Recipients Model Name, type: text, readonly: true }
+      - { field: mailing_domain, label: Filter Domain, type: textarea, required: true }

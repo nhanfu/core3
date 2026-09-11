@@ -1,0 +1,20 @@
+title: Favorite Filter
+page: { id: email-favorite-filter-detail, route: /email-favorite-filters/detail, breadcrumb: [Marketing, Email Marketing, Configuration, Favorite Filters, Filter], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: OdooFormView
+    source: email_favorite_filter_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    group_columns: 2
+    groups:
+      - title: Filter
+        fields:
+          - { field: name, label: Filter Name, type: text, required: true }
+          - { field: recipient_model, label: Recipients Model, type: select, options_source: email_favorite_filter_models, required: true }
+          - { field: mailing_domain, label: Filter Domain, type: textarea, required: true, wide: true }
+      - title: Ownership
+        fields:
+          - { field: saved_by, label: Saved by }
+          - { field: recipient_model_label, label: Recipients Model Name }
