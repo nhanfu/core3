@@ -716,3 +716,54 @@ Evidence and SHA-256 hashes:
 - Core3 list mobile: `/tmp/core3-accounting-partner-ledger-mobile-final-20260911.png` — `02725b12491db6516ea48aa06b279308f67f85a1280c5bd7090ea4072f75319e`
 - Core3 pivot desktop: `/tmp/core3-accounting-partner-ledger-desktop-pivot-final-20260911.png` — `68d4d4db40e0d36269e58a68382300acf5f45829f1774a86332db478abda78fc`
 - Core3 pivot mobile: `/tmp/core3-accounting-partner-ledger-mobile-pivot-final-20260911.png` — `5992a4135c01e380250dfbf447e5a3ab25a4bade94469213b3d197d25b2fab49`
+
+## Current batch: Journal Items graph and Kanban views
+
+The live personal Odoo 19 menu audit resolved Review → Journal Items to the
+`account.move.line` action at `/odoo/items` (current action 343). Its installed
+view modes are List, Pivot, Graph, and Kanban. Desktop opens the dense List
+view; the Graph view keeps a visible Balance axis and legend even when the
+current balance values are all zero; and the Kanban view shows account,
+label, date, and debit/credit amount cards. The responsive Odoo route opens
+Kanban cards on the 390x844 mobile viewport.
+
+Core3 now keeps the Journal Items page layout-only and joins
+`api/journal-items.yaml` through `page.id: accounting-journal-items`. The API
+projection supplies the Odoo card account, month bucket, net balance, DR/CR
+direction, and formatted amount fields. The page declares the complete
+desktop List/Pivot/Graph/Kanban action and a mobile-only card projection, and
+uses icon view navigation to match Odoo's top-right view switcher. The shared
+GraphView gained the opt-in `show_zero_data` contract so this action renders a
+zero-valued Balance chart instead of incorrectly collapsing to `No data`.
+
+Implementation commits are `254c8fa1` (view/API projection and focused
+contract tests) and `22c6bf78` (zero-valued graph rendering and schema/client
+support). Focused validation passed with 2 tests and 17 assertions; the shared
+YAML schema suite passed with 16 tests. `bun run audit` passed with 465 pages,
+472 routes, and 808 datasources, and `git diff --check` passed.
+
+Authenticated browser QA used Odoo `codex@core3.local` against
+`core3_personal` and Core3 `admin@tms.local`. It exercised desktop List,
+Graph, and Kanban switching, the Graph Measures control (Debit then restored
+to Balance), search-empty and search-restore, plus the mobile default card
+state. All captures are temporary and no screenshots are repository assets.
+Both runtimes returned no unexpected failed responses, the rendered widths
+were exactly 1440 and 390 CSS pixels, and no horizontal overflow was observed.
+
+Evidence captures and SHA-256 hashes:
+
+- Odoo List desktop: `/tmp/odoo-accounting-journal-items-final-list-desktop-20260911.png` — `7245c4985b79a8b38f1a347ad5e4d120cb10fb554021a8375dbf527dc4dd9175`
+- Odoo Graph desktop: `/tmp/odoo-accounting-journal-items-final-graph-desktop-20260911.png` — `d7ef8861ce3c8068368589e17556a57ef91527926dc056ce78bedfa18945bd2d`
+- Odoo Kanban desktop: `/tmp/odoo-accounting-journal-items-final-kanban-desktop-20260911.png` — `e0c90344243604d534894331223b7a1a17db3e82f8783d7297f95de754bbb621`
+- Odoo Kanban mobile: `/tmp/odoo-accounting-journal-items-final-kanban-mobile-20260911.png` — `62e215eab8ea981e5cb59255e6cd177509bd3431e96465850848bba1706503f7`
+- Core3 List desktop: `/tmp/core3-accounting-journal-items-final-list-desktop-20260911.png` — `4633265a95f24fbc2d0b7dda9b951c92e2ce4c801dbfe2a48c2ec6e76c119e8b`
+- Core3 Graph desktop: `/tmp/core3-accounting-journal-items-final-graph-desktop-20260911.png` — `a386349e26f87509421e4ca1ad9b4e42bfecdd91ac1d414676eb38d4c7075545`
+- Core3 Kanban desktop: `/tmp/core3-accounting-journal-items-final-kanban-desktop-20260911.png` — `85c09ccbd8627c48b8e59ab3f7babb5360fa98e248d8d2f53502cfe18e2e61bd`
+- Core3 Kanban mobile: `/tmp/core3-accounting-journal-items-final-kanban-mobile-20260911.png` — `4baf7be49d3f7a25b4b9810ed84347e15d5ebd50aa81d821c11af80c3eec0e51`
+
+Each desktop capture is 1440x900 and each mobile capture is 390x844. The
+primary mismatch found and fixed was Core3's missing Graph/Kanban modes and
+its incorrect zero-balance `No data` state. Remaining bounded differences
+are the live Odoo's 85 rows versus Core3's four deterministic review fixtures,
+Odoo's purple shell and compact localized dates versus Core3's Fluent shell
+and ISO dates, and the shared Core3 mobile card styling/fixture density.
