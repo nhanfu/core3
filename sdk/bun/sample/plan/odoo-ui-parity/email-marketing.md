@@ -644,3 +644,39 @@ retain this exact limitation and status.
   smoke and visual checks, `bun run audit` and `bun run audit:yaml` where
   applicable, then `git diff --check`. Action slices must commit only code and
   docs; screenshots remain under `/tmp`.
+
+## Implemented action slice - Blacklisted Email Addresses (2026-09-12)
+
+The authenticated Odoo 19 source action is `mail.mail_blacklist_action` (action
+152 in `core3_user_demo`), model `mail.blacklist`, with `list,form` modes. The
+source list shows Blacklist Date and Email Address; its search exposes Email
+and Archived, and its form provides Add Email Blacklist, Blacklist, and
+Unblacklist states. The source reference was captured as
+`admin@core3.local` at exact 1440x900 and 390x844 with no page errors, failed
+requests, or horizontal overflow.
+
+Core3 implements the menu action at `/email-blacklist`, with the detail form
+joined through `page.id: email-blacklist-detail`. Page YAML is presentation-only
+and API YAML owns the list/detail datasources and mutations. Migration
+`20260912100000-014-email-blacklist.yaml` seeds two active and one archived
+deterministic address with fixed 2026 timestamps. Reads cover search, Archived,
+empty, not-found, and 503 transport states. Writes use `email_marketing.write`
+and cover create, edit, blacklist, unblacklist, and delete with email format,
+duplicate, missing-record, and row-version guards.
+
+Focused validation passes 3 tests with 42 assertions; `bun run audit` reports
+541 pages, 548 routes, and 942 datasources; ESLint, shared and Email Marketing
+Sass builds, and `git diff --check` pass. Authenticated Core3 browser checks
+created a new address through the New form and opened the detail form at both
+target viewports with no page errors, failed requests, or horizontal overflow.
+Core3 captures are local-only under `/tmp`:
+
+- Odoo list: `/tmp/odoo-email-blacklist-desktop-final.png` (`2e7fff98aed871d243c9aa44154eb222d7ec08ad40bf6e499cda5ceb5459ecf5`) and `/tmp/odoo-email-blacklist-mobile-final.png` (`c7bae5c26bb2e9e3166de88514c59814a1fd4f6ab446a30a10da83f8cff3c69b`)
+- Odoo detail: `/tmp/odoo-email-blacklist-detail-desktop-final.png` (`560eb3b272da38bcab9331dc895f71df9366a9db8d592fa477e69e21e487b88f`) and `/tmp/odoo-email-blacklist-detail-mobile-final.png` (`10679d9bc65e432bf17abca0e61604065cf88f5bafece6fd3c46ff7a4465afd5`)
+- Core3 list: `/tmp/core3-email-blacklist-desktop-final2.png` (`f03a571bbcd75a3af870b2ff84843ccd882da35a4c6838bf9fa85ddbf4c7e38b`) and `/tmp/core3-email-blacklist-mobile-final2.png` (`1db428f867c525a171b546e39feebaf339a51b6e98c6e7abcf680473f6f2f1be`)
+- Core3 detail: `/tmp/core3-email-blacklist-detail-desktop-final2.png` (`4b4feda0dd666291df49d4c13e5ffbec8146740a6eec751594c27b672b890065`) and `/tmp/core3-email-blacklist-detail-mobile-final2.png` (`5a1a51b0fe3f571a63d47be81e6021f8b5d34b082bb563849aea400a6220d002`)
+
+The expected residuals are the shared Core3 Fluent shell versus Odoo's purple
+shell, the Core3 compact form modal versus Odoo's chatter form, and deterministic
+replacement fixtures versus the single active address in the live reference.
+Screenshots remain outside Git.
