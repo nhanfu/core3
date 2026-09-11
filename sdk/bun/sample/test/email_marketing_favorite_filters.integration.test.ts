@@ -21,6 +21,7 @@ describe('Email Marketing Favorite Filters parity action', () => {
     expect(detailPage.page.id).toBe('favorite-filter-detail');
     expect(listPage.page.auth.require).toEqual(['email_marketing.read']);
     expect(listPage.components[0].default_filters).toEqual({ saved_by_me: 'true' });
+    expect(listPage.components[0].form_view).toMatchObject({ side_panel: false });
     expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list', 'form']);
     expect(yaml('api/favorite-filters.yaml').page.id).toBe(listPage.page.id);
     expect(yaml('api/favorite-filter-detail.yaml').page.id).toBe(detailPage.page.id);

@@ -19,7 +19,7 @@ components:
     views:
       - { id: list, label: List, icon: table, mobile: true }
       - { id: form, label: Form, icon: edit, mobile: true }
-    form_view: { page: apps/services/email-marketing/pages/favorite-filter-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/email-marketing/pages/favorite-filter-detail.yaml, side_panel: false }
     columns:
       - { field: name, label: Filter Name, type: PrimaryEntityCell, mobile: true }
       - { field: saved_by, label: Saved by, mobile: false }
