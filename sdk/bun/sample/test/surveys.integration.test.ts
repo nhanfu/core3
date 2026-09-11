@@ -28,6 +28,33 @@ describe('Surveys parity catalog and workflow', () => {
     expect(yaml('migrations/20260910193000-004-survey-participant-fixtures.yaml').type.postgres.up).toContain('participant-certification-4');
   });
 
+  test('routes the Certified stat to the Odoo Certifications Succeeded cohort', async () => {
+    const page = yaml('pages/survey-detail.yaml');
+    const api = yaml('api/participants.yaml');
+    const certified = page.actions.find((action: any) => action.id === 'survey_certified_stats_detail');
+    expect(page.page.id).toBe('survey-detail');
+    expect(yaml('pages/participants.yaml').page.id).toBe(api.page.id);
+    expect(certified).toMatchObject({
+      permission: 'surveys.read',
+      navigate_to: '/surveys/participants',
+      params: { survey_id: '{row.id}', quiz_status: 'Passed' },
+    });
+    expect(api.datasources.find((source: any) => source.id === 'survey_participants').query).toContain(':quiz_status');
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_certified_stat_migrations', ['schema', 'data']);
+    const source = api.datasources.find((candidate: any) => candidate.id === 'survey_participants');
+    const result = await repository.querySource(source, {
+      q: null,
+      state: null,
+      quiz_status: 'Passed',
+      survey_id: 'survey-demo-certification',
+    }, 0, 50);
+    expect(result.data).toHaveLength(2);
+    expect(result.data.every((row: any) => row.quiz_status === 'Passed')).toBe(true);
+  });
+
   test('registers the catalog forms and readonly detail routes', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     expect(yaml('pages/suggested-values.yaml').page.route).toBe('/surveys/suggested-values');
