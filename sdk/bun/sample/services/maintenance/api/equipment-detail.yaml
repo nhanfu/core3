@@ -1,3 +1,9 @@
 page: { id: equipment-detail }
 datasources:
-  - { id: maintenance_equipment_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, serial_number, model, vendor_reference, category, location, owner, technician, team, CAST(next_preventive_date AS VARCHAR) AS next_preventive_date, CAST(warranty_date AS VARCHAR) AS warranty_date, cost, description, state, archived FROM maintenance_equipment WHERE id = :id" }
+  - id: maintenance_equipment_detail
+    single: true
+    permission: maintenance.read
+    error_states: { not_found: { status: 404, code: MAINTENANCE_EQUIPMENT_NOT_FOUND, message: Equipment was not found. }, transport_error: { status: 503, code: MAINTENANCE_EQUIPMENT_DETAIL_UNAVAILABLE, message: Equipment details are temporarily unavailable. } }
+    query: "SELECT e.id, e.row_version, e.name, e.serial_number, e.model, e.vendor_reference, e.category, e.location, e.owner, e.technician, e.team, CAST(e.next_preventive_date AS VARCHAR) AS next_preventive_date, CAST(e.warranty_date AS VARCHAR) AS warranty_date, e.cost, e.description, e.state, e.archived, COUNT(r.id) FILTER (WHERE r.archived = FALSE AND r.state NOT IN ('Repaired', 'Scrap')) AS maintenance_open_count FROM maintenance_equipment e LEFT JOIN maintenance_requests r ON r.equipment_id = e.id WHERE e.id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1 GROUP BY e.id, e.row_version, e.name, e.serial_number, e.model, e.vendor_reference, e.category, e.location, e.owner, e.technician, e.team, e.next_preventive_date, e.warranty_date, e.cost, e.description, e.state, e.archived"
+actions:
+  - { id: open_maintenance_requests_from_equipment, type: navigate, permission: maintenance.read, navigate_to: /maintenance-requests, params: { equipment_id: '{row.id}' } }

@@ -7,7 +7,7 @@ components:
     create_action: create_maintenance_request
     create_label: New request
     search: { label: Search maintenance requests, placeholder: 'Search requests, equipment, category, or assignee...' }
-    filters: [{ field: state, label: Status, options_source: maintenance_request_states }, { field: priority, label: Priority, options: [Low, Normal, High] }, { field: archived, label: Archived, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    filters: [{ field: equipment_id, label: Equipment, options_source: maintenance_equipment_lookup }, { field: state, label: Status, options_source: maintenance_request_states }, { field: priority, label: Priority, options: [Low, Normal, High] }, { field: archived, label: Archived, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
     group_by: [{ field: stage, label: Stage }, { field: assigned_to, label: Responsible }, { field: category, label: Category }, { field: owner, label: Created by }]
     view_navigation: tabs
     views:
