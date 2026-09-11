@@ -9,6 +9,8 @@ components:
     source: time_off_allocations
     create_action: create_allocation
     create_label: New allocation
+    header_actions:
+      - { id: create_group_allocation, label: New Group Allocation, permission: time_off.manage, variant: secondary }
     search: { label: Search allocations, placeholder: Search employee or allocation... }
     empty_state: { title: No allocation requests found, description: Create an allocation or adjust your search. }
     filters: [{ field: state, label: Status, options_source: allocation_states }]

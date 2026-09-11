@@ -18,6 +18,7 @@ describe('Time Off group allocation wizard parity', () => {
     expect(page.page).toMatchObject({ id: 'time-off-allocations', route: '/time-off-allocations' });
     expect(page.toolbar).toContainEqual(expect.objectContaining({ action: 'create_group_allocation', label: 'New Group Allocation', permission: 'time_off.manage' }));
     expect(list.source).toBe('time_off_allocations');
+    expect(list.header_actions).toContainEqual(expect.objectContaining({ id: 'create_group_allocation', label: 'New Group Allocation', permission: 'time_off.manage' }));
     expect(action).toMatchObject({ type: 'server_form', title: 'New Group Allocation', permission: 'time_off.manage', handler: 'yaml_mutation' });
     expect(action.fields.map((field: any) => field.label)).toEqual([
       'Grant?', 'Employees', 'Time Off Type', 'Allocation Type', 'Accrual Plan',
