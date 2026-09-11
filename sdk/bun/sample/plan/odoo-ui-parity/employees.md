@@ -616,3 +616,68 @@ represented in the paired states below.
   permission checks, authenticated Playwright checks where the reference is
   installed, `git diff --check`, and verify the commit contains only this
   sub-plan.
+
+## Bounded batch: Employees Settings
+
+This batch implements the one remaining ordinary Employees configuration action
+proven missing from Core3: Employees > Configuration > Settings. In the fresh
+`core3_codex_demo` database, authenticated as `codex@core3.local`, menu id 312
+resolves to `hr.hr_menu_configuration` and action id 449
+(`hr_config_settings_action`), model `res.config.settings`, form-only. The
+source XML confirms the menu is system-administrator-only and the form covers
+Employees, Work Organization, and Contract settings: presence controls, Skills
+Management, Company Working Hours, and contract/work-permit expiration notice
+periods. The live Employees menu also exposed the already-covered Work
+Locations, Working Schedules, Departure Reasons, Job Positions, Contract
+Templates, and Employment Types entries; this batch does not redo them or
+expand into Activity Plans, Skill Types, Badges, Challenges, or Goals History.
+
+Core3 adds `/employees/settings` with page id `employee-settings`; the page is
+layout-only and binds to `api/settings.yaml` through the same page id. Migration
+`20260911203000-014-settings.yaml` seeds one stable company settings record with
+fixed `2026-01-15` timestamps. The `employees.settings` permission is required
+by the page, datasource, save action, and manifest menu, matching Odoo's
+`base.group_system` menu boundary. The update mutation uses optimistic
+concurrency and explicit missing, stale, invalid-value, empty, and transport
+contracts.
+
+The first visual Core3 probe exposed a real shared-runtime defect: `SettingsView`
+had no imported `.o-settings-*` stylesheet, so the page fell back to browser
+default controls and fonts, especially on mobile. Shared responsive styling was
+added in `packages/client/src/styles/components/settings.scss`, imported from
+`components.scss`, and the global/Employees CSS bundles were rebuilt. The
+corrected captures below were visually inspected and show the styled settings
+cards, responsive single-column mobile layout, visible Employees tab, and
+populated controls.
+
+Focused and static validation:
+
+- `bun test test/employees_settings.integration.test.ts`: 3 tests, 22
+  assertions passed.
+- `bun run audit`: 499 pages, 506 routes, and 880 datasources passed.
+- `bun run lint` passed.
+- `bun run css:build:global && bun run css:build:employees` passed.
+- `git diff --check` passed.
+- Implementation commits: `c8561008` (Employees Settings contracts) and
+  `0c60cac1` (shared responsive SettingsView styling). Evidence is not tracked.
+
+Authenticated browser evidence is kept outside Git. Odoo was authenticated as
+`codex@core3.local` in `core3_codex_demo`; desktop navigation used Home Menu >
+Employees > Configuration > Settings, while the mobile capture used the
+authenticated resolved action URL `/odoo/action-449`. Core3 was authenticated
+as `admin@tms.local` and loaded the explicit `/employees/settings` route on the
+isolated runtime. Both surfaces were checked at 1440x900 and 390x844; each
+asserted the Settings title/route, populated presence/schedule/contract text,
+zero `requestfailed` entries, zero `pageerror` entries, and exact body/document
+widths equal to the viewport.
+
+| Surface | Desktop | Mobile |
+| --- | --- | --- |
+| Odoo Settings | `/tmp/odoo-employees-settings-desktop-20260911.png` (`c75a177ebb48a96da2e894cd6f8ebee22e92417352af6362efa09c3b443d5d4c`) | `/tmp/odoo-employees-settings-mobile-20260911.png` (`5d701f1cde51b44ec85e6fb0701fcd1a9f146ee229d102fb43b248c01bf40e8d`) |
+| Core3 Settings | `/tmp/core3-employees-settings-desktop-20260911.png` (`2c46e07e2e594c674eaf1bb0ab189437285f3bde31a7da1bdc4647f4bf3b2518`) | `/tmp/core3-employees-settings-mobile-20260911.png` (`1946663c770b0918b47267ee308f62c7a58e6c9ef3d476b3d02ea3e17c93fbd6`) |
+
+Known differences are bounded to the shared Fluent shell versus Odoo's purple
+shell, Core3's card-based responsive settings renderer versus Odoo's native
+settings blocks, and deterministic service-owned settings storage versus
+Odoo's transient `res.config.settings` persistence. No Discuss fallback image
+is used as evidence.
