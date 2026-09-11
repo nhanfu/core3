@@ -2,6 +2,61 @@
 
 Status: in-progress
 
+## Current batch: Event-scoped Registration statistics
+
+The authenticated personal Odoo database `core3_personal` exposes the installed
+event-scoped `Registration statistics` action as action `288` on
+`event.registration`. It is reached from the `Registration` stat button on an
+event form, for example `Events > Events > Design Fair Los Angeles >
+Registration`, at `/odoo/events/1/action-288`. Odoo declares
+`graph,pivot,kanban,list,form`, an active-event domain, default grouping by
+registration date, and default `Registered`/taken filters. Desktop opens the
+Graph view with one `Registered` bar for 3 registrations on `08 Sep 2026`;
+mobile opens the date-grouped Kanban view with Ron Gibson, Samar Basra, and
+Willie Burke.
+
+This bounded slice adds `/events/registration-statistics`, joined to
+`api/event-registration-statistics.yaml` through `page.id`, and changes the
+existing event `Registration` stat button to pass `event_id` to that route.
+The page owns the Graph, Pivot, Kanban, and List tabs; the API owns the
+event-scoped registration query and explicit empty, missing-event, and
+transport-error contracts. Migration
+`20260911180000-021-event-registration-statistics.yaml` adds the fixed Design
+Fair fixture with the three Odoo-matching attendees on `2026-09-08` and keeps
+the event registration count deterministic and idempotent. Registration rows
+open the existing attendee detail surface; no new CRUD or workflow control is
+invented for this read/report action.
+
+Authenticated Odoo evidence, captured in database `core3_personal` as
+`codex@core3.local` at source revision `65975996`, is:
+
+| Viewport | Route | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| 1440x900 | `/odoo/events/1/action-288` | `/tmp/odoo-events-registration-statistics-desktop-1440x900.png` | `5a241452fba9d00d0b8e4a83563ccea2e9c2b9a9640fd57c90b9fe82b42acb25` |
+| 390x844 | `/odoo/events/1/action-288?view_type=kanban` | `/tmp/odoo-events-registration-statistics-mobile-390x844.png` | `869b6d8a995efb4ad9cb23f36668a1951e63f037338769067fe75131930d8730` |
+
+Authenticated Core3 evidence used `admin@tms.local` in the isolated worktree
+runtime, route `/events/registration-statistics?event_id=event-demo-001`, and
+the same seeded Design Fair fixture:
+
+| Viewport | Capture | SHA-256 | Browser checks |
+| --- | --- | --- | --- |
+| 1440x900 | `/tmp/core3-events-registration-statistics-desktop-1440x900.png` | `ccd8bbeb8fd8594bb005064f5945cccbaf0ec871c52a4fb1a7bdcfb855f18cb4` | Graph active; 3 registered rows; no failed requests; no horizontal overflow |
+| 390x844 | `/tmp/core3-events-registration-statistics-mobile-390x844.png` | `e45314cd3b6ba9bf61b401379b6a08877181eebf358dbfdcb12d6be04c37a402` | Date-grouped cards; 3 registered rows; no failed requests; no horizontal overflow |
+
+The Core3 Graph now formats the x-axis as `08 Sep 2026`, matching Odoo. The
+shared Core3 Fluent shell remains intentionally different from Odoo's purple
+shell; the report geometry, visible labels, default status filter, chart
+measure, date grouping, attendee names, ticket types, and responsive view
+switch are the bounded parity contract. The Odoo browser pass emitted only
+expected navigation-aborted asset requests during login/context replacement;
+no application/data request failed and no HTTP error response was observed.
+
+Focused validation is 3 registration-statistics tests and 18 assertions plus
+the existing Events parity test (6 tests, 43 assertions). The shared UI audit
+passes with 447 pages, 454 routes, and 779 datasources; `git diff --check` is
+clean. Screenshots remain outside Git.
+
 ## Current batch: Event Mail Schedulers
 
 The next uncovered visible Events action in the live personal Odoo database is
@@ -290,6 +345,7 @@ Source actions and their exact models/view modes are:
 | `action_event_view` | `event.event` | `/odoo/events` (`path=events`) | `kanban,calendar,list,form,pivot,graph,activity`; event search view; create-event help |
 | `event_barcode_action_main_view` | client `event.event_barcode_scan_view` | `/odoo/registration-desk` (`path=registration-desk`, fullscreen) | barcode scan/registration desk client action |
 | `action_registration` | `event.registration` | generated action route; planned `/odoo/attendees` | `graph,pivot,kanban,list,form`; last-month/taken/status/group-by-day defaults |
+| `event_registration_action_stats_from_event` / action 288 | `event.registration` | event-scoped `/odoo/events/<id>/action-288`; Core3 `/events/registration-statistics?event_id=<id>` | `graph,pivot,kanban,list,form`; active-event domain, registration-date grouping, registered/taken defaults |
 | `act_event_registration_from_event` | `event.registration` | `/odoo/attendees` (`path=attendees`) | `list,kanban,form,calendar,graph`; `event_id=active_id`, taken default |
 | `event_registration_action_kanban` | `event.registration` | generated event-scoped alias | `kanban,list,form`; registration-desk context |
 | `event_registration_action` | `event.registration` | generated registration-desk alias | `kanban,list,form`; ongoing default |
@@ -462,6 +518,7 @@ Use explicit Core3 routes, preserving existing aliases:
 | `/events/attendees/:id` | registration form | attendee state, answers, check-in/ticket actions |
 | `/events/registration-desk` | `/odoo/registration-desk` | fullscreen scanner/manual registration |
 | `/events/analysis` (preserve `/events-analysis`) | registration statistics | graph/pivot/list/form analysis |
+| `/events/registration-statistics?event_id=<id>` | event-scoped Registration statistics action 288 | graph/pivot/kanban/list/form report with active-event scope |
 | `/events/answer-breakdown` | Answer Breakdown | list/graph/pivot |
 | `/events/templates` | Event Templates | list/form |
 | `/events/stages` | Event Stages | list/form |
