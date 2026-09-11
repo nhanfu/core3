@@ -14,10 +14,11 @@ type:
         pos_tickets BOOLEAN NOT NULL DEFAULT FALSE,
         online_ticketing BOOLEAN NOT NULL DEFAULT FALSE,
         use_event_barcode BOOLEAN NOT NULL DEFAULT FALSE,
-        barcode_nomenclature VARCHAR NOT NULL DEFAULT 'Default GS1'
+        barcode_nomenclature VARCHAR NOT NULL DEFAULT 'Default GS1',
+        barcode_attendance BOOLEAN NOT NULL DEFAULT FALSE
       );
-      INSERT INTO event_settings(id, row_version, company_name, schedule, online_exhibitors, booth_management, sale_tickets, pos_tickets, online_ticketing, use_event_barcode, barcode_nomenclature)
-      VALUES ('event-settings-demo', 1, 'My Company (San Francisco)', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 'Default GS1')
+      INSERT INTO event_settings(id, row_version, company_name, schedule, online_exhibitors, booth_management, sale_tickets, pos_tickets, online_ticketing, use_event_barcode, barcode_nomenclature, barcode_attendance)
+      VALUES ('event-settings-demo', 1, 'My Company (San Francisco)', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 'Default GS1', FALSE)
       ON CONFLICT (id) DO NOTHING;
     down: |
       DELETE FROM event_settings WHERE id = 'event-settings-demo';
