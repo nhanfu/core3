@@ -345,7 +345,7 @@ Approved bounded Core3 contract:
 - route `/email-favorite-filters`, menu Configuration → Favorite Filters,
   default list mode with a list/form switch, and page/API fragments joined by
   `page.id` (`email-favorite-filters` and
-  `email-favorite-filter-detail`)
+  `favorite-filter-detail`)
 - `email_marketing.read` permits list/detail reads; `email_marketing.write`
   permits create/update/delete; no send, workflow, import, or cross-service
   mutation is included
@@ -365,6 +365,45 @@ Approved bounded Core3 contract:
 The implementation must remain YAML-first: page YAML is layout-only, API YAML
 owns datasource and action contracts, and the service migration owns schema and
 fixtures.
+
+## Evidence — Favorite Filters (2026-09-11)
+
+The bounded slice is implemented in commits `56a315f8` (contract),
+`84661814` (YAML/API implementation), `9400003b` (detail `page.id` binding),
+and `ee17b556` (list-view form-mode correction). The
+list keeps the Odoo default `My Filters` scope and visible `Recipients`
+grouping, while opening the form as an explicit detail modal rather than an
+unrequested side panel.
+
+Authenticated browser checks used the fresh Odoo 19 user stack at action 813
+and Core3 at `/email-marketing/email-favorite-filters`, with deterministic
+Core3 fixtures (three default-scope rows). Both environments had zero failed
+target requests and zero page errors; desktop and mobile document widths
+matched the viewport (`1440/1440` and `390/390`). Odoo showed ten populated
+rows and its source create form; Core3 showed three grouped rows and the
+editable detail form. Captures remain outside Git:
+
+- Odoo list: `/tmp/odoo-email-favorite-filters-desktop-final2-20260911.png`
+  (`de9e8353cfe767eae971b60168e18df75eec52fbb55da5a80096fdf97f356358a`)
+  and `/tmp/odoo-email-favorite-filters-mobile-final2-20260911.png`
+  (`d1b5c02540607d35f7a80f896ed95b75eec52fbb55da5a80096fdf97f356358a`)
+- Odoo form: `/tmp/odoo-email-favorite-filters-desktop-create-final2-20260911.png`
+  (`2a995831698e93198afead29ef33015f1b94a2094fe019646957616cb373ca4d8`)
+  and `/tmp/odoo-email-favorite-filters-mobile-create-final2-20260911.png`
+  (`236731f19eb03f52725ff3b561017fd2e1d204477a8add4117957a7bc22c4926`)
+- Core3 list: `/tmp/core3-email-favorite-filters-desktop-list-postfix2-20260911.png`
+  (`df7e7ea9529a41d60fce73b67653fd0af0d0802999c29f9d9fca1c5c853c012b`)
+  and `/tmp/core3-email-favorite-filters-mobile-list-postfix2-20260911.png`
+  (`a4f696c531372bd789ca7a90b70742cc33d8056e4abd2700d28e277e8d1ce42f`)
+- Core3 form: `/tmp/core3-email-favorite-filters-desktop-detail-postfix2-20260911.png`
+  (`e12ab984d738ee6c68872f4ec41266a6da3f390a21a1d47669626abb20e64d1a`)
+  and `/tmp/core3-email-favorite-filters-mobile-detail-postfix2-20260911.png`
+  (`46d41ca88f549c502b844c9ac3c871326956805ddd18048ad5776ad00962d729`)
+
+Focused integration validation passes with 4 tests and 42 assertions. The
+repository audit after the slice reports 527 pages, 534 routes, and 920
+datasources. The Odoo fixture values are reference evidence only; Core3
+continues to use its stable local replacement fixtures.
 
 The source-defined visible menu tree is:
 
