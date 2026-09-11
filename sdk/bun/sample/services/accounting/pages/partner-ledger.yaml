@@ -1,0 +1,38 @@
+title: Partner Ledger
+page: { id: partner-ledger, route: /accounting/reports/partner-ledger, breadcrumb: [Finance, Reporting, Partner Ledger], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_partner_ledger
+    search: { label: Search partner ledger, placeholder: Search partners... }
+    filters:
+      - { field: status, label: Status, options: [{ id: Posted, label: Posted }] }
+      - { field: residual_scope, label: Residual, options: [{ id: with_residual, label: With residual }] }
+      - { field: account_scope, label: Account type, options: [{ id: payable_receivable, label: Payable or Receivable }] }
+    default_filters: { status: Posted, residual_scope: with_residual, account_scope: payable_receivable }
+    empty_state: { title: No records found, description: Try adjusting your search or filters. }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: partner_name, column: Partner }, { field: debit, column: Debit }, { field: credit, column: Credit }, { field: balance, column: Balance }]
+          default: { rows: [partner_name], measures: [{ field: debit, aggregate: sum, column: Debit }, { field: credit, aggregate: sum, column: Credit }, { field: balance, aggregate: sum, column: Balance }] }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: partner_name
+        measure_field: balance
+        measure_label: Balance
+        type: bar
+    columns:
+      - { field: partner_display, label: Partner, type: PrimaryEntityCell }
+      - { field: debit_display, label: Debit, align: right }
+      - { field: credit_display, label: Credit, align: right }
+      - { field: due_date, label: Due Date }
+      - { field: balance_display, label: Balance, align: right }
+      - { field: matching, label: Matching }
+    page_size: 50
+    row_key: id

@@ -1,0 +1,35 @@
+version: 0.0.27
+description: Deterministic Partner Ledger report fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_partner_ledger (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        partner_name VARCHAR NOT NULL,
+        entry_count INTEGER NOT NULL DEFAULT 0,
+        debit DECIMAL(18,2) NOT NULL DEFAULT 0,
+        credit DECIMAL(18,2) NOT NULL DEFAULT 0,
+        due_date VARCHAR NOT NULL DEFAULT '',
+        balance DECIMAL(18,2) NOT NULL DEFAULT 0,
+        matching VARCHAR NOT NULL DEFAULT '',
+        status VARCHAR NOT NULL DEFAULT 'Posted',
+        residual_scope VARCHAR NOT NULL DEFAULT 'with_residual',
+        account_scope VARCHAR NOT NULL DEFAULT 'payable_receivable'
+      );
+      INSERT OR IGNORE INTO accounting_partner_ledger
+        (id, row_version, partner_name, entry_count, debit, credit, due_date, balance, matching, status, residual_scope, account_scope)
+      VALUES
+        ('partner-ledger-acme', 1, 'Acme Corporation', 7, 100875.00, 54625.00, '', 46250.00, '', 'Posted', 'with_residual', 'payable_receivable'),
+        ('partner-ledger-azure', 1, 'Azure Interior', 3, 31750.00, 31750.00, '', 0.00, '', 'Posted', 'with_residual', 'payable_receivable'),
+        ('partner-ledger-gemini', 1, 'Gemini Furniture', 1, 0.00, 622.27, '', -622.27, '', 'Posted', 'with_residual', 'payable_receivable'),
+        ('partner-ledger-lightsup', 1, 'LightsUp', 1, 750.00, 0.00, '', 750.00, '', 'Posted', 'with_residual', 'payable_receivable'),
+        ('partner-ledger-openwood', 1, 'OpenWood', 4, 5074.00, 0.00, '', 5074.00, '', 'Posted', 'with_residual', 'payable_receivable'),
+        ('partner-ledger-ready-mat', 1, 'Ready Mat', 2, 30.00, 30.00, '', 0.00, '', 'Posted', 'with_residual', 'payable_receivable');
+      CREATE INDEX IF NOT EXISTS idx_accounting_partner_ledger_partner ON accounting_partner_ledger(partner_name);
+    down: |
+      DROP TABLE IF EXISTS accounting_partner_ledger;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

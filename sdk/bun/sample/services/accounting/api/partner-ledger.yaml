@@ -1,0 +1,9 @@
+page: { id: partner-ledger }
+datasources:
+  - id: accounting_partner_ledger
+    single: false
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    pivot:
+      fields: [partner_name, entry_count, debit, credit, balance]
+    query: "SELECT id, row_version, partner_name, partner_name || ' (' || CAST(entry_count AS VARCHAR) || ')' AS partner_display, entry_count, debit, credit, printf('$ %,.2f', CAST(debit AS DOUBLE)) AS debit_display, printf('$ %,.2f', CAST(credit AS DOUBLE)) AS credit_display, due_date, balance, printf('$ %,.2f', CAST(balance AS DOUBLE)) AS balance_display, matching, status, residual_scope, account_scope FROM accounting_partner_ledger WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR partner_name ILIKE '%' || :q || '%') AND (:status IS NULL OR status = :status) AND (:residual_scope IS NULL OR residual_scope = :residual_scope) AND (:account_scope IS NULL OR account_scope = :account_scope) ORDER BY ABS(balance) DESC, partner_name"

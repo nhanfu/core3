@@ -206,6 +206,10 @@ menu:
           label: Partner Reports
           icon: chart
           permission: accounting.read
+        - path: /accounting/reports/partner-ledger
+          label: Partner Ledger
+          icon: ledger
+          permission: accounting.read
         - path: /accounting/reports/taxes
           label: Taxes and Fiscal
           icon: percent
