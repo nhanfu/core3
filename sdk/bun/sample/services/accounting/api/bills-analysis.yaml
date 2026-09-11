@@ -1,0 +1,9 @@
+page: { id: bills-analysis }
+datasources:
+  - id: accounting_bills_analysis
+    single: false
+    permission: accounting.read
+    error_states: { transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    pivot:
+      fields: [bill_month, product_category, vendor_name, bill_number, untaxed_amount]
+    query: "SELECT id, row_version, bill_date, bill_month, product_category, vendor_name, bill_number, document_type, invoice_status, untaxed_amount, company FROM accounting_bills_analysis WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:document_scope IS NULL OR :document_scope = 'invoiced') AND (:partner_scope IS NULL OR :partner_scope = 'vendors') AND (:q IS NULL OR bill_month ILIKE '%' || :q || '%' OR product_category ILIKE '%' || :q || '%' OR vendor_name ILIKE '%' || :q || '%' OR bill_number ILIKE '%' || :q || '%' OR document_type ILIKE '%' || :q || '%') ORDER BY bill_date, bill_number, id"

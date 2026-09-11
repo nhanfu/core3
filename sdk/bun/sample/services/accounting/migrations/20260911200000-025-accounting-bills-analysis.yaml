@@ -1,0 +1,33 @@
+version: 0.0.25
+description: Deterministic vendor bills analysis report fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_bills_analysis (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        bill_date DATE NOT NULL,
+        bill_month VARCHAR NOT NULL,
+        product_category VARCHAR NOT NULL,
+        vendor_name VARCHAR NOT NULL,
+        bill_number VARCHAR NOT NULL,
+        document_type VARCHAR NOT NULL,
+        invoice_status VARCHAR NOT NULL DEFAULT 'Posted',
+        untaxed_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)'
+      );
+      INSERT OR IGNORE INTO accounting_bills_analysis
+        (id, row_version, bill_date, bill_month, product_category, vendor_name, bill_number, document_type, invoice_status, untaxed_amount, company)
+      VALUES
+        ('bills-analysis-aug-furniture', 1, DATE '2026-08-20', 'August 2026', 'Furniture / Office', 'Gemini Furniture', 'BILL/2026/08/0001', 'Vendor Bill', 'Posted', 622.27, 'My Company (San Francisco)'),
+        ('bills-analysis-aug-none', 1, DATE '2026-08-20', 'August 2026', 'None', 'Gemini Furniture', 'BILL/2026/08/0002', 'Vendor Bill', 'Posted', 622.00, 'My Company (San Francisco)'),
+        ('bills-analysis-sep-chair', 1, DATE '2026-09-01', 'September 2026', 'Furniture / Office', 'Ready Mat', 'BILL/2026/09/0001', 'Vendor Bill', 'Posted', 30.00, 'My Company (San Francisco)'),
+        ('bills-analysis-sep-refund', 1, DATE '2026-09-01', 'September 2026', 'Furniture / Office', 'Ready Mat', 'RBILL/2026/09/0001', 'Vendor Refund', 'Posted', -30.00, 'My Company (San Francisco)');
+      CREATE INDEX IF NOT EXISTS idx_accounting_bills_analysis_date ON accounting_bills_analysis(bill_date);
+      CREATE INDEX IF NOT EXISTS idx_accounting_bills_analysis_vendor ON accounting_bills_analysis(vendor_name);
+    down: |
+      DROP TABLE IF EXISTS accounting_bills_analysis;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

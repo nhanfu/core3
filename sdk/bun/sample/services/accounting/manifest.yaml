@@ -190,6 +190,10 @@ menu:
           label: Invoice Analysis
           icon: chart
           permission: accounting.read
+        - path: /accounting/reports/vendor-bills-analysis
+          label: Bills Analysis
+          icon: chart
+          permission: accounting.read
         - path: /accounting/reports/analytic
           label: Analytic Report
           icon: chart

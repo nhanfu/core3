@@ -1,0 +1,42 @@
+title: Bills Analysis
+page: { id: bills-analysis, route: /accounting/reports/vendor-bills-analysis, breadcrumb: [Finance, Reporting, Bills Analysis], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_bills_analysis
+    search: { label: Search..., placeholder: Search... }
+    filters:
+      - { field: document_scope, label: Invoiced, options: [{ id: invoiced, label: Invoiced }] }
+      - { field: partner_scope, label: Vendors, options: [{ id: vendors, label: Vendors }] }
+    default_filters: { document_scope: invoiced, partner_scope: vendors }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: bill_month
+        series_field: product_category
+        measure_field: untaxed_amount
+        measure_label: Untaxed Amount
+        type: line
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: bill_month, column: Invoice Date }
+            - { field: product_category, column: Product Category }
+            - { field: untaxed_amount, column: Untaxed Amount }
+          default:
+            rows: [bill_month]
+            columns: [product_category]
+            measures: [{ field: untaxed_amount, aggregate: sum, column: Untaxed Amount }]
+    columns:
+      - { field: bill_month, label: Invoice Date, type: PrimaryEntityCell }
+      - { field: product_category, label: Product Category }
+      - { field: vendor_name, label: Vendor }
+      - { field: bill_number, label: Bill }
+      - { field: untaxed_amount, label: Untaxed Amount, align: right }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No data found, description: "From this report, you can have an overview of the amount invoiced from your vendors. The search tool can also be used to personalise your Invoices reports and so, match this analysis to your needs." }
