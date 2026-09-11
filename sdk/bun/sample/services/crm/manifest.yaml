@@ -76,3 +76,7 @@ menu:
           label: CRM Settings
           icon: settings
           permission: crm.manage
+        - path: /recurring-plans
+          label: Recurring Plans
+          icon: list
+          permission: crm.manage

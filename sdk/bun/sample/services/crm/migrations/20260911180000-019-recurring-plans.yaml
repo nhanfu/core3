@@ -1,0 +1,28 @@
+version: 0.0.19
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_recurring_plans (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL UNIQUE,
+        number_of_months INTEGER NOT NULL CHECK (number_of_months BETWEEN 1 AND 1200),
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT INTO crm_recurring_plans(id, sequence, name, number_of_months, active)
+      VALUES
+        ('crm-recurring-plan-monthly', 10, 'Monthly', 1, true),
+        ('crm-recurring-plan-yearly', 20, 'Yearly', 12, true),
+        ('crm-recurring-plan-over-3-years', 30, 'Over 3 years', 36, true),
+        ('crm-recurring-plan-over-5-years', 40, 'Over 5 years', 60, true),
+        ('crm-recurring-plan-archived', 90, 'Legacy quarterly', 3, false)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS crm_recurring_plans;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

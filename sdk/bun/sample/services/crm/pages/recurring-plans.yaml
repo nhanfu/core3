@@ -1,0 +1,28 @@
+title: Recurring Plans
+page: { id: recurring-plans, route: /recurring-plans, breadcrumb: [CRM, Configuration, Recurring Plans], auth: { require: [crm.manage] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_recurring_plans
+    create_action: create_crm_recurring_plan
+    create_label: New
+    search: { label: Search, placeholder: Search... }
+    filters: [{ field: active, label: Archived, options: [{ id: archived, label: Archived }] }]
+    inline_edit:
+      create_action: create_crm_recurring_plan
+      update_action: update_crm_recurring_plan
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: sequence, type: number, default: 10 }
+        - { field: name, type: text, required: true, placeholder: Plan Name }
+        - { field: number_of_months, type: number, required: true, default: 1 }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, sortable: false, mobile: false }
+      - { field: name, label: Plan Name, type: PrimaryEntityCell }
+      - { field: number_of_months, label: '# Months', align: right }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No recurring plans found, description: Create a recurring plan or adjust your search. }

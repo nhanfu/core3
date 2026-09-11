@@ -1,0 +1,91 @@
+page: { id: recurring-plans }
+datasources:
+  - id: crm_recurring_plans
+    permission: crm.manage
+    error_states:
+      forbidden: { status: 403, code: CRM_RECURRING_PLANS_FORBIDDEN, message: You do not have permission to view recurring plans. }
+      transport_error: { status: 503, code: CRM_RECURRING_PLANS_UNAVAILABLE, message: Recurring plans are temporarily unavailable. }
+    query: "SELECT id, row_version, sequence, name, number_of_months, active FROM crm_recurring_plans WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN 0 ELSE 1 END = 1 AND ((COALESCE(:active, '') = '' AND active = true) OR (:active = 'archived' AND active = false)) AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: create_crm_recurring_plan
+    type: server_form
+    permission: crm.manage
+    title: New Recurring Plan
+    action: crm.recurring_plans.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_recurring_plans]
+    mutation:
+      operation: insert
+      table: crm_recurring_plans
+      fields: [sequence, name, number_of_months, active]
+      required: [name, number_of_months]
+      defaults: { sequence: 10, number_of_months: 1, active: true, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'crm-recurring-plan-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: CRM_RECURRING_PLAN_NAME_REQUIRED, message: A recurring plan name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:number_of_months AS INTEGER) BETWEEN 1 AND 1200", status: 422, code: CRM_RECURRING_PLAN_MONTHS_INVALID, message: Number of months must be between 1 and 1200. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_recurring_plans WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: CRM_RECURRING_PLAN_EXISTS, message: A recurring plan with this name already exists. }
+      result: { query: "SELECT * FROM crm_recurring_plans WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 10 }
+      - { field: name, label: Plan Name, type: text, required: true }
+      - { field: number_of_months, label: '# Months', type: number, required: true, default: 1 }
+  - id: update_crm_recurring_plan
+    type: server_form
+    permission: crm.manage
+    title: Edit Recurring Plan
+    action: crm.recurring_plans.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_recurring_plans]
+    mutation:
+      operation: update
+      table: crm_recurring_plans
+      fields: [sequence, name, number_of_months]
+      required: [name, number_of_months]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_recurring_plans WHERE id = :id", status: 404, code: CRM_RECURRING_PLAN_NOT_FOUND, message: Recurring plan not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: CRM_RECURRING_PLAN_NAME_REQUIRED, message: A recurring plan name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:number_of_months AS INTEGER) BETWEEN 1 AND 1200", status: 422, code: CRM_RECURRING_PLAN_MONTHS_INVALID, message: Number of months must be between 1 and 1200. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_recurring_plans WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: CRM_RECURRING_PLAN_EXISTS, message: A recurring plan with this name already exists. }
+      result: { query: "SELECT * FROM crm_recurring_plans WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Plan Name, type: text, required: true }
+      - { field: number_of_months, label: '# Months', type: number, required: true }
+  - id: archive_crm_recurring_plan
+    type: server
+    permission: crm.manage
+    action: crm.recurring_plans.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_recurring_plans]
+    params: { values: { active: false } }
+    mutation:
+      operation: update
+      table: crm_recurring_plans
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_recurring_plans WHERE id = :id AND active = true", status: 404, code: CRM_RECURRING_PLAN_NOT_FOUND, message: Active recurring plan not found. }
+      result: { query: "SELECT * FROM crm_recurring_plans WHERE id = :id" }
+  - id: unarchive_crm_recurring_plan
+    type: server
+    permission: crm.manage
+    action: crm.recurring_plans.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_recurring_plans]
+    params: { values: { active: true } }
+    mutation:
+      operation: update
+      table: crm_recurring_plans
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_recurring_plans WHERE id = :id AND active = false", status: 404, code: CRM_RECURRING_PLAN_NOT_FOUND, message: Archived recurring plan not found. }
+      result: { query: "SELECT * FROM crm_recurring_plans WHERE id = :id" }

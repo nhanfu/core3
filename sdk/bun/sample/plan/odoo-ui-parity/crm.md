@@ -231,3 +231,44 @@ configuration/settings; then mobile and failure states. After each batch,
 record route/action coverage, datasource IDs, service-boundary evidence,
 authenticated browser evidence, screenshot paths, and any deliberate parity
 exception before starting the next batch.
+
+## Batch: Configuration → Recurring Plans
+
+Status: `implemented`; bounded checkpoint for the installed Odoo action.
+
+Reference evidence (personal live database):
+
+- Database: `core3_personal`; Odoo 19 Community; CRM module installed at
+  version `19.0.1.9`; authenticated user `codex@core3.local`.
+- Odoo menu: `CRM → Configuration → Recurring Plans` when the recurring-revenue
+  group is enabled; action `crm.crm_recurring_plan_action` (ID `402`), model
+  `crm.recurring.plan`, view mode `list`.
+- The authoritative list view is `editable="bottom"` with the sequence handle,
+  `Plan Name`, and `# Months` columns. The search view exposes the `Archived`
+  filter. Live active rows are Monthly (1), Yearly (12), Over 3 years (36), and
+  Over 5 years (60).
+- Reference captures: `/tmp/odoo-crm-recurring-plans/odoo-recurring-plans-desktop.png`
+  at 1440×900 and `/tmp/odoo-crm-recurring-plans/odoo-recurring-plans-mobile.png`
+  at 390×844.
+
+Core3 implementation:
+
+- Page/API contracts are joined by page ID `recurring-plans`; the layout is
+  `pages/recurring-plans.yaml` and the datasource/actions are in
+  `api/recurring-plans.yaml`.
+- Route: `/recurring-plans`; manifest label: `Recurring Plans`; datasource:
+  `crm_recurring_plans`; migration: `0.0.19` in
+  `20260911180000-019-recurring-plans.yaml`.
+- Fixtures preserve the four Odoo active rows and add the deterministic
+  archived `Legacy quarterly` row for the Archived state. Reads cover default,
+  search, archived, empty, no-results, forbidden, and transport-error states.
+  Manager-only create/update/archive/unarchive mutations validate names and
+  month ranges, reject duplicates, and require row-version concurrency.
+- Focused validation: `bun test test/crm_recurring_plans.integration.test.ts` —
+  3 tests passed, 38 assertions.
+
+Known visual limits: Core3 uses the shared Fluent shell rather than Odoo's
+purple shell/top bar; Odoo's generic selected-row archive menu is represented
+by explicit guarded archive/unarchive actions in the Core3 contract. Final
+authenticated Core3 desktop/mobile captures and any responsive differences are
+recorded with the next browser validation checkpoint.
