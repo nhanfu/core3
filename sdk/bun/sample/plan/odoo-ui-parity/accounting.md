@@ -731,8 +731,9 @@ Core3 now keeps the Journal Items page layout-only and joins
 `api/journal-items.yaml` through `page.id: accounting-journal-items`. The API
 projection supplies the Odoo card account, month bucket, net balance, DR/CR
 direction, and formatted amount fields. The page declares the complete
-desktop List/Pivot/Graph/Kanban action and a mobile-only card projection, and
-uses icon view navigation to match Odoo's top-right view switcher. The shared
+desktop List/Pivot/Graph/Kanban action and a mobile-only card projection. The
+current navigation-fidelity batch uses visible text tabs for the desktop
+collection modes; Odoo's reference retains its top-right icon switcher. The shared
 GraphView gained the opt-in `show_zero_data` contract so this action renders a
 zero-valued Balance chart instead of incorrectly collapsing to `No data`.
 
@@ -993,3 +994,98 @@ transport-error, denied, search-empty, and stale states are acceptance cases.
 The Core3 form preserves the source's customer/payment fields because that is
 what the installed Odoo action renders; destination-journal and cryptographic
 paired-entry behavior are outside this UI slice.
+
+## Current batch: Accounting ListView navigation fidelity (2026-09-11)
+
+The fresh authenticated Odoo 19 reference was checked in database
+`core3_codex_demo` at `http://localhost:8069` before changing the Core3
+contracts. The installed actions and rendered desktop labels were:
+
+- Payment Transactions, action 310: `list,kanban,form,graph,pivot`; visible
+  labels `List`, `Kanban`, `Graph`, `Pivot`.
+- Employee Expenses, action 675: `list,kanban,form,pivot,graph`; visible
+  labels `List`, `Kanban`, `Pivot`, `Graph`.
+- Review → Journal Items, action 343 (the installed 335/336 variants expose
+  the same collection modes): `list,pivot,graph,kanban`; visible labels
+  `List`, `Pivot`, `Graph`, `Kanban`.
+- Vendor Payments, action 323: `list,kanban,form,graph,activity`; visible
+  labels `List`, `Kanban`, `Graph`, `Activity`.
+
+Core3 now explicitly declares `view_navigation: tabs` for the four matching
+Accounting ListViews: `/accounting/payment-transactions`,
+`/accounting/employee-expenses`, `/accounting/journal-items`, and
+`/accounting/vendor-payments`. The Payment Transactions Kanban view is no
+longer mobile-only, so its desktop text tab is present as in the source
+action. The page/API boundary remains intact: these changes touch only page
+navigation contracts and their corresponding tests; no API YAML was moved or
+embedded in a page YAML.
+
+Authenticated browser evidence used Odoo `codex@core3.local` and Core3
+`admin@tms.local`, with fixed `1440x900` desktop and `390x844` mobile
+viewports. Every capture reported zero `requestfailed` and zero `pageerror`;
+body and document widths were exactly 1440 and 390 respectively. Core3
+rendered six payment transactions, four employee expenses, four journal items,
+and eleven vendor-payment rows on desktop; mobile rendered the corresponding
+responsive data cards. Odoo rendered four employee expenses, 77 journal items,
+and ten vendor-payment records; Payment Transactions has no records in the
+reference database. Odoo naturally switches to Kanban cards on mobile and
+hides its desktop view switcher. Its Vendor Payments route also shows the
+source `Register a payment` helper over the populated demo rows; this is
+retained as an observed reference-state limitation.
+
+Final comparison captures and SHA-256 hashes (all temporary and outside Git):
+
+- Payment Transactions — Odoo desktop
+  `/tmp/accounting-navigation-fidelity-20260911/odoo-payment-transactions-desktop.png`
+  — `def35435224603ff35e9e449e9bade3362afdf2aecd536778da6d7dac3d6c752`;
+  Odoo mobile
+  `/tmp/accounting-navigation-fidelity-20260911/odoo-payment-transactions-mobile.png`
+  — `2f2f5f0d33ed119a4e7f3b0489956432a3338d87c9df628e827ce3e8cb5b4951`;
+  Core3 desktop
+  `/tmp/accounting-navigation-fidelity-20260911/core3-payment-transactions-desktop.png`
+  — `ec6993ae7edda3aa381b34d91a54b4f96ebce68cd5298829cc5be673ed6cc907`;
+  Core3 mobile
+  `/tmp/accounting-navigation-fidelity-20260911/core3-payment-transactions-mobile.png`
+  — `8228dac30324b8e03c600d6dd8a73ab85a9b2711efa8c5316f4e6e3709ad616e`.
+- Employee Expenses — Odoo desktop
+  `/tmp/accounting-navigation-fidelity-20260911/odoo-employee-expenses-desktop.png`
+  — `10147f5dca2b15e07534c28fcfe87043ed5e184964bc805ba2dc4119dea69aad`;
+  Odoo mobile
+  `/tmp/accounting-navigation-fidelity-20260911/odoo-employee-expenses-mobile.png`
+  — `dcfc4a38a1c806811ce8621123e28ed212ca91ba40a9ba3702e0b104da9bd39f`;
+  Core3 desktop
+  `/tmp/accounting-navigation-fidelity-20260911/core3-employee-expenses-desktop.png`
+  — `15ebdaf79e2c1c1d998b3cc4b4181c0e87b2a9f59967779e924f93aeac09b3f4`;
+  Core3 mobile
+  `/tmp/accounting-navigation-fidelity-20260911/core3-employee-expenses-mobile.png`
+  — `d8c4adc9e946f237c8490a38c1268216eab78c070c199e6ec3ba570370955bdf`.
+- Journal Items — Odoo desktop
+  `/tmp/accounting-navigation-fidelity-20260911/odoo-journal-items-desktop.png`
+  — `1fe4d1bef8e3c3a2fdb01fbdeaafe9d939a585e5446da9214d8dd8912861bf7b`;
+  Odoo mobile
+  `/tmp/accounting-navigation-fidelity-20260911/odoo-journal-items-mobile.png`
+  — `48281227eedc57858c9a8e1a3cc4778cb45bcdf6e9decb3e41d9ce216894816f`;
+  Core3 desktop
+  `/tmp/accounting-navigation-fidelity-20260911/core3-journal-items-desktop.png`
+  — `8de0041432ee7d07fc1ecc43c07f8ef4cdbac05717709a3bce664d46a5b572cd`;
+  Core3 mobile
+  `/tmp/accounting-navigation-fidelity-20260911/core3-journal-items-mobile.png`
+  — `05d2a73700bfc885af656a1afdcf90535da0131f781931e50c278929f9be0e2b`.
+- Vendor Payments — Odoo desktop
+  `/tmp/accounting-navigation-fidelity-20260911/odoo-vendor-payments-desktop.png`
+  — `66499cc2decde2d3657c39002f36e8d2d0359c5c8abef213d92d64f3cbcef490`;
+  Odoo mobile
+  `/tmp/accounting-navigation-fidelity-20260911/odoo-vendor-payments-mobile.png`
+  — `016dadda789a3339be437988054f0d540655e3e3449c23cdf1f497381635155a`;
+  Core3 desktop
+  `/tmp/accounting-navigation-fidelity-20260911/core3-vendor-payments-desktop.png`
+  — `dd7ee1e30ce5e1ea6449cdd1d58218093f23cb538c0f6914be45b40facc9b81a`;
+  Core3 mobile
+  `/tmp/accounting-navigation-fidelity-20260911/core3-vendor-payments-mobile.png`
+  — `d706263a8a3b19154807e050619723fd5bddf089050a8759a495753e14d9c1de`.
+
+Final focused validation passed: 11 tests and 93 assertions across the four
+Accounting contracts; `bun run audit` passed with 498 pages, 505 routes, and
+879 datasources; ESLint, the global Sass rebuild, and `git diff --check` also
+passed. Implementation/test commits are `22a2b896` and `bcf8df22`; this
+evidence update is committed separately.
