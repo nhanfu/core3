@@ -12,7 +12,7 @@ components:
     views:
       - { id: list, label: List, icon: table, mobile: false }
       - { id: form, label: Form, icon: edit }
-    form_view: { page: apps/services/crm/pages/lost-reason-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/crm/pages/crm-lost-reason-detail.yaml, side_panel: true }
     row_key: id
     row_open_action: edit_crm_lost_reason
     row_double_click_action: edit_crm_lost_reason

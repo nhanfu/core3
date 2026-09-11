@@ -1,6 +1,7 @@
 page: { id: crm-lost-reason-detail }
 datasources:
   - id: crm_lost_reason_detail
+    single: true
     permission: crm.manage
     error_states: { transport_error: { status: 503, code: CRM_LOST_REASON_DETAIL_UNAVAILABLE, message: Lost reason details are temporarily unavailable. } }
     query: "SELECT r.id, r.row_version, r.name, r.active, (SELECT COUNT(*) FROM crm_leads l WHERE l.lost_reason = r.id) AS leads_count FROM crm_lost_reasons r WHERE r.id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"

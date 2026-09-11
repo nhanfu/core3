@@ -4,6 +4,7 @@ type:
     up: |
       ALTER TABLE crm_lost_reasons ADD COLUMN IF NOT EXISTS row_version BIGINT;
       UPDATE crm_lost_reasons SET row_version = 1 WHERE row_version IS NULL;
+      UPDATE crm_lost_reasons SET active = false WHERE id IN ('crm-lost-budget', 'crm-lost-timing');
       INSERT INTO crm_lost_reasons(id, name, active, row_version) VALUES
         ('crm-lost-expensive', 'Too expensive', true, 1),
         ('crm-lost-skills', 'We don''t have people/skills', true, 1),

@@ -15,7 +15,7 @@ const action = (id: string) => [...listApi().actions, ...detailApi().actions].fi
 describe('CRM Lost Reasons Odoo action parity', () => {
   test('keeps Odoo list/form, manifest route, and page.id API joins aligned', () => {
     const page = yaml('pages/lost-reasons.yaml');
-    const detail = yaml('pages/lost-reason-detail.yaml');
+    const detail = yaml('pages/crm-lost-reason-detail.yaml');
     const manifest = yaml('manifest.yaml');
     const configuration = manifest.menu.groups.find((group: any) => group.id === 'configuration');
     expect(page.page).toMatchObject({ id: 'crm-lost-reasons', route: '/lost-reasons' });
@@ -24,6 +24,7 @@ describe('CRM Lost Reasons Odoo action parity', () => {
     expect(page.actions).toBeUndefined();
     expect(listApi().page.id).toBe(page.page.id);
     expect(detailApi().page.id).toBe(detail.page.id);
+    expect(detailApi().datasources[0]).toMatchObject({ id: 'crm_lost_reason_detail', single: true });
     expect(configuration.items).toContainEqual({ path: '/lost-reasons', label: 'Lost Reasons', icon: 'archive', permission: 'crm.manage' });
     expect(page.components[0]).toMatchObject({ source: 'crm_lost_reason_action', create_action: 'create_crm_lost_reason', row_open_action: 'edit_crm_lost_reason' });
     expect(page.components[0].columns[0]).toMatchObject({ field: 'name', label: 'Description' });
@@ -41,10 +42,14 @@ describe('CRM Lost Reasons Odoo action parity', () => {
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'crm_lost_reasons_test', ['schema', 'data']);
     const source = listApi().datasources[0];
     const active = (await repository.querySource(source, { q: null, active: null, fixture_state: null }, 0, 50)).data;
-    expect(active.map((row: any) => row.name)).toEqual(['Bad timing', 'Not enough budget', 'Not enough stock', 'Too expensive', "We don't have people/skills"]);
+    expect(active.map((row: any) => row.name)).toEqual(['Not enough stock', 'Too expensive', "We don't have people/skills"]);
     expect(active.every((row: any) => row.active === true && row.row_version === 1)).toBe(true);
     expect((await repository.querySource(source, { q: 'expensive', active: null, fixture_state: null }, 0, 50)).data).toMatchObject([{ id: 'crm-lost-expensive', name: 'Too expensive', leads_count: 0 }]);
-    expect((await repository.querySource(source, { q: null, active: 'archived', fixture_state: null }, 0, 50)).data).toMatchObject([{ id: 'crm-lost-legacy', name: 'Legacy no decision', active: false }]);
+    expect((await repository.querySource(source, { q: null, active: 'archived', fixture_state: null }, 0, 50)).data).toMatchObject([
+      { id: 'crm-lost-timing', name: 'Bad timing', active: false },
+      { id: 'crm-lost-legacy', name: 'Legacy no decision', active: false },
+      { id: 'crm-lost-budget', name: 'Not enough budget', active: false },
+    ]);
     expect((await repository.querySource(source, { q: 'missing', active: null, fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { q: null, active: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { q: null, active: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'CRM_LOST_REASONS_UNAVAILABLE' });
