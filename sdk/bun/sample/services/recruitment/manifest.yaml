@@ -25,3 +25,4 @@ menu:
       label: Configuration
       items:
         - { path: /recruitment/degrees, label: Degrees, icon: list, permission: recruitment.manage }
+        - { path: /recruitment/refuse-reasons, label: Refuse Reasons, icon: list, permission: recruitment.manage }

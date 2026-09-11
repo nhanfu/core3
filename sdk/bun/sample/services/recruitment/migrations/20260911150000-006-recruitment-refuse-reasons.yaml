@@ -1,0 +1,36 @@
+version: 0.0.6
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_refuse_reasons (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL UNIQUE,
+        template_name VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS refuse_reason_id VARCHAR;
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS refused_date DATE;
+      INSERT OR IGNORE INTO recruitment_refuse_reasons(id, sequence, name, template_name, active) VALUES
+        ('refuse-reason-salary', 10, 'Refused by applicant: salary', 'Recruitment: Not interested anymore', TRUE),
+        ('refuse-reason-job-fit', 11, 'Refused by applicant: job fit', 'Recruitment: Not interested anymore', TRUE),
+        ('refuse-reason-requirements', 12, 'Does not fit the job requirements', 'Recruitment: Refuse', TRUE),
+        ('refuse-reason-fulfilled', 13, 'Job already fulfilled', 'Recruitment: Refuse', TRUE),
+        ('refuse-reason-duplicate', 14, 'Duplicate', 'Recruitment: Refuse', TRUE),
+        ('refuse-reason-spam', 15, 'Spam', 'Recruitment: Refuse', TRUE),
+        ('refuse-reason-legacy', 90, 'Legacy archived reason', 'Recruitment: Refuse', FALSE);
+      UPDATE recruitment_applicants
+      SET refuse_reason_id = 'refuse-reason-duplicate', refused_date = DATE '2026-01-15'
+      WHERE id = 'applicant-demo-004';
+    down: |
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS refused_date;
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS refuse_reason_id;
+      DROP TABLE IF EXISTS recruitment_refuse_reasons;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

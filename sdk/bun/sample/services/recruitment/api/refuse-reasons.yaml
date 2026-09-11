@@ -1,0 +1,109 @@
+page: { id: recruitment-refuse-reasons }
+datasources:
+  - id: recruitment_refuse_reasons
+    permission: recruitment.manage
+    error_states:
+      forbidden: { status: 403, code: RECRUITMENT_REFUSE_REASONS_FORBIDDEN, message: You do not have permission to manage refusal reasons. }
+      transport_error: { status: 503, code: RECRUITMENT_REFUSE_REASONS_UNAVAILABLE, message: Recruitment refusal reasons are temporarily unavailable. }
+    query: "SELECT id, row_version, sequence, name, template_name, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label FROM recruitment_refuse_reasons WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND ((:active IS NULL AND active = TRUE) OR (:active = 'active' AND active = TRUE) OR (:active = 'archived' AND active = FALSE)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(template_name, '') ILIKE '%' || :q || '%') ORDER BY sequence, name, id"
+  - id: recruitment_refuse_reason_lookup
+    permission: recruitment.read
+    query: "SELECT id AS value, name AS label FROM recruitment_refuse_reasons WHERE active = TRUE ORDER BY sequence, name, id"
+actions:
+  - id: create_recruitment_refuse_reason
+    type: server_form
+    permission: recruitment.manage
+    title: New Refuse Reason
+    action: recruitment.refuse_reasons.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_refuse_reasons]
+    mutation:
+      operation: insert
+      table: recruitment_refuse_reasons
+      generated: [id]
+      before_steps: [{ query: "SELECT 'refuse-reason-custom-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [sequence, name, template_name, active]
+      required: [name]
+      defaults: { sequence: 10, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_REFUSE_REASON_NAME_REQUIRED, message: A refusal reason is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_refuse_reasons WHERE LOWER(name) = LOWER(:name))", status: 409, code: RECRUITMENT_REFUSE_REASON_NAME_EXISTS, message: A refusal reason with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:sequence AS INTEGER) >= 1", status: 422, code: RECRUITMENT_REFUSE_REASON_SEQUENCE_INVALID, message: Sequence must be at least 1. }
+      result: { query: "SELECT * FROM recruitment_refuse_reasons WHERE id = :id" }
+    fields:
+      - { field: name, label: Description, type: text, required: true }
+      - { field: template_name, label: Email Template, type: select, options: [{ value: 'Recruitment: Refuse', label: 'Recruitment: Refuse' }, { value: 'Recruitment: Not interested anymore', label: 'Recruitment: Not interested anymore' }] }
+      - { field: sequence, label: Sequence, type: number, required: true, min: 1, step: 1 }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_recruitment_refuse_reason
+    type: server_form
+    permission: recruitment.manage
+    title: Edit Refuse Reason
+    action: recruitment.refuse_reasons.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [recruitment_refuse_reasons]
+    mutation:
+      operation: update
+      table: recruitment_refuse_reasons
+      fields: [sequence, name, template_name, active]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_refuse_reasons WHERE id = :id", status: 404, code: RECRUITMENT_REFUSE_REASON_NOT_FOUND, message: Refusal reason not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_REFUSE_REASON_NAME_REQUIRED, message: A refusal reason is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_refuse_reasons WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: RECRUITMENT_REFUSE_REASON_NAME_EXISTS, message: A refusal reason with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:sequence AS INTEGER) >= 1", status: 422, code: RECRUITMENT_REFUSE_REASON_SEQUENCE_INVALID, message: Sequence must be at least 1. }
+      result: { query: "SELECT * FROM recruitment_refuse_reasons WHERE id = :id" }
+    fields:
+      - { field: name, label: Description, type: text, required: true }
+      - { field: template_name, label: Email Template, type: select, options: [{ value: 'Recruitment: Refuse', label: 'Recruitment: Refuse' }, { value: 'Recruitment: Not interested anymore', label: 'Recruitment: Not interested anymore' }] }
+      - { field: sequence, label: Sequence, type: number, required: true, min: 1, step: 1 }
+      - { field: active, label: Active, type: checkbox }
+  - id: archive_recruitment_refuse_reason
+    type: server
+    permission: recruitment.manage
+    action: recruitment.refuse_reasons.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [recruitment_refuse_reasons]
+    mutation:
+      operation: update
+      table: recruitment_refuse_reasons
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_refuse_reasons WHERE id = :id AND active = TRUE", status: 404, code: RECRUITMENT_REFUSE_REASON_NOT_FOUND, message: Active refusal reason not found. }
+      result: { query: "SELECT * FROM recruitment_refuse_reasons WHERE id = :id" }
+  - id: restore_recruitment_refuse_reason
+    type: server
+    permission: recruitment.manage
+    action: recruitment.refuse_reasons.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [recruitment_refuse_reasons]
+    mutation:
+      operation: update
+      table: recruitment_refuse_reasons
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_refuse_reasons WHERE id = :id AND active = FALSE", status: 404, code: RECRUITMENT_REFUSE_REASON_NOT_FOUND, message: Archived refusal reason not found. }
+      result: { query: "SELECT * FROM recruitment_refuse_reasons WHERE id = :id" }
+  - id: delete_recruitment_refuse_reason
+    type: server
+    permission: recruitment.manage
+    action: recruitment.refuse_reasons.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete refuse reason {{row.name}}?'
+    refresh: [recruitment_refuse_reasons]
+    mutation:
+      operation: delete
+      table: recruitment_refuse_reasons
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_refuse_reasons WHERE id = :id", status: 404, code: RECRUITMENT_REFUSE_REASON_NOT_FOUND, message: Refusal reason not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_applicants WHERE refuse_reason_id = :id)", status: 409, code: RECRUITMENT_REFUSE_REASON_IN_USE, message: Refusal reasons linked to applicants cannot be deleted. }

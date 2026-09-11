@@ -1,0 +1,22 @@
+title: Refuse Reasons
+page: { id: recruitment-refuse-reasons, route: /recruitment/refuse-reasons, breadcrumb: [Recruitment, Configuration, Applications, Refuse Reasons], auth: { require: [recruitment.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_refuse_reasons
+    create_action: create_recruitment_refuse_reason
+    create_label: New
+    search: { label: Search refusal reasons, placeholder: Search refusal reasons... }
+    filters:
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }
+    row_key: id
+    row_open_action: edit_recruitment_refuse_reason
+    row_actions: menu
+    empty_state: { title: No refusal reasons, description: Create a reason to explain why an applicant was refused. }
+    columns:
+      - { field: sequence, label: Sequence, type: Number, sortable: true, mobile: false }
+      - { field: name, label: Description, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: template_name, label: Email Template, sortable: true, mobile: true }
+      - { field: active_label, label: Status, optional: hide, mobile: false }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_recruitment_refuse_reason, label: Edit, icon: edit }, { id: archive_recruitment_refuse_reason, label: Archive, icon: archive, permission: recruitment.manage, show_if: 'row.active === true' }, { id: restore_recruitment_refuse_reason, label: Restore, icon: refresh, permission: recruitment.manage, show_if: 'row.active === false' }, { id: delete_recruitment_refuse_reason, label: Delete, icon: delete, permission: recruitment.manage, variant: danger }] }
+    page_size: 25
