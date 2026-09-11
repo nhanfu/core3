@@ -715,3 +715,81 @@ Also run the module discovery/YAML validator, fresh-install and upgrade matrix,
 and the authenticated Playwright desktop/mobile matrix described above. The
 current plan-only validation is limited to source/register/service inspection,
 the authenticated live addon status query, and Markdown whitespace validation.
+
+## 2026-09-11 bounded Manufacturing Products follow-up
+
+- The selected uncovered menu/action is Manufacturing / Products / Products.
+  In the Odoo 19 source checkout at `/home/nhanjs/projects/odoo`, the exact
+  definitions are in `addons/mrp/views/product_views.xml`: search view
+  `mrp_product_template_search_view` (model `product.template`, inheriting
+  `product.product_template_search_view`) adds the `Manufactured Products`
+  domain `[('bom_ids','!=',False)]` and `BoM Components` domain
+  `[('bom_line_ids','!=',False)]`; action `product_template_action` is named
+  `Products`, uses model `product.template`, route state `manufacturing-products`,
+  view modes `kanban,list,form`, search view `mrp_product_template_search_view`,
+  and context `{"search_default_goods":1,"default_is_storable":true}`; menu
+  `menu_mrp_product_form` is named `Products`, parented by `menu_mrp_bom`, and
+  has sequence 1. The authenticated `core3_codex_demo` runtime resolved the
+  action to ID 801 and menu to ID 526. The direct source route is
+  `/odoo/manufacturing-products` and a product record opens directly at
+  `/odoo/manufacturing-products/23`.
+- Source interaction evidence: Odoo opens the Products action in Kanban with
+  87 live products, cards showing product name, variants, price, and on-hand
+  quantity; List is a visible alternate tab. Search/filter behavior includes
+  product type, Manufactured Products, BoM Components, active/archived state,
+  and the inherited goods filter. A card opens the product form with the
+  visible tabs `General Information`, `Attributes & Variants`, `Sales`, `Point
+  of Sale`, `Purchase`, and `Inventory`; the form also exposes product type,
+  invoicing policy, inventory tracking, quantities, prices, taxes, category,
+  company, and internal notes.
+- Core3 implements the bounded slice at `/manufacturing/products` with a
+  direct detail route `/manufacturing/products/detail?id=mrp-product-desk`.
+  Implementation checkpoint: `1ea6f476`
+  (`feat(manufacturing): add products parity slice`).
+  `pages/products.yaml` and `pages/product-detail.yaml` are presentation-only;
+  `api/products.yaml` and `api/product-detail.yaml` own page-id-bound sources,
+  CRUD/archive/delete/message actions, permissions, 401/403/404/409/422/503
+  contracts, and row-version conflict handling. Migration `0.0.16` creates
+  deterministic, idempotent `mrp_products` and `mrp_product_messages` fixtures
+  with 11 products, active/archived and manufactured/component cases, fixed
+  `2026-01-15` timestamps, and stable IDs. The manifest adds Products under
+  Manufacturing Master Data with `manufacturing.read` permission.
+- Focused coverage is `test/manufacturing_products.integration.test.ts`: the
+  helper migrates only migration 016 into a temporary database twice, avoiding
+  the full-service startup cost while still proving migration idempotency. The
+  normal command `bun test test/manufacturing_products.integration.test.ts`
+  passes 3 tests / 43 assertions in under the default 5-second test timeout
+  (the explicit `--timeout 5000` run also passes). Coverage includes page/API
+  ownership, source modes/menu/permissions, deterministic search/filter/detail
+  and message data, empty/transport states, create/edit/stale-write/duplicate,
+  archive, delete, and in-use guards.
+- Authenticated paired captures were taken with safe Playwright scripts using
+  `fullPage: false`, exact 1440x900 and 390x844 viewports, and no committed
+  images. Source captures:
+  `/tmp/odoo-manufacturing-products-desktop-1440x900.png`,
+  `/tmp/odoo-manufacturing-products-mobile-390x844.png`,
+  `/tmp/odoo-manufacturing-products-desktop-form-1440x900.png`, and
+  `/tmp/odoo-manufacturing-products-mobile-form-390x844.png`. Core3 captures:
+  `/tmp/core3-manufacturing-products-desktop-1440x900.png` (Kanban),
+  `/tmp/core3-manufacturing-products-desktop-list-1440x900.png`,
+  `/tmp/core3-manufacturing-products-desktop-form-direct-1440x900.png`,
+  `/tmp/core3-manufacturing-products-mobile-390x844.png`, and
+  `/tmp/core3-manufacturing-products-mobile-form-direct-390x844.png`.
+  The final mobile detail capture uses a storage state seeded from the live
+  Core3 login response, waits for `/api/auth/me` and visible `Desk Combination`
+  detail content before capture, and is populated/styled rather than shell-only.
+  Final Core3 hashes are `772aeeb3d09fad1ea86dedae46f2a60cbbbba4afb8a543063f573d9e9215a505`
+  (desktop Kanban), `6b55bcb061d7e8046b072b5feb3fb51ae6ae190e181c6033bfceafbcc3bc1699`
+  (desktop List), `e97576b9d16e968bd278b8f16b722dde6b0a12a6dd2acfa55f7deebe05edbfbd`
+  (desktop direct form), `d29c273e1df35584fcd54dd45c25118bc945e9b7abeba480afedc859dcaf5dd9`
+  (mobile Kanban), and `6fe7a0f3a8379887e7d4a38d9e6b93f329ca9f73776c50e55776cd186512baf7`
+  (mobile direct form).
+- Final browser verification reported no page errors, no failed requests, and
+  no horizontal overflow: `scrollWidth` equaled the viewport width at both
+  sizes. Global and Manufacturing CSS were rebuilt before the capture pass.
+  Remaining bounded differences are the shared Fluent shell versus Odoo's
+  purple shell, 11 deterministic Core3 fixtures versus Odoo's 87 live rows,
+  and the shared card renderer's desktop single-click selection behavior;
+  direct detail routing and double-click navigation remain valid. Cross-module
+  forecast/document/reordering workflows and full variant editing remain
+  outside this slice.
