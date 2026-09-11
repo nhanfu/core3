@@ -45,34 +45,32 @@ but its menu structure or visual/UX details remain approximate.
 
 ## Live Odoo reference environment
 
-- URL: `http://localhost:8069`
-- Database: `core3_user_demo`
-- Login email: `admin@core3.local`
-- Login password: `Core3OdooUser2026!`
-- Odoo container: `odoo-core3-user`
-- PostgreSQL container: `odoo-core3-user-db`
-- Start command: `docker start odoo-core3-user-db odoo-core3-user`
-- Stop command: `docker stop odoo-core3-user odoo-core3-user-db`
+- URL: `http://localhost:8073`
+- Database: `core3_codex_demo_20260912`
+- Login email: `codex@core3.local`
+- Login password: `Core3CodexAdmin20260912!`
+- Master password: `Core3CodexMaster20260912!`
+- Odoo container: `odoo-core3-codex-20260912`
+- PostgreSQL container: `odoo-core3-codex-20260912-db`
+- Start command: `docker start odoo-core3-codex-20260912-db odoo-core3-codex-20260912`
+- Stop command: `docker stop odoo-core3-codex-20260912 odoo-core3-codex-20260912-db`
 
-The former `odoo-core3-codex` and `odoo-core3-personal` pairs are stopped with
-their volumes preserved for rollback. The active `odoo-core3-user` pair is a
-freshly provisioned Odoo 19 reference database initialized with official demo
-data for the installed CRM, Sales, Accounting, Project, Event, Inventory,
-Manufacturing, Maintenance, Expenses, Time Off, and Calendar applications.
-The database was subsequently extended with Purchase, Point of Sale, Surveys,
-Fleet, Recruitment, Timesheets, Email Marketing, and Live Chat, each with its
-official demo data.
-Historical capture notes that name an older database remain tied to that
-database; new parity captures must use the active credentials above. Keep
-credentials out of source code outside this local parity plan.
+The former `odoo-core3-user` Odoo container was stopped and retained as
+`odoo-core3-user-stopped`; its PostgreSQL container and volumes are preserved
+for rollback. The active reference is a separately provisioned Odoo 19 image
+with a dedicated PostgreSQL 16 database, a dedicated Odoo data volume, and
+official demo data enabled during database creation. New parity captures must
+use the active URL and credentials above. Keep credentials out of source code
+outside this local parity plan.
 
-The `core3_user_demo` database has demo-enabled Odoo modules installed,
-including CRM, Sales, Purchase, Accounting, Inventory, Point of Sale, Events,
-Surveys, Employees, Recruitment, Expenses, Time Off, Timesheets, Project,
-Maintenance, Fleet, Manufacturing, Email Marketing, Live Chat, and Calendar.
-Its verified demo data includes partners, products, CRM leads, events, sales
-orders, projects, expenses, leave records, maintenance requests, fleet
-vehicles, surveys, and POS catalog records.
+The `core3_codex_demo_20260912` database has demo-enabled Odoo modules
+installed for CRM, Sales, Purchase, Accounting, Inventory, Point of Sale,
+Events, Employees, Recruitment, Expenses, Time Off, Timesheets, Project,
+Maintenance, Fleet, Manufacturing, Email Marketing, Live Chat, Calendar, and
+the related source modules required by those applications. Its verified demo
+data includes partners, products, CRM leads, events, sales orders, projects,
+expenses, leave records, maintenance requests, fleet vehicles, surveys, POS
+catalog records, and manufacturing/inventory records.
 
 ## Module register
 
