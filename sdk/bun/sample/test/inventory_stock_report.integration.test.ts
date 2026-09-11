@@ -27,6 +27,8 @@ describe('Inventory Reporting Stock Odoo parity', () => {
     expect(discovered.pageDatasources.get('stock-report')).toContain('inventory_stock_report');
     expect(discoverPageRoutes(discovered)).toContainEqual({ path: '/stock-report', page: 'stock-report', module: 'inventory' });
     expect(list).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'inventory_stock_report', selectable: false, row_actions: 'buttons' });
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'card']);
+    expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: true, card: { title: 'product_name', subtitle: 'default_code' } });
     expect(list.header_actions).toContainEqual(expect.objectContaining({ id: 'inventory_stock_at_date', label: 'Inventory at Date', permission: 'inventory.read' }));
     expect(list.filters).toContainEqual(expect.objectContaining({ field: 'category_name', label: 'Category', options_source: 'inventory_stock_report_categories' }));
     expect(list.columns.map((column: any) => column.field)).toEqual([
