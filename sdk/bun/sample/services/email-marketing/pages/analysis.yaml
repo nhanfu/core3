@@ -1,21 +1,91 @@
-title: Email Marketing Analysis
-page: { id: email-analysis, breadcrumb: [Marketing, Email Marketing, Analysis], auth: { require: [email_marketing.read] } }
-datasources:
-  - id: email_analysis_totals
-    single: true
-    permission: email_marketing.read
-    query: "SELECT COUNT(*) AS campaign_count, COALESCE(SUM(recipient_count), 0) AS recipients, COALESCE(SUM(delivered_count), 0) AS delivered, COALESCE(SUM(opened_count), 0) AS opened, COALESCE(SUM(clicked_count), 0) AS clicked FROM email_campaigns"
-  - id: email_analysis_states
-    permission: email_marketing.read
-    query: "SELECT state AS category, COUNT(*) AS campaign_count FROM email_campaigns GROUP BY state ORDER BY campaign_count DESC"
+title: Mass Mailing Analysis
+page: { id: email-analysis, route: /email-analysis, breadcrumb: [Marketing, Email Marketing, Reporting, Mass Mailing Analysis], auth: { require: [email_marketing.read] } }
+
 components:
-  - type: StatRow
-    source: email_analysis_totals
-    title: Email delivery performance
-    stats: [{ label: Campaigns, field: campaign_count }, { label: Recipients, field: recipients }, { label: Delivered, field: delivered }, { label: Opened, field: opened }, { label: Clicked, field: clicked }]
-  - type: Chart
-    source: email_analysis_states
-    title: Campaigns by status
-    label_field: category
-    value_field: campaign_count
-    variant: bar
+  - type: ListView
+    variant: odoo
+    source: email_mailing_trace_report
+    search: { label: Search..., placeholder: Search... }
+    date_range:
+      label: Date
+      from_field: from_date
+      to_field: to_date
+      default_preset: year
+      presets: [today, week, month, year]
+      preset_labels: { today: 'Date: Today', week: 'Date: This week', month: 'Date: This month', year: 'Date: This year' }
+    filters:
+      - { field: state, label: Status, options: [{ id: Draft, label: Draft }, { id: Tested, label: Tested }, { id: Sent, label: Sent }] }
+    group_by:
+      - { field: campaign, label: Mass Mailing Campaign }
+      - { field: state, label: State }
+      - { field: email_from, label: Sent By }
+      - { field: scheduled_date, label: Scheduled Period }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: name
+        measure_field: sent
+        measure_label: Sent
+        type: bar
+        measures:
+          - { field: sent, label: Sent, aggregate: sum }
+          - { field: scheduled, label: Scheduled, aggregate: sum }
+          - { field: delivered, label: Delivered, aggregate: sum }
+          - { field: opened, label: Opened, aggregate: sum }
+          - { field: replied, label: Replied, aggregate: sum }
+          - { field: clicked, label: Clicked, aggregate: sum }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: name, column: Mailing }
+            - { field: campaign, column: Mass Mailing Campaign }
+            - { field: scheduled_date, column: Scheduled On, type: date }
+            - { field: state, column: State }
+            - { field: email_from, column: Sent By }
+            - { field: scheduled, column: Scheduled }
+            - { field: sent, column: Sent }
+            - { field: delivered, column: Delivered }
+            - { field: opened, column: Opened }
+            - { field: replied, column: Replied }
+            - { field: clicked, column: Clicked }
+            - { field: canceled, column: Canceled }
+            - { field: error, column: Error }
+            - { field: bounced, column: Bounced }
+          default:
+            rows: [name]
+            measures:
+              - { field: sent, aggregate: sum, column: Sent }
+              - { field: scheduled, aggregate: sum, column: Scheduled }
+              - { field: delivered, aggregate: sum, column: Delivered }
+              - { field: opened, aggregate: sum, column: Opened }
+              - { field: replied, aggregate: sum, column: Replied }
+              - { field: clicked, aggregate: sum, column: Clicked }
+      - { id: list, label: List, icon: table }
+    show_pager: true
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state:
+      title: No Mailing Data yet!
+      description: 'Use this report to keep track of the results of your mailings. Review replies, clicks, bounces, and delivery activity here.'
+    columns:
+      - { field: name, label: Mailing, type: PrimaryEntityCell, mobile: true }
+      - { field: campaign, label: Campaign, mobile: false }
+      - { field: scheduled_date, label: Scheduled On, type: DateTime, mobile: true }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: scheduled, label: Scheduled, align: right, mobile: false }
+      - { field: sent, label: Sent, align: right, mobile: true }
+      - { field: processing, label: Processing, align: right, optional: true, mobile: false }
+      - { field: pending, label: Pending, align: right, optional: true, mobile: false }
+      - { field: delivered, label: Delivered, align: right, mobile: true }
+      - { field: opened, label: Opened, align: right, mobile: false }
+      - { field: replied, label: Replied, align: right, mobile: true }
+      - { field: clicked, label: Clicked, align: right, mobile: true }
+      - { field: canceled, label: Canceled, align: right, optional: true, mobile: false }
+      - { field: error, label: Error, align: right, optional: true, mobile: false }
+      - { field: bounced, label: Bounced, align: right, optional: true, mobile: false }

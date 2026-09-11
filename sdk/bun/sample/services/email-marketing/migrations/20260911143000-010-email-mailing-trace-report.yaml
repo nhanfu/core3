@@ -1,0 +1,35 @@
+version: 0.0.10
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_mailing_trace_reports (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        mailing_type VARCHAR NOT NULL DEFAULT 'mail',
+        campaign VARCHAR,
+        scheduled_date TIMESTAMP NOT NULL,
+        state VARCHAR NOT NULL,
+        email_from VARCHAR,
+        scheduled INTEGER NOT NULL DEFAULT 0,
+        processing INTEGER NOT NULL DEFAULT 0,
+        pending INTEGER NOT NULL DEFAULT 0,
+        sent INTEGER NOT NULL DEFAULT 0,
+        delivered INTEGER NOT NULL DEFAULT 0,
+        error INTEGER NOT NULL DEFAULT 0,
+        opened INTEGER NOT NULL DEFAULT 0,
+        replied INTEGER NOT NULL DEFAULT 0,
+        bounced INTEGER NOT NULL DEFAULT 0,
+        canceled INTEGER NOT NULL DEFAULT 0,
+        clicked INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS email_mailing_trace_report_date_idx ON email_mailing_trace_reports(scheduled_date);
+      CREATE INDEX IF NOT EXISTS email_mailing_trace_report_type_idx ON email_mailing_trace_reports(mailing_type);
+    down: |
+      DROP TABLE IF EXISTS email_mailing_trace_reports;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

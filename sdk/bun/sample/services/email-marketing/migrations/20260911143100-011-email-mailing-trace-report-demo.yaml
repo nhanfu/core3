@@ -1,0 +1,32 @@
+version: 0.0.11
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO email_mailing_trace_reports (
+        id, row_version, name, mailing_type, campaign, scheduled_date, state,
+        email_from, scheduled, processing, pending, sent, delivered, error,
+        opened, replied, bounced, canceled, clicked, created_at, updated_at
+      ) VALUES
+        ('email-analysis-newsletter-001', 1, 'Newsletter 1', 'mail', 'Newsletter', TIMESTAMP '2026-01-15 10:15:00', 'Sent', 'Info <info@core3.example.com>', 8, 0, 0, 6, 5, 1, 4, 2, 1, 0, 2, TIMESTAMP '2026-01-15 10:15:00', TIMESTAMP '2026-01-15 10:15:00'),
+        ('email-analysis-spring-release-001', 1, 'Spring Release', 'mail', 'Product Launch', TIMESTAMP '2026-01-16 08:00:00', 'Sent', 'Core3 Marketing <marketing@core3.example.com>', 1250, 0, 0, 1248, 1240, 2, 830, 32, 8, 0, 74, TIMESTAMP '2026-01-15 10:16:00', TIMESTAMP '2026-01-16 08:00:00'),
+        ('email-analysis-onboarding-001', 1, 'Customer Onboarding Tips', 'mail', 'Customer Success', TIMESTAMP '2026-01-14 09:30:00', 'Tested', 'Core3 Marketing <marketing@core3.example.com>', 240, 0, 0, 120, 120, 0, 70, 4, 3, 0, 12, TIMESTAMP '2026-01-14 09:30:00', TIMESTAMP '2026-01-14 09:30:00'),
+        ('email-analysis-quarterly-001', 1, 'Quarterly Product Briefing', 'mail', 'Newsletter', TIMESTAMP '2026-01-17 09:00:00', 'Draft', 'Core3 Marketing <marketing@core3.example.com>', 1250, 0, 1250, 0, 0, 0, 0, 0, 0, 0, 0, TIMESTAMP '2026-01-15 10:18:00', TIMESTAMP '2026-01-15 10:18:00'),
+        ('email-analysis-welcome-001', 1, 'Welcome Series Template', 'mail', 'Customer Success', TIMESTAMP '2026-01-10 09:00:00', 'Sent', 'Core3 Marketing <marketing@core3.example.com>', 1250, 0, 0, 1250, 1200, 0, 840, 80, 8, 0, 42, TIMESTAMP '2026-01-10 09:00:00', TIMESTAMP '2026-01-10 09:00:00'),
+        ('email-analysis-sms-hidden-001', 1, 'SMS Reminder', 'sms', 'Customer Success', TIMESTAMP '2026-01-16 12:00:00', 'Sent', 'Core3 Marketing <marketing@core3.example.com>', 300, 0, 0, 300, 294, 1, 0, 0, 5, 0, 0, TIMESTAMP '2026-01-16 12:00:00', TIMESTAMP '2026-01-16 12:00:00')
+      ON CONFLICT (id) DO UPDATE SET
+        row_version = EXCLUDED.row_version, name = EXCLUDED.name,
+        mailing_type = EXCLUDED.mailing_type, campaign = EXCLUDED.campaign,
+        scheduled_date = EXCLUDED.scheduled_date, state = EXCLUDED.state,
+        email_from = EXCLUDED.email_from, scheduled = EXCLUDED.scheduled,
+        processing = EXCLUDED.processing, pending = EXCLUDED.pending,
+        sent = EXCLUDED.sent, delivered = EXCLUDED.delivered, error = EXCLUDED.error,
+        opened = EXCLUDED.opened, replied = EXCLUDED.replied, bounced = EXCLUDED.bounced,
+        canceled = EXCLUDED.canceled, clicked = EXCLUDED.clicked,
+        updated_at = EXCLUDED.updated_at;
+    down: |
+      DELETE FROM email_mailing_trace_reports WHERE id LIKE 'email-analysis-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

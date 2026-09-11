@@ -24,7 +24,7 @@ menu:
     - id: reporting
       label: Reporting
       items:
-        - { path: /email-analysis, label: Email Analysis, icon: chart, permission: email_marketing.read }
+        - { path: /email-analysis, label: Mass Mailing Analysis, icon: chart, permission: email_marketing.read }
     - id: configuration
       label: Configuration
       items:

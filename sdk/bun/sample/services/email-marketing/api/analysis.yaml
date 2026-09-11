@@ -1,0 +1,25 @@
+page: { id: email-analysis }
+
+datasources:
+  - id: email_mailing_trace_report
+    single: false
+    permission: email_marketing.read
+    error_states:
+      unauthorized: { status: 401, code: EMAIL_ANALYSIS_UNAUTHORIZED, message: Sign in to view Mass Mailing Analysis. }
+      forbidden: { status: 403, code: EMAIL_ANALYSIS_FORBIDDEN, message: You do not have permission to view Mass Mailing Analysis. }
+      transport_error: { status: 503, code: EMAIL_ANALYSIS_UNAVAILABLE, message: Mass Mailing Analysis is temporarily unavailable. }
+    pivot:
+      fields: [id, row_version, name, mailing_type, campaign, scheduled_date, state, email_from, scheduled, processing, pending, sent, delivered, error, opened, replied, bounced, canceled, clicked]
+    query: |
+      SELECT id, row_version, name, mailing_type, campaign,
+        CAST(scheduled_date AS VARCHAR) AS scheduled_date, state, email_from,
+        scheduled, processing, pending, sent, delivered, error, opened,
+        replied, bounced, canceled, clicked
+      FROM email_mailing_trace_reports
+      WHERE mailing_type = 'mail'
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(campaign, '') ILIKE '%' || :q || '%' OR COALESCE(email_from, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR state = :state)
+        AND (:from_date IS NULL OR CAST(scheduled_date AS DATE) >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR CAST(scheduled_date AS DATE) <= CAST(:to_date AS DATE))
+      ORDER BY scheduled_date, name, id
