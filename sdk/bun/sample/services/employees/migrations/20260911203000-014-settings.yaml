@@ -1,0 +1,41 @@
+id: employees_settings
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_settings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL,
+        module_hr_attendance BOOLEAN NOT NULL DEFAULT FALSE,
+        hr_presence_control_login BOOLEAN NOT NULL DEFAULT FALSE,
+        module_hr_presence BOOLEAN NOT NULL DEFAULT FALSE,
+        hr_presence_control_email BOOLEAN NOT NULL DEFAULT FALSE,
+        hr_presence_control_ip BOOLEAN NOT NULL DEFAULT FALSE,
+        hr_presence_control_email_amount INTEGER NOT NULL DEFAULT 5,
+        hr_presence_control_ip_list VARCHAR NOT NULL DEFAULT '',
+        module_hr_skills BOOLEAN NOT NULL DEFAULT FALSE,
+        resource_calendar_name VARCHAR NOT NULL,
+        contract_expiration_notice_period INTEGER NOT NULL DEFAULT 30,
+        work_permit_expiration_notice_period INTEGER NOT NULL DEFAULT 30,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO employee_settings (
+        id, row_version, company_name, module_hr_attendance, hr_presence_control_login,
+        module_hr_presence, hr_presence_control_email, hr_presence_control_ip,
+        hr_presence_control_email_amount, hr_presence_control_ip_list, module_hr_skills,
+        resource_calendar_name, contract_expiration_notice_period,
+        work_permit_expiration_notice_period, created_at, updated_at
+      ) VALUES (
+        'employee-settings-demo', 1, 'My Company (San Francisco)', TRUE, TRUE,
+        FALSE, FALSE, FALSE, 5, '10.0.0.0/24', FALSE, 'Standard 40 hours/week', 30, 60,
+        TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'
+      );
+    down: |
+      DROP TABLE IF EXISTS employee_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

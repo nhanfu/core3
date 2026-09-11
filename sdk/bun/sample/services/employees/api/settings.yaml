@@ -1,0 +1,28 @@
+page: { id: employee-settings }
+datasources:
+  - id: employee_settings
+    single: true
+    permission: employees.settings
+    error_states:
+      unauthorized: { status: 401, code: EMPLOYEES_SETTINGS_UNAUTHORIZED, message: Sign in to view Employees settings. }
+      forbidden: { status: 403, code: EMPLOYEES_SETTINGS_FORBIDDEN, message: You do not have permission to manage Employees settings. }
+      transport_error: { status: 503, code: EMPLOYEES_SETTINGS_UNAVAILABLE, message: Employees settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, module_hr_attendance, hr_presence_control_login, module_hr_presence, hr_presence_control_email, hr_presence_control_ip, hr_presence_control_email_amount, hr_presence_control_ip_list, module_hr_skills, resource_calendar_name, contract_expiration_notice_period, work_permit_expiration_notice_period FROM employee_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = 'employee-settings-demo'"
+actions:
+  - id: employee_settings_update_server
+    type: server
+    permission: employees.settings
+    action: employees.settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: employee_settings
+      key_field: id
+      fields: [module_hr_attendance, hr_presence_control_login, module_hr_presence, hr_presence_control_email, hr_presence_control_ip, hr_presence_control_email_amount, hr_presence_control_ip_list, module_hr_skills, resource_calendar_name, contract_expiration_notice_period, work_permit_expiration_notice_period]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_settings WHERE id = :id", status: 404, code: EMPLOYEES_SETTINGS_NOT_FOUND, message: Employees settings no longer exist. }
+        - { query: "SELECT id FROM employee_settings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_SETTINGS_STALE, message: Employees settings were changed by another user. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:module_hr_attendance AS BOOLEAN) IS NOT NULL AND TRY_CAST(:hr_presence_control_login AS BOOLEAN) IS NOT NULL AND TRY_CAST(:module_hr_presence AS BOOLEAN) IS NOT NULL AND TRY_CAST(:hr_presence_control_email AS BOOLEAN) IS NOT NULL AND TRY_CAST(:hr_presence_control_ip AS BOOLEAN) IS NOT NULL AND TRY_CAST(:module_hr_skills AS BOOLEAN) IS NOT NULL AND TRY_CAST(:contract_expiration_notice_period AS INTEGER) >= 0 AND TRY_CAST(:work_permit_expiration_notice_period AS INTEGER) >= 0 AND CAST(:resource_calendar_name AS VARCHAR) IN ('Standard 40 hours/week', 'Standard 20 hours/week', 'Flexible Hours')", status: 422, code: EMPLOYEES_SETTINGS_VALUES_INVALID, message: Choose a supported working schedule and enter non-negative notice periods. }
+      result: { query: "SELECT * FROM employee_settings WHERE id = :id" }

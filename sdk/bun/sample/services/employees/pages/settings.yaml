@@ -1,0 +1,31 @@
+title: Employees Settings
+page: { id: employee-settings, route: /employees/settings, breadcrumb: [Human Resources, Configuration, Settings], auth: { require: [employees.settings] } }
+components:
+  - type: SettingsView
+    id: employee-settings-view
+    source: employee_settings
+    title: Settings
+    save_action: employee_settings_update_server
+    search_placeholder: Search settings...
+    tabs:
+      - id: employees
+        label: Employees
+        icon: users
+        sections:
+          - title: Employees
+            fields:
+              - { field: module_hr_attendance, label: Presence Display, description: Display employee presence based on attendance records., type: checkbox }
+              - { field: hr_presence_control_login, label: Based on user status in system, description: Display employees as present when they are logged in., type: checkbox }
+              - { field: module_hr_presence, label: Advanced Presence Control, description: Enable presence reporting with email and IP address controls., type: checkbox }
+              - { field: hr_presence_control_email, label: Presence by Sent Emails, description: Use sent email activity to calculate employee presence., type: checkbox }
+              - { field: hr_presence_control_ip, label: Presence by IP Address, description: Use allowed IP addresses to calculate employee presence., type: checkbox }
+              - { field: hr_presence_control_email_amount, label: Sent Emails, description: Minimum number of sent emails considered present., type: info }
+              - { field: hr_presence_control_ip_list, label: IP Addresses, description: Comma-separated IP addresses allowed to display presence., type: info }
+              - { field: module_hr_skills, label: Skills Management, description: Enrich employee profiles with skills and resumes., type: checkbox }
+          - title: Work Organization
+            fields:
+              - { field: resource_calendar_name, label: Company Working Hours, description: Default company schedule used to manage employee working time., type: select, options: [{ value: standard-40, label: Standard 40 hours/week }, { value: standard-20, label: Standard 20 hours/week }, { value: flexible, label: Flexible Hours }] }
+          - title: Contract
+            fields:
+              - { field: contract_expiration_notice_period, label: Contract Expiration Notice Period, description: Number of days before contract end when a warning is triggered., type: info }
+              - { field: work_permit_expiration_notice_period, label: Work Permit Expiration Notice Period, description: Number of days before work permit expiry when a warning is triggered., type: info }
