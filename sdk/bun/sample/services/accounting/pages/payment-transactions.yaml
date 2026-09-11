@@ -1,13 +1,54 @@
 title: Payment Transactions
-page: { id: payment-transactions, route: /accounting/payment-transactions, breadcrumb: [Finance, Configuration, Payment Transactions], auth: { require: [accounting.read] } }
-datasources:
-  - id: accounting_payment_transactions
-    permission: accounting.read
-    query: "SELECT name, partner_name, amount, payment_method, state, reference FROM accounting_payments ORDER BY payment_date DESC"
+page: { id: payment-transactions, route: /accounting/payment-transactions, breadcrumb: [], auth: { require: [accounting.read] } }
 components:
   - type: ListView
     variant: odoo
     source: accounting_payment_transactions
-    search: { label: Search transactions, placeholder: Search transactions... }
-    columns: [{ field: name, label: Transaction, type: PrimaryEntityCell }, { field: partner_name, label: Partner }, { field: amount, label: Amount, align: right }, { field: payment_method, label: Method }, { field: state, label: State, type: StatusChip }, { field: reference, label: Reference }]
-    row_key: name
+    search: { label: Search payment transactions, placeholder: 'Search reference, provider, or partner...' }
+    view_navigation: icons
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: ''
+        card:
+          title: reference
+          subtitle: partner_name
+          fields:
+            - { field: amount_display }
+            - { field: state_label }
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: create_month
+        measure_field: amount
+        measure_label: Amount
+        measures:
+          - { field: amount, label: Amount, aggregate: sum }
+        type: bar
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields: [{ field: state_label, column: Status }, { field: amount, column: Amount }]
+          default: { rows: [create_month], columns: [state_label], measures: [{ field: amount, aggregate: sum, column: Amount }] }
+    empty_state: { title: There are no transactions to show }
+    columns:
+      - { field: reference, label: Reference, type: PrimaryEntityCell }
+      - { field: create_date, label: Created on }
+      - { field: payment_method, label: Payment Method }
+      - { field: provider, label: Provider }
+      - { field: partner, label: Customer }
+      - { field: partner_name, label: Partner Name }
+      - { field: amount_display, label: Amount, align: right }
+      - { field: state_label, label: Status, type: StatusChip }
+      - { field: company, label: Company, optional: show }
+    row_key: id
+    row_open_action: view_accounting_payment_transaction
+    row_double_click_action: view_accounting_payment_transaction
+    page_size: 50
+    responsive_card: true

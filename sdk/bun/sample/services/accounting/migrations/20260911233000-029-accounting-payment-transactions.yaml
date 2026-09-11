@@ -1,0 +1,51 @@
+version: 0.0.29
+description: Accounting Odoo payment transaction parity fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_payment_transactions (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        reference VARCHAR NOT NULL UNIQUE,
+        create_date VARCHAR NOT NULL,
+        create_month VARCHAR NOT NULL,
+        payment_method VARCHAR NOT NULL,
+        provider VARCHAR NOT NULL,
+        partner VARCHAR NOT NULL,
+        partner_name VARCHAR NOT NULL,
+        amount DECIMAL(12, 2) NOT NULL,
+        amount_display VARCHAR NOT NULL,
+        state VARCHAR NOT NULL,
+        state_label VARCHAR NOT NULL,
+        company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        is_live BOOLEAN NOT NULL DEFAULT FALSE,
+        is_live_label VARCHAR NOT NULL DEFAULT 'Test',
+        source_transaction VARCHAR,
+        provider_reference VARCHAR NOT NULL,
+        token VARCHAR,
+        last_state_change VARCHAR NOT NULL,
+        partner_address VARCHAR,
+        partner_city VARCHAR,
+        partner_state VARCHAR,
+        partner_zip VARCHAR,
+        partner_country VARCHAR,
+        partner_email VARCHAR,
+        partner_phone VARCHAR,
+        partner_lang VARCHAR,
+        state_message VARCHAR
+      );
+      INSERT INTO accounting_payment_transactions
+        (id, reference, create_date, create_month, payment_method, provider, partner, partner_name, amount, amount_display, state, state_label, company, is_live, is_live_label, source_transaction, provider_reference, token, last_state_change, partner_address, partner_city, partner_state, partner_zip, partner_country, partner_email, partner_phone, partner_lang, state_message)
+      VALUES
+        ('payment-tx-confirmed-001', 'TX-DEMO-2026-0001', '2026-09-01 09:30:00', 'September 2026', 'Card', 'Stripe', 'Azure Interior', 'Azure Interior', 1250.00, '$ 1250.00', 'done', 'Confirmed', 'My Company (San Francisco)', TRUE, 'Production', NULL, 'pi_core3_0001', '•••• 1111', '2026-09-01 09:31:12', '2, Infinite Loop', 'Cupertino', 'California', '95014', 'United States', 'azure@example.com', '+1 555 0101', 'English (US)', 'Payment confirmed by provider.'),
+        ('payment-tx-authorized-002', 'TX-DEMO-2026-0002', '2026-08-28 14:10:00', 'August 2026', 'Card', 'Demo', 'Gemini Furniture', 'Gemini Furniture', 480.00, '$ 480.00', 'authorized', 'Authorized', 'My Company (San Francisco)', FALSE, 'Test', NULL, 'demo_auth_0002', NULL, '2026-08-28 14:10:24', '14 Rue de la Paix', 'Paris', NULL, '75002', 'France', 'gemini@example.com', '+33 1 40 20 10 10', 'French / Français', 'Authorization is ready for capture.'),
+        ('payment-tx-pending-003', 'TX-DEMO-2026-0003', '2026-08-21 11:45:00', 'August 2026', 'SEPA Direct Debit', 'Demo', 'Acme Corporation', 'Acme Corporation', 875.50, '$ 875.50', 'pending', 'Pending', 'My Company (San Francisco)', FALSE, 'Test', NULL, 'demo_pending_0003', '•••• 9876', '2026-08-21 11:45:00', '1 Main Street', 'San Francisco', 'California', '94105', 'United States', 'acme@example.com', '+1 555 0103', 'English (US)', 'Waiting for the payment provider response.'),
+        ('payment-tx-canceled-004', 'TX-DEMO-2026-0004', '2026-08-12 16:20:00', 'August 2026', 'Card', 'Legacy Gateway', 'Ready Mat', 'Ready Mat', 210.00, '$ 210.00', 'cancel', 'Canceled', 'My Company (San Francisco)', FALSE, 'Test', NULL, 'legacy_cancel_0004', NULL, '2026-08-12 16:21:05', '5 Market Street', 'San Francisco', 'California', '94105', 'United States', 'ready@example.com', '+1 555 0104', 'English (US)', 'The transaction was canceled by the provider.'),
+        ('payment-tx-error-005', 'TX-DEMO-2026-0005', '2026-08-05 08:05:00', 'August 2026', 'Card', 'Demo', 'Deco Addict', 'Deco Addict', 99.99, '$ 99.99', 'error', 'Error', 'My Company (San Francisco)', FALSE, 'Test', NULL, 'demo_error_0005', NULL, '2026-08-05 08:06:42', '12 Oak Avenue', 'Boston', 'Massachusetts', '02108', 'United States', 'deco@example.com', '+1 555 0105', 'English (US)', 'The provider returned an error for this transaction.'),
+        ('payment-tx-draft-006', 'TX-DEMO-2026-0006', '2026-07-29 10:00:00', 'July 2026', 'Card', 'Demo', 'Wood Corner', 'Wood Corner', 320.00, '$ 320.00', 'draft', 'Draft', 'My Company (San Francisco)', FALSE, 'Test', NULL, 'demo_draft_0006', NULL, '2026-07-29 10:00:00', '7 Elm Street', 'Austin', 'Texas', '73301', 'United States', 'wood@example.com', '+1 555 0106', 'English (US)', NULL)
+      ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS accounting_payment_transactions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

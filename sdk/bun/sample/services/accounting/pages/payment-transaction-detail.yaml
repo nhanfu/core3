@@ -1,0 +1,43 @@
+title: Payment Transaction
+page: { id: payment-transaction-detail, route: /accounting/payment-transaction-detail, breadcrumb: [], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_payment_transaction_detail
+    title_field: reference
+    subtitle_field: partner_name
+    status_field: state
+    status_label_field: state_label
+    statusbar:
+      - { value: draft, label: Draft }
+      - { value: pending, label: Pending }
+      - { value: authorized, label: Authorized }
+      - { value: done, label: Confirmed }
+      - { value: cancel, label: Canceled }
+      - { value: error, label: Error }
+    editable: false
+    group_columns: 2
+    groups:
+      - title: Transaction Details
+        fields:
+          - { field: reference, label: Reference }
+          - { field: source_transaction, label: Source Transaction }
+          - { field: amount_display, label: Amount }
+          - { field: payment_method, label: Payment Method }
+          - { field: provider, label: Provider }
+          - { field: company, label: Company }
+          - { field: provider_reference, label: Provider Reference }
+          - { field: token, label: Payment Token }
+          - { field: create_date, label: Created on }
+          - { field: last_state_change, label: Last State Change Date }
+          - { field: is_live_label, label: Production Environment }
+      - title: Customer
+        fields:
+          - { field: partner, label: Customer }
+          - { field: partner_address, label: Address }
+          - { field: partner_city, label: City }
+          - { field: partner_state, label: State }
+          - { field: partner_zip, label: ZIP }
+          - { field: partner_country, label: Country }
+          - { field: partner_email, label: Email }
+          - { field: partner_phone, label: Phone }
+          - { field: partner_lang, label: Language }

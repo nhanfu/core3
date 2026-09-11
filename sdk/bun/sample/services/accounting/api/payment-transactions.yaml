@@ -1,0 +1,15 @@
+page: { id: payment-transactions }
+datasources:
+  - id: accounting_payment_transactions
+    single: false
+    permission: accounting.read
+    error_states:
+      forbidden: { status: 403, code: ACCOUNTING_PAYMENT_TRANSACTIONS_FORBIDDEN, message: You do not have access to payment transactions. }
+      transport_error: { status: 503, code: ACCOUNTING_PAYMENT_TRANSACTIONS_UNAVAILABLE, message: Payment transaction data is temporarily unavailable. }
+    query: "SELECT id, row_version, reference, create_date, create_month, payment_method, provider, partner, partner_name, amount, amount_display, state, state_label, company, is_live, is_live_label FROM accounting_payment_transactions WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN FALSE ELSE TRUE END = TRUE AND (:q IS NULL OR reference ILIKE '%' || :q || '%' OR COALESCE(provider, '') ILIKE '%' || :q || '%' OR COALESCE(partner, '') ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%') ORDER BY create_date DESC, id"
+actions:
+  - id: view_accounting_payment_transaction
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/payment-transaction-detail
+    params: { id: '{row.id}' }
