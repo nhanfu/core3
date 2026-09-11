@@ -476,3 +476,54 @@ Deferred: full applicant view-mode parity from the talent-pool action
 (graph/calendar/pivot/activity), native many-to-many/tag and color widgets,
 CV/chatter/followers, richer applicant/job propagation, and additional
 interviewer/company-specific policy variants.
+
+## Batch 5 implementation record — Recruitment Job Boards Emails
+
+The installed Odoo source and authenticated personal reference were inspected
+before implementation. Odoo action `action_hr_job_platforms` opens model
+`hr.job.platform` from `Recruitment → Configuration → Job Boards → Emails`.
+The source list and form use exactly `name`, `email`, and `regex`; `name` and
+`email` are required, email is unique and normalized on create/write, and the
+model has no job-opening relation. Core3 therefore keeps this batch bounded to
+platform email rules; applicant job assignment remains a separate concern.
+
+Core3 adds page id `recruitment-job-platforms` at `/recruitment/emails`, joins
+page/API YAML by `page.id`, and exposes a manager-only Configuration menu item.
+Migration `20260911200000-007-recruitment-job-platforms.yaml` seeds fixed
+Odoo-matching `Linkedin`, `Jobsdb`, and `Indeed` records. The API covers
+search, empty/no-result, forbidden/transport, required-field, email-format,
+duplicate-email, missing-record, and stale-row states, with guarded
+create/update/delete.
+
+### Evidence
+
+| Surface | State | Viewport | Path | SHA-256 |
+| --- | --- | --- | --- | --- |
+| Odoo | Emails list | 1440×900 | `/tmp/odoo-recruitment-job-boards-emails-desktop-1440x900-20260911.png` | `7f7a4a1c9b8a33ec4d75019fc52ba4a18282526841ecf201634ed1bcf2e1ab47` |
+| Core3 | Emails list | 1440×900 | `/tmp/core3-recruitment-job-boards-emails-list-desktop-1440x900-20260911.png` | `b6652908dde48ea77543e57d1e6b62d4d65d1290f6cc0eeaf9f39410d46a8ad3` |
+| Odoo | Email form | 1440×900 | `/tmp/odoo-recruitment-job-boards-email-form-desktop-1440x900-20260911.png` | `26c86a3fe6497f1f341bebc108657974ac80c3b98efe7df2ae85530a8195ff4d` |
+| Core3 | New email form | 1440×900 | `/tmp/core3-recruitment-job-boards-email-form-desktop-1440x900-20260911.png` | `d8c7fad5d1651d663f2d55c0ae06e09c5f85a399bd85da9db2c414e455aa2b4b` |
+| Odoo | Emails list | 390×844 | `/tmp/odoo-recruitment-job-boards-emails-mobile-390x844-20260911.png` | `2de8cd8d468e24088bf6cf5a1d38fb63e2855ca74ddfa0ed432012d049295938` |
+| Core3 | Emails list | 390×844 | `/tmp/core3-recruitment-job-boards-emails-list-mobile-390x844-20260911.png` | `f7cfd9fe521e28b5c7ac9320e27fd914e5eee71bd9768a498aefd451cd629f97` |
+| Odoo | Email form | 390×844 | `/tmp/odoo-recruitment-job-boards-email-form-mobile-390x844-20260911.png` | `2b5510d8648ca26084e7931cf67921e87cdd86c37f584804d7d795f70638d8ed` |
+| Core3 | New email form | 390×844 | `/tmp/core3-recruitment-job-boards-email-form-mobile-390x844-20260911.png` | `36928044eab33f6379605333ed9ab51c1950e4788c67ecd2b873636d39d77ad9` |
+
+Authenticated Core3 captures were taken from the isolated runtime. The list
+matches the Odoo fields and fixed values, and Regex is intentionally hidden
+on the 390px list for responsive fit. Browser checks found no failed requests,
+page errors, clipping, or horizontal overflow. Residuals are the shared Core3
+Fluent/blue shell versus Odoo's purple shell, Core3 breadcrumb/search-shell
+composition, and Core3's mobile modal form versus Odoo's full-page form.
+
+### Verification and commits
+
+- `bun test test/recruitment_job_platforms.integration.test.ts` — 3 passed, 0 failed, 36 assertions.
+- `bun run audit` — passed: 482 pages, 489 routes, 838 datasources.
+- `bunx eslint sample/test/recruitment_job_platforms.integration.test.ts` — passed.
+- `bun run css:build:global` and `bun run css:build:recruitment` — passed.
+- `git diff --check` — passed.
+
+Commits: `4449a7c9` implementation, `dc290ba8` portable email-validation fix.
+Screenshots remain outside Git. Deferred: mail-template integration, inbound
+email execution, applicant auto-creation, and any job-opening-specific
+platform relation not present in the installed Odoo model.
