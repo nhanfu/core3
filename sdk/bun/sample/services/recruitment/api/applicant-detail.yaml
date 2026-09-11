@@ -18,7 +18,7 @@ actions:
     title: Refuse application
     submit_label: Refuse
     cancel_label: Discard
-    action: recruitment.applicants.reject
+    action: recruitment.applicants.refuse_with_reason
     handler: yaml_mutation
     operation: refuse
     params: { id: '{state.id}', expected_row_version: '{state.recruitment_applicant_detail.row_version}' }
