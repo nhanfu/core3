@@ -76,7 +76,7 @@ describe('Events attendee parity batch', () => {
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
     expect(form.statusbar.map((state: any) => state.value)).toEqual(['Unconfirmed', 'Registered', 'Attended', 'Cancelled']);
     expect(form.groups.map((group: any) => group.title)).toEqual(['Attendee', 'Event Information']);
-    expect(form.header_actions.map((action: any) => action.id)).toEqual(['confirm_attendee_detail', 'mark_attendee_attended_detail', 'cancel_event_attendee_detail']);
+    expect(form.header_actions.map((action: any) => action.id)).toEqual(['send_attendee_email', 'confirm_attendee_detail', 'mark_attendee_attended_detail', 'cancel_event_attendee_detail']);
   });
 
   test('guards attendee transitions and seeds answer-line fields', () => {
