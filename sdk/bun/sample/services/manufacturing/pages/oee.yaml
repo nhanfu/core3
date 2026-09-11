@@ -52,7 +52,7 @@ components:
     columns:
       - { field: date_start, label: Start Date, mobile: true }
       - { field: date_end, label: End Date, mobile: false }
-      - { field: workcenter_name, label: Work Center, type: PrimaryEntityCell, mobile: true, mobile_secondary: loss_reason }
+      - { field: workcenter_name, label: Work Center, type: PrimaryEntityCell, mobile: true }
       - { field: user_name, label: User, mobile: false }
       - { field: loss_reason, label: Loss Reason, mobile: true }
       - { field: duration_minutes, label: Duration (minutes), align: right, mobile: true }
