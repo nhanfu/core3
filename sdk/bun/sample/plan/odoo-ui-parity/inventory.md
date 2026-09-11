@@ -700,7 +700,7 @@ value, and responsive mobile stock cards. Page YAML is layout-only and binds to
 
 Implementation commit: `469fd8e7` (`feat(inventory): add stock report parity`)
 after contract commit `5a2d4a5c`; responsive card refinement is included in
-the follow-up parent fix commit `f3e7c0c2`. Migration `20260911290000-012` provides ten
+the follow-up parent fix commit `d4158a15`. Migration `20260911290000-012` provides ten
 stable storable-product rows with deterministic quantities and values. The
 read-only `inventory.read` contract covers category filters, empty results,
 transport errors, and the guarded Inventory at Date action; row actions link
