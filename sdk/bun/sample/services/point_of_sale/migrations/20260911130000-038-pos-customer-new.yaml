@@ -1,0 +1,40 @@
+version: 0.0.38
+kind: data
+description: Deterministic POS customer profiles for the Customers New action
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_customers (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        company_type VARCHAR NOT NULL DEFAULT 'company',
+        email VARCHAR,
+        phone VARCHAR,
+        street VARCHAR,
+        street2 VARCHAR,
+        city VARCHAR,
+        state_name VARCHAR,
+        zip VARCHAR,
+        country_name VARCHAR,
+        website VARCHAR,
+        tags VARCHAR,
+        notes VARCHAR,
+        is_company BOOLEAN NOT NULL DEFAULT true,
+        currency_code VARCHAR NOT NULL DEFAULT 'USD',
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO pos_customers(id, name, company_type, email, phone, street, city, state_name, zip, country_name, website, tags, notes, is_company, currency_code)
+      VALUES
+        ('pos-customer-acme', 'Acme Corporation', 'company', 'info@acme.example', '+1 555 0101', '100 Market Street', 'San Francisco', 'California', '94105', 'United States', 'https://acme.example', 'B2B, VIP', 'Primary POS customer fixture.', true, 'USD'),
+        ('pos-customer-wayne', 'Wayne Industries', 'company', 'contact@wayne.example', '+1 555 0102', '200 Mission Street', 'San Francisco', 'California', '94105', 'United States', 'https://wayne.example', 'B2B', 'Wholesale POS customer fixture.', true, 'USD'),
+        ('pos-customer-touch', 'Touch Demo Customer', 'person', 'touch@example.test', '+1 555 0103', '1 Core3 Way', 'San Francisco', 'California', '94105', 'United States', '', 'Demo', 'Touch register customer fixture.', false, 'USD')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_customers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

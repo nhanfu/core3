@@ -3,8 +3,8 @@ datasources:
   - id: pos_customer_detail
     single: true
     permission: pos.read
-    query: "SELECT MIN(o.partner_name) AS id, o.partner_name, COUNT(*) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total_sales, MAX(CAST(o.date_order AS VARCHAR)) AS last_order FROM pos_orders o WHERE o.partner_name = :id GROUP BY o.partner_name"
+    query: "SELECT c.id, c.name AS partner_name, COUNT(o.id) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total_sales, MAX(CAST(o.date_order AS VARCHAR)) AS last_order FROM pos_customers c LEFT JOIN pos_orders o ON o.partner_name = c.name WHERE c.id = :id GROUP BY c.id, c.name"
   - id: pos_customer_detail_orders
     single: false
     permission: pos.read
-    query: "SELECT id, name, CAST(date_order AS VARCHAR) AS date_order, state, amount_total FROM pos_orders WHERE partner_name = :id ORDER BY date_order DESC"
+    query: "SELECT o.id, o.name, CAST(o.date_order AS VARCHAR) AS date_order, o.state, o.amount_total FROM pos_orders o JOIN pos_customers c ON c.name = o.partner_name WHERE c.id = :id ORDER BY o.date_order DESC"
