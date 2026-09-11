@@ -332,3 +332,56 @@ and route-specific transport `503` contracts, while retaining the
 `timesheets.manage` permission guard. The focused report test now covers every
 route, menu/page/API ownership, read-only controls and measures, deterministic
 SQL and migration versions, search, empty/not-found, and transport states.
+
+## Batch 5 implementation record — My Timesheets
+
+Implementation commit: `5c9977e26a7465bbed847b412dc9da62c18ac70e` on branch
+`agent/odoo-ui-timesheets-my-20260911`, isolated worktree
+`/home/nhanjs/projects/core3-worktrees/odoo-ui-timesheets-my-20260911`.
+This bounded slice owns the installed Odoo `Timesheets / My Timesheets` action
+(`/odoo/timesheets`) and its Core3 counterpart `/timesheets`. The page/API
+pair is joined by `page.id: timesheets`; the page provides Odoo-labelled List,
+Calendar, Kanban, and Form views while `api/entries.yaml` owns the datasource
+and mutations. Migration `0.0.6` adds the sales-order-item label and seven
+fixed Admin User fixtures dated 2026-01-07 through 2026-01-14. The personal
+query returns ten Admin User entries from the fixed 2026-01-15 dataset and
+supports search plus Today, This Week, and Last Week filters.
+
+The permission boundary is intentional: creating requires `timesheets.write`,
+editing/deleting is limited to the current user's Draft or Rejected entries,
+workflow actions retain their existing write/manage permissions, invalid
+dates/projects or hours outside `(0,24]` return `422`, approved/non-owned
+mutations return `403`, transport failure returns `503`, and empty fixtures
+return an empty result suitable for the UI empty state. The focused suite
+passed 11 tests and 154 assertions across `timesheets_my.integration.test.ts`,
+`timesheets_reports.integration.test.ts`, and
+`timesheets_settings.integration.test.ts`; `git diff --check` passed. CSS was
+rebuilt with `bun run css:build:global` and `bun run css:build:timesheets`.
+
+Authenticated Odoo 19 was checked as `codex@core3.local` against the installed
+Timesheets action. Authenticated Core3 was checked as `admin@tms.local` against
+the isolated runtime on `http://localhost:3014` (the shared reference runtime
+remains on `http://localhost:3002`). The Odoo menu-to-action path was verified
+before the final direct action capture; the final Core3 capture used the same
+authenticated `/timesheets` action after dismissing the launcher. No browser
+page errors or failed requests were observed. Desktop and mobile documents
+reported no horizontal overflow: `scrollWidth === clientWidth` at both 1440px
+and 390px.
+
+| viewport | authenticated Odoo | authenticated Core3 | sha256 (Odoo / Core3) |
+| --- | --- | --- | --- |
+| 1440x900 | `/tmp/odoo-timesheets-my-final-desktop-1440x900-20260911.png` | `/tmp/core3-timesheets-my-final-desktop-1440x900-20260911.png` | `7d583a0f3ed56aba61eb3390f3bf204ab0cd079bd6a55a03df937a47bb5a5e05` / `06fb878c80e2c490a1a9e9920e81a74f2a096475f37f2f5a1712d60ca19b11b8` |
+| 390x844 | `/tmp/odoo-timesheets-my-final-mobile-390x844-20260911.png` | `/tmp/core3-timesheets-my-final-mobile-390x844-20260911.png` | `0d1226b51af3bd1e70312bd5d73dc29cd67e07a6f08ff0f6afa17ae788ed3f86` / `da66c205dd2151da29b03682ad4ad9befc3fb20b26fe86184256db776f18efd2` |
+
+All four files are PNGs with the exact dimensions named in the table and are
+kept under `/tmp`; no image is tracked. The desktop comparison shows the same
+Odoo action hierarchy, search/list controls, project/task/date/description/time
+columns, and a readable entry detail surface; Core3 has a Fluent blue shell and
+split detail panel versus Odoo's purple shell and full-width table. The mobile
+comparison shows Odoo's compact Kanban cards versus Core3's compact Calendar
+month grid; both remain within 390px without clipping. Residual mismatches are
+the expected live-fixture/date difference (Odoo's current September 2026 rows
+versus Core3's deterministic January 2026 rows), shell/icon styling, exact
+relational autocomplete and `00:00` time-input behavior, and Odoo's richer
+sales-order-item relationships. These are outside this bounded slice and are
+recorded rather than masked.
