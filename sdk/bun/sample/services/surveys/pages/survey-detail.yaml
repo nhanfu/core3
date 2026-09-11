@@ -26,6 +26,7 @@ components:
       icon: more-vertical
       actions:
         - { id: duplicate_survey_detail, label: Duplicate, icon: copy, permission: surveys.write }
+        - { id: delete_survey_detail, label: Delete, icon: trash, variant: danger, permission: surveys.write }
         - { id: print_survey_detail, label: Print Survey, permission: surveys.read }
     stat_buttons:
       - { id: survey_certified_stats_detail, label: Certified, value_field: certified_count, permission: surveys.read }
@@ -83,6 +84,24 @@ actions:
       async ({ row }) => {
         if (!row.access_token) throw new Error('This survey does not have a printable link.');
         window.open(`/survey/print/${encodeURIComponent(row.access_token)}`, '_blank', 'noopener');
+  - id: delete_survey_detail
+    type: client
+    permission: surveys.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        const title = String(row.title || row.name || 'this survey');
+        if (!window.confirm(`Delete survey ${title}?\nIt will be removed permanently.`)) return;
+        await request('/api/actions/surveys.records.delete', {
+          method: 'POST',
+          body: {
+            id: row.id,
+            expected_row_version: row.row_version,
+          },
+        });
+        const app = await import('/app.ts');
+        await app.navigate('/surveys');
+      }
       }
   - id: test_survey_detail
     type: navigate

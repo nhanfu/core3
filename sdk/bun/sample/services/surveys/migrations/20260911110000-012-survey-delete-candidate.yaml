@@ -1,0 +1,23 @@
+version: 0.0.13
+description: Deterministic Survey candidate for guarded delete parity
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO surveys(id, name, title, description, owner, response_count, state, access_token, row_version, created_at, updated_at)
+      VALUES ('survey-delete-candidate', 'SURVEY/DELETE-CANDIDATE', 'Delete Candidate Survey', 'A deterministic survey used to verify the Odoo Delete action.', 'Mitchell Admin', 0, 'Draft', 'delete-candidate-token-2026', 1, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES ('question-delete-candidate-1', 'survey-delete-candidate', 'Would you delete this survey?', 'Choice', 1, TRUE, 'Yes,No')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO survey_suggested_values(id, question_id, question_text, value, sequence, score)
+      VALUES ('answer-delete-candidate-yes', 'question-delete-candidate-1', 'Would you delete this survey?', 'Yes', 1, 100)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_suggested_values WHERE question_id = 'question-delete-candidate-1';
+      DELETE FROM survey_questions WHERE id = 'question-delete-candidate-1';
+      DELETE FROM surveys WHERE id = 'survey-delete-candidate';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -3,6 +3,11 @@ datasources:
   - id: survey_detail
     single: true
     permission: surveys.read
+    error_states:
+      unauthorized: { status: 401, code: SURVEY_DETAIL_UNAUTHORIZED, message: Sign in to view this survey. }
+      forbidden: { status: 403, code: SURVEY_DETAIL_FORBIDDEN, message: You do not have permission to view this survey. }
+      missing_record: { status: 404, code: SURVEY_DETAIL_NOT_FOUND, message: Survey not found. }
+      transport_error: { status: 503, code: SURVEY_DETAIL_UNAVAILABLE, message: This survey is temporarily unavailable. }
     query: "SELECT s.id, s.row_version, s.name, s.title, s.description, s.owner, s.response_count, s.access_token, CASE WHEN s.access_token IS NULL OR s.access_token = '' THEN NULL ELSE '/survey/start/' || s.access_token END AS share_url, 'Participate to ' || s.title || ' survey' AS invite_subject, CASE WHEN s.title ILIKE '%certification%' THEN 'Dear participant\n\nYou have been invited to take a new certification.\n\nStart Certification\n\nWe wish you good luck!' ELSE 'Dear participant\n\nWe are conducting a survey and your response would be appreciated.\n\nStart Survey\n\nThank you in advance for your participation.' END AS invite_body, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS participant_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.quiz_passed = true) AS certified_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at, ls.id AS session_id, ls.row_version AS session_row_version, CASE WHEN ls.state IN ('Ready', 'In Progress') THEN ls.state ELSE NULL END AS session_state, ls.session_code, ls.session_link, ls.current_question_text, CAST(ls.session_start_time AS VARCHAR) AS session_start_time, ls.answer_count AS session_answer_count, ls.question_answer_count AS session_question_answer_count FROM surveys s LEFT JOIN survey_live_sessions ls ON ls.survey_id = s.id WHERE s.id = :id"
   - id: survey_questions
     permission: surveys.read
@@ -71,6 +76,27 @@ actions:
             ORDER BY a.sequence, a.id
       result:
         query: "SELECT id, row_version, name, title, description, owner, response_count, access_token, state, CAST(published_at AS VARCHAR) AS published_at, CAST(closed_at AS VARCHAR) AS closed_at FROM surveys WHERE id = :duplicate_id"
+  - id: delete_survey
+    type: server
+    permission: surveys.write
+    action: surveys.records.delete
+    handler: yaml_mutation
+    operation: delete
+    mutation:
+      operation: delete
+      table: surveys
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :id", status: 404, code: SURVEY_DELETE_NOT_FOUND, message: Survey not found. }
+        - { query: "SELECT id FROM surveys WHERE id = :id AND row_version = :expected_row_version", status: 409, code: SURVEY_DELETE_STALE, message: This survey changed before it could be deleted. Reload it and try again. }
+      before_steps:
+        - { query: "DELETE FROM survey_detailed_answers WHERE participant_id IN (SELECT id FROM survey_participants WHERE survey_id = :id)" }
+        - { query: "DELETE FROM survey_suggested_values WHERE question_id IN (SELECT id FROM survey_questions WHERE survey_id = :id)" }
+        - { query: "DELETE FROM survey_invites WHERE survey_id = :id" }
+        - { query: "DELETE FROM survey_responses WHERE survey_id = :id" }
+        - { query: "DELETE FROM survey_participants WHERE survey_id = :id" }
+        - { query: "DELETE FROM survey_live_sessions WHERE survey_id = :id" }
+        - { query: "DELETE FROM survey_questions WHERE survey_id = :id" }
   - id: share_survey_detail
     type: server_form
     permission: surveys.write
