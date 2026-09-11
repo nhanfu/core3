@@ -1,0 +1,39 @@
+title: Odometer Analysis
+page: { id: fleet-odometer-analysis, route: /fleet/reporting/odometers, breadcrumb: [Human Resources, Fleet, Reporting, Odometers], auth: { require: [fleet.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_odometer_analysis
+    search: { label: Search odometer analysis, placeholder: 'Search vehicle, category, fuel type, model, or date...' }
+    filters:
+      - { field: vehicle_id, label: Vehicle, options_source: fleet_odometer_analysis_vehicles }
+      - { field: category_name, label: Category, options_source: fleet_odometer_analysis_categories }
+      - { field: fuel_type, label: Fuel Type, options_source: fleet_odometer_analysis_fuel_types }
+      - { field: model_name, label: Model, options_source: fleet_odometer_analysis_models }
+    default_group_by: recorded_month
+    group_by:
+      - { field: recorded_month, label: Date }
+      - { field: vehicle_name, label: Vehicle }
+      - { field: category_name, label: Category }
+      - { field: fuel_type, label: Fuel Type }
+      - { field: model_name, label: Model }
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: recorded_month
+        series_field: category_name
+        measure_field: mileage_delta
+        measure_label: Mileage Delta
+        type: line
+    columns:
+      - { field: recorded_date, label: Date, type: DateCell }
+      - { field: vehicle_name, label: Vehicle, type: PrimaryEntityCell }
+      - { field: category_name, label: Category }
+      - { field: model_name, label: Model }
+      - { field: fuel_type, label: Fuel Type }
+      - { field: odometer_value, label: Odometer Value, align: right }
+      - { field: mileage_delta, label: Mileage Delta, align: right }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No data for odometer analysis, description: Manage efficiently your vehicle Odometers with Odoo. }

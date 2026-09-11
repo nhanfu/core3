@@ -1,0 +1,27 @@
+version: 0.0.17
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_odometer_reports (
+        id VARCHAR PRIMARY KEY,
+        vehicle_id VARCHAR NOT NULL,
+        category_name VARCHAR NOT NULL,
+        model_name VARCHAR NOT NULL,
+        fuel_type VARCHAR NOT NULL,
+        recorded_date DATE NOT NULL,
+        odometer_value DECIMAL(18,2) NOT NULL DEFAULT 0,
+        mileage_delta DECIMAL(18,2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        CONSTRAINT fleet_vehicle_odometer_reports_odometer_check CHECK (odometer_value >= 0),
+        CONSTRAINT fleet_vehicle_odometer_reports_delta_check CHECK (mileage_delta >= 0)
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_odometer_reports_date_idx ON fleet_vehicle_odometer_reports(recorded_date, category_name, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_odometer_reports_vehicle_idx ON fleet_vehicle_odometer_reports(vehicle_id, recorded_date, id);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_odometer_reports;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

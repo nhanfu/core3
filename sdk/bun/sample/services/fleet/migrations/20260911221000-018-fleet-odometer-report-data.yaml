@@ -1,0 +1,44 @@
+version: 0.0.18
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_odometer_reports(id, vehicle_id, category_name, model_name, fuel_type, recorded_date, odometer_value, mileage_delta) VALUES
+        ('fleet-odometer-report-001', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2025-10-01', 0.00, 0.00),
+        ('fleet-odometer-report-002', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2025-11-01', 493.50, 493.50),
+        ('fleet-odometer-report-003', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2025-12-01', 1525.10, 1031.60),
+        ('fleet-odometer-report-004', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2025-12-01', 0.00, 0.00),
+        ('fleet-odometer-report-005', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-01-01', 2257.60, 732.50),
+        ('fleet-odometer-report-006', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2026-01-01', 280.80, 280.80),
+        ('fleet-odometer-report-007', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-02-01', 2901.33, 643.73),
+        ('fleet-odometer-report-008', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2026-02-01', 1065.57, 784.77),
+        ('fleet-odometer-report-009', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-03-01', 3308.27, 406.93),
+        ('fleet-odometer-report-010', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2026-03-01', 2245.20, 1179.63),
+        ('fleet-odometer-report-011', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-04-01', 3808.40, 500.13),
+        ('fleet-odometer-report-012', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2026-04-01', 3171.56, 926.36),
+        ('fleet-odometer-report-013', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-05-01', 4400.75, 592.35),
+        ('fleet-odometer-report-014', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2026-05-01', 4043.05, 871.49),
+        ('fleet-odometer-report-015', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-06-01', 5346.50, 945.75),
+        ('fleet-odometer-report-016', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2026-06-01', 4830.79, 787.74),
+        ('fleet-odometer-report-017', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-07-01', 6222.00, 875.50),
+        ('fleet-odometer-report-018', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2026-07-01', 5727.80, 897.01),
+        ('fleet-odometer-report-019', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-08-01', 7533.09, 1311.09),
+        ('fleet-odometer-report-020', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2026-08-01', 6823.20, 1095.40),
+        ('fleet-odometer-report-021', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-09-01', 7975.60, 442.51),
+        ('fleet-odometer-report-022', 'fleet-demo-001', 'Sedan', 'Model S', 'Petrol', DATE '2026-09-01', 8001.20, 1178.00),
+        ('fleet-odometer-report-023', 'fleet-demo-002', 'City', 'City', 'Electric', DATE '2026-10-01', 7981.00, 5.40)
+      ON CONFLICT (id) DO UPDATE SET
+        vehicle_id = excluded.vehicle_id,
+        category_name = excluded.category_name,
+        model_name = excluded.model_name,
+        fuel_type = excluded.fuel_type,
+        recorded_date = excluded.recorded_date,
+        odometer_value = excluded.odometer_value,
+        mileage_delta = excluded.mileage_delta,
+        updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DELETE FROM fleet_vehicle_odometer_reports WHERE id LIKE 'fleet-odometer-report-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

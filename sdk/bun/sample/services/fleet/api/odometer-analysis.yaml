@@ -1,0 +1,19 @@
+page: { id: fleet-odometer-analysis }
+datasources:
+  - id: fleet_odometer_analysis_vehicles
+    permission: fleet.manage
+    query: "SELECT DISTINCT v.id AS value, v.name AS label FROM fleet_vehicles v JOIN fleet_vehicle_odometer_reports r ON r.vehicle_id = v.id WHERE COALESCE(v.archived, FALSE) = FALSE ORDER BY v.name, v.id"
+  - id: fleet_odometer_analysis_categories
+    permission: fleet.manage
+    query: "SELECT DISTINCT r.category_name AS value, r.category_name AS label FROM fleet_vehicle_odometer_reports r JOIN fleet_vehicles v ON v.id = r.vehicle_id WHERE COALESCE(v.archived, FALSE) = FALSE ORDER BY r.category_name"
+  - id: fleet_odometer_analysis_fuel_types
+    permission: fleet.manage
+    query: "SELECT DISTINCT r.fuel_type AS value, r.fuel_type AS label FROM fleet_vehicle_odometer_reports r JOIN fleet_vehicles v ON v.id = r.vehicle_id WHERE COALESCE(v.archived, FALSE) = FALSE ORDER BY r.fuel_type"
+  - id: fleet_odometer_analysis_models
+    permission: fleet.manage
+    query: "SELECT DISTINCT r.model_name AS value, r.model_name AS label FROM fleet_vehicle_odometer_reports r JOIN fleet_vehicles v ON v.id = r.vehicle_id WHERE COALESCE(v.archived, FALSE) = FALSE ORDER BY r.model_name"
+  - id: fleet_odometer_analysis
+    single: false
+    permission: fleet.manage
+    error_states: { transport_error: { status: 503, code: FLEET_ODOMETER_ANALYSIS_UNAVAILABLE, message: Fleet odometer analysis is temporarily unavailable } }
+    query: "SELECT r.id, r.vehicle_id, v.name AS vehicle_name, r.category_name, r.model_name, r.fuel_type, CAST(r.recorded_date AS VARCHAR) AS recorded_date, strftime(r.recorded_date, '%Y-%m') AS recorded_month, r.odometer_value, r.mileage_delta FROM fleet_vehicle_odometer_reports r JOIN fleet_vehicles v ON v.id = r.vehicle_id WHERE COALESCE(v.archived, FALSE) = FALSE AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR r.category_name ILIKE '%' || :q || '%' OR r.model_name ILIKE '%' || :q || '%' OR r.fuel_type ILIKE '%' || :q || '%' OR CAST(r.recorded_date AS VARCHAR) ILIKE '%' || :q || '%') AND (:vehicle_id IS NULL OR r.vehicle_id = :vehicle_id) AND (:category_name IS NULL OR r.category_name = :category_name) AND (:fuel_type IS NULL OR r.fuel_type = :fuel_type) AND (:model_name IS NULL OR r.model_name = :model_name) ORDER BY r.recorded_date, r.category_name, r.id"
