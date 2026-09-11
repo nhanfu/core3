@@ -409,6 +409,70 @@ relational tax/selectors, and the richer live activity history are shared
 component or datasource follow-ups. Mobile screenshots are viewport captures;
 the detail continues vertically below the fold without page overflow.
 
+## Purchase Vendor Pricelists detail bounded slice (selected 2026-09-11)
+
+The next uncovered installed visible Purchase action after Products list/detail
+was Configuration → Vendor Pricelists. The authenticated personal Odoo menu
+maps this action to `/odoo/action-239`, source action
+`product.product_supplierinfo_type_action`, with `list,form,kanban` view modes.
+The live list showed 29 demo rows and the selected `Wood Corner` row opened
+`/odoo/action-239/16`. Odoo's visible list labels are Vendor, Product, Company,
+Unit, Unit Price, Currency, and Lead Time. The form labels and sections are
+Vendor Information, Vendor Product Name?, Vendor Product Code?, Lead Time?,
+Product, Product Variant?, Quantity?, Unit Price?, Validity?, Discount (%), and
+Company, grouped under VENDOR and PRICELIST.
+
+Core3 implements the bounded list/detail slice at
+`/purchase/vendor-pricelists` and
+`/purchase/vendor-pricelists/detail?id=supplierinfo-demo-016`. Page YAML and
+API YAML remain separate and are joined by
+`page.id: purchase-vendor-pricelists` and
+`page.id: purchase-vendor-pricelist-detail`. Migration
+`20260911170000-016-purchase-vendor-pricelist-detail.yaml` adds the deterministic
+supplier-information fields and seeds 27 stable rows, including vendor
+product/code, variant, currency, validity dates, discount, lead time, quantity,
+and unit price. The list supports list/card modes, search, row navigation, and
+create; the detail supports read, edit, duplicate, delete, and stale-version
+guards. Read protects both routes and write protects mutations. The integration
+coverage exercises default/search/empty/not-found/transport-error contracts,
+permission declarations, required/duplicate/numeric validation, CRUD, and
+concurrency guards.
+
+Focused validation:
+`test/purchase_vendor_pricelists.integration.test.ts` plus
+`test/purchase_vendor_pricelist_detail.integration.test.ts` pass with 4 tests
+and 48 assertions. Authenticated browser verification covered the populated
+list, `Acoustic` search, row-to-detail navigation, and Edit → Save on
+`supplierinfo-demo-027` (Discount (%) changed to 5). Final comparison captures
+are local under `/tmp` and are intentionally untracked:
+
+- Odoo: `/tmp/purchase-vendor-pricelist-odoo-desktop-list-20260911c.png`,
+  `/tmp/purchase-vendor-pricelist-odoo-desktop-detail-20260911c.png`,
+  `/tmp/purchase-vendor-pricelist-odoo-mobile-list-20260911c.png`, and
+  `/tmp/purchase-vendor-pricelist-odoo-mobile-detail-20260911c.png`.
+- Core3: `/tmp/purchase-vendor-pricelist-core3-desktop-list-20260911c.png`,
+  `/tmp/purchase-vendor-pricelist-core3-desktop-detail-20260911c.png`,
+  `/tmp/purchase-vendor-pricelist-core3-mobile-list-20260911c.png`, and
+  `/tmp/purchase-vendor-pricelist-core3-mobile-detail-20260911c.png`.
+
+The normal populated desktop/mobile matrix reported exact document/body widths
+of 1440/1440 and 390/390 with no failed responses. State captures also cover
+empty, intentional not-found, intentional transport-error, and dispatcher
+permission-denied routes. The transport-error backend contract returns 503
+`PURCHASE_VENDOR_PRICELISTS_UNAVAILABLE` or
+`PURCHASE_VENDOR_PRICELIST_DETAIL_UNAVAILABLE`; the current shared page
+prefetch validator rejects datasource-level `error` metadata before the
+Purchase error component can render, so the browser currently shows Core3's
+generic invalid-page fallback for that state. Likewise, a dispatcher receives
+the expected 403 while the shared shell remains visible. Fixing those shared
+renderer behaviors is outside this Purchase-only slice.
+
+Known visual/data limitations are the shared Fluent shell versus Odoo's purple
+shell, a separate Currency row where Odoo uses inline currency/UoM widgets,
+text-backed relational fields rather than Odoo pickers, and 27 deterministic
+Core3 fixtures versus 29 live Odoo rows. The mobile action strip can scroll
+internally while the page body remains within the viewport.
+
 ## Required visible states
 
 - RFQ/order list: populated, empty, loading/error, search by order/vendor/
