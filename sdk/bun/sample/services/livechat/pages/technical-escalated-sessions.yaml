@@ -1,0 +1,48 @@
+title: Sessions
+page: { id: livechat-technical-escalated-sessions, route: /livechat/technical/escalated-sessions, breadcrumb: [Website, Live Chat, Technical, Escalated Sessions], auth: { require: [livechat.manage] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_technical_escalated_sessions
+    search: { label: Search history, placeholder: Search... }
+    default_filters: { status: ongoing, escalated: true }
+    filters:
+      - { field: status, label: Status, options: [{ id: ongoing, label: Ongoing }] }
+      - { field: rating_text, label: Rating, options: [Happy, Neutral, Unhappy, Unrated] }
+      - { field: country_name, label: Country, options: ['United States', Belgium, France] }
+      - { field: session_date, label: Session Date, options: [{ id: last_24_hours, label: Last 24 Hours }, { id: last_7_days, label: Last 7 Days }, { id: last_30_days, label: Last 30 Days }, { id: last_365_days, label: Last 365 Days }] }
+    group_by:
+      - { field: channel_name, label: Channel }
+      - { field: agents_name, label: Agent }
+      - { field: requesting_agent_name, label: 'Requesting Help' }
+      - { field: providing_agent_name, label: 'Providing Help' }
+      - { field: rating_text, label: Rating }
+      - { field: country_name, label: Country }
+      - { field: customer_name, label: Customer }
+      - { field: session_date_month, label: Session Date }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/livechat/pages/technical-escalated-session-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_livechat_technical_escalated_session
+    row_double_click_action: view_livechat_technical_escalated_session
+    empty_state: { title: No sessions found, description: Escalated ongoing live chat conversations will appear here. }
+    columns:
+      - { field: session_date, label: Date, type: TextCell, mobile: true }
+      - { field: customer_name, label: Customer, type: PrimaryEntityCell, mobile: true }
+      - { field: agents_name, label: Agents, type: TextCell, mobile: true }
+      - { field: requesting_agent_name, label: 'Requesting Help', type: TextCell, mobile: false }
+      - { field: providing_agent_name, label: 'Providing Help', type: TextCell, mobile: false }
+      - { field: chatbot_name, label: Chatbot, type: TextCell, mobile: false }
+      - { field: country_name, label: Country, type: TextCell, mobile: true }
+      - { field: language_name, label: Language, type: TextCell, mobile: true }
+      - { field: expertise_name, label: Expertise, type: TextCell, mobile: true }
+      - { field: tag_names, label: Tags, type: TextCell, mobile: false }
+      - { field: channel_name, label: Channel, type: TextCell, mobile: false }
+      - { field: duration_display, label: Duration, type: TextCell, mobile: true }
+      - { field: message_count, label: Messages, type: TextCell, mobile: true }
+      - { field: rating_text, label: Rating, type: StatusBadge, mobile: true }
+      - { field: rating_feedback, label: Comment, type: TextCell, mobile: false }

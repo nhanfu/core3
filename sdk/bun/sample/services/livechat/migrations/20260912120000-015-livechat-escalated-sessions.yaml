@@ -1,0 +1,48 @@
+version: 0.0.15
+kind: data
+description: Add deterministic read-only Technical Live Chat escalated session fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_technical_escalated_sessions (
+        id VARCHAR PRIMARY KEY,
+        row_version INTEGER NOT NULL DEFAULT 1,
+        session_date TIMESTAMP NOT NULL,
+        customer_name VARCHAR NOT NULL,
+        participant_name VARCHAR NOT NULL,
+        agents_name VARCHAR NOT NULL DEFAULT '',
+        requesting_agent_name VARCHAR NOT NULL DEFAULT '',
+        providing_agent_name VARCHAR NOT NULL DEFAULT '',
+        chatbot_name VARCHAR NOT NULL DEFAULT '',
+        country_name VARCHAR NOT NULL DEFAULT '',
+        language_name VARCHAR NOT NULL DEFAULT '',
+        expertise_name VARCHAR NOT NULL DEFAULT '',
+        tag_names VARCHAR NOT NULL DEFAULT '',
+        channel_name VARCHAR NOT NULL DEFAULT '',
+        duration_hour DOUBLE NOT NULL DEFAULT 0,
+        message_count INTEGER NOT NULL DEFAULT 0,
+        rating_text VARCHAR NOT NULL DEFAULT '',
+        rating_feedback VARCHAR NOT NULL DEFAULT '',
+        status VARCHAR NOT NULL DEFAULT 'ongoing',
+        is_escalated BOOLEAN NOT NULL DEFAULT FALSE
+      );
+      INSERT INTO livechat_technical_escalated_sessions(
+        id, row_version, session_date, customer_name, participant_name,
+        agents_name, requesting_agent_name, providing_agent_name, chatbot_name,
+        country_name, language_name, expertise_name, tag_names, channel_name,
+        duration_hour, message_count, rating_text, rating_feedback, status, is_escalated
+      ) VALUES
+        ('livechat-escalated-session-001', 1, TIMESTAMP '2026-09-12 09:18:00', 'Visiteur', 'Visiteur, Mitchell Admin', 'Core3 Administrator, Marc Demo', 'Marc Demo', 'Mitchell Admin', '', 'Belgium', 'French / Français', 'Discuss', 'Urgent', 'YourWebsite.com', 0.084167, 8, '', '', 'ongoing', TRUE),
+        ('livechat-escalated-session-002', 1, TIMESTAMP '2026-09-12 08:54:00', 'Visitor #306', 'Visitor #306, Mitchell Admin', 'Core3 Administrator, Mitchell Admin', 'Core3 Administrator', 'Mitchell Admin', 'Support Bot', 'United States', 'English (US)', 'Support', 'Billing, VIP', 'Support', 0.131389, 6, '', '', 'ongoing', TRUE),
+        ('livechat-escalated-session-003', 1, TIMESTAMP '2026-09-11 16:42:00', 'Visiteur #402', 'Visiteur #402, Support Agent', 'Support Agent, Mitchell Admin', 'Support Agent', 'Mitchell Admin', '', 'France', 'French / Français', 'Technical Support', 'Urgent', 'Website Support', 0.246944, 12, 'Unhappy', 'Waiting for a technical answer', 'ongoing', TRUE),
+        ('livechat-escalated-session-004', 1, TIMESTAMP '2026-09-11 14:05:00', 'Visitor #401', 'Visitor #401, Support Agent', 'Support Agent, Core3 Administrator', 'Support Agent', 'Core3 Administrator', '', 'United States', 'English (US)', 'Billing', 'Billing, VIP', 'Website Support', 0.388889, 15, 'Neutral', 'Agent handoff requested', 'ongoing', TRUE),
+        ('livechat-escalated-session-005', 1, TIMESTAMP '2026-09-10 11:27:00', 'Visitor #301', 'Visitor #301, Support', 'Support Bot, Core3 Administrator', 'Support Bot', 'Core3 Administrator', 'Support Bot', 'France', 'French / Français', '', 'Follow-up', 'YourWebsite.com', 0.517222, 9, 'Happy', 'Helpful answer after escalation', 'ongoing', TRUE),
+        ('livechat-escalated-session-nonmatching-ongoing', 1, TIMESTAMP '2026-09-12 09:30:00', 'Non Escalated Visitor', 'Non Escalated Visitor', 'Core3 Administrator', '', '', '', 'Belgium', 'French / Français', 'Support', '', 'YourWebsite.com', 0.020000, 1, '', '', 'ongoing', FALSE),
+        ('livechat-escalated-session-nonmatching-closed', 1, TIMESTAMP '2026-09-12 09:25:00', 'Closed Escalated Visitor', 'Closed Escalated Visitor, Core3 Administrator', 'Core3 Administrator', '', '', '', 'United States', 'English (US)', 'Support', '', 'Support', 0.250000, 4, 'Happy', 'Closed session', 'closed', TRUE)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS livechat_technical_escalated_sessions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

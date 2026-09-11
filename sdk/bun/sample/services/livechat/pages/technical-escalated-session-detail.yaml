@@ -1,0 +1,18 @@
+title: Session Form
+page: { id: livechat-technical-escalated-session-detail, route: /livechat/technical/escalated-sessions/detail, breadcrumb: [Website, Live Chat, Technical, Escalated Sessions], auth: { require: [livechat.manage] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_technical_escalated_session_detail
+    title_field: customer_name
+    editable: false
+    labels: { editDetails: Details }
+    groups:
+      - title: Session
+        fields:
+          - { field: participant_name, label: Participants }
+          - { field: session_date, label: Session Date }
+      - title: Rating
+        fields:
+          - { field: rating_text, label: Rating }
+          - { field: rating_feedback, label: Comment, type: textarea }

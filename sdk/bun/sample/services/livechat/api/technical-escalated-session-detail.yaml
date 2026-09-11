@@ -1,0 +1,18 @@
+page: { id: livechat-technical-escalated-session-detail }
+
+datasources:
+  - id: livechat_technical_escalated_session_detail
+    single: true
+    permission: livechat.read
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_ESCALATED_SESSION_DETAIL_UNAUTHORIZED, message: Sign in to view this escalated Live Chat session. }
+      forbidden: { status: 403, code: LIVECHAT_ESCALATED_SESSION_DETAIL_FORBIDDEN, message: You do not have permission to view this escalated Live Chat session. }
+      transport_error: { status: 503, code: LIVECHAT_ESCALATED_SESSION_DETAIL_UNAVAILABLE, message: This escalated Live Chat session is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, CAST(session_date AS VARCHAR) AS session_date,
+        customer_name, participant_name, rating_text, rating_feedback
+      FROM livechat_technical_escalated_sessions
+      WHERE status = 'ongoing'
+        AND is_escalated = TRUE
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND id = :id
