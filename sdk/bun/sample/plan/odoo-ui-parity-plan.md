@@ -68,9 +68,9 @@ keeps this module set reproducible for a fresh owned reference database.
 
 | Core3 service | Odoo reference addon | Source status | Sub-plan | Status |
 | --- | --- | --- | --- | --- |
-| base | contacts, base | available | `odoo-ui-parity/base-contacts.md` | ready |
+| base | contacts, base | available | `odoo-ui-parity/base-contacts.md` | in-progress |
 | chat | mail | available | `odoo-ui-parity/chat.md` | ready |
-| crm | crm | available | `odoo-ui-parity/crm.md` | ready |
+| crm | crm | available | `odoo-ui-parity/crm.md` | in-progress |
 | order | sale_management | available | `odoo-ui-parity/sales.md` | ready |
 | point-of-sale | point_of_sale | available | `odoo-ui-parity/point-of-sale.md` | in-progress |
 | sale-subscription | sale_subscription | unavailable in supplied source | `odoo-ui-parity/subscriptions.md` | planned |
@@ -88,12 +88,12 @@ keeps this module set reproducible for a fresh owned reference database.
 | helpdesk | helpdesk | unavailable in supplied source | `odoo-ui-parity/helpdesk.md` | planned |
 | quality | quality | unavailable in supplied source | `odoo-ui-parity/quality.md` | planned |
 | plm | mrp_plm | unavailable in supplied source | `odoo-ui-parity/plm.md` | planned |
-| employees | hr | available | `odoo-ui-parity/employees.md` | ready |
+| employees | hr | available | `odoo-ui-parity/employees.md` | in-progress |
 | recruitment | hr_recruitment | available | `odoo-ui-parity/recruitment.md` | ready |
 | time-off | hr_holidays | available | `odoo-ui-parity/time-off.md` | in-progress |
 | appraisals | hr_appraisal | unavailable in supplied source | `odoo-ui-parity/appraisals.md` | planned |
 | referrals | hr_referral | unavailable in supplied source | `odoo-ui-parity/referrals.md` | planned |
-| fleet | fleet | available | `odoo-ui-parity/fleet.md` | ready |
+| fleet | fleet | available | `odoo-ui-parity/fleet.md` | in-progress |
 | email-marketing | mass_mailing | available | `odoo-ui-parity/email-marketing.md` | planned |
 | sms-marketing | mass_mailing_sms | available | `odoo-ui-parity/sms-marketing.md` | planned |
 | events | event | available | `odoo-ui-parity/events.md` | in-progress |
