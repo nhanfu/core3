@@ -314,6 +314,58 @@ separate slices.
 
 ## Source menu, action, view, and route inventory
 
+## Contract approval — Favorite Filters (2026-09-11)
+
+The live Odoo 19 `core3_user_demo` audit was performed before implementation
+against `http://127.0.0.1:8069` as `admin@core3.local`. The visible Email
+Marketing menu contains Configuration → **Favorite Filters** (menu 519,
+`mailing_filter_menu_action`) and opens action 813,
+`mass_mailing.mailing_filter_action`:
+
+- model: `mailing.filter`
+- view modes: `list,form`
+- domain: unrestricted by the window action
+- context: `search_default_filter_saved_by_me: 1`
+- source menu permission: ordinary `mass_mailing.group_mass_mailing_user`
+- source fields: required Filter Name, Recipients Model, and Filter Domain;
+  read-only Saved by and Recipients Model Name
+- source list: name, Saved by, Recipients, optional Domain
+- source search: name, Recipients Model, My Filters, group by Recipients
+- source help: “No saved filter yet!” and explanation that filters are saved
+  from a mailing’s recipient rules
+
+The live `mailing.filter` query is empty in this database, so the Core3 slice
+uses deterministic replacement fixtures rather than claiming copied Odoo
+records. This is the next uncovered visible action after the implemented
+Mailings, Mailing List Contacts, Mass Mailing Analysis, Opt-Out Report, and
+Optout Reasons slices.
+
+Approved bounded Core3 contract:
+
+- route `/email-favorite-filters`, menu Configuration → Favorite Filters,
+  default list mode with a list/form switch, and page/API fragments joined by
+  `page.id` (`email-favorite-filters` and
+  `email-favorite-filter-detail`)
+- `email_marketing.read` permits list/detail reads; `email_marketing.write`
+  permits create/update/delete; no send, workflow, import, or cross-service
+  mutation is included
+- fixed seed date `2026-01-15`, stable IDs, four filters across `res.partner`,
+  `mailing.contact`, and `res.users`, idempotent migration fixtures, and a
+  default “My Filters” user scope represented by `saved_by_me`
+- required non-blank name, recipient model, and domain; case-insensitive name
+  uniqueness; supported recipient-model lookup; 404 missing-record, 409
+  duplicate/stale, 422 required-field, and 503 transport-error contracts
+- focused integration coverage for discovery and page/API separation,
+  deterministic search/grouping/empty data, CRUD, permissions, invalid
+  records, duplicate names, stale row versions, and migration idempotence
+- authenticated Odoo/Core3 captures of the populated list and form at
+  `1440x900` and `390x844`, with no failed target requests, page errors, or
+  horizontal overflow; captures remain under `/tmp` and are never committed
+
+The implementation must remain YAML-first: page YAML is layout-only, API YAML
+owns datasource and action contracts, and the service migration owns schema and
+fixtures.
+
 The source-defined visible menu tree is:
 
 - **Email Marketing** (`mass_mailing_menu_root`,
