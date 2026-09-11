@@ -1,0 +1,46 @@
+version: 0.0.10
+description: Deterministic Overall Equipment Effectiveness report fixtures
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_workcenter_productivity (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        workcenter_id VARCHAR NOT NULL,
+        workcenter_name VARCHAR NOT NULL,
+        loss_id VARCHAR NOT NULL,
+        loss_reason VARCHAR NOT NULL,
+        loss_type VARCHAR NOT NULL,
+        date_start TIMESTAMP NOT NULL,
+        date_end TIMESTAMP,
+        duration_minutes DECIMAL(18,2) NOT NULL DEFAULT 0,
+        manufacturing_order_id VARCHAR,
+        manufacturing_order_name VARCHAR,
+        workorder_id VARCHAR,
+        workorder_name VARCHAR,
+        user_name VARCHAR,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        description VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT INTO mrp_workcenter_productivity (
+        id, workcenter_id, workcenter_name, loss_id, loss_reason, loss_type,
+        date_start, date_end, duration_minutes, manufacturing_order_id,
+        manufacturing_order_name, workorder_id, workorder_name, user_name,
+        company_name, description
+      ) VALUES
+        ('oee-assembly-productive', 'workcenter-assembly-1', 'Assembly 1', 'loss-fully-productive', 'Fully Productive Time', 'Productive', TIMESTAMP '2026-01-10 08:00:00', TIMESTAMP '2026-01-13 08:00:00', 4320, 'mo-demo-001', 'MO/2026/0001', 'wo-demo-001', 'Assemble pallet', '', 'My Company (San Francisco)', 'Fully productive work-center time'),
+        ('oee-assembly-availability', 'workcenter-assembly-1', 'Assembly 1', 'loss-material-availability', 'Material Availability', 'Availability', TIMESTAMP '2026-01-10 03:00:00', TIMESTAMP '2026-01-10 05:00:00', 0, 'mo-demo-001', 'MO/2026/0001', 'wo-demo-001', 'Assemble pallet', '', 'My Company (San Francisco)', 'Material availability loss'),
+        ('oee-assembly-failure', 'workcenter-assembly-1', 'Assembly 1', 'loss-equipment-failure', 'Equipment Failure', 'Availability', TIMESTAMP '2026-01-10 07:00:00', TIMESTAMP '2026-01-10 08:00:00', 0, 'mo-demo-001', 'MO/2026/0001', 'wo-demo-001', 'Assemble pallet', '', 'My Company (San Francisco)', 'Equipment failure loss'),
+        ('oee-drill-productive', 'workcenter-drill-1', 'Drill 1', 'loss-fully-productive', 'Fully Productive Time', 'Productive', TIMESTAMP '2026-01-11 08:00:00', TIMESTAMP '2026-01-13 08:00:00', 2880, 'mo-demo-001', 'MO/2026/0001', 'wo-demo-002', 'Quality check', '', 'My Company (San Francisco)', 'Fully productive work-center time'),
+        ('oee-drill-availability', 'workcenter-drill-1', 'Drill 1', 'loss-material-availability', 'Material Availability', 'Availability', TIMESTAMP '2026-01-11 04:00:00', TIMESTAMP '2026-01-11 06:00:00', 0, 'mo-demo-001', 'MO/2026/0001', 'wo-demo-002', 'Quality check', '', 'My Company (San Francisco)', 'Material availability loss'),
+        ('oee-drill-failure', 'workcenter-drill-1', 'Drill 1', 'loss-equipment-failure', 'Equipment Failure', 'Availability', TIMESTAMP '2026-01-13 06:00:00', NULL, 0, 'mo-demo-001', 'MO/2026/0001', 'wo-demo-002', 'Quality check', '', 'My Company (San Francisco)', 'Open equipment failure loss')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM mrp_workcenter_productivity WHERE id LIKE 'oee-%';
+      DROP TABLE IF EXISTS mrp_workcenter_productivity;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
