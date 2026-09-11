@@ -1,0 +1,26 @@
+version: 0.0.37
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_product_activities (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id VARCHAR NOT NULL UNIQUE,
+        activity_type VARCHAR,
+        activity_summary VARCHAR,
+        activity_date DATE,
+        activity_user VARCHAR,
+        activity_state VARCHAR NOT NULL DEFAULT 'planned',
+        activity_count INTEGER NOT NULL DEFAULT 0,
+        row_version INTEGER NOT NULL DEFAULT 1
+      );
+      INSERT INTO pos_product_activities(id, product_id, activity_type, activity_summary, activity_date, activity_user, activity_state, activity_count)
+      VALUES
+        ('pos-product-activity-coffee', 'pos-product-coffee', NULL, NULL, DATE '2026-01-15', 'Core3 Administrator', 'planned', 1),
+        ('pos-product-activity-sandwich', 'pos-product-sandwich', NULL, NULL, DATE '2026-01-15', 'Core3 Administrator', 'planned', 1),
+        ('pos-product-activity-water', 'pos-product-water', NULL, NULL, DATE '2026-01-15', 'Core3 Administrator', 'planned', 0)
+      ON CONFLICT(product_id) DO NOTHING;
+    down: DROP TABLE IF EXISTS pos_product_activities;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

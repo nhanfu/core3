@@ -54,7 +54,7 @@ export class ActivityView extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const rows = Array.isArray(this.state.rows) ? this.state.rows : [];
+    const rows = (Array.isArray(this.state.rows) ? this.state.rows : []).filter((row: ActivityRow) => this.hasActivityRecord(row));
     const types = this.options.view.activityTypes || [];
     const root = html.take(container).section.className('o-activity-view').ele();
     if (!types.length) {
@@ -86,6 +86,13 @@ export class ActivityView extends BaseComponent {
       const schedule = html.take(footerCell).button.className('o-activity-schedule').attr('type', 'button').text('+ Schedule activity').ele();
       html.take(schedule).event('click', () => void this.submit(this.options.scheduleAction!, { rows }));
     }
+  }
+
+  private hasActivityRecord(row: ActivityRow) {
+    return (this.options.view.activityTypes || []).some(type => {
+      const typeField = type.typeField || 'activity_type';
+      return String(row[typeField] ?? '').trim() !== '' || Number(row[type.countField || 'activity_count'] || 0) > 0;
+    });
   }
 
   private drawTypeHeader(container: HTMLElement, type: ActivityTypeDefinition, rows: ActivityRow[]) {

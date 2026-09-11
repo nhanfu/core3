@@ -2,10 +2,45 @@ page: { id: pos-products }
 datasources:
   - id: pos_product_catalog
     permission: pos.read
-    query: "SELECT id, 1 AS row_version, name, barcode, category, CAST(price AS DOUBLE) AS price, CAST(tax_rate AS DOUBLE) AS tax_rate, active FROM pos_products WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%') ORDER BY category, name"
+    error_states: { transport_error: { status: 503, code: POS_PRODUCTS_UNAVAILABLE, message: POS products are temporarily unavailable. } }
+    query: "SELECT p.id, COALESCE(a.row_version, 1) AS row_version, p.name, p.barcode, p.category, CAST(p.price AS DOUBLE) AS price, CAST(0 AS DOUBLE) AS on_hand, CAST(p.tax_rate AS DOUBLE) AS tax_rate, p.active, a.activity_type, a.activity_summary, CAST(a.activity_date AS VARCHAR) AS activity_date, a.activity_user, a.activity_state, COALESCE(a.activity_count, 0) AS activity_count FROM pos_products p LEFT JOIN pos_product_activities a ON a.product_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.barcode ILIKE '%' || :q || '%') ORDER BY p.category, p.name"
+  - id: pos_product_activity_products
+    permission: pos.read
+    query: "SELECT id AS value, name AS label FROM pos_products WHERE active = true ORDER BY name"
 actions:
   - id: view_pos_product
     type: navigate
     permission: pos.read
     navigate_to: /point-of-sale/product-detail
     params: { id: '{row.id}' }
+  - id: schedule_pos_product_activity
+    type: server_form
+    permission: pos.write
+    title: Schedule activity
+    action: pos.products.activity
+    handler: yaml_mutation
+    operation: update
+    refresh: [pos_product_catalog]
+    mutation:
+      operation: update
+      table: pos_product_activities
+      concurrency: false
+      fields: [product_id, activity_type, activity_summary, activity_date]
+      required: [product_id, activity_type, activity_summary, activity_date]
+      guards:
+        - { query: "SELECT id FROM pos_products WHERE id = :product_id AND active = true", status: 404, code: POS_PRODUCT_NOT_FOUND, message: Product not found. }
+        - { query: "SELECT 1 AS ok WHERE :activity_type IN ('todo', 'email', 'call', 'meeting', 'document')", status: 422, code: POS_ACTIVITY_TYPE_INVALID, message: Select a valid activity type. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:activity_summary AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: POS_ACTIVITY_SUMMARY_REQUIRED, message: Activity summary is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:activity_date AS DATE) IS NOT NULL", status: 422, code: POS_ACTIVITY_DATE_INVALID, message: Due date must be a valid ISO date. }
+        - { query: "SELECT 1 AS ok WHERE :expected_row_version IS NULL OR EXISTS (SELECT 1 FROM pos_product_activities WHERE product_id = :product_id AND row_version = TRY_CAST(:expected_row_version AS INTEGER))", status: 409, code: POS_PRODUCT_ACTIVITY_STALE, message: The product activity changed. Reload it before scheduling another activity. }
+        - { query: "SELECT id FROM pos_product_activities WHERE product_id = :product_id", status: 404, code: POS_PRODUCT_ACTIVITY_NOT_FOUND, message: Product activity slot not found. }
+      before_steps:
+        - { query: "SELECT id FROM pos_product_activities WHERE product_id = :product_id", assign: true }
+      steps:
+        - { query: "UPDATE pos_product_activities SET activity_user = 'Core3 Administrator', activity_state = 'planned', activity_count = 1, row_version = row_version + 1 WHERE id = :id", expect_changed: true, code: POS_PRODUCT_ACTIVITY_STALE }
+      result: { query: "SELECT * FROM pos_product_activities WHERE product_id = :product_id" }
+    fields:
+      - { field: product_id, label: Product, type: select, options_source: pos_product_activity_products, required: true }
+      - { field: activity_type, label: Activity Type, type: select, options: [{ value: todo, label: To-Do }, { value: email, label: Email }, { value: call, label: Call }, { value: meeting, label: Meeting }, { value: document, label: Document }], required: true }
+      - { field: activity_summary, label: Summary, type: textarea, required: true }
+      - { field: activity_date, label: Due Date, type: text, default: '2026-01-15', required: true, placeholder: YYYY-MM-DD }
