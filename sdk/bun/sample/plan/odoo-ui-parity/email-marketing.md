@@ -231,6 +231,87 @@ Images remain under `/tmp` and are not committed. The Email Marketing register
 status remains `planned`; this slice does not claim completion of the other
 actions or the shared gates.
 
+## Implemented action slice — Opt-Out Report (2026-09-11)
+
+The fresh authenticated reference database was verified before implementation:
+`mass_mailing` is `installed`, `application: true`, `latest_version:
+19.0.2.7`, and `demo: true` in `core3_codex_demo` at `http://localhost:8069`.
+The complete installed Email Marketing menu tree was queried as
+`codex@core3.local`: Mailings; Mailing Lists → Mailing Lists and Mailing List
+Contacts; Campaigns; Reporting → Mass Mailing Analysis and **Opt-Out Report**;
+and Configuration → Settings, Campaign Stages, Campaign Tags, Link Tracker,
+Blacklisted Email Addresses, Optout Reasons, and Favorite Filters. Technical
+Settings → Mass Mailing → Mailing Traces remains outside the ordinary menu.
+
+The one uncovered action selected from that comparison is Odoo's
+`mass_mailing.mailing_subscription_action_report_optout` (database action
+**483**, menu `mailing_menu_report_subscribe_reason`). Its model is
+`mailing.subscription`, domain `opt_out = True`, context default group-by
+`opt_out_reason_id`, and modes `graph,pivot,list,form`. Source XML is
+`/home/nhanjs/projects/odoo/addons/mass_mailing/views/mailing_subscription_views.xml`:
+the graph is a pie distribution, the pivot groups by unsubscription week and
+mailing list, the list is read-only (`create="0"`) with subscription date,
+contact, blacklist, list, unsubscription date, reason, and bounce columns, and
+the search view provides contact/list/reason/date filters and groupings.
+
+Core3 implements only this report action and keeps the page/API boundary:
+
+- Layout: `services/email-marketing/pages/opt-out-report.yaml` and the
+  read-only `opt-out-report-detail.yaml`.
+- API: `services/email-marketing/api/opt-out-report.yaml` and
+  `opt-out-report-detail.yaml`, joined to the layouts by `page.id`.
+- Menu: Reporting → Opt-Out Report at `/email-opt-out-report`, protected by
+  `email_marketing.read`; no create/update/delete actions are exposed.
+- Modes: default pie Graph, Pivot, List, and read-only Form inspection, with
+  Reason/list/contact filters, unsubscription date range, grouping, pager,
+  empty state, stable 401/403/404/503 states, and row-version-bearing records.
+- Fixture/migration: `migrations/20260911150000-012-email-opt-out-report-demo.yaml`
+  adds a stable imported opt-out record and normalizes the deterministic demo
+  reason/date/list data. Four opt-outs span two lists and three Odoo reasons,
+  including the blacklisted Elsa Ericson row; non-opted-out subscriptions are
+  excluded by the report domain. Re-running migrations is idempotent.
+- Focused contract: `test/email_marketing_opt_out_report.integration.test.ts`
+  covers discovery, page/API separation, modes, filters, deterministic
+  ordering, opt-out-only filtering, empty results, read-only action boundary,
+  and 401/403/503 errors. The shared `GraphView` pie primitive and isolated
+  test were added because the existing renderer exposed only bar/line controls.
+
+Validation in the dedicated worktree:
+
+- Focused report test: **3 pass, 39 expect() calls**.
+- GraphView primitive test: **3 pass**.
+- `bun run audit`: **490 pages, 497 routes, 857 datasources**, passed.
+- ESLint, global and Email Marketing CSS builds, and `git diff --check`
+  passed.
+
+Authenticated Odoo and Core3 browser checks used populated states at exact
+`1440x900` and `390x844` viewports. Every final target check recorded
+`requestfailed: []`, `pageerror: []`, and body/document `scrollWidth` equal to
+the viewport. Captures were visually inspected and remain under `/tmp` only:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Opt-Out Report graph | 1440x900 | `/tmp/odoo-email-optout-report-desktop-1440x900-20260911.png` | `5e9196b1adc3e3f25cd9331107806b174cd528f3d4bae03538ba023db4ee6937` |
+| Odoo Opt-Out Report graph | 390x844 | `/tmp/odoo-email-optout-report-mobile-390x844-20260911.png` | `d5b7393b4cac3ef2cf846cd77f6f6deec07a55dedc633c922706cebc5a026515` |
+| Odoo Opt-Out Report list | 1440x900 | `/tmp/odoo-email-optout-report-list-desktop-1440x900-20260911.png` | `5a7603d1ca82870f803e15299d0f4a05d07a21b25f758b8edb68a8b6125d0ba4` |
+| Odoo related opt-out form | 1440x900 | `/tmp/odoo-email-optout-report-form-desktop-1440x900-20260911.png` | `a7b013134402a47f1e9d7832b26a5c178368031132160796b112563c07c39bb9` |
+| Core3 Opt-Out Report graph | 1440x900 | `/tmp/core3-email-optout-report-desktop-1440x900-20260911.png` | `25436a687978fddf0527267bbe000b99bfdeb9f9519174f9a39037d681aad43b` |
+| Core3 Opt-Out Report graph | 390x844 | `/tmp/core3-email-optout-report-mobile-390x844-20260911.png` | `7f98ca02c74d7a59c4eb047a7219d77e536116c6a41e6e2941f9fb1e67ff5365` |
+| Core3 Opt-Out Report list | 1440x900 | `/tmp/core3-email-optout-report-list-desktop-1440x900-20260911.png` | `9a37474b8a26fc8450a2de7a245373f49cd98e909281979bbcb3a7197adfc1d9` |
+| Core3 Opt-Out Report list | 390x844 | `/tmp/core3-email-optout-report-list-mobile-390x844-20260911.png` | `5c6f018b5b91e081b993b71392d0149d98ba407a473fd4667a35fe1e300c79bd` |
+| Core3 read-only subscription detail | 1440x900 | `/tmp/core3-email-optout-report-detail-desktop-1440x900-20260911.png` | `5aaffc9915b516624b0f630557b5b49c3621568dc7927b0cbf1c85e3ea039961` |
+| Core3 read-only subscription detail | 390x844 | `/tmp/core3-email-optout-report-detail-direct-mobile-390x844-20260911.png` | `d6e942c540cebaf797860e5f3329b5669ccd1ba6edbe5aed20b7a844bdeddb36` |
+
+The fresh Odoo demo had two visible opt-out groups while Core3 deliberately
+uses four deterministic rows to exercise two lists, three reasons, and the
+blacklisted state. Residual visual differences are the shared Fluent shell
+versus Odoo's purple shell, Core3's read-only subscription detail versus
+Odoo's related mailing-contact form/chatter, and renderer-level filter/tool
+styling. The Odoo mobile shell hides view switches naturally; the Core3 mobile
+graph/list/detail routes were checked directly. Mail-trace drill-down,
+contact/chatter mutations, and the other Email Marketing actions remain
+separate slices.
+
 ## Source menu, action, view, and route inventory
 
 The source-defined visible menu tree is:
