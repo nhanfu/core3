@@ -44,5 +44,5 @@ actions:
     fields:
       - { field: employee_id, label: Employee, type: hidden, required: true }
       - { field: employee_name, label: Employee, type: hidden, required: true }
-      - { field: date_from, label: From, type: date, required: true, default: '2026-09-01' }
-      - { field: holiday_type, label: Select Time Off Type, type: select, required: true, default: Approved, options_source: time_off_summary_types }
+      - { field: date_from, label: From, type: date, default: '2026-09-01' }
+      - { field: holiday_type, label: Select Time Off Type, type: select, default: Approved, options_source: time_off_summary_types }

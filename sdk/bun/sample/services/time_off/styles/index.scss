@@ -4,6 +4,76 @@
 /* The employee Print action keeps Odoo's primary-before-secondary footer order. */
 .form-dialog.modal-style-time_off_summary .form-footer .btn-primary { order: 1; }
 .form-dialog.modal-style-time_off_summary .form-footer .btn-secondary { order: 2; }
+.form-dialog.modal-style-time_off_summary {
+  width: min(980px, calc(100vw - 32px));
+  max-height: calc(100vh - 60px);
+  padding: 0;
+  border: 1px solid #ced4da;
+  border-radius: 2px;
+  background: #fff;
+  color: #212529;
+}
+.modal-style-time_off_summary .form-header {
+  margin: 0;
+  padding: 16px;
+  border-bottom: 1px solid #dee2e6;
+}
+.modal-style-time_off_summary .form-title { font-size: 1.125rem; font-weight: 500; }
+.modal-style-time_off_summary .form-field {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 7px 16px;
+}
+.modal-style-time_off_summary .form-label { margin: 0; color: #212529; font-size: .875rem; font-weight: 400; }
+.modal-style-time_off_summary select,
+.modal-style-time_off_summary input:not([type='hidden']):not([type='search']) {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 28px;
+  padding: 4px;
+  border: 0;
+  border-bottom: 1px solid #7b5bb4;
+  border-radius: 0;
+  background: transparent;
+  color: #212529;
+  font: inherit;
+  font-size: .875rem;
+  outline: 0;
+}
+.modal-style-time_off_summary .form-footer {
+  align-items: center;
+  justify-content: flex-start;
+  margin: 18px 0 0;
+  padding: 16px;
+  border-top: 1px solid #dee2e6;
+}
+.modal-style-time_off_summary .form-footer .btn,
+.modal-style-time_off_summary .form-footer button {
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  font: inherit;
+  font-size: .875rem;
+}
+.modal-style-time_off_summary .form-footer .btn-primary { border-color: #71639e; background: #71639e; color: #fff; }
+.modal-style-time_off_summary .form-footer .btn-secondary { border-color: #ced4da; background: #e9ecef; color: #212529; }
+
+@media (max-width: 600px) {
+  .form-overlay:has(.modal-style-time_off_summary) { align-items: flex-start; padding: 0; }
+  .form-dialog.modal-style-time_off_summary {
+    width: 100vw;
+    min-height: 100vh;
+    max-height: 100vh;
+    border-radius: 2px;
+  }
+  .modal-style-time_off_summary .form-field { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 7px 16px; }
+  .modal-style-time_off_summary .form-footer { align-self: end; }
+}
 
 /* Odoo's multiple-request action is a wide, compact modal with inline labels. */
 .form-dialog.modal-style-time_off_multiple {
