@@ -1,0 +1,108 @@
+title: Product
+page: { id: manufacturing-product-detail, route: /manufacturing/products/detail, breadcrumb: [Supply Chain, Manufacturing, Products, Product], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_product_detail
+    title_field: name
+    subtitle_field: default_code
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    stat_buttons:
+      - { id: mrp_product_forecasted, label: Forecasted, value_field: forecasted_qty }
+      - { id: mrp_product_boms, label: Bill of Materials, value_field: bom_count }
+      - { id: mrp_product_documents, label: Documents, value_field: document_count }
+      - { id: mrp_product_sold, label: Sold, value_field: sold_qty }
+      - { id: mrp_product_purchased, label: Purchased, value_field: purchased_qty }
+      - { id: mrp_product_reordering, label: Reordering Rules, value_field: reordering_rule_count }
+    header_actions:
+      - { id: back_to_mrp_products, label: Products, icon: arrow-left, permission: manufacturing.read }
+      - { id: edit_mrp_product, label: Edit, variant: secondary, permission: manufacturing.write }
+      - { id: archive_mrp_product, label: Archive, variant: danger, permission: manufacturing.manage, show_if: 'state.mrp_product_detail.active === true' }
+      - { id: delete_mrp_product, label: Delete, icon: trash, variant: danger, permission: manufacturing.manage, confirm: Delete this product? }
+    group_columns: 2
+    groups:
+      - title: Product
+        fields:
+          - { field: name, label: Product }
+          - { field: default_code, label: Internal Reference }
+          - { field: category, label: Category }
+          - { field: company_name, label: Company }
+      - title: General Information
+        fields:
+          - { field: product_type, label: Product Type? }
+          - { field: uom, label: Unit of Measure }
+          - { field: barcode, label: Barcode }
+          - { field: tracking, label: Track Inventory? }
+          - { field: product_tags, label: Tags }
+      - title: Manufacturing
+        fields:
+          - { field: manufactured, label: Manufactured Products, type: checkbox }
+          - { field: bom_component, label: BoM Components, type: checkbox }
+          - { field: invoicing_policy, label: Invoicing Policy? }
+          - { field: on_hand_display, label: Quantity On Hand, readonly: true }
+          - { field: list_price_display, label: Sales Price? }
+          - { field: cost_price_display, label: Cost, readonly: true }
+    notebook:
+      active: general
+      tabs:
+        - id: general
+          label: General Information
+          groups:
+            - title: Inventory
+              fields:
+                - { field: on_hand_display, label: Quantity On Hand, readonly: true }
+                - { field: tracking, label: Track Inventory? }
+                - { field: uom, label: Unit of Measure }
+        - id: attributes
+          label: Attributes & Variants
+          groups:
+            - title: Attributes & Variants
+              fields:
+                - { field: variant_count, label: Variants, readonly: true }
+                - { field: variant_values, label: Variant Values, readonly: true }
+        - id: sales
+          label: Sales
+          groups:
+            - title: Sales
+              fields:
+                - { field: list_price_display, label: Sales Price? }
+                - { field: invoicing_policy, label: Invoicing Policy? }
+                - { field: sold_qty, label: Sold, readonly: true }
+        - id: point-of-sale
+          label: Point of Sale
+          groups:
+            - title: Point of Sale
+              fields: [{ field: barcode, label: Barcode }, { field: product_tags, label: Tags }]
+        - id: purchase
+          label: Purchase
+          groups:
+            - title: Purchase
+              fields:
+                - { field: cost_price_display, label: Cost, readonly: true }
+                - { field: purchased_qty, label: Purchased, readonly: true }
+                - { field: company_name, label: Company }
+        - id: inventory
+          label: Inventory
+          groups:
+            - title: Inventory
+              fields:
+                - { field: on_hand_display, label: Quantity On Hand, readonly: true }
+                - { field: tracking, label: Track Inventory? }
+                - { field: manufactured, label: Manufactured Products, type: checkbox }
+                - { field: bom_component, label: BoM Components, type: checkbox }
+        - id: notes
+          label: INTERNAL NOTES
+          groups:
+            - title: Internal Notes
+              fields: [{ field: note, label: Internal Notes, type: textarea, wide: true }]
+    message_source: mrp_product_messages
+    chatter_label: INTERNAL NOTES
+    message_label: Send message
+    note_label: Log note
+    message_action: send_mrp_product_message
+    note_action: log_mrp_product_note
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    message_action_labels: { manufacturing.products.message: Message, manufacturing.products.note: Note, created: Product created }

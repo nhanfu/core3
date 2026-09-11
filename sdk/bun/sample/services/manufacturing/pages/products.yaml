@@ -1,0 +1,38 @@
+title: Products
+page: { id: manufacturing-products, route: /manufacturing/products, breadcrumb: [Supply Chain, Manufacturing, Products], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_products
+    create_action: create_mrp_product
+    create_label: New
+    search: { label: Search products, placeholder: 'Search products by name, internal reference, or barcode...' }
+    filters:
+      - { field: product_type, label: Product Type, options: [{ id: Goods, label: Goods }, { id: Consumable, label: Consumable }, { id: Service, label: Service }] }
+      - { field: manufactured, label: BoM, options: [{ id: 'true', label: Manufactured Products }, { id: 'false', label: BoM Components }] }
+      - { field: active, label: Status, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: category
+        card: { title: name, subtitle: default_code, fields: [{ field: variant_count_label, label: Variants }, { field: list_price_display, label: 'Price:' }, { field: on_hand_display, label: 'On hand:' }] }
+      - { id: list, label: List, icon: table }
+    form_view: { page: apps/services/manufacturing/pages/product-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_product
+    row_double_click_action: view_mrp_product
+    row_actions: menu
+    columns:
+      - { field: name, label: Product Name, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: default_code, label: Internal Reference, sortable: true, mobile: true }
+      - { field: product_type, label: Product Type, mobile: false }
+      - { field: variant_count_label, label: Variants, mobile: false }
+      - { field: list_price_display, label: Price, align: right, mobile: true }
+      - { field: on_hand_display, label: On hand, align: right, mobile: true }
+      - { field: category, label: Category, mobile: false, optional: hide }
+      - { field: company_name, label: Company, mobile: false, optional: hide }
+      - { field: active, label: Status, type: StatusChip, mobile: false, optional: hide }
+    page_size: 50
+    empty_state: { title: No products found, description: Create a product for the components and finished products used in bills of materials and manufacturing orders. }

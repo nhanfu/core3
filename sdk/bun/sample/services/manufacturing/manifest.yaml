@@ -33,6 +33,10 @@ menu:
     - id: master-data
       label: Master Data
       items:
+        - path: /manufacturing/products
+          label: Products
+          icon: package
+          permission: manufacturing.read
         - path: /boms
           label: Bills of Materials
           icon: components

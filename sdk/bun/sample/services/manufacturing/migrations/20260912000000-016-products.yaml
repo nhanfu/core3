@@ -1,0 +1,51 @@
+version: 0.0.16
+description: Deterministic Manufacturing Products action fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_products (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, default_code VARCHAR, barcode VARCHAR, category VARCHAR,
+        product_type VARCHAR NOT NULL DEFAULT 'Goods', uom VARCHAR NOT NULL DEFAULT 'Units',
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        list_price DECIMAL(18,2) NOT NULL DEFAULT 0, cost_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        on_hand DECIMAL(18,3) NOT NULL DEFAULT 0, forecasted_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        variant_count INTEGER NOT NULL DEFAULT 1, variant_values VARCHAR, bom_count INTEGER NOT NULL DEFAULT 0,
+        document_count INTEGER NOT NULL DEFAULT 0, sold_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        purchased_qty DECIMAL(18,3) NOT NULL DEFAULT 0, reordering_rule_count INTEGER NOT NULL DEFAULT 0,
+        manufactured BOOLEAN NOT NULL DEFAULT FALSE, bom_component BOOLEAN NOT NULL DEFAULT FALSE,
+        active BOOLEAN NOT NULL DEFAULT TRUE, tracking VARCHAR NOT NULL DEFAULT 'No Tracking',
+        invoicing_policy VARCHAR NOT NULL DEFAULT 'Ordered quantities', product_tags VARCHAR, note VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS mrp_product_messages (
+        id VARCHAR PRIMARY KEY, product_id VARCHAR NOT NULL, actor_name VARCHAR NOT NULL,
+        action VARCHAR NOT NULL, action_label VARCHAR NOT NULL, detail VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT INTO mrp_products (id, name, default_code, barcode, category, product_type, uom, company_name, list_price, cost_price, on_hand, forecasted_qty, variant_count, variant_values, bom_count, document_count, sold_qty, purchased_qty, reordering_rule_count, manufactured, bom_component, active, tracking, invoicing_policy, product_tags, note, created_at) VALUES
+        ('mrp-product-acoustic', 'Acoustic Bloc Screens', NULL, '100000000001', 'Office Furniture', 'Goods', 'Units', 'My Company (San Francisco)', 295, 180, 16, 16, 2, 'Color', 0, 0, 0, 0, 0, FALSE, FALSE, TRUE, 'No Tracking', 'Ordered quantities', 'Office Furniture', 'Manufacturing catalog product', TIMESTAMP '2026-01-15 08:00:00'),
+        ('mrp-product-cable-box', 'Cable Management Box', 'FURN_5555', '100000000002', 'Office Furniture', 'Goods', 'Units', 'My Company (San Francisco)', 100, 60, 90, 90, 1, NULL, 1, 0, 12, 30, 1, TRUE, TRUE, TRUE, 'Lot', 'Ordered quantities', 'Manufactured', 'Finished product used in the cable box BoM.', TIMESTAMP '2026-01-15 08:02:00'),
+        ('mrp-product-desk', 'Desk Combination', 'FURN_7800', '100000000003', 'Office Furniture', 'Goods', 'Units', 'My Company (San Francisco)', 450, 270, 235, 240, 1, NULL, 1, 2, 20, 40, 1, TRUE, FALSE, TRUE, 'No Tracking', 'Ordered quantities', 'Manufactured', 'Finished product with an active BoM.', TIMESTAMP '2026-01-15 08:04:00'),
+        ('mrp-product-drawer', 'Drawer', 'FURN_8855', '100000000004', 'Office Furniture', 'Goods', 'Units', 'My Company (San Francisco)', 110.50, 70, 183, 190, 3, 'Color', 2, 1, 47, 80, 2, TRUE, FALSE, TRUE, 'Lot', 'Delivered quantities', 'Manufactured', 'Primary and secondary drawer assemblies.', TIMESTAMP '2026-01-15 08:06:00'),
+        ('mrp-product-table', 'Table', 'FURN_9666', '100000000005', 'Office Furniture', 'Goods', 'Units', 'My Company (San Francisco)', 520, 300, 1, 2, 1, NULL, 1, 0, 1, 3, 0, TRUE, FALSE, TRUE, 'Serial', 'Ordered quantities', 'Manufactured', 'Serialized finished product.', TIMESTAMP '2026-01-15 08:08:00'),
+        ('mrp-product-table-top', 'Table Top', 'FURN_8522', '100000000006', 'Office Furniture', 'Goods', 'Units', 'My Company (San Francisco)', 380, 210, 5, 5, 1, NULL, 1, 0, 2, 5, 0, TRUE, TRUE, TRUE, 'Lot', 'Ordered quantities', 'Manufactured', 'BoM component and manufactured subassembly.', TIMESTAMP '2026-01-15 08:10:00'),
+        ('mrp-product-table-kit', 'Table Kit', 'FURN_78236', '100000000007', 'Office Furniture', 'Goods', 'Units', 'My Company (San Francisco)', 147, 90, 50, 50, 1, NULL, 1, 0, 0, 4, 0, TRUE, FALSE, TRUE, 'No Tracking', 'Ordered quantities', 'Manufactured', 'Kit product.', TIMESTAMP '2026-01-15 08:12:00'),
+        ('mrp-product-laminate', 'Plastic Laminate', 'FURN_8621', '100000000008', 'Raw Materials', 'Goods', 'Units', 'Northwind Manufacturing', 1000, 700, 0, 0, 0, NULL, 0, 0, 0, 0, 0, FALSE, TRUE, FALSE, 'Lot', 'Ordered quantities', 'Legacy', 'Archived legacy component.', TIMESTAMP '2026-01-15 08:14:00'),
+        ('mrp-product-desk-frame', 'Desk Frame', NULL, NULL, 'Raw Materials', 'Goods', 'Units', 'My Company (San Francisco)', 80, 50, 30, 30, 1, NULL, 0, 0, 0, 20, 0, FALSE, TRUE, TRUE, 'No Tracking', 'Ordered quantities', 'Components', 'Component used in the Desk Combination BoM.', TIMESTAMP '2026-01-15 08:16:00'),
+        ('mrp-product-desk-top', 'Desk Top', NULL, NULL, 'Raw Materials', 'Goods', 'Units', 'My Company (San Francisco)', 120, 75, 25, 25, 1, NULL, 0, 0, 0, 18, 0, FALSE, TRUE, TRUE, 'No Tracking', 'Ordered quantities', 'Components', 'Component used in the Desk Combination BoM.', TIMESTAMP '2026-01-15 08:18:00'),
+        ('mrp-product-wood-scrap', 'Wood scrap', NULL, NULL, 'By-products', 'Consumable', 'kg', 'My Company (San Francisco)', 0, 0, 12, 12, 1, NULL, 0, 0, 0, 0, 0, FALSE, FALSE, TRUE, 'No Tracking', 'Ordered quantities', 'By-product', 'By-product from the drawer assembly.', TIMESTAMP '2026-01-15 08:20:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO mrp_product_messages (id, product_id, actor_name, action, action_label, detail, created_at) VALUES
+        ('mrp-product-message-001', 'mrp-product-desk', 'Mitchell Admin', 'created', 'Product created', 'Desk Combination was added to the Manufacturing catalog.', TIMESTAMP '2026-01-15 08:04:30'),
+        ('mrp-product-message-002', 'mrp-product-desk', 'Mitchell Admin', 'manufacturing.products.note', 'Note', 'The active Desk Combination BoM is ready for production.', TIMESTAMP '2026-01-15 08:05:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM mrp_product_messages WHERE id IN ('mrp-product-message-001', 'mrp-product-message-002');
+      DELETE FROM mrp_products WHERE id LIKE 'mrp-product-%';
+      DROP TABLE IF EXISTS mrp_product_messages;
+      DROP TABLE IF EXISTS mrp_products;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

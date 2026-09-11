@@ -1,0 +1,135 @@
+page: { id: manufacturing-product-detail }
+datasources:
+  - id: mrp_product_detail
+    single: true
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_PRODUCT_DETAIL_UNAUTHORIZED, message: Sign in to view this product. }
+      forbidden: { status: 403, code: MRP_PRODUCT_DETAIL_FORBIDDEN, message: You do not have permission to view this product. }
+      missing_record: { status: 404, code: MRP_PRODUCT_DETAIL_NOT_FOUND, message: Product not found. }
+      transport_error: { status: 503, code: MRP_PRODUCT_DETAIL_UNAVAILABLE, message: This product is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, name, COALESCE(default_code, '') AS default_code, COALESCE(barcode, '') AS barcode,
+        COALESCE(category, '') AS category, product_type, uom, company_name, list_price, cost_price,
+        printf('$ %,.2f', CAST(list_price AS DOUBLE)) AS list_price_display,
+        printf('$ %,.2f', CAST(cost_price AS DOUBLE)) AS cost_price_display,
+        CAST(on_hand AS DOUBLE) AS on_hand, printf('%.2f %s', CAST(on_hand AS DOUBLE), uom) AS on_hand_display,
+        CAST(forecasted_qty AS DOUBLE) AS forecasted_qty, variant_count, COALESCE(variant_values, '') AS variant_values,
+        bom_count, document_count, CAST(sold_qty AS DOUBLE) AS sold_qty, CAST(purchased_qty AS DOUBLE) AS purchased_qty,
+        reordering_rule_count, manufactured, bom_component, active, tracking, invoicing_policy,
+        COALESCE(product_tags, '') AS product_tags, COALESCE(note, '') AS note
+      FROM mrp_products
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id
+  - id: mrp_product_messages
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_PRODUCT_MESSAGES_UNAVAILABLE, message: Product messages are temporarily unavailable. } }
+    query: "SELECT id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM mrp_product_messages WHERE product_id = :id ORDER BY created_at, id"
+actions:
+  - id: back_to_mrp_products
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/products
+  - id: mrp_product_forecasted
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders
+    params: { q: '{state.name}' }
+  - id: mrp_product_boms
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /boms
+    params: { q: '{state.name}' }
+  - id: mrp_product_documents
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/products/detail
+    params: { id: '{state.id}', tab: documents }
+  - id: mrp_product_sold
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/products/detail
+    params: { id: '{state.id}', tab: sales }
+  - id: mrp_product_purchased
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/products/detail
+    params: { id: '{state.id}', tab: purchase }
+  - id: mrp_product_reordering
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/products/detail
+    params: { id: '{state.id}', tab: inventory }
+  - id: edit_mrp_product
+    type: server_form
+    permission: manufacturing.write
+    title: Edit Product
+    action: manufacturing.products.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.mrp_product_detail
+    refresh: [mrp_product_detail, mrp_products, mrp_product_messages]
+    success_message: Product updated.
+    fields:
+      - { field: name, label: Product, type: text, required: true }
+      - { field: default_code, label: Internal Reference, type: text }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: product_type, label: Product Type?, type: select, options: [Goods, Service, Consumable] }
+      - { field: uom, label: Unit of Measure, type: text }
+      - { field: list_price, label: Sales Price, type: number, min: 0 }
+      - { field: cost_price, label: Cost, type: number, min: 0 }
+      - { field: category, label: Category, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: product_tags, label: Tags, type: text }
+    mutation:
+      operation: update
+      table: mrp_products
+      fields: [name, default_code, barcode, category, product_type, uom, company_name, list_price, cost_price, manufactured, bom_component, active, tracking, invoicing_policy, product_tags]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_products WHERE id = :id", status: 404, code: MRP_PRODUCT_NOT_FOUND, message: Product not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: MRP_PRODUCT_NAME_REQUIRED, message: A product name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_products WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: MRP_PRODUCT_NAME_EXISTS, message: A product with this name already exists. }
+      result: { query: "SELECT * FROM mrp_products WHERE id = :id" }
+  - id: archive_mrp_product
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.products.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', values: { active: false } }
+    refresh: [mrp_product_detail, mrp_products]
+    mutation: { steps: [{ query: "UPDATE mrp_products SET active = FALSE, row_version = row_version + 1 WHERE id = :id" }], concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_products WHERE id = :id AND active = TRUE", status: 409, code: MRP_PRODUCT_ALREADY_ARCHIVED, message: Product is already archived. }], result: { query: "SELECT * FROM mrp_products WHERE id = :id" } }
+  - id: delete_mrp_product
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.products.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [mrp_products]
+    confirm: Delete this product?
+    mutation: { operation: delete, table: mrp_products, concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_products WHERE id = :id", status: 404, code: MRP_PRODUCT_NOT_FOUND, message: Product not found. }, { query: "SELECT 1 AS ok FROM mrp_products WHERE id = :id AND bom_count = 0 AND bom_component = FALSE AND on_hand = 0", status: 409, code: MRP_PRODUCT_IN_USE, message: A product used by a bill of materials or holding stock cannot be deleted. Archive it instead. }] }
+  - id: send_mrp_product_message
+    type: server_form
+    permission: manufacturing.write
+    title: Send message
+    action: manufacturing.products.message
+    handler: order_chatter
+    operation: message
+    params: { id: '{row.id}' }
+    refresh: [mrp_product_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation: { guards: [{ query: "SELECT id FROM mrp_products WHERE id = :id", status: 404, code: MRP_PRODUCT_NOT_FOUND, message: Product not found. }], steps: [{ query: "INSERT INTO mrp_product_messages(id, product_id, actor_name, action, action_label, detail, created_at) VALUES(gen_random_uuid(), :id, :current_user_name, 'manufacturing.products.message', 'Message', :content, CURRENT_TIMESTAMP)" }] }
+  - id: log_mrp_product_note
+    type: server_form
+    permission: manufacturing.write
+    title: Log note
+    action: manufacturing.products.note
+    handler: order_chatter
+    operation: note
+    params: { id: '{row.id}' }
+    refresh: [mrp_product_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation: { guards: [{ query: "SELECT id FROM mrp_products WHERE id = :id", status: 404, code: MRP_PRODUCT_NOT_FOUND, message: Product not found. }], steps: [{ query: "INSERT INTO mrp_product_messages(id, product_id, actor_name, action, action_label, detail, created_at) VALUES(gen_random_uuid(), :id, :current_user_name, 'manufacturing.products.note', 'Note', :content, CURRENT_TIMESTAMP)" }] }

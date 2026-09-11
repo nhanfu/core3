@@ -1,0 +1,119 @@
+page: { id: manufacturing-products }
+datasources:
+  - id: mrp_product_types
+    permission: manufacturing.read
+    query: "SELECT value, label FROM (VALUES ('Goods', 'Goods'), ('Consumable', 'Consumable'), ('Service', 'Service')) types(value, label)"
+  - id: mrp_products
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_PRODUCTS_UNAUTHORIZED, message: Sign in to view manufacturing products. }
+      forbidden: { status: 403, code: MRP_PRODUCTS_FORBIDDEN, message: You do not have permission to view manufacturing products. }
+      transport_error: { status: 503, code: MRP_PRODUCTS_UNAVAILABLE, message: Manufacturing products are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, name, COALESCE(default_code, '') AS default_code, COALESCE(barcode, '') AS barcode,
+        COALESCE(category, '') AS category, product_type, uom, company_name, list_price, cost_price,
+        printf('$ %,.2f', CAST(list_price AS DOUBLE)) AS list_price_display,
+        printf('$ %,.2f', CAST(cost_price AS DOUBLE)) AS cost_price_display,
+        CAST(on_hand AS DOUBLE) AS on_hand, printf('%.2f %s', CAST(on_hand AS DOUBLE), uom) AS on_hand_display,
+        variant_count, CAST(variant_count AS VARCHAR) || CASE WHEN variant_count = 1 THEN ' Variant' ELSE ' Variants' END AS variant_count_label,
+        bom_count, document_count, sold_qty, purchased_qty, reordering_rule_count, forecasted_qty,
+        manufactured, bom_component, active, tracking, invoicing_policy, COALESCE(product_tags, '') AS product_tags,
+        CAST(created_at AS VARCHAR) AS created_at
+      FROM mrp_products
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(default_code, '') ILIKE '%' || :q || '%' OR COALESCE(barcode, '') ILIKE '%' || :q || '%')
+        AND (CAST(:product_type AS VARCHAR) IS NULL OR product_type = :product_type)
+        AND (CAST(:manufactured AS BOOLEAN) IS NULL OR manufactured = CAST(:manufactured AS BOOLEAN))
+        AND (CAST(:active AS BOOLEAN) IS NULL OR active = CAST(:active AS BOOLEAN))
+      ORDER BY name, id
+actions:
+  - id: view_mrp_product
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/products/detail
+    params: { id: '{row.id}' }
+  - id: create_mrp_product
+    type: server_form
+    permission: manufacturing.write
+    title: New Product
+    action: manufacturing.products.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mrp_products]
+    success_message: Product created.
+    mutation:
+      operation: insert
+      table: mrp_products
+      generated: [id]
+      fields: [name, default_code, barcode, category, product_type, uom, company_name, list_price, cost_price, on_hand, manufactured, bom_component, active, tracking, invoicing_policy, product_tags]
+      required: [name]
+      defaults: { product_type: Goods, uom: Units, company_name: 'My Company (San Francisco)', list_price: 0, cost_price: 0, on_hand: 0, manufactured: false, bom_component: false, active: true, tracking: No Tracking, invoicing_policy: Ordered quantities, variant_count: 1, bom_count: 0, document_count: 0, sold_qty: 0, purchased_qty: 0, reordering_rule_count: 0, created_at: '2026-01-15 12:00:00' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: MRP_PRODUCT_NAME_REQUIRED, message: A product name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_products WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: MRP_PRODUCT_NAME_EXISTS, message: A product with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:list_price, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:cost_price, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:on_hand, 0) AS DECIMAL(18,3)) >= 0", status: 422, code: MRP_PRODUCT_NUMERIC_INVALID, message: Price and on-hand quantity must be zero or greater. }
+      result: { query: "SELECT * FROM mrp_products WHERE id = :id" }
+    fields:
+      - { field: name, label: Product, type: text, required: true }
+      - { field: default_code, label: Internal Reference, type: text }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: product_type, label: Product Type?, type: select, options: [Goods, Service, Consumable] }
+      - { field: uom, label: Unit of Measure, type: text, default: Units }
+      - { field: list_price, label: Sales Price, type: number, min: 0 }
+      - { field: cost_price, label: Cost, type: number, min: 0 }
+      - { field: category, label: Category, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: product_tags, label: Tags, type: text }
+  - id: edit_mrp_product
+    type: server_form
+    permission: manufacturing.write
+    title: Edit Product
+    action: manufacturing.products.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}' }
+    prefill: row
+    refresh: [mrp_product_detail, mrp_products, mrp_product_messages]
+    success_message: Product updated.
+    mutation:
+      operation: update
+      table: mrp_products
+      fields: [name, default_code, barcode, category, product_type, uom, company_name, list_price, cost_price, manufactured, bom_component, active, tracking, invoicing_policy, product_tags]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_products WHERE id = :id", status: 404, code: MRP_PRODUCT_NOT_FOUND, message: Product not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: MRP_PRODUCT_NAME_REQUIRED, message: A product name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_products WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: MRP_PRODUCT_NAME_EXISTS, message: A product with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:list_price, 0) AS DECIMAL(18,2)) >= 0 AND CAST(COALESCE(:cost_price, 0) AS DECIMAL(18,2)) >= 0", status: 422, code: MRP_PRODUCT_NUMERIC_INVALID, message: Price and cost must be zero or greater. }
+      result: { query: "SELECT * FROM mrp_products WHERE id = :id" }
+    fields:
+      - { field: name, label: Product, type: text, required: true }
+      - { field: default_code, label: Internal Reference, type: text }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: product_type, label: Product Type?, type: select, options: [Goods, Service, Consumable] }
+      - { field: uom, label: Unit of Measure, type: text }
+      - { field: list_price, label: Sales Price, type: number, min: 0 }
+      - { field: cost_price, label: Cost, type: number, min: 0 }
+      - { field: category, label: Category, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: product_tags, label: Tags, type: text }
+  - id: archive_mrp_product
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.products.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', values: { active: false } }
+    refresh: [mrp_products, mrp_product_detail]
+    mutation: { operation: update, table: mrp_products, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_products WHERE id = :id AND active = TRUE", status: 409, code: MRP_PRODUCT_ALREADY_ARCHIVED, message: Product is already archived. }], result: { query: "SELECT * FROM mrp_products WHERE id = :id" } }
+  - id: delete_mrp_product
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.products.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}' }
+    refresh: [mrp_products]
+    confirm: Delete this product?
+    mutation: { operation: delete, table: mrp_products, concurrency: { required: true }, guards: [{ query: "SELECT id FROM mrp_products WHERE id = :id", status: 404, code: MRP_PRODUCT_NOT_FOUND, message: Product not found. }, { query: "SELECT 1 AS ok FROM mrp_products WHERE id = :id AND bom_count = 0 AND bom_component = FALSE AND on_hand = 0", status: 409, code: MRP_PRODUCT_IN_USE, message: A product used by a bill of materials or holding stock cannot be deleted. Archive it instead. }] }
