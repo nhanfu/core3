@@ -25,7 +25,7 @@ describe('Accounting Employee Expenses parity', () => {
     const stats = page.components.find((component: any) => component.type === 'StatRow');
     expect(stats).toMatchObject({ source: 'accounting_employee_expense_totals' });
     expect(stats.stats.map((stat: any) => stat.label)).toEqual(['To Submit', 'Waiting Approval', 'Waiting Reimbursement']);
-    expect(list).toMatchObject({ source: 'accounting_employee_expenses', create_action: 'create_accounting_employee_expense', create_label: 'New' });
+    expect(list).toMatchObject({ source: 'accounting_employee_expenses', create_action: 'create_accounting_employee_expense', create_label: 'New', view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'card', 'kanban', 'pivot', 'graph']);
     expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ label: 'Kanban', mobile: true });
     expect(list.views.find((view: any) => view.id === 'list')).toMatchObject({ mobile: false });

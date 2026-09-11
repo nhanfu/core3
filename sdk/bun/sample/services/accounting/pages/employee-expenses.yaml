@@ -17,7 +17,7 @@ components:
     search: { label: Search employee expenses, placeholder: Search employee expenses... }
     filters: [{ field: status, label: Status, options_source: accounting_employee_expense_states }]
     group_by: [{ field: employee_name, label: Employee }, { field: category, label: Category }, { field: status, label: Status }, { field: expense_date, label: Expense Date }]
-    view_navigation: icons
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table, mobile: false }
       - id: card

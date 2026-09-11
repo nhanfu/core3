@@ -5,7 +5,7 @@ components:
     variant: odoo
     source: accounting_journal_items
     search: { label: Search Journal Items, placeholder: 'Search journal entries, partners, or labels...' }
-    view_navigation: icons
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table, mobile: false }
       - id: pivot

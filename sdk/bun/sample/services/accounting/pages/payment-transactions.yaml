@@ -5,7 +5,7 @@ components:
     variant: odoo
     source: accounting_payment_transactions
     search: { label: Search payment transactions, placeholder: 'Search reference, provider, or partner...' }
-    view_navigation: icons
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
       - id: kanban

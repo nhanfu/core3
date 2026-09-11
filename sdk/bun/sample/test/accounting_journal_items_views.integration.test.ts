@@ -19,7 +19,7 @@ describe('Accounting Journal Items view parity', () => {
     expect(page.page).toMatchObject({ id: 'accounting-journal-items', route: '/accounting/journal-items' });
     expect(page.datasources).toBeUndefined();
     expect(api.page).toEqual({ id: 'accounting-journal-items' });
-    expect(list).toMatchObject({ source: 'accounting_journal_items', variant: 'odoo', view_navigation: 'icons' });
+    expect(list).toMatchObject({ source: 'accounting_journal_items', variant: 'odoo', view_navigation: 'tabs' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'pivot', 'graph', 'kanban', 'card']);
     expect(list.views.find((view: any) => view.id === 'graph')).toMatchObject({
       category_field: 'item_month',
