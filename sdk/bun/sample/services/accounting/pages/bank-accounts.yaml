@@ -9,8 +9,8 @@ components:
     search: { label: Search bank accounts, placeholder: Search bank accounts... }
     columns:
       - { field: account_number, label: Account Number, type: PrimaryEntityCell }
-      - { field: bank_name, label: Bank }
-      - { field: send_money, label: Send Money?, type: BooleanToggle }
+      - { field: bank_name, label: Bank, mobile: true }
+      - { field: send_money, label: Send Money?, type: BooleanToggle, mobile: true }
     page_size: 50
     responsive_card: true
     row_key: id

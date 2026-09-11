@@ -27,6 +27,7 @@ describe('Accounting Bank Accounts Odoo action parity', () => {
     expect(detailApi.page.id).toBe(detailPage.page.id);
     expect(listPage.components[0]).toMatchObject({ source: 'accounting_bank_accounts', create_action: 'create_accounting_bank_account', row_open_action: 'view_accounting_bank_account' });
     expect(listPage.components[0].columns.map((column: any) => column.field)).toEqual(['account_number', 'bank_name', 'send_money']);
+    expect(listPage.components[0].columns.slice(1).every((column: any) => column.mobile === true)).toBe(true);
     expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'accounting_bank_account_detail', title_field: 'account_number' });
     expect(detailPage.components[0].groups[0].fields.map((field: any) => field.field)).toEqual(['account_number', 'clearing_number', 'account_holder', 'account_holder_name', 'bank_name', 'send_money', 'company', 'currency']);
     expect(discovered.pageDatasources.get('accounting-bank-accounts')).toContain('accounting_bank_accounts');
