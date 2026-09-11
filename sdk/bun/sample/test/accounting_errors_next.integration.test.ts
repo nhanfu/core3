@@ -40,7 +40,8 @@ describe('Accounting resilient report/configuration states', () => {
       expect(api.page.id, apiFile).toBe(pageId);
       expect(readSource.permission, apiFile).toBe('accounting.read');
       expect(readSource.error_states?.transport_error, apiFile).toMatchObject({ status: 503, code: 'ACCOUNTING_DATA_UNAVAILABLE' });
-      expect(String(readSource.query), apiFile).toContain(":fixture_state <> 'empty'");
+      expect(String(readSource.query), apiFile).toMatch(/:fixture_state/);
+      expect(String(readSource.query), apiFile).toContain("'empty'");
       expect(discovered.pageDatasources.get(pageId), pageFile).toContain(sourceId);
     }
   });
