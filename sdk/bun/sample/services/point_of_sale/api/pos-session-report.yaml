@@ -1,5 +1,23 @@
 page: { id: pos-session-report }
 datasources:
-  - id: pos_session_report
+  - id: pos_session_report_sessions
     permission: pos.read
-    query: "SELECT s.id, s.name, s.config, s.state, s.user_name, COUNT(o.id) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total_sales, CAST(COALESCE(SUM(o.amount_paid), 0) AS DOUBLE) AS paid_sales FROM pos_sessions s LEFT JOIN pos_orders o ON o.session_id = s.id GROUP BY s.id, s.name, s.config, s.state, s.user_name ORDER BY MAX(s.opened_at) DESC"
+    query: "SELECT id AS value, name || ' — ' || config AS label FROM pos_sessions ORDER BY opened_at DESC, name"
+  - id: pos_session_report_wizard
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_SESSION_REPORT_UNAVAILABLE, message: Session report options are temporarily unavailable. } }
+    query: "SELECT id, 'Session Report' AS name, session_id, add_per_employee, state, CAST(generated_at AS VARCHAR) AS generated_at FROM pos_session_report_wizards WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = COALESCE(:id, 'pos-session-report-demo-001')"
+actions:
+  - id: print_pos_session_report
+    type: client
+    permission: pos.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: cancel_pos_session_report
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale

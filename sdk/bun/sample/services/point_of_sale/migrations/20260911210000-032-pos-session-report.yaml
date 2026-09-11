@@ -1,0 +1,23 @@
+version: 0.0.32
+kind: data
+description: Deterministic POS Session Report wizard fixture for Odoo action 723
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_session_report_wizards (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        session_id VARCHAR,
+        add_per_employee BOOLEAN NOT NULL DEFAULT TRUE,
+        state VARCHAR NOT NULL DEFAULT 'Draft',
+        generated_at TIMESTAMP
+      );
+      INSERT INTO pos_session_report_wizards(id, session_id, add_per_employee, state, generated_at)
+      VALUES ('pos-session-report-demo-001', NULL, TRUE, 'Draft', NULL)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_session_report_wizards;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

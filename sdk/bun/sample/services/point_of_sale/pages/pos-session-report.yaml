@@ -1,17 +1,18 @@
-title: POS Session Report
+title: Session Report
 page: { id: pos-session-report, route: /point-of-sale/session-report, breadcrumb: [Sales, Point of Sale, Reporting, Session Report], auth: { require: [pos.read] } }
 components:
-  - type: ListView
-    variant: odoo
-    source: pos_session_report
-    search: { label: Search session reports, placeholder: Search session... }
-    columns:
-      - { field: name, label: Session, type: PrimaryEntityCell }
-      - { field: config, label: Point of Sale }
-      - { field: user_name, label: Responsible }
-      - { field: order_count, label: Orders, align: right }
-      - { field: total_sales, label: Sales, align: right }
-      - { field: paid_sales, label: Paid, align: right }
-      - { field: state, label: Status, type: StatusChip }
-    page_size: 50
-    row_key: id
+  - type: OdooFormView
+    source: pos_session_report_wizard
+    title_field: name
+    editable: true
+    initial_editing: true
+    group_columns: 1
+    labels: { save: Print, discard: Cancel }
+    header_actions:
+      - { id: print_pos_session_report, label: Print, permission: pos.read, variant: primary }
+      - { id: cancel_pos_session_report, label: Cancel, permission: pos.read, variant: secondary }
+    groups:
+      - title: Session Report
+        fields:
+          - { field: session_id, label: Pos Session, type: select, options_source: pos_session_report_sessions }
+          - { field: add_per_employee, label: Add a report per each employee, type: checkbox }
