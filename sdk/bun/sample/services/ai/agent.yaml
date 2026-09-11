@@ -313,6 +313,21 @@ operations:
     method: POST
     permission: crm.manage
     preview: false
+  - id: crm.lost_reasons.archive
+    route: /api/actions/crm.lost_reasons.archive
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.lost_reasons.unarchive
+    route: /api/actions/crm.lost_reasons.unarchive
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.lost_reasons.delete
+    route: /api/actions/crm.lost_reasons.delete
+    method: POST
+    permission: crm.manage
+    preview: false
   - id: crm.activity_plans.update
     route: /api/actions/crm.activity_plans.update
     method: POST
