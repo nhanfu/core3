@@ -673,3 +673,46 @@ All eight authenticated routes rendered with no unexpected failed requests or
 page-level horizontal overflow. The Odoo reference and Core3 list both show
 six rows; the Core3 form presents the same scalar field contract, while Odoo's
 employee relation/chatter presentation remains outside this bounded action.
+
+## Current batch: Partner Ledger action
+
+The live personal Odoo 19 database exposes the installed Accounting action
+`account.action_account_moves_ledger_partner` (action 341), `Partner Ledger`,
+at `/odoo/action-341`. Its model is `account.move.line` and its available view
+modes are List, Pivot, and Graph. The authenticated list reference shows the
+default facets `Posted`, `With residual`, `Payable or Receivable`, and `Partner`,
+six partner groups, and the totals `$138,479.00` debit, `$87,027.27` credit,
+and `$51,451.73` balance. The mobile reference stays in the compact List
+presentation and clips secondary columns in the same way as the installed
+Odoo responsive view.
+
+Core3 adds `/accounting/reports/partner-ledger` as an explicit Reporting menu
+entry. The page-only `pages/partner-ledger.yaml` joins
+`api/partner-ledger.yaml` through `page.id: partner-ledger`; the API source
+requires `accounting.read`, declares the stable
+`ACCOUNTING_DATA_UNAVAILABLE` transport error, and supports the observed
+partner search and three default filters. Migration
+`20260911220000-027-accounting-partner-ledger.yaml` owns six deterministic
+aggregate fixtures copied from the live reference, including entry counts and
+debit/credit/balance totals. The focused suite covers page/API separation,
+route discovery, idempotent seeding, search, filter-empty, fixture-empty, and
+transport-error behavior.
+
+Authenticated browser checks used Core3 `admin@tms.local` on the isolated
+runtime at `http://localhost:3004` and Odoo `codex@core3.local` against
+`core3_personal` at `http://localhost:8069`, at 1440x900 and 390x844. All
+Core3 list and pivot captures had zero unexpected HTTP responses and exact
+viewport width. The shared Core3 pivot renders the partner aggregate measures
+without Odoo's date-period columns; that renderer limitation is recorded here
+rather than presented as full pivot visual parity. Screenshots remain outside
+Git.
+
+Evidence and SHA-256 hashes:
+
+- Odoo list desktop: `/tmp/odoo-accounting-partner-ledger-desktop-final-20260911.png` — `b9d50151367c354cff4dca319973e8a552c917ed452c5dda63c66c233fd0f9c4`
+- Odoo list mobile: `/tmp/odoo-accounting-partner-ledger-mobile-final-20260911.png` — `15228e097e763b631b02d2bd565a832ce84c734f8744d07628dbc1435d6f67bd`
+- Odoo pivot desktop: `/tmp/odoo-accounting-partner-ledger-desktop-pivot-final-20260911.png` — `8377d2838afbc9deb0d365325cf3fe86777193242f9762c1c7cd3363917fcacd`
+- Core3 list desktop: `/tmp/core3-accounting-partner-ledger-desktop-final-20260911.png` — `f04cbc94f91ac07a3852f5b33c01190b8050e35dd382d6b5f7ebb6f83aafbb29`
+- Core3 list mobile: `/tmp/core3-accounting-partner-ledger-mobile-final-20260911.png` — `02725b12491db6516ea48aa06b279308f67f85a1280c5bd7090ea4072f75319e`
+- Core3 pivot desktop: `/tmp/core3-accounting-partner-ledger-desktop-pivot-final-20260911.png` — `68d4d4db40e0d36269e58a68382300acf5f45829f1774a86332db478abda78fc`
+- Core3 pivot mobile: `/tmp/core3-accounting-partner-ledger-mobile-pivot-final-20260911.png` — `5992a4135c01e380250dfbf447e5a3ab25a4bade94469213b3d197d25b2fab49`
