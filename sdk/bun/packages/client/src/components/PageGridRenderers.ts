@@ -1006,6 +1006,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       actions: utilityActions,
       headerActions,
       groupBy,
+      collapseGroupsByDefault: def.collapse_groups === true,
       favorites,
       bulkActions,
       footerStats: Array.isArray(def.footer?.stats) ? def.footer.stats : undefined,

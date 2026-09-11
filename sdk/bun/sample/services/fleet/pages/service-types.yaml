@@ -10,6 +10,7 @@ components:
     filters: [{ field: category, label: Category, options: [{ id: contract, label: Contract }, { id: service, label: Service }] }]
     group_by: [{ field: category, label: Category }]
     default_group_by: category
+    collapse_groups: true
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table, mobile: false }
@@ -30,4 +31,5 @@ components:
     row_double_click_action: edit_fleet_service_type
     form_view: { page: apps/services/fleet/pages/service-type-detail.yaml, side_panel: false }
     row_actions: menu
+    page_size: 100
     empty_state: { title: Create a new type of service, description: 'Each service can be used in contracts, as a standalone service, or both.' }

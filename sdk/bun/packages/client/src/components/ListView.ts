@@ -98,6 +98,7 @@ export type ListViewOptions = {
   search?: false | { label?: string; placeholder?: string };
   filters?: ListViewFilter[];
   groupBy?: ListViewGroupBy[];
+  collapseGroupsByDefault?: boolean;
   dateRange?: {
     fromField?: string;
     toField?: string;
@@ -528,13 +529,23 @@ export class ListView extends BaseComponent {
         groups.set(value, group);
       }
       const groupLabel = this.options.groupBy?.find(group => group.field === groupBy)?.label || groupBy;
+      const groupValues = [...groups.keys()];
+      const collapseAll = this.options.collapseGroupsByDefault === true && !Array.isArray(this.state.collapsedGroups);
+      const collapsedGroups = new Set<string>(Array.isArray(this.state.collapsedGroups) ? this.state.collapsedGroups.map(String) : []);
       for (const [value, groupRows] of groups) {
         const groupRow = html.take(body).trow.className('o-list-group-header o-list-group-row').dataAttr('list-group', value).ele();
         const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).ele();
         groupCell.dataset.groupBy = groupBy;
+        const isCollapsed = collapseAll || collapsedGroups.has(value);
+        html.take(groupCell).span.className('o-list-group-toggle').text(isCollapsed ? '▸ ' : '▾ ');
         html.take(groupCell).strong.replaceText(`${groupLabel}: ${value}`);
         html.take(groupCell).span.className('o-list-group-count').text(` (${groupRows.length})`);
-        groupRows.forEach((row, index) => this.drawRow(body, row, index, visibleColumns, selected, labels));
+        html.take(groupRow).event('click', () => {
+          const next = new Set<string>(Array.isArray(this.state.collapsedGroups) ? this.state.collapsedGroups.map(String) : groupValues);
+          if (next.has(value)) next.delete(value); else next.add(value);
+          this.setState({ collapsedGroups: [...next] });
+        });
+        if (!isCollapsed) groupRows.forEach((row, index) => this.drawRow(body, row, index, visibleColumns, selected, labels));
       }
     } else {
       const rowItems = this.treeRows(rows);
