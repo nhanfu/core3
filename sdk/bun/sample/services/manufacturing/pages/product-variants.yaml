@@ -15,7 +15,7 @@ components:
       - id: kanban
         label: Kanban
         icon: dashboard
-        group_by: product_template
+        group_by: ''
         card: { title: name, subtitle: default_code, fields: [{ field: variant_values, label: Attributes }, { field: list_price_display, label: 'Price:' }, { field: on_hand_display, label: 'On hand:' }] }
       - { id: list, label: List, icon: table }
     form_view: { page: apps/services/manufacturing/pages/product-variant-detail.yaml, side_panel: false }
