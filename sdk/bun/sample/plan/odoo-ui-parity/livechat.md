@@ -612,3 +612,39 @@ The authenticated Core3 comparison used the isolated runtime after rebuilding th
 | Core3 Agents Graph | 390x844 | `/tmp/core3-livechat-agents-mobile-graph-final-20260911.png` | `09682a90fb3c0b8ae58eb435087b3f13e88cef0e515d9223d402286632ac8285` |
 
 Both Core3 modes were populated with the seeded agent rows at both viewports; the browser pass had no failed requests or page errors, and document/body width matched the configured viewport (1440/1440 and 390/390). The compact mobile Pivot table preserves Odoo's report columns inside its own table viewport while the page remains responsive. Core3 retains the shared Fluent shell and renderer formatting differences from Odoo's purple shell; the action is read-only as in the source ACL.
+
+## Bounded implementation contract: Technical — Member History (2026-09-11)
+
+The next uncovered Live Chat action is Technical → Member History. The active
+authenticated `core3_user_demo` reference exposes
+`im_livechat.im_livechat_channel_member_history_action` at `/odoo/action-800`
+for model `im_livechat.channel.member.history`, with `list,form` view modes and
+context `{ "create": false }`. The source menu is
+`livechat_technical` → `im_livechat.menu_member_history` in
+`/home/nhanjs/projects/odoo/addons/im_livechat/views/im_livechat_channel_member_history_views.xml`;
+the parent Technical menu is restricted to `base.group_no_one`.
+
+The source list contract is the ordered, newest-first fields Created on,
+Channel, Partner, Chatbot Script, Guest, Session Duration, and Member Type. The
+read-only generated form exposes the member identity, channel, partner/guest,
+chatbot script, member type, agent expertise, conversation tags, country,
+outcome, weekday, rating, Live Chat channel, session start hour and duration,
+call history/measures, message count, response time, and help status. The ACL
+`access_im_livechat_channel_member_history_user` grants read only to
+`im_livechat_group_user` (`1,0,0,0`), so this slice has no create, update, or
+delete operation, row actions, or writable fields.
+
+Core3 will add exactly one Technical menu item at
+`/livechat/member-history`, protected by `livechat.technical`; the datasource
+uses `livechat.read` to reflect the source model ACL. Page and API YAML remain
+separate and join by `page.id` as
+`livechat-member-history` and `livechat-member-history-detail`. Deterministic
+service-owned fixtures provide the visible list, search/no-results, explicit
+empty, missing detail, forbidden, and transport-error states. The migration is
+idempotent, uses stable ids and fixed fixture dates, and retains a detail
+route for the source `form` mode. No mutation YAML is permitted; focused tests
+must assert the no-create/no-write/no-unlink boundary, exact source fields,
+page/API joins, migration idempotence, permissions, and failure states.
+
+Authenticated Odoo/Core3 comparisons are required at 1440x900 and 390x844 for
+the list and read-only detail route. Captures remain in `/tmp` only.
