@@ -1,6 +1,6 @@
 # Fleet parity batch 6: service types
 
-Status: contract recorded before implementation.
+Status: implemented and visually verified.
 
 ## Owned Odoo contract
 
@@ -64,3 +64,27 @@ under `fleet.manage`.
 Explicitly deferred: broader Fleet shared relation pickers, chatter/activity,
 multi-company policy, and service-type usage navigation. This batch closes
 only the visible Services > Types action.
+
+## Verification evidence
+
+The merged Core3 implementation uses the existing Fleet service-type page/API
+contracts and the canonical service-type migrations at versions 027/028. The
+list keeps the source's collapsed `Contract (3)` and `Service (71)` groups;
+the detail route opens the seeded `Summer tires` record. The list and detail
+surfaces remain page/API-owned by matching `page.id` values, with manager-only
+CRUD, relation-protected delete, and optimistic row-version guards.
+
+Authenticated paired captures were visually inspected after rebuilding CSS:
+
+| Surface | Viewport | Capture | SHA-256 | Checks |
+| --- | --- | --- | --- | --- |
+| Odoo list | 1440x900 | `/tmp/odoo-fleet-service-types-desktop-20260911.png` | `9eb50e4a138f8e71a637b23f7fe6a663cbe77cca0c3cdb77025044f4f8f7a098` | 3/71 collapsed groups |
+| Odoo list | 390x844 | `/tmp/odoo-fleet-service-types-mobile-20260911.png` | `6cd66e642ea7d243d6a392c113af22568b2a5a5c6773bf6c3536049454e71483` | responsive grouped list |
+| Core3 list | 1440x900 | `/tmp/core3-fleet-service-types-list-desktop-1440x900.png` | `384336142f2fc337cae3af7f37c79699300b53ac29be2b597750269bd9e1c95a` | 3/71 groups; 1440/1440 width; no browser errors |
+| Core3 list | 390x844 | `/tmp/core3-fleet-service-types-list-mobile-390x844.png` | `13b30bca83dcf923f3f5e555d907c2c68dbd90466c529c3c3569495e75e9647b` | 3/71 groups; 390/390 width; no browser errors |
+| Core3 detail | 1440x900 | `/tmp/core3-fleet-service-types-detail-desktop-1440x900.png` | `ba272626db2694d29441bc777566e58a1e30f44a8190b5430ce2efb2bff7e75c` | Summer tires; 1440/1440 width; no browser errors |
+| Core3 detail | 390x844 | `/tmp/core3-fleet-service-types-detail-mobile-390x844.png` | `7bdaf718a528c208510ec52586b74e62afd5e799704e7042accaed4cbd908ef2` | Summer tires; 390/390 width; no browser errors |
+
+Focused Fleet coverage passes 45 tests and 556 assertions across 13 files;
+the Fleet UI audit and ESLint pass, and `git diff --check` is clean. Images
+remain outside Git.
