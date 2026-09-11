@@ -160,3 +160,38 @@ Capture Odoo 19 and Core3 at `1440x900` and `390x844` for every inventory item, 
 - Verification: `bun run audit` reports 460 pages, 467 routes, and 801
   datasources; `git diff --check` is clean. Screenshots remain in `/tmp` and
   are not committed.
+
+### Current batch evidence: Fed. States localization
+
+- Source reviewed: Odoo 19 `base.action_country_state` (action 64), reached
+  from Contacts → Configuration → Localization → Fed. States. The source is
+  an editable-bottom list of State Name, State Code, and Country with a State
+  form, Country search field, Country grouping, and the help text “Create a
+  State”.
+- Core3 now exposes `/base-fed-states` under the same Localization menu. The
+  layout is `pages/fed-states.yaml`; `api/fed-states.yaml` owns the datasource,
+  country lookup, inline create/update/delete actions, and stable permission,
+  validation, duplicate, not-found, and transport-error contracts. The
+  fragments join through `page.id: fed-states`; migration `0.0.9` adds the
+  row-version column required by guarded writes without changing the existing
+  three base state fixtures.
+- Focused validation is `test/base_fed_states.integration.test.ts`: 3 tests,
+  21 assertions. It verifies page/API discovery, deterministic Germany/US/
+  Vietnam rows, search, empty/error reads, and permissioned CRUD guard
+  declarations. The authenticated Core3 browser pass rendered three rows at
+  both target viewports with zero page/request errors and no horizontal
+  overflow.
+- Comparison captures remain outside Git:
+  - Odoo list, desktop: `/tmp/odoo-base-fed-states-desktop-list-final-20260911.png`
+    (`2bba67397af2eff0a31941f320ddb9bd677161db6e9866501d8f9e02555f249e`)
+  - Odoo list, mobile: `/tmp/odoo-base-fed-states-mobile-list-final-20260911.png`
+    (`19a1f14b68c3a401202239eeac9cf9879625f01e499057c9672b4af17c754451`)
+  - Core3 list, desktop: `/tmp/core3-base-fed-states-desktop-final-20260911.png`
+    (`cb9ed1de96caa9b30053c3719deaf76703a21b7e6a5919932be49f537cc21791`)
+  - Core3 list, mobile: `/tmp/core3-base-fed-states-mobile-final-20260911.png`
+    (`beec0d0e0466f88df2580104366fb92e1931475b079017fc24131d7bcd646ef2`)
+- Visual review confirms the same editable list interaction shape, columns,
+  New action, pager, country data, and responsive width behavior. Odoo has
+  2,131 live state rows while this bounded Core3 replacement retains the
+  existing deterministic three-row base fixture; the purple Odoo shell and
+  larger source catalog remain explicit reference differences.
