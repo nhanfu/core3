@@ -150,7 +150,7 @@ ordinary `base.group_user` Directory is distinct from HR-officer Employees.
 - Departments: kanban/list/form, search, archive/unarchive, configuration,
   employee counts and related integration links.
 - Supporting list/form states: work locations, departure reasons, job
-  positions, contract templates, activity plans, settings, and all their
+  positions, contract templates, employment types, activity plans, settings, and all their
   create/edit/empty/permission states.
 - Server actions/wizards: Load Sample Data on an empty Employees action; Create
   User confirmation and user creation; Launch Plan; version history/template
@@ -263,6 +263,7 @@ The fixture set must cover:
 | `/employees/jobs` | Job Positions action | current list/form and create form |
 | `/employees/work-locations` | Work Locations action | list/form |
 | `/employees/departure-reasons` | Departure Reasons action | list/empty/form boundary |
+| `/employees/employment-types` | Employment Types action | editable list |
 | `/employees/activity-plans` | Onboarding / Offboarding | list/kanban/form plus launch wizard |
 | `/employees/contract-templates` | Contract Templates | manager list/form |
 | `/employees/settings` | Settings action | HR settings form, system gate |
@@ -523,6 +524,64 @@ panel.
 | --- | --- | --- |
 | Contract Templates list | `/tmp/core3-employees-contract-templates-list-desktop-1440x900.png` (`ff95c3233371878820ca7369394ade5ab998b3b5273b05878017a96414970e9c`) | `/tmp/core3-employees-contract-templates-list-mobile-390x844.png` (`f67b6ad3c30fb88d091b91d03ca6527f83107af9d399ffc8d24dc9fa4a95db86`) |
 | Contract Template detail | `/tmp/core3-employees-contract-template-detail-desktop-1440x900.png` (`f8b34ddf655d48dde257d179e24e8d04cea3078c22cf14d11245e8585823ccca`) | `/tmp/core3-employees-contract-template-detail-mobile-390x844.png` (`86f7e7e610b821540657810abeeb960bc69159447b625650d83634727b829d4c`) |
+
+## Bounded batch: Employment Types
+
+This batch implements the next uncovered visible Employees configuration action
+after Job Positions and Contract Templates: Employees > Configuration >
+Recruitment > Employment Types. The live personal Odoo database
+`core3_personal` was inspected on 2026-09-11. The menu entry
+`hr.menu_view_hr_contract_type` resolves to database action 434,
+`hr_contract_type_action`, model `hr.contract.type`, and a list-only action.
+The authenticated live screen contains the twelve demo rows Permanent,
+Temporary, Interim, Seasonal, Full-Time, Part-Time, Intern, Student,
+Apprenticeship, Thesis, Statutory, and Employee.
+
+The source XML records this menu as `active="0"`, while the installed personal
+database visibly exposes it under Employees > Configuration > Recruitment. The
+source list is `editable="bottom"` with a sequence handle, Name, hidden code,
+and optional Country columns. `ir.model.access.csv` grants the HR-user group
+read, write, create, and delete access (`1,1,1,1`), so this slice keeps the
+page visible to `employees.read` and gates inline create, update, and delete
+mutations on `employees.write`. There is no archive state in the Odoo model.
+
+Core3 adds `/employees/employment-types` with page/API ownership joined by
+`employee-employment-types`, the Employment Types item under Employees /
+Configuration / Recruitment, and migration
+`20260911200000-013-employment-types.yaml`. The migration is idempotent and
+seeds stable IDs and Odoo sequence values 1001 through 1012. The list mirrors
+the editable-bottom action, supports search and empty/transport states, and
+keeps the optional Country projection available without inventing data.
+
+Focused validation and static evidence:
+
+- `bun test test/employees_employment_types.integration.test.ts`: 3 tests,
+  35 assertions passed.
+- `bun run audit`: 460 pages, 467 routes, and 800 datasources passed.
+- `git diff --check` passed before implementation commit `b68d273f`.
+- The implementation checkpoint contains only the Employees manifest, page/API
+  YAML, deterministic migration, and focused test; screenshots are not tracked.
+- Guards cover required and duplicate names, optimistic stale writes, missing
+  records, delete, idempotent migration, search, empty, and transport states.
+
+Authenticated visual evidence is kept outside Git. Odoo action 434 and Core3
+were captured and inspected at 1440x900 and 390x844 with the authenticated
+Odoo user `codex@core3.local` and Core3 admin `admin@tms.local`. The final
+matrix recorded no failed requests, page errors, or horizontal overflow. Core3
+uses the shared Fluent shell and route breadcrumb/search treatment instead of
+Odoo's purple shell and centered search panel; the Employment Types list,
+editable-bottom row, seeded order, and responsive controls are otherwise
+represented in the paired states below.
+
+| State | Odoo desktop | Odoo mobile |
+| --- | --- | --- |
+| Employment Types list | `/tmp/odoo-employees-employment-types-list-desktop-1440x900.png` (`68b54c0e6d08b0736abd3dc0eb353d592080ea986e3c9224b33fb5369909712e`) | `/tmp/odoo-employees-employment-types-list-mobile-390x844.png` (`46be1298a894587ecb15d2b676deac326288688c33ab121d01167c46f40774dc`) |
+| Employment Types inline New | `/tmp/odoo-employees-employment-types-inline-desktop-1440x900.png` (`13e490eb556e7c25a6d9c879a984c734e33e12d409a5109b096fcf29263841eb`) | `/tmp/odoo-employees-employment-types-inline-mobile-390x844.png` (`3556e3dc9f8e929817031e20172fbbb9f84c05eda13f1c0fa638e0bef41d7e78`) |
+
+| State | Core3 desktop | Core3 mobile |
+| --- | --- | --- |
+| Employment Types list | `/tmp/core3-odoo-employees-employment-types-list-desktop-1440x900.png` (`23baa35ba9abe75e806d2978706862412080c552815fe42f13dff26ced6b8298`) | `/tmp/core3-odoo-employees-employment-types-list-mobile-390x844.png` (`b50fb8791f2470a83516c8730d6450bba94e2ea5c9ce6b1c8bd5b5169743efcd`) |
+| Employment Types inline New | `/tmp/core3-odoo-employees-employment-types-inline-desktop-1440x900.png` (`49c8f34409e1b2bdc86a339ae2c087e6c4da33e7486279824533297ad4a6b681`) | `/tmp/core3-odoo-employees-employment-types-inline-mobile-390x844.png` (`0b9adbd13f1c915f24352e198977ea1a4f6d98e135e5393269edb08e3bf0ffde`) |
 
 ## Acceptance
 
