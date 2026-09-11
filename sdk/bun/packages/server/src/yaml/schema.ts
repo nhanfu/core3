@@ -114,6 +114,7 @@ const COLUMN_KEYS = new Set([
   'width',
   'actions',
   'colors',
+  'palette',
   'format',
   'overdueField',
   'mobile',
