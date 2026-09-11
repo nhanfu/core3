@@ -44,6 +44,10 @@ menu:
     - id: configuration
       label: Configuration
       items:
+        - path: /manufacturing/settings
+          label: Settings
+          icon: settings
+          permission: manufacturing.manage
         - path: /operations
           label: Operations
           icon: tools

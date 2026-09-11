@@ -1,0 +1,33 @@
+page: { id: manufacturing-settings }
+datasources:
+  - id: manufacturing_settings
+    single: true
+    permission: manufacturing.manage
+    error_states:
+      unauthorized: { status: 401, code: MRP_SETTINGS_UNAUTHORIZED, message: Sign in to view Manufacturing settings. }
+      forbidden: { status: 403, code: MRP_SETTINGS_FORBIDDEN, message: You do not have permission to manage Manufacturing settings. }
+      transport_error: { status: 503, code: MRP_SETTINGS_UNAVAILABLE, message: Manufacturing settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, group_mrp_routings, group_mrp_workorder_dependencies, module_mrp_subcontracting, module_stock_barcode, module_quality_control, module_quality_control_worksheet, group_unlocked_by_default, group_mrp_byproducts, group_mrp_reception_report, module_mrp_mps FROM mrp_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = 'manufacturing-settings-demo'"
+actions:
+  - id: manufacturing_settings_update_server
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: mrp_settings
+      key_field: id
+      fields: [group_mrp_routings, group_mrp_workorder_dependencies, module_mrp_subcontracting, module_stock_barcode, module_quality_control, module_quality_control_worksheet, group_unlocked_by_default, group_mrp_byproducts, group_mrp_reception_report, module_mrp_mps]
+      concurrency: { required: true }
+      guards:
+        - query: "SELECT id FROM mrp_settings WHERE id = :id"
+          status: 404
+          code: MRP_SETTINGS_NOT_FOUND
+          message: Manufacturing settings no longer exist.
+        - query: "SELECT id FROM mrp_settings WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Manufacturing settings were changed by another user. Reload before saving.
+      result: { query: "SELECT * FROM mrp_settings WHERE id = :id" }
