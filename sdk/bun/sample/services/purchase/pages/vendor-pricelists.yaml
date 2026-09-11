@@ -47,7 +47,7 @@ actions:
       required: [vendor_name, product_name]
       defaults: { company_name: 'My Company (San Francisco)', uom: Units, currency: USD, unit_price: 0, min_qty: 1, lead_time_days: 0, discount: 0, active: true }
       guards:
-        - { query: "SELECT 1 AS ok WHERE COALESCE(:unit_price, 0) >= 0 AND COALESCE(:min_qty, 0) > 0 AND COALESCE(:lead_time_days, 0) >= 0", status: 422, code: SUPPLIER_INFO_VALUES_INVALID, message: Unit price and lead time must be nonnegative and minimum quantity must be greater than zero. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:unit_price AS DOUBLE), 0) >= 0 AND COALESCE(CAST(:min_qty AS DOUBLE), 0) > 0 AND COALESCE(CAST(:lead_time_days AS DOUBLE), 0) >= 0", status: 422, code: SUPPLIER_INFO_VALUES_INVALID, message: Unit price and lead time must be nonnegative and minimum quantity must be greater than zero. }
       result: { query: "SELECT * FROM purchase_vendor_pricelists WHERE id = :id" }
     fields:
       - { field: vendor_name, label: Vendor, type: text, required: true }

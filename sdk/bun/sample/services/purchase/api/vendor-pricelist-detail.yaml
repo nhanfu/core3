@@ -30,7 +30,7 @@ actions:
       guards:
         - { query: "SELECT id FROM purchase_vendor_pricelists WHERE id = :id", status: 404, code: PURCHASE_VENDOR_PRICELIST_NOT_FOUND, message: Vendor pricelist not found. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:vendor_name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:product_name AS VARCHAR))) > 0", status: 422, code: SUPPLIER_INFO_NAMES_REQUIRED, message: Vendor and product are required. }
-        - { query: "SELECT 1 AS ok WHERE COALESCE(:unit_price, 0) >= 0 AND COALESCE(:min_qty, 0) > 0 AND COALESCE(:lead_time_days, 0) >= 0 AND COALESCE(:discount, 0) BETWEEN 0 AND 100", status: 422, code: SUPPLIER_INFO_VALUES_INVALID, message: Unit price, quantity, lead time, and discount must be valid. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:unit_price AS DOUBLE), 0) >= 0 AND COALESCE(CAST(:min_qty AS DOUBLE), 0) > 0 AND COALESCE(CAST(:lead_time_days AS DOUBLE), 0) >= 0 AND COALESCE(CAST(:discount AS DOUBLE), 0) BETWEEN 0 AND 100", status: 422, code: SUPPLIER_INFO_VALUES_INVALID, message: Unit price, quantity, lead time, and discount must be valid. }
       result: { query: "SELECT * FROM purchase_vendor_pricelists WHERE id = :id" }
     fields:
       - { field: vendor_name, label: Vendor, type: text, required: true }
