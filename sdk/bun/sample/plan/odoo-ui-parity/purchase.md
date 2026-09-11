@@ -9,8 +9,8 @@ Status: `in-progress`
 - Source manifest: `/home/nhanjs/projects/odoo/addons/purchase/__manifest__.py`.
   It depends on `account`, is an application, and declares official demo data
   in `data/purchase_demo.xml`.
-- Authenticated live reference checked on 2026-09-10 at
-  `http://localhost:8069`, database `core3_reference`, server version
+- Authenticated live reference checked on 2026-09-11 at
+  `http://localhost:8069`, database `core3_personal`, server version
   `19.0-20260908`, as `codex@core3.local`.
 - Purchase is installed with official demo data enabled. The live RFQ route
   contains 12 records and the live Purchase Orders route contains 4 records;
@@ -357,6 +357,57 @@ this environment because the persistent Playwright browser interface was not
 available. Screenshots, if captured later, remain local under `/tmp` and are
 not part of the commit. The shared Core3 Fluent shell remains distinct from
 Odoo's purple shell.
+
+## Purchase Products product detail bounded follow-up (selected 2026-09-11)
+
+The authenticated personal Odoo menu audit resolves Purchase → Products →
+Products to action `693` (`product_normal_action_puchased`) at
+`/odoo/purchase-products`. The installed demo database currently shows 153
+products; selecting the deterministic visible `Acoustic Bloc Screens` record
+opens `/odoo/purchase-products/23`. At 1440×900 the detail exposes product
+stats, Sales/Expenses/Point of Sale/Purchase flags, General Information,
+Attributes & Variants, Sales, Point of Sale, Purchase, Inventory, price/cost,
+category/company, and chatter. At 390×844 the same form stacks responsively
+without horizontal overflow. Authenticated reference captures are local only:
+`/tmp/odoo-purchase-product-detail-desktop-acoustic-20260911.png` and
+`/tmp/odoo-purchase-product-detail-mobile-acoustic-20260911.png`.
+
+Core3 now joins `/purchase/products` to
+`/purchase/products/detail?id=<stable-product-id>` through the separate
+`pages/purchase-product-detail.yaml` and
+`api/purchase-product-detail.yaml` fragments, both keyed by
+`page.id: purchase-product-detail`. The Products list opens the detail on
+single click/double click. Migration
+`20260910250000-015-purchase-product-detail.yaml` adds two fixed Internal Notes
+fixtures for `purchase-product-acoustic`; the detail datasource exposes stable
+variant/purchased counters and Odoo-shaped product, General Information, and
+Purchase fields. Purchase read protects the route/datasources; Purchase write
+protects Edit, Archive, Send message, and Log note. Edit requires a row
+version, rejects missing/duplicate/blank names, and Archive rejects an already
+archived product. The detail explicitly serves default, empty/not-found, and
+transport-error datasource states, while the list retains the populated,
+search, and empty states.
+
+Focused validation is `test/purchase_product_detail.integration.test.ts`: 3
+tests and 28 assertions cover page/API discovery, 105 deterministic products,
+search, detail/messages, empty/not-found/transport states, permission
+declarations, duplicate/name validation, stale updates, and archive guards.
+Authenticated Core3 captures are local only:
+`/tmp/core3-purchase-products-desktop-20260911.png`,
+`/tmp/core3-purchase-products-mobile-20260911.png`,
+`/tmp/core3-purchase-product-detail-desktop-20260911.png`, and
+`/tmp/core3-purchase-product-detail-mobile-20260911.png`. Both Core3 viewports
+reported zero failed responses, exact document/body widths of 1440/1440 and
+390/390, and working Edit → Discard interaction.
+
+The bounded visual claim covers the shared Core3 form hierarchy, responsive
+stacking, product stats, Purchase/Sales/Chatter tabs, deterministic field
+values, and Internal Notes. The Fluent Core3 shell intentionally remains
+different from Odoo's purple shell; product photography, Odoo's full stat
+strip and extra tabs (Point of Sale, Inventory, Attributes & Variants),
+relational tax/selectors, and the richer live activity history are shared
+component or datasource follow-ups. Mobile screenshots are viewport captures;
+the detail continues vertically below the fold without page overflow.
 
 ## Required visible states
 
