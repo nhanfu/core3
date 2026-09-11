@@ -155,6 +155,59 @@ Messages and activities area rather than native chatter/activity composition.
 The activity view and richer many2one/avatar behavior are declared for the
 screen contract but remain deferred shared-primitive work.
 
+## Model Categories checkpoint: `fleet_vehicle_model_category_action`
+
+The installed personal Odoo database exposes Fleet > Configuration > Models >
+Categories as menu id 146 and action id 174 (`fleet_vehicle_model_category_action`).
+The action is `fleet.vehicle.model.category`, list-only in the action contract,
+with inline sequence handles and editable `Name`; the installed demo contains
+10 deterministic rows in sequence order: Sedan, Estate, Compact, SUV, Coupe,
+Convertible, MPU, BMX, VTT, and City. The source also defines a form view for
+the same model. Fleet users have read access, while Fleet managers have create,
+write, and delete access; the menu itself is manager-only.
+
+Implementation checkpoint: `1ec41142d79a08f6754b8d11a876be19cf94330d`.
+Core3 exposes `/fleet/config/model-categories` from the page-id/API pair
+`fleet-model-categories`; the page remains presentation-only and
+`api/model-categories.yaml` owns the read datasource and guarded mutations.
+Migrations `20260911194000-013-fleet-model-categories.yaml` and
+`20260911195000-014-fleet-model-categories-data.yaml` add the row-version/index
+support and preserve the ten stable category fixtures on fresh install and
+upgrade. The list keeps the Odoo handle/name layout at desktop and mobile
+breakpoints. Writes require `fleet.manage`; reads require `fleet.read`.
+
+The bounded slice supports deterministic search and empty/transport-error
+states; manager-only inline create/update/delete; sequence ordering; blank and
+case-insensitive duplicate-name validation; stale row-version rejection;
+missing-category 404s; and a relation guard that returns
+`FLEET_MODEL_CATEGORY_IN_USE` when a category is referenced by a vehicle model.
+The focused test also asserts the menu permission, datasource permission,
+page/API join, migration idempotency, live Odoo row volume/order, and every
+guarded mutation permission.
+
+Authenticated visual evidence, captured and inspected on 2026-09-11 using the
+personal Odoo administrator and the isolated Core3 worktree runtime, is kept
+outside Git:
+
+- Odoo desktop 1440x900: `/tmp/odoo-personal-fleet-model-categories-desktop-20260911.png`
+  SHA-256 `cc232b2f837ad687e62b8b46629486d57a1c274d8e13ddd3421dab34b9481acd`
+- Odoo mobile 390x844: `/tmp/odoo-personal-fleet-model-categories-mobile-20260911.png`
+  SHA-256 `6e94d8be8fa6e77ce02a385fe628f504de70d86787056a2222035e006652ad55`
+- Core3 desktop 1440x900: `/tmp/core3-fleet-model-categories-desktop-final-20260911.png`
+  SHA-256 `6c4addaf231ed01c6e141476e807d97c50c6c5b819f98af70543a57063d00004`
+- Core3 mobile 390x844: `/tmp/core3-fleet-model-categories-mobile-final-20260911.png`
+  SHA-256 `3ceaf8e77053c284c9efcaa8b882a47bd7f9c20f5d2b5ad4203211154005fd71`
+
+The authenticated browser pass rendered all 10 rows at both viewports with no
+page errors, ignored notification-abort noise, and no horizontal overflow
+(1440/1440 and 390/390 document widths). The expected shared visual difference
+is Core3's Fluent shell versus Odoo's purple shell; the category rows, order,
+handle, Name column, New control, pager, search affordance, and responsive
+toolbar are represented in both captures. Verification passed with
+`bun test test/fleet_model_categories.integration.test.ts` (3 tests, 32
+assertions), `bun run audit` (453 pages, 460 routes, 788 datasources), and
+`git diff --check`. Evidence documentation checkpoint follows this section.
+
 ## Source data and behavior contract
 
 The source models are `fleet.vehicle`, `fleet.vehicle.model`,
