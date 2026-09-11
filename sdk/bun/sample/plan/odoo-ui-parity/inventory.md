@@ -477,3 +477,99 @@ Focused evidence:
 - Authenticated Core3 smoke also loaded `/moves?view=pivot` with a pivot
   table and `/moves/detail?id=move-line-0002` with a read-only form; both had
   no HTTP errors. Screenshots remain under `/tmp` and are not committed.
+
+## Bounded batch: Procurement > Replenishment (2026-09-11)
+
+Implementation commit: `edc9e84a` (`feat(inventory): add replenishment parity
+slice`). This batch owns the previously uncovered Inventory procurement action
+and does not duplicate Locations, Warehouses, Lots / Serial Numbers, Transfers,
+Physical Inventory, or Moves History.
+
+The authenticated Odoo 19 reference was compared at
+`http://localhost:8069/odoo/replenishment` as `codex@core3.local`. The source
+mapping is `stock.action_orderpoint_replenish` / the replenishment server
+action in `addons/stock/views/stock_orderpoint_views.xml`, with menu
+`stock.menu_reordering_rules_replenish` under Inventory > Configuration >
+Reordering Rules. Odoo exposes the manager-only list and responsive kanban
+action, defaulting to Manual + To Reorder + Not Snoozed and a 365-day horizon.
+The visible list fields are Product, On Hand, Forecast, Route, Min, Max, To
+Order, and Unit; row actions are Order, Automate, and Snooze.
+
+Core3 keeps presentation and behavior separate. The manifest owns the
+manager-only `Procurement > Replenishment` menu; the layout-only page is
+`services/inventory/pages/replenishment.yaml` (`page.id: replenishment`) and
+the matching page-owned API/action fragment is
+`services/inventory/api/replenishment.yaml`. The configured service route is
+`/replenishment`, rendered in the authenticated shell at
+`http://localhost:3005/inventory/replenishment`. List, mobile kanban, and
+create-form layouts are declarative; search, trigger/category/status/snooze
+filters, grouping, empty/error states, and Order/Automate/Snooze/Create
+actions are service-owned.
+
+Migration `20260911120000-011-inventory-replenishment.yaml` (version `0.0.11`)
+creates `inventory_orderpoints` and four stable orderpoint fixtures. Three
+manual Furniture / Office rules reproduce the reference To Reorder rows
+(`FURN_8900`, `E-COM06`, `FURN_1118`); one automatic Office Supplies rule covers
+the trigger filter without changing the default result. The API supports
+deterministic search/category/trigger/status/snooze/horizon filtering,
+`fixture=empty|no_results|not_found`, and manager permission plus 403/503
+transport contracts. Mutations guard required/range/duplicate input and stale
+row versions; Order marks a rule Ordered with a deterministic `PO/REPL/<id>`
+reference, Automate changes Manual to Automatic, and Snooze requires a future
+date.
+
+Focused evidence:
+
+- `bun test ./test/inventory_replenishment.integration.test.ts`: 3 tests,
+  31 assertions passed. The suite covers page/API/menu ownership, responsive
+  view modes, deterministic fixtures, default/automatic/category/search/
+  horizon/empty/unavailable states, permission and validation boundaries,
+  row-version guards, and create/order/automate/snooze mutations.
+- `bun run audit`: passed — 468 pages, 475 routes, 816 datasources; all
+  discovered pages use supported shared components and have routes.
+- `bun run lint`: passed. `bun run css:build:global`,
+  `bun run css:build:auth`, and `bun run css:build:inventory` passed for the
+  fresh-worktree browser run. `git diff --check` passed.
+- Authenticated Odoo shell captures, inspected at the requested viewport
+  sizes: desktop `/tmp/odoo-inventory-replenishment-desktop-20260911.png`
+  (1440x900, SHA-256
+  `a2f8181d0bdfa30a0b3fe5470e79207e5bd84752eee96152b1696cb56f63973c`) and
+  mobile `/tmp/odoo-inventory-replenishment-mobile-20260911.png` (390x844,
+  SHA-256
+  `3d3dbf91dcde2601acfa850dd007b666a6e4e16a4450d72d7695ac656e9add56`).
+- Authenticated Core3 shell captures, inspected at the requested viewport
+  sizes: desktop `/tmp/core3-inventory-replenishment-desktop-20260911.png`
+  (1440x900, SHA-256
+  `a3dab7bb383a5f1f9fa91dcf9945b599d7dd234176f8f50320134fe97263f475`) and
+  mobile `/tmp/core3-inventory-replenishment-mobile-20260911.png` (390x844,
+  SHA-256
+  `8b3eacab98fd7216f1dd117be9d804e6d44fa9a52c4ad5d5f8514ba971bad3e8`).
+  Core3 rendered 3 desktop rows and 3 mobile cards; document width/scroll
+  width was 1440/1440 and 390/390 respectively. The capture logged zero
+  failed requests, HTTP errors, or page errors. Screenshots remain under
+  `/tmp` and are not in Git.
+
+Visual comparison and residual mismatches:
+
+- Desktop parity is bounded to the same replenishment table, default filters,
+  pagination, product quantities, route, and New entry point. Odoo uses its
+  purple Inventory shell, left Trigger / Category / Horizon search panel, and
+  inline Order / Automate / Snooze links. Core3 uses the shared Fluent shell,
+  breadcrumb, filter chips, and a full-width table; the captured row action
+  currently exposes Order, while Automate and Snooze remain declared and
+  covered by the API/action contract but need shared row-action rendering to
+  become visible parity.
+- Mobile parity has the same responsive card mode, three seeded products,
+  Manual and To Reorder state, and Replenishment Report cards. Odoo shows
+  purple mobile chrome, Manual / Category controls, and inline min/max values;
+  Core3 shows the shared shell, filter chips, and stacked Min qty / Max qty
+  values. The Core3 Category control and Odoo's numeric Horizon 365 control are
+  not yet visible in the mobile/desktop shell respectively.
+- This slice intentionally stops short of Odoo's real purchase-order
+  generation, supplier/product relational widgets, route icons, chatter,
+  native snooze-date behavior, and full orderpoint drill-down. Core3's Order
+  mutation is a deterministic state/reference contract; these are residual
+  follow-up parity items, not claims of complete replenishment parity.
+
+Evidence/docs commit is the commit immediately following implementation
+commit `edc9e84a`; implementation code and tests remain separate.
