@@ -1,0 +1,59 @@
+title: Overall Equipment Effectiveness
+page: { id: manufacturing-oee, route: /manufacturing/oee, breadcrumb: [Supply Chain, Manufacturing, Reporting, Overall Equipment Effectiveness], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_oee_productivity
+    search: { label: Search productivity, placeholder: 'Search work centers, loss reasons, or manufacturing orders...' }
+    date_range: { label: Date, from_field: from_date, to_field: to_date }
+    filters:
+      - { field: workcenter_name, label: Work Center, options_source: mrp_oee_workcenters }
+      - { field: loss_reason, label: Loss Reason, options_source: mrp_oee_loss_reasons }
+      - { field: loss_type, label: Effectiveness, options: [{ id: availability, label: Availability Losses }, { id: performance, label: Performance Losses }, { id: quality, label: Quality Losses }, { id: productive, label: Fully Productive }] }
+    group_by:
+      - { field: workcenter_name, label: Workcenter }
+      - { field: loss_reason, label: Loss Reason }
+      - { field: loss_type, label: Effectiveness }
+      - { field: user_name, label: User }
+    default_group_by: workcenter_name
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: workcenter_name
+        measure_field: duration_minutes
+        measure_label: Duration (minutes)
+        type: bar
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: date_start, column: Start Date, type: date }
+            - { field: workcenter_name, column: Work Center }
+            - { field: loss_reason, column: Loss Reason }
+            - { field: loss_type, column: Effectiveness }
+            - { field: duration_minutes, column: Duration (minutes) }
+            - { field: company_name, column: Company }
+          default:
+            rows: [workcenter_name, loss_reason]
+            columns: [loss_type]
+            measures: [{ field: duration_minutes, aggregate: sum, column: Duration (minutes) }]
+          date_ranges: { date_start: day }
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+    form_view: { page: apps/services/manufacturing/pages/oee-detail.yaml, side_panel: false }
+    row_key: id
+    row_double_click_action: view_mrp_oee_productivity
+    row_open_action: view_mrp_oee_productivity
+    empty_state: { title: 'Overall Equipment Effectiveness: no working or blocked time', description: Productivity entries will appear here when work centers record productive or loss time. }
+    columns:
+      - { field: date_start, label: Start Date, mobile: true }
+      - { field: date_end, label: End Date, mobile: false }
+      - { field: workcenter_name, label: Work Center, type: PrimaryEntityCell, mobile: true, mobile_secondary: loss_reason }
+      - { field: user_name, label: User, mobile: false }
+      - { field: loss_reason, label: Loss Reason, mobile: true }
+      - { field: duration_minutes, label: Duration (minutes), align: right, mobile: true }
+      - { field: company_name, label: Company, mobile: false }

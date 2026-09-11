@@ -44,3 +44,10 @@ menu:
           label: Work Centers
           icon: tools
           permission: manufacturing.read
+    - id: reporting
+      label: Reporting
+      items:
+        - path: /manufacturing/oee
+          label: Overall Equipment Effectiveness
+          icon: chart
+          permission: manufacturing.read

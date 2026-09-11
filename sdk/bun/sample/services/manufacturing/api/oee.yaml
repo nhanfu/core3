@@ -1,0 +1,40 @@
+page: { id: manufacturing-oee }
+actions:
+  - id: view_mrp_oee_productivity
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/oee/detail
+    params: { id: '{row.id}' }
+datasources:
+  - id: mrp_oee_workcenters
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT workcenter_name AS value, workcenter_name AS label FROM mrp_workcenter_productivity ORDER BY workcenter_name"
+  - id: mrp_oee_loss_reasons
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT loss_reason AS value, loss_reason AS label FROM mrp_workcenter_productivity ORDER BY loss_reason"
+  - id: mrp_oee_productivity
+    single: false
+    permission: manufacturing.read
+    pivot:
+      fields: [id, row_version, workcenter_id, workcenter_name, loss_id, loss_reason, loss_type, date_start, date_end, duration_minutes, manufacturing_order_id, manufacturing_order_name, workorder_id, workorder_name, user_name, company_name, description]
+    error_states:
+      unauthorized: { status: 401, code: MRP_OEE_UNAUTHORIZED, message: Sign in to view Overall Equipment Effectiveness. }
+      forbidden: { status: 403, code: MRP_OEE_FORBIDDEN, message: You do not have permission to view Overall Equipment Effectiveness. }
+      transport_error: { status: 503, code: MRP_OEE_UNAVAILABLE, message: Overall Equipment Effectiveness data is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, workcenter_id, workcenter_name, loss_id, loss_reason, loss_type,
+        CAST(date_start AS VARCHAR) AS date_start, CAST(date_end AS VARCHAR) AS date_end,
+        CAST(duration_minutes AS DOUBLE) AS duration_minutes, manufacturing_order_id,
+        manufacturing_order_name, workorder_id, workorder_name, COALESCE(user_name, '') AS user_name,
+        company_name, COALESCE(description, '') AS description
+      FROM mrp_workcenter_productivity
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR workcenter_name ILIKE '%' || :q || '%' OR loss_reason ILIKE '%' || :q || '%' OR COALESCE(manufacturing_order_name, '') ILIKE '%' || :q || '%')
+        AND (:workcenter_name IS NULL OR workcenter_name = :workcenter_name)
+        AND (:loss_reason IS NULL OR loss_reason = :loss_reason)
+        AND (:loss_type IS NULL OR LOWER(loss_type) = LOWER(:loss_type) OR (LOWER(:loss_type) = 'availability' AND loss_type = 'Availability'))
+        AND (:from_date IS NULL OR CAST(date_start AS DATE) >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR CAST(date_start AS DATE) <= CAST(:to_date AS DATE))
+      ORDER BY workcenter_name, date_start, id

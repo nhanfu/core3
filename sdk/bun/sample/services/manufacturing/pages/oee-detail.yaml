@@ -1,0 +1,36 @@
+title: Workcenter Productivity
+page: { id: manufacturing-oee-detail, route: /manufacturing/oee/detail, breadcrumb: [Supply Chain, Manufacturing, Reporting, Overall Equipment Effectiveness, Detail], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_oee_productivity_detail
+    title_field: loss_reason
+    subtitle_field: workcenter_name
+    editable: false
+    group_columns: 2
+    groups:
+      - title: Workcenter Productivity
+        fields:
+          - { field: manufacturing_order_name, label: Manufacturing Order }
+          - { field: workorder_name, label: Work Order }
+          - { field: workcenter_name, label: Work Center }
+          - { field: loss_reason, label: Loss Reason }
+      - title: Time and company
+        fields:
+          - { field: date_start, label: Start Date }
+          - { field: date_end, label: End Date }
+          - { field: duration_minutes, label: Duration }
+          - { field: company_name, label: Company }
+    notebook:
+      active: details
+      tabs:
+        - id: details
+          label: Details
+          groups:
+            - title: Description
+              fields:
+                - { field: description, label: Description, type: textarea, wide: true }
+                - { field: loss_type, label: Effectiveness }
+                - { field: user_name, label: User }
+                - { field: row_version, label: Revision }
+    header_actions:
+      - { id: back_to_mrp_oee, label: Back to Overall Equipment Effectiveness, icon: arrow-left, permission: manufacturing.read }

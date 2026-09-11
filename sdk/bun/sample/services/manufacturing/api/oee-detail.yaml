@@ -1,0 +1,25 @@
+page: { id: manufacturing-oee-detail }
+datasources:
+  - id: mrp_oee_productivity_detail
+    single: true
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_OEE_DETAIL_UNAUTHORIZED, message: Sign in to view this productivity entry. }
+      forbidden: { status: 403, code: MRP_OEE_DETAIL_FORBIDDEN, message: You do not have permission to view this productivity entry. }
+      missing_record: { status: 404, code: MRP_OEE_DETAIL_NOT_FOUND, message: Productivity entry not found. }
+      transport_error: { status: 503, code: MRP_OEE_DETAIL_UNAVAILABLE, message: This productivity entry is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, workcenter_id, workcenter_name, loss_id, loss_reason, loss_type,
+        CAST(date_start AS VARCHAR) AS date_start, CAST(date_end AS VARCHAR) AS date_end,
+        CAST(duration_minutes AS DOUBLE) AS duration_minutes, manufacturing_order_id,
+        manufacturing_order_name, workorder_id, workorder_name, COALESCE(user_name, '') AS user_name,
+        company_name, COALESCE(description, '') AS description
+      FROM mrp_workcenter_productivity
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND id = :id
+actions:
+  - id: back_to_mrp_oee
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/oee
+    params: {}
