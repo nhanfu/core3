@@ -269,6 +269,53 @@ The overall sub-plan remains `planned` because the remaining Live Chat action,
 conversation, reporting, chatbot, technical, and public-widget surfaces still
 require separate parity slices.
 
+## Bounded implementation slice: Technical — Escalated Sessions (2026-09-12)
+
+The owned Odoo 19 reference exposes Technical → Escalated Sessions through
+`spreadsheet_dashboard_im_livechat.ongoing_sessions_escalated_menu` (menu id
+`571`) and action `spreadsheet_dashboard_im_livechat.ongoing_sessions_escalated_action`
+(action id `878`). The live action is a `discuss.channel` window with
+`list,form` modes, search view id `2204`, and the exact context
+`{'search_default_ongoing': 1, 'search_default_escalated': 1}`. Its menu is
+under Live Chat → Technical and is restricted to
+`im_livechat.im_livechat_group_manager`. The action has no domain of its own;
+the effective result is `livechat_end_dt IS FALSE` and
+`livechat_is_escalated IS TRUE` from the hidden search filters.
+
+The source contracts are `/home/nhanjs/projects/odoo/addons/
+spreadsheet_dashboard_im_livechat/data/livechat_ongoing_sessions_actions.xml`
+and `/home/nhanjs/projects/odoo/addons/im_livechat/views/
+discuss_channel_views.xml`. The list view is `discuss.channel.list` (view id
+`2205`), create/edit disabled, ascending display is not used here: the
+default order is `create_date desc, id desc`. Visible fields are Date,
+Customer, Agents, Country, Language, Expertise, Duration, Messages, and
+Rating; optional fields include requesting/providing agent, Chatbot, Tags,
+Channel, and Comment. The shared search view supports Agent, requesting or
+providing agent, Country, Customer, My Sessions, Ongoing, Happy/Neutral/
+Unhappy/Unrated, Session Date (24 hours/7/30/365 days), and grouping by
+Channel, Agent, requesting/providing agent, Rating, Country, Customer, or
+Session Date. The read-only form is `discuss.channel.form` (view id `2207`)
+with Participants, Session Date, rating image/Rating, and Comment.
+
+Core3 will add the disjoint route `/livechat/technical/escalated-sessions`
+with page id `livechat-technical-escalated-sessions`; its backend fragment
+will join by that same `page.id` and expose a separate read-only detail page
+with page id `livechat-technical-escalated-session-detail`. The bounded
+fixture profile uses stable escalated and non-escalated ongoing/closed rows so
+the query proves both Ongoing and Escalated semantics rather than filtering a
+pre-filtered static list. It covers default, search no-results, explicit
+empty, missing, forbidden, and transport-error states. Reads require
+`livechat.read`, navigation and the Technical menu require `livechat.manage`,
+and create/update/delete/server mutations are intentionally absent because
+Odoo's action has `create=false` and `edit=false`.
+
+Acceptance requires deterministic idempotent migrations, permission/error
+metadata, page/API separation, focused integration coverage, and authenticated
+Odoo/Core3 comparison captures at 1440x900 and 390x844 under `/tmp` only.
+The shared Fluent shell versus Odoo's purple shell remains an intentional
+global residual; any slice-specific visual mismatch is fixed before evidence
+sign-off.
+
 ## Bounded implementation slice: Conversations — Looking for Help (2026-09-10)
 
 The owned Odoo reference exposes `menu_livechat_looking_for_help` through
