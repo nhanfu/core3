@@ -197,6 +197,15 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
     return { ...button, is_workflow: Boolean(action?.workflow) };
   });
+  if (def.action_menu && Array.isArray(def.action_menu.actions)) {
+    formDef.action_menu = {
+      ...def.action_menu,
+      actions: def.action_menu.actions.filter((button: any) => {
+        const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
+        return action && hasPermission(ctx.user, action.permission);
+      }),
+    };
+  }
   formDef.stat_buttons = (def.stat_buttons || []).filter((button: any) => {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
     return action && hasPermission(ctx.user, action.permission);

@@ -278,4 +278,63 @@ describe('Surveys parity catalog and workflow', () => {
     expect(yaml('migrations/20260910240000-009-survey-test-entries.yaml').version).toBe('0.0.10');
     expect(readFileSync(join(import.meta.dir, '../public/components/PublicSurvey.ts'), 'utf8')).toContain('This is a Test Survey Entry.');
   });
+
+  test('duplicates a survey definition with ordered questions and guarded state', async () => {
+    const page = yaml('pages/survey-detail.yaml');
+    const api = yaml('api/survey-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    const menu = form.action_menu;
+    const duplicate = api.actions.find((candidate: any) => candidate.action === 'surveys.records.duplicate');
+
+    expect(page.page.id).toBe('survey-detail');
+    expect(api.page.id).toBe(page.page.id);
+    expect(menu).toMatchObject({ label: 'Actions', aria_label: 'Actions menu' });
+    expect(menu.actions).toContainEqual(expect.objectContaining({ id: 'duplicate_survey_detail', label: 'Duplicate', icon: 'copy' }));
+    expect(page.actions.find((candidate: any) => candidate.id === 'duplicate_survey_detail')).toMatchObject({ type: 'client', permission: 'surveys.write' });
+    expect(duplicate).toMatchObject({ type: 'server', permission: 'surveys.write', action: 'surveys.records.duplicate', handler: 'yaml_mutation', operation: 'duplicate' });
+    expect(String(duplicate.mutation.guards[0].query)).toContain('source_id');
+    expect(String(duplicate.mutation.guards[1].query)).toContain("state <> 'Archived'");
+    expect(String(duplicate.mutation.guards[2].query)).toContain('row_version = :expected_row_version');
+    expect(String(duplicate.mutation.before_steps[1].query)).toContain('response_count');
+    expect(String(duplicate.mutation.before_steps[2].query)).toContain('ORDER BY q.sequence, q.id');
+    expect(String(duplicate.mutation.before_steps[3].query)).toContain('survey_suggested_values');
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_duplicate_migrations', ['schema', 'data']);
+    const input = {
+      source_id: 'survey-demo-feedback',
+      expected_row_version: 1,
+      duplicate_id: 'survey-duplicate-feedback-1',
+      duplicate_access_token: 'duplicate-feedback-token-2026',
+    };
+    const result = await repository.executeMutation(duplicate.mutation, input);
+    expect(result).toMatchObject({
+      id: 'survey-duplicate-feedback-1',
+      title: 'Feedback Form (copy)',
+      state: 'Draft',
+      response_count: 0,
+      access_token: 'duplicate-feedback-token-2026',
+    });
+    expect(await repository.query('SELECT row_version, response_count, state FROM surveys WHERE id = ?', ['survey-demo-feedback'])).toEqual([
+      { row_version: 1, response_count: 4, state: 'Published' },
+    ]);
+    expect(await repository.query('SELECT question_text, question_type, sequence, required FROM survey_questions WHERE survey_id = ? ORDER BY sequence, id', ['survey-duplicate-feedback-1'])).toEqual([
+      { question_text: 'How satisfied are you?', question_type: 'Rating', sequence: 1, required: true },
+      { question_text: 'What can we improve?', question_type: 'Text', sequence: 2, required: false },
+      { question_text: 'How would you rate our service?', question_type: 'Choice', sequence: 3, required: true },
+      { question_text: 'Would you recommend us?', question_type: 'Choice', sequence: 4, required: true },
+      { question_text: 'Which support channel did you use?', question_type: 'Choice', sequence: 5, required: false },
+      { question_text: 'May we contact you for follow-up?', question_type: 'Choice', sequence: 6, required: false },
+      { question_text: 'Additional comments', question_type: 'Text', sequence: 7, required: false },
+    ]);
+    expect((await repository.query('SELECT COUNT(*) AS count FROM survey_suggested_values WHERE question_id LIKE ?', ['survey-duplicate-feedback-1-question-%']))[0].count).toBe(2);
+
+    await expect(repository.executeMutation(duplicate.mutation, { ...input, source_id: 'missing-survey', duplicate_id: 'survey-duplicate-missing' })).rejects.toMatchObject({ status: 404, code: 'SURVEY_DUPLICATE_NOT_FOUND' });
+    await repository.run("UPDATE surveys SET state = 'Archived' WHERE id = 'survey-demo-feedback'");
+    await expect(repository.executeMutation(duplicate.mutation, { ...input, duplicate_id: 'survey-duplicate-archived' })).rejects.toMatchObject({ status: 409, code: 'SURVEY_DUPLICATE_ARCHIVED' });
+    await repository.run("UPDATE surveys SET state = 'Published' WHERE id = 'survey-demo-feedback'");
+    await expect(repository.executeMutation(duplicate.mutation, { ...input, expected_row_version: 2, duplicate_id: 'survey-duplicate-stale' })).rejects.toMatchObject({ status: 409, code: 'SURVEY_DUPLICATE_STALE' });
+    database.close();
+  });
 });

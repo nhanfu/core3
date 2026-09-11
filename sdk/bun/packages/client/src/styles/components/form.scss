@@ -36,6 +36,19 @@
 .o-form-actionbar { display: flex; min-width: 0; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 6px; }
 .o-form-action { min-height: 30px; padding: 4px 10px; border: 1px solid var(--o-form-border); border-radius: 3px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
 .o-form-action-primary { border-color: var(--o-form-action); background: var(--o-form-action); color: #fff; }.o-form-action-secondary { background: var(--o-form-surface); color: var(--o-form-text); }.o-form-action-danger { border-color: #c0392b; background: #c0392b; color: #fff; }.o-form-action-ghost { border-color: transparent; background: transparent; color: var(--o-form-action); }
+.o-form-action-menu { position: relative; flex: 0 0 auto; }
+.o-form-action-menu[open] { z-index: 8; }
+.o-form-actionbar:has(.o-form-action-menu[open]) { overflow: visible; }
+.o-form-action-menu > summary { list-style: none; }
+.o-form-action-menu > summary::-webkit-details-marker { display: none; }
+.o-form-action-menu-toggle { display: inline-flex; min-height: 30px; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid var(--o-form-border); border-radius: 3px; background: var(--o-form-surface); color: var(--o-form-text); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.o-form-action-menu-toggle:hover, .o-form-action-menu[open] > .o-form-action-menu-toggle { border-color: var(--o-form-action); color: var(--o-form-action); }
+.o-form-action-menu-toggle .svg-icon { width: 15px; height: 15px; }
+.o-form-action-menu-dropdown { position: absolute; z-index: 7; top: calc(100% + 5px); right: 0; min-width: 180px; padding: 4px 0; border: 1px solid var(--o-form-border); border-radius: 4px; background: var(--o-form-surface); box-shadow: 0 6px 18px rgb(15 23 42 / 15%); }
+.o-form-action-menu-item { display: flex; width: 100%; min-height: 34px; align-items: center; gap: 8px; padding: 7px 12px; border: 0; background: transparent; color: var(--o-form-text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.o-form-action-menu-item:hover { background: var(--o-form-hover); color: var(--o-form-action); }
+.o-form-action-menu-item.is-danger { color: #b42318; }
+.o-form-action-menu-item .svg-icon { width: 15px; height: 15px; }
 .o-form-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 390px); align-items: start; gap: 8px; min-width: 0; }
 .o-form-layout-single { grid-template-columns: minmax(0, 1fr); }
 .o-form-layout > * { min-width: 0; }
@@ -170,7 +183,7 @@
 .o-form-page .o-x2many-grid { border: 0 !important; border-radius: 0; }.o-form-page .o-x2many-grid .token-toolbar { padding: 10px 16px; background: var(--o-form-surface) !important; }.o-form-page .o-x2many-grid .token-header { background: var(--o-form-bg) !important; }.o-form-page .o-x2many-grid .token-header th { padding-top: 8px; padding-bottom: 8px; font-size: 11px; letter-spacing: 0; text-transform: none; }.o-form-page .o-x2many-grid .token-cell { padding-top: 8px; padding-bottom: 8px; }.o-x2many-controls { display: flex; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--o-form-border); }.o-x2many-create { padding: 2px 0; border: 0; background: transparent; color: var(--o-form-action); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }.o-x2many-create:hover { text-decoration: underline; }.o-x2many-create:disabled { cursor: default; opacity: .6; text-decoration: none; }
 .o-x2many-row-action { padding: 2px 4px; border: 0; background: transparent; color: var(--o-form-action); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }.o-x2many-row-action:hover { text-decoration: underline; }.o-x2many-row-action.is-danger { color: #a3332b; }
 
-.o-form-action:focus-visible, .o-form-notebook-tab:focus-visible, .o-form-chatter-primary:focus-visible, .o-form-chatter-secondary:focus-visible, .o-form-chatter-tool:focus-visible, .o-form-composer-submit:focus-visible, .o-form-composer-cancel:focus-visible, .o-form-chatter-menu-action:focus-visible, .o-form-chatter-menu-confirm:focus-visible, .o-form-chatter-menu-cancel:focus-visible, .o-form-follower-remove:focus-visible, .o-form-attachment-preview-button:focus-visible, .o-form-attachment-download:focus-visible, .o-form-attachment-preview-close:focus-visible, .o-x2many-create:focus-visible { outline: 2px solid var(--o-form-action); outline-offset: 2px; }
+.o-form-action:focus-visible, .o-form-action-menu-toggle:focus-visible, .o-form-action-menu-item:focus-visible, .o-form-notebook-tab:focus-visible, .o-form-chatter-primary:focus-visible, .o-form-chatter-secondary:focus-visible, .o-form-chatter-tool:focus-visible, .o-form-composer-submit:focus-visible, .o-form-composer-cancel:focus-visible, .o-form-chatter-menu-action:focus-visible, .o-form-chatter-menu-confirm:focus-visible, .o-form-chatter-menu-cancel:focus-visible, .o-form-follower-remove:focus-visible, .o-form-attachment-preview-button:focus-visible, .o-form-attachment-download:focus-visible, .o-form-attachment-preview-close:focus-visible, .o-x2many-create:focus-visible { outline: 2px solid var(--o-form-action); outline-offset: 2px; }
 
 @container odoo-form (max-width: 1320px) {
   .o-form-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
@@ -375,6 +388,12 @@
     scrollbar-width: none;
   }
   .o-form-actionbar::-webkit-scrollbar { display: none; }
+  .o-form-action-menu {
+    position: sticky;
+    right: 0;
+    margin-left: auto;
+    background: var(--o-form-bg);
+  }
   .o-form-action {
     flex: 0 0 auto;
     min-height: 44px;

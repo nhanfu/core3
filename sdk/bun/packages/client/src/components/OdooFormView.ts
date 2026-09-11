@@ -4,6 +4,7 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { OdooChatter } from './OdooChatter.ts';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 import { ComLoader } from '@core3/client/components/ComLoader';
+import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 
 function initials(value: unknown) {
   const words = String(value || '').trim().split(/\s+/).filter(Boolean);
@@ -76,6 +77,27 @@ export class OdooFormView extends BaseComponent {
           }
           else void this.submit(String(action.id), { ...record });
         });
+      }
+      const actionMenu = this.def.action_menu;
+      const menuActions = Array.isArray(actionMenu?.actions)
+        ? actionMenu.actions.filter((action: any) => !action.show_if || Boolean(evalExpr(action.show_if, { row: record, record, state: actionState })))
+        : [];
+      if (menuActions.length) {
+        const menu = html.take(actionBar).details.className('o-form-action-menu').ele() as HTMLDetailsElement;
+        const summary = html.take(menu).summary.className('o-form-action-menu-toggle').attr('aria-label', String(actionMenu.aria_label || actionMenu.label || 'Actions menu')).attr('title', String(actionMenu.aria_label || actionMenu.label || 'Actions menu')).ele();
+        const menuIcon = String(actionMenu.icon || 'more-vertical');
+        if (hasIcon(menuIcon)) appendIcon(summary, menuIcon);
+        html.take(summary).span.className('o-form-action-menu-label').text(String(actionMenu.label || 'Actions'));
+        const dropdown = html.take(menu).div.className('o-form-action-menu-dropdown').attr('role', 'menu').ele();
+        for (const action of menuActions) {
+          const item = html.take(dropdown).button.className(`o-form-action-menu-item${action.variant === 'danger' ? ' is-danger' : ''}`).attr('type', 'button').attr('role', 'menuitem').ele();
+          if (action.icon && hasIcon(String(action.icon))) appendIcon(item, String(action.icon));
+          html.take(item).span.text(String(action.label || action.id || 'Action'));
+          html.take(item).event('click', () => {
+            menu.open = false;
+            void this.submit(String(action.id), { ...record });
+          });
+        }
       }
       if (editing) {
         const save = html.take(actionBar).button.className('o-form-action o-form-action-primary').attr('type', 'button').text(labels.save).ele() as HTMLButtonElement;

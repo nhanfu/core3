@@ -11,6 +11,66 @@ datasources:
     permission: surveys.read
     query: "SELECT id, respondent_name, respondent_email, answer_data, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC, id"
 actions:
+  - id: duplicate_survey
+    type: server
+    permission: surveys.write
+    action: surveys.records.duplicate
+    handler: yaml_mutation
+    operation: duplicate
+    mutation:
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :source_id", status: 404, code: SURVEY_DUPLICATE_NOT_FOUND, message: Survey not found. }
+        - { query: "SELECT id FROM surveys WHERE id = :source_id AND state <> 'Archived'", status: 409, code: SURVEY_DUPLICATE_ARCHIVED, message: Archived surveys cannot be duplicated. }
+        - { query: "SELECT id FROM surveys WHERE id = :source_id AND row_version = :expected_row_version", status: 409, code: SURVEY_DUPLICATE_STALE, message: This survey changed before it could be duplicated. Reload it and try again. }
+      before_steps:
+        - query: |
+            SELECT
+              CAST(COALESCE(NULLIF(CAST(:duplicate_id AS VARCHAR), ''), CAST(gen_random_uuid() AS VARCHAR)) AS VARCHAR) AS duplicate_id,
+              CAST(COALESCE(NULLIF(CAST(:duplicate_access_token AS VARCHAR), ''), CAST(gen_random_uuid() AS VARCHAR)) AS VARCHAR) AS duplicate_access_token,
+              s.name || '-COPY-' || CAST((SELECT COUNT(*) + 1 FROM surveys existing WHERE existing.name LIKE s.name || '-COPY-%') AS VARCHAR) AS duplicate_name,
+              s.title || ' (copy)' AS duplicate_title
+            FROM surveys s
+            WHERE s.id = :source_id
+          assign: true
+        - query: |
+            INSERT INTO surveys(
+              id, name, title, description, owner, response_count, state,
+              published_at, closed_at, row_version, created_at, updated_at, access_token
+            )
+            SELECT
+              :duplicate_id, :duplicate_name, :duplicate_title, s.description,
+              s.owner, 0, 'Draft', NULL, NULL, 1,
+              TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00',
+              :duplicate_access_token
+            FROM surveys s
+            WHERE s.id = :source_id
+        - query: |
+            INSERT INTO survey_questions(
+              id, survey_id, question_text, question_type, sequence, required, answer_options
+            )
+            SELECT
+              :duplicate_id || '-question-' || CAST(q.id AS VARCHAR),
+              :duplicate_id, q.question_text, q.question_type, q.sequence,
+              q.required, q.answer_options
+            FROM survey_questions q
+            WHERE q.survey_id = :source_id
+            ORDER BY q.sequence, q.id
+        - query: |
+            INSERT INTO survey_suggested_values(
+              id, row_version, question_id, question_text, value, sequence,
+              score, matrix_row, matrix_column
+            )
+            SELECT
+              :duplicate_id || '-answer-' || CAST(a.id AS VARCHAR), 1,
+              :duplicate_id || '-question-' || CAST(a.question_id AS VARCHAR),
+              a.question_text, a.value, a.sequence, a.score, a.matrix_row,
+              a.matrix_column
+            FROM survey_suggested_values a
+            JOIN survey_questions q ON q.id = a.question_id
+            WHERE q.survey_id = :source_id
+            ORDER BY a.sequence, a.id
+      result:
+        query: "SELECT id, row_version, name, title, description, owner, response_count, access_token, state, CAST(published_at AS VARCHAR) AS published_at, CAST(closed_at AS VARCHAR) AS closed_at FROM surveys WHERE id = :duplicate_id"
   - id: share_survey_detail
     type: server_form
     permission: surveys.write

@@ -20,6 +20,12 @@ components:
       - { id: cancel_survey_detail, label: Cancel, variant: danger, permission: surveys.manage, show_if: "state.survey_detail.state === 'Draft' || state.survey_detail.state === 'Published'" }
       - { id: archive_survey_detail, label: Archive, variant: secondary, permission: surveys.manage, show_if: "state.survey_detail.state === 'Draft' || state.survey_detail.state === 'Published' || state.survey_detail.state === 'Closed'" }
       - { id: reopen_survey_detail, label: Reopen, variant: primary, permission: surveys.manage, show_if: "state.survey_detail.state === 'Archived'" }
+    action_menu:
+      label: Actions
+      aria_label: Actions menu
+      icon: more-vertical
+      actions:
+        - { id: duplicate_survey_detail, label: Duplicate, icon: copy, permission: surveys.write }
     stat_buttons:
       - { id: survey_certified_stats_detail, label: Certified, value_field: certified_count, permission: surveys.read }
       - { id: survey_participant_stats_detail, label: Participants, value_field: participant_count, permission: surveys.read }
@@ -51,6 +57,23 @@ components:
       - { field: state, label: Status, type: StatusChip }
     empty_state: { title: No responses, description: Responses will appear here after publication. }
 actions:
+  - id: duplicate_survey_detail
+    type: client
+    permission: surveys.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        const result = await request('/api/actions/surveys.records.duplicate', {
+          method: 'POST',
+          body: {
+            id: row.id,
+            source_id: row.id,
+            expected_row_version: row.row_version,
+          },
+        });
+        const app = await import('/app.ts');
+        await app.navigate('/surveys/detail', { id: String(result.id) });
+      }
   - id: test_survey_detail
     type: navigate
     permission: surveys.write
