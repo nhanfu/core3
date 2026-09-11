@@ -52,7 +52,7 @@ describe('Employees Odoo action-mode parity batch', () => {
 
   test('declares the all-activities and departments action contracts', () => {
     const activities = yaml('pages/activities.yaml').components[0];
-    expect(activities.views.map((view: any) => view.id)).toEqual(['activity', 'list', 'card', 'kanban', 'graph', 'pivot']);
+    expect(activities.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'activity', 'graph', 'pivot', 'card']);
     expect(activities.row_open_action).toBe('view_employee_activity');
     expect(yaml('api/activities.yaml').actions.find((action: any) => action.id === 'view_employee_activity'))
       .toMatchObject({ navigate_to: '/employees/detail', params: { id: '{row.employee_id}' } });
@@ -81,9 +81,9 @@ describe('Employees Odoo action-mode parity batch', () => {
 
     const activitySource = yaml('api/activities.yaml').datasources.find((source: any) => source.id === 'employee_activities');
     const activities = await repository.querySource(activitySource, { q: null, timing: null, activity_type: null }, 0, 50);
-    expect(activities.data).toHaveLength(5);
+    expect(activities.data).toHaveLength(3);
     expect(activities.data.map((row: any) => row.id)).toEqual([
-      'employee-activity-004', 'employee-activity-001', 'employee-activity-005', 'employee-activity-002', 'employee-activity-003',
+      'employee-demo-001', 'employee-demo-002', 'employee-demo-003',
     ]);
 
     const departmentSource = yaml('api/departments.yaml').datasources[0];

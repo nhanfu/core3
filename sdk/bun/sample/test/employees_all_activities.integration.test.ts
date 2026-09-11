@@ -37,7 +37,7 @@ describe('Employees All activities parity batch', () => {
     const source = yaml('api/activities.yaml').datasources.find((item: any) => item.id === 'employee_activities');
 
     const populated = await repository.querySource(source, { q: null, timing: null, activity_type: null }, 0, 50);
-    expect(populated.data.map((row: any) => row.employee_id)).toEqual(['employee-demo-001', 'employee-demo-002', 'employee-demo-003']);
+    expect(populated.data.map((row: any) => row.id)).toEqual(['employee-demo-001', 'employee-demo-002', 'employee-demo-003']);
     expect(populated.data.map((row: any) => row.activity_count)).toEqual([2, 1, 1]);
     expect(populated.data.every((row: any) => row.active === undefined || row.active !== false)).toBe(true);
 
