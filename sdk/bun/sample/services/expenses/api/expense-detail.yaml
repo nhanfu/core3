@@ -195,6 +195,7 @@ actions:
     kind: expense_attachment
     params: { id: '{row.id}' }
     mutation:
+      generated: [attachment_id]
       guards:
         - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft'", status: 409, message: Receipts can only be attached to draft expenses }
       steps:
