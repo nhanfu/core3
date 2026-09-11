@@ -2,6 +2,13 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-11 bounded Work Centers follow-up
+
+- Revalidated the installed Odoo contract against `core3_owned`: `mrp.mrp_workcenter_action` (runtime action 839), menu `mrp.menu_view_resource_search_mrp` (runtime menu 519), model `mrp.workcenter`, route `/odoo/workcenters`, and `list,kanban,form` modes. The list uses sequence/name/code/tags/alternatives/productive time/cost/hourly efficiency/OEE/setup/cleanup/company; the form uses `General Information` and `Product Capacities` notebook tabs plus the OEE/Lost/Load/Performance stat buttons and chatter.
+- The isolated Manufacturing follow-up aligns Core3 `/work-centers` to that list/kanban contract, uses the shared responsive ListView behavior, and renders the populated OdooFormView with the matching field labels, two tabs, archive/restore/delete guards, deterministic `2026-01-15` fixtures, and explicit read/write/manage permissions. Backend SQL remains in page-id-bound API fragments; frontend pages remain presentation-only.
+- Authenticated captures are under `/tmp`: Odoo desktop `/tmp/odoo-manufacturing-work-centers-desktop-{list,kanban,form}.png`, Odoo mobile `/tmp/odoo-manufacturing-work-centers-mobile-{list,form}.png`, and Core3 final desktop `/tmp/core3-manufacturing-work-centers-desktop-{list,form}.png`. The final Core3 mobile list/form pair was not refreshed after the row-navigation adjustment, and the shared renderer did not expose a Kanban switcher in the runtime control panel, so those are explicit evidence gaps rather than signoff claims. Browser runs used `domcontentloaded` plus fixed waits; no `networkidle` dependency was used.
+- Deliberately deferred in this bounded slice: cross-module OEE/Load/Performance/Operations report targets, mail chatter data, and inline Product Capacities CRUD. No fake Manufacturing routes were added for those source actions.
+
 ## 2026-09-10 bounded implementation progress
 
 - The owned authenticated reference database `core3_owned` has Manufacturing

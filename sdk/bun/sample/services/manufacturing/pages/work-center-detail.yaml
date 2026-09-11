@@ -1,15 +1,33 @@
 title: Work Center
-page: { id: work-center-detail, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers], auth: { require: [manufacturing.manage] } }
+page: { id: work-center-detail, route: /work-centers/detail, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers], auth: { require: [manufacturing.read] } }
 components:
   - type: OdooFormView
     source: mrp_workcenter_detail
     title_field: name
+    status_field: active
+    status_colors: { true: green, false: red }
     editable: true
+    group_columns: 2
     groups:
       - title: Work Center
-        fields: [{ field: name, label: Work Center }, { field: code, label: Code }, { field: company_name, label: Company }, { field: active, label: Active }]
-      - title: Performance
-        fields: [{ field: time_efficiency, label: Time Efficiency }, { field: oee_target, label: OEE Target }, { field: working_state, label: Workcenter Status }]
-      - title: Work Orders
-        fields: [{ field: planned_workorders, label: Planned }, { field: ready_workorders, label: Ready }, { field: progress_workorders, label: In Progress }, { field: blocked_workorders, label: Blocked }]
-    header_actions: [{ id: edit_mrp_workcenter, label: Edit, variant: primary }]
+        fields: [{ field: name, label: Work Center Name }, { field: tags, label: Tag }, { field: alternative_workcenters, label: Alternative Workcenters }, { field: code, label: Code }, { field: resource_calendar, label: Working Hours }, { field: company_name, label: Company }]
+    notebook:
+      active: general_info
+      tabs:
+        - id: general_info
+          label: General Information
+          groups:
+            - title: Production Information
+              fields: [{ field: time_efficiency, label: Time Efficiency }, { field: oee_target, label: OEE Target }, { field: time_start, label: Setup Time }, { field: time_stop, label: Cleanup Time }]
+            - title: Costing Information
+              fields: [{ field: costs_hour, label: Cost per hour }]
+            - title: Description
+              fields: [{ field: note, label: Description, type: textarea, wide: true }]
+        - id: capacity
+          label: Product Capacities
+          fields: [{ field: capacity_summary, label: Product Capacities }]
+    header_actions:
+      - { id: edit_mrp_workcenter, label: Edit, variant: primary, permission: manufacturing.write }
+      - { id: archive_mrp_workcenter, label: Archive, variant: secondary, permission: manufacturing.manage, show_if: 'record.active === true' }
+      - { id: unarchive_mrp_workcenter, label: Restore, variant: secondary, permission: manufacturing.manage, show_if: 'record.active === false' }
+      - { id: delete_mrp_workcenter, label: Delete, variant: danger, permission: manufacturing.manage }

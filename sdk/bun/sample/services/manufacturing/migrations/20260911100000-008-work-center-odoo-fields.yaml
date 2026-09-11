@@ -1,0 +1,31 @@
+version: 0.0.8
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS sequence INTEGER;
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS tags VARCHAR;
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS alternative_workcenters VARCHAR;
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS productive_time DECIMAL(8,2);
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS costs_hour DECIMAL(8,2);
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS time_start DECIMAL(8,2);
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS time_stop DECIMAL(8,2);
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS resource_calendar VARCHAR;
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS note VARCHAR;
+      ALTER TABLE mrp_workcenters ADD COLUMN IF NOT EXISTS capacity_summary VARCHAR;
+      UPDATE mrp_workcenters SET sequence = 1, productive_time = CASE id WHEN 'workcenter-assembly-1' THEN 72 ELSE 0 END, costs_hour = 0, time_start = 0, time_stop = 0, resource_calendar = 'Standard 40 hours/week', note = '', capacity_summary = 'No product-specific capacities', tags = '', alternative_workcenters = '' WHERE id IN ('workcenter-assembly-1', 'workcenter-assembly-2', 'workcenter-drill-1', 'workcenter-packaging-1');
+    down: |
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS capacity_summary;
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS note;
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS resource_calendar;
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS time_stop;
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS time_start;
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS costs_hour;
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS productive_time;
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS alternative_workcenters;
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS tags;
+      ALTER TABLE mrp_workcenters DROP COLUMN IF EXISTS sequence;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -39,4 +39,4 @@ menu:
         - path: /work-centers
           label: Work Centers
           icon: tools
-          permission: manufacturing.manage
+          permission: manufacturing.read

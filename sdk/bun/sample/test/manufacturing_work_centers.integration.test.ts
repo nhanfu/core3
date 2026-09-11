@@ -26,7 +26,7 @@ describe('Manufacturing Work Centers parity slice', () => {
     expect(discovered.pageDatasources.get('work-center-detail')).toContain('mrp_workcenter_detail');
     expect(yaml('api/work-centers.yaml').page.id).toBe('manufacturing-work-centers');
     expect(yaml('api/work-centers.yaml').actions.map((action: any) => action.id)).toEqual([
-      'create_mrp_workcenter', 'edit_mrp_workcenter', 'archive_mrp_workcenter', 'unarchive_mrp_workcenter', 'delete_mrp_workcenter',
+      'view_mrp_workcenter', 'create_mrp_workcenter', 'edit_mrp_workcenter', 'archive_mrp_workcenter', 'unarchive_mrp_workcenter', 'delete_mrp_workcenter',
     ]);
     expect(yaml('manifest.yaml').menu.groups.flatMap((group: any) => group.items.map((item: any) => item.label))).toContain('Work Centers');
   });
@@ -34,10 +34,15 @@ describe('Manufacturing Work Centers parity slice', () => {
   test('matches the Odoo work center action modes and responsive cards', () => {
     const list = yaml('pages/work-centers.yaml').components[0];
     expect(list.source).toBe('mrp_workcenters');
-    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'card', 'form']);
-    expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ label: 'Cards', mobile: true });
-    expect(list.form_view).toEqual({ page: 'apps/services/manufacturing/pages/work-center-detail.yaml', side_panel: true });
-    expect(list.columns.map((column: any) => column.label)).toEqual(['Work Center', 'Code', 'Status', 'Time Efficiency', 'OEE Target', 'Company', ' ']);
+    expect(list.view_navigation).toBe('icons');
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
+    expect(list.views.find((view: any) => view.id === 'kanban')).toMatchObject({ label: 'Kanban', mobile: true });
+    expect(list.responsive_card).toBeUndefined();
+    expect(list.form_view).toEqual({ page: 'apps/services/manufacturing/pages/work-center-detail.yaml', side_panel: false });
+    expect(yaml('api/work-centers.yaml').actions.find((action: any) => action.id === 'view_mrp_workcenter')).toMatchObject({ type: 'navigate', navigate_to: '/work-centers/detail', permission: 'manufacturing.read' });
+    expect(list.columns.map((column: any) => column.label)).toEqual(['Work Center', 'Sequence', 'Code', 'Tag', 'Alternative Workcenters', 'Productive Time', 'Cost per hour', 'Time Efficiency', 'OEE Target', 'Company', ' ']);
+    const form = yaml('pages/work-center-detail.yaml').components[0];
+    expect(form.notebook.tabs.map((tab: any) => tab.label)).toEqual(['General Information', 'Product Capacities']);
     expect(source('work-centers.yaml', 'mrp_workcenters').error_states.transport_error).toMatchObject({ status: 503, code: 'MRP_WORKCENTERS_UNAVAILABLE' });
   });
 
@@ -64,7 +69,10 @@ describe('Manufacturing Work Centers parity slice', () => {
     const listApi = yaml('api/work-centers.yaml');
     const detailApi = yaml('api/work-center-detail.yaml');
     const allActions = [...listApi.actions, ...detailApi.actions];
-    expect(allActions.every((action: any) => action.permission === 'manufacturing.manage')).toBe(true);
+    expect(listApi.datasources[0].permission).toBe('manufacturing.read');
+    expect(listApi.actions.find((action: any) => action.id === 'create_mrp_workcenter').permission).toBe('manufacturing.write');
+    expect(listApi.actions.find((action: any) => action.id === 'edit_mrp_workcenter').permission).toBe('manufacturing.write');
+    expect(allActions.filter((action: any) => ['archive_mrp_workcenter', 'unarchive_mrp_workcenter', 'delete_mrp_workcenter'].includes(action.id)).every((action: any) => action.permission === 'manufacturing.manage')).toBe(true);
     expect(listApi.actions.find((action: any) => action.id === 'create_mrp_workcenter').mutation.guards.map((guard: any) => guard.status)).toEqual([409, 422]);
     expect(listApi.actions.find((action: any) => action.id === 'edit_mrp_workcenter').mutation.concurrency).toEqual({ required: true });
     expect(listApi.actions.find((action: any) => action.id === 'delete_mrp_workcenter').mutation).toMatchObject({ operation: 'delete', concurrency: { required: true } });

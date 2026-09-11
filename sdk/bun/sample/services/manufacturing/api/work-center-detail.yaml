@@ -2,17 +2,41 @@ page: { id: work-center-detail }
 datasources:
   - id: mrp_workcenter_detail
     single: true
-    permission: manufacturing.manage
+    permission: manufacturing.read
     error_states: { transport_error: { status: 503, code: MRP_WORKCENTER_DETAIL_UNAVAILABLE, message: Work center details are temporarily unavailable. } }
-    query: "SELECT id, row_version, name, COALESCE(code, '') AS code, active, time_efficiency, oee_target, working_state, company_name, planned_workorders, ready_workorders, progress_workorders, blocked_workorders, color FROM mrp_workcenters WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, name, COALESCE(code, '') AS code, active, sequence, tags, alternative_workcenters, productive_time, costs_hour, time_efficiency, oee_target, time_start, time_stop, resource_calendar, note, capacity_summary, working_state, company_name, planned_workorders, ready_workorders, progress_workorders, blocked_workorders, color FROM mrp_workcenters WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
 actions:
   - id: edit_mrp_workcenter
     type: server_form
-    permission: manufacturing.manage
+    permission: manufacturing.write
     title: Edit Work Center
     action: manufacturing.workcenters.update
     handler: yaml_mutation
     operation: update
     refresh: [mrp_workcenter_detail, mrp_workcenters]
-    mutation: { operation: update, table: mrp_workcenters, fields: [name, code, active, time_efficiency, oee_target, working_state, company_name, color], required: [name], concurrency: { required: true }, guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_workcenters WHERE LOWER(name) = LOWER(:name) AND company_name = COALESCE(:company_name, 'My Company') AND id <> :id)", status: 409, code: MRP_WORKCENTER_NAME_EXISTS, message: A work center with this name already exists for this company. }, { query: "SELECT 1 AS ok WHERE CAST(:time_efficiency AS DECIMAL(8,2)) >= 0 AND CAST(:time_efficiency AS DECIMAL(8,2)) <= 200 AND CAST(:oee_target AS DECIMAL(8,2)) >= 0 AND CAST(:oee_target AS DECIMAL(8,2)) <= 100", status: 422, code: MRP_WORKCENTER_METRICS_INVALID, message: Work center metrics are invalid. }], result: { query: "SELECT * FROM mrp_workcenters WHERE id = :id" } }
-    fields: [{ field: name, label: Work Center, type: text, required: true }, { field: code, label: Code, type: text }, { field: company_name, label: Company, type: text }, { field: active, label: Active, type: checkbox }, { field: time_efficiency, label: Time Efficiency, type: number }, { field: oee_target, label: OEE Target, type: number }, { field: working_state, label: Workcenter Status, type: select, options: [{ value: normal, label: Normal }, { value: blocked, label: Blocked }] }, { field: color, label: Color, type: number }]
+    mutation: { operation: update, table: mrp_workcenters, fields: [name, code, active, sequence, tags, alternative_workcenters, time_efficiency, oee_target, time_start, time_stop, costs_hour, resource_calendar, note, capacity_summary, working_state, company_name, color], required: [name], concurrency: { required: true }, guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM mrp_workcenters WHERE LOWER(name) = LOWER(:name) AND company_name = COALESCE(:company_name, 'My Company') AND id <> :id)", status: 409, code: MRP_WORKCENTER_NAME_EXISTS, message: A work center with this name already exists for this company. }, { query: "SELECT 1 AS ok WHERE CAST(:time_efficiency AS DECIMAL(8,2)) >= 0 AND CAST(:time_efficiency AS DECIMAL(8,2)) <= 200 AND CAST(:oee_target AS DECIMAL(8,2)) >= 0 AND CAST(:oee_target AS DECIMAL(8,2)) <= 100", status: 422, code: MRP_WORKCENTER_METRICS_INVALID, message: Work center metrics are invalid. }], result: { query: "SELECT * FROM mrp_workcenters WHERE id = :id" } }
+    fields: [{ field: name, label: Work Center, type: text, required: true }, { field: code, label: Code, type: text }, { field: company_name, label: Company, type: text }, { field: active, label: Active, type: checkbox }, { field: sequence, label: Sequence, type: number }, { field: tags, label: Tag, type: text }, { field: alternative_workcenters, label: Alternative Workcenters, type: text }, { field: time_efficiency, label: Time Efficiency, type: number }, { field: oee_target, label: OEE Target, type: number }, { field: time_start, label: Setup Time, type: number }, { field: time_stop, label: Cleanup Time, type: number }, { field: costs_hour, label: Cost per hour, type: number }, { field: resource_calendar, label: Working Hours, type: text }, { field: note, label: Description, type: textarea }, { field: capacity_summary, label: Product Capacities, type: text }, { field: working_state, label: Workcenter Status, type: select, options: [{ value: normal, label: Normal }, { value: blocked, label: Blocked }] }, { field: color, label: Color, type: number }]
+  - id: archive_mrp_workcenter
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.workcenters.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [mrp_workcenter_detail, mrp_workcenters]
+    mutation: { operation: update, table: mrp_workcenters, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM mrp_workcenters WHERE id = :id" } }
+  - id: unarchive_mrp_workcenter
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.workcenters.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [mrp_workcenter_detail, mrp_workcenters]
+    mutation: { operation: update, table: mrp_workcenters, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM mrp_workcenters WHERE id = :id" } }
+  - id: delete_mrp_workcenter
+    type: server
+    permission: manufacturing.manage
+    action: manufacturing.workcenters.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [mrp_workcenter_detail, mrp_workcenters]
+    mutation: { operation: delete, table: mrp_workcenters, concurrency: { required: true } }
