@@ -26,6 +26,7 @@ context_paths:
   - services/crm/pages/unassigned-leads.yaml
   - services/crm/pages/teams.yaml
   - services/crm/pages/configuration.yaml
+  - services/crm/pages/recurring-plans.yaml
   - services/crm/pages/lead-workflow.yaml
   - services/order/pages/sale-quotations.yaml
 
@@ -179,6 +180,26 @@ operations:
     preview: false
   - id: crm.activity_plan_steps.toggle
     route: /api/actions/crm.activity_plan_steps.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.recurring_plans.create
+    route: /api/actions/crm.recurring_plans.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.recurring_plans.update
+    route: /api/actions/crm.recurring_plans.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.recurring_plans.archive
+    route: /api/actions/crm.recurring_plans.archive
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.recurring_plans.unarchive
+    route: /api/actions/crm.recurring_plans.unarchive
     method: POST
     permission: crm.manage
     preview: false
