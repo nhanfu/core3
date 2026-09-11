@@ -38,6 +38,7 @@ describe('Fleet Services parity checkpoint', () => {
       .toEqual(['Date', 'Description', 'Service Type', 'Vehicle', 'Driver', 'Vendor', 'Notes', 'Cost', 'Stage', '']);
     expect(page.components[0].group_by.map((group: any) => group.label))
       .toEqual(['Service Type', 'Fleet Manager', 'Model', 'Manufacturer']);
+    expect(page.components[0].form_view).toEqual({ page: 'apps/services/fleet/pages/service-detail.yaml', side_panel: false });
     expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'fleet_service_detail', title_field: 'service_type_name', status_field: 'state' });
     expect(detailPage.components[0].statusbar.map((entry: any) => entry.label)).toEqual(['New', 'Running', 'Done', 'Cancelled']);
     expect(detailPage.components[0].groups.map((group: any) => group.title)).toEqual(['Services Logs', 'Vehicle']);

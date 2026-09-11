@@ -77,6 +77,6 @@ components:
     row_key: id
     row_open_action: view_fleet_service
     row_double_click_action: view_fleet_service
-    form_view: { page: apps/services/fleet/pages/service-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/fleet/pages/service-detail.yaml, side_panel: false }
     row_actions: menu
     empty_state: { title: No service logs, description: Create a new service entry or adjust your search and filters. }
