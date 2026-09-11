@@ -1,9 +1,15 @@
 page: { id: project-detail }
+actions:
+  - id: open_project_dashboard
+    type: navigate
+    permission: project.read
+    navigate_to: /projects/detail/dashboard
+    params: { id: '{row.id}' }
 datasources:
   - id: project_detail
     single: true
     permission: project.read
-    query: "SELECT id, row_version, name, customer_name, project_manager, stage, favorite, description, planned_hours, spent_hours, state, COALESCE(ROUND(100.0 * (SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id AND state = 'Done') / NULLIF((SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id), 0)), 0) AS progress, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date FROM projects p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, name, customer_name, project_manager, stage, favorite, description, planned_hours, spent_hours, state, COALESCE(ROUND(100.0 * (SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id AND state = 'Done') / NULLIF((SELECT COUNT(*) FROM project_tasks WHERE project_id = p.id), 0)), 0) AS progress, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date, CAST(COALESCE((SELECT COUNT(*) FROM project_updates WHERE project_id = p.id), 0) AS VARCHAR) || ' Status' AS update_summary FROM projects p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
   - id: project_tasks_detail
     single: false
     permission: project.read

@@ -1,0 +1,61 @@
+title: Project Dashboard
+page: { id: project-dashboard, route: /projects/detail/dashboard, breadcrumb: [Services, Project, Detail, Dashboard], auth: { require: [project.read] } }
+components:
+  - type: StatRow
+    source: project_dashboard_stats
+    title: Project Dashboard
+    stats:
+      - { field: task_summary, label: Tasks }
+      - { field: hours, label: Hours }
+      - { field: timesheets, label: Timesheets }
+      - { field: sales_orders, label: Sales Orders }
+      - { field: sales_order_items, label: Sales Order Items }
+      - { field: purchase_orders, label: Purchase Orders }
+  - type: ListView
+    variant: odoo
+    source: project_dashboard_updates
+    create_action: create_project_update
+    create_label: New
+    search: { label: Search updates, placeholder: Search updates... }
+    filters:
+      - { field: status, label: Status, options: [{ id: on_track, label: On Track }, { id: at_risk, label: At Risk }, { id: off_track, label: Off Track }, { id: on_hold, label: On Hold }, { id: done, label: Complete }] }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: ''
+        card:
+          title: name
+          subtitle: user_name
+          fields:
+            - { field: status, label: Status, type: StatusChip }
+            - { field: progress_display, label: Progress }
+            - { field: task_summary, label: Tasks }
+            - { field: hours_display, label: Hours }
+            - { field: date, label: Date }
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: edit }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: user_name, label: Author, mobile: true }
+      - { field: date, label: Date, type: DateCell, mobile: true }
+      - { field: progress, label: Progress, mobile: false }
+      - { field: status, label: Status, type: StatusChip, mobile: true }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_project_update, label: Edit, icon: edit }, { id: delete_project_update, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    responsive_card: true
+    row_key: id
+    row_open_action: view_project_update
+    row_double_click_action: view_project_update
+    form_view: { page: apps/services/project/pages/project-update-detail.yaml, side_panel: true }
+    empty_state: { title: No updates found. Let's create one!, description: Get a snapshot of the status of your project and share its progress with key stakeholders. }
+  - type: ListView
+    variant: odoo
+    source: project_dashboard_milestones
+    columns:
+      - { field: name, label: Milestone, type: PrimaryEntityCell }
+      - { field: due_date, label: Deadline, type: DateCell }
+      - { field: state, label: Status, type: StatusChip }
+    row_key: id
+    empty_state: { title: No milestones, description: Add milestones to track important project dates. }

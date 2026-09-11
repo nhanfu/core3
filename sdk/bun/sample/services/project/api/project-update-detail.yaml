@@ -1,0 +1,53 @@
+page: { id: project-update-detail }
+datasources:
+  - id: project_update_detail
+    single: true
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_UPDATE_DETAIL_UNAVAILABLE, message: Project update details are temporarily unavailable. } }
+    query: "SELECT u.id, u.row_version, u.project_id, p.name AS project_name, u.name, u.status, u.progress, u.user_name, CAST(u.date AS VARCHAR) AS date, CAST(COUNT(t.id) FILTER (WHERE t.state = 'Done') AS VARCHAR) || ' / ' || CAST(COUNT(t.id) AS VARCHAR) AS task_summary, u.description FROM project_updates u JOIN projects p ON p.id = u.project_id LEFT JOIN project_tasks t ON t.project_id = u.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND u.id = :id GROUP BY u.id, u.row_version, u.project_id, p.name, u.name, u.status, u.progress, u.user_name, u.date, u.description"
+actions:
+  - id: back_to_project_dashboard
+    type: navigate
+    permission: project.read
+    navigate_to: /projects/detail/dashboard
+    params: { id: '{row.project_id}' }
+  - id: edit_project_update
+    type: server_form
+    permission: project.write
+    title: Edit Project Update
+    action: project.updates.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.project_update_detail
+    refresh: [project_update_detail, project_dashboard_updates, project_dashboard_stats, project_detail]
+    mutation:
+      operation: update
+      table: project_updates
+      fields: [name, status, progress, date, description]
+      required: [name, status]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM project_updates WHERE id = :id", status: 404, code: PROJECT_UPDATE_NOT_FOUND, message: Project update not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PROJECT_UPDATE_NAME_REQUIRED, message: A project update title is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:progress AS INTEGER), 0) BETWEEN 0 AND 100", status: 422, code: PROJECT_UPDATE_PROGRESS_INVALID, message: Progress must be between 0 and 100. }
+      result: { query: "SELECT * FROM project_updates WHERE id = :id" }
+    fields:
+      - { field: name, label: Title, type: text, required: true }
+      - { field: status, label: Status, type: select, options: [{ value: on_track, label: On Track }, { value: at_risk, label: At Risk }, { value: off_track, label: Off Track }, { value: on_hold, label: On Hold }, { value: done, label: Complete }] }
+      - { field: progress, label: Progress, type: number, min: 0, max: 100 }
+      - { field: date, label: Date, type: text }
+      - { field: description, label: Description, type: textarea }
+  - id: delete_project_update
+    type: server
+    permission: project.write
+    action: project.updates.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [project_dashboard_updates, project_dashboard_stats, project_detail]
+    mutation:
+      operation: delete
+      table: project_updates
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM project_updates WHERE id = :id", status: 404, code: PROJECT_UPDATE_NOT_FOUND, message: Project update not found. }]
