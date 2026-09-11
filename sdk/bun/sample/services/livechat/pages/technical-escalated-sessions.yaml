@@ -9,6 +9,7 @@ components:
     default_filters: { status: ongoing, escalated: true }
     filters:
       - { field: status, label: Status, options: [{ id: ongoing, label: Ongoing }] }
+      - { field: escalated, label: Escalated, options: [{ id: 'true', label: Escalated }] }
       - { field: rating_text, label: Rating, options: [Happy, Neutral, Unhappy, Unrated] }
       - { field: country_name, label: Country, options: ['United States', Belgium, France] }
       - { field: session_date, label: Session Date, options: [{ id: last_24_hours, label: Last 24 Hours }, { id: last_7_days, label: Last 7 Days }, { id: last_30_days, label: Last 30 Days }, { id: last_365_days, label: Last 365 Days }] }
@@ -34,15 +35,15 @@ components:
       - { field: session_date, label: Date, type: TextCell, mobile: true }
       - { field: customer_name, label: Customer, type: PrimaryEntityCell, mobile: true }
       - { field: agents_name, label: Agents, type: TextCell, mobile: true }
-      - { field: requesting_agent_name, label: 'Requesting Help', type: TextCell, mobile: false }
-      - { field: providing_agent_name, label: 'Providing Help', type: TextCell, mobile: false }
-      - { field: chatbot_name, label: Chatbot, type: TextCell, mobile: false }
+      - { field: requesting_agent_name, label: 'Requesting Help', type: TextCell, optional: hide, mobile: false }
+      - { field: providing_agent_name, label: 'Providing Help', type: TextCell, optional: hide, mobile: false }
+      - { field: chatbot_name, label: Chatbot, type: TextCell, optional: hide, mobile: false }
       - { field: country_name, label: Country, type: TextCell, mobile: true }
       - { field: language_name, label: Language, type: TextCell, mobile: true }
       - { field: expertise_name, label: Expertise, type: TextCell, mobile: true }
-      - { field: tag_names, label: Tags, type: TextCell, mobile: false }
-      - { field: channel_name, label: Channel, type: TextCell, mobile: false }
+      - { field: tag_names, label: Tags, type: TextCell, optional: hide, mobile: false }
+      - { field: channel_name, label: Channel, type: TextCell, optional: hide, mobile: false }
       - { field: duration_display, label: Duration, type: TextCell, mobile: true }
       - { field: message_count, label: Messages, type: TextCell, mobile: true }
       - { field: rating_text, label: Rating, type: StatusBadge, mobile: true }
-      - { field: rating_feedback, label: Comment, type: TextCell, mobile: false }
+      - { field: rating_feedback, label: Comment, type: TextCell, optional: hide, mobile: false }

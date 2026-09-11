@@ -27,6 +27,7 @@ datasources:
           OR country_name ILIKE '%' || :q || '%' OR language_name ILIKE '%' || :q || '%'
           OR expertise_name ILIKE '%' || :q || '%' OR channel_name ILIKE '%' || :q || '%')
         AND (:status IS NULL OR status = :status)
+        AND (:escalated IS NULL OR is_escalated = CAST(:escalated AS BOOLEAN))
         AND (:country_name IS NULL OR country_name = :country_name)
         AND (:rating_text IS NULL OR (:rating_text = 'Unrated' AND rating_text = '') OR rating_text = :rating_text)
         AND (:session_date IS NULL OR :session_date = 'all' OR (

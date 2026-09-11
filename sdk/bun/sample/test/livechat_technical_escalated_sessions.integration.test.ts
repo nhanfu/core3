@@ -66,7 +66,7 @@ describe('Live Chat Technical Escalated Sessions action parity', () => {
     await migrateDatabase(repository, migrations, undefined, 'livechat_technical_escalated_sessions_test_migrations', ['schema', 'data']);
 
     const source = yaml('api/technical-escalated-sessions.yaml').datasources[0];
-    const params = { q: null, status: 'ongoing', country_name: null, rating_text: null, session_date: null, fixture_state: null };
+    const params = { q: null, status: 'ongoing', escalated: 'true', country_name: null, rating_text: null, session_date: null, fixture_state: null };
     const populated = await repository.querySource(source, params, 0, 50);
     expect(populated.data).toHaveLength(5);
     expect(populated.data.every((row: any) => row.status === 'ongoing' && row.is_escalated === true)).toBe(true);
