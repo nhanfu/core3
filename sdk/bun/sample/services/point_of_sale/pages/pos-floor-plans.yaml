@@ -1,0 +1,31 @@
+title: Floor Plans
+page: { id: pos-floor-plans, route: /point-of-sale/floor-plans, breadcrumb: [Sales, Point of Sale, Configuration, Floor Plans], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_floor_plans
+    create_action: new_pos_floor_plan
+    create_label: New
+    responsive_card: true
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: grid
+        mobile: true
+        group_by: name
+        card:
+          title: name
+          subtitle: point_of_sale_names
+          fields:
+            - { field: table_count, label: Tables }
+    row_open_action: view_pos_floor_plan
+    row_double_click_action: view_pos_floor_plan
+    form_view: { page: apps/services/point_of_sale/pages/pos-floor-plan-detail.yaml, side_panel: false }
+    search: { label: Search..., placeholder: Search floor or point of sale... }
+    columns:
+      - { field: name, label: Floor Name, type: PrimaryEntityCell }
+      - { field: point_of_sale_names, label: Point of Sales }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No floor plans, description: Create a floor plan to organize tables for your point of sale. }

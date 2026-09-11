@@ -92,6 +92,10 @@ menu:
           label: Coins/Bills
           icon: money
           permission: pos.read
+        - path: /point-of-sale/floor-plans
+          label: Floor Plans
+          icon: map
+          permission: pos.read
         - path: /point-of-sale/presets
           label: Presets
           icon: sliders

@@ -1,0 +1,139 @@
+page: { id: pos-floor-plan-detail }
+datasources:
+  - id: pos_floor_plan_detail
+    single: true
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_FLOOR_PLAN_DETAIL_UNAVAILABLE, message: Floor plan details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, COALESCE(point_of_sale_names, '') AS point_of_sale_names, sequence FROM pos_floor_plans WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: pos_floor_plan_tables
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_FLOOR_PLAN_TABLES_UNAVAILABLE, message: Floor plan tables are temporarily unavailable. } }
+    query: "SELECT id, row_version, floor_plan_id, sequence, table_number, seats, shape FROM pos_floor_plan_tables WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND floor_plan_id = :id ORDER BY sequence, table_number"
+actions:
+  - id: back_to_pos_floor_plans
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/floor-plans
+
+  - id: new_pos_floor_plan_detail
+    type: navigate
+    permission: pos.manage
+    navigate_to: /point-of-sale/floor-plans/new
+
+  - id: edit_pos_floor_plan
+    type: server_form
+    permission: pos.manage
+    title: Edit Floor Plan
+    action: pos.floor_plans.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.pos_floor_plan_detail
+    refresh: [pos_floor_plan_detail, pos_floor_plans, pos_floor_plan_tables]
+    mutation:
+      operation: update
+      table: pos_floor_plans
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, point_of_sale_names, sequence]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM pos_floor_plans WHERE id = :id", status: 404, code: POS_FLOOR_PLAN_NOT_FOUND, message: Floor plan not found. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: POS_FLOOR_PLAN_NAME_REQUIRED, message: Floor Name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_floor_plans WHERE LOWER(name) = LOWER(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: POS_FLOOR_PLAN_NAME_EXISTS, message: A floor plan with this name already exists. }
+      result: { query: "SELECT * FROM pos_floor_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Floor Name, type: text, required: true }
+      - { field: point_of_sale_names, label: Point of Sales, type: text }
+      - { field: sequence, label: Sequence, type: number }
+
+  - id: delete_pos_floor_plan
+    type: server
+    permission: pos.manage
+    action: pos.floor_plans.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}' }
+    refresh: [pos_floor_plans]
+    mutation:
+      operation: delete
+      table: pos_floor_plans
+      key_field: id
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_floor_plans WHERE id = :id", status: 404, code: POS_FLOOR_PLAN_NOT_FOUND, message: Floor plan not found. }
+        - { query: "SELECT 1 AS ok FROM pos_floor_plans f WHERE f.id = :id AND NOT EXISTS (SELECT 1 FROM pos_floor_plan_tables t WHERE t.floor_plan_id = f.id)", status: 409, code: POS_FLOOR_PLAN_IN_USE, message: Floor plans with tables cannot be deleted. }
+
+  - id: add_pos_floor_plan_table
+    type: server_form
+    permission: pos.manage
+    title: Add a line
+    action: pos.floor_plans.tables.create
+    handler: line_item
+    operation: create
+    domain: pos_floor_plan
+    params: { id: '{state.id}' }
+    refresh: [pos_floor_plan_detail, pos_floor_plans, pos_floor_plan_tables]
+    fields:
+      - { field: table_number, label: Table Number, type: number, required: true, min: 1 }
+      - { field: seats, label: Seats, type: number, required: true, min: 1 }
+      - { field: shape, label: Shape, type: select, options: [Square, Round, Rectangle], default: Square }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence, 'pos-floor-table-' || :id || '-' || CAST(COALESCE(MAX(sequence), 0) + 10 AS VARCHAR) AS line_id FROM pos_floor_plan_tables WHERE floor_plan_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM pos_floor_plans WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The floor plan changed. Reload it before adding a table. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:table_number AS INTEGER) BETWEEN 1 AND 999 AND CAST(:seats AS INTEGER) BETWEEN 1 AND 100 AND CAST(:shape AS VARCHAR) IN ('Square', 'Round', 'Rectangle')", status: 422, code: POS_FLOOR_PLAN_TABLE_VALUES_INVALID, message: Enter a valid table number, seat count, and shape. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_floor_plan_tables WHERE floor_plan_id = :id AND table_number = CAST(:table_number AS INTEGER))", status: 409, code: POS_FLOOR_PLAN_TABLE_EXISTS, message: A table with this number already exists on this floor plan. }
+      steps:
+        - { query: "INSERT INTO pos_floor_plan_tables(id, floor_plan_id, row_version, sequence, table_number, seats, shape) VALUES(:line_id, :id, 1, :next_sequence, CAST(:table_number AS INTEGER), CAST(:seats AS INTEGER), CAST(:shape AS VARCHAR))" }
+        - { query: "UPDATE pos_floor_plans SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The floor plan changed while adding a table. Reload before saving. }
+      result: { query: "SELECT * FROM pos_floor_plan_tables WHERE id = :line_id" }
+
+  - id: edit_pos_floor_plan_table
+    type: server_form
+    permission: pos.manage
+    title: Edit table
+    action: pos.floor_plans.tables.update
+    handler: line_item
+    operation: update
+    domain: pos_floor_plan
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [pos_floor_plan_detail, pos_floor_plans, pos_floor_plan_tables]
+    fields:
+      - { field: table_number, label: Table Number, type: number, required: true, min: 1 }
+      - { field: seats, label: Seats, type: number, required: true, min: 1 }
+      - { field: shape, label: Shape, type: select, options: [Square, Round, Rectangle] }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_floor_plans WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The floor plan changed. Reload before saving. }
+        - { query: "SELECT id FROM pos_floor_plan_tables WHERE id = :line_id AND floor_plan_id = :id AND row_version = :expected_row_version", status: 409, code: POS_FLOOR_PLAN_TABLE_STALE, message: This table changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:table_number AS INTEGER) BETWEEN 1 AND 999 AND CAST(:seats AS INTEGER) BETWEEN 1 AND 100 AND CAST(:shape AS VARCHAR) IN ('Square', 'Round', 'Rectangle')", status: 422, code: POS_FLOOR_PLAN_TABLE_VALUES_INVALID, message: Enter a valid table number, seat count, and shape. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_floor_plan_tables WHERE floor_plan_id = :id AND table_number = CAST(:table_number AS INTEGER) AND id <> :line_id)", status: 409, code: POS_FLOOR_PLAN_TABLE_EXISTS, message: A table with this number already exists on this floor plan. }
+      steps:
+        - { query: "UPDATE pos_floor_plan_tables SET row_version = row_version + 1, table_number = CAST(:table_number AS INTEGER), seats = CAST(:seats AS INTEGER), shape = CAST(:shape AS VARCHAR) WHERE id = :line_id AND floor_plan_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_FLOOR_PLAN_TABLE_STALE, message: This table changed or was deleted. Reload before saving. }
+        - { query: "UPDATE pos_floor_plans SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The floor plan changed while saving a table. Reload before saving. }
+      result: { query: "SELECT * FROM pos_floor_plan_tables WHERE id = :line_id" }
+
+  - id: delete_pos_floor_plan_table
+    type: server
+    permission: pos.manage
+    action: pos.floor_plans.tables.delete
+    handler: line_item
+    operation: delete
+    domain: pos_floor_plan
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete table {{row.table_number}}?'
+    refresh: [pos_floor_plan_detail, pos_floor_plans, pos_floor_plan_tables]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_floor_plans WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: STALE_RECORD, message: The floor plan changed. Reload before deleting. }
+        - { query: "SELECT id FROM pos_floor_plan_tables WHERE id = :line_id AND floor_plan_id = :id AND row_version = :expected_row_version", status: 409, code: POS_FLOOR_PLAN_TABLE_STALE, message: This table changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM pos_floor_plan_tables WHERE id = :line_id AND floor_plan_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_FLOOR_PLAN_TABLE_STALE, message: This table changed or was deleted. }
+        - { query: "UPDATE pos_floor_plans SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: STALE_RECORD, message: The floor plan changed while deleting a table. Reload before saving. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }

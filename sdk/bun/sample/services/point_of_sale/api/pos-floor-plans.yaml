@@ -1,0 +1,41 @@
+page: { id: pos-floor-plans }
+datasources:
+  - id: pos_floor_plans
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_FLOOR_PLANS_UNAVAILABLE, message: Floor plans are temporarily unavailable. } }
+    query: "SELECT f.id, f.row_version, f.name, COALESCE(f.point_of_sale_names, '') AS point_of_sale_names, f.sequence, (SELECT COUNT(*) FROM pos_floor_plan_tables t WHERE t.floor_plan_id = f.id) AS table_count FROM pos_floor_plans f WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR f.name ILIKE '%' || :q || '%' OR COALESCE(f.point_of_sale_names, '') ILIKE '%' || :q || '%') ORDER BY f.sequence, f.id"
+actions:
+  - id: new_pos_floor_plan
+    type: navigate
+    permission: pos.manage
+    navigate_to: /point-of-sale/floor-plans/new
+
+  - id: view_pos_floor_plan
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/floor-plan-detail
+    params: { id: '{row.id}' }
+
+  - id: create_pos_floor_plan
+    type: server_form
+    permission: pos.manage
+    title: New Floor Plan
+    action: pos.floor_plans.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [pos_floor_plans]
+    mutation:
+      operation: insert
+      table: pos_floor_plans
+      generated: [id]
+      fields: [row_version, name, point_of_sale_names, sequence]
+      required: [name]
+      defaults: { row_version: 1, point_of_sale_names: '', sequence: 10 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: POS_FLOOR_PLAN_NAME_REQUIRED, message: Floor Name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_floor_plans WHERE LOWER(name) = LOWER(trim(CAST(:name AS VARCHAR))))", status: 409, code: POS_FLOOR_PLAN_NAME_EXISTS, message: A floor plan with this name already exists. }
+      result: { query: "SELECT * FROM pos_floor_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Floor Name, type: text, required: true }
+      - { field: point_of_sale_names, label: Point of Sales, type: text, default: '' }
+      - { field: sequence, label: Sequence, type: number, default: 10 }

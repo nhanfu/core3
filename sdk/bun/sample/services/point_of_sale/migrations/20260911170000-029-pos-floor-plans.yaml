@@ -1,0 +1,41 @@
+version: 0.0.29
+kind: data
+description: POS floor plans, tables, and deterministic Odoo configuration fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_floor_plans (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        point_of_sale_names VARCHAR NOT NULL DEFAULT '',
+        sequence INTEGER NOT NULL DEFAULT 10
+      );
+      CREATE TABLE IF NOT EXISTS pos_floor_plan_tables (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        floor_plan_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        table_number INTEGER NOT NULL,
+        seats INTEGER NOT NULL DEFAULT 1,
+        shape VARCHAR NOT NULL DEFAULT 'Square'
+      );
+      INSERT INTO pos_floor_plans(id, row_version, name, point_of_sale_names, sequence) VALUES
+        ('pos-floor-main', 1, 'Main Floor', 'Restaurant, Bar', 10),
+        ('pos-floor-patio', 1, 'Patio', 'Restaurant, Bar', 20),
+        ('pos-floor-company-empty', 1, 'My Company (San Francisco)', '', 30),
+        ('pos-floor-company-second', 1, 'My Company (San Francisco)', '', 40),
+        ('pos-floor-kiosk', 1, 'My Company (San Francisco)', 'Kiosk', 50)
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO pos_floor_plan_tables(id, floor_plan_id, row_version, sequence, table_number, seats, shape) VALUES
+        ('pos-floor-main-table-1', 'pos-floor-main', 1, 10, 1, 1, 'Square'),
+        ('pos-floor-patio-table-1', 'pos-floor-patio', 1, 10, 1, 1, 'Square'),
+        ('pos-floor-kiosk-table-1', 'pos-floor-kiosk', 1, 10, 1, 2, 'Round')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_floor_plan_tables;
+      DROP TABLE IF EXISTS pos_floor_plans;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

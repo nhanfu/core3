@@ -1,0 +1,55 @@
+title: Floor Plan
+page: { id: pos-floor-plan-detail, route: /point-of-sale/floor-plan-detail, breadcrumb: [Sales, Point of Sale, Configuration, Floor Plans, Floor Plan], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_floor_plan_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_pos_floor_plans, label: Floor Plans, variant: secondary, permission: pos.read }
+      - { id: new_pos_floor_plan_detail, label: New, variant: primary, permission: pos.manage }
+      - { id: edit_pos_floor_plan, label: Edit, variant: secondary, permission: pos.manage }
+      - { id: delete_pos_floor_plan, label: Delete, variant: danger, permission: pos.manage, confirm: Delete this floor plan? }
+    group_columns: 2
+    groups:
+      - title: Floor Plan
+        wide: true
+        fields:
+          - { field: name, label: Floor Name }
+          - { field: point_of_sale_names, label: Point of Sales }
+
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: pos_floor_plan_tables
+    parent_source: pos_floor_plan_detail
+    title: Tables
+    description: Configure the tables available on this floor plan.
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    actions:
+      - { id: add_pos_floor_plan_table, label: Add a line, variant: primary, permission: pos.manage }
+    empty_state: { title: No tables, description: Add a table to this floor plan. }
+    children:
+      - { type: LineItemField, id: table_number, field: table_number, label: Table Number, input_type: number, required: true }
+      - { type: LineItemField, id: seats, field: seats, label: Seats, input_type: number, required: true }
+      - { type: LineItemField, id: shape, field: shape, label: Shape, readonly: true }
+      - type: LineItemActions
+        id: pos_floor_plan_table_actions
+        edit_action: edit_pos_floor_plan_table
+        create_action: add_pos_floor_plan_table
+        actions:
+          - { id: edit_pos_floor_plan_table, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_floor_plan_table, label: Delete, icon: trash, variant: danger, permission: pos.manage }
+    columns:
+      - { field: table_number, label: Table Number, width: 150 }
+      - { field: seats, label: Seats, align: right, width: 120 }
+      - { field: shape, label: Shape, width: 140 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_pos_floor_plan_table, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_floor_plan_table, label: Delete, icon: trash, variant: danger, permission: pos.manage }

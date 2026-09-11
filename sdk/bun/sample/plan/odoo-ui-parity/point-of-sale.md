@@ -504,3 +504,40 @@ The final browser pass was interrupted after a backend crash caused by the
 initial string/numeric guard expression; that expression is fixed and the
 focused suite passes, but the post-fix successful browser create-and-refresh
 transition was not recaptured in this handoff. Screenshots remain outside Git.
+
+## Current batch: Floor Plans
+
+The healthy authenticated Odoo 19 personal reference exposes Configuration →
+Floor Plans as action 761 with list, kanban, and form views. At 1440x900 the
+list shows Floor Name and Point of Sales for five demo floors; the New and
+detail forms expose Floor Name, Point of Sales, and the Tables line grid with
+Table Number, Seats, Shape, and Add a line. At 390x844 Odoo switches the list
+to cards and keeps the form/grid controls touch-sized. Reference captures are
+`/tmp/odoo-pos-floor-plans-desktop-list.png`,
+`/tmp/odoo-pos-floor-plans-desktop-new.png`,
+`/tmp/odoo-pos-floor-plans-desktop-detail.png`,
+`/tmp/odoo-pos-floor-plans-mobile-list.png`,
+`/tmp/odoo-pos-floor-plans-mobile-new.png`, and
+`/tmp/odoo-pos-floor-plans-mobile-detail.png`; the authenticated pass had no
+failed requests or missing-addon errors after the personal database update.
+
+Core3 adds the bounded Floor Plans slice at
+`/point-of-sale/floor-plans`, `/point-of-sale/floor-plans/new`, and
+`/point-of-sale/floor-plan-detail`. Page YAML and API YAML remain separate and
+join through `pos-floor-plans`, `pos-floor-plan-new`, and
+`pos-floor-plan-detail` IDs. Migration `029` owns five deterministic floor
+fixtures and three table fixtures in the Point of Sale service. The list has
+search, list/kanban views, an empty state, and transport-error metadata; forms
+provide required/duplicate validation, optimistic row-version guards,
+in-use-delete protection, and permissioned floor/table CRUD. New-floor table
+editing is intentionally deferred until the parent floor is saved, matching
+the Odoo workflow guard.
+
+Focused integration coverage passes 3 tests and 39 assertions. `bun run audit`,
+the Point of Sale CSS build, and `git diff --check` also pass. Authenticated
+Core3 route checks at 1440x900 and 390x844 completed for list, New, and detail
+with no failed requests and no horizontal overflow; the six Core3 PNGs are
+provisional only because this isolated runtime captured the transient
+launcher/loading glyph instead of the rendered page. Therefore there is no
+Core3 visual sign-off for this batch. The Odoo PNGs are valid paired reference
+evidence. All captures remain in `/tmp` and are not committed.
