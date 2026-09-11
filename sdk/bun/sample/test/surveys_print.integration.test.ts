@@ -79,6 +79,8 @@ describe('Surveys public print contract', () => {
     expect(app).toContain('survey\\/print\\/');
     expect(app).toContain('PublicSurveyPrint.ts');
     expect(component).toContain('window.print()');
+    expect(component).toContain("appendIcon(printButton, 'printer')");
+    expect(component).toContain("new URLSearchParams(window.location.search).get('review') === '1'");
     expect(component).toContain('This survey has no questions yet.');
     expect(component).toContain('@media print');
   });

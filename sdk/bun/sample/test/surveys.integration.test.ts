@@ -364,4 +364,23 @@ describe('Surveys parity catalog and workflow', () => {
     await expect(repository.executeMutation(duplicate.mutation, { ...input, expected_row_version: 2, duplicate_id: 'survey-duplicate-stale' })).rejects.toMatchObject({ status: 409, code: 'SURVEY_DUPLICATE_STALE' });
     database.close();
   });
+
+  test('opens the token-scoped printable survey from the form Actions menu', () => {
+    const page = yaml('pages/survey-detail.yaml');
+    const api = yaml('api/survey-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    const print = page.actions.find((candidate: any) => candidate.id === 'print_survey_detail');
+
+    expect(page.page.id).toBe('survey-detail');
+    expect(api.page.id).toBe(page.page.id);
+    expect(form.action_menu.actions).toContainEqual(expect.objectContaining({
+      id: 'print_survey_detail',
+      label: 'Print Survey',
+      permission: 'surveys.read',
+    }));
+    expect(print).toMatchObject({ type: 'client', permission: 'surveys.read' });
+    expect(print.script).toContain("window.open(`/survey/print/${encodeURIComponent(row.access_token)}`");
+    expect(print.script).toContain("'_blank'");
+    expect(yaml('operations.yaml').operations['survey.public.print.detail'].query).toContain("state IN ('Published', 'Closed')");
+  });
 });
