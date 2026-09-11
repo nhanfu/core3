@@ -1,0 +1,70 @@
+title: Product
+page: { id: purchase-product-detail, route: /purchase/products/detail, breadcrumb: [Supply Chain, Purchase, Products, Product], auth: { require: [purchase.read] } }
+components:
+  - type: OdooFormView
+    source: purchase_product_detail
+    title_field: name
+    subtitle_field: default_code
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    stat_buttons:
+      - { id: purchase_product_variants, label: Variants, value_field: variant_count }
+      - { id: purchase_product_orders, label: Purchased, value_field: purchased_qty }
+    header_actions:
+      - { id: back_to_purchase_products, label: Products, icon: arrow-left, permission: purchase.read }
+      - { id: edit_purchase_product_detail, label: Edit, variant: secondary, permission: purchase.write }
+      - { id: archive_purchase_product_detail, label: Archive, variant: danger, permission: purchase.write, show_if: "state.purchase_product_detail.active === true" }
+    group_columns: 2
+    groups:
+      - title: Product
+        fields:
+          - { field: name, label: Product }
+          - { field: default_code, label: Internal Reference }
+          - { field: category, label: Category }
+          - { field: company_name, label: Company }
+      - title: General Information
+        fields:
+          - { field: product_type, label: Product Type? }
+          - { field: uom, label: Unit of Measure }
+          - { field: barcode, label: Barcode }
+          - { field: product_tags, label: Tags }
+      - title: Purchase
+        fields:
+          - { field: purchase_ok, label: Purchase, type: checkbox }
+          - { field: cost_price, label: Cost, type: number }
+          - { field: on_hand_display, label: On Hand, readonly: true }
+          - { field: row_version, label: Record version, readonly: true }
+    notebook:
+      active: purchase
+      tabs:
+        - id: purchase
+          label: Purchase
+          groups:
+            - title: Purchase information
+              fields:
+                - { field: purchase_ok, label: Purchase, type: checkbox }
+                - { field: cost_price, label: Cost, type: number }
+                - { field: category, label: Category }
+                - { field: uom, label: Unit of Measure }
+        - id: sales
+          label: Sales
+          groups:
+            - title: Sales information
+              fields:
+                - { field: list_price, label: Sales Price, type: number }
+                - { field: product_type, label: Product Type? }
+                - { field: company_name, label: Company }
+        - id: chatter
+          label: Chatter
+          content_slot: true
+    message_source: purchase_product_messages
+    chatter_label: Internal Notes
+    message_label: Send message
+    note_label: Log note
+    message_action: send_purchase_product_message
+    note_action: log_purchase_product_note
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    message_action_labels: { purchase.products.message: Message, purchase.products.note: Note, created: Product created, purchase.info: Purchase information }

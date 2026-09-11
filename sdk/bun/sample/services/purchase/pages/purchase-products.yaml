@@ -26,8 +26,16 @@ components:
       - { field: active, label: Active, type: StatusChip }
     page_size: 80
     row_key: id
+    row_open_action: view_purchase_product
+    row_double_click_action: view_purchase_product
     selectable: true
     row_actions: menu
     actions:
       - { id: archive_purchase_product, label: Archive, permission: purchase.write, variant: danger, show_if: "row.active === true" }
     empty_state: { title: No products found, description: 'Create a product for everything you purchase, whether it is a storable product, consumable, or service.' }
+actions:
+  - id: view_purchase_product
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/products/detail
+    params: { id: '{row.id}' }

@@ -1,0 +1,99 @@
+page: { id: purchase-product-detail }
+datasources:
+  - id: purchase_product_detail
+    single: true
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_PRODUCT_DETAIL_UNAVAILABLE, message: This product is temporarily unavailable. } }
+    query: "SELECT p.id, p.row_version, p.default_code, p.name, COALESCE(p.product_tags, '') AS product_tags, COALESCE(p.barcode, '') AS barcode, p.company_name, p.list_price, p.cost_price, printf('$ %,.2f', CAST(p.list_price AS DOUBLE)) AS list_price_display, printf('$ %,.2f', CAST(p.cost_price AS DOUBLE)) AS cost_price_display, p.category, p.product_type, p.uom, p.purchase_ok, p.active, p.on_hand, printf('%.2f %s', CAST(p.on_hand AS DOUBLE), p.uom) AS on_hand_display, (SELECT COUNT(*) FROM purchase_product_variants v WHERE v.product_id = p.id) AS variant_count, COALESCE((SELECT SUM(o.quantity) FROM purchase_orders o WHERE o.product_name = p.name AND o.state <> 'Cancelled'), 0) AS purchased_qty FROM purchase_products p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id"
+  - id: purchase_product_messages
+    permission: purchase.read
+    query: "SELECT id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM purchase_product_messages WHERE product_id = :id ORDER BY created_at, id"
+actions:
+  - id: back_to_purchase_products
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/products
+  - id: purchase_product_variants
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/product-variants
+    params: { product_id: '{row.id}' }
+  - id: purchase_product_orders
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase
+    params: { product_name: '{row.name}' }
+  - id: edit_purchase_product_detail
+    type: server_form
+    permission: purchase.write
+    title: Edit Product
+    action: purchase.products.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.purchase_product_detail
+    refresh: [purchase_product_detail, purchase_products]
+    mutation:
+      operation: update
+      table: purchase_products
+      key: id
+      fields: [default_code, name, product_tags, barcode, company_name, list_price, cost_price, category, product_type, uom, purchase_ok, active]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_products WHERE id = :id", status: 404, code: PURCHASE_PRODUCT_NOT_FOUND, message: Product not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PURCHASE_PRODUCT_NAME_REQUIRED, message: A product name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_products WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: PURCHASE_PRODUCT_NAME_EXISTS, message: A product with this name already exists. }
+      result: { query: "SELECT * FROM purchase_products WHERE id = :id" }
+    fields:
+      - { field: default_code, label: Internal Reference, type: text }
+      - { field: name, label: Product, type: text, required: true }
+      - { field: product_tags, label: Tags, type: text }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: list_price, label: Sales Price, type: number }
+      - { field: cost_price, label: Cost, type: number }
+      - { field: category, label: Category, type: text }
+      - { field: product_type, label: Product Type?, type: select, options: [Goods, Service, Consumable] }
+      - { field: uom, label: Unit of Measure, type: text }
+      - { field: purchase_ok, label: Purchase, type: checkbox }
+      - { field: active, label: Active, type: checkbox }
+  - id: archive_purchase_product_detail
+    type: server
+    permission: purchase.write
+    action: purchase.products.archive
+    handler: product_status
+    operation: archive
+    params: { id: '{state.id}' }
+    refresh: [purchase_product_detail, purchase_products]
+    mutation:
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM purchase_products WHERE id = :id AND active = true", status: 409, message: Product is already archived }]
+      steps: [{ query: "UPDATE purchase_products SET active = false, purchase_ok = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id" }]
+      result: { query: "SELECT * FROM purchase_products WHERE id = :id" }
+  - id: send_purchase_product_message
+    type: server_form
+    permission: purchase.write
+    title: Send message
+    action: purchase.products.message
+    handler: order_chatter
+    operation: message
+    params: { id: '{row.id}' }
+    refresh: [purchase_product_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      guards: [{ query: "SELECT id FROM purchase_products WHERE id = :id", status: 404, message: Product not found. }]
+      steps: [{ query: "INSERT INTO purchase_product_messages(id, product_id, actor_name, action, action_label, detail, created_at) VALUES(gen_random_uuid(), :id, :current_user_name, 'purchase.products.message', 'Message', :content, CURRENT_TIMESTAMP)" }]
+  - id: log_purchase_product_note
+    type: server_form
+    permission: purchase.write
+    title: Log note
+    action: purchase.products.note
+    handler: order_chatter
+    operation: note
+    params: { id: '{row.id}' }
+    refresh: [purchase_product_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      guards: [{ query: "SELECT id FROM purchase_products WHERE id = :id", status: 404, message: Product not found. }]
+      steps: [{ query: "INSERT INTO purchase_product_messages(id, product_id, actor_name, action, action_label, detail, created_at) VALUES(gen_random_uuid(), :id, :current_user_name, 'purchase.products.note', 'Note', :content, CURRENT_TIMESTAMP)" }]
