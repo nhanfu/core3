@@ -531,6 +531,30 @@ search/filter/empty/error states, deterministic migration, CRUD and stale/
 validation/permission boundaries. Authenticated Odoo/Core3 browser evidence
 must compare the action at 1440x900 and 390x844, with captures only in `/tmp`.
 
+Implementation and evidence are complete in isolated commits:
+`6c62444c` adds the page/API fragments, manifest route, deterministic
+migration, CRUD guards, and focused contract suite; `4e061de6` records the
+pre-implementation contract. The final authenticated browser comparison used
+the active Odoo reference (`core3_user_demo`, `/odoo/action-126`) and Core3's
+isolated runtime. Both list and detail routes were exercised; list captures
+are:
+
+| View | Odoo | Core3 |
+| --- | --- | --- |
+| Desktop 1440x900 list | `/tmp/odoo-livechat-canned-responses-desktop-1440x900-20260911.png` — `90ce766a8e90846e7d5c15d6b9502dbe40eaa6214e47bf033a03108dfb9f6217` | `/tmp/core3-livechat-canned-responses-desktop-final-20260911.png` — `8befb8b59be972cf648036f7534ec60c188e752678f30bea5ffa3238039a786d` |
+| Mobile 390x844 list | `/tmp/odoo-livechat-canned-responses-mobile-390x844-20260911.png` — `5bec184e1faf07ae53003f37f3d566c5af674e99a29c3cc5a607a43f33a695df` | `/tmp/core3-livechat-canned-responses-mobile-final-20260911.png` — `a8daa7361ceb3b4bdb840614c1b05ea5d5d4281067394418e4a6e3b59f64a3ef` |
+
+Core3 detail-route captures are `/tmp/core3-livechat-canned-response-detail-desktop-20260911.png`
+(`3931b93eee9c0525b8a7953da6a07add683bae73deb6f84fd18bfe6e3dc9b601`) and
+`/tmp/core3-livechat-canned-response-detail-mobile-20260911.png`
+(`7b5269d2ba18d5c76e6d4b72734e132d1be3947321ae6bad377a4c62d75416cf`). The
+browser pass found zero request failures, page errors, or HTTP responses at
+least 400, and document/body widths were exactly 1440/1440 and 390/390.
+Focused tests passed 4/4 with 44 assertions; the UI audit passed with 515
+pages, 522 routes, and 907 datasources; ESLint, global/Live Chat Sass builds,
+and `git diff --check` passed. The overall Live Chat plan remains planned
+because this is one bounded action and the other inventory surfaces remain.
+
 ## Bounded implementation slice: Reporting — Agents (2026-09-11)
 
 The next uncovered installed visible action is Live Chat → Reporting → Agents.
