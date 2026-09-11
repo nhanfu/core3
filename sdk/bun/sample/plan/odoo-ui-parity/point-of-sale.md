@@ -984,3 +984,42 @@ stale version guards are covered by the focused contract suite.
 | Core3 Products responsive kanban | 390×844 | `/tmp/core3-pos-products-activity-final-mobile-390x844.png` | `344c0f235105e3469c4e432990cf8eeb7a64890b9024a9afa6eea0a5011079d9` |
 
 Screenshots are temporary `/tmp` evidence and are not committed.
+
+## Current bounded batch: POS Customers > New
+
+The active Odoo 19 reference exposes Customers > New from the Point of Sale
+Customers action. The form is a new `res.partner` record with Person/Company
+selection, contact and address fields, Contacts, Sales & Purchase, Invoicing,
+and Notes tabs, plus standard Save/Discard actions. Core3 adds the
+service-owned `pos-customer-new` page/API pair at
+`/point-of-sale/customer-new`, keeps the Customers list and form fragments
+joined by `page.id`, and changes the customer directory to deterministic
+customer records so newly created customers are visible before their first
+order.
+
+The bounded mutation is `pos.write` create with required-name, Person/Company,
+email-format, and case-insensitive duplicate-name guards. The migration seeds
+three stable customers and preserves order totals through the existing POS
+order relation. Focused coverage is
+`test/pos_customer_new.integration.test.ts`: 3 tests and 23 assertions,
+including discovery, deterministic fixtures, list/detail joins, validation,
+duplicate rejection, and refresh behavior.
+
+Authenticated browser verification used the active Core3 runtime with
+`admin@tms.local` at 1440x900 and 390x844. The form and list render correctly,
+the duplicate flow returns HTTP 409 with the expected message, and both
+viewports have exact document/body widths. No page errors or HTTP error
+responses were observed; the browser only recorded expected aborted bootstrap
+and favicon requests. Odoo's mobile probe had unrelated background resource
+failures while the form itself rendered.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo POS customer form | 1440x900 | `/tmp/odoo-pos-customer-new-1440x900.png` | `ae65676c556ea06ca2661e6d77116e37224e3fc01d7dab3d23bf1c8afef246b2` |
+| Odoo POS customer form | 390x844 | `/tmp/odoo-pos-customer-new-390x844.png` | `a2b0d148287169eaabbab26c0117164bbc36678c16f076f9a112df863696663b` |
+| Core3 POS customer form | 1440x900 | `/tmp/core3-pos-customer-new-current-1440x900.png` | `50219f42a3ac422ff057ede9e0b554ce26fad2264e94d544f27fb193ff366eab` |
+| Core3 POS customer form | 390x844 | `/tmp/core3-pos-customer-new-current-390x844.png` | `385a871039744747f99564862c72361f35feaeddd378b593aeddbc6c72167c29` |
+
+The intended residual is Odoo's purple partner/chatter shell versus Core3's
+Fluent form shell and compact responsive layout. Images remain under `/tmp`
+and are not committed.
