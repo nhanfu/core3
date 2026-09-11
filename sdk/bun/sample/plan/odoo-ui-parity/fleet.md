@@ -1,7 +1,7 @@
 # Odoo 19 UI parity — Fleet
 
 Status: in progress; vehicle, Odometers, Contracts, Manufacturers, Models,
-and the Services checkpoint below are implemented in isolated worktrees, with
+Vehicle Status, and the Services checkpoint below are implemented in isolated worktrees, with
 remaining Fleet surfaces explicitly deferred below.
 
 This plan remains the source of truth for the complete Fleet parity scope.
@@ -526,3 +526,58 @@ The Odoo worker capture is desktop-only; the Core3 mobile capture covers the
 responsive report state. Odoo's installed action is Graph-first, while Core3
 also uses the shared report list projection for responsive fallback. Date
 labels and shell styling retain the documented Core3/Odoo visual differences.
+
+## Configuration > Vehicle > Status checkpoint (2026-09-11)
+
+The selected uncovered Fleet action was `fleet_vehicle_state_action`, reached
+from `Fleet > Configuration > Vehicle > Status`. The active reference is
+`http://localhost:8069`, database `core3_user_demo`, authenticated as
+`admin@core3.local`; the Odoo source is `/home/nhanjs/projects/odoo` at
+revision `65975996`. The live menu is action id 760, model
+`fleet.vehicle.state`, with `list,form` view order and `base.group_no_one`
+menu visibility. Its editable list has the fields `sequence` (handle), `name`,
+and `fold` (`Folded in Kanban`); the form has the same three fields. The
+installed demo contains seven ordered statuses: New Request, To Order,
+Ordered, Registered, Downgraded, Reserve, and Waiting List. The adjacent
+`fleet_vehicle_tag_action` / Tags surface was audited but deliberately not
+implemented in this batch.
+
+Core3 adds `/fleet/config/statuses` and the detail alias
+`/fleet/config/statuses/detail`. `pages/statuses.yaml` and
+`pages/fleet-status-detail.yaml` are presentation-only; `api/statuses.yaml`
+and `api/status-detail.yaml` own the datasources and mutations and join their
+corresponding pages by `page.id`. Migrations
+`20260911240000-021-fleet-statuses-schema.yaml` and
+`20260911241000-022-fleet-statuses-data.yaml` provide an idempotent,
+service-owned table with the seven fixed records, row versions, ordering, and
+fixed timestamp `2026-01-15 00:00:00`. Fleet users retain read access while
+manager permission is required for create, edit, and delete. Empty,
+not-found, transport, 401/403, duplicate, blank-name, invalid-sequence,
+missing-record, and stale-row-version contracts are explicit in the API and
+focused tests. There is no archive transition because the Odoo model has no
+active/archive field.
+
+Implementation commit: `6b08c715`
+(`feat(fleet): add vehicle status configuration parity`).
+
+Authenticated headless browser evidence used the active Odoo reference and an
+isolated Core3 runtime. Both list surfaces were visually inspected at the
+required viewports; Core3 also opened the form route and created a temporary
+status through the inline `New`/`Save` flow. All browser passes reported no
+page errors, no settled failed requests, and no horizontal overflow:
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Vehicle Status list | 1440x900 | `/tmp/odoo-fleet-status-desktop-20260911.png` | `13c032e37ee790ee3ecfffc966ebf3d8392b8ab9608f4d22054a3b7c899507c5` |
+| Odoo Vehicle Status list | 390x844 | `/tmp/odoo-fleet-status-mobile-20260911.png` | `5758a71cf84c996def4741d075327285a62e65b134634850cce8cae46a51f5f6` |
+| Core3 Vehicle Status list | 1440x900 | `/tmp/core3-fleet-status-desktop-20260911.png` | `2558ea23bd9aed200fad687f3951b298b309c75adc0aa0cafed9b7d1fedc104d` |
+| Core3 Vehicle Status list | 390x844 | `/tmp/core3-fleet-status-mobile-20260911.png` | `2a6be77a775a23f54518d9eeb7f4b394ed5ab533978c2268ce77f4262e47637d` |
+| Core3 Vehicle Status form | 1440x900 | `/tmp/core3-fleet-status-detail-desktop-20260911.png` | `6e90c10a54ea109ef9da7f3796303a366913e2e2d9accedf0438449f25edf986` |
+| Core3 Vehicle Status form | 390x844 | `/tmp/core3-fleet-status-detail-mobile-20260911.png` | `a7c77ac7be81c03ec5c63c5f525b38adfc3b23357d46080b76716152c685be8f` |
+
+Focused coverage passes 4 tests and 49 assertions. The UI audit reports 515
+pages, 522 routes, and 907 datasources; ESLint, global and Fleet CSS builds,
+and `git diff --check` pass. The expected visual difference is the Core3
+Fluent shell and blue accent versus Odoo's purple application shell; table
+labels, status ordering, drag handles, checkboxes, responsive widths, and
+the Odoo list/form control structure are matched.
