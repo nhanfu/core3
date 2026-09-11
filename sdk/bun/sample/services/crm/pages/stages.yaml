@@ -1,0 +1,29 @@
+title: Stages
+page: { id: crm-stages, route: /crm/stages, breadcrumb: [CRM, Configuration, Pipeline, Stages], auth: { require: [crm.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_stage_action
+    create_action: create_crm_stage_action
+    create_label: New
+    search: { label: Search Stages, placeholder: Search... }
+    filters: [{ field: active, label: Archived, options: [{ id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/crm/pages/crm-stage-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: edit_crm_stage_action
+    row_double_click_action: edit_crm_stage_action
+    row_actions: menu
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, sortable: false, mobile: false }
+      - { field: name, label: Stage Name, type: PrimaryEntityCell, mobile: true }
+      - { field: is_won, label: Is Won Stage?, type: BooleanToggle }
+      - { field: team_names, label: Sales Teams }
+      - { field: rotting_threshold_days, label: Days to rot, align: right, mobile: false, optional: hide }
+      - { field: color, label: Color, type: ColorCell, mobile: false, optional: hide }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_crm_stage_action, label: Edit, icon: edit }, { id: archive_crm_stage_action, label: Archive, icon: archive, show_if: 'row.active === true' }, { id: unarchive_crm_stage_action, label: Restore, icon: refresh, show_if: 'row.active === false' }, { id: delete_crm_stage_action, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    empty_state: { title: Create a Stage, description: Stages allow salespersons to track opportunities through the sales cycle. }

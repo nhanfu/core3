@@ -1,0 +1,30 @@
+title: Stage
+page: { id: crm-stage-detail, route: /crm/stages/detail, breadcrumb: [CRM, Configuration, Pipeline, Stages, Stage], auth: { require: [crm.manage] } }
+components:
+  - type: OdooFormView
+    source: crm_stage_detail
+    title_field: name
+    status_field: active
+    status_colors: { true: green, false: red }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_crm_stages, label: Stages, variant: secondary, permission: crm.manage }
+      - { id: edit_crm_stage_action, label: Edit, variant: primary, permission: crm.manage }
+      - { id: archive_crm_stage_action, label: Archive, variant: danger, permission: crm.manage, show_if: 'state.crm_stage_detail.active === true' }
+      - { id: unarchive_crm_stage_action, label: Restore, variant: secondary, permission: crm.manage, show_if: 'state.crm_stage_detail.active === false' }
+      - { id: delete_crm_stage_action, label: Delete, variant: danger, permission: crm.manage, confirm: Delete this stage? }
+    groups:
+      - title: Stage
+        fields:
+          - { field: name, label: Stage Name }
+          - { field: fold, label: Folded }
+          - { field: color, label: Color }
+          - { field: team_names, label: Sales Teams }
+          - { field: is_won, label: Is Won Stage }
+          - { field: rotting_threshold_days, label: Days to rot }
+          - { field: sequence, label: Sequence }
+          - { field: probability, label: Probability }
+      - title: Requirements
+        fields:
+          - { field: requirements, label: Requirements, type: textarea }

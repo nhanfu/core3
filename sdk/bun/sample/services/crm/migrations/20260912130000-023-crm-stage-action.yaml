@@ -1,0 +1,29 @@
+version: 0.0.23
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_stages ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      ALTER TABLE crm_stages ADD COLUMN IF NOT EXISTS is_won BOOLEAN DEFAULT false;
+      ALTER TABLE crm_stages ADD COLUMN IF NOT EXISTS color INTEGER DEFAULT 0;
+      ALTER TABLE crm_stages ADD COLUMN IF NOT EXISTS rotting_threshold_days INTEGER DEFAULT 0;
+      ALTER TABLE crm_stages ADD COLUMN IF NOT EXISTS team_names VARCHAR DEFAULT '';
+      UPDATE crm_stages SET row_version = 1 WHERE row_version IS NULL;
+      UPDATE crm_stages SET is_won = (name = 'Won');
+      UPDATE crm_stages SET color = 0 WHERE color IS NULL;
+      UPDATE crm_stages SET rotting_threshold_days = 0 WHERE rotting_threshold_days IS NULL;
+      UPDATE crm_stages SET team_names = '' WHERE team_names IS NULL OR team_names = 'Shared with all teams';
+      INSERT INTO crm_stages(id, name, sequence, probability, fold, requirements, active, row_version, is_won, color, rotting_threshold_days, team_names)
+      VALUES
+        ('crm-stage-renewal', 'Renewal', 6, 75, false, 'Confirm renewal scope and timing.', true, 1, false, 4, 14, '')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_stages WHERE id = 'crm-stage-renewal';
+      ALTER TABLE crm_stages DROP COLUMN IF EXISTS team_names;
+      ALTER TABLE crm_stages DROP COLUMN IF EXISTS rotting_threshold_days;
+      ALTER TABLE crm_stages DROP COLUMN IF EXISTS color;
+      ALTER TABLE crm_stages DROP COLUMN IF EXISTS is_won;
+      ALTER TABLE crm_stages DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

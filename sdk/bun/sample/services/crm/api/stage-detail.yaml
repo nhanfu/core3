@@ -1,0 +1,90 @@
+page: { id: crm-stage-detail }
+datasources:
+  - id: crm_stage_detail
+    single: true
+    permission: crm.manage
+    error_states: { transport_error: { status: 503, code: CRM_STAGE_DETAIL_UNAVAILABLE, message: Stage details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, sequence, probability, fold, requirements, active, is_won, color, rotting_threshold_days, team_names FROM crm_stages WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"
+actions:
+  - id: back_to_crm_stages
+    type: navigate
+    permission: crm.manage
+    navigate_to: /crm/stages
+  - id: edit_crm_stage_action
+    type: server_form
+    permission: crm.manage
+    title: Edit Stage
+    action: crm.stages.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.crm_stage_detail
+    refresh: [crm_stage_detail, crm_stage_action]
+    mutation:
+      operation: update
+      table: crm_stages
+      fields: [name, sequence, probability, fold, requirements, is_won, color, rotting_threshold_days, team_names]
+      required: [name]
+      concurrency: { required: true }
+      before_steps:
+        - { query: "SELECT name AS old_name FROM crm_stages WHERE id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM crm_stages WHERE id = :id", status: 404, code: CRM_STAGE_NOT_FOUND, message: Stage was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: CRM_STAGE_NAME_REQUIRED, message: Stage name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:probability AS INTEGER) BETWEEN 0 AND 100 AND CAST(:rotting_threshold_days AS INTEGER) >= 0", status: 422, code: CRM_STAGE_VALUES_INVALID, message: Probability and days to rot are invalid. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_stages WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: CRM_STAGE_EXISTS, message: A stage with this name already exists. }
+      steps:
+        - query: "UPDATE crm_leads SET stage = :name, probability = :probability, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE stage = :old_name"
+      result: { query: "SELECT * FROM crm_stages WHERE id = :id" }
+    fields:
+      - { field: name, label: Stage Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, required: true }
+      - { field: probability, label: Probability, type: number, min: 0, max: 100, required: true }
+      - { field: fold, label: Folded, type: checkbox }
+      - { field: color, label: Color, type: number }
+      - { field: team_names, label: Sales Teams, type: text }
+      - { field: is_won, label: Is Won Stage, type: checkbox }
+      - { field: rotting_threshold_days, label: Days to rot, type: number }
+      - { field: requirements, label: Requirements, type: textarea }
+  - id: archive_crm_stage_action
+    type: server
+    permission: crm.manage
+    action: crm.stages.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_stage_detail, crm_stage_action]
+    params: { values: { active: false } }
+    mutation:
+      operation: update
+      table: crm_stages
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM crm_stages WHERE id = :id AND active = true", status: 404, code: CRM_STAGE_NOT_FOUND, message: Active stage was not found. }]
+      result: { query: "SELECT * FROM crm_stages WHERE id = :id" }
+  - id: unarchive_crm_stage_action
+    type: server
+    permission: crm.manage
+    action: crm.stages.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_stage_detail, crm_stage_action]
+    params: { values: { active: true } }
+    mutation:
+      operation: update
+      table: crm_stages
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM crm_stages WHERE id = :id AND active = false", status: 404, code: CRM_STAGE_NOT_FOUND, message: Archived stage not found. }]
+      result: { query: "SELECT * FROM crm_stages WHERE id = :id" }
+  - id: delete_crm_stage_action
+    type: server
+    permission: crm.manage
+    action: crm.stages.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [crm_stage_detail, crm_stage_action]
+    mutation:
+      operation: delete
+      table: crm_stages
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM crm_stages WHERE id = :id", status: 404, code: CRM_STAGE_NOT_FOUND, message: Stage not found. }]
+      result: { query: "SELECT true AS deleted" }

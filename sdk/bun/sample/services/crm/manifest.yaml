@@ -80,6 +80,16 @@ menu:
           label: Configuration
           icon: settings
           permission: crm.manage
+          children:
+            - path: /crm/stages
+              label: Pipeline
+              icon: list
+              permission: crm.manage
+              children:
+                - path: /crm/stages
+                  label: Stages
+                  icon: list
+                  permission: crm.manage
         - path: /settings
           label: CRM Settings
           icon: settings
