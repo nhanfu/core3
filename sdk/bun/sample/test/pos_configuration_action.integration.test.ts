@@ -51,6 +51,8 @@ describe('POS Point of Sale configuration action parity', () => {
     expect(rows.data).toHaveLength(6);
     expect(rows.data.map((row: any) => row.name)).toEqual(['Furniture Shop', 'Clothes Shop', 'Bakery Shop', 'Restaurant', 'Bar', 'Kiosk']);
     expect(rows.data.find((row: any) => row.name === 'Furniture Shop')).toMatchObject({ closing: 'Sep 10', balance: 2243.57, status: 'Active' });
+    expect(rows.data.find((row: any) => row.name === 'Clothes Shop')).toMatchObject({ status: 'Inactive', active: false });
+    expect(rows.data.find((row: any) => row.name === 'Bakery Shop')).toMatchObject({ status: 'Inactive', active: false });
     expect((await repository.querySource(listSource, { q: 'Restaurant', fixture_state: null }, 0, 50)).data).toHaveLength(1);
     expect((await repository.querySource(listSource, { q: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect(listSource.error_states.transport_error).toMatchObject({ status: 503, code: 'POS_CONFIGURATIONS_UNAVAILABLE' });
