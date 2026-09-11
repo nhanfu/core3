@@ -22,6 +22,7 @@ components:
       - id: pivot
         label: Pivot
         icon: pivot
+        show_leaf_rows: false
         pivot:
           fields:
             - { field: bill_month, column: Invoice Date }

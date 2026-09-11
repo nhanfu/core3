@@ -32,6 +32,7 @@ describe('Accounting Bills Analysis parity slice', () => {
     ]);
     expect(list.views.map((view: any) => view.id)).toEqual(['graph', 'pivot']);
     expect(list.views[0]).toMatchObject({ id: 'graph', label: 'Graph', category_field: 'bill_month', series_field: 'product_category', measure_field: 'untaxed_amount', measure_label: 'Untaxed Amount', type: 'line' });
+    expect(list.views[1]).toMatchObject({ show_leaf_rows: false });
     expect(list.views[1].pivot.default).toEqual({ rows: ['bill_month'], columns: ['product_category'], measures: [{ field: 'untaxed_amount', aggregate: 'sum', column: 'Untaxed Amount' }] });
     expect(api.page).toEqual({ id: 'bills-analysis' });
     expect(reportSource.permission).toBe('accounting.read');
