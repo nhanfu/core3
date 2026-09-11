@@ -827,3 +827,40 @@ Residuals and deferred evidence: Core3 list/detail/new paired screenshots,
 authenticated cashier-vs-manager browser proof, exact Odoo shell/icon parity,
 tax distribution line editing, and chatter are deferred. No screenshots are
 committed.
+
+## Current bounded batch: tax distribution-line editing
+
+The source/reference gate is positive. In the owned Odoo 19 database, action
+368 (`account.action_tax_form`) opens `/odoo/taxes`; the `15%` record at
+`/odoo/taxes/1` is populated with invoice repartition lines 1 and 2 and refund
+repartition lines 3 and 4. The embedded `account.tax.repartition.line` list is
+`editable="bottom"` with create/delete enabled and exposes Sequence, `%`, Based
+On (`Base`/`of tax`), Account, Tax Grids, and the optional Tax Closing Entry.
+The source model requires paired invoice/refund distributions, exactly one
+base line per document, and a positive tax allocation totaling 100%. Odoo's
+access CSV grants mutation of taxes and repartition lines to the accounting
+manager; ordinary users retain read access.
+
+Core3 implements only the deferred x2many slice on the existing
+`pos-tax-detail` page. The two page/API contracts remain separate and join by
+`page.id`; invoice and refund grids use service-owned
+`pos_tax_distribution_lines` fixtures. Line create, update, and delete are
+permissioned with `pos.manage`, parent and line `row_version` guards, missing
+parent/line handling, invalid percentage/basis/account validation, required
+tax-line protection, and explicit empty/not-found/transport datasource states.
+The update also refreshes the tax's persisted invoice/refund distribution
+summary. The bounded Core3 contract uses deterministic text account/tax-grid
+projections; sequence drag-reordering, account/tag many2one/many2many pickers,
+cross-document atomic editing, and chatter remain residuals.
+
+Focused coverage passes 3 tests and 28 assertions. Audit, ESLint, global CSS
+build, and `git diff --check` pass. Screenshots are temporary `/tmp` evidence
+and are not committed.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo tax detail | 1440×900 | `/tmp/odoo-pos-tax-distribution-detail-desktop-1440x900-20260911.png` | `8561f5d5ee046c3b37d3a1ed4718533fc9a6133be87a72e1f4d55bf49b92ecb5` |
+| Odoo tax detail | 390×844 | `/tmp/odoo-pos-tax-distribution-detail-mobile-390x844-20260911.png` | `4a97d265029d5f6b3f0a269ad2a24232b547ec4d49a7efa9d1fbdd2cc178ead3` |
+| Core3 tax detail | 1440×900 | `/tmp/core3-pos-tax-distribution-detail-desktop-1440x900-20260911.png` | `8d057f6149c767177b974bde6c57f8117430bae115193b4a8eb2190ddf9ed5e3` |
+| Core3 edited invoice line | 1440×900 | `/tmp/core3-pos-tax-distribution-edited-desktop-1440x900-20260911.png` | `43df49382107c3eed0722e40f787aefd5bfb13f7b0a664637b6a748d0f34b6d3` |
+| Core3 edited invoice line | 390×844 | `/tmp/core3-pos-tax-distribution-edited-mobile-390x844-20260911.png` | `83cc0bc718438bcdadc0c9fee292c530d85ecad6068875c19c63edd9b30c9387` |
