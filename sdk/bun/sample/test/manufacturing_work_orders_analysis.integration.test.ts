@@ -58,7 +58,7 @@ describe('Manufacturing Work Orders Analysis Odoo action parity', () => {
       source: 'mrp_workorder_analysis',
       default_filters: { report_scope: 'active' },
       default_group_by: 'workcenter',
-      view_navigation: 'icons',
+      view_navigation: 'tabs',
       row_open_action: 'view_mrp_workorder_analysis',
     });
     expect(api.datasources.every((source: any) => source.permission === 'manufacturing.read')).toBe(true);

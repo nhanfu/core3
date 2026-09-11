@@ -7,6 +7,7 @@ components:
     source: mrp_workorder_analysis
     search: { label: Search work orders analysis, placeholder: 'Search operations, work centers, manufacturing orders, or products...' }
     default_filters: { report_scope: active }
+    view_navigation: tabs
     filters:
       - { field: state, label: Status, options_source: mrp_workorder_analysis_states }
       - { field: workcenter, label: Work Center, options_source: mrp_workorder_analysis_workcenters }
@@ -18,7 +19,6 @@ components:
       - { field: state, label: Status }
       - { field: planned_date, label: Date }
     default_group_by: workcenter
-    view_navigation: icons
     views:
       - id: graph
         label: Graph
