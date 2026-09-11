@@ -655,6 +655,48 @@ card hierarchy and responsive information density using the available shared
 primitive. Live contact logos and activity-icon chips remain a future shared
 card enhancement.
 
+## Purchase Product History bounded follow-up — 2026-09-11
+
+The next uncovered installed Purchase action was the product form's visible
+`Purchased` stat button. In the authenticated personal Odoo database
+`core3_personal`, the button on `Acoustic Bloc Screens` opens action `697`
+(`Purchase History for Acoustic Bloc Screens`) at
+`/odoo/purchase-products/23/action-697`. The installed action exposes `List`,
+`Pivot`, and `Graph` views, defaults to `Order Date: Last 365 Days`, and shows
+the seeded history line `[FURN_6667] Acoustic Bloc Screens (Black) (1)` with
+quantity `20.00` and total untaxed `$ 5,736.00`.
+
+Core3 now routes the product stat to `/purchase/products/history` with the
+selected product in `product_name`. The layout-only page/API pair is joined by
+`page.id: purchase-product-history`; the API owns the purchase-line query and
+its List/Pivot/Graph field contracts. Migration
+`20260911195000-017-purchase-product-history.yaml` creates the deterministic
+`purchase_product_history` table and seeds four realistic lines, including the
+Odoo-shaped Acoustic Bloc Screens row. The product detail's Purchased total is
+calculated from the same history source so the stat and report cannot drift.
+The focused test covers page/API binding, the stat navigation, deterministic
+product/search filtering, empty/not-found/transport states, and the Purchased
+total. No write action is invented for this read-only Odoo report.
+
+Authenticated comparison captures are local only and remain outside Git:
+
+- Odoo: `/tmp/odoo-purchase-product-history-desktop-20260911.png`,
+  `/tmp/odoo-purchase-product-history-mobile-product-context-20260911.png`,
+  `/tmp/odoo-purchase-product-history-desktop-pivot-20260911.png`, and
+  `/tmp/odoo-purchase-product-history-desktop-graph-20260911.png`.
+- Core3: `/tmp/core3-purchase-product-history-desktop-20260911.png`,
+  `/tmp/core3-purchase-product-history-mobile-20260911.png`,
+  `/tmp/core3-purchase-product-history-desktop-pivot-20260911.png`, and
+  `/tmp/core3-purchase-product-history-desktop-graph-20260911.png`.
+
+The authenticated browser pass used 1440x900 and 390x844 viewports. Odoo and
+Core3 both returned zero failed responses and exact document/body widths at
+both sizes. The mobile table intentionally scrolls its dense report columns
+internally, matching the installed Odoo behavior without widening the page.
+Core3 retains the shared Fluent shell while Odoo retains its purple shell;
+Core3's Pivot/Graph toolbar and seeded records are the bounded shared-component
+parity surface, not a claim that the two global shells are pixel-identical.
+
 ## Acceptance gate
 
 - Every source-visible menu above has a Core3 route, or an explicit documented
