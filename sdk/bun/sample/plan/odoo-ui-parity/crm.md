@@ -266,9 +266,17 @@ Core3 implementation:
   month ranges, reject duplicates, and require row-version concurrency.
 - Focused validation: `bun test test/crm_recurring_plans.integration.test.ts` —
   3 tests passed, 38 assertions.
+- Authenticated Core3 captures: `/tmp/core3-crm-recurring-plans/core3-recurring-plans-desktop.png`
+  at 1440×900 and `/tmp/core3-crm-recurring-plans/core3-recurring-plans-mobile.png`
+  at 390×844. The browser pass reached `/crm/recurring-plans`, returned the four
+  deterministic active rows, reported no page errors or unexpected failed
+  requests, and measured `scrollWidth === innerWidth` at both viewports.
+- The desktop comparison uses a CRM-scoped table rule so the sequence handle
+  and `# Months` column stay narrow like Odoo; the mobile comparison hides the
+  handle and keeps the two visible columns inside the viewport.
 
 Known visual limits: Core3 uses the shared Fluent shell rather than Odoo's
-purple shell/top bar; Odoo's generic selected-row archive menu is represented
-by explicit guarded archive/unarchive actions in the Core3 contract. Final
-authenticated Core3 desktop/mobile captures and any responsive differences are
-recorded with the next browser validation checkpoint.
+purple shell/top bar, and Core3's compact mobile control bar is denser than
+Odoo's. Odoo's generic selected-row archive menu is represented by explicit
+guarded archive/unarchive actions in the Core3 contract. The reference and
+Core3 screenshots remain outside Git.

@@ -1,5 +1,26 @@
 @use 'styles/tokens';
 
+/* Odoo's recurring-plan list keeps the reorder handle and month count narrow. */
+@media (min-width: 601px) {
+  #outlet:has(.o-list-table [data-column='number_of_months']) .o-list-table {
+    table-layout: auto;
+  }
+
+  #outlet:has(.o-list-table [data-column='number_of_months']) .o-list-table [data-column='sequence'] {
+    width: 60px;
+    max-width: 60px;
+  }
+
+  #outlet:has(.o-list-table [data-column='number_of_months']) .o-list-table [data-column='number_of_months'] {
+    width: 90px;
+    max-width: 90px;
+  }
+
+  #outlet:has(.o-list-table [data-column='number_of_months']) .o-list-table [data-column='name'] {
+    width: auto;
+  }
+}
+
 /* Settings follows Odoo's full-width application surface: no page gutter or breadcrumb. */
 .app-content:has(.o-settings-view) {
   padding: 0;
