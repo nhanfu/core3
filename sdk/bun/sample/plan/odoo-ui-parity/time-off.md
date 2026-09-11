@@ -370,6 +370,52 @@ multiple-request wizards remain deferred.
 
 The Mandatory Days follow-up now completes the installed `hr_leave_mandatory_day_action` list/form contract. The layout/API fragments remain joined by `page.id`, and the list now has the Odoo current-year Period filter, search/date scoping, hidden optional department/job columns, row navigation, and manager-only delete. `/mandatory-days/detail` provides the OdooFormView for Name, dates, Color, and Company; create/update/delete are deterministic service mutations with row-version stale protection and 404/409/422 guards. The 0.0.9 migration adds row versions, optional department/job scope fields, and a date index idempotently while preserving the fixed `Company Celebration` fixture. Authenticated personal-Odoo evidence used `/odoo/action-633` (database `core3_personal`) and was captured with empty failed-request lists at 1440x900 and 390x844. Core3 evidence is `/tmp/core3-timeoff-mandatory-days-{desktop,mobile}-{list,detail}.png`; Odoo comparison evidence is `/tmp/odoo-timeoff-personal-{desktop,mobile}-{mandatory-days,mandatory-day-detail}.png`. Final Core3 list/detail browser checks report exact viewport fit and no horizontal overflow; focused Time Off tests pass.
 
+The next uncovered visible `hr_holidays` configuration action is the Accrual
+Plan milestone editor reached from `Configuration > Accrual Plans`. The live
+personal Odoo menu uses `open_view_accrual_plans` (`/odoo/action-632`, model
+`hr.leave.accrual.plan`, `list,form`); its nested milestone actions are
+`action_create_accrual_plan_level` (`New Milestone`) and
+`action_open_accrual_plan_level` (`Milestone Edition`). The authenticated
+reference showed the `Milestones` timeline with `After 1 day(s)`, `After 4
+year(s)`, `After 8 year(s)`, and the exact accrual-frequency, carry-over, and
+cap sentences.
+
+Core3 implements this bounded slice on
+`/time-off/accrual-plans/detail?id=accrual-plan-demo-001` with page contract
+`accrual-plan-detail` and the separate API fragment of the same `page.id`.
+`accrual_plan_levels` is migration-backed at 0.0.10, seeds the three
+deterministic Seniority Plan levels, supports Odoo-shaped search summaries,
+and exposes permissioned New Milestone, Milestone Edition, and Delete
+actions. Create/edit/delete validate values and duplicate start points,
+refresh the parent level count, and use `row_version` stale guards. The
+datasource declares an explicit 503 transport state; the list has default,
+search, and empty states, while the page and actions require
+`time_off.manage`. The supported create form defaults to one Day(s), Daily,
+and At allocation creation, matching the Odoo modal's initial values.
+
+Authenticated comparison captures are outside Git under
+`/tmp/odoo-time-off-accrual-plans-desktop.png`,
+`/tmp/odoo-time-off-accrual-milestones-{desktop,mobile}.png`, and
+`/tmp/odoo-time-off-accrual-milestone-new-{desktop,mobile}.png`; Core3
+captures are under `/tmp/core3-time-off-accrual-plans-desktop.png`,
+`/tmp/core3-time-off-accrual-milestones-{desktop,mobile}.png`,
+`/tmp/core3-time-off-accrual-milestone-new-{desktop,mobile}.png`, and
+`/tmp/core3-time-off-accrual-milestone-created-desktop.png`. The authenticated
+browser run covered menu navigation, populated detail, create/persist, search,
+empty search, modal bounds, and desktop/mobile viewport fit with no failed
+requests or horizontal overflow. The focused milestone suite passes 3 tests
+and 37 assertions.
+
+Known limits: Odoo renders milestones as a custom vertical timeline and its
+conditional milestone form has fewer visible controls than the complete
+Odoo model. Core3 uses the supported responsive Odoo ListView plus modal form
+so row edit/delete, search, empty, and permission boundaries remain
+testable; it presents the same visible summary sentences but not Odoo's
+timeline connector or every conditional frequency-specific field. The
+desktop list search is exercised directly; on mobile the compact toolbar
+collapses the text input behind its search button. No mutation was made in
+the live Odoo database.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context

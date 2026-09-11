@@ -4,6 +4,10 @@ datasources:
     single: true
     permission: time_off.manage
     query: "SELECT id, name, level_count, employee_count, state FROM accrual_plans WHERE id = :id"
+  - id: accrual_plan_levels
+    permission: time_off.manage
+    error_states: { transport_error: { status: 503, code: TIME_OFF_ACCRUAL_LEVELS_UNAVAILABLE, message: Accrual plan milestones are temporarily unavailable. } }
+    query: "SELECT id, row_version, accrual_plan_id, sequence, start_count, start_type, milestone_date, added_value, added_value_type, frequency, week_day, first_day, second_day, first_month_day, first_month, second_month_day, second_month, yearly_month, yearly_day, action_with_unused_accruals, carryover_options, postpone_max_days, accrual_validity, accrual_validity_count, accrual_validity_type, cap_accrued_time, maximum_leave, cap_accrued_time_yearly, maximum_leave_yearly, CASE WHEN milestone_date = 'creation' THEN 'At allocation creation' ELSE 'After ' || CAST(start_count AS VARCHAR) || ' ' || CASE start_type WHEN 'day' THEN 'day(s)' WHEN 'month' THEN 'month(s)' ELSE 'year(s)' END END AS milestone_summary, RTRIM(RTRIM(CAST(added_value AS VARCHAR), '0'), '.') || ' ' || CASE added_value_type WHEN 'day' THEN 'day(s)' ELSE 'hour(s)' END || ' every ' || CASE frequency WHEN 'hourly' THEN 'hour' WHEN 'daily' THEN 'day' WHEN 'weekly' THEN 'week' WHEN 'bimonthly' THEN 'twice a month' WHEN 'monthly' THEN 'month' WHEN 'biyearly' THEN 'twice a year' ELSE 'year' END || CASE WHEN frequency IN ('monthly','yearly') THEN ' on the ' || COALESCE(CAST(CASE WHEN frequency = 'monthly' THEN first_day ELSE yearly_day END AS VARCHAR), '') || ' of ' || CASE WHEN frequency = 'monthly' THEN 'the month' ELSE CASE yearly_month WHEN '1' THEN 'January' WHEN '2' THEN 'February' WHEN '3' THEN 'March' WHEN '4' THEN 'April' WHEN '5' THEN 'May' WHEN '6' THEN 'June' WHEN '7' THEN 'July' WHEN '8' THEN 'August' WHEN '9' THEN 'September' WHEN '10' THEN 'October' WHEN '11' THEN 'November' ELSE 'December' END END ELSE '' END || '.' AS frequency_summary, CASE action_with_unused_accruals WHEN 'all' THEN 'Unused days will be transferred totally on each start of the year.' ELSE 'Unused days will be lost.' END AS carryover_summary, CASE WHEN cap_accrued_time THEN 'A balance cap is set to ' || RTRIM(RTRIM(CAST(maximum_leave AS VARCHAR), '0'), '.') || ' day(s).' ELSE 'No balance cap.' END AS cap_summary FROM accrual_plan_levels WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND accrual_plan_id = :id AND (:q IS NULL OR CAST(start_count AS VARCHAR) ILIKE '%' || :q || '%' OR start_type ILIKE '%' || :q || '%' OR frequency ILIKE '%' || :q || '%' OR milestone_date ILIKE '%' || :q || '%' OR ('After ' || CAST(start_count AS VARCHAR) || ' ' || CASE start_type WHEN 'day' THEN 'day(s)' WHEN 'month' THEN 'month(s)' ELSE 'year(s)' END) ILIKE '%' || :q || '%') ORDER BY sequence, id"
 actions:
   - id: edit_accrual_plan
     type: server_form
@@ -30,3 +34,97 @@ actions:
       - { field: level_count, label: Levels, type: number }
       - { field: employee_count, label: Employees, type: number }
       - { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }
+  - id: create_accrual_plan_milestone
+    type: server_form
+    permission: time_off.manage
+    title: New Milestone
+    action: time_off.accrual_plan_levels.create
+    handler: line_item
+    operation: create
+    domain: accrual_plan
+    params: { id: '{state.id}' }
+    refresh: [accrual_plan_detail, accrual_plans, accrual_plan_levels]
+    fields:
+      - { field: added_value, label: Accrual amount, type: number, required: true, min: 0.001, default: 1 }
+      - { field: added_value_type, label: Accrual unit, type: select, default: day, options: [{ value: day, label: Day(s) }, { value: hour, label: Hour(s) }] }
+      - { field: frequency, label: Frequency, type: select, default: daily, options: [{ value: hourly, label: Hourly }, { value: daily, label: Daily }, { value: weekly, label: Weekly }, { value: bimonthly, label: Twice a month }, { value: monthly, label: Monthly }, { value: biyearly, label: Twice a year }, { value: yearly, label: Yearly }] }
+      - { field: milestone_date, label: Milestone reached, type: select, default: creation, options: [{ value: creation, label: At allocation creation }, { value: after, label: After }] }
+      - { field: start_count, label: Start after, type: number, default: 0, min: 0 }
+      - { field: start_type, label: Start unit, type: select, default: day, options: [{ value: day, label: Days }, { value: month, label: Months }, { value: year, label: Years }] }
+      - { field: action_with_unused_accruals, label: Unused time off, type: select, default: lost, options: [{ value: lost, label: Lost }, { value: all, label: Carried over }] }
+      - { field: carryover_options, label: Carry over amount, type: select, default: unlimited, options: [{ value: unlimited, label: Unlimited }, { value: limited, label: Up to }] }
+      - { field: postpone_max_days, label: Maximum carried-over days, type: number, default: 0, min: 0 }
+      - { field: accrual_validity, label: Define a carry over validity?, type: checkbox, default: false }
+      - { field: accrual_validity_count, label: Carry over validity, type: number, default: 1, min: 1 }
+      - { field: accrual_validity_type, label: Validity unit, type: select, default: day, options: [{ value: day, label: Days }, { value: month, label: Months }] }
+      - { field: cap_accrued_time_yearly, label: Define a yearly cap?, type: checkbox, default: false }
+      - { field: maximum_leave_yearly, label: Yearly cap, type: number, default: 0, min: 0 }
+      - { field: cap_accrued_time, label: Define a balance cap?, type: checkbox, default: false }
+      - { field: maximum_leave, label: Balance cap, type: number, default: 0, min: 0 }
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence, 'accrual-level-' || :id || '-' || CAST(COALESCE(MAX(sequence), 0) + 10 AS VARCHAR) AS line_id FROM accrual_plan_levels WHERE accrual_plan_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM accrual_plans WHERE id = :id", status: 404, code: TIME_OFF_ACCRUAL_PLAN_NOT_FOUND, message: Accrual plan not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:added_value AS DECIMAL(16,5)) > 0 AND CAST(:start_count AS INTEGER) >= 0 AND CAST(:maximum_leave AS DECIMAL(16,2)) >= 0 AND CAST(:maximum_leave_yearly AS DECIMAL(16,2)) >= 0 AND CAST(:frequency AS VARCHAR) IN ('hourly','daily','weekly','bimonthly','monthly','biyearly','yearly') AND CAST(:milestone_date AS VARCHAR) IN ('creation','after')", status: 422, code: TIME_OFF_ACCRUAL_LEVEL_VALUES_INVALID, message: Enter a valid accrual amount, frequency, milestone, and non-negative caps. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:milestone_date AS VARCHAR) <> 'after' OR CAST(:start_count AS INTEGER) > 0", status: 422, code: TIME_OFF_ACCRUAL_LEVEL_START_INVALID, message: An After milestone must start after a positive period. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accrual_plan_levels WHERE accrual_plan_id = :id AND start_count = CAST(:start_count AS INTEGER) AND start_type = CAST(:start_type AS VARCHAR))", status: 409, code: TIME_OFF_ACCRUAL_LEVEL_EXISTS, message: A milestone at this point already exists on the plan. }
+      steps:
+        - { query: "INSERT INTO accrual_plan_levels(id, accrual_plan_id, sequence, start_count, start_type, milestone_date, added_value, added_value_type, frequency, week_day, first_day, second_day, first_month_day, first_month, second_month_day, second_month, yearly_month, yearly_day, action_with_unused_accruals, carryover_options, postpone_max_days, accrual_validity, accrual_validity_count, accrual_validity_type, cap_accrued_time, maximum_leave, cap_accrued_time_yearly, maximum_leave_yearly, row_version) VALUES(:line_id, :id, :next_sequence, COALESCE(CAST(:start_count AS INTEGER), 0), COALESCE(:start_type, 'day'), COALESCE(:milestone_date, 'creation'), CAST(:added_value AS DECIMAL(16,5)), COALESCE(:added_value_type, 'day'), COALESCE(:frequency, 'daily'), :week_day, COALESCE(CAST(:first_day AS INTEGER), 1), :second_day, :first_month_day, :first_month, :second_month_day, :second_month, COALESCE(:yearly_month, '1'), COALESCE(CAST(:yearly_day AS INTEGER), 1), COALESCE(:action_with_unused_accruals, 'lost'), COALESCE(:carryover_options, 'unlimited'), COALESCE(CAST(:postpone_max_days AS INTEGER), 0), COALESCE(CAST(:accrual_validity AS BOOLEAN), FALSE), COALESCE(CAST(:accrual_validity_count AS INTEGER), 1), COALESCE(:accrual_validity_type, 'day'), COALESCE(CAST(:cap_accrued_time AS BOOLEAN), FALSE), COALESCE(CAST(:maximum_leave AS DECIMAL(16,2)), 0), COALESCE(CAST(:cap_accrued_time_yearly AS BOOLEAN), FALSE), COALESCE(CAST(:maximum_leave_yearly AS DECIMAL(16,2)), 0), 1)" }
+        - { query: "UPDATE accrual_plans SET level_count = (SELECT COUNT(*) FROM accrual_plan_levels WHERE accrual_plan_id = :id) WHERE id = :id" }
+      result: { query: "SELECT * FROM accrual_plan_levels WHERE id = :line_id" }
+  - id: edit_accrual_plan_milestone
+    type: server_form
+    permission: time_off.manage
+    title: Milestone Edition
+    action: time_off.accrual_plan_levels.update
+    handler: line_item
+    operation: update
+    domain: accrual_plan
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [accrual_plan_detail, accrual_plans, accrual_plan_levels]
+    fields:
+      - { field: added_value, label: Accrual amount, type: number, required: true, min: 0.001 }
+      - { field: added_value_type, label: Accrual unit, type: select, options: [{ value: day, label: Day(s) }, { value: hour, label: Hour(s) }] }
+      - { field: frequency, label: Frequency, type: select, options: [{ value: hourly, label: Hourly }, { value: daily, label: Daily }, { value: weekly, label: Weekly }, { value: bimonthly, label: Twice a month }, { value: monthly, label: Monthly }, { value: biyearly, label: Twice a year }, { value: yearly, label: Yearly }] }
+      - { field: milestone_date, label: Milestone reached, type: select, options: [{ value: creation, label: At allocation creation }, { value: after, label: After }] }
+      - { field: start_count, label: Start after, type: number, min: 0 }
+      - { field: start_type, label: Start unit, type: select, options: [{ value: day, label: Days }, { value: month, label: Months }, { value: year, label: Years }] }
+      - { field: action_with_unused_accruals, label: Unused time off, type: select, options: [{ value: lost, label: Lost }, { value: all, label: Carried over }] }
+      - { field: carryover_options, label: Carry over amount, type: select, options: [{ value: unlimited, label: Unlimited }, { value: limited, label: Up to }] }
+      - { field: postpone_max_days, label: Maximum carried-over days, type: number, min: 0 }
+      - { field: accrual_validity, label: Define a carry over validity?, type: checkbox }
+      - { field: accrual_validity_count, label: Carry over validity, type: number, min: 1 }
+      - { field: accrual_validity_type, label: Validity unit, type: select, options: [{ value: day, label: Days }, { value: month, label: Months }] }
+      - { field: cap_accrued_time_yearly, label: Define a yearly cap?, type: checkbox }
+      - { field: maximum_leave_yearly, label: Yearly cap, type: number, min: 0 }
+      - { field: cap_accrued_time, label: Define a balance cap?, type: checkbox }
+      - { field: maximum_leave, label: Balance cap, type: number, min: 0 }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM accrual_plan_levels WHERE id = :line_id AND accrual_plan_id = :id", status: 404, code: TIME_OFF_ACCRUAL_LEVEL_NOT_FOUND, message: Milestone not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:added_value AS DECIMAL(16,5)) > 0 AND CAST(:start_count AS INTEGER) >= 0 AND CAST(:maximum_leave AS DECIMAL(16,2)) >= 0 AND CAST(:maximum_leave_yearly AS DECIMAL(16,2)) >= 0 AND CAST(:frequency AS VARCHAR) IN ('hourly','daily','weekly','bimonthly','monthly','biyearly','yearly') AND CAST(:milestone_date AS VARCHAR) IN ('creation','after')", status: 422, code: TIME_OFF_ACCRUAL_LEVEL_VALUES_INVALID, message: Enter a valid accrual amount, frequency, milestone, and non-negative caps. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:milestone_date AS VARCHAR) <> 'after' OR CAST(:start_count AS INTEGER) > 0", status: 422, code: TIME_OFF_ACCRUAL_LEVEL_START_INVALID, message: An After milestone must start after a positive period. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accrual_plan_levels WHERE accrual_plan_id = :id AND start_count = CAST(:start_count AS INTEGER) AND start_type = CAST(:start_type AS VARCHAR) AND id <> :line_id)", status: 409, code: TIME_OFF_ACCRUAL_LEVEL_EXISTS, message: A milestone at this point already exists on the plan. }
+      steps:
+        - { query: "UPDATE accrual_plan_levels SET start_count = CAST(:start_count AS INTEGER), start_type = COALESCE(:start_type, 'day'), milestone_date = COALESCE(:milestone_date, 'creation'), added_value = CAST(:added_value AS DECIMAL(16,5)), added_value_type = COALESCE(:added_value_type, 'day'), frequency = COALESCE(:frequency, 'daily'), week_day = :week_day, first_day = COALESCE(CAST(:first_day AS INTEGER), 1), second_day = :second_day, first_month_day = :first_month_day, first_month = :first_month, second_month_day = :second_month_day, second_month = :second_month, yearly_month = COALESCE(:yearly_month, '1'), yearly_day = COALESCE(CAST(:yearly_day AS INTEGER), 1), action_with_unused_accruals = COALESCE(:action_with_unused_accruals, 'lost'), carryover_options = COALESCE(:carryover_options, 'unlimited'), postpone_max_days = COALESCE(CAST(:postpone_max_days AS INTEGER), 0), accrual_validity = COALESCE(CAST(:accrual_validity AS BOOLEAN), FALSE), accrual_validity_count = COALESCE(CAST(:accrual_validity_count AS INTEGER), 1), accrual_validity_type = COALESCE(:accrual_validity_type, 'day'), cap_accrued_time = COALESCE(CAST(:cap_accrued_time AS BOOLEAN), FALSE), maximum_leave = COALESCE(CAST(:maximum_leave AS DECIMAL(16,2)), 0), cap_accrued_time_yearly = COALESCE(CAST(:cap_accrued_time_yearly AS BOOLEAN), FALSE), maximum_leave_yearly = COALESCE(CAST(:maximum_leave_yearly AS DECIMAL(16,2)), 0), row_version = row_version + 1 WHERE id = :line_id AND accrual_plan_id = :id AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD, message: This milestone changed or was deleted. Reload before saving. }
+      result: { query: "SELECT * FROM accrual_plan_levels WHERE id = :line_id" }
+  - id: delete_accrual_plan_milestone
+    type: server
+    permission: time_off.manage
+    action: time_off.accrual_plan_levels.delete
+    handler: line_item
+    operation: delete
+    domain: accrual_plan
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete this milestone?'
+    refresh: [accrual_plan_detail, accrual_plans, accrual_plan_levels]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM accrual_plan_levels WHERE id = :line_id AND accrual_plan_id = :id", status: 404, code: TIME_OFF_ACCRUAL_LEVEL_NOT_FOUND, message: Milestone not found. }
+      steps:
+        - { query: "DELETE FROM accrual_plan_levels WHERE id = :line_id AND accrual_plan_id = :id AND row_version = :expected_row_version", expect_changed: true, code: STALE_RECORD, message: This milestone changed or was deleted. Reload before deleting. }
+        - { query: "UPDATE accrual_plans SET level_count = (SELECT COUNT(*) FROM accrual_plan_levels WHERE accrual_plan_id = :id) WHERE id = :id" }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }

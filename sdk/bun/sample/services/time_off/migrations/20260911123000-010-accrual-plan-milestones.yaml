@@ -1,0 +1,59 @@
+version: 0.0.10
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accrual_plan_levels (
+        id VARCHAR PRIMARY KEY,
+        accrual_plan_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        start_count INTEGER NOT NULL DEFAULT 0,
+        start_type VARCHAR NOT NULL DEFAULT 'day',
+        milestone_date VARCHAR NOT NULL DEFAULT 'creation',
+        added_value DECIMAL(16,5) NOT NULL DEFAULT 1,
+        added_value_type VARCHAR NOT NULL DEFAULT 'day',
+        frequency VARCHAR NOT NULL DEFAULT 'daily',
+        week_day VARCHAR,
+        first_day VARCHAR,
+        second_day VARCHAR,
+        first_month_day VARCHAR,
+        first_month VARCHAR,
+        second_month_day VARCHAR,
+        second_month VARCHAR,
+        yearly_month VARCHAR,
+        yearly_day VARCHAR,
+        action_with_unused_accruals VARCHAR NOT NULL DEFAULT 'lost',
+        carryover_options VARCHAR NOT NULL DEFAULT 'unlimited',
+        postpone_max_days INTEGER NOT NULL DEFAULT 0,
+        accrual_validity BOOLEAN NOT NULL DEFAULT FALSE,
+        accrual_validity_count INTEGER NOT NULL DEFAULT 1,
+        accrual_validity_type VARCHAR NOT NULL DEFAULT 'day',
+        cap_accrued_time BOOLEAN NOT NULL DEFAULT FALSE,
+        maximum_leave DECIMAL(16,2) NOT NULL DEFAULT 0,
+        cap_accrued_time_yearly BOOLEAN NOT NULL DEFAULT FALSE,
+        maximum_leave_yearly DECIMAL(16,2) NOT NULL DEFAULT 0,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS accrual_plan_levels_plan_sequence_idx
+        ON accrual_plan_levels(accrual_plan_id, sequence, id);
+      INSERT OR IGNORE INTO accrual_plan_levels(
+        id, accrual_plan_id, sequence, start_count, start_type, milestone_date,
+        added_value, added_value_type, frequency, first_day, yearly_month,
+        yearly_day, action_with_unused_accruals, carryover_options,
+        cap_accrued_time, maximum_leave
+      ) VALUES
+        ('accrual-level-demo-001-01', 'accrual-plan-demo-001', 10, 1, 'day', 'after',
+         1, 'day', 'yearly', '1', '1', '1', 'all', 'unlimited', TRUE, 100),
+        ('accrual-level-demo-001-02', 'accrual-plan-demo-001', 40, 4, 'year', 'after',
+         2, 'day', 'yearly', '1', '1', '1', 'all', 'unlimited', TRUE, 100),
+        ('accrual-level-demo-001-03', 'accrual-plan-demo-001', 80, 8, 'year', 'after',
+         3, 'day', 'yearly', '1', '1', '1', 'all', 'unlimited', TRUE, 100);
+      UPDATE accrual_plans
+      SET level_count = (SELECT COUNT(*) FROM accrual_plan_levels WHERE accrual_plan_id = accrual_plans.id)
+      WHERE id IN (SELECT DISTINCT accrual_plan_id FROM accrual_plan_levels);
+    down: |
+      DROP TABLE IF EXISTS accrual_plan_levels;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

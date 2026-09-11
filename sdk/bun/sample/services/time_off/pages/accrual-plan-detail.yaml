@@ -16,3 +16,27 @@ components:
         fields: [{ field: name, label: Name }, { field: state, label: Status }]
       - title: Configuration
         fields: [{ field: level_count, label: Levels }, { field: employee_count, label: Employees }]
+  - type: ListView
+    mount_in: previous-panel
+    source: accrual_plan_levels
+    variant: odoo
+    create_action: create_accrual_plan_milestone
+    create_label: Add a milestone
+    search: { label: Search milestones, placeholder: Search milestones... }
+    empty_state: { title: No milestones on the plan yet. Let's create a new one, description: Create a milestone to define when employees accrue time off. }
+    row_key: id
+    row_open_action: edit_accrual_plan_milestone
+    row_double_click_action: edit_accrual_plan_milestone
+    row_actions: menu
+    columns:
+      - { field: milestone_summary, label: Milestone, width: 220 }
+      - { field: frequency_summary, label: Accrual frequency, width: 390 }
+      - { field: carryover_summary, label: Carry Over, width: 270 }
+      - { field: cap_summary, label: Cap, width: 220 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_accrual_plan_milestone, label: Edit, icon: edit, variant: ghost, permission: time_off.manage }
+          - { id: delete_accrual_plan_milestone, label: Delete, icon: trash, variant: danger, permission: time_off.manage }
