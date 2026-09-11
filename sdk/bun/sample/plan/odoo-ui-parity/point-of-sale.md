@@ -684,3 +684,43 @@ purple-shell modal over the dashboard, while Core3 uses its shared Fluent
 shell and an in-page OdooFormView card; Core3 also currently renders the
 header actions alongside the form edit footer, so Print and Cancel appear in
 both locations. Screenshots remain outside Git.
+
+## Current batch: standalone Sale line action 731
+
+The authenticated personal Odoo 19 database exposes the installed standalone
+`Sale line` action 731 (`pos.order.line`, list view). It is distinct from the
+covered `All sales lines` action 734: the list columns are Product, Quantity,
+Discount (%), Unit Price, Tax Excl., Tax Incl., and Created on, with a New
+action and 21 committed demo rows. The action was checked at 1440×900 and
+390×844; the mobile pager is hidden by Odoo at the narrow breakpoint.
+
+Core3 adds the separate `/point-of-sale/sale-line` route with the matching
+`pos-sale-line` page/API pair. The service-owned query excludes open tickets
+and projects only Paid or Invoiced order lines, so the deterministic action
+fixture renders the same 21-row committed-line shape without leaking the
+touch-selling `House coffee` draft. New and Delete require `pos.manage`; list
+and row navigation require `pos.read`. Required-value, invalid-order,
+empty-state, transport-error, and permission contracts are covered by the
+focused integration test. Supplied create IDs are preserved, with UUID
+generation used only when the caller omits an ID.
+
+Implementation checkpoint: `4fbeb88` (`feat(pos): add sale line action parity`).
+Focused validation passes 3 tests and 19 assertions; the UI audit passes with
+456 pages, 463 routes, and 795 datasources; `git diff --check` is clean.
+
+Authenticated browser evidence was captured and visually inspected on
+2026-09-11. Both surfaces returned zero unexpected responses and zero console
+errors; `document.documentElement.scrollWidth` matched the viewport at both
+sizes. Screenshots remain outside Git.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo action 731 | 1440×900 | `/tmp/odoo-pos-sale-line-action731-1440-final.png` | `bc421f4126e440879c7657c0cf6ac19569926cc471d493e2887ac8e0199c8dbe` |
+| Core3 Sale line | 1440×900 | `/tmp/core3-pos-sale-line-action731-1440-final.png` | `bfd8420851cfa5c77401619bf11a7b1d5769e6ec147ea446d2e759898bfc3861` |
+| Odoo action 731 | 390×844 | `/tmp/odoo-pos-sale-line-action731-390-final.png` | `d85976a0967e6b4ef95db37d1d548361d4337fbb04bd4bed24f164a31f40074d` |
+| Core3 Sale line | 390×844 | `/tmp/core3-pos-sale-line-action731-390-final.png` | `2b0fc1c67dd910074d914c64edf895c10d3217a6df4fbd53bd15fdb99f484297` |
+
+The remaining visual difference is the shared Core3 Fluent shell and compact
+mobile table clipping versus Odoo's purple shell and formatted currency cells;
+the action columns, row count, search/New controls, responsive composition,
+and viewport fit are otherwise aligned for this bounded slice.
