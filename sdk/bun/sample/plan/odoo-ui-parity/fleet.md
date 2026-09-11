@@ -607,7 +607,8 @@ states. Manager-only mutations validate non-blank names and Odoo color indexes
 support delete. Shared list/grid YAML now supports the Odoo color palette while
 remaining backward-compatible with existing color cells.
 
-Implementation commit: `543a5fe7` (`feat(fleet): add vehicle tags parity`).
+Implementation commits: `543a5fe7` (`feat(fleet): add vehicle tags parity`)
+and `0f78cdeb` (`fix(fleet): apply Odoo palette to vehicle tags`).
 
 Authenticated headless browser evidence used the active Odoo reference and an
 isolated Core3 runtime. The Odoo and Core3 list surfaces were checked at both
@@ -616,10 +617,10 @@ temporary, remain under `/tmp`, and are not committed:
 
 | Surface | Viewport | Capture | SHA-256 |
 | --- | --- | --- | --- |
-| Odoo Vehicle Tags list | 1440x900 | `/tmp/odoo-fleet-tags-desktop-20260911.png` | `710c0f7aec551690ed528090fa175890bf8e50e52b1a23a7da79d6f864d9cbc1` |
-| Odoo Vehicle Tags list | 390x844 | `/tmp/odoo-fleet-tags-mobile-20260911.png` | `2c7f6137f68db1dc494add8eca07ba09c723113eeb032a508b1ee34a909c91e1` |
-| Core3 Vehicle Tags list | 1440x900 | `/tmp/core3-fleet-tags-desktop-20260911.png` | `4b7c9af74191160d9bc54e9658eb7ba94b0dc3f3b3f7f19cde24824fda2933a3` |
-| Core3 Vehicle Tags list | 390x844 | `/tmp/core3-fleet-tags-mobile-20260911.png` | `10942f099eece1309d973ba694367dc59c2e1afb9dfb24dd22826ca67386b72c` |
+| Odoo Vehicle Tags list | 1440x900 | `/tmp/odoo-fleet-tags-desktop-20260911.png` | `483d30e9d27d66c6fdf78229ec259ea4315a3a6e6ecfbce225019fb89793bcaf` |
+| Odoo Vehicle Tags list | 390x844 | `/tmp/odoo-fleet-tags-mobile-20260911.png` | `7d0b5893824e1068c6c94e93249dacb4e88586eeaae248dec246c397e4dc6893` |
+| Core3 Vehicle Tags list | 1440x900 | `/tmp/core3-fleet-tags-desktop-20260911.png` | `22cc0adab6cd658c3edc30ccfe47aac1a72556e5dd17d31289a8d527896e77b9` |
+| Core3 Vehicle Tags list | 390x844 | `/tmp/core3-fleet-tags-mobile-20260911.png` | `b3d67faff86caa8989f5ed602216b1599b9e53789d3e7e07c8f79d40bf59947d` |
 | Core3 Vehicle Tag form | 1440x900 | `/tmp/core3-fleet-tag-detail-desktop-final-20260911.png` | `b5df21ce3dacccfe82544d6d3ac3d0fe1234a0381289de6efa02c1a7c3de05d1` |
 | Core3 Vehicle Tag form | 390x844 | `/tmp/core3-fleet-tag-detail-mobile-final-20260911.png` | `7e7fea2cd16fcc36ea9416c3c6ea23356587a51412106b6b81e982e173da8c78` |
 
