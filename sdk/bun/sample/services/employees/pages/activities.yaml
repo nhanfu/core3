@@ -14,34 +14,10 @@ components:
       - { field: timing, label: Timing }
     view_navigation: tabs
     views:
-      - id: activity
-        label: Activity
-        icon: activity
-        title_field: employee_name
-        subtitle_field: job_title
-        record_date_field: activity_date
-        activity_types:
-          - { id: todo, label: To-Do, icon: ✓ }
-          - { id: email, label: Email, icon: ✉ }
-          - { id: call, label: Call, icon: ☎ }
-          - { id: meeting, label: Meeting, icon: ◉ }
-          - { id: document, label: Document, icon: ▣ }
-        mobile: false
       - id: list
         label: List
         icon: table
         mobile: false
-      - id: card
-        label: Cards
-        icon: grid
-        card:
-          title: employee_name
-          subtitle: job_title
-          fields:
-            - { field: activity_type, label: Activity }
-            - { field: activity_summary, label: Summary }
-            - { field: activity_date, label: Due date }
-            - { field: timing, label: Timing }
       - id: kanban
         label: Kanban
         icon: dashboard
@@ -55,6 +31,19 @@ components:
             - { field: activity_summary, label: Summary }
             - { field: activity_date, label: Due date }
             - { field: activity_user, label: Assigned to }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: employee_name
+        subtitle_field: job_title
+        record_date_field: activity_date
+        activity_types:
+          - { id: todo, label: To-Do, icon: ✓ }
+          - { id: email, label: Email, icon: ✉ }
+          - { id: call, label: Call, icon: ☎ }
+          - { id: meeting, label: Meeting, icon: ◉ }
+          - { id: document, label: Document, icon: ▣ }
+        mobile: false
       - id: graph
         label: Graph
         icon: graph
@@ -76,13 +65,25 @@ components:
             rows: [employee_name]
             columns: [timing]
             measures: [{ field: activity_count, aggregate: sum, column: Activities }]
+      - id: card
+        label: Kanban
+        icon: grid
+        mobile: true
+        card:
+          title: employee_name
+          subtitle: job_title
+          fields:
+            - { field: work_email, label: Work Email }
+            - { field: work_phone, label: Work Phone }
+            - { field: activity_count, label: Activities }
+            - { field: activity_date, label: Next Activity Deadline }
+            - { field: department_name, label: Department }
     columns:
       - { field: employee_name, label: Employee, type: PrimaryEntityCell, secondary: job_title }
-      - { field: activity_type, label: Activity }
-      - { field: activity_summary, label: Summary }
-      - { field: activity_date, label: Due date }
-      - { field: activity_user, label: Assigned to }
-      - { field: timing, label: Timing, type: StatusChip }
+      - { field: activity_count, label: Activities }
+      - { field: activity_date, label: Next Activity Deadline }
+      - { field: department_name, label: Department }
+      - { field: job_title, label: Job }
     page_size: 50
     row_key: id
     row_open_action: view_employee_activity

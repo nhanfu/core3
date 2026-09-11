@@ -1,0 +1,13 @@
+version: 0.0.15
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS employee_activities_all_action_idx ON employee_activities(employee_id, activity_date, id);
+      UPDATE employee_activities SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      DROP INDEX IF EXISTS employee_activities_all_action_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
