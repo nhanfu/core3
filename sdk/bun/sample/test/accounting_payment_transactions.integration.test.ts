@@ -39,7 +39,7 @@ describe('Accounting Payment Transactions Odoo action parity', () => {
     });
     expect(form.statusbar.map((state: any) => state.value)).toEqual(['draft', 'pending', 'authorized', 'done', 'cancel', 'error']);
     expect(form.groups.flatMap((group: any) => group.fields.map((field: any) => field.label))).toEqual([
-      'Reference', 'Source Transaction', 'Amount', 'Payment Method', 'Provider', 'Company', 'Provider Reference', 'Payment Token',
+      'Reference', 'Payment', 'Payment State', 'Source Transaction', 'Amount', 'Payment Method', 'Provider', 'Company', 'Provider Reference', 'Payment Token',
       'Created on', 'Last State Change Date', 'Production Environment', 'Customer', 'Address', 'City', 'State', 'ZIP', 'Country',
       'Email', 'Phone', 'Language',
     ]);
@@ -62,14 +62,17 @@ describe('Accounting Payment Transactions Odoo action parity', () => {
     expect((await repository.querySource(list, { ...params, q: 'Azure' }, 0, 50)).data.map((row: any) => row.reference)).toEqual(['TX-DEMO-2026-0001']);
     expect((await repository.querySource(list, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect(await repository.querySource(detail, { id: 'payment-tx-confirmed-001', fixture_state: null }, 0, 1)).toMatchObject({
-      data: { reference: 'TX-DEMO-2026-0001', state: 'done', state_label: 'Confirmed', partner: 'Azure Interior', amount: 1250 },
+      data: { reference: 'TX-DEMO-2026-0001', state: 'done', state_label: 'Confirmed', partner: 'Azure Interior', amount: 1250, payment_reference: 'BNK1/2026/0001', payment_state: 'paid', payment_state_label: 'Paid', payment_date: '2026-09-01' },
+    });
+    expect(await repository.querySource(detail, { id: 'payment-tx-authorized-002', fixture_state: null }, 0, 1)).toMatchObject({
+      data: { reference: 'TX-DEMO-2026-0002', payment_reference: null, payment_state: null, payment_state_label: null, payment_date: null },
     });
     expect((await repository.querySource(detail, { id: 'missing-payment-transaction', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     await expect(repository.querySource(list, { ...params, fixture_state: 'forbidden' }, 0, 50)).rejects.toMatchObject({ status: 403, code: 'ACCOUNTING_PAYMENT_TRANSACTIONS_FORBIDDEN' });
     await expect(repository.querySource(detail, { id: 'payment-tx-confirmed-001', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'ACCOUNTING_PAYMENT_TRANSACTION_DETAIL_UNAVAILABLE' });
   });
 
-  test('keeps creation, editing, and payment-provider workflows explicitly out of the bounded action', () => {
+  test('keeps linked payment read-only and payment-provider workflows explicitly out of the bounded action', () => {
     const list = yaml('pages/payment-transactions.yaml').components[0];
     const actions = yaml('api/payment-transactions.yaml').actions;
     expect(actions).toEqual([{ id: 'view_accounting_payment_transaction', type: 'navigate', permission: 'accounting.read', navigate_to: '/accounting/payment-transaction-detail', params: { id: '{row.id}' } }]);
@@ -77,5 +80,10 @@ describe('Accounting Payment Transactions Odoo action parity', () => {
     expect(yaml('pages/payment-transaction-detail.yaml').components[0].editable).toBe(false);
     expect(yaml('api/payment-transactions.yaml').datasources[0].permission).toBe('accounting.read');
     expect(yaml('api/payment-transaction-detail.yaml').datasources[0].permission).toBe('accounting.read');
+    expect(yaml('pages/payment-transaction-detail.yaml').components[0].groups[0].fields.slice(0, 3)).toEqual([
+      { field: 'reference', label: 'Reference' },
+      { field: 'payment_reference', label: 'Payment' },
+      { field: 'payment_state_label', label: 'Payment State' },
+    ]);
   });
 });

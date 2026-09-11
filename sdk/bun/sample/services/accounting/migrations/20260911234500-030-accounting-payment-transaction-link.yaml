@@ -1,0 +1,40 @@
+version: 0.0.30
+description: Accounting payment transaction linked payment state parity
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_payment_transactions ADD COLUMN IF NOT EXISTS payment_reference VARCHAR;
+      ALTER TABLE accounting_payment_transactions ADD COLUMN IF NOT EXISTS payment_state VARCHAR;
+      ALTER TABLE accounting_payment_transactions ADD COLUMN IF NOT EXISTS payment_state_label VARCHAR;
+      ALTER TABLE accounting_payment_transactions ADD COLUMN IF NOT EXISTS payment_date VARCHAR;
+      UPDATE accounting_payment_transactions
+      SET payment_reference = CASE id
+        WHEN 'payment-tx-confirmed-001' THEN 'BNK1/2026/0001'
+        WHEN 'payment-tx-canceled-004' THEN 'BNK1/2026/0002'
+        ELSE NULL
+      END,
+      payment_state = CASE id
+        WHEN 'payment-tx-confirmed-001' THEN 'paid'
+        WHEN 'payment-tx-canceled-004' THEN 'canceled'
+        ELSE NULL
+      END,
+      payment_state_label = CASE id
+        WHEN 'payment-tx-confirmed-001' THEN 'Paid'
+        WHEN 'payment-tx-canceled-004' THEN 'Canceled'
+        ELSE NULL
+      END,
+      payment_date = CASE id
+        WHEN 'payment-tx-confirmed-001' THEN '2026-09-01'
+        WHEN 'payment-tx-canceled-004' THEN '2026-08-13'
+        ELSE NULL
+      END
+      WHERE id IN ('payment-tx-confirmed-001', 'payment-tx-canceled-004');
+    down: |
+      ALTER TABLE accounting_payment_transactions DROP COLUMN IF EXISTS payment_reference;
+      ALTER TABLE accounting_payment_transactions DROP COLUMN IF EXISTS payment_state;
+      ALTER TABLE accounting_payment_transactions DROP COLUMN IF EXISTS payment_state_label;
+      ALTER TABLE accounting_payment_transactions DROP COLUMN IF EXISTS payment_date;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

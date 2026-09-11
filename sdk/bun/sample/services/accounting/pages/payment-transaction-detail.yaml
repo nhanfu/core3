@@ -20,6 +20,8 @@ components:
       - title: Transaction Details
         fields:
           - { field: reference, label: Reference }
+          - { field: payment_reference, label: Payment }
+          - { field: payment_state_label, label: Payment State }
           - { field: source_transaction, label: Source Transaction }
           - { field: amount_display, label: Amount }
           - { field: payment_method, label: Payment Method }
