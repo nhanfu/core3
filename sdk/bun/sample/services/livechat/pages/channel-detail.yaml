@@ -8,6 +8,8 @@ components:
     subtitle_field: session_summary
     editable: true
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    groups:
+      - { fields: [] }
     header_actions:
       - { id: back_to_livechat_channels, label: Channels, variant: secondary, permission: livechat.read }
       - { id: join_livechat_channel, label: Join Channel, variant: primary, permission: livechat.write, show_if: 'record.joined === false' }

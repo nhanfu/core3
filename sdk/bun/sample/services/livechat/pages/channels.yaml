@@ -13,7 +13,6 @@ components:
       - id: card
         label: Kanban
         icon: dashboard
-        mobile: true
         group_by: active_label
         card:
           title: name
