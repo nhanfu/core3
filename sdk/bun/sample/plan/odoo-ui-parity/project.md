@@ -499,6 +499,40 @@ Validation on the isolated worktree passed: focused tests 3/3 with 35
 assertions, UI audit 505 pages / 512 routes / 889 datasources, ESLint, global
 and Project CSS builds, and `git diff --check`.
 
+## Bounded slice: Project Activity Plans (2026-09-11)
+
+The next genuinely uncovered visible Project action is Configuration > Activity
+Plans. Live Odoo 19 exposes `mail_activity_plan_menu_config_project` ->
+`mail_activity_plan_action_config_project_task_plan` (action 451 in the owned
+database) at `/odoo/project-activity-plans`. The action is backed by
+`mail.activity.plan`, uses `list,kanban,form`, restricts records to
+`project.project` and `project.task`, defaults new plans to `project.task`, and
+shows `Name` and `Steps Count` in the Project list. Its search view provides
+name search, an Archived filter, and grouping by Model. The form exposes Plan
+Name, Model, Company, and an Activities To Create notebook with Activity Type,
+Summary, Assignment, Assigned to, Interval, Unit, and Trigger. The Project
+override allows project/task model selection and inline activity-template rows.
+
+The live owned database currently has no persisted Project activity plans; its
+visible `REF0001`-style rows are Odoo list `sample="1"` placeholders. Core3
+therefore owns deterministic Project/Task plan fixtures rather than copying
+those generated values. The bounded implementation maps the action to
+`/project-activity-plans`, adds it under Project > Configuration with
+`project.manage`, and joins layout-only pages and service-owned API fragments
+by `page.id: project-activity-plans` and `page.id: project-activity-plan-detail`.
+It covers list/kanban/form navigation, active/archived/search/model-group
+states, plan create/edit/archive/restore/delete, nested activity-step
+create/edit/delete, required-name/model and non-negative-interval validation,
+duplicate-name protection, parent/child row-version conflicts, not-found,
+empty, denied, and stable 503 transport-error branches.
+
+The migration uses stable IDs and the fixed `2026-01-15` fixture contract for
+three plans and their activity steps. The focused test will prove source/page
+separation, Odoo labels/view order, deterministic fixtures, CRUD and nested
+step guards, permission boundaries, and error contracts. Authenticated Odoo
+and Core3 desktop/mobile captures remain under `/tmp` and will not be
+committed.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:
