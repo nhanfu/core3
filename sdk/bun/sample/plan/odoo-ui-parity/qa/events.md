@@ -12,7 +12,7 @@ QA state: qa-in-progress
 QA slot: dispatchable events assignment (pending wave dispatch)
 Module owner: events module owner
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: `f7a38e86`
 
 ## Current regression evidence
 
@@ -48,7 +48,7 @@ Candidate commit: none
 ## Sign-off
 
 - Functional: partial pass (focused suite and create flow pass)
-- Permissions: pending
-- Persistence/data integrity: pending
+- Permissions: partial pass (route denial verified; mutation-specific boundaries remain)
+- Persistence/data integrity: partial pass (event and registration persistence verified; broader CRUD reload coverage remains)
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off

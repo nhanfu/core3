@@ -4,7 +4,7 @@ Module owner: events module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: `f7a38e86`
 
 ## Current state
 
