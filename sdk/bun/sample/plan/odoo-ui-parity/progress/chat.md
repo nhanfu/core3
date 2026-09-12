@@ -33,7 +33,6 @@ by `post-merge` after integration.
 - Authenticated browser mutation proof remains a gate for this owner session:
   no browser automation capability is available here, so no screenshot or
   visual-parity claim is made.
-
 ## QA verification — candidate 137d77a0 (2026-09-13)
 
 - Exact candidate HEAD: `137d77a0aab0f3f40ff3bddee2362b2833cd7518`.
