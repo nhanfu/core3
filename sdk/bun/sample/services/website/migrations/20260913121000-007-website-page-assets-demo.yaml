@@ -1,0 +1,14 @@
+version: 0.0.7
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO website_page_assets (id, page_id, file_name, mime_type, size_bytes, content_base64, is_public, uploaded_by)
+      SELECT 'website-asset-demo-001', 'website-page-demo-001', 'core3-mark.svg', 'image/svg+xml', 190, 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMjQwIDEyMCI+PHJlY3Qgd2lkdGg9IjI0MCIgaGVpZ2h0PSIxMjAiIHJ4PSIxNiIgZmlsbD0iIzcxNGJjYSIvPjx0ZXh0IHg9IjEyMCIgeT0iNzAiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIyOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Q29yZTM8L3RleHQ+PC9zdmc+', TRUE, 'user-admin'
+      WHERE NOT EXISTS (SELECT 1 FROM website_page_assets WHERE id = 'website-asset-demo-001');
+    down: |
+      DELETE FROM website_page_assets WHERE id = 'website-asset-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -10,6 +10,7 @@
 .website-public-path, .website-public-article time { display: block; color: #667085; }
 .website-public-content { margin-top: 28px; color: #475467; font-size: 18px; line-height: 1.7; }
 .website-public-content p { margin: 0 0 16px; }
+.website-public-asset { display: block; width: min(100%, 480px); height: auto; margin-top: 28px; border-radius: 12px; }
 .website-public-error, .website-public-loading { display: grid; place-content: center; padding: 48px 24px; text-align: center; }
 .website-public-error h1 { margin-bottom: 8px; }
 

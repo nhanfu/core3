@@ -30,7 +30,13 @@ describe('Website public visibility', () => {
     expect(list?.status).toBe(200);
     expect((await list?.json()).pages.map((page: any) => page.id)).toEqual(['website-page-demo-001', 'website-page-demo-003']);
     expect((await (await route('/api/public/website/pages?website_id=website-demo-002'))?.json())).toMatchObject({ pages: [expect.objectContaining({ id: 'website-page-demo-003', website_id: 'website-demo-002' })] });
-    expect((await (await route('/api/public/website/page?path=/'))?.json()).page).toMatchObject({ id: 'website-page-demo-001', url: '/', content_html: '<p>Welcome to the Core3 Storefront.</p>' });
+    expect((await (await route('/api/public/website/page?path=/'))?.json()).page).toMatchObject({ id: 'website-page-demo-001', url: '/', content_html: '<p>Welcome to the Core3 Storefront.</p>', asset_id: 'website-asset-demo-001', asset_url: '/api/public/website/assets/website-asset-demo-001' });
+    const asset = await route('/api/public/website/assets/website-asset-demo-001');
+    expect(asset?.status).toBe(200);
+    expect(asset?.headers.get('content-type')).toBe('image/svg+xml');
+    expect(await asset?.text()).toContain('<svg');
+    expect((await route('/api/public/website/assets/website-asset-demo-001', { method: 'POST' }))?.status).toBe(405);
+    expect((await route('/api/public/website/assets/website-asset-missing'))?.status).toBe(404);
     expect((await (await route('/api/public/website/page?path=%2F&website_id=website-demo-002'))?.json())).toMatchObject({ page: expect.objectContaining({ id: 'website-page-demo-003', website_name: 'Core3 Docs' }) });
     expect((await route('/api/public/website/pages/website-page-demo-001?website_id=website-demo-002'))?.status).toBe(404);
     expect((await route('/api/public/website/page?path=/contactus'))?.status).toBe(404);

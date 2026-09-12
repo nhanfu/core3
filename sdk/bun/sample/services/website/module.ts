@@ -40,14 +40,28 @@ export default class WebsiteModule implements ModuleLifecycle {
       const path = url.searchParams.get('path') || '/';
       const result = await service.call('website.public.page_by_path', { url: path, website_id: url.searchParams.get('website_id')?.trim() || null });
       const page = result?.pages?.[0];
-      return page ? this.json({ page }) : this.json({ error: 'Page not found', code: 'WEBSITE_PUBLIC_PAGE_NOT_FOUND' }, 404);
+      if (!page) return this.json({ error: 'Page not found', code: 'WEBSITE_PUBLIC_PAGE_NOT_FOUND' }, 404);
+      return this.json({ page: { ...page, asset_url: page.asset_id ? `/api/public/website/assets/${encodeURIComponent(String(page.asset_id))}` : null } });
+    }
+    const assetMatch = url.pathname.match(/^\/api\/public\/website\/assets\/([^/]+)$/);
+    if (assetMatch) {
+      if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
+      const result = await service.call('website.public.asset', { id: decodeURIComponent(assetMatch[1]) });
+      const asset = result?.asset?.[0];
+      if (!asset) return this.json({ error: 'Asset not found', code: 'WEBSITE_PUBLIC_ASSET_NOT_FOUND' }, 404);
+      try {
+        const bytes = Uint8Array.from(atob(String(asset.content_base64)), (char) => char.charCodeAt(0));
+        return new Response(bytes, { status: 200, headers: { 'Content-Type': String(asset.mime_type), 'Content-Length': String(bytes.byteLength), 'Cache-Control': 'public, max-age=300', 'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(String(asset.file_name))}` } });
+      } catch {
+        return this.json({ error: 'Asset content is invalid', code: 'WEBSITE_PUBLIC_ASSET_INVALID' }, 500);
+      }
     }
     const match = url.pathname.match(/^\/api\/public\/website\/pages\/([^/]+)$/);
     if (!match) return null;
     if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
     const result = await service.call('website.public.page', { id: decodeURIComponent(match[1]), website_id: url.searchParams.get('website_id')?.trim() || null });
     const page = result?.pages?.[0];
-    return page ? this.json({ page }) : this.json({ error: 'Page not found', code: 'WEBSITE_PUBLIC_PAGE_NOT_FOUND' }, 404);
+    return page ? this.json({ page: { ...page, asset_url: page.asset_id ? `/api/public/website/assets/${encodeURIComponent(String(page.asset_id))}` : null } }) : this.json({ error: 'Page not found', code: 'WEBSITE_PUBLIC_PAGE_NOT_FOUND' }, 404);
   }
 
   private json(data: unknown, status = 200): Response {

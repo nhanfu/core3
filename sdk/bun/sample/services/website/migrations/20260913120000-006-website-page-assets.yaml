@@ -1,0 +1,24 @@
+version: 0.0.6
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS website_page_assets (
+        id VARCHAR PRIMARY KEY,
+        page_id VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        content_base64 VARCHAR NOT NULL,
+        is_public BOOLEAN NOT NULL DEFAULT FALSE,
+        uploaded_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS website_page_assets_page_idx ON website_page_assets(page_id, created_at);
+    down: |
+      DROP INDEX IF EXISTS website_page_assets_page_idx;
+      DROP TABLE IF EXISTS website_page_assets;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

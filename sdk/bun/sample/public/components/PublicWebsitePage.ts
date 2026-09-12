@@ -6,6 +6,7 @@ type WebsitePage = {
   name?: string;
   url?: string;
   content_html?: string;
+  asset_url?: string | null;
   date_publish?: string;
 };
 
@@ -77,5 +78,6 @@ export async function mount(outlet: HTMLElement, pagePath: string) {
   html.take(article).h1.text(page.name || 'Untitled page');
   html.take(article).p.className('website-public-path').text(page.url || pagePath);
   if (page.content_html) html.take(article).div.className('website-public-content').innerHTML(sanitizePublicHtml(page.content_html));
+  if (page.asset_url) html.take(article).img.className('website-public-asset').src(page.asset_url).attr('alt', page.name || 'Page image');
   if (page.date_publish) html.take(article).time.attr('datetime', page.date_publish).text(`Published ${page.date_publish}`);
 }
