@@ -548,3 +548,40 @@ a fallback. Odoo `127.0.0.1:8069` and `:8073` were reachable, but both exact
 `/odoo/maintenance` requests returned `303` to `/web/login` without an
 authenticated session. Consequently this batch makes no authenticated visual
 claim; the requested 1440x900 and 390x844 capture paths remain empty.
+
+## Bounded batch: Maintenance team dashboard Scheduled action (2026-09-12)
+
+This batch closes the next uncovered dashboard action after To Do: the Odoo
+`maintenance_team_kanban` Scheduled link (source
+`hr_equipment_request_action_cal`, `/odoo/maintenance-calendar`). Odoo opens
+the calendar-first action (`calendar,kanban,list,form,pivot,graph,activity`)
+with the active team and `search_default_todo`; the link is visible only when
+the team has a scheduled non-terminal request. The action is read-only under
+the normal Maintenance read boundary.
+
+Core3 adds the page-id-owned `open_maintenance_team_scheduled_requests`
+navigation action from the dashboard card to `/maintenance-calendar` with
+`team_id` and `todo=true`. The calendar API owns the team lookup and
+team/non-terminal predicates, while the calendar page exposes the Team facet;
+page YAML remains presentation-only. Dashboard scheduled, high-priority,
+blocked, and unscheduled counts now use the same active non-terminal domain as
+the Odoo computed dashboard counters. Stable fixtures prove Metrology has one
+scheduled To Do request while its repaired request is excluded.
+
+Focused verification:
+
+- `bun test ./test/maintenance*.integration.test.ts` from `sdk/bun/sample` —
+  **31 passed, 0 failed, 312 assertions**.
+- `bun run audit` — passed, **639 pages / 655 routes / 1099 datasources**.
+- `bun run lint` from `sdk/bun` — passed.
+- `bun run css:build:global && bun run css:build:maintenance` — passed.
+- `git diff --check` — passed.
+
+Authenticated comparison capture was attempted under
+`/tmp/core3-odoo-parity/maintenance-batch8-20260912/` at 1440x900 and
+390x844. Core3 selected ports 3002/3014 but Vite stopped before readiness with
+`EMFILE: too many open files, watch .../sdk/bun/sample/vite.config.ts`; the
+Core3 endpoint then refused connections. Odoo 8069 and 8073 returned `303`
+from `/odoo/maintenance` to `/web/login` without an authenticated session.
+The persistent Playwright interactive surface was unavailable. No screenshots
+were produced and this batch makes no authenticated visual-parity claim.

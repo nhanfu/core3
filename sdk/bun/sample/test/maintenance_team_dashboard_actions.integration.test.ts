@@ -15,11 +15,12 @@ describe('Maintenance team dashboard To Do action parity', () => {
     const requests = yaml('api/requests.yaml');
     const card = page.components[0].views[0].card;
     expect(page.page).toMatchObject({ id: 'maintenance-dashboard', route: '/maintenance' });
-    expect(card.actions).toEqual([{ id: 'open_maintenance_team_todo_requests', label: 'To Do', label_field: 'todo_count', variant: 'primary', show_if: 'row.todo_count > 0' }]);
+    expect(card.actions).toContainEqual({ id: 'open_maintenance_team_todo_requests', label: 'To Do', label_field: 'todo_count', variant: 'primary', show_if: 'row.todo_count > 0' });
     expect(api.page).toEqual({ id: 'maintenance-dashboard' });
     expect(api.actions).toEqual([
       { id: 'view_maintenance_team', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-teams/detail', params: { id: '{row.id}' } },
       { id: 'open_maintenance_team_todo_requests', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-requests', params: { team_id: '{row.id}', todo: true } },
+      { id: 'open_maintenance_team_scheduled_requests', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-calendar', params: { team_id: '{row.id}', todo: true } },
     ]);
     expect(requests.datasources.find((source: any) => source.id === 'maintenance_requests').permission).toBe('maintenance.read');
     expect(requests.datasources.find((source: any) => source.id === 'maintenance_requests').query).toContain(':team_id');

@@ -5,7 +5,7 @@ components:
     variant: odoo
     source: maintenance_calendar
     search: { label: Search, placeholder: Search maintenance requests... }
-    filters: [{ field: state, label: Status, options_source: maintenance_request_states_calendar }, { field: priority, label: Priority, options: [Low, Normal, High] }]
+    filters: [{ field: team_id, label: Team, options_source: maintenance_calendar_team_lookup }, { field: state, label: Status, options_source: maintenance_request_states_calendar }, { field: priority, label: Priority, options: [Low, Normal, High] }]
     view_navigation: tabs
     views:
       - { id: calendar, label: Calendar, icon: calendar, mobile: false, date_field: scheduled_date }
