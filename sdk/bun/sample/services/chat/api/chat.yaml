@@ -96,13 +96,37 @@ actions:
       result: { query: "SELECT CAST(:message_id AS VARCHAR) AS id, CAST(:thread_id AS VARCHAR) AS thread_id, CAST(:current_user_id AS VARCHAR) AS sender_id, trim(CAST(:content AS VARCHAR)) AS body" }
   - id: mark_thread_read
     type: server
-    permission: chat.read
+    permission: chat.write
     action: chat.threads.mark_read
     handler: chat
     operation: mark_read
     mutation:
+      guards: [{ query: "SELECT id FROM chat_threads WHERE id = :thread_id", status: 404, code: CHAT_THREAD_NOT_FOUND, message: Conversation not found. }]
       steps: [{ query: "UPDATE chat_participants SET last_read_at = CURRENT_TIMESTAMP WHERE thread_id = :thread_id AND user_id = :current_user_id" }]
       result: { query: "SELECT true AS ok" }
+  - id: mark_thread_unread
+    type: server
+    permission: chat.write
+    action: chat.threads.mark_unread
+    handler: chat
+    operation: mark_unread
+    mutation:
+      guards: [{ query: "SELECT id FROM chat_threads WHERE id = :thread_id", status: 404, code: CHAT_THREAD_NOT_FOUND, message: Conversation not found. }]
+      steps: [{ query: "UPDATE chat_participants SET last_read_at = TIMESTAMP '1970-01-01 00:00:00' WHERE thread_id = :thread_id AND user_id = COALESCE(:current_user_id, 'user-admin')" }]
+      result: { query: "SELECT true AS ok" }
+  - id: toggle_thread_star
+    type: server
+    permission: chat.write
+    action: chat.threads.toggle_star
+    handler: chat
+    operation: toggle_star
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM chat_threads WHERE id = :thread_id", status: 404, code: CHAT_THREAD_NOT_FOUND, message: Conversation not found. }
+        - { query: "SELECT id FROM chat_threads WHERE id = :thread_id AND row_version = :expected_row_version", status: 409, code: CHAT_THREAD_STALE, message: Conversation was changed by another user. Reload before saving. }
+      steps: [{ query: "UPDATE chat_threads SET starred = NOT starred, row_version = row_version + 1 WHERE id = :thread_id" }]
+      result: { query: "SELECT id, starred, row_version FROM chat_threads WHERE id = :thread_id" }
   - id: upload_attachment
     type: upload
     action: chat.attachments.send

@@ -37,6 +37,21 @@ describe('Chat Discuss sidebar parity batch', () => {
     expect(api.datasources.every((source: any) => source.permission === 'chat.read')).toBe(true);
     expect(api.actions.find((action: any) => action.id === 'create_thread').permission).toBe('chat.write');
     expect(api.actions.find((action: any) => action.id === 'send_message').permission).toBe('chat.write');
+    expect(api.actions.find((action: any) => action.id === 'mark_thread_unread')).toMatchObject({ permission: 'chat.write', action: 'chat.threads.mark_unread' });
+    expect(api.actions.find((action: any) => action.id === 'toggle_thread_star')).toMatchObject({ permission: 'chat.write', action: 'chat.threads.toggle_star' });
     expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['chat.read', 'chat.write']));
+  });
+
+  test('declares inbox state controls with deterministic mutation boundaries', () => {
+    const page = yaml('pages/chat.yaml');
+    const api = yaml('api/chat.yaml');
+    const workspace = page.components.find((component: any) => component.type === 'ChatWorkspace');
+    expect(workspace).toMatchObject({ mark_read_action: 'mark_thread_read', mark_unread_action: 'mark_thread_unread', toggle_star_action: 'toggle_thread_star' });
+    for (const id of ['mark_thread_read', 'mark_thread_unread', 'toggle_thread_star']) {
+      expect(api.actions.find((action: any) => action.id === id)?.permission, id).toBe('chat.write');
+      expect(api.actions.find((action: any) => action.id === id)?.handler, id).toBe('chat');
+    }
+    expect(api.actions.find((action: any) => action.id === 'toggle_thread_star')?.mutation.steps[0].query).toContain('NOT starred');
+    expect(api.actions.find((action: any) => action.id === 'toggle_thread_star')?.mutation.guards).toEqual(expect.arrayContaining([expect.objectContaining({ status: 404 }), expect.objectContaining({ status: 409 })]));
   });
 });

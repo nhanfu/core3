@@ -279,6 +279,8 @@ export class ChatWorkspace extends BaseComponent {
           }
           if (Number(thread.unread_count) > 0 && this.def.mark_read_action) {
             await this.submit(this.def.mark_read_action, { row: { id: thread.id } });
+            thread.unread_count = 0;
+            this.redraw();
           }
         });
       }
@@ -303,6 +305,24 @@ export class ChatWorkspace extends BaseComponent {
     html.take(headerCopy).h2.className('truncate').text(String(activeThread.title || ''));
     html.take(headerCopy).p.className('truncate').text(String(activeThread.participant_names || ''));
     html.take(mainHeader).span.className('chat-online-status').text(`● ${i18n.tKey('chat.active_conversation', {}, 'Active conversation')}`);
+    const headerActions = html.take(mainHeader).div.className('chat-header-actions').ele() as HTMLElement;
+    if (this.def.toggle_star_action) {
+      const star = html.take(headerActions).button.className('chat-thread-action').type('button').attr('aria-label', activeThread.starred ? 'Unstar conversation' : 'Star conversation').text(activeThread.starred ? '★' : '☆').ele() as HTMLButtonElement;
+      html.take(star).event('click', async () => {
+        await this.submit(this.def.toggle_star_action, { row: { id: activeThread.id, expected_row_version: activeThread.row_version } });
+        activeThread.starred = !activeThread.starred;
+        this.redraw();
+      });
+    }
+    const readAction = Number(activeThread.unread_count) > 0 ? this.def.mark_read_action : this.def.mark_unread_action;
+    if (readAction) {
+      const read = html.take(headerActions).button.className('chat-thread-action').type('button').attr('aria-label', Number(activeThread.unread_count) > 0 ? 'Mark conversation as read' : 'Mark conversation as unread').text(Number(activeThread.unread_count) > 0 ? '✓' : '•').ele() as HTMLButtonElement;
+      html.take(read).event('click', async () => {
+        await this.submit(readAction, { row: { id: activeThread.id, expected_row_version: activeThread.row_version } });
+        activeThread.unread_count = Number(activeThread.unread_count) > 0 ? 0 : 1;
+        this.redraw();
+      });
+    }
 
     const messageList = html.take(main).div.className('chat-message-list flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5').ele() as HTMLElement;
     const activeMessages = [

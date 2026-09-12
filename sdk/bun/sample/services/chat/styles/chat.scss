@@ -39,6 +39,9 @@
 .chat-header h2 { margin: 0; color: var(--chat-text); font-size: 13px; font-weight: 600; }
 .chat-header p { margin: 2px 0 0; color: var(--chat-muted); font-size: 11px; }
 .chat-online-status { color: #4f8a62; font-size: 10px; white-space: nowrap; }
+.chat-header-actions { display: flex; flex: none; gap: 4px; }
+.chat-thread-action { width: 28px; height: 28px; border: 1px solid var(--chat-border); border-radius: 3px; background: var(--chat-surface); color: var(--chat-muted); font-size: 14px; }
+.chat-thread-action:hover { border-color: var(--chat-action); color: var(--chat-action); }
 .chat-message-list { background: var(--chat-bg); }
 .chat-empty { color: var(--chat-muted); }
 .chat-message { max-width: 100%; }

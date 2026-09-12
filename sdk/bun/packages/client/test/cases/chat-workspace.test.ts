@@ -49,6 +49,8 @@ function createWorkspace() {
     upload_action: 'upload_attachment',
     download_action: 'download_attachment',
     mark_read_action: 'mark_read',
+    mark_unread_action: 'mark_unread',
+    toggle_star_action: 'toggle_star',
     search_placeholder: 'Search threads',
   });
   component._transport = { submit };
@@ -102,6 +104,21 @@ describe('ChatWorkspace', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(submit).toHaveBeenCalledWith('mark_read', { row: { id: 'thread-2' } });
+  });
+
+  it('exposes persistent star and read-state actions for the active inbox thread', async () => {
+    const { container, submit, component } = createWorkspace();
+    const star = container.querySelector<HTMLButtonElement>('[aria-label="Star conversation"]')!;
+    star.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(submit).toHaveBeenCalledWith('toggle_star', { row: { id: 'thread-1', expected_row_version: undefined } });
+    expect(component.state.threads.find((thread: any) => thread.id === 'thread-1')?.starred).toBe(true);
+
+    const unread = container.querySelector<HTMLButtonElement>('[aria-label="Mark conversation as unread"]')!;
+    unread.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(submit).toHaveBeenCalledWith('mark_unread', { row: { id: 'thread-1', expected_row_version: undefined } });
+    expect(component.state.threads.find((thread: any) => thread.id === 'thread-1')?.unread_count).toBe(1);
   });
 
   it('loads messages only after selecting another thread', async () => {

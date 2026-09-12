@@ -16,6 +16,8 @@ components:
     upload_action: upload_attachment
     download_action: download_attachment
     mark_read_action: mark_thread_read
+    mark_unread_action: mark_thread_unread
+    toggle_star_action: toggle_thread_star
     websocket: { endpoint: /api/events/chat, permission: chat.read, send_action: send_message }
     search_placeholder: Search conversations...
     empty_threads: No conversations found

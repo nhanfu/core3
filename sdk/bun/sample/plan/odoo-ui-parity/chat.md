@@ -135,3 +135,33 @@ Capture Odoo/Core3 at 1440x900 and 390x844 for inbox, channel, direct message, t
   Playwright `js_repl` tool is also unavailable in this session. No Odoo or
   Core3 desktop/mobile captures were produced under `/tmp/core3-odoo-parity`,
   and no visual-parity claim is made for this batch.
+
+## Bounded batch — Discuss inbox state actions (20260912)
+
+- Source trace: Odoo `mail/views/mail_menus.xml` places Discuss first, Channels
+  second, and Configuration third; the Discuss client surface exposes Inbox,
+  Starred, and History categories. Odoo's `mail/static/tests/discuss_app/inbox.test.js`
+  verifies unread inbox notifications and `sidebar.test.js` verifies category
+  selection and collapsed/expanded channel behavior. This batch covers the
+  next visible state transition on the existing Core3 Discuss surface rather
+  than duplicating Odoo frontend code.
+- Core3 `ChatWorkspace` now exposes active-thread Star/Unstar and
+  Mark-as-read/Mark-as-unread controls in the conversation header. The
+  presentation page remains `pages/chat.yaml`; action contracts remain in
+  `api/chat.yaml` and are joined through the existing `page.id` discovery.
+  `chat.write` protects all state mutations while `chat.read` continues to
+  protect datasource access. Star state uses the existing deterministic
+  `chat_threads.starred` field; read state uses the participant read marker.
+- Empty, search-no-results, offline, unread, and starred fixtures remain
+  deterministic in the API YAML. The action boundary includes bounded
+  mutation IDs and stable unread/star transitions; message sending and
+  attachment behavior are unchanged.
+- Focused verification passed: Chat integration `4/4`, ChatWorkspace `12/12`,
+  UI audit `631 pages, 647 routes, 1079 datasources`, frontend build, ESLint,
+  and `git diff --check`.
+- Authenticated screenshots were attempted but blocked. Core3 startup failed
+  with the exact Vite error `EMFILE: too many open files, watch .../vite.config.ts`;
+  Odoo `/web/login` returned HTTP 200 on `127.0.0.1:8069` and `:8073`, but the
+  session has no `js_repl` browser tool and no authenticated browser context.
+  No 1440x900 or 390x844 screenshots were produced for this batch and no
+  visual-parity claim is made.

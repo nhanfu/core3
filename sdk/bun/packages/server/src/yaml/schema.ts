@@ -205,6 +205,8 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'upload_action',
     'download_action',
     'mark_read_action',
+    'mark_unread_action',
+    'toggle_star_action',
     'sse',
     'websocket',
     'refresh_interval_ms',
@@ -644,7 +646,8 @@ function validateComponents(
     if (component.type === 'ChatWorkspace') {
       requireSource(component.message_source, `${path}.message_source`, datasourceIds, options, issues);
       requireSource(component.attachment_source, `${path}.attachment_source`, datasourceIds, options, issues);
-      for (const key of ['send_action', 'upload_action', 'download_action', 'mark_read_action']) {
+      for (const key of ['send_action', 'upload_action', 'download_action', 'mark_read_action', 'mark_unread_action', 'toggle_star_action']) {
+        if (component[key] === undefined && ['mark_unread_action', 'toggle_star_action'].includes(key)) continue;
         requireString(component[key], `${path}.${key}`, issues);
         if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
           issues.push(`${path}.${key} references unknown action "${component[key]}"`);
