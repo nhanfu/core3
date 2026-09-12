@@ -112,6 +112,11 @@ export default class SurveysModule implements ModuleLifecycle {
       });
       return this.json({ survey: detail, answer: result });
     }
+    const questions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
+    const missingRequired = questions
+      .filter((question: any) => question.required && (answers[question.id] === undefined || answers[question.id] === null || String(answers[question.id]).trim() === ''))
+      .map((question: any) => question.question_text || question.id);
+    if (missingRequired.length) return this.json({ error: `Required answers are missing: ${missingRequired.join(', ')}` }, 422);
     const result = await service.call('surveys.public.submit', {
       id: response.id,
       survey_id: response.survey_id,

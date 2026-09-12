@@ -49,13 +49,18 @@ describe('Surveys public response workflow', () => {
     const startedBody = await started.json();
     const answerToken = startedBody.answer.access_token;
     expect(startedBody.answer).toMatchObject({ survey_id: 'survey-demo-feedback', state: 'In Progress', answer_data: '{}' });
+    const missing = await route(`/api/public/surveys/${token}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers: {} }) });
+    expect(missing.status).toBe(422);
+    expect((await missing.json()).error).toContain('Required answers are missing');
+    expect((await repository.query('SELECT state, answer_data FROM survey_responses WHERE access_token = ?', [answerToken]))[0]).toEqual({ state: 'In Progress', answer_data: '{}' });
+    expect((await repository.query('SELECT response_count FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0].response_count).toBe(4);
 
     const saved = await route(`/api/public/surveys/${token}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers: { 'question-feedback-rating': '5' } }) });
     expect(saved.status).toBe(200);
     expect((await saved.json()).answer).toMatchObject({ state: 'In Progress', answer_data: '{"question-feedback-rating":"5"}' });
-    const submitted = await route(`/api/public/surveys/${token}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers: { 'question-feedback-rating': '5' }, respondent_name: 'QA Participant', respondent_email: 'qa@example.com' }) });
+    const submitted = await route(`/api/public/surveys/${token}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers: { 'question-feedback-rating': '5', 'question-feedback-service': 'Excellent', 'question-feedback-recommend': 'Yes' }, respondent_name: 'QA Participant', respondent_email: 'qa@example.com' }) });
     expect(submitted.status).toBe(200);
-    expect((await submitted.json()).answer).toMatchObject({ state: 'Submitted', answer_data: '{"question-feedback-rating":"5"}' });
+    expect((await submitted.json()).answer).toMatchObject({ state: 'Submitted', answer_data: expect.stringContaining('question-feedback-recommend') });
     expect((await repository.query('SELECT state, respondent_name, respondent_email FROM survey_responses WHERE access_token = ?', [answerToken]))[0]).toEqual({ state: 'Submitted', respondent_name: 'QA Participant', respondent_email: 'qa@example.com' });
     expect((await repository.query('SELECT response_count FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0].response_count).toBe(5);
     const duplicate = await route(`/api/public/surveys/${token}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers: {} }) });
