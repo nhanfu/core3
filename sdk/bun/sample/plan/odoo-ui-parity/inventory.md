@@ -1,6 +1,6 @@
 # Inventory UI parity
 
-Status: ready
+Status: in-progress
 
 ## Reference gate
 
@@ -814,8 +814,34 @@ The next uncovered visible stock action is Odoo 19 `stock.action_package_view`, 
 
 Core3 adds `/packages` and `/packages/detail`. `pages/packages.yaml` and `pages/package-detail.yaml` are presentation-only and bind by matching page IDs to `api/packages.yaml` and `api/package-detail.yaml`. Migration `0.0.16` adds stable internal, customer, nested, and empty package fixtures dated `2026-01-15`. The package action supports deterministic search, internal/main package filters, empty and 503 states, and tracking-user permission boundaries. Create/edit validates required and duplicate package references with 422/409 responses; Unpack is row-version guarded and makes package content empty.
 
-Source correction on 2026-09-12: Odoo's `action_package_view` context enables both `In internal locations` and `Main Packages` by default. Core3 activates both corresponding filters on `/packages`, retains Form as the row-open detail contract rather than a view-switch button, and uses the source action's package-specific empty-help copy and illustration.
+Source correction on 2026-09-12: Odoo's `action_package_view` context enables both `In internal locations` and `Main Packages` by default. Core3 now activates both corresponding filters on `/packages`, with a focused contract assertion.
 
-Focused evidence: `bun test test/inventory_packages.integration.test.ts` passes 3 tests and 25 assertions; the client `list-view.test.ts` package empty-state regression passes; `bun run audit`, the inventory CSS build, and `git diff --check` pass. The package datasource returns exactly `PACK0000001` and `PACK0000004` under the default internal/main filters. The mobile list remains within the 390px viewport with the List/Kanban controls available and no page overflow. `sample` has no lint script; the repository ESLint command is run from `sdk/bun`.
+Focused evidence: `bun test test/inventory_packages.integration.test.ts` passes 3 tests and 21 assertions; `bun run audit` passes with 646 pages, 661 routes, and 1,109 datasources; `bun run css:build:inventory` and `git diff --check` pass. `sample` has no lint script, so `bun run lint` reports `Script not found "lint"`.
 
-Paired browser evidence from System Chrome is retained outside Git in `/tmp/core3-odoo-parity/paired-inventory-20260912/`: before captures are `core3-inventory-packages-desktop-1440x900.png` and `core3-inventory-packages-mobile-390x844.png`; authoritative Odoo action-562 captures are `odoo-inventory-packages-desktop-1440x900.png` and `odoo-inventory-packages-mobile-390x844.png`. After captures are `/tmp/core3-odoo-parity/inventory-visual4-20260912/core3-inventory-packages-desktop-1440x900.png` and `core3-inventory-packages-mobile-390x844.png`. Parity status: PASS for default filtered population, list/kanban controls, mobile overflow, and package empty-state copy/illustration; the Odoo desktop reference contains a transient loading overlay, so Core3 is assessed against the stable populated mobile/list state and source contract rather than reproducing that transient artifact.
+Authenticated capture attempt under `/tmp/core3-odoo-parity/` remains blocked: after `bun install --frozen-lockfile` installed the workspace dependencies, the isolated Core3 frontend still exits with Vite `EMFILE: too many open files, watch '.../sample/vite.config.ts'` under the permitted `ulimit -n 10000`; the limit cannot be raised in this environment. The backend also cannot provide a browser target after the frontend exits. No authenticated Core3 desktop/mobile screenshot was produced, and this slice makes no visual-parity claim; captures remain required in a browser-capable runtime.
+
+Recovery evidence on 2026-09-12: the committed single-module runner (`bun run agent:module -- inventory --port=3316`) served the authenticated Inventory module without Vite file watching. Playwright using the installed system Chrome logged in as the seeded Core3 administrator and rendered `/inventory/packages` at 1440x900 and 390x844 with no console errors, page errors, failed requests, or HTTP error responses. Captures are `/tmp/core3-odoo-parity/inventory-single-run/core3-inventory-packages-desktop.png` and `core3-inventory-packages-mobile.png`. The same attempt reached the Odoo login page but the documented reference credentials were rejected, so no paired Odoo capture or visual-parity claim is made. Images remain outside Git.
+
+## Configuration > Settings bounded slice (2026-09-12)
+
+Core3 adds the manager-only Inventory > Configuration > Settings route at
+`/inventory/settings`. The generic `/settings` path is deliberately avoided
+because another module owns it during route discovery. The presentation page
+uses the shared `SettingsView` and binds by `page.id: inventory-settings` to a
+service-owned API fragment covering locations, warehouses, lots/serials,
+packages, barcode, and reception-report controls.
+
+Migration `0.0.17` adds deterministic `inventory_settings` defaults dated
+`2026-01-15`. Its update mutation is persisted, idempotently installable, and
+guarded by manager permission, missing-record `404`, and row-version `409`.
+The literal `schema.yaml` / `demo.yaml` consolidation remains a follow-up:
+the current shared migration loader discovers only timestamp-prefixed files, so
+implementing that migration convention requires a shared loader change outside
+this inventory assignment.
+
+Focused evidence is recorded in `progress/inventory.md` and `qa/inventory.md`.
+The authenticated Core3 page renders at desktop and mobile with no failed
+requests or horizontal overflow. Direct authenticated API mutation succeeds.
+The Settings Save browser journey remains blocked by the shared server-action
+transport dropping `SettingsView` draft values; no shared runtime file is
+changed in this module slice.
