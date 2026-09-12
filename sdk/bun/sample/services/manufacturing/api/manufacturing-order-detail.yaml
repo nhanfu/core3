@@ -20,6 +20,11 @@ datasources:
     permission: manufacturing.read
     query: "SELECT id, production_id, move_type, product_name, quantity, reserved_quantity, uom, lot_name, state FROM mrp_production_moves WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND production_id = :id ORDER BY sequence, id"
 actions:
+  - id: open_mrp_production_overview
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders/detail/overview
+    params: { id: '{state.id}' }
   - id: back_to_mrp_productions
     type: navigate
     permission: manufacturing.read

@@ -974,3 +974,42 @@ evidence note. Authenticated desktop/mobile capture was attempted under
 not expose a usable interactive browser session in this worktree, so no visual
 signoff or image files are claimed. The action remains bounded: recursive
 multi-level costing, print/PDF export, and Odoo chatter are not synthesized.
+
+## Manufacturing Order Overview bounded action (2026-09-12)
+
+- Local Odoo source inspection identified `action_report_mo_overview` in
+  `addons/mrp/views/mrp_production_views.xml`: a client action named `MO
+  Overview`, tag `mrp_mo_overview`, model `mrp.production`, launched by the
+  Manufacturing Order form stat button labelled `Overview`. The source OWL
+  action renders `Print` and `Unfold` controls, display options for
+  replenishments, availabilities, receipts, unit/MO/BoM/real costs, and a
+  responsive overview table with Status, Quantity, Free to use / On Hand,
+  Reserved, Receipt, Unit Cost, MO Cost, BoM Cost, and Real Cost columns. It
+  expands Components, Operations, By-products, and a Cost Breakdown section.
+  The action is record-scoped and has no standalone menu.
+- Core3 adds the read-only `/manufacturing-orders/detail/overview` page. The
+  MO form now exposes the exact `Overview` stat button; its action and the
+  overview page are joined through the selected MO `id`. Presentation remains
+  in `pages/manufacturing-order-overview.yaml`; the four page-id-bound
+  datasources and `Print`/`Unfold` actions are in
+  `api/manufacturing-order-overview.yaml`. Existing deterministic production,
+  move, and work-order fixtures provide populated and empty breakdown states;
+  all sources require `manufacturing.read` and declare 401/403/404/503
+  boundaries. No mutation is exposed because the Odoo client action is a
+  report/read-only surface.
+- Focused coverage is
+  `test/manufacturing_order_overview.integration.test.ts`: 2 tests and 14
+  assertions pass. It verifies page/API separation, route discovery, stat
+  navigation, populated components/operations, empty and not-found fixture
+  behavior, transport failure, and permission contracts. The UI audit passes
+  with 603 pages, 611 routes, and 1,041 datasources; ESLint and
+  `git diff --check` pass.
+- Authenticated Core3 and Odoo desktop 1440x900 plus mobile 390x844 captures
+  were attempted under `/tmp/core3-odoo-parity/manufacturing-next-20260912/`.
+  No image or visual claim is made: the Core3 runtime could not start because
+  Vite hit `EMFILE: too many open files` while watching `vite.config.ts`, and
+  the DuckDB migration runner separately failed with `Parser Error: Adding
+  columns with constraints not yet supported` on an existing constrained
+  `ALTER TABLE`. The capture blocker is environmental and remains explicit.
+- This bounded slice does not synthesize Odoo's recursive server report/PDF,
+  interactive column display menu, chatter, or cross-module stock costing.

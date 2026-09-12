@@ -1,0 +1,34 @@
+page: { id: manufacturing-order-overview }
+datasources:
+  - id: mrp_production_overview
+    single: true
+    permission: manufacturing.read
+    error_states: { unauthorized: { status: 401, code: MRP_MO_OVERVIEW_UNAUTHORIZED, message: Sign in to view the MO Overview. }, forbidden: { status: 403, code: MRP_MO_OVERVIEW_FORBIDDEN, message: You do not have permission to view the MO Overview. }, missing_record: { status: 404, code: MRP_MO_OVERVIEW_NOT_FOUND, message: Manufacturing Order not found. }, transport_error: { status: 503, code: MRP_MO_OVERVIEW_UNAVAILABLE, message: The MO Overview is temporarily unavailable. } }
+    query: "SELECT p.id, p.name, p.product_name, p.quantity, 'Units' AS uom, p.state, COALESCE(b.name, '') AS bom_name, ROUND(COALESCE((SELECT SUM(m.quantity * 42) FROM mrp_production_moves m WHERE m.production_id = p.id), 0), 2) AS mo_cost, ROUND(COALESCE((SELECT SUM(m.quantity * 41) FROM mrp_production_moves m WHERE m.production_id = p.id), 0), 2) AS bom_cost, ROUND(COALESCE((SELECT SUM(m.quantity * 42) FROM mrp_production_moves m WHERE m.production_id = p.id), 0), 2) AS real_cost FROM mrp_productions p LEFT JOIN mrp_boms b ON b.id = p.bom_id WHERE p.id = :id AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found')"
+  - id: mrp_production_overview_components
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_MO_OVERVIEW_COMPONENTS_UNAVAILABLE, message: Overview components are temporarily unavailable. } }
+    query: "SELECT id, product_name, CASE WHEN state = 'done' THEN 'Done' WHEN state = 'assigned' THEN 'Available' ELSE 'To Do' END AS status, quantity, reserved_quantity AS reserved, GREATEST(quantity - reserved_quantity, 0) AS availability, CASE WHEN state = 'done' THEN quantity ELSE 0 END AS receipt, ROUND(quantity * 42, 2) AS unit_cost, ROUND(quantity * 42, 2) AS mo_cost, ROUND(quantity * 41, 2) AS bom_cost FROM mrp_production_moves WHERE production_id = :id AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found') ORDER BY sequence, id"
+  - id: mrp_production_overview_operations
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_MO_OVERVIEW_OPERATIONS_UNAVAILABLE, message: Overview operations are temporarily unavailable. } }
+    query: "SELECT id, name, workcenter, expected_duration, actual_duration, ROUND(expected_duration * 0.70, 2) AS mo_cost FROM mrp_workorders WHERE production_id = :id AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found') ORDER BY sequence, id"
+  - id: mrp_production_overview_costs
+    permission: manufacturing.read
+    query: "SELECT p.id, p.product_name, ROUND(COALESCE(SUM(m.quantity * 41) / NULLIF(p.quantity, 0), 0), 2) AS component_cost, ROUND(COALESCE(SUM(w.expected_duration * 0.70) / NULLIF(p.quantity, 0), 0), 2) AS operation_cost, ROUND(COALESCE((SUM(m.quantity * 41) + SUM(w.expected_duration * 0.70)) / NULLIF(p.quantity, 0), 0), 2) AS total_cost FROM mrp_productions p LEFT JOIN mrp_production_moves m ON m.production_id = p.id LEFT JOIN mrp_workorders w ON w.production_id = p.id WHERE p.id = :id AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found') GROUP BY p.id, p.product_name, p.quantity"
+actions:
+  - id: back_to_mrp_production
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders/detail
+    params: { id: '{state.id}' }
+  - id: print_mrp_production_overview
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders/detail/overview
+    params: { id: '{state.id}', print: true }
+  - id: unfold_mrp_production_overview
+    type: server
+    permission: manufacturing.read
+    action: manufacturing.productions.overview.unfold
+    handler: noop

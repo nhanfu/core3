@@ -1,0 +1,46 @@
+title: MO Overview
+page: { id: manufacturing-order-overview, route: /manufacturing-orders/detail/overview, breadcrumb: [Supply Chain, Manufacturing, Manufacturing Orders, Overview], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_production_overview
+    title_field: name
+    subtitle_field: product_name
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_mrp_production, label: Back to Manufacturing Order, icon: arrow-left, permission: manufacturing.read }
+      - { id: print_mrp_production_overview, label: Print, variant: primary, permission: manufacturing.read }
+      - { id: unfold_mrp_production_overview, label: Unfold, variant: secondary, permission: manufacturing.read }
+    groups:
+      - title: Overview
+        fields: [{ field: name, label: Manufacturing Order }, { field: product_name, label: Product }, { field: quantity, label: Quantity }, { field: uom, label: Unit of Measure }, { field: state, label: Status }, { field: bom_name, label: Bill of Materials }, { field: mo_cost, label: MO Cost }, { field: bom_cost, label: BoM Cost }, { field: real_cost, label: Real Cost }]
+    notebook:
+      active: components
+      tabs:
+        - id: components
+          label: Components
+          component:
+            type: ListView
+            variant: odoo
+            source: mrp_production_overview_components
+            columns: [{ field: product_name, label: Component, type: PrimaryEntityCell }, { field: status, label: Status, type: StatusChip }, { field: quantity, label: Quantity, align: right }, { field: availability, label: Free to use / On Hand, align: right }, { field: reserved, label: Reserved, align: right }, { field: receipt, label: Receipt, align: right }, { field: unit_cost, label: Unit Cost, align: right }, { field: mo_cost, label: MO Cost, align: right }, { field: bom_cost, label: BoM Cost, align: right }]
+            row_key: id
+            empty_state: { title: No components, description: This manufacturing order has no component moves. }
+        - id: operations
+          label: Operations
+          component:
+            type: ListView
+            variant: odoo
+            source: mrp_production_overview_operations
+            columns: [{ field: name, label: Operation, type: PrimaryEntityCell }, { field: workcenter, label: Work Center }, { field: expected_duration, label: Expected Duration, align: right }, { field: actual_duration, label: Real Duration, align: right }, { field: mo_cost, label: MO Cost, align: right }]
+            row_key: id
+            empty_state: { title: No operations, description: No operations are configured for this manufacturing order. }
+        - id: cost-breakdown
+          label: Cost Breakdown
+          component:
+            type: ListView
+            variant: odoo
+            source: mrp_production_overview_costs
+            columns: [{ field: product_name, label: Product, type: PrimaryEntityCell }, { field: component_cost, label: Avg Cost of Components per Unit, align: right }, { field: operation_cost, label: Avg Cost of Operations per Unit, align: right }, { field: total_cost, label: Avg Total Cost per Unit, align: right }]
+            row_key: id
+            empty_state: { title: No cost breakdown, description: Cost breakdown appears when components or operations are configured. }

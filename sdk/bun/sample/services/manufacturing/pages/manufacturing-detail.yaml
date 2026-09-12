@@ -6,6 +6,8 @@ components:
     title_field: name
     subtitle_field: product_name
     editable: true
+    stat_buttons:
+      - { id: open_mrp_production_overview, label: Overview, value_field: quantity, permission: manufacturing.read }
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: back_to_mrp_productions, label: Back to Manufacturing Orders, icon: arrow-left, permission: manufacturing.read }
