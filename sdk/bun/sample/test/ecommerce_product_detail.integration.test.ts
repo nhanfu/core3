@@ -45,6 +45,28 @@ describe('eCommerce Product detail parity', () => {
     database.close();
   });
 
+  test('publishes and unpublishes a product through the editor and public catalog', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'ecommerce_catalog_publication_test', ['schema', 'data']);
+    const detail = yaml('api/product-detail.yaml');
+    const edit = detail.actions.find((candidate: any) => candidate.id === 'edit_ecommerce_product');
+    const shop = yaml('api/shop.yaml').datasources.find((candidate: any) => candidate.id === 'ecommerce_shop_products');
+    const product = (await repository.query('SELECT * FROM ecommerce_products WHERE id = ?', ['ecommerce-product-setup']))[0];
+    const values = { name: product.name, internal_reference: product.internal_reference, product_type: product.product_type, category: product.category, sales_price: product.sales_price, website_sequence: product.website_sequence, is_published: true };
+
+    const published = await repository.executeMutation(edit.mutation, { id: product.id, expected_row_version: 1, values });
+    expect(published).toMatchObject({ id: product.id, is_published: true, row_version: 2 });
+    expect((await repository.querySource(shop, { q: null, company_name: 'My Company' }, 0, 50)).data.map((row: any) => row.id)).toContain(product.id);
+
+    const unpublished = await repository.executeMutation(edit.mutation, { id: product.id, expected_row_version: 2, values: { ...values, is_published: false } });
+    expect(unpublished).toMatchObject({ id: product.id, is_published: false, row_version: 3 });
+    expect((await repository.querySource(shop, { q: null, company_name: 'My Company' }, 0, 50)).data.map((row: any) => row.id)).not.toContain(product.id);
+    await expect(repository.executeMutation(edit.mutation, { id: product.id, expected_row_version: 2, values: { ...values, is_published: true } }))
+      .rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    database.close();
+  });
+
   test('joins the products list navigation to a page/API-bound detail form', () => {
     const list = yaml('pages/products.yaml');
     const page = yaml('pages/product-detail.yaml');

@@ -65,6 +65,7 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | ECOMMERCE-SCOPE-001 | Manifest-to-page/API coverage | Current implementation covers all 9 registered Ecommerce routes plus linked Product detail and Checkout routes | pass for route coverage; browser journey pending |
 
 | ECOMMERCE-WF-019 | Guest checkout handoff | Checkout test plus unauthenticated mobile browser/API flow — validates guest identity and delivery/payment fields, copies anonymous cart lines into an order with `customer_id = NULL`, converts the cart, rejects repeat checkout, and clears the cart cookie | pass at service/API and unauthenticated browser/API level; external payment/delivery callbacks and paired Odoo comparison remain open |
+| ECOMMERCE-WF-020 | Catalog publication visibility | Product editor test toggles the seeded unpublished service into the public catalog and back, persists versions 1 → 3, and rejects stale replay with 409 | pass at service/API level; authenticated browser workflow and paired Odoo comparison remain open |
 
 ## Bugs and retests
 
