@@ -193,8 +193,8 @@ operations:
     method: POST
     permission: crm.manage
     preview: false
-  - id: crm.recurring_plans.archive
-    route: /api/actions/crm.recurring_plans.archive
+  - id: crm.recurring_plans.bulk_archive
+    route: /api/actions/crm.recurring_plans.bulk_archive
     method: POST
     permission: crm.manage
     preview: false

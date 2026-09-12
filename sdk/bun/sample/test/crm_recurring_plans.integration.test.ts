@@ -79,6 +79,7 @@ describe('CRM Recurring Plans bounded parity', () => {
     const bulkDelete = action('delete_selected_crm_recurring_plans');
     expect([create, update, archive, unarchive, bulkArchive, bulkRestore, bulkDelete].every((entry: any) => entry.permission === 'crm.manage')).toBe(true);
     expect([create, update, archive, unarchive, bulkArchive, bulkRestore, bulkDelete].every((entry: any) => entry.handler === 'yaml_mutation')).toBe(true);
+    expect(bulkArchive.action).toBe('crm.recurring_plans.bulk_archive');
     expect(update.mutation.concurrency).toEqual({ required: true });
     expect(archive.mutation.concurrency).toEqual({ required: true });
 

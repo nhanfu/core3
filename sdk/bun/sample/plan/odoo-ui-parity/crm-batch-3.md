@@ -30,8 +30,9 @@ validation, stale-row protection, empty/no-result, and transport-error states.
 ## Implementation and evidence (2026-09-12)
 
 The page/API split, manager-only CRUD, AI action catalog entries, deterministic
-fixtures, and concurrency/validation guards are implemented. DuckDB bulk
-actions use the repository's array binding contract (`id IN :ids`), and the
+fixtures, and concurrency/validation guards are implemented. Individual and
+bulk archive operations use distinct named actions, and DuckDB bulk actions
+use the repository's array binding contract (`id IN :ids`), so the
 shared inline-edit table gives sequence handles a fixed 40px column so the
 desktop and mobile geometry matches Odoo.
 

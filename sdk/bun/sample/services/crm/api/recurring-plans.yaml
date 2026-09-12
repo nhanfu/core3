@@ -92,7 +92,7 @@ actions:
   - id: archive_selected_crm_recurring_plans
     type: server
     permission: crm.manage
-    action: crm.recurring_plans.archive
+    action: crm.recurring_plans.bulk_archive
     handler: yaml_mutation
     operation: bulk_update
     refresh: [crm_recurring_plans]
