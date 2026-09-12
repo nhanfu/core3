@@ -81,6 +81,28 @@ describe('Website Page Manager parity', () => {
     database.close();
   });
 
+  test('edits page metadata with row-version and site guards', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'website_page_edit_test', ['schema', 'data']);
+    const pageApi = yaml('api/pages.yaml');
+    const edit = pageApi.actions.find((action: any) => action.id === 'edit_website_page');
+    const mutation = edit.mutation;
+
+    const updated = await repository.executeMutation(mutation, {
+      id: 'website-page-demo-002',
+      expected_row_version: 1,
+      values: { website_id: 'website-demo-001', website_name: 'Core3 Storefront', name: 'Contact', url: '/contact', is_indexed: true, is_homepage: false, is_in_menu: true, is_seo_optimized: true },
+    });
+    expect(updated).toMatchObject({ id: 'website-page-demo-002', name: 'Contact', url: '/contact', row_version: 2 });
+    expect((await repository.query('SELECT name, url, row_version FROM website_pages WHERE id = ?', ['website-page-demo-002']))[0]).toEqual({ name: 'Contact', url: '/contact', row_version: 2 });
+    await expect(repository.executeMutation(mutation, {
+      id: 'website-page-demo-002', expected_row_version: 1,
+      values: { website_id: 'website-demo-001', website_name: 'Core3 Storefront', name: 'Stale', url: '/stale' },
+    })).rejects.toMatchObject({ status: 409 });
+    database.close();
+  });
+
   test('keeps Odoo view labels and permission boundaries explicit', () => {
     const page = yaml('pages/pages.yaml');
     const api = yaml('api/pages.yaml');
@@ -88,6 +110,7 @@ describe('Website Page Manager parity', () => {
     expect(page.components[0].views.map((view: any) => view.label)).toEqual(['List', 'Kanban']);
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Page Title', 'Page URL', 'Indexed', 'Is In Main Menu', 'Is SEO Optimized', 'Is Published']);
     expect(api.actions.find((action: any) => action.id === 'create_website_page')).toMatchObject({ permission: 'website.write' });
+    expect(api.actions.find((action: any) => action.id === 'edit_website_page')).toMatchObject({ action: 'website.pages.update', permission: 'website.write' });
     expect(api.actions.find((action: any) => action.id === 'unpublish_website_page')).toMatchObject({ permission: 'website.manage' });
     expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['website.read', 'website.write', 'website.manage']));
   });

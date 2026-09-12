@@ -34,6 +34,7 @@ components:
     row_key: id
     row_actions: menu
     actions:
+      - { id: edit_website_page, label: Edit, permission: website.write, variant: secondary }
       - { id: publish_website_page, label: Publish, permission: website.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: unpublish_website_page, label: Unpublish, permission: website.manage, variant: secondary, show_if: "row.state === 'Published'" }
     empty_state: { title: No pages found, description: No website pages match the current search. }

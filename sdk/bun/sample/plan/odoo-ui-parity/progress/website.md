@@ -12,7 +12,8 @@ The Website page lifecycle now has focused integration evidence: a seeded Draft
 page publishes and unpublishes through the declared YAML workflow, increments
 row versions, rejects duplicate transitions, and enforces the manager-only
 unpublish permission. This is a bounded slice only; no full parity claim is
-made here.
+made here. Page metadata now also has a guarded YAML edit action that persists
+title, URL, site, and presentation flags with row-version concurrency checks.
 The public boundary now resolves published pages by path and ID and excludes
 draft pages through Website-owned operations. The public browser route and
 Fluent HTML renderer are now declared and covered by an implementation

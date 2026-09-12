@@ -39,5 +39,34 @@ actions:
       - { field: is_homepage, label: Home page, type: checkbox }
       - { field: is_in_menu, label: Is In Main Menu, type: checkbox }
       - { field: is_seo_optimized, label: Is SEO Optimized, type: checkbox }
+  - id: edit_website_page
+    type: server_form
+    permission: website.write
+    title: Edit page
+    action: website.pages.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [website_pages]
+    mutation:
+      operation: update
+      table: website_pages
+      fields: [website_id, website_name, name, url, is_indexed, is_homepage, is_in_menu, is_seo_optimized]
+      required: [website_id, website_name, name, url]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM website_pages WHERE id = :id", status: 404, code: WEBSITE_PAGE_NOT_FOUND, message: Website page not found }
+        - { query: "SELECT 1 AS ok FROM website_websites WHERE id = :website_id", status: 400, code: WEBSITE_INVALID_SITE, message: A valid website is required }
+      timestamps: true
+      result: { query: "SELECT * FROM website_pages WHERE id = :id" }
+    fields:
+      - { field: website_id, label: Website, type: select, options_source: website_lookup, required: true }
+      - { field: website_name, label: Website name, type: text, required: true }
+      - { field: name, label: Page Title, type: text, required: true }
+      - { field: url, label: Page URL, type: text, required: true }
+      - { field: is_indexed, label: Indexed, type: checkbox }
+      - { field: is_homepage, label: Home page, type: checkbox }
+      - { field: is_in_menu, label: Is In Main Menu, type: checkbox }
+      - { field: is_seo_optimized, label: Is SEO Optimized, type: checkbox }
   - { id: publish_website_page, type: server, permission: website.write, action: website.pages.publish, handler: order_transition, workflow: website_pages, operation: publish, refresh: [website_pages] }
   - { id: unpublish_website_page, type: server, permission: website.manage, action: website.pages.unpublish, handler: order_transition, workflow: website_pages, operation: unpublish, refresh: [website_pages] }
