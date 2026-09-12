@@ -1,0 +1,10 @@
+page: { id: email-link-tracker-detail }
+datasources:
+  - id: email_link_tracker_detail
+    single: true
+    permission: email_marketing.read
+    error_states: { transport_error: { status: 503, code: EMAIL_LINK_TRACKER_DETAIL_UNAVAILABLE, message: Link tracker details are temporarily unavailable. } }
+    query: "SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at, short_url, title, url, label, count, campaign_name, medium_name, source_name FROM email_marketing_link_trackers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - { id: visit_email_link_tracker, type: server, permission: email_marketing.read, action: email_marketing.link_trackers.visit, handler: noop }
+  - { id: view_email_link_tracker_clicks, type: server, permission: email_marketing.read, action: email_marketing.link_trackers.clicks, handler: noop }

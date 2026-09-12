@@ -1,0 +1,36 @@
+title: Link Tracker
+page: { id: email-link-trackers, route: /email-link-trackers, breadcrumb: [Marketing, Email Marketing, Configuration, Link Tracker], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: email_link_trackers
+    create_action: create_email_link_tracker
+    create_label: New
+    search: { label: Links, placeholder: Search links... }
+    group_by:
+      - { field: campaign_name, label: Campaign }
+      - { field: medium_name, label: Medium }
+      - { field: source_name, label: Source }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: form, label: Form, icon: edit, mobile: true }
+      - { id: graph, label: Graph, icon: chart, mobile: true, category_field: url, measure_field: count, measure_label: '# Clicks', type: bar }
+    form_view: { page: apps/services/email-marketing/pages/link-tracker-detail.yaml, side_panel: false }
+    columns:
+      - { field: created_at, label: Create Date, type: DateCell, mobile: false }
+      - { field: short_url, label: Link Tracker, type: PrimaryEntityCell, mobile: true }
+      - { field: title, label: Page Title, mobile: true }
+      - { field: url, label: Target URL, optional: true, mobile: false }
+      - { field: label, label: Button label, optional: true, mobile: false }
+      - { field: count, label: '# Clicks', type: NumberCell, mobile: true }
+      - { field: campaign_name, label: Campaign, optional: true, mobile: false }
+      - { field: medium_name, label: Medium, optional: true, mobile: false }
+      - { field: source_name, label: Source, optional: true, mobile: false }
+    page_size: 50
+    row_key: id
+    row_open_action: edit_email_link_tracker
+    row_double_click_action: edit_email_link_tracker
+    row_actions: menu
+    empty_state: { title: Create a link tracker, description: Trackers collect click statistics and generate short URLs. }

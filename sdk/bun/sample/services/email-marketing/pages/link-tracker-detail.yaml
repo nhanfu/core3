@@ -1,0 +1,24 @@
+title: Website Link
+page: { id: email-link-tracker-detail, route: /email-link-trackers/detail, breadcrumb: [Marketing, Email Marketing, Configuration, Link Tracker, Website Link], auth: { require: [email_marketing.read] } }
+
+components:
+  - type: OdooFormView
+    source: email_link_tracker_detail
+    title_field: short_url
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    stat_buttons:
+      - { id: visit_email_link_tracker, label: Visit Page, value_field: count, hide_value: true, icon: external-link }
+      - { id: view_email_link_tracker_clicks, label: Clicks, value_field: count, icon: mouse-pointer }
+    group_columns: 2
+    groups:
+      - title: Link
+        fields:
+          - { field: url, label: Target Link, type: text, required: true }
+          - { field: title, label: Page Title, type: text }
+          - { field: label, label: Button label, type: text }
+      - title: UTM
+        fields:
+          - { field: campaign_name, label: Campaign, type: text }
+          - { field: medium_name, label: Medium, type: text }
+          - { field: source_name, label: Source, type: text }

@@ -1,0 +1,59 @@
+page: { id: email-link-trackers }
+datasources:
+  - id: email_link_trackers
+    permission: email_marketing.read
+    error_states: { transport_error: { status: 503, code: EMAIL_LINK_TRACKERS_UNAVAILABLE, message: Link trackers are temporarily unavailable. } }
+    query: "SELECT id, row_version, CAST(created_at AS VARCHAR) AS created_at, short_url, title, url, label, count, campaign_name, medium_name, source_name FROM email_marketing_link_trackers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR title ILIKE '%' || :q || '%' OR url ILIKE '%' || :q || '%' OR label ILIKE '%' || :q || '%' OR short_url ILIKE '%' || :q || '%') AND (:campaign_name IS NULL OR campaign_name = :campaign_name) AND (:medium_name IS NULL OR medium_name = :medium_name) AND (:source_name IS NULL OR source_name = :source_name) ORDER BY count DESC, id"
+actions:
+  - id: create_email_link_tracker
+    type: server_form
+    permission: email_marketing.write
+    title: New Link Tracker
+    action: email_marketing.link_trackers.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [email_link_trackers]
+    mutation:
+      operation: insert
+      table: email_marketing_link_trackers
+      generated: [id]
+      fields: [url, title, label, campaign_name, medium_name, source_name]
+      required: [url]
+      defaults: { title: '', label: '', campaign_name: '', medium_name: '', source_name: '', short_url: 'https://go.core3.local/r/new-link', count: 0, row_version: 1, created_at: '2026-01-15 09:30:00' }
+      before_steps: [{ query: "SELECT 'email-link-' || regexp_replace(lower(trim(CAST(:url AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }, { query: "SELECT 'https://go.core3.local/r/' || regexp_replace(lower(trim(CAST(:url AS VARCHAR))), '[^a-z0-9]+', '', 'g') AS short_url", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:url AS VARCHAR))) > 0 AND (CAST(:url AS VARCHAR) ILIKE 'http://%' OR CAST(:url AS VARCHAR) ILIKE 'https://%')", status: 422, code: EMAIL_LINK_TRACKER_URL_INVALID, message: Enter a valid target URL beginning with http:// or https://. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_link_trackers WHERE url = TRIM(CAST(:url AS VARCHAR)) AND COALESCE(label, '') = COALESCE(CAST(:label AS VARCHAR), ''))", status: 409, code: EMAIL_LINK_TRACKER_EXISTS, message: A link tracker with this URL and button label already exists. }
+      result: { query: "SELECT * FROM email_marketing_link_trackers WHERE id = :id" }
+    fields: [{ field: url, label: Target Link, type: text, required: true }, { field: title, label: Page Title, type: text }, { field: label, label: Button label, type: text }, { field: campaign_name, label: Campaign, type: text }, { field: medium_name, label: Medium, type: text }, { field: source_name, label: Source, type: text }]
+  - id: edit_email_link_tracker
+    type: server_form
+    permission: email_marketing.write
+    title: Edit Website Link
+    action: email_marketing.link_trackers.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [email_link_trackers, email_link_tracker_detail]
+    mutation:
+      operation: update
+      table: email_marketing_link_trackers
+      fields: [url, title, label, campaign_name, medium_name, source_name]
+      required: [url]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_marketing_link_trackers WHERE id = :id", status: 404, code: EMAIL_LINK_TRACKER_NOT_FOUND, message: Link tracker not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:url AS VARCHAR))) > 0 AND (CAST(:url AS VARCHAR) ILIKE 'http://%' OR CAST(:url AS VARCHAR) ILIKE 'https://%')", status: 422, code: EMAIL_LINK_TRACKER_URL_INVALID, message: Enter a valid target URL beginning with http:// or https://. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_link_trackers WHERE url = TRIM(CAST(:url AS VARCHAR)) AND COALESCE(label, '') = COALESCE(CAST(:label AS VARCHAR), '') AND id <> :id)", status: 409, code: EMAIL_LINK_TRACKER_EXISTS, message: A link tracker with this URL and button label already exists. }
+      result: { query: "SELECT * FROM email_marketing_link_trackers WHERE id = :id" }
+    fields: [{ field: url, label: Target Link, type: text, required: true }, { field: title, label: Page Title, type: text }, { field: label, label: Button label, type: text }, { field: campaign_name, label: Campaign, type: text }, { field: medium_name, label: Medium, type: text }, { field: source_name, label: Source, type: text }]
+  - id: delete_email_link_tracker
+    type: server
+    permission: email_marketing.write
+    action: email_marketing.link_trackers.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [email_link_trackers]
+    mutation: { operation: delete, table: email_marketing_link_trackers, concurrency: { required: true }, guards: [{ query: "SELECT id FROM email_marketing_link_trackers WHERE id = :id", status: 404, code: EMAIL_LINK_TRACKER_NOT_FOUND, message: Link tracker not found. }] }
+  - { id: visit_email_link_tracker, type: server, permission: email_marketing.read, action: email_marketing.link_trackers.visit, handler: noop }
+  - { id: view_email_link_tracker_clicks, type: server, permission: email_marketing.read, action: email_marketing.link_trackers.clicks, handler: noop }
