@@ -9,6 +9,7 @@ updates in this file; do not create per-agent progress logs.
 | 2026-09-12 | Surveys | Questions-tab section action | `fc3184a9` | focused aggregate passed; UI audit passed | blocked; no visual claim | browser capture unavailable |
 | 2026-09-12 | Project | Embedded project milestones action | `c7ba4f31` | focused test 2/2; UI audit passed | blocked; no visual claim | browser capture unavailable |
 | 2026-09-12 | Employees | Employee Work tab parity | `cf396ff3` | focused test 3/3; UI audit passed | blocked; no visual claim | Core3 listener/browser unavailable |
+| 2026-09-12 | Employees | Employee Work tab visual contract correction | pending | focused test and static audit pending | attempted 1440x900 and 390x844; no visual claim | Vite `EMFILE`; built fallback 401/port collision; see employees.md |
 | 2026-09-12 | Recruitment | Applicant next activities view | `cca6c545` | focused test 2/2; UI audit passed | blocked; no visual claim | Core3 Vite `EMFILE` blocker |
 | 2026-09-12 | CRM | Reporting -> Pipeline Analysis | `10b7ff05` | focused test 2/2, 19 assertions; audit and ESLint passed | blocked; no visual claim | js_repl unavailable and Core3 3071 not listening |
 | 2026-09-12 | Fleet | Vehicle Services stat action states | `09a95ceb` | focused test 2/2, 14 assertions; audit, ESLint, and diff check passed | attempted 1440x900 and 390x844; no visual claim | Odoo Fleet uninstalled; Core3 `/api/modules` 502 and Vite `EMFILE`; see `fleet-batch-12.md` |

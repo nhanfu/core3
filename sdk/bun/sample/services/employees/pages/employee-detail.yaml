@@ -16,39 +16,23 @@ components:
       - { id: edit_employee, label: Edit, variant: secondary, permission: employees.write }
       - { id: archive_employee_detail, label: Archive, variant: danger, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: restore_employee_detail, label: Restore, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === false" }
-    group_columns: 2
-    groups:
-      - title: Work Information
-        fields:
-          - { field: name, label: Employee Name }
-          - { field: employee_number, label: Employee Number }
-          - { field: work_email, label: Work Email }
-          - { field: work_phone, label: Work Phone }
-          - { field: company_name, label: Company }
-          - { field: department_name, label: Department }
-          - { field: job_title, label: Job Position }
-          - { field: manager_name, label: Manager }
-          - { field: coach_name, label: Coach }
-          - { field: work_location, label: Work Location }
-          - { field: address_name, label: Work Address }
-          - { field: hire_date, label: Start Date }
-          - { field: termination_date, label: Departure Date }
     notebook:
       active: work
       tabs:
         - id: work
           label: Work
           groups:
-            - title: Organization
-              fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_position_name, label: Job Position }, { field: job_title, label: Job Title }, { field: manager_name, label: Manager }, { field: address_name, label: Address }, { field: work_location, label: Work Location }]
+            - title: Work
+              fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_position_name, label: Job Position }, { field: job_title, label: Job Title }, { field: manager_name, label: Manager }]
+            - title: Location
+              fields: [{ field: address_name, label: Address }, { field: work_location, label: Work Location }]
             - title: Departure
               show_if: "state.employee_detail.active === false"
               fields: [{ field: departure_reason_name, label: Departure Reason }, { field: departure_description, label: Description, type: textarea }, { field: departure_date, label: Departure Date, type: date }]
             - title: Note
               permission: employees.write
               fields: [{ field: additional_note, label: Note, type: textarea, wide: true }]
-            - title: Organization chart
-              fields: [{ field: org_parent_name, label: Manager }, { field: org_direct_reports, label: Direct Reports }]
+          organization_chart: { parent_field: org_parent_name, direct_reports_field: org_direct_reports }
         - id: resume
           label: Resume
           groups:

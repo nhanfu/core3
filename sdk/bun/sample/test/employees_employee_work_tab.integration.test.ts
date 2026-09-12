@@ -14,10 +14,12 @@ describe('Employees Odoo Work tab parity', () => {
     const work = page.components[0].notebook.tabs.find((tab: any) => tab.id === 'work');
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
-    expect(work.groups.map((group: any) => group.title)).toEqual(['Organization', 'Departure', 'Note', 'Organization chart']);
-    expect(work.groups[0].fields.map((field: any) => field.label)).toEqual(['Company', 'Department', 'Job Position', 'Job Title', 'Manager', 'Address', 'Work Location']);
-    expect(work.groups[1].show_if).toBe("state.employee_detail.active === false");
-    expect(work.groups[2].permission).toBe('employees.write');
+    expect(work.groups.map((group: any) => group.title)).toEqual(['Work', 'Location', 'Departure', 'Note']);
+    expect(work.groups[0].fields.map((field: any) => field.label)).toEqual(['Company', 'Department', 'Job Position', 'Job Title', 'Manager']);
+    expect(work.groups[1].fields.map((field: any) => field.label)).toEqual(['Address', 'Work Location']);
+    expect(work.groups[2].show_if).toBe("state.employee_detail.active === false");
+    expect(work.groups[3].permission).toBe('employees.write');
+    expect(work.organization_chart).toEqual({ parent_field: 'org_parent_name', direct_reports_field: 'org_direct_reports' });
   });
 
   test('projects deterministic active and departed Work tab state', async () => {

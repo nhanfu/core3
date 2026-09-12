@@ -990,3 +990,21 @@ persistent browser runtime is unavailable in this session, and no alternate
 authenticated browser runtime was available. Capture attempts are reserved
 under `/tmp/core3-odoo-parity/employees-batch8-20260912/`; no screenshots are
 invented or committed.
+
+## Employee Work tab visual audit follow-up (2026-09-12)
+
+The bounded source audit found that the prior Core3 contract duplicated a
+Work Information block above the notebook, merged Odoo's Work and Location
+groups, and rendered the organization-chart projection as ordinary fields.
+Odoo's `hr_employee_views.xml` orders the sections as Work (company,
+department, job position, job title, manager), Location (address, work
+location), inactive-only Departure, and HR-user Note, with the organization
+chart in a separate adjacent area. Core3 now preserves that order and records
+the chart field mapping without presenting it as ordinary form fields.
+
+An authenticated browser audit was attempted at 1440x900 and 390x844 against
+the isolated worktree. The dev runner failed before readiness with Vite
+`EMFILE: too many open files` while watching `vite.config.ts`. A built-server
+fallback returned 401 JSON for direct employee navigation and then stopped on
+a port collision. No authenticated Core3 or Odoo Work-tab render was
+available; no visual-parity claim or screenshot is made.
