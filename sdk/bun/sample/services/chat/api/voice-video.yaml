@@ -1,0 +1,25 @@
+page: { id: chat-voice-video }
+datasources:
+  - id: chat_call_settings
+    single: true
+    permission: chat.read
+    error_states: { forbidden: { status: 403, code: CHAT_CALL_SETTINGS_FORBIDDEN, message: You do not have permission to view voice and video settings. }, transport_error: { status: 503, code: CHAT_CALL_SETTINGS_UNAVAILABLE, message: Voice and video settings are temporarily unavailable. } }
+    query: "SELECT id, row_version, microphone, audio_output, voice_mode, voice_detection_sensitivity, push_to_talk_delay_ms, camera, show_only_video, blur_video, background_blur_intensity, edge_blur_intensity, log_rtc_events FROM chat_call_settings WHERE id = 'chat-call-settings' AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found')"
+actions:
+  - id: chat_call_settings_update_server
+    type: server
+    permission: chat.write
+    action: chat.call-settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: chat_call_settings
+      key_field: id
+      fields: [microphone, audio_output, voice_mode, voice_detection_sensitivity, push_to_talk_delay_ms, camera, show_only_video, blur_video, background_blur_intensity, edge_blur_intensity, log_rtc_events]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM chat_call_settings WHERE id = :id", status: 404, code: CHAT_CALL_SETTINGS_NOT_FOUND, message: Voice and video settings no longer exist. }
+        - { query: "SELECT 1 FROM chat_call_settings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: CHAT_CALL_SETTINGS_STALE, message: Voice and video settings were changed by another user. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:voice_mode AS VARCHAR) IN ('voice_detection', 'push_to_talk') AND CAST(:voice_detection_sensitivity AS DOUBLE) BETWEEN 0 AND 100 AND CAST(:push_to_talk_delay_ms AS INTEGER) BETWEEN 0 AND 2000 AND CAST(:background_blur_intensity AS DOUBLE) BETWEEN 0 AND 100 AND CAST(:edge_blur_intensity AS DOUBLE) BETWEEN 0 AND 100", status: 422, code: CHAT_CALL_SETTINGS_VALUES_INVALID, message: Choose valid voice, video, and delay values. }
+      result: { query: "SELECT * FROM chat_call_settings WHERE id = :id" }

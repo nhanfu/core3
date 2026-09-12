@@ -107,3 +107,31 @@ Capture Odoo/Core3 at 1440x900 and 390x844 for inbox, channel, direct message, t
   authenticated Core3/Odoo rendering and 1440x900/390x844 captures could not be
   produced. No visual-parity claim is made for this batch; no image files were
   added.
+
+## Bounded batch — Discuss Voice & Video settings action parity (20260912)
+
+- Source evidence: Odoo `mail.discuss_call_settings_action` in
+  `addons/mail/data/ir_actions_client.xml` is a client action named “Voice &
+  Video Settings”, opened as a medium dialog with no footer. The user-facing
+  menu is `mail.menu_call_settings`, ordered fifth under Configuration. Its
+  `call_settings.xml` view presents Voice (Microphone, Audio Output, Voice
+  Detection/Push to Talk, sensitivity and release delay), Video (Camera,
+  video-only and blur toggles/intensities), and debug-only RTC logging. Device
+  selectors are represented by deterministic Core3 choices; the no-footer
+  dialog behavior is represented by the existing settings shell.
+- Core3 adds `/chat/voice-video`, a presentation-only page and API fragment
+  joined by `page.id`, and the manifest Configuration menu entry ordered after
+  Notifications. Migration `20260912120000-010-chat-call-settings.yaml` seeds
+  fixed device names and settings. Reads require `chat.read`; saving requires
+  `chat.write`, with empty/transport, not-found, stale-version, and bounded
+  value validation contracts.
+- Focused Chat coverage passes 15/15 tests with 88 assertions, including the
+  new 3-test Voice & Video suite and all prior Chat slices. `bun run audit`
+  passes with 628 pages, 644 routes, and 1075 datasources; ESLint,
+  `frontend:build`, and `git diff --check` pass.
+- Authenticated capture attempt: Odoo login pages responded HTTP 200 on
+  `127.0.0.1:8069` and `:8073`, but Core3 could not start because Vite hit
+  `EMFILE: too many open files` while watching `vite.config.ts`. The required
+  Playwright `js_repl` tool is also unavailable in this session. No Odoo or
+  Core3 desktop/mobile captures were produced under `/tmp/core3-odoo-parity`,
+  and no visual-parity claim is made for this batch.

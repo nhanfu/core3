@@ -1,0 +1,47 @@
+title: Voice & Video Settings
+page: { id: chat-voice-video, route: /chat/voice-video, breadcrumb: [Discuss, Configuration, Voice & Video], auth: { require: [chat.read] } }
+
+components:
+  - type: SettingsView
+    id: chat-voice-video-view
+    source: chat_call_settings
+    title: Voice & Video Settings
+    save_action: save_chat_call_settings
+    tabs:
+      - id: voice-video
+        label: Voice & Video
+        icon: video
+        sections:
+          - title: Voice
+            fields:
+              - { field: microphone, label: Microphone, type: select, options: [{ value: default-microphone, label: Default microphone }, { value: usb-microphone, label: USB microphone }] }
+              - { field: audio_output, label: Audio Output, type: select, options: [{ value: default-speakers, label: Default speakers }, { value: usb-headset, label: USB headset }] }
+              - { field: voice_mode, label: Voice mode, type: select, options: [{ value: voice_detection, label: Voice Detection }, { value: push_to_talk, label: Push to Talk }] }
+              - { field: voice_detection_sensitivity, label: Voice detection sensitivity, description: Adjust how much sound activates your microphone., type: number, suffix: '%' }
+              - { field: push_to_talk_delay_ms, label: Delay after releasing push-to-talk, description: Delay in milliseconds., type: number, suffix: ms }
+          - title: Video
+            fields:
+              - { field: camera, label: Camera, type: select, options: [{ value: default-camera, label: Default camera }, { value: usb-camera, label: USB camera }] }
+              - { field: show_only_video, label: Show video participants only, type: checkbox }
+              - { field: blur_video, label: Blur video background, type: checkbox }
+              - { field: background_blur_intensity, label: Background blur intensity, description: 0–100 percent., type: number, suffix: '%' }
+              - { field: edge_blur_intensity, label: Edge blur intensity, description: 0–100 percent., type: number, suffix: '%' }
+          - title: Technical Settings
+            fields:
+              - { field: log_rtc_events, label: Log RTC events, description: Enable diagnostic logging for real-time calls., type: checkbox }
+
+actions:
+  - id: save_chat_call_settings
+    type: client
+    permission: chat.write
+    script: |
+      async ({ row, request }) => request('/api/actions/chat.call-settings.update', {
+        method: 'POST',
+        body: { id: row.id, expected_row_version: row.row_version, values: {
+          microphone: row.microphone, audio_output: row.audio_output, voice_mode: row.voice_mode,
+          voice_detection_sensitivity: row.voice_detection_sensitivity, push_to_talk_delay_ms: row.push_to_talk_delay_ms,
+          camera: row.camera, show_only_video: row.show_only_video, blur_video: row.blur_video,
+          background_blur_intensity: row.background_blur_intensity, edge_blur_intensity: row.edge_blur_intensity,
+          log_rtc_events: row.log_rtc_events,
+        } },
+      })

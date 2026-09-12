@@ -21,4 +21,5 @@ menu:
       label: Configuration
       items:
         - { path: /chat/notifications, label: Notifications, icon: bell, permission: chat.read }
+        - { path: /chat/voice-video, label: Voice & Video, icon: video, permission: chat.read }
         - { path: /chat/canned-responses, label: Canned Responses, icon: message, permission: chat.read }

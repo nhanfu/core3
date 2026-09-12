@@ -1,0 +1,13 @@
+version: 0.0.10
+description: Deterministic Discuss voice and video settings
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS chat_call_settings (id VARCHAR PRIMARY KEY, row_version INTEGER NOT NULL DEFAULT 1, microphone VARCHAR NOT NULL DEFAULT 'default-microphone', audio_output VARCHAR NOT NULL DEFAULT 'default-speakers', voice_mode VARCHAR NOT NULL DEFAULT 'voice_detection', voice_detection_sensitivity DOUBLE NOT NULL DEFAULT 45, push_to_talk_delay_ms INTEGER NOT NULL DEFAULT 250, camera VARCHAR NOT NULL DEFAULT 'default-camera', show_only_video BOOLEAN NOT NULL DEFAULT FALSE, blur_video BOOLEAN NOT NULL DEFAULT FALSE, background_blur_intensity DOUBLE NOT NULL DEFAULT 40, edge_blur_intensity DOUBLE NOT NULL DEFAULT 20, log_rtc_events BOOLEAN NOT NULL DEFAULT FALSE);
+      INSERT INTO chat_call_settings (id, row_version, microphone, audio_output, voice_mode, voice_detection_sensitivity, push_to_talk_delay_ms, camera, show_only_video, blur_video, background_blur_intensity, edge_blur_intensity, log_rtc_events) VALUES ('chat-call-settings', 1, 'default-microphone', 'default-speakers', 'voice_detection', 45, 250, 'default-camera', FALSE, FALSE, 40, 20, FALSE) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS chat_call_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
