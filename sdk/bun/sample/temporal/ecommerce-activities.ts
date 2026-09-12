@@ -15,6 +15,7 @@ function required(value: string, field: string): string {
 
 export async function authorizePayment(input: PaymentDeliveryInput): Promise<PaymentResult> {
   const orderId = required(input.order_id, 'order_id');
+  if (input.payment_method === 'Test Failure') throw new Error('PAYMENT_PROVIDER_UNAVAILABLE');
   const existing = paymentResults.get(orderId);
   if (existing) return existing;
   const result = { state: 'Authorized', provider_reference: `payment-${orderId}` };

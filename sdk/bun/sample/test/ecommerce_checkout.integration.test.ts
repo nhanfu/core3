@@ -101,6 +101,14 @@ describe('eCommerce Checkout parity', () => {
     expect(await recordCallback({ callback_id: 'callback-ecommerce-001', order_id: 'ecommerce-order-001', status: 'Authorized' })).toEqual({ recorded: false });
   });
 
+  test('keeps provider retry and compensation policy explicit', () => {
+    const contract = yaml('temporal/payment-delivery.yaml').workflow;
+    const payment = contract.activities.find((activity: any) => activity.id === 'authorize_payment');
+    expect(payment.retryable_errors).toEqual(['PAYMENT_PROVIDER_UNAVAILABLE', 'PAYMENT_TIMEOUT']);
+    expect(contract.retry.maximum_attempts).toBe(5);
+    expect(contract.activities.find((activity: any) => activity.id === 'cancel_payment_and_release_delivery')).toMatchObject({ compensation: true, idempotency_key: 'order_id' });
+  });
+
   test('creates an order with copied lines and closes the cart atomically', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
