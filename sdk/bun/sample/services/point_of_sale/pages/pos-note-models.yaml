@@ -1,40 +1,24 @@
-title: POS Note Models
+title: Note Models
 page: { id: pos-note-models, route: /point-of-sale/note-models, breadcrumb: [Sales, Point of Sale, Configuration, Note Models], auth: { require: [pos.read] } }
 components:
   - type: ListView
     variant: odoo
     source: pos_note_models
-    create_action: create_pos_note_model
-    create_label: New
-    search: { label: Search note models, placeholder: Search note model... }
+    search: { label: Search..., placeholder: Search... }
+    selectable: true
+    column_chooser: true
+    inline_edit:
+      create_action: create_pos_note_model_inline
+      update_action: update_pos_note_model_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: sequence, type: number, default: 10 }
+        - { field: name, type: text, required: true, placeholder: Note model }
+        - { field: color, type: color, palette: odoo, default: 0 }
     columns:
-      - { field: name, label: Note model, type: PrimaryEntityCell }
-      - { field: note_type, label: Type }
-      - { field: position, label: Show on }
-      - { field: note_text, label: Note }
-      - { field: usage_count, label: Used, align: right }
-      - { field: active, label: Status, type: StatusChip }
+      - { field: sequence, label: ' ', type: HandleCell, mobile: true }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: color, label: Color, type: ColorCell, palette: odoo, mobile: true }
     page_size: 50
     row_key: id
-actions:
-  - id: create_pos_note_model
-    type: server_form
-    permission: pos.manage
-    title: New POS note model
-    action: pos.note_models.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [pos_note_models]
-    mutation:
-      operation: insert
-      table: pos_note_models
-      fields: [name, note_type, position, note_text, usage_count, active]
-      required: [name, note_type, note_text]
-      defaults: { position: On receipt, usage_count: 0, active: true }
-      result: { query: "SELECT * FROM pos_note_models WHERE id = :id" }
-    fields:
-      - { field: name, label: Note model, type: text, required: true }
-      - { field: note_type, label: Type, type: select, options: [Kitchen note, Customer note], default: Kitchen note }
-      - { field: position, label: Show on, type: select, options: [On order, On order line, On receipt], default: On receipt }
-      - { field: note_text, label: Note, type: textarea, required: true }
-      - { field: active, label: Active, type: checkbox, default: true }

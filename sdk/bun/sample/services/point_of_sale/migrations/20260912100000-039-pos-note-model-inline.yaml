@@ -1,0 +1,18 @@
+version: 0.0.39
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_note_models ADD COLUMN IF NOT EXISTS sequence INTEGER;
+      ALTER TABLE pos_note_models ADD COLUMN IF NOT EXISTS color INTEGER;
+      ALTER TABLE pos_note_models ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      UPDATE pos_note_models SET sequence = CASE id WHEN 'pos-note-allergy' THEN 10 WHEN 'pos-note-cutlery' THEN 20 WHEN 'pos-note-no-onion' THEN 30 ELSE 10 END WHERE sequence IS NULL;
+      UPDATE pos_note_models SET color = CASE id WHEN 'pos-note-allergy' THEN 2 WHEN 'pos-note-cutlery' THEN 5 WHEN 'pos-note-no-onion' THEN 7 ELSE 0 END WHERE color IS NULL;
+      UPDATE pos_note_models SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      ALTER TABLE pos_note_models DROP COLUMN IF EXISTS row_version;
+      ALTER TABLE pos_note_models DROP COLUMN IF EXISTS color;
+      ALTER TABLE pos_note_models DROP COLUMN IF EXISTS sequence;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

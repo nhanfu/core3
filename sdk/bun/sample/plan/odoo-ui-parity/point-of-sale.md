@@ -473,6 +473,23 @@ Screenshots remain outside Git.
 - Commits contain YAML/TS/docs only; screenshots remain local evidence and are
   never committed.
 
+## Current bounded batch: Note Models action 743
+
+The live Odoo 19 audit on 2026-09-12 resolves Configuration → Note Models to
+menu record 429 and window action 743 (`pos.note`, list-only). Its editable
+bottom list exposes the sequence handle, Name, and Color columns. Core3 now
+matches that action with an inline-edit list, page/API fragments joined by
+`pos-note-models`, deterministic sequence/color/version migration fields, and
+permissioned create/update guards. Empty, transport-error, unauthorized, and
+forbidden datasource metadata plus invalid-name, duplicate, missing, and stale
+write contracts are covered by the focused test.
+
+Paired 1440×900 and 390×844 captures were attempted under
+`/tmp/core3-odoo-parity/pos-batch5-20260912/`, but browser validation stopped at
+the first runtime failure: Vite exited with `EMFILE: too many open files` while
+watching `vite.config.ts`, before Core3 reached `/api/modules`. No screenshots
+were created or added to Git.
+
 ## Current batch: cashier initial, empty, error, and denied states
 
 The existing `/point-of-sale/cashier` and `/point-of-sale/touch` surfaces now
