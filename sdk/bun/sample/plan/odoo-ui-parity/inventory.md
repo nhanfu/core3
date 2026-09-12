@@ -807,3 +807,13 @@ produced, and this batch makes no visual-parity claim. Static evidence remains
 the focused integration test, UI audit, inventory CSS build, and `git diff
 --check`; the repository-wide typecheck is still blocked by pre-existing
 errors outside Inventory and `sample` has no `lint` script.
+
+## Products > Packages bounded slice (2026-09-12)
+
+The next uncovered visible stock action is Odoo 19 `stock.action_package_view`, launched by `stock.menu_package` under Inventory > Products. The source is `addons/stock/views/stock_package_views.xml`; the menu is restricted to `stock.group_tracking_lot` and has sequence 102. The action is named `Packages`, uses model `stock.package`, orders views `list,kanban,form`, and defaults to internal locations plus main packages through its action context. The search view exposes Package Name, Location, and Package Type, filters `In internal locations` and `Main Packages`, and groups by Location and Package Type. The list columns are Package Name, Container, Package Type, Location, and optional Company. The kanban card contains the package name and type. The form contains Unpack, Package Transfers, Package Reference, Package Type, Owner, Location, Container, Company, Pack Date, and contained Product, Lot, Quantity, and Unit rows. The source's editable transfer-pack list is a linked workflow surface and remains deferred.
+
+Core3 adds `/packages` and `/packages/detail`. `pages/packages.yaml` and `pages/package-detail.yaml` are presentation-only and bind by matching page IDs to `api/packages.yaml` and `api/package-detail.yaml`. Migration `0.0.16` adds stable internal, customer, nested, and empty package fixtures dated `2026-01-15`. The package action supports deterministic search, internal/main package filters, empty and 503 states, and tracking-user permission boundaries. Create/edit validates required and duplicate package references with 422/409 responses; Unpack is row-version guarded and makes package content empty.
+
+Focused evidence: `bun test test/inventory_packages.integration.test.ts` passes 3 tests and 20 assertions; `bun run audit` passes with 637 pages, 653 routes, and 1,092 datasources; `git diff --check` passes. `sample` has no `lint` script, so `bun run lint` reports `Script not found "lint"`.
+
+Authenticated capture attempt under `/tmp/core3-odoo-parity/` was blocked: the isolated Core3 frontend exits with Vite `EMFILE: too many open files` after the backend selects occupied ports 3002/3012, and this worktree has no Playwright package available for the authenticated browser pass. Odoo was reachable at `http://127.0.0.1:8073`, but no authenticated screenshot was produced. This slice makes no visual-parity claim; desktop/mobile captures remain required in a browser-capable runtime.

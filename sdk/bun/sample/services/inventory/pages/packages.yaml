@@ -1,0 +1,36 @@
+title: Packages
+page: { id: packages, route: /packages, breadcrumb: [Supply Chain, Inventory, Products, Packages], auth: { require: [inventory.tracking] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_packages
+    create_action: create_inventory_package
+    create_label: New
+    default_filters: { internal: internal }
+    search: { label: Package Name, placeholder: Search packages... }
+    filters:
+      - { field: internal, label: In internal locations, options: [{ id: internal, label: In internal locations }] }
+      - { field: main_packages, label: Main Packages, options: [{ id: main, label: Main Packages }] }
+    group_by:
+      - { field: location_name, label: Location }
+      - { field: package_type_name, label: Package Type }
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: location_name
+        card: { title: name, subtitle: package_type_name, fields: [{ field: location_name, label: Location }] }
+      - { id: form, label: Form, icon: form }
+    columns:
+      - { field: name, label: Package Name, type: PrimaryEntityCell, sortable: true }
+      - { field: parent_package_name, label: Container }
+      - { field: package_type_name, label: Package Type }
+      - { field: location_name, label: Location }
+      - { field: company_name, label: Company, optional: hide }
+    page_size: 50
+    row_key: id
+    row_open_action: view_inventory_package
+    row_double_click_action: view_inventory_package
+    form_view: { page: apps/services/inventory/pages/package-detail.yaml, side_panel: false }
+    empty_state: { title: No packages found, description: Create a package or adjust your search and filters. }

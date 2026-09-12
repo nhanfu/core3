@@ -1,0 +1,40 @@
+title: Package
+page: { id: package-detail, route: /packages/detail, breadcrumb: [Supply Chain, Inventory, Products, Packages, Package], auth: { require: [inventory.tracking] } }
+components:
+  - type: OdooFormView
+    source: inventory_package_detail
+    title_field: name
+    subtitle_field: package_type_name
+    status_field: state
+    editable: true
+    group_columns: 2
+    header_actions:
+      - { id: back_to_inventory_packages, label: Back to Packages, icon: arrow-left, permission: inventory.tracking }
+      - { id: edit_inventory_package, label: Edit, variant: primary, permission: inventory.tracking }
+      - { id: unpack_inventory_package, label: Unpack, variant: secondary, permission: inventory.tracking, show_if: "record.state !== 'Empty'" }
+    groups:
+      - title: Package Information
+        fields:
+          - { field: name, label: Package Reference }
+          - { field: package_type_name, label: Package Type }
+          - { field: owner_name, label: Owner }
+          - { field: location_name, label: Location }
+          - { field: parent_package_name, label: Container }
+          - { field: company_name, label: Company }
+          - { field: pack_date, label: Pack Date }
+      - title: Content
+        wide: true
+        fields:
+          - { field: content_count, label: Items, type: number, readonly: true }
+  - type: LineItemGrid
+    source: inventory_package_contents
+    parent_source: inventory_package_detail
+    title: Content
+    variant: odoo_x2many
+    row_key: id
+    columns:
+      - { field: product_name, label: Product }
+      - { field: lot_name, label: Lot/Serial Number }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_name, label: Unit }
+    empty_state: { title: No package contents, description: This package is empty. }

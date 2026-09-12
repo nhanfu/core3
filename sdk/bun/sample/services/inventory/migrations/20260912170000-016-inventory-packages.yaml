@@ -1,0 +1,38 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_packages (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, parent_package_name VARCHAR, package_type_name VARCHAR,
+        location_name VARCHAR, owner_name VARCHAR, company_name VARCHAR,
+        pack_date DATE, state VARCHAR NOT NULL DEFAULT 'In internal locations',
+        content_count INTEGER NOT NULL DEFAULT 0, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(name)
+      );
+      CREATE TABLE IF NOT EXISTS inventory_package_contents (
+        id VARCHAR PRIMARY KEY, package_id VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        lot_name VARCHAR, quantity DECIMAL(18,3) NOT NULL, unit_name VARCHAR NOT NULL DEFAULT 'Units'
+      );
+      INSERT INTO inventory_packages(id,name,parent_package_name,package_type_name,location_name,owner_name,company_name,pack_date,state,content_count) VALUES
+        ('package-main-0001','PACK0000001',NULL,'Pallet','WH/Stock','', 'My Company (San Francisco)',DATE '2026-01-15','In internal locations',2),
+        ('package-box-0002','PACK0000002','PACK0000001','Box','WH/Stock/Shelf 1','', 'My Company (San Francisco)',DATE '2026-01-15','In internal locations',1),
+        ('package-customer-0003','PACK0000003',NULL,'Box','Customers/Wood Corner','Wood Corner','My Company (San Francisco)',DATE '2026-01-14','Customer location',1),
+        ('package-empty-0004','PACK0000004',NULL,NULL,NULL,'','My Company (San Francisco)',NULL,'Empty',0)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_package_contents(id,package_id,product_name,lot_name,quantity,unit_name) VALUES
+        ('package-content-0001','package-main-0001','[FURN_8855] Drawer','0000000000029',80,'Units'),
+        ('package-content-0002','package-main-0001','[E-COM08] Storage Box',NULL,18,'Units'),
+        ('package-content-0003','package-box-0002','[FURN_5555] Cable Management Box','CM-BOX-00001',50,'Units'),
+        ('package-content-0004','package-customer-0003','[E-COM08] Storage Box',NULL,12,'Units')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_package_contents WHERE package_id IN ('package-main-0001','package-box-0002','package-customer-0003','package-empty-0004');
+      DELETE FROM inventory_packages WHERE id IN ('package-main-0001','package-box-0002','package-customer-0003','package-empty-0004');
+      DROP TABLE IF EXISTS inventory_package_contents;
+      DROP TABLE IF EXISTS inventory_packages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

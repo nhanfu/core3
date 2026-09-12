@@ -62,6 +62,10 @@ menu:
           label: Lots / Serial Numbers
           icon: tag
           permission: inventory.tracking
+        - path: /packages
+          label: Packages
+          icon: package
+          permission: inventory.tracking
     - id: configuration
       label: Configuration
       items:

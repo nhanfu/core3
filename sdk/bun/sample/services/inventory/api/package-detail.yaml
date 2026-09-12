@@ -1,0 +1,59 @@
+page: { id: package-detail }
+datasources:
+  - id: inventory_package_detail
+    single: true
+    permission: inventory.tracking
+    error_states: { transport_error: { status: 503, code: INVENTORY_PACKAGE_DETAIL_UNAVAILABLE, message: Package details are temporarily unavailable. } }
+    query: "SELECT id,row_version,name,COALESCE(parent_package_name,'') AS parent_package_name,COALESCE(package_type_name,'') AS package_type_name,COALESCE(location_name,'') AS location_name,COALESCE(owner_name,'') AS owner_name,COALESCE(company_name,'Visible to all companies') AS company_name,CAST(pack_date AS VARCHAR) AS pack_date,state,content_count FROM inventory_packages WHERE CASE WHEN COALESCE(:fixture_state,'') IN ('empty','not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: inventory_package_contents
+    single: false
+    permission: inventory.tracking
+    query: "SELECT id,product_name,COALESCE(lot_name,'') AS lot_name,quantity,unit_name FROM inventory_package_contents WHERE package_id = :id ORDER BY product_name,id"
+actions:
+  - id: back_to_inventory_packages
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /packages
+  - id: edit_inventory_package
+    type: server_form
+    permission: inventory.tracking
+    title: Edit package
+    action: inventory.packages.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_package_detail
+    refresh: [inventory_package_detail, inventory_packages]
+    mutation:
+      operation: update
+      table: inventory_packages
+      fields: [name, package_type_name, location_name, owner_name, company_name, pack_date]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_packages WHERE id = :id", status: 404, code: INVENTORY_PACKAGE_NOT_FOUND, message: Package not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_PACKAGE_NAME_REQUIRED, message: A package reference is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_packages WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: INVENTORY_PACKAGE_EXISTS, message: A package with this reference already exists. }
+      result: { query: "SELECT * FROM inventory_packages WHERE id = :id" }
+    fields:
+      - { field: name, label: Package Reference, type: text, required: true }
+      - { field: package_type_name, label: Package Type, type: text }
+      - { field: owner_name, label: Owner, type: text }
+      - { field: location_name, label: Location, type: text }
+      - { field: parent_package_name, label: Container, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: pack_date, label: Pack Date, type: date }
+  - id: unpack_inventory_package
+    type: server
+    permission: inventory.tracking
+    action: inventory.packages.unpack
+    handler: yaml_mutation
+    operation: update
+    params: { values: { state: 'Empty', content_count: 0 } }
+    refresh: [inventory_package_detail, inventory_packages, inventory_package_contents]
+    mutation:
+      operation: update
+      table: inventory_packages
+      fields: [state, content_count]
+      defaults: { state: 'Empty', content_count: 0 }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_packages WHERE id = :id AND state <> 'Empty'", status: 404, code: INVENTORY_PACKAGE_NOT_FOUND, message: Package is already empty or unavailable. }]
