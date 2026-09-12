@@ -25,7 +25,7 @@ Candidate commit: working tree after authenticated Fleet QA
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | FLEET-001 | Focused Fleet contract corpus | 62 focused tests / 683 assertions across 20 files | PASS |
-| FLEET-002 | Registered route responsive smoke | Strict 53/56 at desktop/mobile; three mobile compact/initial-detail cases rerendered in isolated contexts with no errors or overflow | CONDITIONAL |
+| FLEET-002 | Registered route responsive smoke | Corrected 28-route matrix reached 55/56 on the first pass; the only miss was a mobile `/fleet/config/tags` early-shell sample. An isolated rerun after the normal render wait produced the full tag table with no errors, failed requests, or overflow | PASS |
 | FLEET-003 | Vehicle archive/restore persistence | `fleet-demo-002` archive → restore, row versions 1 → 3; stale archive 409 | PASS |
 | FLEET-004 | Permission boundary | Fleet user archive returned 403 `fleet.write` | PASS |
 | FLEET-005 | Fresh paired Odoo visual comparison and complete browser CRUD | Not complete for current candidate | pending |
@@ -35,5 +35,5 @@ Candidate commit: working tree after authenticated Fleet QA
 - Functional: pass for tested Fleet contracts and vehicle workflow
 - Permissions: pass for tested write boundary
 - Persistence/data integrity: pass for archive/restore workflow
-- Desktop/mobile visual parity: conditional route smoke; paired parity pending
-- Tester decision: conditional; strict mobile threshold and paired Odoo gates remain open
+- Desktop/mobile visual parity: route smoke pass; paired parity pending
+- Tester decision: pass for route smoke; paired Odoo and complete interaction gates remain open

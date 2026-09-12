@@ -15,11 +15,12 @@ coverage are still open.
 ## Current evidence (2026-09-12)
 
 - Fleet focused corpus: `bun test ./test/*fleet*.integration.test.ts --timeout 20000` — 62 passed, 683 assertions, 0 failed across 20 files.
-- Fresh authenticated runner on port 4030 checked 28 registered routes at
-  desktop/mobile. The strict content threshold accepted 53/56; the three
-  mobile misses had no errors or overflow and were compact/new or initially
-  invalid-detail cases. Isolated reruns with corrected seeded IDs rendered
-  cleanly, including the manufacturer new form, status detail, and tag detail.
+- Fresh authenticated runner on port 4030 checked all 28 registered routes at
+  desktop/mobile. The corrected matrix accepted 55/56 on its first pass; the
+  only miss was `/fleet/config/tags` sampled during its initial two-character
+  shell. An isolated rerun after the normal render wait produced the full tag
+  table with no page/request errors or horizontal overflow. The earlier three
+  compact/invalid-detail cases were also rerun with corrected IDs and passed.
 - Authenticated Fleet archive workflow passed for `fleet-demo-002`: archive
   then restore persisted `archived` and row versions 1 → 3; stale archive
   returned 409 `STALE_RECORD`; Fleet user archive returned 403
@@ -27,6 +28,5 @@ coverage are still open.
 
 ## Next bounded task
 
-Resolve the strict mobile route-matrix threshold cases, complete fresh paired
-Odoo comparison, and expand browser CRUD/vehicle workflow coverage before
-sign-off.
+Complete fresh paired Odoo comparison and expand browser CRUD/vehicle workflow
+coverage before sign-off.
