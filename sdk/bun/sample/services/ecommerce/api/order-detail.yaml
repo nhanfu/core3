@@ -1,0 +1,13 @@
+page: { id: ecommerce-order-detail }
+datasources:
+  - id: ecommerce_order_detail
+    single: true
+    permission: ecommerce.read
+    error_states:
+      missing_record: { status: 404, code: ECOMMERCE_ORDER_NOT_FOUND, message: eCommerce order not found. }
+      forbidden: { status: 403, code: ECOMMERCE_ORDER_DETAIL_FORBIDDEN, message: You do not have permission to view this order. }
+      transport_error: { status: 503, code: ECOMMERCE_ORDER_DETAIL_UNAVAILABLE, message: eCommerce order details are temporarily unavailable. }
+    query: "SELECT id, row_version, order_number, customer_name, customer_email, amount_total, currency, state, CAST(date_order AS VARCHAR) AS date_order, company_name FROM ecommerce_orders WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id"
+actions:
+  - { id: back_to_ecommerce_orders, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/orders, params: {} }
+  - { id: print_ecommerce_order, type: print, permission: ecommerce.read, source: ecommerce_order_detail }

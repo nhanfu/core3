@@ -12,10 +12,15 @@ describe('eCommerce Orders parity', () => {
   test('joins the Odoo Orders page and API contract', () => {
     const page = yaml('pages/orders.yaml');
     const api = yaml('api/orders.yaml');
+    const detailPage = yaml('pages/order-detail.yaml');
+    const detailApi = yaml('api/order-detail.yaml');
     expect(page.page).toMatchObject({ id: 'ecommerce-orders', route: '/ecommerce/orders' });
     expect(api.page).toEqual({ id: 'ecommerce-orders' });
     expect(page.components[0]).toMatchObject({ type: 'ListView', source: 'ecommerce_orders', row_open_action: 'view_ecommerce_order' });
     expect(api.datasources.map((source: any) => source.id)).toEqual(['ecommerce_orders', 'ecommerce_order_states']);
+    expect(detailPage.page).toMatchObject({ id: 'ecommerce-order-detail', route: '/ecommerce/orders/detail' });
+    expect(detailApi.page).toEqual({ id: 'ecommerce-order-detail' });
+    expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'ecommerce_order_detail', editable: false });
   });
 
   test('serves deterministic searchable orders and explicit read boundaries', async () => {
@@ -28,6 +33,9 @@ describe('eCommerce Orders parity', () => {
     expect((await repository.querySource(source, { ...params, q: 'acme' }, 0, 50)).data[0].customer_name).toBe('Acme Corporation');
     expect((await repository.querySource(source, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect(source.error_states.forbidden.status).toBe(403);
+    const detail = yaml('api/order-detail.yaml').datasources[0];
+    expect(await repository.querySource(detail, { id: 'ecommerce-order-001', fixture_state: null }, 0, 1)).toMatchObject({ data: { order_number: 'WEB/2026/0001', state: 'Sale Order' } });
+    expect((await repository.querySource(detail, { id: 'ecommerce-order-001', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     database.close();
   });
 });

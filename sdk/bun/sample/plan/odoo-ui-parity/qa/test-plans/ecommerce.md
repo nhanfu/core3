@@ -31,7 +31,7 @@ mutations use isolated databases and deterministic IDs.
 | --- | --- | --- | --- |
 | ECOM-FUNC-001 | Products | Search/filter/detail, published visibility, CRUD validation and stale guards use persisted catalog data | pass: focused suite |
 | ECOM-FUNC-002 | Pricelists | List/detail, rule validation, duplicate/missing guards and manager writes persist | pass: focused suite |
-| ECOM-FUNC-003 | Orders | Order list, search/status filters, deterministic rows and read-only navigation contract work | pass: focused suite; detail browser pending |
+| ECOM-FUNC-003 | Orders | Order list/detail, search/status filters, deterministic rows, read-only form and not-found boundary work | pass: focused suite |
 | ECOM-FUNC-004 | Shop/cart | Product selection, cart add/update/remove and totals persist across reload | planned expansion |
 | ECOM-FUNC-005 | Checkout/order mutations | Customer, delivery, payment and order creation validate and persist atomically | planned expansion |
 | ECOM-FUNC-006 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
