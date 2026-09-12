@@ -10,6 +10,8 @@ components:
     status_colors: { Draft: neutral, Active: green, On Leave: amber, Terminated: red }
     editable: true
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    stat_buttons:
+      - { id: open_employee_timesheets, label: Timesheets, value_field: employee_number, permission: timesheets.read }
     header_actions:
       - { id: edit_employee, label: Edit, variant: secondary, permission: employees.write }
       - { id: archive_employee_detail, label: Archive, variant: danger, permission: employees.write, show_if: "state.employee_detail.active === true" }

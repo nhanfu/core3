@@ -1,0 +1,31 @@
+title: Timesheets
+page: { id: employee-timesheets, route: /employee-timesheets, breadcrumb: [Human Resources, Employees, Timesheets], auth: { require: [timesheets.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_timesheet_entries
+    create_action: create_employee_timesheet_entry
+    create_label: New
+    search: { label: Search timesheets, placeholder: 'Search project, task, or description...' }
+    filters:
+      - { field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }
+      - { field: work_date, label: Date, options: [{ id: today, label: Today }, { id: this_week, label: This Week }, { id: last_week, label: Last Week }] }
+    group_by: [{ field: project_name, label: Project }, { field: task_name, label: Task }, { field: state, label: Status }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form, mobile: false }
+    columns:
+      - { field: work_date, label: Date }
+      - { field: project_name, label: Project }
+      - { field: task_name, label: Task }
+      - { field: description, label: Description }
+      - { field: time_spent_display, label: Time Spent, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    row_key: id
+    row_open_action: view_employee_timesheet_entry
+    row_actions: menu
+    page_size: 25
+    empty_state: { title: Record a new activity, description: You can register and track your workings hours by project every day. }
+actions:
+  - { id: view_employee_timesheet_entry, type: navigate, permission: timesheets.read, navigate_to: /timesheets/detail, params: { id: '{row.id}', view_scope: employee, employee_id: '{state.employee_id}' } }

@@ -480,3 +480,26 @@ this database, and no paired browser captures were completed in the isolated
 runtime. The implementation is source- and contract-bounded; visual parity
 remains unclaimed and the screenshot gate stays open. Images remain outside
 Git.
+
+## Employee-context Timesheets action (2026-09-12)
+
+The next uncovered source action is Odoo 19 `timesheet_action_from_employee`
+from `hr_timesheet/views/hr_timesheet_views.xml`, opened by the Timesheets stat
+button in `hr_timesheet/views/hr_employee_views.xml`. It is a record-context
+action named `Timesheets`, filters `project_id != False` and
+`employee_id = active_id`, defaults `default_employee_id: active_id`, and
+uses the employee search view plus the Timesheets form. Its source help begins
+`Record a new activity` and explains tracking working hours by project.
+
+Core3 implements the bounded `/employee-timesheets` page/API pair, joined by
+`page.id`, and adds the employee-detail Timesheets stat button/action. It is
+not a top-level menu, preserving Odoo's context placement. The API provides
+employee-scoped list/form reads, deterministic 2026-01-15 date filters, empty
+and 503 transport fixtures, write permission boundaries, CRUD, positive
+<=24-hour validation, missing-employee 404, row-version conflict handling,
+and cross-employee 403 protection. The focused integration test is
+`test/timesheets_employee.integration.test.ts`.
+
+Authenticated desktop 1440x900 and mobile 390x844 Odoo/Core3 captures were not
+completed in this isolated runtime, so visual parity is not claimed and the
+required captures remain pending under `/tmp/core3-odoo-parity/timesheets-batch4-20260912/`.
