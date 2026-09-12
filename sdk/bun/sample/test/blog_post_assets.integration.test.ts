@@ -29,6 +29,10 @@ describe('Blog post assets parity', () => {
     const form = new FormData();
     form.set('file', new File([new Uint8Array([80, 75, 3, 4])], 'article.pdf', { type: 'application/pdf' }));
     form.set('meta', JSON.stringify({ kind: 'blog_post_attachment', post_id: 'blog-post-demo-001' }));
+    authUser.permissions = ['blog.read'];
+    await expect(api(new Request('http://blog.test/api/upload', { method: 'POST', body: form }), new URL('http://blog.test/api/upload')))
+      .rejects.toMatchObject({ status: 403 });
+    authUser.permissions = ['blog.read', 'blog.write'];
     const response = await api(new Request('http://blog.test/api/upload', { method: 'POST', body: form }), new URL('http://blog.test/api/upload'));
     expect(response?.status).toBe(200);
     const uploaded = await response?.json() as any;
