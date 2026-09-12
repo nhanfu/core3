@@ -3,17 +3,17 @@
 QA slot: wave-1 chat assignment
 Module owner: chat module owner
 Verification trigger: merge-candidate
-Candidate commit: working tree candidate; pending owner commit
-QA state: qa-failed
+Candidate commit: `57888722f02e689191bc07fcec58f7bec19f49dc`
+QA state: ready-for-test
 
 ## Test cases
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| CHAT-FUNC-001 | Page/API page-id join and real query-backed datasources | `bun test test/chat.integration.test.ts` — 5 tests, 34 assertions | pass |
+| CHAT-FUNC-001 | Page/API page-id join and real query-backed datasources | `bun test ./test/chat*.integration.test.ts` — 20 tests, 134 assertions | pass |
 | CHAT-FUNC-002 | Persisted conversations, message reads, create mutation, participant permission boundary | same focused suite | pass |
 | CHAT-REG-001 | Global page discovery and route/datasource audit | `bun run audit` — 647 pages, 662 routes, 1112 datasources | pass |
-| CHAT-BROWSER-001 | Authenticated desktop/mobile Odoo/Core3 comparison | no authenticated captures yet | pending |
+| CHAT-BROWSER-001 | Authenticated desktop/mobile Odoo/Core3 comparison | no authenticated captures; browser capability unavailable | blocked |
 
 ## Bugs and retests
 
@@ -26,5 +26,5 @@ QA state: qa-failed
 - Functional: pass for focused scope
 - Permissions: pass for participant guard
 - Persistence/data integrity: pass for focused scope
-- Desktop/mobile visual parity: pending
+- Desktop/mobile visual parity: blocked
 - Tester decision: not signed off until committed candidate and browser evidence
