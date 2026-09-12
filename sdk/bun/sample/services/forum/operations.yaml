@@ -1,0 +1,7 @@
+operations:
+  forum.public.questions:
+    result_key: questions
+    query: "SELECT id, forum_id, forum_name, title, content, author_name, tags, views, vote_count, answer_count, state, TRUE AS is_seo_optimized FROM forum_posts WHERE state IN ('Active', 'Closed') AND (:q IS NULL OR title ILIKE '%' || :q || '%' OR COALESCE(content, '') ILIKE '%' || :q || '%' OR COALESCE(tags, '') ILIKE '%' || :q || '%') ORDER BY created_at DESC, id"
+  forum.public.question:
+    result_key: questions
+    query: "SELECT id, forum_id, forum_name, title, content, author_name, tags, views, vote_count, answer_count, state, closed_reason, TRUE AS is_seo_optimized FROM forum_posts WHERE id = :id AND state IN ('Active', 'Closed')"

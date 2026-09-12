@@ -1,1 +1,14 @@
 .forum-page { min-height: 100%; }
+.forum-public { min-height: 100vh; padding: 40px clamp(20px, 8vw, 120px); background: #f8f9fa; color: #212529; }
+.forum-public-header { display: flex; align-items: center; justify-content: space-between; max-width: 920px; margin: 0 auto 32px; }
+.forum-public-brand { color: #714bc3; font-size: 18px; font-weight: 700; }
+.forum-public-back { color: #495057; font-size: 14px; text-decoration: none; }
+.forum-public-question { max-width: 920px; margin: 0 auto; padding: clamp(24px, 5vw, 52px); border: 1px solid #dee2e6; border-radius: 8px; background: #fff; box-shadow: 0 6px 24px rgb(33 37 41 / 6%); }
+.forum-public-kicker { margin-bottom: 10px; color: #714bc3; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.forum-public-question h1 { margin: 0 0 16px; font-size: clamp(26px, 4vw, 40px); line-height: 1.15; }
+.forum-public-meta, .forum-public-stats { display: flex; flex-wrap: wrap; gap: 16px; color: #6c757d; font-size: 13px; }
+.forum-public-stats { margin: 24px 0; padding: 14px 0; border-block: 1px solid #e9ecef; }
+.forum-public-content { white-space: pre-wrap; line-height: 1.7; }
+.forum-public-closed { padding: 12px 16px; border-radius: 4px; background: #f1f3f5; color: #495057; font-size: 13px; }
+.forum-public-tags { margin-top: 24px; color: #714bc3; font-size: 13px; }
+@media (max-width: 576px) { .forum-public { padding: 24px 14px; } .forum-public-question { padding: 24px 18px; } }
