@@ -137,6 +137,7 @@ export type ListViewOptions = {
   kanbanTransitions?: Array<{ from: string | string[]; to: string }>;
   kanbanStateEditor?: Record<string, any>;
   emptyState?: { title?: string; description?: string; illustration?: string };
+  errorState?: { status?: number; code?: string; message?: string };
   labels?: {
     new?: string;
     filters?: string;
@@ -293,6 +294,16 @@ export class ListView extends BaseComponent {
     const visibleColumns = this.defs.filter(column => visibleColumnIds.has(column.id || column.field)
       && (!this.isSmallScreen() || column.mobile !== false));
     const root = html.take(container).section.className(`o-list-view${this.options.scroll === 'body' ? ' o-list-view-body-scroll' : ''}${this.options.inlineEdit ? ' o-list-view-inline-edit' : ''}`).ele();
+
+    if (this.options.errorState) {
+      const error = this.options.errorState;
+      const content = html.take(root).div.className('o-list-error-state').attr('role', 'alert').ele();
+      html.take(content).h3.text('Data unavailable');
+      if (error.message) html.take(content).p.text(error.message);
+      const status = [error.status, error.code].filter(Boolean).join(' ');
+      if (status) html.take(content).small.text(status);
+      return;
+    }
 
     if (this.options.viewNavigation === 'tabs') this.drawViewTabs(root);
 

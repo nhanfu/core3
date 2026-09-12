@@ -969,6 +969,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     {
       rows: activeSourceResult.data || [],
       meta: activeSourceResult.meta || {},
+      ...(activeSourceResult.error ? { errorState: activeSourceResult.error } : {}),
       filters: { ...(filterState[sourceId] || {}) },
       selectedIds: [],
       ...(sortState[sourceId] ? { sort: sortState[sourceId] } : {}),
@@ -1078,6 +1079,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           .catch((error: unknown) => comp.setState({ pivotError: error instanceof Error ? error.message : String(error) }));
       },
       emptyState: def.empty_state,
+      errorState: sourceResult.error,
       labels: {
         new: translatedLabels.new,
         filters: translatedLabels.filters,
@@ -1230,7 +1232,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   };
   const slot = html.take(targetContainer).div.className('o-list-view-slot').ele() as HTMLElement;
   mountOwned(comp, slot);
-  bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
+  bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta, errorState: data.error }, true));
   if (footerSourceId) bindSource(footerSourceId, data => _origSetState({ footerRecord: data.data || {} }, true));
 }
 

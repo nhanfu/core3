@@ -32,6 +32,28 @@ describe('YAML Odoo ListView renderer', () => {
     expect(container.querySelector('.o-list-view')?.classList.contains('o-list-view-body-scroll')).toBe(true);
   });
 
+  it('renders a datasource transport error instead of the configured empty state', async () => {
+    window.__CORE3_USER__ = { permissions: ['manufacturing.read'] };
+    const container = document.createElement('div');
+    await renderPage({
+      page: { id: 'manufacturing-work-orders-analysis' },
+      datasources: [{
+        id: 'mrp_workorder_analysis', permission: 'manufacturing.read', data: [],
+        error: { status: 503, code: 'MRP_WORKORDER_ANALYSIS_UNAVAILABLE', message: 'Work Orders Analysis is temporarily unavailable.' },
+      }],
+      components: [{
+        type: 'ListView', variant: 'odoo', source: 'mrp_workorder_analysis',
+        empty_state: { title: 'No Work Orders Analysis data' },
+        columns: [{ field: 'operation_name', label: 'Operation' }],
+      }],
+    }, { container });
+
+    expect(container.querySelector('.o-list-error-state')?.textContent).toContain('Data unavailable');
+    expect(container.querySelector('.o-list-error-state')?.textContent).toContain('503 MRP_WORKORDER_ANALYSIS_UNAVAILABLE');
+    expect(container.querySelector('.o-list-error-state')?.textContent).toContain('temporarily unavailable');
+    expect(container.querySelector('.o-list-empty')).toBeNull();
+  });
+
   it('renders a declarative default grouping in the initial list state', async () => {
     vi.spyOn(client, 'query').mockResolvedValue({
       data: [

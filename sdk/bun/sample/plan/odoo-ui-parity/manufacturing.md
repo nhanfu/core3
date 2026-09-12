@@ -2,6 +2,29 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-13 Work Orders Analysis transport-error UI repair
+
+- Traced the active route payload: `PageRoot` received the declared 503
+  datasource error alongside empty data, but the Odoo `ListView` only checked
+  row count and therefore rendered the empty state. `PageGridRenderers` now
+  forwards the runtime error and `ListView` renders a role-alert containing the
+  status, code, and message before the empty-state branch.
+- Added renderer regression coverage for
+  `MRP_WORKORDER_ANALYSIS_UNAVAILABLE` and retained the existing Manufacturing
+  datasource/schema coverage. No Manufacturing page/API contract or migration
+  was duplicated or changed.
+
+## 2026-09-13 Work Orders Analysis transport UI repair
+
+- Repaired `MANUFACTURING-WORA-001`: the shared Odoo ListView now consumes
+  the runtime datasource error envelope and renders a `Data unavailable`
+  alert with the declared status, code, and message instead of falling through
+  to the configured empty state. The active Work Orders Analysis declaration
+  remains unchanged.
+- Added renderer regression coverage for the exact 503
+  `MRP_WORKORDER_ANALYSIS_UNAVAILABLE` response. No aggregate progress was
+  edited.
+
 ## 2026-09-13 Work Orders Analysis transport-error repair
 
 - Fixed `MANUFACTURING-WORA-001`: the public runtime datasource schema now

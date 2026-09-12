@@ -1,5 +1,20 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-WORA-001 repair — pending browser retest (2026-09-13)
+
+- Repair target: the active Work Orders Analysis transport-error route now
+  propagates datasource errors into the shared Odoo ListView, which renders
+  `Data unavailable`, HTTP `503`, code `MRP_WORKORDER_ANALYSIS_UNAVAILABLE`,
+  and the declared unavailable message instead of `No Work Orders Analysis
+  data`.
+- Regression evidence: configured jsdom renderer test passes; Manufacturing
+  focused test passes 5 tests / 50 assertions. Full Manufacturing suite passes
+  60 tests / 680 assertions across 19 files.
+- Audit passed with 659 pages, 668 routes, and 1,138 datasources. Manufacturing
+  CSS build, targeted ESLint, and `git diff --check` passed.
+- Fresh authenticated browser retest is still pending; no new screenshot or
+  browser sign-off is claimed here. Aggregate progress was not edited.
+
 ## MANUFACTURING-WORA-001 retest — commit `499edd41` (2026-09-13)
 
 - Retest target: `499edd41` (`fix(manufacturing): render work order analysis
