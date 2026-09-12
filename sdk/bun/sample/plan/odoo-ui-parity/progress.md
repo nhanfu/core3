@@ -1,7 +1,9 @@
 # Odoo UI parity agent progress
 
-Append one completed-task row after each sub-agent finishes. Keep all module
-updates in this file; do not create per-agent progress logs.
+Keep one module-ownership/sign-off row per module. Update it only when the
+long-lived module agent changes state or the shared tester signs off. Track
+intermediate test cases and repairs in `test-cases.md` and `bug-fixes.md`; do
+not create per-agent progress logs.
 
 | Date | Module | Bounded slice | Commit | Tests/audits | Browser captures | Blocker |
 | --- | --- | --- | --- | --- | --- | --- |

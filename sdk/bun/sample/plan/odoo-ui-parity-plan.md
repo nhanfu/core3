@@ -151,12 +151,51 @@ The shared mock-data contract is defined in
   frontend, in-memory DuckDB, and loads the requested module plus `auth` for
   session/login support. File watching is disabled; restart it manually after
   source changes.
-- After completing a task, every sub-agent must update the single shared
-  progress file `odoo-ui-parity/progress.md` with the module, bounded slice,
-  commit, tests/audits, browser-capture result, and any blocker. Do not create
-  per-agent progress logs.
+- A module agent owns its module end-to-end. Spawn one Luna medium-effort
+  sub-agent per module, give it the module goal, and keep that same agent
+  working until the module reaches parity sign-off or has a confirmed source
+  blocker. The agent may make frequent source/test/documentation commits and
+  may complete multiple bounded slices; do not spawn a new agent for every
+  slice, retry, screenshot, or bug.
+- Keep at most five module agents active at once. Queue later modules until an
+  ownership slot is free. This is an execution limit, not permission to split
+  one module across several short-lived agents.
+- Use one shared tester sub-agent for the entire parity effort. The tester is
+  not duplicated per module or per wave. It consumes the module agents'
+  committed work, runs the shared test matrix and authenticated Odoo/Core3
+  browser comparisons, records failures in
+  `odoo-ui-parity/test-cases.md`, records repairs in
+  `odoo-ui-parity/bug-fixes.md`, and re-tests fixes until every module's
+  accepted functionality is green. Module agents must respond to tester
+  findings and keep ownership until the tester signs off or the blocker is
+  explicitly recorded.
+- `odoo-ui-parity/progress.md` is the module-level ownership/sign-off ledger,
+  not a per-slice activity log. A module agent adds or updates one row only
+  when its module goal changes state: active, source-blocked, tester-failed,
+  or parity-signed-off. Intermediate commits and failing attempts belong in
+  `test-cases.md` and `bug-fixes.md`; do not create per-agent progress logs.
+- Every completed module must have corresponding test-case entries and a
+  tester result before its progress row can say parity-signed-off. A source
+  blocker may be recorded only with the exact missing addon/action evidence;
+  it is not a visual parity sign-off.
 - CRUD screens must use `FormView` for create and edit flows. Avoid bespoke or
   ugly CRUD modals. If a modal is required by the Odoo interaction, define the
   modal as a YAML-managed form contract and render it through `FormView`, so
   its fields, validation, permissions, and actions remain declarative and
   maintainable.
+
+## Shared verification and repair ledgers
+
+The module-level plan files describe Odoo behavior and implementation scope.
+The execution ledgers beside this plan track cross-module verification:
+
+- `odoo-ui-parity/test-cases.md` is the canonical test matrix. It records the
+  test case ID, module, Odoo route/action, Core3 route, fixture/state,
+  desktop/mobile capture paths, result, tester, and follow-up bug ID.
+- `odoo-ui-parity/bug-fixes.md` is the canonical repair queue. It records the
+  observed mismatch or failure, evidence, owning module agent, fix commit,
+  regression test, retest result, and remaining blocker.
+
+The shared tester must update both ledgers as part of every verification pass.
+Screenshots remain temporary under `/tmp/core3-odoo-parity/` and must never be
+added to Git.
