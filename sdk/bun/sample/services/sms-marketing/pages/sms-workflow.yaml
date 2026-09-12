@@ -39,7 +39,7 @@ workflow:
     - id: cancel
       from: [Draft, In Queue]
       to: Draft
-      permission: sms_marketing.manage
+      permission: sms_marketing.write
       mutation:
         guards: [{ query: "SELECT id FROM sms_campaigns WHERE id = :id AND state IN ('Draft', 'In Queue')", status: 409, message: Only queued SMS campaigns can be cancelled }]
         steps: [{ query: "UPDATE sms_campaigns SET state = 'Draft', scheduled_at = NULL, row_version = row_version + 1 WHERE id = :id" }]

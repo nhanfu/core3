@@ -1,5 +1,38 @@
 # Odoo 19 UI parity - SMS Marketing
 
+## Bounded action: SMS Marketing / Mailing Lists (wave 2)
+
+This wave implements the next concrete Odoo menu/action entry beyond the SMS
+mailings slice: `SMS Marketing` (`mass_mailing_sms_menu_root`, sequence 120) →
+`Mailing Lists` (`mass_mailing_sms_menu_contacts`, sequence 2) → `Mailing
+Lists` (`mailing_list_menu_sms`, sequence 1, action
+`mailing_list_action_sms`). The source action is `mailing.list`, has context
+`{'mailing_sms': True}`, and orders its views `kanban,list,form`.
+
+Source evidence was read from `/home/nhanjs/projects/odoo/addons/mass_mailing_sms`:
+`views/mailing_sms_menus.xml` defines the menu hierarchy and permissions;
+`views/mailing_list_views.xml` inherits the base mailing-list kanban/form,
+adds SMS contact counts and a `Send SMS` form button, and declares the action;
+the inherited base view in
+`/home/nhanjs/projects/odoo/addons/mass_mailing/views/mailing_list_views.xml`
+defines the list columns (`name`, public, mailings, bounce, opt-out, blacklist,
+recipients), kanban responsive layout, and the empty-state copy.
+
+Core3 maps that contract to `pages/lists.yaml` + `api/lists.yaml`, joined by
+`page.id: sms-lists`, and `pages/list-detail.yaml` + `api/list-detail.yaml`,
+joined by `page.id: sms-list-detail`. The list page preserves Odoo's
+`kanban,list,form` order, responsive kanban cards, search, active/archive
+filter, Odoo list metrics, empty state, and row navigation. The detail page
+preserves the editable list form and `Send SMS` action; the latter routes to
+the existing SMS mailing action with list context. No Odoo frontend code is
+copied.
+
+The migration `20260912153000-004-sms-mailing-lists.yaml` adds deterministic
+SMS audience metrics and two additional realistic lists, with idempotent
+fixtures and fixed values. Reads use `sms_marketing.read`; create, edit, and
+Send SMS use `sms_marketing.write`; duplicate names, missing records, stale
+row versions, empty fixtures, and transport failures have explicit contracts.
+
 ## Bounded action: SMS Marketing mailings
 
 Source: local Odoo 19 addon `/home/nhanjs/projects/odoo/addons/mass_mailing_sms`
@@ -63,12 +96,20 @@ missing details are explicit 404 contracts.
 
 ## Runtime evidence
 
-The authenticated browser pass could not run in this worktree. The
-`playwright-interactive` skill was inspected, but its required `js_repl` tool is
-not exposed in this session. The fallback runtime also could not render Core3:
-the dev frontend failed with `EMFILE: too many open files` while Vite watched
-`vite.config.ts`; the backend then failed in full startup with DuckDB
-`Parser Error: Adding columns with constraints not yet supported`; and the
-built-server attempt failed with `Unable to connect to event mediator`. No
-authenticated Core3 screenshots were captured, and this batch makes no visual
-parity claim. No screenshot is added to Git.
+Focused runtime checks passed after aligning the existing SMS workflow Cancel
+transition with its visible `sms_marketing.write` action permission (the
+catalog previously rejected the mismatch before loading any page). Core3
+started with `bun run dev --db=ddb --memory`, backend 3001, frontend 3002, and
+event mediator 3010. The browser fallback used a temporary Playwright install
+because the prescribed `js_repl` tool is not exposed in this session.
+
+The required authenticated browser pass remains blocked. At 1440x900 and
+390x844, Core3 redirected to `/auth/login`, but `/services/auth/styles/index.css`
+returned `401 Unauthorized`, leaving the login form outlet empty; therefore no
+Core3 login or route assertion was possible. Odoo was reachable at both
+`http://127.0.0.1:8069` and `http://127.0.0.1:8073`, but the attempted
+`admin`/`admin` login remained on `/web/login` and did not authenticate. The
+attempt images are under
+`/tmp/core3-odoo-parity/sms-marketing-batch-20260912/` for all requested
+desktop/mobile dimensions, but they are unauthenticated diagnostics only.
+This batch makes no visual-parity claim and no images are added to Git.

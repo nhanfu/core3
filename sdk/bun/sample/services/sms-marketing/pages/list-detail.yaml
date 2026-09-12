@@ -1,0 +1,15 @@
+title: Mailing List
+page: { id: sms-list-detail, route: /sms-lists/detail, breadcrumb: [Marketing, SMS Marketing, Mailing Lists, Detail], auth: { require: [sms_marketing.read] } }
+components:
+  - type: OdooFormView
+    source: sms_list_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: send_sms_from_list, label: Send SMS, variant: primary, permission: sms_marketing.write }
+    groups:
+      - title: Contact List
+        fields: [{ field: name, label: Mailing List }, { field: description, label: Description }, { field: is_public, label: Public List }]
+      - title: SMS Audience
+        fields: [{ field: contact_count_sms, label: SMS Contacts }, { field: mailing_count, label: Mailings }, { field: bounce_pct, label: Bounce (%) }, { field: opt_out_pct, label: Opt-out (%) }, { field: blacklist_pct, label: Blacklist (%) }]

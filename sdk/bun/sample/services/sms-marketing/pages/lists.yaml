@@ -1,38 +1,44 @@
-title: SMS Opt-in Lists
-page: { id: sms-lists, breadcrumb: [Marketing, SMS Marketing, Opt-in Lists], auth: { require: [sms_marketing.read] } }
-datasources:
-  - id: sms_lists
-    permission: sms_marketing.read
-    query: "SELECT id, name, description, opt_in_count, state FROM sms_lists ORDER BY name"
+title: Mailing Lists
+page: { id: sms-lists, route: /sms-lists, breadcrumb: [Marketing, SMS Marketing, Mailing Lists], auth: { require: [sms_marketing.read] } }
 components:
   - type: ListView
     variant: odoo
     source: sms_lists
     create_action: create_sms_list
-    create_label: New opt-in list
+    create_label: New Mailing List
+    search: { label: Mailing Lists, placeholder: Search Mailing Lists... }
+    filters: [{ field: active, label: Records, options_source: sms_list_states }]
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: ''
+        card:
+          compact: true
+          title: name
+          subtitle: description
+          primary_metric: contact_count
+          primary_metric_label: Total Contacts
+          fields: [{ field: contact_count_sms, label: SMS Contacts }, { field: mailing_count, label: Mailings }, { field: bounce_pct, label: Bounce }]
+          footer: [{ field: state, label: Status }]
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: form, label: Form, icon: form, mobile: false }
     columns:
-      - { field: name, label: Opt-in list, type: PrimaryEntityCell }
-      - { field: description, label: Description }
-      - { field: opt_in_count, label: Opted in, align: right }
+      - { field: name, label: Mailing Lists, type: PrimaryEntityCell }
+      - { field: is_public, label: Public, type: StatusChip }
+      - { field: mailing_count, label: Mailings, align: right }
+      - { field: bounce_pct, label: Bounce (%), align: right }
+      - { field: opt_out_pct, label: Opt-out (%), align: right }
+      - { field: blacklist_pct, label: Blacklist (%), align: right }
+      - { field: contact_count, label: Recipients, align: right }
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_open_action: view_sms_list
+    row_double_click_action: view_sms_list
+    row_actions: menu
+    form_view: { page: apps/services/sms-marketing/pages/list-detail.yaml, side_panel: true }
+    empty_state: { title: Create a Mailing List, description: No need to import mailing lists; send SMS to contacts saved in other Core3 apps. }
 actions:
-  - id: create_sms_list
-    type: server_form
-    permission: sms_marketing.manage
-    title: New SMS opt-in list
-    action: sms_marketing.lists.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [sms_lists]
-    mutation:
-      operation: insert
-      table: sms_lists
-      fields: [name, description, opt_in_count]
-      required: [name]
-      result: { query: "SELECT * FROM sms_lists WHERE id = :id" }
-    fields:
-      - { field: name, label: Opt-in list, type: text, required: true }
-      - { field: description, label: Description, type: text }
-      - { field: opt_in_count, label: Opted in, type: number }

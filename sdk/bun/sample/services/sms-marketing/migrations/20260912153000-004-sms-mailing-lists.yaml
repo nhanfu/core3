@@ -1,0 +1,24 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS description VARCHAR;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS mailing_count INTEGER DEFAULT 0;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS bounce_pct DECIMAL(5, 1) DEFAULT 0;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS opt_out_pct DECIMAL(5, 1) DEFAULT 0;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS blacklist_pct DECIMAL(5, 1) DEFAULT 0;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS contact_count INTEGER DEFAULT 0;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS contact_count_email INTEGER DEFAULT 0;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS contact_count_sms INTEGER DEFAULT 0;
+      ALTER TABLE sms_lists ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
+      UPDATE sms_lists SET row_version = COALESCE(row_version, 1), description = COALESCE(description, 'Customers who consented to SMS updates'), is_public = COALESCE(is_public, false), mailing_count = COALESCE(mailing_count, 4), contact_count = COALESCE(contact_count, opt_in_count), contact_count_sms = COALESCE(contact_count_sms, opt_in_count), active = COALESCE(active, true), state = COALESCE(state, 'Active') WHERE id = 'sms-list-demo-001';
+      INSERT OR IGNORE INTO sms_lists(id, name, description, opt_in_count, row_version, is_public, mailing_count, bounce_pct, opt_out_pct, blacklist_pct, contact_count, contact_count_email, contact_count_sms, active, state) VALUES ('sms-list-demo-002', 'VIP Customers', 'High-value customers opted in to priority alerts', 186, 1, false, 2, 0.5, 1.1, 0.0, 186, 174, 186, true, 'Active'), ('sms-list-demo-003', 'Former Subscribers', 'Archived list retained for reporting', 0, 1, false, 1, 2.0, 100.0, 4.0, 0, 0, 0, false, 'Archived');
+    down: |
+      DELETE FROM sms_lists WHERE id IN ('sms-list-demo-002', 'sms-list-demo-003');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

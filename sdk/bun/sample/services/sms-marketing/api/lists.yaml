@@ -1,0 +1,33 @@
+page: { id: sms-lists }
+datasources:
+  - id: sms_lists
+    permission: sms_marketing.read
+    error_states: { transport_error: { status: 503, code: SMS_LISTS_UNAVAILABLE, message: SMS Mailing Lists are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, description, is_public, mailing_count, bounce_pct, opt_out_pct, blacklist_pct, contact_count, contact_count_email, contact_count_sms, active, state FROM sms_lists WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:active IS NULL OR active = CAST(:active AS BOOLEAN)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY name, id"
+  - id: sms_list_states
+    permission: sms_marketing.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"
+actions:
+  - { id: view_sms_list, type: navigate, permission: sms_marketing.read, navigate_to: /sms-lists/detail, params: { id: '{row.id}' } }
+  - id: create_sms_list
+    type: server_form
+    permission: sms_marketing.write
+    title: New Mailing List
+    action: sms_marketing.lists.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sms_lists]
+    mutation:
+      operation: insert
+      table: sms_lists
+      fields: [name, description, is_public]
+      required: [name]
+      defaults: { is_public: false, active: true, state: Active, row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sms_lists WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: SMS_LIST_EXISTS, message: A mailing list with this name already exists. }
+      result: { query: "SELECT * FROM sms_lists WHERE id = :id" }
+    fields:
+      - { field: name, label: Mailing List, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: is_public, label: Public List, type: checkbox }
+  - { id: send_sms_from_list, type: navigate, permission: sms_marketing.write, navigate_to: /sms-campaigns, params: { list_id: '{row.id}', list_name: '{row.name}' } }

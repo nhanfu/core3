@@ -1,0 +1,34 @@
+page: { id: sms-list-detail }
+datasources:
+  - id: sms_list_detail
+    single: true
+    permission: sms_marketing.read
+    error_states:
+      missing_record: { status: 404, code: SMS_LIST_NOT_FOUND, message: Mailing list not found. }
+      transport_error: { status: 503, code: SMS_LIST_DETAIL_UNAVAILABLE, message: SMS Mailing List details are temporarily unavailable. }
+    query: "SELECT id, row_version, name, description, is_public, mailing_count, bounce_pct, opt_out_pct, blacklist_pct, contact_count, contact_count_email, contact_count_sms, active, state FROM sms_lists WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - { id: send_sms_from_list, type: navigate, permission: sms_marketing.write, navigate_to: /sms-campaigns, params: { list_id: '{state.sms_list_detail.id}', list_name: '{state.sms_list_detail.name}' } }
+  - id: edit_sms_list
+    type: server_form
+    permission: sms_marketing.write
+    title: Edit Mailing List
+    action: sms_marketing.lists.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.sms_list_detail
+    refresh: [sms_list_detail, sms_lists]
+    mutation:
+      operation: update
+      table: sms_lists
+      fields: [name, description, is_public]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM sms_lists WHERE id = :id", status: 404, code: SMS_LIST_NOT_FOUND, message: Mailing list not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sms_lists WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: SMS_LIST_EXISTS, message: A mailing list with this name already exists. }
+      result: { query: "SELECT * FROM sms_lists WHERE id = :id" }
+    fields:
+      - { field: name, label: Mailing List, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: is_public, label: Public List, type: checkbox }
