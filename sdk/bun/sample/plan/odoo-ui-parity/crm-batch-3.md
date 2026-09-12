@@ -19,10 +19,10 @@ demo rows: Monthly (1), Yearly (12), Over 3 years (36), and Over 5 years (60).
 
 | Odoo action/menu | Core3 page/route | API fragment/datasource |
 | --- | --- | --- |
-| `crm.crm_recurring_plan_action` / Recurring Plans | `crm-recurring-plans` / `/recurring-plans` | `api/recurring-plans.yaml` / `crm_recurring_plans` |
+| `crm.crm_recurring_plan_action` / Recurring Plans | `recurring-plans` / `/crm/recurring-plans` | `api/recurring-plans.yaml` / `crm_recurring_plans` |
 
 The page is layout-only and joins its page.id-bound API fragment through
-discovery. The CRM-local migration `20260910170000-019-recurring-plans.yaml`
+discovery. The CRM-local migration `20260911180000-019-recurring-plans.yaml`
 seeds stable rows and timestamps from 2026-01-15. Manager-only CRUD includes
 inline create/edit, bulk archive/restore/delete, duplicate and invalid-month
 validation, stale-row protection, empty/no-result, and transport-error states.
@@ -49,10 +49,11 @@ responsive behavior match.
 | --- | --- | --- | --- |
 | Odoo Recurring Plans | 1440x900 | `/tmp/odoo-crm-recurring-plans-desktop-1440x900-20260912.png` | `379591f5776544dfcc71f1e772158a277b6b97e37e025c8cd9c1acdb847d4b5b` |
 | Odoo Recurring Plans | 390x844 | `/tmp/odoo-crm-recurring-plans-mobile-390x844-20260912.png` | `95f7f084710bb03f6d66c3b27da7fe77ec01650a5ae2f8dbcf961fcd011a03eb` |
-| Core3 Recurring Plans | 1440x900 | `/tmp/core3-crm-recurring-plans-desktop-1440x900-20260912.png` | `300f698b9a3bfa605c7ad40096d82c4598aad151fe76914489e9e97883c82043` |
-| Core3 Recurring Plans | 390x844 | `/tmp/core3-crm-recurring-plans-mobile-390x844-20260912.png` | `a37202091f36344a642530715743bb198e970e4a8125bdc614cd703999bf4031` |
+| Core3 Recurring Plans | 1440x900 | `/tmp/core3-crm-recurring-plans-desktop-1440x900-20260912.png` | `ff810c8eacbd66ad9dcc0b0fae1eac25f7b00f6095906b74dd06b9596c3e2ddc` |
+| Core3 Recurring Plans | 390x844 | `/tmp/core3-crm-recurring-plans-mobile-390x844-20260912.png` | `ae37b5ef4c360565759850f126b487e13fa48409903d06a0d342ec2f99e032a0` |
 
-Focused CRM validation passes 41 tests and 195 assertions across the CRM test
-files; the recurring-plan slice itself passes 3 tests and 26 assertions. The
-isolated worktree audit passes with 399 pages, 405 routes, and 699 datasources;
-`git diff --check` passes. Images remain outside Git.
+Focused CRM validation passes 50 tests and 312 assertions across the CRM test
+files; the recurring-plan slice itself passes 3 tests and 42 assertions. The
+parent audit passes with 545 pages, 552 routes, and 947 datasources; repository
+lint and the frontend build pass, and `git diff --check` passes. Images remain
+outside Git.
