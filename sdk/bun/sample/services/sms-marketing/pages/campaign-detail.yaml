@@ -1,25 +1,29 @@
-title: SMS Campaign
-page: { id: sms-campaign-detail, breadcrumb: [Marketing, SMS Marketing, Detail], auth: { require: [sms_marketing.read] } }
-datasources:
-  - id: sms_campaign_detail
-    single: true
-    permission: sms_marketing.read
-    query: "SELECT id, row_version, name, title, sender_name, list_name, message, recipient_count, delivered_count, failed_count, state, CAST(scheduled_at AS VARCHAR) AS scheduled_at, CAST(sent_at AS VARCHAR) AS sent_at FROM sms_campaigns WHERE id = :id"
+title: SMS Marketing
+page: { id: sms-campaign-detail, route: /sms-campaigns/detail, breadcrumb: [Marketing, SMS Marketing, SMS Marketing], auth: { require: [sms_marketing.read] } }
 components:
   - type: OdooFormView
-    source: sms_campaign_detail
-    title_field: name
+    source: sms_marketing_mailing_detail
+    title_field: subject
     status_field: state
-    statusbar: [{ value: Draft, label: Draft }, { value: Scheduled, label: Scheduled }, { value: Sending, label: Sending }, { value: Sent, label: Sent }, { value: Cancelled, label: Cancelled }]
-    status_colors: { Draft: neutral, Scheduled: amber, Sending: blue, Sent: green, Cancelled: red }
+    statusbar: [{ value: Draft, label: Draft }, { value: In Queue, label: In Queue }, { value: Sending, label: Sending }, { value: Sent, label: Sent }]
+    status_colors: { Draft: blue, 'In Queue': blue, Sending: teal, Sent: green }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: new_sms_campaign, label: New, variant: primary, permission: sms_marketing.write }
+      - { id: send_sms_campaign, label: Send, variant: primary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
+      - { id: schedule_sms_campaign, label: Schedule, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
+      - { id: cancel_sms_campaign, label: Cancel, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'In Queue'" }
     group_columns: 2
     groups:
-      - title: Campaign
-        fields: [{ field: name, label: Campaign }, { field: state, label: Status }, { field: title, label: Title }, { field: sender_name, label: Sender }, { field: list_name, label: Audience }, { field: message, label: Message }]
+      - title: Mailing
+        fields: [{ field: subject, label: Title }, { field: recipient_model_label, label: Recipients }, { field: mailing_list_names, label: Mailing Lists }, { field: responsible, label: Responsible }]
       - title: Delivery
-        fields: [{ field: recipient_count, label: Recipients }, { field: delivered_count, label: Delivered }, { field: failed_count, label: Failed }, { field: scheduled_at, label: Scheduled at }, { field: sent_at, label: Sent at }]
+        fields: [{ field: sent, label: Sent }, { field: expected, label: Expected }, { field: scheduled, label: Scheduled }, { field: failed, label: Failed }, { field: bounced, label: Bounced }, { field: schedule_date, label: Scheduled for }, { field: sent_date, label: Sent Date }]
+    notebook:
+      active: sms_body
+      tabs:
+        - { id: sms_body, label: SMS Content, content_slot: true }
+        - { id: settings, label: Settings, groups: [{ title: Options, fields: [{ field: sms_allow_unsubscribe, label: Allow Unsubscribe }] }, { title: Tracking, fields: [{ field: campaign_name, label: Campaign }] }] }
 actions:
-  - { id: schedule_sms_campaign_detail, type: server, permission: sms_marketing.write, action: sms_marketing.campaigns.schedule, handler: order_transition, workflow: sms_campaigns, operation: schedule, params: { id: '{state.id}' }, refresh: [sms_campaign_detail] }
-  - { id: send_sms_campaign_detail, type: server, permission: sms_marketing.write, action: sms_marketing.campaigns.send, handler: order_transition, workflow: sms_campaigns, operation: send, params: { id: '{state.id}' }, refresh: [sms_campaign_detail] }
-  - { id: complete_sms_campaign_detail, type: server, permission: sms_marketing.manage, action: sms_marketing.campaigns.complete, handler: order_transition, workflow: sms_campaigns, operation: complete, params: { id: '{state.id}' }, refresh: [sms_campaign_detail] }
-  - { id: cancel_sms_campaign_detail, type: server, permission: sms_marketing.manage, action: sms_marketing.campaigns.cancel, handler: order_transition, workflow: sms_campaigns, operation: cancel, params: { id: '{state.id}' }, refresh: [sms_campaign_detail] }
+  - { id: new_sms_campaign, type: navigate, permission: sms_marketing.write, navigate_to: /sms-campaigns }

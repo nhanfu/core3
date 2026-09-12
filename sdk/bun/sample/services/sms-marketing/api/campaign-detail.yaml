@@ -1,0 +1,40 @@
+page: { id: sms-campaign-detail }
+datasources:
+  - id: sms_marketing_mailing_detail
+    single: true
+    permission: sms_marketing.read
+    error_states:
+      missing_record: { status: 404, code: SMS_MAILING_NOT_FOUND, message: Mailing not found. }
+      transport_error: { status: 503, code: SMS_MAILING_DETAIL_UNAVAILABLE, message: SMS Marketing details are temporarily unavailable. }
+    query: "SELECT id, row_version, title AS subject, sender_name AS responsible, list_name AS mailing_list_names, list_name AS recipient_model_label, message AS body_plaintext, recipient_count, recipient_count AS sent, recipient_count AS expected, 0 AS scheduled, failed_count AS failed, failed_count AS bounced, CAST(scheduled_at AS VARCHAR) AS schedule_date, CAST(sent_at AS VARCHAR) AS sent_date, state, title AS campaign_name, true AS sms_allow_unsubscribe FROM sms_campaigns WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_sms_campaign
+    type: server_form
+    permission: sms_marketing.write
+    title: Edit Mailing
+    action: sms_marketing.mailings.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.sms_marketing_mailing_detail
+    refresh: [sms_marketing_mailing_detail, sms_marketing_mailings]
+    mutation:
+      operation: update
+      table: sms_campaigns
+      fields: [title, sender_name, list_name, message, recipient_count, scheduled_at]
+      required: [title, list_name, message, recipient_count]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM sms_campaigns WHERE id = :id", status: 404, code: SMS_MAILING_NOT_FOUND, message: Mailing not found. }
+        - { query: "SELECT 1 AS ok FROM sms_campaigns WHERE id = :id AND state NOT IN ('Sending', 'Sent')", status: 409, code: SMS_MAILING_IMMUTABLE, message: Sending or sent mailings cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:title AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:message AS VARCHAR))) > 0 AND CAST(:recipient_count AS INTEGER) >= 0", status: 422, code: SMS_MAILING_REQUIRED_FIELDS, message: Title, SMS Content, and a non-negative recipient count are required. }
+      result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
+    fields:
+      - { field: title, label: Title, type: text, required: true }
+      - { field: sender_name, label: Sender, type: text }
+      - { field: list_name, label: Mailing Lists, type: text, required: true }
+      - { field: message, label: SMS Content, type: textarea, required: true }
+      - { field: scheduled_at, label: Scheduled for, type: text }
+      - { field: recipient_count, label: Recipients Count, type: number, required: true, min: 0 }
+  - { id: send_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.mailings.send, handler: order_transition, workflow: sms_campaigns, operation: send, refresh: [sms_marketing_mailing_detail, sms_marketing_mailings] }
+  - { id: schedule_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.mailings.schedule, handler: order_transition, workflow: sms_campaigns, operation: schedule, refresh: [sms_marketing_mailing_detail, sms_marketing_mailings] }
+  - { id: cancel_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.mailings.cancel, handler: order_transition, workflow: sms_campaigns, operation: cancel, refresh: [sms_marketing_mailing_detail, sms_marketing_mailings] }

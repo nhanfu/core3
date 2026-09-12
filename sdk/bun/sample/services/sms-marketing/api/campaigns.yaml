@@ -1,0 +1,42 @@
+page: { id: sms-campaigns }
+datasources:
+  - id: sms_mailing_states
+    single: false
+    permission: sms_marketing.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('In Queue','In Queue'), ('Sending','Sending'), ('Sent','Sent')) states(value, label)"
+  - id: sms_marketing_mailings
+    single: false
+    permission: sms_marketing.read
+    error_states: { transport_error: { status: 503, code: SMS_MAILINGS_UNAVAILABLE, message: SMS Marketing is temporarily unavailable. } }
+    query: "SELECT c.id, c.row_version, CAST(c.scheduled_at AS VARCHAR) AS calendar_date, c.title AS subject, 'mailing.contact' AS recipient_model_label, c.sender_name AS responsible, c.recipient_count AS sent, CASE WHEN c.recipient_count = 0 THEN 0 ELSE ROUND(100.0 * c.delivered_count / c.recipient_count, 1) END AS clicked, CASE WHEN c.recipient_count = 0 THEN 0 ELSE ROUND(100.0 * c.failed_count / c.recipient_count, 1) END AS bounced, c.state, c.list_name AS mailing_list_names, c.title AS campaign_name FROM sms_campaigns c WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.title ILIKE '%' || :q || '%') AND (:state IS NULL OR c.state = :state) ORDER BY c.scheduled_at, c.id"
+actions:
+  - { id: view_sms_campaign, type: navigate, permission: sms_marketing.read, navigate_to: /sms-campaigns/detail, params: { id: '{row.id}' } }
+  - { id: new_sms_campaign, type: navigate, permission: sms_marketing.write, navigate_to: /sms-campaigns }
+  - id: create_sms_campaign
+    type: server_form
+    permission: sms_marketing.write
+    title: New Mailing
+    action: sms_marketing.mailings.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sms_marketing_mailings]
+    mutation:
+      operation: insert
+      table: sms_campaigns
+      generated: [id]
+      fields: [name, title, sender_name, list_id, list_name, message, recipient_count, scheduled_at]
+      required: [name, title, list_id, list_name, message, recipient_count]
+      defaults: { state: Draft, row_version: 1, delivered_count: 0, failed_count: 0, created_at: '2026-09-12 09:00:00', updated_at: '2026-09-12 09:00:00' }
+      guards:
+        - { query: "SELECT 1 AS ok FROM sms_lists WHERE id = :list_id AND state = 'Active' AND LENGTH(TRIM(CAST(:message AS VARCHAR))) > 0 AND CAST(:recipient_count AS INTEGER) >= 0", status: 422, code: SMS_MAILING_REQUIRED_FIELDS, message: Title, recipients, SMS Content, and a non-negative recipient count are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sms_campaigns WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: SMS_MAILING_EXISTS, message: A mailing with this name already exists. }
+      result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
+    fields:
+      - { field: name, label: Mailing, type: text, required: true }
+      - { field: title, label: Title, type: text, required: true }
+      - { field: sender_name, label: Sender, type: text }
+      - { field: list_id, label: Mailing Lists, type: text, required: true }
+      - { field: list_name, label: Mailing List, type: text, required: true }
+      - { field: message, label: SMS Content, type: textarea, required: true }
+      - { field: scheduled_at, label: Scheduled for, type: text }
+      - { field: recipient_count, label: Recipients Count, type: number, required: true, min: 0 }

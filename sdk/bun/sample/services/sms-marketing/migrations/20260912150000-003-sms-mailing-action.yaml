@@ -1,0 +1,17 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE sms_campaigns SET scheduled_at = TIMESTAMP '2026-09-12 09:00:00', updated_at = TIMESTAMP '2026-09-12 09:00:00' WHERE id = 'sms-campaign-demo-001';
+      INSERT OR IGNORE INTO sms_campaigns(id, name, title, sender_name, list_id, list_name, message, scheduled_at, sent_at, recipient_count, delivered_count, failed_count, state, row_version, created_at, updated_at)
+      VALUES
+        ('sms-campaign-demo-002', 'SMS/2026/0002', 'September maintenance', 'Core3', 'sms-list-demo-001', 'Opt-in Customers', 'Planned maintenance starts tonight.', TIMESTAMP '2026-09-12 10:00:00', NULL, 840, 0, 0, 'In Queue', 1, TIMESTAMP '2026-09-12 08:00:00', TIMESTAMP '2026-09-12 08:00:00'),
+        ('sms-campaign-demo-003', 'SMS/2026/0003', 'Delivery confirmation', 'Core3', 'sms-list-demo-001', 'Opt-in Customers', 'Your order has been delivered.', TIMESTAMP '2026-09-11 14:00:00', TIMESTAMP '2026-09-11 14:05:00', 120, 116, 4, 'Sent', 1, TIMESTAMP '2026-09-11 12:00:00', TIMESTAMP '2026-09-11 14:05:00'),
+        ('sms-campaign-demo-004', 'SMS/2026/0004', 'New customer welcome', 'Core3', 'sms-list-demo-001', 'Opt-in Customers', 'Welcome to Core3 updates.', TIMESTAMP '2026-09-13 09:00:00', NULL, 24, 0, 0, 'Draft', 1, TIMESTAMP '2026-09-12 08:30:00', TIMESTAMP '2026-09-12 08:30:00');
+    down: |
+      DELETE FROM sms_campaigns WHERE id IN ('sms-campaign-demo-002', 'sms-campaign-demo-003', 'sms-campaign-demo-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
