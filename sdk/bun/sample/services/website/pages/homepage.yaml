@@ -1,0 +1,49 @@
+title: Homepage
+page: { id: website-homepage, route: /website-homepage, breadcrumb: [Website, Site, Homepage], auth: { require: [website.read] } }
+components:
+  - type: Html
+    tag: section
+    class: website-homepage-preview
+    children:
+      - type: Html
+        tag: div
+        class: website-homepage-browser-bar
+        children:
+          - { type: Html, tag: span, class: website-homepage-browser-dot website-homepage-browser-dot--red, text: '' }
+          - { type: Html, tag: span, class: website-homepage-browser-dot website-homepage-browser-dot--yellow, text: '' }
+          - { type: Html, tag: span, class: website-homepage-browser-dot website-homepage-browser-dot--green, text: '' }
+          - { type: Html, tag: span, class: website-homepage-address, text: https://www.core3.example/ }
+      - type: Html
+        tag: div
+        class: website-homepage-site
+        children:
+          - type: Html
+            tag: div
+            class: website-homepage-site-header
+            children:
+              - { type: Html, tag: strong, class: website-homepage-brand, text: Core3 Storefront }
+              - type: Html
+                tag: div
+                class: website-homepage-nav
+                children:
+                  - { type: Html, tag: span, text: Home }
+                  - { type: Html, tag: span, text: Contact us }
+          - type: Html
+            tag: main
+            class: website-homepage-hero
+            children:
+              - { type: Html, tag: small, class: website-homepage-eyebrow, text: Welcome to our website }
+              - { type: Html, tag: strong, class: website-homepage-title, text: Everything your business needs, in one place. }
+              - { type: Html, tag: p, text: A clear, welcoming homepage for the Core3 Storefront. }
+              - { type: Html, tag: span, class: website-homepage-cta, text: Discover more }
+          - type: Html
+            tag: div
+            class: website-homepage-site-footer
+            children:
+              - { type: Html, tag: span, text: Core3 Storefront }
+              - { type: Html, tag: span, text: / }
+              - { type: Html, tag: span, text: Contact us }
+  - type: StatRow
+    source: website_homepage
+    title: Homepage status
+    stats: [{ label: Website, field: website_name }, { label: Page, field: page_name }, { label: Status, field: state }]

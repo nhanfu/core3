@@ -1,0 +1,17 @@
+page:
+  id: website-homepage
+  route: /website-homepage
+datasources:
+  - id: website_homepage
+    permission: website.read
+    single: true
+    meta: { empty_state: { title: Homepage unavailable, description: No published homepage is configured for this website. } }
+    error_states: { transport_error: { status: 503, code: WEBSITE_HOMEPAGE_UNAVAILABLE, message: The homepage preview could not be loaded. Try again. } }
+    query: "SELECT w.name AS website_name, p.name AS page_name, p.url, p.state, p.is_in_menu, p.is_seo_optimized FROM website_websites w JOIN website_pages p ON p.website_id = w.id WHERE p.is_homepage = TRUE ORDER BY w.name, p.id LIMIT 1"
+actions:
+  - id: open_website_homepage
+    type: client
+    permission: website.read
+    script: |
+      // js
+      async () => window.open('/website-homepage', '_blank', 'noopener,noreferrer')

@@ -68,6 +68,25 @@ permission does not match its workflow transition` in
 slice makes no visual-parity claim. Fixing that unrelated service is outside
 this bounded Website change.
 
+### Wave 3 execution evidence — 2026-09-12
+
+The next uncovered source entry after Page Manager is `Website > Site > Homepage`
+(`menu_website_preview`, sequence 10), which invokes the `website_preview` client
+action (`Website Preview`, path `website`, tag `website_preview`). Core3 adds the
+permissioned `website-homepage` page and its `open_website_homepage` client-action
+contract. The established Core3 `/website` route is already the Websites list, so
+`/website-homepage` is a deliberate route alias; the source menu/action identity
+and ordering remain recorded here. The preview uses a safe YAML text tree and a
+deterministic Core3 Storefront homepage state; Menu Editor (sequence 20) remains
+unimplemented.
+
+Focused Website tests pass (6 tests, 27 assertions). The required authenticated
+desktop/mobile captures were attempted but not produced: Playwright/js_repl was
+unavailable, Odoo redirected the unauthenticated `/odoo/website-pages` probe to
+`/web/login`, and Core3's prescribed startup encountered existing port
+contention (`3001`) with the fallback Vite process unavailable (`EMFILE`). No
+visual-parity claim is made and no screenshot files were added.
+
 ## Follow-up
 
 Website preview/Homepage, Menu Editor, Analytics, themes, SEO filters, tracked

@@ -11,6 +11,10 @@ menu:
     icon: globe
     permission: website.read
   groups:
+    - id: site
+      label: Site
+      items:
+        - { path: /website-homepage, label: Homepage, icon: home, permission: website.read }
     - id: content
       label: Content
       items:
