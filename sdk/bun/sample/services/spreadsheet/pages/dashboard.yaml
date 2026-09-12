@@ -1,0 +1,23 @@
+title: Dashboard
+page: { id: spreadsheet-dashboard, route: /spreadsheet/dashboard, breadcrumb: [Dashboards, Dashboard], auth: { require: [spreadsheet.manage] } }
+components:
+  - type: OdooFormView
+    source: spreadsheet_dashboard
+    title_field: name
+    editable: true
+    group_columns: 2
+    groups:
+      - title: Dashboard
+        fields:
+          - { field: name, label: Name }
+          - { field: dashboard_group_name, label: Dashboard Group }
+          - { field: company_name, label: Companies }
+          - { field: group_names, label: Groups }
+          - { field: workbook_status, label: Data }
+    header_actions:
+      - { id: edit_spreadsheet_dashboard, label: Edit, variant: primary }
+      - { id: open_spreadsheet_dashboard, label: Open Dashboard, variant: secondary }
+    action_menu:
+      label: Actions
+      actions:
+        - { id: toggle_spreadsheet_dashboard_publication, label: Toggle publication }

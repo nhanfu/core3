@@ -27,4 +27,6 @@ components:
       - { field: company_name, label: Companies, mobile: false }
       - { field: published, label: Is Published, type: BooleanToggle, sortable: false, mobile: false }
     row_key: id
+    row_open_action: view_spreadsheet_dashboard
+    row_double_click_action: view_spreadsheet_dashboard
     empty_state: { title: No spreadsheets, description: This group has no dashboards yet. }

@@ -1,0 +1,47 @@
+page: { id: spreadsheet-dashboard }
+datasources:
+  - id: spreadsheet_dashboard
+    single: true
+    permission: spreadsheet.manage
+    query: "SELECT d.id, d.row_version, d.name, d.group_id, g.name AS dashboard_group_name, d.company_name, 'Internal Users' AS group_names, CASE d.snapshot_status WHEN 'ready' THEN 'Data available' WHEN 'empty' THEN 'No data' ELSE 'Data unavailable' END AS workbook_status FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE d.id = :id AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))"
+    error_states:
+      transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_UNAVAILABLE, message: Dashboard is temporarily unavailable. }
+actions:
+  - id: edit_spreadsheet_dashboard
+    type: server_form
+    permission: spreadsheet.manage
+    title: Edit Dashboard
+    action: spreadsheet.dashboard.update
+    handler: yaml_mutation
+    operation: update
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+    mutation:
+      operation: update
+      table: spreadsheet_dashboards
+      fields: [name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM spreadsheet_dashboards WHERE id = :id AND row_version = :expected_row_version", status: 409, code: SPREADSHEET_DASHBOARD_STALE, message: This dashboard changed elsewhere. Reload before saving. }
+        - { query: "SELECT id FROM spreadsheet_dashboards WHERE id = :id AND LENGTH(TRIM(:name)) > 0", status: 422, code: SPREADSHEET_DASHBOARD_NAME_REQUIRED, message: Dashboard name is required. }
+      result: { query: "SELECT id, row_version, name FROM spreadsheet_dashboards WHERE id = :id" }
+  - id: open_spreadsheet_dashboard
+    type: navigate
+    permission: spreadsheet.manage
+    navigate_to: /dashboards
+    params: { dashboard_id: '{state.id}' }
+  - id: toggle_spreadsheet_dashboard_publication
+    type: server
+    permission: spreadsheet.dashboard.manage
+    action: spreadsheet.dashboard.toggle-publication
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: spreadsheet_dashboards
+      fields: [published, state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM spreadsheet_dashboards WHERE id = :id AND row_version = :expected_row_version", status: 409, code: SPREADSHEET_DASHBOARD_STALE, message: This dashboard changed elsewhere. Reload before publishing. }
+      values: { published: true, state: Published }

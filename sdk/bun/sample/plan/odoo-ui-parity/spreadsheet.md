@@ -370,3 +370,37 @@ gate.
   horizontal overflow.
 - Run `git diff --check`; confirm `git status` contains only this plan before
   committing. Never add `/tmp` screenshots.
+
+## 2026-09-12 bounded implementation batch: Dashboard record form and workbook entry
+
+This batch implements the next uncovered source action: the nested
+`spreadsheet.dashboard` record form reached from Configuration > Dashboards >
+`spreadsheet.dashboard.group` > Spreadsheets. Odoo source authority is
+`spreadsheet_dashboard/views/spreadsheet_dashboard_views.xml` at revision
+`65975996`: the dashboard model form exposes Name, Dashboard Group, Companies
+(only for `base.group_multi_company`), Groups, and spreadsheet data; the
+record is manager-readable/editable while ordinary internal users are
+read-only. The Core3 nested list now opens `/spreadsheet/dashboard`, whose
+layout-only page joins `api/dashboard.yaml` by `page.id` and renders the same
+field ordering through `OdooFormView`. `Open Dashboard` enters the existing
+read-only `/dashboards?dashboard_id=<id>` client action, preserving the source
+dashboard-to-workbook flow without adding a duplicate menu or route.
+
+The detail API is manager-bound and includes deterministic Sales, Empty
+workbook, and unreadable snapshot states from the existing `2026-01-15`
+fixtures. Manager edits update Name through a required row-version mutation;
+blank names return 422 and stale records return 409. A manager-only
+publication action is declared with the same stale guard. Not-found and 503
+transport fixtures are covered by the focused integration suite. The page
+remains frontend-layout-only and all SQL/action contracts are in the
+page-id-owned API fragment.
+
+Focused `spreadsheet.integration.test.ts` passes 7 tests / 68 assertions;
+workspace ESLint, Spreadsheet CSS build, `bun run audit`, and `git diff
+--check` pass. Authenticated desktop/mobile browser verification and the
+required `/tmp/core3-odoo-parity/spreadsheet-batch-20260912/` screenshots were
+not possible in this worktree: `bun run dev --db=ddb --memory` failed before
+HTTP readiness because Vite hit `EMFILE: too many open files` while watching
+`vite.config.ts`, and the backend separately stopped on the existing DuckDB
+parser error `Adding columns with constraints not yet supported`. No visual
+parity claim is made for this batch and no screenshots were added to Git.

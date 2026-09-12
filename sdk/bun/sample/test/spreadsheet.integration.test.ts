@@ -119,6 +119,7 @@ describe('Spreadsheet dashboard configuration parity', () => {
       'sequence', 'name', 'group_name', 'company_name', 'published',
     ]);
     expect(nested.columns.at(-1)).toMatchObject({ type: 'BooleanToggle', label: 'Is Published', mobile: false });
+    expect(nested.row_open_action).toBe('view_spreadsheet_dashboard');
     const addAction = yaml('api/dashboard-group.yaml').actions.find((action: any) => action.id === 'add_spreadsheet_dashboard');
     expect(addAction).toMatchObject({
       type: 'server_form',
@@ -128,6 +129,32 @@ describe('Spreadsheet dashboard configuration parity', () => {
     });
     expect(addAction.mutation).toMatchObject({ generated: ['id'] });
     expect(addAction.mutation.before_steps[0].query).toContain(':group_id');
+  });
+
+  test('maps the nested dashboard form and workbook entry action', async () => {
+    const page = yaml('pages/dashboard.yaml');
+    const api = yaml('api/dashboard.yaml');
+    expect(page.page).toMatchObject({ id: 'spreadsheet-dashboard', route: '/spreadsheet/dashboard' });
+    expect(page.page.auth.require).toEqual(['spreadsheet.manage']);
+    expect(page.components[0]).toMatchObject({ type: 'OdooFormView', source: 'spreadsheet_dashboard', editable: true });
+    expect(page.components[0].groups[0].fields.map((field: any) => field.label)).toEqual(['Name', 'Dashboard Group', 'Companies', 'Groups', 'Data']);
+    expect(api.datasources[0].permission).toBe('spreadsheet.manage');
+    expect(api.actions).toContainEqual(expect.objectContaining({ id: 'open_spreadsheet_dashboard', navigate_to: '/dashboards', params: { dashboard_id: '{state.id}' } }));
+    const update = api.actions.find((action: any) => action.id === 'edit_spreadsheet_dashboard');
+    expect(update).toMatchObject({ operation: 'update', permission: 'spreadsheet.manage', mutation: { concurrency: { required: true } } });
+    expect(update.mutation.guards).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 409, code: 'SPREADSHEET_DASHBOARD_STALE' }),
+      expect.objectContaining({ status: 422, code: 'SPREADSHEET_DASHBOARD_NAME_REQUIRED' }),
+    ]));
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_dashboard_detail_migrations', ['schema', 'data']);
+    const source = apiSource('dashboard.yaml', 'spreadsheet_dashboard');
+    expect((await repository.querySource(source, { id: 'sdb-sales', fixture_state: null }, 0, 1)).data).toMatchObject({
+      name: 'Sales', dashboard_group_name: 'Sales', workbook_status: 'Data available',
+    });
+    expect((await repository.querySource(source, { id: 'sdb-sales', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
+    await expect(repository.querySource(source, { id: 'sdb-sales', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'SPREADSHEET_DASHBOARD_UNAVAILABLE' });
   });
 
   test('returns fixed group fixtures, search, empty, nested rows, and stable errors', async () => {
