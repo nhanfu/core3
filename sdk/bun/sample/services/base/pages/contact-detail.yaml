@@ -60,6 +60,11 @@ components:
     follower_source: contact_followers
     attachment_source: contact_attachments
     activity_action: schedule_activity
+    attachment_label: Attachments
+    add_attachment_label: Add attachment
+    no_attachments_label: No attachments yet
+    attachment_upload_action: upload_contact_attachment
+    attachment_download_action: download_contact_attachment
     chatter_label: Chatter
     chatter_empty: No messages or activities yet
     message_action_field: action

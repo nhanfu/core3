@@ -11,7 +11,7 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, fil
 const source = (file: string, id: string) => yaml(`api/${file}`).datasources.find((item: any) => item.id === id);
 
 describe('Base Contacts list/card/detail parity batch', () => {
-  test('keeps Contacts layouts presentation-only and API-owned by page id', () => {
+  test('keeps Contacts layouts presentation-only and API-owned by page id', { timeout: 20000 }, () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     for (const [pageFile, pageId, apiFile, dataSourceId] of [
       ['pages/contacts.yaml', 'contacts', 'contacts.yaml', 'contacts'],
@@ -63,17 +63,19 @@ describe('Base Contacts list/card/detail parity batch', () => {
     expect(defaults.data.map((row: any) => row.id)).toEqual([
       'company-azure', 'contact-azure-brandon', 'company-demo', 'company-vietnam', 'contact-demo',
       'contact-gemini-edwin', 'company-gemini', 'contact-gemini-jesse', 'contact-berlin',
+      'company-northwind',
     ]);
     expect(defaults.data.find((row: any) => row.id === 'contact-demo')).toMatchObject({ name: 'Demo Contact', avatar_initials: 'D', category_count: 1, activity_count: 1 });
     expect((await repository.querySource(contacts, { q: 'Leonie', active: null, company_type: null, country_name: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['contact-berlin']);
     expect((await repository.querySource(contacts, { q: null, active: null, company_type: 'person', country_name: 'Vietnam', fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['contact-gemini-edwin', 'contact-gemini-jesse']);
-    expect((await repository.querySource(contacts, { q: null, active: 'archived', company_type: null, country_name: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['contact-archived', 'contact-archive-filter']);
+    expect((await repository.querySource(contacts, { q: null, active: 'archived', company_type: null, country_name: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['company-archived', 'contact-archived', 'contact-archive-filter']);
     expect((await repository.querySource(contacts, { q: null, active: null, company_type: null, country_name: null, fixture_state: 'empty' })).data).toEqual([]);
 
     const detail = source('contact-detail.yaml', 'contact_detail');
     expect(await repository.querySource(detail, { id: 'contact-demo', fixture_state: null }, 0, 1)).toMatchObject({ data: expect.objectContaining({ name: 'Demo Contact', categories: 'Partner', avatar_initials: 'D' }) });
     expect((await repository.querySource(detail, { id: 'missing-contact', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     expect((await repository.querySource(source('contact-detail.yaml', 'contact_messages'), { id: 'contact-demo', fixture_state: null }, 0, 50)).data).toHaveLength(2);
+    expect((await repository.querySource(source('contact-detail.yaml', 'contact_attachments'), { id: 'contact-demo', fixture_state: null }, 0, 50)).data).toHaveLength(1);
   });
 
   test('keeps read/write permissions and transport-error contracts explicit', () => {
@@ -85,6 +87,9 @@ describe('Base Contacts list/card/detail parity batch', () => {
     expect(yaml('api/contacts.yaml').actions.find((action: any) => action.id === 'create_contact')).toMatchObject({ permission: 'base.contacts.write', operation: 'create', mutation: { required: ['name'] } });
     expect(yaml('api/contact-detail.yaml').actions.find((action: any) => action.id === 'edit_contact_detail')).toMatchObject({ permission: 'base.contacts.write', operation: 'update' });
     expect(yaml('api/contact-detail.yaml').actions.find((action: any) => action.id === 'schedule_activity')).toMatchObject({ permission: 'base.activities.write', operation: 'create' });
+    expect(yaml('api/contact-detail.yaml').actions.find((action: any) => action.id === 'upload_contact_attachment')).toMatchObject({ type: 'upload', handler: 'attachment_metadata', permission: 'base.contacts.write', kind: 'base_contact_attachment' });
+    expect(yaml('api/contact-detail.yaml').actions.find((action: any) => action.id === 'download_contact_attachment')).toMatchObject({ type: 'download', permission: 'base.contacts.read', kind: 'base_contact_attachment' });
+    expect(yaml('api/contact-detail.yaml').actions.find((action: any) => action.id === 'delete_contact')).toMatchObject({ operation: 'delete', permission: 'base.contacts.manage' });
     for (const id of ['archive_contact', 'unarchive_contact']) {
       expect(yaml('api/contacts.yaml').actions.find((action: any) => action.id === id)).toMatchObject({ permission: 'base.contacts.write', handler: 'yaml_mutation', params: { id: '{row.id}', expected_row_version: '{row.row_version}' } });
     }

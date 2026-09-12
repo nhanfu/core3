@@ -17,7 +17,7 @@ datasources:
     query: "SELECT id, name, email FROM (VALUES ('contact-follower-admin', 'Administrator', 'admin@tms.local')) followers(id, name, email) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
   - id: contact_attachments
     permission: base.contacts.read
-    query: "SELECT id, file_name, mime_type, size_bytes, uploaded_by, created_at FROM (VALUES ('contact-attachment-001', 'contact-brief.txt', 'text/plain', 128, 'Administrator', TIMESTAMP '2026-09-02 10:00:00')) attachments(id, file_name, mime_type, size_bytes, uploaded_by, created_at) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+    query: "SELECT id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM (SELECT id, file_name, mime_type, size_bytes, uploaded_by, created_at FROM base_contact_attachments WHERE contact_id = :id UNION ALL SELECT 'contact-attachment-001', 'contact-brief.txt', 'text/plain', 128, 'Administrator', TIMESTAMP '2026-09-02 10:00:00' WHERE :id = 'contact-demo') attachments WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
   - id: livechat_partner_capabilities
     single: true
     permission: livechat.read
@@ -25,7 +25,7 @@ datasources:
       unauthorized: { status: 401, code: LIVECHAT_PARTNER_HISTORY_UNAUTHORIZED, message: Sign in to view Live Chat history for this contact. }
       forbidden: { status: 403, code: LIVECHAT_PARTNER_HISTORY_FORBIDDEN, message: You do not have permission to view this contact's Live Chat history. }
       transport_error: { status: 503, code: LIVECHAT_PARTNER_HISTORY_UNAVAILABLE, message: Contact Live Chat history is temporarily unavailable. }
-    query: "SELECT partner_id, livechat_channel_count, livechat_session_count FROM livechat_partner_capabilities WHERE partner_id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+    query: "SELECT id AS partner_id, COALESCE(livechat_channel_count, 0) AS livechat_channel_count, 0 AS livechat_session_count FROM base_contacts WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
 actions:
   - id: edit_contact_detail
     type: server_form
@@ -79,3 +79,36 @@ actions:
     permission: livechat.read
     navigate_to: /livechat-sessions/all
     params: { partner_id: '{state.contact_detail.id}' }
+  - id: delete_contact
+    type: server
+    permission: base.contacts.manage
+    action: base.contacts.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.contact_detail.id}' }
+    mutation:
+      operation: delete
+      table: base_contacts
+      guards:
+        - { query: "SELECT id FROM base_contacts WHERE id = :id", status: 404, code: BASE_CONTACT_NOT_FOUND, message: Contact not found. }
+        - { query: "SELECT 1 AS ok FROM base_contacts WHERE id = :id AND NOT EXISTS (SELECT 1 FROM base_contacts child WHERE child.parent_company_id = base_contacts.id)", status: 409, code: BASE_CONTACT_HAS_CHILDREN, message: Contacts with child contacts cannot be deleted. Archive the contact instead. }
+      result: { query: "SELECT :id AS id, true AS deleted" }
+  - id: upload_contact_attachment
+    type: upload
+    action: base.contacts.attachments.upload
+    handler: attachment_metadata
+    permission: base.contacts.write
+    kind: base_contact_attachment
+    params: { contact_id: '{state.contact_detail.id}' }
+    refresh: [contact_attachments, contact_messages]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - { query: "SELECT id FROM base_contacts WHERE id = :contact_id", status: 404, code: BASE_CONTACT_NOT_FOUND, message: Contact not found. }
+      steps:
+        - { query: "INSERT INTO base_contact_attachments(id, contact_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :contact_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)" }
+      result: { query: "SELECT id, contact_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM base_contact_attachments WHERE id = :attachment_id" }
+  - id: download_contact_attachment
+    type: download
+    permission: base.contacts.read
+    kind: base_contact_attachment

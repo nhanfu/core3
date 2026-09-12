@@ -1,0 +1,14 @@
+version: 0.0.17
+kind: schema
+description: Persist contact attachment metadata for the Contacts chatter
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_contact_attachments (id VARCHAR PRIMARY KEY, contact_id VARCHAR NOT NULL, file_name VARCHAR NOT NULL, mime_type VARCHAR NOT NULL, size_bytes BIGINT NOT NULL DEFAULT 0, storage_key VARCHAR NOT NULL, uploaded_by VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);
+      CREATE INDEX IF NOT EXISTS base_contact_attachments_contact_idx ON base_contact_attachments(contact_id, created_at);
+    down: |
+      DROP TABLE IF EXISTS base_contact_attachments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
