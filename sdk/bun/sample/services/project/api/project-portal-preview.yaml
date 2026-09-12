@@ -1,0 +1,17 @@
+page: { id: project-portal-preview }
+datasources:
+  - id: project_portal_tasks
+    permission: project.read
+    query: "SELECT t.id, t.project_id, t.project_name, t.name, COALESCE(NULLIF(t.assignee, ''), 'Unassigned') AS assignee, COALESCE(NULLIF(t.milestone_name, ''), '') AS milestone_name, t.stage, t.state, CAST(t.due_date AS VARCHAR) AS due_date FROM project_tasks t INNER JOIN projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id AND p.state <> 'Cancelled' AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.assignee ILIKE '%' || :q || '%' OR t.milestone_name ILIKE '%' || :q || '%') ORDER BY CASE t.state WHEN 'Done' THEN 2 WHEN 'Cancelled' THEN 3 ELSE 1 END, t.due_date NULLS LAST, t.id"
+    error_states: { transport_error: { status: 503, code: PROJECT_PORTAL_PREVIEW_UNAVAILABLE, message: The customer portal preview is temporarily unavailable. } }
+actions:
+  - id: back_to_project
+    type: navigate
+    permission: project.read
+    navigate_to: /projects/detail
+    params: { id: '{query.id}' }
+  - id: view_project_portal_task
+    type: navigate
+    permission: project.read
+    navigate_to: /tasks/detail
+    params: { id: '{row.id}' }

@@ -5,6 +5,11 @@ actions:
     permission: project.read
     navigate_to: /projects/detail/dashboard
     params: { id: '{row.id}' }
+  - id: preview_project_portal
+    type: navigate
+    permission: project.read
+    navigate_to: /projects/detail/preview
+    params: { id: '{row.id}' }
 datasources:
   - id: project_detail
     single: true

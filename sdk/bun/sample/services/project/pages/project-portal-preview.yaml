@@ -1,0 +1,34 @@
+title: This is a preview of the customer portal
+page: { id: project-portal-preview, route: /projects/detail/preview, breadcrumb: [Project, Projects, Customer Portal Preview], auth: { require: [project.read] } }
+components:
+  - type: Html
+    tag: section
+    class: project-portal-preview-banner
+    children:
+      - { type: Html, tag: p, text: This is a preview of the customer portal }
+      - { type: Html, tag: p, text: Back to edit mode }
+  - type: ListView
+    variant: odoo
+    source: project_portal_tasks
+    header_actions:
+      - { id: back_to_project, label: Back to edit mode, variant: secondary, permission: project.read }
+    search: { label: Search tasks, placeholder: Search tasks... }
+    group_by: [{ field: stage, label: Stage }]
+    default_group_by: stage
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card: { title: name, subtitle: assignee, fields: [{ field: milestone_name, label: Milestone }, { field: stage, label: Stage }] }
+    row_key: id
+    row_open_action: view_project_portal_task
+    empty_state: { title: No tasks, description: There are no tasks to display for this project. }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: assignee, label: Assignees, mobile: true }
+      - { field: milestone_name, label: Milestone, mobile: true }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: state, label: Status, type: StatusChip }

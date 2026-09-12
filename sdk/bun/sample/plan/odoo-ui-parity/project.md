@@ -533,6 +533,20 @@ step guards, permission boundaries, and error contracts. Authenticated Odoo
 and Core3 desktop/mobile captures remain under `/tmp` and will not be
 committed.
 
+## Customer Portal Preview bounded slice (2026-09-12)
+
+Core3 adds the project record's Portal Preview action at
+`/project/project-portal-preview`, with separate page/API YAML joined by
+`page.id`, deterministic visible task fixtures, read-only `project.read`
+access, record-not-found, empty, and transport states. The focused test
+passes 3 tests and 19 assertions.
+
+Authenticated paired captures are saved under
+`/tmp/core3-odoo-parity/project-next-20260912/` at 1440x900 and 390x844. The
+implementation preserves the project-detail action placement and preview
+content shape; the remaining visual difference is the shared Core3 Fluent
+shell versus Odoo's purple shell. Images remain outside Git.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:

@@ -10,6 +10,8 @@ components:
     status_colors: { Draft: neutral, Active: blue, Completed: green, Cancelled: red }
     stat_buttons:
       - { id: open_project_dashboard, label: Dashboard, value_field: update_summary, permission: project.read }
+    header_actions:
+      - { id: preview_project_portal, label: Preview, variant: secondary, permission: project.read }
     group_columns: 2
     groups:
       - title: Project details
