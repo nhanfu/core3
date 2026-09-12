@@ -235,14 +235,15 @@ marked pass without evidence.
   session/login support. File watching is disabled; restart it manually after
   source changes.
 - There are exactly 38 persistent module owners: one Luna medium-effort
-  sub-agent for every actual module row in the module register. A standard
-  logical wave contains up to 9 module owners and 3 QA owners: one QA owner
-  handles at most 3 paired module owners. The scheduler must never exceed 16
-  worker agents in total, including any bounded shared-tooling or integration
-  workers; the main agent is the 17th coordinator and does not count as a
-  worker. Unused capacity remains idle when fewer modules are ready, and QA
-  ownership must remain explicit rather than silently overloading a QA owner
-  beyond the three-module limit.
+  sub-agent for every actual module row in the module register. Agent counts
+  are supplied with each goal submission, not hard-coded in this plan:
+  `DEV_AGENTS`, `QA_AGENTS`, and `REVIEW_AGENTS`. The scheduler must never
+  exceed 16 worker agents in total, including developers, QA, review/merge,
+  shared-tooling, and integration workers; the main agent is the 17th
+  dispatcher and does not count as a worker. The submitted allocation must
+  satisfy `DEV_AGENTS + QA_AGENTS + REVIEW_AGENTS <= 16`; unused capacity
+  remains idle. QA ownership must remain explicit and must not exceed the
+  per-QA module limit declared in the goal.
   `auth` and `ai` are excluded because they are Core3 infrastructure, not
   registered Odoo modules.
 - A module owner receives the complete module goal, not a short UI slice. It
@@ -261,16 +262,23 @@ marked pass without evidence.
   module changes and never merge, cherry-pick, or edit another module's
   worktree. Cross-module contracts and dependencies are documented for the
   main agent to integrate in dependency order.
-- The main agent is the sole manager and integration gate: it reviews every
-  commit and diff, checks ownership boundaries and warnings, runs targeted and
-  shared tests, audits routes/contracts, verifies authenticated Odoo/Core3
-  browser evidence, and cherry-picks or merges only validated commits into the
-  active branch. A commit is not accepted based on an agent's claim alone.
+- The main agent is dispatch-only. It maintains the wave queue and ownership
+  registry, dispatches bounded tasks, passes exact event payloads to developers,
+  QA, and the review/merge agent, and reports their recorded results. It does
+  not review code, run acceptance tests, resolve conflicts, cherry-pick, merge,
+  or edit implementation and ledger files during normal wave execution.
+- A separate persistent review/merge agent is the integration gate. It reviews
+  every candidate diff and commit, checks ownership boundaries and warnings,
+  runs targeted and shared tests, audits routes/contracts, verifies authenticated
+  Odoo/Core3 browser evidence, resolves integration conflicts, and cherry-picks
+  or merges only validated commits into the active branch. This agent is a
+  bounded worker slot and must be included in the 16-worker limit.
 - Do not create fresh replacement agents. If an owner stops, the main agent
   resumes that same run/worktree or records a blocker and requests explicit
   direction; ownership remains stable for the lifetime of this plan.
-- Use 3 dispatchable QA slots for each standard logical wave, with one QA
-  assignment explicitly mapped to up to 3 module owners. QA does not need a
+- Use the submitted number of dispatchable QA slots for each wave. Each QA
+  assignment is explicitly mapped to one or more module owners, subject to the
+  per-QA module limit declared at goal submission. QA does not need a
   continuously active process or a separate durable product goal, but each QA
   owner has durable module test plans and QA ledgers for its assigned modules.
   QA creates and reviews the detailed test plans before development, then
@@ -282,18 +290,23 @@ marked pass without evidence.
   `odoo-ui-parity/qa/test-plans/<module>.md`. The module owner must respond to
   QA findings and retain ownership until all required cases pass or an exact
   blocker is recorded.
-- A wave has explicit phases: `qa-plan -> dev-batch -> qa-feedback -> repair
-  loop -> merge-gate`. In `qa-plan`, the 3 QA owners create or update the
-  detailed test plans for their mapped modules and the main agent approves
-  their scope. In `dev-batch`, up to 9 paired developers implement against
-  those plans while their paired QA owners remain idle or prepare fixtures.
-  When the dev batch submits candidates, the main agent pauses continuation
-  work and activates the same 3 QA owners against the exact Core3 processes or
-  worktrees spawned by their mapped developers. QA returns a bounded pass,
-  defect list, or blocker per module. The main agent dispatches the same
-  developer owner to repair only after feedback is recorded, then reactivates
-  the same QA owner for retest. A module proceeds to merge only after its
-  required cases pass or its exact blocker is approved.
+- A wave is an overlapping pipeline, not a barrier sequence. Its logical
+  states are `qa-plan -> dev-batch -> qa-feedback -> repair loop -> merge-gate`,
+  but each module advances independently. QA owners begin testing a completed
+  candidate as soon as its developer emits `feature-complete` or
+  `merge-candidate`; developers immediately continue with other ready modules
+  while QA tests the candidate. A QA result is a bounded pass, defect list, or
+  blocker per module. The same developer owner repairs findings while other
+  developers and QA owners continue their assigned work. The review/merge
+  agent reviews and merges each independently validated module without waiting
+  for the rest of the wave. Only dependency conflicts, shared-file ownership,
+  or global infrastructure changes may pause a downstream dispatch.
+- At goal submission, record the wave allocation and pipeline policy in the
+  dispatch record: `DEV_AGENTS`, `QA_AGENTS`, `REVIEW_AGENTS`, `MAX_WORKERS=16`,
+  and `MAX_MODULES_PER_QA`. For example, `QA_AGENTS=5` may test the first five
+  completed modules while `DEV_AGENTS=5` starts five unrelated ready modules;
+  both sets run concurrently as long as the worker limit and dependency rules
+  are respected.
 - QA triggers are `test-plan-ready`, `feature-complete`, `merge-candidate`,
   `post-merge`, `refactor-impact`, and `release`. The module owner records the
   trigger and candidate commit in its module progress file; the main agent
@@ -344,15 +357,16 @@ added to Git.
 
 Every registered module follows this lifecycle with the same owner:
 
-`inventory -> domain/data/migrations -> service/API/permissions -> workflows -> UI -> CRUD/permission tests -> authenticated desktop/mobile comparison -> owner sign-off -> main-agent review -> cherry-pick/merge`.
+`inventory -> domain/data/migrations -> service/API/permissions -> workflows -> UI -> CRUD/permission tests -> authenticated desktop/mobile comparison -> owner sign-off -> review/merge-agent review -> cherry-pick/merge`.
 
-The main agent maintains the ownership registry with module, branch, worktree,
-run id, dependencies, latest commit, test evidence, browser capture directory,
-status, and blocker. A module is complete only when its functionality and UI
-are both accepted; a missing upstream Odoo addon is a blocker with exact
+The main agent maintains the dispatch-facing ownership registry with module,
+branch, worktree, run id, dependencies, latest commit, and current event. The
+review/merge agent records acceptance evidence, merge status, and blockers in
+the module QA/progress ledgers. A module is complete only when its functionality
+and UI are both accepted; a missing upstream Odoo addon is a blocker with exact
 evidence, never an implicit fixture-only success.
 
-## Main-agent merge protocol
+## Review/merge-agent protocol
 
 1. Confirm the owner changed only its assigned module and its own progress file.
 2. Review the diff and commit history for YAML contracts, migrations, runtime
@@ -365,3 +379,17 @@ evidence, never an implicit fixture-only success.
    checkout, and update the shared QA/progress ledgers.
 6. Send concrete repair findings back to the same owner; never open a new agent
    to replace it.
+
+## Main-agent dispatch protocol
+
+1. Select the next ready module or event from the registry and dispatch it to
+   the existing module owner, mapped QA owner, or review/merge agent.
+2. Include the module id, worktree/process, dependency status, trigger,
+   candidate commit, exact test-plan path, and expected output in every task.
+3. Wait for the assigned agent's recorded result; do not duplicate work or
+   perform review, testing, or merge actions itself.
+4. Dispatch repairs to the same module owner after QA or review feedback, then
+   dispatch QA retest and review/merge again as separate bounded events.
+5. Keep each wave within the submitted `DEV_AGENTS`, `QA_AGENTS`, and
+   `REVIEW_AGENTS` allocation and the `MAX_WORKERS=16` global limit, including
+   the review/merge agent.
