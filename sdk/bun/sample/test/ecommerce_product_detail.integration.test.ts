@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
@@ -65,6 +65,44 @@ describe('eCommerce Product detail parity', () => {
     await expect(repository.executeMutation(edit.mutation, { id: product.id, expected_row_version: 2, values: { ...values, is_published: true } }))
       .rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
     database.close();
+  });
+
+  test('preserves product image metadata and bytes across a database restart', async () => {
+    const databasePath = `/tmp/core3-ecommerce-image-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `ecommerce_image_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const uploadRoot = `/tmp/core3-ecommerce-image-restart-uploads-${crypto.randomUUID()}`;
+    const authUser = { sub: 'user-admin', email: 'admin@tms.local', name: 'Admin User', roles: ['admin'], permissions: ['ecommerce.read', 'ecommerce.write'] };
+    const page = yaml('api/product-detail.yaml');
+    const upload = page.actions.find((action: any) => action.id === 'upload_ecommerce_product_image');
+    const createApi = (repository: YamlRepository) => createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return authUser; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
+      sources: new Map(), pageSources: new Map(), pages: new Map([['ecommerce-product-detail', { actions: [upload] }]]),
+      catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
+      permissions: { permissions: ['ecommerce.read', 'ecommerce.write'], tables: {}, endpoints: {} }, uploadRoot, eventStore: {}, topics: {},
+      storage: yaml('storage.yaml'),
+    });
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const form = new FormData();
+    form.set('file', new File([new Uint8Array([80, 78, 71, 1])], 'restart.png', { type: 'image/png' }));
+    form.set('meta', JSON.stringify({ kind: 'ecommerce_product_image', product_id: 'ecommerce-product-mug' }));
+    const uploadedResponse = await createApi(firstRepository)(new Request('http://ecommerce.test/api/upload', { method: 'POST', body: form }), new URL('http://ecommerce.test/api/upload'));
+    expect(uploadedResponse?.status).toBe(200);
+    const uploaded = await uploadedResponse!.json() as any;
+    expect(uploaded).toMatchObject({ product_id: 'ecommerce-product-mug', file_name: 'restart.png', size_bytes: 4 });
+    first.close();
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await secondRepository.query('SELECT file_name, size_bytes FROM ecommerce_product_images WHERE id = ?', [uploaded.id]))[0]).toEqual({ file_name: 'restart.png', size_bytes: 4 });
+    const downloaded = await createApi(secondRepository)(new Request(`http://ecommerce.test/api/ecommerce/product-images/${uploaded.id}`, { headers: { Authorization: 'Bearer test-token' } }), new URL(`http://ecommerce.test/api/ecommerce/product-images/${uploaded.id}`));
+    expect(downloaded?.status).toBe(200);
+    expect([...new Uint8Array(await downloaded!.arrayBuffer())]).toEqual([80, 78, 71, 1]);
+    second.close();
+    rmSync(databasePath, { force: true });
+    rmSync(uploadRoot, { recursive: true, force: true });
   });
 
   test('joins the products list navigation to a page/API-bound detail form', () => {
