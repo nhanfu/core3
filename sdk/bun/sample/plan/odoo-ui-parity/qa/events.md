@@ -20,6 +20,8 @@ Candidate commit: none
 - Focused Events suite: `bun test ./test/events*.integration.test.ts --timeout 20000` — 82 passed, 0 failed, 604 assertions across 29 files.
 - Authenticated Core3 browser create flow: admin opened `/events`, created `QA Browser Event 20260912` with required name/start time, received a successful mutation, and saw the persisted row after refresh; no page errors, failed requests, or HTTP errors.
 - Artifact: `/tmp/core3-odoo-parity/events-create-desktop-20260912.png`.
+- Authenticated Events route matrix: 14 registered menu routes at desktop and mobile — 28/28 passed with no blank/redirect result, page error, failed request, HTTP error, or horizontal overflow; raw result: `/tmp/core3-odoo-parity/events-matrix-20260912.json`.
+- Permission boundary: `fleet@tms.local` reached `/events` but received `Requires permission: events.read` with the expected 403 page-data response; no browser errors.
 - The first browser attempt exposed an empty optional `end_at` timestamp defect; the form contract was corrected by declaring both event date fields as `datetime`, preserving Core3's text-based ISO date/time input convention.
 - Authenticated route matrix and paired Odoo comparison remain pending for full module sign-off.
 
@@ -29,6 +31,8 @@ Candidate commit: none
 | --- | --- | --- | --- |
 | EVENTS-FUNC-001 | Focused functional/contract suite for event lifecycle, reports, CRUD, and guards | 82 tests, 604 assertions; `bun test ./test/events*.integration.test.ts --timeout 20000` | pass |
 | EVENTS-FUNC-002 | Authenticated create and persistence smoke | `/events`; created `QA Browser Event 20260912`; persisted in 1-11/11 list; screenshot artifact recorded | pass |
+| EVENTS-BROWSER-002 | Authenticated registered-menu route matrix | 14 routes × desktop/mobile = 28/28; raw JSON result recorded | pass |
+| EVENTS-PERM-001 | Read permission boundary | Fleet user denied `events.read` with expected 403/permission page | pass |
 | EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current evidence covers focused contracts and one create flow; complete matrix/Odoo comparison not yet run | pending |
 
 ## Bugs and retests
