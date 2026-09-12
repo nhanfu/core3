@@ -4,7 +4,7 @@ Module owner: maintenance module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: 02bb85ec
+Candidate commit: pending commit for request-create validation
 
 ## Current state
 
@@ -36,6 +36,20 @@ request list/detail browser slice. No full parity claim is made here.
   returns `409 STALE_RECORD` rather than `200`.
 - Maintenance focused corpus after the fix: **33 tests, 323 assertions,
   0 failures**.
+
+## 2026-09-13 bounded implementation batch: Maintenance Request create validation
+
+The request-list create action now validates the values that the Odoo form
+allows before inserting a record. It rejects case-insensitive duplicate names,
+unsupported request types and priorities, and malformed scheduled dates with
+stable 409/422 errors. A focused integration test proves a valid request is
+persisted and invalid attempts do not create partial rows.
+
+- Focused create test: **1 test, 8 assertions, 0 failures**.
+- Full Maintenance corpus: **34 tests, 331 assertions, 0 failures** across 14
+  files.
+- Browser, actor/company, restart, and paired Odoo evidence remain outside this
+  bounded implementation slice.
 
 ## Next bounded task
 

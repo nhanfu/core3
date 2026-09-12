@@ -12,7 +12,7 @@ QA state: qa-in-progress
 QA slot: QA-1 (single-module assignment)
 Module owner: maintenance module owner
 Verification trigger: feature-complete
-Candidate commit: 02bb85ec
+Candidate commit: pending commit for request-create validation
 
 ## QA wave execution (2026-09-13)
 
@@ -84,6 +84,7 @@ concurrency finding; all executed focused checks pass otherwise.
 | MAINT-PERM-003 | Ordinary Fleet user mutation boundary | Authenticated direct API on isolated runner; Fleet update returned `403` and admin record remained unchanged | pass for request update boundary; full Maintenance mutation matrix remains pending |
 | MAINT-PERM-006 | Unauthenticated request boundary | Direct request-list API returned `401 UNAUTHORIZED`; authenticated admin browser request list/detail rendered | pass for tested request routes; all-route expiry/browser redirect coverage remains pending |
 | MAINT-QA-001 | Identical stale update replay | Shared mutation runtime fix; Maintenance suite now verifies same payload with old `expected_row_version` returns `409 STALE_RECORD` | pass for the repaired runtime path; broader stale matrix remains pending |
+| MAINT-QA-002 | Request create validation | `maintenance_request_create.integration.test.ts`; valid create persisted, duplicate/type/priority/date failures returned stable errors and created-row count stayed at one | pass in focused and full Maintenance corpus |
 
 ## Bugs and retests
 
@@ -98,4 +99,4 @@ concurrency finding; all executed focused checks pass otherwise.
 - Permissions: pass for tested request read/write denial boundary; full actor/company matrix remains open
 - Persistence/data integrity: pass for changed-value updates and lifecycle; identical stale no-op replay is fixed and covered
 - Desktop/mobile visual parity: authenticated request list/detail smoke pass; paired Odoo comparison pending
-- Tester decision: conditional; `MAINT-QA-001` fixed, while full CRUD, actor, integration, and paired Odoo gates remain open
+- Tester decision: conditional; request-create validation is verified, while full CRUD, actor, integration, browser, and paired Odoo gates remain open

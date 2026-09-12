@@ -19,7 +19,17 @@ actions:
     handler: yaml_mutation
     operation: create
     refresh: [maintenance_requests]
-    mutation: { operation: insert, table: maintenance_requests, fields: [name, equipment_id, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, request_date, scheduled_date, recurrence], required: [name, equipment_id, equipment_name, description], result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" } }
+    mutation:
+      operation: insert
+      table: maintenance_requests
+      fields: [name, equipment_id, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, request_date, scheduled_date, recurrence]
+      required: [name, equipment_id, equipment_name, description]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_requests WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: MAINTENANCE_REQUEST_NAME_EXISTS, message: A maintenance request with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:request_type AS VARCHAR) IN ('Corrective', 'Preventive')", status: 422, code: MAINTENANCE_REQUEST_TYPE_INVALID, message: Choose Corrective or Preventive. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:priority AS VARCHAR) IN ('Low', 'Normal', 'High')", status: 422, code: MAINTENANCE_REQUEST_PRIORITY_INVALID, message: Choose Low, Normal, or High priority. }
+        - { query: "SELECT 1 AS ok WHERE :scheduled_date IS NULL OR LENGTH(TRIM(CAST(:scheduled_date AS VARCHAR))) = 0 OR TRY_CAST(:scheduled_date AS DATE) IS NOT NULL", status: 422, code: MAINTENANCE_REQUEST_SCHEDULED_DATE_INVALID, message: Scheduled date must be a valid ISO date. }
+      result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
     fields:
       - { field: name, label: Request, type: text, required: true }
       - { field: equipment_id, label: Equipment, type: select, options_source: maintenance_equipment_lookup, required: true }
