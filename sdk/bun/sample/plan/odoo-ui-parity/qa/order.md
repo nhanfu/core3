@@ -14,6 +14,17 @@ Verification trigger: merge-candidate
 Candidate commit: ef85c2a7
 QA state: qa-in-progress
 
+## Wave QA fallback (2026-09-13)
+
+- `sales_orders_to_invoice.integration.test.ts`: **3 passed, 18 assertions,
+  0 failures** after candidate `6ee3dfd3`.
+- Bulk invoice creation passed for approved in-scope orders, duplicate and
+  invalid selections, empty selection, branch scope, and no-partial-write
+  guards.
+- Authenticated desktop/mobile action evidence, Accounting-side invoice
+  effects, broader permissions, and paired Odoo gates remain open; this is not
+  module sign-off.
+
 Detailed execution matrix: [`test-plans/order.md`](test-plans/order.md). The
 module-scoped Sales suite passes; the remaining failure is repository-wide
 discovery of datasource contracts outside Order ownership.

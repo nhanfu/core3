@@ -29,6 +29,14 @@ request list/detail browser slice. No full parity claim is made here.
   candidate is conditionally failed and returned to development; QA made no
   product-code changes.
 
+## Retest (2026-09-13)
+
+- Fixed the shared `YamlMutationRuntime` unchanged-update path so it validates
+  `expected_row_version` before returning. A stale identical payload now
+  returns `409 STALE_RECORD` rather than `200`.
+- Maintenance focused corpus after the fix: **33 tests, 323 assertions,
+  0 failures**.
+
 ## Next bounded task
 
 Resolve `MAINT-QA-001`, then rerun the focused corpus and authenticated browser

@@ -61,6 +61,20 @@ describe('Maintenance Request edit parity', () => {
       expected_row_version: 1,
       values: { name: 'Stale edit', description: 'Must not overwrite the newer record.' },
     })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await expect(repository.executeMutation(edit.mutation, {
+      id: 'maintenance-demo-001',
+      expected_row_version: 1,
+      values: {
+        name: 'Replace compressor belt',
+        request_type: 'Preventive',
+        description: 'Inspect and replace the compressor belt.',
+        instructions: 'Lock out the unit before service.',
+        priority: 'High',
+        assigned_to: 'Maintenance User',
+        scheduled_date: '2026-02-20',
+        recurrence: '30 days',
+      },
+    })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
 
     const detail = await repository.querySource(api.datasources[0], { id: 'maintenance-demo-001' }, 0, 1);
     expect(detail.data).toMatchObject({ name: 'Replace compressor belt', description: 'Inspect and replace the compressor belt.', row_version: 2 });

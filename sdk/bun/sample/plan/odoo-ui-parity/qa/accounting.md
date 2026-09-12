@@ -14,6 +14,16 @@ Verification trigger: merge-candidate
 Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 QA state: qa-in-progress
 
+## Wave QA fallback (2026-09-13)
+
+- QA-1 capacity was unavailable (`agent thread limit reached`), so the main
+  runner executed the single-module candidate check locally.
+- `accounting_journal_items_views.integration.test.ts`: **2 passed, 20
+  assertions, 0 failures**; Journal Items view contract and deterministic
+  projections passed.
+- Browser download, broader actor/persistence, and paired Odoo gates remain
+  open; this is not module sign-off.
+
 ## Current regression evidence (2026-09-12)
 
 - Explicit-timeout Accounting suite: `bun test ./test/accounting_*.integration.test.ts --timeout 20000` — 90 passed, 1,010 assertions, 0 failed across 34 files.

@@ -9,6 +9,14 @@
 - Boundary: this is route/render smoke evidence only; it does not sign off the complete menu tree, CRUD, permissions, workflows, persistence, or paired Odoo visual parity.
 
 QA state: qa-in-progress
+
+## Wave QA fallback (2026-09-13)
+
+- `point_of_sale.integration.test.ts`: **13 passed, 69 assertions, 0
+  failures** after the POS Orders route repair in candidate `6f86243c`.
+- The route contract and existing POS session/payment/preset checks pass.
+- Browser interaction, actor/restart matrix, and paired Odoo comparison
+  remain open; this is not module sign-off.
 QA slot: dispatchable point-of-sale assignment (pending wave dispatch)
 Module owner: point-of-sale module owner
 Verification trigger: feature-complete

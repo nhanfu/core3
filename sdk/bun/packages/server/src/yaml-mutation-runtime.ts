@@ -179,9 +179,6 @@ export class YamlMutationRuntime {
       const current = currentRows[0];
       if (!current) throw { status: 404, message: 'Record not found' };
       const changedFields = requested.filter((field) => !sameMutationValue(current[field], values[field]));
-      if (!changedFields.length && !definition.timestamps) return;
-      const sets = changedFields.map((field) => `${field} = ?`);
-      if (definition.timestamps) sets.push('updated_at = CURRENT_TIMESTAMP');
       const concurrency = definition.concurrency === false ? undefined : (definition.concurrency || {});
       const versionField = this.identifier(concurrency?.field || 'row_version', 'Concurrency field');
       const versionInput = String(concurrency?.input || 'expected_row_version');
@@ -189,6 +186,12 @@ export class YamlMutationRuntime {
       if (concurrency && (concurrency.required !== false) && (expectedVersion === undefined || expectedVersion === null || expectedVersion === '')) {
         throw { status: 400, message: `${versionInput} is required` };
       }
+      if (!changedFields.length && !definition.timestamps) {
+        if (concurrency && String(current[versionField]) !== String(expectedVersion)) await this.throwStaleOrMissing(connection, table, id, versionField, keyField);
+        return;
+      }
+      const sets = changedFields.map((field) => `${field} = ?`);
+      if (definition.timestamps) sets.push('updated_at = CURRENT_TIMESTAMP');
       if (concurrency) sets.push(`${versionField} = ${versionField} + 1`);
       const where = concurrency ? ` WHERE ${keyField} = ? AND ${versionField} = ?` : ` WHERE ${keyField} = ?`;
       const result = await runOnConnection(connection, `UPDATE ${table} SET ${sets.join(', ')}${where}`, concurrency

@@ -80,22 +80,22 @@ concurrency finding; all executed focused checks pass otherwise.
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | MAINTENANCE-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Detailed plan approved; focused contracts, route matrix, and request cancel persistence are recorded, but full CRUD and paired Odoo gates remain open | pending |
-| MAINT-FUNC-003 | Request detail edit contract | `maintenance_request_edit.integration.test.ts`; authenticated admin detail render; direct update persistence and stale-write checks | API persistence and changed-value stale guard pass; browser edit control and identical stale replay remain open |
+| MAINT-FUNC-003 | Request detail edit contract | `maintenance_request_edit.integration.test.ts`; authenticated admin detail render; direct update persistence and stale-write checks | API persistence and changed-value stale guard pass; browser edit control remains open |
 | MAINT-PERM-003 | Ordinary Fleet user mutation boundary | Authenticated direct API on isolated runner; Fleet update returned `403` and admin record remained unchanged | pass for request update boundary; full Maintenance mutation matrix remains pending |
 | MAINT-PERM-006 | Unauthenticated request boundary | Direct request-list API returned `401 UNAUTHORIZED`; authenticated admin browser request list/detail rendered | pass for tested request routes; all-route expiry/browser redirect coverage remains pending |
-| MAINT-QA-001 | Identical stale update replay | Isolated HTTP `/api/mutate`: first update advanced row version; same payload with old `expected_row_version` returned `200` | **open** — no-op update bypasses concurrency guard; expected `409 STALE_RECORD` |
+| MAINT-QA-001 | Identical stale update replay | Shared mutation runtime fix; Maintenance suite now verifies same payload with old `expected_row_version` returns `409 STALE_RECORD` | pass for the repaired runtime path; broader stale matrix remains pending |
 
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | MAINTENANCE-001 | Focused contracts and authenticated route/workflow smoke | 32 tests/316 assertions; 32/32 route checks; Cancel → Reopen action state persisted after reload | PASS |
-| MAINT-QA-001 | Identical stale update replay bypasses row-version check | None; QA-only finding against `02bb85ec`; changed stale replay still returns `409 STALE_RECORD` | Reproduced on isolated runner `:4335`; same stale payload returned HTTP 200 | OPEN |
+| MAINT-QA-001 | Identical stale update replay bypasses row-version check | `YamlMutationRuntime` now checks concurrency before returning from an unchanged update | Maintenance retest returned `409 STALE_RECORD` for the same stale payload | FIXED |
 
 ## Sign-off
 
 - Functional: pass for executed repository contracts and request edit/lifecycle checks; browser edit control remains unverified
 - Permissions: pass for tested request read/write denial boundary; full actor/company matrix remains open
-- Persistence/data integrity: pass for changed-value updates and lifecycle; identical stale no-op replay is open
+- Persistence/data integrity: pass for changed-value updates and lifecycle; identical stale no-op replay is fixed and covered
 - Desktop/mobile visual parity: authenticated request list/detail smoke pass; paired Odoo comparison pending
-- Tester decision: **conditional fail / return to developer** for `MAINT-QA-001`; full CRUD, actor, integration, and paired Odoo gates remain open
+- Tester decision: conditional; `MAINT-QA-001` fixed, while full CRUD, actor, integration, and paired Odoo gates remain open

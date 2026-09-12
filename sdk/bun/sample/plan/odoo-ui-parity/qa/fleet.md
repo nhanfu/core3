@@ -9,6 +9,14 @@
 - Boundary: this is route/render smoke evidence only; it does not sign off the complete menu tree, CRUD, permissions, workflows, persistence, or paired Odoo visual parity.
 
 QA state: qa-in-progress
+
+## Wave QA fallback (2026-09-13)
+
+- `fleet_vehicle_create.integration.test.ts`: **2 passed, 10 assertions,
+  0 failures** after candidate `160a7de5`.
+- Valid vehicle persistence/defaults and required/duplicate validation passed.
+- Browser create/edit, actor/company, restart, integration, and paired Odoo
+  gates remain open; this is not module sign-off.
 QA slot: dispatchable fleet assignment (pending wave dispatch)
 Module owner: fleet module owner
 Verification trigger: feature-complete
