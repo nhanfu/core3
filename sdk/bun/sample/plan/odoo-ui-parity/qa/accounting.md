@@ -11,8 +11,8 @@
 QA slot: dispatchable accounting slot
 Module owner: accounting
 Verification trigger: merge-candidate
-Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
-QA state: qa-in-progress
+Candidate commit: `fd00ae4d84e35cd87127a104701b8c30b44e7bfb`
+QA state: qa-verified-partial
 
 ## Wave QA fallback (2026-09-13)
 
@@ -24,9 +24,41 @@ QA state: qa-in-progress
 - Browser download, broader actor/persistence, and paired Odoo gates remain
   open; this is not module sign-off.
 
+## QA-1 candidate verification (2026-09-13)
+
+- Candidate under test: `fd00ae4d84e35cd87127a104701b8c30b44e7bfb`
+  (`feat(accounting): add journal items export contract`), already integrated
+  into the QA checkout.
+- Focused export contract: `bun test
+  ./test/accounting_journal_items_views.integration.test.ts --timeout 20000` —
+  **2 passed, 20 assertions, 0 failures**.
+- Complete Accounting contract corpus: `bun test
+  ./test/accounting_*.integration.test.ts --timeout 20000` — **90 passed,
+  1,013 assertions, 0 failures across 34 files**.
+- Authenticated browser runner: `bun run agent:module -- accounting
+  --port=4331`, using the local admin demo account. At 1440x900 and 390x844,
+  the Export action was present in the list utility menu; each click produced
+  `accounting-journal-items-export.xlsx`, 4,453 bytes. `file` identified the
+  artifact as Microsoft Excel 2007+, and `unzip -t` reported no errors.
+- Browser persistence: the admin Journal Items list remained `1-4 / 4` and
+  retained `INV/2026/0001` before and after reload. The export is read-only and
+  did not change the four seeded rows.
+- Permission boundary: `fleet@tms.local` received `Requires permission:
+  accounting.read` on `/accounting/journal-items`; no Journal Items were
+  rendered.
+- Browser health: both authenticated admin viewports had zero console/request
+  errors and no horizontal overflow. Captures are outside Git at
+  `/tmp/accounting-journal-items-desktop.png` and
+  `/tmp/accounting-journal-items-mobile.png`; the downloaded artifact is at
+  `/tmp/accounting-journal-items-export-qa.xlsx`.
+- Finding: no defect found in the candidate export contract. Broader
+  Accounting browser CRUD, actor matrix, attachments/print/import actions,
+  and paired Odoo comparison remain open; this candidate is not full-module
+  sign-off.
+
 ## Current regression evidence (2026-09-12)
 
-- Explicit-timeout Accounting suite: `bun test ./test/accounting_*.integration.test.ts --timeout 20000` — 90 passed, 1,010 assertions, 0 failed across 34 files.
+- Explicit-timeout Accounting suite: `bun test ./test/accounting_*.integration.test.ts --timeout 20000` — 90 passed, 1,013 assertions, 0 failed across 34 files.
 - The prior combined-run timeout is closed as a harness-timeout issue; the
   explicit timeout completes the full current Accounting contract set.
 - Existing authenticated route evidence remains 80/80 desktop and 80/80
@@ -47,7 +79,7 @@ QA state: qa-in-progress
 | ACC-FUNC-006 | Bank statements, cash/credit registers, reconciliation | `/accounting/bank-statements`, `/accounting/cash-registers`, `/accounting/credit-statements`, `/accounting/reconciliation`, `/accounting/reconciliation-models` | list/pivot/graph, empty/error/forbidden, guarded payment/reconciliation mutation | focused accounting statement/reconciliation suites | pass in focused coverage; browser retest pending |
 | ACC-FUNC-007 | Reporting and analytic actions | `/accounting/analysis`, `/accounting/bills-analysis`, `/accounting/invoice-analysis`, `/accounting/analytic-items`, `/accounting/partner-ledger`, `/accounting/sales`, `/accounting/purchases` | deterministic report queries, filters, empty/error states, declared pivot fields | focused report/ledger suites | pass in focused coverage; browser retest pending |
 | ACC-FUNC-008 | Closing/configuration surfaces | `/accounting/closing`, `/accounting/secure-entries`, `/accounting/settings`, remaining configuration routes | permissioned settings, secure transition, catalog reads and forms | focused secure/configuration suites | pass in focused coverage; browser retest pending |
-| ACC-FUNC-009-JI | Journal Items export | `/accounting/journal-items` | Export action is page/API-bound, read-permissioned, and serializes the real datasource projection; shared renderer downloads XLSX | `accounting_journal_items_views.integration.test.ts` | pass at contract level; authenticated download evidence pending |
+| ACC-FUNC-009-JI | Journal Items export | `/accounting/journal-items` | Export action is page/API-bound, read-permissioned, and serializes the real datasource projection; shared renderer downloads XLSX | `accounting_journal_items_views.integration.test.ts`; QA-1 authenticated desktop/mobile download | pass; broader Accounting export/attachment/print actions remain open |
 | ACC-BROWSER-001 | Authenticated Odoo/Core3 reference | `/accounting/journals` | desktop authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-desktop.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-desktop.png`; shell retest: `/tmp/core3-odoo-parity/accounting-paired/core3-desktop-shell-fixed.png` | functional pass; shell/auth menu mismatch fixed, toolbar comparison remains open |
 | ACC-BROWSER-002 | Authenticated Odoo/Core3 reference | `/accounting/journals` | mobile authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-mobile.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-mobile.png`; shell retest: `/tmp/core3-odoo-parity/accounting-paired/core3-mobile-shell-fixed.png` | functional pass; shell/auth menu mismatch fixed, toolbar comparison remains open |
 | ACC-RUNTIME-001 | Core3 module runner | accounting process | startup and zero unexpected API failures | `bun run agent:module -- accounting --port=4011`; `/api/modules` returned 200 | fixed/retested |

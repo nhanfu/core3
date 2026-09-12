@@ -3,9 +3,9 @@
 Module owner: accounting
 Wave: first execution wave
 QA assignment: dispatchable accounting QA slot (bounded event tasks)
-Status: ready-for-test (runtime retested; full browser matrix in progress)
+Status: qa-verified-partial (Journal Items export candidate)
 Verification trigger: merge-candidate
-Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
+Candidate commit: `fd00ae4d84e35cd87127a104701b8c30b44e7bfb`
 
 ## Scope inventory
 
@@ -28,6 +28,7 @@ Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 | Post-merge route matrix | All 80 Accounting routes at 1440x900 and 390x844 | 160 authenticated route checks; 80/80 desktop and 80/80 mobile passed after a 1.2s render settle; no blank/redirect, page/request error, or horizontal overflow | pass; full interaction and paired visual states remain open |
 | Authenticated CRUD boundary | Journals FormView and unauthorized Accounting read | Admin create/reload persisted a journal; Fleet Manager received `Requires permission: accounting.read` | pass; broader workflow and permission matrix remains open |
 | Journal Items export contract | `accounting_journal_items_views.integration.test.ts` | Page/API `page.id` binding, `accounting.read` action declaration, deterministic datasource projection, and RFC 4180 CSV serialization pass; shared renderer provides XLSX download | pass at contract level; authenticated download evidence and other Accounting export/attachment/print actions remain open |
+| QA-1 candidate browser verification | `bun run agent:module -- accounting --port=4331`; authenticated Playwright | Admin desktop/mobile both exposed Export in the list utility menu and downloaded a valid 4,453-byte XLSX; Journal Items remained `1-4 / 4` with `INV/2026/0001` after reload; Fleet user received `Requires permission: accounting.read`; zero browser/request errors and no overflow | pass for candidate slice; broader Accounting sign-off remains open |
 
 ## Remaining gates
 
@@ -36,6 +37,9 @@ Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 - Run authenticated Core3 desktop (`1440x900`) and mobile (`390x844`) checks against the committed candidate, including CRUD, persistence, workflow, and permission denial.
 - Compare the same states against the authenticated Odoo reference and keep captures under `/tmp/core3-odoo-parity/` only.
 - Resolve the combined-suite timeout policy (serial execution or a documented timeout) before module sign-off.
+- Complete the remaining Accounting browser CRUD/actor/workflow gates, including
+  paired Odoo comparison and non-Journal-Items import/attachment/print actions,
+  before full module sign-off.
 
 ## Ownership boundary
 
