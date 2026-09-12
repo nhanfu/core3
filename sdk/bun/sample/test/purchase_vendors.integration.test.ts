@@ -35,6 +35,7 @@ describe('Purchase Vendors parity', () => {
     expect(detail.components[0]).toMatchObject({ source: 'purchase_vendor_detail', status_field: 'state', editable: true });
     expect(detail.components[0].stat_buttons).toContainEqual(expect.objectContaining({ id: 'vendor_purchase_orders', value_field: 'purchase_order_count' }));
     expect(yaml('manifest.yaml').menu.groups[0].items).toContainEqual(expect.objectContaining({ path: '/purchase/vendors', label: 'Vendors', permission: 'purchase.read' }));
+    expect(yaml('pages/vendors.yaml').components[0].create_label).toBe('New');
   });
 
   test('serves deterministic active and archived supplier fixtures with search, empty, and transport states', async () => {

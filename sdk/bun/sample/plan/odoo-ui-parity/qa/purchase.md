@@ -55,7 +55,7 @@ Candidate commit: none
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | PURCHASE-001 | Authenticated route and acknowledge smoke | 46/46 route checks; PO acknowledge returned 200 and persisted after reload | PASS |
-| PURCHASE-VIS-001 | Vendors parity differs: Odoo has 2 rows and `New`; Core3 has 5 rows and `New vendor`, with different visible columns/activity badges | — | Fresh paired captures at both viewports recorded; data/label/layout adjudication still required | open |
+| PURCHASE-VIS-001 | Vendors parity differs: Odoo has 2 rows and Core3 has 5 rows, with different visible columns/activity badges | — | Action label corrected to `New`; fresh paired captures still show the documented fixture-cardinality and remaining field/activity differences | open |
 
 ## Sign-off
 

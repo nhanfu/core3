@@ -6,7 +6,7 @@ components:
     source: purchase_vendors
     responsive_card: true
     create_action: create_purchase_vendor
-    create_label: New vendor
+    create_label: New
     search: { label: Search vendors, placeholder: Search vendors... }
     filters: [{ field: state, label: Status, options_source: purchase_vendor_states }]
     view_navigation: tabs
