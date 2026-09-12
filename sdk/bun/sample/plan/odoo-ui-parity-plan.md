@@ -1,14 +1,18 @@
-# Odoo 19 UI parity — module register
+# Odoo 19 parity — module register and full functionality
 
 ## Scope
 
-Clone the Odoo 19 Community UI in Core3, module by module and menu by menu.
-This is UI-only work: pages use deterministic YAML fixture data until backend work
-is explicitly planned. A module may not enter implementation until its linked
-sub-plan is approved and marked `ready`.
+Clone the Odoo 19 Community experience in Core3, module by module and menu by
+menu, including the backend behavior behind every visible feature. UI parity is
+not sufficient: each module must provide real persistence, service/API
+contracts, CRUD, state transitions, permissions, workflows, and relevant
+notifications, attachments, imports/exports, reports, and integrations.
+Deterministic YAML seed data remains required for repeatable tests, but it is not
+a substitute for production functionality.
 
 Website Builder, Forum, Blog, eCommerce, and other composition-oriented modules
-remain YAML-driven are on-hold for an appropreate architecture.
+must use the approved Core3 declarative/runtime architecture; they are not
+exempt from functional parity or allowed to remain fixture-only.
 frontend code is not copied.
 
 ## Binding fidelity contract
@@ -45,15 +49,14 @@ but its menu structure or visual/UX details remain approximate.
 
 ## Live Odoo reference environment
 
-- URL: `http://localhost:8073`
-- Database: `core3_codex_demo_20260912`
+- URL: `http://localhost:8069`
+- Database: `core3_reference`
 - Login email: `codex@core3.local`
-- Login password: `Core3CodexAdmin20260912!`
-- Master password: `Core3CodexMaster20260912!`
-- Odoo container: `odoo-core3-codex-20260912`
-- PostgreSQL container: `odoo-core3-codex-20260912-db`
-- Start command: `docker start odoo-core3-codex-20260912-db odoo-core3-codex-20260912`
-- Stop command: `docker stop odoo-core3-codex-20260912 odoo-core3-codex-20260912-db`
+- Login password: use the local QA secret; never print or commit it
+- Odoo container: `odoo-core3-reference`
+- PostgreSQL container: inspect the container configuration before starting
+- Start command: `docker start odoo-core3-reference`
+- Stop command: `docker stop odoo-core3-reference`
 
 The former `odoo-core3-user` Odoo container was stopped and retained as
 `odoo-core3-user-stopped`; its PostgreSQL container and volumes are preserved
@@ -63,7 +66,7 @@ official demo data enabled during database creation. New parity captures must
 use the active URL and credentials above. Keep credentials out of source code
 outside this local parity plan.
 
-The `core3_codex_demo_20260912` database has demo-enabled Odoo modules
+The `core3_reference` database has demo-enabled Odoo modules
 installed for CRM, Sales, Purchase, Accounting, Inventory, Point of Sale,
 Events, Employees, Recruitment, Expenses, Time Off, Timesheets, Project,
 Maintenance, Fleet, Manufacturing, Email Marketing, Live Chat, Calendar, and
@@ -127,10 +130,11 @@ this register.
    data.
 3. Enumerate every visible menu, action, and view state.
 4. Identify Odoo screenshots/routes at desktop and mobile viewports.
-5. Declare Core3 YAML mock data in the screen's backend datasource definition for
-   every list, form, kanban, calendar, chart, report, pivot, dashboard, and empty
-   state shown by the module. Page-layout YAML remains data-source-only, so its
-   backend mock provider can later be replaced by a query without changing UI YAML.
+5. Declare deterministic Core3 YAML seed data and the real backend datasource
+   contract for every list, form, kanban, calendar, chart, report, pivot,
+   dashboard, and empty state shown by the module. Tests may use the seed
+   provider, but accepted runtime behavior must use real service queries and
+   mutations without changing the page-layout YAML contract.
 6. Specify the exact screen layout, colors, spacing, tabs, sections, components,
    and visible text to be matched, including the ListView tab-navigation rule.
 7. Identify shared UI primitives required by the module; do not implement new
@@ -151,15 +155,28 @@ The shared mock-data contract is defined in
   frontend, in-memory DuckDB, and loads the requested module plus `auth` for
   session/login support. File watching is disabled; restart it manually after
   source changes.
-- A module agent owns its module end-to-end. Spawn one Luna medium-effort
-  sub-agent per module, give it the module goal, and keep that same agent
-  working until the module reaches parity sign-off or has a confirmed source
-  blocker. The agent may make frequent source/test/documentation commits and
-  may complete multiple bounded slices; do not spawn a new agent for every
-  slice, retry, screenshot, or bug.
-- Keep at most five module agents active at once. Queue later modules until an
-  ownership slot is free. This is an execution limit, not permission to split
-  one module across several short-lived agents.
+- There are exactly 39 persistent module owners: one Luna medium-effort
+  sub-agent for every row in the module register. All 39 are launched in
+  parallel, each in its own worktree and branch. `auth` and `ai` are excluded
+  because they are Core3 infrastructure, not registered Odoo modules.
+- A module owner receives the complete module goal, not a short UI slice. It
+  remains responsible for menu/action inventory, domain model and migrations,
+  APIs/services, permissions, workflows, UI, seeded data, CRUD, regression
+  tests, authenticated browser proof, and visual comparison until parity is
+  signed off or an exact source blocker is recorded. Do not respawn or rotate
+  owners for slices, retries, screenshots, or bug fixes.
+- Worktrees are isolated from the active checkout. Owners commit only their
+  module changes and never merge, cherry-pick, or edit another module's
+  worktree. Cross-module contracts and dependencies are documented for the
+  main agent to integrate in dependency order.
+- The main agent is the sole manager and integration gate: it reviews every
+  commit and diff, checks ownership boundaries and warnings, runs targeted and
+  shared tests, audits routes/contracts, verifies authenticated Odoo/Core3
+  browser evidence, and cherry-picks or merges only validated commits into the
+  active branch. A commit is not accepted based on an agent's claim alone.
+- Do not create fresh replacement agents. If an owner stops, the main agent
+  resumes that same run/worktree or records a blocker and requests explicit
+  direction; ownership remains stable for the lifetime of this plan.
 - Use one shared tester sub-agent for the entire parity effort. The tester is
   not duplicated per module or per wave. It consumes the module agents'
   committed work, runs the shared test matrix and authenticated Odoo/Core3
@@ -202,3 +219,29 @@ Module agents may update only their own progress file, never another module's
 file or the aggregate `progress.md`.
 Screenshots remain temporary under `/tmp/core3-odoo-parity/` and must never be
 added to Git.
+
+## Persistent ownership and completion lifecycle
+
+Every registered module follows this lifecycle with the same owner:
+
+`inventory -> domain/data/migrations -> service/API/permissions -> workflows -> UI -> CRUD/permission tests -> authenticated desktop/mobile comparison -> owner sign-off -> main-agent review -> cherry-pick/merge`.
+
+The main agent maintains the ownership registry with module, branch, worktree,
+run id, dependencies, latest commit, test evidence, browser capture directory,
+status, and blocker. A module is complete only when its functionality and UI
+are both accepted; a missing upstream Odoo addon is a blocker with exact
+evidence, never an implicit fixture-only success.
+
+## Main-agent merge protocol
+
+1. Confirm the owner changed only its assigned module and its own progress file.
+2. Review the diff and commit history for YAML contracts, migrations, runtime
+   warnings, permissions, tests, and dependency declarations.
+3. Reproduce focused tests and run `git diff --check` plus the relevant shared
+   audit.
+4. Verify authenticated Odoo and Core3 desktop/mobile evidence, including CRUD
+   and permission boundaries, with captures kept outside Git.
+5. Cherry-pick or merge the validated commit, resolve conflicts in the main
+   checkout, and update the shared QA/progress ledgers.
+6. Send concrete repair findings back to the same owner; never open a new agent
+   to replace it.
