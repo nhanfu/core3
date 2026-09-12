@@ -1,0 +1,18 @@
+title: Conversation
+page: { id: livechat-all-conversation-detail, route: /livechat-sessions/all/detail, breadcrumb: [Website, Live Chat, Sessions, All Conversations, Conversation], auth: { require: [livechat.read] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_all_conversation_detail
+    title_field: customer_display
+    editable: false
+    fields:
+      - { field: participants, label: Participants }
+      - { field: session_date_label, label: Session Date }
+      - { field: channel_name, label: Channel }
+      - { field: agents_name, label: Agents }
+      - { field: status_label, label: Status, type: StatusChip }
+      - { field: duration_label, label: Duration }
+      - { field: message_count, label: Messages }
+      - { field: rating_text, label: Rating, type: StatusBadge }
+      - { field: comment, label: Comment }

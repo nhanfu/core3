@@ -1,0 +1,20 @@
+page: { id: livechat-all-conversation-detail }
+
+datasources:
+  - id: livechat_all_conversation_detail
+    single: true
+    permission: livechat.read
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_ALL_CONVERSATION_DETAIL_UNAUTHORIZED, message: Sign in to view this Live Chat conversation. }
+      forbidden: { status: 403, code: LIVECHAT_ALL_CONVERSATION_DETAIL_FORBIDDEN, message: You do not have permission to view this Live Chat conversation. }
+      transport_error: { status: 503, code: LIVECHAT_ALL_CONVERSATION_DETAIL_UNAVAILABLE, message: Live Chat conversation details are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, session_date, strftime(session_date, '%d %b %Y %H:%M') AS session_date_label,
+        COALESCE(NULLIF(customer_name, ''), 'Visitor') AS customer_display,
+        participants, agents_name, channel_name, country_name, language_name, expertise_name,
+        duration_minutes, printf('%02d:%02d:%02d', CAST(FLOOR(CAST(ROUND(duration_minutes * 60) AS INTEGER) / 3600.0) AS INTEGER), CAST(FLOOR((CAST(ROUND(duration_minutes * 60) AS INTEGER) % 3600) / 60.0) AS INTEGER), CAST(ROUND(duration_minutes * 60) AS INTEGER) % 60) AS duration_label,
+        message_count, rating_text, comment,
+        CASE WHEN rating_text = '' THEN 'Unrated' ELSE rating_text END AS status_label
+      FROM livechat_all_conversations
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND id = :id

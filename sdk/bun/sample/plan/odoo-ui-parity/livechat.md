@@ -874,3 +874,44 @@ read/display Options, Rules, and Widget tabs versus Odoo's richer controls.
 The selected Odoo action is `im_livechat.report_channel`, action 439, with Sessions list/graph/pivot reporting and the source measures/groupings. Core3 keeps the existing `/livechat/reporting/sessions` route, fixes its page/API binding, and declares deterministic session rows, date/search/empty states, `livechat.read` access, and the 503 transport contract. The focused test passes 3 tests and 40 assertions.
 
 Authenticated Odoo and Core3 captures are under `/tmp/core3-odoo-parity/livechat-next-20260912/` at both 1440x900 and 390x844; the paired browser run reported no application failures or horizontal overflow. The expected bounded residual is the shared Core3 Fluent shell and compact report renderer versus Odoo's purple shell and richer chart controls.
+
+## Bounded implementation slice: Conversations — All Conversations (2026-09-12)
+
+The next uncovered menu-backed source action is Odoo Live Chat → Conversations
+→ All Conversations, menu `menu_livechat_all_conversations`, backed by
+`discuss_channel_action` in `addons/im_livechat/views/discuss_channel_views.xml`.
+The source action is `discuss.channel`, named `Sessions`, with
+`kanban,list,pivot,graph,form` modes, the live-chat domain
+`livechat_channel_id != None`, default last-30-days search context, and
+`create=false`. Its list fields are Date, Customer, Agents, Country, Language,
+Expertise, Duration, Messages, Rating, and Comment; the form is read-only with
+Participants and Session Date plus rating feedback.
+
+Core3 adds the disjoint authenticated route `/livechat-sessions/all` under the
+exact `All Conversations` menu label, with read-only detail route
+`/livechat-sessions/all/detail`. Page YAML and API YAML are separate and join
+through page ids `livechat-all-conversations` and
+`livechat-all-conversation-detail`. The named datasource and deterministic
+fixed-date migration provide six Odoo-shaped conversations, customer fallback,
+agent/channel/country/language/expertise relations, ratings, comments,
+duration/message measures, date/rating/search filters, and kanban/list/pivot/
+graph/form presentation. Empty, no-results, not-found, forbidden, unauthorized,
+and transport-error contracts are explicit. No create/update/delete actions
+are exposed because the source action is read-only.
+
+Focused validation is `test/livechat_all_conversations.integration.test.ts`:
+3 tests passed with 30 assertions after installing the fresh worktree's Bun
+workspace dependencies. The UI audit passed with 580 pages, 587 routes, and
+998 datasources; `git diff --check` remains required before commit.
+
+Authenticated Odoo/Core3 captures were attempted under
+`/tmp/core3-odoo-parity/livechat-batch2-20260912/`. The attempt is not visual
+sign-off: the first test/runtime attempt lacked installed workspace packages
+(`Cannot find module '@core3/server/database/duckdb-database'`), which was
+resolved locally with `bun install --frozen-lockfile`; the authenticated Core3
+server attempt then failed because the shared event mediator could not bind
+port 3010 (`EADDRINUSE`). Vite alone served a shell, but no authenticated
+backend session could be reached, so no screenshot claim is made and no image
+is committed. Odoo live UI capture was likewise not completed in this bounded
+attempt. The plan remains `planned` and the limitation is retained for the
+next runtime pass.

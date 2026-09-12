@@ -1,0 +1,27 @@
+version: 0.0.16
+kind: data
+description: Add deterministic read-only All Conversations history fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_all_conversations (
+        id VARCHAR PRIMARY KEY, row_version INTEGER NOT NULL DEFAULT 1,
+        session_date TIMESTAMP NOT NULL, customer_name VARCHAR NOT NULL DEFAULT '', participants VARCHAR NOT NULL,
+        agents_name VARCHAR NOT NULL DEFAULT '', agent_name VARCHAR NOT NULL DEFAULT '', country_name VARCHAR NOT NULL DEFAULT '',
+        language_name VARCHAR NOT NULL DEFAULT '', expertise_name VARCHAR NOT NULL DEFAULT '', channel_name VARCHAR NOT NULL,
+        duration_minutes DOUBLE NOT NULL DEFAULT 0, message_count INTEGER NOT NULL DEFAULT 0,
+        rating_text VARCHAR NOT NULL DEFAULT '', comment VARCHAR NOT NULL DEFAULT ''
+      );
+      INSERT INTO livechat_all_conversations(id, session_date, customer_name, participants, agents_name, agent_name, country_name, language_name, expertise_name, channel_name, duration_minutes, message_count, rating_text, comment) VALUES
+        ('livechat-conversation-001', TIMESTAMP '2026-09-12 09:18:00', 'Visitor #306', 'Visitor #306, Mitchell Admin', 'Mitchell Admin', 'Mitchell Admin', 'United States', 'English (US)', 'Support', 'Support', 5.50, 12, 'Happy', 'Quick answer about billing'),
+        ('livechat-conversation-002', TIMESTAMP '2026-09-11 16:42:00', 'Visiteur #402', 'Visiteur #402, Support Agent', 'Support Agent', 'Support Agent', 'France', 'French / Français', 'Technical Support', 'Website Support', 12.75, 19, 'Unhappy', 'Waiting for a technical answer'),
+        ('livechat-conversation-003', TIMESTAMP '2026-09-10 11:27:00', '', 'Visitor, Support Bot', 'Support Bot', 'Support Bot', 'Belgium', 'French / Français', '', 'YourWebsite.com', 2.25, 6, '', ''),
+        ('livechat-conversation-004', TIMESTAMP '2026-09-04 14:05:00', 'Visitor #301', 'Visitor #301, Mitchell Admin', 'Mitchell Admin', 'Mitchell Admin', 'United States', 'English (US)', 'Billing', 'YourWebsite.com', 8.00, 15, 'Neutral', 'Follow-up requested'),
+        ('livechat-conversation-005', TIMESTAMP '2026-08-27 08:54:00', 'Visiteur #311', 'Visiteur #311, Marc Demo', 'Marc Demo', 'Marc Demo', 'France', 'French / Français', 'Discuss', 'Support', 3.00, 4, 'Happy', 'Resolved'),
+        ('livechat-conversation-006', TIMESTAMP '2026-07-18 10:00:00', 'Visitor #199', 'Visitor #199', '', '', 'United States', 'English (US)', '', 'Support', 1.50, 2, '', '')
+      ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS livechat_all_conversations;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

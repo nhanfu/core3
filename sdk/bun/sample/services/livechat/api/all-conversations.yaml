@@ -1,0 +1,34 @@
+page: { id: livechat-all-conversations }
+
+datasources:
+  - id: livechat_all_conversations
+    single: false
+    permission: livechat.read
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_ALL_CONVERSATIONS_UNAUTHORIZED, message: Sign in to view Live Chat conversation history. }
+      forbidden: { status: 403, code: LIVECHAT_ALL_CONVERSATIONS_FORBIDDEN, message: You do not have permission to view Live Chat conversation history. }
+      transport_error: { status: 503, code: LIVECHAT_ALL_CONVERSATIONS_UNAVAILABLE, message: Live Chat conversation history is temporarily unavailable. }
+    pivot:
+      fields: [id, session_date, session_date_month, channel_name, agent_name, country_name, language_name, rating_text, duration_minutes, message_count]
+    query: |
+      SELECT id, row_version, session_date, strftime(session_date, '%Y-%m') AS session_date_month,
+        strftime(session_date, '%d %b %Y %H:%M') AS session_date_label,
+        customer_name, COALESCE(NULLIF(customer_name, ''), 'Visitor') AS customer_display,
+        participants, agents_name, agent_name, country_name, language_name, expertise_name,
+        channel_name, duration_minutes,
+        printf('%02d:%02d:%02d', CAST(FLOOR(CAST(ROUND(duration_minutes * 60) AS INTEGER) / 3600.0) AS INTEGER), CAST(FLOOR((CAST(ROUND(duration_minutes * 60) AS INTEGER) % 3600) / 60.0) AS INTEGER), CAST(ROUND(duration_minutes * 60) AS INTEGER) % 60) AS duration_label,
+        message_count, rating_text, comment,
+        CASE WHEN rating_text = '' THEN 'Unrated' WHEN rating_text IN ('Happy', 'Neutral', 'Unhappy') THEN rating_text ELSE rating_text END AS status_label
+      FROM livechat_all_conversations
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR customer_name ILIKE '%' || :q || '%' OR agents_name ILIKE '%' || :q || '%' OR channel_name ILIKE '%' || :q || '%' OR country_name ILIKE '%' || :q || '%' OR comment ILIKE '%' || :q || '%')
+        AND (:rating_text IS NULL OR rating_text = :rating_text OR (:rating_text = 'Unrated' AND rating_text = ''))
+        AND (:session_date IS NULL OR :session_date = 'last_365_days' OR session_date >= TIMESTAMP '2026-08-10 00:00:00')
+      ORDER BY session_date DESC, id DESC
+
+actions:
+  - id: view_livechat_conversation
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat-sessions/all/detail
+    params: { id: '{row.id}' }

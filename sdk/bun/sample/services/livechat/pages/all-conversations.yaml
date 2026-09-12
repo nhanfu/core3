@@ -1,0 +1,50 @@
+title: All Conversations
+page: { id: livechat-all-conversations, route: /livechat-sessions/all, breadcrumb: [Website, Live Chat, Sessions, All Conversations], auth: { require: [livechat.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_all_conversations
+    search: { label: Search history, placeholder: Search... }
+    filters:
+      - { field: rating_text, label: Rating, options: [Happy, Neutral, Unhappy, Unrated] }
+      - { field: session_date, label: Session Date, options: [last_30_days, last_365_days] }
+    group_by:
+      - { field: channel_name, label: Channel }
+      - { field: agent_name, label: Agent }
+      - { field: rating_text, label: Rating }
+      - { field: country_name, label: Country }
+      - { field: session_date_month, label: Session Date }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: channel_name
+        card:
+          title: customer_display
+          fields:
+            - { field: session_date_label, label: 'Date' }
+            - { field: duration_label, label: Duration }
+            - { field: message_count, label: Messages }
+            - { field: status_label, label: Status }
+            - { field: country_name, label: Country }
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: pivot, label: Pivot, icon: pivot }
+      - { id: graph, label: Graph, icon: graph, category_field: session_date_label, date_field: session_date, measure_field: message_count, measure_label: Messages, type: bar }
+    row_key: id
+    row_open_action: view_livechat_conversation
+    row_double_click_action: view_livechat_conversation
+    form_view: { page: apps/services/livechat/pages/all-conversation-detail.yaml, side_panel: false }
+    empty_state: { title: No data yet!, description: Start a conversation to populate your chat history. }
+    columns:
+      - { field: session_date_label, label: Date }
+      - { field: customer_display, label: Customer }
+      - { field: agents_name, label: Agents }
+      - { field: country_name, label: Country }
+      - { field: language_name, label: Language }
+      - { field: expertise_name, label: Expertise }
+      - { field: duration_label, label: Duration }
+      - { field: message_count, label: Messages, align: right }
+      - { field: rating_text, label: Rating, type: StatusBadge }
+      - { field: comment, label: Comment }
