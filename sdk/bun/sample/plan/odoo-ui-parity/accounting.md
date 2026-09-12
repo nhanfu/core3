@@ -1166,3 +1166,19 @@ pages, 552 routes, and 947 datasources, ESLint and the frontend build pass,
 and `git diff --check` is clean. The expected residual is the shared Fluent
 shell and Core3's compact pivot/graph rendering versus Odoo's purple shell and
 formatted accounting pivot. Screenshots remain outside Git.
+
+## Cash Registers bounded slice (2026-09-12)
+
+Core3 adds the Accounting Cash Registers action at `/accounting/cash-registers`
+with a page/API pair joined by `page.id`, deterministic register fixtures, and
+read-only `accounting.read` access. The focused contract covers list/search,
+empty/error/denied states, stable ordering, and the cash-register action
+navigation.
+
+The focused integration test passes 2 tests and 13 assertions. Authenticated
+Core3 and Odoo captures were saved at 1440x900 and 390x844 under
+`/tmp/core3-odoo-parity/accounting-next-20260912/`; images remain outside Git.
+The comparison confirms the bounded list surface and responsive width. The
+remaining differences are the shared Core3 Fluent shell versus Odoo's purple
+shell and deterministic Core3 fixtures versus the live Odoo dataset. No
+cash-session posting or reconciliation workflow is claimed by this slice.
