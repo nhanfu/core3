@@ -23,6 +23,12 @@ Candidate commit: current working tree
 - Fleet user permission boundary: `/surveys` returned HTTP 403 with `Requires permission: surveys.read`, with no browser errors.
 - Authenticated lifecycle persistence on the module-scoped process: created a survey and question, then Draft → Published → Closed → Archived → Draft; all responses returned 200 and the survey row version advanced `1 → 5`.
 - The pre-existing shared process on port 3002 returned `Unknown page` for the same routes; the module-scoped process loaded them successfully. This is recorded as a process freshness/integration follow-up, not as a Surveys implementation failure.
+- Current module-scoped rerun on port 4034 checked all 14 registered Surveys
+  routes at desktop/mobile: 28/28 passed with no page errors, failed requests,
+  HTTP errors, redirect/blank states, or horizontal overflow.
+- Authenticated mobile Close action on `survey-demo-feedback` returned 200,
+  changed the visible action set, and persisted `Closed` after reload.
+- The detailed module plan is approved at `qa/test-plans/surveys.md`.
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
@@ -31,7 +37,7 @@ Candidate commit: current working tree
 | SURVEYS-PERM-001 | Non-member cannot read Surveys | Fleet user received HTTP 403 with `Requires permission: surveys.read`; browser errors 0 | pass |
 | SURVEYS-WORKFLOW-001 | Survey create, question persistence, and lifecycle transitions | Authenticated create/question plus Draft → Published → Closed → Archived → Draft returned 200; row version 1 → 5 | pass |
 | SURVEYS-RUNTIME-001 | Shared-process registration freshness | Shared port 3002 returned page 404s while fresh module process on 4010 passed 28/28 | follow-up |
-| SURVEYS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Functional and module-scoped route evidence present; paired Odoo comparison and shared-process retest remain open | pending |
+| SURVEYS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Focused contracts, lifecycle/permission evidence, current 14-route matrix, and mobile Close persistence are recorded; paired Odoo comparison and broader public/actor coverage remain open | pending |
 
 ## Bugs and retests
 
@@ -43,6 +49,6 @@ Candidate commit: current working tree
 
 - Functional: partial pass (focused suite passed)
 - Permissions: partial pass (read boundary passed; mutation-role matrix remains)
-- Persistence/data integrity: partial pass (contract tests passed; authenticated mutation persistence remains)
-- Desktop/mobile visual parity: pending
+- Persistence/data integrity: partial pass (authenticated Close persistence and contract tests pass; restart coverage remains)
+- Desktop/mobile visual parity: current route smoke pass; paired comparison pending
 - Tester decision: not signed off
