@@ -3,3 +3,4 @@ permissions:
   - inventory.write
   - inventory.manage
   - inventory.tracking
+  - inventory.multi_location

@@ -41,8 +41,8 @@ describe('Inventory physical inventory parity', () => {
     expect(list.filters[0].options.map((option: any) => option.label)).toEqual([
       'My Counts', 'Internal Locations', 'Transit Locations', 'To Count', 'To Apply', 'Conflicts', 'Negative Stock',
     ]);
-    expect(yaml('manifest.yaml').menu.groups[0].items.map((item: any) => item.label)).toEqual(['Receipts', 'Deliveries', 'Physical Inventory']);
-    expect(yaml('permissions.yaml').permissions).toEqual(['inventory.read', 'inventory.write', 'inventory.manage', 'inventory.tracking']);
+    expect(yaml('manifest.yaml').menu.groups[0].items.map((item: any) => item.label)).toEqual(['Receipts', 'Deliveries', 'Internal', 'Physical Inventory']);
+    expect(yaml('permissions.yaml').permissions).toEqual(['inventory.read', 'inventory.write', 'inventory.manage', 'inventory.tracking', 'inventory.multi_location']);
   });
 
   test('returns stable physical inventory fixtures and explicit empty/error states', async () => {

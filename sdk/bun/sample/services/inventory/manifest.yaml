@@ -22,6 +22,10 @@ menu:
           label: Deliveries
           icon: truck
           permission: inventory.read
+        - path: /internal
+          label: Internal
+          icon: transfer
+          permission: inventory.multi_location
         - path: /physical-inventory
           label: Physical Inventory
           icon: clipboard

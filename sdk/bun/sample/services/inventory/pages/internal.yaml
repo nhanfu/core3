@@ -1,0 +1,38 @@
+title: Internal Transfers
+page: { id: internal, route: /internal, breadcrumb: [Supply Chain, Inventory, Operations, Transfers, Internal], auth: { require: [inventory.multi_location] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_internal_transfers
+    view_navigation: tabs
+    create_label: New
+    search: { label: Search internal transfers, placeholder: Search internal transfers... }
+    filters:
+      - { field: state, label: Status, options_source: inventory_internal_transfer_states }
+      - { field: scheduled_date, label: Scheduled date, options: [{ id: overdue, label: Overdue }, { id: today, label: Today }, { id: upcoming, label: Upcoming }] }
+    group_by: [state, scheduled_date, source_document]
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: operation_kind
+        card: { title: name, subtitle: contact_name, fields: [{ field: scheduled_date, label: Scheduled Date }, { field: state, label: Status }] }
+      - { id: form, label: Form, icon: form }
+      - { id: calendar, label: Calendar, icon: calendar, date_field: scheduled_date, mobile: false }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, sortable: true }
+      - { field: contact_name, label: Contact }
+      - { field: scheduled_date, label: Scheduled Date, sortable: true }
+      - { field: source_document, label: Source Document }
+      - { field: company_name, label: Company }
+      - { field: state, label: Status, type: StatusChip, colors: { Ready: teal, Draft: neutral, Waiting: amber, Done: green, Cancelled: red } }
+    page_size: 50
+    row_key: id
+    row_open_action: view_inventory_transfer
+    row_double_click_action: view_inventory_transfer
+    row_actions: menu
+    form_view: { page: apps/services/inventory/pages/transfer-detail.yaml, side_panel: true }
+    empty_state: { title: No internal transfer yet! Create a new one., description: Move stock between your locations with traceability. }
+actions:
+  - { id: view_inventory_transfer, type: navigate, permission: inventory.multi_location, navigate_to: /inventory/transfer/detail, params: { id: '{row.id}' } }

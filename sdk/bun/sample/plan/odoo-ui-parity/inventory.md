@@ -729,3 +729,44 @@ are not committed.
 Core3 adds the Inventory Operations > Adjustments Scrap Orders action at `/inventory/scraps`, with list/kanban/pivot/graph declarations, detail form, page/API YAML joined by `page.id`, deterministic Draft/Done fixtures, and create/edit/validate/stale-write/done-delete guards. The focused test passes 3 tests and 25 assertions.
 
 The live Odoo action is source-confirmed as `stock.action_stock_scrap` (action 547), but its reference database has no scrap rows. The isolated Core3 runtime was not available for a completed paired browser capture in this batch, so no new screenshot claim is made; screenshot gate remains open and images, if captured later, stay outside Git.
+
+## Operations > Internal Transfers bounded slice (2026-09-12)
+
+The next uncovered stock action after Stock and Scrap Orders is Odoo 19
+`stock.action_picking_tree_internal`, launched by `stock.int_picking` in
+`addons/stock/views/stock_picking_views.xml`. Its menu path is Inventory >
+Operations > Transfers > Internal and its source menu is restricted to
+`stock.group_stock_multi_locations`. The action path is `internal`, its
+context restricts `stock.picking` to internal operation types, and its view
+order is `list,kanban,form,calendar`; unlike Receipts and Deliveries it does
+not expose Activity. The shared picking search view provides Status,
+Scheduled Date, Source Document, Destination Country, Operation Type, and
+Properties grouping. The existing transfer detail contract supplies the
+shared list/detail fields and guarded status actions.
+
+Core3 adds `/internal` only. `pages/internal.yaml` is layout-only with
+`page.id: internal` and binds to the separate `api/internal.yaml` with the
+same page id. It preserves visible List/Kanban/Form/Calendar tabs, Reference,
+Contact, Scheduled Date, Source Document, Company, and Status columns, and
+opens the shared transfer detail for a real list/detail interaction. Activity
+is intentionally absent because the source action does not provide it. The
+manifest inserts Internal between Deliveries and Physical Inventory under
+Transfers.
+
+Migration `20260912130000-014-inventory-internal-transfers.yaml` adds one
+internal operation type and four stable Draft/Waiting/Ready/Done fixtures,
+move lines, and dates around fixed `2026-01-15`; inserts are idempotent and
+the down migration removes only these IDs. The datasource provides stable
+search/status/date filtering, empty/no-result behavior, and the existing 503
+`INVENTORY_TRANSFER_DATA_UNAVAILABLE` state. The route/datasource require
+`inventory.multi_location`; shared detail mutations retain write,
+state-transition, and row-version guards.
+
+Focused evidence: `bun test test/inventory_internal_transfers.integration.test.ts`
+passes 3 tests and 13 assertions, proving page/API ownership, menu and view
+order, deterministic/idempotent fixtures, search, empty, transport-error,
+and permission contracts. Browser QA inventory covers authenticated desktop
+1440x900 and mobile 390x844 menu/list/filter/row-detail/no-overflow checks,
+plus empty and denied exploratory states. Captures belong under
+`/tmp/core3-odoo-parity/inventory-batch4-20260912/`; no visual parity claim is
+made until authenticated Core3 actually renders at both viewports.

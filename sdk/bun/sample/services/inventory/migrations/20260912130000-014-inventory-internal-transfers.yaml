@@ -1,0 +1,27 @@
+version: 0.0.14
+type:
+  postgres:
+    up: |
+      INSERT INTO inventory_operation_types(id, name, code, operation_kind, source_location_id, destination_location_id) VALUES
+        ('operation-internal', 'Internal Transfers', 'WH-INT', 'internal', 'location-stock', 'location-transit')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state) VALUES
+        ('internal-00001', 'operation-internal', 'WH/INT/00001', NULL, DATE '2026-01-12', 'Internal replenishment', 'My Company', 'location-stock', 'location-transit', 'Ready'),
+        ('internal-00002', 'operation-internal', 'WH/INT/00002', NULL, DATE '2026-01-15', 'Warehouse relocation', 'My Company', 'location-stock', 'location-transit', 'Waiting'),
+        ('internal-00003', 'operation-internal', 'WH/INT/00003', NULL, DATE '2026-01-18', NULL, 'My Company', 'location-stock', 'location-transit', 'Done'),
+        ('internal-00004', 'operation-internal', 'WH/INT/00004', NULL, DATE '2026-01-20', 'Cycle count', 'My Company', 'location-stock', 'location-transit', 'Draft')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity) VALUES
+        ('internal-move-00001', 'internal-00001', 'Desk Combination', 12, 0),
+        ('internal-move-00002', 'internal-00002', 'Storage Box', 24, 0),
+        ('internal-move-00003', 'internal-00003', 'Desk Combination', 8, 8),
+        ('internal-move-00004', 'internal-00004', 'Storage Box', 5, 0)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_picking_moves WHERE picking_id IN ('internal-00001', 'internal-00002', 'internal-00003', 'internal-00004');
+      DELETE FROM inventory_pickings WHERE id IN ('internal-00001', 'internal-00002', 'internal-00003', 'internal-00004');
+      DELETE FROM inventory_operation_types WHERE id = 'operation-internal';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
