@@ -608,6 +608,8 @@ export class PageRuntime extends BaseComponent {
                   ? `/website/page-assets/${encodeURIComponent(String(row.id))}`
                 : actionDef.kind === 'blog_post_attachment'
                   ? `/blog/post-attachments/${encodeURIComponent(String(row.id))}`
+                : actionDef.kind === 'ecommerce_product_image'
+                  ? `/ecommerce/product-images/${encodeURIComponent(String(row.id))}`
                 : `/chat/attachments/${encodeURIComponent(String(row.id))}`;
           await client.downloadFile(
             path,
