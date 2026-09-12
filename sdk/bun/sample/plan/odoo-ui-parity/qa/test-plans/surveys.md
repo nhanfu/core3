@@ -43,7 +43,7 @@ and the published public survey token.
 | Case ID | Class | Workflow/integration | Expected transition/side effect | Failure/recovery assertion | Status |
 | --- | --- | --- | --- | --- | --- |
 | SURVEYS-WF-001 | workflow | Survey lifecycle | Draft → Published → Closed → Archived → Draft updates state/version and visible actions | Forbidden/stale transition returns 409 without partial update | pass |
-| SURVEYS-WF-002 | workflow | Public response | Start token, validate required answers, advance questions and submit response | Invalid token, missing required answer, duplicate submit and retry are safe | planned |
+| SURVEYS-WF-002 | workflow | Public response | Start token, validate required answers, advance questions and submit response | Start/progress/submit persistence and duplicate-submit guard pass through the public handler; broader required-answer/retry matrix remains planned | pass: `surveys_public_response.integration.test.ts` |
 | SURVEYS-WF-003 | workflow | Live session | Create/start/advance/end session and preserve participant/session state | Restart/retry does not duplicate session or answers | pass at contract level |
 | SURVEYS-WF-004 | integration | Participant invite | Send/resend invite records deterministic audit result | invalid/cancelled recipient and transport failure are explicit | pass at contract level |
 | SURVEYS-WF-005 | integration | Durable/external boundary | Timers, mail delivery, callbacks and long-running sessions use Temporal contract when activated | retry, timeout, compensation, replay/restart and shutdown are required | planned |
