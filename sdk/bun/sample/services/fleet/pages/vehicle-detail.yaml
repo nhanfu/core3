@@ -14,6 +14,7 @@ components:
     group_columns: 2
     stat_buttons:
       - { id: open_fleet_vehicle_assignment_logs, label: Drivers History, value_field: assignment_count, permission: fleet.read }
+      - { id: open_fleet_vehicle_odometer_report, label: Odometer Report, value_field: odometer_count, hide_value: true, permission: fleet.manage, show_if: "state.vehicle_type === 'car'" }
     groups:
       - title: Vehicle
         fields: [{ field: name, label: Vehicle }, { field: state, label: Status }, { field: license_plate, label: License plate }, { field: vehicle_type, label: Type }, { field: model, label: Model }, { field: manufacturer, label: Manufacturer }]

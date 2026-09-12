@@ -11,6 +11,30 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, fil
 const source = (id: string) => yaml('api/odometer-analysis.yaml').datasources.find((item: any) => item.id === id);
 
 describe('Fleet Odometer Analysis parity', () => {
+  test('maps the vehicle-form Odometer Report action to the scoped analysis route', () => {
+    const source = readFileSync('/home/nhanjs/projects/odoo/addons/fleet/models/fleet_vehicle.py', 'utf8');
+    const view = readFileSync('/home/nhanjs/projects/odoo/addons/fleet/views/fleet_vehicle_views.xml', 'utf8');
+    const vehiclePage = yaml('pages/vehicle-detail.yaml');
+    const vehicleApi = yaml('api/vehicle-detail.yaml');
+    const reportPage = yaml('pages/odometer-analysis.yaml');
+    const reportApi = yaml('api/odometer-analysis.yaml');
+    const stat = vehiclePage.components[0].stat_buttons.find((entry: any) => entry.id === 'open_fleet_vehicle_odometer_report');
+    const action = vehicleApi.actions.find((entry: any) => entry.id === 'open_fleet_vehicle_odometer_report');
+
+    expect(view).toContain('name="action_open_odometer_report"');
+    expect(view).toContain('context="{\'xml_id\':\'fleet_vehicle_odometer_action\'}"');
+    expect(source).toContain("def action_open_odometer_report(self):");
+    expect(source).toContain("'domain': [('vehicle_id', '=', self.id)]");
+    expect(source).toContain("'search_default_groupby_date': True");
+    expect(stat).toMatchObject({ label: 'Odometer Report', hide_value: true, permission: 'fleet.manage' });
+    expect(stat.show_if).toBe("state.vehicle_type === 'car'");
+    expect(action).toMatchObject({ type: 'navigate', permission: 'fleet.manage', navigate_to: '/fleet/reporting/odometers' });
+    expect(action.params).toEqual({ vehicle_id: '{state.id}', default_group_by: 'recorded_month' });
+    expect(reportPage.page).toMatchObject({ id: 'fleet-odometer-analysis', route: '/fleet/reporting/odometers', auth: { require: ['fleet.manage'] } });
+    expect(reportApi.page.id).toBe(reportPage.page.id);
+    expect(reportApi.datasources.find((entry: any) => entry.id === 'fleet_odometer_analysis').permission).toBe('fleet.manage');
+  });
+
   test('keeps the Reporting page layout-only and binds its page-owned API', () => {
     const page = yaml('pages/odometer-analysis.yaml');
     const api = yaml('api/odometer-analysis.yaml');

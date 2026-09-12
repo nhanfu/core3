@@ -833,3 +833,31 @@ Capture was attempted under `/tmp/core3-odoo-parity/fleet-batch8-20260912/`;
 the reference Fleet addon/database was unavailable and the Core3 runtime was
 limited by Vite's `EMFILE` watcher failure. No visual parity claim or image is
 made; images remain outside Git.
+
+## Vehicle Odometer Report action (2026-09-12)
+
+The next uncovered source action after Drivers History and vehicle
+archive/restore is the inline `action_open_odometer_report` button on the
+`fleet.vehicle` form. Odoo declares it beside the car Odometer field, hides it
+for bikes, and opens `fleet_vehicle_odometer_reporting_action` with the current
+vehicle as its domain and Date as the default grouping. The report action is
+manager-only and exposes the graph view of `fleet.vehicle.odometer.report`.
+
+Core3 binds the existing `vehicle-detail` page/API pair to the existing
+`/fleet/reporting/odometers` page. Its `Odometer Report` stat action is hidden
+unless `vehicle_type` is `car`, requires `fleet.manage`, passes
+`vehicle_id={state.id}`, and preserves the report's date grouping. No new menu,
+fixture, migration, or report renderer is introduced; existing report
+datasource empty and transport-error states remain in force.
+
+Focused coverage in `test/fleet_odometer_analysis.integration.test.ts` checks
+the pinned Odoo XML/Python action, page/API join, route parameters, manager
+permission, car-only visibility, and existing deterministic report/error
+contracts. Authenticated visual capture was attempted under
+`/tmp/core3-odoo-parity/fleet-batch9-20260912/`; the active reference
+database reports Fleet `uninstalled`, so Odoo cannot render the Fleet menu or
+action. The isolated Core3 built-server attempt also could not reach an
+authenticated page: its first launch required the event mediator, and the
+retry then failed in existing DuckDB startup migrations with `Parser Error:
+Adding columns with constraints not yet supported`. No visual parity claim or
+image is made.
