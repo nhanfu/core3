@@ -89,7 +89,7 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
         current_branch_id: String(authUser.branch_id || ''),
         view_scope: String(authUser.view_scope || 'all'),
       });
-      if (actionDefinition.event) await (eventStore as EventStore).publish({
+      if (actionDefinition.event && typeof eventStore?.publish === 'function') await (eventStore as EventStore).publish({
         ...event,
         topic: actionDefinition.event,
         status: 'success',
@@ -98,7 +98,7 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
       });
       return json(result);
     } catch (error) {
-      if (actionDefinition.event) await (eventStore as EventStore).publish({
+      if (actionDefinition.event && typeof eventStore?.publish === 'function') await (eventStore as EventStore).publish({
         ...event, topic: actionDefinition.event, status: 'failed', error: String((error as any)?.message || 'Action failed'),
       });
       throw error;

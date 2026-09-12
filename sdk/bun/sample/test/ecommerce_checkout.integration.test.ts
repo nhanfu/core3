@@ -83,6 +83,7 @@ describe('eCommerce Checkout parity', () => {
     expect(api.page).toEqual({ id: 'ecommerce-checkout' });
     expect(page.components[0]).toMatchObject({ type: 'OdooFormView', source: 'ecommerce_checkout_cart' });
     expect(api.actions.find((action: any) => action.id === 'confirm_ecommerce_checkout').params).toEqual({ cart_id: '{state.ecommerce_checkout_cart.id}' });
+    expect(api.actions.find((action: any) => action.id === 'confirm_ecommerce_checkout').event).toBe('ecommerce.checkout.confirmed');
   });
 
   test('declares the Temporal payment and delivery boundary without hiding runtime requirements', () => {

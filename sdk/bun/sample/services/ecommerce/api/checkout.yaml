@@ -23,6 +23,7 @@ actions:
     title: Confirm order
     action: ecommerce.checkout.confirm
     handler: yaml_mutation
+    event: ecommerce.checkout.confirmed
     operation: create
     params: { cart_id: '{state.ecommerce_checkout_cart.id}' }
     refresh: [ecommerce_checkout_cart, ecommerce_orders]

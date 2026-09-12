@@ -1,5 +1,6 @@
 import { loadYamlServiceManifest, YamlServiceModule } from '@core3/server/yaml-service';
 import type { ModuleContext, ModuleLifecycle } from '@core3/server/module';
+import { EcommerceTemporalDispatcher } from './temporal-dispatcher';
 
 type EcommerceService = { call(operation: string, request?: Record<string, unknown>): Promise<any> };
 const ANONYMOUS_CART_COOKIE = 'core3_ecommerce_cart';
@@ -7,6 +8,7 @@ const ANONYMOUS_CART_COOKIE = 'core3_ecommerce_cart';
 export default class EcommerceModule implements ModuleLifecycle {
   readonly id = 'ecommerce';
   private delegate: YamlServiceModule | null = null;
+  private temporalDispatcher = new EcommerceTemporalDispatcher();
 
   private getDelegate(context: ModuleContext): YamlServiceModule {
     this.delegate ??= new YamlServiceModule(loadYamlServiceManifest(context.moduleRoot));
@@ -20,6 +22,7 @@ export default class EcommerceModule implements ModuleLifecycle {
     await delegate.load(context);
     const service = context.resolveService<EcommerceService>('yaml.service.ecommerce');
     const yamlApi = delegate.getRuntimeContext()?.api;
+    if (context.env.TEMPORAL_ADDRESS) await this.temporalDispatcher.start(context.eventBus, context.env.TEMPORAL_ADDRESS);
     context.registerApi(async (request, url, server) => {
       const publicResponse = await this.handlePublicRoute(request, url, service);
       if (publicResponse) return publicResponse;
@@ -28,6 +31,7 @@ export default class EcommerceModule implements ModuleLifecycle {
   }
 
   async unload(context: ModuleContext): Promise<void> {
+    await this.temporalDispatcher.stop();
     await this.delegate?.unload(context);
     this.delegate = null;
   }
