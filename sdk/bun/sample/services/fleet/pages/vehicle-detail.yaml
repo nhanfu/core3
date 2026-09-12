@@ -15,6 +15,9 @@ components:
     stat_buttons:
       - { id: open_fleet_vehicle_assignment_logs, label: Drivers History, value_field: assignment_count, permission: fleet.read }
       - { id: open_fleet_vehicle_contracts, label: Contracts, value_field: contract_count, permission: fleet.read }
+      - { id: open_fleet_vehicle_services, label: Services, value_field: service_count, icon: wrench, permission: fleet.read, show_if: "state.service_activity === 'none'" }
+      - { id: open_fleet_vehicle_services_overdue, label: Services, value_field: service_count, icon: wrench, permission: fleet.read, show_if: "state.service_activity === 'overdue'" }
+      - { id: open_fleet_vehicle_services_today, label: Services, value_field: service_count, icon: wrench, permission: fleet.read, show_if: "state.service_activity === 'today'" }
       - { id: open_fleet_vehicle_odometers, label: Odometer, value_field: odometer_count, permission: fleet.read, show_if: "state.vehicle_type === 'car'" }
       - { id: open_fleet_vehicle_odometer_report, label: Odometer Report, value_field: odometer_count, hide_value: true, permission: fleet.manage, show_if: "state.vehicle_type === 'car'" }
     groups:

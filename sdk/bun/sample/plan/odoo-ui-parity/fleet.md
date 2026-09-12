@@ -922,3 +922,28 @@ subsequent probes could not connect; earlier built-server fallbacks recorded
 the DuckDB migration parser error and Vite `EMFILE` limit. No authenticated
 desktop/mobile visual-parity claim or screenshot is made. Full batch notes are in
 `fleet-batch-11.md`.
+
+## Vehicle Services stat action (2026-09-12)
+
+The next uncovered vehicle-form action is the Services stat action in
+`fleet_vehicle_view_form`. Odoo defines three mutually exclusive `fa-wrench`
+buttons over `service_count`: neutral Services for `service_activity=none`,
+danger Services for `overdue`, and warning Services for `today`. Each opens
+`fleet_vehicle_log_services_action` with the vehicle domain and
+`search_default_inactive: not active`. The target action is the existing
+`fleet.vehicle.log.services` action with modes
+`list,kanban,form,graph,pivot,activity` and default Service Type grouping.
+
+Core3 adds the three state-specific Services stat buttons to the existing
+`vehicle-detail` page/API pair. All variants navigate to `/fleet/services`
+with `vehicle_id` and archived/inactive context; reads remain `fleet.read`.
+The detail datasource returns a deterministic active-service count and
+explicit `service_activity: none` fixture state. Overdue/today mail-activity
+computation remains a declared shared-primitive follow-up; no new menu or
+fabricated activity rows are added.
+
+Focused coverage is `test/fleet_vehicle_services_action.integration.test.ts`
+(2 tests, 14 assertions). Browser capture was attempted under
+`/tmp/core3-odoo-parity/fleet-services-action-20260912/`; no visual claim is
+made unless authenticated 1440x900 and 390x844 captures succeed. Full batch
+notes are in `fleet-batch-12.md`.
