@@ -22,16 +22,22 @@ Candidate commit: current working tree
 - Focused Project suite: `bun test ./test/project*.integration.test.ts --timeout 20000` — 44 passed, 0 failed, 506 assertions across 15 files.
 - Authenticated module-scoped probes loaded the Project dashboard, milestone, activity, and portal surfaces with seeded IDs. Fleet user opening `/project/settings` received HTTP 403 with `Requires permission: project.settings`, with no browser errors.
 - The module-scoped process namespaces routes under `/project` (for example `/project/projects`); using unprefixed `/projects` or `/project/project/settings` is invalid in that runner. Properly namespaced Project list, detail, dashboard, stages, roles, tags, activity types, and activity plans routes loaded cleanly. A dependency-aware process selecting `project,timesheets` also loaded `/project/tasks/detail?id=task-demo-002` with the timesheet datasource and no browser/request errors.
+- Current dependency-aware runner `project,timesheets` on port 4039 passed all
+  27 manifest routes at desktop/mobile: 54/54 with no page errors, failed
+  requests, HTTP errors, blank states, or horizontal overflow.
+- The detailed per-module checklist is approved at
+  `qa/test-plans/project.md`; full browser CRUD, actor matrix, restart
+  persistence, and paired Odoo comparison remain open.
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | PROJECT-FUNC-001 | Focused functionality, dashboard, configuration, portal, task, and milestone contracts | 44 tests, 506 assertions; focused suite passed | pass |
-| PROJECT-BROWSER-001 | Authenticated seeded Project route probes | Proper `/project/*` list, detail, dashboard, and configuration routes loaded; dependency-aware task detail also passed | pass |
+| PROJECT-BROWSER-001 | Authenticated seeded Project route probes | 27 dependency-aware routes × desktop/mobile = 54/54; valid list/detail/dashboard/configuration states loaded | pass |
 | PROJECT-CROSS-001 | Project task detail with Timesheets service dependency | `project,timesheets` process loaded `/project/tasks/detail?id=task-demo-002` with no browser/request errors | pass |
 | PROJECT-PERM-001 | Non-manager cannot open Project settings | Fleet user received HTTP 403 with `Requires permission: project.settings`; browser errors 0 | pass |
-| PROJECT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Functional and dependency-aware route evidence present; full CRUD smoke and paired Odoo comparison remain open | pending |
+| PROJECT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Focused suite and complete dependency-aware route evidence present; full CRUD actor smoke and paired Odoo comparison remain open | pending |
 
 ## Bugs and retests
 
