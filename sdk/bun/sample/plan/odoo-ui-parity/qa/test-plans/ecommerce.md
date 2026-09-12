@@ -48,7 +48,7 @@ mutations use isolated databases and deterministic IDs.
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
 | ECOM-WF-001 | Catalog publication | Draft/unpublished → published → unpublished updates public visibility and version atomically | planned browser workflow |
-| ECOM-WF-002 | Cart lifecycle | Add → update quantity → remove preserves price-list rules and totals | add/repeat-add persistence passes; remove and price-list recalculation remain planned |
+| ECOM-WF-002 | Cart lifecycle | Add → update quantity → remove preserves price-list rules and totals | add/repeat-add/remove persistence and total recalculation pass; price-list recalculation remains planned |
 | ECOM-WF-003 | Checkout | Cart → customer/address → delivery/payment → order confirms without partial writes | pass: service mutation; authenticated browser/payment integration planned |
 | ECOM-WF-004 | Sales integration | Created web order resolves customer/product references through owning services | planned integration gate |
 | ECOM-WF-005 | Durable/external boundary | Payment, delivery, email, callbacks and cross-module commerce workflows use Temporal when durable; retry, replay, restart and compensation are tested | planned |

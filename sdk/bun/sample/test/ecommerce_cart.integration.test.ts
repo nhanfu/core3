@@ -29,6 +29,13 @@ describe('eCommerce Cart parity', () => {
     expect(lines.data.map((row: any) => row.quantity)).toEqual([2, 1]);
     const action = api.actions.find((candidate: any) => candidate.id === 'update_ecommerce_cart_line');
     await expect(repository.executeMutation(action.mutation, { id: 'ecommerce-cart-line-001', values: { quantity: 0 }, expected_version: 1 })).rejects.toMatchObject({ status: 422, code: 'ECOMMERCE_CART_QUANTITY_INVALID' });
+    const remove = api.actions.find((candidate: any) => candidate.id === 'remove_ecommerce_cart_line');
+    const removed = await repository.executeMutation(remove.mutation, { id: 'ecommerce-cart-line-001', expected_row_version: 1, customer_scope: 'all' });
+    expect(removed).toMatchObject({ id: 'ecommerce-cart-line-001', cart_id: 'ecommerce-cart-open-001' });
+    expect((await repository.query('SELECT COUNT(*) AS count FROM ecommerce_cart_lines WHERE id = ?', ['ecommerce-cart-line-001']))[0].count).toBe(0);
+    expect(await repository.querySource(api.datasources[0], { id: 'ecommerce-cart-open-001', fixture_state: null }, 0, 1)).toMatchObject({ data: { item_count: 1, amount_total: 249 } });
+    expect((await repository.querySource(api.datasources[1], { cart_id: 'ecommerce-cart-open-001' }, 0, 50)).data).toHaveLength(1);
+    await expect(repository.executeMutation(remove.mutation, { id: 'ecommerce-cart-line-002', expected_row_version: 1, customer_scope: 'own', current_user_email: 'hello@workspace.example' })).rejects.toMatchObject({ status: 403, code: 'ECOMMERCE_CART_OWNERSHIP_REQUIRED' });
     database.close();
   });
 });

@@ -24,3 +24,20 @@ actions:
     refresh: [ecommerce_cart, ecommerce_cart_lines]
     mutation: { operation: update, table: ecommerce_cart_lines, fields: [quantity], required: [quantity], concurrency: { required: true }, guards: [{ query: "SELECT 1 AS ok WHERE CAST(:quantity AS INTEGER) > 0", status: 422, code: ECOMMERCE_CART_QUANTITY_INVALID, message: Quantity must be positive. }, { query: "SELECT 1 AS ok WHERE COALESCE(:customer_scope, 'all') = 'all' OR EXISTS (SELECT 1 FROM ecommerce_cart_lines l JOIN ecommerce_carts c ON c.id = l.cart_id JOIN ecommerce_customers ec ON ec.id = c.customer_id WHERE l.id = :id AND lower(COALESCE(ec.email, '')) = lower(:current_user_email))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart line belongs to another customer. }], result: { query: "SELECT * FROM ecommerce_cart_lines WHERE id = :id" } }
     fields: [{ field: quantity, label: Quantity, type: number, required: true, min: 1 }]
+  - id: remove_ecommerce_cart_line
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.cart_lines.remove
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_cart, ecommerce_cart_lines]
+    mutation:
+      operation: delete
+      table: ecommerce_cart_lines
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id, cart_id FROM ecommerce_cart_lines WHERE id = :id AND row_version = :expected_row_version", status: 409, code: ECOMMERCE_CART_LINE_STALE, message: This cart line has changed. Reload your cart., assign: true }
+        - { query: "SELECT 1 AS ok FROM ecommerce_cart_lines l JOIN ecommerce_carts c ON c.id = l.cart_id JOIN ecommerce_customers ec ON ec.id = c.customer_id WHERE l.id = :id AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(ec.email, '')) = lower(:current_user_email))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart line belongs to another customer. }
+      steps:
+        - { query: "UPDATE ecommerce_carts SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-13 10:00:00' WHERE id = :cart_id" }
