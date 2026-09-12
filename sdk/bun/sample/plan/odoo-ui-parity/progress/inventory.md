@@ -48,6 +48,10 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
   row versions 1 → 4, move completion persistence, and a timeline message;
   a stale cancel returned 409 and `fleet@tms.local` received 403 for
   `inventory.write`.
+- Repaired transfer edit wiring by exposing `Edit details` in the form
+  header and converting the edit contract to a YAML `server_form`; authenticated
+  Save posted `inventory.pickings.update` and reload preserved the changed
+  contact. Focused suite remained green at 39 tests / 439 assertions.
 
 ## Remaining blockers
 
@@ -59,6 +63,6 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
 - Literal `schema.yaml` / `demo.yaml` migration consolidation is blocked by
   the current timestamp-only migration discovery contract; do not rewrite
   existing migration history from this isolated module worktree.
-- Transfer edit/CRUD browser interaction, remaining transfer operation kinds,
+- Remaining transfer CRUD browser interaction, remaining transfer operation kinds,
   and full Odoo workflow parity still require QA coverage; the single passing
   receipt workflow is not module completion.

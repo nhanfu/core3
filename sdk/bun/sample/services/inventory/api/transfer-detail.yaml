@@ -18,13 +18,15 @@ datasources:
 
 actions:
   - id: edit_inventory_transfer
-    type: form
+    type: server_form
     permission: inventory.write
     title: Edit transfer
-    table: inventory_pickings
+    action: inventory.pickings.update
+    handler: yaml_mutation
     operation: update
     fields: [{ field: contact_name, label: Contact, type: text }, { field: scheduled_date, label: Scheduled Date, type: text }, { field: source_document, label: Source Document, type: text }]
     refresh: [inventory_transfer_detail, inventory_transfer_lines]
+    mutation: { operation: update, table: inventory_pickings, fields: [contact_name, scheduled_date, source_document], concurrency: { required: true }, guards: [{ query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }], result: { query: "SELECT * FROM inventory_pickings WHERE id = :id" } }
   - id: mark_inventory_transfer_todo
     type: server
     permission: inventory.write

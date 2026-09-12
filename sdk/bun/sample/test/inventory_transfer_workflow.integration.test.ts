@@ -37,7 +37,9 @@ describe('Inventory receipts and deliveries transfer workflow parity', () => {
 
     const detail = yaml('pages/transfer-detail.yaml').components.find((component: any) => component.type === 'OdooFormView');
     expect(detail.statusbar.map((state: any) => state.value)).toEqual(['Draft', 'Waiting', 'Ready', 'Done', 'Cancelled']);
-    expect(detail.header_actions.map((candidate: any) => candidate.label)).toEqual(['Mark as Todo', 'Check Availability', 'Validate', 'Cancel']);
+    expect(detail.header_actions.map((candidate: any) => candidate.label)).toEqual(['Edit details', 'Mark as Todo', 'Check Availability', 'Validate', 'Cancel']);
+    expect(action('edit_inventory_transfer')).toMatchObject({ type: 'server_form', action: 'inventory.pickings.update', handler: 'yaml_mutation', operation: 'update' });
+    expect(action('edit_inventory_transfer').mutation).toMatchObject({ table: 'inventory_pickings', fields: ['contact_name', 'scheduled_date', 'source_document'], concurrency: { required: true } });
     expect(detail.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Operations', 'Additional Info', 'Note']);
     expect(Bun.YAML.parse(readFileSync(join(serviceRoot, 'manifest.yaml'), 'utf8')).menu.groups.map((group: any) => group.label)).toEqual(['Transfers', 'Adjustments', 'Procurement', 'Reporting', 'Products', 'Configuration']);
   });

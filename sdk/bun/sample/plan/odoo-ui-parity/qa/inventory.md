@@ -45,14 +45,18 @@ Authenticated user: `admin@tms.local`
 - The fleet user (`fleet@tms.local`) was denied the same confirm mutation with
   the declared 403 `inventory.write` permission boundary.
 - This proves one end-to-end state transition and permission boundary through
-  the authenticated mutation transport. Transfer edit UI/CRUD interaction,
-  the remaining operation kinds, and full Odoo workflow parity remain open.
+  the authenticated mutation transport. The transfer edit contract was then
+  repaired: `Edit details` now opens the declared fields, Save posts
+  `inventory.pickings.update`, and a reload preserved the changed contact.
+- Remaining transfer CRUD interaction, the other operation kinds, and full
+  Odoo workflow parity remain open.
 
 The previous Odoo-session blocker is superseded for the current reference. The
 Settings pair and remaining Inventory visual/interaction gates are still open.
 
 ## Dispatch notes
 
-The shared action transport retest and one authenticated transfer workflow pass.
+The shared action transport retest, transfer edit persistence, and one
+authenticated transfer workflow pass.
 Keep the module open until the remaining Odoo paired surfaces, full Inventory
 CRUD/workflow browser checks, and migration-contract decision are complete.
