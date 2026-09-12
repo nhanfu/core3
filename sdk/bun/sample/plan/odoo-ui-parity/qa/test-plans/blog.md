@@ -30,7 +30,7 @@ content; mutations use isolated databases and deterministic IDs.
 | --- | --- | --- | --- |
 | BLOG-FUNC-001 | Blogs/posts | Search/filter/detail, create/edit, author/blog links and publication fields use persisted data | pass: focused suite |
 | BLOG-FUNC-002 | Tags/categories | CRUD, duplicate/blank validation, search and relation-safe deletion work | pass: focused suite |
-| BLOG-FUNC-003 | Publication | Draft/published filtering and post state persist after reload and control visibility | planned browser workflow |
+| BLOG-FUNC-003 | Publication | Draft/published filtering and post state persist after reload and control visibility | pass: declared publish/unpublish action transport and persisted state/version assertions; browser visibility remains planned |
 | BLOG-FUNC-004 | Analysis/public | Read-only analysis and published views use scoped real data and exclude drafts | planned |
 | BLOG-FUNC-005 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit | pass at contract level |
 | BLOG-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate blogs, posts or tags | planned restart/migration gate |
@@ -40,7 +40,7 @@ content; mutations use isolated databases and deterministic IDs.
 
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
-| BLOG-WF-001 | Post lifecycle | Draft → Published → Unpublished updates route visibility, version and indexes atomically | planned browser workflow |
+| BLOG-WF-001 | Post lifecycle | Draft → Published → Unpublished updates route visibility, version and indexes atomically | pass: workflow API publishes/unpublishes persisted draft, increments versions 1 → 2 → 3, records publication date, and rejects duplicate publish; public/browser visibility remains planned |
 | BLOG-WF-002 | Taxonomy | Tags/categories attach and detach without leaking or deleting referenced posts | pass at contract level |
 | BLOG-WF-003 | Content rendering | Stored content and assets render through declared YAML/shared HTML components without unsafe interpolation | planned browser gate |
 | BLOG-WF-004 | Website integration | Published posts resolve through Website routes and preserve site/company scope | planned integration gate |

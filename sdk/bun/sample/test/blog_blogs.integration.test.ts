@@ -2,11 +2,44 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
+import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
+import { migrateDatabase } from '@core3/server/migrations';
+import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const root = join(import.meta.dir, '../services/blog');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('Blog Blogs parity slice', () => {
+  test('publishes and unpublishes a persisted post through the declared workflow', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'blog_publication_workflow_test', ['schema', 'data']);
+    const discovered = discoverPages(join(import.meta.dir, '..'));
+    const authUser = { sub: 'blog-editor', email: 'editor@workspace.example', name: 'Blog Editor', roles: ['editor'], permissions: ['blog.read', 'blog.write'] };
+    const api = createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return authUser; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
+      sources: new Map([...discovered.datasources].filter(([id]) => id.startsWith('blog_'))),
+      pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === 'blog')),
+      pages: new Map([...discovered.pages].filter(([, page]) => page.module === 'blog').map(([id, page]) => [id, page.config])),
+      catalogs: discovered.catalogs,
+      menus: discovered.menus,
+      workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'blog').map(([id, workflow]) => [id, workflow.config])),
+      workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'blog').map(([id, workflow]) => [id, workflow.file])),
+      permissions: discovered.permissions.get('blog')?.config || {},
+      uploadRoot: '/tmp/core3-blog-test-uploads', eventStore: {}, topics: {},
+    });
+    const postId = 'blog-post-demo-002';
+    const transition = (name: string) => api(new Request(`http://blog.test/api/actions/blog.posts.${name}`, { method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' }, body: JSON.stringify({ id: postId, values: {} }) }), new URL(`http://blog.test/api/actions/blog.posts.${name}`));
+    expect((await (await transition('publish')).json())).toMatchObject({ id: postId, state: 'Published' });
+    expect((await repository.query('SELECT state, row_version, published_date FROM blog_posts WHERE id = ?', [postId]))[0]).toMatchObject({ state: 'Published', row_version: 2 });
+    await expect(transition('publish')).rejects.toMatchObject({ status: 409 });
+    expect((await (await transition('unpublish')).json())).toMatchObject({ id: postId, state: 'Draft' });
+    expect((await repository.query('SELECT state, row_version FROM blog_posts WHERE id = ?', [postId]))[0]).toEqual({ state: 'Draft', row_version: 3 });
+    database.close();
+  });
+
   test('joins the Odoo Blogs action to a page and route', () => {
     const page = yaml('pages/blogs.yaml');
     const api = yaml('api/blogs.yaml');
