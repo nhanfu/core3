@@ -6,10 +6,11 @@ Audit date: 2026-09-12
 
 ## Odoo source audit
 
-The requested Odoo 19 addon `industry_fsm` is not present in the supplied
-checkout at `/home/nhanjs/projects/odoo` (branch `19.0`, revision
-`659759969d535d286b656c96b675e4612b925ddd`). The addon directory itself is
-missing:
+The requested sibling source path `../odoo` resolves to
+`/home/nhanjs/projects/core3-worktrees/odoo` from this worktree and is absent.
+The available Odoo checkout is `/home/nhanjs/projects/odoo`, branch `19.0`,
+revision `659759969d535d286b656c96b675e4612b925ddd`. The requested addon is
+also absent there:
 
 - `/home/nhanjs/projects/odoo/addons/industry_fsm/`
 - Consequently there is no local `/home/nhanjs/projects/odoo/addons/industry_fsm/__manifest__.py`.
@@ -17,10 +18,10 @@ missing:
   `demo/`, or `static/` paths to inspect.
 
 A directory search across `/home/nhanjs/projects` and `/home/nhanjs` found no
-other local checkout containing an `industry_fsm` directory. The Odoo checkout
-does contain unrelated references to the addon in `web` tests/tooling, but
-those references do not provide the addon manifest, menu tree, views, demo
-data, or assets required for a UI audit.
+other local checkout containing an `industry_fsm` directory. The available
+checkout contains only unrelated translated module metadata references such as
+`base.module_industry_fsm`; those references do not provide the addon manifest,
+menu tree, views, demo data, or assets required for a UI audit.
 
 The parent register remains accurate: `field-service` maps to `industry_fsm`,
 source status is unavailable in the supplied source, and implementation status
@@ -42,8 +43,9 @@ Core3 has an existing, non-parity Field Service domain boundary at
 - `pages/field-service-workflow.yaml` owns the `field_service_tasks` state
   machine and transition guards.
 - `migrations/20260819090000-001-field-service.yaml` owns the
-  `field_service_tasks` table; the follow-up demo migration owns one
-  `field-task-demo-001` row.
+  `field_service_tasks` table; the follow-up demo migration owns one stable-id
+  `field-task-demo-001` row, but its `scheduled_date` uses `CURRENT_DATE + 1`
+  and is therefore date-relative rather than fully deterministic.
 - `permissions.yaml` owns `field-service.read`, `field-service.write`, and
   `field-service.manage`.
 - `storage.yaml` selects DuckDB and local uploads.
@@ -56,6 +58,33 @@ has no Field Service-specific browser capture or focused test suite. Its page
 YAML also embeds datasource queries, while the shared parity contract requires
 page-matched API fragments under `services/<module>/api/`; that contract repair
 must be planned separately after the Odoo source inventory exists.
+
+### Contract audit evidence
+
+The current files expose the following contract without asserting Odoo
+equivalence:
+
+| Concern | Current declaration | Audit result |
+| --- | --- | --- |
+| Route/page | `/field-service`, page ids `field-service` and `field-service-task-detail` | Discovered by the shared audit; source ownership is Core3-only |
+| Read boundary | `field-service.read` on menu, pages, and datasources | Declared in YAML; no Odoo visibility group can be compared |
+| Write boundary | `field-service.write` for create/assign/start/complete | Declared in YAML; no source-backed workflow parity established |
+| Management boundary | `field-service.manage` for cancel | Declared in YAML; no source-backed admin boundary established |
+| API separation | No `services/field-service/api/` directory; queries/actions remain in `pages/tasks.yaml` and `pages/task-detail.yaml` | Does not meet the current page/API separation contract |
+| Fixture | Stable task id `field-task-demo-001` | Present, but scheduled date is date-relative |
+| Browser evidence | No Field Service-specific authenticated capture | Not claimed or created |
+
+Validation evidence for this audit:
+
+- `cd sdk/bun/sample && bun run audit` passed: 647 pages, 662 routes, and
+  1112 datasources; the shared audit reported every discovered page has a
+  supported component and route.
+- `cd sdk/bun/packages/client && bun run test -- --run
+  test/cases/yaml-schema.test.ts test/cases/service-schema.test.ts` ran 21
+  tests: the 16-test YAML schema suite passed, while the pre-existing service
+  schema suite failed one invalid nested-database assertion. This is unrelated
+  to the Field Service files and is not presented as a Field Service pass.
+- `git diff --check` passed.
 
 ## Why UI cloning cannot truthfully proceed
 
