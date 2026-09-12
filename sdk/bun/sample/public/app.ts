@@ -266,6 +266,10 @@ function publicWebsiteRoute(path: string): boolean {
   return /^\/website\/page\/?$/.test(path);
 }
 
+function publicBlogRoute(path: string): boolean {
+  return /^\/blog\/post\/?$/.test(path);
+}
+
 async function renderPublicSpreadsheet(path: string) {
   const route = publicSpreadsheetRoute(path);
   const outlet = document.getElementById('outlet');
@@ -281,6 +285,15 @@ async function renderPublicWebsite(path: string) {
   const pagePath = new URLSearchParams(window.location.search).get('path') || '/';
   const mod = await import('./components/PublicWebsitePage.ts');
   await mod.mount(outlet, pagePath);
+}
+
+async function renderPublicBlog(path: string) {
+  if (!publicBlogRoute(path)) return;
+  const outlet = document.getElementById('outlet');
+  if (!outlet) return;
+  const postId = new URLSearchParams(window.location.search).get('id') || '';
+  const mod = await import('./components/PublicBlogPost.ts');
+  await mod.mount(outlet, postId);
 }
 
 async function renderPublicSurvey(path: string) {
@@ -420,6 +433,11 @@ async function bootstrap() {
     await renderPublicWebsite(window.location.pathname);
     return;
   }
+  if (publicBlogRoute(window.location.pathname)) {
+    app.innerHTML = '<div id="outlet"></div>';
+    await renderPublicBlog(window.location.pathname);
+    return;
+  }
 
   // Older sessions may contain an avatar data URL inside the JWT. Discard
   // those sessions so the user can receive a compact token after logging in.
@@ -525,6 +543,10 @@ window.addEventListener('popstate', () => {
   }
   if (publicWebsiteRoute(window.location.pathname)) {
     void renderPublicWebsite(window.location.pathname);
+    return;
+  }
+  if (publicBlogRoute(window.location.pathname)) {
+    void renderPublicBlog(window.location.pathname);
     return;
   }
   const location = currentLocation();
