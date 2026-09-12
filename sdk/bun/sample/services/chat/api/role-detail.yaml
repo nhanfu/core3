@@ -1,0 +1,27 @@
+page: { id: chat-role-detail }
+datasources:
+  - id: chat_role_detail
+    single: true
+    permission: chat.read
+    error_states: { forbidden: { status: 403, code: CHAT_ROLE_DETAIL_FORBIDDEN, message: You do not have permission to view this role. }, transport_error: { status: 503, code: CHAT_ROLE_DETAIL_UNAVAILABLE, message: Role details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, user_ids, user_names FROM chat_roles WHERE id = :id AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found')"
+actions:
+  - id: save_chat_role
+    type: server_form
+    permission: chat.write
+    title: Save Role
+    action: mail.res_role.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [chat_roles, chat_role_detail]
+    fields: [{ field: name, label: Role, type: text, required: true }, { field: user_ids, label: User IDs, type: text }, { field: user_names, label: Users, type: text }]
+    mutation:
+      operation: update
+      table: chat_roles
+      fields: [name, user_ids, user_names]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM chat_roles WHERE id = :id", status: 404, code: CHAT_ROLE_NOT_FOUND, message: Role not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM chat_roles WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: CHAT_ROLE_NAME_EXISTS, message: A role with this name already exists. }
+      result: { query: "SELECT * FROM chat_roles WHERE id = :id" }

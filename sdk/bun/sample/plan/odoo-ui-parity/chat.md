@@ -165,3 +165,31 @@ Capture Odoo/Core3 at 1440x900 and 390x844 for inbox, channel, direct message, t
   session has no `js_repl` browser tool and no authenticated browser context.
   No 1440x900 or 390x844 screenshots were produced for this batch and no
   visual-parity claim is made.
+
+## Bounded batch — Discuss Roles action parity (20260912)
+
+- Source-backed next action: Odoo `mail.res_role_action` from
+  `addons/mail/views/res_role_views.xml`, exposed at Discuss → Configuration →
+  Roles after Canned Responses. It targets `res.role` with `list,form` modes;
+  the list is inline-editable and shows Role plus Users, while search exposes
+  Role, Users, My Roles, and Users grouping. The action help text explains
+  @-mentioning roles; unlike Technical → Call History, Roles is user-facing.
+- Core3 adds `/chat/roles` and `/chat/roles/detail`, page-only YAML fragments
+  joined to `api/roles.yaml` and `api/role-detail.yaml` by `page.id`. The
+  service-owned `chat_roles` fixture has fixed IDs and member names; migration
+  `20260912130000-011-chat-roles.yaml` is deterministic and idempotent.
+  Search, My Roles, empty/not-found and transport contracts are explicit;
+  create/update/delete use `chat.write`, with duplicate-name, missing-record,
+  and optimistic-concurrency guards.
+- Focused verification: Chat integration tests pass `19/19` with `126`
+  assertions across all six Chat suites; UI audit passes with `643` pages,
+  `659` routes, and `1103` datasources; changed TypeScript passes ESLint and
+  `git diff --check` passes.
+- Authenticated browser capture was attempted under `/tmp/core3-odoo-parity`.
+  Odoo login endpoints returned HTTP 200 on ports 8069 and 8073, but this
+  session has no `js_repl` browser capability or installed Playwright package,
+  so no authenticated Core3/Odoo rendering or 1440x900/390x844 screenshots
+  could be produced. A Core3 launch reached Vite on port 3002, then the
+  bounded attempt was terminated after 20 seconds; no authenticated browser
+  context existed. No visual-parity claim is made and no image artifacts were
+  added.

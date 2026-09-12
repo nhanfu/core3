@@ -1,0 +1,13 @@
+title: Role
+page: { id: chat-role-detail, route: /chat/roles/detail, breadcrumb: [Discuss, Configuration, Roles, Role], auth: { require: [chat.read] } }
+components:
+  - type: OdooFormView
+    source: chat_role_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Role
+        fields:
+          - { field: name, label: Role, type: text, required: true }
+          - { field: user_names, label: Users, type: text, placeholder: Select users... }
+    header_actions: [{ id: save_chat_role, label: Save, variant: primary, permission: chat.write }]

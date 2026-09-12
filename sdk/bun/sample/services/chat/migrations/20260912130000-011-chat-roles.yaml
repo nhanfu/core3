@@ -1,0 +1,15 @@
+version: 0.0.11
+description: Add deterministic Discuss Roles action fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS chat_roles (id VARCHAR PRIMARY KEY, row_version INTEGER NOT NULL DEFAULT 1, name VARCHAR NOT NULL UNIQUE, user_ids VARCHAR NOT NULL DEFAULT '', user_names VARCHAR NOT NULL DEFAULT '');
+      INSERT INTO chat_roles(id, row_version, name, user_ids, user_names) VALUES
+        ('chat-role-support', 1, 'Support Team', 'user-admin,user-disp', 'Admin User, Dispatcher User'),
+        ('chat-role-operations', 1, 'Operations Team', 'user-disp', 'Dispatcher User') ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS chat_roles;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

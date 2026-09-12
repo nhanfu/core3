@@ -1,0 +1,25 @@
+title: Roles
+page: { id: chat-roles, route: /chat/roles, breadcrumb: [Discuss, Configuration, Roles], auth: { require: [chat.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: chat_roles
+    create_action: create_chat_role
+    create_label: New
+    search: { label: Roles Search, placeholder: Search roles... }
+    filters: [{ field: my_role, label: My Roles, options: [{ id: 'true', label: My Roles }] }]
+    group_by: [{ field: user_names, label: Users }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/chat/pages/role-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: edit_chat_role
+    row_actions: menu
+    empty_state: { title: No roles found. Let's create one!, description: Notify multiple people at once by @-mentioning roles in conversations. }
+    columns:
+      - { field: name, label: Role, type: PrimaryEntityCell, mobile: true }
+      - { field: user_names, label: Users, type: AvatarListCell, mobile: true }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_chat_role, label: Edit, icon: edit }, { id: delete_chat_role, label: Delete, icon: trash, variant: danger }] }
