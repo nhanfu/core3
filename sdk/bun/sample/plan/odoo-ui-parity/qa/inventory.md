@@ -151,3 +151,26 @@ QA disposition: CONDITIONAL / BLOCKED on browser Draft Delete. Receipt create an
 
 QA disposition: RETEST INCOMPLETE / BLOCKED on authenticated Draft Delete. No
 Inventory sign-off or aggregate progress claim.
+
+## 503 root-cause investigation
+
+- Exact API path: `GET /inventory/transfer/detail?id=receipt-00003`; the
+  rendered Delete action posts to `/api/mutate` with
+  `inventory.pickings.delete`.
+- Clean Inventory runner: PID `3519107` (`agent-module` parent `3519103`)
+  listened on `*:4143`; `/api/modules`, detail, login, and authenticated
+  Delete returned HTTP 200 with row version `1`.
+- Controlled gateway reproduction: PID `3524523` listened on `*:4144` while
+  configured for service host `127.0.0.1:4199`; `ss` showed no `4199` listener.
+  The exact detail request returned HTTP 503 with
+  `Service host unavailable` / `TARGET_UNAVAILABLE`, matching QA. This occurs
+  before the Inventory mutation route and is runner infrastructure, not an
+  Inventory guard or persistence failure.
+- Added a client transport regression asserting `/api/mutate` receives the
+  resolved `receipt-00003` and `expected_row_version: "1"` payload.
+- Full Inventory suite: 43 tests / 455 assertions across 14 files. Audit:
+  659 pages / 668 routes / 1136 datasources. Inventory CSS, scoped ESLint,
+  and `git diff --check` all pass.
+
+QA should rerun authenticated Draft Delete with a live gateway target and
+retain listener/process evidence; no browser deletion claim is made here.

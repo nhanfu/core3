@@ -5,6 +5,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { interpolate } from '@core3/client/expr';
+import { client } from '@core3/client/client';
 
 const serviceRoot = join(import.meta.dir, '../services/inventory');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
@@ -33,6 +34,29 @@ describe('Inventory transfer create and delete persistence', () => {
     expect(yaml('pages/transfer-detail.yaml').components[0].header_actions).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'delete_inventory_transfer', permission: 'inventory.write' }),
     ]));
+  });
+
+  test('serializes a browser-shaped Draft Delete action with its resolved row version', async () => {
+    const remove = action('transfer-detail.yaml', 'delete_inventory_transfer');
+    const params = Object.fromEntries(Object.entries(remove.params).map(([key, value]) => [
+      key,
+      interpolate(value, { row: { id: 'receipt-00003', row_version: 1 } }),
+    ]));
+    const previousFetch = globalThis.fetch;
+    let request: { url: string; body: any } | undefined;
+    globalThis.fetch = async (input, init) => {
+      request = { url: String(input), body: JSON.parse(String(init?.body || '{}')) };
+      return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
+    };
+    try {
+      await client.action(remove.action, params);
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+    expect(request).toEqual({
+      url: '/api/mutate',
+      body: { mutation: 'inventory.pickings.delete', id: 'receipt-00003', expected_row_version: '1' },
+    });
   });
 
   test('persists a new draft receipt and deletes it with its move history', async () => {

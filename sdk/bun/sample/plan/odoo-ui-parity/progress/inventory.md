@@ -152,3 +152,21 @@ sign-off.
 
 QA disposition: retest incomplete / blocked on authenticated Draft Delete; no
 Inventory sign-off or aggregate progress claim.
+
+## 503 root-cause investigation
+
+- The integrated route is `GET /inventory/transfer/detail?id=receipt-00003`
+  through the frontend/API base; mutations use `POST /api/mutate` with
+  `mutation: inventory.pickings.delete`.
+- Clean single-module Inventory runner evidence: agent PID `3519103`, server
+  PID `3519107`, listener `*:4143`; `/api/modules`, the exact detail route,
+  login, and authenticated Draft Delete all returned HTTP 200. The delete
+  response was reached with `expected_row_version: 1`.
+- Gateway reproduction: PID `3524523` listened on `*:4144` with target
+  `127.0.0.1:4199`; no `4199` listener existed. The exact detail request
+  returned HTTP 503 `{error: Service host unavailable, code: TARGET_UNAVAILABLE}`.
+  Therefore the QA 503 is runner/service-host infrastructure, before Inventory
+  action dispatch; no Inventory product/runtime repair is indicated.
+- Added client transport regression for the browser-shaped Delete payload.
+  Full Inventory suite passes 43 tests / 455 assertions; audit 659/668/1136,
+  Inventory CSS, scoped ESLint, and diff-check pass.
