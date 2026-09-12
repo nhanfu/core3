@@ -4,6 +4,10 @@ datasources:
     single: false
     permission: maintenance.read
     query: "SELECT c.id, c.row_version, c.name, c.technician, c.company_name, c.active, c.color, COUNT(DISTINCT e.id) AS equipment_count, COUNT(DISTINCT r.id) AS request_count FROM maintenance_category_records c LEFT JOIN maintenance_equipment e ON e.category_id = c.id AND e.archived = FALSE LEFT JOIN maintenance_requests r ON r.category_id = c.id AND r.archived = FALSE WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR COALESCE(c.technician, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR (:active = 'active' AND c.active = TRUE) OR (:active = 'archived' AND c.active = FALSE)) GROUP BY c.id, c.row_version, c.name, c.technician, c.company_name, c.active, c.color ORDER BY c.name, c.id"
+    error_states:
+      unauthorized: { status: 401, code: MAINTENANCE_CATEGORIES_UNAUTHENTICATED, message: Sign in to view equipment categories. }
+      forbidden: { status: 403, code: MAINTENANCE_CATEGORIES_FORBIDDEN, message: You do not have permission to view equipment categories. }
+      transport_error: { status: 503, code: MAINTENANCE_CATEGORIES_UNAVAILABLE, message: Equipment categories are temporarily unavailable. }
 actions:
   - id: create_maintenance_category
     type: server_form
@@ -17,4 +21,18 @@ actions:
     fields: [{ field: name, label: Category Name, type: text, required: true }, { field: technician, label: Responsible, type: text }, { field: company_name, label: Company, type: text }, { field: color, label: Color, type: number }, { field: note, label: Note, type: text }]
   - { id: archive_maintenance_category, type: server, permission: maintenance.manage, action: maintenance.categories.archive, handler: yaml_mutation, operation: update, refresh: [maintenance_categories], params: { values: { active: false } }, mutation: { operation: update, table: maintenance_category_records, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_category_records WHERE id = :id" } } }
   - { id: reopen_maintenance_category, type: server, permission: maintenance.manage, action: maintenance.categories.reopen, handler: yaml_mutation, operation: update, refresh: [maintenance_categories], params: { values: { active: true } }, mutation: { operation: update, table: maintenance_category_records, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_category_records WHERE id = :id" } } }
+  - id: delete_maintenance_category
+    type: server
+    permission: maintenance.manage
+    action: maintenance.categories.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [maintenance_categories]
+    mutation:
+      operation: delete
+      table: maintenance_category_records
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_category_records WHERE id = :id", status: 404, code: MAINTENANCE_CATEGORY_NOT_FOUND, message: Equipment category was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_requests WHERE category_id = :id) AND NOT EXISTS (SELECT 1 FROM maintenance_equipment WHERE category_id = :id)", status: 409, code: MAINTENANCE_CATEGORY_IN_USE, message: An equipment category with equipment or maintenance requests cannot be deleted; archive it instead. }
   - { id: view_maintenance_category, type: navigate, permission: maintenance.read, navigate_to: /equipement-categories/detail, params: { id: '{row.id}' } }

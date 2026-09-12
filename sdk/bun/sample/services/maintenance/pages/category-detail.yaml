@@ -8,4 +8,5 @@ components:
     status_field: active
     status_colors: { true: green, false: neutral }
     group_columns: 2
+    header_actions: [{ id: edit_maintenance_category, label: Edit, variant: primary, permission: maintenance.manage }, { id: delete_maintenance_category_detail, label: Delete, variant: danger, permission: maintenance.manage, confirm: Delete this equipment category? }]
     groups: [{ title: Equipment Category, fields: [{ field: name, label: Category Name }, { field: technician, label: Responsible }, { field: company_name, label: Company }, { field: color, label: Color }, { field: note, label: Note }] }]

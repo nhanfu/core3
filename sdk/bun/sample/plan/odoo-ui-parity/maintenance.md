@@ -344,3 +344,51 @@ under `/tmp/core3-odoo-parity/maintenance-batch3-20260912/` at 1440x900 and
 state. Core3 returned an authentication redirect for both viewports, so its
 captures are login-shell evidence only and do not claim authenticated feature
 parity. Images are temporary comparison evidence and are not committed.
+
+## Bounded batch: Equipment Categories delete action (2026-09-12)
+
+This batch closes exactly one additional source-backed Maintenance action:
+deleting an Equipment Category from Odoo's Configuration > Equipment Categories
+screen. The source action is `hr_equipment_category_action` at
+`/odoo/equipement-categories`, with `list,kanban,form` views. The source model
+guard in `addons/maintenance/models/maintenance.py` rejects deletion when
+equipment or maintenance requests still reference the category and instructs
+the user to archive it instead.
+
+Core3 keeps the existing deliberate normalized route
+`/equipement-categories` and detail route `/equipement-categories/detail`, with
+the menu/action label and ordering matching the source. Page YAML remains
+presentation-only; `api/categories.yaml` and `api/category-detail.yaml` are
+joined through `page.id`. The list row menu and the Odoo-style detail header
+now expose Delete, protected by `maintenance.manage`. The action returns stable
+`MAINTENANCE_CATEGORY_NOT_FOUND` (404), `MAINTENANCE_CATEGORY_IN_USE` (409),
+and row-version `STALE_RECORD` (409) responses; authenticated list/detail
+boundaries declare 401, 403, 404, and 503 states.
+
+The existing deterministic migration fixtures provide five Odoo-shaped
+categories. Computers is linked to active equipment and requests and therefore
+exercises the protected-delete guard; Phones is deliberately unlinked and is
+deleted successfully in the focused test. Migration execution is repeated to
+prove idempotent install/upgrade behavior without changing stable IDs or row
+versions.
+
+Implementation and verification:
+
+- `services/maintenance/api/categories.yaml` and `api/category-detail.yaml`
+  add the list/detail delete mutations and linked-record guards.
+- `services/maintenance/pages/category-detail.yaml` adds the visible Edit /
+  Delete header actions; no backend contract is embedded in page YAML.
+- `test/maintenance_category_delete.integration.test.ts` covers the exact
+  source route/menu binding, CRUD-state reads, default/empty/forbidden/error
+  contracts, idempotent fixtures, successful delete, linked 409, missing 404,
+  stale 409, and manager permission binding.
+- Focused Maintenance suite: **19 passed, 0 failed, 232 assertions**.
+
+Authenticated comparison attempt was bounded to
+`/tmp/core3-odoo-parity/maintenance-batch4-20260912/` at 1440x900 and
+390x844. The source XML/model audit completed. The local Odoo endpoint was
+checked for the exact action, while the Core3 runtime capture is limited to
+the authenticated route if the local service is available; images remain
+temporary and are never committed. Any unavailable runtime or uninstalled
+reference module is recorded as environment evidence, not presented as visual
+parity.
