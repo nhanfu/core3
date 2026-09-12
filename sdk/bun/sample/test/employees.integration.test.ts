@@ -104,6 +104,18 @@ describe('Employees Odoo action-mode parity batch', () => {
     expect(yaml('manifest.yaml').menu.groups[0].items.map((item: any) => item.label)).toEqual(['Employees', 'Directory', 'All activities', 'Employee Records']);
   });
 
+  test('forces employee archive and restore actions to override submitted form state', () => {
+    for (const file of ['api/employees.yaml', 'api/employee-detail.yaml']) {
+      const api = yaml(file);
+      const archive = api.actions.find((action: any) => action.id.startsWith('archive_employee'));
+      const restore = api.actions.find((action: any) => action.id.startsWith('restore_employee'));
+      expect(archive.params).toEqual({ values: { active: false } });
+      expect(restore.params).toEqual({ values: { active: true } });
+      expect(archive.mutation.concurrency).toEqual({ required: true });
+      expect(restore.mutation.concurrency).toEqual({ required: true });
+    }
+  });
+
   test('adds the Odoo work-location configuration list/form with manager write boundary', async () => {
     const listPage = yaml('pages/work-locations.yaml');
     const detailPage = yaml('pages/work-location-detail.yaml');

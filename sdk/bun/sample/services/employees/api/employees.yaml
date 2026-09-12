@@ -48,7 +48,8 @@ actions:
     handler: yaml_mutation
     operation: update
     refresh: [employees]
-    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false } }
+    params: { values: { active: false } }
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false }, concurrency: { required: true }, result: { query: "SELECT * FROM employees WHERE id = :id" } }
   - id: restore_employee
     type: server
     permission: employees.write
@@ -56,4 +57,5 @@ actions:
     handler: yaml_mutation
     operation: update
     refresh: [employees]
-    mutation: { operation: update, table: employees, fields: [active], defaults: { active: true } }
+    params: { values: { active: true } }
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: true }, concurrency: { required: true }, result: { query: "SELECT * FROM employees WHERE id = :id" } }
