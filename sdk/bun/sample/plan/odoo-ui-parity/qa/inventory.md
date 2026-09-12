@@ -30,7 +30,7 @@ Authenticated user: `admin@tms.local`
 
 ## Current route and reference evidence (2026-09-12)
 
-- Focused Inventory suite: `bun test ./test/inventory*.integration.test.ts --timeout 20000` — 39 passed, 0 failed, 437 assertions across 13 files.
+- Focused Inventory suite: `bun test ./test/inventory*.integration.test.ts --timeout 20000` — 39 passed, 0 failed, 439 assertions across 13 files.
 - Fresh module-scoped authenticated route matrix: 24 routes × desktop/mobile = 48/48 passed with valid seeded detail IDs, no page errors, HTTP failures, or horizontal overflow; raw result: `/tmp/inventory-matrix-isolated.json`.
 - Current paired Packages capture: Core3 and Odoo rendered at desktop/mobile under `/tmp/core3-odoo-parity/paired-inventory-20260912/`. Core3 had no failures; Odoo mobile recorded three navigation-aborted/avatar requests and no page errors, so this is comparison evidence rather than a clean zero-failure pair.
 
@@ -60,3 +60,5 @@ The shared action transport retest, transfer edit persistence, and one
 authenticated transfer workflow pass.
 Keep the module open until the remaining Odoo paired surfaces, full Inventory
 CRUD/workflow browser checks, and migration-contract decision are complete.
+
+Detailed execution matrix: [`test-plans/inventory.md`](test-plans/inventory.md). It is the module-level source for transfer, stock, product, report, actor, persistence, Temporal, and paired Odoo gates.

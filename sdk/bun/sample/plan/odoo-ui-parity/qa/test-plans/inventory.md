@@ -1,0 +1,76 @@
+# Inventory detailed QA test plan
+
+Module: inventory  
+QA owner: inventory-qa  
+Developer owner: inventory module owner  
+Reference addon/version: stock, Odoo 19 Community  
+Plan status: approved  
+Last reviewed: 2026-09-12
+
+This plan follows [`inventory.md`](../../inventory.md); executed evidence is
+recorded in [`../inventory.md`](../inventory.md).
+
+## Coverage inventory
+
+| Menu/action family | Core3 route families | Scope |
+| --- | --- | --- |
+| Transfers | receipts/deliveries, internal transfers and detail routes | Picking CRUD, edit persistence, confirm/check/validate workflow and move completion |
+| Products/locations | locations, lots/serials, packages, warehouses and operation types | Hierarchy, lot/package/warehouse CRUD, archive and relation guards |
+| Operations | replenishment, physical inventory and scrap routes | Counts, replenishment actions, scrap lifecycle and stale guards |
+| Reporting/settings | moves history, stock report and settings routes | Graph/pivot/list filters, manager settings and read-only report boundaries |
+
+Actors are Inventory Manager, Inventory User, warehouse operator, Fleet
+ordinary user, wrong-company user and unauthenticated user. Fixtures use stable
+warehouses, locations, products, lots, packages, pickings, moves, scrap rows
+and report records. Mutations use isolated databases and deterministic IDs;
+transfer workflows must preserve row versions and move quantities.
+
+## Functional and data cases
+
+| Case ID | Surface | Expected result and persistence assertion | Status |
+| --- | --- | --- | --- |
+| INV-FUNC-001 | Transfers | Search/filter/detail, edit fields, confirm/check/validate and reload persistence work | pass: focused suite and authenticated workflow |
+| INV-FUNC-002 | Locations/warehouses | Hierarchy, CRUD, archive/restore, validation, duplicate, in-use and stale guards work | pass: focused suite |
+| INV-FUNC-003 | Lots/packages | Scoped list/detail, quantity/location validation, CRUD and safe delete preserve relations | pass: focused suite |
+| INV-FUNC-004 | Operations | Replenishment, physical counts and scrap actions validate quantities/state and persist | pass: focused suite |
+| INV-FUNC-005 | Reporting/settings | Move history, stock report and settings expose declared read-only/filter/save contracts | pass: focused suite |
+| INV-FUNC-006 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit for every datasource | pass: focused suite |
+| INV-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate stock records or moving dates | planned migration/restart gate |
+| INV-FUNC-008 | Attachments/import/export/print | Exercise transfer documents, product/lot import/export and exposed report/print actions | planned browser interaction gate |
+
+## Workflow and integration cases
+
+| Case ID | Workflow/integration | Expected result | Status |
+| --- | --- | --- | --- |
+| INV-WF-001 | Receipt/delivery lifecycle | Draft → Waiting → Ready → Done updates picking/moves atomically and rejects stale/cancelled actions | pass: authenticated workflow probe |
+| INV-WF-002 | Transfer edit | Details edit posts through mutation transport and survives reload | pass: authenticated browser probe |
+| INV-WF-003 | Inventory count/replenishment | Count and replenishment actions update quantities with validation and row-version guards | pass at contract level |
+| INV-WF-004 | Scrap/packages/lots | Scrap, lot and package relations remain consistent and scoped to the operation | pass at contract level; browser workflow planned |
+| INV-WF-005 | Durable/external boundary | Carrier, barcode, accounting and cross-module callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+
+## Permission and security cases
+
+| Case ID | Actor/scope | Expected result | Status |
+| --- | --- | --- | --- |
+| INV-PERM-001 | Inventory Manager | Configuration, transfer, count and stock mutations succeed | planned browser actor gate |
+| INV-PERM-002 | Inventory User/operator | Assigned warehouse reads and permitted operations work within scope | planned |
+| INV-PERM-003 | Fleet ordinary user | Transfer/configuration writes return 403 and do not change rows | pass: authenticated confirm boundary |
+| INV-PERM-004 | Wrong company | Warehouses, locations, products, lots, pickings and reports are not leaked or mutable | planned |
+| INV-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected response data | planned |
+| INV-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current inventory rows and moves unchanged | pass: focused suite |
+
+## Visual, responsive, and regression cases
+
+| Case ID | State | Viewport | Required assertion | Status |
+| --- | --- | --- | --- | --- |
+| INV-UI-001 | Transfers/detail | 1440x900, 390x844 | Menu order, statusbar, move lines, forms and responsive layout match Odoo | route matrix pass; paired comparison partial |
+| INV-UI-002 | Products/locations/configuration | both | List/form/kanban, hierarchy, settings and validation states match Odoo | planned paired capture |
+| INV-UI-003 | Operations/reports | both | Replenishment, counts, scrap and graph/pivot/list reports match Odoo | planned paired capture |
+| INV-UI-004 | Current route regression | all 24 registered routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | pass: 48-check matrix |
+
+## Exit criteria
+
+Full Inventory sign-off requires the focused suite, authenticated CRUD and
+transfer/operation workflows, all actor boundaries, reload/restart persistence,
+complete paired Odoo desktop/mobile comparisons, and a migration-contract
+decision. Current route, Settings, and transfer evidence is conditional only.
