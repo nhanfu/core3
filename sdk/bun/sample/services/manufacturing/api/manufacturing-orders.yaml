@@ -25,7 +25,7 @@ datasources:
       LEFT JOIN mrp_workorders w ON w.production_id = p.id
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
         AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%' OR COALESCE(p.reference, '') ILIKE '%' || :q || '%')
-        AND (:state IS NULL OR p.state = :state)
+        AND (:state IS NULL OR (:state = 'todo' AND p.state IN ('Draft', 'Confirmed', 'In Progress', 'To Close')) OR p.state = :state)
         AND (:priority IS NULL OR p.priority = :priority)
       GROUP BY p.id, p.row_version, p.name, p.product_id, p.product_name, b.name, p.quantity,
         p.qty_produced, p.state, p.planned_date, p.reference, p.priority, p.company_name,

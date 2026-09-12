@@ -36,6 +36,8 @@ describe('Manufacturing Orders parity slice', () => {
     expect(detailPage.page).toMatchObject({ id: 'manufacturing-detail', route: '/manufacturing-orders/detail' });
     expect(listPage.components[0]).toMatchObject({ source: 'mrp_productions', row_open_action: 'view_mrp_production', view_navigation: 'tabs' });
     expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
+    expect(listPage.components[0].default_filters).toEqual({ state: 'todo' });
+    expect(listPage.components[0].filters[0].options).toEqual(expect.arrayContaining([{ id: 'todo', label: 'To Do' }]));
     expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'mrp_production_detail' });
     expect(detailPage.components[0].notebook.tabs.map((tab: any) => tab.label)).toEqual(['Components', 'Work Orders', 'Miscellaneous']);
     expect(discovered.pageDatasources.get('manufacturing-orders')).toEqual(['mrp_production_states', 'mrp_bom_lookup', 'mrp_productions']);
@@ -60,6 +62,7 @@ describe('Manufacturing Orders parity slice', () => {
     const params = { q: null, state: null, priority: null, fixture_state: null };
 
     expect((await repository.querySource(list, params, 0, 50)).data.map((row: any) => row.state)).toEqual(['Cancelled', 'Done', 'To Close', 'In Progress', 'Confirmed', 'Draft']);
+    expect((await repository.querySource(list, { ...params, state: 'todo' }, 0, 50)).data.map((row: any) => row.state)).toEqual(['To Close', 'In Progress', 'Confirmed', 'Draft']);
     expect((await repository.querySource(states, {}, 0, 50)).data.map((row: any) => row.value)).toEqual(['Draft', 'Confirmed', 'In Progress', 'To Close', 'Done', 'Cancelled']);
     expect((await repository.querySource(list, { ...params, q: 'Wood Panel' }, 0, 50)).data).toMatchObject([{ id: 'mo-progress-001', workorder_count: 3 }]);
     expect((await repository.querySource(list, { ...params, state: 'To Close' }, 0, 50)).data).toMatchObject([{ id: 'mo-to-close-001', qty_produced: 8 }]);

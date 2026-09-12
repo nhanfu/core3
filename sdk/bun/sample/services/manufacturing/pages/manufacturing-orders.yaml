@@ -6,9 +6,19 @@ components:
     source: mrp_productions
     create_action: create_mrp_production
     create_label: New
+    default_filters: { state: todo }
     search: { label: Search manufacturing orders, placeholder: Search orders or products... }
     filters:
-      - { field: state, label: Status, options_source: mrp_production_states }
+      - field: state
+        label: Status
+        options:
+          - { id: todo, label: To Do }
+          - { id: Draft, label: Draft }
+          - { id: Confirmed, label: Confirmed }
+          - { id: In Progress, label: In Progress }
+          - { id: To Close, label: To Close }
+          - { id: Done, label: Done }
+          - { id: Cancelled, label: Cancelled }
       - { field: priority, label: Priority, options: [{ id: Urgent, label: Urgent }, { id: Normal, label: Normal }] }
     view_navigation: tabs
     views:
