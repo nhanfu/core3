@@ -147,7 +147,7 @@ const CHART_COLORS = new Set(['blue', 'indigo', 'green', 'amber', 'red', 'teal']
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope', 'permission', 'permissions', 'action', 'handler', 'mutation', 'success_message']),
-  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'permissions', 'handler', 'service', 'service_operation', 'workflow', 'operation', 'domain', 'kind', 'topic', 'topic_version', 'event', 'mutation', 'success_message', 'modal_style', 'submit_label', 'cancel_label']),
+  server_form: new Set(['id', 'type', 'title', 'description', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'permissions', 'handler', 'service', 'service_operation', 'workflow', 'operation', 'domain', 'kind', 'topic', 'topic_version', 'event', 'mutation', 'success_message', 'modal_style', 'submit_label', 'cancel_label']),
   delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope', 'permission', 'action', 'handler', 'mutation']),
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope', 'permission']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),

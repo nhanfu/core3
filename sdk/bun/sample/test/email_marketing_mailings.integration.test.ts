@@ -97,6 +97,41 @@ describe('Email Marketing Mailings parity action', () => {
       .rejects.toMatchObject({ status: 409, code: 'EMAIL_MAILING_RETRY_BLOCKED' });
   });
 
+  test('matches the Odoo Mailing Test wizard and validates multiline recipients', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'email_mailing_test_wizard', ['schema', 'data']);
+
+    const mailingTest = action('test_email_mailing');
+    expect(mailingTest).toMatchObject({
+      type: 'server_form',
+      title: 'Send a Sample Mail',
+      description: 'Send a sample mailing for testing purpose to the address below.',
+      submit_label: 'Send test',
+      cancel_label: 'Cancel',
+      fields: [{ field: 'last_test_recipients', label: 'Recipients', type: 'textarea', required: true }],
+    });
+
+    await expect(repository.executeMutation(mailingTest.mutation, {
+      id: 'email-mailing-lead-feedback', expected_row_version: 1,
+      values: { last_test_recipients: 'not-an-email' },
+    })).rejects.toMatchObject({ status: 422, code: 'EMAIL_MAILING_TEST_EMAIL_INVALID' });
+
+    const sent = await repository.executeMutation(mailingTest.mutation, {
+      id: 'email-mailing-lead-feedback', expected_row_version: 1,
+      values: { last_test_recipients: 'qa@example.com\nmarketing@example.com' },
+    });
+    expect(sent).toMatchObject({
+      last_test_recipients: 'qa@example.com\nmarketing@example.com',
+      last_test_email: 'qa@example.com',
+      row_version: 2,
+    });
+    await expect(repository.executeMutation(mailingTest.mutation, {
+      id: 'email-mailing-lead-feedback', expected_row_version: 1,
+      values: { last_test_recipients: 'qa@example.com' },
+    })).rejects.toMatchObject({ status: 409, code: 'EMAIL_MAILING_TEST_STATE_CHANGED' });
+  });
+
   test('keeps permissions, mock states, and deterministic mutation contracts explicit', () => {
     expect(listApi.datasources.every((source: any) => source.permission === 'email_marketing.read')).toBe(true);
     expect(detailApi.datasources[0].error_states).toMatchObject({
@@ -111,6 +146,7 @@ describe('Email Marketing Mailings parity action', () => {
       expect(action(id).mutation, id).toBeDefined();
     }
     expect(action('edit_email_mailing').mutation.concurrency).toEqual({ required: true });
+    expect(action('test_email_mailing').fields[0]).toMatchObject({ field: 'last_test_recipients', type: 'textarea' });
     for (const file of ['20260911010000-008-email-mailings.yaml', '20260911011000-009-email-mailings-demo.yaml']) {
       expect(readFileSync(join(serviceRoot, 'migrations', file), 'utf8')).not.toMatch(/CURRENT_TIMESTAMP|CURRENT_DATE|gen_random_uuid|random_uuid/i);
     }

@@ -40,6 +40,7 @@ type:
         campaign_name VARCHAR,
         body VARCHAR NOT NULL DEFAULT '',
         last_test_email VARCHAR,
+        last_test_recipients VARCHAR,
         mail_server_available BOOLEAN NOT NULL DEFAULT true,
         active BOOLEAN NOT NULL DEFAULT true,
         favorite BOOLEAN NOT NULL DEFAULT false,

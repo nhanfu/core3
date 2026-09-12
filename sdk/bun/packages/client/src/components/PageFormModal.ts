@@ -82,6 +82,10 @@ export class PageFormModal extends BaseComponent {
         html.take(closeBtn).attr('aria-label', i18n.tKey('labels.close', {}, 'Close'));
         html.take(closeBtn).prop('title', i18n.tKey('labels.close', {}, 'Close'));
 
+        if (actionDef.description) {
+          html.take(dialog).p.className('form-description').replaceText(String(actionDef.description));
+        }
+
 
         // Fields
         type InputEntry = { el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement; fieldDef: any; group: HTMLDivElement };

@@ -1,0 +1,12 @@
+version: 0.0.20
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE email_mailings ADD COLUMN IF NOT EXISTS last_test_recipients VARCHAR;
+    down: |
+      ALTER TABLE email_mailings DROP COLUMN IF EXISTS last_test_recipients;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -833,3 +833,41 @@ authenticated desktop/mobile screenshots were produced under
 makes no visual-parity claim. When runtime access is restored, capture the Odoo
 and Core3 Draft mailing Schedule modal at 1440x900 and 390x844, recording failed
 requests, page errors, and horizontal overflow.
+
+## Mailing Test wizard bounded slice (2026-09-12)
+
+The next uncovered visible action after scheduling is Odoo's
+`action_mail_mass_mailing_test` (`mailing.mailing.test`, form, modal target).
+The source is `addons/mass_mailing/wizard/mailing_mailing_test_views.xml` at
+revision `65975996`; the form order is the explanatory copy **Send a sample
+mailing for testing purpose to the address below.**, then required multiline
+**Recipients**, followed by **Send test** and **Cancel**. The wizard accepts
+one address per line and is opened from the parent mailing form's **Test**
+button with a medium modal that remains usable on mobile.
+
+Core3 keeps the existing `page.id: mailing-detail` presentation/API join and
+upgrades the `test_email_mailing` action in `api/mailing-detail.yaml` to that
+wizard contract. The API owns the modal description, labels, multiline
+textarea placeholder, write permission, deterministic email validation,
+optimistic row-version guard, and refresh target; the page owns only the
+parent form's Test action. `last_test_recipients` is added by
+`migrations/20260912170000-020-email-mailing-test.yaml`, while the first
+recipient remains mirrored to the existing compatibility field. No real mail
+is sent or external address is contacted.
+
+Focused validation in `test/email_marketing_mailings.integration.test.ts`
+passes **5 tests, 68 assertions**. It covers the exact wizard labels and
+field order, invalid and multiline recipients, deterministic persistence,
+stale-row rejection, page/API separation, permission, empty/error contracts,
+and idempotent migrations. A small shared YAML/client contract was added so
+server-form descriptions render as safe text above their fields.
+
+Authenticated screenshot attempt: `/web/health` returned HTTP 200 for Odoo at
+`127.0.0.1:8069` and `:8073`, but the persistent authenticated browser runner
+(`js_repl`) is not exposed in this session and no Playwright package exists in
+the worktree. Core3 at `127.0.0.1:32615` was not listening. Consequently no
+authenticated Odoo or Core3 captures could be produced at `1440x900` or
+`390x844` under `/tmp/core3-odoo-parity/email-marketing-test-20260912/`; this
+slice makes no visual-parity claim. The exact probe outputs are retained in
+that directory as `health-8069.txt`, `health-8073.txt`, and
+`health-32615.txt`.

@@ -6,7 +6,7 @@ datasources:
     error_states:
       missing_record: { status: 404, code: EMAIL_MAILING_NOT_FOUND, message: Mailing not found. }
       transport_error: { status: 503, code: EMAIL_MAILING_DETAIL_UNAVAILABLE, message: Mailing details are temporarily unavailable. }
-    query: "SELECT m.id, m.row_version, m.subject, m.preview, m.email_from, m.reply_to, m.state, m.schedule_type, CAST(m.schedule_date AS VARCHAR) AS schedule_date, CAST(m.sent_date AS VARCHAR) AS sent_date, m.recipient_model, m.recipient_model_label, m.recipient_domain, m.responsible, m.recipient_count, m.sent, m.scheduled, m.expected, m.canceled, m.process, m.delivered, m.opened, m.clicked, m.replied, m.bounced, m.failed, m.received_ratio, m.opened_ratio, m.replied_ratio, m.bounced_ratio, m.clicks_ratio, m.link_trackers_count, m.mailing_list_names, m.campaign_name, m.body, m.last_test_email, m.mail_server_available, m.active, m.favorite, m.ab_testing_enabled FROM email_mailings m WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.id = :id"
+    query: "SELECT m.id, m.row_version, m.subject, m.preview, m.email_from, m.reply_to, m.state, m.schedule_type, CAST(m.schedule_date AS VARCHAR) AS schedule_date, CAST(m.sent_date AS VARCHAR) AS sent_date, m.recipient_model, m.recipient_model_label, m.recipient_domain, m.responsible, m.recipient_count, m.sent, m.scheduled, m.expected, m.canceled, m.process, m.delivered, m.opened, m.clicked, m.replied, m.bounced, m.failed, m.received_ratio, m.opened_ratio, m.replied_ratio, m.bounced_ratio, m.clicks_ratio, m.link_trackers_count, m.mailing_list_names, m.campaign_name, m.body, m.last_test_email, m.last_test_recipients, m.mail_server_available, m.active, m.favorite, m.ab_testing_enabled FROM email_mailings m WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.id = :id"
 actions:
   - id: new_email_mailing
     type: navigate
@@ -125,22 +125,22 @@ actions:
   - id: test_email_mailing
     type: server_form
     permission: email_marketing.write
-    title: Send a Test Mailing
+    title: Send a Sample Mail
+    description: Send a sample mailing for testing purpose to the address below.
+    submit_label: Send test
+    cancel_label: Cancel
     action: email_marketing.mailings.test
     handler: yaml_mutation
     operation: update
     prefill: state.email_mailing_detail
     refresh: [email_mailing_detail]
     mutation:
-      operation: update
-      table: email_mailings
-      fields: [last_test_email]
       concurrency: { required: true }
       guards:
-        - { query: "SELECT id FROM email_mailings WHERE id = :id AND state NOT IN ('Sending', 'Sent')", status: 409, code: EMAIL_MAILING_TEST_BLOCKED, message: Sending or sent mailings cannot be tested. }
-        - { query: "SELECT 1 AS ok WHERE regexp_matches(TRIM(CAST(:last_test_email AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$')", status: 422, code: EMAIL_MAILING_TEST_EMAIL_INVALID, message: Enter a valid test email address. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:last_test_recipients AS VARCHAR))) > 0 AND regexp_matches(TRIM(split_part(replace(CAST(:last_test_recipients AS VARCHAR), chr(13), ''), chr(10), 1)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$')", status: 422, code: EMAIL_MAILING_TEST_EMAIL_INVALID, message: Enter one valid email address per line. }
+      steps: [{ query: "UPDATE email_mailings SET last_test_recipients = CAST(:last_test_recipients AS VARCHAR), last_test_email = split_part(replace(CAST(:last_test_recipients AS VARCHAR), chr(13), ''), chr(10), 1), row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_TEST_STATE_CHANGED, message: This mailing changed before its test could be sent. }]
       result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
-    fields: [{ field: last_test_email, label: Test Email, type: text, required: true }]
+    fields: [{ field: last_test_recipients, label: Recipients, type: textarea, required: true, placeholder: "email1@example.com\\nemail2@example.com" }]
   - id: add_email_mailing_template
     type: server
     permission: email_marketing.write
