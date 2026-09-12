@@ -1013,3 +1013,51 @@ multi-level costing, print/PDF export, and Odoo chatter are not synthesized.
   `ALTER TABLE`. The capture blocker is environmental and remains explicit.
 - This bounded slice does not synthesize Odoo's recursive server report/PDF,
   interactive column display menu, chatter, or cross-module stock costing.
+
+## Product Moves bounded action (2026-09-12)
+
+- Local Odoo source inspection identified the record-scoped action
+  `mrp.action_mrp_production_moves` in
+  `/home/nhanjs/projects/odoo/addons/mrp/views/stock_move_views.xml`: label
+  `Inventory Moves`, model `stock.move.line`, modes `list,form`, and domain
+  `['|', ('move_id.raw_material_production_id', '=', active_id),
+  ('move_id.production_id', '=', active_id)]`. The launcher is the
+  `Product Moves` stat button in `addons/mrp/views/mrp_production_views.xml`,
+  visible only for `progress` and `done` manufacturing orders. The source list
+  is `stock.view_move_line_tree` (`Move Lines`, create/edit disabled), and the
+  source form is `stock.view_move_line_form` (statusbar, Date, Reference,
+  Origin, Product, Source/Destination Location, Quantity, UoM, Lot/Serial
+  Number, and Done By). This is a button action, not a standalone MRP menu.
+- Core3 implements the bounded record-scoped surface at
+  `/manufacturing-orders/detail/product-moves` with a read-only list and
+  `/manufacturing-orders/detail/product-moves/detail` with the matching
+  read-only move-line form. The MO form now exposes the exact `Product Moves`
+  stat control for In Progress/Done records and derives its count from the
+  existing deterministic production-move fixtures. Presentation-only pages
+  are `pages/product-moves.yaml` and `pages/product-move-detail.yaml`; the
+  page-id-bound backend contracts are `api/product-moves.yaml` and
+  `api/product-move-detail.yaml`. Raw and finished moves are scoped by the
+  selected MO, with deterministic date, reference, locations, quantities,
+  lots, and status values. All sources require `manufacturing.read` and
+  declare explicit 401/403/404/503 boundaries; no mutation is exposed because
+  Odoo disables create and edit for this action.
+- Focused coverage is
+  `test/manufacturing_product_moves.integration.test.ts`: 2 tests and 23
+  assertions pass. It verifies page/API separation, route discovery, the
+  record-scoped stat navigation, deterministic raw/finished rows, read-only
+  permission contracts, empty/not-found fixture behavior, and transport
+  failures. The UI audit passes with 622 pages, 631 routes, and 1,066
+  datasources; test ESLint and `git diff --check` pass.
+- Authenticated Core3 and Odoo captures at 1440x900 and 390x844 were
+  attempted under `/tmp/core3-odoo-parity/manufacturing-product-moves-20260912/`.
+  No image or visual-parity claim is made: the Core3 runtime could not expose
+  a usable frontend because Vite failed before render with
+  `EMFILE: too many open files` while watching
+  `sdk/bun/sample/vite.config.ts` (Node `FSWatcher`, errno `-24`). Odoo was
+  not captured after that paired runtime gate failed. No images were created
+  or committed. The shared Fluent shell versus Odoo's purple shell, and the
+  simplified deterministic move fixture versus Odoo's live stock.move.line
+  records, remain unverified visual differences for this slice.
+- The bounded slice does not synthesize stock move-line editing, package/owner
+  tracking, cross-module Inventory menus, traceability, or the full Stock
+  Moves History action. Those remain deferred integration surfaces.

@@ -1,0 +1,30 @@
+page: { id: manufacturing-product-moves }
+datasources:
+  - id: mrp_product_moves
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_PRODUCT_MOVES_UNAUTHORIZED, message: Sign in to view Product Moves. }
+      forbidden: { status: 403, code: MRP_PRODUCT_MOVES_FORBIDDEN, message: You do not have permission to view Product Moves. }
+      missing_record: { status: 404, code: MRP_PRODUCT_MOVES_MO_NOT_FOUND, message: Manufacturing Order not found. }
+      transport_error: { status: 503, code: MRP_PRODUCT_MOVES_UNAVAILABLE, message: Product Moves are temporarily unavailable. }
+    query: |
+      SELECT m.id, CAST('2026-01-15' AS VARCHAR) AS date, p.name AS reference,
+        m.production_id, m.move_type, m.product_name, m.quantity, m.uom,
+        COALESCE(m.lot_name, '') AS lot_name,
+        CASE WHEN m.move_type = 'Finished product' THEN 'Production' ELSE 'WH/Stock' END AS location,
+        CASE WHEN m.move_type = 'Finished product' THEN 'WH/Stock' ELSE 'Production' END AS location_dest,
+        m.state
+      FROM mrp_production_moves m JOIN mrp_productions p ON p.id = m.production_id
+      WHERE m.production_id = :id AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found')
+      ORDER BY m.sequence, m.id
+actions:
+  - id: view_mrp_product_move
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders/detail/product-moves/detail
+    params: { id: '{row.id}', production_id: '{state.id}' }
+  - id: back_to_mrp_product_moves
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders/detail/product-moves
+    params: { id: '{state.production_id}' }

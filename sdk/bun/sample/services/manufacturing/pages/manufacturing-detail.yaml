@@ -8,6 +8,7 @@ components:
     editable: true
     stat_buttons:
       - { id: open_mrp_production_overview, label: Overview, value_field: quantity, permission: manufacturing.read }
+      - { id: open_mrp_production_moves, label: Product Moves, value_field: move_count, permission: manufacturing.read, show_if: "record.state === 'In Progress' || record.state === 'Done'" }
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: back_to_mrp_productions, label: Back to Manufacturing Orders, icon: arrow-left, permission: manufacturing.read }

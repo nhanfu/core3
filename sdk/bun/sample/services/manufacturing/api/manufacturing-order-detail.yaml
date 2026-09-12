@@ -7,7 +7,8 @@ datasources:
     query: |
       SELECT p.id, p.row_version, p.name, p.product_id, p.product_name, b.name AS bom_name,
         p.bom_id, p.quantity, p.qty_produced, p.state, CAST(p.planned_date AS VARCHAR) AS planned_date,
-        p.reference, p.priority, p.company_name, p.warehouse_name, p.origin, p.availability, p.locked
+        p.reference, p.priority, p.company_name, p.warehouse_name, p.origin, p.availability, p.locked,
+        (SELECT COUNT(*) FROM mrp_production_moves m WHERE m.production_id = p.id) AS move_count
       FROM mrp_productions p
       LEFT JOIN mrp_boms b ON b.id = p.bom_id
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id
@@ -24,6 +25,11 @@ actions:
     type: navigate
     permission: manufacturing.read
     navigate_to: /manufacturing-orders/detail/overview
+    params: { id: '{state.id}' }
+  - id: open_mrp_production_moves
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing-orders/detail/product-moves
     params: { id: '{state.id}' }
   - id: back_to_mrp_productions
     type: navigate

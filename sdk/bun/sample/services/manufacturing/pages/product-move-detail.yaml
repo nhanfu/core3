@@ -1,0 +1,35 @@
+title: Move Line
+page: { id: manufacturing-product-move-detail, route: /manufacturing-orders/detail/product-moves/detail, breadcrumb: [Supply Chain, Manufacturing, Manufacturing Orders, Product Moves, Move Line], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_product_move_detail
+    title_field: product_name
+    subtitle_field: reference
+    editable: false
+    labels: { editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_mrp_product_moves, label: Back to Product Moves, icon: arrow-left, permission: manufacturing.read }
+    status_field: state
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: Confirmed, label: Confirmed }
+      - { value: Assigned, label: Assigned }
+      - { value: Done, label: Done }
+    status_colors: { Draft: neutral, Confirmed: amber, Assigned: blue, Done: green, Waiting: amber }
+    group_columns: 2
+    groups:
+      - title: Move Line
+        fields:
+          - { field: date, label: Date }
+          - { field: reference, label: Reference }
+          - { field: product_name, label: Product }
+          - { field: move_type, label: Move Type }
+          - { field: quantity, label: Quantity }
+          - { field: uom, label: Unit }
+      - title: Locations and Traceability
+        fields:
+          - { field: location, label: Source Location }
+          - { field: location_dest, label: Destination Location }
+          - { field: lot_name, label: Lot/Serial Number }
+          - { field: production_name, label: Manufacturing Order }
+          - { field: state, label: Status }

@@ -1,0 +1,28 @@
+title: Inventory Moves
+page: { id: manufacturing-product-moves, route: /manufacturing-orders/detail/product-moves, breadcrumb: [Supply Chain, Manufacturing, Manufacturing Orders, Product Moves], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_product_moves
+    search: { label: Search Product Moves, placeholder: 'Search reference, product, lot, or location...' }
+    views:
+      - { id: list, label: List, icon: table }
+      - id: form
+        label: Form
+        icon: form
+    view_navigation: tabs
+    form_view: { page: apps/services/manufacturing/pages/product-move-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_product_move
+    row_double_click_action: view_mrp_product_move
+    empty_state: { title: No product moves, description: Components and finished products will appear here when this manufacturing order is in progress or done. }
+    columns:
+      - { field: date, label: Date, mobile: true, sortable: true }
+      - { field: reference, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: product_name, label: Product, mobile: true, mobile_secondary: move_type }
+      - { field: lot_name, label: Lot/Serial Number, mobile: false }
+      - { field: location, label: From, mobile: false }
+      - { field: location_dest, label: To, mobile: false }
+      - { field: quantity, label: Quantity, align: right, mobile: true }
+      - { field: uom, label: Unit, mobile: true }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
