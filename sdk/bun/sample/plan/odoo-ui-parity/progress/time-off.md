@@ -2,19 +2,24 @@
 
 Module owner: time-off module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: dormant
+Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: current working tree
 
 ## Current state
 
-This module is registered in odoo-parity-plan.md but has not yet produced a
-current-wave candidate or verified evidence in the active checkout. No parity
-claim is made here.
+The focused Time Off suite passes 45 tests across 17 files with 485 assertions.
+The authenticated registered-menu matrix passes 32/32 desktop/mobile checks
+across 16 routes. An authenticated request was created, submitted, and
+approved successfully, with row versions advancing from 1 to 3.
+The Fleet user permission boundary was also checked: `/time-off/time-off-approval`
+returned HTTP 403 with `Requires permission: time_off.manage`, with no browser
+errors.
+Complete permission boundaries, full CRUD/workflow coverage, and paired Odoo
+desktop/mobile comparison remain open. No full parity claim is made here.
 
 ## Next bounded task
 
-Record the complete Odoo menu/action/view inventory, implement the module
-functionality, and dispatch QA on the first committed candidate. Update this
-file only with evidence from the matching module owner.
-
+Run role-specific permission checks, cancellation/refusal/balance persistence
+flows, and paired Odoo desktop/mobile captures; then update this file only with
+evidence from the matching module owner.
