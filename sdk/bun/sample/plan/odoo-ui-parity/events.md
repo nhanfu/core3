@@ -1239,3 +1239,52 @@ event-form action inventory; `bun run lint`, the Events Sass build, and
 `audit-order-ui.ts` script and reports unrelated pre-existing audit findings;
 there is no separate root `bun run audit` script. Screenshots remain outside
 Git.
+
+## Bounded batch: Event Full Page Ticket Example report (2026-09-12)
+
+The installed Odoo 19 `event` addon binds `Full Page Ticket Example` through
+`event.action_report_event_event_full_page_ticket` to `event.event` with
+`qweb-pdf`, report template `event.event_event_report_template_full_page_ticket`,
+and binding type `report`. It is available from the event form Print menu to
+event users with read access and has no create, edit, delete, or workflow
+interaction. The source template renders the event name, first ticket type,
+placeholder attendee `John Doe`, venue, date range, QR code and Code128 barcode,
+ticket instructions, and organizer footer. The companion registration report
+is a separate `event.registration` action and remains outside this event-scoped
+slice.
+
+Core3 adds `/events/full-page-ticket`, joined to
+`api/event-full-page-ticket.yaml` by `page.id`, and adds the matching
+`Full Page Ticket Example` event-form action. The page owns the read-only
+OdooFormView and TemplatePreview; the API owns the event header and ordered
+report blocks. Migration `20260912150000-029-event-full-page-ticket.yaml`
+adds nine deterministic blocks covering the source-visible ticket contract.
+The action invokes the browser print surface rather than claiming Odoo's
+server-generated PDF or barcode image transport. Explicit empty,
+missing-event, and transport-error contracts are covered by
+`events_full_page_ticket.integration.test.ts`; no CRUD or mutation is
+declared because the source report is read-only.
+
+The authenticated Odoo reference was reached as `codex@core3.local` in
+`core3_codex_demo_20260912` at `/odoo/events/1`, with no page errors or failed
+requests. Captures are under `/tmp/core3-odoo-parity/events-full-page-ticket-20260912/`:
+
+| Surface | Viewport | Capture | SHA-256 | Result |
+| --- | --- | --- | --- | --- |
+| Odoo event form | 1440x900 | `odoo-event-form-desktop.png` | `63f7594f80c61ad6b2a3c70dc8561f9a237050f6225dd4636b217217d00aea5d` | authenticated event loaded |
+| Odoo event form | 390x844 | `odoo-event-form-mobile.png` | `ad650c32e824d254a150ebea8531ac64c6c1b32607e56e819a957749427d96d5` | authenticated event loaded |
+| Odoo event form action menu | 1440x900 | `odoo-event-print-menu-desktop.png` | `31fdafea3e847c6d9a02e7b8b410817142ee155ae98244bc018353b12450ef73` | menu opened; report label was not exposed in this client state |
+
+No Core3 authenticated capture was possible. The normal supervisor started
+the backend but Vite exited with `EMFILE: too many open files` while watching
+`sdk/bun/sample/vite.config.ts`; the standalone server then failed because
+`sdk/bun/sample/coredb/auth.duckdb` is absent, and a direct in-process attempt
+was rejected because `runtime.service_host_url` is required. The production
+frontend build and static audit succeeded, but these runtime blockers mean
+this batch makes no Core3 visual-parity claim. The paired Core3 desktop/mobile
+captures remain a required follow-up. No screenshots are committed.
+
+Validation: focused test passes 3 tests and 12 assertions; frontend/global and
+Events Sass plus Vite production build pass; `bun run audit` reports 613 pages,
+622 routes, and 1057 datasources; and `git diff --check` is clean. ESLint was
+not applicable to YAML; the focused TypeScript test has no lint findings.

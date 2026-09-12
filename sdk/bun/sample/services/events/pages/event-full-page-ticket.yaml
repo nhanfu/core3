@@ -1,0 +1,35 @@
+title: Full Page Ticket Example
+page: { id: event-full-page-ticket, route: /events/full-page-ticket, breadcrumb: [Marketing, Events, Event, Full Page Ticket Example], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_full_page_ticket
+    title_field: event_name
+    subtitle_field: event_schedule
+    editable: false
+    header_actions:
+      - { id: print_event_full_page_ticket, label: Print, permission: events.read, variant: primary }
+      - { id: back_to_event_detail, label: Back to event, permission: events.read, variant: secondary }
+    group_columns: 2
+    groups:
+      - title: Event
+        fields: [{ field: event_name, label: Event }, { field: event_schedule, label: Date }, { field: venue, label: Venue }, { field: ticket_type, label: Ticket type }]
+      - title: Ticket
+        fields: [{ field: attendee_name, label: Attendee }, { field: ticket_instructions, label: Ticket Instructions }, { field: organizer, label: Organizer }]
+  - type: TemplatePreview
+    id: event-full-page-ticket-preview
+    source: event_full_page_ticket_blocks
+    template_source: event_full_page_ticket
+actions:
+  - id: print_event_full_page_ticket
+    type: client
+    permission: events.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: back_to_event_detail
+    type: navigate
+    permission: events.read
+    navigate_to: /event-detail
+    params: { id: '{row.event_id}' }

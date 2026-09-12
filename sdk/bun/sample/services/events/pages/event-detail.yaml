@@ -12,6 +12,7 @@ components:
       - { id: registration_desk_event_detail, label: Registration Desk, variant: primary, permission: events.read }
       - { id: print_event_attendee_list, label: Attendee List, variant: secondary, permission: events.read }
       - { id: print_event_badge_example, label: Badge Example, variant: secondary, permission: events.read }
+      - { id: print_event_full_page_ticket_example, label: Full Page Ticket Example, variant: secondary, permission: events.read }
       - { id: edit_event_detail, label: Edit, variant: secondary, permission: events.write }
       - { id: publish_event_detail, label: Publish, variant: primary, permission: events.write, show_if: "record.state === 'Draft'" }
       - { id: start_event_detail, label: Start, variant: secondary, permission: events.write, show_if: "record.state === 'Published'" }
@@ -158,6 +159,7 @@ actions:
   - { id: registration_desk_event_detail, type: navigate, permission: events.read, navigate_to: /events/registration-desk }
   - { id: print_event_attendee_list, type: navigate, permission: events.read, navigate_to: /events/attendee-list, params: { id: '{row.id}' } }
   - { id: print_event_badge_example, type: navigate, permission: events.read, navigate_to: /events/badge-example, params: { id: '{row.id}' } }
+  - { id: print_event_full_page_ticket_example, type: navigate, permission: events.read, navigate_to: /events/full-page-ticket, params: { id: '{row.id}' } }
   - { id: event_registration_stats_detail, type: navigate, permission: events.read, navigate_to: /events/registration-statistics, params: { event_id: '{row.id}' } }
   - { id: event_attendee_stats_detail, type: navigate, permission: events.read, navigate_to: /events/attendees, params: { event_id: '{row.id}' } }
   - { id: event_leads_detail, type: navigate, permission: events.read, navigate_to: /events/leads, params: { event_id: '{row.id}' } }

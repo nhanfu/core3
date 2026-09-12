@@ -1,0 +1,14 @@
+page: { id: event-full-page-ticket }
+datasources:
+  - id: event_full_page_ticket
+    single: true
+    permission: events.read
+    error_states:
+      missing_record: { status: 404, code: EVENT_FULL_PAGE_TICKET_NOT_FOUND, message: Event full page ticket not found. }
+      transport_error: { status: 503, code: EVENT_FULL_PAGE_TICKET_UNAVAILABLE, message: Event full page ticket is temporarily unavailable. }
+    query: "SELECT e.id AS event_id, e.name AS event_name, strftime(e.start_at, '%d %b %Y %H:%M') || ' - ' || strftime(e.end_at, '%H:%M') AS event_schedule, COALESCE(e.venue, 'Online Event') AS venue, COALESCE((SELECT name FROM event_tickets WHERE event_id = e.id ORDER BY name LIMIT 1), 'General Admission') AS ticket_type, 'John Doe' AS attendee_name, 'Bring this ticket to the registration desk.' AS ticket_instructions, COALESCE(e.organizer, 'Events Team') AS organizer, 'Full Page Ticket Example' AS name, 'A4' AS format, 'Ready' AS status FROM events e WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.id = :id"
+  - id: event_full_page_ticket_blocks
+    permission: events.read
+    error_states:
+      transport_error: { status: 503, code: EVENT_FULL_PAGE_TICKET_UNAVAILABLE, message: Event full page ticket is temporarily unavailable. }
+    query: "SELECT id, block_type, label, content, token_key FROM event_full_page_ticket_blocks WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY sequence, id"

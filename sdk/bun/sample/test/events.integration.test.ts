@@ -34,6 +34,7 @@ describe('Events attendee parity batch', () => {
       'registration_desk_event_detail',
       'print_event_attendee_list',
       'print_event_badge_example',
+      'print_event_full_page_ticket_example',
       'edit_event_detail',
       'publish_event_detail',
       'start_event_detail',
