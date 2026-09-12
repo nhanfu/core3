@@ -92,10 +92,10 @@ describe('Website Page Manager parity', () => {
     const updated = await repository.executeMutation(mutation, {
       id: 'website-page-demo-002',
       expected_row_version: 1,
-      values: { website_id: 'website-demo-001', website_name: 'Core3 Storefront', name: 'Contact', url: '/contact', is_indexed: true, is_homepage: false, is_in_menu: true, is_seo_optimized: true },
+      values: { website_id: 'website-demo-001', website_name: 'Core3 Storefront', name: 'Contact', url: '/contact', content_html: '<p>Contact the team.</p>', is_indexed: true, is_homepage: false, is_in_menu: true, is_seo_optimized: true },
     });
-    expect(updated).toMatchObject({ id: 'website-page-demo-002', name: 'Contact', url: '/contact', row_version: 2 });
-    expect((await repository.query('SELECT name, url, row_version FROM website_pages WHERE id = ?', ['website-page-demo-002']))[0]).toEqual({ name: 'Contact', url: '/contact', row_version: 2 });
+    expect(updated).toMatchObject({ id: 'website-page-demo-002', name: 'Contact', url: '/contact', content_html: '<p>Contact the team.</p>', row_version: 2 });
+    expect((await repository.query('SELECT name, url, content_html, row_version FROM website_pages WHERE id = ?', ['website-page-demo-002']))[0]).toEqual({ name: 'Contact', url: '/contact', content_html: '<p>Contact the team.</p>', row_version: 2 });
     await expect(repository.executeMutation(mutation, {
       id: 'website-page-demo-002', expected_row_version: 1,
       values: { website_id: 'website-demo-001', website_name: 'Core3 Storefront', name: 'Stale', url: '/stale' },

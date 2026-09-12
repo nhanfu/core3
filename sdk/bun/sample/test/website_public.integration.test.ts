@@ -29,7 +29,7 @@ describe('Website public visibility', () => {
     const list = await route('/api/public/website/pages');
     expect(list?.status).toBe(200);
     expect((await list?.json()).pages.map((page: any) => page.id)).toEqual(['website-page-demo-001']);
-    expect((await (await route('/api/public/website/page?path=/'))?.json()).page).toMatchObject({ id: 'website-page-demo-001', url: '/' });
+    expect((await (await route('/api/public/website/page?path=/'))?.json()).page).toMatchObject({ id: 'website-page-demo-001', url: '/', content_html: '<p>Welcome to the Core3 Storefront.</p>' });
     expect((await route('/api/public/website/page?path=/contactus'))?.status).toBe(404);
     expect((await route('/api/public/website/pages/website-page-demo-002'))?.status).toBe(404);
     expect((await route('/api/public/website/pages/website-page-demo-001', { method: 'POST' }))?.status).toBe(405);
@@ -44,5 +44,7 @@ describe('Website public visibility', () => {
     expect(componentSource).toContain("@core3/client/html");
     expect(componentSource).toContain("/api/public/website/page?path=");
     expect(componentSource).toContain("html.take(outlet).add('main')");
+    expect(componentSource).toContain('sanitizePublicHtml');
+    expect(componentSource).toContain("'SCRIPT', 'STYLE', 'IFRAME'");
   });
 });

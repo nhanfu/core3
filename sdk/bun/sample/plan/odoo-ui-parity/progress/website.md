@@ -19,7 +19,9 @@ draft pages through Website-owned operations. The public browser route and
 Fluent HTML renderer are now declared and covered by an implementation
 contract test. A live single-module browser smoke verified the published Home
 at 1440x900 and 390x844, and verified that the draft Contact us page is not
-exposed. These are Core3 runtime checks, not paired Odoo visual sign-off.
+exposed. Page content is now migration-backed and sanitized before public DOM
+insertion; a live browser smoke rendered the seeded content with no scripts.
+These are Core3 runtime checks, not paired Odoo visual sign-off.
 
 ## Next bounded task
 
@@ -31,4 +33,4 @@ rendered page content, and paired Odoo comparison before module sign-off.
 
 | Date | Check | Evidence | Result |
 | --- | --- | --- | --- |
-| 2026-09-13 | Public Website page | Single-module server on `:4310`; published Home rendered at desktop/mobile; draft `/contactus` showed unavailable state; no page errors on published route | Core3 runtime pass; artifacts in `/tmp/core3-odoo-parity/website-public-desktop.png` and `website-public-mobile.png` |
+| 2026-09-13 | Public Website page/content | Single-module server on `:4310`; published Home/content rendered in headless Chrome; draft `/contactus` showed unavailable state; no page errors/scripts in rendered content | Core3 runtime pass; artifact `/tmp/core3-odoo-parity/website-public-content-desktop.png`; paired Odoo comparison pending |

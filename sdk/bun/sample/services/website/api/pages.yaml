@@ -13,7 +13,7 @@ datasources:
   - id: website_pages
     permission: website.read
     workflow: website_pages
-    query: "SELECT id, row_version, website_id, website_name, name, url, is_indexed, is_homepage, is_in_menu, is_seo_optimized, CAST(date_publish AS VARCHAR) AS date_publish, state FROM website_pages WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR url ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY url, id"
+    query: "SELECT id, row_version, website_id, website_name, name, url, content_html, is_indexed, is_homepage, is_in_menu, is_seo_optimized, CAST(date_publish AS VARCHAR) AS date_publish, state FROM website_pages WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR url ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY url, id"
 actions:
   - id: create_website_page
     type: server_form
@@ -26,7 +26,7 @@ actions:
     mutation:
       operation: insert
       table: website_pages
-      fields: [website_id, website_name, name, url, is_indexed, is_homepage, is_in_menu, is_seo_optimized]
+      fields: [website_id, website_name, name, url, content_html, is_indexed, is_homepage, is_in_menu, is_seo_optimized]
       required: [website_id, website_name, name, url]
       guards: [{ query: "SELECT 1 AS ok FROM website_websites WHERE id = :website_id", status: 400, message: A valid website is required }]
       result: { query: "SELECT * FROM website_pages WHERE id = :id" }
@@ -35,6 +35,7 @@ actions:
       - { field: website_name, label: Website name, type: text, required: true }
       - { field: name, label: Page Title, type: text, required: true }
       - { field: url, label: Page URL, type: text, required: true }
+      - { field: content_html, label: Page content, type: textarea }
       - { field: is_indexed, label: Indexed, type: checkbox }
       - { field: is_homepage, label: Home page, type: checkbox }
       - { field: is_in_menu, label: Is In Main Menu, type: checkbox }
@@ -51,7 +52,7 @@ actions:
     mutation:
       operation: update
       table: website_pages
-      fields: [website_id, website_name, name, url, is_indexed, is_homepage, is_in_menu, is_seo_optimized]
+      fields: [website_id, website_name, name, url, content_html, is_indexed, is_homepage, is_in_menu, is_seo_optimized]
       required: [website_id, website_name, name, url]
       concurrency: { required: true }
       guards:
@@ -64,6 +65,7 @@ actions:
       - { field: website_name, label: Website name, type: text, required: true }
       - { field: name, label: Page Title, type: text, required: true }
       - { field: url, label: Page URL, type: text, required: true }
+      - { field: content_html, label: Page content, type: textarea }
       - { field: is_indexed, label: Indexed, type: checkbox }
       - { field: is_homepage, label: Home page, type: checkbox }
       - { field: is_in_menu, label: Is In Main Menu, type: checkbox }

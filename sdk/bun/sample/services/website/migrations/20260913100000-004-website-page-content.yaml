@@ -1,0 +1,13 @@
+version: 0.0.4
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE website_pages ADD COLUMN IF NOT EXISTS content_html VARCHAR;
+      UPDATE website_pages SET content_html = '<p>Welcome to the Core3 Storefront.</p>' WHERE id = 'website-page-demo-001' AND content_html IS NULL;
+    down: |
+      ALTER TABLE website_pages DROP COLUMN IF EXISTS content_html;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

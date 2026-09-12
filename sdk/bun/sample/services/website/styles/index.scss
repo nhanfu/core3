@@ -8,6 +8,8 @@
 .website-public-kicker { color: #6b5dd3; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .website-public-article h1 { margin: 14px 0; font-size: clamp(32px, 6vw, 60px); line-height: 1.08; }
 .website-public-path, .website-public-article time { display: block; color: #667085; }
+.website-public-content { margin-top: 28px; color: #475467; font-size: 18px; line-height: 1.7; }
+.website-public-content p { margin: 0 0 16px; }
 .website-public-error, .website-public-loading { display: grid; place-content: center; padding: 48px 24px; text-align: center; }
 .website-public-error h1 { margin-bottom: 8px; }
 
