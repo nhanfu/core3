@@ -84,11 +84,11 @@ catalog records, and manufacturing/inventory records.
 | sale-subscription | sale_subscription | unavailable in supplied source | `odoo-ui-parity/subscriptions.md` | planned |
 | sale-renting | sale_renting | unavailable in supplied source | `odoo-ui-parity/rental.md` | planned |
 | accounting | account | available | `odoo-ui-parity/accounting.md` | in-progress |
-| expenses | hr_expense | available | `odoo-ui-parity/expenses.md` | ready |
+| expenses | hr_expense | available | `odoo-ui-parity/expenses.md` | in-progress |
 | documents | documents | unavailable in supplied source | `odoo-ui-parity/documents.md` | planned |
 | approvals | approvals | unavailable in supplied source | `odoo-ui-parity/approvals.md` | planned |
 | spreadsheet | spreadsheet | available | `odoo-ui-parity/spreadsheet.md` | ready |
-| inventory | stock | available | `odoo-ui-parity/inventory.md` | ready |
+| inventory | stock | available | `odoo-ui-parity/inventory.md` | in-progress |
 | manufacturing | mrp | available | `odoo-ui-parity/manufacturing.md` | in-progress |
 | purchase | purchase | available | `odoo-ui-parity/purchase.md` | in-progress |
 | maintenance | maintenance | available | `odoo-ui-parity/maintenance.md` | ready |
@@ -97,7 +97,7 @@ catalog records, and manufacturing/inventory records.
 | quality | quality | unavailable in supplied source | `odoo-ui-parity/quality.md` | planned |
 | plm | mrp_plm | unavailable in supplied source | `odoo-ui-parity/plm.md` | planned |
 | employees | hr | available | `odoo-ui-parity/employees.md` | in-progress |
-| recruitment | hr_recruitment | available | `odoo-ui-parity/recruitment.md` | ready |
+| recruitment | hr_recruitment | available | `odoo-ui-parity/recruitment.md` | in-progress |
 | time-off | hr_holidays | available | `odoo-ui-parity/time-off.md` | in-progress |
 | appraisals | hr_appraisal | unavailable in supplied source | `odoo-ui-parity/appraisals.md` | planned |
 | referrals | hr_referral | unavailable in supplied source | `odoo-ui-parity/referrals.md` | planned |
@@ -107,8 +107,8 @@ catalog records, and manufacturing/inventory records.
 | events | event | available | `odoo-ui-parity/events.md` | in-progress |
 | surveys | survey | available | `odoo-ui-parity/surveys.md` | in-progress |
 | marketing-automation | marketing_automation | unavailable in supplied source | `odoo-ui-parity/marketing-automation.md` | planned |
-| project | project | available | `odoo-ui-parity/project.md` | ready |
-| timesheets | hr_timesheet | available | `odoo-ui-parity/timesheets.md` | ready |
+| project | project | available | `odoo-ui-parity/project.md` | in-progress |
+| timesheets | hr_timesheet | available | `odoo-ui-parity/timesheets.md` | in-progress |
 | website | website | available; YAML-driven | `odoo-ui-parity/website.md` | on-hold |
 | ecommerce | website_sale | available; YAML-driven | `odoo-ui-parity/ecommerce.md` | on-hold |
 | blog | website_blog | available; YAML-driven | `odoo-ui-parity/blog.md` | on-hold |
