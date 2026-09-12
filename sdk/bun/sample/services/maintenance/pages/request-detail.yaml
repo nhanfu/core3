@@ -10,7 +10,8 @@ components:
     statusbar: [{ value: New Request, label: New Request }, { value: In Progress, label: In Progress }, { value: Repaired, label: Repaired }, { value: Scrap, label: Scrap }]
     statusbar_actions: { In Progress: assign_maintenance_request_detail, Repaired: start_maintenance_request_detail, Scrap: repair_maintenance_request_detail }
     header_actions:
-      - { id: cancel_maintenance_request_detail, label: Cancel, variant: danger, permission: maintenance.write, show_if: "state.maintenance_request_detail.state !== 'Scrap'" }
+      - { id: archive_maintenance_request_detail, label: Cancel, variant: danger, permission: maintenance.write, show_if: "state.maintenance_request_detail.archived === false" }
+      - { id: reopen_maintenance_request_detail, label: Reopen Request, variant: secondary, permission: maintenance.write, show_if: "state.maintenance_request_detail.archived === true" }
     group_columns: 2
     groups: [{ title: Request, fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: equipment_name, label: Equipment }, { field: category, label: Category }, { field: team, label: Team }, { field: request_type, label: Type }, { field: priority, label: Priority }] }, { title: Scheduling, fields: [{ field: assigned_to, label: Responsible }, { field: owner, label: Created by }, { field: request_date, label: Request date }, { field: scheduled_date, label: Scheduled date }, { field: completed_date, label: Completed date }, { field: recurrence, label: Recurrence }, { field: instructions, label: Instructions }, { field: description, label: Description }] }]
 actions: []

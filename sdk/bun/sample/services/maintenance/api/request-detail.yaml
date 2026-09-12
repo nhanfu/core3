@@ -1,8 +1,40 @@
 page: { id: maintenance-request-detail }
 datasources:
-  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, state, stage, kanban_state, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(completed_date AS VARCHAR) AS completed_date, recurrence FROM maintenance_requests WHERE id = :id" }
+  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, state, stage, kanban_state, archived, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(completed_date AS VARCHAR) AS completed_date, recurrence FROM maintenance_requests WHERE id = :id" }
 actions:
   - { id: assign_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.assign, handler: order_transition, workflow: maintenance_requests, operation: assign, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
   - { id: start_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.start, handler: order_transition, workflow: maintenance_requests, operation: start, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
   - { id: repair_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.repair, handler: order_transition, workflow: maintenance_requests, operation: repair, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
   - { id: cancel_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.cancel, handler: order_transition, workflow: maintenance_requests, operation: cancel, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
+  - id: archive_maintenance_request_detail
+    type: server
+    permission: maintenance.write
+    action: maintenance.requests.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [maintenance_request_detail, maintenance_requests]
+    params: { values: { archived: true } }
+    mutation:
+      operation: update
+      table: maintenance_requests
+      fields: [archived]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Maintenance request was not found. }
+      result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
+  - id: reopen_maintenance_request_detail
+    type: server
+    permission: maintenance.write
+    action: maintenance.requests.reopen
+    handler: yaml_mutation
+    operation: update
+    refresh: [maintenance_request_detail, maintenance_requests]
+    params: { values: { archived: false } }
+    mutation:
+      operation: update
+      table: maintenance_requests
+      fields: [archived]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Maintenance request was not found. }
+      result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }

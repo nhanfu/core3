@@ -33,3 +33,35 @@ actions:
   - { id: start_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.start, handler: order_transition, workflow: maintenance_requests, operation: start, refresh: [maintenance_requests] }
   - { id: repair_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.repair, handler: order_transition, workflow: maintenance_requests, operation: repair, refresh: [maintenance_requests] }
   - { id: cancel_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.cancel, handler: order_transition, workflow: maintenance_requests, operation: cancel, refresh: [maintenance_requests] }
+  - id: archive_maintenance_request
+    type: server
+    permission: maintenance.write
+    action: maintenance.requests.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [maintenance_requests]
+    params: { values: { archived: true } }
+    mutation:
+      operation: update
+      table: maintenance_requests
+      fields: [archived]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Maintenance request was not found. }
+      result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
+  - id: reopen_maintenance_request
+    type: server
+    permission: maintenance.write
+    action: maintenance.requests.reopen
+    handler: yaml_mutation
+    operation: update
+    refresh: [maintenance_requests]
+    params: { values: { archived: false } }
+    mutation:
+      operation: update
+      table: maintenance_requests
+      fields: [archived]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Maintenance request was not found. }
+      result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }

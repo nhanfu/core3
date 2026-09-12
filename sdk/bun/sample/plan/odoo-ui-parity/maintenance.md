@@ -419,3 +419,50 @@ existing migration limitation (`Adding columns with constraints not yet
 supported`). The local Odoo endpoint was reachable, but no new authenticated
 Maintenance comparison screen was claimed. This is a runtime evidence
 limitation, not visual parity evidence.
+
+## Bounded batch: Maintenance Request cancel and reopen (2026-09-12)
+
+This batch closes the Odoo Maintenance Request form actions `Cancel` and
+`Reopen Request` from `addons/maintenance/views/maintenance_views.xml`. Odoo
+archives a request with Cancel and exposes Reopen Request when the archived
+flag is set; the existing Core3 Cancel control incorrectly used the terminal
+Scrap workflow transition.
+
+Core3 now exposes page-id-owned archive/reopen mutations in both the request
+list and request-detail API fragments. The detail datasource includes the
+archived state, and its OdooFormView binds visible `Cancel` and `Reopen
+Request` header actions to the matching permission-protected mutations. Both
+mutations require a row version, return stable
+`MAINTENANCE_REQUEST_NOT_FOUND` (404) and `STALE_RECORD` (409) errors, and
+refresh the list/detail sources. The deterministic fixture is archived and
+reopened without changing its stable ID or dates.
+
+Implementation and verification:
+
+- `services/maintenance/api/requests.yaml` and
+  `api/request-detail.yaml` add the archive/reopen contracts.
+- `services/maintenance/pages/request-detail.yaml` binds the source-accurate
+  header actions; page YAML remains presentation-only.
+- `test/maintenance_request_archive.integration.test.ts` covers page/API
+  separation, permissions, deterministic ordering, idempotent DuckDB install
+  and upgrade, archive filtering, successful reopen, missing 404, and stale
+  409 behavior. The existing statusbar contract test was updated for the new
+  visible actions.
+- `bun test test/maintenance*.integration.test.ts` from `sdk/bun/sample` —
+  **25 passed, 0 failed, 277 assertions**.
+- `bun run audit` from `sdk/bun/sample` — passed, **600 pages / 608 routes /
+  1034 datasources**.
+- `bun run lint` from `sdk/bun` — passed.
+- `bun run css:build:global && bun run css:build:maintenance` from
+  `sdk/bun/sample` — passed.
+- `git diff --check` — passed.
+
+Authenticated browser evidence was attempted with an isolated
+`bun run dev --db=ddb --memory` runtime. Startup failed before readiness on the
+existing DuckDB migration parser limitation, `Adding columns with constraints
+not yet supported`, so `http://127.0.0.1:3001` and `:3002` returned no
+response. The persistent Playwright interactive surface required by the
+browser QA procedure was not available in this session, and no desktop or
+mobile screenshots are claimed or added. The local Odoo source was inspected
+at `/home/nhanjs/projects/odoo`; no new authenticated Odoo comparison capture
+was made in this batch.
