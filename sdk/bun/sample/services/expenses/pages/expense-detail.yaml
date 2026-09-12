@@ -26,6 +26,9 @@ components:
       - { id: pay_expense_detail, label: Mark paid, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'In Payment'" }
       - { id: refuse_expense_detail, label: Refuse, variant: danger, permission: expenses.manage, show_if: "state.expense_detail.status === 'Submitted' || state.expense_detail.status === 'Approved'" }
       - { id: reset_expense_detail, label: Reset to draft, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Refused'" }
+      - { id: split_expense, label: Split Expense, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft'" }
+    stat_buttons:
+      - { id: open_split_expense, label: Split, value_field: split_expense_count, icon: split, permission: expenses.read, show_if: "state.expense_detail.split_expense_count > 0" }
     group_columns: 2
     groups:
       - title: Expense details
@@ -78,3 +81,43 @@ components:
     attachment_accept: image/*,.pdf,.jpg,.jpeg,.png
     attachment_upload_action: upload_expense_attachment
     attachment_download_action: download_expense_attachment
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: expense_split_lines
+    parent_source: expense_detail
+    title: Split Expense
+    description: Divide this draft expense into lines whose total matches the original amount.
+    variant: odoo_x2many
+    page_size: 20
+    row_key: id
+    actions:
+      - { id: add_expense_split_line, label: Add a line, variant: primary, permission: expenses.write }
+    empty_state: { title: No split lines, description: Add at least two lines before splitting this expense. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: name, field: name, label: Expense, input_type: text, required: true }
+      - { type: LineItemField, id: product_name, field: product_name, label: Product, input_type: text }
+      - { type: LineItemField, id: employee_name, field: employee_name, label: Employee, input_type: text, required: true }
+      - { type: LineItemField, id: total_amount, field: total_amount_display, label: Total Amount, input_type: number, required: true }
+      - { type: LineItemField, id: analytic_distribution, field: analytic_distribution, label: Analytic distribution, input_type: text }
+      - type: LineItemActions
+        id: expense_split_line_actions
+        edit_action: edit_expense_split_line
+        create_action: add_expense_split_line
+        actions:
+          - { id: edit_expense_split_line, label: Edit, icon: edit, variant: ghost, permission: expenses.write }
+          - { id: delete_expense_split_line, label: Delete, icon: trash, variant: danger, permission: expenses.write }
+    columns:
+      - { field: sequence, label: '#', align: right, width: 52 }
+      - { field: name, label: Expense, width: 260 }
+      - { field: product_name, label: Product, width: 150 }
+      - { field: employee_name, label: Employee, width: 150 }
+      - { field: total_amount_display, label: Total Amount, align: right, width: 130 }
+      - { field: analytic_distribution, label: Analytic distribution, width: 180 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_expense_split_line, label: Edit, icon: edit, variant: ghost, permission: expenses.write }
+          - { id: delete_expense_split_line, label: Delete, icon: trash, variant: danger, permission: expenses.write }

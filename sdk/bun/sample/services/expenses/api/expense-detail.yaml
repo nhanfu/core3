@@ -17,7 +17,9 @@ datasources:
         e.manager_name, e.vendor_name, e.receipt_reference, e.receipt_label, e.receipt_checksum,
         e.company_name, e.department_name,
         e.analytic_distribution, e.journal_entry, e.duplicate_candidate,
-        e.reimbursement_status, e.refusal_reason, e.state AS status
+        e.reimbursement_status, e.refusal_reason, e.state AS status,
+        e.split_expense_origin_id,
+        (SELECT COUNT(*) FROM expenses split WHERE split.split_expense_origin_id = e.id OR e.split_expense_origin_id = split.split_expense_origin_id) AS split_expense_count
       FROM expenses e WHERE e.id = :id AND (:fixture_state IS NULL OR :fixture_state <> 'empty')
   - id: expense_detail_activity
     single: false
@@ -49,8 +51,37 @@ datasources:
       WHERE e.id = :id
         AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
       GROUP BY e.id, e.row_version
+  - id: expense_split_wizard
+    single: true
+    permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_SPLIT_UNAVAILABLE, message: Expense split data is temporarily unavailable } }
+    query: |
+      SELECT 'split-wizard-' || e.id AS id, e.id AS expense_id, e.row_version,
+        e.amount AS original_amount,
+        COALESCE(SUM(l.total_amount), 0) AS split_total,
+        COUNT(l.id) AS line_count,
+        ABS(e.amount - COALESCE(SUM(l.total_amount), 0)) < 0.01 AND COUNT(l.id) >= 2 AS split_possible,
+        CASE WHEN ABS(e.amount - COALESCE(SUM(l.total_amount), 0)) < 0.01 AND COUNT(l.id) >= 2 THEN NULL
+          ELSE 'The total amount does not match the original amount.' END AS warning
+      FROM expenses e LEFT JOIN expense_split_lines l ON l.expense_id = e.id
+      WHERE e.id = :id AND e.state = 'Draft'
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+      GROUP BY e.id, e.row_version, e.amount
+  - id: expense_split_lines
+    single: false
+    permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_SPLIT_LINES_UNAVAILABLE, message: Expense split lines are temporarily unavailable } }
+    query: |
+      SELECT id, expense_id, row_version, sequence, name, product_name, employee_name,
+        total_amount, printf('$%,.2f', total_amount) AS total_amount_display,
+        tax_amount, analytic_distribution
+      FROM expense_split_lines
+      WHERE expense_id = :id
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+      ORDER BY sequence, id
 actions:
   - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
+  - { id: open_split_expense, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{state.expense_detail.split_expense_origin_id}' } }
   - id: edit_expense_detail
     type: server_form
     permission: expenses.write
@@ -161,6 +192,102 @@ actions:
         - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-post-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.post', 'Posted', 'Journal entry posted')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     refresh: [expense_detail, expense_detail_activity]
+  - id: split_expense
+    type: server_form
+    permission: expenses.write
+    title: Expense split
+    submit_label: Split Expense
+    cancel_label: Cancel
+    action: expenses.detail.split
+    handler: yaml_mutation
+    operation: split
+    prefill: source
+    prefill_source: expense_split_wizard
+    params: { id: '{state.id}' }
+    refresh: [expense_detail, expense_detail_activity, expense_split_wizard, expense_split_lines]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: EXPENSE_SPLIT_STALE, message: Only the current draft expense can be split. }
+        - { query: "SELECT 1 AS ok FROM expenses e WHERE e.id = :id AND (SELECT COUNT(*) FROM expense_split_lines WHERE expense_id = :id) >= 2 AND ABS(e.amount - (SELECT COALESCE(SUM(total_amount), 0) FROM expense_split_lines WHERE expense_id = :id)) < 0.01", status: 409, code: EXPENSE_SPLIT_TOTAL_MISMATCH, message: The total amount does not match the original amount. }
+      steps:
+        - query: "UPDATE expenses SET amount = (SELECT total_amount FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), name = (SELECT name FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), product_name = (SELECT product_name FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1), split_expense_origin_id = COALESCE(split_expense_origin_id, id), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: EXPENSE_SPLIT_STALE
+        - query: "INSERT INTO expenses(id, row_version, sheet_id, name, category, expense_date, employee_name, amount, payment_method, description, receipt_reference, state, receipt_label, company_name, department_name, tax_amount, analytic_distribution, journal_entry, duplicate_candidate, reimbursement_status, product_name, quantity, unit_name, manager_name, vendor_name, receipt_checksum, refusal_reason, split_expense_origin_id) SELECT 'expense-split-' || l.id, 1, e.sheet_id, l.name, e.category, e.expense_date, l.employee_name, l.total_amount, e.payment_method, e.description, e.receipt_reference, e.state, e.receipt_label, e.company_name, e.department_name, l.tax_amount, l.analytic_distribution, NULL, NULL, e.reimbursement_status, l.product_name, e.quantity, e.unit_name, e.manager_name, e.vendor_name, e.receipt_checksum, NULL, :id FROM expense_split_lines l JOIN expenses e ON e.id = :id WHERE l.expense_id = :id AND l.id <> (SELECT id FROM expense_split_lines WHERE expense_id = :id ORDER BY sequence, id LIMIT 1) ON CONFLICT (id) DO NOTHING"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-split-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.split', 'Split Expense', 'Expense split into editable lines')"
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    fields:
+      - { field: original_amount, label: Original Amount, type: number, readonly: true }
+      - { field: split_total, label: Total Amount, type: number, readonly: true }
+      - { field: line_count, label: Split lines, type: number, readonly: true }
+      - { field: warning, label: Validation, type: textarea, readonly: true, show_if: "state.expense_split_wizard.warning" }
+  - id: add_expense_split_line
+    type: server_form
+    permission: expenses.write
+    title: Add split line
+    action: expenses.detail.split_line.create
+    handler: line_item
+    operation: create
+    domain: expense_split
+    params: { id: '{state.id}' }
+    refresh: [expense_detail, expense_split_wizard, expense_split_lines]
+    fields:
+      - { field: name, label: Expense, type: text, required: true }
+      - { field: product_name, label: Product, type: text }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: total_amount, label: Total Amount, type: number, required: true, min: 0.01 }
+      - { field: tax_amount, label: Taxes, type: number, default: 0, min: 0 }
+      - { field: analytic_distribution, label: Analytic distribution, type: text }
+    mutation:
+      generated: [line_id]
+      before_steps: [{ query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM expense_split_lines WHERE expense_id = :id", assign: true }]
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft'", status: 409, code: EXPENSE_SPLIT_NOT_DRAFT, message: Split lines can only be edited for draft expenses. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:employee_name AS VARCHAR))) > 0 AND CAST(:total_amount AS DECIMAL(18,2)) > 0", status: 422, code: EXPENSE_SPLIT_LINE_INVALID, message: Enter an expense, employee, and positive total amount. }
+      steps: [{ query: "INSERT INTO expense_split_lines(id, expense_id, row_version, sequence, name, product_name, employee_name, total_amount, tax_amount, analytic_distribution) VALUES(:line_id, :id, 1, :next_sequence, TRIM(:name), NULLIF(TRIM(COALESCE(:product_name, '')), ''), TRIM(:employee_name), CAST(:total_amount AS DECIMAL(18,2)), COALESCE(CAST(:tax_amount AS DECIMAL(18,2)), 0), NULLIF(TRIM(COALESCE(:analytic_distribution, '')), ''))" }]
+      result: { query: "SELECT * FROM expense_split_lines WHERE id = :line_id" }
+  - id: edit_expense_split_line
+    type: server_form
+    permission: expenses.write
+    title: Edit split line
+    action: expenses.detail.split_line.update
+    handler: line_item
+    operation: update
+    domain: expense_split
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [expense_detail, expense_split_wizard, expense_split_lines]
+    fields:
+      - { field: name, label: Expense, type: text, required: true }
+      - { field: product_name, label: Product, type: text }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: total_amount, label: Total Amount, type: number, required: true, min: 0.01 }
+      - { field: tax_amount, label: Taxes, type: number, min: 0 }
+      - { field: analytic_distribution, label: Analytic distribution, type: text }
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft'", status: 409, code: EXPENSE_SPLIT_NOT_DRAFT, message: Split lines can only be edited for draft expenses. }
+        - { query: "SELECT id FROM expense_split_lines WHERE id = :line_id AND expense_id = :id AND row_version = :expected_row_version", status: 409, code: EXPENSE_SPLIT_LINE_STALE, message: This split line changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:employee_name AS VARCHAR))) > 0 AND CAST(:total_amount AS DECIMAL(18,2)) > 0", status: 422, code: EXPENSE_SPLIT_LINE_INVALID, message: Enter an expense, employee, and positive total amount. }
+      steps: [{ query: "UPDATE expense_split_lines SET row_version = row_version + 1, name = TRIM(:name), product_name = NULLIF(TRIM(COALESCE(:product_name, '')), ''), employee_name = TRIM(:employee_name), total_amount = CAST(:total_amount AS DECIMAL(18,2)), tax_amount = COALESCE(CAST(:tax_amount AS DECIMAL(18,2)), 0), analytic_distribution = NULLIF(TRIM(COALESCE(:analytic_distribution, '')), '') WHERE id = :line_id AND expense_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EXPENSE_SPLIT_LINE_STALE }]
+      result: { query: "SELECT * FROM expense_split_lines WHERE id = :line_id" }
+  - id: delete_expense_split_line
+    type: server
+    permission: expenses.write
+    action: expenses.detail.split_line.delete
+    handler: line_item
+    operation: delete
+    domain: expense_split
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: 'Delete split line {{row.name}}?'
+    refresh: [expense_detail, expense_split_wizard, expense_split_lines]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft'", status: 409, code: EXPENSE_SPLIT_NOT_DRAFT, message: Split lines can only be edited for draft expenses. }
+        - { query: "SELECT id FROM expense_split_lines WHERE id = :line_id AND expense_id = :id AND row_version = :expected_row_version", status: 409, code: EXPENSE_SPLIT_LINE_STALE, message: This split line changed or was deleted. Reload before deleting. }
+      steps: [{ query: "DELETE FROM expense_split_lines WHERE id = :line_id AND expense_id = :id AND row_version = :expected_row_version", expect_changed: true, code: EXPENSE_SPLIT_LINE_STALE }]
   - id: mark_expense_in_payment
     type: server
     permission: expenses.manage

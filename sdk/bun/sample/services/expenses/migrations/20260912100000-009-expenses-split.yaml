@@ -1,0 +1,33 @@
+version: 0.0.9
+description: Odoo expense split wizard lines and deterministic draft fixture
+type:
+  postgres:
+    up: |
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS split_expense_origin_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS idx_expenses_split_origin ON expenses(split_expense_origin_id);
+      CREATE TABLE IF NOT EXISTS expense_split_lines (
+        id VARCHAR PRIMARY KEY,
+        expense_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL,
+        product_name VARCHAR,
+        employee_name VARCHAR NOT NULL,
+        total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        tax_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        analytic_distribution VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-09-12 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS idx_expense_split_lines_expense ON expense_split_lines(expense_id, sequence, id);
+      INSERT INTO expense_split_lines(id, expense_id, sequence, name, product_name, employee_name, total_amount, tax_amount, analytic_distribution)
+      VALUES
+        ('expense-split-line-draft-1', 'expense-demo-draft', 10, 'Breakfast with project team', 'Meals', 'Admin User', 12.25, 0, 'Engineering: 100%'),
+        ('expense-split-line-draft-2', 'expense-demo-draft', 20, 'Breakfast with project team', 'Meals', 'Admin User', 12.25, 0, 'Engineering: 100%')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS expense_split_lines;
+      ALTER TABLE expenses DROP COLUMN IF EXISTS split_expense_origin_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
