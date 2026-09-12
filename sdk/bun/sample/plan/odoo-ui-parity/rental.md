@@ -70,9 +70,17 @@ screenshots, or visual parity claims for `sale_renting`.
 
 ## Audit evidence (2026-09-12)
 
-- `bun run audit` from `sdk/bun/sample` was attempted. It exited before
-  discovery with `Cannot find module '@core3/server/discovery'` from
-  `scripts/audit-order-ui.ts`; this is a fresh-worktree dependency-resolution
-  failure, not evidence that rental routes pass or fail.
+- Wave 2 rechecked the expected sibling path first: `/home/nhanjs/projects/core3-worktrees/odoo` is absent. The resolved local reference `/home/nhanjs/projects/odoo` is on `19.0` at `659759969d535d286b656c96b675e4612b925ddd`.
+- `git ls-tree -r --name-only HEAD | rg '(^|/)(sale_renting|sale-renting)(/|$)'` returned no matches in the resolved reference checkout. This is the exact blocker for selecting a reference-supported Rental UI/UX surface in this wave.
+- No Core3 Rental YAML, fixture, permission, route, or test changes were made because the source gate is still blocked. In particular, the existing `/events` menu entry remains an internal contract issue and is not promoted to `/rental-events` without an Odoo route reference.
+- After frozen workspace dependency installation, `bun run audit` from
+  `sdk/bun/sample` passed: 647 pages, 662 routes, and 1,113 datasources were
+  discovered, with every discovered page using supported shared components and
+  having a route. This is a Core3-wide structural audit, not Odoo parity
+  evidence.
+- The initial pre-install audit attempt exited with `Cannot find module
+  '@core3/server/discovery'` from `scripts/audit-order-ui.ts`; that was a
+  fresh-worktree dependency-resolution failure and is now resolved.
+- `bun run lint` from `sdk/bun` passed with no output.
 - No rental-specific integration test is present in `sdk/bun/sample/test`.
 - `git diff --check` passes for this documentation change.
