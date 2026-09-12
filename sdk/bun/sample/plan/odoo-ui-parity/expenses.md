@@ -424,3 +424,40 @@ Batch 5 implements the next uncovered Odoo action, the accounting-only `Post
 Expenses` wizard. See [expenses-batch-5.md](expenses-batch-5.md) for source
 evidence, the page/API contract, deterministic migration, focused test/audit
 results, and the honest browser-capture limitation.
+
+## Expenses Analysis follow-up (2026-09-12)
+
+The next bounded visible action is Reporting → Expenses Analysis, Odoo menu
+`hr_expense.menu_hr_expense_all_expenses` → window action
+`hr_expense.hr_expense_actions_all` (`/odoo/expenses-analysis`). Its source
+view order is `graph,pivot,list,form`, with search view
+`hr_expense_view_search_with_panel` and context defaulting the state search
+panel to draft, submitted, approved, posted, in payment, and paid. The graph
+measures `total_amount` and `tax_amount` by date/employee; the pivot groups
+employee by expense-date month and measures total amount. Refused rows are
+excluded by the active-state context. The action is available to ordinary
+Expenses users; manager-only operations are not exposed by this read surface.
+
+This batch moves the analysis datasource to
+`services/expenses/api/analysis.yaml`, keeps the page presentation-only, and
+adds deterministic graph/pivot/list tabs, filters, grouping, detail navigation,
+active-state filtering, empty results, and transport-error metadata. The
+generic Core3 ListView contract currently has filter dropdowns but no dedicated
+Odoo search-panel component, so the state/employee/company facets are exposed
+through the shared filter contract; a reusable search-panel primitive remains a
+follow-up rather than an Expenses-specific renderer.
+
+Verification for this batch: `bun test
+test/expenses_analysis.integration.test.ts test/expenses_next.integration.test.ts
+test/expenses_categories.integration.test.ts` passed 13 tests and 91
+assertions; `bun run audit` passed with 608 pages, 616 routes, and 1,049
+datasources. The Odoo source reference was authenticated at
+`http://127.0.0.1:8073` and the desktop analysis route was captured at
+`/tmp/core3-odoo-parity/expenses-analysis-wave2/odoo-desktop.png` (1440x900).
+The mobile route redirected to Discuss and had one failed request, so the
+mobile image is not treated as an Expenses reference. Core3 desktop and mobile
+capture attempts were blocked by `ERR_CONNECTION_REFUSED`: startup aborts in
+`createYamlApi` on unrelated existing action `sms_marketing.mailings.cancel`
+because its permission differs from the workflow transition, leaving no
+backend listener on port 3001 and no valid Core3 visual-parity claim. The
+temporary Playwright install and all screenshots remain outside Git.

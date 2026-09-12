@@ -1,0 +1,35 @@
+page: { id: expense-analysis }
+datasources:
+  - id: expense_analysis_states
+    single: false
+    permission: expenses.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Posted','Posted'), ('In Payment','In payment'), ('Paid','Paid')) states(value, label)"
+  - id: expense_analysis_employees
+    single: false
+    permission: expenses.read
+    query: "SELECT DISTINCT employee_name AS value, employee_name AS label FROM expenses WHERE state <> 'Refused' ORDER BY employee_name"
+  - id: expense_analysis_companies
+    single: false
+    permission: expenses.read
+    query: "SELECT DISTINCT company_name AS value, company_name AS label FROM expenses WHERE state <> 'Refused' ORDER BY company_name"
+  - id: expense_analysis
+    single: false
+    permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_ANALYSIS_UNAVAILABLE, message: Expense analysis data is temporarily unavailable } }
+    query: |
+      SELECT e.id, e.row_version, e.employee_name, e.name, e.department_name,
+        CAST(e.expense_date AS VARCHAR) AS expense_date, e.category,
+        e.payment_method AS payment_mode,
+        CASE e.payment_method WHEN 'Company' THEN 'Paid by Company' ELSE 'Paid by Employee' END AS payment_mode_label,
+        e.amount AS total_amount, printf('$%,.2f', e.amount) AS total_amount_display,
+        COALESCE(e.tax_amount, 0) AS tax_amount, printf('$%,.2f', COALESCE(e.tax_amount, 0)) AS tax_amount_display,
+        e.company_name, e.state
+      FROM expenses e
+      WHERE e.state <> 'Refused'
+        AND (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.department_name ILIKE '%' || :q || '%' OR e.company_name ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR e.state = :state)
+        AND (:employee_name IS NULL OR e.employee_name = :employee_name)
+        AND (:company_name IS NULL OR e.company_name = :company_name)
+      ORDER BY e.expense_date DESC, e.id
+actions:
+  - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
