@@ -23,7 +23,7 @@ actions:
     action: inventory.pickings.delete
     handler: yaml_mutation
     operation: delete
-    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
     refresh: [inventory_receipts, inventory_deliveries, inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline]
     mutation:
       operation: delete

@@ -85,6 +85,37 @@ Detailed execution matrix: [`test-plans/inventory.md`](test-plans/inventory.md).
 - Authenticated New/Delete browser proof and paired Odoo comparison remain
   open; no module sign-off is implied.
 
+## QA execution — candidate `a238bd3d` (2026-09-13)
+
+- Focused CRUD regression: `bun test test/inventory_transfer_crud.integration.test.ts --timeout 20000` — PASS, 3 tests / 13 assertions. It proves the required `name`/`scheduled_date` contract, deterministic Draft creation, duplicate 409, stale/non-Draft delete 409, move-history deletion, and repository persistence.
+- Focused workflow regression: `bun test test/inventory_transfer_workflow.integration.test.ts --timeout 20000` — PASS, 3 tests / 43 assertions. The first header action remains `Edit details`; Delete follows it, and the existing transfer workflow contract remains green.
+- Static/build checks: `bun run audit` PASS (659 pages / 668 routes / 1136 datasources); `bun run css:build:inventory` PASS; TypeScript test ESLint PASS; `bun run frontend:build` PASS; `git diff --check` PASS.
+- Authenticated Core3 desktop (`1440x900`, isolated `localhost:3032`, Admin): `/inventory/receipts` rendered 6 seeded receipts and the New Receipt form. Blank Save showed the required-field guard; a valid `WH/IN/QA-A238-2` receipt returned HTTP 200 with `id=receipt-wh-in-qa-a238-2`, `state=Draft`, `row_version=1`, and appeared in the list. A duplicate reference returned HTTP 409 and the visible `already exists` error. Capture: `/tmp/core3-odoo-parity/inventory-a238bd3d-desktop-receipts-final.png`.
+- Authenticated Draft detail desktop: `WH/IN/00003` rendered `Edit details` first and `Delete` second; a non-Draft detail hid Delete. Capture: `/tmp/core3-odoo-parity/inventory-a238bd3d-desktop-draft-detail.png`.
+- Draft Delete browser result: FAIL. Clicking the rendered Delete action sent `/api/mutate`, but the request resolved `expected_row_version` as an empty string. Backend error was `Conversion Error: Could not convert string '' to INT64` in the Draft guard, followed by frontend HTTP 502/socket hang-up and backend exit. This is a reproducible browser integration defect; no deletion success or persistence-after-reload is claimed. Repository-level deletion still passes with an explicit row version.
+- Authenticated Core3 mobile (`390x844`): `/inventory/receipts` rendered with New available and no horizontal overflow; capture `/tmp/core3-odoo-parity/inventory-a238bd3d-mobile-receipts.png`. Fleet login (`fleet@tms.local`) reached the authenticated receipts route with no New control, confirming the visible write boundary; the timed attempt did not submit a mutation.
+- Paired Odoo reference (`core3_reference`, authenticated `codex@core3.local`): `/odoo/receipts` rendered 6 receipts at desktop and responsive kanban at mobile with no horizontal overflow. Captures: `/tmp/core3-odoo-parity/inventory-a238bd3d-odoo-receipts-desktop.png` and `/tmp/core3-odoo-parity/inventory-a238bd3d-odoo-receipts-mobile.png`.
+
+QA disposition: CONDITIONAL / BLOCKED on browser Draft Delete. Receipt create and contract-level guards pass; the candidate is not signed off.
+
+## Repair evidence — Draft Delete row version
+
+- Draft Delete now resolves params from the form record (`{row.id}` and
+  `{row.row_version}`) instead of page state, so the mutation no longer sends
+  an empty `expected_row_version`. Existing Edit details ordering and all
+  Draft/state/concurrency guards remain unchanged.
+- `inventory_transfer_crud.integration.test.ts` reproduces the browser
+  interpolation path and asserts `receipt-00003` plus version `"1"`; it also
+  retains persistence, dependent move cleanup, duplicate, stale, and
+  non-Draft guard coverage.
+- Full Inventory suite: `bun test test/inventory*.integration.test.ts
+  --timeout 20000` — PASS, 42 tests / 454 assertions across 14 files.
+- `bun run audit` — PASS, 659 pages / 668 routes / 1136 datasources.
+  `bun run css:build:inventory`, scoped ESLint, and `git diff --check` — PASS.
+- Authenticated browser deletion should be rerun by QA against this repair;
+  this developer run proves the exact parameter-resolution path and repository
+  mutation contract but does not claim a new browser capture.
+
 ## Merge review record — candidate `84dd0f48` / QA `85fa66c1`
 
 - QA evidence was reviewed and retained: focused CRUD/workflow checks,

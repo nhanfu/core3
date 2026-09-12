@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { interpolate } from '@core3/client/expr';
 
 const serviceRoot = join(import.meta.dir, '../services/inventory');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
@@ -22,6 +23,8 @@ describe('Inventory transfer create and delete persistence', () => {
       defaults: expect.objectContaining({ state: 'Draft', row_version: 1 }),
     });
     expect(remove).toMatchObject({ type: 'server', permission: 'inventory.write', operation: 'delete' });
+    expect(remove.params).toEqual({ id: '{row.id}', expected_row_version: '{row.row_version}' });
+    expect(Object.fromEntries(Object.entries(remove.params).map(([key, value]) => [key, interpolate(value, { row: { id: 'receipt-00003', row_version: 1 } })]))).toEqual({ id: 'receipt-00003', expected_row_version: '1' });
     expect(remove.mutation).toMatchObject({ operation: 'delete', table: 'inventory_pickings', concurrency: { required: true } });
     expect(remove.mutation.guards).toEqual(expect.arrayContaining([
       expect.objectContaining({ status: 409, code: 'INVENTORY_TRANSFER_DELETE_NOT_ALLOWED' }),
