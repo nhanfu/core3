@@ -1,0 +1,28 @@
+title: Badge
+page: { id: event-attendee-badge, route: /events/attendees/badge, breadcrumb: [Marketing, Events, Reporting, Attendees, Badge], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_attendee_badge
+    title_field: attendee_name
+    subtitle_field: event_name
+    status_field: print_status
+    editable: false
+    labels: { workflowStatus: Status }
+    header_actions:
+      - { id: print_attendee_badge_document, label: Print, permission: events.read, variant: primary, show_if: "record.print_status === 'Ready'" }
+      - { id: back_to_event_attendee, label: Back to attendee, permission: events.read, variant: secondary }
+    status_colors: { Ready: green, Unavailable: red }
+    group_columns: 2
+    groups:
+      - title: Badge
+        fields: [{ field: attendee_name, label: Attendee }, { field: barcode, label: Barcode }, { field: ticket_type, label: Ticket Type }, { field: print_status, label: Status }]
+      - title: Event Information
+        fields: [{ field: event_name, label: Event }, { field: event_schedule, label: Date }, { field: event_venue, label: Venue }, { field: booked_by, label: Organizer }]
+  - type: ContactGrid
+    source: event_attendee_badge_answers
+    row_key: id
+    columns:
+      - { field: question, label: Question, type: PrimaryEntityCell }
+      - { field: answer, label: Answer }
+    empty_state: { title: No badge answers, description: This badge has no registration answers to display. }
+page: { id: event-attendee-badge }

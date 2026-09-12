@@ -1,0 +1,29 @@
+version: 0.0.25
+kind: data
+description: Deterministic attendee badge report fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_registration_badges (
+        registration_id VARCHAR PRIMARY KEY,
+        barcode VARCHAR NOT NULL UNIQUE,
+        badge_format VARCHAR NOT NULL DEFAULT 'A6',
+        badge_status VARCHAR NOT NULL DEFAULT 'Ready'
+      );
+      INSERT INTO event_registration_badges(registration_id, barcode, badge_format, badge_status) VALUES
+        ('registration-demo-001', 'CORE3-REG-0001', 'A6', 'Ready'),
+        ('registration-demo-002', 'CORE3-REG-0002', 'A6', 'Ready'),
+        ('registration-demo-003', 'CORE3-REG-0003', 'A6', 'Ready'),
+        ('registration-demo-004', 'CORE3-REG-0004', 'A6', 'Ready'),
+        ('registration-demo-005', 'CORE3-REG-0005', 'A6', 'Ready'),
+        ('registration-demo-006', 'CORE3-REG-0006', 'A6', 'Ready'),
+        ('registration-demo-007', 'CORE3-REG-0007', 'A6', 'Ready'),
+        ('registration-demo-unconfirmed', 'CORE3-REG-0008', 'A6', 'Ready')
+      ON CONFLICT (registration_id) DO NOTHING;
+    down: |
+      DELETE FROM event_registration_badges WHERE registration_id LIKE 'registration-demo-%';
+      DROP TABLE IF EXISTS event_registration_badges;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

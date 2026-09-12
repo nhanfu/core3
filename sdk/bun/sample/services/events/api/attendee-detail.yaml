@@ -9,6 +9,18 @@ datasources:
     permission: events.read
     query: "SELECT id, question, question_type, COALESCE(suggested_answer, '') AS suggested_answer, COALESCE(text_answer, '') AS text_answer FROM event_registration_answers WHERE registration_id = :id ORDER BY id"
 actions:
+  - id: print_attendee_badge
+    type: client
+    permission: events.read
+    script: |
+      // js
+      async ({ row, request }) => {
+        await request('/api/actions/events.registrations.print_badge', {
+          method: 'POST',
+          body: { id: row.id, expected_row_version: row.row_version },
+        })
+        window.location.assign(`/events/attendees/badge?id=${encodeURIComponent(String(row.id))}`)
+      }
   - id: send_attendee_email
     type: server_form
     modal_style: mail_composer

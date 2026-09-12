@@ -1,0 +1,37 @@
+page: { id: event-attendee-badge }
+datasources:
+  - id: event_attendee_badge
+    single: true
+    permission: events.read
+    error_states:
+      missing_record: { status: 404, code: EVENT_ATTENDEE_BADGE_NOT_FOUND, message: Attendee badge not found. }
+      transport_error: { status: 503, code: EVENT_ATTENDEE_BADGE_UNAVAILABLE, message: Attendee badge is temporarily unavailable. }
+    query: "SELECT r.id, COALESCE(r.row_version, 1) AS row_version, r.attendee_name, r.event_name, COALESCE(r.ticket_type, '') AS ticket_type, COALESCE(r.booked_by, '') AS booked_by, COALESCE(b.barcode, '') AS barcode, COALESCE(strftime(e.start_at, '%d %b %Y %H:%M'), '') || ' - ' || COALESCE(strftime(e.end_at, '%H:%M'), '') AS event_schedule, COALESCE(e.venue, '') AS event_venue, CASE WHEN r.state IN ('Registered', 'Attended') AND b.badge_status = 'Ready' THEN 'Ready' ELSE 'Unavailable' END AS print_status FROM event_registrations r LEFT JOIN events e ON e.id = r.event_id LEFT JOIN event_registration_badges b ON b.registration_id = r.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id"
+  - id: event_attendee_badge_answers
+    permission: events.read
+    query: "SELECT a.id, a.question, COALESCE(NULLIF(a.suggested_answer, ''), NULLIF(a.text_answer, ''), 'Not answered') AS answer FROM event_registration_answers a WHERE a.registration_id = :id ORDER BY a.id"
+actions:
+  - id: print_attendee_badge_document
+    type: client
+    permission: events.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: back_to_event_attendee
+    type: navigate
+    permission: events.read
+    navigate_to: /events/attendees/detail
+    params: { id: '{row.id}' }
+  - id: validate_print_attendee_badge
+    type: server
+    permission: events.read
+    action: events.registrations.print_badge
+    handler: yaml_mutation
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      guards:
+        - { query: "SELECT id FROM event_registrations WHERE id = :id", status: 404, code: EVENT_ATTENDEE_BADGE_NOT_FOUND, message: Attendee registration not found. }
+        - { query: "SELECT r.id FROM event_registrations r JOIN event_registration_badges b ON b.registration_id = r.id WHERE r.id = :id AND r.state IN ('Registered', 'Attended') AND b.badge_status = 'Ready' AND COALESCE(r.row_version, 1) = :expected_row_version", status: 409, code: EVENT_ATTENDEE_BADGE_UNAVAILABLE, message: A badge is available only for an active attendee registration. }
+      result: { query: "SELECT registration_id AS id, barcode, 'Badge ready to print' AS message FROM event_registration_badges WHERE registration_id = :id" }
