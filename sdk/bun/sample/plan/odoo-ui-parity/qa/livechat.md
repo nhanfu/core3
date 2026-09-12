@@ -14,6 +14,8 @@ Module owner: livechat module owner
 Verification trigger: feature-complete
 Candidate commit: none
 
+Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). It is the module-level source for sessions, channels, bots, reporting, actors, persistence, Temporal, and paired Odoo gates.
+
 ## Current regression evidence
 
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
