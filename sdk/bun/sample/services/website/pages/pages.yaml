@@ -29,7 +29,13 @@ components:
       - { field: is_indexed, label: Indexed }
       - { field: is_in_menu, label: Is In Main Menu }
       - { field: is_seo_optimized, label: Is SEO Optimized }
-      - { field: state, label: Is Published, type: StatusChip }
+      - field: state
+        label: Is Published
+        type: StatusChip
+        actions:
+          - { id: edit_website_page, label: Edit, permission: website.write }
+          - { id: publish_website_page, label: Publish, permission: website.write, variant: primary, show_if: "row.state === 'Draft'" }
+          - { id: unpublish_website_page, label: Unpublish, permission: website.manage, variant: secondary, show_if: "row.state === 'Published'" }
     page_size: 50
     row_key: id
     row_actions: menu
