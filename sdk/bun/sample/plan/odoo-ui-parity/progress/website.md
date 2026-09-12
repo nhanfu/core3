@@ -14,11 +14,12 @@ row versions, rejects duplicate transitions, and enforces the manager-only
 unpublish permission. This is a bounded slice only; no full parity claim is
 made here.
 The public boundary now resolves published pages by path and ID and excludes
-draft pages through Website-owned operations. Browser/public visual evidence is
-still open.
+draft pages through Website-owned operations. The public browser route and
+Fluent HTML renderer are now declared and covered by an implementation
+contract test; authenticated/public visual evidence is still open.
 
 ## Next bounded task
 
 Add authenticated browser mutation/reload evidence, public visibility and
-site-scope checks, then continue with assets, persistence/restart, Fluent HTML,
-and paired Odoo comparison before module sign-off.
+site-scope checks, then continue with assets, persistence/restart, rendered
+page content, and paired Odoo comparison before module sign-off.

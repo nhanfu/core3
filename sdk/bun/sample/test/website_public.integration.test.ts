@@ -35,4 +35,14 @@ describe('Website public visibility', () => {
     expect((await route('/api/public/website/pages/website-page-demo-001', { method: 'POST' }))?.status).toBe(405);
     database.close();
   });
+
+  test('declares the public browser route and Fluent HTML renderer', () => {
+    const appSource = readFileSync(join(import.meta.dir, '../public/app.ts'), 'utf8');
+    const componentSource = readFileSync(join(import.meta.dir, '../public/components/PublicWebsitePage.ts'), 'utf8');
+    expect(appSource).toMatch(/website\\\/page/);
+    expect(appSource).toContain("./components/PublicWebsitePage.ts");
+    expect(componentSource).toContain("@core3/client/html");
+    expect(componentSource).toContain("/api/public/website/page?path=");
+    expect(componentSource).toContain("html.take(outlet).main");
+  });
 });
