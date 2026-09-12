@@ -19,3 +19,30 @@ datasources:
         AND (:q IS NULL OR o.order_number ILIKE '%' || :q || '%' OR o.customer_name ILIKE '%' || :q || '%')
         AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
       ORDER BY o.order_date ASC
+
+actions:
+  - id: create_invoices_from_selected_orders
+    type: server
+    permission: orders.write
+    action: sales.orders.create_invoices
+    handler: yaml_mutation
+    operation: bulk_create
+    refresh: [sale_orders_to_invoice]
+    confirm: 'Create invoices for {count} selected orders?'
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE :selectedIds IS NOT NULL"
+          status: 400
+          code: SALES_INVOICE_SELECTION_REQUIRED
+          message: Select at least one order to invoice.
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.id IN :selectedIds AND (COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) <> 'Approved' OR EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id) OR (:view_scope <> 'all' AND o.branch_id <> :current_branch_id)))"
+          status: 409
+          code: SALES_INVOICE_SELECTION_INVALID
+          message: Only approved, uninvoiced orders in the current branch scope can be invoiced.
+      steps:
+        - query: "INSERT INTO sale_invoices(id, order_id, invoice_number, state, amount, invoice_date) SELECT gen_random_uuid(), o.id, 'INV/' || o.order_number, 'Draft', CAST(o.total_amount AS DECIMAL(18,2)), CURRENT_DATE FROM orders o WHERE o.id IN :selectedIds AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Approved' AND NOT EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id OR i.invoice_number = 'INV/' || o.order_number) AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)"
+          expect_changed: true
+          status: 409
+          code: SALES_INVOICE_SELECTION_CHANGED
+          message: The selected orders changed. Reload and try again.
+      result: { query: "SELECT COUNT(*) AS created_count FROM sale_invoices WHERE order_id IN :selectedIds AND state = 'Draft'" }

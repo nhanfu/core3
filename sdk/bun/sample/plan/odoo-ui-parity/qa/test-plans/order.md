@@ -36,6 +36,7 @@ databases and generated IDs.
 | ORDER-FUNC-006 | Reporting | Customer and salesperson reports expose Odoo graph/pivot/search/date contracts with real scoped rows | pass: focused suite |
 | ORDER-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate orders, lines, templates or teams | planned restart/migration gate |
 | ORDER-FUNC-008 | Attachments/import/export/print | Exercise exposed order attachments, import/export and print actions, including failure recovery | planned browser interaction gate |
+| ORDER-FUNC-009 | Orders to Invoice bulk action | Select eligible approved orders, create draft invoices atomically, refresh queue state, reject empty/duplicate/mixed-scope/already-invoiced selections, and preserve rows on failure | pass: focused suite |
 
 ## Workflow and integration cases
 

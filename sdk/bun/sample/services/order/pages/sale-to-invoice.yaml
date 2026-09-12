@@ -19,6 +19,8 @@ components:
     page_size: 50
     row_key: id
     selectable: true
+    bulk_actions:
+      - { id: create_invoices_from_selected_orders, label: Create Invoices, permission: orders.write, variant: primary }
     row_open_action: view_to_invoice_order
     row_double_click_action: view_to_invoice_order
     row_actions: menu
