@@ -30,7 +30,7 @@ dashboards, workbook snapshots, figures, filters and share tokens.
 | --- | --- | --- | --- |
 | SHEET-FUNC-001 | Dashboard landing | Group selection, cards, date filters and selected dashboard load deterministic persisted data | pass: focused suite and captures |
 | SHEET-FUNC-002 | Group configuration | List/form, nested dashboards, ordering and required-name validation persist | pass: focused suite and captures |
-| SHEET-FUNC-003 | Workbook runtime | Snapshot, formulas, figures, linked cells and global filters render without client-only fixture replacement | planned implementation gate |
+| SHEET-FUNC-003 | Workbook runtime | Snapshot, formulas, figures, linked cells and global filters render without client-only fixture replacement | partial: persisted date-range filter slice; editor/formula interactions remain planned |
 | SHEET-FUNC-004 | Publication/access | Publish/archive, company/group visibility and official-group deletion guards enforce source permissions | pass at contract level; browser mutation planned |
 | SHEET-FUNC-005 | Share/export | Valid/revoked/invalid share tokens, read-only data and authenticated download follow declared boundaries | planned implementation gate |
 | SHEET-FUNC-006 | Empty/error/not-found | Empty groups, missing dashboards, malformed snapshots, forbidden and transport-error states are explicit | pass at contract level |
@@ -42,7 +42,7 @@ dashboards, workbook snapshots, figures, filters and share tokens.
 | --- | --- | --- | --- |
 | SHEET-WF-001 | Dashboard lifecycle | Draft → Published → Archived updates visibility and row version atomically | pass: `spreadsheet.integration.test.ts`; browser workflow remains planned |
 | SHEET-WF-002 | Nested group management | Add/edit/remove dashboard in a group preserves ordering and company scope | pass at contract level |
-| SHEET-WF-003 | Spreadsheet interaction | Filter/formula/chart/pivot/table actions update the workbook view without mutating unauthorized source records | planned |
+| SHEET-WF-003 | Spreadsheet interaction | Filter/formula/chart/pivot/table actions update the workbook view without mutating unauthorized source records | partial: date-range filter persists per user with ACL/concurrency tests |
 | SHEET-WF-004 | Share lifecycle | Create/revoke/share/download preserves read-only snapshot and token scope | planned |
 | SHEET-WF-005 | Durable/external boundary | Snapshot generation, exports, notifications and third-party callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 
@@ -51,7 +51,7 @@ dashboards, workbook snapshots, figures, filters and share tokens.
 | Case ID | Actor/scope | Expected result | Status |
 | --- | --- | --- | --- |
 | SHEET-PERM-001 | Manager/system user | Group/dashboard configuration and permitted publication actions succeed | planned browser actor gate |
-| SHEET-PERM-002 | Ordinary internal user | Only permitted published dashboards and read-only workbook data are visible | planned |
+| SHEET-PERM-002 | Ordinary internal user | Only permitted published dashboards and read-only workbook data are visible | partial: viewer filter state is user-bound; full company/group ACL remains planned |
 | SHEET-PERM-003 | Public share visitor | Only valid, non-revoked share snapshots are visible; no editor/configuration access | planned |
 | SHEET-PERM-004 | Wrong company | Other-company groups, dashboards, snapshots and shares are not leaked or mutable | planned |
 | SHEET-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected workbook data | planned |

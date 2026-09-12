@@ -12,7 +12,7 @@ type DashboardRow = {
 
 function sourceRows(dataMap: Record<string, any>, sourceId?: string): any[] {
   const value = sourceId ? dataMap[sourceId]?.data : [];
-  return Array.isArray(value) ? value : [];
+  return Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : [];
 }
 
 function text(value: unknown, fallback = '') {
@@ -43,10 +43,12 @@ export class SpreadsheetDashboardClientAction extends BaseComponent {
     const summaries = sourceRows(dataMap, this.state.summaries_source);
     const chartPoints = sourceRows(dataMap, this.state.chart_source);
     const rows = sourceRows(dataMap, this.state.rows_source);
+    const filterStates = sourceRows(dataMap, this.state.filter_source);
     const activeId = text(this.state.activeDashboardId);
     const active = activeId
       ? dashboards.find(dashboard => text(dashboard.id) === activeId)
       : dashboards[0];
+    const filterState = filterStates.find(state => text(state.dashboard_id) === text(active?.id));
 
     container.replaceChildren();
     const root = document.createElement('section');
@@ -67,8 +69,26 @@ export class SpreadsheetDashboardClientAction extends BaseComponent {
     const date = document.createElement('button');
     date.type = 'button';
     date.className = 'o-spreadsheet-dashboard-date';
-    date.textContent = text(this.state.pageParams?.dashboard_date, '2026-01-15');
+    date.textContent = text(filterState?.date_range || this.state.pageParams?.dashboard_date, 'This year');
     date.title = 'Dashboard date';
+    date.setAttribute('aria-label', 'Dashboard date range');
+    date.addEventListener('click', () => {
+      if (!filterState || !this.state.filter_action || !active) return;
+      const options = ['Today', 'This week', 'This month', 'This year'];
+      const previous = text(filterState.date_range, 'This year');
+      const next = options[(options.indexOf(previous) + 1) % options.length];
+      filterState.date_range = next;
+      void this.submit(this.state.filter_action, {
+        state: { dashboard_id: active.id, filter_state_id: filterState.id, filter_row_version: filterState.row_version },
+        row: filterState,
+        values: { date_range: next },
+      }).then((result: any) => {
+        if (result?.row_version !== undefined) filterState.row_version = result.row_version;
+        this.redraw();
+      }).catch(() => {
+        filterState.date_range = previous;
+      });
+    });
     controls.append(date);
     const share = document.createElement('button');
     share.type = 'button';

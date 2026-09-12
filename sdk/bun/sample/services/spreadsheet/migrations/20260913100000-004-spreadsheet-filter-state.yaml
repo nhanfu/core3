@@ -1,0 +1,25 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS spreadsheet_dashboard_filter_states (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        dashboard_id VARCHAR NOT NULL, user_id VARCHAR NOT NULL,
+        date_range VARCHAR NOT NULL DEFAULT 'This year',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_spreadsheet_dashboard_filter_user
+        ON spreadsheet_dashboard_filter_states(dashboard_id, user_id);
+      INSERT OR IGNORE INTO spreadsheet_dashboard_filter_states
+        (id, dashboard_id, user_id, date_range)
+      VALUES
+        ('sdfs-sales-admin', 'sdb-sales', 'user-admin', 'This year'),
+        ('sdfs-sales-manager', 'sdb-sales', 'spreadsheet-manager', 'This year'),
+        ('sdfs-sales-viewer', 'sdb-sales', 'spreadsheet-viewer', 'This month');
+    down: |
+      DROP TABLE IF EXISTS spreadsheet_dashboard_filter_states;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

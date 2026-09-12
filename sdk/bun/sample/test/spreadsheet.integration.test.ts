@@ -36,6 +36,7 @@ describe('Spreadsheet dashboard configuration parity', () => {
       'spreadsheet_dashboard_summaries_landing',
       'spreadsheet_dashboard_chart_landing',
       'spreadsheet_dashboard_rows_landing',
+      'spreadsheet_dashboard_filter_state',
     ]);
     expect(api.datasources.every((source: any) => source.permission === 'spreadsheet.read')).toBe(true);
   });
@@ -70,6 +71,46 @@ describe('Spreadsheet dashboard configuration parity', () => {
     expect(toggled).toMatchObject({ id: 'sdb-sales', favorite: false, row_version: 2 });
     await expect(repository.executeMutation(favoriteAction.mutation, { id: 'sdb-sales', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_FAVORITE_STALE' });
     await expect(repository.executeMutation(favoriteAction.mutation, { id: 'sdb-error', expected_row_version: 1 })).rejects.toMatchObject({ status: 503, code: 'SPREADSHEET_DASHBOARD_FAVORITE_UNAVAILABLE' });
+  });
+
+  test('persists a per-user dashboard date filter with permission and concurrency guards', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_filter_state_migrations', ['schema', 'data']);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_filter_state_migrations', ['schema', 'data']);
+    expect((await repository.query('SELECT COUNT(*) AS count FROM spreadsheet_dashboard_filter_states'))[0].count).toBe(3);
+    const api = yaml('api/dashboards.yaml');
+    const source = apiSource('dashboards.yaml', 'spreadsheet_dashboard_filter_state');
+    expect(source.permission).toBe('spreadsheet.read');
+    expect(source.query).toContain('user_id = :current_user_id');
+    expect((await repository.querySource(source, { dashboard_id: 'sdb-sales', current_user_id: 'spreadsheet-viewer' }, 0, 1)).data).toMatchObject(
+      { id: 'sdfs-sales-viewer', date_range: 'This month' },
+    );
+    const action = api.actions.find((candidate: any) => candidate.id === 'save_dashboard_filter');
+    expect(action).toMatchObject({ permission: 'spreadsheet.read', action: 'spreadsheet.dashboard.filter.save' });
+    expect(action.mutation.guards).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 403, code: 'SPREADSHEET_DASHBOARD_FILTER_FORBIDDEN' }),
+      expect.objectContaining({ status: 422, code: 'SPREADSHEET_DASHBOARD_FILTER_INVALID' }),
+    ]));
+    const saved = await repository.executeMutation(action.mutation, {
+      id: 'sdfs-sales-viewer', dashboard_id: 'sdb-sales', current_user_id: 'spreadsheet-viewer',
+      expected_row_version: 1, values: { date_range: 'This week' },
+    });
+    expect(saved).toMatchObject({ id: 'sdfs-sales-viewer', date_range: 'This week', row_version: 2 });
+    expect((await repository.querySource(source, { dashboard_id: 'sdb-sales', current_user_id: 'spreadsheet-viewer' }, 0, 1)).data.date_range).toBe('This week');
+    await expect(repository.executeMutation(action.mutation, {
+      id: 'sdfs-sales-viewer', dashboard_id: 'sdb-sales', current_user_id: 'spreadsheet-viewer',
+      expected_row_version: 1, values: { date_range: 'Today' },
+    })).rejects.toMatchObject({ status: 409 });
+    await expect(repository.executeMutation(action.mutation, {
+      id: 'sdfs-sales-viewer', dashboard_id: 'sdb-sales', current_user_id: 'other-user',
+      expected_row_version: 2, values: { date_range: 'Today' },
+    })).rejects.toMatchObject({ status: 403, code: 'SPREADSHEET_DASHBOARD_FILTER_FORBIDDEN' });
+    await expect(repository.executeMutation(action.mutation, {
+      id: 'sdfs-sales-viewer', dashboard_id: 'sdb-sales', current_user_id: 'spreadsheet-viewer',
+      expected_row_version: 2, values: { date_range: 'Tomorrow' },
+    })).rejects.toMatchObject({ status: 422, code: 'SPREADSHEET_DASHBOARD_FILTER_INVALID' });
+    database.close();
   });
 
   test('publishes and archives a dashboard through YAML workflow actions', async () => {

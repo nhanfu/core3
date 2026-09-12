@@ -29,6 +29,12 @@ datasources:
     single: false
     permission: spreadsheet.read
     query: "SELECT dashboard_id, sequence, country, category, revenue, orders FROM spreadsheet_dashboard_rows ORDER BY dashboard_id, sequence"
+  - id: spreadsheet_dashboard_filter_state
+    single: true
+    permission: spreadsheet.read
+    query: "SELECT id, row_version, dashboard_id, user_id, date_range FROM spreadsheet_dashboard_filter_states WHERE dashboard_id = COALESCE(:dashboard_id, 'sdb-sales') AND user_id = :current_user_id"
+    error_states:
+      transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_FILTER_UNAVAILABLE, message: Dashboard filters are temporarily unavailable. }
 actions:
   - id: toggle_dashboard_favorite
     type: server
@@ -47,3 +53,24 @@ actions:
       steps:
         - { query: "UPDATE spreadsheet_dashboards SET favorite = NOT favorite, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SPREADSHEET_DASHBOARD_FAVORITE_STALE, message: This dashboard changed before its favorite state was updated. Reload before trying again. }
       result: { query: "SELECT id, favorite, row_version FROM spreadsheet_dashboards WHERE id = :id" }
+  - id: save_dashboard_filter
+    type: server_form
+    permission: spreadsheet.read
+    title: Dashboard filter
+    action: spreadsheet.dashboard.filter.save
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.filter_state_id}', dashboard_id: '{state.dashboard_id}', expected_row_version: '{state.filter_row_version}', current_user_id: '{current_user_id}' }
+    refresh: [spreadsheet_dashboard_filter_state]
+    mutation:
+      operation: update
+      table: spreadsheet_dashboard_filter_states
+      fields: [date_range]
+      required: [date_range]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM spreadsheet_dashboard_filter_states WHERE id = :id AND dashboard_id = :dashboard_id AND user_id = :current_user_id", status: 403, code: SPREADSHEET_DASHBOARD_FILTER_FORBIDDEN, message: This dashboard filter belongs to another user. }
+        - { query: "SELECT id FROM spreadsheet_dashboard_filter_states WHERE id = :id AND :date_range IN ('Today', 'This week', 'This month', 'This year')", status: 422, code: SPREADSHEET_DASHBOARD_FILTER_INVALID, message: Choose a supported dashboard date range. }
+      result: { query: "SELECT id, row_version, dashboard_id, user_id, date_range FROM spreadsheet_dashboard_filter_states WHERE id = :id" }
+    fields:
+      - { field: date_range, label: Date range, type: select, options: [{ value: Today, label: Today }, { value: This week, label: This week }, { value: This month, label: This month }, { value: This year, label: This year }] }

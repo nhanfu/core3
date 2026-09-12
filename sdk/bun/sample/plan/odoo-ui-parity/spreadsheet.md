@@ -483,3 +483,27 @@ HTTP readiness: `bun run dev --db=ddb --memory` selected backend/frontend port
 `http://127.0.0.1:8073/web/login` returned 200, but no authenticated capture
 runner is available in this session. No visual parity claim or screenshot is
 made for this batch, and no images are committed.
+
+## 2026-09-13 bounded implementation batch: persisted dashboard date filter
+
+This batch advances the read-only workbook runtime with a persisted dashboard
+date-range control. Core3 stores the selected range per `dashboard_id` and
+authenticated `current_user_id` in `spreadsheet_dashboard_filter_states`.
+Migration `004` seeds deterministic admin, manager, and ordinary-viewer states
+at the shared `2026-01-15` seed date. The discovered `dashboards` API owns the
+filter datasource and `save_dashboard_filter` action, validating ownership,
+supported ranges, row versions, and stable 403/409/422 boundaries.
+
+The dashboard client action consumes the page-id-owned filter source. Its date
+control cycles the supported values, submits the guarded mutation, refreshes
+the persisted state, and keeps the workbook read-only. No page YAML query or
+client fixture was added. The share mutation's stale branch was also repaired
+to use its declared Spreadsheet-specific 409 code instead of the generic
+repository stale error.
+
+Focused `spreadsheet.integration.test.ts` passes 11 tests / 113 assertions,
+including migration seed/reload persistence, cross-user denial, invalid range,
+stale row version, page/API discovery, and existing share/public-boundary
+regression coverage. Visual authenticated browser capture was not run in this
+batch; prior local startup blockers remain recorded above. No screenshots were
+added to Git.

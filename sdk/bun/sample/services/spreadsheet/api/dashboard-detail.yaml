@@ -35,7 +35,6 @@ actions:
     params: { dashboard_id: '{row.dashboard_id}', id: '{row.share_id}', expected_row_version: '{row.share_row_version}' }
     refresh: [spreadsheet_dashboard_share]
     mutation:
-      operation: update
       table: spreadsheet_dashboard_shares
       fields: [revoked]
       defaults: { revoked: false }
@@ -43,6 +42,8 @@ actions:
       guards:
         - { query: "SELECT s.id FROM spreadsheet_dashboard_shares s JOIN spreadsheet_dashboards d ON d.id = s.dashboard_id WHERE s.dashboard_id = :dashboard_id AND s.row_version = :expected_row_version AND d.published = TRUE", status: 409, code: SPREADSHEET_DASHBOARD_SHARE_STALE, message: This dashboard share changed or is no longer published. Reload before sharing. }
         - { query: "SELECT s.id FROM spreadsheet_dashboard_shares s JOIN spreadsheet_dashboards d ON d.id = s.dashboard_id WHERE s.dashboard_id = :dashboard_id AND d.published = TRUE", status: 422, code: SPREADSHEET_DASHBOARD_SHARE_UNAVAILABLE, message: This dashboard does not have a share link. }
+      steps:
+        - { query: "UPDATE spreadsheet_dashboard_shares SET revoked = :revoked, row_version = row_version + 1 WHERE id = :id AND dashboard_id = :dashboard_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SPREADSHEET_DASHBOARD_SHARE_STALE, message: This dashboard share changed or is no longer published. Reload before sharing. }
       result: { query: "SELECT s.id, s.row_version, s.dashboard_id, s.label, s.revoked, '/dashboard/share/' || s.dashboard_id || '/' || s.token AS share_link FROM spreadsheet_dashboard_shares s WHERE s.dashboard_id = :dashboard_id AND s.revoked = FALSE ORDER BY s.created_at DESC, s.id LIMIT 1" }
     fields:
       - { field: share_link, label: Share Link, type: text, readonly: true }
