@@ -546,3 +546,28 @@ unavailable in this session (`js_repl` is not exposed and the local
 `http://127.0.0.1:8073/web/login` returned HTTP 200, but no authenticated Odoo
 or Core3 screenshot was created under `/tmp/core3-odoo-parity`; visual parity
 is therefore explicitly unclaimed and remains a follow-up gate.
+
+## Task-form embedded Timesheets tab (2026-09-12)
+
+The next bounded visible surface is the Odoo task form's embedded `Timesheets`
+notebook tab from `hr_timesheet/views/project_task_views.xml`. It is distinct
+from `timesheet_action_task`: the tab is shown in the task form for timesheet
+users when the task's project allows timesheets, and uses the task's
+`timesheet_ids` relation with Date, Employee, Entry, Description, and Time
+Spent columns plus the mobile kanban contract.
+
+Core3 now declares that tab as a `content_slot` and mounts an Odoo-style
+`LineItemGrid` into it. The Project task API obtains
+`project_task_timesheets` through the Timesheets-owned
+`yaml.service.timesheets` operation `timesheets.entries.by_task`; no service
+reads the other service's isolated database directly. Existing fixed
+`2026-01-15` task fixtures are reused, and the service contract honors
+`timesheets.read` plus deterministic `empty`/`not_found` fixture states. The
+full task-context CRUD action remains available through the stat-button route;
+inline mutation wiring for this cross-service embedded grid is deferred until
+the shared x2many service-action contract supports it.
+
+Focused coverage passes 24 Timesheets integration tests and 266 assertions;
+the UI audit passes with 646 pages, 661 routes, and 1110 datasources; the
+embedded test and `git diff --check` pass. No browser captures were created or
+claimed in this slice.

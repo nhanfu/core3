@@ -1,0 +1,14 @@
+operations:
+  timesheets.entries.by_task:
+    result_key: timesheet_entries
+    query: |
+      SELECT t.id, t.row_version, t.employee_id, t.employee_name, t.name,
+             CAST(t.work_date AS VARCHAR) AS work_date, t.description,
+             t.hours, printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER),
+               CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display,
+             t.project_id, t.project_name, t.task_id, t.task_name,
+             t.billable, t.state
+      FROM timesheet_entries t
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND t.task_id = :task_id
+      ORDER BY t.work_date DESC, t.id

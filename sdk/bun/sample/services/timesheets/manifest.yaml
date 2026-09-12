@@ -3,6 +3,7 @@ kind: domain-service
 database: duckdb
 migrations: migrations
 permissions: permissions.yaml
+operations: operations.yaml
 storage: storage.yaml
 menu:
   timesheets:

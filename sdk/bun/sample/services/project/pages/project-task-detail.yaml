@@ -35,3 +35,21 @@ components:
         - id: blocked_by
           label: Blocked By
           fields: [{ field: blocked_by_summary, label: Blocked By }, { field: blocked_by_names, label: Dependencies, type: textarea, wide: true }]
+        - id: timesheets
+          label: Timesheets
+          content_slot: true
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: project_task_timesheets
+    parent_source: project_task_detail
+    variant: odoo_x2many
+    page_size: 25
+    row_key: id
+    columns:
+      - { field: work_date, label: Date }
+      - { field: employee_name, label: Employee }
+      - { field: name, label: Entry }
+      - { field: description, label: Description }
+      - { field: time_spent_display, label: Time Spent, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    empty_state: { title: Record a new activity, description: Track your working hours by project every day. }
