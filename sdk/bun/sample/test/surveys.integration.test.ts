@@ -22,7 +22,7 @@ describe('Surveys parity catalog and workflow', () => {
   test('matches Odoo survey detail stat buttons and counts', () => {
     const page = yaml('pages/survey-detail.yaml');
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
-    expect(form.stat_buttons.map((button: any) => button.value_field)).toEqual(['certified_count', 'participant_count', 'completed_count']);
+    expect(form.stat_buttons.map((button: any) => button.value_field)).toEqual(['certified_count', 'registered_count', 'completed_count']);
     expect(page.actions.find((action: any) => action.id === 'survey_participant_stats_detail').params).toEqual({ survey_id: '{row.id}', state: 'Completed' });
     expect(page.actions.find((action: any) => action.id === 'survey_registered_stats_detail').params).toEqual({ survey_id: '{row.id}' });
     expect(yaml('api/survey-detail.yaml').datasources[0].query).toContain('completed_count');
@@ -54,6 +54,30 @@ describe('Surveys parity catalog and workflow', () => {
     expect(result.data.length).toBeGreaterThan(0);
     expect(result.data.every((row: any) => row.state === 'Completed')).toBe(true);
     expect(result.data.every((row: any) => row.survey_id === 'survey-demo-feedback')).toBe(true);
+  });
+
+  test('routes the Registered stat to every participant attempt with stable errors', async () => {
+    const page = yaml('pages/survey-detail.yaml');
+    const detail = yaml('api/survey-detail.yaml');
+    const participants = yaml('api/participants.yaml');
+    const registered = page.actions.find((action: any) => action.id === 'survey_registered_stats_detail');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    expect(page.page.id).toBe('survey-detail');
+    expect(yaml('pages/participants.yaml').page.id).toBe(participants.page.id);
+    expect(form.stat_buttons).toContainEqual(expect.objectContaining({ label: 'Registered', value_field: 'registered_count' }));
+    expect(registered).toMatchObject({ permission: 'surveys.read', navigate_to: '/surveys/participants', params: { survey_id: '{row.id}' } });
+    expect(detail.datasources[0].query).toContain('registered_count');
+    expect(participants.datasources[0].error_states.transport_error).toMatchObject({ status: 503, code: 'SURVEY_REGISTERED_PARTICIPANTS_UNAVAILABLE' });
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_registered_stat_migrations', ['schema', 'data']);
+    const participantSource = participants.datasources[0];
+    const all = await repository.querySource(participantSource, { q: null, state: null, quiz_status: null, survey_id: 'survey-demo-feedback', fixture_state: null }, 0, 50);
+    expect(all.data).toHaveLength(5);
+    expect(all.data.some((row: any) => row.state === 'In Progress')).toBe(true);
+    expect((await repository.querySource(participantSource, { q: 'no registered match', state: null, quiz_status: null, survey_id: 'survey-demo-feedback', fixture_state: null }, 0, 50)).data).toEqual([]);
+    await expect(repository.querySource(participantSource, { q: null, state: null, quiz_status: null, survey_id: 'survey-demo-feedback', fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'SURVEY_REGISTERED_PARTICIPANTS_UNAVAILABLE' });
   });
 
   test('routes the Certified stat to the Odoo Certifications Succeeded cohort', async () => {

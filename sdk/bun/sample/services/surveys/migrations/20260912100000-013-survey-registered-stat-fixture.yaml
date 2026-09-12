@@ -1,0 +1,15 @@
+version: 0.0.14
+description: Deterministic registered participant for Odoo Registered stat parity
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_participants(id, survey_id, survey_name, contact, email, attempt_no, deadline, quiz_passed, score, state, created_at, invitation_status, invitation_count)
+      VALUES ('participant-feedback-registered', 'survey-demo-feedback', 'Feedback Form', 'Ready Mat', 'ready.mat.feedback@example.com', 1, DATE '2026-01-30', NULL, NULL, 'In Progress', TIMESTAMP '2026-01-15 09:00:00', 'Not sent', 0)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_participants WHERE id = 'participant-feedback-registered';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

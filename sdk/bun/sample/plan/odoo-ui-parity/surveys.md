@@ -824,3 +824,20 @@ reference was captured from the installed disposable Survey database at
 the isolated runtime resolved to the MovedX shell during login instead of the
 Core3 auth surface. No screenshot is claimed for that failed run and no image
 is committed. The overall Surveys module remains `in-progress`.
+
+## Registered participants stat bounded slice (2026-09-12)
+
+The installed Odoo Survey form distinguishes `Registered` from the completed
+`Participants` cohort: Registered opens every participant attempt, including
+in-progress attempts. Core3 now exposes a deterministic `registered_count`,
+keeps the stat navigation on the existing participant page, and declares the
+registered datasource transport failure contract. The page/API pair remains
+joined by `page.id`; the migration adds only fixed, idempotent participant
+fixtures.
+
+Focused validation passes 19 tests with 185 assertions; the UI audit passes
+with 578 pages, 585 routes, and 996 datasources. An authenticated browser
+comparison was attempted under `/tmp/core3-odoo-parity/surveys-batch4-20260912/`,
+but the isolated runtime did not expose a reachable Core3 listener, so no
+authenticated Core3 screenshot or full visual-parity claim is made. Images,
+if produced during the attempt, remain outside Git.

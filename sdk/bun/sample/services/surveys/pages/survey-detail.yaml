@@ -30,7 +30,7 @@ components:
         - { id: print_survey_detail, label: Print Survey, permission: surveys.read }
     stat_buttons:
       - { id: survey_certified_stats_detail, label: Certified, value_field: certified_count, permission: surveys.read }
-      - { id: survey_registered_stats_detail, label: Registered, value_field: participant_count, permission: surveys.read }
+      - { id: survey_registered_stats_detail, label: Registered, value_field: registered_count, permission: surveys.read }
       - { id: survey_participant_stats_detail, label: Participants, value_field: completed_count, permission: surveys.read }
     statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: Closed, label: Closed }, { value: Cancelled, label: Cancelled }, { value: Archived, label: Archived }]
     status_colors: { Draft: neutral, Published: blue, Closed: green, Cancelled: red, Archived: neutral }
