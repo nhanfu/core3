@@ -45,6 +45,7 @@ describe('Manufacturing Work Orders Analysis Odoo action parity', () => {
       'mrp_workorder_analysis_states',
       'mrp_workorder_analysis_workcenters',
       'mrp_workorder_analysis_productions',
+      'mrp_workorder_analysis_companies',
       'mrp_workorder_analysis',
     ]);
     expect(discovered.pageDatasources.get('manufacturing-work-orders-analysis-detail')).toEqual(['mrp_workorder_analysis_detail']);
@@ -98,7 +99,7 @@ describe('Manufacturing Work Orders Analysis Odoo action parity', () => {
     const { database, repository } = await repositoryForTest();
     const api = yaml('api/work-orders-analysis.yaml');
     const source = api.datasources.find((candidate: any) => candidate.id === 'mrp_workorder_analysis');
-    const params = { q: null, state: null, workcenter: null, production_name: null, from_date: null, to_date: null, report_scope: 'active', fixture_state: null };
+    const params = { q: null, state: null, workcenter: null, production_name: null, company_name: null, from_date: null, to_date: null, report_scope: 'active', fixture_state: null };
 
     const active = await repository.querySource(source, params, 0, 50);
     expect(active.data).toHaveLength(3);
@@ -112,6 +113,9 @@ describe('Manufacturing Work Orders Analysis Odoo action parity', () => {
     expect((await repository.querySource(source, { ...params, from_date: '2026-01-15', to_date: '2026-01-15' }, 0, 50)).data).toHaveLength(3);
     expect((await repository.querySource(source, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { ...params, fixture_state: 'no_results' }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(source, { ...params, report_scope: 'all', company_name: 'My Company (San Francisco)' }, 0, 50)).data).toHaveLength(6);
+    expect((await repository.querySource(source, { ...params, report_scope: 'all', company_name: 'Core3 Vietnam' }, 0, 50)).data.map((row: any) => row.id)).toEqual(['wora-cancelled-001']);
+    expect((await repository.querySource(source, { ...params, report_scope: 'all', company_name: 'Unknown Company' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { ...params, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'MRP_WORKORDER_ANALYSIS_UNAVAILABLE' });
     await expect(repository.querySource(source, { ...params, fixture_state: 'forbidden' }, 0, 50)).rejects.toMatchObject({ status: 403, code: 'MRP_WORKORDER_ANALYSIS_FORBIDDEN' });
     await expect(repository.querySource(source, { ...params, fixture_state: 'unauthorized' }, 0, 50)).rejects.toMatchObject({ status: 401, code: 'MRP_WORKORDER_ANALYSIS_UNAUTHORIZED' });
@@ -129,6 +133,7 @@ describe('Manufacturing Work Orders Analysis Odoo action parity', () => {
       expected_duration: 45,
       duration: 30,
     });
+    expect((await repository.querySource(source, { id: 'wora-progress-001', company_name: 'Core3 Vietnam', fixture_state: null }, 0, 1)).data).toEqual({});
     await expect(repository.querySource(source, { id: 'wora-missing-001', fixture_state: 'missing_record' }, 0, 1)).rejects.toMatchObject({ status: 404, code: 'MRP_WORKORDER_ANALYSIS_DETAIL_NOT_FOUND' });
     await expect(repository.querySource(source, { id: 'wora-progress-001', fixture_state: 'forbidden' }, 0, 1)).rejects.toMatchObject({ status: 403, code: 'MRP_WORKORDER_ANALYSIS_DETAIL_FORBIDDEN' });
     await expect(repository.querySource(source, { id: 'wora-progress-001', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'MRP_WORKORDER_ANALYSIS_DETAIL_UNAVAILABLE' });

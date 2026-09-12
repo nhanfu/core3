@@ -2,6 +2,28 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-13 Work Orders Analysis company-scope repair
+
+- Reimplemented the rejected candidate against the active
+  `manufacturing-work-orders-analysis` contract. Existing report and detail
+  routes, page IDs, fixture table, and API files were retained; no conflicting
+  `/workorders` contract was added.
+- Added company option filtering and enforced the server-injected
+  `company_name` boundary in report/detail queries. Focused tests cover
+  My Company versus Core3 Vietnam isolation, unknown-company emptiness, and
+  cross-company detail hiding. Aggregate progress and migration history were
+  not edited.
+
+## 2026-09-13 Work Orders Analysis scope repair
+
+- Reimplemented the rejected candidate against the active Work Orders Analysis
+  contract instead of adding duplicate `/workorders` files. Report and detail
+  queries now honor the server-injected `company_name` boundary, and the
+  existing report exposes a company filter whose options are scope-limited.
+- Focused coverage verifies My Company/Core3 Vietnam isolation, unknown-company
+  emptiness, hidden cross-company detail rows, page discovery, and the existing
+  report/error contract. No aggregate progress or migration history was edited.
+
 ## 2026-09-11 fresh-reference revalidation
 
 - The bounded Work Orders Analysis slice was rechecked against the newly

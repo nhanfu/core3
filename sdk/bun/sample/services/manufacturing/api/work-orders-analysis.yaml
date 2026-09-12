@@ -13,6 +13,10 @@ datasources:
     single: false
     permission: manufacturing.read
     query: "SELECT DISTINCT production_name AS value, production_name AS label FROM mrp_workorder_analysis WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END ORDER BY production_name"
+  - id: mrp_workorder_analysis_companies
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT company_name AS value, company_name AS label FROM mrp_workorder_analysis WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:company_name IS NULL OR company_name = :company_name) ORDER BY company_name"
   - id: mrp_workorder_analysis
     single: false
     permission: manufacturing.read
@@ -52,6 +56,7 @@ datasources:
         AND (:state IS NULL OR state = :state)
         AND (:workcenter IS NULL OR workcenter = :workcenter)
         AND (:production_name IS NULL OR production_name = :production_name)
+        AND (:company_name IS NULL OR company_name = :company_name)
         AND (:from_date IS NULL OR CAST(planned_date AS DATE) >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR CAST(planned_date AS DATE) <= CAST(:to_date AS DATE))
       ORDER BY workcenter, planned_date, sequence, id

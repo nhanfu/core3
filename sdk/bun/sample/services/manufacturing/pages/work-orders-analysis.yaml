@@ -12,6 +12,7 @@ components:
       - { field: state, label: Status, options_source: mrp_workorder_analysis_states }
       - { field: workcenter, label: Work Center, options_source: mrp_workorder_analysis_workcenters }
       - { field: production_name, label: Manufacturing Order, options_source: mrp_workorder_analysis_productions }
+      - { field: company_name, label: Company, options_source: mrp_workorder_analysis_companies }
     group_by:
       - { field: workcenter, label: Work Center }
       - { field: operation_name, label: Operation }

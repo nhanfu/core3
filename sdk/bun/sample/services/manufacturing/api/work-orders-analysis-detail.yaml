@@ -33,6 +33,7 @@ datasources:
       FROM mrp_workorder_analysis
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'missing_record') THEN FALSE ELSE TRUE END
         AND id = :id
+        AND (:company_name IS NULL OR company_name = :company_name)
 
 actions:
   - id: back_to_mrp_workorder_analysis
