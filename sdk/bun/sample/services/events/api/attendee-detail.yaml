@@ -21,6 +21,11 @@ actions:
         })
         window.location.assign(`/events/attendees/badge?id=${encodeURIComponent(String(row.id))}`)
       }
+  - id: print_attendee_full_page_ticket
+    type: navigate
+    permission: events.read
+    navigate_to: /events/attendees/full-page-ticket
+    params: { id: '{row.id}' }
   - id: send_attendee_email
     type: server_form
     modal_style: mail_composer

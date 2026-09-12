@@ -10,6 +10,7 @@ components:
     labels: { workflowStatus: Status }
     header_actions:
       - { id: print_attendee_badge, label: Print Badge, variant: secondary, permission: events.read, show_if: "record.state === 'Registered' || record.state === 'Attended'" }
+      - { id: print_attendee_full_page_ticket, label: Full Page Ticket, variant: secondary, permission: events.read }
       - { id: send_attendee_email, label: Send by Email, variant: primary, permission: events.write }
       - { id: confirm_attendee_detail, label: Registered, variant: primary, permission: events.write, show_if: "record.state === 'Unconfirmed'" }
       - { id: mark_attendee_attended_detail, label: Attended, variant: primary, permission: events.write, show_if: "record.state === 'Registered'" }

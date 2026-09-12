@@ -1,0 +1,36 @@
+version: 0.0.30
+kind: data
+description: Deterministic attendee Full Page Ticket report fixture
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_attendee_full_page_ticket_blocks (
+        id VARCHAR PRIMARY KEY,
+        registration_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL,
+        block_type VARCHAR NOT NULL,
+        label VARCHAR,
+        content VARCHAR,
+        token_key VARCHAR
+      );
+      INSERT INTO event_attendee_full_page_ticket_blocks(id, registration_id, sequence, block_type, label, content, token_key) VALUES
+        ('attendee-ticket-004-event', 'registration-demo-004', 1, 'text', 'Event', 'Live Music Festival', NULL),
+        ('attendee-ticket-004-type', 'registration-demo-004', 2, 'text', 'Ticket type', 'Free', NULL),
+        ('attendee-ticket-004-attendee', 'registration-demo-004', 3, 'text', 'Attendee', 'Douglas Fletcher', NULL),
+        ('attendee-ticket-004-date', 'registration-demo-004', 4, 'text', 'Date', '03 Oct 2026 18:00 - 04 Oct 2026 00:00', NULL),
+        ('attendee-ticket-004-venue', 'registration-demo-004', 5, 'text', 'Venue', 'Open Air Stage', NULL),
+        ('attendee-ticket-004-instructions', 'registration-demo-004', 6, 'text', 'Ticket Instructions', 'Bring this ticket to the registration desk.', NULL),
+        ('attendee-ticket-004-qr', 'registration-demo-004', 7, 'barcode', 'QR Code', 'BADGE-MUSIC-004', 'qr'),
+        ('attendee-ticket-004-barcode', 'registration-demo-004', 8, 'barcode', 'Barcode', 'BADGE-MUSIC-004', 'code128'),
+        ('attendee-ticket-004-organizer', 'registration-demo-004', 9, 'text', 'Organizer', 'My Company (San Francisco)', NULL)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_attendee_full_page_ticket_blocks WHERE registration_id = 'registration-demo-004';
+      DROP TABLE IF EXISTS event_attendee_full_page_ticket_blocks;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database:
+  storage:
+    driver: duckdb

@@ -1,0 +1,14 @@
+page: { id: event-attendee-full-page-ticket }
+datasources:
+  - id: event_attendee_full_page_ticket
+    single: true
+    permission: events.read
+    error_states:
+      missing_record: { status: 404, code: EVENT_ATTENDEE_FULL_PAGE_TICKET_NOT_FOUND, message: Attendee full page ticket not found. }
+      transport_error: { status: 503, code: EVENT_ATTENDEE_FULL_PAGE_TICKET_UNAVAILABLE, message: Attendee full page ticket is temporarily unavailable. }
+    query: "SELECT r.id AS registration_id, r.event_id, r.event_name, COALESCE(strftime(e.start_at, '%d %b %Y %H:%M'), '') || ' - ' || COALESCE(strftime(e.end_at, '%H:%M'), '') AS event_schedule, COALESCE(e.venue, 'Online Event') AS venue, COALESCE(r.ticket_type, 'General Admission') AS ticket_type, r.attendee_name, 'Bring this ticket to the registration desk.' AS ticket_instructions, COALESCE(r.booked_by, e.organizer, 'Events Team') AS organizer, COALESCE(r.barcode, '') AS barcode, 'Full Page Ticket' AS name, 'A4' AS format, 'Ready' AS status FROM event_registrations r LEFT JOIN events e ON e.id = r.event_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id"
+  - id: event_attendee_full_page_ticket_blocks
+    permission: events.read
+    error_states:
+      transport_error: { status: 503, code: EVENT_ATTENDEE_FULL_PAGE_TICKET_UNAVAILABLE, message: Attendee full page ticket is temporarily unavailable. }
+    query: "SELECT id, block_type, label, content, token_key FROM event_attendee_full_page_ticket_blocks WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND registration_id = :id ORDER BY sequence, id"
