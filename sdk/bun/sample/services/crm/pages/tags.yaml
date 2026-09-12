@@ -30,5 +30,5 @@ components:
     columns:
       - { field: name, label: Tag Name, type: PrimaryEntityCell, mobile: true }
       - { field: color, label: Color, type: ColorCell, palette: odoo, mobile: true, sortable: false }
-      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: edit_crm_tag, label: Edit, icon: edit }, { id: delete_crm_tag, label: Delete, icon: trash, variant: danger }] }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: edit_crm_tag, label: Edit, icon: edit }] }
     page_size: 50

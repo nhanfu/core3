@@ -19,10 +19,6 @@ actions:
     type: navigate
     permission: pos.read
     navigate_to: /point-of-sale/pricelists
-  - id: print_pos_pricelist
-    type: client
-    permission: pos.read
-    handler: print
   - id: edit_pos_pricelist
     type: server_form
     permission: pos.manage

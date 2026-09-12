@@ -52,7 +52,6 @@ actions:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: CRM_TAG_NAME_REQUIRED, message: A tag name is required. }
         - { query: "SELECT 1 AS ok WHERE CAST(:color AS INTEGER) BETWEEN 0 AND 11", status: 422, code: CRM_TAG_COLOR_INVALID, message: Color must be between 0 and 11. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: CRM_TAG_EXISTS, message: A CRM tag with this name already exists. }
-      steps: [{ query: "UPDATE crm_tags SET name = :name, color = :color, row_version = row_version + 1 WHERE id = :id" }]
       result: { query: "SELECT * FROM crm_tags WHERE id = :id" }
     fields:
       - { field: name, label: Tag Name, type: text, required: true }

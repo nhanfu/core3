@@ -8,7 +8,6 @@ components:
     group_columns: 2
     header_actions:
       - { id: back_to_pos_pricelists, label: Pricelists, variant: secondary, permission: pos.read }
-      - { id: print_pos_pricelist, label: Print, variant: secondary, permission: pos.read }
       - { id: edit_pos_pricelist, label: Edit, variant: primary, permission: pos.manage }
     groups:
       - title: Pricelist
