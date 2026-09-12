@@ -15,6 +15,11 @@ authenticated desktop/mobile comparison before acceptance.
 
 ## 2026-09-12 source audit
 
+The requested relative source path `../odoo` is not present from this isolated
+worktree. The authoritative local checkout inspected for this audit is
+`/home/nhanjs/projects/odoo` (Odoo branch `19.0`, commit
+`659759969d535d286b656c96b675e4612b925ddd`).
+
 The requested addon directory is absent:
 
 | Required source | Result |
@@ -116,7 +121,8 @@ alternate checkout path and commit), then:
 ## Verification record
 
 - Addon/path audit: `mrp_plm` directory, manifest, views, security, and data
-  paths absent; only the unrelated icon asset was found.
+  paths absent in the authoritative checkout; `../odoo` is also absent from
+  this worktree; only the unrelated icon asset was found.
 - Core3 ownership audit: existing tracked `services/plm` files listed above;
   no PLM API directory or focused test exists.
 - No source-backed UI implementation or browser evidence was added.
