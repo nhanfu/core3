@@ -13,7 +13,7 @@
 | Module | `crm` |
 | QA owner | pending dispatch to QA slot |
 | Verification trigger | `merge-candidate` |
-| Candidate commit | `3ad8bbd3b1d6649128a20af8fb41ac668ebe8c1c` |
+| Candidate commit | `85ebc4f9` (form-runtime repair) |
 | Runtime | Core3 full memory runtime, `http://127.0.0.1:4012`, authenticated `admin@tms.local` |
 | Odoo reference | not freshly authenticated in this slice |
 | Result | `tester-failed` |
