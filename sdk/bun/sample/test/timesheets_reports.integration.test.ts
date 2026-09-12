@@ -16,6 +16,12 @@ const reportPages = [
 ] as const;
 
 describe('Timesheets reporting parity slice', () => {
+  test('declares pivot fields for Timesheet Analysis', () => {
+    const api = yaml('api/analysis.yaml');
+    const source = api.datasources.find((candidate: any) => candidate.id === 'timesheet_analysis');
+    expect(source.pivot.fields).toEqual(expect.arrayContaining(['employee_name', 'project_name', 'task_name', 'month', 'hours', 'cost']));
+  });
+
   test('maps each Odoo report route to a layout-only page and matching API fragment', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const routes = discoverPageRoutes(discovered);

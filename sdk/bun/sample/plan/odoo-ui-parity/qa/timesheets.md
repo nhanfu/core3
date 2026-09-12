@@ -8,23 +8,32 @@
 - Artifacts: /tmp/core3-odoo-parity/module-matrix-20260912/timesheets-desktop.png and timesheets-mobile.png.
 - Boundary: this is route/render smoke evidence only; it does not sign off the complete menu tree, CRUD, permissions, workflows, persistence, or paired Odoo visual parity.
 
-QA state: dormant
+QA state: qa-in-progress
 QA slot: dispatchable timesheets assignment (pending wave dispatch)
 Module owner: timesheets module owner
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: current working tree
+
+## Current regression evidence
+
+- Focused Timesheets suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 24 passed, 0 failed, 266 assertions across 8 files; the reporting retest after the fix passed 6/6 with 109 assertions.
+- Authenticated module-scoped route matrix: 13 routes × desktop/mobile; 22/26 bare-route checks were clean. The four failures were isolated: All Timesheets emitted late detail requests during route traversal, and Timesheet Analysis exposed a real missing-pivot-fields contract.
+- Fix: declared `pivot.fields` for `timesheet_analysis` in `services/timesheets/api/analysis.yaml`; a fresh authenticated retest rendered Pivot/Graph/List with no HTTP or browser failures.
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| TIMESHEETS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
+| TIMESHEETS-FUNC-001 | Focused functionality, reports, scoped CRUD, settings, and embedded-task contracts | 24 tests, 266 assertions; focused suite passed | pass |
+| TIMESHEETS-BROWSER-001 | Authenticated route matrix | 22/26 initial bare-route checks; analysis clean after pivot fix; detail route traversal needs valid IDs | partial pass |
+| TIMESHEETS-FUNC-002 | Timesheet Analysis Pivot/Graph/List runtime | Missing API pivot contract fixed; fresh authenticated retest rendered all three views with no failures | pass |
+| TIMESHEETS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Full parameterized route matrix, role boundaries, authenticated mutation smoke, and paired Odoo comparison remain open | pending |
 
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
-| — | No current-wave QA run | — | — | pending |
+| TIMESHEETS-QA-001 | Timesheet Analysis requested pivot data but API datasource declared no pivot fields | Current working tree | Added `pivot.fields`; reporting test 6/6 and authenticated Pivot/Graph/List retest passed | fixed |
 
 ## Sign-off
 
