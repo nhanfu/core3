@@ -14,6 +14,8 @@ Module owner: website module owner
 Verification trigger: feature-complete
 Candidate commit: none
 
+Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It is the module-level source for page publishing, public visibility, YAML/HTML rendering, actors, persistence, Temporal, and paired Odoo gates.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
