@@ -1,0 +1,53 @@
+page: { id: crm-tag-detail }
+datasources:
+  - id: crm_tag_detail
+    single: true
+    permission: crm.manage
+    error_states:
+      unauthorized: { status: 401, code: CRM_TAG_DETAIL_UNAUTHORIZED, message: Sign in to view this CRM tag. }
+      forbidden: { status: 403, code: CRM_TAG_DETAIL_FORBIDDEN, message: You do not have permission to manage this CRM tag. }
+      not_found: { status: 404, code: CRM_TAG_NOT_FOUND, message: CRM tag was not found. }
+      transport_error: { status: 503, code: CRM_TAG_DETAIL_UNAVAILABLE, message: CRM tag details are temporarily unavailable. }
+    query: "SELECT id, row_version, name, color FROM crm_tags WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"
+actions:
+  - id: back_to_crm_tags
+    type: navigate
+    permission: crm.manage
+    navigate_to: /crm/tags
+  - id: edit_crm_tag_detail
+    type: server_form
+    permission: crm.manage
+    title: Edit Tag
+    action: crm.tags.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.crm_tag_detail
+    refresh: [crm_tag_detail, crm_tag_configuration]
+    mutation:
+      operation: update
+      table: crm_tags
+      fields: [name, color]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_tags WHERE id = :id", status: 404, code: CRM_TAG_NOT_FOUND, message: CRM tag was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: CRM_TAG_NAME_REQUIRED, message: A tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:color AS INTEGER) BETWEEN 0 AND 11", status: 422, code: CRM_TAG_COLOR_INVALID, message: Color must be between 0 and 11. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: CRM_TAG_EXISTS, message: A CRM tag with this name already exists. }
+      steps: [{ query: "UPDATE crm_tags SET name = :name, color = :color, row_version = row_version + 1 WHERE id = :id" }]
+      result: { query: "SELECT * FROM crm_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Tag Name, type: text, required: true }
+      - { field: color, label: Color, type: color, palette: odoo }
+  - id: delete_crm_tag_detail
+    type: server
+    permission: crm.manage
+    action: crm.tags.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [crm_tag_configuration]
+    mutation:
+      operation: delete
+      table: crm_tags
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM crm_tags WHERE id = :id", status: 404, code: CRM_TAG_NOT_FOUND, message: CRM tag was not found. }]

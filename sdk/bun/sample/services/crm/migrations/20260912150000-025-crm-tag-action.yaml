@@ -1,0 +1,19 @@
+version: 0.0.25
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_tags ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      UPDATE crm_tags SET row_version = 1 WHERE row_version IS NULL;
+      INSERT INTO crm_tags(id, name, color, row_version) VALUES
+        ('crm-tag-product', 'Product', 1, 1), ('crm-tag-software', 'Software', 2, 1),
+        ('crm-tag-services', 'Services', 3, 1), ('crm-tag-information', 'Information', 4, 1),
+        ('crm-tag-design', 'Design', 5, 1), ('crm-tag-training', 'Training', 6, 1),
+        ('crm-tag-consulting', 'Consulting', 7, 1), ('crm-tag-other', 'Other', 8, 1)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM crm_tags WHERE id IN ('crm-tag-product', 'crm-tag-software', 'crm-tag-services', 'crm-tag-information', 'crm-tag-design', 'crm-tag-training', 'crm-tag-consulting', 'crm-tag-other');
+      ALTER TABLE crm_tags DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

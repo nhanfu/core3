@@ -1,0 +1,17 @@
+title: Tags
+page: { id: crm-tag-detail, route: /crm/tags/detail, breadcrumb: [CRM, Configuration, Pipeline, Tags], auth: { require: [crm.manage] } }
+components:
+  - type: OdooFormView
+    source: crm_tag_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_crm_tags, label: Tags, variant: secondary, permission: crm.manage }
+      - { id: edit_crm_tag_detail, label: Edit, variant: primary, permission: crm.manage }
+      - { id: delete_crm_tag_detail, label: Delete, variant: danger, permission: crm.manage, confirm: Delete this tag? }
+    groups:
+      - title: Tags
+        fields:
+          - { field: name, label: Tag Name, type: text, required: true, placeholder: e.g. Services }
+          - { field: color, label: Color, type: color, palette: odoo }

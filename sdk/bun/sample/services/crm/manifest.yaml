@@ -90,6 +90,10 @@ menu:
                   label: Stages
                   icon: list
                   permission: crm.manage
+                - path: /crm/tags
+                  label: Tags
+                  icon: tag
+                  permission: crm.manage
         - path: /settings
           label: CRM Settings
           icon: settings

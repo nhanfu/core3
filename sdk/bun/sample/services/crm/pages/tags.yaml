@@ -1,31 +1,34 @@
-title: CRM Lead Tags
-page:
-  id: crm-tags
-  breadcrumb: [CRM, Tags]
-  auth: { require: [crm.read] }
+title: Tags
+page: { id: crm-tags, route: /crm/tags, breadcrumb: [CRM, Configuration, Pipeline, Tags], auth: { require: [crm.manage] } }
 components:
   - type: ListView
     variant: odoo
-    source: crm_tag_values
-    search: { label: Search tags, placeholder: Search lead tags... }
-    columns:
-      - { field: value, label: Tag }
-      - { field: lead_count, label: Leads }
-  - type: ListView
-    variant: odoo
     source: crm_tag_configuration
-    create_action: create_crm_tag
-    create_label: New tag
-    columns:
-      - { field: name, label: Tag }
-      - { field: lead_count, label: Leads }
-      - { field: color, label: Color }
-      - { field: active, label: Active, type: StatusChip }
+    create_action: create_crm_tag_inline
+    create_label: New
+    search: { label: Search, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/crm/pages/crm-tag-detail.yaml, side_panel: false }
+    inline_edit:
+      create_action: create_crm_tag_inline
+      update_action: update_crm_tag_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: name, type: text, required: true, placeholder: e.g. Services }
+        - { field: color, type: color, palette: odoo, default: 0 }
     row_key: id
     selectable: true
     bulk_actions:
-      - { id: bulk_delete_crm_tags, label: Delete selected, permission: crm.manage }
+      - { id: bulk_delete_crm_tags, label: Delete selected, permission: crm.manage, variant: danger }
+    row_open_action: edit_crm_tag
     row_actions: menu
-    actions:
-      - { id: edit_crm_tag, label: Edit, permission: crm.manage, variant: ghost }
-      - { id: toggle_crm_tag, label: Toggle, permission: crm.manage, variant: ghost }
+    empty_state: { title: Create CRM Tags, description: 'Use Tags to manage and track your Opportunities (product structure, sales type, ...)' }
+    columns:
+      - { field: name, label: Tag Name, type: PrimaryEntityCell, mobile: true }
+      - { field: color, label: Color, type: ColorCell, palette: odoo, mobile: true, sortable: false }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: edit_crm_tag, label: Edit, icon: edit }, { id: delete_crm_tag, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50

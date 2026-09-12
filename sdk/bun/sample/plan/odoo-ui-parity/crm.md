@@ -515,3 +515,52 @@ Core3 implementation and evidence:
   3 tests passed, 35 assertions after adding the complete error-state
   contract checks. Screenshots remain outside Git under the requested batch
   directory (which is intentionally empty after the failed capture attempt).
+
+## Batch 4: Configuration -> Pipeline -> Tags (2026-09-12)
+
+Status: `implemented`; runtime/browser verification blocked by the first
+concrete test failure below.
+
+Reference contract:
+
+- The source menu is `CRM -> Configuration -> Pipeline -> Tags`, declared by
+  `addons/crm/views/crm_menu_views.xml` and bound to the inherited
+  `sales_team.sales_team_crm_tag_action`.
+- The authoritative action is in
+  `addons/sales_team/views/crm_tag_views.xml`: model `crm.tag`, action name
+  `Tags`, a `list` view with `editable="bottom"`, `Tag Name` and color-picker
+  columns, and a form with the `e.g. Services` placeholder. The model source
+  defines required `name` and integer `color` fields and a unique name
+  constraint. Official demo records are Product, Software, Services,
+  Information, Design, Training, Consulting, and Other with colors 1 through
+  8.
+
+Core3 implementation:
+
+- Page/API contracts join through `crm-tags`; layout is
+  `services/crm/pages/tags.yaml`, while `api/tags.yaml` owns the list
+  datasource and inline CRUD action contracts. The form is a separate
+  `crm-tag-detail` page/API pair at `/crm/tags/detail`.
+- The manifest now places `Tags` below `Configuration -> Pipeline`, with the
+  source action represented by `/crm/tags`. The list preserves Odoo's two data
+  columns, inline-bottom editing, List/Form tabs, empty help text, color
+  palette, and detail navigation rather than exposing the older
+  projection-only lead-count/active controls.
+- Migration
+  `services/crm/migrations/20260912150000-025-crm-tag-action.yaml` adds stable
+  row versions and idempotent source-backed fixtures. Manager-only create,
+  update, delete, duplicate/name/color validation, stale-write, missing-row,
+  empty/no-result, unauthorized, forbidden, and transport-error contracts are
+  covered by `test/crm_tags_action.integration.test.ts`.
+
+Verification boundary:
+
+- First and only runtime attempt:
+  `bun test test/crm_tags_action.integration.test.ts` from `sdk/bun/sample`
+  failed before assertions with
+  `Cannot find module '@core3/server/database/duckdb-database'` from the new
+  test file (`0 pass, 1 fail, 1 error`). This fresh worktree dependency/module
+  resolution failure is recorded without a second runtime attempt.
+- Authenticated Odoo/Core3 desktop/mobile captures were not run after the
+  test failure, so no visual parity claim or image artifact is recorded.
+  Images remain outside Git under `/tmp/core3-odoo-parity/crm-batch4-20260912/`.
