@@ -73,6 +73,13 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-UI-003 | Empty/unpublished/error | both | Public visibility, empty and error states do not leak content or overflow | planned |
 | ECOM-UI-004 | Current route regression | all manifest-owned Ecommerce routes | Public/authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
 
+## Reference blocker
+
+The current authenticated Odoo reference has no Website/eCommerce app in its
+launcher and `/shop` returns 404. Odoo paired cases remain blocked until a
+database with the `website_sale` addon installed is supplied; this does not
+waive Core3 functional, permission, persistence, or browser gates.
+
 ## Exit criteria
 
 Full Ecommerce sign-off requires the focused catalog suite, authenticated and
