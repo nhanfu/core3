@@ -5,15 +5,3 @@ datasources:
     pivot: { fields: [statement_month, starting_balance, ending_balance] }
     error_states: { forbidden: { status: 403, code: ACCOUNTING_CASH_REGISTERS_FORBIDDEN, message: You do not have access to cash registers. }, transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
     query: "SELECT id, row_version, reference, strftime(date, '%b') || ' ' || CAST(EXTRACT(DAY FROM date) AS VARCHAR) AS date_display, strftime(date, '%b') || ' ' || CAST(EXTRACT(DAY FROM date) AS VARCHAR) AS statement_month, journal, company, starting_balance, ending_balance, printf('$ %,.2f', CAST(starting_balance AS DOUBLE)) AS starting_balance_display, printf('$ %,.2f', CAST(ending_balance AS DOUBLE)) AS ending_balance_display FROM accounting_cash_registers WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR reference ILIKE '%' || :q || '%' OR journal ILIKE '%' || :q || '%') AND (:statement_filter IS NULL OR (:statement_filter = 'empty' AND line_numbers = '') OR (:statement_filter = 'invalid' AND is_valid = FALSE)) ORDER BY date DESC, sequence"
-actions:
-  - { id: view_accounting_cash_register, type: navigate, permission: accounting.read, navigate_to: /accounting/cash-register-detail, params: { id: '{row.id}' } }
-  - id: create_accounting_cash_register
-    type: server_form
-    permission: accounting.write
-    title: New Cash Register
-    action: accounting.cash_registers.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [accounting_cash_registers]
-    mutation: { operation: insert, table: accounting_cash_registers, generated: [id], fields: [reference, date, journal, company, starting_balance, ending_balance, line_numbers, is_valid], required: [reference, date, journal], defaults: { company: 'My Company (San Francisco)', starting_balance: 0, ending_balance: 0, line_numbers: '', is_valid: true, sequence: 1000 }, guards: [{ query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:reference AS VARCHAR))) > 0", status: 422, code: ACCOUNTING_CASH_REFERENCE_REQUIRED, message: A reference is required. }, { query: "SELECT 1 AS ok WHERE CAST(:ending_balance AS DOUBLE) >= CAST(:starting_balance AS DOUBLE)", status: 422, code: ACCOUNTING_CASH_BALANCE_INVALID, message: Ending balance must not be below starting balance. }], result: { query: "SELECT * FROM accounting_cash_registers WHERE id = :id" } }
-    fields: [{ field: reference, label: Reference, type: text, required: true }, { field: date, label: Date, type: date, required: true }, { field: journal, label: Journal, type: text, required: true, default: Cash }, { field: starting_balance, label: Starting Balance, type: number, default: 0 }, { field: ending_balance, label: Ending Balance, type: number, default: 0 }]

@@ -1167,21 +1167,25 @@ and `git diff --check` is clean. The expected residual is the shared Fluent
 shell and Core3's compact pivot/graph rendering versus Odoo's purple shell and
 formatted accounting pivot. Screenshots remain outside Git.
 
-## Cash Registers bounded slice (2026-09-12)
+## Cash Registers source-boundary repair (2026-09-12)
 
-Core3 adds the Accounting Cash Registers action at `/accounting/cash-registers`
-with a page/API pair joined by `page.id`, deterministic register fixtures, and
-read-only `accounting.read` access. The focused contract covers list/search,
-empty/error/denied states, stable ordering, and the cash-register action
-navigation.
+The existing Cash Registers slice is now aligned to Odoo's installed
+`account.action_view_bank_statement_tree` in
+`addons/account/views/account_bank_statement_views.xml`. That action targets
+`account.bank.statement` with the cash-journal context/domain, exposes exactly
+`list,pivot,graph`, and uses the shared statement list with `create="false"`;
+there is no form/detail action or CRUD workflow. Core3 therefore keeps only
+the `/accounting/cash-registers` page/API pair joined by `page.id`, removes the
+unavailable New, row-navigation, and detail route, and retains deterministic
+read-only `accounting.read` fixtures.
 
-The focused integration test passes 2 tests and 13 assertions. Authenticated
-Core3 and Odoo captures were saved at 1440x900 and 390x844 under
-`/tmp/core3-odoo-parity/accounting-next-20260912/`; images remain outside Git.
-The comparison confirms the bounded list surface and responsive width. The
-remaining differences are the shared Core3 Fluent shell versus Odoo's purple
-shell and deterministic Core3 fixtures versus the live Odoo dataset. No
+The focused integration test covers page/API separation, exact view modes,
+stable ordering, search, invalid/empty filters, transport failure, forbidden
+metadata, idempotent fixtures, and the manifest permission boundary. No
 cash-session posting or reconciliation workflow is claimed by this slice.
+Authenticated visual verification was not rerun for this source-boundary
+repair in the isolated runtime; existing captures remain outside Git, and no
+new visual-parity claim is made here.
 
 ## Credit Statements bounded action (2026-09-12)
 

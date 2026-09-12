@@ -25,8 +25,7 @@ components:
         measure_field: ending_balance
         measure_label: Ending Balance
         type: line
-    create_label: New
-    selectable: true
+    selectable: false
     column_chooser: true
     columns:
       - { field: reference, label: Reference, type: PrimaryEntityCell }
@@ -37,8 +36,5 @@ components:
       - { field: ending_balance_display, label: Ending Balance, align: right }
     page_size: 50
     row_key: id
-    row_open_action: view_accounting_cash_register
-    row_double_click_action: view_accounting_cash_register
-    row_actions: menu
     responsive_card: true
     empty_state: { title: Create a new cash log, description: A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up cash payments on a daily basis. }
