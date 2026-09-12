@@ -169,12 +169,12 @@ The shared mock-data contract is defined in
   accepted functionality is green. Module agents must respond to tester
   findings and keep ownership until the tester signs off or the blocker is
   explicitly recorded.
-- `odoo-ui-parity/progress.md` is the module-level ownership/sign-off ledger,
-  not a per-slice activity log. A module agent adds or updates one row only
-  when its module goal changes state: active, source-blocked, tester-failed,
-  or parity-signed-off. Intermediate commits and failing attempts belong in
-  the matching module section of `module-qa.md`; do not create per-agent
-  progress logs.
+- `odoo-ui-parity/progress.md` is the shared tester-maintained aggregate and
+  sign-off ledger. Module agents must not edit it directly. Each module agent
+  owns and may update only `odoo-ui-parity/progress/<module>.md`, following
+  `odoo-ui-parity/progress/README.md`. The shared tester consolidates those
+  files into `progress.md` after verification. Intermediate commits and
+  failing attempts belong in the matching module section of `module-qa.md`.
 - Every completed module must have corresponding test-case entries and a
   tester result before its progress row can say parity-signed-off. A source
   blocker may be recorded only with the exact missing addon/action evidence;
@@ -198,5 +198,7 @@ with separate test-case and bug-fix tables for every module:
 
 The shared tester must update the relevant module section as part of every
 verification pass. Do not create separate global test-case or bug-fix files.
+Module agents may update only their own progress file, never another module's
+file or the aggregate `progress.md`.
 Screenshots remain temporary under `/tmp/core3-odoo-parity/` and must never be
 added to Git.
