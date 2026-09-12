@@ -14,6 +14,8 @@ Module owner: ecommerce module owner
 Verification trigger: feature-complete
 Candidate commit: none
 
+Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md). It is the module-level source for catalog, pricelists, commerce workflows, actors, persistence, Temporal, and paired Odoo gates.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
