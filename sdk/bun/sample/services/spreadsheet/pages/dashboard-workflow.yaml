@@ -10,5 +10,19 @@ workflow:
     - { id: Published, label: Published, color: green }
     - { id: Archived, label: Archived, color: blue, terminal: true }
   transitions:
-    - { id: publish, from: [Draft], to: Published, permission: spreadsheet.dashboard.manage }
-    - { id: archive, from: [Draft, Published], to: Archived, permission: spreadsheet.dashboard.manage }
+    - id: publish
+      from: [Draft]
+      to: Published
+      permission: spreadsheet.dashboard.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM spreadsheet_dashboards WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: SPREADSHEET_DASHBOARD_PUBLISH_STALE, message: This dashboard changed or is no longer a draft. Reload before publishing. }]
+        steps: [{ query: "UPDATE spreadsheet_dashboards SET state = 'Published', published = TRUE, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SPREADSHEET_DASHBOARD_PUBLISH_STALE, message: This dashboard changed before publishing. Reload before trying again. }]
+        result: { query: "SELECT * FROM spreadsheet_dashboards WHERE id = :id" }
+    - id: archive
+      from: [Draft, Published]
+      to: Archived
+      permission: spreadsheet.dashboard.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM spreadsheet_dashboards WHERE id = :id AND state IN ('Draft', 'Published') AND row_version = :expected_row_version", status: 409, code: SPREADSHEET_DASHBOARD_ARCHIVE_STALE, message: This dashboard changed or is already archived. Reload before archiving. }]
+        steps: [{ query: "UPDATE spreadsheet_dashboards SET state = 'Archived', published = FALSE, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SPREADSHEET_DASHBOARD_ARCHIVE_STALE, message: This dashboard changed before archiving. Reload before trying again. }]
+        result: { query: "SELECT * FROM spreadsheet_dashboards WHERE id = :id" }

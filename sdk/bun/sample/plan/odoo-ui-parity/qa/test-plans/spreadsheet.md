@@ -40,7 +40,7 @@ dashboards, workbook snapshots, figures, filters and share tokens.
 
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
-| SHEET-WF-001 | Dashboard lifecycle | Draft → Published → Archived updates visibility and row version atomically | pass at contract level; browser workflow planned |
+| SHEET-WF-001 | Dashboard lifecycle | Draft → Published → Archived updates visibility and row version atomically | pass: `spreadsheet.integration.test.ts`; browser workflow remains planned |
 | SHEET-WF-002 | Nested group management | Add/edit/remove dashboard in a group preserves ordering and company scope | pass at contract level |
 | SHEET-WF-003 | Spreadsheet interaction | Filter/formula/chart/pivot/table actions update the workbook view without mutating unauthorized source records | planned |
 | SHEET-WF-004 | Share lifecycle | Create/revoke/share/download preserves read-only snapshot and token scope | planned |

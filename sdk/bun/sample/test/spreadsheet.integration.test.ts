@@ -5,6 +5,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 import SpreadsheetModule from '../services/spreadsheet/module';
 
 const serviceRoot = join(import.meta.dir, '../services/spreadsheet');
@@ -71,6 +72,40 @@ describe('Spreadsheet dashboard configuration parity', () => {
     await expect(repository.executeMutation(favoriteAction.mutation, { id: 'sdb-error', expected_row_version: 1 })).rejects.toMatchObject({ status: 503, code: 'SPREADSHEET_DASHBOARD_FAVORITE_UNAVAILABLE' });
   });
 
+  test('publishes and archives a dashboard through YAML workflow actions', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_dashboard_lifecycle_test', ['schema', 'data']);
+    const discovered = discoverPages(join(import.meta.dir, '..'));
+    let user: any = { sub: 'spreadsheet-manager', email: 'manager@workspace.example', name: 'Spreadsheet Manager', permissions: ['spreadsheet.read', 'spreadsheet.dashboard.manage'] };
+    const api = createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return user; }, hasPermission(actor: any, permission: string) { return actor.permissions.includes(permission); } },
+      sources: new Map([...discovered.datasources].filter(([id]) => id.startsWith('spreadsheet_'))),
+      pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === 'spreadsheet')),
+      pages: new Map([...discovered.pages].filter(([, page]) => page.module === 'spreadsheet').map(([id, page]) => [id, page.config])),
+      catalogs: discovered.catalogs,
+      menus: discovered.menus,
+      workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'spreadsheet').map(([id, workflow]) => [id, workflow.config])),
+      workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'spreadsheet').map(([id, workflow]) => [id, workflow.file])),
+      permissions: discovered.permissions.get('spreadsheet')?.config || {},
+      uploadRoot: '/tmp/core3-spreadsheet-test-uploads', eventStore: {}, topics: {},
+    });
+    const transition = (name: string, expected: number) => api(new Request(`http://spreadsheet.test/api/actions/spreadsheet.dashboard.${name}`, {
+      method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'sdb-draft', expected_row_version: expected, values: {} }),
+    }), new URL(`http://spreadsheet.test/api/actions/spreadsheet.dashboard.${name}`));
+
+    expect((await (await transition('publish', 1)).json())).toMatchObject({ id: 'sdb-draft', state: 'Published', published: true, row_version: 2 });
+    expect((await repository.query('SELECT state, published, row_version FROM spreadsheet_dashboards WHERE id = ?', ['sdb-draft']))[0]).toEqual({ state: 'Published', published: true, row_version: 2 });
+    await expect(transition('publish', 1)).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_PUBLISH_STALE' });
+    expect((await (await transition('archive', 2)).json())).toMatchObject({ id: 'sdb-draft', state: 'Archived', published: false, row_version: 3 });
+    expect((await repository.query('SELECT state, published, row_version FROM spreadsheet_dashboards WHERE id = ?', ['sdb-draft']))[0]).toEqual({ state: 'Archived', published: false, row_version: 3 });
+    user = { ...user, permissions: ['spreadsheet.read'] };
+    await expect(transition('archive', 3)).rejects.toMatchObject({ status: 403 });
+    database.close();
+  });
+
   test('keeps configuration pages layout-only and API-owned by page id', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const pages = [
@@ -126,9 +161,10 @@ describe('Spreadsheet dashboard configuration parity', () => {
       breadcrumbs: [],
     });
     expect(nested.columns.map((column: any) => column.field)).toEqual([
-      'sequence', 'name', 'group_name', 'company_name', 'published',
+      'sequence', 'name', 'group_name', 'company_name', 'published', 'actions',
     ]);
-    expect(nested.columns.at(-1)).toMatchObject({ type: 'BooleanToggle', label: 'Is Published', mobile: false });
+    expect(nested.columns.find((column: any) => column.field === 'published')).toMatchObject({ type: 'BooleanToggle', label: 'Is Published', mobile: false });
+    expect(nested.columns.at(-1).actions.map((action: any) => action.id)).toEqual(['publish_spreadsheet_dashboard', 'archive_spreadsheet_dashboard']);
     expect(nested.row_open_action).toBe('view_spreadsheet_dashboard');
     const addAction = yaml('api/dashboard-group.yaml').actions.find((action: any) => action.id === 'add_spreadsheet_dashboard');
     expect(addAction).toMatchObject({

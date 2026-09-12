@@ -5,6 +5,8 @@ actions:
     permission: spreadsheet.manage
     navigate_to: /spreadsheet/dashboard
     params: { id: '{row.id}' }
+  - { id: publish_spreadsheet_dashboard, type: server, permission: spreadsheet.dashboard.manage, action: spreadsheet.dashboard.publish, handler: order_transition, workflow: spreadsheet_dashboards, operation: publish, params: { id: '{row.id}', expected_row_version: '{row.row_version}' }, refresh: [spreadsheet_group_dashboards] }
+  - { id: archive_spreadsheet_dashboard, type: server, permission: spreadsheet.dashboard.manage, action: spreadsheet.dashboard.archive, handler: order_transition, workflow: spreadsheet_dashboards, operation: archive, params: { id: '{row.id}', expected_row_version: '{row.row_version}' }, refresh: [spreadsheet_group_dashboards] }
   - id: add_spreadsheet_dashboard
     type: server_form
     permission: spreadsheet.manage

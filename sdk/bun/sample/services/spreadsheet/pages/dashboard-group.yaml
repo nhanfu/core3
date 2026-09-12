@@ -26,6 +26,7 @@ components:
       - { field: group_name, label: Group, mobile: false }
       - { field: company_name, label: Companies, mobile: false }
       - { field: published, label: Is Published, type: BooleanToggle, sortable: false, mobile: false }
+      - { field: actions, label: '', sortable: false, align: right, actions: [{ id: publish_spreadsheet_dashboard, label: Publish, show_if: 'row.state === "Draft"' }, { id: archive_spreadsheet_dashboard, label: Archive, variant: danger, show_if: 'row.state === "Draft" || row.state === "Published"' }] }
     row_key: id
     row_open_action: view_spreadsheet_dashboard
     row_double_click_action: view_spreadsheet_dashboard
