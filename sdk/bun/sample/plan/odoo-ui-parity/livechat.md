@@ -968,3 +968,48 @@ Playwright `js_repl` runtime is unavailable in this worktree. No screenshot or
 visual-parity claim is made. The runtime limitation is recorded here rather
 than substituting unauthenticated shell evidence; images, if produced in a
 follow-up runtime pass, must remain outside Git at 1440x900 and 390x844.
+
+## Bounded implementation slice: Technical — Sessions Handled by Agent (2026-09-12)
+
+The next uncovered Odoo menu-backed action is Technical → Sessions Handled by
+Agent. The exact source trace is
+`/home/nhanjs/projects/odoo/addons/spreadsheet_dashboard_im_livechat/data/livechat_ongoing_sessions_actions.xml`:
+menu `ongoing_sessions_handle_by_agent_menu`, action
+`ongoing_sessions_handle_by_agent_action`, model `discuss.channel`, shared
+search view `im_livechat.discuss_channel_view_search`, and shared list/form
+views `im_livechat.discuss_channel_view_tree` and
+`im_livechat.discuss_channel_view_form`. The window action is named
+“Sessions”, uses `list,form`, and supplies
+`{'search_default_ongoing': 1, 'search_default_handled_by_agent': 1}`. The
+hidden search facets are defined in
+`/home/nhanjs/projects/odoo/addons/im_livechat/views/discuss_channel_views.xml`:
+Ongoing and Handled by Agent (`livechat_agent_history_ids != False`). The
+menu is a child of `im_livechat.livechat_technical` and is restricted to
+`im_livechat.im_livechat_group_manager`; the shared list is read-only and
+shows Date, Customer, Agents, Country, Language, Expertise, Duration,
+Messages, and Rating, with Participants, Session Date, Rating, and Comment in
+the form.
+
+Core3 adds the disjoint routes
+`/livechat/technical/ongoing-sessions/handled-by-agent` and
+`/livechat/technical/ongoing-sessions/handled-by-agent/detail`, joined by
+page ids `livechat-technical-handled-by-agent-sessions` and
+`livechat-technical-handled-by-agent-session-detail`. Page YAML is
+presentation-only and the API fragments own the named datasources and the
+single navigate action. The idempotent fixture migration supplies three
+ongoing agent-handled rows plus a closed agent row and an ongoing chatbot row,
+so the source semantics are tested rather than represented by an already
+filtered static list. Search, country/rating facets, empty/no-results,
+not-found, forbidden, unauthorized metadata, and transport-error states are
+covered. Reads require `livechat.read`, while the manager-only route/menu and
+record navigation require `livechat.manage`; no create/update/delete action is
+exposed because the Odoo list/form are read-only.
+
+Focused validation is
+`test/livechat_technical_handled_by_agent_sessions.integration.test.ts`: 3
+tests passed with 31 assertions after `bun install --frozen-lockfile` restored
+the fresh worktree dependencies. The browser comparison was attempted but
+the interactive Playwright `js_repl` runtime is unavailable in this worktree;
+therefore no authenticated 1440x900 or 390x844 capture was produced and no
+visual-parity claim is made. If runtime access is restored, paired Odoo/Core3
+list/detail captures must be written only below `/tmp/core3-odoo-parity/`.

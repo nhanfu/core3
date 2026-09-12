@@ -1,0 +1,18 @@
+title: Session
+page: { id: livechat-technical-handled-by-agent-session-detail, route: /livechat/technical/ongoing-sessions/handled-by-agent/detail, breadcrumb: [Website, Live Chat, Technical, Sessions Handled by Agent], auth: { require: [livechat.manage] } }
+
+components:
+  - type: OdooFormView
+    source: livechat_technical_handled_by_agent_session_detail
+    title_field: customer_name
+    editable: false
+    labels: { editDetails: Details }
+    groups:
+      - title: Session
+        fields:
+          - { field: participant_name, label: Participants }
+          - { field: session_date, label: Session Date }
+      - title: Rating
+        fields:
+          - { field: rating_text, label: Rating }
+          - { field: rating_feedback, label: Feedback, type: textarea }
