@@ -22,6 +22,11 @@ actions:
       key: id
       fields: [name, currency, company, country_groups, active]
       required: []
+      guards:
+        - query: "SELECT id FROM ecommerce_pricelists WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company IS NULL OR company = :current_company_name)"
+          status: 403
+          code: ECOMMERCE_COMPANY_SCOPE_REQUIRED
+          message: Pricelists must belong to the current company or be shared.
       result: { query: "SELECT * FROM ecommerce_pricelists WHERE id = :id" }
     fields:
       - { field: name, label: Name, type: text }

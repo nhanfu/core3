@@ -34,6 +34,10 @@ actions:
           status: 409
           code: ECOMMERCE_PRICELIST_NAME_EXISTS
           message: Pricelist name already exists
+        - query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company, :current_company_name) IN ('', :current_company_name)"
+          status: 403
+          code: ECOMMERCE_COMPANY_SCOPE_REQUIRED
+          message: Pricelists must belong to the current company or be shared.
       result: { query: "SELECT * FROM ecommerce_pricelists WHERE id = :id" }
     fields:
       - { field: name, label: Name, type: text, required: true }
@@ -55,6 +59,10 @@ actions:
           status: 409
           code: ECOMMERCE_PRICELIST_ALREADY_ARCHIVED
           message: Pricelist is already archived
+        - query: "SELECT id FROM ecommerce_pricelists WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company IS NULL OR company = :current_company_name)"
+          status: 403
+          code: ECOMMERCE_COMPANY_SCOPE_REQUIRED
+          message: Pricelists must belong to the current company or be shared.
       steps:
         - query: "UPDATE ecommerce_pricelists SET active = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
       result: { query: "SELECT * FROM ecommerce_pricelists WHERE id = :id" }

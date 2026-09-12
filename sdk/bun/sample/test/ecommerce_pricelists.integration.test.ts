@@ -41,6 +41,10 @@ describe('eCommerce Pricelists parity', () => {
     const archive = api.actions.find((action: any) => action.id === 'archive_ecommerce_pricelist');
     expect(create.permission).toBe('ecommerce.write');
     expect(archive.permission).toBe('ecommerce.write');
+    await expect(repository.executeMutation(create.mutation, {
+      current_company_name: 'Other Company',
+      values: { name: 'Cross Company Prices', company: 'My Company' },
+    })).rejects.toMatchObject({ status: 403, code: 'ECOMMERCE_COMPANY_SCOPE_REQUIRED' });
     await expect(repository.executeMutation(create.mutation, { values: { name: ' ' } })).rejects.toMatchObject({ status: 400, message: 'name is required' });
     const created = await repository.executeMutation(create.mutation, { values: { name: 'QA Partner Prices', country_groups: 'Canada' } });
     expect(created).toMatchObject({ name: 'QA Partner Prices', currency: 'USD', active: true });

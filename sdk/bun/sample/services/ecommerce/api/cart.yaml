@@ -25,7 +25,7 @@ actions:
     handler: yaml_mutation
     operation: update
     refresh: [ecommerce_cart, ecommerce_cart_lines]
-    mutation: { operation: update, table: ecommerce_cart_lines, fields: [quantity], required: [quantity], concurrency: { required: true }, guards: [{ query: "SELECT 1 AS ok WHERE CAST(:quantity AS INTEGER) > 0", status: 422, code: ECOMMERCE_CART_QUANTITY_INVALID, message: Quantity must be positive. }, { query: "SELECT 1 AS ok WHERE COALESCE(:customer_scope, 'all') = 'all' OR EXISTS (SELECT 1 FROM ecommerce_cart_lines l JOIN ecommerce_carts c ON c.id = l.cart_id JOIN ecommerce_customers ec ON ec.id = c.customer_id WHERE l.id = :id AND lower(COALESCE(ec.email, '')) = lower(:current_user_email))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart line belongs to another customer. }], result: { query: "SELECT * FROM ecommerce_cart_lines WHERE id = :id" } }
+    mutation: { operation: update, table: ecommerce_cart_lines, fields: [quantity], required: [quantity], concurrency: { required: true }, guards: [{ query: "SELECT 1 AS ok WHERE CAST(:quantity AS INTEGER) > 0", status: 422, code: ECOMMERCE_CART_QUANTITY_INVALID, message: Quantity must be positive. }, { query: "SELECT 1 AS ok WHERE COALESCE(:customer_scope, 'all') = 'all' OR EXISTS (SELECT 1 FROM ecommerce_cart_lines l JOIN ecommerce_carts c ON c.id = l.cart_id JOIN ecommerce_customers ec ON ec.id = c.customer_id WHERE l.id = :id AND (:current_company_name IS NULL OR :current_company_name = '' OR c.company_name = :current_company_name) AND lower(COALESCE(ec.email, '')) = lower(:current_user_email))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart line belongs to another customer or company. }], result: { query: "SELECT * FROM ecommerce_cart_lines WHERE id = :id" } }
     fields: [{ field: quantity, label: Quantity, type: number, required: true, min: 1 }]
   - id: remove_ecommerce_cart_line
     type: server
@@ -41,7 +41,7 @@ actions:
       concurrency: { required: true }
       guards:
         - { query: "SELECT id, cart_id FROM ecommerce_cart_lines WHERE id = :id AND row_version = :expected_row_version", status: 409, code: ECOMMERCE_CART_LINE_STALE, message: This cart line has changed. Reload your cart., assign: true }
-        - { query: "SELECT 1 AS ok FROM ecommerce_cart_lines l JOIN ecommerce_carts c ON c.id = l.cart_id JOIN ecommerce_customers ec ON ec.id = c.customer_id WHERE l.id = :id AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(ec.email, '')) = lower(:current_user_email))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart line belongs to another customer. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_cart_lines l JOIN ecommerce_carts c ON c.id = l.cart_id JOIN ecommerce_customers ec ON ec.id = c.customer_id WHERE l.id = :id AND (COALESCE(:customer_scope, 'all') = 'all' OR ((:current_company_name IS NULL OR :current_company_name = '' OR c.company_name = :current_company_name) AND lower(COALESCE(ec.email, '')) = lower(:current_user_email)))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart line belongs to another customer or company. }
       steps:
         - { query: "UPDATE ecommerce_carts SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-13 10:00:00' WHERE id = :cart_id" }
   - id: apply_ecommerce_cart_pricelist
@@ -61,7 +61,7 @@ actions:
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM ecommerce_carts WHERE id = :id AND state = 'Open' AND row_version = :expected_row_version AND (COALESCE(:customer_scope, 'all') = 'all' OR customer_id = (SELECT id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart belongs to another customer or is no longer open. }
-        - { query: "SELECT id FROM ecommerce_pricelists WHERE id = :pricelist_id AND active = TRUE AND (company IS NULL OR company = 'My Company')", status: 422, code: ECOMMERCE_PRICELIST_INVALID, message: Select an active pricelist. }
+        - { query: "SELECT id FROM ecommerce_pricelists WHERE id = :pricelist_id AND active = TRUE AND (company IS NULL OR COALESCE(:current_company_name, '') = '' OR company = :current_company_name)", status: 422, code: ECOMMERCE_PRICELIST_INVALID, message: Select an active pricelist. }
       steps:
         - { query: "UPDATE ecommerce_cart_lines l SET unit_price = COALESCE((SELECT r.price FROM ecommerce_pricelist_rules r JOIN ecommerce_products p ON p.name = r.apply_on WHERE r.pricelist_id = :pricelist_id AND p.id = l.product_id AND r.min_quantity <= l.quantity AND (r.date_start IS NULL OR r.date_start <= DATE '2026-09-13') AND (r.date_end IS NULL OR r.date_end >= DATE '2026-09-13') ORDER BY r.min_quantity DESC LIMIT 1), (SELECT p.sales_price FROM ecommerce_products p WHERE p.id = l.product_id)), row_version = l.row_version + 1 WHERE l.cart_id = :id" }
       result: { query: "SELECT * FROM ecommerce_carts WHERE id = :id" }

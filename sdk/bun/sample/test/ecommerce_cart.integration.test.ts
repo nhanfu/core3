@@ -41,6 +41,7 @@ describe('eCommerce Cart parity', () => {
     const repository2 = new YamlRepository(database2);
     await migrateDatabase(repository2, join(root, 'migrations'), undefined, 'ecommerce_cart_pricelist_test', ['schema', 'data']);
     const apply = api.actions.find((candidate: any) => candidate.id === 'apply_ecommerce_cart_pricelist');
+    await expect(repository2.executeMutation(apply.mutation, { id: 'ecommerce-cart-open-001', expected_row_version: 1, current_company_name: 'Other Company', customer_scope: 'all', values: { pricelist_id: 'ecommerce-pricelist-retail' } })).rejects.toMatchObject({ status: 422, code: 'ECOMMERCE_PRICELIST_INVALID' });
     const repriced = await repository2.executeMutation(apply.mutation, { id: 'ecommerce-cart-open-001', expected_row_version: 1, customer_scope: 'all', values: { pricelist_id: 'ecommerce-pricelist-retail' } });
     expect(repriced).toMatchObject({ id: 'ecommerce-cart-open-001', pricelist_id: 'ecommerce-pricelist-retail' });
     expect(await repository2.query('SELECT unit_price FROM ecommerce_cart_lines WHERE product_id = ?', ['ecommerce-product-chair'])).toEqual([{ unit_price: 229 }]);
