@@ -142,3 +142,15 @@ Only after all eight are written does implementation begin.
 
 The shared mock-data contract is defined in
 `odoo-ui-parity/screen-mock-data.md` and applies to every module sub-plan.
+
+## Shared agent contribution rules
+
+- After completing a task, every sub-agent must update the single shared
+  progress file `odoo-ui-parity/progress.md` with the module, bounded slice,
+  commit, tests/audits, browser-capture result, and any blocker. Do not create
+  per-agent progress logs.
+- CRUD screens must use `FormView` for create and edit flows. Avoid bespoke or
+  ugly CRUD modals. If a modal is required by the Odoo interaction, define the
+  modal as a YAML-managed form contract and render it through `FormView`, so
+  its fields, validation, permissions, and actions remain declarative and
+  maintainable.
