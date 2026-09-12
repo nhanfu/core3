@@ -16,11 +16,11 @@ Candidate commit: working tree after Ecommerce Categories slice
 
 Current isolated runner inventory (4041): the manifest registers 9 routes;
  page/API contracts are present for all 9 manifest routes plus the linked
- Product detail route: Products, Product detail, Pricelists,
+ Product detail and Checkout routes: Products, Product detail, Pricelists,
  Pricelist detail, Categories, Orders list/detail, Unpaid Orders, Abandoned
  Carts, Customers, Cart, and Shop. Cart has persisted summary/line contracts;
- Shop is covered at contract level, while checkout remains an unimplemented
- journey.
+ Shop is covered at contract level and Checkout now has a persisted order
+ mutation; authenticated browser proof remains open.
 
 Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md). It is the module-level source for catalog, pricelists, commerce workflows, actors, persistence, Temporal, and paired Odoo gates.
 
@@ -38,7 +38,8 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | ECOMMERCE-FUNC-008 | Cart summary/lines, totals, navigation and quantity guard | `bun test ./test/ecommerce_cart.integration.test.ts` — 2 tests, 7 assertions | pass |
 | ECOMMERCE-FUNC-009 | Shop page/API, published-product visibility and cart navigation contract | `bun test ./test/ecommerce_shop.integration.test.ts` — 2 tests, 9 assertions | pass at contract level; authenticated add-to-cart persistence planned |
 | ECOMMERCE-FUNC-010 | Product detail page/API, persisted read, guarded edit, stale and duplicate-reference boundaries | `bun test ./test/ecommerce_product_detail.integration.test.ts` — 2 tests, 9 assertions | pass |
-| ECOMMERCE-SCOPE-001 | Manifest-to-page/API coverage | Current implementation covers all 9 registered Ecommerce routes; checkout journey and end-to-end mutations remain open | pass for route coverage; journey pending |
+| ECOMMERCE-FUNC-011 | Checkout validation, persisted order/line creation, cart conversion, and repeat-checkout guard | `bun test ./test/ecommerce_checkout.integration.test.ts` — 3 tests, 10 assertions | pass at service level; authenticated browser workflow planned |
+| ECOMMERCE-SCOPE-001 | Manifest-to-page/API coverage | Current implementation covers all 9 registered Ecommerce routes plus linked Product detail and Checkout routes | pass for route coverage; browser journey pending |
 
 ## Bugs and retests
 

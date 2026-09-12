@@ -13,6 +13,7 @@ datasources:
     query: "SELECT id, row_version, cart_id, product_id, product_name, unit_price, quantity, quantity * unit_price AS line_total FROM ecommerce_cart_lines WHERE cart_id = COALESCE(:cart_id, 'ecommerce-cart-open-001') ORDER BY id"
 actions:
   - { id: continue_ecommerce_shopping, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
+  - { id: checkout_ecommerce_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/checkout, params: { cart_id: '{state.ecommerce_cart.id}' } }
   - id: update_ecommerce_cart_line
     type: server_form
     permission: ecommerce.write

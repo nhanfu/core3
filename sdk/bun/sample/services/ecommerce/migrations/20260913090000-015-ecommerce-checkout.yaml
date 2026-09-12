@@ -1,0 +1,24 @@
+version: 0.0.28
+kind: schema
+description: eCommerce checkout order fields and order lines
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS cart_id VARCHAR;
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS shipping_address VARCHAR;
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS delivery_method VARCHAR;
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR;
+      CREATE TABLE IF NOT EXISTS ecommerce_order_lines (
+        id VARCHAR PRIMARY KEY,
+        order_id VARCHAR NOT NULL,
+        product_id VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        unit_price DECIMAL(12,2) NOT NULL,
+        quantity INTEGER NOT NULL,
+        line_total DECIMAL(12,2) NOT NULL
+      );
+    down: DROP TABLE IF EXISTS ecommerce_order_lines;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
