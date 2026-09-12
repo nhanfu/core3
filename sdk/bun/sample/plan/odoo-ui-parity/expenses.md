@@ -473,3 +473,20 @@ The department-scoped graph/pivot action remains separately deferred. See
 [expenses-batch-6.md](expenses-batch-6.md) for the source contract and exact
 reference limitation: the primary Odoo addon is uninstalled, so no visual
 capture is claimed.
+
+## Department analysis follow-up (2026-09-12)
+
+The next bounded source-backed action is Odoo's
+`action_hr_expense_department_filtered`, the department integration's
+read-only `Expense Analysis` action with `graph,pivot` view order and an
+`active_id` department context. Core3 now exposes the explicit handoff route
+`/expenses/department-analysis`, defaulting deterministically to `Sales` and
+allowing the department scope to be changed through the shared filter. The
+page/API split is joined by `page.id`; the API has read permission, stable
+empty/error fixtures, detail navigation, and deliberately no mutation/CRUD
+action because the Odoo source action defines no write operation.
+
+The primary Odoo database still has `hr_expense` uninstalled, so this batch
+does not claim an authenticated visual capture. The department graph/pivot
+surface is otherwise source-backed and covered by the focused integration
+test.

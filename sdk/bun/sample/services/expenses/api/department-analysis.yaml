@@ -1,0 +1,23 @@
+page: { id: expenses-department-analysis }
+datasources:
+  - id: expense_department_analysis_departments
+    single: false
+    permission: expenses.read
+    query: "SELECT DISTINCT department_name AS value, department_name AS label FROM expenses WHERE department_name IS NOT NULL ORDER BY department_name"
+  - id: expense_department_analysis
+    single: false
+    permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_DEPARTMENT_ANALYSIS_UNAVAILABLE, message: Department expense analysis is temporarily unavailable } }
+    query: |
+      SELECT e.id, e.row_version, e.employee_name, e.name, e.department_name,
+        CAST(e.expense_date AS VARCHAR) AS expense_date, e.category,
+        e.amount AS total_amount, printf('$%,.2f', e.amount) AS total_amount_display,
+        COALESCE(e.tax_amount, 0) AS tax_amount, printf('$%,.2f', COALESCE(e.tax_amount, 0)) AS tax_amount_display,
+        e.company_name, e.state
+      FROM expenses e
+      WHERE e.state <> 'Refused'
+        AND e.department_name = COALESCE(NULLIF(:department_name, ''), 'Sales')
+        AND (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%')
+      ORDER BY e.expense_date DESC, e.id
+actions:
+  - { id: view_department_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }

@@ -1,0 +1,39 @@
+page: { id: expenses-department-analysis, route: /expenses/department-analysis, breadcrumb: [Finance, Expenses, Department Analysis], auth: { require: [expenses.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: expense_department_analysis
+    search: { label: Expense, placeholder: 'Search expense or employee...' }
+    filters:
+      - { field: department_name, label: Department, options_source: expense_department_analysis_departments }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: employee_name
+        measure_field: total_amount
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: employee_name, column: Employee }
+            - { field: expense_date, column: Expense Date }
+            - { field: total_amount, column: Total Amount }
+            - { field: tax_amount, column: Total Taxes }
+          default: { rows: [employee_name], columns: [expense_date], measures: [{ field: total_amount, aggregate: sum, column: Total Amount }, { field: tax_amount, aggregate: sum, column: Total Taxes }] }
+    page_size: 25
+    column_chooser: true
+    row_key: id
+    row_double_click_action: view_department_expense_detail
+    empty_state: { title: No data yet!, description: Create new expenses to get statistics. }
+    columns:
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell }
+      - { field: name, label: Expense }
+      - { field: expense_date, label: Expense Date }
+      - { field: category, label: Category }
+      - { field: total_amount_display, label: Total Amount, align: right }
+      - { field: tax_amount_display, label: Total Taxes, align: right, optional: hide }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: state, label: Status, type: StatusChip }
