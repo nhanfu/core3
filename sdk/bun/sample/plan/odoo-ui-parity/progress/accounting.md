@@ -24,12 +24,13 @@ Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 | Timeout retests | `bun test --timeout 20000 ./test/accounting_journal_items_views.integration.test.ts` | 2 pass, 17 assertions |
 | Timeout retests | `bun test --timeout 20000 ./test/accounting_journals_catalog.integration.test.ts` | 3 pass, 38 assertions |
 | Runtime readiness | `bun run agent:module -- accounting --port=4011`; `GET /api/modules` | pass; isolated accounting process listened and returned 200 |
-| Authenticated browser | `/accounting/journals`, 1440x900 and 390x844 | Core3 render pass after authenticated menu refresh and shared plum shell correction; 0 page/request errors, 6 visible menu entries, no horizontal overflow; Odoo paired comparison and remaining route matrix pending |
+| Authenticated browser | `/accounting/journals`, 1440x900 and 390x844 | Core3 render pass after authenticated menu refresh and shared plum shell correction; 0 page/request errors, 6 visible menu entries, no horizontal overflow; paired Odoo toolbar comparison remains pending |
+| Post-merge route matrix | All 80 Accounting routes at 1440x900 and 390x844 | 160 authenticated route checks; 80/80 desktop and 80/80 mobile passed after a 1.2s render settle; no blank/redirect, page/request error, or horizontal overflow | pass; full interaction and paired visual states remain open |
 
 ## Remaining gates
 
 - Preserve the verified runtime repair and expand the authenticated browser matrix across the remaining accounting routes.
-- Complete the paired visual comparison for toolbar geometry and record the shell/auth-cache repair commit.
+- Complete the paired visual comparison for toolbar geometry and record the shell/auth-cache repair commit `3b3e2106`.
 - Run authenticated Core3 desktop (`1440x900`) and mobile (`390x844`) checks against the committed candidate, including CRUD, persistence, workflow, and permission denial.
 - Compare the same states against the authenticated Odoo reference and keep captures under `/tmp/core3-odoo-parity/` only.
 - Resolve the combined-suite timeout policy (serial execution or a documented timeout) before module sign-off.
