@@ -4,7 +4,11 @@ datasources:
     single: true
     permission: orders.read
     error_states: { transport_error: { status: 503, code: SALES_QUOTATION_TEMPLATE_DETAIL_UNAVAILABLE, message: Quotation template details are temporarily unavailable. } }
-    query: "SELECT id, row_version, name, company_name, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status FROM sale_quotation_templates WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, name, company_name, active, number_of_days, confirmation_mail, invoicing_journal, require_signature, require_payment, prepayment_percent, note, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status FROM sale_quotation_templates WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: sale_quotation_template_lines
+    single: false
+    permission: orders.read
+    query: "SELECT id, template_id, row_version, sequence, product_name, description, quantity, uom, optional FROM sale_quotation_template_lines WHERE template_id = :id ORDER BY sequence, id"
 actions:
   - id: edit_sale_quotation_template
     type: server_form
@@ -19,7 +23,7 @@ actions:
     mutation:
       operation: update
       table: sale_quotation_templates
-      fields: [name, company_name]
+      fields: [name, company_name, number_of_days, confirmation_mail, invoicing_journal, require_signature, require_payment, prepayment_percent, note]
       required: [name]
       concurrency: { required: true }
       guards:
@@ -30,6 +34,49 @@ actions:
     fields:
       - { field: name, label: Quotation Template, type: text, required: true }
       - { field: company_name, label: Company, type: text }
+      - { field: number_of_days, label: Quotation Validity, type: number, min: 0 }
+      - { field: confirmation_mail, label: Confirmation Mail, type: text }
+      - { field: invoicing_journal, label: Invoicing Journal, type: text }
+      - { field: require_signature, label: Online Signature, type: checkbox }
+      - { field: require_payment, label: Online Payment, type: checkbox }
+      - { field: prepayment_percent, label: Prepayment percentage, type: number, min: 0, max: 100 }
+      - { field: note, label: Terms & Conditions, type: textarea, wide: true }
+  - id: add_sale_quotation_template_line
+    type: server_form
+    permission: orders.write
+    title: Add a product
+    action: sales.quotation_templates.lines.create
+    handler: yaml_mutation
+    operation: create
+    params: { template_id: '{state.id}' }
+    refresh: [sale_quotation_template_lines]
+    mutation:
+      operation: insert
+      table: sale_quotation_template_lines
+      fields: [template_id, sequence, product_name, description, quantity, uom, optional, row_version]
+      required: [product_name, quantity]
+      defaults: { sequence: 20, description: '', quantity: 1, uom: Units, optional: false, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT :template_id || '-line-' || regexp_replace(lower(trim(CAST(:product_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM sale_quotation_templates WHERE id = :template_id)", status: 404, code: SALES_QUOTATION_TEMPLATE_NOT_FOUND, message: Quotation template not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:product_name AS VARCHAR))) > 0 AND COALESCE(:quantity, 0) > 0", status: 422, code: SALES_QUOTATION_TEMPLATE_LINE_INVALID, message: Product and a positive quantity are required. }
+      result: { query: "SELECT * FROM sale_quotation_template_lines WHERE id = :id" }
+    fields:
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: quantity, label: Quantity, type: number, required: true, min: 0.01 }
+      - { field: uom, label: Unit, type: text }
+      - { field: optional, label: Optional Product, type: checkbox }
+  - id: delete_sale_quotation_template_line
+    type: server
+    permission: orders.write
+    action: sales.quotation_templates.lines.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}' }
+    refresh: [sale_quotation_template_lines]
+    mutation: { operation: delete, table: sale_quotation_template_lines, concurrency: { required: true }, guards: [{ query: "SELECT id FROM sale_quotation_template_lines WHERE id = :id", status: 404, code: SALES_QUOTATION_TEMPLATE_LINE_NOT_FOUND, message: Template line not found. }] }
   - id: archive_sale_quotation_template
     type: server
     permission: orders.write

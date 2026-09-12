@@ -18,3 +18,51 @@ components:
         fields:
           - { field: name, label: Quotation Template }
           - { field: company_name, label: Company }
+          - { field: number_of_days, label: Quotation Validity, type: number }
+          - { field: confirmation_mail, label: Confirmation Mail }
+          - { field: invoicing_journal, label: Invoicing Journal }
+      - title: Online Confirmation
+        fields:
+          - { field: require_signature, label: Online Signature, type: checkbox }
+          - { field: require_payment, label: Online Payment, type: checkbox }
+          - { field: prepayment_percent, label: Prepayment percentage, type: number, show_if: "state.sale_quotation_template_detail.require_payment === true" }
+    notebook:
+      active: order_lines
+      tabs:
+        - { id: order_lines, label: Lines, content_slot: true }
+        - id: terms_and_conditions
+          label: Terms & Conditions
+          groups:
+            - title: Terms & Conditions
+              fields: [{ field: note, label: Terms & Conditions, type: textarea, wide: true }]
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: sale_quotation_template_lines
+    parent_source: sale_quotation_template_detail
+    title: Lines
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_sale_quotation_template_line, label: Add a product, variant: primary, permission: orders.write }
+    empty_state: { title: No quotation template lines, description: Add a product to this quotation template. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: product_name, field: product_name, label: Product, input_type: text }
+      - { type: LineItemField, id: description, field: description, label: Description, input_type: text }
+      - { type: LineItemField, id: quantity, field: quantity, label: Quantity, input_type: number }
+      - { type: LineItemField, id: uom, field: uom, label: Unit, input_type: text }
+      - { type: LineItemField, id: optional, field: optional, label: Optional, input_type: checkbox }
+    columns:
+      - { field: sequence, label: '#', width: 60 }
+      - { field: product_name, label: Product, width: 240 }
+      - { field: description, label: Description, width: 300 }
+      - { field: quantity, label: Quantity, align: right, width: 110 }
+      - { field: uom, label: Unit, width: 110 }
+      - { field: optional, label: Optional, width: 100 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: delete_sale_quotation_template_line, label: Delete, icon: trash, variant: danger, permission: orders.write }

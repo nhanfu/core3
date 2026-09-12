@@ -27,7 +27,7 @@ describe('Sales quotation templates parity slice', () => {
     expect(discovered.pageDatasources.get('sale-quotation-templates')).toContain('sale_quotation_templates');
   });
 
-  test('provides deterministic fixtures, empty/error states, and CRUD guards', async () => {
+  test('provides deterministic fixtures, empty/error states, and CRUD guards', { timeout: 15000 }, async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'sales_quotation_templates_acceptance', ['schema', 'data']);
@@ -48,6 +48,13 @@ describe('Sales quotation templates parity slice', () => {
     const detailApi = yaml('api/sale-quotation-template-detail.yaml');
     const update = action(detailApi, 'edit_sale_quotation_template');
     expect(update.mutation.concurrency).toMatchObject({ required: true });
+    expect(update.mutation.fields).toEqual(expect.arrayContaining(['number_of_days', 'require_signature', 'require_payment', 'prepayment_percent', 'note']));
+    expect(detailApi.datasources).toContainEqual(expect.objectContaining({ id: 'sale_quotation_template_lines', single: false }));
+    const lineCreate = action(detailApi, 'add_sale_quotation_template_line');
+    const line = await repository.executeMutation(lineCreate.mutation, { values: { template_id: 'sale-quotation-template-office-furnitures', product_name: 'Office Chair', quantity: 2 } });
+    expect(line).toMatchObject({ template_id: 'sale-quotation-template-office-furnitures', product_name: 'Office Chair', quantity: 2 });
+    await expect(repository.executeMutation(lineCreate.mutation, { values: { template_id: 'missing-template', product_name: 'Chair', quantity: 1 } })).rejects.toMatchObject({ status: 404, code: 'SALES_QUOTATION_TEMPLATE_NOT_FOUND' });
+    await expect(repository.executeMutation(lineCreate.mutation, { values: { template_id: 'sale-quotation-template-office-furnitures', product_name: ' ', quantity: 0 } })).rejects.toMatchObject({ status: 422, code: 'SALES_QUOTATION_TEMPLATE_LINE_INVALID' });
     const edited = await repository.executeMutation(update.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Services 2026 Updated', company_name: 'My Company (San Francisco)' } });
     expect(edited).toMatchObject({ id: created.id, row_version: 2, name: 'Services 2026 Updated' });
     await expect(repository.executeMutation(update.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Stale' } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });

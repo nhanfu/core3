@@ -1,0 +1,41 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE sale_quotation_templates ADD COLUMN IF NOT EXISTS number_of_days INTEGER;
+      ALTER TABLE sale_quotation_templates ADD COLUMN IF NOT EXISTS confirmation_mail VARCHAR;
+      ALTER TABLE sale_quotation_templates ADD COLUMN IF NOT EXISTS invoicing_journal VARCHAR;
+      ALTER TABLE sale_quotation_templates ADD COLUMN IF NOT EXISTS require_signature BOOLEAN;
+      ALTER TABLE sale_quotation_templates ADD COLUMN IF NOT EXISTS require_payment BOOLEAN;
+      ALTER TABLE sale_quotation_templates ADD COLUMN IF NOT EXISTS prepayment_percent DOUBLE;
+      ALTER TABLE sale_quotation_templates ADD COLUMN IF NOT EXISTS note VARCHAR;
+      UPDATE sale_quotation_templates SET number_of_days = COALESCE(number_of_days, 30), require_signature = COALESCE(require_signature, false), require_payment = COALESCE(require_payment, false), prepayment_percent = COALESCE(prepayment_percent, 0), note = COALESCE(note, '');
+      CREATE TABLE IF NOT EXISTS sale_quotation_template_lines (
+        id VARCHAR PRIMARY KEY,
+        template_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        product_name VARCHAR NOT NULL,
+        description VARCHAR NOT NULL DEFAULT '',
+        quantity DOUBLE NOT NULL DEFAULT 1,
+        uom VARCHAR NOT NULL DEFAULT 'Units',
+        optional BOOLEAN NOT NULL DEFAULT false,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      INSERT INTO sale_quotation_template_lines(id, template_id, sequence, product_name, description, quantity, uom, optional)
+      VALUES ('sale-quotation-template-line-office-desks', 'sale-quotation-template-office-furnitures', 10, 'Office Desks', 'Standard office desks', 5, 'Units', false)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM sale_quotation_template_lines WHERE template_id = 'sale-quotation-template-office-furnitures';
+      DROP TABLE IF EXISTS sale_quotation_template_lines;
+      ALTER TABLE sale_quotation_templates DROP COLUMN IF EXISTS note;
+      ALTER TABLE sale_quotation_templates DROP COLUMN IF EXISTS prepayment_percent;
+      ALTER TABLE sale_quotation_templates DROP COLUMN IF EXISTS require_payment;
+      ALTER TABLE sale_quotation_templates DROP COLUMN IF EXISTS require_signature;
+      ALTER TABLE sale_quotation_templates DROP COLUMN IF EXISTS invoicing_journal;
+      ALTER TABLE sale_quotation_templates DROP COLUMN IF EXISTS confirmation_mail;
+      ALTER TABLE sale_quotation_templates DROP COLUMN IF EXISTS number_of_days;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
