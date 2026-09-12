@@ -14,6 +14,8 @@ Module owner: blog module owner
 Verification trigger: feature-complete
 Candidate commit: none
 
+Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the module-level source for blogs, posts, taxonomy, publication, actors, persistence, Temporal, and paired Odoo gates.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
