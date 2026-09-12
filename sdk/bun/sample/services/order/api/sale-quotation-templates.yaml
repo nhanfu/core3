@@ -1,0 +1,36 @@
+page: { id: sale-quotation-templates }
+datasources:
+  - id: sale_quotation_templates
+    single: false
+    permission: orders.read
+    error_states: { transport_error: { status: 503, code: SALES_QUOTATION_TEMPLATES_UNAVAILABLE, message: Quotation templates are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, company_name, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status FROM sale_quotation_templates WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR company_name ILIKE '%' || :q || '%') AND (:active IS NULL OR active = CAST(:active AS BOOLEAN)) ORDER BY name, id"
+actions:
+  - id: view_sale_quotation_template
+    type: navigate
+    permission: orders.read
+    navigate_to: /order/quotation-template/detail
+    params: { id: '{row.id}' }
+  - id: create_sale_quotation_template
+    type: server_form
+    permission: orders.write
+    title: New quotation template
+    action: sales.quotation_templates.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sale_quotation_templates]
+    mutation:
+      operation: insert
+      table: sale_quotation_templates
+      fields: [name, company_name, active, row_version]
+      required: [name]
+      defaults: { company_name: 'My Company (San Francisco)', active: true, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'sale-quotation-template-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: SALES_QUOTATION_TEMPLATE_NAME_REQUIRED, message: A quotation template name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sale_quotation_templates WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: SALES_QUOTATION_TEMPLATE_EXISTS, message: A quotation template with this name already exists. }
+      result: { query: "SELECT * FROM sale_quotation_templates WHERE id = :id" }
+    fields:
+      - { field: name, label: Quotation Template, type: text, required: true, placeholder: e.g. Office Furnitures }
+      - { field: company_name, label: Company, type: text, default: 'My Company (San Francisco)' }

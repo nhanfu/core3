@@ -1,0 +1,21 @@
+version: 0.0.15
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sale_quotation_templates (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT INTO sale_quotation_templates(id, row_version, name, company_name, active)
+      VALUES ('sale-quotation-template-office-furnitures', 1, 'Office Furnitures', 'My Company (San Francisco)', true)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM sale_quotation_templates WHERE id = 'sale-quotation-template-office-furnitures';
+      DROP TABLE IF EXISTS sale_quotation_templates;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

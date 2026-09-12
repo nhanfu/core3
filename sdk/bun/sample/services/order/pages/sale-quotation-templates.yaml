@@ -1,0 +1,21 @@
+title: Quotation Templates
+page: { id: sale-quotation-templates, route: /order/quotation-templates, breadcrumb: [Sales, Configuration, Sales Orders, Quotation Templates], auth: { require: [orders.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_quotation_templates
+    create_action: create_sale_quotation_template
+    create_label: New
+    search: { label: Quotation Templates, placeholder: Search... }
+    filters: [{ field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }]
+    default_filters: { active: 'true' }
+    view_navigation: tabs
+    views: [{ id: list, label: List, icon: table, mobile: true }]
+    columns:
+      - { field: name, label: Quotation Template, type: PrimaryEntityCell, mobile: true }
+      - { field: company_name, label: Company }
+    page_size: 50
+    row_key: id
+    row_open_action: view_sale_quotation_template
+    row_double_click_action: view_sale_quotation_template
+    empty_state: { title: No quotation templates found, description: Create a quotation template or adjust your search. }

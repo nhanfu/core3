@@ -1,0 +1,50 @@
+page: { id: sale-quotation-template-detail }
+datasources:
+  - id: sale_quotation_template_detail
+    single: true
+    permission: orders.read
+    error_states: { transport_error: { status: 503, code: SALES_QUOTATION_TEMPLATE_DETAIL_UNAVAILABLE, message: Quotation template details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, company_name, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status FROM sale_quotation_templates WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: edit_sale_quotation_template
+    type: server_form
+    permission: orders.write
+    title: Edit quotation template
+    action: sales.quotation_templates.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.sale_quotation_template_detail
+    params: { id: '{state.id}' }
+    refresh: [sale_quotation_template_detail, sale_quotation_templates]
+    mutation:
+      operation: update
+      table: sale_quotation_templates
+      fields: [name, company_name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM sale_quotation_templates WHERE id = :id", status: 404, code: SALES_QUOTATION_TEMPLATE_NOT_FOUND, message: Quotation template not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: SALES_QUOTATION_TEMPLATE_NAME_REQUIRED, message: A quotation template name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sale_quotation_templates WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: SALES_QUOTATION_TEMPLATE_EXISTS, message: A quotation template with this name already exists. }
+      result: { query: "SELECT * FROM sale_quotation_templates WHERE id = :id" }
+    fields:
+      - { field: name, label: Quotation Template, type: text, required: true }
+      - { field: company_name, label: Company, type: text }
+  - id: archive_sale_quotation_template
+    type: server
+    permission: orders.write
+    action: sales.quotation_templates.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [sale_quotation_template_detail, sale_quotation_templates]
+    mutation: { operation: update, table: sale_quotation_templates, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM sale_quotation_templates WHERE id = :id AND active = true", status: 409, code: SALES_QUOTATION_TEMPLATE_ALREADY_ARCHIVED, message: Quotation template is already archived. }] }
+  - id: restore_sale_quotation_template
+    type: server
+    permission: orders.write
+    action: sales.quotation_templates.restore
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [sale_quotation_template_detail, sale_quotation_templates]
+    mutation: { operation: update, table: sale_quotation_templates, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM sale_quotation_templates WHERE id = :id AND active = false", status: 409, code: SALES_QUOTATION_TEMPLATE_ALREADY_ACTIVE, message: Quotation template is already active. }] }

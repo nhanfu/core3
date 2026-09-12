@@ -79,6 +79,10 @@ menu:
           label: Pricelist Rules
           icon: sliders
           permission: orders.read
+        - path: /order/quotation-templates
+          label: Quotation Templates
+          icon: document
+          permission: orders.read
         - path: /order/invoices
           label: Invoices
           icon: document

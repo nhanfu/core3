@@ -1,0 +1,20 @@
+title: Quotation Template
+page: { id: sale-quotation-template-detail, route: /order/quotation-template/detail, breadcrumb: [Sales, Configuration, Sales Orders, Quotation Templates, Quotation Template], auth: { require: [orders.read] } }
+components:
+  - type: OdooFormView
+    source: sale_quotation_template_detail
+    title_field: name
+    status_field: status
+    status_colors: { Active: green, Archived: neutral }
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: edit_sale_quotation_template, label: Edit, variant: secondary, permission: orders.write }
+      - { id: archive_sale_quotation_template, label: Archive, variant: danger, permission: orders.write, show_if: "state.sale_quotation_template_detail.active === true" }
+      - { id: restore_sale_quotation_template, label: Restore, variant: secondary, permission: orders.write, show_if: "state.sale_quotation_template_detail.active === false" }
+    group_columns: 2
+    groups:
+      - title: Sales Orders
+        fields:
+          - { field: name, label: Quotation Template }
+          - { field: company_name, label: Company }
