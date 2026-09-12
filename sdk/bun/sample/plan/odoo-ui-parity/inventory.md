@@ -793,3 +793,17 @@ and permission contracts. Browser QA inventory covers authenticated desktop
 plus empty and denied exploratory states. Captures belong under
 `/tmp/core3-odoo-parity/inventory-batch4-20260912/`; no visual parity claim is
 made until authenticated Core3 actually renders at both viewports.
+
+Recovery attempt on 2026-09-12: the isolated Core3 runtime was started with
+`bun run dev --db=ddb --memory`, but it stopped before binding because Vite
+raised `EMFILE: too many open files, watch .../vite.config.ts` and the backend
+reported the unrelated catalog error `Named action sms_marketing.mailings.cancel
+permission does not match its workflow transition`. The Odoo server was
+reachable at `http://127.0.0.1:8069`, but the documented `codex@core3.local` /
+`Core3Odoo2026!` login returned `Wrong login/password` in
+`core3_codex_demo`, `core3_owned`, and `core3_reference`. The resulting login
+pages were deleted; no authenticated Core3 or Odoo desktop/mobile capture was
+produced, and this batch makes no visual-parity claim. Static evidence remains
+the focused integration test, UI audit, inventory CSS build, and `git diff
+--check`; the repository-wide typecheck is still blocked by pre-existing
+errors outside Inventory and `sample` has no `lint` script.
