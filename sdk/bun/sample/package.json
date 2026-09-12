@@ -46,6 +46,7 @@
     "start": "CORE3_FRONTEND_DIST=true CORE3_DB_DRIVER=duckdb CORE3_AUTH_DB_DRIVER=duckdb CORE3_ORDER_DB_DRIVER=duckdb CORE3_CHAT_DB_DRIVER=duckdb PORT=3001 bun server.ts",
     "start:built": "CORE3_FRONTEND_DIST=true CORE3_DB_DRIVER=duckdb CORE3_AUTH_DB_DRIVER=duckdb CORE3_ORDER_DB_DRIVER=duckdb CORE3_CHAT_DB_DRIVER=duckdb PORT=3001 bun server.ts",
     "dev": "bun scripts/dev.ts",
+    "agent:module": "bun scripts/agent-module.ts",
     "frontend:dev": "vite --config vite.config.ts",
     "frontend:build": "bun run css:build && vite build --config vite.config.ts",
     "dev:ddb": "bun scripts/dev.ts --db=ddb",

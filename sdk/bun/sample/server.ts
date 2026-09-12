@@ -169,7 +169,24 @@ async function serveSPA() {
   });
 }
 
-const modules = await discoverModules(APPS_ROOT);
+const discoveredModules = await discoverModules(APPS_ROOT);
+const requestedModules = String(process.env.CORE3_MODULES || process.env.CORE3_MODULE || '')
+  .split(',')
+  .map((moduleId) => moduleId.trim())
+  .filter(Boolean);
+if (requestedModules.length) {
+  const availableModuleIds = new Set(discoveredModules.map((module) => module.id));
+  const unknownModule = requestedModules.find((moduleId) => !availableModuleIds.has(moduleId));
+  if (unknownModule) {
+    throw new Error(`Unknown module: ${unknownModule}. Available modules: ${[...availableModuleIds].sort().join(', ')}`);
+  }
+}
+// Auth remains available in single-module mode because the host protects API
+// routes and the frontend needs the session/login contract.
+const selectedModuleIds = new Set(requestedModules.length ? [...requestedModules, 'auth'] : []);
+const modules = requestedModules.length
+  ? discoveredModules.filter((module) => selectedModuleIds.has(module.id))
+  : discoveredModules;
 const moduleManager = new ModuleManager(modules);
 const pageDiscovery = discoverPages(APPS_ROOT);
 const pageRoutes = discoverPageRoutes(pageDiscovery);

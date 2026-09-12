@@ -145,6 +145,12 @@ The shared mock-data contract is defined in
 
 ## Shared agent contribution rules
 
+- To run one module quickly without Bun's recursive file watcher, use
+  `bun run agent:module -- <module>` from `sdk/bun/sample` (for example,
+  `bun run agent:module -- inventory --port=4000`). The runner uses the built
+  frontend, in-memory DuckDB, and loads the requested module plus `auth` for
+  session/login support. File watching is disabled; restart it manually after
+  source changes.
 - After completing a task, every sub-agent must update the single shared
   progress file `odoo-ui-parity/progress.md` with the module, bounded slice,
   commit, tests/audits, browser-capture result, and any blocker. Do not create
