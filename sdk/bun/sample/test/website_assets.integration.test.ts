@@ -64,4 +64,34 @@ describe('Website page assets parity', () => {
     await expect(request('website.pages.assets.publish', 2, { is_public: true })).rejects.toMatchObject({ status: 409 });
     database.close();
   });
+
+  test('preserves asset visibility and version across a database restart', async () => {
+    const databasePath = `/tmp/core3-website-asset-visibility-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `website_asset_visibility_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const manager = { sub: 'website-manager', email: 'manager@workspace.example', name: 'Website Manager', roles: ['manager'], permissions: ['website.read', 'website.write', 'website.manage'] };
+    const createApi = (repository: YamlRepository) => {
+      const page = yaml('api/page-detail.yaml');
+      return createYamlApi({
+        repository,
+        authProvider: { async getCurrentUser() { return manager; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
+        sources: new Map(page.datasources.map((source: any) => [source.id, source])), pageSources: new Map(), pages: new Map([['website-page-detail', { actions: page.actions }]]),
+        catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
+        permissions: { permissions: ['website.read', 'website.write', 'website.manage'], tables: {}, endpoints: {} },
+        uploadRoot: `/tmp/core3-website-asset-restart-uploads-${crypto.randomUUID()}`, eventStore: {}, topics: {}, storage: yaml('storage.yaml'),
+      });
+    };
+    const request = (api: ReturnType<typeof createApi>, action: string) => api(new Request(`http://website.test/api/actions/${action}`, { method: 'POST', headers: { Authorization: 'Bearer test-token', 'content-type': 'application/json' }, body: JSON.stringify({ id: 'website-asset-restart-001', expected_row_version: 1, values: { is_public: true } }) }), new URL(`http://website.test/api/actions/${action}`));
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    await firstRepository.run("INSERT INTO website_page_assets (id, page_id, file_name, mime_type, size_bytes, content_base64, is_public, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", ['website-asset-restart-001', 'website-page-demo-001', 'restart.svg', 'image/svg+xml', 4, 'U1ZHAA==', false, manager.sub]);
+    expect((await request(createApi(firstRepository), 'website.pages.assets.publish'))?.status).toBe(200);
+    first.close();
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await secondRepository.query('SELECT is_public, row_version FROM website_page_assets WHERE id = ?', ['website-asset-restart-001']))[0]).toEqual({ is_public: true, row_version: 2 });
+    second.close();
+    rmSync(databasePath, { force: true });
+  });
 });
