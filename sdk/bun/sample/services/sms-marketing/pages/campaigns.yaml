@@ -29,5 +29,5 @@ components:
     row_open_action: view_sms_campaign
     row_double_click_action: view_sms_campaign
     row_actions: menu
-    form_view: { page: apps/services/sms-marketing/pages/campaign-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/sms-marketing/pages/sms-campaign-detail.yaml, side_panel: true }
     empty_state: { title: Create a SMS Marketing Mailing, description: 'Write an appealing SMS Text Message, define recipients and track its results.' }

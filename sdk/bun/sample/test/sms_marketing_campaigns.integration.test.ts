@@ -15,7 +15,7 @@ const action = (id: string) => [...(listApi.actions ?? []), ...(detailApi.action
 describe('SMS Marketing mailing action parity', () => {
   test('joins presentation pages and backend APIs by page.id with Odoo view modes', () => {
     const listPage = yaml('pages/campaigns.yaml');
-    const detailPage = yaml('pages/campaign-detail.yaml');
+    const detailPage = yaml('pages/sms-campaign-detail.yaml');
     const discovered = discoverPages(join(import.meta.dir, '..'));
     expect(listPage.datasources).toBeUndefined();
     expect(detailPage.datasources).toBeUndefined();
