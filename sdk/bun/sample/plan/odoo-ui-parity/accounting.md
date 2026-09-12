@@ -1344,3 +1344,27 @@ Authenticated Core3/Odoo captures were attempted under
 `127.0.0.1:3001`. Odoo `/web/login` returned HTTP 200, but this session has no
 usable Playwright package/authenticated browser automation context. No images
 were captured and no visual-parity claim is made for this batch.
+
+## Purchases journal action (2026-09-12)
+
+The next uncovered source action after Sales is Odoo
+`account.action_account_moves_journal_purchase` (Purchases) from
+`account_move_views.xml`. It targets `account.move.line`, uses the grouped
+sales/purchases list view and search contract, declares `list,pivot,graph,kanban`,
+and applies the posted purchase-journal context (`journal_type=purchase`,
+group by journal entry, posted and purchase filters, expanded groups). It is
+read-only for `account.group_account_readonly`.
+
+Core3 adds `/accounting/purchases` with presentation-only page YAML and
+`api/purchases.yaml` joined by `page.id`. The route provides the Odoo-shaped
+Date, Journal Entry, Partner, Label, Debit, Credit, and Matching columns,
+List/Pivot/Graph/Kanban tabs, responsive cards, posted filtering, search,
+deterministic BILL fixtures, and explicit empty results. It requires
+`accounting.read`; no mutations or unsupported detail route are exposed.
+
+Focused validation passes 2 tests and 13 assertions; `bun run audit` passes
+with 640 pages, 656 routes, and 1,099 datasources, and `git diff --check` is
+clean. The authenticated visual attempt at 1440x900 and 390x844 was blocked
+before browser startup because Vite hit `EMFILE: too many open files` while
+watching `sdk/bun/sample/vite.config.ts`; the backend fallback was therefore
+not usable. No screenshots were captured and no visual-parity claim is made.

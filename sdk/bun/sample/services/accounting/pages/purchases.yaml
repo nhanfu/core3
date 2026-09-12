@@ -1,0 +1,56 @@
+title: Purchases
+page: { id: accounting-purchases, route: /accounting/purchases, breadcrumb: [Finance, Accounting, Transactions, Purchases], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_purchase_journal_items
+    search: { label: Search Purchases, placeholder: 'Search journal entries, partners, or labels...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields: [{ field: partner_name, column: Partner }, { field: debit, column: Debit }, { field: credit, column: Credit }]
+          default: { rows: [partner_name], measures: [{ field: debit, aggregate: sum, column: Debit }, { field: credit, aggregate: sum, column: Credit }] }
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: item_month
+        measure_field: balance
+        measure_label: Balance
+        show_zero_data: true
+        measures:
+          - { field: balance, label: Balance, aggregate: sum }
+          - { field: debit, label: Debit, aggregate: sum }
+          - { field: credit, label: Credit, aggregate: sum }
+        type: line
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: ''
+        card: { title: account_name, subtitle: label, fields: [{ field: item_date }, { field: amount_display }] }
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card: { title: account_name, subtitle: label, fields: [{ field: item_date }, { field: amount_display }] }
+    filters: [{ field: state, label: Status, options: [{ id: Posted, label: Posted }] }]
+    default_filters: { state: Posted }
+    empty_state: { title: No purchase journal items, description: Try adjusting your search or filters. }
+    selectable: true
+    column_chooser: true
+    columns:
+      - { field: item_date, label: Date }
+      - { field: entry_name, label: Journal Entry, type: PrimaryEntityCell }
+      - { field: partner_name, label: Partner }
+      - { field: label, label: Label }
+      - { field: debit, label: Debit, align: right }
+      - { field: credit, label: Credit, align: right }
+      - { field: matching, label: Matching }
+    page_size: 50
+    row_key: id
