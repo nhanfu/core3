@@ -1,0 +1,74 @@
+page: { id: chat-channels }
+datasources:
+  - id: chat_channels
+    permission: chat.read
+    error_states: { forbidden: { status: 403, code: CHAT_CHANNELS_FORBIDDEN, message: You do not have permission to view channels. }, transport_error: { status: 503, code: CHAT_CHANNELS_UNAVAILABLE, message: Channels are temporarily unavailable. } }
+    query: |
+      SELECT c.id, c.row_version, c.sequence, c.name, c.description, c.channel_type, c.active, c.group_restricted,
+        CASE WHEN c.active THEN 'Active' ELSE 'Archived' END AS active_label,
+        EXISTS (SELECT 1 FROM chat_channel_members m WHERE m.channel_id = c.id AND m.user_id = COALESCE(:current_user_id, 'user-admin')) AS is_member,
+        CASE WHEN EXISTS (SELECT 1 FROM chat_channel_members m WHERE m.channel_id = c.id AND m.user_id = COALESCE(:current_user_id, 'user-admin')) THEN 'Leave' ELSE 'Join' END AS membership_action
+      FROM chat_channels c WHERE c.channel_type = 'channel' AND (:q IS NULL OR c.name ILIKE '%' || :q || '%') AND (COALESCE(:active, '') = '' OR c.active = CAST(:active AS BOOLEAN)) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN FALSE ELSE TRUE END ORDER BY c.sequence, c.name
+actions:
+  - id: create_chat_channel
+    type: server_form
+    permission: chat.write
+    title: New Channel
+    action: mail.discuss_channel.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [chat_channels]
+    fields: [{ field: name, label: Group Name, type: text, required: true }, { field: description, label: Description, type: textarea }, { field: active, label: Active, type: checkbox }]
+    mutation:
+      operation: insert
+      table: chat_channels
+      generated: [id]
+      fields: [name, description, active, channel_type, group_restricted]
+      required: [name]
+      defaults: { active: true, channel_type: channel, group_restricted: false, sequence: 30, description: '' }
+      guards: [{ query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 128 AND NOT EXISTS (SELECT 1 FROM chat_channels WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: CHAT_CHANNEL_NAME_EXISTS, message: A channel with this name already exists. }]
+  - id: save_chat_channel
+    type: server_form
+    permission: chat.write
+    title: Save Channel
+    action: mail.discuss_channel.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [chat_channels, chat_channel_detail]
+    fields: [{ field: name, label: Group Name, type: text, required: true }, { field: description, label: Description, type: textarea }, { field: active, label: Active, type: checkbox }, { field: group_public, label: Group Allowed, type: text }, { field: auto_subscribe_groups, label: Auto Subscribe Groups, type: text }]
+    mutation:
+      operation: update
+      table: chat_channels
+      fields: [name, description, active, group_public, group_restricted, auto_subscribe_groups]
+      required: [name]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM chat_channels WHERE id = :id", status: 404, code: CHAT_CHANNEL_NOT_FOUND, message: Channel not found. }]
+  - id: edit_chat_channel
+    type: navigate
+    permission: chat.read
+    navigate_to: /chat/channels/detail
+    params: { id: '{row.id}' }
+  - id: join_chat_channel
+    type: server
+    permission: chat.write
+    action: mail.discuss_channel.join
+    handler: yaml_mutation
+    operation: insert
+    refresh: [chat_channels]
+    mutation:
+      operation: insert
+      table: chat_channel_members
+      fields: [channel_id, user_id]
+      defaults: { user_id: user-admin }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM chat_channel_members WHERE channel_id = :id AND user_id = COALESCE(:current_user_id, 'user-admin'))", status: 409, code: CHAT_CHANNEL_ALREADY_JOINED, message: You already joined this channel. }]
+  - id: leave_chat_channel
+    type: server
+    permission: chat.write
+    action: mail.discuss_channel.leave
+    handler: yaml_mutation
+    operation: delete
+    refresh: [chat_channels]
+    mutation:
+      operation: delete
+      table: chat_channel_members
+      guards: [{ query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM chat_channel_members WHERE channel_id = :id AND user_id = COALESCE(:current_user_id, 'user-admin'))", status: 409, code: CHAT_CHANNEL_ALREADY_LEFT, message: You already left this channel. }]

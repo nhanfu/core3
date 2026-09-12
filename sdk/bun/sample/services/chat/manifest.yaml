@@ -16,6 +16,7 @@ menu:
       label: Workspace
       items:
         - { path: /chat, label: Discuss, icon: message, permission: chat.read }
+        - { path: /chat/channels, label: Channels, icon: hashtag, permission: chat.read }
     - id: configuration
       label: Configuration
       items:

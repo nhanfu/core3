@@ -1,0 +1,16 @@
+version: 0.0.8
+description: Add deterministic Discuss Channels action fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS chat_channels (id VARCHAR PRIMARY KEY, row_version INTEGER NOT NULL DEFAULT 1, sequence INTEGER NOT NULL DEFAULT 10, name VARCHAR NOT NULL UNIQUE, description VARCHAR NOT NULL DEFAULT '', channel_type VARCHAR NOT NULL DEFAULT 'channel', active BOOLEAN NOT NULL DEFAULT TRUE, group_public VARCHAR NOT NULL DEFAULT '', group_restricted BOOLEAN NOT NULL DEFAULT FALSE, auto_subscribe_groups VARCHAR NOT NULL DEFAULT '');
+      CREATE TABLE IF NOT EXISTS chat_channel_members (channel_id VARCHAR NOT NULL REFERENCES chat_channels(id), user_id VARCHAR NOT NULL, PRIMARY KEY(channel_id, user_id));
+      INSERT INTO chat_channels(id, row_version, sequence, name, description, channel_type, active, group_public, group_restricted, auto_subscribe_groups) VALUES ('chat-channel-operations', 1, 10, 'operations', 'Coordinate daily delivery work.', 'channel', TRUE, 'Internal Users', FALSE, 'Operations'), ('chat-channel-archived', 1, 20, 'release-notes', 'Historical release discussion.', 'channel', FALSE, '', FALSE, '') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO chat_channel_members(channel_id, user_id) VALUES ('chat-channel-operations', 'user-admin') ON CONFLICT DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS chat_channel_members;
+      DROP TABLE IF EXISTS chat_channels;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

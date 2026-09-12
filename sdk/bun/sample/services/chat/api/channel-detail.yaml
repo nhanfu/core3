@@ -1,0 +1,24 @@
+page: { id: chat-channel-detail }
+datasources:
+  - id: chat_channel_detail
+    single: true
+    permission: chat.read
+    error_states: { transport_error: { status: 503, code: CHAT_CHANNEL_DETAIL_UNAVAILABLE, message: This channel is temporarily unavailable. } }
+    query: "SELECT c.id, c.row_version, c.name, c.description, c.active, c.group_public, c.group_restricted, c.auto_subscribe_groups, COALESCE((SELECT string_agg(u.name, ', ' ORDER BY u.name) FROM chat_channel_members m JOIN chat_users u ON u.id = m.user_id WHERE m.channel_id = c.id), '') AS member_names FROM chat_channels c WHERE c.id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+actions:
+  - id: save_chat_channel_detail
+    type: server_form
+    permission: chat.write
+    title: Save Channel
+    action: mail.discuss_channel.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [chat_channels, chat_channel_detail]
+    fields: [{ field: name, label: Group Name, type: text, required: true }, { field: description, label: Description, type: textarea }, { field: active, label: Active, type: checkbox }, { field: group_public, label: Group Allowed, type: text }, { field: auto_subscribe_groups, label: Auto Subscribe Groups, type: text }]
+    mutation:
+      operation: update
+      table: chat_channels
+      fields: [name, description, active, group_public, group_restricted, auto_subscribe_groups]
+      required: [name]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM chat_channels WHERE id = :id", status: 404, code: CHAT_CHANNEL_NOT_FOUND, message: Channel not found. }]

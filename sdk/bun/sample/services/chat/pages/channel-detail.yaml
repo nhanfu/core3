@@ -1,0 +1,15 @@
+title: Mail Channel Form
+page: { id: chat-channel-detail, route: /chat/channels/detail, breadcrumb: [Discuss, Channels], auth: { require: [chat.read] } }
+components:
+  - type: OdooFormView
+    source: chat_channel_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Channel
+        fields: [{ field: name, label: Group Name }, { field: description, label: Description }, { field: active, label: Active }]
+      - title: Privacy
+        fields: [{ field: group_public, label: Group Allowed }, { field: auto_subscribe_groups, label: Auto Subscribe Groups }]
+      - title: Members
+        fields: [{ field: member_names, label: Members }]
+    header_actions: [{ id: save_chat_channel_detail, label: Save, variant: primary, permission: chat.write }]

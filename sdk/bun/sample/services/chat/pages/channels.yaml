@@ -1,0 +1,25 @@
+title: Channels
+page: { id: chat-channels, route: /chat/channels, breadcrumb: [Discuss, Channels], auth: { require: [chat.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: chat_channels
+    create_action: create_chat_channel
+    create_label: New
+    search: { label: Search Groups, placeholder: Search... }
+    filters: [{ field: active, label: Status, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: true, group_by: active_label, card: { title: name, subtitle: description, fields: [{ field: channel_type, label: Type }, { field: membership_action, label: '' }] } }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/chat/pages/channel-detail.yaml, side_panel: true }
+    row_key: id
+    row_open_action: edit_chat_channel
+    row_actions: menu
+    empty_state: { title: No channels found, description: Create a channel for group discussions. }
+    columns:
+      - { field: name, label: Channel, type: PrimaryEntityCell, mobile: true }
+      - { field: description, label: Description, mobile: true }
+      - { field: membership_action, label: '', mobile: true }
+      - { field: active_label, label: Active, optional: hide }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_chat_channel, label: Configure, icon: settings }, { id: join_chat_channel, label: Join, icon: user-plus, show_if: 'row.is_member === false && row.group_restricted === false' }, { id: leave_chat_channel, label: Leave, icon: user-minus, show_if: 'row.is_member === true && row.group_restricted === false' }] }

@@ -73,3 +73,10 @@ Capture Odoo/Core3 at 1440x900 and 390x844 for inbox, channel, direct message, t
   Odoo mobile measured `390/390`. The Core3 desktop list and mobile kanban
   captures were reviewed against the Odoo action surface; no clipped content
   or horizontal page overflow was observed.
+
+## Bounded batch — Discuss Channels action parity (20260912)
+
+- Source-backed action: `mail.discuss_channel_action` in Odoo `mail/views/discuss_channel_views.xml`, exposed at Discuss → Channels. It uses `discuss.channel`, `kanban,form` modes, the `channel_type = channel` domain, `Search Groups`/Archived search, and member-sensitive Join/Leave buttons. Technical → Email Channels/Members is restricted to `base.group_no_one` and remains out of this user-facing batch.
+- Core3 routes are `/chat/channels` and `/chat/channels/detail`, with page-only YAML joined to backend API YAML by `page.id`. Fixtures use `chat_channels`, `chat_channel_members`, and existing Auth-owned `chat_users`; migration `20260912100000-008-chat-channels.yaml` is deterministic and idempotent.
+- Acceptance coverage includes active/archived/member and empty/search states, forbidden/transport contracts, duplicate-name validation, not-found and optimistic-concurrency guards, and create/update/join/leave action declarations. Authenticated desktop/mobile evidence and exact runtime limitations are recorded after verification.
+- Runtime limitation: this worktree session did not expose `js_repl`, and `playwright` is not installed in the sample workspace, so authenticated Core3/Odoo browser rendering and the required 1440x900/390x844 captures could not be produced. No visual-parity claim is made for this batch; static YAML/schema, migration/query, audit, and build checks are the available evidence.
