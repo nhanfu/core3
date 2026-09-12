@@ -29,3 +29,21 @@ datasources:
     single: false
     permission: spreadsheet.read
     query: "SELECT dashboard_id, sequence, country, category, revenue, orders FROM spreadsheet_dashboard_rows ORDER BY dashboard_id, sequence"
+actions:
+  - id: toggle_dashboard_favorite
+    type: server
+    permission: spreadsheet.read
+    action: spreadsheet.dashboard.toggle_favorite
+    handler: yaml_mutation
+    operation: toggle_favorite
+    params: { id: '{row.id}' }
+    refresh: [spreadsheet_dashboards_landing]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM spreadsheet_dashboards WHERE id = :id AND state <> 'Archived' AND published = TRUE", status: 404, code: SPREADSHEET_DASHBOARD_NOT_FOUND, message: This dashboard is unavailable or has been unpublished. }
+        - { query: "SELECT id FROM spreadsheet_dashboards WHERE id = :id AND snapshot_status <> 'error'", status: 503, code: SPREADSHEET_DASHBOARD_FAVORITE_UNAVAILABLE, message: Dashboard favorites are temporarily unavailable. }
+        - { query: "SELECT id FROM spreadsheet_dashboards WHERE id = :id AND row_version = :expected_row_version", status: 409, code: SPREADSHEET_DASHBOARD_FAVORITE_STALE, message: This dashboard changed before its favorite state was updated. Reload before trying again. }
+      steps:
+        - { query: "UPDATE spreadsheet_dashboards SET favorite = NOT favorite, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SPREADSHEET_DASHBOARD_FAVORITE_STALE, message: This dashboard changed before its favorite state was updated. Reload before trying again. }
+      result: { query: "SELECT id, favorite, row_version FROM spreadsheet_dashboards WHERE id = :id" }

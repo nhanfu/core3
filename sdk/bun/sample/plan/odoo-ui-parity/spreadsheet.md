@@ -453,3 +453,33 @@ and snapshot shape. Authenticated Odoo/Core3 desktop and mobile captures were
 attempted but remain blocked by the existing startup failures (`EMFILE` from
 Vite watching and the DuckDB constrained-column parser error). No visual-parity
 claim or screenshot is made for this batch; images remain outside Git.
+
+## 2026-09-12 bounded implementation batch: Dashboard favorite action
+
+This batch implements the next uncovered source action: the dashboard favorite
+toggle exposed by Odoo's `spreadsheet.dashboard.is_favorite` field and
+`action_toggle_favorite()` model action. The retained `/dashboards` client
+action now enables its existing star control and submits the page-id-owned
+`toggle_dashboard_favorite` API action for the selected dashboard. The mutation
+is read-permission bound, flips the service-owned favorite state, increments its
+row version, refreshes the landing catalog, and has deterministic 404
+unpublished/missing, 409 stale, and 503 unreadable-dashboard guards. The
+dashboard canvas remains read-only; workbook editing and company/group ACL
+boundaries remain separate deferred slices.
+
+Focused service verification passes 9 tests / 96 assertions, including the
+toggle result, stale row version, and unavailable snapshot branches. The shared
+client component verification passes 3 tests, including the submitted action
+and selected-dashboard payload. `bun run audit` passes with 639 pages, 655
+routes, and 1,098 datasources; workspace ESLint passes; `git diff --check`
+passes.
+
+Authenticated Odoo/Core3 captures at 1440x900 and 390x844 were attempted under
+`/tmp/core3-odoo-parity/spreadsheet-favorite-20260912/`. Core3 could not reach
+HTTP readiness: `bun run dev --db=ddb --memory` selected backend/frontend port
+3003, then Vite exited with `EMFILE: too many open files` while watching
+`vite.config.ts`; listener inspection showed only unrelated ports 3001 and
+3002, and `GET http://127.0.0.1:3003/api/modules` failed to connect. Odoo's
+`http://127.0.0.1:8073/web/login` returned 200, but no authenticated capture
+runner is available in this session. No visual parity claim or screenshot is
+made for this batch, and no images are committed.

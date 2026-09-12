@@ -82,7 +82,11 @@ export class SpreadsheetDashboardClientAction extends BaseComponent {
     favorite.className = 'o-spreadsheet-dashboard-favorite';
     favorite.textContent = active?.favorite ? '★' : '☆';
     favorite.setAttribute('aria-label', active?.favorite ? 'Favorite dashboard' : 'Add dashboard to favorites');
-    favorite.disabled = true;
+    favorite.title = active?.favorite ? 'Remove from favorites' : 'Add to favorites';
+    favorite.addEventListener('click', () => {
+      if (!this.state.favorite_action || !active) return;
+      void this.submit(this.state.favorite_action, { state: { dashboard_id: active.id }, row: active });
+    });
     controls.append(favorite);
 
     if (!active) {

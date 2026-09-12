@@ -11,3 +11,4 @@ components:
     rows_source: spreadsheet_dashboard_rows_landing
     default_dashboard_id: sdb-sales
     read_only: true
+    favorite_action: toggle_dashboard_favorite

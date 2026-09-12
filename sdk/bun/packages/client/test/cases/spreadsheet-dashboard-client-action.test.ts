@@ -10,16 +10,18 @@ const dataMap = {
   rows: { data: [{ dashboard_id: 'sales-dashboard', country: 'Vietnam', category: 'Services', revenue: 42100, orders: 284 }] },
 };
 
-function mount(definition: any, state: Record<string, string> = {}) {
+function mount(definition: any, state: Record<string, string> = {}, submit?: (action: string, params: any) => unknown) {
   const container = document.createElement('div');
   const resolved = SpreadsheetDashboardClientAction.resolveState(definition, { dataMap, state });
-  new SpreadsheetDashboardClientAction('spreadsheet-dashboard-test', resolved).mount(container);
+  const action = new SpreadsheetDashboardClientAction('spreadsheet-dashboard-test', resolved);
+  if (submit) action._transport = { submit };
+  action.mount(container);
   return container;
 }
 
 describe('SpreadsheetDashboardClientAction', () => {
   it('renders a read-only landing, selected workbook, figures, and mobile-compatible controls', () => {
-    const container = mount({ groups_source: 'groups', dashboards_source: 'dashboards', workbooks_source: 'workbooks', summaries_source: 'summaries', chart_source: 'chart', rows_source: 'rows' });
+    const container = mount({ groups_source: 'groups', dashboards_source: 'dashboards', workbooks_source: 'workbooks', summaries_source: 'summaries', chart_source: 'chart', rows_source: 'rows', favorite_action: 'toggle_dashboard_favorite' });
     expect(container.querySelector('.o-spreadsheet-readonly')?.textContent).toBe('Read-only');
     expect(container.querySelector('.o-spreadsheet-dashboard-sidebar')?.textContent).toContain('Sales');
     expect(container.querySelector('.o-spreadsheet-workbook')?.textContent).toContain('Sheet1');
@@ -27,6 +29,13 @@ describe('SpreadsheetDashboardClientAction', () => {
     expect(container.querySelector('[aria-label="Top countries map"]')).not.toBeNull();
     expect(container.querySelector('[aria-label="Top categories treemap"]')).not.toBeNull();
     expect(container.querySelectorAll('.o-spreadsheet-granularity button')).toHaveLength(4);
+  });
+
+  it('submits the declared favorite action for the selected dashboard', async () => {
+    const calls: any[] = [];
+    const container = mount({ groups_source: 'groups', dashboards_source: 'dashboards', workbooks_source: 'workbooks', summaries_source: 'summaries', chart_source: 'chart', rows_source: 'rows', favorite_action: 'toggle_dashboard_favorite' }, {}, (action, params) => calls.push({ action, params }));
+    await (container.querySelector('.o-spreadsheet-dashboard-favorite') as HTMLButtonElement).click();
+    expect(calls).toEqual([{ action: 'toggle_dashboard_favorite', params: { state: { dashboard_id: 'sales-dashboard' }, row: expect.objectContaining({ id: 'sales-dashboard' }) } }]);
   });
 
   it('renders stable empty, missing, and malformed snapshot states', () => {

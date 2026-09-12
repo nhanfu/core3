@@ -25,6 +25,7 @@ describe('Spreadsheet dashboard configuration parity', () => {
       default_dashboard_id: 'sdb-sales',
     });
     expect(action.groups_source).toBe('spreadsheet_dashboard_groups_landing');
+    expect(action.favorite_action).toBe('toggle_dashboard_favorite');
     expect(action.workbooks_source).toBe('spreadsheet_dashboard_workbooks');
     expect(api.page.id).toBe('dashboards');
     expect(api.datasources.map((source: any) => source.id)).toEqual([
@@ -60,6 +61,14 @@ describe('Spreadsheet dashboard configuration parity', () => {
       status: 503,
       code: 'SPREADSHEET_DASHBOARD_WORKBOOKS_UNAVAILABLE',
     });
+    expect(yaml('api/dashboards.yaml').actions).toContainEqual(expect.objectContaining({
+      id: 'toggle_dashboard_favorite', permission: 'spreadsheet.read', action: 'spreadsheet.dashboard.toggle_favorite', operation: 'toggle_favorite',
+    }));
+    const favoriteAction = yaml('api/dashboards.yaml').actions.find((candidate: any) => candidate.id === 'toggle_dashboard_favorite');
+    const toggled = await repository.executeMutation(favoriteAction.mutation, { id: 'sdb-sales', expected_row_version: 1 });
+    expect(toggled).toMatchObject({ id: 'sdb-sales', favorite: false, row_version: 2 });
+    await expect(repository.executeMutation(favoriteAction.mutation, { id: 'sdb-sales', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_FAVORITE_STALE' });
+    await expect(repository.executeMutation(favoriteAction.mutation, { id: 'sdb-error', expected_row_version: 1 })).rejects.toMatchObject({ status: 503, code: 'SPREADSHEET_DASHBOARD_FAVORITE_UNAVAILABLE' });
   });
 
   test('keeps configuration pages layout-only and API-owned by page id', () => {
