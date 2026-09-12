@@ -1,0 +1,19 @@
+page: { id: ecommerce-unpaid-orders, route: /ecommerce/unpaid-orders, breadcrumb: [eCommerce, Orders, Unpaid Orders], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_unpaid_orders
+    responsive_card: true
+    search: { label: Search unpaid orders, placeholder: Search order or customer... }
+    columns:
+      - { field: order_number, label: Order, type: PrimaryEntityCell }
+      - { field: customer_name, label: Customer }
+      - { field: amount_total, label: Amount Due, align: right }
+      - { field: currency, label: Currency }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: date_order, label: Order Date }
+    row_open_action: view_ecommerce_unpaid_order
+    row_double_click_action: view_ecommerce_unpaid_order
+    page_size: 50
+    row_key: id
+    empty_state: { title: No unpaid orders, description: Orders awaiting payment appear here. }

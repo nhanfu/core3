@@ -1,0 +1,11 @@
+page: { id: ecommerce-unpaid-orders }
+datasources:
+  - id: ecommerce_unpaid_orders
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_UNPAID_ORDERS_UNAUTHENTICATED, message: Sign in to view unpaid orders. }
+      forbidden: { status: 403, code: ECOMMERCE_UNPAID_ORDERS_FORBIDDEN, message: You do not have permission to view unpaid orders. }
+      transport_error: { status: 503, code: ECOMMERCE_UNPAID_ORDERS_UNAVAILABLE, message: Unpaid orders are temporarily unavailable. }
+    query: "SELECT id, row_version, order_number, customer_name, customer_email, amount_total, currency, state, CAST(date_order AS VARCHAR) AS date_order, company_name FROM ecommerce_orders WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND state IN ('Quotation', 'Sale Order') AND (:q IS NULL OR order_number ILIKE '%' || :q || '%' OR customer_name ILIKE '%' || :q || '%') ORDER BY date_order DESC, order_number"
+actions:
+  - { id: view_ecommerce_unpaid_order, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/orders/detail, params: { id: '{row.id}' } }
