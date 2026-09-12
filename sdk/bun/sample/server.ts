@@ -144,14 +144,31 @@ async function serveStatic(pathname: string) {
     const file = USE_FRONTEND_DIST && await distFile.exists()
       ? distFile
       : await publicFile.exists() ? publicFile : await appFile.exists() ? appFile : packageFile;
-    if (!(await file.exists())) return null;
-    if (rel.endsWith('.ts')) {
+    let resolvedFile = file;
+    if (!(await resolvedFile.exists()) && !rel.includes('.')) {
+      for (const extension of ['.ts', '.js', '.mjs']) {
+        const candidateRel = `${rel}${extension}`;
+        const candidate = USE_FRONTEND_DIST && await Bun.file(join(DIST_ROOT, candidateRel)).exists()
+          ? Bun.file(join(DIST_ROOT, candidateRel))
+          : await Bun.file(join(PUBLIC_ROOT, candidateRel)).exists()
+            ? Bun.file(join(PUBLIC_ROOT, candidateRel))
+            : await Bun.file(join(APPS_ROOT, candidateRel)).exists()
+              ? Bun.file(join(APPS_ROOT, candidateRel))
+              : Bun.file(join(REPO_ROOT, candidateRel));
+        if (await candidate.exists()) {
+          resolvedFile = candidate;
+          break;
+        }
+      }
+    }
+    if (!(await resolvedFile.exists())) return null;
+    if (/\.(ts|js|mjs)$/.test(resolvedFile.name || rel)) {
       const transpiler = new Bun.Transpiler({ loader: 'ts' });
-      return new Response(transpiler.transformSync(await file.text()), {
+      return new Response(transpiler.transformSync(await resolvedFile.text()), {
         headers: { 'Content-Type': 'application/javascript', ...CORS_HEADERS },
       });
     }
-    return new Response(file, { headers: { 'Content-Type': mimeFor(rel), ...CORS_HEADERS } });
+    return new Response(resolvedFile, { headers: { 'Content-Type': mimeFor(rel), ...CORS_HEADERS } });
   } catch {
     return null;
   }
