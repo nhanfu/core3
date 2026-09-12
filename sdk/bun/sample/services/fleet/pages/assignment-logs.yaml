@@ -1,0 +1,28 @@
+title: Assignment Logs
+page: { id: fleet-assignment-logs, route: /fleet/vehicles/assignment-logs, breadcrumb: [Human Resources, Fleet, Assignment Logs], auth: { require: [fleet.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_vehicle_assignment_logs
+    create_label: New
+    search: { label: Search assignment logs, placeholder: Search... }
+    view_navigation: tabs
+    views: [{ id: list, label: List, icon: table }]
+    inline_edit:
+      create_action: create_fleet_vehicle_assignment_log
+      update_action: update_fleet_vehicle_assignment_log
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: vehicle_id, type: select, options_source: fleet_assignment_log_vehicles, required: true }
+        - { field: driver_name, type: text, required: true, placeholder: Driver }
+        - { field: date_start, type: text, required: true, placeholder: YYYY-MM-DD }
+        - { field: date_end, type: text, placeholder: YYYY-MM-DD }
+    columns:
+      - { field: vehicle_name, label: Vehicle, type: PrimaryEntityCell, mobile: true }
+      - { field: driver_name, label: Current Driver, mobile: true }
+      - { field: date_start, label: Start Date, mobile: true }
+      - { field: date_end, label: End Date, mobile: true }
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No assignment logs, description: Assign a driver to a vehicle to start its history. }

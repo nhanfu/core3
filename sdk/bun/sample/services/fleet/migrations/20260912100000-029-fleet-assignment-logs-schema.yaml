@@ -1,0 +1,23 @@
+version: 0.0.29
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_assignation_logs (
+        id VARCHAR PRIMARY KEY,
+        vehicle_id VARCHAR NOT NULL,
+        driver_name VARCHAR NOT NULL,
+        date_start DATE,
+        date_end DATE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_assignation_logs_vehicle_idx ON fleet_vehicle_assignation_logs(vehicle_id, date_start, id);
+      CREATE INDEX IF NOT EXISTS fleet_vehicle_assignation_logs_start_idx ON fleet_vehicle_assignation_logs(date_start, id);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_assignation_logs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

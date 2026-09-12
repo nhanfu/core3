@@ -1,0 +1,74 @@
+page: { id: fleet-assignment-logs }
+datasources:
+  - id: fleet_assignment_log_vehicles
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_vehicles WHERE COALESCE(archived, FALSE) = FALSE ORDER BY name, id"
+  - id: fleet_vehicle_assignment_logs
+    permission: fleet.read
+    error_states:
+      unauthorized: { status: 401, code: FLEET_ASSIGNMENT_LOGS_UNAUTHORIZED, message: Sign in to view assignment logs. }
+      forbidden: { status: 403, code: FLEET_ASSIGNMENT_LOGS_FORBIDDEN, message: You do not have permission to view assignment logs. }
+      transport_error: { status: 503, code: FLEET_ASSIGNMENT_LOGS_UNAVAILABLE, message: Assignment log data is temporarily unavailable. }
+    query: "SELECT l.id, l.row_version, l.vehicle_id, v.name AS vehicle_name, l.driver_name, CAST(l.date_start AS VARCHAR) AS date_start, CAST(l.date_end AS VARCHAR) AS date_end FROM fleet_vehicle_assignation_logs l JOIN fleet_vehicles v ON v.id = l.vehicle_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:vehicle_id IS NULL OR l.vehicle_id = :vehicle_id) AND (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR l.driver_name ILIKE '%' || :q || '%' OR CAST(l.date_start AS VARCHAR) ILIKE '%' || :q || '%' OR COALESCE(CAST(l.date_end AS VARCHAR), '') ILIKE '%' || :q || '%') ORDER BY l.date_start DESC NULLS LAST, l.id DESC"
+actions:
+  - id: create_fleet_vehicle_assignment_log
+    type: server_form
+    permission: fleet.write
+    title: New Assignment Log
+    action: fleet.vehicle_assignment_logs.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fleet_vehicle_assignment_logs]
+    mutation:
+      operation: insert
+      table: fleet_vehicle_assignation_logs
+      fields: [vehicle_id, driver_name, date_start, date_end]
+      required: [vehicle_id, driver_name, date_start]
+      generated: [id]
+      before_steps: [{ query: "SELECT 'fleet-assignment-custom-' || regexp_replace(lower(trim(CAST(:driver_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') || '-' || CAST((SELECT COUNT(*) + 1 FROM fleet_vehicle_assignation_logs) AS VARCHAR) AS id", assign: true }]
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id AND COALESCE(archived, FALSE) = FALSE", status: 404, code: FLEET_ASSIGNMENT_VEHICLE_NOT_FOUND, message: Vehicle was not found or is archived. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:driver_name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: FLEET_ASSIGNMENT_DRIVER_REQUIRED, message: Driver is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:date_start AS DATE) IS NOT NULL AND (:date_end IS NULL OR CAST(:date_end AS DATE) >= CAST(:date_start AS DATE))", status: 422, code: FLEET_ASSIGNMENT_DATE_INVALID, message: End Date must be on or after Start Date. }
+      result: { query: "SELECT * FROM fleet_vehicle_assignation_logs WHERE id = :id" }
+    fields:
+      - { field: vehicle_id, label: Vehicle, type: select, options_source: fleet_assignment_log_vehicles, required: true }
+      - { field: driver_name, label: Current Driver, type: text, required: true }
+      - { field: date_start, label: Start Date, type: text, required: true }
+      - { field: date_end, label: End Date, type: text }
+  - id: update_fleet_vehicle_assignment_log
+    type: server_form
+    permission: fleet.write
+    title: Edit Assignment Log
+    action: fleet.vehicle_assignment_logs.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [fleet_vehicle_assignment_logs]
+    mutation:
+      operation: update
+      table: fleet_vehicle_assignation_logs
+      fields: [vehicle_id, driver_name, date_start, date_end]
+      required: [vehicle_id, driver_name, date_start]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_assignation_logs WHERE id = :id", status: 404, code: FLEET_ASSIGNMENT_LOG_NOT_FOUND, message: Assignment log was not found. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id AND COALESCE(archived, FALSE) = FALSE", status: 404, code: FLEET_ASSIGNMENT_VEHICLE_NOT_FOUND, message: Vehicle was not found or is archived. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:driver_name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: FLEET_ASSIGNMENT_DRIVER_REQUIRED, message: Driver is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:date_start AS DATE) IS NOT NULL AND (:date_end IS NULL OR CAST(:date_end AS DATE) >= CAST(:date_start AS DATE))", status: 422, code: FLEET_ASSIGNMENT_DATE_INVALID, message: End Date must be on or after Start Date. }
+      result: { query: "SELECT * FROM fleet_vehicle_assignation_logs WHERE id = :id" }
+    fields:
+      - { field: vehicle_id, label: Vehicle, type: select, options_source: fleet_assignment_log_vehicles, required: true }
+      - { field: driver_name, label: Current Driver, type: text, required: true }
+      - { field: date_start, label: Start Date, type: text, required: true }
+      - { field: date_end, label: End Date, type: text }
+  - id: delete_fleet_vehicle_assignment_log
+    type: delete
+    permission: fleet.write
+    table: fleet_vehicle_assignation_logs
+    refresh: [fleet_vehicle_assignment_logs]
+    mutation:
+      operation: delete
+      table: fleet_vehicle_assignation_logs
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_assignation_logs WHERE id = :id", status: 404, code: FLEET_ASSIGNMENT_LOG_NOT_FOUND, message: Assignment log was not found. }

@@ -1,0 +1,19 @@
+version: 0.0.30
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicle_assignation_logs (id, vehicle_id, driver_name, date_start, date_end, row_version, created_at, updated_at) VALUES
+        ('fleet-assignment-001', 'fleet-demo-002', 'Doris Cole', DATE '2026-09-10', NULL, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-assignment-002', 'fleet-demo-003', 'Beth Evans', DATE '2026-04-25', NULL, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-assignment-003', 'fleet-demo-003', 'Audrey Peterson', DATE '2026-04-25', DATE '2026-04-25', 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-assignment-004', 'fleet-demo-001', 'Abigail Peterson', DATE '2026-01-20', NULL, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-assignment-005', 'fleet-demo-001', 'Marc Demo', DATE '2025-10-09', DATE '2026-01-20', 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00'),
+        ('fleet-assignment-006', 'fleet-demo-003', 'Beth Evans', DATE '2025-05-17', DATE '2026-04-25', 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (id) DO UPDATE SET vehicle_id = excluded.vehicle_id, driver_name = excluded.driver_name, date_start = excluded.date_start, date_end = excluded.date_end, row_version = 1, updated_at = excluded.updated_at;
+    down: |
+      DELETE FROM fleet_vehicle_assignation_logs WHERE id LIKE 'fleet-assignment-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
