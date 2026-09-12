@@ -1143,3 +1143,45 @@ error `EMFILE: too many open files` while watching
 created, and this batch makes no visual-parity claim. The bounded residuals
 are the unavailable browser evidence, Odoo purple shell/chatter, and adding
 Sales Prices lines after the new parent is saved.
+
+## Current bounded batch: Products > New Product action
+
+The local Odoo 19 source audit on 2026-09-12 traces Point of Sale → Products
+to menu `menu_pos_products` and action `product_template_action_pos_product`
+in `addons/point_of_sale/views/product_view.xml`. The action uses
+`kanban,list,form,activity`, defaults `available_in_pos` to true, and exposes
+the separate `product_template_action_add_pos` New Product form action as a
+medium dialog. Its POS-visible fields include Product, Barcode, Category,
+Sales Price, Customer Taxes, and Point of Sale availability; the source
+product form also provides General Information and Point of Sale tabs.
+
+Core3 now adds the visible `New` action to `/point-of-sale/products` and a
+service-owned `/point-of-sale/products/new` form. The page and API fragments
+join through `pos-product-new`; the form defaults Category to General, Sales
+Price to 1, Customer Taxes to 10, and Available in Point of Sale to true.
+Creation is guarded by `pos.manage` while the page and datasource retain
+`pos.read`, preserving cashier read-only access. Required-name, duplicate,
+negative-price, and tax-range validation are service mutation guards. The
+existing `pos_products` table is reused and migration `0.0.42` is an
+idempotent compatibility checkpoint because no schema expansion is needed.
+
+Focused coverage passes 2 tests and 14 assertions in
+`test/pos_product_new.integration.test.ts`, including the exact menu action,
+page/API join, deterministic defaults, manager-only create action, successful
+insert, and validation/duplicate boundaries. The Products Activity and
+Product Variants regression suites also pass: 10 tests and 75 assertions
+combined. The UI audit passes with 621 pages, 630 routes, and 1,065
+datasources; targeted ESLint, POS CSS generation, and `git diff --check` pass.
+
+Authenticated Core3 and Odoo captures were attempted under
+`/tmp/core3-odoo-parity/pos-products-new-20260912/`. This session does not
+expose the required Playwright/js_repl tool and `import('playwright')` fails
+with `ERR_MODULE_NOT_FOUND`. The fallback Core3 runtime reached its startup
+banner but Vite exited before `/api/modules` with the exact host error
+`EMFILE: too many open files` while watching
+`sdk/bun/sample/vite.config.ts`. Therefore no authenticated render,
+screenshot, or visual-parity claim is made for this batch. Odoo browser
+capture was not claimed because the paired Core3 surface was unavailable.
+Screenshots remain outside Git; the residuals are browser/runtime evidence,
+the Odoo purple shell/chatter, and the broader generic product fields and
+attribute-line workflow.

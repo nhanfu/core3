@@ -1,0 +1,9 @@
+version: 0.0.42
+type:
+  postgres:
+    up: SELECT 1;
+    down: SELECT 1;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

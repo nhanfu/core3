@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: pos_product_catalog
+    create_action: new_pos_product
+    create_label: New
     row_open_action: view_pos_product
     row_double_click_action: view_pos_product
     view_navigation: tabs
@@ -33,3 +35,8 @@ components:
       - { field: active, label: Active, type: StatusChip }
     page_size: 50
     row_key: id
+actions:
+  - id: new_pos_product
+    type: navigate
+    permission: pos.manage
+    navigate_to: /point-of-sale/products/new

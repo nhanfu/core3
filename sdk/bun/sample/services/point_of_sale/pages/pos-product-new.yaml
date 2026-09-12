@@ -1,0 +1,40 @@
+title: New Product
+page: { id: pos-product-new, route: /point-of-sale/products/new, breadcrumb: [Sales, Point of Sale, Products, New], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_product_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_pos_products, label: Products, variant: secondary, permission: pos.read }
+      - { id: create_pos_product, label: Save, variant: primary, permission: pos.manage }
+    group_columns: 2
+    groups:
+      - title: Product
+        wide: true
+        fields:
+          - { field: name, label: Product, type: text, required: true, placeholder: 'e.g. Cheese Burger' }
+          - { field: barcode, label: Barcode, type: text, placeholder: 'e.g. 1234567890123' }
+          - { field: category, label: Category, type: text, default: General }
+          - { field: price, label: Sales Price, type: number, default: 1 }
+          - { field: tax_rate, label: Customer Taxes, type: number, default: 10 }
+          - { field: active, label: Available in Point of Sale, type: checkbox, default: true }
+    notebook:
+      active: point-of-sale
+      tabs:
+        - id: general
+          label: General Information
+          fields:
+            - { field: name, label: Product }
+            - { field: category, label: Category }
+            - { field: barcode, label: Barcode }
+        - id: point-of-sale
+          label: Point of Sale
+          fields:
+            - { field: active, label: Available in Point of Sale, type: checkbox, default: true }
+            - { field: price, label: Sales Price }
+            - { field: tax_rate, label: Customer Taxes }
+    chatter_label: Chatter
+    chatter_empty: No messages or activities yet

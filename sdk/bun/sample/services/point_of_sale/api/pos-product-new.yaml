@@ -1,0 +1,43 @@
+page: { id: pos-product-new }
+datasources:
+  - id: pos_product_new
+    single: true
+    permission: pos.read
+    error_states:
+      unauthorized: { status: 401, code: POS_PRODUCT_NEW_UNAUTHORIZED, message: Sign in to create a POS product. }
+      forbidden: { status: 403, code: POS_PRODUCT_NEW_FORBIDDEN, message: You do not have permission to create a POS product. }
+      transport_error: { status: 503, code: POS_PRODUCT_NEW_UNAVAILABLE, message: The new POS product form is temporarily unavailable. }
+    query: "SELECT NULL AS id, 1 AS row_version, '' AS name, '' AS barcode, 'General' AS category, CAST(1 AS DOUBLE) AS price, CAST(10 AS DOUBLE) AS tax_rate, true AS active"
+actions:
+  - id: back_to_pos_products
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/products
+  - id: create_pos_product
+    type: server_form
+    permission: pos.manage
+    title: New Product
+    action: pos.products.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [pos_product_catalog]
+    mutation:
+      operation: insert
+      table: pos_products
+      generated: [id]
+      fields: [name, barcode, category, price, tax_rate, active]
+      required: [name]
+      defaults: { barcode: '', category: General, price: 1, tax_rate: 10, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 160", status: 422, code: POS_PRODUCT_NAME_REQUIRED, message: Product name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:price, 0) AS DECIMAL(18,2)) >= 0", status: 422, code: POS_PRODUCT_PRICE_INVALID, message: Sales Price must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:tax_rate, 0) AS DECIMAL(9,4)) BETWEEN 0 AND 100", status: 422, code: POS_PRODUCT_TAX_INVALID, message: Customer Taxes must be between 0 and 100. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_products WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: POS_PRODUCT_NAME_EXISTS, message: A product with this name already exists. }
+      result: { query: "SELECT * FROM pos_products WHERE id = :id" }
+    fields:
+      - { field: name, label: Product, type: text, required: true }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: category, label: Category, type: text, default: General }
+      - { field: price, label: Sales Price, type: number, default: 1 }
+      - { field: tax_rate, label: Customer Taxes, type: number, default: 10 }
+      - { field: active, label: Available in Point of Sale, type: checkbox, default: true }
