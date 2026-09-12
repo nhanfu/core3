@@ -20,6 +20,9 @@ horizontal overflow. The Fleet user permission probe correctly denied
 An authenticated mutation probe also completed the event lifecycle from Draft to
 Published to In Progress to Completed, with successful 200 responses and row
 versions advancing from 1 through 4.
+The registration probe accepted one attendee on a capacity-1 published event,
+returned a persisted registration record, and rejected the second attendee with
+the expected 409 capacity guard.
 Full menu-tree coverage, permissions, complete browser CRUD/workflow coverage,
 and paired Odoo desktop/mobile comparison remain open. No full parity claim is
 made here.
