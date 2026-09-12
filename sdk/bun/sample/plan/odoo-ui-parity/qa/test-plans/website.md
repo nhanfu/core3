@@ -34,6 +34,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-FUNC-005 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit and do not leak draft content | pass at contract level |
 | WEBSITE-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate sites/pages or moving content dates | planned restart/migration gate |
 | WEBSITE-FUNC-007 | Assets/import/export | Exercise image/asset binding, page import/export and exposed preview/print actions | planned browser interaction gate |
+| WEBSITE-FUNC-008 | Menu Editor CRUD | Create/edit menu labels, URL, parent, target, sequence, per-site duplicate URL guards, invalid-site rejection, stale-write protection, and persisted ordering | pass: `website_menus.integration.test.ts`; authenticated browser interaction and Odoo comparison remain planned |
 
 ## Workflow and integration cases
 
@@ -44,6 +45,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-WF-003 | Site ordering | Website ordering selects the correct homepage and preserves multi-site scope | pass at contract level |
 | WEBSITE-WF-004 | Asset delivery | Asset references resolve safely and broken assets produce deterministic fallback state | planned |
 | WEBSITE-WF-005 | Durable/external boundary | Publishing jobs, asset processing, callbacks and cross-module integrations use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| WEBSITE-WF-006 | Menu Editor | Menu changes persist through declared YAML mutation contracts and do not permit duplicate routes within a website | pass: focused integration suite |
 
 ## Permission and security cases
 

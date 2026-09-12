@@ -4,7 +4,7 @@ Module owner: website module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: active
 Verification trigger: feature-complete
-Candidate commit: `f95d0965` plus current public-renderer runtime fix
+Candidate commit: `0c995b07` (DEV-2 Menu Editor); prior public-renderer/runtime fixes remain in history
 
 ## Current state
 
@@ -27,14 +27,20 @@ Published pages now expose only public asset metadata and a binary asset route;
 the seeded SVG loaded successfully in a 390x844 headless browser check.
 Multipart Website asset upload/download now persists storage metadata through
 the YAML API and keeps uploaded assets private by default.
+The Menu Editor now has a declared update action: menu rows open the permissioned
+server form, create and update validate the target website, duplicate URLs are
+rejected within that website, and row versions protect edits from stale writes.
+The focused Menu Editor suite proves create/edit persistence, sequence and target
+flags, invalid-site atomicity, and case-insensitive duplicate-route rejection.
 These are Core3 runtime checks, not paired Odoo visual sign-off.
 
 ## Next bounded task
 
-Add authenticated browser permission/site-scope checks, then continue with
-assets, richer rendered page content, and paired Odoo comparison before module
-sign-off. Authenticated edit/save/reload and file-backed restart/migration
-replay are now verified in the Core3 runtime.
+Add authenticated browser permission/site-scope checks for the Menu Editor and
+page lifecycle, then continue with assets/import/export, richer rendered page
+content, and paired Odoo comparison before module sign-off. Authenticated
+page edit/save/reload and file-backed restart/migration replay are verified in
+the Core3 runtime; Menu Editor browser and restart evidence remain open.
 
 ## Runtime evidence
 
@@ -46,3 +52,4 @@ replay are now verified in the Core3 runtime.
 | 2026-09-13 | Public multi-site scope | Two deterministic published sites share `/`; explicit `website_id` resolves the requested site and cross-site ID lookup returns 404 | Core3 public scope pass; company/actor permission and paired Odoo comparison pending |
 | 2026-09-13 | Published asset delivery | Seeded SVG is exposed only through a published page, returns `image/svg+xml`, loads at natural width 240 in mobile Chrome, and has no page errors | Core3 asset delivery pass; upload/editor asset workflow and paired Odoo comparison pending |
 | 2026-09-13 | Asset upload/download | Multipart upload persisted a private page asset and its storage key; authenticated download returned the exact four-byte fixture; temporary upload files were removed after the test | Core3 API pass; browser attachment interaction, public promotion, and paired Odoo comparison pending |
+| 2026-09-13 | Menu Editor service lifecycle | `website_menus.integration.test.ts`; declared create/update actions created and edited a menu item, persisted sequence/parent/target flags, rejected stale and case-insensitive duplicate routes, and left the original row unchanged on invalid-site update | Core3 service pass; authenticated browser interaction, restart replay, and paired Odoo comparison pending |
