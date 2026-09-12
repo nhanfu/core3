@@ -1,0 +1,41 @@
+page: { id: ecommerce-product-detail }
+datasources:
+  - id: ecommerce_product_detail
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_UNAUTHENTICATED, message: Sign in to view this product. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_FORBIDDEN, message: You do not have access to this product. }
+      missing_record: { status: 404, code: ECOMMERCE_PRODUCT_NOT_FOUND, message: Product not found. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_UNAVAILABLE, message: Product details are temporarily unavailable. }
+    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id"
+actions:
+  - { id: back_to_ecommerce_products, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
+  - { id: add_ecommerce_product_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }
+  - id: edit_ecommerce_product
+    type: server_form
+    permission: ecommerce.write
+    title: Edit product
+    action: ecommerce.products.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [ecommerce_product_detail, ecommerce_products, ecommerce_shop_products]
+    mutation:
+      operation: update
+      table: ecommerce_products
+      fields: [name, internal_reference, product_type, category, sales_price, website_sequence, is_published]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :id", status: 404, code: ECOMMERCE_PRODUCT_NOT_FOUND, message: Product not found. }
+        - { query: "SELECT 1 AS ok WHERE :internal_reference IS NULL OR NOT EXISTS (SELECT 1 FROM ecommerce_products WHERE internal_reference = :internal_reference AND id <> :id)", status: 409, code: ECOMMERCE_PRODUCT_REFERENCE_EXISTS, message: Internal reference already exists. }
+      result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
+    fields:
+      - { field: name, label: Product Name, type: text, required: true }
+      - { field: internal_reference, label: Internal Reference, type: text }
+      - { field: product_type, label: Product Type, type: select, options: [Goods, Service] }
+      - { field: category, label: eCommerce Category, type: text }
+      - { field: sales_price, label: Sales Price, type: number }
+      - { field: website_sequence, label: Website Sequence, type: number }
+      - { field: is_published, label: Published, type: checkbox }

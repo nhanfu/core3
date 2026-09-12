@@ -1,0 +1,12 @@
+page: { id: ecommerce-product-detail, route: /ecommerce/products/detail, breadcrumb: [eCommerce, Products, Products, Product], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_product_detail
+    editable: false
+    title_field: name
+    header_actions:
+      - { id: back_to_ecommerce_products, label: Back, variant: secondary }
+      - { id: add_ecommerce_product_to_cart, label: Add to Cart, variant: primary, permission: ecommerce.write }
+    groups:
+      - { title: Product, columns: 2, fields: [{ field: name, label: Product Name }, { field: internal_reference, label: Internal Reference }, { field: product_type, label: Product Type }, { field: category, label: Category }] }
+      - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: website_sequence, label: Website Sequence }, { field: is_published, label: Published, type: StatusChip }, { field: active, label: Active, type: StatusChip }] }
