@@ -22,6 +22,7 @@ Candidate commit: current working tree
 - Authenticated module-scoped route matrix: 15 routes × desktop/mobile; 29/30 completed cleanly on the first pass, and the `/openings` route passed an isolated retest at both the declared alias and normalized `/recruitment/openings` route. No persistent page, request, or overflow defect remains in this matrix.
 - Fleet user permission boundary: `/recruitment/settings` returned HTTP 403 with `Requires permission: recruitment.settings`, with no browser errors.
 - Authenticated applicant workflow on the module-scoped process: created an applicant for `JOB/2026/0001`, then advanced New → Screening → Interview → Offer → Hired; all responses returned 200 and the applicant row version advanced `1 → 5`.
+- Detailed executable coverage is maintained in [`test-plans/recruitment.md`](test-plans/recruitment.md), including applicant/job-position/talent-pool CRUD, lifecycle, actor boundaries, persistence, Temporal boundaries, and paired Odoo visual gates.
 
 ## Test-case inventory
 
