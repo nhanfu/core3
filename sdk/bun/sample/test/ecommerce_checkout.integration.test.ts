@@ -11,9 +11,11 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'ut
 describe('eCommerce Checkout parity', () => {
   test('joins cart checkout navigation to a page/API-bound checkout form', () => {
     const cart = yaml('api/cart.yaml');
+    const cartPage = yaml('pages/cart.yaml');
     const page = yaml('pages/checkout.yaml');
     const api = yaml('api/checkout.yaml');
     expect(cart.actions.find((action: any) => action.id === 'checkout_ecommerce_cart')).toMatchObject({ navigate_to: '/ecommerce/checkout', permission: 'ecommerce.write' });
+    expect(cartPage.components[0].header_actions).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'checkout_ecommerce_cart' })]));
     expect(page.page).toMatchObject({ id: 'ecommerce-checkout', route: '/ecommerce/checkout' });
     expect(api.page).toEqual({ id: 'ecommerce-checkout' });
     expect(page.components[0]).toMatchObject({ type: 'OdooFormView', source: 'ecommerce_checkout_cart' });
@@ -27,7 +29,7 @@ describe('eCommerce Checkout parity', () => {
     const api = yaml('api/checkout.yaml');
     const checkout = api.actions.find((action: any) => action.id === 'confirm_ecommerce_checkout');
     const order = await repository.executeMutation(checkout.mutation, { values: { cart_id: 'ecommerce-cart-open-001', customer_name: 'Acme Corporation', customer_email: 'buyer@acme.example', shipping_address: '1 Main Street', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' } }) as any;
-    expect(order).toMatchObject({ customer_name: 'Acme Corporation', amount_total: 285, state: 'Quotation', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' });
+    expect(order).toMatchObject({ customer_id: 'ecommerce-customer-001', customer_name: 'Acme Corporation', amount_total: 285, state: 'Quotation', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' });
     expect((await repository.query('SELECT COUNT(*) AS count FROM ecommerce_order_lines WHERE order_id = ?', [order.id]))[0].count).toBe(2);
     expect((await repository.query('SELECT state FROM ecommerce_carts WHERE id = ?', ['ecommerce-cart-open-001']))[0].state).toBe('Converted');
     await expect(repository.executeMutation(checkout.mutation, { values: { cart_id: 'ecommerce-cart-open-001', customer_name: 'Acme Corporation', customer_email: 'buyer@acme.example', shipping_address: '1 Main Street', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' } })).rejects.toMatchObject({ status: 409, code: 'ECOMMERCE_CHECKOUT_CART_CLOSED' });
@@ -61,6 +63,9 @@ describe('eCommerce Checkout parity', () => {
     expect((await repository.querySource(cartApi.datasources[0], { id: 'ecommerce-cart-open-001', company_name: 'Other Company', fixture_state: null }, 0, 1)).data).toEqual({});
     expect((await repository.querySource(customerApi.datasources[0], { q: null, active: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(orderApi.datasources[0], { q: null, state: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(cartApi.datasources[0], { id: 'ecommerce-cart-open-001', customer_id: 'ecommerce-customer-999', company_name: null, fixture_state: null }, 0, 1)).data).toEqual({});
+    expect((await repository.querySource(customerApi.datasources[0], { q: null, active: null, customer_id: 'ecommerce-customer-999', company_name: null, fixture_state: null }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(orderApi.datasources[0], { q: null, state: null, customer_id: 'ecommerce-customer-999', company_name: null, fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(productApi.datasources[0], { q: null, published: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(pricelistApi.datasources[0], { q: null, active: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
     database.close();

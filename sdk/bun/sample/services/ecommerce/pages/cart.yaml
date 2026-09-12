@@ -4,7 +4,9 @@ components:
     source: ecommerce_cart
     editable: false
     title_field: customer_name
-    header_actions: [{ id: continue_ecommerce_shopping, label: Continue Shopping, variant: secondary }]
+    header_actions:
+      - { id: continue_ecommerce_shopping, label: Continue Shopping, variant: secondary }
+      - { id: checkout_ecommerce_cart, label: Checkout, variant: primary, permission: ecommerce.write }
     groups:
       - { title: Cart Summary, columns: 2, fields: [{ field: customer_name, label: Customer }, { field: state, label: Status, type: StatusChip }, { field: item_count, label: Items }, { field: amount_total, label: Total }] }
     notebook:

@@ -5,6 +5,7 @@ type:
   postgres:
     up: |
       ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS cart_id VARCHAR;
+      ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR;
       ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS shipping_address VARCHAR;
       ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS delivery_method VARCHAR;
       ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR;
@@ -12,6 +13,7 @@ type:
       UPDATE ecommerce_carts SET company_name = 'My Company' WHERE company_name IS NULL;
       ALTER TABLE ecommerce_products ADD COLUMN IF NOT EXISTS company_name VARCHAR;
       UPDATE ecommerce_products SET company_name = 'My Company' WHERE company_name IS NULL;
+      UPDATE ecommerce_orders SET customer_id = CASE customer_name WHEN 'Acme Corporation' THEN 'ecommerce-customer-001' WHEN 'Nguyen Workspace' THEN 'ecommerce-customer-002' WHEN 'Northwind Traders' THEN 'ecommerce-customer-003' ELSE customer_id END WHERE customer_id IS NULL;
       CREATE TABLE IF NOT EXISTS ecommerce_order_lines (
         id VARCHAR PRIMARY KEY,
         order_id VARCHAR NOT NULL,
