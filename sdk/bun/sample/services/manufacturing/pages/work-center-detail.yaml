@@ -8,6 +8,7 @@ components:
     status_colors: { true: green, false: red }
     editable: true
     stat_buttons:
+      - { id: open_mrp_workcenter_operations, label: Operations, value_field: operation_count, icon: tools, permission: manufacturing.read }
       - { id: open_mrp_productivity_losses, label: Lost, value_field: productivity_loss_count, icon: chart, permission: manufacturing.read }
       - { id: open_mrp_workcenter_loads, label: Load, value_field: workcenter_load_minutes, icon: chart, permission: manufacturing.read }
       - { id: open_mrp_workorder_performance, label: Performance, value_field: performance_workorder_count, icon: chart, permission: manufacturing.read }

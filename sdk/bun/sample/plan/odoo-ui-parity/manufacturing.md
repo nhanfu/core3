@@ -1061,3 +1061,41 @@ multi-level costing, print/PDF export, and Odoo chatter are not synthesized.
 - The bounded slice does not synthesize stock move-line editing, package/owner
   tracking, cross-module Inventory menus, traceability, or the full Stock
   Moves History action. Those remain deferred integration surfaces.
+
+## Work Center Operations stat action (2026-09-12)
+
+- The next uncovered visible source action is the Work Center form's
+  `action_show_operations` object button in
+  `/home/nhanjs/projects/odoo/addons/mrp/views/mrp_workcenter_views.xml`.
+  It is visible only when `has_routing_lines` is true and resolves
+  `mrp.mrp_routing_action` (`Operations`, model `mrp.routing.workcenter`,
+  modes `list,kanban,form`) with domain `workcenter_id = active_id` and
+  context `default_workcenter_id = active_id`. The standalone menu remains
+  Manufacturing / Configuration / Operations (`menu_mrp_routing_action`,
+  sequence 100, `group_mrp_routings`); this slice adds the missing
+  record-scoped launcher without creating a second menu.
+- The source list is `mrp_routing_workcenter_tree_view`: Operation, Bill of
+  Material, Work Center, Duration (minutes), optional Total Duration, variant
+  values/dependencies, and Company. Search exposes Operation, Bill of
+  Material, Work Center, Archived, plus Bill of Material and Workcenter
+  groupings. The Kanban card shows Operation and Work Center; the form shows
+  Operation, BoM, Work Center, variants/dependencies, cost mode, default
+  duration, duration computation, and company. Core3 keeps
+  `manufacturing.read` for viewing and the existing write/manage CRUD
+  boundaries, with explicit unauthorized/forbidden/transport states.
+- Core3 adds the `Operations` stat control to Work Center detail, counts all
+  scoped routing lines like the source `has_routing_lines` condition, and
+  passes `workcenter_id`/`workcenter` into the existing `/operations` page.
+  Presentation remains in `pages/operations.yaml`; the page-id-bound API is
+  `api/operations.yaml`. Existing deterministic operations provide populated,
+  empty, archived, and CRUD-validation fixtures; the focused test covers
+  Assembly 1, Drill 1, missing scope, empty, transport, route, permissions,
+  and page ownership.
+- Odoo is list-first with visible List/Kanban/Form navigation; Core3 preserves
+  visible List/Kanban tabs and shared responsive list/card behavior at
+  1440x900 and 390x844. An authenticated capture attempt was made under
+  `/tmp/core3-odoo-parity/manufacturing-workcenter-operations-20260912/`:
+  Odoo returned a login redirect (`303`) and Core3 `/api/modules` returned
+  `200`, but this session had no usable interactive Playwright/js_repl browser
+  handle, so authenticated screenshots could not be produced. No visual
+  signoff or image claim is made.

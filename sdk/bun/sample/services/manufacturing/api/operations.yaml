@@ -2,7 +2,10 @@ page: { id: manufacturing-operations }
 datasources:
   - id: mrp_operations
     permission: manufacturing.read
-    error_states: { transport_error: { status: 503, code: MRP_OPERATIONS_UNAVAILABLE, message: Operations are temporarily unavailable. } }
+    error_states:
+      unauthorized: { status: 401, code: MRP_OPERATIONS_UNAUTHORIZED, message: Sign in to view Operations. }
+      forbidden: { status: 403, code: MRP_OPERATIONS_FORBIDDEN, message: You do not have permission to view Operations. }
+      transport_error: { status: 503, code: MRP_OPERATIONS_UNAVAILABLE, message: Operations are temporarily unavailable. }
     query: |
       SELECT id, row_version, name, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active_label,
         sequence, bom_id, bom_name, workcenter_id,
@@ -17,6 +20,7 @@ datasources:
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
         AND (CAST(:active AS VARCHAR) IS NULL OR (CAST(:active AS VARCHAR) = 'active' AND active = TRUE) OR (CAST(:active AS VARCHAR) = 'archived' AND active = FALSE))
         AND (CAST(:time_mode AS VARCHAR) IS NULL OR time_mode = :time_mode)
+        AND (CAST(:workcenter_id AS VARCHAR) IS NULL OR workcenter_id = :workcenter_id)
         AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR bom_name ILIKE '%' || :q || '%' OR workcenter_name ILIKE '%' || :q || '%')
       ORDER BY created_at, id
 actions:
