@@ -6,6 +6,18 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## QA-4 candidate verification (2026-09-13)
+
+Exact candidate `3c28ad98` was tested in isolated worktree
+`qa-employees-candidate-3c28ad98`. The focused Employees corpus passed with 52
+tests and 634 assertions across 16 files. Authenticated desktop browser smoke
+at 1440x900 loaded the Employees list/detail surface without page errors,
+failed requests, HTTP errors, or overflow; the real New employee form created
+`QA Browser Employee` and returned HTTP 200 with persisted-in-runtime card
+visibility. Mobile mutation, edit/archive/restore, actor/company boundaries,
+restart persistence, full empty/error matrix, and paired Odoo comparison were
+not covered by this QA event and remain open.
+
 ## Current state
 
 The focused Employees suite passes 52 tests across 16 files with 634

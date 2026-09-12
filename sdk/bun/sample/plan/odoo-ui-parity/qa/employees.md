@@ -23,6 +23,35 @@ Module owner: employees module owner
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## QA-4 candidate verification (2026-09-13)
+
+- Tested the exact integrated candidate `3c28ad98` in isolated worktree
+  `qa-employees-candidate-3c28ad98`; no product files were changed.
+- Focused command:
+  `bun test ./test/employees*.integration.test.ts --timeout 20000`
+- Result: **52 passed, 0 failed, 634 assertions** across 16 files; exit code 0.
+- Authenticated Core3 browser runtime: `admin@tms.local` on the candidate's
+  isolated memory-mode server. The Employees route loaded at desktop
+  `1440x900` with seeded employee cards, menu/action families, and no page
+  errors, failed requests, or HTTP responses >= 400.
+- Browser create flow: opened `New employee`, entered employee number
+  `QA-1789252715650`, name `QA Browser Employee`, and start date
+  `2026-09-13`; Save returned HTTP 200 from `/api/mutate`, returned ID
+  `employee-qa-1789252715650`, and the new card remained visible after the
+  mutation. Evidence capture:
+  `/tmp/core3-odoo-parity/employees-qa-candidate-3c28ad98-create-result-desktop.png`.
+- Browser detail navigation for the created record opened
+  `employees?form=show&form_id=employee-qa-1789252715650` and exposed Edit and
+  Archive actions without recorded browser errors.
+- Finding: this QA event did not complete mobile browser coverage, browser
+  edit/archive/restore, actor/company mutation matrix, restart persistence,
+  full empty/error route matrix, or paired Odoo comparison. These remain
+  blockers to Employees sign-off.
+
+QA-4 decision: conditional pass for the candidate's focused contracts and
+authenticated desktop create/detail smoke; module sign-off remains blocked by
+the gates listed above.
+
 ## Current regression evidence
 
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
