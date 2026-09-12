@@ -1,4 +1,4 @@
-# Blog parity — configuration slice
+# Blog parity — configuration slices
 
 ## Source-backed trace
 
@@ -56,3 +56,35 @@ and deterministic DuckDB/Postgres fixtures; no Odoo frontend code is copied.
 
 The existing Blog Posts and Blog Analysis entries remain Core3 extensions in
 the Content and Reporting groups; they are outside this bounded Odoo menu slice.
+
+## Blogs action slice — 2026-09-12
+
+The next source action is `action_blog_blog` (Blogs), ordered before Tags and
+Tag Categories under Website → Configuration → Blog. Odoo 19 defines a
+`blog.blog` list ordered by sequence with the drag handle, name, post count,
+website (only for multi-website groups), and an invisible active field. Its
+form visibly exposes Blog Name and Blog Subtitle, while the search view searches Name
+and provides an Archived filter. Core3 implements the visible single-website
+list fields and a list-to-form YAML action; archive filtering remains
+deferred because the bounded source action has no visible filter control in
+the current Core3 ListView contract. The shared responsive ListView owns the
+390px layout; no Blog-specific frontend code is introduced.
+
+- Presentation: `services/blog/pages/blogs.yaml` contains the page and list
+  only (`page.id: blog`).
+- Backend: `services/blog/api/blogs.yaml` joins by `page.id` and owns list and
+  detail datasources, permissions, validation, concurrency, and error states.
+- Existing deterministic `blog-demo-001` data supplies the visible blog and
+  its two posts; no new fixture is needed for this action slice.
+- Focused contract test: `bun test ./test/blog_blogs.integration.test.ts`.
+- Verification: focused Blogs contract test passed (2 tests / 10 assertions),
+  `bun run audit` passed (641 pages, 657 routes, 1102 datasources), repository
+  lint passed, and `git diff --check` passed.
+- Browser comparison is blocked for this batch. Odoo responds at
+  `127.0.0.1:8073/web/login` (200), while Core3 responds at
+  `127.0.0.1:3001/api/modules` with 401 as expected for an unauthenticated
+  request. This worktree has `/usr/bin/google-chrome` but no Playwright package
+  and no interactive Playwright session, so authenticated 1440x900 and
+  390x844 captures could not be attempted to completion. No visual-parity
+  claim is made; the runtime probe is recorded at
+  `/tmp/core3-odoo-parity/blog/runtime-attempt-20260912.txt`.
