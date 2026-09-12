@@ -44,7 +44,7 @@ components:
           - { value: Neutral, label: Neutral, color: amber }
         measures:
           - { field: session_count, label: Sessions, aggregate: sum }
-          - { field: response_time, label: 'Response Time (hh:mm:ss)', aggregate: avg }
+          - { field: time_to_answer, label: 'Response Time (hh:mm:ss)', aggregate: avg }
           - { field: duration, label: 'Duration (min)', aggregate: avg }
           - { field: rating, label: 'Rating (%)', aggregate: avg }
           - { field: number_of_calls, label: '# of calls', aggregate: sum }
@@ -67,7 +67,7 @@ components:
             - { field: rating_text, column: 'Satisfaction Rate' }
             - { field: session_outcome, column: 'Session Outcome' }
             - { field: session_count, column: Sessions }
-            - { field: response_time, column: 'Response Time (hh:mm:ss)' }
+            - { field: time_to_answer, column: 'Response Time (hh:mm:ss)' }
             - { field: duration, column: 'Duration (min)' }
             - { field: rating, column: 'Rating (%)' }
             - { field: number_of_calls, column: '# of calls' }
@@ -78,7 +78,7 @@ components:
             columns: [rating_text]
             measures:
               - { field: session_count, aggregate: sum, column: Sessions }
-              - { field: response_time, aggregate: avg, column: 'Response Time (hh:mm:ss)' }
+              - { field: time_to_answer, aggregate: avg, column: 'Response Time (hh:mm:ss)' }
               - { field: duration, aggregate: avg, column: 'Duration (min)' }
               - { field: rating, aggregate: avg, column: 'Rating (%)' }
               - { field: number_of_calls, aggregate: sum, column: '# of calls' }

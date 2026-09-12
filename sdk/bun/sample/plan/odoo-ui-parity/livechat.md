@@ -868,3 +868,9 @@ visual-parity claim; the existing authenticated screenshots remain the latest
 trusted visual evidence. The known residuals remain the shared Fluent shell,
 generic card Join/Leave text actions, text-rendered agent values, and bounded
 read/display Options, Rules, and Widget tabs versus Odoo's richer controls.
+
+## Reporting > Sessions bounded slice (2026-09-12)
+
+The selected Odoo action is `im_livechat.report_channel`, action 439, with Sessions list/graph/pivot reporting and the source measures/groupings. Core3 keeps the existing `/livechat/reporting/sessions` route, fixes its page/API binding, and declares deterministic session rows, date/search/empty states, `livechat.read` access, and the 503 transport contract. The focused test passes 3 tests and 40 assertions.
+
+Authenticated Odoo and Core3 captures are under `/tmp/core3-odoo-parity/livechat-next-20260912/` at both 1440x900 and 390x844; the paired browser run reported no application failures or horizontal overflow. The expected bounded residual is the shared Core3 Fluent shell and compact report renderer versus Odoo's purple shell and richer chart controls.

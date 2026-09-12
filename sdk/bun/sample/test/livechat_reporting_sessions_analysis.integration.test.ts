@@ -11,7 +11,7 @@ const serviceRoot = join(sampleRoot, 'services/livechat');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
 
 describe('Live Chat Reporting — Sessions analysis parity', () => {
-  test('keeps the existing route, menu label, and page/API join aligned with Odoo action 825', () => {
+  test('keeps the existing route, menu label, and page/API join aligned with Odoo action 439', () => {
     const page = yaml('pages/analysis.yaml');
     const api = yaml('api/analysis.yaml');
     const manifest = yaml('manifest.yaml');
@@ -36,7 +36,7 @@ describe('Live Chat Reporting — Sessions analysis parity', () => {
     ]);
     expect(list.views[0].measures).toEqual(expect.arrayContaining([
       { field: 'session_count', label: 'Sessions', aggregate: 'sum' },
-      { field: 'response_time', label: 'Response Time (hh:mm:ss)', aggregate: 'avg' },
+      { field: 'time_to_answer', label: 'Response Time (hh:mm:ss)', aggregate: 'avg' },
       { field: 'duration', label: 'Duration (min)', aggregate: 'avg' },
       { field: 'number_of_calls', label: '# of calls', aggregate: 'sum' },
     ]));
@@ -85,7 +85,7 @@ describe('Live Chat Reporting — Sessions analysis parity', () => {
     const pivotFields = source.pivot.fields;
     expect(source.permission).toBe('livechat.read');
     expect(source.error_states.transport_error).toMatchObject({ status: 503, code: 'LIVECHAT_REPORT_SESSIONS_UNAVAILABLE' });
-    expect(pivotFields).toEqual(expect.arrayContaining(['channel_name', 'agent_name', 'start_date', 'country_name', 'rating_text', 'session_count', 'response_time', 'duration', 'rating', 'number_of_calls', 'call_duration_hour']));
+    expect(pivotFields).toEqual(expect.arrayContaining(['channel_name', 'agent_name', 'start_date', 'country_name', 'rating_text', 'session_count', 'time_to_answer', 'duration', 'rating', 'number_of_calls', 'call_duration_hour']));
     expect(page.components[0].group_by).toEqual(expect.arrayContaining([
       { field: 'channel_name', label: 'Channel' },
       { field: 'agent_name', label: 'Agent' },
@@ -97,6 +97,8 @@ describe('Live Chat Reporting — Sessions analysis parity', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'livechat_report_sessions_error_test_migrations', ['schema', 'data']);
+    expect(source.error_states.unauthorized).toMatchObject({ status: 401 });
+    expect(source.error_states.forbidden).toMatchObject({ status: 403 });
     await expect(repository.querySource(source, { fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'LIVECHAT_REPORT_SESSIONS_UNAVAILABLE' });
     database.close();
   });
