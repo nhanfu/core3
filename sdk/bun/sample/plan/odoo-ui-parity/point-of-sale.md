@@ -1185,3 +1185,39 @@ capture was not claimed because the paired Core3 surface was unavailable.
 Screenshots remain outside Git; the residuals are browser/runtime evidence,
 the Odoo purple shell/chatter, and the broader generic product fields and
 attribute-line workflow.
+
+## Current bounded batch: Products > Edit Product action
+
+The local Odoo 19 source exposes `product_template_action_edit_pos` from
+`addons/point_of_sale/views/product_view.xml` as the product-template edit
+action. It is a medium dialog form with Product, Barcode, POS Category,
+Sales Price, Customer Taxes, and Point of Sale availability fields; edits are
+available to product managers while POS users retain read-only product
+access. The action is reached from an existing product record and is distinct
+from the preceding `New Product` action.
+
+Core3 adds the corresponding Edit header action to the existing product
+detail form. The page/API remain joined by `page.id: pos-product-detail`; the
+service-owned mutation uses `pos.manage`, optimistic `row_version`, and
+required-name, duplicate-name, non-negative-price, tax-range, and missing /
+stale-record guards. The detail datasource now declares explicit forbidden,
+missing, and transport-error states, and successful edits refresh both the
+detail and product catalog sources. No product variants, image, chatter, or
+additional menu/action is included in this slice.
+
+Focused coverage passes 4 tests and 24 assertions in
+`test/pos_product_new.integration.test.ts`, including the existing New
+action regression plus the Edit contract, field ordering, update, validation,
+and stale-version behavior. Audit, ESLint, POS CSS generation, and
+`git diff --check` pass.
+
+Authenticated captures were attempted under
+`/tmp/core3-odoo-parity/pos-product-edit-20260912/`. This session has no
+interactive Playwright/js_repl browser tool and `import('playwright')` fails
+with `ERR_MODULE_NOT_FOUND`. The fallback Core3 runtime reached its startup
+banner but Vite exited before `/api/modules` with
+`EMFILE: too many open files` while watching
+`sdk/bun/sample/vite.config.ts`; port 3002 then became unreachable. No
+authenticated render, screenshot, or visual-parity claim is made for this
+batch. Screenshots remain outside Git; residuals are the unavailable browser
+evidence and the Odoo purple shell/medium-dialog visual differences.

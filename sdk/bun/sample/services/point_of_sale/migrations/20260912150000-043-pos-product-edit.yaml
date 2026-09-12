@@ -1,0 +1,13 @@
+version: 0.0.43
+description: Add optimistic product editing support for the Odoo Edit Product action
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_products ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      UPDATE pos_products SET row_version = COALESCE(row_version, 1);
+    down: |
+      ALTER TABLE pos_products DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

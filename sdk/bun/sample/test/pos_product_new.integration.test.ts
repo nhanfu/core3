@@ -40,3 +40,33 @@ describe('POS Products New action parity', () => {
     database.close();
   });
 });
+
+describe('POS Products Edit action parity', () => {
+  test('exposes the Odoo edit action with a matching detail contract', () => {
+    const page = yaml('pages/pos-product-detail.yaml');
+    const api = yaml('api/pos-product-detail.yaml');
+    const form = page.components[0];
+    const edit = api.actions.find((candidate: any) => candidate.id === 'edit_pos_product');
+    expect(form).toMatchObject({ type: 'OdooFormView', source: 'pos_product_detail', editable: true });
+    expect(form.header_actions).toContainEqual(expect.objectContaining({ id: 'edit_pos_product', label: 'Edit', permission: 'pos.manage' }));
+    expect(api.page.id).toBe(page.page.id);
+    expect(api.datasources[0].query).toContain('row_version');
+    expect(edit).toMatchObject({ type: 'server_form', title: 'Edit Product', permission: 'pos.manage', operation: 'update', handler: 'yaml_mutation' });
+    expect(edit.fields.map((field: any) => field.label)).toEqual(['Product', 'Barcode', 'Category', 'Sales Price', 'Customer Taxes', 'Available in Point of Sale']);
+  });
+
+  test('updates service-owned products with validation and stale guards', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'pos_product_edit', ['schema', 'data']);
+    const api = yaml('api/pos-product-detail.yaml');
+    const detail = api.datasources[0];
+    expect(await repository.querySource(detail, { id: 'pos-product-coffee', fixture_state: null }, 0, 1)).toMatchObject({ data: { row_version: 1, name: 'House coffee' } });
+    const edit = api.actions.find((candidate: any) => candidate.id === 'edit_pos_product');
+    const updated = await repository.executeMutation(edit.mutation, { values: { id: 'pos-product-coffee', expected_row_version: 1, name: 'House coffee updated', barcode: 'POS-COFFEE', category: 'Drinks', price: 3.75, tax_rate: 10, active: true } });
+    expect(updated).toMatchObject({ name: 'House coffee updated', price: 3.75, row_version: 2 });
+    await expect(repository.executeMutation(edit.mutation, { values: { id: 'pos-product-coffee', expected_row_version: 1, name: 'Stale coffee' } })).rejects.toMatchObject({ status: 409, code: 'POS_PRODUCT_STALE' });
+    await expect(repository.executeMutation(edit.mutation, { values: { id: 'pos-product-coffee', expected_row_version: 2, name: '   ' } })).rejects.toMatchObject({ status: 422, code: 'POS_PRODUCT_NAME_REQUIRED' });
+    database.close();
+  });
+});
