@@ -15,6 +15,7 @@ components:
     header_actions:
       - { id: send_purchase_order_detail, label: Send RFQ, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft'" }
       - { id: confirm_purchase_order_detail, label: Confirm Order, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Sent'" }
+      - { id: approve_purchase_order_detail, label: Approve Order, variant: primary, permission: purchase.manage, show_if: "state.purchase_order_detail.state === 'To Approve'" }
       - { id: receive_purchase_order_detail, label: Receive, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed'" }
       - { id: acknowledge_purchase_order_detail, label: Acknowledge, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed' && !state.purchase_order_detail.acknowledged" }
       - { id: lock_purchase_order_detail, label: Lock, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed' && !state.purchase_order_detail.locked" }

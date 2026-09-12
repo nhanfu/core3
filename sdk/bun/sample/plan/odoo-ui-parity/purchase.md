@@ -1043,3 +1043,41 @@ existing migration with `Parser Error: Adding columns with constraints not yet
 supported`. The shared runtime/migration repair is outside this bounded
 Purchase action slice; retry captures after those environment blockers are
 resolved. No images were added to Git.
+
+## Purchase Order approval action — 2026-09-12
+
+The next missing order-form action was Odoo's manager-only `Approve Order`.
+The exact source trace is `addons/purchase/views/purchase_views.xml`,
+`purchase_order_form`: `button_approve` is labelled `Approve Order`, visible
+only when `state == 'to approve'`, and gated by `purchase.group_purchase_manager`.
+The implementation is `addons/purchase/models/purchase_order.py::button_approve`;
+it changes the order state to `purchase` (and applies the company's lock policy).
+This is a form header action, not a new menu or route.
+
+Core3 adds `Approve Order` to `pages/purchase-detail.yaml` and the separate
+`approve_purchase_order_detail` mutation in `api/purchase-detail.yaml`, joined
+by the existing `page.id: purchase-detail`. It requires `purchase.manage`,
+requires the current `row_version`, accepts only `To Approve` records, changes
+the state to `Confirmed`, marks `approval_status` as `approved`, increments the
+version, refreshes the detail datasource, and returns explicit stale/invalid
+state errors. The deterministic `po-demo-008` RFQ already supplies the
+`To Approve` fixture; no migration or page-local data was added.
+
+Focused verification is in `test/purchase.integration.test.ts`: the action
+label, manager permission, mutation contract, successful transition,
+row-version increment, and repeated/stale rejection pass in the isolated
+DuckDB fixture.
+
+The focused run passed 11 tests and 106 assertions. `bun run audit` passed
+with 620 pages, 629 routes, and 1064 datasources; `bunx tsc --noEmit -p
+tsconfig.json` remains blocked by the repository's existing cross-package
+TypeScript errors (including `@core3/client`, `@core3/server`, and `med`).
+
+Authenticated desktop/mobile capture was attempted under
+`/tmp/core3-odoo-parity/purchase-approve-20260912/`. No visual-parity claim is
+made: the local Odoo login endpoints at ports 8069 and 8073 returned HTTP 200,
+but this session has no persistent `js_repl`/Playwright browser interface for
+authenticated capture. Core3 startup also reproduced the exact runtime
+blocker `EMFILE: too many open files` while Vite watched
+`sdk/bun/sample/vite.config.ts`; its backend exited before a page could load.
+No screenshots were committed.

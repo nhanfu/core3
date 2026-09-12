@@ -98,6 +98,25 @@ describe('Purchase Orders list and detail parity', () => {
     await expect(repository.executeMutation(actions[1].mutation, { id: 'po-demo-005', expected_row_version: 3 })).rejects.toThrow('Only unchanged locked purchase orders can be unlocked');
   });
 
+  test('exposes manager-only Odoo Approve Order for To Approve orders', async () => {
+    const page = yaml('pages/purchase-detail.yaml');
+    const api = yaml('api/purchase-detail.yaml');
+    const approve = api.actions.find((action: any) => action.id === 'approve_purchase_order_detail');
+    expect(page.components[0].header_actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'approve_purchase_order_detail', label: 'Approve Order', permission: 'purchase.manage', show_if: "state.purchase_order_detail.state === 'To Approve'" }),
+    ]));
+    expect(approve).toMatchObject({ action: 'purchase.orders.approve', permission: 'purchase.manage', operation: 'update' });
+    expect(approve.mutation.guards[0].status).toBe(409);
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_approve_test_schema_migrations', ['schema', 'data']);
+    expect((await repository.query("SELECT state, approval_status, row_version FROM purchase_orders WHERE id = 'po-demo-008'"))[0]).toEqual({ state: 'To Approve', approval_status: 'pending', row_version: 1 });
+    await repository.executeMutation(approve.mutation, { id: 'po-demo-008', expected_row_version: 1 });
+    expect((await repository.query("SELECT state, approval_status, row_version FROM purchase_orders WHERE id = 'po-demo-008'"))[0]).toEqual({ state: 'Confirmed', approval_status: 'approved', row_version: 2 });
+    await expect(repository.executeMutation(approve.mutation, { id: 'po-demo-008', expected_row_version: 2 })).rejects.toThrow('Only unchanged purchase orders waiting for approval can be approved');
+  });
+
   test('keeps RFQs aligned with the Odoo action view family and page/API boundary', () => {
     const page = yaml('pages/purchase-rfqs.yaml');
     const list = page.components.find((component: any) => component.type === 'ListView');
