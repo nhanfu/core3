@@ -16,7 +16,8 @@ datasources:
         printf('%,.3f %s', COALESCE(e.quantity, 1), COALESCE(e.unit_name, 'Units')) AS quantity_display,
         e.manager_name, e.vendor_name, e.receipt_reference, e.receipt_label, e.receipt_checksum,
         e.company_name, e.department_name,
-        e.analytic_distribution, e.journal_entry, e.duplicate_candidate,
+        e.analytic_distribution, e.journal_entry, e.posting_journal, e.accounting_date,
+        e.duplicate_candidate,
         e.reimbursement_status, e.refusal_reason, e.state AS status,
         e.split_expense_origin_id,
         (SELECT COUNT(*) FROM expenses split WHERE split.split_expense_origin_id = e.id OR e.split_expense_origin_id = split.split_expense_origin_id) AS split_expense_count
@@ -79,6 +80,17 @@ datasources:
       WHERE expense_id = :id
         AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
       ORDER BY sequence, id
+  - id: expense_post_wizard
+    single: true
+    permission: expenses.manage
+    error_states: { transport_error: { status: 503, code: EXPENSE_POST_WIZARD_UNAVAILABLE, message: Expense posting options are temporarily unavailable } }
+    query: |
+      SELECT e.id, e.row_version,
+        COALESCE(e.posting_journal, 'Employee Expenses') AS employee_journal,
+        COALESCE(CAST(e.accounting_date AS VARCHAR), '2026-09-12') AS accounting_date
+      FROM expenses e
+      WHERE e.id = :id AND e.state = 'Approved'
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
 actions:
   - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
   - { id: open_split_expense, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{state.expense_detail.split_expense_origin_id}' } }
@@ -176,22 +188,32 @@ actions:
       - { field: candidate_summary, label: Similar expenses, type: textarea, readonly: true }
       - { field: decision, label: Decision, type: select, required: true, options: [{ value: approve, label: Approve }, { value: refuse, label: Refuse }] }
   - id: post_expense_detail
-    type: server
+    type: server_form
     permission: expenses.manage
+    title: Post Expenses
+    submit_label: Post Expenses
+    cancel_label: Cancel
     action: expenses.detail.post
     handler: yaml_mutation
     operation: post
-    params: { id: '{state.id}' }
+    prefill: source
+    prefill_source: expense_post_wizard
+    params: { id: '{state.id}', expected_row_version: '{state.expense_detail.row_version}' }
     mutation:
       guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id", status: 404, code: EXPENSE_NOT_FOUND, message: This expense no longer exists. }
         - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Approved' AND row_version = :expected_row_version AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, code: EXPENSE_POST_GUARD, message: Attach a receipt before posting this expense }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(:employee_journal), '') IS NOT NULL AND regexp_matches(CAST(:accounting_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EXPENSE_POST_VALUES_INVALID, message: Select a journal and enter an accounting date in YYYY-MM-DD format. }
       steps:
-        - query: "UPDATE expenses SET state = 'Posted', row_version = row_version + 1, journal_entry = COALESCE(journal_entry, 'MISC/2026/EXPENSE') WHERE id = :id AND row_version = :expected_row_version"
+        - query: "UPDATE expenses SET state = 'Posted', row_version = row_version + 1, posting_journal = :employee_journal, accounting_date = CAST(:accounting_date AS DATE), journal_entry = COALESCE(journal_entry, 'MISC/2026/EXPENSE') WHERE id = :id AND row_version = :expected_row_version"
           expect_changed: true
           code: STALE_RECORD
-        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-post-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.post', 'Posted', 'Journal entry posted')"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-post-' || CAST(:expected_row_version AS VARCHAR), :id, :current_user_name, 'expenses.post', 'Posted', 'Posted to ' || :employee_journal || ' on ' || CAST(:accounting_date AS VARCHAR))"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
     refresh: [expense_detail, expense_detail_activity]
+    fields:
+      - { field: employee_journal, label: Journal, type: select, required: true, options: [{ value: Employee Expenses, label: Employee Expenses }, { value: Miscellaneous Operations, label: Miscellaneous Operations }] }
+      - { field: accounting_date, label: Accounting date, type: text, required: true, placeholder: YYYY-MM-DD }
   - id: split_expense
     type: server_form
     permission: expenses.write

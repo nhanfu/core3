@@ -1,0 +1,16 @@
+version: 0.0.10
+description: Odoo expense posting wizard journal and accounting date fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS posting_journal VARCHAR;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS accounting_date VARCHAR;
+      UPDATE expenses SET posting_journal = 'Employee Expenses' WHERE posting_journal IS NULL;
+      UPDATE expenses SET accounting_date = expense_date WHERE accounting_date IS NULL;
+    down: |
+      ALTER TABLE expenses DROP COLUMN IF EXISTS posting_journal;
+      ALTER TABLE expenses DROP COLUMN IF EXISTS accounting_date;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

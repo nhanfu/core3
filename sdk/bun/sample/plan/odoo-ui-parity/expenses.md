@@ -417,3 +417,10 @@ The source-backed Odoo reference modal was captured at
 run. Split-expense editing remains deferred because the reference run did not
 provide a valid split mutation flow; the duplicate decision contract is
 covered.
+
+## Post Expenses wizard follow-up (2026-09-12)
+
+Batch 5 implements the next uncovered Odoo action, the accounting-only `Post
+Expenses` wizard. See [expenses-batch-5.md](expenses-batch-5.md) for source
+evidence, the page/API contract, deterministic migration, focused test/audit
+results, and the honest browser-capture limitation.

@@ -23,6 +23,7 @@ describe('Expenses approval-state parity batch', () => {
       expect(page.page.id, pageFile).toBe(pageId);
       expect(discovered.pageDatasources.get(pageId), pageFile).toContain(sourceId);
     }
+    expect(discovered.pageDatasources.get('expense-detail')).toContain('expense_post_wizard');
 
     expect(action('expense-detail.yaml', 'refuse_expense_detail')).toMatchObject({
       type: 'server_form', handler: 'yaml_mutation', operation: 'refuse',
@@ -85,7 +86,7 @@ describe('Expenses approval-state parity batch', () => {
     expect(rows.map((row: any) => row.state)).toEqual(expect.arrayContaining(['Draft', 'Submitted', 'Approved', 'Posted', 'In Payment', 'Paid', 'Refused']));
 
     const step = async (id: string, actionId: string, expected: number) => repository.executeMutation(action('expense-detail.yaml', actionId).mutation, {
-      id, expected_row_version: expected, current_user_name: 'Operations Lead',
+      id, expected_row_version: expected, employee_journal: 'Employee Expenses', accounting_date: '2026-09-12', current_user_name: 'Operations Lead',
     });
     const id = 'expense-demo-draft';
     expect((await step(id, 'submit_expense_detail', 1))).toMatchObject({ state: 'Submitted', row_version: 2 });
@@ -113,5 +114,20 @@ describe('Expenses approval-state parity batch', () => {
     await expect(repository.executeMutation(refuse.mutation, {
       id: 'expense-demo-submitted', expected_row_version: 1, current_user_name: 'Operations Lead', reason: 'x',
     })).rejects.toMatchObject({ status: 400, code: 'EXPENSE_REFUSAL_REASON_INVALID' });
+  });
+
+  test('implements the Odoo Post Expenses wizard with journal/date validation', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'expenses_post_wizard_migrations', ['schema', 'data']);
+    const post = action('expense-detail.yaml', 'post_expense_detail');
+    expect(post).toMatchObject({ type: 'server_form', title: 'Post Expenses', submit_label: 'Post Expenses', cancel_label: 'Cancel', permission: 'expenses.manage', prefill_source: 'expense_post_wizard' });
+    const wizard = yaml('api/expense-detail.yaml').datasources.find((source: any) => source.id === 'expense_post_wizard');
+    expect((await repository.querySource(wizard, { id: 'expense-demo-approved', fixture_state: null }, 0, 1)).data).toMatchObject({ employee_journal: 'Employee Expenses', accounting_date: '2026-09-03' });
+    expect((await repository.querySource(wizard, { id: 'expense-demo-approved', fixture_state: 'empty' }, 0, 1)).data).toEqual({});
+    await expect(repository.executeMutation(post.mutation, { id: 'expense-demo-approved', expected_row_version: 1, employee_journal: '', accounting_date: '2026/09/12', current_user_name: 'Finance Manager' })).rejects.toMatchObject({ status: 422, code: 'EXPENSE_POST_VALUES_INVALID' });
+    const result = await repository.executeMutation(post.mutation, { id: 'expense-demo-approved', expected_row_version: 1, employee_journal: 'Miscellaneous Operations', accounting_date: '2026-09-12', current_user_name: 'Finance Manager' });
+    expect(result).toMatchObject({ state: 'Posted', posting_journal: 'Miscellaneous Operations', accounting_date: '2026-09-12' });
+    await expect(repository.executeMutation(post.mutation, { id: 'expense-demo-posted', expected_row_version: 1, employee_journal: 'Employee Expenses', accounting_date: '2026-09-12', current_user_name: 'Finance Manager' })).rejects.toMatchObject({ status: 409 });
   });
 });
