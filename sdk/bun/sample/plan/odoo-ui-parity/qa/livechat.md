@@ -22,7 +22,13 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 - Live Chat formerly failing Looking for Help and partner-history cases now
   pass in focused reruns after deterministic fixture and contract repairs.
 - Focused Sessions suite: `bun test ./test/livechat_sessions.integration.test.ts` — 4 passed, 35 assertions; the lifecycle uses the Help Queue-owned `join` action and persists the session through close.
-- Authenticated desktop/mobile route matrix and Odoo comparison remain pending.
+- Full Live Chat-focused suite: `bun test ./test/livechat*.integration.test.ts --timeout 20000` — 58 passed, 632 assertions, 0 failed across 18 files.
+- Isolated runner `:4327` rendered Sessions at desktop 1440x900 and mobile
+  390x844, and opening seeded Visitor A loaded the Session detail side panel;
+  all requests and page errors were clean with no horizontal overflow. Captures:
+  `/tmp/core3-odoo-parity/livechat-sessions-desktop.png`,
+  `livechat-sessions-mobile.png`, and the detail state was verified from the
+  authenticated browser.
 
 ## Test-case inventory
 
@@ -30,12 +36,14 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 | --- | --- | --- | --- |
 | LIVECHAT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
 | LIVECHAT-WORKFLOW-001 | Visitor session lifecycle | Authenticated API test traverses In Progress → Waiting → In Progress → Looking for Help → In Progress → Closed, persists visitor/channel/operator/outcome and versions 1 → 6, and rejects closed-session replay | pass |
+| LIVECHAT-FUNC-001 | Sessions, channels, bots, configuration, history, reporting, and technical views | Full focused suite 58/58, 632 assertions across 18 files | pass for tested contracts |
+| LIVECHAT-BROWSER-001 | Authenticated Sessions list and detail side panel | Isolated runner `:4327`; desktop/mobile list and seeded Visitor A detail loaded without failed requests, page errors, or overflow; captures recorded above | pass for Core3 runtime; paired Odoo comparison and browser mutations remain open |
 
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
-| — | No current-wave QA run | — | — | pending |
+| LIVECHAT-QA-001 | Detail side-panel form-view aliases were previously vulnerable to file-stem/page-ID mismatch | current shared alias repair | Sessions list and Visitor A detail retest passed at `:4327` with no failed requests | fixed |
 
 ## Sign-off
 
