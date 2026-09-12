@@ -105,6 +105,23 @@ layout and action references. Authenticated Chrome verification at 1440x900 and
 unexpected responses, and no page-level horizontal overflow. Captures are
 temporary under `/tmp/core3-accounting-api-*.png` and are not repository assets.
 
+## Current batch: Journal Items export contract
+
+The Journal Items review surface now exposes the existing Core3 list export
+capability through its page/API boundary. The layout declares the visible
+`Export` action on `/accounting/journal-items`; the matching
+`api/journal-items.yaml` fragment owns the permissioned
+`accounting.journal_items.export` client action. The shared renderer fetches
+all rows using the active search/filter parameters and downloads the visible
+columns as XLSX, with CSV serialization available through the same export
+contract.
+
+Focused coverage verifies the page/API `page.id` binding, the
+`accounting.read` permission declaration, deterministic Journal Items rows,
+and RFC 4180 CSV output for the real datasource projection. This bounded slice
+does not sign off import, attachment, print, or export behavior on every other
+Accounting route; those remain tracked in `ACC-FUNC-009`.
+
 ## Current batch: product and analytic surfaces
 
 The live Odoo menu audit identified Products, Analytic Items, and Analytic

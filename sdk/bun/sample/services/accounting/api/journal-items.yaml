@@ -1,4 +1,8 @@
 page: { id: accounting-journal-items }
+actions:
+  - id: accounting.journal_items.export
+    type: client
+    permission: accounting.read
 datasources:
   - id: accounting_journal_items
     single: false

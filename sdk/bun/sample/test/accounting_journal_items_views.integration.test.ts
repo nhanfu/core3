@@ -5,6 +5,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { toCsv } from '@core3/client/list-utils';
 
 const serviceRoot = join(import.meta.dir, '../services/accounting');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
@@ -20,6 +21,14 @@ describe('Accounting Journal Items view parity', () => {
     expect(page.datasources).toBeUndefined();
     expect(api.page).toEqual({ id: 'accounting-journal-items' });
     expect(list).toMatchObject({ source: 'accounting_journal_items', variant: 'odoo', view_navigation: 'tabs' });
+    expect(list.actions).toEqual([
+      { id: 'accounting.journal_items.export', label: 'Export', title: 'Export Journal Items', icon: 'download', permission: 'accounting.read' },
+    ]);
+    expect(api.actions).toContainEqual({
+      id: 'accounting.journal_items.export',
+      type: 'client',
+      permission: 'accounting.read',
+    });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'pivot', 'graph', 'kanban', 'card']);
     expect(list.views.find((view: any) => view.id === 'graph')).toMatchObject({
       category_field: 'item_month',
@@ -67,6 +76,20 @@ describe('Accounting Journal Items view parity', () => {
     });
     expect(initial.data.every((row: any) => row.state === 'Posted')).toBe(true);
     expect((await repository.querySource(source, { q: 'Azure Interior', fixture_state: null }, 0, 50)).data).toHaveLength(2);
+    const csv = toCsv(initial.data, [
+      { field: 'item_date', label: 'Date' },
+      { field: 'entry_name', label: 'Journal Entry' },
+      { field: 'label', label: 'Label' },
+      { field: 'debit', label: 'Debit' },
+      { field: 'credit', label: 'Credit' },
+    ]);
+    expect(csv.split('\r\n')).toEqual([
+      'Date,Journal Entry,Label,Debit,Credit',
+      '2026-01-15,INV/2026/0001,Product Sales,295,0',
+      '2026-01-15,INV/2026/0001,Sales untaxed,0,295',
+      '2026-01-14,BILL/2026/0002,Expenses,480,0',
+      '2026-01-14,BILL/2026/0002,Account Payable,0,480',
+    ]);
     database.close();
   });
 });

@@ -27,6 +27,7 @@ Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 | Authenticated browser | `/accounting/journals`, 1440x900 and 390x844 | Core3 render pass after authenticated menu refresh and shared plum shell correction; 0 page/request errors, 6 visible menu entries, no horizontal overflow; paired Odoo toolbar comparison remains pending |
 | Post-merge route matrix | All 80 Accounting routes at 1440x900 and 390x844 | 160 authenticated route checks; 80/80 desktop and 80/80 mobile passed after a 1.2s render settle; no blank/redirect, page/request error, or horizontal overflow | pass; full interaction and paired visual states remain open |
 | Authenticated CRUD boundary | Journals FormView and unauthorized Accounting read | Admin create/reload persisted a journal; Fleet Manager received `Requires permission: accounting.read` | pass; broader workflow and permission matrix remains open |
+| Journal Items export contract | `accounting_journal_items_views.integration.test.ts` | Page/API `page.id` binding, `accounting.read` action declaration, deterministic datasource projection, and RFC 4180 CSV serialization pass; shared renderer provides XLSX download | pass at contract level; authenticated download evidence and other Accounting export/attachment/print actions remain open |
 
 ## Remaining gates
 
