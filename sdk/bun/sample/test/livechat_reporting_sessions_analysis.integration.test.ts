@@ -21,6 +21,16 @@ describe('Live Chat Reporting — Sessions analysis parity', () => {
 
     expect(page.page).toMatchObject({ id: 'livechat-analysis', route: '/livechat-analysis', auth: { require: ['livechat.read'] } });
     expect(api.page).toEqual({ id: 'livechat-analysis' });
+    expect(api.datasources[0].meta.source_action).toMatchObject({
+      addon: 'im_livechat', external_id: 'im_livechat_report_channel_action', action_id: 439,
+      model: 'im_livechat.report.channel', view_modes: ['graph', 'pivot'], domain: [],
+    });
+    expect(api.datasources[0].meta.source_action.context).toMatchObject({
+      search_default_filter_date_last_month: 1,
+      pivot_measures: ['__count', 'time_to_answer', 'duration', 'rating', 'number_of_calls'],
+      graph_measure: '__count__',
+      im_livechat_hide_partner_company: true,
+    });
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
     expect(reporting.items).toContainEqual(expect.objectContaining({ path: '/livechat-analysis', label: 'Sessions', permission: 'livechat.read' }));

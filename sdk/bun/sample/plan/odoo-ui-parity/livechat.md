@@ -873,6 +873,22 @@ read/display Options, Rules, and Widget tabs versus Odoo's richer controls.
 
 The selected Odoo action is `im_livechat.report_channel`, action 439, with Sessions list/graph/pivot reporting and the source measures/groupings. Core3 keeps the existing `/livechat/reporting/sessions` route, fixes its page/API binding, and declares deterministic session rows, date/search/empty states, `livechat.read` access, and the 503 transport contract. The focused test passes 3 tests and 40 assertions.
 
+The current implementation's route is the established `/livechat-analysis` alias
+from the Live Chat manifest; no duplicate Reporting menu or route was added.
+This bounded contract repair records action 439's authoritative addon,
+`im_livechat.report.channel` model, `graph,pivot` modes, empty domain, and
+last-month/count/response-time/duration/rating/calls context in the backend API
+fragment while the page remains layout-only and joined by `page.id`. The
+focused suite asserts that the action contract and page/API binding remain
+source-bound.
+
+This worktree could not produce new authenticated viewport captures for this
+repair: the interactive Playwright skill runtime (`js_repl`) and local
+Playwright package were unavailable, Odoo responded at `http://127.0.0.1:8073`
+with HTTP 200, and the isolated Core3 runtime was not listening on
+`127.0.0.1:3022`. Therefore no visual-parity claim or screenshot artifact is
+made for this contract-only change; no image was added to Git.
+
 Authenticated Odoo and Core3 captures are under `/tmp/core3-odoo-parity/livechat-next-20260912/` at both 1440x900 and 390x844; the paired browser run reported no application failures or horizontal overflow. The expected bounded residual is the shared Core3 Fluent shell and compact report renderer versus Odoo's purple shell and richer chart controls.
 
 ## Bounded implementation slice: Conversations — All Conversations (2026-09-12)
