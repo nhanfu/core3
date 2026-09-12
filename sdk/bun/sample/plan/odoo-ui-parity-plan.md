@@ -111,7 +111,7 @@ catalog records, and manufacturing/inventory records.
 | timesheets | hr_timesheet | available | `odoo-ui-parity/timesheets.md` | in-progress |
 | website | website | available; YAML-driven | `odoo-ui-parity/website.md` | in-progress |
 | ecommerce | website_sale | available; YAML-driven | `odoo-ui-parity/ecommerce.md` | in-progress |
-| blog | website_blog | available; YAML-driven | `odoo-ui-parity/blog.md` | on-hold |
+| blog | website_blog | available; YAML-driven | `odoo-ui-parity/blog.md` | in-progress |
 | forum | website_forum | available; YAML-driven | `odoo-ui-parity/forum.md` | in-progress |
 | livechat | im_livechat | available | `odoo-ui-parity/livechat.md` | planned |
 
