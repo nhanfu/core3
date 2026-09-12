@@ -5,6 +5,15 @@ components:
     variant: odoo
     source: employee_directory
     search: { label: Search directory, placeholder: 'Search employees...' }
+    filters:
+      - { field: directory_filter, label: Directory, options: [{ id: my_team, label: My Team }, { id: my_department, label: My Department }, { id: newly_hired, label: Newly Hired }, { id: archived, label: Archived }] }
+      - { field: company_name, label: Company, options: [{ id: Core3 Vietnam, label: Core3 Vietnam }] }
+      - { field: department_name, label: Department, options: [{ id: Engineering, label: Engineering }] }
+    group_by:
+      - { field: manager_name, label: Manager }
+      - { field: department_name, label: Department }
+      - { field: job_title, label: Job }
+      - { field: company_name, label: Company }
     view_navigation: tabs
     views:
       - id: kanban

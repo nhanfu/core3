@@ -2,7 +2,8 @@ page: { id: employee-directory }
 datasources:
   - id: employee_directory
     permission: employees.read
-    query: "SELECT id, row_version, name, image_url, job_title, department_name, work_email, work_phone, company_name, work_location, presence FROM employees WHERE active = true AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR work_email ILIKE '%' || :q || '%' OR department_name ILIKE '%' || :q || '%') ORDER BY name, id"
+    error_states: { forbidden: { status: 403, code: EMPLOYEES_DIRECTORY_FORBIDDEN, message: You do not have access to the employee directory. }, transport_error: { status: 503, code: EMPLOYEES_DIRECTORY_UNAVAILABLE, message: The employee directory is temporarily unavailable. } }
+    query: "SELECT id, name, image_url, job_title, department_name, work_email, work_phone, company_name, work_location, presence, manager_name, CASE WHEN hire_date >= DATE '2026-01-01' THEN true ELSE false END AS newly_hired, active FROM employees WHERE directory_visible = true AND CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN false ELSE (:active = 'archived' AND active = false) OR (COALESCE(:active, 'active') = 'active' AND active = true) OR :active = 'all' END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR work_email ILIKE '%' || :q || '%' OR department_name ILIKE '%' || :q || '%' OR manager_name ILIKE '%' || :q || '%') AND (:company_name IS NULL OR company_name = :company_name) AND (:department_name IS NULL OR department_name = :department_name) AND (:manager_name IS NULL OR manager_name = :manager_name) AND (:newly_hired IS NULL OR (CASE WHEN hire_date >= DATE '2026-01-01' THEN true ELSE false END) = CAST(:newly_hired AS BOOLEAN)) ORDER BY name, id"
 actions:
   - id: view_directory_employee
     type: navigate

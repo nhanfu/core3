@@ -805,3 +805,45 @@ cards versus Odoo's purple shell/activity matrix. Images are not committed.
 Core3 adds the Employees onboarding/offboarding Activity Plans action at `/employees/activity-plans`, with List/Kanban and detail pages, inline activity steps, page/API YAML joined by `page.id`, deterministic plans, and manager-only CRUD/archive/restore/delete guards. The focused test passes 3 tests and 39 assertions.
 
 Odoo reference captures cover list/detail at 1440x900 and 390x844 under `/tmp/core3-odoo-parity/employees-next-20260912/`; Core3 captures cover the desktop list/detail states. The mobile Core3 runtime capture could not be completed before the isolated browser process was stopped, so mobile visual parity remains unclaimed. Images remain outside Git.
+
+## Bounded batch: Employees Directory (2026-09-12)
+
+This batch implements the next uncovered Employees action beyond the already
+completed departments, departure reasons, settings, activities, plans,
+schedules, jobs, and employment types slices: Human Resources > Directory.
+The source action is `hr_employee_public_action` from Odoo 19 `hr`, model
+`hr.employee.public`, with view order `kanban,list,form`, allowed-company
+scoping, and `base.group_user` read-only access (`1,0,0,0`). Its source search
+contract includes Employees/name and work-email search, Company and Department
+facets, Manager/Job fields, My Team, My Department, Newly Hired, Archived, and
+Manager/Department/Job/Company group-by options. The public form disables
+create/write and exposes only work identity, contact, company, department, job,
+manager, and work-location information.
+
+Core3 keeps `/employees/directory` and `/employees/directory/detail`, joined by
+page IDs `employee-directory` and `employee-directory-detail`. The page YAML
+is presentation-only; `api/directory.yaml` and `api/directory-detail.yaml` own
+the read-only projection and navigation action. Migration
+`20260912093000-017-directory-projection.yaml` adds an idempotent
+`directory_visible` projection boundary and deterministic index without
+changing existing employee fixture IDs or the seeded `2026-01-15` date. Active,
+archived, filtered, empty, forbidden, transport-error, and not-found contracts
+are explicit; no CRUD mutation is exposed because Odoo's public action is
+read-only. Public queries omit private payroll, identity, and internal row
+version fields.
+
+Live audit limitation: the one shell-Playwright fallback reached Odoo's
+database selector at `http://127.0.0.1:8069` and confirmed only
+`core3_reference` was exposed, but `codex@core3.local` /
+`Core3Odoo2026!` was rejected with `Wrong login/password`. No authenticated
+live Directory screenshot or rendered-record assertion is claimed. The
+action/view/permission contract is backed by the local Odoo source files
+`addons/hr/views/hr_employee_public_views.xml` and
+`addons/hr/security/ir.model.access.csv`; retry authenticated comparison when
+the reference credentials/database are restored.
+
+The required paired screenshots were attempted once under
+`/tmp/core3-odoo-parity/employees-batch3-20260912/` at 1440x900 and 390x844.
+The persistent browser REPL was unavailable, so shell Playwright was the one
+runtime fallback; screenshots remain outside Git. Missing captures are an
+explicit runtime limitation, not invented evidence.

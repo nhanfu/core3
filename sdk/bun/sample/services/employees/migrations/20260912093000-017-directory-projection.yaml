@@ -1,0 +1,16 @@
+id: employees_directory_projection
+version: 0.0.17
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS directory_visible BOOLEAN DEFAULT TRUE;
+      UPDATE employees SET directory_visible = TRUE WHERE directory_visible IS NULL;
+      CREATE INDEX IF NOT EXISTS employees_directory_projection_idx ON employees(directory_visible, active, name, id);
+    down: |
+      DROP INDEX IF EXISTS employees_directory_projection_idx;
+      ALTER TABLE employees DROP COLUMN IF EXISTS directory_visible;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
