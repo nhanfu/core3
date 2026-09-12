@@ -113,6 +113,7 @@ and permission boundaries passed. The candidate remains `pending-qa`.
 - Focused evidence: Base Contacts 5 tests / 62 assertions; client document
   components 33 tests; audit 647 pages / 662 routes / 1112 datasources;
   frontend build, ESLint, and `git diff --check` pass.
-- `BASE-ATTACH-001`: resolved for upload/download persistence and delivery.
-  Fresh Odoo paired visual comparison remains open; no full module sign-off
-  is claimed.
+- Direct API/storage upload/download persistence passed, but the bounded
+  browser capture timed out during hidden file-input interaction. Fresh
+  browser capture and Odoo paired visual comparison remain open; no full
+  module sign-off is claimed.

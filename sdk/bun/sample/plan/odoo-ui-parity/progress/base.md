@@ -39,7 +39,7 @@ Candidate commit: `8fdf7be3`
 - Focused evidence: client 31 tests; Base Contacts 5 tests / 61 assertions;
   audit 647/662/1112; frontend build; focused ESLint; diff check.
 
-## BASE-ATTACH-001 resolution (2026-09-13)
+## BASE-ATTACH-001 retest (2026-09-13)
 
 - Registered Base local file storage and the
   `/api/base/contacts/attachments/:attachment_id` download route.
@@ -48,8 +48,9 @@ Candidate commit: `8fdf7be3`
 - Authenticated browser verified upload HTTP 200, persisted attachment listing,
   seeded-file download, desktop/mobile rendering, zero errors, and no
   horizontal overflow.
-- The prior timeout/handler blocker is resolved; fresh Odoo paired comparison
-  remains open.
+- Direct API/storage retest passed, but the bounded browser capture still
+  timed out during hidden file-input interaction; fresh browser upload/download
+  evidence and paired Odoo comparison remain open.
 
 ## QA result for candidate `bb3487c2` (2026-09-13)
 
