@@ -98,9 +98,11 @@ describe('Maintenance bounded Odoo parity batch', () => {
     expect(form.header_actions).toEqual([
       { id: 'archive_maintenance_request_detail', label: 'Cancel', variant: 'danger', permission: 'maintenance.write', show_if: "state.maintenance_request_detail.archived === false" },
       { id: 'reopen_maintenance_request_detail', label: 'Reopen Request', variant: 'secondary', permission: 'maintenance.write', show_if: "state.maintenance_request_detail.archived === true" },
+      { id: 'update_maintenance_request_kanban_state', label: 'Update kanban state', variant: 'secondary', permission: 'maintenance.write', show_if: "state.maintenance_request_detail.archived === false" },
     ]);
     const api = yaml('api/request-detail.yaml');
     expect(api.actions.map((action: any) => action.id)).toEqual([
+      'update_maintenance_request_kanban_state',
       'assign_maintenance_request_detail',
       'start_maintenance_request_detail',
       'repair_maintenance_request_detail',

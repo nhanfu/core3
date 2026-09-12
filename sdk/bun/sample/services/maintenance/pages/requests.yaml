@@ -11,7 +11,7 @@ components:
     group_by: [{ field: stage, label: Stage }, { field: assigned_to, label: Responsible }, { field: category, label: Category }, { field: owner, label: Created by }]
     view_navigation: tabs
     views:
-      - { id: kanban, label: Kanban, icon: dashboard, mobile: false, group_by: state, groups_source: maintenance_request_states, card: { title: name, subtitle: equipment_name, fields: [{ field: priority, label: Priority }, { field: assigned_to, label: Responsible }, { field: scheduled_date, label: Scheduled }] } }
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: false, group_by: state, groups_source: maintenance_request_states, card: { title: name, subtitle: equipment_name, fields: [{ field: priority, label: Priority }, { field: assigned_to, label: Responsible }, { field: scheduled_date, label: Scheduled }, { field: kanban_state, label: Kanban state }] } }
       - { id: list, label: List, icon: table, mobile: false }
       - { id: card, label: Cards, icon: grid, card: { title: name, subtitle: equipment_name, fields: [{ field: priority, label: Priority }, { field: assigned_to, label: Responsible }, { field: state, label: Status }] } }
       - { id: calendar, label: Calendar, icon: calendar, mobile: false, date_field: scheduled_date }

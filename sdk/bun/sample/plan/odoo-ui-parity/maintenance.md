@@ -466,3 +466,41 @@ browser QA procedure was not available in this session, and no desktop or
 mobile screenshots are claimed or added. The local Odoo source was inspected
 at `/home/nhanjs/projects/odoo`; no new authenticated Odoo comparison capture
 was made in this batch.
+
+## Bounded batch: Maintenance Request kanban state (2026-09-12)
+
+This batch closes one visible request view gap: Odoo’s `maintenance.request`
+form and kanban views expose `kanban_state` as a `state_selection` widget. The
+source form places it in the sheet (`maintenance_views.xml:95`), the kanban
+footer renders the same widget (`maintenance_views.xml:176-181`), and the
+model defines the exact values `normal` / “In Progress”, `blocked` / “Blocked”,
+and `done` / “Ready for next stage” (`maintenance.py:223-224`). This is an
+independent state from the stage statusbar and is reset to `normal` when the
+stage changes (`maintenance.py:331-335`).
+
+Core3 now shows the kanban state on the request kanban card and detail form,
+and exposes a page-id-owned `Update kanban state` form action. The API action
+updates only `kanban_state`, requires `maintenance.write` and the current row
+version, and returns stable 404 not-found, 409 stale-row, and 422 invalid-state
+contracts. It accepts only the three source values and uses deterministic
+fixtures; no page YAML contains SQL or mutation logic.
+
+Focused verification:
+
+- `bun test test/maintenance*.integration.test.ts` — **27 passed, 0 failed,
+  289 assertions**.
+- `bun run audit` — passed, **627 pages / 643 routes / 1074 datasources**.
+- `bun run lint` from `sdk/bun` — passed.
+- `bun run css:build:global && bun run css:build:maintenance` — passed.
+- `git diff --check` — passed.
+
+Authenticated browser capture was attempted under
+`/tmp/core3-odoo-parity/maintenance-batch6-20260912/` at 1440x900 and
+390x844. Core3 failed before readiness because Vite hit `EMFILE: too many open
+files` while installing file watchers; both `:3001` and `:3002` then refused
+connections. Odoo `:8069` and `:8073` redirected to login, and the installed
+workspace does not expose the required persistent Playwright interactive
+surface (the fallback Playwright package was also unavailable). Therefore no
+authenticated Odoo or Core3 feature screenshots were produced and this batch
+makes no visual-parity claim. The runtime/browser limitation is recorded here;
+no images were added to Git.

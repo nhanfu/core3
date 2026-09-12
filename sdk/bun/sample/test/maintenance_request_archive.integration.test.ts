@@ -14,7 +14,7 @@ describe('Maintenance Request cancel and reopen parity', () => {
     const detail = yaml('api/request-detail.yaml');
     const list = yaml('api/requests.yaml');
     expect(page.page).toMatchObject({ id: 'maintenance-request-detail', route: '/maintenance-requests/detail' });
-    expect(page.components[0].header_actions.map((action: any) => action.label)).toEqual(['Cancel', 'Reopen Request']);
+    expect(page.components[0].header_actions.map((action: any) => action.label)).toEqual(['Cancel', 'Reopen Request', 'Update kanban state']);
     expect(page.components[0]).not.toHaveProperty('query');
     expect(detail.page.id).toBe('maintenance-request-detail');
     expect(list.page.id).toBe('maintenance-requests');
