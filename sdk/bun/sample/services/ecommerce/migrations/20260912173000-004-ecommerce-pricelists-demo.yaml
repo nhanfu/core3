@@ -1,0 +1,23 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_pricelists (id, sequence, name, country_groups, currency, company, active)
+      VALUES
+        ('ecommerce-pricelist-public', 10, 'Public Pricelist', 'All countries', 'USD', 'My Company', TRUE),
+        ('ecommerce-pricelist-retail', 20, 'Retail Customers', 'United States', 'USD', 'My Company', TRUE),
+        ('ecommerce-pricelist-eu', 30, 'Europe Seasonal', 'European Union', 'EUR', 'My Company', TRUE),
+        ('ecommerce-pricelist-legacy', 40, 'Legacy Wholesale', 'All countries', 'USD', 'My Company', FALSE)
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO ecommerce_pricelist_rules (id, pricelist_id, apply_on, price, min_quantity, date_start, date_end)
+      VALUES
+        ('ecommerce-rule-public-mug', 'ecommerce-pricelist-public', 'Core3 Ceramic Mug', 18.00, 1, NULL, NULL),
+        ('ecommerce-rule-retail-chair', 'ecommerce-pricelist-retail', 'Ergonomic Office Chair', 229.00, 1, '2026-01-01', NULL),
+        ('ecommerce-rule-eu-lamp', 'ecommerce-pricelist-eu', 'Desk Lamp', 42.00, 5, '2026-06-01', '2026-09-30')
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_pricelist_rules WHERE id IN ('ecommerce-rule-public-mug', 'ecommerce-rule-retail-chair', 'ecommerce-rule-eu-lamp'); DELETE FROM ecommerce_pricelists WHERE id IN ('ecommerce-pricelist-public', 'ecommerce-pricelist-retail', 'ecommerce-pricelist-eu', 'ecommerce-pricelist-legacy');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

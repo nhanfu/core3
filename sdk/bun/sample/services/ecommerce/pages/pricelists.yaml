@@ -1,0 +1,27 @@
+title: Pricelists
+page: { id: ecommerce-pricelists, route: /ecommerce/pricelists, breadcrumb: [eCommerce, Products, Pricelists], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_pricelists
+    create_action: create_ecommerce_pricelist
+    create_label: New
+    search: { label: Products Price Search, placeholder: Search pricelist or country group... }
+    filters: [{ field: active, label: Archived, options_source: ecommerce_pricelist_active }]
+    views:
+      - { id: list, label: List, mobile: false }
+      - { id: kanban, label: Kanban, mobile: true, group_by: '' }
+    columns:
+      - { field: sequence, label: Sequence, type: Handle }
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: country_groups, label: Country Groups }
+      - { field: currency, label: Currency }
+      - { field: company, label: Company }
+    page_size: 40
+    row_key: id
+    row_open_action: view_ecommerce_pricelist
+    row_double_click_action: view_ecommerce_pricelist
+    row_actions: menu
+    actions:
+      - { id: archive_ecommerce_pricelist, label: Archive, permission: ecommerce.write, variant: danger, show_if: "row.active === true" }
+    empty_state: { title: Create a new pricelist, description: 'A price is a set of sales prices or rules to compute the price of sales order lines based on products, product categories, dates and ordered quantities.' }

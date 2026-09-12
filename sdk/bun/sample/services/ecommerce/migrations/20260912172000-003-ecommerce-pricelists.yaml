@@ -1,0 +1,24 @@
+version: 0.0.3
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_pricelists (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10, name VARCHAR NOT NULL,
+        country_groups VARCHAR, currency VARCHAR NOT NULL DEFAULT 'USD',
+        company VARCHAR, active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_pricelists_name_idx ON ecommerce_pricelists(name);
+      CREATE TABLE IF NOT EXISTS ecommerce_pricelist_rules (
+        id VARCHAR PRIMARY KEY, pricelist_id VARCHAR NOT NULL, apply_on VARCHAR NOT NULL,
+        price DECIMAL(12,2) NOT NULL DEFAULT 0, min_quantity DECIMAL(12,2) NOT NULL DEFAULT 1,
+        date_start DATE, date_end DATE
+      );
+    down: DROP TABLE IF EXISTS ecommerce_pricelist_rules; DROP TABLE IF EXISTS ecommerce_pricelists;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

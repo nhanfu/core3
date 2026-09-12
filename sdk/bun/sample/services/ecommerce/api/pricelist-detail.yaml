@@ -1,0 +1,37 @@
+page: { id: ecommerce-pricelist-detail }
+datasources:
+  - id: ecommerce_pricelist_detail
+    single: true
+    permission: ecommerce.read
+    query: "SELECT * FROM ecommerce_pricelists WHERE id = :id"
+  - id: ecommerce_pricelist_rules
+    permission: ecommerce.read
+    query: "SELECT id, apply_on, price, min_quantity, date_start, date_end FROM ecommerce_pricelist_rules WHERE pricelist_id = :id ORDER BY min_quantity, apply_on"
+actions:
+  - id: edit_ecommerce_pricelist
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Pricelist
+    action: ecommerce.pricelists.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_pricelist_detail]
+    mutation:
+      operation: update
+      table: ecommerce_pricelists
+      key: id
+      fields: [name, currency, company, country_groups, active]
+      required: []
+      result: { query: "SELECT * FROM ecommerce_pricelists WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text }
+      - { field: currency, label: Currency, type: text }
+      - { field: company, label: Company, type: text }
+      - { field: country_groups, label: Country Groups, type: text }
+      - { field: active, label: Active, type: checkbox }
+  - id: print_ecommerce_pricelist
+    type: client
+    permission: ecommerce.read
+    script: |
+      // js
+      async () => { window.print() }

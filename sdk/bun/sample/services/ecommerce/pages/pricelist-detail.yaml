@@ -1,0 +1,35 @@
+title: Pricelist
+page: { id: ecommerce-pricelist-detail, route: /ecommerce/pricelists/detail, breadcrumb: [eCommerce, Products, Pricelists, Pricelist], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_pricelist_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard }
+    group_columns: 2
+    header_actions:
+      - { id: edit_ecommerce_pricelist, label: Edit, variant: secondary, permission: ecommerce.write }
+      - { id: print_ecommerce_pricelist, label: Print, variant: secondary, permission: ecommerce.read }
+    fields:
+      - { field: name, label: Name, type: text }
+      - { field: currency, label: Currency, type: text }
+      - { field: company, label: Company, type: text, placeholder: Visible to all }
+      - { field: country_groups, label: Country Groups, type: text, placeholder: All countries }
+      - { field: active, label: Active, type: checkbox }
+    notebook:
+      active: pricelist_rules
+      tabs:
+        - id: pricelist_rules
+          label: Sales Prices
+          component:
+            type: ListView
+            variant: odoo
+            source: ecommerce_pricelist_rules
+            columns:
+              - { field: apply_on, label: Apply on, type: PrimaryEntityCell }
+              - { field: price, label: Price, align: right }
+              - { field: min_quantity, label: Min Quantity, align: right }
+              - { field: date_start, label: Start Date }
+              - { field: date_end, label: End Date }
+            row_key: id
+            empty_state: { title: No pricelist rules, description: Add a sales price rule to this pricelist. }
