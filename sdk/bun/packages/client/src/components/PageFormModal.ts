@@ -266,7 +266,17 @@ export class PageFormModal extends BaseComponent {
             if (el instanceof HTMLInputElement && el.type === 'checkbox') return el.checked;
             if (fieldDef.type === 'multi-select' || fieldDef.type === 'permission-grid') return el.value.split(',').map(value => value.trim()).filter(Boolean);
             if (el instanceof HTMLSelectElement && el.multiple) return Array.from(el.selectedOptions).map(option => option.value);
-            return el.value?.trim() ?? '';
+            const value = el.value?.trim() ?? '';
+            // Empty typed values must not be sent as SQL values. On insert,
+            // omitting them lets YAML mutation defaults and nullable columns
+            // behave as declared; on update, null preserves the ability to
+            // explicitly clear an optional numeric/date field.
+            if (!value && ['number', 'money', 'date', 'datetime', 'time'].includes(String(fieldDef.type))) {
+              const declaredDefault = fieldDef.default ?? actionDef.mutation?.defaults?.[fieldDef.field];
+              if (actionDef.mutation?.operation === 'insert' && declaredDefault !== undefined) return declaredDefault;
+              return null;
+            }
+            return value;
           };
           for (const entry of Object.values(inputs)) {
             const { el, fieldDef } = entry;
@@ -275,7 +285,7 @@ export class PageFormModal extends BaseComponent {
             if (fieldDef.required && (Array.isArray(v) ? v.length === 0 : !v)) {
               setFieldError(entry, `${label} is required.`);
               if (!firstInvalid) firstInvalid = el;
-            } else if (['number', 'money'].includes(String(fieldDef.type)) && String(v).trim()) {
+            } else if (['number', 'money'].includes(String(fieldDef.type)) && v !== null && String(v).trim()) {
               const numeric = Number(String(v).replace(',', '.'));
               if (!Number.isFinite(numeric)) {
                 setFieldError(entry, `${label} must be a valid number.`);
@@ -314,7 +324,9 @@ export class PageFormModal extends BaseComponent {
                 expected_row_version: formRecord.row_version,
                 parent_expected_row_version: dataMap.order_detail?.data?.row_version,
                 ...(Array.isArray(row?.selectedIds) ? { selectedIds: row.selectedIds } : {}),
-                values: Object.fromEntries(changes.map(change => [change.field, change.value])),
+                values: Object.fromEntries(changes
+                  .filter(change => !(actionDef.mutation?.operation === 'insert' && change.value === null))
+                  .map(change => [change.field, change.value])),
               });
             } else {
               await client.patch({
@@ -323,7 +335,9 @@ export class PageFormModal extends BaseComponent {
                 id: formRecord.id ?? null,
                 expected_row_version: formRecord.row_version,
                 scope: actionDef.scope,
-                changes,
+                changes: actionDef.mutation?.operation === 'insert'
+                  ? changes.filter(change => change.value !== null)
+                  : changes,
               });
             }
             if (actionDef.success_message) showToast(actionDef.success_message, 'success');
