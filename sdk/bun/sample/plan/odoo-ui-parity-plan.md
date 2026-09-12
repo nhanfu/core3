@@ -112,7 +112,7 @@ catalog records, and manufacturing/inventory records.
 | website | website | available; YAML-driven | `odoo-ui-parity/website.md` | in-progress |
 | ecommerce | website_sale | available; YAML-driven | `odoo-ui-parity/ecommerce.md` | in-progress |
 | blog | website_blog | available; YAML-driven | `odoo-ui-parity/blog.md` | on-hold |
-| forum | website_forum | available; YAML-driven | `odoo-ui-parity/forum.md` | on-hold |
+| forum | website_forum | available; YAML-driven | `odoo-ui-parity/forum.md` | in-progress |
 | livechat | im_livechat | available | `odoo-ui-parity/livechat.md` | planned |
 
 `auth` and `ai` are Core3 infrastructure, not Odoo-clone modules, and are outside

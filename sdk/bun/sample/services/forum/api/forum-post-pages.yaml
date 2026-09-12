@@ -1,0 +1,27 @@
+page: { id: forum-post-pages }
+datasources:
+  - id: forum_post_page_states
+    permission: forum.read
+    query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Closed','Closed'), ('Flagged','Flagged')) states(value, label)"
+  - id: forum_post_pages
+    permission: forum.read
+    error_states:
+      unauthorized: { status: 401, code: FORUM_POST_PAGES_UNAUTHORIZED, message: Sign in to view Forum Posts. }
+      forbidden: { status: 403, code: FORUM_POST_PAGES_FORBIDDEN, message: You do not have permission to view Forum Posts. }
+      transport_error: { status: 503, code: FORUM_POST_PAGES_UNAVAILABLE, message: Forum Posts are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, title, '/forum/core3-platform-qa/' || lower(replace(title, ' ', '-')) AS website_url,
+        forum_name, author_name, views, answer_count, state, TRUE AS is_seo_optimized
+      FROM forum_posts
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR title ILIKE '%' || :q || '%' OR author_name ILIKE '%' || :q || '%' OR forum_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR state = :state)
+        AND (:content_scope IS NULL OR :content_scope = 'posts')
+        AND (:content_scope IS NULL OR :content_scope <> 'answered_posts' OR answer_count > 0)
+      ORDER BY created_at DESC, id
+actions:
+  - id: open_forum_post_page
+    type: navigate
+    permission: forum.read
+    navigate_to: /forum-question-detail
+    params: { id: '{row.id}' }

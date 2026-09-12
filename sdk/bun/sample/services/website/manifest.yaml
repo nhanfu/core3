@@ -17,6 +17,7 @@ menu:
         - { path: /website, label: Websites, icon: globe, permission: website.read }
         - { path: /website-pages, label: Pages, icon: document, permission: website.read }
         - { path: /website-menus, label: Menus, icon: menu, permission: website.read }
+        - { path: /forum-post-pages, label: Forum Posts, icon: comment, permission: forum.read }
     - id: reporting
       label: Reporting
       items:

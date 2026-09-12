@@ -1,0 +1,37 @@
+title: Forum Post Pages
+page: { id: forum-post-pages, route: /forum-post-pages, breadcrumb: [Website, Content, Forum Posts], auth: { require: [forum.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: forum_post_pages
+    search: { label: Search in Post, placeholder: 'Search content, author, forum, or tag...' }
+    filters:
+      - { field: content_scope, label: Content, options: [{ id: posts, label: Posts }, { id: answers, label: Answers }, { id: accepted_answer, label: Accepted Answer }, { id: answered_posts, label: Answered Posts }] }
+      - { field: state, label: Status, options_source: forum_post_page_states }
+    group_by:
+      - { field: forum_name, label: Forum }
+      - { field: author_name, label: Author }
+    default_filters: { content_scope: posts }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: forum_name
+        card: { title: title, subtitle: forum_name, fields: [{ field: views, label: Views }, { field: answer_count, label: Answers }, { field: state, label: Status }] }
+      - { id: graph, label: Graph, icon: graph, category_field: forum_name, measure_field: views, measure_label: Views, type: bar, mobile: false }
+    row_key: id
+    row_open_action: open_forum_post_page
+    row_actions: menu
+    empty_state: { title: No forum posts found, description: Create a new forum post from the website or adjust your search and filters. }
+    columns:
+      - { field: title, label: Content, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: website_url, label: Website URL, mobile: false }
+      - { field: forum_name, label: Forum, mobile: true }
+      - { field: views, label: '# Views', align: right, mobile: true, sortable: true }
+      - { field: answer_count, label: '# Answers', align: right, mobile: true }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: is_seo_optimized, label: SEO Optimized, mobile: false }
+    page_size: 50
