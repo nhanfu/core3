@@ -6,7 +6,7 @@ components:
     source: inventory_packages
     create_action: create_inventory_package
     create_label: New
-    default_filters: { internal: internal }
+    default_filters: { internal: internal, main_packages: main }
     search: { label: Package Name, placeholder: Search packages... }
     filters:
       - { field: internal, label: In internal locations, options: [{ id: internal, label: In internal locations }] }

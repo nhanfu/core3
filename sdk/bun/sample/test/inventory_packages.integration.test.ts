@@ -20,6 +20,7 @@ describe('Inventory Packages Odoo action parity', () => {
     expect(page.datasources).toBeUndefined();
     expect(detail.datasources).toBeUndefined();
     expect(api.page.id).toBe(page.page.id);
+    expect(page.components[0].default_filters).toEqual({ internal: 'internal', main_packages: 'main' });
     expect(discovered.pageDatasources.get('packages')).toContain('inventory_packages');
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/packages', page: 'packages', module: 'inventory' }),
