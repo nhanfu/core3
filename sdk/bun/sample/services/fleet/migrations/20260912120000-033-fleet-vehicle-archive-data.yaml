@@ -1,0 +1,14 @@
+version: 0.0.33
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO fleet_vehicles(id, name, license_plate, vehicle_type, model, manufacturer, driver_name, odometer, fuel_type, state, acquisition_date, contract_end_date, archived, row_version, created_at, updated_at)
+      VALUES ('fleet-demo-004', 'Workshop Van 04', '51A-000.04', 'Car', 'Transit', 'Core Motors', NULL, 45200, 'Diesel', 'Retired', DATE '2025-01-15', DATE '2025-12-31', TRUE, 1, TIMESTAMP '2026-01-15 00:00:00', TIMESTAMP '2026-01-15 00:00:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM fleet_vehicles WHERE id = 'fleet-demo-004';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

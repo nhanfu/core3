@@ -9,6 +9,8 @@ components:
     status_colors: { Available: green, Assigned: blue, Maintenance: amber, Retired: red }
     header_actions:
       - { id: action_accept_driver_change, label: Apply New Driver, variant: primary, permission: fleet.write, show_if: "state.future_driver_name" }
+      - { id: archive_fleet_vehicle, label: Archive, variant: danger, permission: fleet.write, show_if: "state.archived === false" }
+      - { id: unarchive_fleet_vehicle, label: Restore, variant: secondary, permission: fleet.write, show_if: "state.archived === true" }
     group_columns: 2
     stat_buttons:
       - { id: open_fleet_vehicle_assignment_logs, label: Drivers History, value_field: assignment_count, permission: fleet.read }

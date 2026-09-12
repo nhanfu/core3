@@ -786,3 +786,50 @@ This source object action has no independent create/delete/archive CRUD in
 Odoo; those operations remain intentionally absent, while the applicable
 update, empty, not-found, transport, permission, and stale-write contracts are
 covered.
+
+## Fleet vehicle archive action checkpoint (2026-09-12)
+
+The next uncovered source-backed action is Odoo's generic vehicle
+archive/restore behavior on `fleet.vehicle`, reached from the existing
+`Fleet > Fleet` action `fleet_vehicle_action` (`fleet.vehicle`,
+`kanban,list,form,pivot,activity`) at Core3 route `/vehicles`; its detail alias
+is `/vehicles/detail`. Odoo exposes the `active` field as an Archived ribbon
+and standard action-menu archive/restore behavior. This is one bounded action
+slice; no new Fleet menu or unrelated vehicle workflow is introduced.
+
+Core3 adds `Archive` and `Restore` to the existing vehicle-detail header. The
+presentation file remains `pages/vehicle-detail.yaml`; the service-owned
+`api/vehicle-detail.yaml` owns both guarded mutations and continues to join by
+`page.id: vehicle-detail`. `fleet.write` is required for both actions, while
+vehicle detail/list reads retain `fleet.read`. Archive requires an active row;
+restore requires an archived row; both require the current `row_version` and
+return stable 404/409 contracts for missing state and stale writes.
+
+Migration `20260912120000-033-fleet-vehicle-archive-data.yaml` adds the fixed,
+archived `Workshop Van 04` fixture with the shared `2026-01-15` timestamp and
+idempotent install/upgrade behavior. Focused coverage is
+`test/fleet_vehicle_archive.integration.test.ts`: source action/menu/route
+mapping, page/API discovery, active/archived fixture idempotency, permission
+declarations, archive/restore transitions, protected repeat transitions,
+missing-row and stale-row errors. The source action has no separate create or
+delete operation, so those are intentionally not fabricated for this slice.
+
+Authenticated capture attempt is bounded to
+`/tmp/core3-odoo-parity/fleet-batch8-20260912/`. If the local Odoo
+Fleet module/database is unavailable, the exact runtime limitation is recorded
+here and no visual parity claim is made. Core3 capture is attempted only after
+the focused test and production asset checks; images remain outside Git.
+
+## Vehicle Archive/Restore bounded action (2026-09-12)
+
+The Odoo Fleet vehicle form exposes archive and restore state actions. Core3
+adds manager-protected `archive_fleet_vehicle` and `unarchive_fleet_vehicle`
+actions to the existing vehicle-detail page/API seam, with row-version guards,
+active/archived deterministic fixtures, idempotent migration
+`20260912120000-033-fleet-vehicle-archive-data.yaml`, and explicit missing and
+stale transitions. The focused test passes 3 tests and 14 assertions.
+
+Capture was attempted under `/tmp/core3-odoo-parity/fleet-batch8-20260912/`;
+the reference Fleet addon/database was unavailable and the Core3 runtime was
+limited by Vite's `EMFILE` watcher failure. No visual parity claim or image is
+made; images remain outside Git.

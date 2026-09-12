@@ -30,3 +30,35 @@ actions:
         - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Vehicle was changed by another user. Reload before applying the new driver. }
       steps: [{ query: "UPDATE fleet_vehicles SET driver_name = :future_driver_name, future_driver_name = NULL, next_assignation_date = NULL, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true }]
       result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+  - id: archive_fleet_vehicle
+    type: server
+    permission: fleet.write
+    action: fleet.vehicles.archive
+    handler: yaml_mutation
+    params: { id: '{state.id}', values: { archived: true } }
+    refresh: [fleet_vehicle_detail, fleet_vehicles]
+    mutation:
+      operation: update
+      table: fleet_vehicles
+      fields: [archived]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND archived = FALSE", status: 404, code: FLEET_VEHICLE_NOT_ACTIVE, message: Active vehicle was not found. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Vehicle was changed by another user. Reload before archiving. }
+      result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+  - id: unarchive_fleet_vehicle
+    type: server
+    permission: fleet.write
+    action: fleet.vehicles.unarchive
+    handler: yaml_mutation
+    params: { id: '{state.id}', values: { archived: false } }
+    refresh: [fleet_vehicle_detail, fleet_vehicles]
+    mutation:
+      operation: update
+      table: fleet_vehicles
+      fields: [archived]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND archived = TRUE", status: 404, code: FLEET_VEHICLE_NOT_ARCHIVED, message: Archived vehicle was not found. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Vehicle was changed by another user. Reload before restoring. }
+      result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
