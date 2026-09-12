@@ -45,6 +45,19 @@ function mountOwned<T extends BaseComponent>(component: T, container: HTMLElemen
   return owner.mountChild(component, container);
 }
 
+function attachmentDownloadPath(kind: unknown, id: unknown): string {
+  const encodedId = encodeURIComponent(String(id || ''));
+  const routes: Record<string, string> = {
+    employee_document: '/hr/employee-documents',
+    contract_document: '/hr/contract-documents',
+    company_document: '/org/company-documents',
+    order_attachment: '/orders/attachments',
+    expense_attachment: '/expenses/attachments',
+    base_contact_attachment: '/base/contacts/attachments',
+  };
+  return `${routes[String(kind)] || '/chat/attachments'}/${encodedId}`;
+}
+
 async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
   const { DocumentSummary } = await import('@core3/client/components/DocumentSummary');
   const sourceResult = dataMap[def.source] || { data: {} };
@@ -256,6 +269,20 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
       });
       if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
       return;
+    }
+    if (actionDef.type === 'upload') {
+      const file = params?.file instanceof File ? params.file : undefined;
+      if (!file) throw new Error('Attachment file is required');
+      const result = await client.uploadFile(file, {
+        kind: actionDef.kind,
+        ...resolveActionParams(actionDef.params, { ...ctx, row: params }),
+      });
+      if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
+      return result;
+    }
+    if (actionDef.type === 'download') {
+      if (!params?.id) throw new Error('Attachment id is required');
+      return client.downloadFile(attachmentDownloadPath(actionDef.kind, params.id), String(params.file_name || 'attachment'));
     }
     return handleAction(actionDef, params || {});
   };

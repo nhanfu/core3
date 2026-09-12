@@ -367,6 +367,45 @@ describe('document detail components', () => {
     expect(submitted).toEqual([{ action: 'download_contact_attachment', params: expect.objectContaining({ id: 'file-1' }) }]);
   });
 
+  it('propagates form actions to attachment controls', async () => {
+    const component = new OdooFormView('contact-form', {
+      record: { id: 'contact-demo', name: 'Demo Contact' },
+      attachments: [{ id: 'file-1', file_name: 'contact-brief.txt', mime_type: 'text/plain', size_bytes: 128 }],
+    }, {
+      title_field: 'name',
+      attachment_source: 'contact_attachments',
+      attachment_panel_open: true,
+      attachment_download_action: 'download_contact_attachment',
+    });
+    const submitted: Array<{ action: string; params: any }> = [];
+    component._onAction = async (action: string, params: any) => { submitted.push({ action, params }); };
+    const container = mount(component);
+    container.querySelector<HTMLButtonElement>('.o-form-attachment-download')!.click();
+    await Promise.resolve();
+    expect(submitted).toEqual([{ action: 'download_contact_attachment', params: expect.objectContaining({ id: 'file-1' }) }]);
+  });
+
+  it('propagates upload actions from the form to the attachment panel', async () => {
+    const component = new OdooFormView('contact-upload-form', {
+      record: { id: 'contact-demo', name: 'Demo Contact' },
+      attachments: [],
+    }, {
+      title_field: 'name',
+      attachment_source: 'contact_attachments',
+      attachment_panel_open: true,
+      attachment_upload_action: 'upload_contact_attachment',
+    });
+    const submitted: Array<{ action: string; params: any }> = [];
+    component._onAction = async (action: string, params: any) => { submitted.push({ action, params }); };
+    const container = mount(component);
+    const input = container.querySelector<HTMLInputElement>('input[type=file]')!;
+    const file = new File(['attachment'], 'qa-contact.txt', { type: 'text/plain' });
+    Object.defineProperty(input, 'files', { configurable: true, value: [file] });
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(submitted).toEqual([{ action: 'upload_contact_attachment', params: { id: 'contact-demo', file } }]);
+  });
+
   it('adds and removes followers through the shared chatter manager', async () => {
     const component = new OdooFollowerManager('followers', {
       record: { id: 'order-1' },

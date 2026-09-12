@@ -64,6 +64,7 @@ export class OdooChatter extends BaseComponent {
       });
       attachmentTool.details.open = this.def.attachment_panel_open === true;
       const panel = new OdooAttachmentPanel(`${this.id}-attachments`, { record, attachments }, this.def);
+      panel._onAction = this._onAction;
       panel.parent = this;
       this.children.push(panel);
       panel.mount(attachmentTool.content);

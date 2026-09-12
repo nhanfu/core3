@@ -346,6 +346,7 @@ export class OdooFormView extends BaseComponent {
       followerCandidates: this.state.followerCandidates || [],
       attachments: this.state.attachments || [],
     }, this.def);
+    chatter._onAction = this._onAction;
     const chatterSlot = html.take(layout).div.className('o-form-chatter-slot').ele() as HTMLDivElement;
     this.mountChild(chatter, chatterSlot);
   }

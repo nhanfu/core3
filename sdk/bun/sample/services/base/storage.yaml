@@ -1,3 +1,15 @@
 database:
   storage:
     driver: duckdb
+
+files:
+  driver: local
+  path: ${BASE_UPLOAD_ROOT:-.data/uploads}
+  credentials: {}
+
+attachments:
+  base_contact_attachment:
+    download:
+      route: /api/base/contacts/attachments
+      permission: base.contacts.read
+      query: SELECT id, contact_id, file_name, mime_type, size_bytes, storage_key FROM base_contact_attachments WHERE id = :attachment_id

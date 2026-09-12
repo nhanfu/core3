@@ -269,3 +269,18 @@ frontend build, focused ESLint, and `git diff --check`. The real browser file
 upload journey did not return before the runner timeout, so upload persistence
 and download delivery remain blocked for QA; this slice claims panel/control
 visibility only.
+
+## Contact attachment end-to-end slice (2026-09-13)
+
+Resolved `BASE-ATTACH-001`. Base `storage.yaml` now registers local upload
+storage and the `base_contact_attachment` download route. The detail renderer
+dispatches the declared upload/download actions, and the form explicitly
+propagates its action handler through Chatter and attachment children.
+
+Authenticated Chromium against `http://127.0.0.1:4010` verified upload HTTP
+200 for `qa-contact-2.txt`, persistence in the attachment list, and download
+of the seeded attachment as `contact-brief.txt`. Desktop 1440x900 and mobile
+390x844 both rendered the attachment panel with no page/request errors or
+horizontal overflow. Captures remain outside Git at
+`/tmp/core3-base-attach-001-desktop.png` and
+`/tmp/core3-base-attach-001-mobile.png`.

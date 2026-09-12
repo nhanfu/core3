@@ -89,6 +89,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
     expect(yaml('api/contact-detail.yaml').actions.find((action: any) => action.id === 'schedule_activity')).toMatchObject({ permission: 'base.activities.write', operation: 'create' });
     expect(yaml('api/contact-detail.yaml').actions.find((action: any) => action.id === 'upload_contact_attachment')).toMatchObject({ type: 'upload', handler: 'attachment_metadata', permission: 'base.contacts.write', kind: 'base_contact_attachment' });
     expect(yaml('api/contact-detail.yaml').actions.find((action: any) => action.id === 'download_contact_attachment')).toMatchObject({ type: 'download', permission: 'base.contacts.read', kind: 'base_contact_attachment' });
+    expect(yaml('storage.yaml')).toMatchObject({ attachments: { base_contact_attachment: { download: { route: '/api/base/contacts/attachments', permission: 'base.contacts.read' } } } });
     expect(yaml('api/contact-detail.yaml').actions.find((action: any) => action.id === 'delete_contact')).toMatchObject({ operation: 'delete', permission: 'base.contacts.manage' });
     for (const id of ['archive_contact', 'unarchive_contact']) {
       expect(yaml('api/contacts.yaml').actions.find((action: any) => action.id === id)).toMatchObject({ permission: 'base.contacts.write', handler: 'yaml_mutation', params: { id: '{row.id}', expected_row_version: '{row.row_version}' } });
