@@ -1,0 +1,41 @@
+title: Mailing Traces
+page: { id: email-traces, route: /email-traces, breadcrumb: [Settings, Technical, Mass Mailing, Mailing Traces], auth: { require: [email_marketing.settings] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: email_mailing_traces
+    search: { label: Mail Statistics, placeholder: 'Search recipient, mailing, or message...' }
+    filters:
+      - { field: trace_status, label: State, options: [{ id: outgoing, label: Scheduled }, { id: cancel, label: Cancelled }, { id: process, label: Processing }, { id: sent, label: Sent }, { id: open, label: Opened }, { id: reply, label: Replied }, { id: bounce, label: Bounced }, { id: error, label: Failed }] }
+      - { field: is_test_trace, label: Test Traces, options: [{ id: 'true', label: Test Traces }] }
+    group_by:
+      - { field: trace_status, label: State }
+      - { field: mass_mailing_name, label: Mass Mailing }
+      - { field: open_datetime, label: Open Date }
+      - { field: reply_datetime, label: Reply Date }
+      - { field: updated_at, label: Last State Update }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: form, label: Form, icon: edit, mobile: true }
+      - { id: graph, label: Graph, icon: chart, mobile: true, category_field: updated_at, measure_field: trace_count, measure_label: Traces, type: bar }
+      - { id: pivot, label: Pivot, icon: pivot, mobile: true }
+    form_view: { page: apps/services/email-marketing/pages/trace-detail.yaml, side_panel: false }
+    columns:
+      - { field: mass_mailing_name, label: Mailing, type: PrimaryEntityCell, mobile: true }
+      - { field: email, label: Recipient, mobile: true }
+      - { field: message_id, label: Message ID, optional: true, mobile: false }
+      - { field: sent_datetime, label: Sent Date, type: DateTime, mobile: true }
+      - { field: links_click_datetime, label: Click Date, type: DateTime, optional: true, mobile: false }
+      - { field: trace_status, label: Status, type: StatusChip, mobile: true }
+      - { field: failure_type, label: Failure Type, optional: true, mobile: false }
+      - { field: open_datetime, label: Open Date, optional: true, mobile: false }
+      - { field: reply_datetime, label: Reply Date, optional: true, mobile: false }
+      - { field: is_test_trace, label: Test, optional: true, mobile: false }
+    page_size: 50
+    row_key: id
+    row_open_action: view_email_trace
+    row_double_click_action: view_email_trace
+    row_actions: menu
+    empty_state: { title: No mailing traces yet!, description: 'Mailing traces record delivery, opens, replies, clicks, bounces, and failures.' }

@@ -36,3 +36,7 @@ menu:
         - { path: /email-blacklist, label: Blacklisted Email Addresses, icon: ban, permission: email_marketing.read }
         - { path: /email-optout-reasons, label: Optout Reasons, icon: settings, permission: email_marketing.manage }
         - { path: /email-favorite-filters, label: Favorite Filters, icon: filter, permission: email_marketing.read }
+    - id: technical
+      label: Technical
+      items:
+        - { path: /email-traces, label: Mailing Traces, icon: history, permission: email_marketing.settings }

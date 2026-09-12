@@ -1,0 +1,31 @@
+title: Mail Statistics
+page: { id: email-trace-detail, route: /email-traces/detail, breadcrumb: [Settings, Technical, Mass Mailing, Mailing Traces, Mail Statistics], auth: { require: [email_marketing.settings] } }
+
+components:
+  - type: OdooFormView
+    source: email_mailing_trace_detail
+    title_field: email
+    editable: false
+    labels: { save: Save, discard: Close, editDetails: Details, workflowStatus: Status }
+    header_actions:
+      - { id: open_trace_recipient, label: Open Recipient, variant: secondary, permission: email_marketing.settings }
+    statusbar: { field: trace_status, visible: [outgoing, sent, error] }
+    groups:
+      - title: Status
+        fields:
+          - { field: failure_type, label: Failure Type, type: text }
+          - { field: sent_datetime, label: Sent Date, type: datetime }
+          - { field: links_click_datetime, label: Click Date, type: datetime }
+          - { field: open_datetime, label: Open Date, type: datetime }
+          - { field: failure_reason, label: Failure Reason, type: textarea }
+          - { field: reply_datetime, label: Reply Date, type: datetime }
+      - title: Mailing
+        fields:
+          - { field: email, label: Recipient Address, type: email }
+          - { field: mass_mailing_name, label: Mailing, type: text }
+          - { field: message_id, label: Message ID, type: text }
+      - title: Marketing
+        fields:
+          - { field: campaign_name, label: Campaign, type: text }
+          - { field: medium_name, label: Medium, type: text }
+          - { field: source_name, label: Source, type: text }

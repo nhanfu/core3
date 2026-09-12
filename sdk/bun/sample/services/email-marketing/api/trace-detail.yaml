@@ -1,0 +1,13 @@
+page: { id: email-trace-detail }
+datasources:
+  - id: email_mailing_trace_detail
+    single: true
+    permission: email_marketing.settings
+    error_states:
+      unauthorized: { status: 401, code: EMAIL_TRACE_DETAIL_UNAUTHORIZED, message: Sign in to view this mail statistic. }
+      forbidden: { status: 403, code: EMAIL_TRACE_DETAIL_FORBIDDEN, message: Technical Mailing Traces require administrator access. }
+      not_found: { status: 404, code: EMAIL_TRACE_DETAIL_NOT_FOUND, message: Mailing trace not found. }
+      transport_error: { status: 503, code: EMAIL_TRACE_DETAIL_UNAVAILABLE, message: This mail statistic is temporarily unavailable. }
+    query: "SELECT id, row_version, mass_mailing_id, mass_mailing_name, email, message_id, trace_status, failure_type, failure_reason, CAST(sent_datetime AS VARCHAR) AS sent_datetime, CAST(links_click_datetime AS VARCHAR) AS links_click_datetime, CAST(open_datetime AS VARCHAR) AS open_datetime, CAST(reply_datetime AS VARCHAR) AS reply_datetime, campaign_name, medium_name, source_name, is_test_trace FROM email_mailing_traces WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND id = CAST(:id AS VARCHAR)"
+actions:
+  - { id: open_trace_recipient, type: server, permission: email_marketing.settings, action: email_marketing.traces.open_recipient, handler: noop }

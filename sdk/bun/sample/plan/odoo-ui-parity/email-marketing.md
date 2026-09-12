@@ -746,3 +746,51 @@ makes no visual-parity claim and has no screenshot evidence; if the runtime is
 restored, captures must be saved under
 `/tmp/core3-odoo-parity/email-marketing-batch5-20260912/` at 1440x900 and
 390x844 without committing images.
+
+## Technical Mailing Traces bounded slice (2026-09-12)
+
+The next missing source-backed action is Odoo's technical
+`mailing_trace_action` (`mailing.trace`, source
+`addons/mass_mailing/views/mailing_trace_views.xml`, revision `65975996`). Its
+menu is Technical Settings → Mass Mailing → **Mailing Traces** via
+`mailing_mailing_menu_technical` → `menu_email_statistics`; it is separate from
+the ordinary Email Marketing menu. The action has `list,form,graph,pivot`
+modes and an unrestricted domain. The list is read-only (`create="0"`) and
+shows Mailing, recipient email, message ID, sent/click dates, trace-status
+badge, failure type, optional open/reply/test fields, and Open Recipient. The
+search contract is Mail Statistics with scheduled/cancelled/processing/sent/
+clicked/delivered/opened/replied/bounced/failed/test filters and State, Open
+Date, Reply Date, Last State Update, and Mass Mailing groupings. The form is
+read-only with an outgoing/sent/error statusbar, Status, Mailing, and Marketing
+groups plus Open Recipient.
+
+Core3 implements this technical slice at `/email-traces`, protected by the
+administrator-level `email_marketing.settings` permission. Page presentation
+and backend contracts remain separate and are joined by `page.id`:
+
+- Layout: `services/email-marketing/pages/traces.yaml` and
+  `pages/trace-detail.yaml`.
+- API: `services/email-marketing/api/traces.yaml` and
+  `api/trace-detail.yaml`.
+- Menu: Technical → Mailing Traces in `manifest.yaml`; no ordinary-user menu
+  exposure or mutation action is added.
+- Fixture/schema: `migrations/20260912160000-019-email-mailing-traces.yaml`
+  seeds seven fixed-date traces covering opened, replied, sent, bounced,
+  failed/test, scheduled, and cancelled states. Re-running the migration is
+  idempotent.
+- Focused contract: `test/email_marketing_traces.integration.test.ts` covers
+  page/API discovery, exact modes/menu permission, deterministic ordering and
+  fixtures, search/status/test filters, empty and read-only detail/not-found
+  behavior, and 401/403/503/404 declarations. Result: **3 pass, 17
+  assertions**. `bun run audit` passes with 616 pages, 625 routes, and 1,060
+  datasources; `git diff --check` passes.
+
+Authenticated visual capture attempt: Odoo at `http://127.0.0.1:8073`
+accepted the documented credentials and reached authenticated Discuss with zero
+failed requests; the technical Mailing Traces screen was not reached. Core3 at
+`http://127.0.0.1:32615` was not listening (`curl` failed to connect), so no
+authenticated Core3 screen could be captured. The only attempt artifact is
+`/tmp/core3-odoo-parity/email-marketing-traces-20260912/` (Odoo authenticated
+Discuss fallback captures at 1440x900 and 390x844);
+no visual-parity claim is made, and the runtime blocker must be cleared before
+desktop/mobile comparison evidence can be added. No image is committed.

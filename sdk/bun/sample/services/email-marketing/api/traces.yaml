@@ -1,0 +1,29 @@
+page: { id: email-traces }
+datasources:
+  - id: email_mailing_traces
+    permission: email_marketing.settings
+    error_states:
+      unauthorized: { status: 401, code: EMAIL_TRACES_UNAUTHORIZED, message: Sign in to view Mailing Traces. }
+      forbidden: { status: 403, code: EMAIL_TRACES_FORBIDDEN, message: Technical Mailing Traces require administrator access. }
+      transport_error: { status: 503, code: EMAIL_TRACES_UNAVAILABLE, message: Mailing Traces are temporarily unavailable. }
+    query: |
+      SELECT id, row_version, mass_mailing_id, mass_mailing_name, email, message_id,
+        CAST(sent_datetime AS VARCHAR) AS sent_datetime,
+        CAST(links_click_datetime AS VARCHAR) AS links_click_datetime,
+        trace_status, failure_type,
+        CAST(open_datetime AS VARCHAR) AS open_datetime,
+        CAST(reply_datetime AS VARCHAR) AS reply_datetime,
+        is_test_trace, trace_count,
+        CAST(updated_at AS VARCHAR) AS updated_at
+      FROM email_mailing_traces
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR email ILIKE '%' || :q || '%' OR mass_mailing_name ILIKE '%' || :q || '%' OR message_id ILIKE '%' || :q || '%' OR COALESCE(failure_reason, '') ILIKE '%' || :q || '%')
+        AND (:trace_status IS NULL OR trace_status = :trace_status)
+        AND (:is_test_trace IS NULL OR is_test_trace = CAST(:is_test_trace AS BOOLEAN))
+      ORDER BY updated_at DESC, id
+actions:
+  - id: view_email_trace
+    type: navigate
+    permission: email_marketing.settings
+    navigate_to: /email-traces/detail
+  - { id: open_trace_recipient, type: server, permission: email_marketing.settings, action: email_marketing.traces.open_recipient, handler: noop }

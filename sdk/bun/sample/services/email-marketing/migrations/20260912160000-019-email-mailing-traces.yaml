@@ -1,0 +1,20 @@
+version: 0.0.19
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_mailing_traces (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, mass_mailing_id VARCHAR NOT NULL, mass_mailing_name VARCHAR NOT NULL, email VARCHAR NOT NULL, message_id VARCHAR NOT NULL, sent_datetime TIMESTAMP, links_click_datetime TIMESTAMP, trace_status VARCHAR NOT NULL, failure_type VARCHAR, failure_reason VARCHAR, open_datetime TIMESTAMP, reply_datetime TIMESTAMP, campaign_name VARCHAR, medium_name VARCHAR, source_name VARCHAR, is_test_trace BOOLEAN NOT NULL DEFAULT FALSE, trace_count INTEGER NOT NULL DEFAULT 1, updated_at TIMESTAMP NOT NULL);
+      INSERT INTO email_mailing_traces (id,row_version,mass_mailing_id,mass_mailing_name,email,message_id,sent_datetime,links_click_datetime,trace_status,failure_type,failure_reason,open_datetime,reply_datetime,campaign_name,medium_name,source_name,is_test_trace,trace_count,updated_at) VALUES
+        ('email-trace-newsletter-aristide',1,'email-mailing-newsletter','Newsletter 1','aristide@example.com','msg-newsletter-aristide','2026-01-15 10:00:00','2026-01-15 10:14:00','open',NULL,NULL,'2026-01-15 10:10:00',NULL,'Newsletter Campaign','Email','Newsletter',FALSE,1,'2026-01-15 10:14:00'),
+        ('email-trace-newsletter-beverly',1,'email-mailing-newsletter','Newsletter 1','beverly@example.com','msg-newsletter-beverly','2026-01-15 10:00:00','2026-01-15 10:18:00','reply',NULL,NULL,'2026-01-15 10:08:00','2026-01-15 10:20:00','Newsletter Campaign','Email','Newsletter',FALSE,1,'2026-01-15 10:20:00'),
+        ('email-trace-offer-carol',1,'email-mailing-spring','Spring Offer','carol@example.com','msg-offer-carol','2026-01-14 09:00:00',NULL,'sent',NULL,NULL,NULL,NULL,'Spring Campaign','Email','Promotion',FALSE,1,'2026-01-14 09:00:00'),
+        ('email-trace-offer-david',1,'email-mailing-spring','Spring Offer','david@example.com', 'msg-offer-david','2026-01-14 09:00:00',NULL,'bounce','smtp', 'Mailbox unavailable',NULL,NULL,'Spring Campaign','Email','Promotion',FALSE,1,'2026-01-14 09:02:00'),
+        ('email-trace-test-elsa',1,'email-mailing-newsletter','Newsletter 1','elsa@example.com','msg-test-elsa','2026-01-13 15:00:00',NULL,'error','recipient','Blacklisted address',NULL,NULL,'Newsletter Campaign','Email','Newsletter',TRUE,1,'2026-01-13 15:01:00'),
+        ('email-trace-scheduled-franz',1,'email-mailing-monthly','Monthly Newsletter','franz@example.com','msg-monthly-franz',NULL,NULL,'outgoing',NULL,NULL,NULL,NULL,'Newsletter Campaign','Email','Newsletter',FALSE,1,'2026-01-15 08:00:00'),
+        ('email-trace-cancelled-gilbert',1,'email-mailing-monthly','Monthly Newsletter','gilbert@example.com','msg-monthly-gilbert',NULL,NULL,'cancel',NULL,NULL,NULL,NULL,'Newsletter Campaign','Email','Newsletter',FALSE,1,'2026-01-12 08:00:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS email_mailing_traces;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
