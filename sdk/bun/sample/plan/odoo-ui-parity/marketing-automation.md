@@ -115,3 +115,29 @@ visual evidence are added by this audit.
   workspace dependency `@core3/server/discovery` is unavailable.
 - Focused Marketing Automation parity test — not added; there is no
   source-backed Odoo slice that could be tested truthfully.
+
+## Revalidation — wave 2 (2026-09-12)
+
+This worktree rechecked the source and runtime gates before changing any
+product code. The requested relative `../odoo` checkout is absent; the
+documented source checkout at `/home/nhanjs/projects/odoo` is the available
+reference and remains on `19.0` revision `65975996`.
+
+- `test -e /home/nhanjs/projects/odoo/addons/marketing_automation` — missing.
+- `test -e /home/nhanjs/projects/odoo/enterprise/addons/marketing_automation`
+  — missing; no local enterprise tree is present.
+- `find /home/nhanjs/projects/odoo -maxdepth 4 -type d` finds only the
+  unrelated `base_automation` and `marketing_card` marketing/automation
+  candidates.
+- `rg` across Odoo Python/XML/JS source finds no `marketing_automation`
+  addon implementation; the only hits are unrelated comments in `mass_mailing`
+  and `mass_mailing_sms`.
+- `127.0.0.1:8069` and `:8073` answer `/web/login` with HTTP 200, but this
+  cannot expose a missing addon. Core3 `/api/modules` is unavailable because
+  neither `127.0.0.1:3000` nor `:32615` has a listener.
+
+No source-supported menu/action/view/security/demo contract exists to map, so
+no bounded UI/API slice, fixture, permission test, or screenshot is added in
+this wave. The existing synthetic Core3 service remains unchanged and is not
+treated as Odoo evidence. The blocker and the parent register status remain
+unchanged.
