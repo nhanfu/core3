@@ -15,7 +15,9 @@ describe('eCommerce Checkout parity', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'ecommerce_checkout_http_scope_test', ['schema', 'data']);
     const source = yaml('api/orders.yaml').datasources[0];
-    const authUser = { sub: 'customer-user', email: 'buyer@acme.example', name: 'Acme Buyer', roles: ['customer'], permissions: ['ecommerce.read'] };
+    const checkoutApi = yaml('api/checkout.yaml');
+    const confirm = checkoutApi.actions.find((action: any) => action.id === 'confirm_ecommerce_checkout');
+    const authUser = { sub: 'customer-user', email: 'hello@workspace.example', name: 'Workspace Buyer', roles: ['customer'], permissions: ['ecommerce.read', 'ecommerce.write'] };
     const api = createYamlApi({
       repository,
       authProvider: {
@@ -23,17 +25,22 @@ describe('eCommerce Checkout parity', () => {
         hasPermission(user: any, permission: string) { return user.permissions.includes(permission); },
       },
       sources: new Map([[source.id, source]]),
-      pageSources: new Map(), pages: new Map(), catalogs: new Map(), menus: new Map(),
+      pageSources: new Map(), pages: new Map([['ecommerce-checkout', { actions: [confirm] }]]), catalogs: new Map(), menus: new Map(),
       workflows: new Map(), workflowFiles: new Map(),
-      permissions: { permissions: ['ecommerce.read'], tables: {}, endpoints: {} },
+      permissions: { permissions: ['ecommerce.read', 'ecommerce.write'], tables: {}, endpoints: {} },
       uploadRoot: '/tmp/core3-ecommerce-test-uploads', eventStore: {}, topics: {},
     });
     const request = (params: Record<string, unknown>) => api(new Request('http://core3.test/api/query', {
       method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
       body: JSON.stringify({ sourceId: source.id, params, top: 50 }),
     }), new URL('http://core3.test/api/query'));
-    expect((await (await request({ customer_id: 'ecommerce-customer-002' })).json()).data).toEqual([]);
-    expect((await (await request({})).json()).data.map((row: any) => row.customer_email)).toEqual(['buyer@acme.example']);
+    expect((await (await request({ customer_id: 'ecommerce-customer-001' })).json()).data).toEqual([]);
+    expect((await (await request({})).json()).data.map((row: any) => row.customer_email)).toEqual(['hello@workspace.example']);
+    const mutationError = await api(new Request('http://core3.test/api/actions/ecommerce.checkout.confirm', {
+      method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: { cart_id: 'ecommerce-cart-open-001', customer_name: 'Acme Corporation', customer_email: 'buyer@acme.example', shipping_address: '1 Main Street', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' } }),
+    }), new URL('http://core3.test/api/actions/ecommerce.checkout.confirm')).catch(error => error);
+    expect(mutationError).toMatchObject({ status: 403, code: 'ECOMMERCE_CHECKOUT_OWNERSHIP_REQUIRED' });
     database.close();
   });
 
