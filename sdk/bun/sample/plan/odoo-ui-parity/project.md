@@ -547,6 +547,42 @@ implementation preserves the project-detail action placement and preview
 content shape; the remaining visual difference is the shared Core3 Fluent
 shell versus Odoo's purple shell. Images remain outside Git.
 
+## Bounded slice: Customer Portal Projects (2026-09-12)
+
+The next uncovered Project surface after the existing record-linked Customer
+Portal Preview is Odoo's authenticated portal controller
+`ProjectCustomerPortal.portal_my_projects` at `/my/projects`, from
+`addons/project/controllers/portal.py`. The matching template is
+`addons/project/views/project_portal_project_project_templates.xml`, template
+`portal_my_projects`: it uses the portal layout/searchbar titled `Projects`,
+shows `There are no projects.` when empty, and otherwise renders a table with
+project name links and task count/label. The controller excludes templates,
+defaults sorting to `Name`, offers `Newest`, and scopes access to authenticated
+portal users; it does not expose internal Project CRUD or a create action.
+
+Core3 maps the route to `/my/projects`, with a distinct `project.portal`
+permission and a Customer Portal menu group so the boundary cannot be confused
+with the internal `/projects` action. The page is layout-only and the matching
+`api/portal-projects.yaml` owns the read query, navigation alias to the
+existing project detail route, and stable 503 transport contract. Existing
+fixed project fixtures are reused; templates and archived projects are
+excluded. Migration `20260912110000-012-project-portal-projects.yaml` pins
+fixture project timestamps to `2026-01-15` for deterministic Newest ordering
+and is idempotent. Focused coverage proves page/API separation, labels,
+ordering, template exclusion, empty/no-match, transport, and portal permission
+boundaries. The detail link is a deliberate Core3 alias to the existing
+authenticated project detail page; a portal-specific project detail/template
+remains a separate follow-up action.
+
+Authenticated visual verification limitation: this worktree did not expose the
+required persistent `playwright-interactive` `js_repl`, and `import('playwright')`
+failed because the package is not installed here. Consequently no authenticated
+Core3 or Odoo captures were produced under
+`/tmp/core3-odoo-parity/project-batch4-20260912/` at 1440x900 or 390x844, and
+this slice makes no visual-parity claim. Source XML/controller/template
+evidence and static contract checks are the available verification for this
+batch; authenticated browser comparison remains a follow-up gate.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:

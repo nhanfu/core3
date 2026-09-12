@@ -1,0 +1,12 @@
+version: 0.0.12
+description: Fixed creation timestamps for the portal project ordering contract
+type:
+  postgres:
+    up: |
+      UPDATE projects SET created_at = TIMESTAMP '2026-01-15 09:00:00', updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id IN ('project-demo-001', 'project-demo-002', 'project-demo-003');
+    down: |
+      SELECT 1;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

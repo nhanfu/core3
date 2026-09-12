@@ -1,0 +1,16 @@
+title: Projects
+page: { id: project-portal-projects, route: /my/projects, breadcrumb: [Project, Projects], auth: { require: [project.portal] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: portal_projects
+    search: { label: Search, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: name, label: Project, type: PrimaryEntityCell, mobile: true }
+      - { field: task_count, label: Tasks, align: right, mobile: true }
+    row_key: id
+    row_open_action: view_portal_project
+    empty_state: { title: There are no projects., description: There are no projects. }

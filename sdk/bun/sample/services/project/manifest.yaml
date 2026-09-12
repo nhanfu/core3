@@ -17,6 +17,10 @@ menu:
         - { path: /projects, label: Projects, icon: project, permission: project.read }
         - { path: /project-by-stage, label: Projects, icon: workflow, permission: project.read }
         - { path: /tasks, label: My Tasks, icon: checklist, permission: project.read }
+    - id: portal
+      label: Customer Portal
+      items:
+        - { path: /my/projects, label: Projects, icon: project, permission: project.portal }
     - id: reporting
       label: Reporting
       items:

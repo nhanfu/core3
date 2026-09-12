@@ -1,0 +1,12 @@
+page: { id: project-portal-projects }
+datasources:
+  - id: portal_projects
+    permission: project.portal
+    query: "SELECT p.id, p.name, COUNT(t.id) AS task_count FROM projects p LEFT JOIN project_tasks t ON t.project_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND COALESCE(p.is_template, FALSE) = FALSE AND COALESCE(p.archived, FALSE) = FALSE AND (:q IS NULL OR p.name ILIKE '%' || :q || '%') GROUP BY p.id, p.name, p.created_at ORDER BY CASE WHEN COALESCE(:sortby, 'name') = 'date' THEN p.created_at END DESC, p.name, p.id"
+    error_states: { transport_error: { status: 503, code: PROJECT_PORTAL_PROJECTS_UNAVAILABLE, message: The customer portal projects are temporarily unavailable. } }
+actions:
+  - id: view_portal_project
+    type: navigate
+    permission: project.portal
+    navigate_to: /projects/detail
+    params: { id: '{row.id}' }
