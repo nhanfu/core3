@@ -4,11 +4,39 @@ import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const root = join(import.meta.dir, '../services/ecommerce');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('eCommerce Checkout parity', () => {
+  test('enforces authenticated customer ownership at the HTTP query boundary', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'ecommerce_checkout_http_scope_test', ['schema', 'data']);
+    const source = yaml('api/orders.yaml').datasources[0];
+    const authUser = { sub: 'customer-user', email: 'buyer@acme.example', name: 'Acme Buyer', roles: ['customer'], permissions: ['ecommerce.read'] };
+    const api = createYamlApi({
+      repository,
+      authProvider: {
+        async getCurrentUser() { return authUser; },
+        hasPermission(user: any, permission: string) { return user.permissions.includes(permission); },
+      },
+      sources: new Map([[source.id, source]]),
+      pageSources: new Map(), pages: new Map(), catalogs: new Map(), menus: new Map(),
+      workflows: new Map(), workflowFiles: new Map(),
+      permissions: { permissions: ['ecommerce.read'], tables: {}, endpoints: {} },
+      uploadRoot: '/tmp/core3-ecommerce-test-uploads', eventStore: {}, topics: {},
+    });
+    const request = (params: Record<string, unknown>) => api(new Request('http://core3.test/api/query', {
+      method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sourceId: source.id, params, top: 50 }),
+    }), new URL('http://core3.test/api/query'));
+    expect((await (await request({ customer_id: 'ecommerce-customer-002' })).json()).data).toEqual([]);
+    expect((await (await request({})).json()).data.map((row: any) => row.customer_email)).toEqual(['buyer@acme.example']);
+    database.close();
+  });
+
   test('joins cart checkout navigation to a page/API-bound checkout form', () => {
     const cart = yaml('api/cart.yaml');
     const cartPage = yaml('pages/cart.yaml');
