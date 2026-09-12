@@ -21,14 +21,14 @@ Candidate commit: current working tree
   in focused reruns.
 - Focused Project suite: `bun test ./test/project*.integration.test.ts --timeout 20000` — 44 passed, 0 failed, 506 assertions across 15 files.
 - Authenticated module-scoped probes loaded the Project dashboard, milestone, activity, and portal surfaces with seeded IDs. Fleet user opening `/project/settings` received HTTP 403 with `Requires permission: project.settings`, with no browser errors.
-- Two runtime blockers are recorded: the module-scoped process resolves `/projects` and several configuration routes through the colliding `order` service and requests undeclared page `dashboard`; `/tasks/detail` fails because its declared `yaml.service.timesheets` dependency is not loaded by the single-module runner. These need a full-process/route-collision retest.
+- The module-scoped process namespaces routes under `/project` (for example `/project/projects`); using unprefixed `/projects` or `/project/project/settings` is invalid in that runner. Properly namespaced Project list, detail, dashboard, stages, roles, tags, activity types, and activity plans routes loaded cleanly. `/project/tasks/detail` still fails because its declared `yaml.service.timesheets` dependency is not loaded by the single-module runner.
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | PROJECT-FUNC-001 | Focused functionality, dashboard, configuration, portal, task, and milestone contracts | 44 tests, 506 assertions; focused suite passed | pass |
-| PROJECT-BROWSER-001 | Authenticated seeded Project route probes | Dashboard/milestone/activity/portal probes loaded; `/projects` collision and task dependency blockers remain | partial pass |
+| PROJECT-BROWSER-001 | Authenticated seeded Project route probes | Proper `/project/*` list, detail, dashboard, and configuration routes loaded; task detail cross-service dependency remains | partial pass |
 | PROJECT-PERM-001 | Non-manager cannot open Project settings | Fleet user received HTTP 403 with `Requires permission: project.settings`; browser errors 0 | pass |
 | PROJECT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Route collision, cross-service runner dependency, full CRUD smoke, and paired Odoo comparison remain open | pending |
 
@@ -36,7 +36,7 @@ Candidate commit: current working tree
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
-| PROJECT-RUNTIME-001 | `/projects` and configuration detail routes collide with the order service and request missing page `dashboard`; `/tasks/detail` raises missing `yaml.service.timesheets` in isolated runner | — | Reproduced in module-scoped authenticated probes; full-process retest and route ownership repair remain required | open |
+| PROJECT-RUNTIME-001 | Unprefixed paths were invalid for the module-scoped runner; `/project/tasks/detail` raises missing `yaml.service.timesheets` because the runner loads only Project plus Auth | — | Proper namespaced routes passed; task detail requires a full-process or dependency-aware runner retest | follow-up |
 
 ## Sign-off
 

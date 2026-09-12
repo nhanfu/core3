@@ -11,11 +11,12 @@ Candidate commit: current working tree
 The focused Project suite passes 44 tests across 15 files with 506 assertions.
 Authenticated module-scoped probes loaded seeded dashboard, milestone,
 activity, and portal screens; Fleet was denied `project.settings` with HTTP
-403. The isolated runner also reproduced a route collision where `/projects`
-and several configuration routes resolve through `order` and request missing
-page `dashboard`, while `/tasks/detail` requires the unregistered
-`yaml.service.timesheets` dependency. Full-process retest, route ownership
-repair, and paired Odoo comparison remain open. No parity claim is made here.
+403. The isolated runner namespaces routes under `/project`; properly
+namespaced Project list, detail, dashboard, and configuration routes loaded
+cleanly. `/project/tasks/detail` still requires the unregistered
+`yaml.service.timesheets` dependency because the runner loads only Project plus
+Auth. Full-process/dependency-aware task retest and paired Odoo comparison
+remain open. No parity claim is made here.
 
 ## Next bounded task
 
