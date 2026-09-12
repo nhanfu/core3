@@ -1,0 +1,34 @@
+title: Certifications
+page: { id: employee-certifications, route: /employees/certifications, breadcrumb: [Employees, Learning, Certifications], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_certifications
+    create_action: create_employee_certification
+    create_label: New
+    search: { label: Search Certification, placeholder: 'Search certification or employee...' }
+    filters:
+      - { field: valid_state, label: Validity, options: [{ id: valid, label: Valid certification }, { id: expired, label: Expired }] }
+    group_by:
+      - { field: certification_name, label: Certification }
+      - { field: skill_type_name, label: Type }
+      - { field: employee_name, label: Employee }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: kanban, label: Kanban, icon: grid, mobile: true, group_by: employee_name, card: { title: certification_name, fields: [{ field: employee_name, label: Employee }, { field: valid_from, label: From }, { field: valid_to, label: To }] } }
+    columns:
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell, mobile: true }
+      - { field: certification_name, label: Certification }
+      - { field: skill_level_name, label: Level, optional: hide }
+      - { field: skill_type_name, label: Type, optional: hide }
+      - { field: valid_from, label: From }
+      - { field: valid_to, label: To, optional: show }
+      - { field: validity_status, label: Status, type: StatusChip }
+      - { field: id, label: '', sortable: false, actions: [{ id: delete_employee_certification, label: Delete, icon: trash, variant: danger }] }
+    row_key: id
+    row_actions: menu
+    row_open_action: view_employee_certification
+    row_double_click_action: view_employee_certification
+    column_chooser: true
+    empty_state: { title: No certifications found, description: Add a certification or adjust your search. }

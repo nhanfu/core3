@@ -1,0 +1,29 @@
+version: 0.0.21
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_certifications (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        employee_id VARCHAR NOT NULL,
+        skill_type_id VARCHAR NOT NULL,
+        skill_id VARCHAR NOT NULL,
+        level_name VARCHAR,
+        valid_from DATE NOT NULL,
+        valid_to DATE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO employee_certifications (id, employee_id, skill_type_id, skill_id, level_name, valid_from, valid_to) VALUES
+        ('employee-cert-admin-odoo', 'employee-demo-001', 'skill-type-certifications', 'skill-odoo-cert', 'Certified', DATE '2025-06-01', NULL),
+        ('employee-cert-anh-odoo', 'employee-demo-002', 'skill-type-certifications', 'skill-odoo-cert', 'Advanced', DATE '2024-04-10', DATE '2026-03-31'),
+        ('employee-cert-long-odoo', 'employee-demo-003', 'skill-type-certifications', 'skill-odoo-cert', 'Foundation', DATE '2026-01-10', DATE '2026-01-14'),
+        ('employee-cert-ha-odoo', 'employee-demo-004', 'skill-type-certifications', 'skill-odoo-cert', 'Certified', DATE '2023-02-01', DATE '2024-12-31');
+      UPDATE employee_certifications SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_certifications;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

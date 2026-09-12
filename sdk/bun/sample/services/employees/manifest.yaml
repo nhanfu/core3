@@ -25,6 +25,7 @@ menu:
     - id: learning
       label: Learning
       items:
+        - { path: /employees/certifications, label: Certifications, icon: certificate, permission: employees.read }
         - { path: /employees/training-attendances, label: Training Attendances, icon: education, permission: employees.read }
     - id: configuration
       label: Configuration

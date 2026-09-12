@@ -1,0 +1,47 @@
+page: { id: employee-certification-detail }
+datasources:
+  - id: employee_certification_detail
+    single: true
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_CERTIFICATION_DETAIL_UNAVAILABLE, message: Certification details are temporarily unavailable. } }
+    query: "SELECT c.id, c.row_version, c.employee_id, e.name AS employee_name, s.name AS certification_name, t.name AS skill_type_name, c.level_name AS skill_level_name, CAST(c.valid_from AS VARCHAR) AS valid_from, CAST(c.valid_to AS VARCHAR) AS valid_to, CASE WHEN c.valid_to IS NULL OR c.valid_to >= DATE '2026-01-15' THEN 'Valid' ELSE 'Expired' END AS validity_status FROM employee_certifications c JOIN employees e ON e.id = c.employee_id JOIN employee_skills s ON s.id = c.skill_id JOIN employee_skill_types t ON t.id = c.skill_type_id WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND c.id = :id"
+actions:
+  - id: edit_employee_certification
+    type: server_form
+    permission: employees.write
+    title: Edit Certification
+    action: employees.certifications.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_certification_detail
+    params: { id: '{state.id}' }
+    refresh: [employee_certification_detail, employee_certifications]
+    mutation:
+      operation: update
+      table: employee_certifications
+      fields: [employee_id, skill_type_id, skill_id, level_name, valid_from, valid_to]
+      required: [employee_id, skill_type_id, skill_id, valid_from]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_certifications WHERE id = :id", status: 404, code: EMPLOYEES_CERTIFICATION_NOT_FOUND, message: Certification not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:valid_to AS DATE) IS NULL OR CAST(:valid_to AS DATE) >= CAST(:valid_from AS DATE)", status: 422, code: EMPLOYEES_CERTIFICATION_DATES_INVALID, message: The end date must be after the start date. }
+      result: { query: "SELECT * FROM employee_certifications WHERE id = :id" }
+    fields:
+      - { field: employee_id, label: Employee, type: text, required: true }
+      - { field: skill_type_id, label: Certification Type, type: text, required: true }
+      - { field: skill_id, label: Certification, type: text, required: true }
+      - { field: level_name, label: Level, type: text }
+      - { field: valid_from, label: From, type: date, required: true }
+      - { field: valid_to, label: To, type: date }
+  - id: delete_employee_certification
+    type: server
+    permission: employees.write
+    action: employees.certifications.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [employee_certification_detail, employee_certifications]
+    mutation:
+      operation: delete
+      table: employee_certifications
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM employee_certifications WHERE id = :id", status: 404, code: EMPLOYEES_CERTIFICATION_NOT_FOUND, message: Certification not found. }]

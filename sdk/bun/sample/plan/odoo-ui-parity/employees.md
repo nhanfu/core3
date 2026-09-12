@@ -918,3 +918,52 @@ runtime is unavailable in this session, and no alternate authenticated browser
 runtime was available. No visual-parity claim is made and no screenshots are
 invented; the required artifact directory remains reserved at
 `/tmp/core3-odoo-parity/employees-batch6-20260912/`.
+
+## Certifications bounded action (2026-09-12)
+
+This batch implements the next uncovered installed Employees/Learning action
+after Skill Types: `Employees > Learning > Certifications`. The Odoo source
+trace is `/home/nhanjs/projects/odoo/addons/hr_skills/views/hr_views.xml`:
+`action_hr_employee_skill_certification` (lines 584-594) is named
+Certifications, uses model `hr.employee.skill`, has the explicit
+`is_certification=True` domain, context `show_employee=True` plus default
+grouping by type, and `list,form` views. The menu is
+`hr_certification_menu` under `hr_skill_learning_menu` (lines 610-622), whose
+parent Learning menu is HR-user-only. The list source is the certification
+list at `hr_views.xml` lines 540-582: New, Employee, Certification, optional
+Level/Type, From/To validity dates, and validity decorations. Search supports
+Certification/Employee, Valid certification, and grouping by Certification,
+Type, and Employee. The form is the certification-specific inherited form at
+lines 400-444. ACL lines 12-13 of
+`/home/nhanjs/projects/odoo/addons/hr_skills/security/ir.model.access.csv`
+grant HR users full CRUD and ordinary users read/write/create without unlink;
+Core3 keeps the visible route read-gated and reserves mutations for
+`employees.write`, with delete explicitly write-gated as the service boundary.
+
+Core3 adds `/employees/certifications` and
+`/employees/certifications/detail`, with layout-only pages joined to
+`api/certifications.yaml` and `api/certification-detail.yaml` by page IDs.
+Migration `20260912120000-021-certifications.yaml` seeds four stable employee
+certifications, including valid, expiring, expired, and archived-employee
+states, and evaluates validity against fixed `2026-01-15` data. The list
+preserves Odoo's List/Kanban action surface, validity filter, three group-by
+facets, employee/certification/date columns, row navigation, New, and empty
+and 503 transport states. The detail contract covers populated/not-found
+records, create/update/delete, required values, reversed date validation,
+duplicate ranges, and optimistic stale writes.
+
+Focused evidence:
+
+- `bun test test/employees_certifications.integration.test.ts`: 3 tests, 25
+  assertions passed.
+- `bun run audit`: 610 pages, 618 routes, and 1049 datasources passed.
+- `bun run lint` from `sdk/bun` passed; `git diff --check` passed.
+
+Authenticated Core3 and Odoo captures were attempted under
+`/tmp/core3-odoo-parity/employees-batch7-20260912/` for 1440x900 and 390x844.
+No visual-parity claim is made: this session has no persistent
+`playwright-interactive` `js_repl`, the Playwright package is unavailable, and
+the Core3 listener at `127.0.0.1:3003` was not running (`curl` returned
+connection refused). Odoo at `127.0.0.1:8069` returned the unauthenticated
+database/login page (HTTP 200), but no authenticated certification render was
+available. No screenshots were invented or committed.

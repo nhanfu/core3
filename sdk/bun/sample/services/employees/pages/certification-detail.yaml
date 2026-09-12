@@ -1,0 +1,16 @@
+title: Certification
+page: { id: employee-certification-detail, route: /employees/certifications/detail, breadcrumb: [Employees, Learning, Certifications, Certification], auth: { require: [employees.read] } }
+components:
+  - type: OdooFormView
+    source: employee_certification_detail
+    title_field: certification_name
+    status_field: validity_status
+    groups:
+      - title: Certification
+        fields:
+          - { field: employee_name, label: Employee, type: text }
+          - { field: certification_name, label: Certification, type: text }
+          - { field: skill_level_name, label: Level, type: text }
+          - { field: valid_from, label: From, type: date }
+          - { field: valid_to, label: To, type: date }
+page: { id: employee-certification-detail }

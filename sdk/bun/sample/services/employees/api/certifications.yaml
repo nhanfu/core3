@@ -1,0 +1,50 @@
+page: { id: employee-certifications }
+datasources:
+  - id: employee_certifications
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_CERTIFICATIONS_UNAVAILABLE, message: Certifications are temporarily unavailable. } }
+    query: "SELECT c.id, c.row_version, c.employee_id, e.name AS employee_name, s.name AS certification_name, t.name AS skill_type_name, c.level_name AS skill_level_name, CAST(c.valid_from AS VARCHAR) AS valid_from, CAST(c.valid_to AS VARCHAR) AS valid_to, CASE WHEN c.valid_to IS NULL OR c.valid_to >= DATE '2026-01-15' THEN 'valid' ELSE 'expired' END AS valid_state, CASE WHEN c.valid_to IS NULL OR c.valid_to >= DATE '2026-01-15' THEN 'Valid' ELSE 'Expired' END AS validity_status FROM employee_certifications c JOIN employees e ON e.id = c.employee_id JOIN employee_skills s ON s.id = c.skill_id JOIN employee_skill_types t ON t.id = c.skill_type_id WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND (:valid_state IS NULL OR (CASE WHEN c.valid_to IS NULL OR c.valid_to >= DATE '2026-01-15' THEN 'valid' ELSE 'expired' END) = :valid_state) AND (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR s.name ILIKE '%' || :q || '%' OR t.name ILIKE '%' || :q || '%') ORDER BY c.valid_from DESC, e.name, c.id"
+actions:
+  - id: view_employee_certification
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/certifications/detail
+    params: { id: '{row.id}' }
+  - id: create_employee_certification
+    type: server_form
+    permission: employees.write
+    title: New Certification
+    action: employees.certifications.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_certifications]
+    mutation:
+      operation: insert
+      table: employee_certifications
+      fields: [employee_id, skill_type_id, skill_id, level_name, valid_from, valid_to, row_version]
+      required: [employee_id, skill_type_id, skill_id, valid_from]
+      defaults: { valid_from: '2026-01-15', row_version: 1 }
+      before_steps: [{ query: "SELECT 'employee-cert-' || regexp_replace(lower(trim(CAST(:employee_id AS VARCHAR) || '-' || CAST(:skill_id AS VARCHAR) || '-' || CAST(:valid_from AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:employee_id AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:skill_type_id AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:skill_id AS VARCHAR))) > 0 AND CAST(:valid_from AS DATE) IS NOT NULL AND (CAST(:valid_to AS DATE) IS NULL OR CAST(:valid_to AS DATE) >= CAST(:valid_from AS DATE))", status: 422, code: EMPLOYEES_CERTIFICATION_DATES_INVALID, message: Enter a certification, employee, and valid date range. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_certifications WHERE employee_id = :employee_id AND skill_id = :skill_id AND valid_from = CAST(:valid_from AS DATE) AND COALESCE(valid_to, DATE '9999-12-31') = COALESCE(CAST(:valid_to AS DATE), DATE '9999-12-31'))", status: 409, code: EMPLOYEES_CERTIFICATION_EXISTS, message: This certification already exists for the employee and date range. }
+      result: { query: "SELECT * FROM employee_certifications WHERE id = :id" }
+    fields:
+      - { field: employee_id, label: Employee, type: text, required: true }
+      - { field: skill_type_id, label: Certification Type, type: text, required: true }
+      - { field: skill_id, label: Certification, type: text, required: true }
+      - { field: level_name, label: Level, type: text }
+      - { field: valid_from, label: From, type: date, required: true }
+      - { field: valid_to, label: To, type: date }
+  - id: delete_employee_certification
+    type: server
+    permission: employees.write
+    action: employees.certifications.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [employee_certifications]
+    mutation:
+      operation: delete
+      table: employee_certifications
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM employee_certifications WHERE id = :id", status: 404, code: EMPLOYEES_CERTIFICATION_NOT_FOUND, message: Certification not found. }]
