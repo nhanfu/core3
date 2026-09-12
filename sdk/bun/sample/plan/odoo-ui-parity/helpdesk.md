@@ -28,6 +28,17 @@ These files prove only that a Core3 Helpdesk service boundary exists. They are n
 
 An authenticated Core3 capture was attempted after starting the isolated sample with `PORT=3101 FRONTEND_PORT=3102 bun run dev --db=ddb --memory`. Startup reached service discovery and reported `helpdesk=duckdb-memory`, but stopped before serving the UI because this checkout lacks the installed workspace dependencies: `vite: command not found` and `Cannot find module '@core3/server/module'`. Consequently no authenticated 1440x900 or 390x844 capture was possible, and no image artifacts were created. This is an environment limitation, not visual evidence for or against parity.
 
+## Wave 2 source-gate decision (2026-09-12)
+
+The requested `../odoo` path resolves to `/home/nhanjs/projects/core3-worktrees/odoo`, which is absent. The available checkout was inspected at `/home/nhanjs/projects/odoo` (`659759969d535d286b656c96b675e4612b925ddd`). The following source checks returned no Helpdesk addon evidence:
+
+- no `addons/helpdesk/` directory;
+- no Helpdesk-named `__manifest__.py` or `__openerp__.py`;
+- no Python, XML, CSV, YAML, or YML addon source containing `helpdesk`, `helpdesk.ticket`, or `helpdesk.team` in an addon implementation path; and
+- no Helpdesk action/view/menu/security/demo source from which a Core3 page or action could be derived.
+
+The repository does contain unrelated test fixtures and base module catalog/translation references containing the word “Helpdesk”; these do not provide the addon implementation or action evidence required by this plan. Therefore Wave 2 has no source-backed UI/UX slice to implement. The exact blocker remains: provide an Odoo checkout containing `addons/helpdesk/` and an authenticated Odoo database exposing its installed actions before Helpdesk parity work can proceed.
+
 ## Dependency / next gate
 
 Keep Helpdesk implementation blocked at the source gate. The next gate is to provide both:
