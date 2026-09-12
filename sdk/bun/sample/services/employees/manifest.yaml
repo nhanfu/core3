@@ -21,6 +21,10 @@ menu:
       label: Reporting
       items:
         - { path: /employees/departments, label: Departments, icon: hierarchy, permission: employees.read }
+    - id: learning
+      label: Learning
+      items:
+        - { path: /employees/training-attendances, label: Training Attendances, icon: education, permission: employees.read }
     - id: configuration
       label: Configuration
       items:

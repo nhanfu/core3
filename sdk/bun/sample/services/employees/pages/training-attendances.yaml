@@ -1,0 +1,41 @@
+title: Training Attendances
+page: { id: employee-training-attendances, route: /employees/training-attendances, breadcrumb: [Employees, Learning, Training Attendances], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_training_attendances
+    create_action: create_employee_training_attendance
+    create_label: New
+    search: { label: Resume Lines, placeholder: 'Search training, employee, or section...' }
+    filters:
+      - { field: company_name, label: Company, options_source: employee_training_companies }
+      - { field: department_name, label: Department, options_source: employee_training_departments }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: kanban, label: Kanban, icon: grid, mobile: true, group_by: '', card: { title: name, fields: [{ field: employee_name, label: Employee }, { field: date_start, label: Date }, { field: course_type, label: Type }] } }
+      - { id: calendar, label: Calendar, icon: calendar, date_field: date_start, mobile: true }
+    inline_edit:
+      create_action: create_employee_training_attendance
+      update_action: update_employee_training_attendance
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: employee_name, type: text, required: true }
+        - { field: name, type: text, required: true, placeholder: Training title }
+        - { field: date_start, type: date, required: true }
+        - { field: line_type_name, type: text, required: true, placeholder: Resume section }
+        - { field: duration, type: number, default: 0 }
+    columns:
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell, mobile: true }
+      - { field: name, label: Training Title }
+      - { field: date_start, label: Date }
+      - { field: course_type, label: Type }
+      - { field: line_type_name, label: Resume Section, optional: show }
+      - { field: duration, label: Number of Hours, optional: hide, align: right }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: department_name, label: Department, optional: hide }
+      - { field: id, label: '', sortable: false, actions: [{ id: delete_employee_training_attendance, label: Delete, icon: trash, variant: danger }] }
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No training attendances found, description: Add a training attendance or adjust your search. }

@@ -847,3 +847,18 @@ The required paired screenshots were attempted once under
 The persistent browser REPL was unavailable, so shell Playwright was the one
 runtime fallback; screenshots remain outside Git. Missing captures are an
 explicit runtime limitation, not invented evidence.
+
+## Training Attendances bounded action (2026-09-12)
+
+Local `hr_skills` source inspection identified Learning > Training Attendances
+on `hr.resume.line`, with list, kanban, form, and calendar views. Core3 adds
+`/employees/training-attendances` with a page/API pair joined by `page.id`,
+deterministic course fixtures, and read access plus HR-user CRUD guards. The
+focused contract covers search, facets, empty/transport states, validation,
+stale rows, missing rows, and permission boundaries.
+
+The focused test passes 3 tests and 30 assertions. Capture was attempted under
+`/tmp/core3-odoo-parity/employees-batch4-20260912/`; Vite failed with
+`EMFILE: too many open files`, and the built-frontend fallback lacked the event
+mediator. No rendered parity claim or screenshot is made; images remain outside
+Git.

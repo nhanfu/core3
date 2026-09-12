@@ -1,0 +1,74 @@
+page: { id: employee-training-attendances }
+datasources:
+  - id: employee_training_attendances
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_TRAINING_ATTENDANCES_UNAVAILABLE, message: Training attendances are temporarily unavailable. } }
+    query: "SELECT id, row_version, employee_name, name, date_start, course_type, line_type_name, duration, description, company_name, department_name FROM employee_training_attendances WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND (:q IS NULL OR employee_name ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR line_type_name ILIKE '%' || :q || '%') AND (:company_name IS NULL OR :company_name = 'all' OR company_name = :company_name) AND (:department_name IS NULL OR :department_name = 'all' OR department_name = :department_name) ORDER BY date_start DESC, id"
+  - id: employee_training_companies
+    permission: employees.read
+    query: "SELECT DISTINCT company_name AS id, company_name AS label FROM employee_training_attendances ORDER BY company_name"
+  - id: employee_training_departments
+    permission: employees.read
+    query: "SELECT DISTINCT department_name AS id, department_name AS label FROM employee_training_attendances WHERE department_name IS NOT NULL ORDER BY department_name"
+actions:
+  - id: create_employee_training_attendance
+    type: server_form
+    permission: employees.write
+    title: New training attendance
+    action: employees.training_attendances.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_training_attendances]
+    mutation:
+      operation: insert
+      table: employee_training_attendances
+      fields: [employee_name, name, date_start, line_type_name, duration, course_type, description, company_name, department_name]
+      required: [employee_name, name, date_start, line_type_name]
+      defaults: { course_type: Training, duration: 0, company_name: My Company (San Francisco), department_name: People, row_version: 1 }
+      before_steps: [{ query: "SELECT 'training-attendance-' || regexp_replace(lower(trim(CAST(:employee_name AS VARCHAR) || '-' || CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:employee_name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:line_type_name AS VARCHAR))) > 0 AND CAST(:date_start AS DATE) IS NOT NULL", status: 422, code: EMPLOYEES_TRAINING_ATTENDANCE_VALUES_INVALID, message: Enter an employee, training title, date, and resume section. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:duration AS DOUBLE) >= 0", status: 422, code: EMPLOYEES_TRAINING_ATTENDANCE_DURATION_INVALID, message: Number of hours must be zero or greater. }
+      result: { query: "SELECT * FROM employee_training_attendances WHERE id = :id" }
+    fields:
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: name, label: Training Title, type: text, required: true }
+      - { field: date_start, label: Date, type: date, required: true }
+      - { field: line_type_name, label: Resume Section, type: text, required: true }
+      - { field: duration, label: Number of Hours, type: number, default: 0 }
+  - id: update_employee_training_attendance
+    type: server_form
+    permission: employees.write
+    title: Edit training attendance
+    action: employees.training_attendances.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [employee_training_attendances]
+    mutation:
+      operation: update
+      table: employee_training_attendances
+      fields: [employee_name, name, date_start, line_type_name, duration, course_type, description, company_name, department_name]
+      required: [employee_name, name, date_start, line_type_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_training_attendances WHERE id = :id", status: 404, code: EMPLOYEES_TRAINING_ATTENDANCE_NOT_FOUND, message: Training attendance not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:duration AS DOUBLE) >= 0", status: 422, code: EMPLOYEES_TRAINING_ATTENDANCE_DURATION_INVALID, message: Number of hours must be zero or greater. }
+      result: { query: "SELECT * FROM employee_training_attendances WHERE id = :id" }
+    fields:
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: name, label: Training Title, type: text, required: true }
+      - { field: date_start, label: Date, type: date, required: true }
+      - { field: line_type_name, label: Resume Section, type: text, required: true }
+      - { field: duration, label: Number of Hours, type: number }
+  - id: delete_employee_training_attendance
+    type: server
+    permission: employees.write
+    action: employees.training_attendances.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [employee_training_attendances]
+    mutation:
+      operation: delete
+      table: employee_training_attendances
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM employee_training_attendances WHERE id = :id", status: 404, code: EMPLOYEES_TRAINING_ATTENDANCE_NOT_FOUND, message: Training attendance not found. }]

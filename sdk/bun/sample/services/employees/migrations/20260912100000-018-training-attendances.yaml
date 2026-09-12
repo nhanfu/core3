@@ -1,0 +1,32 @@
+version: 0.0.18
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_training_attendances (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        employee_name VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        date_start DATE NOT NULL,
+        course_type VARCHAR NOT NULL DEFAULT 'Training',
+        line_type_name VARCHAR NOT NULL,
+        duration DOUBLE NOT NULL DEFAULT 0,
+        description VARCHAR,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        department_name VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      INSERT OR IGNORE INTO employee_training_attendances (id, employee_name, name, date_start, course_type, line_type_name, duration, description, company_name, department_name) VALUES
+        ('training-attendance-ada-python', 'Ada Lovelace', 'Python Fundamentals', DATE '2026-01-08', 'Training', 'Technical Skills', 8, 'Core Python and testing workshop.', 'My Company (San Francisco)', 'Engineering'),
+        ('training-attendance-grace-security', 'Grace Hopper', 'Secure Coding', DATE '2026-01-22', 'Training', 'Technical Skills', 6, 'Application security fundamentals.', 'My Company (San Francisco)', 'Engineering'),
+        ('training-attendance-linus-leadership', 'Linus Torvalds', 'Team Leadership', DATE '2026-02-03', 'Course', 'Soft Skills', 4, 'Practical coaching and feedback.', 'My Company (San Francisco)', 'Product'),
+        ('training-attendance-margaret-orientation', 'Margaret Hamilton', 'New Hire Orientation', DATE '2026-02-10', 'Training', 'Internal Training', 3, 'Company and safety orientation.', 'My Company (San Francisco)', 'People');
+      UPDATE employee_training_attendances SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_training_attendances;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
