@@ -299,6 +299,7 @@
   .o-list-view-inline-edit .o-list-table .o-list-selector { display: none; }
   .o-list-view-inline-edit .o-list-table th,
   .o-list-view-inline-edit .o-list-table td { max-width: none; overflow: hidden; padding-right: 8px; padding-left: 8px; text-overflow: ellipsis; }
+  .o-list-view-inline-edit .o-list-table [data-column='sequence'] { width: 40px; }
   .o-list-view-inline-edit .o-list-table [data-column='name'] { width: 39%; }
   .o-list-view-inline-edit .o-list-table [data-column='value'] { width: 20%; }
   .o-list-view-inline-edit .o-list-table [data-column='pos_config_ids'] { width: 41%; }

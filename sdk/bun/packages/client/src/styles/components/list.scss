@@ -244,6 +244,7 @@
 
 @media (min-width: 601px) {
   .o-list-view-inline-edit .o-list-table { table-layout: fixed; }
+  .o-list-view-inline-edit .o-list-table [data-column='sequence'] { width: 40px; }
   .o-list-view-inline-edit .o-list-table [data-column='name'] { width: 32%; }
   .o-list-view-inline-edit .o-list-table [data-column='value'] { width: 105px; }
 }
