@@ -1,0 +1,15 @@
+version: 0.0.24
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS acknowledged_at DATE;
+      UPDATE purchase_orders
+      SET acknowledged_at = DATE '2026-01-15'
+      WHERE acknowledged = true AND acknowledged_at IS NULL;
+    down: |
+      ALTER TABLE purchase_orders DROP COLUMN IF EXISTS acknowledged_at;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

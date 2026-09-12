@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_DETAIL_UNAVAILABLE, message: Purchase order details are temporarily unavailable. } }
-    query: "SELECT id, row_version, name, vendor_name, contact_name, product_name, quantity, qty_received, unit_price, state, CAST(order_date AS VARCHAR) AS order_date, CAST(order_date AS VARCHAR) AS confirmation_date, CAST(expected_date AS VARCHAR) AS expected_date, CAST(expected_date AS VARCHAR) AS expected_arrival, reference, currency, 'Main Company (San Francisco)' AS company_name, buyer_name, CASE WHEN state IN ('Confirmed', 'Received') THEN 'Nothing to Bill' ELSE 'To Bill' END AS billing_status, total_amount, printf('%s %,.2f', currency, CAST(total_amount AS DOUBLE)) AS total_amount_display, (SELECT COUNT(*) FROM purchase_order_lines l WHERE l.order_id = purchase_orders.id) AS line_count, (SELECT COUNT(*) FROM purchase_receipts r WHERE r.purchase_order_id = purchase_orders.id) AS receipt_count, (SELECT r.id FROM purchase_receipts r WHERE r.purchase_order_id = purchase_orders.id ORDER BY r.id LIMIT 1) AS receipt_id, locked, acknowledged, notes FROM purchase_orders WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, name, vendor_name, contact_name, product_name, quantity, qty_received, unit_price, state, CAST(order_date AS VARCHAR) AS order_date, CAST(order_date AS VARCHAR) AS confirmation_date, CAST(expected_date AS VARCHAR) AS expected_date, CAST(expected_date AS VARCHAR) AS expected_arrival, reference, currency, 'Main Company (San Francisco)' AS company_name, buyer_name, CASE WHEN state IN ('Confirmed', 'Received') THEN 'Nothing to Bill' ELSE 'To Bill' END AS billing_status, total_amount, printf('%s %,.2f', currency, CAST(total_amount AS DOUBLE)) AS total_amount_display, (SELECT COUNT(*) FROM purchase_order_lines l WHERE l.order_id = purchase_orders.id) AS line_count, (SELECT COUNT(*) FROM purchase_receipts r WHERE r.purchase_order_id = purchase_orders.id) AS receipt_count, (SELECT r.id FROM purchase_receipts r WHERE r.purchase_order_id = purchase_orders.id ORDER BY r.id LIMIT 1) AS receipt_id, locked, acknowledged, CAST(acknowledged_at AS VARCHAR) AS acknowledged_at, notes FROM purchase_orders WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
   - id: purchase_order_lines
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_ORDER_LINES_UNAVAILABLE, message: Purchase order lines are temporarily unavailable. } }
@@ -15,6 +15,20 @@ actions:
   - { id: send_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.send, handler: order_transition, workflow: purchase_orders, operation: send, refresh: [purchase_order_detail] }
   - { id: confirm_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.confirm, handler: order_transition, workflow: purchase_orders, operation: confirm, refresh: [purchase_order_detail] }
   - { id: receive_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.receive, handler: order_transition, workflow: purchase_orders, operation: receive, refresh: [purchase_order_detail] }
+  - id: acknowledge_purchase_order_detail
+    type: server
+    permission: purchase.write
+    action: purchase.orders.acknowledge
+    handler: yaml_mutation
+    operation: update
+    refresh: [purchase_order_detail]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Confirmed' AND COALESCE(acknowledged, false) = false AND COALESCE(locked, false) = false AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_ACKNOWLEDGE_INVALID, message: This purchase order is already acknowledged, locked, or no longer confirmed. Reload before acknowledging. }
+      steps:
+        - { query: "UPDATE purchase_orders SET acknowledged = true, acknowledged_at = DATE '2026-01-15', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'Confirmed' AND COALESCE(acknowledged, false) = false AND COALESCE(locked, false) = false AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_ACKNOWLEDGE_STALE, message: This purchase order changed or is no longer available for acknowledgement. Reload before acknowledging. }
+      result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
   - { id: cancel_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.cancel, handler: order_transition, workflow: purchase_orders, operation: cancel, refresh: [purchase_order_detail] }
   - id: add_purchase_order_line
     type: server_form
