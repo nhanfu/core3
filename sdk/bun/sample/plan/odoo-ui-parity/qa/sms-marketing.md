@@ -8,17 +8,20 @@
 - Artifacts: /tmp/core3-odoo-parity/module-matrix-20260912/sms-marketing-desktop.png and sms-marketing-mobile.png.
 - Boundary: this is route/render smoke evidence only; it does not sign off the complete menu tree, CRUD, permissions, workflows, persistence, or paired Odoo visual parity.
 
-QA state: dormant
+QA state: qa-in-progress
 QA slot: dispatchable sms-marketing assignment (pending wave dispatch)
 Module owner: sms-marketing module owner
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: working tree after SMS Marketing QA planning
+
+Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-marketing.md). It is the module-level source for campaigns, lists, contacts, reports, actors, persistence, Temporal, and paired Odoo gates.
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | SMS_MARKETING-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
+| SMS-FUNC-001 | SMS campaign, list, contact, and analysis contract corpus | `bun test ./test/sms_marketing*.integration.test.ts` — 12 tests, 85 assertions | pass |
 
 ## Bugs and retests
 
