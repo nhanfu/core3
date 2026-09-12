@@ -39,6 +39,7 @@ components:
     page_size: 50
     row_key: id
     row_actions: menu
+    row_open_action: open_website_page_detail
     actions:
       - { id: edit_website_page, label: Edit, permission: website.write, variant: secondary }
       - { id: publish_website_page, label: Publish, permission: website.write, variant: primary, show_if: "row.state === 'Draft'" }

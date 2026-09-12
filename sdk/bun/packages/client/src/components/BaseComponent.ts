@@ -197,6 +197,16 @@ export class BaseComponent {
     if (typeof this._onAction === 'function') {
       return this._onAction(action, params, this);
     }
+    // Nested components such as chatter attachment panels are owned by the
+    // form view, while the action dispatcher is installed on that form view.
+    // Walk the ownership chain so nested controls can submit the form action.
+    let owner = this.parent;
+    while (owner) {
+      if (typeof owner._onAction === 'function') {
+        return owner._onAction(action, params, this);
+      }
+      owner = owner.parent;
+    }
     const root = this.root;
     if (typeof root._transport?.submit === 'function') {
       return root._transport.submit(action, params);

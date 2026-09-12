@@ -135,4 +135,21 @@ describe('Website Page Manager parity', () => {
     expect(api.actions.find((action: any) => action.id === 'unpublish_website_page')).toMatchObject({ permission: 'website.manage' });
     expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['website.read', 'website.write', 'website.manage']));
   });
+
+  test('joins the page detail attachment manager to the page and asset actions', () => {
+    const page = yaml('pages/page-detail.yaml');
+    const api = yaml('api/page-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    expect(page.page).toMatchObject({ id: 'website-page-detail', route: '/website-pages/detail' });
+    expect(api.page.id).toBe(page.page.id);
+    expect(form).toMatchObject({
+      source: 'website_page_detail',
+      attachment_source: 'website_page_assets',
+      attachment_upload_action: 'upload_website_page_asset',
+      attachment_download_action: 'download_website_page_asset',
+    });
+    expect(api.datasources.map((source: any) => source.id)).toEqual(['website_page_detail', 'website_page_assets']);
+    expect(api.actions.find((action: any) => action.id === 'upload_website_page_asset')).toMatchObject({ type: 'upload', kind: 'website_page_asset', permission: 'website.write' });
+    expect(api.actions.find((action: any) => action.id === 'download_website_page_asset')).toMatchObject({ type: 'download', kind: 'website_page_asset', permission: 'website.read' });
+  });
 });

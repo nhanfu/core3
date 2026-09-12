@@ -1,0 +1,23 @@
+page: { id: website-page-detail, route: /website-pages/detail, breadcrumb: [Website, Site, Content, Pages, Page], auth: { require: [website.read] } }
+components:
+  - type: OdooFormView
+    source: website_page_detail
+    editable: false
+    title_field: name
+    attachment_source: website_page_assets
+    attachment_page_size: 100
+    attachment_label: Page assets
+    attachment_accept: image/*,.svg,.pdf,.txt
+    add_attachment_label: Add page asset
+    no_attachments_label: No page assets
+    uploading_label: Uploading asset…
+    upload_failed_label: Asset upload failed
+    download_label: Download asset
+    attachment_upload_action: upload_website_page_asset
+    attachment_download_action: download_website_page_asset
+    header_actions:
+      - { id: back_to_website_pages, label: Back, variant: secondary }
+      - { id: edit_website_page_detail, label: Edit, variant: primary, permission: website.write }
+    groups:
+      - { title: Page, columns: 2, fields: [{ field: name, label: Page Title }, { field: url, label: Page URL }, { field: website_name, label: Website }, { field: state, label: Status, type: StatusChip }] }
+      - { title: Content, columns: 1, fields: [{ field: content_html, label: Page content, type: textarea }] }

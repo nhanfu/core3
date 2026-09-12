@@ -570,6 +570,8 @@ export class PageRuntime extends BaseComponent {
             uploadMeta.contract_id = resolveActionParams(actionDef.params || { contract_id: '{state.id}' }, { ...ctx, row: row || {} }).contract_id;
           } else if (actionDef.kind === 'company_document') {
             uploadMeta.company_id = resolveActionParams(actionDef.params || { company_id: '{state.id}' }, { ...ctx, row: row || {} }).company_id;
+          } else if (actionDef.kind === 'website_page_asset') {
+            uploadMeta.page_id = resolveActionParams(actionDef.params || { page_id: '{row.id}' }, rowCtx).page_id;
           } else if (actionDef.kind === 'master_data_import') {
             uploadMeta.scope = actionDef.scope;
           }
@@ -595,8 +597,10 @@ export class PageRuntime extends BaseComponent {
               ? `/org/company-documents/${encodeURIComponent(String(row.id))}`
               : actionDef.kind === 'order_attachment'
                 ? `/orders/attachments/${encodeURIComponent(String(row.id))}`
-                : actionDef.kind === 'expense_attachment'
+              : actionDef.kind === 'expense_attachment'
                   ? `/expenses/attachments/${encodeURIComponent(String(row.id))}`
+                : actionDef.kind === 'website_page_asset'
+                  ? `/website/page-assets/${encodeURIComponent(String(row.id))}`
                 : `/chat/attachments/${encodeURIComponent(String(row.id))}`;
           await client.downloadFile(
             path,
