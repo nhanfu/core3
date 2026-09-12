@@ -1,0 +1,4 @@
+operations:
+  ecommerce.public.shop:
+    result_key: products
+    query: "SELECT id, name, internal_reference, product_type, category, sales_price, website_sequence, company_name FROM ecommerce_products WHERE active = TRUE AND is_published = TRUE AND company_name = 'My Company' AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') ORDER BY website_sequence, name"
