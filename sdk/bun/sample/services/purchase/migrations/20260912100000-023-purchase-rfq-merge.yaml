@@ -7,8 +7,10 @@ type:
       VALUES ('po-demo-009', 'PO/2026/0009', 'vendor-demo-002', 'Northwind Components', 'USB-C docking stations', 12, 0, 129.00, 'Draft', DATE '2026-09-01', DATE '2026-09-20', 'Docking station top-up', 'rfq', 'approved', false, false, 'USD', 'Mitchell Admin', 1548.00, 'Grace Chen', 'Merge candidate for the RFQ action.');
       INSERT OR IGNORE INTO purchase_order_lines(id, order_id, sequence, display_type, product_name, description, quantity, qty_received, qty_billed, uom, unit_price, tax_rate, line_total)
       VALUES ('purchase-line-demo-009-10', 'po-demo-009', 10, 'product', 'USB-C docking stations', 'USB-C docking stations', 12, 0, 0, 'Units', 129.00, 0, 1548.00);
+      INSERT OR IGNORE INTO purchase_order_lines(id, order_id, sequence, display_type, product_name, description, quantity, qty_received, qty_billed, uom, unit_price, tax_rate, line_total)
+      VALUES ('purchase-line-demo-002-10', 'po-demo-002', 10, 'product', 'USB-C docking stations', 'USB-C docking stations', 24, 0, 0, 'Units', 129.00, 0, 3096.00);
     down: |
-      DELETE FROM purchase_order_lines WHERE id = 'purchase-line-demo-009-10';
+      DELETE FROM purchase_order_lines WHERE id IN ('purchase-line-demo-002-10', 'purchase-line-demo-009-10');
       DELETE FROM purchase_orders WHERE id = 'po-demo-009';
   duckdb: postgres
   mysql: postgres

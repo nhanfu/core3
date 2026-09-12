@@ -133,7 +133,10 @@ describe('Purchase Orders list and detail parity', () => {
       { id: 'po-demo-002', state: 'Cancelled' },
       { id: 'po-demo-009', state: 'Draft' },
     ]);
-    expect((await repository.query("SELECT quantity, total_amount, row_version FROM purchase_orders WHERE id = 'po-demo-009'"))[0]).toMatchObject({ quantity: 12, total_amount: 1548, row_version: 2 });
+    expect((await repository.query("SELECT quantity, total_amount, row_version FROM purchase_orders WHERE id = 'po-demo-009'"))[0]).toMatchObject({ quantity: 36, total_amount: 4644, row_version: 2 });
+    expect(await repository.query("SELECT order_id, quantity, unit_price, line_total FROM purchase_order_lines WHERE order_id = 'po-demo-009' ORDER BY id")).toEqual([
+      { order_id: 'po-demo-009', quantity: 36, unit_price: 129, line_total: 4644 },
+    ]);
 
     await expect(repository.executeMutation(merge.mutation, { selectedIds: ['po-demo-003', 'po-demo-006'] })).rejects.toThrow('Please select at least two unlocked RFQs');
     await expect(repository.executeMutation(merge.mutation, { selectedIds: ['po-demo-001', 'po-demo-009'] })).rejects.toThrow('Selected RFQs must have the same vendor');

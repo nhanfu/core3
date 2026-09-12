@@ -980,9 +980,16 @@ minimum-selection, row-version, and permission guards. The oldest selected
 RFQ remains the survivor; quantities and totals are combined and the other
 selected records become cancelled.
 
+The merge mutation follows Odoo's `_merge_po_line` behavior from
+`addons/purchase/models/purchase_order_line.py`: matching product lines are
+coalesced at the lower unit price, totals are recalculated, and duplicate
+product lines are removed before remaining section/note lines move to the
+survivor. The deterministic fixture includes both RFQ lines and the focused
+test verifies the 36-unit/4644 USD result plus duplicate-line cleanup.
+
 The implementation adds deterministic migration `0.0.23` and focused coverage
 inside `test/purchase.integration.test.ts`. The targeted merge test passes
-with 7 assertions. The broader existing Purchase suite currently has two
+with the expanded line-aggregation assertions. The broader existing Purchase suite currently has two
 unrelated 5-second fixture-query timeouts under the shared multi-runtime host;
 those are not claimed as green. No fresh Core3/Odoo screenshot is claimed for
 this slice and no image is committed.
