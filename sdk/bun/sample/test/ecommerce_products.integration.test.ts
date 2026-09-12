@@ -44,6 +44,10 @@ describe('eCommerce Products parity', () => {
     await expect(repository.executeMutation(create.mutation, { values: { name: 'Duplicate', internal_reference: 'QA-BOTTLE-001' } })).rejects.toMatchObject({ status: 409, code: 'ECOMMERCE_PRODUCT_REFERENCE_EXISTS' });
     const importer = api.actions.find((action: any) => action.id === 'import_ecommerce_products');
     expect(importer.permission).toBe('ecommerce.write');
+    await expect(repository.executeMutation(importer.mutation, {
+      current_company_name: 'Other Company',
+      values: { product_list: 'Cross Company|ECOM-CROSS-001|10', company_name: 'My Company' },
+    })).rejects.toMatchObject({ status: 403, code: 'ECOMMERCE_COMPANY_SCOPE_REQUIRED' });
     const imported = await repository.executeMutation(importer.mutation, { values: { product_list: 'Travel Mug|ECOM-IMP-001|25.50\nDesk Lamp|ECOM-IMP-002|44.00' } });
     expect(imported).toMatchObject({ imported: 2 });
     await expect(repository.executeMutation(importer.mutation, { values: { product_list: 'Invalid row' } })).rejects.toMatchObject({ status: 422, code: 'ECOMMERCE_PRODUCT_IMPORT_INVALID' });
