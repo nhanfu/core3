@@ -1,0 +1,16 @@
+version: 0.0.27
+kind: data
+description: eCommerce cart demo data
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_carts (id, customer_id, customer_name, currency, state) VALUES ('ecommerce-cart-open-001', 'ecommerce-customer-001', 'Acme Corporation', 'USD', 'Open') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO ecommerce_cart_lines (id, cart_id, product_id, product_name, unit_price, quantity) VALUES
+        ('ecommerce-cart-line-001', 'ecommerce-cart-open-001', 'ecommerce-product-mug', 'Core3 Ceramic Mug', 18.00, 2),
+        ('ecommerce-cart-line-002', 'ecommerce-cart-open-001', 'ecommerce-product-chair', 'Ergonomic Office Chair', 249.00, 1)
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_cart_lines WHERE cart_id = 'ecommerce-cart-open-001'; DELETE FROM ecommerce_carts WHERE id = 'ecommerce-cart-open-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

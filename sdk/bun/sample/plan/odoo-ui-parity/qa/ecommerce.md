@@ -15,9 +15,10 @@ Verification trigger: feature-complete
 Candidate commit: working tree after Ecommerce Categories slice
 
 Current isolated runner inventory (4041): the manifest registers 8 routes;
- page/API contracts are present for all 8 manifest routes: Products, Pricelists,
+ page/API contracts are present for all 9 manifest routes: Products, Pricelists,
  Pricelist detail, Categories, Orders list/detail, Unpaid Orders, Abandoned
- Carts, and Customers. Shop/cart/checkout remains an unimplemented journey.
+ Carts, Customers, and Cart. Cart has persisted summary/line contracts; Shop
+ and checkout remain unimplemented journeys.
 
 Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md). It is the module-level source for catalog, pricelists, commerce workflows, actors, persistence, Temporal, and paired Odoo gates.
 
@@ -32,6 +33,7 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | ECOMMERCE-FUNC-005 | Unpaid Orders list/API and unpaid-state filter | `bun test ./test/ecommerce_unpaid_orders.integration.test.ts` — 2 tests, 8 assertions | pass |
 | ECOMMERCE-FUNC-006 | Abandoned Carts list/API and deterministic read boundary | `bun test ./test/ecommerce_abandoned_carts.integration.test.ts` — 2 tests, 9 assertions | pass |
 | ECOMMERCE-FUNC-007 | Customers list/API, summary data and order navigation | `bun test ./test/ecommerce_customers.integration.test.ts` — 2 tests, 8 assertions | pass |
+| ECOMMERCE-FUNC-008 | Cart summary/lines, totals, navigation and quantity guard | `bun test ./test/ecommerce_cart.integration.test.ts` — 2 tests, 7 assertions | pass |
 | ECOMMERCE-SCOPE-001 | Manifest-to-page/API coverage | Current implementation covers all 8 registered Ecommerce routes; shop/cart/checkout journey and mutations remain unimplemented | pass for route coverage; journey pending |
 
 ## Bugs and retests

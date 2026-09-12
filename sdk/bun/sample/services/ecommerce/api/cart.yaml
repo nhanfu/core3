@@ -1,0 +1,24 @@
+page: { id: ecommerce-cart }
+datasources:
+  - id: ecommerce_cart
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_CART_UNAUTHENTICATED, message: Sign in to view your cart. }
+      forbidden: { status: 403, code: ECOMMERCE_CART_FORBIDDEN, message: You do not have permission to view this cart. }
+      transport_error: { status: 503, code: ECOMMERCE_CART_UNAVAILABLE, message: Cart details are temporarily unavailable. }
+    query: "SELECT c.id, c.row_version, c.customer_name, c.currency, c.state, COALESCE(SUM(l.quantity), 0) AS item_count, COALESCE(SUM(l.quantity * l.unit_price), 0) AS amount_total FROM ecommerce_carts c LEFT JOIN ecommerce_cart_lines l ON l.cart_id = c.id WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND c.id = COALESCE(:id, 'ecommerce-cart-open-001') GROUP BY c.id, c.row_version, c.customer_name, c.currency, c.state"
+  - id: ecommerce_cart_lines
+    permission: ecommerce.read
+    query: "SELECT id, row_version, cart_id, product_id, product_name, unit_price, quantity, quantity * unit_price AS line_total FROM ecommerce_cart_lines WHERE cart_id = COALESCE(:cart_id, 'ecommerce-cart-open-001') ORDER BY id"
+actions:
+  - { id: continue_ecommerce_shopping, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
+  - id: update_ecommerce_cart_line
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.cart_lines.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_cart, ecommerce_cart_lines]
+    mutation: { operation: update, table: ecommerce_cart_lines, fields: [quantity], required: [quantity], concurrency: { required: true }, guards: [{ query: "SELECT 1 AS ok WHERE CAST(:quantity AS INTEGER) > 0", status: 422, code: ECOMMERCE_CART_QUANTITY_INVALID, message: Quantity must be positive. }], result: { query: "SELECT * FROM ecommerce_cart_lines WHERE id = :id" } }
+    fields: [{ field: quantity, label: Quantity, type: number, required: true, min: 1 }]

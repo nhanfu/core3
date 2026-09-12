@@ -35,12 +35,13 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-004 | Unpaid Orders | Unpaid list filters persisted orders and reuses the guarded read-only order detail route | pass: focused suite |
 | ECOM-FUNC-005 | Abandoned Carts | Abandoned cart list, deterministic search/empty states and read-only detail navigation work | pass: focused suite |
 | ECOM-FUNC-006 | Customers | Customer summary list, search/filter, deterministic data and order navigation work | pass: focused suite |
-| ECOM-FUNC-007 | Shop/cart | Product selection, cart add/update/remove and totals persist across reload | planned expansion |
-| ECOM-FUNC-008 | Checkout/order mutations | Customer, delivery, payment and order creation validate and persist atomically | planned expansion |
-| ECOM-FUNC-009 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
-| ECOM-FUNC-010 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |
-| ECOM-FUNC-011 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, prices, categories, carts, customers or orders | planned restart/migration gate |
-| ECOM-FUNC-012 | Assets/import/export/print | Exercise product images/assets, catalog import/export and exposed print actions | planned browser interaction gate |
+| ECOM-FUNC-007 | Cart | Persisted cart summary/lines, totals, product navigation and guarded quantity validation work | pass: focused suite; browser workflow planned |
+| ECOM-FUNC-008 | Shop | Public/product selection and add-to-cart journey persists cart state | planned expansion |
+| ECOM-FUNC-009 | Checkout/order mutations | Customer, delivery, payment and order creation validate and persist atomically | planned expansion |
+| ECOM-FUNC-010 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
+| ECOM-FUNC-011 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |
+| ECOM-FUNC-012 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, prices, categories, carts, customers or orders | planned restart/migration gate |
+| ECOM-FUNC-013 | Assets/import/export/print | Exercise product images/assets, catalog import/export and exposed print actions | planned browser interaction gate |
 
 ## Workflow and integration cases
 

@@ -30,6 +30,10 @@ menu:
           label: Customers
           icon: users
           permission: ecommerce.read
+        - path: /ecommerce/cart
+          label: Cart
+          icon: cart
+          permission: ecommerce.read
     - id: products
       label: Products
       items:
@@ -45,4 +49,3 @@ menu:
           label: Categories
           icon: folder
           permission: ecommerce.read
-

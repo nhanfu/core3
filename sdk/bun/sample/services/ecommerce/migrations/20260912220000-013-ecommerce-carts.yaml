@@ -1,0 +1,30 @@
+version: 0.0.26
+kind: schema
+description: eCommerce carts and cart lines
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_carts (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        customer_id VARCHAR,
+        customer_name VARCHAR NOT NULL,
+        currency VARCHAR NOT NULL DEFAULT 'USD',
+        state VARCHAR NOT NULL DEFAULT 'Open',
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS ecommerce_cart_lines (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        cart_id VARCHAR NOT NULL,
+        product_id VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL,
+        unit_price DECIMAL(12,2) NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 1,
+        UNIQUE (cart_id, product_id)
+      );
+    down: DROP TABLE IF EXISTS ecommerce_cart_lines; DROP TABLE IF EXISTS ecommerce_carts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
