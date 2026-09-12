@@ -21,6 +21,10 @@ describe('Base partner bank accounts parity', () => {
     const page = yaml('pages/partner-bank-accounts.yaml');
     expect(page.datasources).toBeUndefined();
     expect(page.page).toMatchObject({ id: 'partner-bank-accounts', route: '/base-partner-bank-accounts' });
+    expect(page.components[0].empty_state).toEqual({
+      title: 'Create a Bank Account',
+      description: 'From here you can manage all bank accounts linked to you and your contacts.',
+    });
     expect(api.page.id).toBe(page.page.id);
     expect(yaml('pages/partner-bank-account-detail.yaml').page.id).toBe(detailApi.page.id);
     const discovered = discoverPages(join(import.meta.dir, '..'));

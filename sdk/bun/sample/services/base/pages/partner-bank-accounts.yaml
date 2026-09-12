@@ -21,4 +21,4 @@ components:
     row_actions: menu
     row_open_action: view_partner_bank_account
     row_double_click_action: view_partner_bank_account
-    empty_state: { title: No bank accounts found, description: Create a bank account to link it to you or your contacts. }
+    empty_state: { title: Create a Bank Account, description: From here you can manage all bank accounts linked to you and your contacts. }
