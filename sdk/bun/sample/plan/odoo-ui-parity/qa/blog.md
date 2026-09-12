@@ -22,6 +22,7 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 | --- | --- | --- | --- |
 | BLOG-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
 | BLOG-WF-001 | Post publication lifecycle | `bun test ./test/blog_blogs.integration.test.ts ./test/blog_tag_categories.integration.test.ts` — 5 tests, 29 assertions; authenticated YAML action transport publishes/unpublishes `blog-post-demo-002`, persists versions 2/3, records publication date, and rejects duplicate publish | pass for service/API workflow; public/browser visibility and Odoo comparison remain open |
+| BLOG-PUBLIC-001 | Published-only public list/detail | `bun test ./test/blog_public.integration.test.ts` — 2 tests, 8 assertions; persisted SQL returns only `blog-post-demo-001`, draft detail returns no row, public routes return published detail and 404 drafts, and unsupported methods return 405 | pass for service/API public boundary; authenticated/public desktop-mobile capture and Odoo comparison remain open |
 
 ## Bugs and retests
 

@@ -1,0 +1,7 @@
+operations:
+  blog.public.posts:
+    result_key: posts
+    query: "SELECT id, blog_id, blog_name, name, subtitle, author_name, tags, CAST(published_date AS VARCHAR) AS published_date, visits FROM blog_posts WHERE state = 'Published' AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(subtitle, '') ILIKE '%' || :q || '%' OR COALESCE(tags, '') ILIKE '%' || :q || '%') ORDER BY published_date DESC, id"
+  blog.public.post:
+    result_key: posts
+    query: "SELECT id, blog_id, blog_name, name, subtitle, author_name, teaser, tags, CAST(published_date AS VARCHAR) AS published_date, visits FROM blog_posts WHERE id = :id AND state = 'Published'"
