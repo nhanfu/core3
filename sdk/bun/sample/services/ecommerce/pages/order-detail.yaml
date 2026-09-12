@@ -7,21 +7,7 @@ components:
     header_actions:
       - { id: back_to_ecommerce_orders, label: Back, variant: secondary }
       - { id: print_ecommerce_order, label: Print, variant: secondary }
-    sections:
-      - title: Order
-        columns: 2
-        fields:
-          - { field: order_number, label: Order }
-          - { field: state, label: Status, type: StatusChip }
-          - { field: date_order, label: Order Date }
-          - { field: company_name, label: Company }
-      - title: Customer
-        columns: 2
-        fields:
-          - { field: customer_name, label: Customer }
-          - { field: customer_email, label: Email }
-      - title: Total
-        columns: 2
-        fields:
-          - { field: amount_total, label: Total }
-          - { field: currency, label: Currency }
+    groups:
+      - { title: Order, columns: 2, fields: [{ field: order_number, label: Order }, { field: state, label: Status, type: StatusChip }, { field: date_order, label: Order Date }, { field: company_name, label: Company }] }
+      - { title: Customer, columns: 2, fields: [{ field: customer_name, label: Customer }, { field: customer_email, label: Email }] }
+      - { title: Total, columns: 2, fields: [{ field: amount_total, label: Total }, { field: currency, label: Currency }] }

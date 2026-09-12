@@ -14,8 +14,9 @@ datasources:
 actions:
   - { id: continue_ecommerce_shopping, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
   - id: update_ecommerce_cart_line
-    type: server
+    type: server_form
     permission: ecommerce.write
+    title: Update Cart Line
     action: ecommerce.cart_lines.update
     handler: yaml_mutation
     operation: update

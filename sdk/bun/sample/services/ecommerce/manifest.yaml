@@ -14,6 +14,10 @@ menu:
     - id: orders
       label: Orders
       items:
+        - path: /ecommerce/shop
+          label: Shop
+          icon: cart
+          permission: ecommerce.read
         - path: /ecommerce/orders
           label: Orders
           icon: document

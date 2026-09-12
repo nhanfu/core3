@@ -36,7 +36,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-005 | Abandoned Carts | Abandoned cart list, deterministic search/empty states and read-only detail navigation work | pass: focused suite |
 | ECOM-FUNC-006 | Customers | Customer summary list, search/filter, deterministic data and order navigation work | pass: focused suite |
 | ECOM-FUNC-007 | Cart | Persisted cart summary/lines, totals, product navigation and guarded quantity validation work | pass: focused suite; browser workflow planned |
-| ECOM-FUNC-008 | Shop | Public/product selection and add-to-cart journey persists cart state | planned expansion |
+| ECOM-FUNC-008 | Shop | Public/product selection and add-to-cart route contract exposes only published products and navigates to the cart | pass: focused suite; authenticated persistence planned |
 | ECOM-FUNC-009 | Checkout/order mutations | Customer, delivery, payment and order creation validate and persist atomically | planned expansion |
 | ECOM-FUNC-010 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
 | ECOM-FUNC-011 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |

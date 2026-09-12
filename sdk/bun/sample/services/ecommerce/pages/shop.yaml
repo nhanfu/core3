@@ -1,0 +1,20 @@
+page: { id: ecommerce-shop, route: /ecommerce/shop, breadcrumb: [eCommerce, Shop], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_shop_products
+    responsive_card: true
+    search: { label: Search products, placeholder: Search products or categories... }
+    views:
+      - { id: kanban, label: Products, icon: grid, mobile: true, group_by: '', card: { title: name, subtitle: category, fields: [{ field: sales_price, label: Price }, { field: product_type, label: Type }] } }
+      - { id: list, label: List, icon: table, mobile: false }
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: category, label: Category }
+      - { field: sales_price, label: Price, align: right }
+      - { field: product_type, label: Type }
+    row_actions: menu
+    header_actions: [{ id: shop_view_cart, label: View Cart, permission: ecommerce.read, variant: secondary }]
+    page_size: 50
+    row_key: id
+    empty_state: { title: No products available, description: Published products will appear here. }

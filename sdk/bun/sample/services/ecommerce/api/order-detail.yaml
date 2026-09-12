@@ -10,4 +10,9 @@ datasources:
     query: "SELECT id, row_version, order_number, customer_name, customer_email, amount_total, currency, state, CAST(date_order AS VARCHAR) AS date_order, company_name FROM ecommerce_orders WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id"
 actions:
   - { id: back_to_ecommerce_orders, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/orders, params: {} }
-  - { id: print_ecommerce_order, type: print, permission: ecommerce.read, source: ecommerce_order_detail }
+  - id: print_ecommerce_order
+    type: client
+    permission: ecommerce.read
+    script: |
+      // js
+      async () => { window.print() }

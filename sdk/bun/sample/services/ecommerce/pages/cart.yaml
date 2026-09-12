@@ -5,17 +5,14 @@ components:
     editable: false
     title_field: customer_name
     header_actions: [{ id: continue_ecommerce_shopping, label: Continue Shopping, variant: secondary }]
-    sections:
-      - title: Cart Summary
-        columns: 2
-        fields:
-          - { field: customer_name, label: Customer }
-          - { field: state, label: Status, type: StatusChip }
-          - { field: item_count, label: Items }
-          - { field: amount_total, label: Total }
-      - title: Cart Lines
-        children:
-          - id: cart_lines
+    groups:
+      - { title: Cart Summary, columns: 2, fields: [{ field: customer_name, label: Customer }, { field: state, label: Status, type: StatusChip }, { field: item_count, label: Items }, { field: amount_total, label: Total }] }
+    notebook:
+      active: cart_lines
+      tabs:
+        - id: cart_lines
+          label: Cart Lines
+          component:
             type: ListView
             source: ecommerce_cart_lines
             columns: [{ field: product_name, label: Product, type: PrimaryEntityCell }, { field: unit_price, label: Unit Price }, { field: quantity, label: Quantity }, { field: line_total, label: Total }]
