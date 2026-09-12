@@ -1,0 +1,18 @@
+page: { id: ecommerce-orders }
+datasources:
+  - id: ecommerce_orders
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_ORDERS_UNAUTHENTICATED, message: Sign in to view eCommerce orders. }
+      forbidden: { status: 403, code: ECOMMERCE_ORDERS_FORBIDDEN, message: You do not have permission to view eCommerce orders. }
+      transport_error: { status: 503, code: ECOMMERCE_ORDERS_UNAVAILABLE, message: eCommerce orders are temporarily unavailable. }
+    query: "SELECT id, row_version, order_number, customer_name, customer_email, amount_total, currency, state, CAST(date_order AS VARCHAR) AS date_order, company_name FROM ecommerce_orders WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR order_number ILIKE '%' || :q || '%' OR customer_name ILIKE '%' || :q || '%' OR COALESCE(customer_email, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY date_order DESC, order_number"
+  - id: ecommerce_order_states
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('Quotation', 'Quotation'), ('Sale Order', 'Sale Order'), ('Cancelled', 'Cancelled')) states(value, label)"
+actions:
+  - id: view_ecommerce_order
+    type: navigate
+    permission: ecommerce.read
+    navigate_to: /ecommerce/orders/detail
+    params: { id: '{row.id}' }

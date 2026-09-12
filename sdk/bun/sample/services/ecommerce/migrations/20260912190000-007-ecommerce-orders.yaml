@@ -1,0 +1,24 @@
+version: 0.0.20
+kind: schema
+description: eCommerce order records
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_orders (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        order_number VARCHAR NOT NULL,
+        customer_name VARCHAR NOT NULL,
+        customer_email VARCHAR,
+        amount_total DECIMAL(12,2) NOT NULL DEFAULT 0,
+        currency VARCHAR NOT NULL DEFAULT 'USD',
+        state VARCHAR NOT NULL DEFAULT 'Quotation',
+        date_order TIMESTAMP NOT NULL,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company'
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_orders_number_idx ON ecommerce_orders(order_number);
+    down: DROP TABLE IF EXISTS ecommerce_orders;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

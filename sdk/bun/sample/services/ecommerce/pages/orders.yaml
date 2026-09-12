@@ -1,0 +1,20 @@
+page: { id: ecommerce-orders, route: /ecommerce/orders, breadcrumb: [eCommerce, Orders, Orders], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_orders
+    responsive_card: true
+    search: { label: Search orders, placeholder: Search order or customer... }
+    filters: [{ field: state, label: Status, options_source: ecommerce_order_states }]
+    columns:
+      - { field: order_number, label: Order, type: PrimaryEntityCell }
+      - { field: customer_name, label: Customer }
+      - { field: amount_total, label: Total, align: right }
+      - { field: currency, label: Currency }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: date_order, label: Order Date }
+    row_open_action: view_ecommerce_order
+    row_double_click_action: view_ecommerce_order
+    page_size: 50
+    row_key: id
+    empty_state: { title: No eCommerce orders, description: Orders created through the website appear here. }
