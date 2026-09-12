@@ -20,21 +20,21 @@ function loadStyles() {
 export async function mount(outlet: HTMLElement, pagePath: string) {
   loadStyles();
   html.take(outlet).clear();
-  const loading = html.take(outlet).main.className('website-public website-public-loading').ele();
+  const loading = html.take(outlet).add('main').className('website-public website-public-loading').ele();
   html.take(loading).p.text('Loading page…');
 
   const response = await fetch(`/api/public/website/page?path=${encodeURIComponent(pagePath)}`);
   const payload = await response.json().catch(() => ({}));
   html.take(outlet).clear();
   if (!response.ok || !payload.page) {
-    const error = html.take(outlet).main.className('website-public website-public-error').ele();
+    const error = html.take(outlet).add('main').className('website-public website-public-error').ele();
     html.take(error).h1.text('Page unavailable');
     html.take(error).p.text('This published Website page is not available.');
     return;
   }
 
   const page = payload.page as WebsitePage;
-  const root = html.take(outlet).main.className('website-public').ele();
+  const root = html.take(outlet).add('main').className('website-public').ele();
   const header = html.take(root).header.className('website-public-header').ele();
   html.take(header).div.className('website-public-brand').text(page.website_name || 'Website');
   html.take(header).a.className('website-public-home').href('/website/page?path=%2F').text('Home');

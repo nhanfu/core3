@@ -43,6 +43,6 @@ describe('Website public visibility', () => {
     expect(appSource).toContain("./components/PublicWebsitePage.ts");
     expect(componentSource).toContain("@core3/client/html");
     expect(componentSource).toContain("/api/public/website/page?path=");
-    expect(componentSource).toContain("html.take(outlet).main");
+    expect(componentSource).toContain("html.take(outlet).add('main')");
   });
 });

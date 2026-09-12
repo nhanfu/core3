@@ -22,7 +22,8 @@ Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It 
 | --- | --- | --- | --- |
 | WEBSITE-WF-001 | Draft page publish/unpublish lifecycle | `bun test ./test/website_pages.integration.test.ts`; persisted state/version, duplicate-transition conflict, and editor/manager boundary | pass for contract/integration slice |
 | WEBSITE-PUBLIC-001 | Published-only public page visibility | `website_public.integration.test.ts`; published home resolves by path/list/id while draft Contact us is absent and unsupported methods return 405 | pass for service/API boundary |
-| WEBSITE-UI-005 | Public Website page route/render seam | `website_public.integration.test.ts`; `/website/page?path=...` is registered and the component uses `@core3/client/html` with published API data | pass for implementation contract; authenticated browser capture remains planned |
+| WEBSITE-UI-005 | Public Website page route/render seam | `website_public.integration.test.ts`; `/website/page?path=...` is registered and the component uses `@core3/client/html` with published API data | pass for implementation contract; browser runtime verified separately |
+| WEBSITE-UI-006 | Public page desktop/mobile runtime | Single-module server `:4310` + authenticated headless browser; published Home rendered at 1440x900 and 390x844, draft `/contactus` showed unavailable state | pass for Core3 runtime; paired Odoo comparison remains pending; artifacts `/tmp/core3-odoo-parity/website-public-desktop.png`, `/tmp/core3-odoo-parity/website-public-mobile.png` |
 | WEBSITE-FUNC-001 | Website Homepage/Page Manager/public boundary suite | `bun test ./test/website*.integration.test.ts --timeout 20000` — 9 tests, 44 assertions | pass for focused scope |
 | WEBSITE-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
 
@@ -30,7 +31,7 @@ Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It 
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
-| — | Full module QA has not run | — | — | pending |
+| WEBSITE-BUG-001 | Public renderer called unsupported fluent `main` getter and produced a blank page | `f95d0965` | Live browser smoke after frontend rebuild; published Home rendered without page errors | fixed |
 
 ## Sign-off
 
