@@ -1,0 +1,39 @@
+title: Sales Teams
+page: { id: sale-sales-teams, route: /order/sales-teams, breadcrumb: [Sales, Orders, Sales Teams], auth: { require: [crm.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_sales_teams
+    search: { label: Sales Teams, placeholder: Search... }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - id: card
+        label: Kanban
+        icon: grid
+        card:
+          title: name
+          subtitle: leader
+          fields:
+            - { field: target_revenue_display, label: Invoiced Target / Month }
+            - { field: member_count, label: Members }
+            - { field: active, label: Active }
+      - { id: form, label: Form, icon: edit }
+    columns:
+      - { field: name, label: Sales Team, type: PrimaryEntityCell }
+      - { field: leader, label: Team Leader }
+      - { field: target_revenue_display, label: Invoiced Target / Month, align: right }
+      - { field: member_count, label: Members, align: right }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_sale_sales_team
+    row_double_click_action: view_sale_sales_team
+    form_view: { page: apps/services/crm/pages/team-detail.yaml, side_panel: true }
+    empty_state: { title: No sales teams found, description: Create a sales team or adjust your search. }
+actions:
+  - id: view_sale_sales_team
+    type: navigate
+    permission: crm.manage
+    navigate_to: /team-detail
+    params: { id: '{row.id}' }

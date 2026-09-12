@@ -27,6 +27,10 @@ menu:
           label: Customers
           icon: users
           permission: orders.read
+        - path: /order/sales-teams
+          label: Sales Teams
+          icon: users
+          permission: crm.manage
     - id: to-invoice
       label: To Invoice
       items:

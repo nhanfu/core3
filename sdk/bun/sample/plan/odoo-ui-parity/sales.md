@@ -78,3 +78,28 @@ The next uncovered Odoo Sales action is `sale.menu_sale_order_upselling` → `sa
 Core3 adds `/order/orders-to-upsell` with a separate `sale-orders-to-upsell` page/API pair joined by `page.id`, the manifest menu entry, Odoo-shaped list fields and mobile List tab, deterministic `order-demo-06` fixture data (`qty_delivered=2`, ordered quantity `1`, `invoice_policy=order`), and a read-only route to the existing Sales order form. The query preserves branch scope and guards the delivered/order-policy rule; the page has explicit populated, empty, and transport-error behavior through the shared datasource contract.
 
 Verification: `bun test test/sales_orders_to_upsell.integration.test.ts` passes (2 tests, 15 assertions); authenticated browser captures were attempted but the persistent `js_repl` required by the playwright-interactive skill was unavailable in this session, so no desktop/mobile visual claim is made. Image artifacts were not added.
+
+## Sales Teams bounded slice (2026-09-12)
+
+The next uncovered Sales-owned source action is Odoo menu `sale.report_sales_team`
+→ action `sales_team.crm_team_action_sales`, reached at Sales > Orders > Sales Teams (sequence 30,
+visible to `sales_team.group_sale_manager`). Its action is `crm.team` with
+`kanban,form` modes and Sales context `in_sales_app=True`; the kanban dashboard
+offers Sales Orders, Invoices, and Sales reporting actions, while the form
+shows Sales Team, Team Leader, Members, Company, and the Sales addon
+`invoiced_target` monthly target field. Core3 reuses the canonical CRM team
+form/data contract and adds the Sales-owned `/order/sales-teams` page/API pair,
+with visible Kanban/Form tabs, active/archived states, deterministic existing
+team fixtures, member counts, monthly invoiced-target display, empty state,
+and the `crm.manage` manager boundary. The Sales menu entry is placed after
+Customers, matching Odoo's Orders sequence.
+
+Focused coverage: `bun test test/sales_teams_sales_action.integration.test.ts`
+passes (2 tests, 12 assertions); UI audit, TypeScript, ESLint, and
+`git diff --check` pass. Fallback Chrome captures were attempted at
+1440x900 and 390x844 under `/tmp/core3-odoo-parity/sales-teams-20260912/`.
+Odoo reached the login page (HTTP 303) and Core3 required authentication (HTTP
+401); the required persistent `js_repl` Playwright surface is unavailable, and
+the fallback Core3 dev runner hit `EMFILE` before the authenticated route could
+be exercised. Therefore no visual parity claim is made; image artifacts remain
+outside Git.

@@ -1,0 +1,8 @@
+page: { id: sale-sales-teams }
+datasources:
+  - id: sale_sales_teams
+    single: false
+    permission: crm.manage
+    query: "SELECT t.id, t.name, t.leader, t.target_revenue, '$' || printf('%,.2f', t.target_revenue) AS target_revenue_display, t.active, (SELECT COUNT(*) FROM crm_team_members m WHERE m.team_id = t.id AND m.active = true) AS member_count FROM crm_teams t WHERE (COALESCE(CAST(:active AS VARCHAR), 'active') = 'all' OR (CAST(:active AS VARCHAR) = 'active' AND t.active = true) OR (CAST(:active AS VARCHAR) = 'archived' AND t.active = false)) AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR COALESCE(t.leader, '') ILIKE '%' || :q || '%') ORDER BY t.name"
+    error_states:
+      transport_error: { status: 503, code: SALES_TEAMS_UNAVAILABLE, message: Sales teams are temporarily unavailable. }
