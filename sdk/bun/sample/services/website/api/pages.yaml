@@ -70,5 +70,22 @@ actions:
       - { field: is_homepage, label: Home page, type: checkbox }
       - { field: is_in_menu, label: Is In Main Menu, type: checkbox }
       - { field: is_seo_optimized, label: Is SEO Optimized, type: checkbox }
+  - id: upload_website_page_asset
+    type: upload
+    action: website.pages.assets.upload
+    handler: attachment_metadata
+    permission: website.write
+    kind: website_page_asset
+    mutation:
+      generated: [asset_id]
+      guards:
+        - { query: "SELECT id FROM website_pages WHERE id = :page_id", status: 404, code: WEBSITE_PAGE_NOT_FOUND, message: Website page not found }
+      steps:
+        - { query: "INSERT INTO website_page_assets(id, page_id, file_name, mime_type, size_bytes, storage_key, content_base64, is_public, uploaded_by) VALUES(:asset_id, :page_id, :fileName, :mimeType, :sizeBytes, :storageKey, '', FALSE, :current_user_id)" }
+      result: { query: "SELECT id, page_id, file_name, mime_type, size_bytes, storage_key, is_public, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM website_page_assets WHERE id = :asset_id" }
+  - id: download_website_page_asset
+    type: download
+    permission: website.read
+    kind: website_page_asset
   - { id: publish_website_page, type: server, permission: website.write, action: website.pages.publish, handler: order_transition, workflow: website_pages, operation: publish, refresh: [website_pages] }
   - { id: unpublish_website_page, type: server, permission: website.manage, action: website.pages.unpublish, handler: order_transition, workflow: website_pages, operation: unpublish, refresh: [website_pages] }

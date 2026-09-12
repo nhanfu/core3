@@ -25,6 +25,8 @@ The public operations now accept an explicit site scope and deterministic
 second-site fixtures prove duplicate paths do not cross site boundaries.
 Published pages now expose only public asset metadata and a binary asset route;
 the seeded SVG loaded successfully in a 390x844 headless browser check.
+Multipart Website asset upload/download now persists storage metadata through
+the YAML API and keeps uploaded assets private by default.
 These are Core3 runtime checks, not paired Odoo visual sign-off.
 
 ## Next bounded task
@@ -43,3 +45,4 @@ replay are now verified in the Core3 runtime.
 | 2026-09-13 | File-backed restart and migration replay | Explicit DuckDB file retained edited published content/state/version across close/reopen and rerunning Website migrations | Core3 persistence pass; full process/permission matrix and paired Odoo comparison pending |
 | 2026-09-13 | Public multi-site scope | Two deterministic published sites share `/`; explicit `website_id` resolves the requested site and cross-site ID lookup returns 404 | Core3 public scope pass; company/actor permission and paired Odoo comparison pending |
 | 2026-09-13 | Published asset delivery | Seeded SVG is exposed only through a published page, returns `image/svg+xml`, loads at natural width 240 in mobile Chrome, and has no page errors | Core3 asset delivery pass; upload/editor asset workflow and paired Odoo comparison pending |
+| 2026-09-13 | Asset upload/download | Multipart upload persisted a private page asset and its storage key; authenticated download returned the exact four-byte fixture; temporary upload files were removed after the test | Core3 API pass; browser attachment interaction, public promotion, and paired Odoo comparison pending |

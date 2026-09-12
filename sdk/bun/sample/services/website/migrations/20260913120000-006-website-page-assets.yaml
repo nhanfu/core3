@@ -9,6 +9,7 @@ type:
         file_name VARCHAR NOT NULL,
         mime_type VARCHAR NOT NULL,
         size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR,
         content_base64 VARCHAR NOT NULL,
         is_public BOOLEAN NOT NULL DEFAULT FALSE,
         uploaded_by VARCHAR,

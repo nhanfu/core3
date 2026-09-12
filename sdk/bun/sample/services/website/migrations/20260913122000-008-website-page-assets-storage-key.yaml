@@ -1,0 +1,12 @@
+version: 0.0.8
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE website_page_assets ADD COLUMN IF NOT EXISTS storage_key VARCHAR;
+    down: |
+      ALTER TABLE website_page_assets DROP COLUMN IF EXISTS storage_key;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

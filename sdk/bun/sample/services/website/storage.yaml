@@ -3,3 +3,10 @@ database:
 files:
   driver: local
   path: .data/uploads
+
+attachments:
+  website_page_asset:
+    download:
+      route: /api/website/page-assets
+      permission: website.read
+      query: SELECT * FROM website_page_assets WHERE id = :attachment_id
