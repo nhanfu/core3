@@ -54,3 +54,17 @@ actions:
       result: { query: "SELECT * FROM blog_tag_categories WHERE id = :id" }
     fields:
       - { field: name, label: Name, type: text, required: true }
+  - id: delete_blog_tag_category
+    type: server
+    permission: blog.write
+    action: blog.tag_categories.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [blog_tag_categories]
+    mutation:
+      operation: delete
+      table: blog_tag_categories
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM blog_tag_categories WHERE id = :id", status: 404, code: BLOG_TAG_CATEGORY_NOT_FOUND, message: Tag category not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_tags t JOIN blog_tag_categories c ON LOWER(t.category) = LOWER(c.name) WHERE c.id = :id)", status: 409, code: BLOG_TAG_CATEGORY_IN_USE, message: A tag category used by tags cannot be deleted. }

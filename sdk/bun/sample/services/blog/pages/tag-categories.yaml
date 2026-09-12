@@ -9,6 +9,7 @@ components:
     search: { label: Search tag categories, placeholder: 'Search tag category...' }
     columns:
       - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_blog_tag_category, label: Edit, icon: edit }, { id: delete_blog_tag_category, label: Delete, icon: trash, variant: danger }] }
     page_size: 50
     row_key: id
     row_open_action: edit_blog_tag_category
