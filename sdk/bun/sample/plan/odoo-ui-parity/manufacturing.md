@@ -63,6 +63,45 @@ Centers, and `List/Graph/Pivot` for Productivity Losses.
 - Final isolated-worktree verification: focused Manufacturing tests `15 pass / 188 assertions`; YAML audit `498 pages / 505 routes / 879 datasources`; ESLint passed; `bun run css:build:global` passed; and `git diff --check` passed. The test contracts assert `view_navigation: tabs`, the corrected Work Center desktop-visible Kanban mode, static status fixtures, source modes/menu placement, page/API separation, and the existing CRUD/permission boundaries.
 - Remaining bounded difference: Core3 intentionally uses the shared Fluent shell and deterministic YAML fixtures, while Odoo uses its purple shell and live/demo ORM data. This batch verifies the populated initial list state and visible mode navigation at both viewports; it does not claim parity for unrelated form/chatter workflows or every secondary Odoo report state.
 
+## 2026-09-12 Manufacturing Orders default-filter refresh
+
+The active replacement reference is the fresh Odoo 19 stack at
+`http://localhost:8073`, database `core3_codex_demo_20260912`. Its current
+`mrp.mrp_production_action` is runtime action `675` for `mrp.production`, with
+`list,kanban,form,calendar,pivot,graph,activity` modes and context
+`search_default_todo=True`. The source therefore opens with the `To Do` filter
+and four visible draft/confirmed/in-progress/to-close rows.
+
+The authenticated comparison found that Core3's manufacturing-orders page was
+loading all six deterministic lifecycle fixtures by default. The fix keeps
+the full state filter available but adds the Odoo-shaped `To Do` option as the
+default and teaches the datasource query that `state=todo` means Draft,
+Confirmed, In Progress, or To Close. The page/API split and service-owned
+fixtures remain unchanged. The resulting filtered route shows four rows at
+both target sizes; the six-state workflow remains covered by the explicit
+state and mutation tests.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Manufacturing Orders list | 1440x900 | `/tmp/odoo-manufacturing-orders-list-desktop-1440x900-20260912.png` | `df7d2c208bfc3da28c9f07b716244546f3353162de7c00c440d4670496c4ec2f` |
+| Odoo Manufacturing Orders Kanban | 1440x900 | `/tmp/odoo-manufacturing-orders-kanban-desktop-1440x900-20260912.png` | `e91e165833dbe2254f6ddb876cde273a83f04ae674a937e9b490234d117ab21f` |
+| Odoo Manufacturing Order form | 1440x900 | `/tmp/odoo-manufacturing-orders-form-desktop-1440x900-20260912.png` | `677692870a62acba7e411bbfb7084e37971c34a3f8270496d3b5bd2f4f88e54c` |
+| Odoo Manufacturing Orders list | 390x844 | `/tmp/odoo-manufacturing-orders-list-mobile-390x844-20260912.png` | `8719e71e8ba5157a9c2f29e0fbe84f4e2b7962f60ddd3d5175b89ec2bfffcca1` |
+| Odoo Manufacturing Order form | 390x844 | `/tmp/odoo-manufacturing-orders-form-mobile-390x844-20260912.png` | `4ab85601a4c0da0c6b2a6444dce2ba9fcedf1299e2887403869d83331fdf5dbd` |
+| Core3 Manufacturing Orders list | 1440x900 | `/tmp/core3-manufacturing-orders-filtered-desktop-1440x900-20260912.png` | `8d5f26a0500f5a320f9cd0a3b340a80abe21625a602d067f08397db21f52b049` |
+| Core3 Manufacturing Orders Kanban | 1440x900 | `/tmp/core3-manufacturing-orders-filtered-kanban-desktop-1440x900-20260912.png` | `c2c74d915dc128351ced9bc01fc4e38c629cb5c0b01519fe28f5420d5d237878` |
+| Core3 Manufacturing Order form | 1440x900 | `/tmp/core3-manufacturing-orders-filtered-form-desktop-20260912.png` | `bc40451ccbd7f7d7ba26bd5f962215502f8c3059c4e5b3ff53922b79be17d11d` |
+| Core3 Manufacturing Orders list | 390x844 | `/tmp/core3-manufacturing-orders-filtered-mobile-390x844-20260912.png` | `44c8fd72c08b4cce3381654b6228d31e61d39d59b96f045a57f001a7ad90f5ea` |
+| Core3 Manufacturing Order form | 390x844 | `/tmp/core3-manufacturing-orders-filtered-form-mobile-390x844-20260912.png` | `756b64c0cbd7f7d7ba26bd5f962215502f8c3059c4e5b3ff53922b79be17d11d` |
+
+The focused suite passes 3 tests and 48 assertions; the worktree audit passes
+with 545 pages, 552 routes, and 947 datasources, ESLint passes, and
+`git diff --check` is clean. Both authenticated Core3 routes reported no page
+errors or failed requests and no horizontal overflow. The intentional visual
+residual remains the shared Fluent shell and Core3's deterministic row content
+versus Odoo's purple shell and live demo records. Screenshots remain outside
+Git.
+
 ## 2026-09-11 bounded Work Orders Analysis contract
 
 - Source inspection was completed first against the authenticated personal
