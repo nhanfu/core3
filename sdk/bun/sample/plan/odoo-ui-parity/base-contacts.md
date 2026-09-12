@@ -74,6 +74,37 @@ Capture Odoo 19 and Core3 at `1440x900` and `390x844` for every inventory item, 
 
 ## Current batch evidence
 
+### Current batch evidence: Banks configuration (Odoo action `base.action_res_bank_form`)
+
+- Source reviewed: Odoo 19 `odoo/addons/base/views/res_bank_views.xml` and
+  `odoo/addons/contacts/views/contact_views.xml`. The source menu is Contacts →
+  Configuration → Bank Accounts → Banks; the list shows Bank, BIC, and Country,
+  with an Archived filter, and the form contains Bank Details, Bank Address, and
+  Communication Details.
+- Core3 ownership: `pages/banks.yaml` and `pages/bank-detail.yaml` are
+  presentation-only; `api/banks.yaml` and `api/bank-detail.yaml` own datasource,
+  action, fixture, error, and permission contracts, joined by `page.id: banks`
+  and `page.id: bank-detail`. Migration `20260912110000-012-banks.yaml` seeds
+  Odoo demo-shaped ING, BNP Paribas, and archived Reserve records.
+- Core3 route: `/base-banks`, qualified under Bank Accounts, with detail at
+  `/base-bank-detail?id=<bank id>`. Focused validation is
+  `test/base_banks.integration.test.ts` and covers discovery, idempotent
+  fixtures, search, archive filtering, empty/503/404 states, permissioned
+  create/update/archive/restore/delete, required and duplicate validation, and
+  optimistic stale-write guards.
+- Browser comparison is attempted under
+  `/tmp/core3-odoo-parity/base-batch4-20260912/`; the first runtime failure and
+  its exact limitation will be recorded here before finalizing this batch.
+- Runtime limitation encountered: the initial focused test could not start in
+  the fresh worktree because Bun reported `Cannot find module
+  '@core3/server/database/duckdb-database'`; workspace dependencies had not yet
+  been installed. This is an environment limitation, not a Banks contract
+  result; dependency installation and source-level validation continue.
+- Browser runtime limitation: `bun run dev --db=ddb --memory` started the
+  backend but Vite exited before serving the frontend with
+  `EMFILE: too many open files, watch .../sample/vite.config.ts`; therefore no
+  authenticated Core3 desktop/mobile capture could be rendered in this batch.
+
 - Batch: canonical Contacts list/card and contact detail interaction.
 - Source reviewed: Odoo 19 `addons/contacts/views/contact_views.xml` and `odoo/addons/base/views/res_partner_views.xml`; live reference was available at `/odoo/contacts?view_type=list` and `/odoo/contacts/98`.
 - Core3 authenticated routes: `/base/contacts` (page route `/contacts`) and `/base/contacts/detail?id=contact-demo` (page route `/contacts/detail`).

@@ -1,0 +1,13 @@
+version: 0.0.12
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_banks (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, bic VARCHAR, street VARCHAR, street2 VARCHAR, city VARCHAR, state VARCHAR, zip VARCHAR, country VARCHAR, phone VARCHAR, email VARCHAR, active BOOLEAN NOT NULL DEFAULT true);
+      INSERT INTO base_banks(id, name, bic, country, active) VALUES ('bank-ing', 'ING', 'BBRUBEBB', 'Belgium', true), ('bank-bnp', 'BNP Paribas', 'GEBABEBB', 'Belgium', true), ('bank-reserve', 'Reserve', NULL, NULL, false) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, bic = EXCLUDED.bic, country = EXCLUDED.country, active = EXCLUDED.active;
+    down: |
+      DROP TABLE IF EXISTS base_banks;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

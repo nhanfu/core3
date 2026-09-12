@@ -32,5 +32,11 @@ menu:
                 - { path: /base-country-groups, label: Country Group, icon: globe, permission: base.reference.read }
                 - { path: /base-fed-states, label: Fed. States, icon: map, permission: base.reference.read }
                 - { path: /base-countries, label: Countries, icon: globe, permission: base.reference.read }
+            - path: /base-bank-accounts
+              label: Bank Accounts
+              icon: bank
+              permission: base.reference.read
+              children:
+                - { path: /base-banks, label: Banks, icon: bank, permission: base.reference.read }
         - { path: /users, label: Users, icon: users, permission: auth.users.manage }
         - { path: /user-groups, label: User groups, icon: users, permission: auth.roles.manage }

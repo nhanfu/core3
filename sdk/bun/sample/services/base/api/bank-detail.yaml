@@ -1,0 +1,19 @@
+page: { id: bank-detail }
+datasources:
+  - id: bank_detail
+    single: true
+    permission: base.reference.read
+    error_states: { transport_error: { status: 503, code: BASE_BANK_UNAVAILABLE, message: Bank data is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, bic, street, street2, city, state, zip, country, phone, email, active FROM base_banks WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"
+actions:
+  - id: edit_bank_detail
+    type: server_form
+    permission: base.reference.write
+    title: Edit bank
+    action: base.reference.banks.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.bank_detail
+    refresh: [bank_detail]
+    mutation: { operation: update, table: base_banks, fields: [name, bic, street, street2, city, state, zip, country, phone, email], required: [name], concurrency: { required: true }, guards: [{ query: "SELECT id FROM base_banks WHERE id = :id AND active = true", status: 404, code: BASE_BANK_NOT_FOUND, message: Active bank not found. }], result: { query: "SELECT * FROM base_banks WHERE id = :id" } }
+    fields: [{ field: name, label: Bank Name, type: text, required: true }, { field: bic, label: BIC, type: text }, { field: street, label: Street, type: text }, { field: street2, label: Street 2, type: text }, { field: city, label: City, type: text }, { field: state, label: State, type: text }, { field: zip, label: ZIP, type: text }, { field: country, label: Country, type: text }, { field: phone, label: Phone, type: text }, { field: email, label: Email, type: text }]

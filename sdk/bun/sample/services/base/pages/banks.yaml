@@ -1,0 +1,18 @@
+title: Banks
+page: { id: banks, route: /base-banks, breadcrumb: [Contacts, Configuration, Bank Accounts, Banks], auth: { require: [base.reference.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: banks
+    create_action: create_bank
+    create_label: New
+    search: { label: Search banks, placeholder: 'Search...' }
+    filters: [{ field: active, label: Status, options_source: bank_active_states }]
+    columns: [{ field: name, label: Bank, type: PrimaryEntityCell }, { field: bic, label: BIC }, { field: country, label: Country }, { field: id, label: ' ', sortable: false, actions: [{ id: archive_bank, label: Archive, icon: archive, variant: danger, show_if: 'row.active === true' }, { id: unarchive_bank, label: Unarchive, icon: refresh, show_if: 'row.active === false' }, { id: delete_bank, label: Delete, icon: trash, variant: danger }] }]
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_bank
+    row_double_click_action: view_bank
+    form_view: { page: apps/services/base/pages/bank-detail.yaml, side_panel: true }
+    empty_state: { title: No banks found, description: Create a bank to use it on contact bank accounts. }
