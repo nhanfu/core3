@@ -24,11 +24,12 @@ actions:
     action: ecommerce.checkout.confirm
     handler: yaml_mutation
     operation: create
+    params: { cart_id: '{state.ecommerce_checkout_cart.id}' }
     refresh: [ecommerce_checkout_cart, ecommerce_orders]
     mutation:
-      required: [cart_id, customer_name, customer_email, shipping_address, delivery_method, payment_method]
+      required: [customer_name, customer_email, shipping_address, delivery_method, payment_method]
       before_steps:
-        - { query: "SELECT 'ecommerce-order-checkout-' || CAST(:cart_id AS VARCHAR) AS id", assign: true }
+        - { query: "SELECT COALESCE(:cart_id, 'ecommerce-cart-open-001') AS cart_id, 'ecommerce-order-checkout-' || COALESCE(:cart_id, 'ecommerce-cart-open-001') AS id", assign: true }
       guards:
         - { query: "SELECT id FROM ecommerce_carts WHERE id = :cart_id AND state = 'Open'", status: 409, code: ECOMMERCE_CHECKOUT_CART_CLOSED, message: This cart is no longer available for checkout. }
         - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM ecommerce_cart_lines WHERE cart_id = :cart_id)", status: 422, code: ECOMMERCE_CHECKOUT_CART_EMPTY, message: Add a product before checking out. }
@@ -41,7 +42,7 @@ actions:
         - { query: "UPDATE ecommerce_carts SET state = 'Converted', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :cart_id" }
       result: { query: "SELECT * FROM ecommerce_orders WHERE id = :id" }
     fields:
-      - { field: cart_id, label: Cart, type: hidden, required: true }
+      - { field: cart_id, label: Cart, type: hidden }
       - { field: customer_name, label: Customer Name, type: text, required: true }
       - { field: customer_email, label: Customer Email, type: text, required: true }
       - { field: shipping_address, label: Shipping Address, type: textarea, required: true }

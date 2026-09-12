@@ -17,6 +17,7 @@ describe('eCommerce Checkout parity', () => {
     expect(page.page).toMatchObject({ id: 'ecommerce-checkout', route: '/ecommerce/checkout' });
     expect(api.page).toEqual({ id: 'ecommerce-checkout' });
     expect(page.components[0]).toMatchObject({ type: 'OdooFormView', source: 'ecommerce_checkout_cart' });
+    expect(api.actions.find((action: any) => action.id === 'confirm_ecommerce_checkout').params).toEqual({ cart_id: '{state.ecommerce_checkout_cart.id}' });
   });
 
   test('creates an order with copied lines and closes the cart atomically', async () => {
