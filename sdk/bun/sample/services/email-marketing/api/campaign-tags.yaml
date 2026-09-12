@@ -1,0 +1,61 @@
+page: { id: email-campaign-tags }
+datasources:
+  - id: email_campaign_tags
+    permission: email_marketing.manage
+    error_states: { forbidden: { status: 403, code: EMAIL_CAMPAIGN_TAGS_FORBIDDEN, message: You do not have permission to manage campaign tags. }, transport_error: { status: 503, code: EMAIL_CAMPAIGN_TAGS_UNAVAILABLE, message: Campaign tags are temporarily unavailable. } }
+    query: "SELECT id, row_version, name FROM email_marketing_campaign_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: create_email_campaign_tag
+    type: server_form
+    permission: email_marketing.manage
+    title: Create a Tag
+    action: email_marketing.campaign_tags.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [email_campaign_tags]
+    mutation:
+      operation: insert
+      table: email_marketing_campaign_tags
+      generated: [id]
+      fields: [name]
+      required: [name]
+      defaults: { row_version: 1 }
+      before_steps: [{ query: "SELECT 'email-campaign-tag-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_CAMPAIGN_TAG_NAME_REQUIRED, message: A campaign tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_campaign_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMAIL_CAMPAIGN_TAG_EXISTS, message: A campaign tag with this name already exists. }
+      result: { query: "SELECT * FROM email_marketing_campaign_tags WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }]
+  - id: update_email_campaign_tag
+    type: server_form
+    permission: email_marketing.manage
+    title: Edit Campaign Tag
+    action: email_marketing.campaign_tags.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [email_campaign_tags]
+    mutation:
+      operation: update
+      table: email_marketing_campaign_tags
+      fields: [name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_marketing_campaign_tags WHERE id = :id", status: 404, code: EMAIL_CAMPAIGN_TAG_NOT_FOUND, message: Campaign tag not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_CAMPAIGN_TAG_NAME_REQUIRED, message: A campaign tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_campaign_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMAIL_CAMPAIGN_TAG_EXISTS, message: A campaign tag with this name already exists. }
+      result: { query: "SELECT * FROM email_marketing_campaign_tags WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }]
+  - id: delete_email_campaign_tag
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.campaign_tags.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [email_campaign_tags]
+    mutation:
+      operation: delete
+      table: email_marketing_campaign_tags
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM email_marketing_campaign_tags WHERE id = :id", status: 404, code: EMAIL_CAMPAIGN_TAG_NOT_FOUND, message: Campaign tag not found. }]

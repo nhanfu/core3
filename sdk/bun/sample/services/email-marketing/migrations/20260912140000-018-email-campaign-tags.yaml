@@ -1,0 +1,20 @@
+version: 0.0.18
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_marketing_campaign_tags (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE
+      );
+      INSERT INTO email_marketing_campaign_tags(id, row_version, name) VALUES
+        ('email-campaign-tag-newsletter', 1, 'Newsletter'),
+        ('email-campaign-tag-product', 1, 'Product'),
+        ('email-campaign-tag-event', 1, 'Event')
+        ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS email_marketing_campaign_tags;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

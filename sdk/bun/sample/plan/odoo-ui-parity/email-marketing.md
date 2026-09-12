@@ -716,3 +716,33 @@ idempotent migration. An authenticated Odoo/Core3 browser comparison was not
 completed in this batch because the isolated runtime was unavailable before
 the browser pass. No screenshot or full visual-parity claim is made, and no
 images are committed.
+
+## Campaign Tags bounded slice (2026-09-12)
+
+The next uncovered visible action after Campaign Stages is Odoo's inherited UTM
+action `utm.action_view_utm_tag` (`utm.tag`), exposed by
+`mass_mailing_tag_menu` under Email Marketing → Configuration → Tags. The local
+source is `/home/nhanjs/projects/odoo/addons/utm/views/utm_tag_views.xml` at
+revision `65975996`: the action is titled **Campaign Tags**, uses the editable
+top list `utm_tag_view_tree` with the single required `name` column, and its
+empty help reads **Create a Tag** followed by “Assign tags to your campaigns to
+organize, filter and track them.” The mass_mailing menu restricts this entry to
+`mass_mailing.group_mass_mailing_campaign`; UTM model access allows ordinary
+users to read tags and system users to create/write/delete, represented by the
+existing Core3 campaign-manager permission `email_marketing.manage`.
+
+Core3 implements only this list action at `/email-campaign-tags`. The page is
+presentation-only and the API datasource/mutations are joined by
+`page.id: email-campaign-tags`; no unsupported form, kanban, or tag-color
+surface is added. Migration `20260912140000-018-email-campaign-tags.yaml`
+creates an idempotent table and fixed Newsletter, Product, and Event fixtures.
+The focused contract is `test/email_marketing_campaign_tags.integration.test.ts`
+and covers menu/page/API ownership, deterministic ordering/search, empty and
+503 transport contracts, duplicate/blank/missing/stale guards, and CRUD.
+
+Authenticated Odoo/Core3 browser verification was not completed because the
+isolated runtime was unavailable before the browser pass. Therefore this slice
+makes no visual-parity claim and has no screenshot evidence; if the runtime is
+restored, captures must be saved under
+`/tmp/core3-odoo-parity/email-marketing-batch5-20260912/` at 1440x900 and
+390x844 without committing images.
