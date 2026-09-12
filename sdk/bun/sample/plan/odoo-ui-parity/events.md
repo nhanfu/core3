@@ -1200,3 +1200,42 @@ Capture was attempted under `/tmp/core3-odoo-parity/events-batch5-20260912/`,
 but the paired runtime could not be established after the documented schema
 and fixture-boundary failures. No visual parity claim or screenshot is made;
 images remain outside Git.
+
+## Bounded batch: Event Badge Example report (2026-09-12)
+
+The installed Odoo 19 `event` addon binds the `Badge Example` report action
+`event.action_report_event_event_badge` to `event.event` with `qweb-pdf` report
+`event.event_event_report_template_badge`. It is available from the event
+form Print menu to event users with read access; it is read-only and has no
+create, edit, delete, or workflow interaction. The source report selects the
+event badge format, displays the event name and date/time, a placeholder
+attendee (`John Doe`), placeholder company (`My Placeholder Company`), the
+sample barcode `12345678901234567890`, and the first event ticket.
+
+Core3 adds `/events/badge-example`, joined through `page.id` to
+`api/event-badge-example.yaml`, and adds the matching `Badge Example` action to
+the existing event form. The page owns the read-only event header and
+`TemplatePreview`; the API owns the event datasource, deterministic badge
+blocks, print action, and explicit empty, missing, and transport-error
+contracts. Migration `20260912140000-028-event-badge-example.yaml` seeds six
+stable preview blocks and is idempotent. The browser Print surface is used;
+Core3 does not claim Odoo's server-side PDF generation or barcode image
+transport.
+
+The requested persistent `js_repl` Playwright runtime is unavailable in this
+session. Browser capture was attempted under
+`/tmp/core3-odoo-parity/events-batch7-20260912/`, but authenticated Core3
+could not start: the pre-existing Slots migration
+`20260912130000-027-event-slots-action.yaml` fails DuckDB startup with
+`Parser Error: Adding columns with constraints not yet supported`; Vite also
+reports `EMFILE: too many open files` while watching `vite.config.ts`. No
+authenticated Core3/Odoo screenshot pair or visual-parity claim is made, and
+no images are committed.
+
+Validation: focused `events_badge_example.integration.test.ts` passes 3 tests
+and 12 assertions; the full Events integration set passes after updating the
+event-form action inventory; `bun run lint`, the Events Sass build, and
+`git diff --check` pass. The repository's `bun run audit` is the existing
+`audit-order-ui.ts` script and reports unrelated pre-existing audit findings;
+there is no separate root `bun run audit` script. Screenshots remain outside
+Git.

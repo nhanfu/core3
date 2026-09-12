@@ -1,0 +1,30 @@
+version: 0.0.28
+kind: data
+description: Deterministic event Badge Example report fixture
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_badge_example_blocks (
+        id VARCHAR PRIMARY KEY,
+        event_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL,
+        block_type VARCHAR NOT NULL,
+        label VARCHAR,
+        content VARCHAR,
+        token_key VARCHAR
+      );
+      INSERT INTO event_badge_example_blocks(id, event_id, sequence, block_type, label, content, token_key) VALUES
+        ('badge-example-001-title', 'event-demo-001', 1, 'text', 'Event', 'EVT/2026/0001', NULL),
+        ('badge-example-001-date', 'event-demo-001', 2, 'text', 'Date', '09 Oct 2026 16:30 - 19:30', NULL),
+        ('badge-example-001-attendee', 'event-demo-001', 3, 'text', 'Attendee', 'John Doe', NULL),
+        ('badge-example-001-company', 'event-demo-001', 4, 'text', 'Company', 'My Placeholder Company', NULL),
+        ('badge-example-001-barcode', 'event-demo-001', 5, 'text', 'Barcode', '12345678901234567890', NULL),
+        ('badge-example-001-ticket', 'event-demo-001', 6, 'text', 'Ticket', 'General Admission', NULL)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_badge_example_blocks WHERE event_id = 'event-demo-001';
+      DROP TABLE IF EXISTS event_badge_example_blocks;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

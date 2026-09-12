@@ -1,0 +1,28 @@
+page: { id: event-badge-example }
+datasources:
+  - id: event_badge_example
+    single: true
+    permission: events.read
+    error_states:
+      missing_record: { status: 404, code: EVENT_BADGE_EXAMPLE_NOT_FOUND, message: Event badge example not found. }
+      transport_error: { status: 503, code: EVENT_BADGE_EXAMPLE_UNAVAILABLE, message: Event badge example is temporarily unavailable. }
+    query: "SELECT e.id AS event_id, e.name AS event_name, strftime(e.start_at, '%d %b %Y %H:%M') || ' - ' || strftime(e.end_at, '%H:%M') AS event_schedule, COALESCE(e.venue, '') AS venue, COALESCE((SELECT name FROM event_tickets WHERE event_id = e.id ORDER BY name LIMIT 1), 'General Admission') AS ticket_type, 'Badge Example' AS name, 'A6' AS format, 'Ready' AS status FROM events e WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.id = :id"
+  - id: event_badge_example_blocks
+    permission: events.read
+    error_states:
+      transport_error: { status: 503, code: EVENT_BADGE_EXAMPLE_UNAVAILABLE, message: Event badge example is temporarily unavailable. }
+    query: "SELECT id, block_type, label, content, token_key FROM event_badge_example_blocks WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND event_id = :id ORDER BY sequence, id"
+actions:
+  - id: print_event_badge_example
+    type: client
+    permission: events.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: back_to_event_detail
+    type: navigate
+    permission: events.read
+    navigate_to: /event-detail
+    params: { id: '{row.event_id}' }

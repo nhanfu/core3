@@ -33,6 +33,7 @@ describe('Events attendee parity batch', () => {
     expect(form.header_actions.map((action: any) => action.id)).toEqual([
       'registration_desk_event_detail',
       'print_event_attendee_list',
+      'print_event_badge_example',
       'edit_event_detail',
       'publish_event_detail',
       'start_event_detail',

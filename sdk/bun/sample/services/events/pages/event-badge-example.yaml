@@ -1,0 +1,19 @@
+title: Badge Example
+page: { id: event-badge-example, route: /events/badge-example, breadcrumb: [Marketing, Events, Event, Badge Example], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_badge_example
+    title_field: event_name
+    subtitle_field: event_schedule
+    editable: false
+    header_actions:
+      - { id: print_event_badge_example, label: Print, permission: events.read, variant: primary }
+      - { id: back_to_event_detail, label: Back to event, permission: events.read, variant: secondary }
+    group_columns: 2
+    groups:
+      - title: Event
+        fields: [{ field: event_name, label: Event }, { field: event_schedule, label: Date }, { field: venue, label: Venue }, { field: ticket_type, label: Ticket type }]
+  - type: TemplatePreview
+    id: event-badge-example-preview
+    source: event_badge_example_blocks
+    template_source: event_badge_example
