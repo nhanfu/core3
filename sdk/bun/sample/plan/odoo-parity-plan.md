@@ -179,6 +179,53 @@ Only after all eight are written does implementation begin.
 The shared mock-data contract is defined in
 `odoo-ui-parity/screen-mock-data.md` and applies to every module sub-plan.
 
+## Required QA test plan before implementation
+
+The existing `qa/<module>.md` files are execution ledgers, not complete test
+plans. Before a developer starts a module, its assigned QA owner MUST create
+the detailed test plan at
+`odoo-ui-parity/qa/test-plans/<module>.md`, using
+`odoo-ui-parity/qa/test-plans/_template.md`. The developer may not mark a
+module ready for implementation until that test plan has been reviewed by the
+main agent.
+
+Each module test plan must be a long, module-specific checklist derived from
+the Odoo menu/action inventory and must include concrete case IDs, setup data,
+actor/permission boundary, exact action or route, expected result, persistence
+assertion, and required evidence. At minimum, QA must cover:
+
+- every menu, submenu, action, view mode, visible tab, search/filter/group,
+  sort, pagination, empty state, loading state, error state, and responsive
+  breakpoint;
+- list, kanban, form, calendar, pivot, graph, dashboard, report, wizard, and
+  modal states wherever the Odoo screen exposes them;
+- create, read, edit, duplicate, archive/unarchive, delete, bulk action,
+  import/export, attachment, chatter/message, notification, and report/print
+  behavior where applicable;
+- required fields, field types, defaults, computed/related fields, invalid
+  values, boundary values, duplicate values, missing records, stale row
+  versions, retries, and partial-failure behavior;
+- every declared workflow transition, forbidden transition, cancellation,
+  approval/rejection, reopen/reset path, scheduled/timer path, and resulting
+  side effects on related records;
+- admin, manager, ordinary user, cross-company, branch/scope, and
+  unauthenticated/unauthorized behavior, including hidden actions and direct
+  API enforcement;
+- database persistence after reload and restart, idempotent seed/migration
+  behavior, transaction/rollback integrity, row-version/concurrency behavior,
+  and cross-module contract effects;
+- third-party, email, payment, webhook, file, external API, and durable
+  workflow behavior where applicable, including retry, timeout, compensation,
+  recovery, and audit history;
+- authenticated Odoo/Core3 comparison at desktop and mobile for normal,
+  detail, create/edit, modal/wizard, empty, error, permission, and each major
+  workflow state.
+
+Each case is classified as `functional`, `data`, `permission`, `workflow`,
+`integration`, `visual`, `responsive`, `security`, or `regression`. A module
+cannot receive QA sign-off while a required case is unplanned, unexecuted, or
+marked pass without evidence.
+
 ## Shared agent contribution rules
 
 - To run one module quickly without Bun's recursive file watcher, use
@@ -189,9 +236,12 @@ The shared mock-data contract is defined in
   source changes.
 - There are exactly 38 persistent module owners: one Luna medium-effort
   sub-agent for every actual module row in the module register. A logical wave
-  contains 9 module owners and 3 QA owners, with each QA owner responsible for
-  3 modules. The main agent schedules those 12 workers as a wave; the main
-  agent is the 13th coordinator and does not count as a module or QA owner.
+  contains up to 10 module owners and exactly 10 QA owners, with one QA owner
+  assigned to each active module. The main agent schedules those 20 workers as
+  a wave; the main agent is the 21st coordinator and does not count as a module
+  or QA owner. If fewer than 10 modules are ready, unused QA slots remain
+  idle; never overload one QA owner with another module while an assigned
+  module is still under test.
   `auth` and `ai` are excluded because they are Core3 infrastructure, not
   registered Odoo modules.
 - A module owner receives the complete module goal, not a short UI slice. It
@@ -218,26 +268,34 @@ The shared mock-data contract is defined in
 - Do not create fresh replacement agents. If an owner stops, the main agent
   resumes that same run/worktree or records a blocker and requests explicit
   direction; ownership remains stable for the lifetime of this plan.
-- Use 3 dispatchable QA slots for each logical wave, with each QA assignment
-  covering up to 3 module owners. QA does not require a durable active goal or
-  continuously running session. The module assignment, ledger, and current
-  state are durable; each verification event creates a bounded QA task that the
-  main agent can dispatch to an available QA slot. The QA task ends after
-  recording sign-off or a blocker. QA agents consume committed developer work,
-  test the Core3 process/worktree spawned by the corresponding developer, run
-  the functional and authenticated Odoo/Core3 browser matrix, and re-test
-  fixes. Each module's results, failures, and repairs are recorded in
-  `odoo-ui-parity/qa/<module>.md`. Module agents must respond to their assigned
-  QA findings and keep ownership until QA signs off or the blocker is
-  explicitly recorded.
-- QA triggers are `feature-complete`, `merge-candidate`, `post-merge`,
-  `refactor-impact`, and `release`. The module owner records the trigger and
-  candidate commit in its module progress file; the main agent creates a
-  bounded event task and dispatches it to an available QA slot in the
-  background. The QA slot acknowledges the event, runs the required checks
-  against the committed candidate, updates the module QA ledger, and closes
-  the task. No QA slot continuously polls or starts a duplicate Core3 process
-  while idle.
+- Use 10 dispatchable QA slots for each logical wave, with one QA assignment
+  paired to each of up to 10 module owners. QA does not need a continuously
+  active process or a separate durable product goal, but each QA owner has a
+  durable module test plan and QA ledger. QA creates and reviews the detailed
+  test plan before development, then consumes the exact Core3 process or
+  worktree spawned by its paired developer, runs the planned functional and
+  authenticated Odoo/Core3 browser cases, records failures, and re-tests fixes.
+  Each module's results, failures, and repairs are recorded in
+  `odoo-ui-parity/qa/<module>.md`; its pre-development cases are recorded in
+  `odoo-ui-parity/qa/test-plans/<module>.md`. The module owner must respond to
+  QA findings and retain ownership until all required cases pass or an exact
+  blocker is recorded.
+- A wave has explicit phases: `qa-plan -> dev-batch -> qa-feedback -> repair
+  loop -> merge-gate`. In `qa-plan`, the 10 QA owners create or update the
+  detailed test plans and the main agent approves their scope. In `dev-batch`,
+  up to 10 paired developers implement against those plans while their paired
+  QA owners remain idle or prepare fixtures. When the dev batch submits a
+  candidate, the main agent pauses continuation work and activates the 10 QA
+  owners in parallel against the corresponding developer process/worktree.
+  QA returns a bounded pass, defect list, or blocker. The main agent dispatches
+  the same developer owner to repair only after feedback is recorded, then
+  reactivates the same paired QA owner for retest. A module proceeds to merge
+  only after its required cases pass or its exact blocker is approved.
+- QA triggers are `test-plan-ready`, `feature-complete`, `merge-candidate`,
+  `post-merge`, `refactor-impact`, and `release`. The module owner records the
+  trigger and candidate commit in its module progress file; the main agent
+  creates a bounded event task for the paired QA owner. No QA slot continuously
+  polls, starts duplicate processes, or tests uncommitted developer work.
 - `odoo-ui-parity/progress.md` is the QA-maintained aggregate and sign-off
   ledger. Module agents must not edit it directly. Each module agent
   owns and may update only `odoo-ui-parity/progress/<module>.md`, following

@@ -3,6 +3,10 @@
 This directory prevents module agents from conflicting on the shared
 `../progress.md` aggregate.
 
+Before implementation, the paired QA owner creates the module's detailed test
+plan at `../qa/test-plans/<module>.md`. The module progress file must link that
+plan and record whether it is draft, reviewed, approved, or superseded.
+
 ## Ownership rules
 
 - Each module has one file: `<module>.md`.
