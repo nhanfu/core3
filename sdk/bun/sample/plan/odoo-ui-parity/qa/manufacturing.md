@@ -8,28 +8,31 @@
 - Artifacts: /tmp/core3-odoo-parity/module-matrix-20260912/manufacturing-desktop.png and manufacturing-mobile.png.
 - Boundary: this is route/render smoke evidence only; it does not sign off the complete menu tree, CRUD, permissions, workflows, persistence, or paired Odoo visual parity.
 
-QA state: dormant
+QA state: qa-in-progress
 QA slot: dispatchable manufacturing assignment (pending wave dispatch)
 Module owner: manufacturing module owner
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: working tree after authenticated manufacturing QA
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| MANUFACTURING-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
+| MANUFACTURING-001 | Full focused contract corpus and route matrix | 59 focused tests / 674 assertions; 32 routes × desktop/mobile = 64/64; no page/request errors or overflow | PASS |
+| MANUFACTURING-002 | Authenticated work-order lifecycle and stale boundary | Admin `wo-blocked-001`: Waiting → Ready → Progress/paused → Ready → Blocked, versions 1 → 6; stale plan 409 | PASS |
+| MANUFACTURING-003 | Permission boundary | Fleet user plan action returned 403 `manufacturing.write` | PASS |
+| MANUFACTURING-004 | Fresh paired Odoo/Core3 visual comparison for every accepted surface | Existing source captures are recorded, but no fresh current-wave pair is adjudicated | pending |
 
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
-| — | No current-wave QA run | — | — | pending |
+| MANUFACTURING-BROWSER-001 | Current candidate had no verified QA evidence | — | Replaced by MANUFACTURING-001 through 003 | closed |
 
 ## Sign-off
 
-- Functional: pending
-- Permissions: pending
-- Persistence/data integrity: pending
+- Functional: pass for current tested contracts and work-order lifecycle
+- Permissions: pass for tested read/write boundary
+- Persistence/data integrity: pass for tested workflow row versions/state changes
 - Desktop/mobile visual parity: pending
-- Tester decision: not signed off
+- Tester decision: conditional; no module sign-off until paired Odoo and remaining interaction gates close
