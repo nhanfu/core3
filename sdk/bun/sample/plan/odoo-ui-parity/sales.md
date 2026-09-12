@@ -103,3 +103,28 @@ Odoo reached the login page (HTTP 303) and Core3 required authentication (HTTP
 the fallback Core3 dev runner hit `EMFILE` before the authenticated route could
 be exercised. Therefore no visual parity claim is made; image artifacts remain
 outside Git.
+
+## Salespersons report visual audit attempt (2026-09-12)
+
+This bounded audit selected `/order/reporting/salespersons` because it maps to
+Odoo `sale.action_order_report_salesperson` and already has a focused Core3
+contract test. The Odoo source trace in `addons/sale/report/sale_report_views.xml`
+confirms the exact action contract: title `Sales Analysis By Salespersons`,
+`graph,pivot` view modes, the bar graph view, `user_id`/Salesperson grouping,
+and the default hidden `Order Date: Last 365 Days` facet. The Core3 YAML has the
+same visible graph/pivot modes, grouping, title, and date preset. Its extra
+`Average Order` field is only declared as a table column and was not treated as
+a verifiable rendered mismatch because the graph/pivot surface could not load.
+
+Authenticated desktop (`1440x900`) and mobile (`390x844`) capture was attempted
+under `/tmp/core3-odoo-parity/sales-visual2-20260912/`. The available backend at
+`127.0.0.1:3001` returned JSON/401 when opened as a browser page, while its
+frontend `127.0.0.1:3002` was not listening. After installing the frozen Bun
+dependencies, the isolated Vite start still failed before binding with the
+exact host error `EMFILE: too many open files` while watching
+`sdk/bun/sample/vite.config.ts`. The generated error-document files are not
+parity captures and must not be used as evidence. No authenticated Odoo/Core3
+visual comparison, correction, or parity claim is recorded; screenshots remain
+outside Git. Re-run this audit when a browser-capable Core3 frontend can bind,
+then compare labels, graph/pivot toolbar ordering, spacing, and horizontal
+overflow at both requested viewports.
