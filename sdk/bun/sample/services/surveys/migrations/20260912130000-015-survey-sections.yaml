@@ -1,0 +1,18 @@
+version: 0.0.16
+description: Survey section rows for the Odoo Questions tab Add a section action
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS is_page BOOLEAN;
+      UPDATE survey_questions SET is_page = FALSE WHERE is_page IS NULL;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options, is_page)
+      VALUES ('section-conditional-profile', 'survey-demo-conditional', 'About your profile', 'Section', 2, false, '', true)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_questions WHERE id = 'section-conditional-profile';
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS is_page;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -167,6 +167,45 @@ describe('Surveys parity catalog and workflow', () => {
     });
   });
 
+  test('adds an Odoo Questions-tab section with ordered, guarded line semantics', async () => {
+    const page = yaml('pages/survey-detail.yaml');
+    const api = yaml('api/survey-detail.yaml');
+    const questions = page.components.find((component: any) => component.source === 'survey_questions');
+    const section = api.actions.find((action: any) => action.id === 'add_survey_section');
+
+    expect(page.page.id).toBe('survey-detail');
+    expect(api.page.id).toBe(page.page.id);
+    expect(questions).toMatchObject({ type: 'LineItemGrid', parent_source: 'survey_detail' });
+    expect(questions.actions).toContainEqual(expect.objectContaining({ id: 'add_survey_section', label: 'Add a section' }));
+    expect(section).toMatchObject({
+      permission: 'surveys.write', handler: 'line_item', action: 'surveys.questions.add_section',
+      params: { id: '{state.id}' },
+    });
+    expect(section.fields.map((field: any) => field.field)).toEqual(['question_text']);
+    expect(String(section.mutation.steps[0].query)).toContain("question_type, sequence");
+    expect(String(section.mutation.steps[0].query)).toContain("'Section'");
+    expect(String(section.mutation.guards[0].query)).toContain('parent_expected_row_version');
+    expect(String(section.mutation.guards[1].query)).toContain('question_text');
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_sections_migrations', ['schema', 'data']);
+    const seeded = await repository.query('SELECT question_text, question_type, sequence, is_page FROM survey_questions WHERE id = ?', ['section-conditional-profile']);
+    expect(seeded).toEqual([{ question_text: 'About your profile', question_type: 'Section', sequence: 2, is_page: true }]);
+
+    const created = await repository.executeMutation(section.mutation, {
+      id: 'survey-demo-feedback', parent_expected_row_version: 1, values: { question_text: 'About you' },
+    });
+    expect(created).toMatchObject({ survey_id: 'survey-demo-feedback', question_text: 'About you', question_type: 'Section', is_page: true });
+    expect((await repository.query('SELECT sequence FROM survey_questions WHERE id = ?', [created.id]))[0].sequence).toBe(8);
+    expect((await repository.query('SELECT row_version FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0].row_version).toBe(2);
+    await expect(repository.executeMutation(section.mutation, { id: 'survey-demo-feedback', parent_expected_row_version: 1, values: { question_text: 'Stale' } })).rejects.toMatchObject({ status: 409, code: 'SURVEY_SECTION_PARENT_CHANGED' });
+    await expect(repository.executeMutation(section.mutation, { id: 'survey-demo-feedback', parent_expected_row_version: 2, values: { question_text: ' ' } })).rejects.toMatchObject({ status: 422, code: 'SURVEY_SECTION_TITLE_REQUIRED' });
+    await repository.run("UPDATE surveys SET state = 'Archived' WHERE id = 'survey-demo-feedback'");
+    await expect(repository.executeMutation(section.mutation, { id: 'survey-demo-feedback', parent_expected_row_version: 2, values: { question_text: 'Archived' } })).rejects.toMatchObject({ status: 409, code: 'SURVEY_SECTION_PARENT_CHANGED' });
+    database.close();
+  });
+
   test('registers the catalog forms and readonly detail routes', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     expect(yaml('pages/suggested-values.yaml').page.route).toBe('/surveys/suggested-values');

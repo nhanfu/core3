@@ -11,11 +11,33 @@ datasources:
     query: "SELECT s.id, s.row_version, s.name, s.title, s.description, s.owner, s.response_count, s.access_token, CASE WHEN s.access_token IS NULL OR s.access_token = '' THEN NULL ELSE '/survey/start/' || s.access_token END AS share_url, 'Participate to ' || s.title || ' survey' AS invite_subject, CASE WHEN s.title ILIKE '%certification%' THEN 'Dear participant\n\nYou have been invited to take a new certification.\n\nStart Certification\n\nWe wish you good luck!' ELSE 'Dear participant\n\nWe are conducting a survey and your response would be appreciated.\n\nStart Survey\n\nThank you in advance for your participation.' END AS invite_body, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS registered_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id) AS participant_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.state = 'Completed') AS completed_count, (SELECT COUNT(*) FROM survey_participants p WHERE p.survey_id = s.id AND p.quiz_passed = true) AS certified_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at, ls.id AS session_id, ls.row_version AS session_row_version, CASE WHEN ls.state IN ('Ready', 'In Progress') THEN ls.state ELSE NULL END AS session_state, ls.session_code, ls.session_link, ls.current_question_text, CAST(ls.session_start_time AS VARCHAR) AS session_start_time, ls.answer_count AS session_answer_count, ls.question_answer_count AS session_question_answer_count FROM surveys s LEFT JOIN survey_live_sessions ls ON ls.survey_id = s.id WHERE s.id = :id"
   - id: survey_questions
     permission: surveys.read
-    query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :id ORDER BY sequence, id"
+    query: "SELECT id, question_text, question_type, sequence, required, answer_options, is_page FROM survey_questions WHERE survey_id = :id ORDER BY sequence, id"
   - id: survey_responses
     permission: surveys.read
     query: "SELECT id, respondent_name, respondent_email, answer_data, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC, id"
 actions:
+  - id: add_survey_section
+    type: server_form
+    permission: surveys.write
+    title: Add a section
+    action: surveys.questions.add_section
+    handler: line_item
+    operation: create
+    params: { id: '{state.id}' }
+    refresh: [survey_detail, survey_questions]
+    mutation:
+      generated: [line_id]
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :id AND state <> 'Archived' AND row_version = :parent_expected_row_version", status: 409, code: SURVEY_SECTION_PARENT_CHANGED, message: This survey changed or is archived. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:question_text AS VARCHAR), ''))) > 0", status: 422, code: SURVEY_SECTION_TITLE_REQUIRED, message: A section title is required. }
+      before_steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 1 AS next_sequence, :id || '-section-' || CAST(COALESCE(MAX(sequence), 0) + 1 AS VARCHAR) AS line_id FROM survey_questions WHERE survey_id = :id", assign: true }
+      steps:
+        - { query: "INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options, is_page) VALUES(:line_id, :id, :question_text, 'Section', :next_sequence, false, '', true)", expect_changed: true, status: 409, code: SURVEY_SECTION_CREATE_FAILED, message: The section could not be added. }
+        - { query: "UPDATE surveys SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: SURVEY_SECTION_PARENT_CHANGED, message: This survey changed before the section was added. Reload and try again. }
+      result: { query: "SELECT * FROM survey_questions WHERE id = :line_id" }
+    fields:
+      - { field: question_text, label: Section title, type: text, required: true, placeholder: 'e.g. About you' }
   - id: duplicate_survey
     type: server
     permission: surveys.write

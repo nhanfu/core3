@@ -909,3 +909,35 @@ this worktree under `/tmp/core3-odoo-parity/surveys-batch6-20260912/` at
 persistent Playwright `js_repl` capability, so authenticated browser capture
 could not run. No Odoo or Core3 screenshot, runtime request result, or visual
 parity claim is made for this slice; any attempt artifacts remain outside Git.
+
+## Bounded slice: Questions-tab Add a section (2026-09-12)
+
+The next uncovered visible survey-form control is Odoo's inline Questions tab
+`Add a section` create entry from `addons/survey/views/survey_survey_views.xml`.
+Its context sets `default_is_page=True` and
+`default_questions_selection='all'`; the created `survey.question` remains in
+the ordered `question_and_page_ids` graph and is rendered as a section row.
+Core3 models this single control with the existing shared `LineItemGrid`,
+keeping the `survey-detail` page/API fragments joined by `page.id`. The API
+action `surveys.questions.add_section` requires `surveys.write`, scopes the
+insert to the current survey, appends the next stable sequence, marks the row
+as `is_page`, increments the parent row version, and rejects archived,
+stale, empty-title, and failed inserts with explicit 409/422 contracts.
+
+Migration `20260912130000-015-survey-sections.yaml` adds the idempotent
+`is_page` field and the deterministic conditional-survey section fixture
+`section-conditional-profile`. No question renderer, public flow, section
+navigation, or unrelated CRUD action is included.
+
+Focused validation: `bun test --max-concurrency 1 test/surveys.integration.test.ts`
+passes 22 tests and 215 assertions; `bun run audit` passes with 633 pages,
+649 routes, and 1085 datasources; `git diff --check` is clean. The required
+authenticated Odoo/Core3 capture attempt was made under
+`/tmp/core3-odoo-parity/surveys-sections-20260912/` for 1440x900 and 390x844.
+Odoo responded with a redirect on port 8073, but this worktree's Core3 start
+could not claim its requested port: the launcher found port 3001 busy and
+selected the already-owned parent runtime on 3002, while the isolated process
+was terminated after the bounded attempt. Because no authenticated isolated
+Core3 browser surface was available, no Odoo or Core3 screenshot or visual
+parity claim is made for this slice; the runtime log and response probe remain
+outside Git.

@@ -41,15 +41,28 @@ components:
         fields: [{ field: name, label: Survey }, { field: state, label: Status }, { field: title, label: Title }, { field: owner, label: Owner }, { field: response_count, label: Responses }]
       - title: Description
         fields: [{ field: description, label: Description }, { field: published_at, label: Published at }, { field: closed_at, label: Closed at }]
-  - type: ContactGrid
+  - type: LineItemGrid
+    mount_in: previous-panel
     source: survey_questions
+    parent_source: survey_detail
+    title: Questions
+    variant: odoo_x2many
     row_key: id
+    actions:
+      - { id: add_survey_section, label: Add a section, variant: secondary, permission: surveys.write }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: question_text, field: question_text, label: Question or section, input_type: text, required: true }
+      - { type: LineItemField, id: question_type, field: question_type, label: Type, input_type: text, readonly: true }
+      - { type: LineItemField, id: is_page, field: is_page, label: Section, input_type: checkbox, readonly: true }
     columns:
-      - { field: sequence, label: '#', align: right }
-      - { field: question_text, label: Question, type: PrimaryEntityCell }
+      - { field: sequence, label: '#', align: right, width: 52 }
+      - { field: question_text, label: Question or section, type: PrimaryEntityCell, width: 320 }
       - { field: question_type, label: Type }
+      - { field: is_page, label: Section }
       - { field: required, label: Required }
       - { field: answer_options, label: Options }
+    empty_state: { title: No questions or sections, description: Add a question or section to structure this survey. }
   - type: ContactGrid
     source: survey_responses
     row_key: id
