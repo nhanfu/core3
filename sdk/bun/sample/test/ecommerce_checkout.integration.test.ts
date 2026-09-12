@@ -43,7 +43,7 @@ describe('eCommerce Checkout parity', () => {
     const source = yaml('api/orders.yaml').datasources[0];
     const checkoutApi = yaml('api/checkout.yaml');
     const confirm = checkoutApi.actions.find((action: any) => action.id === 'confirm_ecommerce_checkout');
-    const authUser = { sub: 'customer-user', email: 'hello@workspace.example', name: 'Workspace Buyer', roles: ['customer'], permissions: ['ecommerce.read', 'ecommerce.write'] };
+    const authUser = { sub: 'customer-user', email: 'hello@workspace.example', name: 'Workspace Buyer', company: { name: 'My Company' }, roles: ['customer'], permissions: ['ecommerce.read', 'ecommerce.write'] };
     const api = createYamlApi({
       repository,
       authProvider: {
@@ -61,6 +61,7 @@ describe('eCommerce Checkout parity', () => {
       body: JSON.stringify({ sourceId: source.id, params, top: 50 }),
     }), new URL('http://core3.test/api/query'));
     expect((await (await request({ customer_id: 'ecommerce-customer-001' })).json()).data).toEqual([]);
+    expect((await (await request({ company_name: 'Other Company' })).json()).data.map((row: any) => row.company_name)).toEqual(['My Company']);
     expect((await (await request({})).json()).data.map((row: any) => row.customer_email)).toEqual(['hello@workspace.example']);
     const mutationError = await api(new Request('http://core3.test/api/actions/ecommerce.checkout.confirm', {
       method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },

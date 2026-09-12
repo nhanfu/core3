@@ -67,7 +67,7 @@ the all-customer scope.
 | ECOM-PERM-001 | Ecommerce Manager/editor | Catalog and pricelist mutations succeed according to role | pass at contract level; browser actor planned |
 | ECOM-PERM-002 | Public visitor | Only published catalog data is visible; cart/customer data is isolated | pass: public shop and cookie-scoped anonymous cart contract; customer ownership remains covered by ECOM-PERM-003 |
 | ECOM-PERM-003 | Authenticated customer | Own cart/order and checkout data only; other customers are denied | pass: YAML service/mutation contract; HTTP actor coverage remains planned |
-| ECOM-PERM-004 | Wrong company | Products, prices, carts and orders are not leaked or mutable | pass at service-query level for products, pricelists, carts, customers, and orders; authenticated actor test remains open |
+| ECOM-PERM-004 | Wrong company | Products, prices, carts and orders are not leaked or mutable | pass at service-query level and HTTP query context for authenticated customer company scope; authenticated browser actor test remains open |
 | ECOM-PERM-005 | Unauthenticated/expired | Private routes redirect/401/403 without protected data | planned |
 | ECOM-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current product/pricelist/cart/order unchanged | pass at contract level |
 

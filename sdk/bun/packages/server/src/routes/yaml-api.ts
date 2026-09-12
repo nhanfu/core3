@@ -137,6 +137,11 @@ export function createYamlApi(ctx: YamlApiContext) {
       current_user_name: String(user.name || ''),
       current_user_email: String(user.email || ''),
       customer_scope: user.roles?.includes('admin') ? 'all' : 'own',
+      // Non-admin company scope is identity-derived; never trust a caller's
+      // company_name query parameter to widen the visible company boundary.
+      company_name: user.roles?.includes('admin')
+        ? params.company_name
+        : String(user.company?.name || user.company_name || params.company_name || ''),
       current_branch_id: String(user.branch_id || ''),
       view_scope: String(user.view_scope || 'all'),
     };
