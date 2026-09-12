@@ -3,7 +3,7 @@
 Module owner: chat module owner
 QA slot: wave-1 chat assignment
 State: ready-for-test
-Candidate commit: `57888722f02e689191bc07fcec58f7bec19f49dc`
+Candidate commit: `137d77a0aab0f3f40ff3bddee2362b2833cd7518`
 
 ## Current verification
 
@@ -33,3 +33,23 @@ by `post-merge` after integration.
 - Authenticated browser mutation proof remains a gate for this owner session:
   no browser automation capability is available here, so no screenshot or
   visual-parity claim is made.
+
+## QA verification — candidate 137d77a0 (2026-09-13)
+
+- Exact candidate HEAD: `137d77a0aab0f3f40ff3bddee2362b2833cd7518`.
+- Bounded Chat suite: **21/21 passed, 143 assertions** across 7 integration
+  files. Participant email resolution/persistence, creator participation,
+  duplicate handling, and `CHAT_PARTICIPANTS_INVALID` rejection passed.
+- Permission/persistence: focused checks passed; durable restart persistence
+  and the complete actor/company matrix remain open.
+- Audit passed: 659 pages, 668 routes, 1134 datasources. `git diff --check`
+  passed.
+- Repository lint is blocked by unrelated existing errors at
+  `sample/test/website_public.integration.test.ts:31,33`.
+- Authenticated module runner `:4328` started and `/api/modules` returned 200,
+  but seeded admin login was followed by `/api/auth/me` HTTP 401
+  `INVALID_TOKEN`; desktop 1440x900 and mobile 390x844 Chat route checks all
+  redirected to login. No candidate captures were produced.
+- QA state: **conditional / not signed off**. Browser CRUD, actor boundaries,
+  restart persistence, and paired Odoo desktop/mobile comparison remain
+  blocked or unexecuted.
