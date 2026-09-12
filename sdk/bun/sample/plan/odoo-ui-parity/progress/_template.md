@@ -7,7 +7,7 @@
 | State | active / source-blocked / tester-failed / parity-signed-off |
 | Current goal | pending |
 | Last commit | pending |
-| Tester | shared tester |
+| QA slot | assigned QA slot |
 | Last verification | pending |
 | Open bug IDs | none |
 

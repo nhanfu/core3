@@ -1,10 +1,9 @@
 # Odoo UI parity agent progress
 
-This is the shared tester-maintained aggregate. Module agents update only
-their own `progress/<module>.md`; the tester consolidates those records here
+This is the QA-maintained aggregate. Module agents update only their own
+`progress/<module>.md`; assigned QA owners consolidate verified records here
 after verification. Keep one module-ownership/sign-off row per module. Track
-intermediate test cases and repairs in the matching module section of
-`module-qa.md`.
+intermediate test cases and repairs in each module's `qa/<module>.md` ledger.
 
 | Date | Module | Bounded slice | Commit | Tests/audits | Browser captures | Blocker |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -1,4 +1,7 @@
-# Odoo UI parity module QA and bug-fix ledger
+# Legacy consolidated QA ledger
+
+New QA entries belong in `qa/<module>.md`; this file is retained as historical
+evidence only and is no longer authoritative.
 
 This is the single shared tester ledger. Test cases and bug fixes are merged
 into one file but separated by module. The shared tester owns every section;

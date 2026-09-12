@@ -47,6 +47,38 @@ spacing tokens, tabs, sections, component and text parity, responsive behavior,
 and all visible interactive states. A module is not ready when its screens work
 but its menu structure or visual/UX details remain approximate.
 
+## Technical implementation notes
+
+- Render HTML through the Core3 Fluent API in `html.js`. Prefer fluent
+  composition and registered Core3 components over hand-built HTML strings,
+  ad-hoc DOM mutation, or bespoke page markup. Keep page structure and
+  behavior declarative in YAML; use the Fluent API only at the renderer seam
+  where HTML must be produced.
+- During development mode, module migrations may be consolidated into exactly
+  two module-owned files: `schema.yaml` for tables, indexes, constraints, and
+  schema changes, and `demo.yaml` for deterministic demo/fixture data. Both
+  files must remain idempotent and rerunnable on a clean database and an
+  existing development database. This consolidation is safe only for
+  unreleased development migrations; once a release or shared environment has
+  consumed a migration, preserve its history and add a new migration instead
+  of rewriting it.
+- Use the Temporal workflow engine for any workflow that must be durable across
+  restarts, spans multiple Core3 modules, or integrates with a third-party
+  system. This includes long-running steps, timers, human approval waits,
+  retries, callbacks, and external side effects. Module-local synchronous state
+  transitions may remain Core3/YAML workflows. YAML must still declare the
+  workflow identity, permissions, inputs, outputs, and transition contract;
+  Temporal owns durable execution, retry policy, timeout handling, and recovery.
+  Every Temporal activity must be permission-checked, idempotent, observable,
+  and provide an explicit failure or compensation path.
+- Core3 uses Bun for the Temporal client and Worker during development and
+  deployment. Temporal's TypeScript Worker support is officially centered on
+  Node, so Bun compatibility is a Core3 runtime decision and must be verified
+  against the pinned SDK version. Each Temporal integration must pass Worker
+  startup, workflow start, replay/restart recovery, activity execution, retry,
+  signal/timer, and shutdown smoke checks before acceptance. Keep a Node Worker
+  fallback documented if a future SDK or Bun change breaks compatibility.
+
 ## Live Odoo reference environment
 
 - URL: `http://localhost:8069`
@@ -155,16 +187,25 @@ The shared mock-data contract is defined in
   frontend, in-memory DuckDB, and loads the requested module plus `auth` for
   session/login support. File watching is disabled; restart it manually after
   source changes.
-- There are exactly 39 persistent module owners: one Luna medium-effort
-  sub-agent for every row in the module register. All 39 are launched in
-  parallel, each in its own worktree and branch. `auth` and `ai` are excluded
-  because they are Core3 infrastructure, not registered Odoo modules.
+- There are exactly 38 persistent module owners: one Luna medium-effort
+  sub-agent for every actual module row in the module register. A logical wave
+  contains 9 module owners and 3 QA owners, with each QA owner responsible for
+  3 modules. The main agent schedules those 12 workers as a wave; the main
+  agent is the 13th coordinator and does not count as a module or QA owner.
+  `auth` and `ai` are excluded because they are Core3 infrastructure, not
+  registered Odoo modules.
 - A module owner receives the complete module goal, not a short UI slice. It
   remains responsible for menu/action inventory, domain model and migrations,
   APIs/services, permissions, workflows, UI, seeded data, CRUD, regression
   tests, authenticated browser proof, and visual comparison until parity is
   signed off or an exact source blocker is recorded. Do not respawn or rotate
   owners for slices, retries, screenshots, or bug fixes.
+- A module owner's assignment, worktree, branch, ledger, and implementation
+  context are durable, but its process does not need to remain active. The
+  main agent dispatches bounded implementation, repair, regression, or evidence
+  tasks to the same module owner and resumes context from the module plan,
+  progress file, commits, and open findings. Do not create a new durable
+  developer agent for each event or feature slice.
 - Worktrees are isolated from the active checkout. Owners commit only their
   module changes and never merge, cherry-pick, or edit another module's
   worktree. Cross-module contracts and dependencies are documented for the
@@ -177,21 +218,32 @@ The shared mock-data contract is defined in
 - Do not create fresh replacement agents. If an owner stops, the main agent
   resumes that same run/worktree or records a blocker and requests explicit
   direction; ownership remains stable for the lifetime of this plan.
-- Use one shared tester sub-agent for the entire parity effort. The tester is
-  not duplicated per module or per wave. It consumes the module agents'
-  committed work, runs the shared test matrix and authenticated Odoo/Core3
-  browser comparisons, records failures in
-  `odoo-ui-parity/module-qa.md`, records each module's tests and repairs in
-  that module's section, and re-tests fixes until every module's
-  accepted functionality is green. Module agents must respond to tester
-  findings and keep ownership until the tester signs off or the blocker is
+- Use 3 dispatchable QA slots for each logical wave, with each QA assignment
+  covering up to 3 module owners. QA does not require a durable active goal or
+  continuously running session. The module assignment, ledger, and current
+  state are durable; each verification event creates a bounded QA task that the
+  main agent can dispatch to an available QA slot. The QA task ends after
+  recording sign-off or a blocker. QA agents consume committed developer work,
+  test the Core3 process/worktree spawned by the corresponding developer, run
+  the functional and authenticated Odoo/Core3 browser matrix, and re-test
+  fixes. Each module's results, failures, and repairs are recorded in
+  `odoo-ui-parity/qa/<module>.md`. Module agents must respond to their assigned
+  QA findings and keep ownership until QA signs off or the blocker is
   explicitly recorded.
-- `odoo-ui-parity/progress.md` is the shared tester-maintained aggregate and
-  sign-off ledger. Module agents must not edit it directly. Each module agent
+- QA triggers are `feature-complete`, `merge-candidate`, `post-merge`,
+  `refactor-impact`, and `release`. The module owner records the trigger and
+  candidate commit in its module progress file; the main agent creates a
+  bounded event task and dispatches it to an available QA slot in the
+  background. The QA slot acknowledges the event, runs the required checks
+  against the committed candidate, updates the module QA ledger, and closes
+  the task. No QA slot continuously polls or starts a duplicate Core3 process
+  while idle.
+- `odoo-ui-parity/progress.md` is the QA-maintained aggregate and sign-off
+  ledger. Module agents must not edit it directly. Each module agent
   owns and may update only `odoo-ui-parity/progress/<module>.md`, following
-  `odoo-ui-parity/progress/README.md`. The shared tester consolidates those
-  files into `progress.md` after verification. Intermediate commits and
-  failing attempts belong in the matching module section of `module-qa.md`.
+  `odoo-ui-parity/progress/README.md`. The assigned QA owners consolidate
+  verified module results into `progress.md` after verification. Intermediate
+  commits and failing attempts belong in the matching module QA ledger.
 - Every completed module must have corresponding test-case entries and a
   tester result before its progress row can say parity-signed-off. A source
   blocker may be recorded only with the exact missing addon/action evidence;
@@ -205,18 +257,21 @@ The shared mock-data contract is defined in
 ## Shared verification and repair ledger
 
 The module-level plan files describe Odoo behavior and implementation scope.
-The single execution ledger beside this plan tracks cross-module verification
-with separate test-case and bug-fix tables for every module:
+Each module has its own execution ledger at
+`odoo-ui-parity/qa/<module>.md`, with separate test-case and bug-fix tables.
+The aggregate progress file tracks only cross-module status:
 
-- `odoo-ui-parity/module-qa.md` is the canonical QA and repair ledger. Each
-  module section records its Odoo route/action, Core3 route, fixture/state,
-  desktop/mobile capture paths, test result, observed mismatch, evidence,
-  owner, fix commit, regression test, retest result, and blocker.
+- `odoo-ui-parity/qa/<module>.md` is the canonical QA and repair ledger for
+  that module. It records the Odoo route/action, Core3 route, fixture/state,
+  verification trigger, desktop/mobile capture paths, test result, observed
+  mismatch, evidence, owner, fix commit, regression test, retest result, and
+  blocker.
 
-The shared tester must update the relevant module section as part of every
-verification pass. Do not create separate global test-case or bug-fix files.
-Module agents may update only their own progress file, never another module's
-file or the aggregate `progress.md`.
+The assigned QA owner must update the relevant module ledger as part of every
+verification pass. Do not combine module QA histories into one file. Module
+agents may update only their own progress and QA files; QA agents may update
+only the QA ledgers for their assigned modules. No agent may edit the
+aggregate `progress.md` directly.
 Screenshots remain temporary under `/tmp/core3-odoo-parity/` and must never be
 added to Git.
 
