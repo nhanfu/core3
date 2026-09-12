@@ -20,6 +20,7 @@ Candidate commit: current working tree
 - Authenticated module-scoped route matrix: 13 routes × desktop/mobile; an isolated fresh-page rerun with valid detail IDs passed 26/26 with no page/request errors or horizontal overflow. The earlier 22/26 bare-route result was a reused-page traversal artifact; Timesheet Analysis exposed a real missing-pivot-fields contract.
 - Fix: declared `pivot.fields` for `timesheet_analysis` in `services/timesheets/api/analysis.yaml`; a fresh authenticated retest rendered Pivot/Graph/List with no HTTP or browser failures.
 - Authenticated mutation smoke on a fresh `timesheets,project` runner: created Draft → Submitted → Approved with HTTP 200 at each step and row versions 1 → 3. Approval dispatched the Project-owned `project.projects.add_hours` mutation after loading `project_id` and `hours` from the submitted row.
+- Permission boundary smoke on the same runner: Fleet received 403 for `/api/pages/timesheets`, `/api/pages/all-timesheets`, `/api/pages/timesheets-settings`, and `timesheets.entries.approve`, with the expected `timesheets.read`, `timesheets.manage`, and `timesheets.settings` permission errors.
 
 ## Test-case inventory
 
@@ -29,6 +30,7 @@ Candidate commit: current working tree
 | TIMESHEETS-BROWSER-001 | Authenticated route matrix | 26/26 isolated fresh-page checks across 13 routes × desktop/mobile, including valid detail IDs; no page/request errors or horizontal overflow | pass |
 | TIMESHEETS-FUNC-002 | Timesheet Analysis Pivot/Graph/List runtime | Missing API pivot contract fixed; fresh authenticated retest rendered all three views with no failures | pass |
 | TIMESHEETS-FUNC-003 | Cross-module approval workflow | Authenticated create → submit → approve passed; Project hours contract was invoked after approval inputs were assigned from the row | pass |
+| TIMESHEETS-PERM-001 | Fleet permission boundary | Fleet denied personal, all-timesheets, settings, and approval endpoints with expected 403 permission errors | pass |
 | TIMESHEETS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Full parameterized route matrix, role boundaries, authenticated mutation smoke, and paired Odoo comparison remain open | pending |
 
 ## Bugs and retests

@@ -16,12 +16,14 @@ exposed a missing API pivot declaration, which was fixed by adding `pivot.fields
 and reverified with authenticated Pivot/Graph/List rendering without failures. A fresh authenticated mutation smoke also completed
 Draft -> Submitted -> Approved, with approval dispatching the Project-owned
 hours mutation after assigning its cross-module inputs from the submitted row.
+Role-boundary smoke also confirms that Fleet is denied personal, all-timesheets,
+settings, and approval endpoints with the expected 403 permission errors.
 Full parameterized route coverage, role-specific permissions, broader CRUD
 persistence, and paired Odoo comparison remain open. No parity claim is made
 here.
 
 ## Next bounded task
 
-Run the parameterized detail-route matrix, role-specific permission checks,
-authenticated entry CRUD/workflow persistence, and paired Odoo desktop/mobile
-captures. Update this file only with evidence from the matching module owner.
+Run authenticated entry CRUD/persistence checks beyond the workflow smoke, then
+capture paired Odoo/Core3 desktop and mobile evidence for the registered route
+set. Update this file only with evidence from the matching module owner.
