@@ -28,6 +28,7 @@ components:
         - { id: duplicate_survey_detail, label: Duplicate, icon: copy, permission: surveys.write }
         - { id: delete_survey_detail, label: Delete, icon: trash, variant: danger, permission: surveys.write }
         - { id: print_survey_detail, label: Print Survey, permission: surveys.read }
+        - { id: archive_survey_detail, label: Archive, icon: archive, permission: surveys.manage, show_if: "state.survey_detail.state === 'Draft' || state.survey_detail.state === 'Published' || state.survey_detail.state === 'Closed'" }
     stat_buttons:
       - { id: survey_certified_stats_detail, label: Certified, value_field: certified_count, permission: surveys.read }
       - { id: survey_registered_stats_detail, label: Registered, value_field: registered_count, permission: surveys.read }

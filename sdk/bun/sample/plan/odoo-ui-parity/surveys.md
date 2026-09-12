@@ -876,3 +876,36 @@ This agent session has no `js_repl` capability, so the persistent
 `playwright-interactive` browser workflow cannot run here; no authenticated
 Core3 screenshot or visual-parity claim is made for this batch. Any runtime
 attempt artifacts remain outside Git.
+
+## Bounded slice: Survey form Archive Actions-menu parity (2026-09-12)
+
+The next visible gap after the Attempts stat was the Odoo Survey form
+Actions-menu `Archive` entry. The exact source trace is Odoo 19 revision
+`65975996`: `addons/survey/views/survey_survey_views.xml` defines the form
+header `action_archive` object button with visible label `Close` and
+`action_unarchive` with visible label `Reopen`; the generic Odoo form action
+menu contributes the row-scoped `Archive` entry beside `Duplicate`, `Delete`,
+and `Print Survey`. The model implementation is
+`addons/survey/models/survey_survey.py:523-529`, where `action_archive` and
+`action_unarchive` persist the active state (and archive/unarchive a linked
+certification badge). The action is available only for an active survey and
+requires the survey model write/security boundary.
+
+Core3 now exposes the existing guarded `archive_survey_detail` workflow in
+the `survey-detail` form `action_menu` with the exact visible label `Archive`.
+The page remains presentation-only and the API/action ownership remains
+separate, joined by `page.id: survey-detail`; it reuses
+`surveys.records.archive`, `surveys.manage`, the existing state predicate,
+row-scoped `state.id`, refresh, and the existing deterministic Archived and
+Reopen lifecycle. No new mutation, fixture, route, or renderer was added.
+
+Focused coverage in `test/surveys.integration.test.ts` verifies the page/API
+join, exact menu label/icon/permission/state visibility, and reuse of the
+server workflow action. `git diff --check` is clean.
+
+The required authenticated Odoo/Core3 browser comparison was attempted for
+this worktree under `/tmp/core3-odoo-parity/surveys-batch6-20260912/` at
+1440x900 and 390x844. This agent session does not expose the required
+persistent Playwright `js_repl` capability, so authenticated browser capture
+could not run. No Odoo or Core3 screenshot, runtime request result, or visual
+parity claim is made for this slice; any attempt artifacts remain outside Git.

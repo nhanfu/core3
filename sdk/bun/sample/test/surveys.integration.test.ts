@@ -142,6 +142,31 @@ describe('Surveys parity catalog and workflow', () => {
     }, 0, 50)).data).toEqual([]);
   });
 
+  test('exposes Odoo survey Archive in the form Actions menu', () => {
+    const page = yaml('pages/survey-detail.yaml');
+    const api = yaml('api/survey-detail.yaml');
+    const form = page.components.find((component: any) => component.type === 'OdooFormView');
+    const menuArchive = form.action_menu.actions.find((action: any) => action.id === 'archive_survey_detail');
+    const pageArchive = page.actions.find((action: any) => action.id === 'archive_survey_detail');
+
+    expect(page.page.id).toBe('survey-detail');
+    expect(api.page.id).toBe(page.page.id);
+    expect(menuArchive).toMatchObject({
+      id: 'archive_survey_detail',
+      label: 'Archive',
+      icon: 'archive',
+      permission: 'surveys.manage',
+      show_if: "state.survey_detail.state === 'Draft' || state.survey_detail.state === 'Published' || state.survey_detail.state === 'Closed'",
+    });
+    expect(pageArchive).toMatchObject({
+      id: 'archive_survey_detail',
+      type: 'server',
+      permission: 'surveys.manage',
+      action: 'surveys.records.archive',
+      handler: 'order_transition',
+    });
+  });
+
   test('registers the catalog forms and readonly detail routes', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     expect(yaml('pages/suggested-values.yaml').page.route).toBe('/surveys/suggested-values');
