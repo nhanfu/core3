@@ -5,6 +5,28 @@ implementation is authorized.
 
 Audit date: 2026-09-12
 
+## Wave 2 verification evidence
+
+The source gate was rechecked before selecting the implementation scope:
+
+```text
+$ test -d /home/nhanjs/projects/core3-worktrees/odoo
+missing
+$ git -C /home/nhanjs/projects/odoo branch --show-current
+19.0
+$ git -C /home/nhanjs/projects/odoo rev-parse HEAD
+659759969d535d286b656c96b675e4612b925ddd
+$ test -d /home/nhanjs/projects/odoo/addons/hr_appraisal
+missing
+$ git -C /home/nhanjs/projects/odoo ls-files 'addons/hr_appraisal/**' 'enterprise/addons/hr_appraisal/**'
+(no output)
+```
+
+The available source therefore cannot support a source-backed UI/UX slice in
+this wave. The bounded result is the exact unavailable-addon blocker recorded
+below; no Core3 YAML, fixture, permission, route, or visual contract was
+changed.
+
 ## Parent-plan scope
 
 The module register in `../odoo-ui-parity-plan.md` identifies Appraisals as an
