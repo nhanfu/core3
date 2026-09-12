@@ -17,6 +17,24 @@ datasources:
     query: "SELECT actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM inventory_transfer_messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND picking_id = :id UNION ALL SELECT 'OdooBot', 'inventory.transfer.created', 'Transfer created', 'Transfer created', CAST(p.scheduled_date AS VARCHAR) FROM inventory_pickings p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id AND NOT EXISTS (SELECT 1 FROM inventory_transfer_messages m WHERE m.picking_id = p.id) ORDER BY created_at DESC"
 
 actions:
+  - id: delete_inventory_transfer
+    type: server
+    permission: inventory.write
+    action: inventory.pickings.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
+    refresh: [inventory_receipts, inventory_deliveries, inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline]
+    mutation:
+      operation: delete
+      table: inventory_pickings
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_DELETE_NOT_ALLOWED, message: Only draft transfers can be deleted. }
+      steps:
+        - { query: "DELETE FROM inventory_picking_moves WHERE picking_id = :id" }
+        - { query: "DELETE FROM inventory_transfer_messages WHERE picking_id = :id" }
+
   - id: edit_inventory_transfer
     type: server_form
     permission: inventory.write

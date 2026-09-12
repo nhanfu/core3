@@ -76,3 +76,20 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
 - The product candidate was rejected by the merge agent because its page/test
   changes conflict with the active transfer edit implementation. Rebase the
   product candidate before another integration attempt.
+
+## Rebased candidate review
+
+- Rebased onto active checkout `a7088525`; retained the active `Edit details`
+  form contract and test ordering, then added Draft-delete beside it.
+- Receipt-create/Draft-delete focused tests and all requested checks are being
+  rerun for the rebased candidate.
+
+## Rebased candidate evidence
+
+- Final candidate commit: `HEAD` (rebased onto active `a7088525`).
+- Active transfer edit ordering is preserved: `Edit details` remains first;
+  Draft Delete is the following action and the regression test matches it.
+- CRUD suite: 3 tests / 13 assertions passed. Transfer workflow suite: 3
+  tests / 43 assertions passed.
+- UI audit passed: 659 pages, 668 routes, 1136 datasources. Inventory CSS
+  build, scoped ESLint, and `git diff --check` passed.

@@ -63,6 +63,28 @@ CRUD/workflow browser checks, and migration-contract decision are complete.
 
 Detailed execution matrix: [`test-plans/inventory.md`](test-plans/inventory.md). It is the module-level source for transfer, stock, product, report, actor, persistence, Temporal, and paired Odoo gates.
 
+## Rebased candidate review
+
+- The CRUD product changes were rebased onto active checkout `a7088525`.
+- The active transfer edit action remains first in the form contract and its
+  existing test expectation is preserved; Draft Delete is an additional
+  permissioned action.
+- Receipt-create/Draft-delete browser proof and paired Odoo comparison remain
+  open; repository and static checks are being rerun against the rebased tree.
+
+## Rebased candidate evidence
+
+- Final candidate commit: `HEAD`, rebased onto active `a7088525`.
+- The active `Edit details` action remains first in the transfer form and its
+  existing test contract is preserved; Draft Delete follows it.
+- `bun test test/inventory_transfer_crud.integration.test.ts`: PASS, 3 tests /
+  13 assertions. `bun test test/inventory_transfer_workflow.integration.test.ts`:
+  PASS, 3 tests / 43 assertions.
+- `bun run audit`: PASS, 659 pages / 668 routes / 1136 datasources.
+  `bun run css:build:inventory`, scoped ESLint, and `git diff --check`: PASS.
+- Authenticated New/Delete browser proof and paired Odoo comparison remain
+  open; no module sign-off is implied.
+
 ## Merge review record — candidate `84dd0f48` / QA `85fa66c1`
 
 - QA evidence was reviewed and retained: focused CRUD/workflow checks,

@@ -12,6 +12,7 @@ components:
     statusbar: [{ value: Draft, label: Draft }, { value: Waiting, label: Waiting }, { value: Ready, label: Ready }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
     header_actions:
       - { id: edit_inventory_transfer, label: Edit details, variant: secondary, permission: inventory.write }
+      - { id: delete_inventory_transfer, label: Delete, variant: danger, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Draft'" }
       - { id: mark_inventory_transfer_todo, label: Mark as Todo, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Draft'" }
       - { id: check_inventory_transfer_availability, label: Check Availability, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Waiting' || state.inventory_transfer_detail.state === 'Draft'" }
       - { id: validate_inventory_transfer, label: Validate, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }

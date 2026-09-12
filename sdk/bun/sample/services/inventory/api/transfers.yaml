@@ -9,3 +9,29 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_DATA_UNAVAILABLE, message: Transfer data is temporarily unavailable. } }
     query: "SELECT p.id, p.row_version, p.name, p.contact_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, p.company_name, p.state, 'Transfers' AS operation_kind, 'todo' AS activity_type, CASE p.state WHEN 'Draft' THEN 'Confirm receipt details' WHEN 'Waiting' THEN 'Check incoming stock' WHEN 'Ready' THEN 'Receive products' WHEN 'Done' THEN 'Review receipt' ELSE 'Review receipt' END AS activity_summary, CAST(p.scheduled_date AS VARCHAR) AS activity_date, 'admin@tms.local' AS activity_user, CASE p.state WHEN 'Done' THEN 'done' WHEN 'Draft' THEN 'overdue' WHEN 'Ready' THEN 'today' ELSE 'planned' END AS activity_state, 1 AS activity_count FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.operation_kind = 'receipt' AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.contact_name, '') ILIKE '%' || :q || '%' OR COALESCE(p.source_document, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) AND (:scheduled_date IS NULL OR (:scheduled_date = 'overdue' AND p.scheduled_date < DATE '2026-01-15') OR (:scheduled_date = 'today' AND p.scheduled_date = DATE '2026-01-15') OR (:scheduled_date = 'upcoming' AND p.scheduled_date > DATE '2026-01-15')) ORDER BY p.scheduled_date, p.name"
+actions:
+  - id: create_inventory_receipt
+    type: server_form
+    permission: inventory.write
+    title: New Receipt
+    action: inventory.receipts.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_receipts]
+    mutation:
+      operation: insert
+      table: inventory_pickings
+      fields: [operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state]
+      required: [name, scheduled_date]
+      defaults: { operation_type_id: operation-receipts, company_name: 'My Company', source_location_id: location-customer, destination_location_id: location-stock, state: Draft, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'receipt-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80 AND CAST(:scheduled_date AS DATE) IS NOT NULL", status: 422, code: INVENTORY_RECEIPT_FIELDS_REQUIRED, message: Receipt reference and scheduled date are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_pickings WHERE name = TRIM(CAST(:name AS VARCHAR)))", status: 409, code: INVENTORY_RECEIPT_EXISTS, message: A transfer with this reference already exists. }
+      result: { query: "SELECT * FROM inventory_pickings WHERE id = :id" }
+    fields:
+      - { field: name, label: Reference, type: text, required: true }
+      - { field: contact_name, label: Contact, type: text }
+      - { field: scheduled_date, label: Scheduled Date, type: text, required: true }
+      - { field: source_document, label: Source Document, type: text }

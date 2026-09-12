@@ -5,6 +5,7 @@ components:
     variant: odoo
     source: inventory_receipts
     view_navigation: tabs
+    create_action: create_inventory_receipt
     create_label: New
     search: { label: Search receipts, placeholder: Search receipts... }
     filters:
