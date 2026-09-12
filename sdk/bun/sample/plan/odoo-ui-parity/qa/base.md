@@ -51,3 +51,16 @@ Runtime: `bun run agent:module -- base --port=4010`
 and paired Odoo comparison remain open. Authenticated evidence includes the
 mobile list and desktop/mobile detail; the desktop list capture is excluded
 because its run had a transient `/api/apps` failure.
+
+## DEV candidate: attachment panel visibility (2026-09-13)
+
+- Candidate branch: `agent/base-contact-attachments-qa`
+- Authenticated route: `/base/contacts/detail?id=contact-demo`
+- Desktop/mobile: attachment panel, `contact-brief.txt`, and Add attachment
+  control visible; no page/request errors or horizontal overflow.
+- Focused tests: client document components 31 tests; Base Contacts 5 tests /
+  61 assertions. Audit, frontend build, ESLint, and diff check pass.
+- Blocker: a real browser file upload did not return before the runner timeout;
+  persistence and download delivery still require QA follow-up.
+- Odoo paired comparison remains open; screenshots are outside Git under
+  `/tmp/core3-base-contact-attachments-qa-*.png`.

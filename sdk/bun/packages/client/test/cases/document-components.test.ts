@@ -344,6 +344,29 @@ describe('document detail components', () => {
     expect(container.querySelector('.o-form-composer')).toBeNull();
   });
 
+  it('opens the declarative attachment panel and keeps upload/download controls visible', () => {
+    const component = new OdooChatter('contact-chatter', {
+      record: { id: 'contact-demo' },
+      attachments: [{ id: 'file-1', file_name: 'contact-brief.txt', mime_type: 'text/plain', size_bytes: 128 }],
+    }, {
+      attachment_source: 'contact_attachments',
+      attachment_panel_open: true,
+      attachment_upload_action: 'upload_contact_attachment',
+      attachment_download_action: 'download_contact_attachment',
+      add_attachment_label: 'Add attachment',
+    });
+    const submitted: Array<{ action: string; params: any }> = [];
+    component._transport = { submit: async (action: string, params: any) => { submitted.push({ action, params }); } };
+    const container = mount(component);
+    const menu = container.querySelector<HTMLDetailsElement>('.o-form-chatter-tool-menu')!;
+    expect(menu.open).toBe(true);
+    expect(container.querySelector('.o-form-attachment-panel')).not.toBeNull();
+    expect(container.textContent).toContain('contact-brief.txt');
+    expect(container.querySelector<HTMLButtonElement>('.o-form-attachment-upload')?.textContent).toContain('Add attachment');
+    container.querySelector<HTMLButtonElement>('.o-form-attachment-download')!.click();
+    expect(submitted).toEqual([{ action: 'download_contact_attachment', params: expect.objectContaining({ id: 'file-1' }) }]);
+  });
+
   it('adds and removes followers through the shared chatter manager', async () => {
     const component = new OdooFollowerManager('followers', {
       record: { id: 'order-1' },

@@ -62,6 +62,7 @@ export class OdooChatter extends BaseComponent {
         count: attachments.length,
         label: this.def.attachment_label || i18n.tKey('chatter.attachments', {}, 'Attachments'),
       });
+      attachmentTool.details.open = this.def.attachment_panel_open === true;
       const panel = new OdooAttachmentPanel(`${this.id}-attachments`, { record, attachments }, this.def);
       panel.parent = this;
       this.children.push(panel);

@@ -26,7 +26,18 @@ Candidate commit: `ecf1880f`
 
 ## Remaining blockers
 
-- The shared `OdooFormView` does not visibly render the contact attachment
-  panel; renderer-level attachment QA remains open.
+- The contact attachment panel visibility gap is fixed in the current slice;
+  upload persistence/download delivery still require QA follow-up.
 - Odoo paired captures were not recaptured in this wave; this is not signed
   off as full visual parity.
+
+## Attachment panel visibility slice (2026-09-13)
+
+- Implemented declarative `attachment_panel_open` support and enabled it for
+  the contact detail form.
+- Authenticated Chromium: desktop/mobile panel, seeded attachment, and upload
+  control rendered with zero page/request errors and no horizontal overflow.
+- Real file upload did not complete before the browser runner timeout; upload
+  persistence/download delivery remain open and no end-to-end claim is made.
+- Focused evidence: client 31 tests; Base Contacts 5 tests / 61 assertions;
+  audit 647/662/1112; frontend build; focused ESLint; diff check.

@@ -46,7 +46,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
 
     const detail = yaml('pages/contact-detail.yaml');
     const form = detail.components.find((component: any) => component.type === 'OdooFormView');
-    expect(form).toMatchObject({ source: 'contact_detail', avatar_field: 'avatar_url', avatar_initials_field: 'avatar_initials', message_source: 'contact_messages', follower_source: 'contact_followers', attachment_source: 'contact_attachments', activity_action: 'schedule_activity' });
+    expect(form).toMatchObject({ source: 'contact_detail', avatar_field: 'avatar_url', avatar_initials_field: 'avatar_initials', message_source: 'contact_messages', follower_source: 'contact_followers', attachment_source: 'contact_attachments', attachment_panel_open: true, activity_action: 'schedule_activity' });
     expect(form.stat_buttons.map((button: any) => button.label)).toEqual(['Live Chat', 'Opportunities', 'Invoiced', 'Meetings', 'Tasks', 'Purchases', 'Lots/Serial Numbers']);
     expect(form.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Contacts', 'Sales & Purchase', 'Invoicing', 'Notes']);
     expect(detail.components.find((component: any) => component.type === 'ListView')).toMatchObject({ source: 'contact_activities', mount_in: 'previous-panel' });

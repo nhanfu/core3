@@ -252,3 +252,20 @@ Core3 implements the visible form at `/base-country-detail?id=US`. `pages/countr
 Focused validation: `test/base_countries.integration.test.ts` passes 3 tests / 23 assertions, covering discovery and route ownership, idempotent fixtures, search/empty/transport states, US detail with California state data, detail not-found/503, update, missing-record guard, and read/write permission declarations. `bun run audit` passes with 608 pages, 617 routes, and 1047 datasources; `bun run frontend:build` passes; `git diff --check` passes.
 
 Browser evidence attempt: Odoo was reachable at `http://127.0.0.1:8069`, but the unauthenticated browser landed at `/web/login?redirect=%2Fodoo%2Fcontacts%3F`; an `admin` / `admin` login attempt remained on `/web/login`. Those unauthenticated attempt images are `/tmp/core3-odoo-parity/base-country-detail-20260912/odoo-desktop.png`, `odoo-mobile.png`, and `odoo-auth-attempt-desktop.png`. Core3 startup was attempted with `bun run dev --db=ddb --memory`; it failed before serving HTTP because the existing unrelated YAML contract error is `Named action sms_marketing.mailings.cancel permission does not match its workflow transition` from `packages/server/src/routes/yaml-api.ts:253`. Consequently no authenticated Core3 or Odoo captures were produced, and no visual-parity claim is made for this slice. Images remain outside Git.
+
+## Contact attachment panel visibility slice (2026-09-13)
+
+The contact detail form now declares `attachment_panel_open: true`, and the
+shared Odoo chatter honors that contract. Authenticated Chromium rendered the
+attachment panel, seeded `contact-brief.txt`, and the Add attachment control
+on `/base/contacts/detail?id=contact-demo` at 1440x900 and 390x844 with no
+page/request errors or horizontal overflow. Captures remain outside Git at
+`/tmp/core3-base-contact-attachments-qa-desktop.png` and
+`/tmp/core3-base-contact-attachments-qa-mobile.png`.
+
+Focused checks pass: client document components 31 tests, Base Contacts 5
+tests / 61 assertions, audit (647 pages / 662 routes / 1112 datasources),
+frontend build, focused ESLint, and `git diff --check`. The real browser file
+upload journey did not return before the runner timeout, so upload persistence
+and download delivery remain blocked for QA; this slice claims panel/control
+visibility only.

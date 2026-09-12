@@ -59,6 +59,7 @@ components:
     message_source: contact_messages
     follower_source: contact_followers
     attachment_source: contact_attachments
+    attachment_panel_open: true
     activity_action: schedule_activity
     attachment_label: Attachments
     add_attachment_label: Add attachment
