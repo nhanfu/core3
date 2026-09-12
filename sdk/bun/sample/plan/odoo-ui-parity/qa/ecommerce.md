@@ -15,9 +15,9 @@ Verification trigger: feature-complete
 Candidate commit: working tree after Ecommerce Categories slice
 
 Current isolated runner inventory (4041): the manifest registers 8 routes;
- page/API contracts are present for Products, Pricelists, Pricelist detail,
- Categories, Orders list/detail, Unpaid Orders, and Abandoned Carts. Customers
- remains the only manifest-only order route; shop/cart/checkout is still open.
+ page/API contracts are present for all 8 manifest routes: Products, Pricelists,
+ Pricelist detail, Categories, Orders list/detail, Unpaid Orders, Abandoned
+ Carts, and Customers. Shop/cart/checkout remains an unimplemented journey.
 
 Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md). It is the module-level source for catalog, pricelists, commerce workflows, actors, persistence, Temporal, and paired Odoo gates.
 
@@ -31,7 +31,8 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | ECOMMERCE-FUNC-004 | Order detail form/API, persisted read and not-found contract | Same focused Orders test — 2 tests, 13 assertions | pass |
 | ECOMMERCE-FUNC-005 | Unpaid Orders list/API and unpaid-state filter | `bun test ./test/ecommerce_unpaid_orders.integration.test.ts` — 2 tests, 8 assertions | pass |
 | ECOMMERCE-FUNC-006 | Abandoned Carts list/API and deterministic read boundary | `bun test ./test/ecommerce_abandoned_carts.integration.test.ts` — 2 tests, 9 assertions | pass |
-| ECOMMERCE-SCOPE-001 | Manifest-to-page/API coverage | Isolated `/api/modules` inventory on port 4041 confirms 8 registered routes and 4 implemented page/API route families; 4 commerce route families remain unimplemented | pending |
+| ECOMMERCE-FUNC-007 | Customers list/API, summary data and order navigation | `bun test ./test/ecommerce_customers.integration.test.ts` — 2 tests, 8 assertions | pass |
+| ECOMMERCE-SCOPE-001 | Manifest-to-page/API coverage | Current implementation covers all 8 registered Ecommerce routes; shop/cart/checkout journey and mutations remain unimplemented | pass for route coverage; journey pending |
 
 ## Bugs and retests
 

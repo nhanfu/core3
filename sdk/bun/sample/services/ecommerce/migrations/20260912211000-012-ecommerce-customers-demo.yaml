@@ -1,0 +1,16 @@
+version: 0.0.25
+kind: data
+description: eCommerce customer demo data
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_customers (id, name, email, order_count, total_spent, currency) VALUES
+        ('ecommerce-customer-001', 'Acme Corporation', 'buyer@acme.example', 4, 1048.00, 'USD'),
+        ('ecommerce-customer-002', 'Nguyen Workspace', 'hello@workspace.example', 2, 246.50, 'USD'),
+        ('ecommerce-customer-003', 'Northwind Traders', 'orders@northwind.example', 1, 120.00, 'EUR')
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_customers WHERE id IN ('ecommerce-customer-001', 'ecommerce-customer-002', 'ecommerce-customer-003');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,21 @@
+page: { id: ecommerce-customers, route: /ecommerce/customers, breadcrumb: [eCommerce, Orders, Customers], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_customers
+    responsive_card: true
+    search: { label: Search customers, placeholder: Search customer or email... }
+    filters: [{ field: active, label: Status, options_source: ecommerce_customer_active }]
+    columns:
+      - { field: name, label: Customer, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: order_count, label: Orders, align: right }
+      - { field: total_spent, label: Total Spent, align: right }
+      - { field: currency, label: Currency }
+      - { field: company_name, label: Company }
+      - { field: active, label: Active, type: StatusChip }
+    row_open_action: view_ecommerce_customer_orders
+    row_double_click_action: view_ecommerce_customer_orders
+    page_size: 50
+    row_key: id
+    empty_state: { title: No eCommerce customers, description: Customers placing website orders appear here. }

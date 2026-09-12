@@ -34,12 +34,13 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-003 | Orders | Order list/detail, search/status filters, deterministic rows, read-only form and not-found boundary work | pass: focused suite |
 | ECOM-FUNC-004 | Unpaid Orders | Unpaid list filters persisted orders and reuses the guarded read-only order detail route | pass: focused suite |
 | ECOM-FUNC-005 | Abandoned Carts | Abandoned cart list, deterministic search/empty states and read-only detail navigation work | pass: focused suite |
-| ECOM-FUNC-006 | Shop/cart | Product selection, cart add/update/remove and totals persist across reload | planned expansion |
-| ECOM-FUNC-007 | Checkout/order mutations | Customer, delivery, payment and order creation validate and persist atomically | planned expansion |
-| ECOM-FUNC-008 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
-| ECOM-FUNC-009 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |
-| ECOM-FUNC-010 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, prices, categories, carts or orders | planned restart/migration gate |
-| ECOM-FUNC-011 | Assets/import/export/print | Exercise product images/assets, catalog import/export and exposed print actions | planned browser interaction gate |
+| ECOM-FUNC-006 | Customers | Customer summary list, search/filter, deterministic data and order navigation work | pass: focused suite |
+| ECOM-FUNC-007 | Shop/cart | Product selection, cart add/update/remove and totals persist across reload | planned expansion |
+| ECOM-FUNC-008 | Checkout/order mutations | Customer, delivery, payment and order creation validate and persist atomically | planned expansion |
+| ECOM-FUNC-009 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
+| ECOM-FUNC-010 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |
+| ECOM-FUNC-011 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, prices, categories, carts, customers or orders | planned restart/migration gate |
+| ECOM-FUNC-012 | Assets/import/export/print | Exercise product images/assets, catalog import/export and exposed print actions | planned browser interaction gate |
 
 ## Workflow and integration cases
 
@@ -66,7 +67,7 @@ mutations use isolated databases and deterministic IDs.
 
 | Case ID | State | Viewport | Required assertion | Status |
 | --- | --- | --- | --- | --- |
-| ECOM-UI-001 | Shop/product/pricelist/categories/orders/unpaid/abandoned | 1440x900, 390x844 | Catalog cards, product detail, category/order lists, unpaid/abandoned filters, prices, controls and responsive layout match Odoo | planned paired capture |
+| ECOM-UI-001 | Shop/product/pricelist/categories/orders/unpaid/abandoned/customers | 1440x900, 390x844 | Catalog cards, product detail, category/order/customer lists, unpaid/abandoned filters, prices, controls and responsive layout match Odoo | planned paired capture |
 | ECOM-UI-002 | Cart/checkout/payment | both | Cart summary, checkout steps, validation and payment states match Odoo | planned expansion |
 | ECOM-UI-003 | Empty/unpublished/error | both | Public visibility, empty and error states do not leak content or overflow | planned |
 | ECOM-UI-004 | Current route regression | all manifest-owned Ecommerce routes | Public/authenticated desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
