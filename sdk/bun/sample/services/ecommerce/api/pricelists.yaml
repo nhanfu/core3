@@ -4,7 +4,7 @@ datasources:
     single: false
     permission: ecommerce.read
     error_states: { forbidden: { status: 403, code: ECOMMERCE_PRICELISTS_FORBIDDEN, message: You do not have access to eCommerce pricelists. }, transport_error: { status: 503, code: ECOMMERCE_PRICELISTS_UNAVAILABLE, message: eCommerce pricelists are temporarily unavailable. } }
-    query: "SELECT id, row_version, sequence, name, country_groups, currency, company, active FROM ecommerce_pricelists WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(country_groups, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY sequence, name"
+    query: "SELECT id, row_version, sequence, name, country_groups, currency, company, active FROM ecommerce_pricelists WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(country_groups, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) AND (:company_name IS NULL OR company IS NULL OR company = :company_name) ORDER BY sequence, name"
   - id: ecommerce_pricelist_active
     single: false
     permission: ecommerce.read

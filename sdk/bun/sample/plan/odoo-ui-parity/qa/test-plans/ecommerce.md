@@ -60,7 +60,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-PERM-001 | Ecommerce Manager/editor | Catalog and pricelist mutations succeed according to role | pass at contract level; browser actor planned |
 | ECOM-PERM-002 | Public visitor | Only published catalog data is visible; cart/customer data is isolated | planned |
 | ECOM-PERM-003 | Authenticated customer | Own cart/order and checkout data only; other customers are denied | planned: actor ownership still needs runtime coverage |
-| ECOM-PERM-004 | Wrong company | Products, prices, carts and orders are not leaked or mutable | pass for carts, customers, and orders at service-query level; product/pricelist scope remains open |
+| ECOM-PERM-004 | Wrong company | Products, prices, carts and orders are not leaked or mutable | pass at service-query level for products, pricelists, carts, customers, and orders; authenticated actor test remains open |
 | ECOM-PERM-005 | Unauthenticated/expired | Private routes redirect/401/403 without protected data | planned |
 | ECOM-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current product/pricelist/cart/order unchanged | pass at contract level |
 

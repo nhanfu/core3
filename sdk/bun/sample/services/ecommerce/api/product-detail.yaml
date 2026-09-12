@@ -8,7 +8,7 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_PRODUCT_FORBIDDEN, message: You do not have access to this product. }
       missing_record: { status: 404, code: ECOMMERCE_PRODUCT_NOT_FOUND, message: Product not found. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_UNAVAILABLE, message: Product details are temporarily unavailable. }
-    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id"
+    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id AND (:company_name IS NULL OR company_name = :company_name)"
 actions:
   - { id: back_to_ecommerce_products, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
   - { id: add_ecommerce_product_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }

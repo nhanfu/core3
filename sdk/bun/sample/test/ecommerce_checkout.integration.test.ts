@@ -56,9 +56,13 @@ describe('eCommerce Checkout parity', () => {
     const cartApi = yaml('api/cart.yaml');
     const customerApi = yaml('api/customers.yaml');
     const orderApi = yaml('api/orders.yaml');
+    const productApi = yaml('api/products.yaml');
+    const pricelistApi = yaml('api/pricelists.yaml');
     expect((await repository.querySource(cartApi.datasources[0], { id: 'ecommerce-cart-open-001', company_name: 'Other Company', fixture_state: null }, 0, 1)).data).toEqual({});
     expect((await repository.querySource(customerApi.datasources[0], { q: null, active: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(orderApi.datasources[0], { q: null, state: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(productApi.datasources[0], { q: null, published: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(pricelistApi.datasources[0], { q: null, active: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
     database.close();
   });
 });

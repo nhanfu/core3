@@ -39,7 +39,7 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | ECOMMERCE-FUNC-009 | Shop page/API, published-product visibility and cart navigation contract | `bun test ./test/ecommerce_shop.integration.test.ts` — 2 tests, 9 assertions | pass at contract level; authenticated add-to-cart persistence planned |
 | ECOMMERCE-FUNC-010 | Product detail page/API, persisted read, guarded edit, stale and duplicate-reference boundaries | `bun test ./test/ecommerce_product_detail.integration.test.ts` — 2 tests, 9 assertions | pass |
 | ECOMMERCE-FUNC-011 | Checkout validation, persisted order/line creation, cart conversion, and repeat-checkout guard | `bun test ./test/ecommerce_checkout.integration.test.ts` — 4 tests, 16 assertions | pass at service level; authenticated browser workflow captured |
-| ECOMMERCE-FUNC-012 | Migration rerun/idempotency and wrong-company isolation for carts, customers, and orders | Same focused Checkout test — 4 tests, 16 assertions | pass at service level |
+| ECOMMERCE-FUNC-012 | Migration rerun/idempotency and wrong-company isolation for catalog and commerce records | Same focused Checkout test — 4 tests, 18 assertions | pass at service level |
 | ECOMMERCE-SCOPE-001 | Manifest-to-page/API coverage | Current implementation covers all 9 registered Ecommerce routes plus linked Product detail and Checkout routes | pass for route coverage; browser journey pending |
 
 ## Bugs and retests

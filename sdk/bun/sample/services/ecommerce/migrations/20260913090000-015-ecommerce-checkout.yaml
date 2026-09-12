@@ -10,6 +10,8 @@ type:
       ALTER TABLE ecommerce_orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR;
       ALTER TABLE ecommerce_carts ADD COLUMN IF NOT EXISTS company_name VARCHAR;
       UPDATE ecommerce_carts SET company_name = 'My Company' WHERE company_name IS NULL;
+      ALTER TABLE ecommerce_products ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      UPDATE ecommerce_products SET company_name = 'My Company' WHERE company_name IS NULL;
       CREATE TABLE IF NOT EXISTS ecommerce_order_lines (
         id VARCHAR PRIMARY KEY,
         order_id VARCHAR NOT NULL,

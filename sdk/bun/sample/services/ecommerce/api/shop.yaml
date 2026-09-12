@@ -6,7 +6,7 @@ datasources:
       unauthorized: { status: 401, code: ECOMMERCE_SHOP_UNAUTHENTICATED, message: Sign in to browse the shop. }
       forbidden: { status: 403, code: ECOMMERCE_SHOP_FORBIDDEN, message: You do not have permission to browse the shop. }
       transport_error: { status: 503, code: ECOMMERCE_SHOP_UNAVAILABLE, message: The shop is temporarily unavailable. }
-    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND active = TRUE AND is_published = TRUE AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') ORDER BY website_sequence, name"
+    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND active = TRUE AND is_published = TRUE AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') AND (:company_name IS NULL OR company_name = :company_name) ORDER BY website_sequence, name"
 actions:
   - { id: shop_add_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }
   - { id: shop_view_cart, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/cart, params: {} }
