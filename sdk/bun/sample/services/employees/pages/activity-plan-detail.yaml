@@ -1,0 +1,48 @@
+title: Employee Plan
+page: { id: employee-activity-plan-detail, route: /employees/activity-plans/detail, breadcrumb: [Employees, Configuration, Employee, Onboarding / Offboarding, Employee Plan], auth: { require: [employees.manage] } }
+components:
+  - type: OdooFormView
+    source: employee_activity_plan_detail
+    title_field: name
+    status_field: status
+    status_colors: { Active: green, Archived: neutral }
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: new_employee_activity_plan, label: New, variant: primary, permission: employees.manage }
+      - { id: edit_employee_activity_plan, label: Edit, variant: secondary, permission: employees.manage }
+      - { id: archive_employee_activity_plan, label: Archive, variant: danger, permission: employees.manage, show_if: "state.employee_activity_plan_detail.active === true" }
+      - { id: restore_employee_activity_plan, label: Restore, variant: secondary, permission: employees.manage, show_if: "state.employee_activity_plan_detail.active === false" }
+      - { id: delete_employee_activity_plan, label: Delete, variant: danger, permission: employees.manage, confirm: Delete this activity plan? }
+    group_columns: 2
+    groups:
+      - title: Planning
+        fields:
+          - { field: name, label: Plan Name }
+          - { field: res_model_label, label: Applies to }
+          - { field: department_name, label: Department }
+          - { field: company_name, label: Company }
+          - { field: status, label: Status, type: StatusChip }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: employee_activity_plan_steps
+    parent_source: employee_activity_plan_detail
+    title: Activities To Create
+    description: Assign a list of activities in just a few clicks.
+    variant: odoo_x2many
+    page_size: 100
+    row_key: id
+    actions: [{ id: add_employee_activity_plan_step, label: Add a line, variant: primary, permission: employees.manage }]
+    empty_state: { title: No activities to create, description: Add an activity to this plan. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: activity_type, field: activity_type, label: Activity Type, readonly: true }
+      - { type: LineItemField, id: summary, field: summary, label: Summary, input_type: text, required: true }
+      - { type: LineItemField, id: responsible_type, field: responsible_type, label: Responsible, readonly: true }
+      - { type: LineItemField, id: delay_count, field: delay_count, label: Delay, readonly: true }
+      - { type: LineItemField, id: delay_unit, field: delay_unit, label: Unit, readonly: true }
+      - type: LineItemActions
+        id: activity_plan_step_actions
+        actions:
+          - { id: edit_employee_activity_plan_step, label: Edit, icon: edit, variant: ghost, permission: employees.manage }
+          - { id: delete_employee_activity_plan_step, label: Delete, icon: trash, variant: danger, permission: employees.manage }

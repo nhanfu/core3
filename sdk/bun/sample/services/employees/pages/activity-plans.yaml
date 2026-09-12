@@ -1,0 +1,28 @@
+title: Employee Plans
+page: { id: employee-activity-plans, route: /employees/activity-plans, breadcrumb: [Employees, Configuration, Employee, Onboarding / Offboarding], auth: { require: [employees.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_activity_plans
+    create_action: create_employee_activity_plan
+    create_label: New
+    search: { label: Plan, placeholder: Search... }
+    filters: [{ field: active, label: Records, options: [{ id: 'true', label: Current }, { id: 'false', label: Archived }] }]
+    group_by: [{ field: res_model, label: Model }, { field: company_name, label: Company }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: kanban, label: Kanban, icon: grid, mobile: true, group_by: '', card: { title: name, fields: [{ field: res_model_label, label: Applies to }, { field: steps_count, label: Steps }] } }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: steps_count, label: Steps Count, align: right }
+      - { field: res_model_label, label: Model }
+      - { field: department_name, label: Department, optional: hide }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: status, label: Status, type: StatusChip }
+    page_size: 50
+    column_chooser: true
+    row_key: id
+    row_open_action: view_employee_activity_plan
+    row_double_click_action: view_employee_activity_plan
+    empty_state: { title: Create an Activity Plan, description: 'Activity plans are used to assign a list of activities in just a few clicks (e.g. "Onboarding", "Offboarding", ...).' }

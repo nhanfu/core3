@@ -31,3 +31,4 @@ menu:
         - { path: /employees/jobs, label: Job Positions, icon: briefcase, permission: employees.read }
         - { path: /employees/contract-templates, label: Contract Templates, icon: file-text, permission: employees.manage }
         - { path: /employees/employment-types, label: Employment Types, icon: list, permission: employees.read }
+        - { path: /employees/activity-plans, label: Onboarding / Offboarding, icon: checklist, permission: employees.manage }

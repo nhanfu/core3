@@ -799,3 +799,9 @@ were taken at the same viewports; screenshots stay under `/tmp`:
 
 The bounded visual residual is the Core3 Fluent shell and responsive employee
 cards versus Odoo's purple shell/activity matrix. Images are not committed.
+
+## Activity Plans bounded slice (2026-09-12)
+
+Core3 adds the Employees onboarding/offboarding Activity Plans action at `/employees/activity-plans`, with List/Kanban and detail pages, inline activity steps, page/API YAML joined by `page.id`, deterministic plans, and manager-only CRUD/archive/restore/delete guards. The focused test passes 3 tests and 39 assertions.
+
+Odoo reference captures cover list/detail at 1440x900 and 390x844 under `/tmp/core3-odoo-parity/employees-next-20260912/`; Core3 captures cover the desktop list/detail states. The mobile Core3 runtime capture could not be completed before the isolated browser process was stopped, so mobile visual parity remains unclaimed. Images remain outside Git.

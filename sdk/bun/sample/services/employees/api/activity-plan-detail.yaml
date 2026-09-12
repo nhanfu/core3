@@ -1,0 +1,67 @@
+page: { id: employee-activity-plan-detail }
+datasources:
+  - id: employee_activity_plan_detail
+    single: true
+    permission: employees.manage
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_ACTIVITY_PLAN_DETAIL_UNAVAILABLE, message: Employee plan details are temporarily unavailable. } }
+    query: "SELECT p.id, p.row_version, p.name, p.res_model, 'Employees' AS res_model_label, p.department_name, p.company_name, p.active, CASE WHEN p.active THEN 'Active' ELSE 'Archived' END AS status FROM employee_activity_plans p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id"
+  - id: employee_activity_plan_steps
+    permission: employees.manage
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_ACTIVITY_PLAN_STEPS_UNAVAILABLE, message: Plan activities are temporarily unavailable. } }
+    query: "SELECT s.id, s.plan_id, s.row_version, s.sequence, s.activity_type, s.summary, s.responsible_type, s.delay_count, s.delay_unit FROM employee_activity_plan_steps s WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND s.plan_id = :plan_id ORDER BY s.sequence, s.id"
+actions:
+  - id: new_employee_activity_plan
+    type: navigate
+    permission: employees.manage
+    navigate_to: /employees/activity-plans
+  - id: edit_employee_activity_plan
+    type: server_form
+    permission: employees.manage
+    title: Edit Employee Plan
+    action: employees.activity_plans.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_activity_plan_detail
+    params: { id: '{state.id}' }
+    refresh: [employee_activity_plan_detail, employee_activity_plans]
+    mutation:
+      operation: update
+      table: employee_activity_plans
+      fields: [name, department_name, company_name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_activity_plans WHERE id = :id", status: 404, code: EMPLOYEES_ACTIVITY_PLAN_NOT_FOUND, message: Activity plan not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_ACTIVITY_PLAN_NAME_REQUIRED, message: A plan name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_activity_plans WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMPLOYEES_ACTIVITY_PLAN_EXISTS, message: An activity plan with this name already exists. }
+      result: { query: "SELECT * FROM employee_activity_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan Name, type: text, required: true }
+      - { field: department_name, label: Department, type: text }
+      - { field: company_name, label: Company, type: text }
+  - id: archive_employee_activity_plan
+    type: server
+    permission: employees.manage
+    action: employees.activity_plans.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_activity_plan_detail, employee_activity_plans]
+    mutation: { operation: update, table: employee_activity_plans, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_activity_plans WHERE id = :id AND active = true", status: 404, code: EMPLOYEES_ACTIVITY_PLAN_NOT_FOUND, message: Active activity plan not found. }] }
+  - id: restore_employee_activity_plan
+    type: server
+    permission: employees.manage
+    action: employees.activity_plans.restore
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_activity_plan_detail, employee_activity_plans]
+    mutation: { operation: update, table: employee_activity_plans, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_activity_plans WHERE id = :id AND active = false", status: 404, code: EMPLOYEES_ACTIVITY_PLAN_NOT_FOUND, message: Archived activity plan not found. }] }
+  - id: delete_employee_activity_plan
+    type: server
+    permission: employees.manage
+    action: employees.activity_plans.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [employee_activity_plans]
+    mutation: { operation: delete, table: employee_activity_plans, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_activity_plans WHERE id = :id", status: 404, code: EMPLOYEES_ACTIVITY_PLAN_NOT_FOUND, message: Activity plan not found. }] }

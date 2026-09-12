@@ -1,0 +1,95 @@
+import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
+import { discoverPages } from '@core3/server/discovery';
+import { migrateDatabase } from '@core3/server/migrations';
+import { YamlRepository } from '@core3/server/database/yaml-repository';
+
+const serviceRoot = join(import.meta.dir, '../services/employees');
+const odooRoot = '/home/nhanjs/projects/odoo/addons/hr';
+const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
+const action = (definition: any, id: string) => definition.actions.find((entry: any) => entry.id === id);
+
+describe('Employees Onboarding / Offboarding parity', () => {
+  test('maps the source action and binds layout pages to service APIs', () => {
+    const menu = readFileSync(join(odooRoot, 'views/hr_views.xml'), 'utf8');
+    const views = readFileSync(join(odooRoot, 'views/mail_activity_plan_views.xml'), 'utf8');
+    expect(menu).toContain('id="menu_config_plan_plan"');
+    expect(menu).toContain('name="Onboarding / Offboarding"');
+    expect(menu).toContain('action="mail_activity_plan_action"');
+    expect(views).toContain('<field name="name">Employee Plans</field>');
+    expect(views).toContain('<field name="view_mode">list,kanban,form</field>');
+    expect(views).toContain("<field name=\"context\">{'default_res_model': 'hr.employee'}</field>");
+    const list = yaml('pages/activity-plans.yaml');
+    const detail = yaml('pages/activity-plan-detail.yaml');
+    const listApi = yaml('api/activity-plans.yaml');
+    const detailApi = yaml('api/activity-plan-detail.yaml');
+    expect(list.datasources).toBeUndefined();
+    expect(detail.datasources).toBeUndefined();
+    expect(list.page).toMatchObject({ id: 'employee-activity-plans', route: '/employees/activity-plans', auth: { require: ['employees.manage'] } });
+    expect(detail.page).toMatchObject({ id: 'employee-activity-plan-detail', route: '/employees/activity-plans/detail', auth: { require: ['employees.manage'] } });
+    expect(listApi.page.id).toBe(list.page.id);
+    expect(detailApi.page.id).toBe(detail.page.id);
+    expect(list.components[0].views.map((entry: any) => entry.label)).toEqual(['List', 'Kanban']);
+    expect(detail.components[0]).toMatchObject({ type: 'OdooFormView', source: 'employee_activity_plan_detail' });
+    expect(detail.components[1]).toMatchObject({ type: 'LineItemGrid', source: 'employee_activity_plan_steps', parent_source: 'employee_activity_plan_detail' });
+    expect([action(listApi, 'create_employee_activity_plan'), action(detailApi, 'edit_employee_activity_plan'), action(detailApi, 'archive_employee_activity_plan'), action(detailApi, 'restore_employee_activity_plan'), action(detailApi, 'delete_employee_activity_plan')].every((entry: any) => entry.permission === 'employees.manage')).toBe(true);
+    expect(yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration').items).toContainEqual({ path: '/employees/activity-plans', label: 'Onboarding / Offboarding', icon: 'checklist', permission: 'employees.manage' });
+    const discovered = discoverPages(join(import.meta.dir, '..'));
+    expect(discovered.pages.get('employee-activity-plans')).toBeTruthy();
+    expect(discovered.pages.get('employee-activity-plan-detail')).toBeTruthy();
+    expect(discovered.pageDatasources.get('employee-activity-plans')).toContain('employee_activity_plans');
+    expect(discovered.pageDatasources.get('employee-activity-plan-detail')).toContain('employee_activity_plan_detail');
+    expect(discovered.pageDatasources.get('employee-activity-plan-detail')).toContain('employee_activity_plan_steps');
+  });
+
+  test('seeds stable plans and covers list/detail, empty, and transport states', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'employees_activity_plans_acceptance', ['schema', 'data']);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'employees_activity_plans_acceptance', ['schema', 'data']);
+    const listSource = yaml('api/activity-plans.yaml').datasources[0];
+    const params = { q: null, active: null, fixture_state: null };
+    const populated = await repository.querySource(listSource, params, 0, 50);
+    expect(populated.data.map((row: any) => row.name)).toEqual(['Engineering New Hire', 'Offboarding', 'Onboarding']);
+    expect(populated.data.find((row: any) => row.name === 'Onboarding')).toMatchObject({ steps_count: 2, res_model_label: 'Employees', status: 'Active' });
+    expect((await repository.querySource(listSource, { ...params, q: 'engineering' }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Engineering New Hire']);
+    expect((await repository.querySource(listSource, { ...params, active: 'false' }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Legacy Offboarding']);
+    expect((await repository.querySource(listSource, { ...params, q: 'not-present' }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(listSource, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+    await expect(repository.querySource(listSource, { ...params, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'EMPLOYEES_ACTIVITY_PLANS_UNAVAILABLE' });
+    const detailSource = yaml('api/activity-plan-detail.yaml').datasources[0];
+    expect(await repository.querySource(detailSource, { id: 'employee-plan-onboarding', fixture_state: null }, 0, 1)).toMatchObject({ data: { name: 'Onboarding', res_model: 'hr.employee' } });
+    expect((await repository.querySource(detailSource, { id: 'missing-plan', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
+    const steps = yaml('api/activity-plan-detail.yaml').datasources[1];
+    expect((await repository.querySource(steps, { plan_id: 'employee-plan-onboarding', fixture_state: null }, 0, 50)).data.map((row: any) => row.summary)).toEqual(['Prepare welcome package', 'Schedule first-week check-in']);
+    await database.close();
+  });
+
+  test('enforces manager CRUD, validation, duplicate, stale, archive, restore, and missing guards', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'employees_activity_plans_mutation', ['schema', 'data']);
+    const listApi = yaml('api/activity-plans.yaml');
+    const detailApi = yaml('api/activity-plan-detail.yaml');
+    const create = action(listApi, 'create_employee_activity_plan');
+    const update = action(detailApi, 'edit_employee_activity_plan');
+    const archive = action(detailApi, 'archive_employee_activity_plan');
+    const restore = action(detailApi, 'restore_employee_activity_plan');
+    const remove = action(detailApi, 'delete_employee_activity_plan');
+    expect([create, update, archive, restore, remove].every((entry: any) => entry.handler === 'yaml_mutation' && entry.permission === 'employees.manage')).toBe(true);
+    const created = await repository.executeMutation(create.mutation, { values: { name: 'New Starter' } });
+    expect(created).toMatchObject({ id: 'employee-plan-new-starter', name: 'New Starter', row_version: 1, active: true });
+    await expect(repository.executeMutation(create.mutation, { values: { name: ' new starter ' } })).rejects.toMatchObject({ status: 409, code: 'EMPLOYEES_ACTIVITY_PLAN_EXISTS' });
+    await expect(repository.executeMutation(create.mutation, { values: { name: ' ' } })).rejects.toMatchObject({ status: 422, code: 'EMPLOYEES_ACTIVITY_PLAN_NAME_REQUIRED' });
+    const edited = await repository.executeMutation(update.mutation, { id: created.id, expected_row_version: 1, values: { name: 'New Starter Updated' } });
+    expect(edited).toMatchObject({ id: created.id, name: 'New Starter Updated', row_version: 2 });
+    await expect(repository.executeMutation(update.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Stale' } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await repository.executeMutation(archive.mutation, { id: created.id, expected_row_version: 2, values: { active: false } });
+    await repository.executeMutation(restore.mutation, { id: created.id, expected_row_version: 3, values: { active: true } });
+    await repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 4 });
+    await expect(repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 4 })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_ACTIVITY_PLAN_NOT_FOUND' });
+    await database.close();
+  });
+});

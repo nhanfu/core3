@@ -1,0 +1,37 @@
+page: { id: employee-activity-plans }
+datasources:
+  - id: employee_activity_plans
+    permission: employees.manage
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_ACTIVITY_PLANS_UNAVAILABLE, message: Employee plans are temporarily unavailable. } }
+    query: "SELECT p.id, p.row_version, p.name, p.res_model, 'Employees' AS res_model_label, COALESCE(p.department_name, 'Available to all Departments') AS department_name, COALESCE(p.company_name, 'Visible to all') AS company_name, p.active, CASE WHEN p.active THEN 'Active' ELSE 'Archived' END AS status, (SELECT COUNT(*) FROM employee_activity_plan_steps s WHERE s.plan_id = p.id) AS steps_count FROM employee_activity_plans p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((:active IS NULL AND p.active = true) OR (:active IS NOT NULL AND p.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.department_name, '') ILIKE '%' || :q || '%') ORDER BY p.name, p.id"
+actions:
+  - id: view_employee_activity_plan
+    type: navigate
+    permission: employees.manage
+    navigate_to: /employees/activity-plans/detail
+    params: { id: '{row.id}' }
+  - id: create_employee_activity_plan
+    type: server_form
+    permission: employees.manage
+    title: Create an Activity Plan
+    action: employees.activity_plans.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_activity_plans]
+    mutation:
+      operation: insert
+      table: employee_activity_plans
+      fields: [name, res_model, department_name, company_name, active, row_version]
+      required: [name]
+      defaults: { res_model: hr.employee, department_name: null, company_name: null, active: true, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'employee-plan-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_ACTIVITY_PLAN_NAME_REQUIRED, message: A plan name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_activity_plans WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMPLOYEES_ACTIVITY_PLAN_EXISTS, message: An activity plan with this name already exists. }
+      result: { query: "SELECT * FROM employee_activity_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan Name, type: text, required: true, placeholder: e.g. Onboarding }
+      - { field: res_model, label: Applies to, type: text, default: hr.employee, readonly: true }
+      - { field: department_name, label: Department, type: text, placeholder: Available to all Departments }
+      - { field: company_name, label: Company, type: text, placeholder: Visible to all }

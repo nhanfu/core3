@@ -1,0 +1,18 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_activity_plans (id VARCHAR PRIMARY KEY NOT NULL, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL UNIQUE, res_model VARCHAR NOT NULL DEFAULT 'hr.employee', department_name VARCHAR, company_name VARCHAR, active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00', updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00');
+      CREATE TABLE IF NOT EXISTS employee_activity_plan_steps (id VARCHAR PRIMARY KEY NOT NULL, plan_id VARCHAR NOT NULL, row_version BIGINT NOT NULL DEFAULT 1, sequence INTEGER NOT NULL, activity_type VARCHAR NOT NULL, summary VARCHAR NOT NULL, responsible_type VARCHAR NOT NULL, delay_count INTEGER NOT NULL DEFAULT 0, delay_unit VARCHAR NOT NULL DEFAULT 'days');
+      INSERT OR IGNORE INTO employee_activity_plans (id, name, res_model, department_name, company_name, active) VALUES ('employee-plan-onboarding', 'Onboarding', 'hr.employee', NULL, NULL, true), ('employee-plan-offboarding', 'Offboarding', 'hr.employee', NULL, NULL, true), ('employee-plan-engineering', 'Engineering New Hire', 'hr.employee', 'Engineering', 'My Company (San Francisco)', true), ('employee-plan-archived', 'Legacy Offboarding', 'hr.employee', NULL, NULL, false);
+      INSERT OR IGNORE INTO employee_activity_plan_steps (id, plan_id, sequence, activity_type, summary, responsible_type, delay_count, delay_unit) VALUES ('employee-plan-onboarding-step-1', 'employee-plan-onboarding', 1, 'To-Do', 'Prepare welcome package', 'Employee', 0, 'days'), ('employee-plan-onboarding-step-2', 'employee-plan-onboarding', 2, 'Meeting', 'Schedule first-week check-in', 'Manager', 2, 'days'), ('employee-plan-offboarding-step-1', 'employee-plan-offboarding', 1, 'To-Do', 'Collect company equipment', 'Employee', 0, 'days'), ('employee-plan-engineering-step-1', 'employee-plan-engineering', 1, 'Email', 'Share engineering handbook', 'HR Responsible', -3, 'days');
+      UPDATE employee_activity_plans SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_activity_plan_steps;
+      DROP TABLE IF EXISTS employee_activity_plans;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: { storage: { driver: duckdb } }
