@@ -1,6 +1,61 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-7-implemented-visual-capture-blocked`
+Status: `batch-8-implemented-visual-capture-blocked`
+
+## Batch 8 — Configuration → Job Positions → Contract Types
+
+Source trace: Odoo 19 `addons/hr_recruitment/views/menuitems.xml` places the
+inherited `hr.menu_view_hr_contract_type` under Recruitment → Configuration →
+Job Positions → Contract Types (`sequence=2`, `groups=hr.group_hr_user`). Its
+action is inherited from `addons/hr/views/hr_contract_type_views.xml` as
+`hr.hr_contract_type_action`, model `hr.contract.type`, title `Employment
+Types`, and view mode `list`. The list is `editable="bottom"` and orders by
+sequence; visible fields are Sequence (handle) and Name, with Code invisible
+and Country optional/hidden. The form contains Name, invisible Code, and
+Country. Odoo's HR access row grants the HR-user boundary full CRUD; this
+Core3 slice maps that shared HR-user requirement to the existing
+`recruitment.manage` manager-equivalent permission.
+
+Core3 adds `/recruitment/contract-types` with page id
+`recruitment-contract-types`, a presentation-only Odoo-style list page, and a
+page-scoped API fragment joined by the same `page.id`. The migration
+`20260912110000-011-recruitment-contract-types.yaml` seeds the fixed Odoo HR
+catalog (Permanent, Temporary, Interim, Seasonal, Full-Time, Part-Time,
+Intern, Student, Apprenticeship, Thesis, Statutory, Employee), preserving
+the source sequence order and deterministic codes. Manager-only list/search,
+bottom-create/edit/delete actions cover required and duplicate names,
+missing/not-found, stale row versions, empty, forbidden, and transport-error
+states. Contract types are configuration metadata only: they do not mutate
+applicants, stages, or the Recruitment workflow transitions; applicant and
+stage writes remain governed by their existing `recruitment.write` and
+`recruitment.manage` contracts.
+
+Focused verification:
+
+- `bun test test/recruitment_contract_types.integration.test.ts` — 3 passed,
+  0 failed, 27 assertions.
+- `bun run audit` — passed: 613 pages, 622 routes, 1056 datasources.
+- Authenticated desktop/mobile visual evidence is blocked for this batch;
+  see the capture note below. No visual-parity claim is made and no images
+  are committed.
+- `git diff --check` and focused ESLint are recorded after the capture
+  attempt.
+
+### Batch 8 capture attempt and limitation
+
+The required capture directory was created at `/tmp/core3-odoo-parity` and
+the exact `1440x900` and `390x844` browser attempts were made. The isolated
+Core3 start command reached Vite on port 3002 but its backend exited during
+YAML startup with the pre-existing unrelated error
+`Named action sms_marketing.mailings.cancel permission does not match its
+workflow transition`; the target route therefore returned
+`ERR_CONNECTION_REFUSED` and no authenticated Core3 surface was available.
+The Odoo server on port 8069 responded, but both login attempts remained on
+the login page, so the credentials/session needed to inspect the installed
+contract-type action were not available in this run. The only generated
+images in `/tmp/core3-odoo-parity` are these unauthenticated blocker states;
+they are not parity evidence and remain outside Git. No desktop/mobile visual
+claim is made.
 
 ## Batch 7 — Configuration → Job Positions → Stages
 

@@ -1,0 +1,20 @@
+title: Employment Types
+page: { id: recruitment-contract-types, route: /recruitment/contract-types, breadcrumb: [Recruitment, Configuration, Job Positions, Contract Types], auth: { require: [recruitment.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_contract_types
+    create_action: create_recruitment_contract_type
+    create_label: New
+    search: { label: Search employment types, placeholder: Search employment types... }
+    row_key: id
+    row_open_action: edit_recruitment_contract_type
+    row_actions: menu
+    inline_edit: bottom
+    empty_state: { title: Create a new employment type, description: Define the employment types available when configuring job positions. }
+    columns:
+      - { field: sequence, label: Sequence, type: Number, sortable: true, mobile: false }
+      - { field: name, label: Employment Type, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: country_name, label: Country, optional: hide, mobile: false }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: edit_recruitment_contract_type, label: Edit, icon: edit }, { id: delete_recruitment_contract_type, label: Delete, icon: delete, variant: danger }] }
+    page_size: 25

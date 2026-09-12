@@ -1,0 +1,63 @@
+page: { id: recruitment-contract-types }
+datasources:
+  - id: recruitment_contract_types
+    permission: recruitment.manage
+    error_states:
+      forbidden: { status: 403, code: RECRUITMENT_CONTRACT_TYPES_FORBIDDEN, message: You do not have permission to manage employment types. }
+      transport_error: { status: 503, code: RECRUITMENT_CONTRACT_TYPES_UNAVAILABLE, message: Employment types are temporarily unavailable. }
+    query: "SELECT id, row_version, name, code, country_name FROM recruitment_contract_types WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(country_name, '') ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: create_recruitment_contract_type
+    type: server_form
+    permission: recruitment.manage
+    title: New Employment Type
+    action: recruitment.contract_types.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_contract_types]
+    mutation:
+      operation: insert
+      table: recruitment_contract_types
+      generated: [id]
+      fields: [name, code, country_name, sequence]
+      required: [name]
+      defaults: { sequence: 1000, country_name: null }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_CONTRACT_TYPE_NAME_REQUIRED, message: An employment type name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_contract_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: RECRUITMENT_CONTRACT_TYPE_NAME_EXISTS, message: An employment type with this name already exists. }
+      result: { query: "SELECT * FROM recruitment_contract_types WHERE id = :id" }
+    fields: [{ field: name, label: Employment Type, type: text, required: true }, { field: country_name, label: Country, type: text }, { field: sequence, label: Sequence, type: number, required: true, min: 0 }]
+  - id: edit_recruitment_contract_type
+    type: server_form
+    permission: recruitment.manage
+    title: Edit Employment Type
+    action: recruitment.contract_types.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [recruitment_contract_types]
+    mutation:
+      operation: update
+      table: recruitment_contract_types
+      fields: [name, code, country_name, sequence]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_contract_types WHERE id = :id", status: 404, code: RECRUITMENT_CONTRACT_TYPE_NOT_FOUND, message: Employment type not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_CONTRACT_TYPE_NAME_REQUIRED, message: An employment type name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_contract_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: RECRUITMENT_CONTRACT_TYPE_NAME_EXISTS, message: An employment type with this name already exists. }
+      result: { query: "SELECT * FROM recruitment_contract_types WHERE id = :id" }
+    fields: [{ field: name, label: Employment Type, type: text, required: true }, { field: country_name, label: Country, type: text }, { field: sequence, label: Sequence, type: number, required: true, min: 0 }]
+  - id: delete_recruitment_contract_type
+    type: server
+    permission: recruitment.manage
+    action: recruitment.contract_types.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete employment type {{row.name}}?'
+    refresh: [recruitment_contract_types]
+    mutation:
+      operation: delete
+      table: recruitment_contract_types
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM recruitment_contract_types WHERE id = :id", status: 404, code: RECRUITMENT_CONTRACT_TYPE_NOT_FOUND, message: Employment type not found. }]
