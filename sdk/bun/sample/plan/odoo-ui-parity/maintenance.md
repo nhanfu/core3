@@ -504,3 +504,47 @@ surface (the fallback Playwright package was also unavailable). Therefore no
 authenticated Odoo or Core3 feature screenshots were produced and this batch
 makes no visual-parity claim. The runtime/browser limitation is recorded here;
 no images were added to Git.
+
+## Bounded batch: Maintenance team dashboard To Do action (2026-09-12)
+
+This batch closes the Odoo Maintenance Teams dashboard card action that opens
+team-scoped To Do requests. The source `maintenance_team_kanban` card links
+`hr_equipment_todo_request_action_from_dashboard` with the active team and a
+non-done request domain. Core3’s dashboard already had deterministic To Do,
+scheduled, priority, blocked, and unscheduled counters, but the cards only
+opened team configuration; the To Do counter now has a visible card action.
+
+The action is declared in `api/dashboard.yaml` for the
+`maintenance-dashboard` page and navigates to `/maintenance-requests` with
+`team_id` and `todo` parameters. The request API owns the team predicate and
+non-terminal/active predicate, while the presentation page adds the Team facet
+and card action only. The action is read-protected, has the existing request
+transport error contract, and preserves deterministic ordering and the stable
+empty fixture. The existing team detail navigation remains in the page-id API
+contract.
+
+Focused verification:
+
+- `bun test ./test/maintenance_team_dashboard_actions.integration.test.ts` — **2 passed, 0 failed, 11 assertions**.
+- `bun test ./test/maintenance*.integration.test.ts` — **29 passed, 0 failed, 301 assertions** across 11 Maintenance integration files.
+- `bun run audit` — passed, **631 pages / 647 routes / 1080 datasources**.
+- `bun run lint` from `sdk/bun` — passed.
+- `bun run css:build:global && bun run css:build:maintenance` — passed.
+- `git diff --check` — passed.
+
+Authenticated comparison capture is attempted under
+`/tmp/core3-odoo-parity/maintenance-batch7-20260912/` at 1440x900 and
+390x844. Screenshots will only be claimed if both the Odoo reference action
+and the authenticated Core3 action are reachable; otherwise the exact runtime
+or authentication blocker is recorded below and no visual-parity claim is made.
+
+Browser evidence result: no screenshots were produced. Core3 startup reached
+the backend/frontend launch step but Vite stopped with
+`EMFILE: too many open files, watch .../sdk/bun/sample/vite.config.ts`; both
+`127.0.0.1:3001/api/modules` and `127.0.0.1:3002/` then refused connections.
+The persistent `js_repl` Playwright surface required by the browser procedure
+was not available, and the workspace had no importable `playwright` package for
+a fallback. Odoo `127.0.0.1:8069` and `:8073` were reachable, but both exact
+`/odoo/maintenance` requests returned `303` to `/web/login` without an
+authenticated session. Consequently this batch makes no authenticated visual
+claim; the requested 1440x900 and 390x844 capture paths remain empty.

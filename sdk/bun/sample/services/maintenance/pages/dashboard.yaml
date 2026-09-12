@@ -7,9 +7,7 @@ components:
     search: { label: Search, placeholder: Search maintenance teams... }
     filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
     views:
-      - { id: card, label: Kanban, icon: dashboard, card: { title: name, subtitle: company_name, fields: [{ field: todo_count, label: To Do }, { field: scheduled_count, label: Scheduled }, { field: high_priority_count, label: Top Priorities }, { field: blocked_count, label: Blocked }, { field: unscheduled_count, label: Unscheduled }] } }
+      - { id: card, label: Kanban, icon: dashboard, card: { title: name, subtitle: company_name, fields: [{ field: todo_count, label: To Do }, { field: scheduled_count, label: Scheduled }, { field: high_priority_count, label: Top Priorities }, { field: blocked_count, label: Blocked }, { field: unscheduled_count, label: Unscheduled }], actions: [{ id: open_maintenance_team_todo_requests, label: To Do, label_field: todo_count, variant: primary, show_if: 'row.todo_count > 0' }] } }
     row_key: id
     row_open_action: view_maintenance_team
     empty_state: { title: No maintenance teams, description: No maintenance teams match the current filters. }
-actions:
-  - { id: view_maintenance_team, type: navigate, permission: maintenance.read, navigate_to: /maintenance-teams/detail, params: { id: '{row.id}' } }
