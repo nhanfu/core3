@@ -6,7 +6,7 @@ Audit date: 2026-09-12
 
 ## Parent-plan scope
 
-The module register in `../odoo-ui-parity-plan.md` identifies `approvals` as
+The module register in `../odoo-parity-plan.md` identifies `approvals` as
 planned and records its Odoo source as unavailable. This sub-plan remains
 unapproved for implementation. The required menu, action, view, addon, and
 authenticated desktop/mobile comparison gates cannot be completed without a

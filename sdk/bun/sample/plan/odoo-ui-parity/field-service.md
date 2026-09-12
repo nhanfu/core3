@@ -26,7 +26,7 @@ menu tree, views, demo data, or assets required for a UI audit.
 The parent register remains accurate: `field-service` maps to `industry_fsm`,
 source status is unavailable in the supplied source, and implementation status
 is `planned` in
-`sdk/bun/sample/plan/odoo-ui-parity-plan.md`.
+`sdk/bun/sample/plan/odoo-parity-plan.md`.
 
 ## Current Core3 ownership
 

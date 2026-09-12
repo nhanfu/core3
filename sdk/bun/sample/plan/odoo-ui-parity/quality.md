@@ -22,7 +22,7 @@ absent:
 `git ls-tree` finds no `addons/quality` entry in that checkout, and the
 repository-wide local project search found no other relevant Odoo checkout
 containing an `addons/quality` source tree. The parent register in
-`plan/odoo-ui-parity-plan.md` records this module as `unavailable in supplied
+`plan/odoo-parity-plan.md` records this module as `unavailable in supplied
 source`, with this sub-plan path and status `planned`.
 
 Without the addon manifest, Python models, XML menus/actions/views, security,

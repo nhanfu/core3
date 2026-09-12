@@ -9,7 +9,7 @@ no PLM UI cloning or parity claim may begin.
 
 The parent register already records `plm | mrp_plm | unavailable in supplied
 source | odoo-ui-parity/plm.md | planned` in
-`plan/odoo-ui-parity-plan.md:75-99`. The parent gate requires the complete
+`plan/odoo-parity-plan.md:75-99`. The parent gate requires the complete
 source menu/action/view inventory before implementation and requires paired
 authenticated desktop/mobile comparison before acceptance.
 

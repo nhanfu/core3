@@ -7,7 +7,7 @@ Audit date: 2026-09-12
 
 ## Parent-plan scope
 
-The module register in `../odoo-ui-parity-plan.md` identifies Marketing
+The module register in `../odoo-parity-plan.md` identifies Marketing
 Automation as the Odoo `marketing_automation` module and marks it
 `unavailable in supplied source` / `planned`. This audit confirms that gate.
 The required Odoo menu, action, view, permission, demo-data, and authenticated

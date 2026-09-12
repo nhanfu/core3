@@ -28,7 +28,7 @@ menu, model, view, security, demo, or asset source.
 
 The parent register already records this module as `unavailable in supplied
 source` and `planned` in
-`sdk/bun/sample/plan/odoo-ui-parity-plan.md`. The previously referenced
+`sdk/bun/sample/plan/odoo-parity-plan.md`. The previously referenced
 `sdk/bun/sample/plan/odoo-ui-parity/subscriptions.md` did not exist before this
 audit; this file is the source-availability gate, not an implementation plan
 or a substitute Odoo screen inventory.

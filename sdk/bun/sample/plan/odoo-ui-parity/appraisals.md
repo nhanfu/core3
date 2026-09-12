@@ -29,7 +29,7 @@ changed.
 
 ## Parent-plan scope
 
-The module register in `../odoo-ui-parity-plan.md` identifies Appraisals as an
+The module register in `../odoo-parity-plan.md` identifies Appraisals as an
 Odoo 19 `hr_appraisal` module and marks it `planned` with its source
 unavailable. This audit confirms that source gate. The required Odoo menu,
 action, view, permission, demo-data, and authenticated desktop/mobile

@@ -6,7 +6,7 @@ Audit date: 2026-09-12
 
 The requested relative Odoo checkout path, `/home/nhanjs/projects/core3-worktrees/odoo`, does not exist. The available local Odoo checkout is `/home/nhanjs/projects/odoo`. Its `addons/` directory contains no `helpdesk` directory, no `helpdesk`-named files, and no Helpdesk addon manifest (`__manifest__.py` or legacy `__openerp__.py`). A repository-wide filename and text search also found no Helpdesk addon source. The checkout is Odoo 19.0 at commit `659759969d535d286b656c96b675e4612b925ddd`.
 
-The parent register in `plan/odoo-ui-parity-plan.md` already records `helpdesk | helpdesk | unavailable in supplied source | odoo-ui-parity/helpdesk.md | planned`. This audit confirms that gate against both the requested relative path and the available `/home/nhanjs/projects/odoo` checkout.
+The parent register in `plan/odoo-parity-plan.md` already records `helpdesk | helpdesk | unavailable in supplied source | odoo-ui-parity/helpdesk.md | planned`. This audit confirms that gate against both the requested relative path and the available `/home/nhanjs/projects/odoo` checkout.
 
 Because there is no local addon manifest, model/view/action source, or installed Helpdesk reference surface to inspect, this worktree cannot truthfully derive Odoo Helpdesk labels, menus, routes, view modes, workflows, fixtures, or screenshots. No Odoo UI parity claim is made here.
 
