@@ -1,0 +1,10 @@
+page: { id: purchase-price-comparison }
+datasources:
+  - id: purchase_price_comparison
+    permission: purchase.read
+    pivot:
+      fields: [product_name, order_name, order_date, vendor_name, quantity, unit_price, total_untaxed]
+    error_states: { transport_error: { status: 503, code: PURCHASE_PRICE_COMPARISON_UNAVAILABLE, message: Purchase comparison is temporarily unavailable. } }
+    query: "SELECT h.id, h.product_id, h.product_name, h.order_name, CAST(h.order_date AS VARCHAR) AS order_date, CAST(h.confirmation_date AS VARCHAR) AS confirmation_date, h.vendor_name, h.company_name, h.quantity, h.unit_price, printf('$ %,.2f', CAST(h.unit_price AS DOUBLE)) AS unit_price_display, h.total_untaxed, printf('$ %,.2f', CAST(h.total_untaxed AS DOUBLE)) AS total_untaxed_display, h.currency FROM purchase_product_history h WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:id IS NULL OR EXISTS (SELECT 1 FROM purchase_order_lines l WHERE l.order_id = :id AND l.product_name = h.product_name)) AND (:q IS NULL OR h.order_name ILIKE '%' || :q || '%' OR h.vendor_name ILIKE '%' || :q || '%' OR h.product_name ILIKE '%' || :q || '%') ORDER BY h.product_name, h.order_date DESC, h.id"
+actions:
+  - { id: open_purchase_price_comparison, type: navigate, permission: purchase.read, navigate_to: /purchase/price-comparison, params: { id: '{row.id}' } }

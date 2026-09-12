@@ -1,0 +1,18 @@
+version: 0.0.25
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO purchase_order_lines(id, order_id, sequence, display_type, product_name, description, quantity, qty_received, qty_billed, uom, unit_price, tax_rate, line_total)
+      VALUES ('purchase-line-demo-006-10', 'po-demo-006', 10, 'product', 'Ergonomic office desks', 'Ergonomic office desks', 8, 8, 8, 'Units', 420.00, 0, 3360.00);
+      INSERT OR IGNORE INTO purchase_product_history(id, product_id, product_name, order_name, order_date, confirmation_date, vendor_name, company_name, quantity, unit_price, total_untaxed, currency)
+      VALUES
+        ('purchase-history-desks-001', 'purchase-product-office-desk', 'Ergonomic office desks', 'PO/2026/0006', DATE '2026-08-24', DATE '2026-08-24', 'Saigon Office Goods', 'My Company (San Francisco)', 8, 420.00, 3360.00, 'USD'),
+        ('purchase-history-desks-002', 'purchase-product-office-desk', 'Ergonomic office desks', 'PO/2026/0008', DATE '2026-07-18', DATE '2026-07-18', 'Wood Corner', 'My Company (San Francisco)', 6, 395.00, 2370.00, 'USD');
+    down: |
+      DELETE FROM purchase_product_history WHERE id IN ('purchase-history-desks-001', 'purchase-history-desks-002');
+      DELETE FROM purchase_order_lines WHERE id = 'purchase-line-demo-006-10';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

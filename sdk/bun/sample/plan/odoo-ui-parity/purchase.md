@@ -986,3 +986,17 @@ with 7 assertions. The broader existing Purchase suite currently has two
 unrelated 5-second fixture-query timeouts under the shared multi-runtime host;
 those are not claimed as green. No fresh Core3/Odoo screenshot is claimed for
 this slice and no image is committed.
+
+## Price Comparison bounded action (2026-09-12)
+
+Local Odoo source exposes `action_purchase_comparison` from the purchase-order
+form for vendor price history on the selected order products. Core3 adds
+`/purchase/price-comparison`, joined through `page.id`, and links the existing
+detail-page Price Comparison action to a read-only API. Migration
+`20260912120000-025-purchase-price-comparison.yaml` seeds deterministic vendor
+history with search, empty, missing, and transport-error states.
+
+The focused test passes 2 tests and 12 assertions. Authenticated desktop/mobile
+capture was attempted under `/tmp/core3-odoo-parity/purchase-batch5-20260912/`,
+but Vite stopped with `EMFILE: too many open files` before a Core3 browser pass;
+no visual parity claim or screenshot is made. Images remain outside Git.

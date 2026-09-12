@@ -1,0 +1,41 @@
+title: Purchase Comparison
+page: { id: purchase-price-comparison, route: /purchase/price-comparison, breadcrumb: [Supply Chain, Purchase, Purchase Order, Price Comparison], auth: { require: [purchase.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: purchase_price_comparison
+    search: { label: Search purchase comparison, placeholder: 'Search orders, vendors, or products...' }
+    date_range: { label: Order Date, from_field: order_date, to_field: order_date }
+    group_by: [{ field: product_name, label: Product }, { field: vendor_name, label: Vendor }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: product_name, column: Product }
+            - { field: order_name, column: Order Reference }
+            - { field: order_date, column: Order Date, type: date }
+            - { field: vendor_name, column: Vendor }
+            - { field: quantity, column: Quantity }
+            - { field: total_untaxed, column: Total purchased amount }
+          default:
+            rows: [product_name, vendor_name]
+            columns: []
+            measures:
+              - { field: total_untaxed, aggregate: sum, column: Total purchased amount }
+              - { field: quantity, aggregate: sum, column: Quantity }
+      - { id: graph, label: Graph, icon: graph, category_field: order_date, measure_field: unit_price, type: line }
+    columns:
+      - { field: order_name, label: Order Reference, type: PrimaryEntityCell, sortable: true }
+      - { field: order_date, label: Order Date }
+      - { field: vendor_name, label: Vendor }
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_price_display, label: Unit Price, align: right }
+      - { field: total_untaxed_display, label: Total Untaxed, align: right }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No purchase comparison, description: No purchase history was found for the products on this order. }
