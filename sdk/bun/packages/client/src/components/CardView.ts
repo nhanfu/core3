@@ -1,6 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { KanbanView } from '@core3/client/components/KanbanView';
+import { evalExpr } from '@core3/client/expr';
 
 type CardRow = Record<string, unknown>;
 
@@ -16,7 +17,7 @@ export type CardViewDefinition = {
   groupBy?: string;
   groups?: Array<{ value: string; label: string; color?: string }>;
   groupsSource?: string;
-  card?: { title: string; subtitle?: string; imageField?: string; image_field?: string; compact?: boolean; avatarField?: string; avatar_field?: string; companyField?: string; company_field?: string; primaryMetric?: string; primary_metric?: string; primaryMetricLabel?: string; primary_metric_label?: string; contactFields?: Array<{ field: string; icon?: string }>; contact_fields?: Array<{ field: string; icon?: string }>; badges?: Array<{ field: string }>; fields?: Array<{ field: string; label?: string }>; footer?: Array<{ field: string; label?: string; totalField?: string; total_field?: string }> };
+  card?: { title: string; subtitle?: string; imageField?: string; image_field?: string; compact?: boolean; avatarField?: string; avatar_field?: string; companyField?: string; company_field?: string; primaryMetric?: string; primary_metric?: string; primaryMetricLabel?: string; primary_metric_label?: string; contactFields?: Array<{ field: string; icon?: string }>; contact_fields?: Array<{ field: string; icon?: string }>; badges?: Array<{ field: string }>; fields?: Array<{ field: string; label?: string }>; actions?: Array<{ id: string; label: string; label_field?: string; variant?: 'primary' | 'secondary' | 'ghost'; show_if?: string }>; footer?: Array<{ field: string; label?: string; totalField?: string; total_field?: string }> };
 };
 
 export type CardViewOptions = {
@@ -146,14 +147,41 @@ export class CardView extends BaseComponent {
       if (subtitle != null && subtitle !== '') html.take(card).p.className('o-kanban-card-subtitle').text(String(subtitle));
     }
     const fields = cardDef?.fields || [];
-    if (!fields.length) return;
-    const details = html.take(card).div.className('o-kanban-card-fields').ele();
-    for (const field of fields) {
-      const value = row[field.field];
-      if (value == null || value === '') continue;
-      const line = html.take(details).div.ele();
-      if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
-      html.take(line).span.className('o-kanban-card-field-value').text(String(value));
+    if (fields.length) {
+      const details = html.take(card).div.className('o-kanban-card-fields').ele();
+      for (const field of fields) {
+        const value = row[field.field];
+        if (value == null || value === '') continue;
+        const line = html.take(details).div.ele();
+        if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
+        html.take(line).span.className('o-kanban-card-field-value').text(String(value));
+      }
+    }
+
+    const actions = (cardDef?.actions || []).filter(action => {
+      if (!action.show_if) return true;
+      try {
+        return Boolean(evalExpr(action.show_if, { row }));
+      } catch {
+        return false;
+      }
+    });
+    if (actions.length) {
+      html.take(card).toggleClass('has-card-actions', true);
+      const actionBar = html.take(card).div.className('o-kanban-card-actions').ele();
+      for (const action of actions) {
+        const button = html.take(actionBar).button
+          .className(`o-kanban-card-action o-kanban-card-action-${action.variant || 'ghost'}`)
+          .attr('type', 'button')
+          .ele() as HTMLButtonElement;
+        const count = action.label_field ? row[action.label_field] : undefined;
+        button.textContent = count == null || count === '' ? action.label : `${count} ${action.label}`;
+        button.addEventListener('click', event => {
+          event.preventDefault();
+          event.stopPropagation();
+          void this.submit(action.id, { row });
+        });
+      }
     }
   }
 

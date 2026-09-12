@@ -289,6 +289,29 @@ describe('Odoo ListView', () => {
     expect(submit).toHaveBeenCalledWith('view_order', { row: expect.objectContaining({ id: 'o1' }) });
   });
 
+  it('renders visible card actions with count labels and stops card navigation', () => {
+    const submit = vi.fn();
+    const component = create({
+      openAction: 'view_order',
+      views: [{ id: 'card', label: 'Cards', card: {
+        title: 'number',
+        actions: [
+          { id: 'open_todo', label: 'To Do', label_field: 'todo_count', variant: 'primary', show_if: 'row.todo_count > 0' },
+          { id: 'open_blocked', label: 'Blocked', label_field: 'blocked_count', show_if: 'row.blocked_count > 0' },
+        ],
+      } }],
+    }, { activeView: 'card', rows: [{ id: 'o1', number: 'ORD-001', todo_count: 2, blocked_count: 0 }] });
+    component._transport = { submit };
+    const container = mount(component);
+
+    const action = container.querySelector<HTMLButtonElement>('.o-kanban-card-action')!;
+    expect(action.textContent).toBe('2 To Do');
+    expect(container.querySelectorAll('.o-kanban-card-action')).toHaveLength(1);
+    action.click();
+    expect(submit).toHaveBeenCalledWith('open_todo', { row: expect.objectContaining({ id: 'o1' }) });
+    expect(submit).not.toHaveBeenCalledWith('view_order', expect.anything());
+  });
+
   it('late-binds Kanban card actions when the page handler is installed after mount', () => {
     const submit = vi.fn();
     const component = create({

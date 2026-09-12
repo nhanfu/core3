@@ -585,3 +585,10 @@ Core3 endpoint then refused connections. Odoo 8069 and 8073 returned `303`
 from `/odoo/maintenance` to `/web/login` without an authenticated session.
 The persistent Playwright interactive surface was unavailable. No screenshots
 were produced and this batch makes no authenticated visual-parity claim.
+
+The follow-up source audit added the Odoo dashboard's visible Top Priorities
+card action and the shared CardView action rendering contract. Focused tests
+pass for the Maintenance integration and client ListView suites. Core3
+dashboard captures are under
+`/tmp/core3-odoo-parity/maintenance-visual3-20260912/`; no authenticated Odoo
+comparison is claimed while the reference login is throttled.
