@@ -5,7 +5,7 @@ Status: `ready-for-qa`
 Owner: `agent/odoo-owner-base-wave1`
 QA owner: `QA-1` (dispatchable)
 Verification trigger: `feature-complete`
-Candidate commit: `bb3487c2`
+Candidate commit: `8fdf7be3`
 
 ## Evidence
 
@@ -52,6 +52,26 @@ Candidate commit: `bb3487c2`
   remains open.
 
 ## QA result for candidate `bb3487c2` (2026-09-13)
+
+## QA result for candidate `8fdf7be3` (2026-09-13)
+
+- Direct authenticated API verification passed for local Base storage:
+  upload returned 200, wrote the configured `/tmp/core3-base-attachments-qa`
+  file, appeared in two fresh contact-detail page loads, and downloaded with
+  matching source bytes and attachment filename.
+- Anonymous page and attachment download requests returned 401. Focused Base
+  permissions and the declared storage/action contracts passed.
+- Authenticated Chromium login and Base detail rendering were confirmed, but
+  the bounded desktop/mobile capture runner timed out waiting for the hidden
+  file input after 8 seconds. Existing images are outside Git; no complete
+  fresh browser journey is claimed. Odoo paired comparison remains open.
+- Focused Base: 5 tests / 62 assertions; configured client document
+  components: 33 tests; audit 647/662/1112; frontend build; and diff check
+  pass. `bun run lint` is not defined in this package and therefore is an
+  explicit unavailable gate, not a pass.
+- Blocker `BASE-ATTACH-QA-001`: fresh authenticated desktop/mobile
+  upload/download evidence is incomplete due the bounded browser timeout.
+  Do not grant full Base sign-off.
 
 - Authenticated Chromium checks at 1440x900 and 390x844 passed for
   `/base/contacts/detail?id=contact-demo`: the attachment panel is open,

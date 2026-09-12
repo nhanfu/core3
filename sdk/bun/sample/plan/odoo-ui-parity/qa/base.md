@@ -5,7 +5,7 @@ Assigned QA: `QA-1`
 QA mode: dispatchable bounded task; activate on feature-complete,
 merge-candidate, post-merge, refactor-impact, or release.
 Verification trigger: `feature-complete`
-Candidate commit: `bb3487c2`
+Candidate commit: `8fdf7be3`
 Runtime: `bun run agent:module -- base --port=4010`
 
 ## Coverage
@@ -57,6 +57,48 @@ because its run had a transient `/api/apps` failure.
   browser, upload probe, or port-4010 server process remains running.
 - Odoo paired comparison remains open. This candidate is not signed off;
   upload persistence and download delivery are blocking gaps.
+
+## QA verification: candidate `8fdf7be3` (2026-09-13)
+
+- Runtime: bounded single-module Base server at `http://127.0.0.1:4010`, with
+  `BASE_UPLOAD_ROOT=/tmp/core3-base-attachments-qa`; server was stopped after
+  the probe.
+- Authenticated API: `admin@tms.local / admin123` upload of
+  `qa-contact-upload.txt` to `contact-demo` returned HTTP 200 and attachment
+  metadata id `f9392a04-de17-43b8-9cd2-9e971c4d7493`. The local storage file
+  was written, two fresh `contact-detail?cache=false` page loads listed the
+  attachment, and download returned HTTP 200 with `Content-Disposition` for
+  `qa-contact-upload.txt`. Downloaded bytes SHA-256 matched the source
+  `/etc/hostname`: `25a6abebc1433659c257903b148dc4b55ef6e495d566c31f003fead6e7eb1dca`.
+- Permission boundary: unauthenticated contact-detail and attachment
+  download requests both returned HTTP 401 `UNAUTHORIZED`. Focused YAML
+  assertions cover `base.contacts.write` upload and `base.contacts.read`
+  download; `base.contacts.manage` remains on contact deletion.
+- Authenticated browser: Chromium login and `/base/contacts/detail?id=contact-demo`
+  rendered the contact, attachment panel, seeded `contact-brief.txt`, the
+  previously uploaded `qa-contact-upload.txt`, and Add attachment control in
+  the standalone login probe. The bounded capture runner did not complete hidden file-input
+  interaction before its 8-second selector timeout; therefore this is not
+  browser upload/download sign-off. Existing captures are outside Git at
+  `/tmp/core3-base-contact-attachments-qa-desktop.png` and
+  `/tmp/core3-base-contact-attachments-qa-mobile.png`; no new complete
+  desktop/mobile attachment journey capture is claimed.
+- Focused suites/gates: Base Contacts 5 tests / 62 assertions pass; configured
+  client document-components suite 33 tests pass; audit passes at 647 pages /
+  662 routes / 1112 datasources; frontend build passes; `git diff --check`
+  passes. `bun run lint` is unavailable because this package has no `lint`
+  script (`error: Script not found "lint"`); no lint result is claimed.
+- Paired Odoo comparison: not completed in this bounded run; no full parity
+  sign-off is granted.
+
+### Blocker `BASE-ATTACH-QA-001`
+
+The bounded Chromium capture runner timed out waiting for the hidden file
+input (`page.waitForSelector('input[type=file]')`, 8 seconds) after the
+authenticated page itself was confirmed. This leaves fresh authenticated
+desktop/mobile upload/download captures unproven even though the direct API
+journey, local storage write, persistence across page reloads, download bytes,
+and permission boundaries passed. The candidate remains `pending-qa`.
 
 ## DEV retest: `BASE-ATTACH-001` (2026-09-13)
 
