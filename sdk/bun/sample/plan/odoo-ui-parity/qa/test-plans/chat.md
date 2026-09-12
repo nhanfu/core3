@@ -41,7 +41,7 @@ archived, empty, no-results and offline states with stable IDs.
 
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
-| CHAT-WF-001 | Message lifecycle | Compose → send → read/unread → star/unstar updates participant marker and message state atomically | planned browser mutation gate |
+| CHAT-WF-001 | Message lifecycle | Compose → send → read/unread → star/unstar updates participant marker and message state atomically | pass: `chat_message_lifecycle.integration.test.ts`; browser mutation gate remains planned |
 | CHAT-WF-002 | Thread/reply/reaction | Reply, mention, reaction and thread navigation remain linked to the owning conversation | pass at contract level |
 | CHAT-WF-003 | Channel membership | Join/Leave and invite/member changes enforce membership and manager rules without partial updates | pass at contract level; actor browser gate planned |
 | CHAT-WF-004 | Notifications/activity | Read markers, notification preferences and scheduled activities remain user/channel scoped | pass at contract level |

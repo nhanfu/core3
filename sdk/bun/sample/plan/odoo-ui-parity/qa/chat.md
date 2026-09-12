@@ -22,8 +22,9 @@ paired Odoo visual gates.
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| CHAT-FUNC-001 | Page/API page-id join and real query-backed datasources | `bun test ./test/chat*.integration.test.ts` — 20 tests, 134 assertions | pass |
+| CHAT-FUNC-001 | Page/API page-id join and real query-backed datasources | `bun test ./test/chat*.integration.test.ts` — 21 tests, 142 assertions | pass |
 | CHAT-FUNC-002 | Persisted conversations, message reads, create mutation, participant permission boundary | same focused suite | pass |
+| CHAT-WORKFLOW-001 | Message send/read/unread/star lifecycle | `chat_message_lifecycle.integration.test.ts`; message and participant markers persist, thread version advances 1 → 3, stale star returns 409 | pass |
 | CHAT-REG-001 | Global page discovery and route/datasource audit | `bun run audit` — 647 pages, 662 routes, 1112 datasources | pass |
 | CHAT-BROWSER-001 | Authenticated desktop/mobile Odoo/Core3 comparison | no authenticated captures; browser capability unavailable | blocked |
 
