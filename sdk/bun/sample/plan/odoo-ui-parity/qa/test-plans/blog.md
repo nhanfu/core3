@@ -31,7 +31,7 @@ content; mutations use isolated databases and deterministic IDs.
 | BLOG-FUNC-001 | Blogs/posts | Search/filter/detail, create/edit, author/blog links and publication fields use persisted data | pass: focused suite |
 | BLOG-FUNC-002 | Tags/categories | CRUD, duplicate/blank validation, search and relation-safe deletion work | pass: focused suite |
 | BLOG-FUNC-003 | Publication | Draft/published filtering and post state persist after reload and control visibility | pass: declared publish/unpublish action transport and persisted state/version assertions; browser visibility remains planned |
-| BLOG-FUNC-004 | Analysis/public | Read-only analysis and published views use scoped real data and exclude drafts | pass: public list/detail operations use persisted SQL with Published-only filtering; browser capture remains planned |
+| BLOG-FUNC-004 | Analysis/public | Read-only analysis and published views use scoped real data and exclude drafts | pass: public list/detail operations use persisted SQL with Published-only filtering; authenticated-free desktop/mobile browser probes returned published list/detail 200 and draft detail 404 |
 | BLOG-FUNC-005 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit | pass at contract level |
 | BLOG-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate blogs, posts or tags | planned restart/migration gate |
 | BLOG-FUNC-007 | Assets/import/export/print | Exercise images/assets, editor content, import/export and exposed print/preview actions | planned browser interaction gate |
@@ -51,7 +51,7 @@ content; mutations use isolated databases and deterministic IDs.
 | Case ID | Actor/scope | Expected result | Status |
 | --- | --- | --- | --- |
 | BLOG-PERM-001 | Blog Manager/Editor | Blog, post and taxonomy mutations succeed according to role | planned browser actor gate |
-| BLOG-PERM-002 | Public visitor | Only published public posts/assets are visible | pass: public list/search/detail operations expose published post and 404 draft detail; public browser capture and asset boundary remain planned |
+| BLOG-PERM-002 | Public visitor | Only published public posts/assets are visible | pass: public list/search/detail operations expose published post and 404 draft detail; desktop/mobile browser captures completed; asset boundary remains planned |
 | BLOG-PERM-003 | Wrong company/site | Other-site blogs, drafts and assets are not leaked or mutable | planned |
 | BLOG-PERM-004 | Unauthenticated/expired | Private routes redirect/401/403 without draft content | planned |
 | BLOG-PERM-005 | Stale/missing/invalid | 409/404/422 leaves current blog/post/taxonomy unchanged | pass at contract level |
