@@ -15,8 +15,8 @@
 | Verification trigger | `merge-candidate` |
 | Candidate commit | `85ebc4f9` (form-runtime repair) |
 | Runtime | Core3 full memory runtime, `http://127.0.0.1:4012`, authenticated `admin@tms.local` |
-| Odoo reference | not freshly authenticated in this slice |
-| Result | `tester-failed` |
+| Odoo reference | authenticated `codex@core3.local` in `core3_reference` |
+| Result | `qa-in-progress` |
 
 ## Functional test cases
 
@@ -36,6 +36,7 @@
 - Create form: authenticated admin entered lead data through normal browser controls; mutation response was HTTP 200. Screenshot: `/tmp/core3-odoo-parity-crm-lead-created-desktop.png`.
 - Empty-optionals create: authenticated admin entered only the required lead name; mutation response was HTTP 200 and the created detail rendered numeric default `0` with no closing date. No browser errors were recorded.
 - Browser console had no page errors; the favicon 404 is an unrelated missing asset warning.
+- Paired Pipeline captures: Odoo `/odoo/crm` and Core3 `/crm/my-pipeline`, desktop `1440x900` and mobile `390x844`, under `/tmp/core3-odoo-parity/crm-paired-*.png`. Both runtimes rendered without page/request errors or Core3 horizontal overflow.
 
 ## Re-test and blockers
 
@@ -44,7 +45,8 @@
 | `CRM-FUNC-001` | CRM owner / shared runtime owner | Normalize empty optional number/date form values to null/default before insert | fixed in `PageFormModal`; browser retested |
 | `CRM-BOUNDARY-001` | Main agent with Base owner | Add an allowlisted Base contact-create operation or a durable cross-service workflow; CRM cannot edit Base files in this isolated assignment | open |
 | `CRM-AI-001` | Main agent / AI owner | Add `crm.tags.delete` to `services/ai/agent.yaml` and regenerate catalog evidence | fixed in `4456e44c`; regression retested |
-| `CRM-REF-001` | QA/main agent | Authenticate the installed Odoo reference and capture matching routes at `1440x900` and `390x844` | open |
+| `CRM-REF-001` | QA/main agent | Compare matching Odoo/Core3 CRM states and repair remaining visual/data differences | open; authenticated paired Pipeline captures now exist |
+| `CRM-VIS-001` | CRM owner / shared UI owner | Align Pipeline fixture records and mobile layout with Odoo: Odoo uses a horizontally scrolling kanban and 7 cards; Core3 shows 5 cards in a vertical mobile layout | open; paired captures show the mismatch |
 
 ## Sign-off
 
