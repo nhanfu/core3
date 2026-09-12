@@ -1,0 +1,7 @@
+page: { id: accounting-entries-to-review }
+datasources:
+  - id: accounting_entries_to_review
+    single: false
+    permission: accounting.read
+    error_states: { forbidden: { status: 403, code: ACCOUNTING_ENTRIES_TO_REVIEW_FORBIDDEN, message: You do not have access to entries to review. }, transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "SELECT id, row_version, name, journal, CAST(entry_date AS VARCHAR) AS entry_date, reference, debit, credit, state FROM accounting_journal_entries WHERE state = 'Draft' AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR journal ILIKE '%' || :q || '%' OR COALESCE(reference, '') ILIKE '%' || :q || '%') ORDER BY entry_date DESC, id"

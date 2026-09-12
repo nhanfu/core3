@@ -1,0 +1,30 @@
+title: Entries to Review
+page: { id: accounting-entries-to-review, route: /accounting/entries-to-review, breadcrumb: [Finance, Accounting, Transactions, Entries to Review], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_entries_to_review
+    search: { label: Search journal entries, placeholder: Search entries or journals... }
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: true, group_by: '', card: { title: name, subtitle: journal, fields: [{ field: entry_date }, { field: reference }, { field: state }] } }
+    filters: [{ field: state, label: Status, options: [{ id: Draft, label: To Review }]}]
+    columns:
+      - { field: name, label: Entry, type: PrimaryEntityCell }
+      - { field: journal, label: Journal }
+      - { field: entry_date, label: Date }
+      - { field: reference, label: Reference }
+      - { field: debit, label: Debit, align: right }
+      - { field: credit, label: Credit, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_journal_entry
+    row_double_click_action: view_journal_entry
+    row_actions: menu
+actions:
+  - id: view_journal_entry
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/journal-entry-detail
+    params: { id: '{row.id}' }

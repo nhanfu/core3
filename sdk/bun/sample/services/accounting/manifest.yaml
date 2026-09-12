@@ -65,6 +65,10 @@ menu:
           label: Journal Entries
           icon: ledger
           permission: accounting.read
+        - path: /accounting/entries-to-review
+          label: Entries to Review
+          icon: ledger
+          permission: accounting.read
         - path: /accounting/payments
           label: Payments
           icon: bank

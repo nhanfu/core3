@@ -1,0 +1,17 @@
+version: 0.0.35
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO accounting_journal_entries(id, name, journal, entry_date, reference, debit, credit, state)
+      VALUES
+        ('accounting-review-demo-001', 'Review: Office supplies accrual', 'Miscellaneous', DATE '2026-01-15', 'ACCRUAL/2026/001', 425.00, 425.00, 'Draft'),
+        ('accounting-review-demo-002', 'Review: January bank fee', 'Bank', DATE '2026-01-14', 'BANK/2026/001', 18.50, 18.50, 'Draft'),
+        ('accounting-review-demo-003', 'Review: Vendor prepayment', 'Purchases', DATE '2026-01-13', 'PREPAY/2026/001', 1200.00, 1200.00, 'Draft'),
+        ('accounting-review-demo-004', 'Review: Equipment adjustment', 'Miscellaneous', DATE '2026-01-12', 'ADJ/2026/001', 75.00, 75.00, 'Draft');
+    down: |
+      DELETE FROM accounting_journal_entries WHERE id LIKE 'accounting-review-demo-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

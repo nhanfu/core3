@@ -1217,3 +1217,32 @@ and any resulting screenshot omissions are recorded in the handoff.
 Core3 adds the source-supported Credit Statements action at `/accounting/credit-statements`, with separate page/API YAML joined by `page.id`, deterministic credit rows, read-only accounting permissions, filter/search/empty/transport states, and a bounded credit-only action contract. The focused test passes 2 tests and 17 assertions.
 
 The active Odoo action was source-confirmed, but it was not directly menu-bound in the installed reference. Odoo desktop/mobile captures are under `/tmp/core3-odoo-parity/accounting-batch4-20260912/`; Core3 pairing was blocked by the isolated runtime. No full visual parity claim is made; images remain outside Git.
+
+## Entries to Review bounded action (2026-09-12)
+
+The Odoo 19 `account` source exposes “Entries to Review” from each journal
+dashboard's Manage section in `account_journal_dashboard_view.xml`. It opens
+`action_move_journal_line` (`account.move`) with `search_default_unposted=1`;
+the source action declares `list,kanban,form,activity` and the resulting list
+is the unposted journal-entry review state. Core3 adds the explicit
+module-qualified route `/accounting/entries-to-review` under
+Accounting → Transactions, with the dashboard action represented as a menu
+entry because Core3 does not yet expose journal-dashboard object links.
+
+The page is presentation-only and joins `api/entries-to-review.yaml` through
+`page.id`. Migration `20260912050000-035-accounting-entries-to-review.yaml`
+adds four fixed Draft entries dated 2026-01-12 through 2026-01-15. The source
+requires Accounting read access; Core3 covers `accounting.read`, deterministic
+ordering, search, fixture-empty behavior, and navigation to the existing
+journal-entry detail form. Posting/editing remains on that existing detail
+workflow and is not duplicated here.
+
+Focused validation passes 2 tests and 11 assertions; the YAML audit passes
+with 571 pages, 578 routes, and 985 datasources. Authenticated desktop/mobile
+evidence was attempted under
+`/tmp/core3-odoo-parity/accounting-batch5-20260912/`, but the isolated dev
+frontend terminated before the browser pass with the exact environment error
+`EMFILE: too many open files` from Vite while watching
+`sdk/bun/sample/vite.config.ts`; the backend listener then became unavailable
+(`curl: (7) Failed to connect to 127.0.0.1 port 3001`). No screenshot or full
+visual parity claim is made for this batch, and no images are committed.

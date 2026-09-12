@@ -27,7 +27,7 @@ describe('Accounting Journal Entry detail parity', () => {
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'accounting_journal_detail_test_migrations', ['schema', 'data']);
     const source = yaml('api/journal-entry-detail.yaml').datasources[0];
     expect(await repository.querySource(source, { id: 'accounting-entry-demo-001', fixture_state: null }, 0, 1)).toMatchObject({ data: { name: 'Miscellaneous Operations', state: 'Posted', balance: 0 } });
-    expect((await repository.query('SELECT COUNT(*) AS count FROM accounting_journal_entries'))[0].count).toBe(33);
+    expect((await repository.query('SELECT COUNT(*) AS count FROM accounting_journal_entries'))[0].count).toBe(37);
     expect((await repository.querySource(source, { id: 'missing-entry', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     const page = yaml('pages/journal-entry-detail.yaml');
     const post = page.actions.find((action: any) => action.id === 'post_journal_entry');
