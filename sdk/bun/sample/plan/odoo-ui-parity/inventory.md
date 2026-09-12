@@ -723,3 +723,9 @@ responses. Odoo reference and Core3 captures remain under `/tmp`:
 The bounded residual is the Odoo purple shell/search panel and Inventory at
 Date wizard versus Core3's Fluent shell and shared date entry point. Images
 are not committed.
+
+## Scrap Orders bounded slice (2026-09-12)
+
+Core3 adds the Inventory Operations > Adjustments Scrap Orders action at `/inventory/scraps`, with list/kanban/pivot/graph declarations, detail form, page/API YAML joined by `page.id`, deterministic Draft/Done fixtures, and create/edit/validate/stale-write/done-delete guards. The focused test passes 3 tests and 25 assertions.
+
+The live Odoo action is source-confirmed as `stock.action_stock_scrap` (action 547), but its reference database has no scrap rows. The isolated Core3 runtime was not available for a completed paired browser capture in this batch, so no new screenshot claim is made; screenshot gate remains open and images, if captured later, stay outside Git.

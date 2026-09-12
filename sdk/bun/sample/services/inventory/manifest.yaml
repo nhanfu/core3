@@ -26,6 +26,13 @@ menu:
           label: Physical Inventory
           icon: clipboard
           permission: inventory.read
+    - id: adjustments
+      label: Adjustments
+      items:
+        - path: /inventory/scraps
+          label: Scrap Orders
+          icon: delete
+          permission: inventory.read
     - id: procurement
       label: Procurement
       items:

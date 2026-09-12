@@ -1,0 +1,43 @@
+title: Scrap Orders
+page: { id: inventory-scraps, route: /inventory/scraps, breadcrumb: [Inventory, Operations, Adjustments, Scrap Orders], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_scrap_orders
+    create_action: create_inventory_scrap
+    create_label: New
+    search: { label: Search Scrap, placeholder: 'Search reference, product, or source document...' }
+    filters:
+      - { field: state, label: Status, options_source: inventory_scrap_states }
+      - { field: product_name, label: Product, options_source: inventory_scrap_products }
+      - { field: source_location, label: Location, options_source: inventory_scrap_locations }
+      - { field: scrap_location, label: Scrap Location, options_source: inventory_scrap_locations }
+    group_by:
+      - { field: product_name, label: Product }
+      - { field: source_location, label: Location }
+      - { field: scrap_location, label: Scrap Location }
+      - { field: picking_name, label: Transfer }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: form }
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: true, group_by: state, groups_source: inventory_scrap_states, card: { title: name, subtitle: product_name, fields: [{ field: date_done, label: Date }, { field: scrap_qty, label: Quantity }, { field: state, label: Status }] } }
+      - { id: pivot, label: Pivot, icon: pivot, mobile: false, pivot: { fields: [{ field: date_done, column: Date, type: date }, { field: product_name, column: Product }, { field: source_location, column: Location }, { field: scrap_qty, column: Quantity }], default: { rows: [product_name], columns: [state], measures: [{ field: scrap_qty, aggregate: sum, column: Quantity }] } } }
+      - { id: graph, label: Graph, icon: graph, mobile: false, category_field: product_name, measure_field: scrap_qty, measure_label: Quantity, type: bar }
+    form_view: { page: apps/services/inventory/pages/scrap-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_inventory_scrap
+    row_actions: menu
+    actions: [{ id: delete_inventory_scrap, label: Delete, permission: inventory.write, variant: danger, show_if: "row.state === 'Draft'" }]
+    empty_state: { title: No scrap order found, description: Scrap products to remove damaged or unusable stock and send it to a scrap location. }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, mobile: true, sortable: true }
+      - { field: date_done, label: Date, mobile: true, sortable: true }
+      - { field: product_name, label: Product, mobile: true, mobile_secondary: state }
+      - { field: scrap_qty, label: Quantity, align: right, mobile: true }
+      - { field: product_uom, label: Unit, mobile: true }
+      - { field: company_name, label: Company, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: id, label: ' ', sortable: false, mobile: false, actions: [{ id: view_inventory_scrap, label: Open, icon: eye }, { id: delete_inventory_scrap, label: Delete, icon: trash, variant: danger, show_if: 'row.state === "Draft"' }] }
+    page_size: 50
+page: { id: inventory-scraps }

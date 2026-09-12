@@ -1,0 +1,30 @@
+version: 0.0.13
+description: Deterministic Inventory Scrap Orders action fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_scrap_orders (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL UNIQUE,
+        date_done DATE NOT NULL DEFAULT DATE '2026-01-15', product_id VARCHAR, product_name VARCHAR NOT NULL,
+        scrap_qty DECIMAL(18,3) NOT NULL DEFAULT 1, product_uom VARCHAR NOT NULL DEFAULT 'Units',
+        source_location VARCHAR NOT NULL DEFAULT 'WH/Stock', scrap_location VARCHAR NOT NULL DEFAULT 'Virtual Locations/Scrap',
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)', state VARCHAR NOT NULL DEFAULT 'Draft',
+        origin VARCHAR, picking_name VARCHAR, lot_name VARCHAR, package_name VARCHAR, owner_name VARCHAR,
+        should_replenish BOOLEAN NOT NULL DEFAULT FALSE, note VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_scrap_state ON inventory_scrap_orders(state);
+      INSERT INTO inventory_scrap_orders (id,name,date_done,product_id,product_name,scrap_qty,product_uom,source_location,scrap_location,company_name,state,origin,picking_name,lot_name,package_name,owner_name,should_replenish,note,created_at) VALUES
+        ('inventory-scrap-0001','SCRAP/2026/0001',DATE '2026-01-15','product-furn-9666','[FURN_9666] Table',1,'Units','WH/Stock','Virtual Locations/Scrap','My Company (San Francisco)','Done','MO/2026/0005','WH/OUT/0005','LOT-TABLE-001','PACK-0004',NULL,FALSE,'Damaged tabletop discovered during final inspection',TIMESTAMP '2026-01-15 09:20:00'),
+        ('inventory-scrap-0002','SCRAP/2026/0002',DATE '2026-01-16','product-furn-7023','[FURN_7023] Wood Panel',3,'Units','WH/Stock','Virtual Locations/Scrap','My Company (San Francisco)','Draft','MO/2026/0003','WH/IN/0003',NULL,NULL,NULL,TRUE,'Awaiting quality approval',TIMESTAMP '2026-01-15 09:30:00'),
+        ('inventory-scrap-0003','SCRAP/2026/0003',DATE '2026-01-17','product-furn-8855','[FURN_8855] Drawer',2,'Units','WH/Quality Control','Virtual Locations/Scrap','My Company (San Francisco)','Done','MO/2026/0004','WH/OUT/0004','LOT-DRAWER-001',NULL,NULL,FALSE,'Surface damage on drawer front',TIMESTAMP '2026-01-15 09:40:00'),
+        ('inventory-scrap-0004','SCRAP/2026/0004',DATE '2026-01-18','product-furn-78236','[FURN_78236] Table Kit',4,'Units','WH/Stock','Virtual Locations/Scrap','My Company (San Francisco)','Draft','WH/REPL/0003',NULL,NULL,NULL,NULL,TRUE,'Separate components for replenishment review',TIMESTAMP '2026-01-15 09:50:00'),
+        ('inventory-scrap-0005','SCRAP/2026/0005',DATE '2026-01-19','product-furn-8855-sec','[FURN_8855] Drawer (SEC-ASSEM)',1,'Units','WH/Stock','Virtual Locations/Scrap','Core3 Vietnam','Done','MO/2026/0005','WH/OUT/0005','LOT-DRAWER-001',NULL,NULL,FALSE,'Second-company fixture for record-rule coverage',TIMESTAMP '2026-01-15 10:00:00'),
+        ('inventory-scrap-0006','SCRAP/2026/0006',DATE '2026-01-20','product-furn-8522','[FURN_8522] Table Top',2,'Units','WH/Input','Virtual Locations/Scrap','My Company (San Francisco)','Draft','SO/2026/0002',NULL,NULL,NULL,NULL,FALSE,NULL,TIMESTAMP '2026-01-15 10:10:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |-
+      DELETE FROM inventory_scrap_orders WHERE id LIKE 'inventory-scrap-%';
+      DROP TABLE IF EXISTS inventory_scrap_orders;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

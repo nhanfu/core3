@@ -1,0 +1,41 @@
+page: { id: inventory-scrap-detail }
+datasources:
+  - id: inventory_scrap_order_detail
+    single: true
+    permission: inventory.read
+    error_states:
+      unauthorized: { status: 401, code: INVENTORY_SCRAP_DETAIL_UNAUTHORIZED, message: Sign in to view this Scrap Order. }
+      forbidden: { status: 403, code: INVENTORY_SCRAP_DETAIL_FORBIDDEN, message: You do not have permission to view this Scrap Order. }
+      missing_record: { status: 404, code: INVENTORY_SCRAP_NOT_FOUND, message: Scrap Order not found. }
+      transport_error: { status: 503, code: INVENTORY_SCRAP_DETAIL_UNAVAILABLE, message: This Scrap Order is temporarily unavailable. }
+    query: |
+      SELECT id,row_version,name,CAST(date_done AS VARCHAR) AS date_done,product_id,product_name,CAST(scrap_qty AS DOUBLE) AS scrap_qty,product_uom,source_location,scrap_location,company_name,state,COALESCE(origin,'') AS origin,COALESCE(picking_name,'') AS picking_name,COALESCE(lot_name,'') AS lot_name,COALESCE(package_name,'') AS package_name,COALESCE(owner_name,'') AS owner_name,should_replenish,COALESCE(note,'') AS note FROM inventory_scrap_orders WHERE CASE WHEN COALESCE(:fixture_state,'') IN ('empty','not_found') THEN 0 ELSE 1 END = 1 AND id = :id
+actions:
+  - { id: back_to_inventory_scraps, type: navigate, permission: inventory.read, navigate_to: /inventory/scraps }
+  - id: edit_inventory_scrap
+    type: server_form
+    permission: inventory.write
+    title: Edit Scrap Order
+    action: inventory.scraps.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_scrap_order_detail
+    refresh: [inventory_scrap_order_detail, inventory_scrap_orders]
+    mutation:
+      operation: update
+      table: inventory_scrap_orders
+      fields: [name,date_done,product_id,product_name,scrap_qty,product_uom,source_location,scrap_location,company_name,origin,picking_name,lot_name,package_name,owner_name,should_replenish,note]
+      required: [name,product_name,scrap_qty,product_uom,company_name]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_scrap_orders WHERE id = :id", status: 404, code: INVENTORY_SCRAP_NOT_FOUND, message: Scrap Order not found. }, { query: "SELECT id FROM inventory_scrap_orders WHERE id = :id AND state = 'Draft'", status: 409, code: INVENTORY_SCRAP_DONE_EDIT, message: A Done Scrap Order cannot be edited. }, { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:product_name AS VARCHAR))) > 0 AND CAST(:scrap_qty AS DECIMAL(18,3)) > 0", status: 422, code: INVENTORY_SCRAP_REQUIRED_FIELDS, message: Reference, product, and a positive quantity are required. }, { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_scrap_orders WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: INVENTORY_SCRAP_REFERENCE_EXISTS, message: A Scrap Order with this reference already exists. }]
+      result: { query: "SELECT * FROM inventory_scrap_orders WHERE id = :id" }
+    fields: [{ field: name, label: Reference, type: text, required: true }, { field: date_done, label: Date, type: date, required: true }, { field: product_name, label: Product, type: text, required: true }, { field: scrap_qty, label: Quantity, type: number, required: true, min: 0.001 }, { field: product_uom, label: Unit, type: text, required: true }, { field: source_location, label: Source Location, type: text }, { field: scrap_location, label: Scrap Location, type: text }, { field: company_name, label: Company, type: text, required: true }, { field: origin, label: Source Document, type: text }, { field: picking_name, label: Picking, type: text }, { field: lot_name, label: Lot/Serial Number, type: text }, { field: package_name, label: Package, type: text }, { field: owner_name, label: Owner, type: text }, { field: should_replenish, label: Replenish Quantities, type: boolean }, { field: note, label: Notes, type: textarea }]
+  - id: validate_inventory_scrap
+    type: server
+    permission: inventory.write
+    action: inventory.scraps.validate
+    handler: yaml_mutation
+    params: { id: '{state.id}', expected_row_version: '{state.inventory_scrap_order_detail.row_version}' }
+    refresh: [inventory_scrap_order_detail, inventory_scrap_orders]
+    mutation: { table: inventory_scrap_orders, guards: [{ query: "SELECT id FROM inventory_scrap_orders WHERE id = :id", status: 404, code: INVENTORY_SCRAP_NOT_FOUND, message: Scrap Order not found. }, { query: "SELECT id FROM inventory_scrap_orders WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: INVENTORY_SCRAP_NOT_DRAFT, message: Only a current Draft Scrap Order can be validated. }, { query: "SELECT 1 AS ok FROM inventory_scrap_orders WHERE id = :id AND scrap_qty > 0 AND product_name <> ''", status: 422, code: INVENTORY_SCRAP_INVALID, message: A positive quantity and product are required before validating. }], steps: [{ query: "UPDATE inventory_scrap_orders SET state = 'Done', row_version = row_version + 1 WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The Scrap Order changed. Reload it before validating. }], result: { query: "SELECT * FROM inventory_scrap_orders WHERE id = :id" } }
+  - { id: delete_inventory_scrap_detail, type: server, permission: inventory.write, action: inventory.scraps.delete, handler: yaml_mutation, operation: delete, params: { id: '{state.id}', expected_row_version: '{state.inventory_scrap_order_detail.row_version}' }, refresh: [inventory_scrap_orders], mutation: { operation: delete, table: inventory_scrap_orders, concurrency: { required: true }, guards: [{ query: "SELECT id FROM inventory_scrap_orders WHERE id = :id", status: 404, code: INVENTORY_SCRAP_NOT_FOUND, message: Scrap Order not found. }, { query: "SELECT id FROM inventory_scrap_orders WHERE id = :id AND state = 'Draft'", status: 409, code: INVENTORY_SCRAP_DONE_DELETE, message: A Done Scrap Order cannot be deleted. }] } }
