@@ -1,10 +1,17 @@
 # project QA ledger
 
-QA state: dormant
+QA state: qa-in-progress
 QA slot: dispatchable project assignment (pending wave dispatch)
 Module owner: project module owner
 Verification trigger: feature-complete
 Candidate commit: none
+
+## Current regression evidence
+
+- Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
+- Project task, dashboard/update, grouped-stage, and permission contracts pass
+  in focused reruns.
+- Authenticated route matrix and Odoo comparison remain pending.
 
 ## Test-case inventory
 
@@ -25,4 +32,3 @@ Candidate commit: none
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
-

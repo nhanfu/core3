@@ -1,10 +1,16 @@
 # purchase QA ledger
 
-QA state: dormant
+QA state: qa-in-progress
 QA slot: dispatchable purchase assignment (pending wave dispatch)
 Module owner: purchase module owner
 Verification trigger: feature-complete
 Candidate commit: none
+
+## Current regression evidence
+
+- Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
+- Purchase order line and product-history contracts pass in focused reruns.
+- Authenticated route matrix and Odoo comparison remain pending.
 
 ## Test-case inventory
 
@@ -25,4 +31,3 @@ Candidate commit: none
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
-

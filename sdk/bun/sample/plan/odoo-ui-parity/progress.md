@@ -7,6 +7,7 @@ intermediate test cases and repairs in each module's `qa/<module>.md` ledger.
 
 | Date | Module | Bounded slice | Commit | Tests/audits | Browser captures | Blocker |
 | --- | --- | --- | --- | --- | --- | --- |
+| 2026-09-12 | Repository regression | Full parity test corpus after wave repairs | `4456e44c` | 1,045 tests, 10,098 assertions, 0 failures across 326 files; UI audit remains green | functional browser gates tracked per module; no broad visual claim | Odoo paired comparison and route-level browser matrix remain open |
 | 2026-09-12 | Events | Attendee full-page ticket report | `0621e61e` | focused test 3/3; UI audit passed | blocked; no visual claim | Core3/Odoo browser runtime unavailable |
 | 2026-09-12 | Surveys | Questions-tab section action | `fc3184a9` | focused aggregate passed; UI audit passed | blocked; no visual claim | browser capture unavailable |
 | 2026-09-12 | Project | Embedded project milestones action | `c7ba4f31` | focused test 2/2; UI audit passed | blocked; no visual claim | browser capture unavailable |

@@ -1,10 +1,16 @@
 # recruitment QA ledger
 
-QA state: dormant
+QA state: qa-in-progress
 QA slot: dispatchable recruitment assignment (pending wave dispatch)
 Module owner: recruitment module owner
 Verification trigger: feature-complete
 Candidate commit: none
+
+## Current regression evidence
+
+- Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
+- Applicant view navigation and analysis contracts pass in focused reruns.
+- Authenticated route matrix and Odoo comparison remain pending.
 
 ## Test-case inventory
 
@@ -25,4 +31,3 @@ Candidate commit: none
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
-
