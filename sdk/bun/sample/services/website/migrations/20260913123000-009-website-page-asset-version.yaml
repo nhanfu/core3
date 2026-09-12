@@ -1,0 +1,13 @@
+version: 0.0.9
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE website_page_assets ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      UPDATE website_page_assets SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      ALTER TABLE website_page_assets DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

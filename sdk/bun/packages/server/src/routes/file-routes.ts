@@ -74,13 +74,27 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
     const [fileRecord] = await repository.query(bound.statement, bound.values);
     if (!fileRecord) return apiError(404, 'Attachment not found');
     if (rule.scope && !(await recordInCurrentBranch(String(rule.scope.table || ''), String(fileRecord[rule.scope.resource_id || 'order_id'] || fileRecord.order_id)))) return apiError(403, 'Record is outside the current view scope');
-    const file = Bun.file(join(UPLOAD_ROOT, fileRecord.storage_key));
-    if (!(await file.exists())) return apiError(404, 'Attachment file not found');
-    return new Response(file, { headers: {
+    const headers = {
       'Content-Type': fileRecord.mime_type || 'application/octet-stream',
       'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(fileRecord.file_name)}`,
       ...CORS_HEADERS,
-    }});
+    };
+    // Seeded/demo assets may intentionally keep their bytes inline in the
+    // database and have no local storage key. Serve those through the same
+    // authenticated download contract instead of passing a non-string key to
+    // path.join(). Uploaded assets continue to use the local file path.
+    if (typeof fileRecord.storage_key !== 'string' || !fileRecord.storage_key.trim()) {
+      if (typeof fileRecord.content_base64 !== 'string' || !fileRecord.content_base64) return apiError(404, 'Attachment file not found');
+      try {
+        const bytes = Uint8Array.from(atob(fileRecord.content_base64), char => char.charCodeAt(0));
+        return new Response(bytes, { headers });
+      } catch {
+        return apiError(500, 'Attachment content is invalid');
+      }
+    }
+    const file = Bun.file(join(UPLOAD_ROOT, fileRecord.storage_key));
+    if (!(await file.exists())) return apiError(404, 'Attachment file not found');
+    return new Response(file, { headers });
   }
 
   return null;

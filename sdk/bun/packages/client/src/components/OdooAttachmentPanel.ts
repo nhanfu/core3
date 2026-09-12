@@ -2,6 +2,7 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
 import { html } from '@core3/client/html';
 import { i18n } from '@core3/client/i18n';
+import { evalExpr } from '@core3/client/expr';
 
 function formatSize(value: unknown) {
   const bytes = Number(value || 0);
@@ -93,6 +94,19 @@ export class OdooAttachmentPanel extends BaseComponent {
         .attr('aria-label', `${this.def.download_label || i18n.tKey('files.download', {}, 'Download')}: ${name.textContent}`).ele() as HTMLButtonElement;
       appendIcon(download, 'download');
       html.take(download).event('click', () => void this.download(attachment));
+    }
+    const attachmentActions = Array.isArray(this.def.attachment_actions)
+      ? this.def.attachment_actions.filter((action: any) => !action.show_if || Boolean(evalExpr(String(action.show_if), { row: attachment, record: attachment })))
+      : [];
+    if (attachmentActions.length) {
+      const actions = html.take(item).div.className('o-form-attachment-actions').attr('role', 'group').ele() as HTMLDivElement;
+      for (const action of attachmentActions) {
+        const button = html.take(actions).button.type('button')
+          .className(`o-form-attachment-action o-form-attachment-action-${action.variant || 'secondary'}`)
+          .text(String(action.label || action.id || 'Action'))
+          .ele() as HTMLButtonElement;
+        html.take(button).event('click', () => void this.submit(String(action.id), { ...attachment }));
+      }
     }
     return item;
   }

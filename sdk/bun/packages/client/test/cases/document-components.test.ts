@@ -403,6 +403,26 @@ describe('document detail components', () => {
     expect(container.textContent).toContain('2 KB');
   });
 
+  it('renders declarative attachment actions only for matching asset state', async () => {
+    const component = new OdooAttachmentPanel('asset-actions', {
+      record: { id: 'page-1' },
+      attachments: [{ id: 'asset-1', file_name: 'hero.svg', mime_type: 'image/svg+xml', size_bytes: 4, is_public: false, row_version: 1 }],
+    }, {
+      attachment_actions: [
+        { id: 'publish_asset', label: 'Make public', show_if: 'row.is_public !== true' },
+        { id: 'privatize_asset', label: 'Make private', show_if: 'row.is_public === true' },
+      ],
+    });
+    const submitted: Array<{ action: string; params: any }> = [];
+    component._transport = { submit: async (action: string, params: any) => { submitted.push({ action, params }); } };
+    const container = mount(component);
+    expect(container.querySelectorAll('.o-form-attachment-action')).toHaveLength(1);
+    expect(container.querySelector('.o-form-attachment-action')?.textContent).toBe('Make public');
+    container.querySelector<HTMLButtonElement>('.o-form-attachment-action')!.click();
+    await Promise.resolve();
+    expect(submitted).toEqual([{ action: 'publish_asset', params: expect.objectContaining({ id: 'asset-1', row_version: 1 }) }]);
+  });
+
   it('loads authenticated image previews and closes the viewer with Escape', async () => {
     const originalCreateObjectURL = URL.createObjectURL;
     const originalRevokeObjectURL = URL.revokeObjectURL;

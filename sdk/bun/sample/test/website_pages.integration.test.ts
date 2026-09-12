@@ -147,6 +147,10 @@ describe('Website Page Manager parity', () => {
       attachment_source: 'website_page_assets',
       attachment_upload_action: 'upload_website_page_asset',
       attachment_download_action: 'download_website_page_asset',
+      attachment_actions: expect.arrayContaining([
+        expect.objectContaining({ id: 'publish_website_page_asset', label: 'Make public' }),
+        expect.objectContaining({ id: 'privatize_website_page_asset', label: 'Make private' }),
+      ]),
     });
     expect(api.datasources.map((source: any) => source.id)).toEqual(['website_page_detail', 'website_page_assets']);
     expect(api.actions.find((action: any) => action.id === 'upload_website_page_asset')).toMatchObject({ type: 'upload', kind: 'website_page_asset', permission: 'website.write' });

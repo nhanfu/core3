@@ -174,6 +174,14 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     const action = (config.actions || []).find((candidate: any) => candidate.id === def[key]);
     if (!action || !hasPermission(ctx.user, action.permission)) delete formDef[key];
   }
+  if (Array.isArray(def.attachment_actions)) {
+    formDef.attachment_actions = def.attachment_actions
+      .map((button: any) => {
+        const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
+        return action && hasPermission(ctx.user, action.permission) ? { ...button } : null;
+      })
+      .filter(Boolean);
+  }
   const attachmentDownloadAction = (config.actions || []).find((candidate: any) => candidate.id === formDef.attachment_download_action);
   if (attachmentDownloadAction) {
     formDef.resolve_attachment_blob = (row: any) => {

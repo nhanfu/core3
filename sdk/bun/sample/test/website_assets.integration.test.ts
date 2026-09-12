@@ -40,4 +40,28 @@ describe('Website page assets parity', () => {
     database.close();
     rmSync(uploadRoot, { recursive: true, force: true });
   });
+
+  test('promotes and privatizes an asset with manager permission and row-version guards', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'website_asset_visibility_test', ['schema', 'data']);
+    const page = yaml('api/page-detail.yaml');
+    const manager = { sub: 'website-manager', email: 'manager@workspace.example', name: 'Website Manager', roles: ['manager'], permissions: ['website.read', 'website.write', 'website.manage'] };
+    const api = createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return manager; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
+      sources: new Map(page.datasources.map((source: any) => [source.id, source])), pageSources: new Map(), pages: new Map([['website-page-detail', { actions: page.actions }]]),
+      catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
+      permissions: { permissions: ['website.read', 'website.write', 'website.manage'], tables: {}, endpoints: {} },
+      uploadRoot: `/tmp/core3-website-visibility-${crypto.randomUUID()}`, eventStore: {}, topics: {}, storage: yaml('storage.yaml'),
+    });
+    await repository.run("INSERT INTO website_page_assets (id, page_id, file_name, mime_type, size_bytes, content_base64, is_public, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", ['website-asset-private-001', 'website-page-demo-001', 'private.svg', 'image/svg+xml', 4, 'U1ZHAA==', false, 'website-manager']);
+    const request = (id: string, expected: number, values: Record<string, unknown>) => api(new Request(`http://website.test/api/actions/${id}`, { method: 'POST', headers: { Authorization: 'Bearer test-token', 'content-type': 'application/json' }, body: JSON.stringify({ id: 'website-asset-private-001', expected_row_version: expected, values }) }), new URL(`http://website.test/api/actions/${id}`));
+    expect((await request('website.pages.assets.publish', 1, { is_public: true }))?.status).toBe(200);
+    expect((await repository.query('SELECT is_public, row_version FROM website_page_assets WHERE id = ?', ['website-asset-private-001']))[0]).toEqual({ is_public: true, row_version: 2 });
+    expect((await request('website.pages.assets.privatize', 2, { is_public: false }))?.status).toBe(200);
+    expect((await repository.query('SELECT is_public, row_version FROM website_page_assets WHERE id = ?', ['website-asset-private-001']))[0]).toEqual({ is_public: false, row_version: 3 });
+    await expect(request('website.pages.assets.publish', 2, { is_public: true })).rejects.toMatchObject({ status: 409 });
+    database.close();
+  });
 });

@@ -149,6 +149,9 @@
 .o-form-attachment-info strong { color: var(--o-form-text); font-size: 12px; }
 .o-form-attachment-info small { color: var(--o-form-muted); font-size: 10px; }
 .o-form-attachment-download:hover { background: var(--o-form-bg); color: var(--o-form-action); }
+.o-form-attachment-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 4px 4px; }
+.o-form-attachment-action { padding: 4px 8px; border: 1px solid var(--o-form-border); border-radius: 3px; background: var(--o-form-surface); color: var(--o-form-text); cursor: pointer; font-size: 11px; }
+.o-form-attachment-action:hover { border-color: var(--o-form-action); color: var(--o-form-action); }
 .o-form-attachment-preview-overlay { position: fixed; z-index: 120; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(15 23 42 / 72%); }
 .o-form-attachment-preview-dialog { position: relative; display: grid; max-width: min(960px, 94vw); max-height: 92vh; overflow: hidden; border-radius: 5px; background: var(--o-form-surface); box-shadow: 0 22px 60px rgb(0 0 0 / 35%); }
 .o-form-attachment-preview-dialog > img { display: block; max-width: 100%; max-height: calc(92vh - 58px); object-fit: contain; background: #111827; }

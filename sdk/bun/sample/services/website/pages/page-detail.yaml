@@ -15,6 +15,9 @@ components:
     download_label: Download asset
     attachment_upload_action: upload_website_page_asset
     attachment_download_action: download_website_page_asset
+    attachment_actions:
+      - { id: publish_website_page_asset, label: Make public, variant: primary, show_if: "row.is_public !== true" }
+      - { id: privatize_website_page_asset, label: Make private, variant: secondary, show_if: "row.is_public === true" }
     header_actions:
       - { id: back_to_website_pages, label: Back, variant: secondary }
       - { id: edit_website_page_detail, label: Edit, variant: primary, permission: website.write }
