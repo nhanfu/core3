@@ -26,6 +26,7 @@ components:
       - id: card
         label: Cards
         icon: grid
+        mobile: false
         group_by: stage
         groups_source: crm_my_pipeline_stages
         card:

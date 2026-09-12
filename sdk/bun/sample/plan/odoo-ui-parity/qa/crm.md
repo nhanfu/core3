@@ -46,7 +46,7 @@
 | `CRM-BOUNDARY-001` | Main agent with Base owner | Add an allowlisted Base contact-create operation or a durable cross-service workflow; CRM cannot edit Base files in this isolated assignment | open |
 | `CRM-AI-001` | Main agent / AI owner | Add `crm.tags.delete` to `services/ai/agent.yaml` and regenerate catalog evidence | fixed in `4456e44c`; regression retested |
 | `CRM-REF-001` | QA/main agent | Compare matching Odoo/Core3 CRM states and repair remaining visual/data differences | open; authenticated paired Pipeline captures now exist |
-| `CRM-VIS-001` | CRM owner / shared UI owner | Align Pipeline fixture records and mobile layout with Odoo: Odoo uses a horizontally scrolling kanban and 7 cards; Core3 shows 5 cards in a vertical mobile layout | open; paired captures show the mismatch |
+| `CRM-VIS-001` | CRM owner / shared UI owner | Align Pipeline fixture records and mobile layout with Odoo: Odoo uses a horizontally scrolling kanban and 7 cards; Core3 shows 5 cards in a vertical mobile layout | partially fixed in `my-pipeline.yaml`/shared CardView CSS; mobile board now scrolls horizontally; fixture cardinality remains open |
 
 ## Sign-off
 

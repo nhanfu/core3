@@ -3,8 +3,11 @@
 .o-kanban-board.is-ungrouped { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); align-content: start; align-items: start; overflow: auto; }
 .o-kanban-column { display: flex; width: min(320px, calc(100vw - 48px)); min-width: 280px; height: fit-content; max-height: 100%; flex-direction: column; border-radius: 5px; background: var(--o-list-muted-bg); }
 @media (max-width: 768px) {
-  .o-kanban-board { display: block; overflow-x: hidden; padding: 12px; }
-  .o-kanban-column { width: 100%; min-width: 0; max-width: 100%; margin-bottom: 12px; max-height: none; }
+  /* Odoo keeps grouped pipelines as a horizontally scrollable board on
+   * phones. The columns remain usable at their desktop minimum width while
+   * the board, rather than the document, owns horizontal scrolling. */
+  .o-kanban-board { display: flex; overflow-x: auto; overflow-y: hidden; padding: 12px; }
+  .o-kanban-column { width: min(320px, calc(100vw - 48px)); min-width: 280px; max-width: none; margin-bottom: 0; max-height: none; }
   .o-kanban-cards { overflow-y: visible; }
 }
 .o-kanban-column-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 10px; color: var(--o-list-text); }
