@@ -28,3 +28,18 @@ The normal Vite launch separately failed with `EMFILE: too many open files`;
 polling allowed startup, but did not resolve the gateway/auth boundary. The
 desktop/mobile images in the directory are explicitly unauthenticated capture
 attempt artifacts, not parity evidence. No visual claim is made.
+
+## Vehicles visual-contract audit — 2026-09-12
+
+The bounded Vehicles audit inspected the Odoo vehicle action/menu source and
+the existing Core3 page/manifest. Odoo orders the Fleet child actions Fleet,
+Contracts, Services, Odometers (sequences 0, 2, 3, 10) and opens the vehicle
+action in `kanban,list,form,pivot,activity` order. Core3 had Odometers before
+Contracts and Services and opened List before Kanban. The manifest and page
+were corrected to preserve those source-backed orders, with regression coverage
+in `test/fleet_vehicles_visual.integration.test.ts`.
+
+No authenticated Vehicles captures were available under `/tmp`; the existing
+Fleet captures cover other surfaces. The current Odoo/Core3 runtime boundary
+also remains the one recorded above, so this audit makes no browser visual
+claim for Vehicles.

@@ -15,13 +15,13 @@ components:
     group_by: [{ field: model, label: Model }, { field: manufacturer, label: Brand }, { field: state, label: Status }, { field: fuel_type, label: Fuel Type }]
     view_navigation: tabs
     views:
-      - { id: list, label: List, icon: table }
       - id: kanban
         label: Kanban
         icon: dashboard
         group_by: state
         groups_source: fleet_vehicle_states
         card: { title: name, subtitle: license_plate, fields: [{ field: model, label: Model }, { field: driver_name, label: Driver }, { field: odometer, label: Odometer }, { field: contract_end_date, label: Contract end }] }
+      - { id: list, label: List, icon: table }
     columns:
       - { field: name, label: Vehicle, type: PrimaryEntityCell }
       - { field: license_plate, label: License plate }

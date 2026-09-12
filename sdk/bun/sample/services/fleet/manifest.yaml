@@ -15,9 +15,9 @@ menu:
       label: Fleet
       items:
         - { path: /vehicles, label: Fleet, icon: car, permission: fleet.read }
-        - { path: /fleet/odometers, label: Odometers, icon: chart, permission: fleet.read }
         - { path: /fleet/contracts, label: Contracts, icon: file, permission: fleet.read }
         - { path: /fleet/services, label: Services, icon: tools, permission: fleet.read }
+        - { path: /fleet/odometers, label: Odometers, icon: chart, permission: fleet.read }
     - id: reporting
       label: Reporting
       items:
