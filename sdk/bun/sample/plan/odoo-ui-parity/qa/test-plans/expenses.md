@@ -35,7 +35,7 @@ and split lines. Mutations use isolated databases and deterministic dates/IDs.
 | EXPENSE-FUNC-005 | Posting/approval | Receipt requirement, approval/refusal, journal/date validation and payment states follow Odoo guards | pass: focused suite |
 | EXPENSE-FUNC-006 | Reporting | Expense and department reports expose deterministic grouped data and department scope | pass: focused suite |
 | EXPENSE-FUNC-007 | Empty/error/not-found | Missing, empty, forbidden and transport-error states are explicit for each datasource | pass at contract level |
-| EXPENSE-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate expenses, receipts or activities | planned restart/migration gate |
+| EXPENSE-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate expenses, receipts or activities | pass: upgrade/replay persistence test |
 | EXPENSE-FUNC-009 | Receipts/import/export/print | Exercise receipt upload/preview, expense import/export and exposed report/print actions | planned browser interaction gate |
 
 ## Workflow and integration cases
