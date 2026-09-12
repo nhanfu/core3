@@ -103,6 +103,7 @@ describe('Maintenance bounded Odoo parity batch', () => {
     const api = yaml('api/request-detail.yaml');
     expect(api.actions.map((action: any) => action.id)).toEqual([
       'update_maintenance_request_kanban_state',
+      'edit_maintenance_request_detail',
       'assign_maintenance_request_detail',
       'start_maintenance_request_detail',
       'repair_maintenance_request_detail',

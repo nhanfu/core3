@@ -26,11 +26,24 @@ Candidate commit: none
 - Paired Odoo comparison, full browser CRUD, settings, and ordinary-user
   browser permission evidence remain open.
 
+## Current bounded slice (2026-09-13)
+
+- Added the permissioned `edit_maintenance_request_detail` server form and
+  `maintenance.requests.update` mutation. It edits the request identity,
+  description/instructions, priority, assignment, schedule, and recurrence.
+- The mutation requires `maintenance.write`, rejects archived or missing
+  requests, validates required fields and duplicate names, and requires the
+  current `row_version`.
+- `maintenance_request_edit.integration.test.ts`: 1 passed, 6 assertions;
+  the update persisted `maintenance-demo-001` at row version 2 and a stale
+  replay returned 409 without overwriting it.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | MAINTENANCE-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Detailed plan approved; focused contracts, route matrix, and request cancel persistence are recorded, but full CRUD and paired Odoo gates remain open | pending |
+| MAINT-FUNC-003 | Request detail edit contract | `maintenance_request_edit.integration.test.ts`; update persistence and stale-write guard | pass for API contract; authenticated browser edit remains planned |
 
 ## Bugs and retests
 

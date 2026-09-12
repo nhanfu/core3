@@ -22,6 +22,37 @@ actions:
         - { query: "SELECT 1 AS ok WHERE CAST(:kanban_state AS VARCHAR) IN ('normal', 'blocked', 'done')", status: 422, code: MAINTENANCE_REQUEST_KANBAN_STATE_INVALID, message: Choose In Progress, Blocked, or Ready for next stage. }
       result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
     fields: [{ field: kanban_state, label: Kanban state, type: select, options: [{ value: normal, label: In Progress }, { value: blocked, label: Blocked }, { value: done, label: Ready for next stage }], required: true }]
+  - id: edit_maintenance_request_detail
+    type: server_form
+    permission: maintenance.write
+    title: Edit maintenance request
+    action: maintenance.requests.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.maintenance_request_detail
+    refresh: [maintenance_request_detail, maintenance_requests]
+    mutation:
+      operation: update
+      table: maintenance_requests
+      key: id
+      fields: [name, request_type, description, instructions, priority, assigned_to, scheduled_date, recurrence]
+      required: [name, description]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND archived = FALSE", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Active maintenance request was not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:description AS VARCHAR))) > 0", status: 422, code: MAINTENANCE_REQUEST_REQUIRED, message: Request and description are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_requests WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: MAINTENANCE_REQUEST_NAME_EXISTS, message: A maintenance request with this name already exists. }
+      result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
+    fields:
+      - { field: name, label: Request, type: text, required: true }
+      - { field: request_type, label: Type, type: select, options: [{ value: Corrective, label: Corrective }, { value: Preventive, label: Preventive }], required: true }
+      - { field: description, label: Description, type: textarea, required: true }
+      - { field: instructions, label: Instructions, type: textarea }
+      - { field: priority, label: Priority, type: select, options: [Low, Normal, High], required: true }
+      - { field: assigned_to, label: Assigned to, type: text }
+      - { field: scheduled_date, label: Scheduled date, type: text }
+      - { field: recurrence, label: Recurrence, type: text }
   - { id: assign_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.assign, handler: order_transition, workflow: maintenance_requests, operation: assign, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
   - { id: start_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.start, handler: order_transition, workflow: maintenance_requests, operation: start, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
   - { id: repair_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.repair, handler: order_transition, workflow: maintenance_requests, operation: repair, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
