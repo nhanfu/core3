@@ -30,7 +30,8 @@ components:
         - { id: print_survey_detail, label: Print Survey, permission: surveys.read }
     stat_buttons:
       - { id: survey_certified_stats_detail, label: Certified, value_field: certified_count, permission: surveys.read }
-      - { id: survey_participant_stats_detail, label: Participants, value_field: participant_count, permission: surveys.read }
+      - { id: survey_registered_stats_detail, label: Registered, value_field: participant_count, permission: surveys.read }
+      - { id: survey_participant_stats_detail, label: Participants, value_field: completed_count, permission: surveys.read }
     statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: Closed, label: Closed }, { value: Cancelled, label: Cancelled }, { value: Archived, label: Archived }]
     status_colors: { Draft: neutral, Published: blue, Closed: green, Cancelled: red, Archived: neutral }
     group_columns: 2
@@ -111,7 +112,8 @@ actions:
   - { id: see_survey_results_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/results, params: { survey_id: '{row.id}' } }
   - { id: open_live_session_detail, type: navigate, permission: surveys.manage, navigate_to: /surveys/live-session, params: { survey_id: '{row.id}' } }
   - { id: survey_certified_stats_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/participants, params: { survey_id: '{row.id}', quiz_status: Passed } }
-  - { id: survey_participant_stats_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/participants, params: { survey_id: '{row.id}' } }
+  - { id: survey_participant_stats_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/participants, params: { survey_id: '{row.id}', state: Completed } }
+  - { id: survey_registered_stats_detail, type: navigate, permission: surveys.read, navigate_to: /surveys/participants, params: { survey_id: '{row.id}' } }
   - { id: publish_survey_detail, type: server, permission: surveys.write, action: surveys.records.publish, handler: order_transition, workflow: surveys, operation: publish, params: { id: '{state.id}' }, refresh: [survey_detail] }
   - { id: close_survey_detail, type: server, permission: surveys.manage, action: surveys.records.close, handler: order_transition, workflow: surveys, operation: close, params: { id: '{state.id}' }, refresh: [survey_detail] }
   - { id: cancel_survey_detail, type: server, permission: surveys.manage, action: surveys.records.cancel, handler: order_transition, workflow: surveys, operation: cancel, params: { id: '{state.id}' }, refresh: [survey_detail] }

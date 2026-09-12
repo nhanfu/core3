@@ -806,3 +806,21 @@ menu at both target viewports; images remain outside Git:
 
 The documented residual is Odoo's native confirmation/menu shell versus the
 shared Core3 Actions menu and confirmation flow. Images are not committed.
+
+## Bounded slice: Participants stat completed cohort (2026-09-12)
+
+The installed Odoo Survey form distinguishes the `Registered` stat, which
+opens all participant attempts, from the `Participants` stat, which opens the
+completed cohort with the visible `Completed` facet. Core3 now exposes both
+stat buttons: `Registered` routes to the unfiltered participant list and
+`Participants` routes to `/surveys/participants` with `state=Completed`.
+The detail datasource adds the deterministic `completed_count` aggregate and
+the page/API contract remains joined by `page.id`.
+
+The focused suite passes 18 tests with 175 assertions and the UI audit passes
+with 545 pages, 552 routes, and 947 datasources. The authenticated Odoo
+reference was captured from the installed disposable Survey database at
+1440x900 and 390x844. A fresh Core3 browser comparison was not accepted:
+the isolated runtime resolved to the MovedX shell during login instead of the
+Core3 auth surface. No screenshot is claimed for that failed run and no image
+is committed. The overall Surveys module remains `in-progress`.

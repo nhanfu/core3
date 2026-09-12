@@ -22,10 +22,38 @@ describe('Surveys parity catalog and workflow', () => {
   test('matches Odoo survey detail stat buttons and counts', () => {
     const page = yaml('pages/survey-detail.yaml');
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
-    expect(form.stat_buttons.map((button: any) => button.value_field)).toEqual(['certified_count', 'participant_count']);
-    expect(page.actions.find((action: any) => action.id === 'survey_participant_stats_detail').params).toEqual({ survey_id: '{row.id}' });
-    expect(yaml('api/survey-detail.yaml').datasources[0].query).toContain('certified_count');
+    expect(form.stat_buttons.map((button: any) => button.value_field)).toEqual(['certified_count', 'participant_count', 'completed_count']);
+    expect(page.actions.find((action: any) => action.id === 'survey_participant_stats_detail').params).toEqual({ survey_id: '{row.id}', state: 'Completed' });
+    expect(page.actions.find((action: any) => action.id === 'survey_registered_stats_detail').params).toEqual({ survey_id: '{row.id}' });
+    expect(yaml('api/survey-detail.yaml').datasources[0].query).toContain('completed_count');
     expect(yaml('migrations/20260910193000-004-survey-participant-fixtures.yaml').type.postgres.up).toContain('participant-certification-4');
+  });
+
+  test('routes the Participants stat to the completed Odoo cohort', async () => {
+    const page = yaml('pages/survey-detail.yaml');
+    const api = yaml('api/participants.yaml');
+    const participants = page.actions.find((action: any) => action.id === 'survey_participant_stats_detail');
+    expect(page.components.find((component: any) => component.type === 'OdooFormView').stat_buttons).toContainEqual(expect.objectContaining({ label: 'Participants', value_field: 'completed_count' }));
+    expect(participants).toMatchObject({
+      permission: 'surveys.read',
+      navigate_to: '/surveys/participants',
+      params: { survey_id: '{row.id}', state: 'Completed' },
+    });
+    expect(api.datasources.find((source: any) => source.id === 'survey_participants').query).toContain(':state');
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_completed_stat_migrations', ['schema', 'data']);
+    const source = api.datasources.find((candidate: any) => candidate.id === 'survey_participants');
+    const result = await repository.querySource(source, {
+      q: null,
+      state: 'Completed',
+      quiz_status: null,
+      survey_id: 'survey-demo-feedback',
+    }, 0, 50);
+    expect(result.data.length).toBeGreaterThan(0);
+    expect(result.data.every((row: any) => row.state === 'Completed')).toBe(true);
+    expect(result.data.every((row: any) => row.survey_id === 'survey-demo-feedback')).toBe(true);
   });
 
   test('routes the Certified stat to the Odoo Certifications Succeeded cohort', async () => {
