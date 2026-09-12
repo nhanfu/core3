@@ -40,6 +40,10 @@ Candidate commit: none
 - The pair has an open fidelity finding: Odoo exposes 2 vendors and the action
   label `New`, while Core3 exposes 5 seeded vendors and `New vendor`; the
   differing vendor card/table fields and activity badges also require review.
+- Label retest on isolated runner `:4329` confirms both desktop and mobile now
+  expose `New` (not `New vendor`) with no browser errors or overflow. Captures:
+  `/tmp/core3-odoo-parity/purchase-vendors-label-desktop.png` and
+  `purchase-vendors-label-mobile.png`.
 - Full Odoo/Core3 comparison and complete browser CRUD remain open.
 
 ## Test-case inventory
@@ -55,7 +59,7 @@ Candidate commit: none
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | PURCHASE-001 | Authenticated route and acknowledge smoke | 46/46 route checks; PO acknowledge returned 200 and persisted after reload | PASS |
-| PURCHASE-VIS-001 | Vendors parity differs: Odoo has 2 rows and Core3 has 5 rows, with different visible columns/activity badges | — | Action label corrected to `New`; fresh paired captures still show the documented fixture-cardinality and remaining field/activity differences | open |
+| PURCHASE-VIS-001 | Vendors parity differs: Odoo has 2 rows and Core3 has 5 rows, with different visible columns/activity badges | — | Action label corrected and browser-retested; fixture-cardinality and remaining field/activity differences remain | open |
 
 ## Sign-off
 
