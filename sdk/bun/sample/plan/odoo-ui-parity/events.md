@@ -1148,6 +1148,45 @@ full visual parity claim is made. Images remain outside Git.
   implementation commit may contain YAML/TS/docs only; screenshots remain in
   `/tmp`.
 
+## Bounded batch: Event Attendee List report (2026-09-12)
+
+The installed Odoo 19 source exposes the bound report
+`action_report_event_event_attendee_list` (`event.event`, report name
+`event.event_event_attendee_list`, `qweb-pdf`, binding type `report`). From an
+event record's Print menu it renders `Attendee list`, the event name and date
+range, and the exact columns `Name`, `Company`, `Ticket type`, `Phone number`,
+and a QR-code column. The report uses the event's registrations and is
+available to the event-user read boundary; it has no create, edit, delete, or
+workflow state.
+
+Core3 adds `/events/attendee-list`, joined to
+`api/event-attendee-list.yaml` by `page.id`, and adds the matching
+`Attendee List` event-form action. The page owns the read-only report layout
+and Print/Back controls; the API owns the event header and registration rows.
+The existing fixed Design Fair registrations provide deterministic names,
+ticket types, phone/company values, and badge barcodes; no runtime date or
+random fixture is introduced. Explicit empty, missing-event, and transport
+error contracts are covered by `events_attendee_list.integration.test.ts`.
+Core3's Print control invokes the browser print surface rather than claiming
+Odoo's server-generated PDF or QR-image transport.
+
+Browser verification was attempted under
+`/tmp/core3-odoo-parity/events-batch6-20260912/`. The requested persistent
+`js_repl` Playwright runtime is unavailable in this session, and no
+authenticated Core3 server/reference browser pair could be established before
+the batch validation window ended. Therefore this batch makes no visual
+parity claim and no screenshots are committed. The authenticated desktop and
+mobile captures remain a required follow-up before claiming rendered parity.
+The exact Core3 startup failure was DuckDB's `Parser Error: Adding columns
+with constraints not yet supported` from the pre-existing
+`20260912130000-027-event-slots-action.yaml` migration; Vite additionally
+reported `EMFILE: too many open files` while watching `vite.config.ts`.
+
+Validation: the focused report test passes 3 tests and 14 assertions; the
+related Events regression subset passes 12 tests and 103 assertions; the full
+Events suite passes 73 tests and 567 assertions across 26 files. Audit,
+targeted ESLint, Events/global Sass, and `git diff --check` pass.
+
 ## Event-scoped Slots bounded action (2026-09-12)
 
 Odoo's event slot action uses calendar/list/form views scoped to the active

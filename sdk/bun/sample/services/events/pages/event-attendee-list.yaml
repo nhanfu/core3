@@ -1,0 +1,25 @@
+title: Attendee List
+page: { id: event-attendee-list, route: /events/attendee-list, breadcrumb: [Marketing, Events, Event, Attendee List], auth: { require: [events.read] } }
+components:
+  - type: OdooFormView
+    source: event_attendee_list
+    title_field: event_name
+    subtitle_field: event_schedule
+    editable: false
+    header_actions:
+      - { id: print_event_attendee_list, label: Print, permission: events.read, variant: primary }
+      - { id: back_to_event_detail, label: Back to event, permission: events.read, variant: secondary }
+    group_columns: 2
+    groups:
+      - title: Event
+        fields: [{ field: event_name, label: Event }, { field: event_schedule, label: Date }]
+  - type: ContactGrid
+    source: event_attendee_list_rows
+    row_key: id
+    columns:
+      - { field: attendee_name, label: Name, type: PrimaryEntityCell }
+      - { field: company_name, label: Company }
+      - { field: ticket_type, label: Ticket type }
+      - { field: attendee_phone, label: Phone number }
+      - { field: barcode, label: QR Code }
+    empty_state: { title: No Attendees yet!, description: Wait until Attendees register to your Event or create their registrations manually. }

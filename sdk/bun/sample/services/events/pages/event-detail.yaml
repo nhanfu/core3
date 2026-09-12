@@ -10,6 +10,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     header_actions:
       - { id: registration_desk_event_detail, label: Registration Desk, variant: primary, permission: events.read }
+      - { id: print_event_attendee_list, label: Attendee List, variant: secondary, permission: events.read }
       - { id: edit_event_detail, label: Edit, variant: secondary, permission: events.write }
       - { id: publish_event_detail, label: Publish, variant: primary, permission: events.write, show_if: "record.state === 'Draft'" }
       - { id: start_event_detail, label: Start, variant: secondary, permission: events.write, show_if: "record.state === 'Published'" }
@@ -154,6 +155,7 @@ components:
     empty_state: { title: No registrations, description: Attendees will appear here after registration. }
 actions:
   - { id: registration_desk_event_detail, type: navigate, permission: events.read, navigate_to: /events/registration-desk }
+  - { id: print_event_attendee_list, type: navigate, permission: events.read, navigate_to: /events/attendee-list, params: { id: '{row.id}' } }
   - { id: event_registration_stats_detail, type: navigate, permission: events.read, navigate_to: /events/registration-statistics, params: { event_id: '{row.id}' } }
   - { id: event_attendee_stats_detail, type: navigate, permission: events.read, navigate_to: /events/attendees, params: { event_id: '{row.id}' } }
   - { id: event_leads_detail, type: navigate, permission: events.read, navigate_to: /events/leads, params: { event_id: '{row.id}' } }

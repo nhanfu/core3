@@ -42,7 +42,7 @@ describe('Events datasource ownership and state parity', () => {
 
     const events = apiSource('events.yaml', 'events');
     const eventRows = await repository.querySource(events, { q: null, fixture_state: null }, 0, 50);
-    expect(eventRows.data).toHaveLength(9);
+    expect(eventRows.data).toHaveLength(10);
     expect(eventRows.data.map((row: any) => row.id)).toContain('event-demo-007');
     expect(eventRows.data.every((row: any) => String(row.start_at).startsWith('2026-'))).toBe(true);
 
@@ -61,7 +61,7 @@ describe('Events datasource ownership and state parity', () => {
 
     const analysisTotals = apiSource('analysis.yaml', 'event_analysis_totals');
     const totals = await repository.querySource(analysisTotals, { q: null, fixture_state: null }, 0, 1);
-    expect(totals.data).toMatchObject({ event_count: 9 });
+    expect(totals.data).toMatchObject({ event_count: 10 });
     const analysisStates = apiSource('analysis.yaml', 'event_analysis_states');
     const searchedStates = await repository.querySource(analysisStates, { q: 'Hockey', fixture_state: null }, 0, 25);
     expect(searchedStates.data).toEqual([{ category: 'Published', event_count: 1 }]);

@@ -21,7 +21,7 @@ describe('Events attendee email parity', () => {
 
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
-    expect(form.header_actions[0]).toMatchObject({ id: 'send_attendee_email', label: 'Send by Email', permission: 'events.write' });
+    expect(form.header_actions.find((candidate: any) => candidate.id === 'send_attendee_email')).toMatchObject({ id: 'send_attendee_email', label: 'Send by Email', permission: 'events.write' });
     expect(api.page.id).toBe('event-attendee-detail');
     expect(discovered.pageDatasources.get('event-attendee-detail')).toContain('event_attendee_detail');
     expect(send).toMatchObject({

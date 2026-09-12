@@ -32,13 +32,15 @@ describe('Events attendee parity batch', () => {
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
     expect(form.header_actions.map((action: any) => action.id)).toEqual([
       'registration_desk_event_detail',
+      'print_event_attendee_list',
       'edit_event_detail',
       'publish_event_detail',
       'start_event_detail',
       'complete_event_detail',
       'cancel_event_detail',
+      'event_slots_detail',
     ]);
-    expect(form.stat_buttons.map((action: any) => action.value_field)).toEqual(['registration_count', 'attendee_count', 'sale_price_total_display']);
+    expect(form.stat_buttons.map((action: any) => action.value_field)).toEqual(['registration_count', 'attendee_count', 'lead_count', 'sale_price_total_display']);
     expect(page.actions.find((action: any) => action.id === 'event_registration_stats_detail')).toMatchObject({
       navigate_to: '/events/registration-statistics',
       params: { event_id: '{row.id}' },
@@ -76,7 +78,7 @@ describe('Events attendee parity batch', () => {
     const form = page.components.find((component: any) => component.type === 'OdooFormView');
     expect(form.statusbar.map((state: any) => state.value)).toEqual(['Unconfirmed', 'Registered', 'Attended', 'Cancelled']);
     expect(form.groups.map((group: any) => group.title)).toEqual(['Attendee', 'Event Information']);
-    expect(form.header_actions.map((action: any) => action.id)).toEqual(['send_attendee_email', 'confirm_attendee_detail', 'mark_attendee_attended_detail', 'cancel_event_attendee_detail']);
+    expect(form.header_actions.map((action: any) => action.id)).toEqual(['print_attendee_badge', 'send_attendee_email', 'confirm_attendee_detail', 'mark_attendee_attended_detail', 'cancel_event_attendee_detail']);
   });
 
   test('guards attendee transitions and seeds answer-line fields', () => {

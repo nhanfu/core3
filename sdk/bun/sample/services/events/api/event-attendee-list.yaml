@@ -1,0 +1,25 @@
+page: { id: event-attendee-list }
+datasources:
+  - id: event_attendee_list
+    single: true
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_ATTENDEE_LIST_UNAVAILABLE, message: The attendee list is temporarily unavailable. } }
+    query: "SELECT e.id, e.name AS event_name, strftime(e.start_at, '%d %b %Y %H:%M') || ' - ' || strftime(e.end_at, '%H:%M') AS event_schedule FROM events e WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND e.id = :id"
+  - id: event_attendee_list_rows
+    permission: events.read
+    error_states: { transport_error: { status: 503, code: EVENT_ATTENDEE_LIST_UNAVAILABLE, message: The attendee list is temporarily unavailable. } }
+    query: "SELECT r.id, r.attendee_name, COALESCE(r.company_name, '') AS company_name, COALESCE(r.ticket_type, '') AS ticket_type, COALESCE(r.attendee_phone, '') AS attendee_phone, COALESCE(b.barcode, '') AS barcode FROM event_registrations r LEFT JOIN event_registration_badges b ON b.registration_id = r.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.event_id = :id ORDER BY r.attendee_name, r.id"
+actions:
+  - id: print_event_attendee_list
+    type: client
+    permission: events.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: back_to_event_detail
+    type: navigate
+    permission: events.read
+    navigate_to: /event-detail
+    params: { id: '{row.id}' }
