@@ -34,6 +34,10 @@ menu:
           label: Orders to Invoice
           icon: invoice
           permission: orders.read
+        - path: /order/orders-to-upsell
+          label: Orders to Upsell
+          icon: trending-up
+          permission: orders.read
     - id: products
       label: Products
       items:

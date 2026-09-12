@@ -1,0 +1,38 @@
+title: Orders to Upsell
+page: { id: sale-orders-to-upsell, route: /order/orders-to-upsell, breadcrumb: [Sales, To Invoice, Orders to Upsell], auth: { require: [orders.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_orders_to_upsell
+    search: { label: Search orders, placeholder: Search order number or customer... }
+    group_by:
+      - { field: salesperson_name, label: Salesperson }
+      - { field: customer_name, label: Customer }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+    columns:
+      - { field: order_number, label: Number, type: PrimaryEntityCell, sortable: true }
+      - { field: order_date, label: Order date, sortable: true }
+      - { field: customer_name, label: Customer }
+      - { field: salesperson_name, label: Salesperson }
+      - { field: total_amount_display, label: Total, align: right }
+      - { field: invoice_status, label: Invoice status, type: StatusChip, colors: { Upselling: amber } }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_open_action: view_upsell_order
+    row_double_click_action: view_upsell_order
+    row_actions: menu
+    form_view: { page: apps/services/order/pages/sale-order-detail.yaml, side_panel: true }
+    empty_state:
+      title: No orders to upsell found.
+      description: An order is to upsell when delivered quantities are above initially ordered quantities, and the invoicing policy is based on ordered quantities.
+
+actions:
+  - id: view_upsell_order
+    type: navigate
+    permission: orders.read
+    navigate_to: /order/sale-order
+    params: { id: '{row.id}' }

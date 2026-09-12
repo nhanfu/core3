@@ -1,0 +1,25 @@
+page: { id: sale-orders-to-upsell }
+datasources:
+  - id: sale_orders_to_upsell
+    single: false
+    permission: orders.read
+    error_states: { transport_error: { status: 503, code: SALES_ORDERS_TO_UPSELL_UNAVAILABLE, message: Orders to upsell are temporarily unavailable. } }
+    query: |
+      SELECT o.id, o.row_version, o.order_number, o.customer_name,
+        CAST(o.order_date AS VARCHAR) AS order_date,
+        COALESCE(o.salesperson_name, o.created_by) AS salesperson_name,
+        CAST(o.total_amount AS DOUBLE) AS total_amount,
+        printf('$%,.2f', CAST(o.total_amount AS DOUBLE)) AS total_amount_display,
+        'Upselling' AS invoice_status
+      FROM orders o
+      WHERE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Approved'
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
+        AND EXISTS (
+          SELECT 1 FROM order_lines l
+          WHERE l.order_id = o.id
+            AND COALESCE(l.qty_delivered, 0) > COALESCE(l.quantity, 0)
+            AND COALESCE(l.invoice_policy, 'order') = 'order'
+        )
+        AND (:q IS NULL OR o.order_number ILIKE '%' || :q || '%' OR o.customer_name ILIKE '%' || :q || '%')
+        AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+      ORDER BY o.order_date DESC

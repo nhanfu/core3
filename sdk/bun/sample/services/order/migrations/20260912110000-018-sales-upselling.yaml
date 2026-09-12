@@ -1,0 +1,15 @@
+version: 0.0.18
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS invoice_policy VARCHAR;
+      UPDATE order_lines SET invoice_policy = COALESCE(invoice_policy, 'order');
+      UPDATE order_lines SET qty_delivered = 2, invoice_policy = 'order'
+      WHERE id = 'order-line-demo-06';
+    down: |
+      ALTER TABLE order_lines DROP COLUMN IF EXISTS invoice_policy;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
