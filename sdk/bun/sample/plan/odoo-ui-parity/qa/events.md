@@ -17,7 +17,7 @@ Candidate commit: `f7a38e86`
 ## Current regression evidence
 
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
-- Focused Events suite: `bun test ./test/events*.integration.test.ts --timeout 20000` — 82 passed, 0 failed, 604 assertions across 29 files.
+- Focused Events suite: `bun test ./test/events*.integration.test.ts --timeout 20000` — 82 passed, 0 failed, 608 assertions across 29 files.
 - Authenticated Core3 browser create flow: admin opened `/events`, created `QA Browser Event 20260912` with required name/start time, received a successful mutation, and saw the persisted row after refresh; no page errors, failed requests, or HTTP errors.
 - Artifact: `/tmp/core3-odoo-parity/events-create-desktop-20260912.png`.
 - Authenticated Events route matrix: 14 registered menu routes at desktop and mobile — 28/28 passed with no blank/redirect result, page error, failed request, HTTP error, or horizontal overflow; raw result: `/tmp/core3-odoo-parity/events-matrix-20260912.json`.
@@ -25,6 +25,7 @@ Candidate commit: `f7a38e86`
 - Authenticated lifecycle mutation probe: created `QA Lifecycle Event 20260912`, then advanced Draft → Published → In Progress → Completed with 200 responses and row versions 1 → 2 → 3 → 4.
 - Authenticated registration probe: created and published a capacity-1 event, registered the first attendee successfully (200, `Registered`), and the second attendee was rejected with the declared 409 capacity guard; the registration response included a persisted registration id and timestamp.
 - Authenticated edit probe: updated an event name/start time and explicitly cleared nullable `end_at` successfully (200, row version 1 → 2); replaying the old version was rejected with 409 `STALE_RECORD`.
+- Authenticated delete probe: deleted an eligible Draft event successfully (200), while deletion of a Published event was rejected with the declared 409 `EVENT_NOT_DRAFT` guard.
 - The first browser attempt exposed an empty optional `end_at` timestamp defect; the form contract was corrected by declaring both event date fields as `datetime`, preserving Core3's text-based ISO date/time input convention.
 - Authenticated route matrix and paired Odoo comparison remain pending for full module sign-off.
 
@@ -32,13 +33,14 @@ Candidate commit: `f7a38e86`
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| EVENTS-FUNC-001 | Focused functional/contract suite for event lifecycle, reports, CRUD, and guards | 82 tests, 604 assertions; `bun test ./test/events*.integration.test.ts --timeout 20000` | pass |
+| EVENTS-FUNC-001 | Focused functional/contract suite for event lifecycle, reports, CRUD, and guards | 82 tests, 608 assertions; `bun test ./test/events*.integration.test.ts --timeout 20000` | pass |
 | EVENTS-FUNC-002 | Authenticated create and persistence smoke | `/events`; created `QA Browser Event 20260912`; persisted in 1-11/11 list; screenshot artifact recorded | pass |
 | EVENTS-BROWSER-002 | Authenticated registered-menu route matrix | 14 routes × desktop/mobile = 28/28; raw JSON result recorded | pass |
 | EVENTS-PERM-001 | Read permission boundary | Fleet user denied `events.read` with expected 403/permission page | pass |
 | EVENTS-WORKFLOW-001 | Event lifecycle transitions with optimistic row versions | Authenticated sequence completed Draft → Published → In Progress → Completed; each response 200 and incremented `row_version` | pass |
 | EVENTS-WORKFLOW-002 | Registration persistence and capacity guard | Capacity-1 event accepted first registration (200) and rejected second registration (409) | pass |
 | EVENTS-FUNC-003 | Event edit, nullable datetime clear, and stale-row guard | Update returned 200 with row version increment; stale update returned 409 `STALE_RECORD` | pass |
+| EVENTS-FUNC-004 | Event delete and lifecycle safety guard | Eligible Draft delete returned 200; Published delete returned 409 `EVENT_NOT_DRAFT` | pass |
 | EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current evidence covers focused contracts and one create flow; complete matrix/Odoo comparison not yet run | pending |
 
 ## Bugs and retests

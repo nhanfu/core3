@@ -94,5 +94,8 @@ describe('Events datasource ownership and state parity', () => {
     expect(detailEdit.mutation.required).toEqual(['name']);
     expect(detailEdit.fields.find((field: any) => field.field === 'start_at')).toMatchObject({ type: 'datetime' });
     expect(detailEdit.fields.find((field: any) => field.field === 'end_at')).toMatchObject({ type: 'datetime' });
+    const detailDelete = yaml('pages/event-detail.yaml').actions.find((action: any) => action.id === 'delete_event_detail');
+    expect(detailDelete).toMatchObject({ permission: 'events.write', action: 'events.records.delete' });
+    expect(detailDelete.mutation.guards.map((guard: any) => guard.status)).toEqual([404, 409, 409, 409]);
   });
 });

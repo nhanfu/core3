@@ -14,6 +14,7 @@ components:
       - { id: print_event_badge_example, label: Badge Example, variant: secondary, permission: events.read }
       - { id: print_event_full_page_ticket_example, label: Full Page Ticket Example, variant: secondary, permission: events.read }
       - { id: edit_event_detail, label: Edit, variant: secondary, permission: events.write }
+      - { id: delete_event_detail, label: Delete, variant: danger, permission: events.write, confirm: Delete this event? }
       - { id: publish_event_detail, label: Publish, variant: primary, permission: events.write, show_if: "record.state === 'Draft'" }
       - { id: start_event_detail, label: Start, variant: secondary, permission: events.write, show_if: "record.state === 'Published'" }
       - { id: complete_event_detail, label: Complete, variant: primary, permission: events.manage, show_if: "record.state === 'In Progress'" }
@@ -258,6 +259,21 @@ actions:
       - { field: capacity, label: Capacity, type: number }
       - { field: start_at, label: Starts at, type: datetime }
       - { field: end_at, label: Ends at, type: datetime }
+  - id: delete_event_detail
+    type: server
+    permission: events.write
+    action: events.records.delete
+    handler: yaml_mutation
+    params: { id: '{state.id}' }
+    refresh: [event_detail, events]
+    mutation:
+      operation: delete
+      table: events
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :id", status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+        - { query: "SELECT id FROM events WHERE id = :id AND state = 'Draft'", status: 409, code: EVENT_NOT_DRAFT, message: Only draft events can be deleted. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_registrations WHERE event_id = :id)", status: 409, code: EVENT_HAS_REGISTRATIONS, message: Events with registrations cannot be deleted. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM event_tickets WHERE event_id = :id)", status: 409, code: EVENT_HAS_TICKETS, message: Events with tickets cannot be deleted. }
   - { id: publish_event_detail, type: server, permission: events.write, action: events.records.publish, handler: order_transition, workflow: events, operation: publish, params: { id: '{state.id}' }, refresh: [event_detail] }
   - { id: start_event_detail, type: server, permission: events.write, action: events.records.start, handler: order_transition, workflow: events, operation: start, params: { id: '{state.id}' }, refresh: [event_detail] }
   - { id: complete_event_detail, type: server, permission: events.manage, action: events.records.complete, handler: order_transition, workflow: events, operation: complete, params: { id: '{state.id}' }, refresh: [event_detail] }
