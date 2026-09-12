@@ -2,19 +2,22 @@
 
 Module owner: employees module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: dormant
+Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: current working tree
 
 ## Current state
 
-This module is registered in odoo-parity-plan.md but has not yet produced a
-current-wave candidate or verified evidence in the active checkout. No parity
-claim is made here.
+The focused Employees suite passes 50 tests across 16 files with 617
+assertions. An authenticated module-scoped route smoke covered 27 routes at
+desktop and mobile; valid-ID retests for the affected certification, departure
+reason, work location, and working schedule detail states passed without
+browser/request errors. Fleet was denied the manager-only settings route with
+HTTP 403. Full parameterized route coverage and paired Odoo comparison remain
+open. No parity claim is made here.
 
 ## Next bounded task
 
-Record the complete Odoo menu/action/view inventory, implement the module
-functionality, and dispatch QA on the first committed candidate. Update this
-file only with evidence from the matching module owner.
-
+Run the complete parameterized route matrix, authenticated employee/catalog
+CRUD smoke, and paired Odoo desktop/mobile captures. Update this file only
+with evidence from the matching module owner.
