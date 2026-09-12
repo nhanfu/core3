@@ -15,3 +15,4 @@ components:
         fields:
           - { field: name, label: Tag Name, type: text, required: true, placeholder: e.g. Services }
           - { field: color, label: Color, type: color, palette: odoo }
+          - { field: active, label: Active, type: checkbox }

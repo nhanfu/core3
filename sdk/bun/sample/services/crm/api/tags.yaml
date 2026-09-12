@@ -6,7 +6,7 @@ datasources:
       unauthorized: { status: 401, code: CRM_TAGS_UNAUTHORIZED, message: Sign in to view CRM tags. }
       forbidden: { status: 403, code: CRM_TAGS_FORBIDDEN, message: You do not have permission to manage CRM tags. }
       transport_error: { status: 503, code: CRM_TAGS_UNAVAILABLE, message: CRM tags are temporarily unavailable. }
-    query: "SELECT id, row_version, name, color FROM crm_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY id"
+    query: "SELECT id, row_version, name, color, active FROM crm_tags WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN 0 ELSE 1 END = 1 AND (COALESCE(:active, 'active') = 'all' OR (COALESCE(:active, 'active') = 'active' AND active = true) OR (COALESCE(:active, 'active') = 'archived' AND active = false)) AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY id"
 actions:
   - id: create_crm_tag_inline
     type: server_form
@@ -19,9 +19,9 @@ actions:
     mutation:
       operation: insert
       table: crm_tags
-      fields: [name, color]
+      fields: [name, color, active]
       required: [name]
-      defaults: { color: 0, row_version: 1 }
+      defaults: { color: 0, active: true, row_version: 1 }
       generated: [id]
       before_steps: [{ query: "SELECT 'crm-tag-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
       guards:
@@ -32,6 +32,7 @@ actions:
     fields:
       - { field: name, label: Tag, type: text, required: true }
       - { field: color, label: Color, type: color, palette: odoo, default: 0 }
+      - { field: active, label: Active, type: checkbox, default: true }
   - id: update_crm_tag_inline
     type: server_form
     permission: crm.manage
@@ -44,7 +45,7 @@ actions:
     mutation:
       operation: update
       table: crm_tags
-      fields: [name, color]
+      fields: [name, color, active]
       required: [name]
       concurrency: { required: true }
       guards:
@@ -56,11 +57,24 @@ actions:
     fields:
       - { field: name, label: Tag Name, type: text, required: true }
       - { field: color, label: Color, type: color, palette: odoo }
+      - { field: active, label: Active, type: checkbox }
   - id: edit_crm_tag
     type: navigate
     permission: crm.manage
     navigate_to: /crm/tags/detail
     params: { id: '{row.id}' }
+  - id: delete_crm_tag
+    type: server
+    permission: crm.manage
+    action: crm.tags.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [crm_tag_configuration]
+    mutation:
+      operation: delete
+      table: crm_tags
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM crm_tags WHERE id = :id", status: 404, code: CRM_TAG_NOT_FOUND, message: CRM tag was not found. }]
   - id: bulk_delete_crm_tags
     type: server
     permission: crm.manage

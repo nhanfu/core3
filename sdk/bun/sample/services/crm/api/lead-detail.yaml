@@ -137,11 +137,7 @@ actions:
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:contact_name, '') AS VARCHAR)), '') IS NOT NULL"
           status: 400
           message: Customer name is required
-        - query: "SELECT 1 AS ok WHERE :contact_email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND lower(email) = lower(:contact_email))"
-          status: 409
-          message: A contact with this email already exists
       steps:
-        - query: "INSERT INTO base_contacts(id, name, email, phone, active) VALUES('crm-lead-contact-' || :id, :contact_name, :contact_email, :contact_phone, true)"
         - query: "UPDATE crm_leads SET partner_id = 'crm-lead-contact-' || :id, partner_name = :contact_name, email = :contact_email, phone = :contact_phone, type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead'"
         - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'Lead converted and customer created', 'done', CURRENT_TIMESTAMP)"
       result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
@@ -165,9 +161,9 @@ actions:
       required: [name]
       timestamps: true
       guards:
-        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR LENGTH(TRIM(CAST(:partner_id AS VARCHAR))) > 0"
           status: 400
-          message: Select an active contact
+          message: Select a contact from the contact selector
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
           status: 400
           message: Select an active lead source

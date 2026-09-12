@@ -8,7 +8,7 @@ datasources:
       forbidden: { status: 403, code: CRM_TAG_DETAIL_FORBIDDEN, message: You do not have permission to manage this CRM tag. }
       not_found: { status: 404, code: CRM_TAG_NOT_FOUND, message: CRM tag was not found. }
       transport_error: { status: 503, code: CRM_TAG_DETAIL_UNAVAILABLE, message: CRM tag details are temporarily unavailable. }
-    query: "SELECT id, row_version, name, color FROM crm_tags WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"
+    query: "SELECT id, row_version, name, color, active FROM crm_tags WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"
 actions:
   - id: back_to_crm_tags
     type: navigate
@@ -39,6 +39,7 @@ actions:
     fields:
       - { field: name, label: Tag Name, type: text, required: true }
       - { field: color, label: Color, type: color, palette: odoo }
+      - { field: active, label: Active, type: checkbox }
   - id: delete_crm_tag_detail
     type: server
     permission: crm.manage

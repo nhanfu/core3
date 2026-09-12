@@ -30,7 +30,7 @@ describe('CRM Tags Odoo action parity', () => {
     expect(api.page.id).toBe(page.page.id);
     expect(detailApi.page.id).toBe(detail.page.id);
     expect(page.components[0]).toMatchObject({ source: 'crm_tag_configuration', create_action: 'create_crm_tag_inline', row_open_action: 'edit_crm_tag' });
-    expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Tag Name', 'Color', '']);
+    expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Tag Name', 'Color', 'Active', '']);
     expect(page.components[0].columns[1]).toMatchObject({ type: 'ColorCell', palette: 'odoo' });
     expect(detail.components[0]).toMatchObject({ type: 'OdooFormView', source: 'crm_tag_detail', editable: true });
     expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('crm-tags')).toEqual(['crm_tag_configuration']);
@@ -55,6 +55,17 @@ describe('CRM Tags Odoo action parity', () => {
     await expect(repository.querySource(source, { q: null, fixture_state: 'unauthorized' }, 0, 50)).rejects.toMatchObject({ status: 401, code: 'CRM_TAGS_UNAUTHORIZED' });
     await expect(repository.querySource(source, { q: null, fixture_state: 'forbidden' }, 0, 50)).rejects.toMatchObject({ status: 403, code: 'CRM_TAGS_FORBIDDEN' });
     await expect(repository.querySource(source, { q: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'CRM_TAGS_UNAVAILABLE' });
+    database.close();
+  });
+
+  test('keeps active and archived tag filters isolated', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await repository.run('CREATE TABLE crm_tags(id VARCHAR PRIMARY KEY, row_version BIGINT, name VARCHAR, color INTEGER, active BOOLEAN); INSERT INTO crm_tags VALUES (\'tag-active\', 1, \'Active tag\', 1, true), (\'tag-archived\', 1, \'Archived tag\', 2, false);');
+    const source = yaml('api/tags.yaml').datasources[0];
+    expect((await repository.querySource(source, { q: null, active: 'active', fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['tag-active']);
+    expect((await repository.querySource(source, { q: null, active: 'archived', fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['tag-archived']);
+    expect((await repository.querySource(source, { q: null, active: 'all', fixture_state: null }, 0, 50)).data).toHaveLength(2);
     database.close();
   });
 

@@ -7,6 +7,7 @@ components:
     create_action: create_crm_tag_inline
     create_label: New
     search: { label: Search, placeholder: Search... }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }, { id: all, label: All }] }]
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table, mobile: false }
@@ -30,5 +31,6 @@ components:
     columns:
       - { field: name, label: Tag Name, type: PrimaryEntityCell, mobile: true }
       - { field: color, label: Color, type: ColorCell, palette: odoo, mobile: true, sortable: false }
-      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: edit_crm_tag, label: Edit, icon: edit }] }
+      - { field: active, label: Active, type: StatusChip, mobile: true }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: edit_crm_tag, label: Edit, icon: edit }, { id: delete_crm_tag, label: Delete, icon: trash, variant: danger }] }
     page_size: 50

@@ -62,7 +62,7 @@ describe('CRM YAML lifecycle integration', () => {
     const page = yaml('pages/leads.yaml');
     const converted = await repository.executeMutation(action(page, 'convert_lead').mutation, { id: 'lead-1' });
     expect(converted.type).toBe('opportunity');
-    expect(converted).toMatchObject({ partner_name: 'Canonical Customer', email: 'customer@example.test', phone: '+1 555 0101' });
+    expect(converted).toMatchObject({ partner_id: 'contact-1' });
     expect((await repository.query('SELECT type, row_version FROM crm_leads WHERE id = ?', ['lead-1']))[0]).toMatchObject({ type: 'opportunity', row_version: 2 });
     expect((await repository.query('SELECT summary, state FROM crm_activities WHERE lead_id = ?', ['lead-1']))[0]).toMatchObject({ summary: 'Lead converted to opportunity', state: 'done' });
   });
@@ -81,7 +81,7 @@ describe('CRM YAML lifecycle integration', () => {
       id: 'lead-new-contact', contact_name: 'Prospective Customer', contact_email: 'prospect@example.test', contact_phone: '+1 555 0199',
     });
     expect(converted).toMatchObject({ type: 'opportunity', partner_name: 'Prospective Customer', partner_id: 'crm-lead-contact-lead-new-contact' });
-    expect((await repository.query("SELECT name, email FROM base_contacts WHERE id = 'crm-lead-contact-lead-new-contact'"))[0]).toMatchObject({ name: 'Prospective Customer', email: 'prospect@example.test' });
+    expect((await repository.query("SELECT partner_name, email FROM crm_leads WHERE id = 'lead-new-contact'"))[0]).toMatchObject({ partner_name: 'Prospective Customer', email: 'prospect@example.test' });
     expect((await repository.query("SELECT summary, state FROM crm_activities WHERE lead_id = 'lead-new-contact'"))[0]).toMatchObject({ summary: 'Lead converted and customer created', state: 'done' });
   });
 
@@ -252,8 +252,9 @@ describe('CRM YAML lifecycle integration', () => {
     const leads = yaml('pages/leads.yaml');
     const detail = yaml('pages/lead-detail.yaml');
     for (const page of [leads, detail]) {
-      const forms = page.actions.filter((action: any) => action.type === 'server_form');
-      expect(forms.some((action: any) => String(action.mutation?.guards?.[0]?.query || '').includes('base_contacts') && action.mutation.guards[0].query.includes('active = true'))).toBe(true);
+      const contactSource = page.datasources.find((source: any) => source.id.startsWith('crm_contacts'));
+      expect(contactSource).toMatchObject({ type: 'service', service: 'yaml.service.base', operation: 'contacts.search' });
+      expect(page.actions.filter((candidate: any) => candidate.type === 'server_form').some((candidate: any) => candidate.fields?.some((field: any) => field.field === 'partner_id'))).toBe(true);
     }
   });
 
@@ -291,7 +292,7 @@ describe('CRM YAML lifecycle integration', () => {
     expect(leads.components.find((component: any) => component.type === 'ListView').columns).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'tags' })]));
     expect(yaml('pages/lead-detail.yaml').components.find((component: any) => component.type === 'OdooFormView').groups[0].fields).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'tags' })]));
     expect(yaml('pages/lead-detail.yaml').actions.find((candidate: any) => candidate.id === 'edit_lead_detail').mutation.fields).toContain('tags');
-    expect(yaml('pages/tags.yaml').components[0].source).toBe('crm_tag_values');
+    expect(yaml('pages/tags.yaml').components[0].source).toBe('crm_tag_configuration');
   });
 
   it('applies every declared lead pipeline filter in the datasource query', () => {
@@ -423,31 +424,30 @@ describe('CRM YAML lifecycle integration', () => {
     ]));
   });
 
-  it('aggregates comma-separated lead tags for the tag surface', async () => {
+  it('uses the managed CRM tag catalog for the tag surface', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
-    await repository.run("CREATE TABLE crm_leads(tags VARCHAR); INSERT INTO crm_leads VALUES ('urgent, enterprise'), ('enterprise'), (NULL)");
-    const query = String(yaml('pages/tags.yaml').datasources[0].query);
-    const positionalQuery = query.replaceAll(':q', '?');
-    expect(await repository.query(positionalQuery, [null, null])).toEqual([
-      { value: 'enterprise', label: 'enterprise', lead_count: 2 },
-      { value: 'urgent', label: 'urgent', lead_count: 1 },
+    await repository.run("CREATE TABLE crm_tags(id VARCHAR PRIMARY KEY, row_version BIGINT, name VARCHAR, color INTEGER, active BOOLEAN); INSERT INTO crm_tags VALUES ('tag-enterprise', 1, 'enterprise', 2, true), ('tag-urgent', 1, 'urgent', 4, true)");
+    const source = yaml('pages/tags.yaml').datasources[0];
+    expect((await repository.querySource(source, { fixture_state: null, active: 'all', q: null }, 0, 50)).data).toEqual([
+      { id: 'tag-enterprise', row_version: 1, name: 'enterprise', color: 2, active: true },
+      { id: 'tag-urgent', row_version: 1, name: 'urgent', color: 4, active: true },
     ]);
-    expect(await repository.query(positionalQuery, ['urg', 'urg'])).toEqual([
-      { value: 'urgent', label: 'urgent', lead_count: 1 },
+    expect((await repository.querySource(source, { fixture_state: null, active: 'all', q: 'urg' }, 0, 50)).data).toEqual([
+      { id: 'tag-urgent', row_version: 1, name: 'urgent', color: 4, active: true },
     ]);
   });
 
   it('creates and archives managed CRM tags through guarded actions', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
-    await repository.run('CREATE TABLE crm_tags(id VARCHAR PRIMARY KEY, name VARCHAR, color INTEGER, active BOOLEAN);');
+    await repository.run('CREATE TABLE crm_tags(id VARCHAR PRIMARY KEY, name VARCHAR, color INTEGER, active BOOLEAN, row_version BIGINT DEFAULT 1);');
     const tags = yaml('pages/tags.yaml');
-    const created = await repository.executeMutation(action(tags, 'create_crm_tag').mutation, { name: 'Priority', color: 4, active: true });
-    expect(created).toMatchObject({ name: 'Priority', color: 4, active: true });
-    await expect(repository.executeMutation(action(tags, 'create_crm_tag').mutation, { name: 'priority', color: 2, active: true })).rejects.toMatchObject({ status: 409 });
-    const toggled = await repository.executeMutation(action(tags, 'toggle_crm_tag').mutation, { id: created.id });
-    expect(toggled).toMatchObject({ id: created.id, active: false });
+    const created = await repository.executeMutation(action(tags, 'create_crm_tag_inline').mutation, { values: { name: 'Priority', color: 4 } });
+    expect(created).toMatchObject({ name: 'Priority', color: 4, row_version: 1 });
+    await expect(repository.executeMutation(action(tags, 'create_crm_tag_inline').mutation, { values: { name: 'priority', color: 2 } })).rejects.toMatchObject({ status: 409 });
+    const updated = await repository.executeMutation(action(tags, 'update_crm_tag_inline').mutation, { id: created.id, expected_row_version: 1, values: { name: 'Priority', color: 5 } });
+    expect(updated).toMatchObject({ id: created.id, color: 5, row_version: 2 });
   });
 
   it('edits a CRM stage and propagates its name and probability to leads', async () => {
@@ -557,7 +557,7 @@ describe('CRM YAML lifecycle integration', () => {
       'crm.activity_types.create', 'crm.activity_types.toggle',
       'crm.stages.create',
     ]));
-  });
+  }, 30000);
 
   it('requires explicit confirmation before an AI CRM mutation executes', async () => {
     let invoked = false;

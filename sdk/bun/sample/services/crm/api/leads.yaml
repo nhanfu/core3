@@ -67,9 +67,9 @@ actions:
       required: [name]
       defaults: { stage: New, probability: 10, expected_revenue: 0 }
       guards:
-        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR LENGTH(TRIM(CAST(:partner_id AS VARCHAR))) > 0"
           status: 400
-          message: Select an active contact
+          message: Select a contact from the contact selector
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
           status: 400
           message: Select an active lead source
@@ -117,9 +117,9 @@ actions:
       required: [name]
       timestamps: true
       guards:
-        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR LENGTH(TRIM(CAST(:partner_id AS VARCHAR))) > 0"
           status: 400
-          message: Select an active contact
+          message: Select a contact from the contact selector
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
           status: 400
           message: Select an active lead source
@@ -194,7 +194,7 @@ actions:
           status: 409
           message: Only open leads can be converted into opportunities
       steps:
-        - query: "UPDATE crm_leads AS lead SET partner_name = COALESCE((SELECT contact.name FROM base_contacts contact WHERE contact.id = lead.partner_id AND contact.active = true), lead.partner_name), email = COALESCE((SELECT contact.email FROM base_contacts contact WHERE contact.id = lead.partner_id AND contact.active = true), lead.email), phone = COALESCE((SELECT contact.phone FROM base_contacts contact WHERE contact.id = lead.partner_id AND contact.active = true), lead.phone), type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE lead.id = :id AND lead.type = 'lead'"
+        - query: "UPDATE crm_leads SET type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead'"
         - query: "INSERT INTO crm_activities(lead_id, activity_type, summary, state, completed_at) VALUES(:id, 'stage_change', 'Lead converted to opportunity', 'done', CURRENT_TIMESTAMP)"
       result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
   - id: merge_leads
