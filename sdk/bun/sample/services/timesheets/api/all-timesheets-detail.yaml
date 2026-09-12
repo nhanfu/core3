@@ -10,7 +10,7 @@ actions:
     type: server_form
     permission: timesheets.manage
     title: Edit all timesheet entry
-    action: timesheets.entries.update
+    action: timesheets.all_entries.update
     handler: yaml_mutation
     operation: update
     prefill: row

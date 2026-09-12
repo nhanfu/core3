@@ -11,7 +11,7 @@ actions:
     type: server_form
     permission: timesheets.write
     title: New project timesheet
-    action: timesheets.entries.create
+    action: timesheets.project_entries.create
     handler: yaml_mutation
     operation: create
     refresh: [project_timesheet_entries]
@@ -37,7 +37,7 @@ actions:
     type: server_form
     permission: timesheets.write
     title: Edit project timesheet
-    action: timesheets.entries.update
+    action: timesheets.project_entries.update
     handler: yaml_mutation
     operation: update
     prefill: row
@@ -62,7 +62,7 @@ actions:
   - id: delete_project_timesheet_entry
     type: server
     permission: timesheets.write
-    action: timesheets.entries.delete
+    action: timesheets.project_entries.delete
     handler: yaml_mutation
     operation: delete
     confirm: 'Delete project timesheet entry {{row.name}}?'

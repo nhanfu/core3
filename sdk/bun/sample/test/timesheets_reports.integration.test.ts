@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
@@ -36,6 +36,21 @@ describe('Timesheets reporting parity slice', () => {
     const projectAction = projectPage.actions.find((action: any) => action.action === 'project.projects.add_hours');
     expect(projectAction).toMatchObject({ handler: 'yaml_mutation', permission: 'project.write' });
     expect(projectAction.mutation.steps[0].query).toContain('spent_hours = spent_hours +');
+  });
+
+  test('keeps context-specific CRUD actions globally addressable', () => {
+    const actionNames = readdirSync(join(serviceRoot, 'api'))
+      .filter((file) => file.endsWith('.yaml'))
+      .flatMap((file) => {
+        const actions = (yaml(`api/${file}`).actions || []) as any[];
+        return actions.map((action) => String(action.action || '')).filter((action) => /timesheets\..+\.(create|update|delete)$/.test(action));
+      });
+    expect(actionNames.length).toBe(new Set(actionNames).size);
+    expect(actionNames).toEqual(expect.arrayContaining([
+      'timesheets.entries.create', 'timesheets.entries.update', 'timesheets.entries.delete',
+      'timesheets.employee_entries.create', 'timesheets.project_entries.create', 'timesheets.task_entries.create',
+      'timesheets.entry_detail.update', 'timesheets.all_entries.update',
+    ]));
   });
 
   test('maps each Odoo report route to a layout-only page and matching API fragment', () => {

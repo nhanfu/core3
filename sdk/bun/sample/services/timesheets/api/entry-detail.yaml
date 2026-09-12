@@ -9,7 +9,7 @@ actions:
     type: server_form
     permission: timesheets.write
     title: Edit timesheet entry
-    action: timesheets.entries.update
+    action: timesheets.entry_detail.update
     handler: yaml_mutation
     operation: update
     prefill: row

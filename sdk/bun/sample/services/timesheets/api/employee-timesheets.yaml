@@ -11,7 +11,7 @@ actions:
     type: server_form
     permission: timesheets.write
     title: New employee timesheet
-    action: timesheets.entries.create
+    action: timesheets.employee_entries.create
     handler: yaml_mutation
     operation: create
     refresh: [employee_timesheet_entries]
@@ -30,7 +30,7 @@ actions:
     type: server_form
     permission: timesheets.write
     title: Edit employee timesheet
-    action: timesheets.entries.update
+    action: timesheets.employee_entries.update
     handler: yaml_mutation
     operation: update
     prefill: row
@@ -49,7 +49,7 @@ actions:
   - id: delete_employee_timesheet_entry
     type: server
     permission: timesheets.write
-    action: timesheets.entries.delete
+    action: timesheets.employee_entries.delete
     handler: yaml_mutation
     operation: delete
     confirm: 'Delete employee timesheet entry {{row.name}}?'

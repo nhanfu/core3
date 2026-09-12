@@ -16,21 +16,23 @@ Candidate commit: current working tree
 
 ## Current regression evidence
 
-- Focused Timesheets suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 26 passed, 0 failed, 273 assertions across 8 files; the reporting retest after the fix passed 7/7 with 116 assertions.
+- Focused Timesheets suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 27 passed, 0 failed, 275 assertions across 8 files; the reporting retest after the fix passed 8/8 with 118 assertions.
 - Authenticated module-scoped route matrix: 13 routes × desktop/mobile; an isolated fresh-page rerun with valid detail IDs passed 26/26 with no page/request errors or horizontal overflow. The earlier 22/26 bare-route result was a reused-page traversal artifact; Timesheet Analysis exposed a real missing-pivot-fields contract.
 - Fix: declared `pivot.fields` for `timesheet_analysis` in `services/timesheets/api/analysis.yaml`; a fresh authenticated retest rendered Pivot/Graph/List with no HTTP or browser failures.
 - Authenticated mutation smoke on a fresh `timesheets,project` runner: created Draft → Submitted → Approved with HTTP 200 at each step and row versions 1 → 3. Approval dispatched the Project-owned `project.projects.add_hours` mutation after loading `project_id` and `hours` from the submitted row.
 - Permission boundary smoke on the same runner: Fleet received 403 for `/api/pages/timesheets`, `/api/pages/all-timesheets`, `/api/pages/timesheets-settings`, and `timesheets.entries.approve`, with the expected `timesheets.read`, `timesheets.manage`, and `timesheets.settings` permission errors.
+- Authenticated CRUD smoke on a fresh runner: Admin create → edit → delete returned HTTP 200, row version advanced 1 → 2, and a post-delete edit was rejected with the expected personal-scope 403. Context-specific CRUD actions are now globally unique so each page invokes its own guard.
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| TIMESHEETS-FUNC-001 | Focused functionality, reports, scoped CRUD, settings, and embedded-task contracts | 24 tests, 266 assertions; focused suite passed | pass |
+| TIMESHEETS-FUNC-001 | Focused functionality, reports, scoped CRUD, settings, and embedded-task contracts | 27 tests, 275 assertions; focused suite passed | pass |
 | TIMESHEETS-BROWSER-001 | Authenticated route matrix | 26/26 isolated fresh-page checks across 13 routes × desktop/mobile, including valid detail IDs; no page/request errors or horizontal overflow | pass |
 | TIMESHEETS-FUNC-002 | Timesheet Analysis Pivot/Graph/List runtime | Missing API pivot contract fixed; fresh authenticated retest rendered all three views with no failures | pass |
 | TIMESHEETS-FUNC-003 | Cross-module approval workflow | Authenticated create → submit → approve passed; Project hours contract was invoked after approval inputs were assigned from the row | pass |
 | TIMESHEETS-PERM-001 | Fleet permission boundary | Fleet denied personal, all-timesheets, settings, and approval endpoints with expected 403 permission errors | pass |
+| TIMESHEETS-FUNC-004 | Authenticated CRUD persistence | Admin create → edit → delete passed HTTP 200; post-delete edit rejected; duplicate global action-name regression covered | pass |
 | TIMESHEETS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Full parameterized route matrix, role boundaries, authenticated mutation smoke, and paired Odoo comparison remain open | pending |
 
 ## Bugs and retests
@@ -38,6 +40,7 @@ Candidate commit: current working tree
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | TIMESHEETS-QA-001 | Timesheet Analysis requested pivot data but API datasource declared no pivot fields | Current working tree | Added `pivot.fields`; reporting test 6/6 and authenticated Pivot/Graph/List retest passed | fixed |
+| TIMESHEETS-QA-002 | Duplicate global CRUD action names caused personal delete to execute task scope | `afe0fa2a` working tree | Context-specific action names plus authenticated create/edit/delete smoke and 27-test suite passed | fixed |
 
 ## Sign-off
 
