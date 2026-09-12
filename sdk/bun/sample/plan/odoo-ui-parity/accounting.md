@@ -1130,3 +1130,39 @@ The remaining visual differences are the expected Core3 Fluent shell versus
 Odoo's purple shell, compact mobile navigation hiding Odoo's desktop
 breadcrumbs/view controls, and the bounded fixture rows versus the live Odoo
 database's current bank-statement population.
+
+## 2026-09-12 Bank Statements active-reference refresh
+
+The replacement Odoo stack resolves the same XML action to runtime action 341
+in `core3_codex_demo_20260912` at `http://localhost:8073`. The authenticated
+source contains two Bank journal statements and renders List, Pivot, Graph,
+and read-only form states at the required desktop/mobile sizes.
+
+The paired browser pass found and fixed a Core3 runtime contract defect: the
+page declared Pivot fields, but the service-owned
+`accounting_bank_statements` datasource did not. Selecting Pivot or Graph
+therefore raised `Datasource does not declare pivot fields`. The datasource
+now declares `statement_month`, `starting_balance`, and `ending_balance`; the
+focused test asserts the contract, and the authenticated fixed run reports
+zero page errors and zero failed requests in all exercised states.
+
+| Surface | Viewport | Capture | SHA-256 |
+| --- | --- | --- | --- |
+| Odoo Bank Statements list | 1440x900 | `/tmp/odoo-accounting-bank-statements-list-desktop-1440x900-20260912.png` | `04fb6a3e6664cdc5b09ce92e088702ddba0f4fbeae516fa906034c806722a3b6` |
+| Odoo Bank Statements pivot | 1440x900 | `/tmp/odoo-accounting-bank-statements-pivot-desktop-1440x900-20260912.png` | `a93e12a5a227d24e5d327f17c9fa0cb4548c5bb3a34d1862f180474c34dee57d` |
+| Odoo Bank Statements graph | 1440x900 | `/tmp/odoo-accounting-bank-statements-graph-desktop-1440x900-20260912.png` | `a8a8692ef08eb630743b8060a0e3ecf38782d73de2ac430a3976d6cb7b066b62` |
+| Odoo Bank Statement form | 1440x900 | `/tmp/odoo-accounting-bank-statement-form-desktop-1440x900-20260912.png` | `dfe7d81226ea0ff602fd40671fe818eeba80da37d07dfcd2f5989a822995c47f` |
+| Odoo Bank Statements list | 390x844 | `/tmp/odoo-accounting-bank-statements-list-mobile-390x844-20260912.png` | `0d6b320938db6f7046a98e2e738eb5bbb470781236d2ff489c6fb2f5de096fec` |
+| Odoo Bank Statement form | 390x844 | `/tmp/odoo-accounting-bank-statement-form-mobile-390x844-20260912.png` | `fbe83bd0ee1c3084020dbc2f0aabe7c670db4cf1cf94362e26050b206fa77300` |
+| Core3 Bank Statements list | 1440x900 | `/tmp/core3-accounting-bank-statements-list-fixed-desktop-1440x900-20260912.png` | `d67f36e51d55e699ac9a5ff3d5672ade044d173eb0d41ef66ed36e39d1c92908` |
+| Core3 Bank Statements pivot | 1440x900 | `/tmp/core3-accounting-bank-statements-pivot-fixed-desktop-1440x900-20260912.png` | `2d9feed655e312128c546d037ccec3b124d832c70cda27c2eb88b762369d4d5d` |
+| Core3 Bank Statements graph | 1440x900 | `/tmp/core3-accounting-bank-statements-graph-fixed-desktop-1440x900-20260912.png` | `1f92676f913a195a707500d149ded8911f760305c3e802bf02c3b1e4582d6402` |
+| Core3 Bank Statement form | 1440x900 | `/tmp/core3-accounting-bank-statement-form-fixed-desktop-1440x900-20260912.png` | `6e27210936fd912d6d3ffcf9516edecae42c2412759a38bb93a89113c8201281` |
+| Core3 Bank Statements list | 390x844 | `/tmp/core3-accounting-bank-statements-list-fixed-mobile-390x844-20260912.png` | `a1b4ad78952ad18becedc644cfd66fa0f1c1bb2635b3afbd7bca5d62339e64fd` |
+| Core3 Bank Statement form | 390x844 | `/tmp/core3-accounting-bank-statement-form-fixed-mobile-390x844-20260912.png` | `c757429ae14a36e4966a6457ffd5c8d016ac5b476847ad52cae8e65c63c38aab` |
+
+The fixed batch passes 2 tests and 26 assertions, the audit passes with 545
+pages, 552 routes, and 947 datasources, ESLint and the frontend build pass,
+and `git diff --check` is clean. The expected residual is the shared Fluent
+shell and Core3's compact pivot/graph rendering versus Odoo's purple shell and
+formatted accounting pivot. Screenshots remain outside Git.
