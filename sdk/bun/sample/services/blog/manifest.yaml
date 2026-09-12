@@ -11,12 +11,16 @@ menu:
     icon: edit
     permission: blog.read
   groups:
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /blog, label: Blogs, icon: edit, permission: blog.read }
+        - { path: /blog-tags, label: Tags, icon: tag, permission: blog.read }
+        - { path: /blog-tag-categories, label: Tag Categories, icon: folder, permission: blog.read }
     - id: content
       label: Content
       items:
         - { path: /blog-posts, label: Blog Posts, icon: document, permission: blog.read }
-        - { path: /blog, label: Blogs, icon: edit, permission: blog.read }
-        - { path: /blog-tags, label: Tags, icon: tag, permission: blog.read }
     - id: reporting
       label: Reporting
       items:

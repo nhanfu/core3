@@ -1,0 +1,56 @@
+page: { id: blog-tag-categories }
+datasources:
+  - id: blog_tag_categories
+    permission: blog.read
+    error_states:
+      unauthorized: { status: 401, code: BLOG_TAG_CATEGORIES_UNAUTHORIZED, message: Sign in to view tag categories. }
+      forbidden: { status: 403, code: BLOG_TAG_CATEGORIES_FORBIDDEN, message: You do not have permission to view tag categories. }
+      transport_error: { status: 503, code: BLOG_TAG_CATEGORIES_UNAVAILABLE, message: Tag categories are temporarily unavailable. }
+    query: "SELECT id, row_version, name FROM blog_tag_categories WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name, id"
+  - id: blog_tag_category_detail
+    permission: blog.read
+    single: true
+    query: "SELECT id, row_version, name FROM blog_tag_categories WHERE id = :id"
+actions:
+  - id: create_blog_tag_category
+    type: server_form
+    permission: blog.write
+    title: New tag category
+    action: blog.tag_categories.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [blog_tag_categories]
+    mutation:
+      operation: insert
+      table: blog_tag_categories
+      fields: [name]
+      required: [name]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: BLOG_TAG_CATEGORY_NAME_REQUIRED, message: A tag category name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_tag_categories WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: BLOG_TAG_CATEGORY_EXISTS, message: A tag category with this name already exists. }
+      result: { query: "SELECT * FROM blog_tag_categories WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+  - id: edit_blog_tag_category
+    type: server_form
+    permission: blog.write
+    title: Edit tag category
+    action: blog.tag_categories.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}' }
+    prefill: row
+    refresh: [blog_tag_categories]
+    mutation:
+      operation: update
+      table: blog_tag_categories
+      fields: [name]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM blog_tag_categories WHERE id = :id", status: 404, code: BLOG_TAG_CATEGORY_NOT_FOUND, message: Tag category not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: BLOG_TAG_CATEGORY_NAME_REQUIRED, message: A tag category name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_tag_categories WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: BLOG_TAG_CATEGORY_EXISTS, message: A tag category with this name already exists. }
+      result: { query: "SELECT * FROM blog_tag_categories WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }

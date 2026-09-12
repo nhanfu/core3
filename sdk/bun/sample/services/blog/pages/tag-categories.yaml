@@ -1,0 +1,14 @@
+title: Tag Categories
+page: { id: blog-tag-categories, route: /blog-tag-categories, breadcrumb: [Website, Configuration, Blog, Tag Categories], auth: { require: [blog.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: blog_tag_categories
+    create_action: create_blog_tag_category
+    create_label: New tag category
+    search: { label: Search tag categories, placeholder: 'Search tag category...' }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+    page_size: 50
+    row_key: id
+    row_open_action: edit_blog_tag_category

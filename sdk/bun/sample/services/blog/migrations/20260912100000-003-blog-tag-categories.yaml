@@ -1,0 +1,23 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS blog_tag_categories (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO blog_tag_categories (id, name)
+      SELECT 'blog-category-demo-001', 'Technology'
+      WHERE NOT EXISTS (SELECT 1 FROM blog_tag_categories WHERE id = 'blog-category-demo-001');
+      INSERT INTO blog_tag_categories (id, name)
+      SELECT 'blog-category-demo-002', 'Architecture'
+      WHERE NOT EXISTS (SELECT 1 FROM blog_tag_categories WHERE id = 'blog-category-demo-002');
+    down: |
+      DELETE FROM blog_tag_categories WHERE id IN ('blog-category-demo-001', 'blog-category-demo-002');
+      DROP TABLE IF EXISTS blog_tag_categories;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
