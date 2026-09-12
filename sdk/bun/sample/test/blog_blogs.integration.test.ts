@@ -76,4 +76,21 @@ describe('Blog Blogs parity slice', () => {
     await expect(repository.executeMutation(edit.mutation, { id: 'blog-post-demo-001', expected_row_version: 1, values: { blog_id: 'blog-demo-001', blog_name: 'Core3 Engineering', name: 'Stale' } })).rejects.toMatchObject({ status: 409 });
     database.close();
   });
+
+  test('imports idempotent post rows through the declared form action', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'blog_post_import_test', ['schema', 'data']);
+    const page = yaml('pages/posts.yaml');
+    const importer = page.actions.find((action: any) => action.id === 'import_blog_posts');
+    expect(page.components[0].actions).toContainEqual(expect.objectContaining({ id: 'blog_posts.export', label: 'Export' }));
+    const values = { post_list: 'Imported launch|Release notes|QA Team|release,qa\nImported guide|How to use it|Docs Team|docs' };
+    const first = await repository.executeMutation(importer.mutation, { values });
+    expect(first).toEqual({ imported: 2 });
+    const second = await repository.executeMutation(importer.mutation, { values });
+    expect(second).toEqual({ imported: 2 });
+    expect((await repository.query("SELECT COUNT(*) AS count FROM blog_posts WHERE id LIKE 'blog-post-import-%'", []))[0].count).toBe(2);
+    await expect(repository.executeMutation(importer.mutation, { values: { post_list: 'Invalid row' } })).rejects.toMatchObject({ status: 422, code: 'BLOG_POST_IMPORT_INVALID' });
+    database.close();
+  });
 });

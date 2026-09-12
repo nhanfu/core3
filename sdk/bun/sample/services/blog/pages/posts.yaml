@@ -33,11 +33,30 @@ components:
     row_key: id
     row_actions: menu
     row_open_action: view_blog_post
+    header_actions: [{ id: import_blog_posts, label: Import, permission: blog.write, variant: secondary }]
     actions:
+      - { id: blog_posts.export, label: Export, title: Export, icon: download }
       - { id: publish_blog_post, label: Publish, permission: blog.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: unpublish_blog_post, label: Unpublish, permission: blog.write, variant: secondary, show_if: "row.state === 'Published'" }
       - { id: archive_blog_post, label: Archive, permission: blog.manage, variant: danger, show_if: "row.state !== 'Archived'" }
 actions:
+  - id: import_blog_posts
+    type: server_form
+    permission: blog.write
+    title: Import blog posts
+    action: blog.posts.import
+    handler: yaml_mutation
+    operation: create
+    submit_label: Import
+    refresh: [blog_posts]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:post_list AS VARCHAR))) > 0", status: 422, code: BLOG_POST_IMPORT_REQUIRED, message: Add at least one post row. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM (SELECT trim(unnest(string_split(CAST(:post_list AS VARCHAR), chr(10)))) AS line) lines WHERE line <> '' AND NOT regexp_matches(line, '^[^|]+\\|[^|]+\\|[^|]+\\|[^|]+$'))", status: 422, code: BLOG_POST_IMPORT_INVALID, message: Each row must use Title|Subtitle|Author|Tags format. }
+      steps:
+        - { query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:post_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS name, trim(split_part(line, '|', 2)) AS subtitle, trim(split_part(line, '|', 3)) AS author_name, trim(split_part(line, '|', 4)) AS tags FROM lines WHERE line <> '') INSERT INTO blog_posts(id, row_version, blog_id, blog_name, name, subtitle, author_name, tags, state) SELECT 'blog-post-import-' || regexp_replace(lower(name), '[^a-z0-9]+', '-', 'g'), 1, 'blog-demo-001', 'Core3 Engineering', name, subtitle, author_name, tags, 'Draft' FROM parsed ON CONFLICT (id) DO UPDATE SET subtitle = EXCLUDED.subtitle, author_name = EXCLUDED.author_name, tags = EXCLUDED.tags, updated_at = TIMESTAMP '2026-09-13 10:00:00'" }
+      result: { query: "SELECT COUNT(*) AS imported FROM blog_posts WHERE id LIKE 'blog-post-import-%'" }
+    fields: [{ field: post_list, label: Post List, type: textarea, required: true, placeholder: 'Title|Subtitle|Author|tag' }]
   - id: create_blog_post
     type: server_form
     permission: blog.write

@@ -17,6 +17,7 @@ components:
     header_actions:
       - { id: back_to_blog_posts, label: Back, variant: secondary }
       - { id: edit_blog_post_detail, label: Edit, variant: primary, permission: blog.write }
+      - { id: print_blog_post, label: Print, variant: secondary, permission: blog.read }
     fields:
       - { field: name, label: Title }
       - { field: subtitle, label: Subtitle }
@@ -49,6 +50,10 @@ actions:
     permission: blog.read
     kind: blog_post_attachment
   - { id: back_to_blog_posts, type: navigate, permission: blog.read, navigate_to: /blog-posts, params: {} }
+  - id: print_blog_post
+    type: client
+    permission: blog.read
+    script: "async () => { window.print(); }"
   - id: edit_blog_post_detail
     type: server_form
     permission: blog.write

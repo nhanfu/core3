@@ -34,7 +34,7 @@ content; mutations use isolated databases and deterministic IDs.
 | BLOG-FUNC-004 | Analysis/public | Read-only analysis and published views use scoped real data and exclude drafts | pass: public list/detail operations use persisted SQL with Published-only filtering; authenticated-free desktop/mobile browser probes returned published list/detail 200 and draft detail 404 |
 | BLOG-FUNC-005 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit | pass at contract level |
 | BLOG-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate blogs, posts or tags | planned restart/migration gate |
-| BLOG-FUNC-007 | Assets/import/export/print | Exercise images/assets, editor content, import/export and exposed print/preview actions | pass: authenticated multipart post-attachment upload/download, persisted `content_html`, and public sanitized content rendering; import/export/print remain planned |
+| BLOG-FUNC-007 | Assets/import/export/print | Exercise images/assets, editor content, import/export and exposed print/preview actions | pass: authenticated multipart post-attachment upload/download, persisted `content_html`, public sanitized content rendering, validated idempotent import, shared list export affordance, and declared detail print action |
 
 ## Workflow and integration cases
 
