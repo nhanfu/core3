@@ -13,12 +13,30 @@ function required(value: string, field: string): string {
   return normalized;
 }
 
+async function callProvider(url: string, payload: Record<string, unknown>, idempotencyKey: string, unavailableCode: string): Promise<Record<string, unknown>> {
+  let response: Response;
+  try {
+    response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': idempotencyKey }, body: JSON.stringify(payload) });
+  } catch {
+    throw new Error(unavailableCode);
+  }
+  if (!response.ok) throw new Error(unavailableCode);
+  let result: unknown;
+  try { result = await response.json(); } catch { throw new Error(`${unavailableCode}_INVALID_RESPONSE`); }
+  if (!result || typeof result !== 'object' || Array.isArray(result)) throw new Error(`${unavailableCode}_INVALID_RESPONSE`);
+  return result as Record<string, unknown>;
+}
+
 export async function authorizePayment(input: PaymentDeliveryInput): Promise<PaymentResult> {
   const orderId = required(input.order_id, 'order_id');
   if (input.payment_method === 'Test Failure') throw new Error('PAYMENT_PROVIDER_UNAVAILABLE');
   const existing = paymentResults.get(orderId);
   if (existing) return existing;
-  const result = { state: 'Authorized', provider_reference: `payment-${orderId}` };
+  const providerUrl = process.env.ECOMMERCE_PAYMENT_PROVIDER_URL;
+  const provider = providerUrl
+    ? await callProvider(providerUrl, { order_id: orderId, payment_method: input.payment_method, customer_email: input.customer_email }, orderId, 'PAYMENT_PROVIDER_UNAVAILABLE')
+    : {};
+  const result = { state: String(provider.state || 'Authorized'), provider_reference: String(provider.provider_reference || `payment-${orderId}`) };
   paymentResults.set(orderId, result);
   return result;
 }
@@ -27,7 +45,11 @@ export async function createDelivery(input: PaymentDeliveryInput & { payment_ref
   const orderId = required(input.order_id, 'order_id');
   const existing = deliveryResults.get(orderId);
   if (existing) return existing;
-  const result = { state: 'Ready', tracking_reference: `delivery-${orderId}` };
+  const providerUrl = process.env.ECOMMERCE_DELIVERY_PROVIDER_URL;
+  const provider = providerUrl
+    ? await callProvider(providerUrl, { order_id: orderId, delivery_method: input.delivery_method, payment_reference: input.payment_reference }, orderId, 'DELIVERY_PROVIDER_UNAVAILABLE')
+    : {};
+  const result = { state: String(provider.state || 'Ready'), tracking_reference: String(provider.tracking_reference || `delivery-${orderId}`) };
   deliveryResults.set(orderId, result);
   return result;
 }

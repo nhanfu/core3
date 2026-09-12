@@ -6,7 +6,7 @@ import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
 import EcommerceModule from '../services/ecommerce/module';
-import { recordCallback } from '../temporal/ecommerce-activities';
+import { authorizePayment, createDelivery, recordCallback } from '../temporal/ecommerce-activities';
 
 const root = join(import.meta.dir, '../services/ecommerce');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -107,6 +107,35 @@ describe('eCommerce Checkout parity', () => {
     expect(payment.retryable_errors).toEqual(['PAYMENT_PROVIDER_UNAVAILABLE', 'PAYMENT_TIMEOUT']);
     expect(contract.retry.maximum_attempts).toBe(5);
     expect(contract.activities.find((activity: any) => activity.id === 'cancel_payment_and_release_delivery')).toMatchObject({ compensation: true, idempotency_key: 'order_id' });
+  });
+
+  test('uses configured provider adapters with idempotency keys', async () => {
+    const requestBodies: unknown[] = [];
+    const idempotencyKeys: string[] = [];
+    const server = Bun.serve({ port: 0, async fetch(request) { idempotencyKeys.push(request.headers.get('idempotency-key') || ''); requestBodies.push(await request.json()); return Response.json({ state: 'Authorized', provider_reference: 'provider-payment-001' }); } });
+    const previous = process.env.ECOMMERCE_PAYMENT_PROVIDER_URL;
+    process.env.ECOMMERCE_PAYMENT_PROVIDER_URL = `http://127.0.0.1:${server.port}`;
+    try {
+      const result = await authorizePayment({ order_id: 'provider-adapter-order-001', payment_method: 'Wire Transfer', delivery_method: 'Standard Delivery' });
+      expect(result).toEqual({ state: 'Authorized', provider_reference: 'provider-payment-001' });
+      expect(requestBodies).toHaveLength(1);
+      expect(idempotencyKeys).toEqual(['provider-adapter-order-001']);
+      expect(requestBodies[0]).toMatchObject({ order_id: 'provider-adapter-order-001', payment_method: 'Wire Transfer' });
+    } finally {
+      if (previous === undefined) delete process.env.ECOMMERCE_PAYMENT_PROVIDER_URL;
+      else process.env.ECOMMERCE_PAYMENT_PROVIDER_URL = previous;
+      server.stop();
+    }
+    const deliveryServer = Bun.serve({ port: 0, fetch() { return Response.json({ state: 'Ready', tracking_reference: 'provider-delivery-001' }); } });
+    const previousDelivery = process.env.ECOMMERCE_DELIVERY_PROVIDER_URL;
+    process.env.ECOMMERCE_DELIVERY_PROVIDER_URL = `http://127.0.0.1:${deliveryServer.port}`;
+    try {
+      expect(await createDelivery({ order_id: 'provider-adapter-order-002', payment_method: 'Wire Transfer', delivery_method: 'Standard Delivery', payment_reference: 'provider-payment-002' })).toEqual({ state: 'Ready', tracking_reference: 'provider-delivery-001' });
+    } finally {
+      if (previousDelivery === undefined) delete process.env.ECOMMERCE_DELIVERY_PROVIDER_URL;
+      else process.env.ECOMMERCE_DELIVERY_PROVIDER_URL = previousDelivery;
+      deliveryServer.stop();
+    }
   });
 
   test('creates an order with copied lines and closes the cart atomically', async () => {
