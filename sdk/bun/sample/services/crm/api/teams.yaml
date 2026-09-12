@@ -3,7 +3,7 @@ datasources:
   - id: crm_teams
     single: false
     permission: crm.read
-    query: "SELECT t.id, t.name, t.leader, t.email_alias, t.target_revenue, t.use_leads, t.active, (SELECT COUNT(*) FROM crm_team_members m WHERE m.team_id = t.id AND m.active = true) AS member_count FROM crm_teams t ORDER BY t.name"
+    query: "SELECT t.id, t.name, t.leader, t.email_alias, t.target_revenue, t.use_leads, t.active, (SELECT COUNT(*) FROM crm_team_members m WHERE m.team_id = t.id AND m.active = true) AS member_count FROM crm_teams t WHERE (COALESCE(CAST(:active AS VARCHAR), 'active') = 'all' OR (CAST(:active AS VARCHAR) = 'active' AND t.active = true) OR (CAST(:active AS VARCHAR) = 'archived' AND t.active = false)) AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR COALESCE(t.leader, '') ILIKE '%' || :q || '%') ORDER BY t.name"
   - id: crm_stages_config
     single: false
     permission: crm.read

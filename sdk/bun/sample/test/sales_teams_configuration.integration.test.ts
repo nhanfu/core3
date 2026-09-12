@@ -7,14 +7,13 @@ import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 
 const sampleRoot = join(import.meta.dir, '..');
-const orderRoot = join(sampleRoot, 'services/order');
 const crmRoot = join(sampleRoot, 'services/crm');
 const yaml = (root: string, file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 const action = (definition: any, id: string) => definition.actions.find((candidate: any) => candidate.id === id);
 
 describe('Sales Teams configuration action parity', () => {
   test('maps Odoo Sales Configuration -> Sales Teams to the CRM-owned list/detail forms', () => {
-    const manifest = yaml(orderRoot, 'manifest.yaml');
+    const manifest = yaml(crmRoot, 'manifest.yaml');
     const configuration = manifest.menu.groups.find((group: any) => group.id === 'configuration');
     const listPage = yaml(crmRoot, 'pages/teams.yaml');
     const listApi = yaml(crmRoot, 'api/teams.yaml');
@@ -33,12 +32,15 @@ describe('Sales Teams configuration action parity', () => {
     expect(discovered.pageDatasources.get('teams')).toEqual(expect.arrayContaining(['crm_teams', 'crm_team_member_configuration']));
     expect(discovered.pageDatasources.get('team-detail')).toEqual(expect.arrayContaining(['crm_team_detail', 'crm_team_members_detail']));
     expect(routes).toContainEqual({ path: '/teams', page: 'teams', module: 'crm' });
+    expect(routes).toContainEqual({ path: '/crm/teams', page: 'teams', module: 'crm' });
     expect(routes).toContainEqual({ path: '/team-detail', page: 'team-detail', module: 'crm' });
 
     expect(listPage.components[0]).toMatchObject({
       type: 'ListView', source: 'crm_teams', create_action: 'create_crm_team',
       row_open_action: 'view_crm_team', row_double_click_action: 'view_crm_team',
     });
+    expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list', 'form', 'card']);
+    expect(listPage.components[0].filters[0]).toMatchObject({ field: 'active', label: 'Status' });
     expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'crm_team_detail' });
     expect(action(listApi, 'create_crm_team')).toMatchObject({ permission: 'crm.manage', operation: 'create' });
     expect(action(listApi, 'edit_crm_team')).toMatchObject({ permission: 'crm.manage', operation: 'update' });
@@ -51,12 +53,14 @@ describe('Sales Teams configuration action parity', () => {
     await migrateDatabase(repository, join(crmRoot, 'migrations'), undefined, 'sales_teams_configuration_test_migrations', ['schema', 'data']);
 
     const listApi = yaml(crmRoot, 'api/teams.yaml');
-    const rows = await repository.querySource(listApi.datasources.find((source: any) => source.id === 'crm_teams'), { q: null, active: null, fixture_state: null }, 0, 50);
+    const rows = await repository.querySource(listApi.datasources.find((source: any) => source.id === 'crm_teams'), { q: null, active: 'active', fixture_state: null }, 0, 50);
     expect(rows.data.map((row: any) => row.id)).toEqual(['crm-team-enterprise', 'crm-team-north-america']);
     expect(rows.data).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'crm-team-enterprise', name: 'Enterprise', leader: 'Admin User', email_alias: 'enterprise' }),
       expect.objectContaining({ id: 'crm-team-north-america', name: 'North America', leader: 'Dispatcher User', email_alias: 'north-america' }),
     ]));
+    expect((await repository.querySource(listApi.datasources.find((source: any) => source.id === 'crm_teams'), { q: 'North', active: 'active', fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['North America']);
+    expect((await repository.querySource(listApi.datasources.find((source: any) => source.id === 'crm_teams'), { q: null, active: 'archived', fixture_state: null }, 0, 50)).data).toEqual([]);
 
     const create = action(listApi, 'create_crm_team');
     const created = await repository.executeMutation(create.mutation, {

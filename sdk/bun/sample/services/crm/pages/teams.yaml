@@ -1,11 +1,13 @@
 title: Sales Teams
-page: { id: teams, breadcrumb: [Sales, CRM, Sales Teams], auth: { require: [crm.read] } }
+page: { id: teams, breadcrumb: [CRM, Configuration, Sales Teams], auth: { require: [crm.read] } }
 components:
   - type: ListView
     variant: odoo
     source: crm_teams
     create_action: create_crm_team
     create_label: New sales team
+    search: { label: Sales Teams, placeholder: Search... }
+    filters: [{ field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
     columns:
       - { field: name, label: Sales team, type: PrimaryEntityCell }
       - { field: leader, label: Team leader }
@@ -17,6 +19,7 @@ components:
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: edit }
       - id: card
         label: Cards
         icon: grid

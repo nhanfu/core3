@@ -76,6 +76,10 @@ menu:
     - id: configuration
       label: Configuration
       items:
+        - path: /crm/teams
+          label: Sales Teams
+          icon: users
+          permission: crm.manage
         - path: /configuration
           label: Configuration
           icon: settings
