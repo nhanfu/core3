@@ -14,6 +14,8 @@ Module owner: manufacturing module owner
 Verification trigger: feature-complete
 Candidate commit: working tree after authenticated manufacturing QA
 
+Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufacturing.md). It is the module-level source for manufacturing CRUD, workflows, actors, persistence, Temporal, and paired Odoo gates.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
