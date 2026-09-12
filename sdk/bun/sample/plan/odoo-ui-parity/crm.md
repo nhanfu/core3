@@ -468,3 +468,50 @@ within a viewport-bounded document rather than adding a bespoke renderer.
 Core3 adds CRM Configuration > Activity Types at `/crm/activity-types`, with separate page/API YAML joined by `page.id`, deterministic Call/Email/Meeting/To-Do fixtures, manager CRUD, and duplicate/validation/stale/missing/permission guards. The focused test passes 2 tests and 18 assertions.
 
 Odoo list captures are under `/tmp/core3-odoo-parity/crm-next-20260912/odoo-activity-types-desktop.png` and `odoo-activity-types-mobile.png`. The isolated Core3 browser pair was not completed before the runtime pass ended, so no paired visual parity claim is made; screenshots remain outside Git.
+
+## Batch: Configuration -> Lost Reasons (2026-09-12)
+
+Status: `implemented`; bounded checkpoint for the next uncovered CRM
+configuration action after Pipeline Stages, Activities reporting, and Activity
+Types.
+
+Reference contract:
+
+- The source menu is `CRM -> Configuration -> Pipeline -> Lost Reasons`,
+  declared in `addons/crm/views/crm_menu_views.xml` as `menu_crm_lost_reason`
+  with action `crm.crm_lost_reason_action` and sequence 6.
+- `addons/crm/views/crm_lost_reason_views.xml` defines a `list,form` action for
+  `crm.lost.reason`. The list is inline-editable and shows `name`; the search
+  view is labelled `Search Opportunities` and exposes the `Archived` filter.
+  The form is labelled `Lost Reason`, contains the `Description` field and a
+  `Leads` stat button, and the empty help copy starts with `Create a Lost
+  Reason` and explains that lost reasons report why opportunities are lost.
+- The live endpoint `http://localhost:8073/web/database/selector` responded
+  `200` during this bounded audit. The authenticated visual audit and paired
+  captures were attempted once but stopped at the first runtime failure:
+  `/tmp/core3-playwright/node_modules/playwright/lib/mjs/playwright.mjs` was
+  missing. No Odoo or Core3 screenshot was produced and no visual parity claim
+  is made for this batch.
+
+Core3 implementation and evidence:
+
+- Page/API contracts join through page ID `crm-lost-reasons`; layout is
+  `services/crm/pages/lost-reasons.yaml` and its form is
+  `pages/crm-lost-reason-detail.yaml`. Datasources, actions, CRUD guards, and
+  response states are in `api/lost-reasons.yaml` and
+  `api/lost-reason-detail.yaml`; page YAML owns no datasource or action
+  records.
+- Route `/lost-reasons` is under Configuration -> Lost Reasons in the CRM
+  manifest and requires `crm.manage`. The migration is
+  `20260911210000-022-lost-reasons.yaml` (schema/data version `0.0.22`) with
+  stable active and archived fixtures, idempotent reruns, and lead usage
+  counts.
+- The list supports default, search, archived, empty, no-results, 401, 403,
+  and 503 states. Create/update/archive/restore/delete are manager-only;
+  validation, duplicate, in-use deletion, missing-row, and stale-row guards
+  are explicit. The detail datasource covers not-found and the same
+  unauthorized/forbidden/transport boundaries.
+- Focused validation: `bun test test/crm_lost_reasons.integration.test.ts` —
+  3 tests passed, 35 assertions after adding the complete error-state
+  contract checks. Screenshots remain outside Git under the requested batch
+  directory (which is intentionally empty after the failed capture attempt).

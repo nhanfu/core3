@@ -29,6 +29,16 @@ describe('CRM Lost Reasons Odoo action parity', () => {
     expect(page.components[0]).toMatchObject({ source: 'crm_lost_reason_action', create_action: 'create_crm_lost_reason', row_open_action: 'edit_crm_lost_reason' });
     expect(page.components[0].columns[0]).toMatchObject({ field: 'name', label: 'Description' });
     expect(detail.components[0].stat_buttons).toEqual([{ id: 'view_lost_reason_leads', label: 'Leads', value_field: 'leads_count', permission: 'crm.read' }]);
+    expect(listApi().datasources[0].error_states).toMatchObject({
+      unauthorized: { status: 401, code: 'CRM_LOST_REASONS_UNAUTHORIZED' },
+      forbidden: { status: 403, code: 'CRM_LOST_REASONS_FORBIDDEN' },
+      transport_error: { status: 503, code: 'CRM_LOST_REASONS_UNAVAILABLE' },
+    });
+    expect(detailApi().datasources[0].error_states).toMatchObject({
+      unauthorized: { status: 401, code: 'CRM_LOST_REASON_DETAIL_UNAUTHORIZED' },
+      forbidden: { status: 403, code: 'CRM_LOST_REASON_DETAIL_FORBIDDEN' },
+      not_found: { status: 404, code: 'CRM_LOST_REASON_NOT_FOUND' },
+    });
     const discovered = discoverPages(join(import.meta.dir, '..'));
     expect(discovered.pages.get('crm-lost-reasons')?.config.page.id).toBe('crm-lost-reasons');
     expect(discovered.pageDatasources.get('crm-lost-reasons')).toEqual(['crm_lost_reason_action']);
@@ -53,6 +63,8 @@ describe('CRM Lost Reasons Odoo action parity', () => {
     expect((await repository.querySource(source, { q: 'missing', active: null, fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { q: null, active: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { q: null, active: null, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'CRM_LOST_REASONS_UNAVAILABLE' });
+    await expect(repository.querySource(source, { q: null, active: null, fixture_state: 'unauthorized' }, 0, 50)).rejects.toMatchObject({ status: 401, code: 'CRM_LOST_REASONS_UNAUTHORIZED' });
+    await expect(repository.querySource(source, { q: null, active: null, fixture_state: 'forbidden' }, 0, 50)).rejects.toMatchObject({ status: 403, code: 'CRM_LOST_REASONS_FORBIDDEN' });
     database.close();
   });
 

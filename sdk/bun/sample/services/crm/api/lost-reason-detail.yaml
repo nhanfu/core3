@@ -3,7 +3,11 @@ datasources:
   - id: crm_lost_reason_detail
     single: true
     permission: crm.manage
-    error_states: { transport_error: { status: 503, code: CRM_LOST_REASON_DETAIL_UNAVAILABLE, message: Lost reason details are temporarily unavailable. } }
+    error_states:
+      unauthorized: { status: 401, code: CRM_LOST_REASON_DETAIL_UNAUTHORIZED, message: Sign in to view lost reason details. }
+      forbidden: { status: 403, code: CRM_LOST_REASON_DETAIL_FORBIDDEN, message: You do not have permission to manage lost reason details. }
+      not_found: { status: 404, code: CRM_LOST_REASON_NOT_FOUND, message: Lost reason was not found. }
+      transport_error: { status: 503, code: CRM_LOST_REASON_DETAIL_UNAVAILABLE, message: Lost reason details are temporarily unavailable. }
     query: "SELECT r.id, r.row_version, r.name, r.active, (SELECT COUNT(*) FROM crm_leads l WHERE l.lost_reason = r.id) AS leads_count FROM crm_lost_reasons r WHERE r.id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"
 actions:
   - id: back_to_crm_lost_reasons
