@@ -22,6 +22,7 @@ Candidate commit: none
 - Artifact: `/tmp/core3-odoo-parity/events-create-desktop-20260912.png`.
 - Authenticated Events route matrix: 14 registered menu routes at desktop and mobile — 28/28 passed with no blank/redirect result, page error, failed request, HTTP error, or horizontal overflow; raw result: `/tmp/core3-odoo-parity/events-matrix-20260912.json`.
 - Permission boundary: `fleet@tms.local` reached `/events` but received `Requires permission: events.read` with the expected 403 page-data response; no browser errors.
+- Authenticated lifecycle mutation probe: created `QA Lifecycle Event 20260912`, then advanced Draft → Published → In Progress → Completed with 200 responses and row versions 1 → 2 → 3 → 4.
 - The first browser attempt exposed an empty optional `end_at` timestamp defect; the form contract was corrected by declaring both event date fields as `datetime`, preserving Core3's text-based ISO date/time input convention.
 - Authenticated route matrix and paired Odoo comparison remain pending for full module sign-off.
 
@@ -33,6 +34,7 @@ Candidate commit: none
 | EVENTS-FUNC-002 | Authenticated create and persistence smoke | `/events`; created `QA Browser Event 20260912`; persisted in 1-11/11 list; screenshot artifact recorded | pass |
 | EVENTS-BROWSER-002 | Authenticated registered-menu route matrix | 14 routes × desktop/mobile = 28/28; raw JSON result recorded | pass |
 | EVENTS-PERM-001 | Read permission boundary | Fleet user denied `events.read` with expected 403/permission page | pass |
+| EVENTS-WORKFLOW-001 | Event lifecycle transitions with optimistic row versions | Authenticated sequence completed Draft → Published → In Progress → Completed; each response 200 and incremented `row_version` | pass |
 | EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current evidence covers focused contracts and one create flow; complete matrix/Odoo comparison not yet run | pending |
 
 ## Bugs and retests

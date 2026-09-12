@@ -17,12 +17,15 @@ The authenticated registered-menu route matrix passed 28/28 checks (14 routes
 at desktop and mobile) without blank pages, browser errors, HTTP failures, or
 horizontal overflow. The Fleet user permission probe correctly denied
 `events.read` with a 403 permission page.
+An authenticated mutation probe also completed the event lifecycle from Draft to
+Published to In Progress to Completed, with successful 200 responses and row
+versions advancing from 1 through 4.
 Full menu-tree coverage, permissions, complete browser CRUD/workflow coverage,
 and paired Odoo desktop/mobile comparison remain open. No full parity claim is
 made here.
 
 ## Next bounded task
 
-Run the authenticated Events route matrix, permission-boundary checks, state
-transitions/registration workflow, and paired Odoo desktop/mobile captures;
-then update this file only with evidence from the matching module owner.
+Run the authenticated registration/attendee CRUD workflow and paired Odoo
+desktop/mobile captures for the remaining Events screens; then update this file
+only with evidence from the matching module owner.
