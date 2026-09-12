@@ -94,6 +94,32 @@ then mark this plan `ready`. Authenticated comparison capture must cover every
 implemented reference surface at 1440x900 and 390x844. Any screenshots belong
 only under `/tmp/core3-odoo-parity` and must not be committed.
 
+## Wave 2 slice decision
+
+No bounded Documents UI/UX slice is implementable in this wave. The source
+gate was rechecked against the supplied Odoo checkout before selecting work:
+the checkout is reachable at `/home/nhanjs/projects/odoo` on revision
+`659759969d535d286b656c96b675e4612b925ddd`, but neither `addons/documents`
+nor an Enterprise checkout exists. Searching the Community addon tree only
+finds generic attachment, recruitment, and EDI integrations; none supplies
+the Documents application contract.
+
+The Odoo runtime is reachable at `http://127.0.0.1:8073`, but the prior
+authenticated probe at `/odoo` found no `Documents` text or application
+surface at either target viewport. This cannot establish labels, actions,
+views, responsive behavior, or permission boundaries for a parity slice.
+
+The Core3 runtime audit was rerun from this worktree with
+`bun run dev --db=ddb --memory`. Service discovery reached the Documents
+DuckDB-memory module and selected fallback ports 3002/3011, then startup
+failed because this isolated worktree has no installed `vite` executable and
+cannot resolve `@core3/server/module`. The existing Documents manifest,
+permissions, page/workflow, analysis, and migration YAML all parse
+successfully with Bun, but that is contract validation only and is not UI
+evidence. No page/API contract, fixture, permission change, implementation
+test, or screenshot was added because doing so would invent an Odoo reference
+surface that is unavailable.
+
 ## Audit evidence
 
 Read-only checks performed:
@@ -104,5 +130,8 @@ Read-only checks performed:
 - Authenticated Odoo browser probe — `/odoo` at both target viewport sizes, no
   Documents surface.
 - Core3 service/config/YAML ownership inspection — foundation listed above.
-- Core3 runtime start attempt — blocked by missing worktree dependencies.
-
+- Core3 runtime start attempt — module discovery reached Documents, then
+  blocked by missing worktree dependencies (`vite` and `@core3/server/module`).
+- Bun YAML parse pass over all existing Documents manifest, permission, page,
+  workflow, analysis, and migration contracts — passed.
+- `git diff --check` — passed after the audit update.
