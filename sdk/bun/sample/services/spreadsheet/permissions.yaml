@@ -5,3 +5,4 @@ permissions:
   - spreadsheet.dashboard.read
   - spreadsheet.dashboard.write
   - spreadsheet.dashboard.manage
+  - spreadsheet.export

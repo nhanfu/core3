@@ -254,6 +254,19 @@ function publicSurveyToken(path: string): string | null {
   return publicSurveyRoute(path)?.surveyToken || publicSurveyPrintRoute(path)?.surveyToken || null;
 }
 
+function publicSpreadsheetRoute(path: string): { shareId: string; token: string } | null {
+  const match = path.match(/^\/dashboard\/share\/([^/]+)\/([A-Za-z0-9_-]+)$/);
+  return match ? { shareId: match[1], token: match[2] } : null;
+}
+
+async function renderPublicSpreadsheet(path: string) {
+  const route = publicSpreadsheetRoute(path);
+  const outlet = document.getElementById('outlet');
+  if (!route || !outlet) return;
+  const mod = await import('./components/PublicSpreadsheetDashboard.ts');
+  await mod.mount(outlet, route.shareId, route.token);
+}
+
 async function renderPublicSurvey(path: string) {
   const printRoute = publicSurveyPrintRoute(path);
   const outlet = document.getElementById('outlet');
@@ -381,6 +394,11 @@ async function bootstrap() {
     await renderPublicSurvey(window.location.pathname);
     return;
   }
+  if (publicSpreadsheetRoute(window.location.pathname)) {
+    app.innerHTML = '<div id="outlet"></div>';
+    await renderPublicSpreadsheet(window.location.pathname);
+    return;
+  }
 
   // Older sessions may contain an avatar data URL inside the JWT. Discard
   // those sessions so the user can receive a compact token after logging in.
@@ -478,6 +496,10 @@ async function bootstrap() {
 window.addEventListener('popstate', () => {
   if (publicSurveyToken(window.location.pathname)) {
     void renderPublicSurvey(window.location.pathname);
+    return;
+  }
+  if (publicSpreadsheetRoute(window.location.pathname)) {
+    void renderPublicSpreadsheet(window.location.pathname);
     return;
   }
   const location = currentLocation();

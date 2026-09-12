@@ -357,6 +357,16 @@ Bun.serve({
       }
     }
 
+    // Module-owned public controller routes (for example Odoo-style share
+    // links) are deliberately outside the authenticated /api namespace.
+    try {
+      const publicResponse = await moduleManager.handle(req, url, server);
+      if (publicResponse) return publicResponse;
+    } catch (error) {
+      const failure = error as any;
+      return apiError(failure?.status || 500, failure?.message || 'Internal server error', failure?.code || 'INTERNAL_ERROR');
+    }
+
     if (req.method === 'GET') return (await serveStatic(url.pathname)) || serveSPA();
     return new Response('Not Found', { status: 404, headers: CORS_HEADERS });
   },

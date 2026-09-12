@@ -1,0 +1,7 @@
+operations:
+  spreadsheet.public.share:
+    result_key: share
+    query: "SELECT s.id, s.dashboard_id, s.token, s.revoked, d.name AS dashboard_name, d.published, d.snapshot_status, d.workbook_snapshot FROM spreadsheet_dashboard_shares s JOIN spreadsheet_dashboards d ON d.id = s.dashboard_id WHERE s.id = :share_id AND s.token = :token LIMIT 1"
+  spreadsheet.public.export:
+    result_key: share
+    query: "SELECT s.id, s.dashboard_id, s.token, s.revoked, d.name AS dashboard_name, d.published, d.snapshot_status, d.workbook_snapshot FROM spreadsheet_dashboard_shares s JOIN spreadsheet_dashboards d ON d.id = s.dashboard_id WHERE s.id = :share_id AND s.token = :token LIMIT 1"

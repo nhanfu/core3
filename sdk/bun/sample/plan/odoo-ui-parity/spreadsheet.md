@@ -426,3 +426,30 @@ and not-found behavior. `bun run audit` passes with 591 pages, 598 routes, and
 verification was attempted but remains blocked by the existing local startup
 failures recorded above (`EMFILE` from Vite and the DuckDB constrained-column
 parser error); no visual parity claim or screenshot is made for this batch.
+
+## 2026-09-12 bounded implementation batch: Public dashboard share boundary
+
+This batch implements the Odoo `spreadsheet_dashboard` public-share controller
+slice. Source authority is `controllers/share.py` at revision `65975996`:
+`/dashboard/share/<int:share_id>/<token>` is a public frozen shell;
+`/dashboard/data/<share_id>/<token>` is a public GET JSON payload; and
+`/dashboard/download/<share_id>/<token>` is an authenticated export route.
+Each route validates the share id, token, revocation, and published dashboard
+access. Export additionally requires an authenticated request, matching the
+Odoo export boundary in this fixture.
+
+Core3 owns these controller routes in `services/spreadsheet/module.ts`. The
+public shell is detected before normal login in `public/app.ts`, uses the
+existing read-only spreadsheet canvas, and loads its frozen snapshot from the
+controller response. `operations.yaml` keeps share lookup and snapshot data
+backend-owned; no page YAML contains controller SQL. Invalid, revoked, and
+missing shares return stable 404 JSON, wrong methods return 405, empty
+workbooks return 404, unavailable snapshots return 503, and unauthenticated
+downloads return 401. Export returns a deterministic Odoo-compatible filename.
+
+Focused route tests cover valid frozen data, revoked and missing tokens,
+unauthenticated/authenticated download, content disposition, operation routing,
+and snapshot shape. Authenticated Odoo/Core3 desktop and mobile captures were
+attempted but remain blocked by the existing startup failures (`EMFILE` from
+Vite watching and the DuckDB constrained-column parser error). No visual-parity
+claim or screenshot is made for this batch; images remain outside Git.

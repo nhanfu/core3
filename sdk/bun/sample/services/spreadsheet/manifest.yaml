@@ -4,6 +4,7 @@ database: duckdb
 migrations: migrations
 permissions: permissions.yaml
 storage: storage.yaml
+operations: operations.yaml
 menu:
   dashboards:
     path: /dashboards

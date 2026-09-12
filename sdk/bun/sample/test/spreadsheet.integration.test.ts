@@ -5,6 +5,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import SpreadsheetModule from '../services/spreadsheet/module';
 
 const serviceRoot = join(import.meta.dir, '../services/spreadsheet');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
@@ -248,5 +249,35 @@ describe('Spreadsheet dashboard configuration parity', () => {
     await expect(repository.executeMutation(action.mutation, {
       dashboard_id: 'sdb-product', id: 'share-product-revoked-2026', expected_row_version: 1, values: { revoked: false },
     })).resolves.toMatchObject({ dashboard_id: 'sdb-product', revoked: false });
+  });
+
+  test('matches Odoo public share/data/download routes and access boundaries', async () => {
+    const module = new SpreadsheetModule();
+    const calls: any[] = [];
+    const service = { call: async (operation: string, params: any) => {
+      calls.push({ operation, params });
+      if (params.share_id === 'missing') return { share: [] };
+      return { share: [{ id: params.share_id, dashboard_id: 'sdb-sales', token: params.token, dashboard_name: 'Sales', published: true, revoked: params.token === 'revoked', snapshot_status: 'ready', workbook_snapshot: '{"sheets":[{"name":"Sheet1"}]}' }] };
+    } };
+    const valid = (path: string, init?: RequestInit) => module.handleShareRoute(new Request(`http://core3.test${path}`, init), new URL(`http://core3.test${path}`), service);
+    expect(await valid('/dashboard/data/share-sales-2026/sales-dashboard-share-2026')).toMatchObject({ status: 200 });
+    const payload = await (await valid('/dashboard/data/share-sales-2026/sales-dashboard-share-2026'))!.json();
+    expect(payload).toMatchObject({ is_frozen: true, dashboard_name: 'Sales', snapshot: { sheets: [{ name: 'Sheet1' }] } });
+    expect(await valid('/dashboard/data/share-sales-2026/revoked')).toMatchObject({ status: 404 });
+    expect(await valid('/dashboard/data/missing/sales-dashboard-share-2026')).toMatchObject({ status: 404 });
+    expect(await valid('/dashboard/download/share-sales-2026/sales-dashboard-share-2026')).toMatchObject({ status: 401 });
+    const download = await valid('/dashboard/download/share-sales-2026/sales-dashboard-share-2026', { headers: { Authorization: 'Bearer export-user' } });
+    expect(download).toMatchObject({ status: 200 });
+    expect(download!.headers.get('content-disposition')).toContain('Sales.xlsx');
+    const restrictedModule = new SpreadsheetModule() as any;
+    restrictedModule.authAdapter = {
+      getCurrentUser: async () => ({ id: 'viewer' }),
+      hasPermission: (_user: any, permission: string) => permission === 'spreadsheet.read',
+    };
+    expect(await restrictedModule.handleShareRoute(new Request('http://core3.test/dashboard/download/share-sales-2026/sales-dashboard-share-2026', { headers: { Authorization: 'Bearer viewer' } }), new URL('http://core3.test/dashboard/download/share-sales-2026/sales-dashboard-share-2026'), service)).toMatchObject({ status: 403 });
+    expect(calls.map((call) => call.operation)).toEqual([
+      'spreadsheet.public.share', 'spreadsheet.public.share', 'spreadsheet.public.share',
+      'spreadsheet.public.share', 'spreadsheet.public.export', 'spreadsheet.public.export', 'spreadsheet.public.export',
+    ]);
   });
 });
