@@ -3,3 +3,9 @@ database:
 files:
   driver: local
   path: .data/uploads
+attachments:
+  blog_post_attachment:
+    download:
+      route: /api/blog/post-attachments
+      permission: blog.read
+      query: SELECT * FROM blog_post_attachments WHERE id = :attachment_id

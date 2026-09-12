@@ -1,0 +1,24 @@
+version: 0.0.4
+kind: schema
+description: Blog post attachment metadata
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS blog_post_attachments (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        post_id VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR NOT NULL,
+        uploaded_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS blog_post_attachments_post_idx ON blog_post_attachments(post_id);
+    down: |
+      DROP TABLE IF EXISTS blog_post_attachments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

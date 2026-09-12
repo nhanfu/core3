@@ -34,7 +34,7 @@ content; mutations use isolated databases and deterministic IDs.
 | BLOG-FUNC-004 | Analysis/public | Read-only analysis and published views use scoped real data and exclude drafts | pass: public list/detail operations use persisted SQL with Published-only filtering; authenticated-free desktop/mobile browser probes returned published list/detail 200 and draft detail 404 |
 | BLOG-FUNC-005 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit | pass at contract level |
 | BLOG-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate blogs, posts or tags | planned restart/migration gate |
-| BLOG-FUNC-007 | Assets/import/export/print | Exercise images/assets, editor content, import/export and exposed print/preview actions | planned browser interaction gate |
+| BLOG-FUNC-007 | Assets/import/export/print | Exercise images/assets, editor content, import/export and exposed print/preview actions | pass: authenticated multipart post-attachment upload/download and metadata persistence; editor rendering/import/export/print remain planned |
 
 ## Workflow and integration cases
 
@@ -42,7 +42,7 @@ content; mutations use isolated databases and deterministic IDs.
 | --- | --- | --- | --- |
 | BLOG-WF-001 | Post lifecycle | Draft → Published → Unpublished updates route visibility, version and indexes atomically | pass: workflow API publishes/unpublishes persisted draft, increments versions 1 → 2 → 3, records publication date, and rejects duplicate publish; public/browser visibility remains planned |
 | BLOG-WF-002 | Taxonomy | Tags/categories attach and detach without leaking or deleting referenced posts | pass at contract level |
-| BLOG-WF-003 | Content rendering | Stored content and assets render through declared YAML/shared HTML components without unsafe interpolation | planned browser gate |
+| BLOG-WF-003 | Content rendering | Stored content and assets render through declared YAML/shared HTML components without unsafe interpolation | pass for persisted attachment storage/download contract; rendered content and public asset policy remain planned |
 | BLOG-WF-004 | Website integration | Published posts resolve through Website routes and preserve site/company scope | planned integration gate |
 | BLOG-WF-005 | Durable/external boundary | Publishing, asset processing, notifications and third-party callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 
