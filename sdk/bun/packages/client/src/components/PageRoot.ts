@@ -549,7 +549,10 @@ export class PageRuntime extends BaseComponent {
         }
         if (!uploadFile) break;
         try {
-          const uploadMeta: any = { kind: actionDef.kind };
+          const uploadMeta: any = {
+            kind: actionDef.kind,
+            ...resolveActionParams(actionDef.params, rowCtx),
+          };
           if (actionDef.kind === 'chat_attachment') {
             uploadMeta.thread_id = row.id;
             uploadMeta.content = row.content;
@@ -571,7 +574,9 @@ export class PageRuntime extends BaseComponent {
           } else if (actionDef.kind === 'company_document') {
             uploadMeta.company_id = resolveActionParams(actionDef.params || { company_id: '{state.id}' }, { ...ctx, row: row || {} }).company_id;
           } else if (actionDef.kind === 'website_page_asset') {
-            uploadMeta.page_id = resolveActionParams(actionDef.params || { page_id: '{row.id}' }, rowCtx).page_id;
+            uploadMeta.page_id ||= row.id;
+          } else if (actionDef.kind === 'blog_post_attachment') {
+            uploadMeta.post_id ||= row.id;
           } else if (actionDef.kind === 'master_data_import') {
             uploadMeta.scope = actionDef.scope;
           }
@@ -601,6 +606,8 @@ export class PageRuntime extends BaseComponent {
                   ? `/expenses/attachments/${encodeURIComponent(String(row.id))}`
                 : actionDef.kind === 'website_page_asset'
                   ? `/website/page-assets/${encodeURIComponent(String(row.id))}`
+                : actionDef.kind === 'blog_post_attachment'
+                  ? `/blog/post-attachments/${encodeURIComponent(String(row.id))}`
                 : `/chat/attachments/${encodeURIComponent(String(row.id))}`;
           await client.downloadFile(
             path,

@@ -190,6 +190,8 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
                 ? `/expenses/attachments/${id}`
               : attachmentDownloadAction.kind === 'website_page_asset'
                 ? `/website/page-assets/${id}`
+              : attachmentDownloadAction.kind === 'blog_post_attachment'
+                ? `/blog/post-attachments/${id}`
               : `/chat/attachments/${id}`;
       return client.fetchFile(path);
     };
