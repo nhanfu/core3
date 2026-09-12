@@ -76,10 +76,6 @@ menu:
           label: Sales Details
           icon: chart
           permission: pos.read
-        - path: /point-of-sale/sales-details-wizard
-          label: Sales Details (Wizard)
-          icon: chart
-          permission: pos.read
         - path: /point-of-sale/sales-lines
           label: All Sales Lines
           icon: list

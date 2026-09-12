@@ -11,15 +11,15 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, fil
 const action = (api: any, id: string) => api.actions.find((candidate: any) => candidate.id === id);
 
 describe('POS Sales Details wizard action 703 parity', () => {
-  test('keeps the new wizard route disjoint and joins page/API by page.id', () => {
+  test('binds the visible Sales Details action and joins page/API by page.id', () => {
     const page = yaml('pages/pos-sales-details-wizard.yaml');
     const api = yaml('api/pos-sales-details-wizard.yaml');
     const manifest = yaml('manifest.yaml');
     const menu = manifest.menu.groups.flatMap((group: any) => group.items);
-    expect(page.page).toMatchObject({ id: 'pos-sales-details-wizard', route: '/point-of-sale/sales-details-wizard' });
+    expect(page.page).toMatchObject({ id: 'pos-sales-details-wizard', route: '/point-of-sale/sales-details' });
     expect(api.page.id).toBe(page.page.id);
-    expect(menu).toContainEqual(expect.objectContaining({ path: page.page.route, label: 'Sales Details (Wizard)', permission: 'pos.read' }));
-    expect(page.page.route).not.toBe('/point-of-sale/sales-details');
+    expect(menu).toContainEqual(expect.objectContaining({ path: page.page.route, label: 'Sales Details', permission: 'pos.read' }));
+    expect(yaml('pages/pos-sales-details.yaml').page.route).toBe('/point-of-sale/sales-details-lines');
     expect(page.components[0]).toMatchObject({ type: 'OdooFormView', source: 'pos_sales_details_wizard', initial_editing: true });
     expect(page.components[1]).toMatchObject({ type: 'LineItemGrid', source: 'pos_sales_details_wizard_lines', parent_source: 'pos_sales_details_wizard' });
   });

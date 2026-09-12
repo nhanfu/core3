@@ -1,5 +1,5 @@
 title: POS Sales Details
-page: { id: pos-sales-details, route: /point-of-sale/sales-details, breadcrumb: [Sales, Point of Sale, Reporting, Sales Details], auth: { require: [pos.read] } }
+page: { id: pos-sales-details, route: /point-of-sale/sales-details-lines, breadcrumb: [Sales, Point of Sale, Reporting, Sales Details Lines], auth: { require: [pos.read] } }
 components:
   - type: ListView
     variant: odoo

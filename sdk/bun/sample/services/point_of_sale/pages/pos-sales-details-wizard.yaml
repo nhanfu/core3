@@ -1,5 +1,5 @@
 title: Sales Details
-page: { id: pos-sales-details-wizard, route: /point-of-sale/sales-details-wizard, breadcrumb: [Sales, Point of Sale, Reporting, Sales Details], auth: { require: [pos.read] } }
+page: { id: pos-sales-details-wizard, route: /point-of-sale/sales-details, breadcrumb: [Sales, Point of Sale, Reporting, Sales Details], auth: { require: [pos.read] } }
 components:
   - type: OdooFormView
     source: pos_sales_details_wizard

@@ -909,6 +909,12 @@ Focused coverage passes 3 tests and 28 assertions. Audit, ESLint, global CSS
 build, and `git diff --check` pass. Screenshots are temporary `/tmp` evidence
 and are not committed.
 
+## Sales Details wizard bounded slice (2026-09-12)
+
+Core3 completes the Odoo POS Sales Details action 703 through the visible report action and wizard route. The page/API contract preserves `page.id`, deterministic order-line aggregation, date/session filters, empty/error states, line actions, permissions, validation, and row-version guards. The focused test passes 4 tests and 26 assertions.
+
+Authenticated paired captures are saved under `/tmp/core3-odoo-parity/pos-next-20260912/` at 1440x900 and 390x844. The comparison covers the report/wizard surface and responsive width; remaining differences are the shared Fluent shell versus Odoo's purple shell and bounded deterministic fixtures. Images remain outside Git.
+
 | Surface | Viewport | Capture | SHA-256 |
 | --- | --- | --- | --- |
 | Odoo tax detail | 1440×900 | `/tmp/odoo-pos-tax-distribution-detail-desktop-1440x900-20260911.png` | `8561f5d5ee046c3b37d3a1ed4718533fc9a6133be87a72e1f4d55bf49b92ecb5` |
