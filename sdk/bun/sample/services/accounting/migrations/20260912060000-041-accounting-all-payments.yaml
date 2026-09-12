@@ -1,0 +1,19 @@
+version: 0.0.41
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_payments ADD COLUMN IF NOT EXISTS unmatched BOOLEAN NOT NULL DEFAULT FALSE;
+      UPDATE accounting_payments SET unmatched = TRUE WHERE id IN ('accounting-payment-demo-001', 'accounting-all-payment-001', 'accounting-all-payment-002', 'accounting-all-payment-003');
+      INSERT OR IGNORE INTO accounting_payments(id, name, partner_name, payment_type, amount, payment_method, journal, currency, payment_date, state, reference, unmatched)
+      VALUES
+        ('accounting-all-payment-001', 'PAY/2026/0008', 'Gemini Furniture', 'Inbound', 1650.00, 'Bank', 'Bank', 'USD', '2026-01-15', 'Posted', 'INV/2026/0001', TRUE),
+        ('accounting-all-payment-002', 'PAY/2026/0009', 'Lumber Inc', 'Outbound', 880.00, 'Bank', 'Bank', 'USD', '2026-01-14', 'Posted', 'BILL/2026/0001', TRUE),
+        ('accounting-all-payment-003', 'PAY/2026/0010', 'Office Supplies Co', 'Inbound', 420.50, 'Card', 'Card', 'USD', '2026-01-13', 'Posted', 'SO/2026/0008', TRUE);
+    down: |
+      DELETE FROM accounting_payments WHERE id IN ('accounting-all-payment-001', 'accounting-all-payment-002', 'accounting-all-payment-003');
+      ALTER TABLE accounting_payments DROP COLUMN IF EXISTS unmatched;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

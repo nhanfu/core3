@@ -1,0 +1,41 @@
+page: { id: accounting-all-payments }
+datasources:
+  - id: all_payment_states
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('In Process','In Process'), ('Posted','Posted'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: accounting_all_payments
+    single: false
+    permission: accounting.read
+    error_states: { forbidden: { status: 403, code: ACCOUNTING_ALL_PAYMENTS_FORBIDDEN, message: You do not have access to all payments. }, transport_error: { status: 503, code: ACCOUNTING_DATA_UNAVAILABLE, message: Accounting data service is temporarily unavailable } }
+    query: "SELECT id, row_version, name, partner_name, payment_type, amount, printf('%s %,.2f', currency, CAST(amount AS DOUBLE)) AS amount_display, payment_method, journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, state, reference, unmatched, CAST(payment_date AS VARCHAR) AS activity_date FROM accounting_payments WHERE unmatched = TRUE AND state = 'Posted' AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR journal ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY payment_date DESC, id"
+actions:
+  - id: view_accounting_all_payment
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/payment-detail
+    params: { id: '{row.id}' }
+  - id: create_accounting_all_payment
+    type: server_form
+    permission: accounting.write
+    title: New payment
+    action: accounting.all_payments.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: accounting_payments
+      fields: [name, partner_name, payment_type, amount, payment_method, journal, currency, payment_date, state, reference, unmatched]
+      required: [name, amount]
+      defaults: { payment_type: Inbound, payment_method: Bank, journal: Bank, currency: USD, state: Draft, unmatched: true, payment_date: '2026-01-15' }
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0", status: 422, code: ACCOUNTING_PAYMENT_AMOUNT_INVALID, message: Payment amount must be positive. }]
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+    fields:
+      - { field: name, label: Payment, type: text, required: true }
+      - { field: partner_name, label: Partner, type: text }
+      - { field: payment_type, label: Payment Type, type: select, options: [Inbound, Outbound] }
+      - { field: amount, label: Amount, type: number, required: true }
+      - { field: journal, label: Journal, type: select, options: [Bank, Cash, Card, Miscellaneous], default: Bank }
+      - { field: payment_method, label: Payment Method, type: select, options: [Bank, Cash, Card, Other], default: Bank }
+      - { field: payment_date, label: Date, type: text, default: '2026-01-15' }
+      - { field: reference, label: Memo, type: text }

@@ -73,6 +73,10 @@ menu:
           label: Payments
           icon: bank
           permission: accounting.read
+        - path: /accounting/all-payments
+          label: All Payments
+          icon: bank
+          permission: accounting.read
         - path: /accounting/chart-of-accounts
           label: Chart of Accounts
           icon: ledger

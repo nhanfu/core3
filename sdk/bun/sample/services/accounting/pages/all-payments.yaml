@@ -1,0 +1,38 @@
+title: Payments
+page: { id: accounting-all-payments, route: /accounting/all-payments, breadcrumb: [Finance, Accounting, Payments], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_all_payments
+    create_action: create_accounting_all_payment
+    create_label: New
+    search: { label: Search payments, placeholder: Search payments... }
+    filters: [{ field: state, label: Status, options_source: all_payment_states }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: kanban, label: Kanban, icon: dashboard, mobile: true, group_by: state, groups_source: all_payment_states, card: { title: partner_name, subtitle: amount_display, fields: [{ field: name, label: Number }, { field: payment_date, label: Date }, { field: state, label: State }] } }
+      - { id: graph, label: Graph, icon: graph, category_field: journal, measure_field: amount, type: bar, mobile: false }
+      - id: activity
+        label: Activity
+        icon: activity
+        title_field: name
+        subtitle_field: partner_name
+        record_date_field: payment_date
+        mobile: false
+        activity_types: [{ id: todo, label: To-Do, icon: check }]
+    columns:
+      - { field: payment_date, label: Date, sortable: true }
+      - { field: name, label: Number, type: PrimaryEntityCell }
+      - { field: journal, label: Journal }
+      - { field: payment_method, label: Payment Method }
+      - { field: partner_name, label: Customer }
+      - { field: amount_display, label: Amount in Currency, align: right }
+      - { field: amount, label: Amount, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_accounting_all_payment
+    row_double_click_action: view_accounting_all_payment
+    row_actions: menu
+    empty_state: { title: No payments found, description: Payments are used to register liquidity movements. }

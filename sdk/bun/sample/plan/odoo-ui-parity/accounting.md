@@ -1246,3 +1246,18 @@ frontend terminated before the browser pass with the exact environment error
 `sdk/bun/sample/vite.config.ts`; the backend listener then became unavailable
 (`curl: (7) Failed to connect to 127.0.0.1 port 3001`). No screenshot or full
 visual parity claim is made for this batch, and no images are committed.
+
+## All Payments bounded slice (2026-09-12)
+
+The Odoo journal dashboard exposes `account.action_account_all_payments`
+(`account.payment`) as the Payments action. Core3 adds the module-qualified
+`/accounting/all-payments` menu route with separate page/API YAML joined by
+`page.id`, deterministic posted inbound/outbound payment fixtures, read-only
+`accounting.read` access, and explicit empty, forbidden, transport, and stale
+write boundaries. The migration uses version `0.0.41` and is idempotent; the
+focused suite passes 3 tests with 14 assertions.
+
+An authenticated desktop/mobile comparison was attempted under
+`/tmp/core3-odoo-parity/accounting-batch6-20260912/`, but the isolated runtime
+was unavailable before the browser pass. No authenticated Core3 screenshot or
+full visual-parity claim is made, and images are not committed.
