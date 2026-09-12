@@ -8,6 +8,7 @@ import { YamlRepository } from '@core3/server/database/yaml-repository';
 
 const serviceRoot = join(import.meta.dir, '../services/base');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
+const detailApi = yaml('api/country-detail.yaml');
 
 describe('Base Countries parity', () => {
   test('binds the Localization menu and page/API fragments by page.id', () => {
@@ -20,10 +21,13 @@ describe('Base Countries parity', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     expect(page.page).toMatchObject({ id: 'countries', route: '/base-countries' });
     expect(api.page.id).toBe(page.page.id);
+    expect(yaml('pages/country-detail.yaml').datasources).toBeUndefined();
+    expect(detailApi.page.id).toBe('country-detail');
     expect(page.components[0]).toMatchObject({ type: 'ListView', source: 'countries' });
     expect(discovered.pageDatasources.get('countries')).toEqual(['countries']);
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/base-countries', page: 'countries', module: 'base' }),
+      expect.objectContaining({ path: '/base-country-detail', page: 'country-detail', module: 'base' }),
     ]));
   });
 
@@ -43,6 +47,14 @@ describe('Base Countries parity', () => {
     expect((await repository.querySource(source, { q: 'Vietnam', fixture_state: null }, 0, 80)).data).toEqual([{ code: 'VN', name: 'Vietnam', currency_code: 'VND' }]);
     expect((await repository.querySource(source, { q: null, fixture_state: 'empty' }, 0, 80)).data).toEqual([]);
     await expect(repository.querySource(source, { q: null, fixture_state: 'transport_error' }, 0, 80)).rejects.toMatchObject({ status: 503, code: 'BASE_COUNTRIES_UNAVAILABLE' });
+    const detail = detailApi.datasources[0];
+    expect((await repository.querySource(detail, { id: 'US', fixture_state: null }, 0, 1)).data).toEqual(expect.objectContaining({ code: 'US', phone_code: '+1', vat_label: 'Tax ID', states: 'California' }));
+    expect((await repository.querySource(detail, { id: 'missing', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
+    await expect(repository.querySource(detail, { id: 'US', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'BASE_COUNTRY_DETAIL_UNAVAILABLE' });
+    const edit = detailApi.actions[0].mutation;
+    await repository.executeMutation(edit, { id: 'US', values: { name: 'United States', currency_code: 'USD', phone_code: '+1', vat_label: 'Federal Tax ID', zip_required: true, state_required: true } });
+    expect((await repository.querySource(detail, { id: 'US', fixture_state: null }, 0, 1)).data).toEqual(expect.objectContaining({ vat_label: 'Federal Tax ID' }));
+    await expect(repository.executeMutation(edit, { id: 'missing', values: { name: 'Missing', currency_code: 'USD' } })).rejects.toMatchObject({ status: 404, code: 'BASE_COUNTRY_NOT_FOUND' });
     database.close();
   });
 
@@ -53,5 +65,6 @@ describe('Base Countries parity', () => {
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Country', 'Code']);
     expect(api.datasources[0].permission).toBe('base.reference.read');
     expect(api.actions).toEqual([expect.objectContaining({ id: 'view_country_from_localization', permission: 'base.reference.read' })]);
+    expect(detailApi.actions).toEqual([expect.objectContaining({ id: 'edit_country_detail', permission: 'base.reference.write' })]);
   });
 });

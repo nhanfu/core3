@@ -1,0 +1,19 @@
+page: { id: country-detail }
+datasources:
+  - id: country_detail
+    single: true
+    permission: base.reference.read
+    error_states: { transport_error: { status: 503, code: BASE_COUNTRY_DETAIL_UNAVAILABLE, message: Country details are temporarily unavailable. } }
+    query: "SELECT code, name, currency_code, phone_code, vat_label, zip_required, state_required, (SELECT COALESCE(string_agg(name, ', ' ORDER BY name), '') FROM base_states WHERE country_code = base_countries.code) AS states FROM base_countries WHERE code = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"
+actions:
+  - id: edit_country_detail
+    type: server_form
+    permission: base.reference.write
+    title: Edit country
+    action: base.reference.countries.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.country_detail
+    refresh: [country_detail]
+    mutation: { operation: update, table: base_countries, key_field: code, concurrency: false, fields: [name, currency_code, phone_code, vat_label, zip_required, state_required], required: [name, currency_code], guards: [{ query: "SELECT code FROM base_countries WHERE code = :id", status: 404, code: BASE_COUNTRY_NOT_FOUND, message: Country not found. }], result: { query: "SELECT * FROM base_countries WHERE code = :id" } }
+    fields: [{ field: name, label: Country, type: text, required: true }, { field: currency_code, label: Currency, type: text, required: true }, { field: phone_code, label: Phone Code, type: text }, { field: vat_label, label: VAT Label, type: text }, { field: zip_required, label: ZIP Required, type: checkbox }, { field: state_required, label: State Required, type: checkbox }]

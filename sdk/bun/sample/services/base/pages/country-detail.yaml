@@ -1,22 +1,14 @@
 title: Country
-page: { id: country-detail, breadcrumb: [Contacts, Configuration, Countries], auth: { require: [base.reference.read] } }
-datasources:
-  - { id: country_detail, single: true, permission: base.reference.read, query: "SELECT code, name, currency_code FROM base_countries WHERE code = :id" }
+page: { id: country-detail, route: /base-country-detail, breadcrumb: [Contacts, Configuration, Localization, Countries, Detail], auth: { require: [base.reference.read] } }
 components:
   - type: OdooFormView
     source: country_detail
     title_field: name
     header_actions: [{ id: edit_country_detail, label: Edit, variant: secondary, permission: base.reference.write }]
-    groups: [{ title: Country, fields: [{ field: code, label: Code }, { field: name, label: Country }, { field: currency_code, label: Currency }] }]
-actions:
-  - id: edit_country_detail
-    type: server_form
-    permission: base.reference.write
-    title: Edit country
-    action: base.reference.countries.update
-    handler: yaml_mutation
-    operation: update
-    prefill: state.country_detail
-    refresh: [country_detail]
-    mutation: { operation: update, table: base_countries, key_field: code, concurrency: false, fields: [name, currency_code], required: [name, currency_code] }
-    fields: [{ field: name, label: Country, type: text, required: true }, { field: currency_code, label: Currency, type: text, required: true }]
+    groups:
+      - title: Country
+        fields: [{ field: name, label: Country }, { field: currency_code, label: Currency }, { field: code, label: Code }]
+      - title: Phone and VAT
+        fields: [{ field: phone_code, label: Phone Code }, { field: vat_label, label: VAT Label }, { field: zip_required, label: ZIP Required }, { field: state_required, label: State Required }]
+      - title: States
+        fields: [{ field: states, label: States }]

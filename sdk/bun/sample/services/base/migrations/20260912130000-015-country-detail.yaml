@@ -1,0 +1,19 @@
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE base_countries ADD COLUMN IF NOT EXISTS phone_code VARCHAR;
+      ALTER TABLE base_countries ADD COLUMN IF NOT EXISTS vat_label VARCHAR;
+      ALTER TABLE base_countries ADD COLUMN IF NOT EXISTS zip_required BOOLEAN;
+      ALTER TABLE base_countries ADD COLUMN IF NOT EXISTS state_required BOOLEAN;
+      UPDATE base_countries SET phone_code = CASE code WHEN 'US' THEN '+1' WHEN 'VN' THEN '+84' WHEN 'DE' THEN '+49' ELSE NULL END, vat_label = CASE code WHEN 'US' THEN 'Tax ID' WHEN 'VN' THEN 'Tax Code' WHEN 'DE' THEN 'VAT' ELSE NULL END, zip_required = code IN ('US', 'DE'), state_required = code IN ('US', 'DE');
+    down: |
+      ALTER TABLE base_countries DROP COLUMN IF EXISTS phone_code;
+      ALTER TABLE base_countries DROP COLUMN IF EXISTS vat_label;
+      ALTER TABLE base_countries DROP COLUMN IF EXISTS zip_required;
+      ALTER TABLE base_countries DROP COLUMN IF EXISTS state_required;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
