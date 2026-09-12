@@ -1,0 +1,15 @@
+version: 0.0.23
+kind: data
+description: eCommerce abandoned cart demo data
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_abandoned_carts (id, cart_number, customer_name, customer_email, item_count, amount_total, currency, abandoned_at) VALUES
+        ('ecommerce-cart-001', 'CART/2026/0001', 'Acme Corporation', 'buyer@acme.example', 2, 267.00, 'USD', TIMESTAMP '2026-09-09 11:30:00'),
+        ('ecommerce-cart-002', 'CART/2026/0002', 'Nguyen Workspace', 'hello@workspace.example', 1, 46.50, 'USD', TIMESTAMP '2026-09-10 16:45:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_abandoned_carts WHERE id IN ('ecommerce-cart-001', 'ecommerce-cart-002');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

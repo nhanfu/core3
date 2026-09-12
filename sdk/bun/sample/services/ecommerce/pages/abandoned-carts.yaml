@@ -1,0 +1,20 @@
+page: { id: ecommerce-abandoned-carts, route: /ecommerce/abandoned-carts, breadcrumb: [eCommerce, Orders, Abandoned Carts], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_abandoned_carts
+    responsive_card: true
+    search: { label: Search abandoned carts, placeholder: Search cart or customer... }
+    columns:
+      - { field: cart_number, label: Cart, type: PrimaryEntityCell }
+      - { field: customer_name, label: Customer }
+      - { field: item_count, label: Items, align: right }
+      - { field: amount_total, label: Total, align: right }
+      - { field: currency, label: Currency }
+      - { field: abandoned_at, label: Abandoned On }
+      - { field: state, label: Status, type: StatusChip }
+    row_open_action: view_ecommerce_abandoned_cart
+    row_double_click_action: view_ecommerce_abandoned_cart
+    page_size: 50
+    row_key: id
+    empty_state: { title: No abandoned carts, description: Carts left without checkout appear here. }

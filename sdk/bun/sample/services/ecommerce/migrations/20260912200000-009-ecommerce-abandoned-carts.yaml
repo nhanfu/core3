@@ -1,0 +1,24 @@
+version: 0.0.22
+kind: schema
+description: eCommerce abandoned carts
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_abandoned_carts (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        cart_number VARCHAR NOT NULL,
+        customer_name VARCHAR NOT NULL,
+        customer_email VARCHAR,
+        item_count INTEGER NOT NULL DEFAULT 0,
+        amount_total DECIMAL(12,2) NOT NULL DEFAULT 0,
+        currency VARCHAR NOT NULL DEFAULT 'USD',
+        abandoned_at TIMESTAMP NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Abandoned'
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_abandoned_carts_number_idx ON ecommerce_abandoned_carts(cart_number);
+    down: DROP TABLE IF EXISTS ecommerce_abandoned_carts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

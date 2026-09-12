@@ -1,0 +1,11 @@
+page: { id: ecommerce-abandoned-carts }
+datasources:
+  - id: ecommerce_abandoned_carts
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_ABANDONED_CARTS_UNAUTHENTICATED, message: Sign in to view abandoned carts. }
+      forbidden: { status: 403, code: ECOMMERCE_ABANDONED_CARTS_FORBIDDEN, message: You do not have permission to view abandoned carts. }
+      transport_error: { status: 503, code: ECOMMERCE_ABANDONED_CARTS_UNAVAILABLE, message: Abandoned carts are temporarily unavailable. }
+    query: "SELECT id, row_version, cart_number, customer_name, customer_email, item_count, amount_total, currency, CAST(abandoned_at AS VARCHAR) AS abandoned_at, state FROM ecommerce_abandoned_carts WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR cart_number ILIKE '%' || :q || '%' OR customer_name ILIKE '%' || :q || '%' OR COALESCE(customer_email, '') ILIKE '%' || :q || '%') ORDER BY abandoned_at DESC, cart_number"
+actions:
+  - { id: view_ecommerce_abandoned_cart, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/abandoned-carts/detail, params: { id: '{row.id}' } }
