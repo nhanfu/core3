@@ -39,10 +39,9 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
 
 ## Remaining blockers
 
-- Browser Save is blocked by a shared Core3 runtime defect: generic `server`
-  page actions do not pass `SettingsView` draft fields as `values`, and the
-  mutation endpoint replaces scalar fields with an empty `values` object.
-  Fixing that requires a shared client/server change outside inventory scope.
+- Browser Save now passes through the shared mutation transport: the generic
+  server action includes the SettingsView draft as `values`, and an
+  authenticated Save followed by reload preserved the changed checkbox.
 - Odoo paired Settings screenshots were not captured because the local
   reference credentials/session were not available in this run.
 - Literal `schema.yaml` / `demo.yaml` migration consolidation is blocked by

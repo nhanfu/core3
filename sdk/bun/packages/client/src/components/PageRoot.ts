@@ -511,6 +511,10 @@ export class PageRuntime extends BaseComponent {
             id: row?.id ?? null,
             expected_row_version: row?.row_version,
             ...(Array.isArray(row?.selectedIds) ? { selectedIds: row.selectedIds } : {}),
+            // YAML mutations consume editable fields from the explicit
+            // `values` envelope. This also keeps SettingsView's draft fields
+            // intact when a generic server action is submitted.
+            ...(actionDef.mutation && row && typeof row === 'object' ? { values: row } : {}),
             ...resolveActionParams(actionDef.params, rowCtx),
           });
           if (actionDef.result === 'alert') {
