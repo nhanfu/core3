@@ -1,0 +1,23 @@
+page: { id: accounting-cash-register-detail }
+datasources:
+  - id: accounting_cash_register_detail
+    single: true
+    permission: accounting.read
+    error_states: { forbidden: { status: 403, code: ACCOUNTING_CASH_REGISTER_DETAIL_FORBIDDEN, message: You do not have access to this cash register. }, transport_error: { status: 503, code: ACCOUNTING_CASH_REGISTER_DETAIL_UNAVAILABLE, message: Cash register details are temporarily unavailable. } }
+    query: "SELECT id, row_version, reference, date, strftime(date, '%b') || ' ' || CAST(EXTRACT(DAY FROM date) AS VARCHAR) AS date_display, journal, company, currency, starting_balance, ending_balance, line_numbers, CASE WHEN is_complete THEN 'Yes' ELSE 'No' END AS is_complete_label, CASE WHEN is_valid THEN 'Yes' ELSE 'No' END AS is_valid_label, problem_description, attachment_name, attachment_type, attachment_size FROM accounting_cash_registers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND id = :id"
+actions:
+  - id: update_accounting_cash_register
+    type: server
+    permission: accounting.write
+    action: accounting.cash_registers.update
+    handler: yaml_mutation
+    operation: update
+    mutation: { operation: update, table: accounting_cash_registers, fields: [reference, date, starting_balance, ending_balance], required: [reference, date], result: { query: "SELECT * FROM accounting_cash_registers WHERE id = :id" } }
+  - id: delete_accounting_cash_register
+    type: server
+    permission: accounting.write
+    action: accounting.cash_registers.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [accounting_cash_registers]
+    mutation: { operation: delete, table: accounting_cash_registers }

@@ -1,0 +1,44 @@
+title: Cash Registers
+page: { id: accounting-cash-registers, route: /accounting/cash-registers, breadcrumb: [Finance, Accounting, Cash Registers], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_cash_registers
+    search: { label: Search Statements, placeholder: Search Statements... }
+    filters:
+      - { field: statement_filter, label: Filters, options: [{ id: empty, label: Empty }, { id: invalid, label: Invalid }] }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields: [{ field: statement_month, column: Date }, { field: starting_balance, column: Starting Balance }, { field: ending_balance, column: Ending Balance }]
+          default: { rows: [statement_month], measures: [{ field: starting_balance, aggregate: sum, column: Starting Balance }, { field: ending_balance, aggregate: sum, column: Ending Balance }] }
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: statement_month
+        measure_field: ending_balance
+        measure_label: Ending Balance
+        type: line
+    create_label: New
+    selectable: true
+    column_chooser: true
+    columns:
+      - { field: reference, label: Reference, type: PrimaryEntityCell }
+      - { field: date_display, label: Date }
+      - { field: journal, label: Journal }
+      - { field: company, label: Company }
+      - { field: starting_balance_display, label: Starting Balance, align: right }
+      - { field: ending_balance_display, label: Ending Balance, align: right }
+    page_size: 50
+    row_key: id
+    row_open_action: view_accounting_cash_register
+    row_double_click_action: view_accounting_cash_register
+    row_actions: menu
+    responsive_card: true
+    empty_state: { title: Create a new cash log, description: A Cash Register allows you to manage cash entries in your cash journals. This feature provides an easy way to follow up cash payments on a daily basis. }

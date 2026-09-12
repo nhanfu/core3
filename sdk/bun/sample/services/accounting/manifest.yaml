@@ -93,6 +93,10 @@ menu:
           label: Bank Statements
           icon: bank
           permission: accounting.read
+        - path: /accounting/cash-registers
+          label: Cash Registers
+          icon: bank
+          permission: accounting.read
         - path: /accounting/reconciliation
           label: Reconciliation
           icon: bank
