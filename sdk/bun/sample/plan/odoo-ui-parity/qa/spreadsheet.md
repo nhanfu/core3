@@ -14,6 +14,8 @@ Module owner: spreadsheet module owner
 Verification trigger: feature-complete
 Candidate commit: none
 
+Detailed execution matrix: [`test-plans/spreadsheet.md`](test-plans/spreadsheet.md). It is the module-level source for dashboards, workbook runtime, sharing, actors, persistence, Temporal, and paired Odoo gates.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
