@@ -10,9 +10,10 @@ Candidate commit: current working tree
 
 The focused Timesheets suite passes 26 tests across 8 files with 273
 assertions. The initial authenticated matrix covered 13 routes at desktop and
-mobile; Timesheet Analysis exposed a missing API pivot declaration, which was
-fixed by adding `pivot.fields` and reverified with authenticated Pivot/Graph/List
-rendering without failures. A fresh authenticated mutation smoke also completed
+mobile; an isolated fresh-page rerun now passes 26/26 route checks with valid
+detail IDs and no page/request errors or horizontal overflow. Timesheet Analysis
+exposed a missing API pivot declaration, which was fixed by adding `pivot.fields`
+and reverified with authenticated Pivot/Graph/List rendering without failures. A fresh authenticated mutation smoke also completed
 Draft -> Submitted -> Approved, with approval dispatching the Project-owned
 hours mutation after assigning its cross-module inputs from the submitted row.
 Full parameterized route coverage, role-specific permissions, broader CRUD
