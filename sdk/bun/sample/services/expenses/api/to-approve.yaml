@@ -1,0 +1,27 @@
+page: { id: expenses-to-approve }
+datasources:
+  - id: expense_approval_departments
+    single: false
+    permission: expenses.read
+    query: "SELECT DISTINCT department_name AS value, department_name AS label FROM expenses WHERE state = 'Submitted' AND department_name IS NOT NULL ORDER BY department_name"
+  - id: expenses_department_to_approve
+    single: false
+    permission: expenses.read
+    workflow: expense_items
+    error_states: { transport_error: { status: 503, code: EXPENSE_DEPARTMENT_APPROVAL_UNAVAILABLE, message: Department expense approval data is temporarily unavailable } }
+    query: |
+      SELECT e.id, e.row_version, e.name, e.employee_name, e.department_name, e.category,
+        CAST(e.expense_date AS VARCHAR) AS expense_date, e.amount,
+        printf('$%,.2f', e.amount) AS amount_display, e.payment_method AS payment_mode,
+        CASE e.payment_method WHEN 'Company' THEN 'Paid by Company' ELSE 'Paid by Employee' END AS payment_mode_label,
+        e.receipt_label, e.company_name, e.state AS status
+      FROM expenses e
+      WHERE e.state = 'Submitted'
+        AND e.department_name = COALESCE(NULLIF(:department_name, ''), 'Sales')
+        AND (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%')
+        AND (:payment_mode IS NULL OR e.payment_method = :payment_mode)
+      ORDER BY e.expense_date ASC, e.id
+actions:
+  - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
+  - { id: approve_department_expense, type: server, permission: expenses.manage, action: expenses.approve, handler: yaml_mutation, operation: approve, mutation: { guards: [{ query: "SELECT id FROM expenses WHERE id = :id AND state = 'Submitted' AND NULLIF(TRIM(receipt_reference), '') IS NOT NULL", status: 409, message: Attach a receipt before approving this expense }], steps: [{ query: "UPDATE expenses SET state = 'Approved', row_version = row_version + 1 WHERE id = :id" }, { query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.approve', 'Approved', 'Approved from department queue')" }], result: { query: "SELECT * FROM expenses WHERE id = :id" } }, refresh: [expenses_department_to_approve] }
+  - { id: refuse_department_expense, type: server_form, permission: expenses.manage, action: expenses.refuse, handler: yaml_mutation, operation: refuse, title: Refuse Expense, fields: [{ field: reason, label: Reason, type: text, required: true, placeholder: Explain why this expense is being refused... }], mutation: { steps: [{ query: "UPDATE expenses SET state = 'Refused', refusal_reason = :reason, row_version = row_version + 1 WHERE id = :id AND state = 'Submitted'", expect_changed: true, status: 409, message: Only submitted expenses can be refused }, { query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.refuse', 'Refused', :reason)" }], result: { query: "SELECT * FROM expenses WHERE id = :id" } }, refresh: [expenses_department_to_approve] }

@@ -461,3 +461,15 @@ capture attempts were blocked by `ERR_CONNECTION_REFUSED`: startup aborts in
 because its permission differs from the workflow transition, leaving no
 backend listener on port 3001 and no valid Core3 visual-parity claim. The
 temporary Playwright install and all screenshots remain outside Git.
+
+## Department approval follow-up (2026-09-12)
+
+Batch 6 implements the next unrepresented source action,
+`action_hr_expense_department_to_approve`, as the explicit scoped route
+`/expenses/to-approve`. It preserves submitted-only ordering, department
+selection/default scope, shared list/kanban/pivot views, receipt-gated approval,
+reasoned refusal, permission metadata, and deterministic empty/error fixtures.
+The department-scoped graph/pivot action remains separately deferred. See
+[expenses-batch-6.md](expenses-batch-6.md) for the source contract and exact
+reference limitation: the primary Odoo addon is uninstalled, so no visual
+capture is claimed.

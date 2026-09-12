@@ -1,0 +1,39 @@
+title: Expense to Approve
+page: { id: expenses-to-approve, route: /expenses/to-approve, breadcrumb: [Expenses, My Expenses, Expense to Approve], auth: { require: [expenses.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: expenses_department_to_approve
+    search: { label: Search department expenses, placeholder: 'Search expense, employee, or category...' }
+    filters:
+      - { field: department_name, label: Department, options_source: expense_approval_departments }
+      - { field: payment_mode, label: Paid by, options_source: expense_payment_modes }
+    group_by:
+      - { field: employee_name, label: Employee }
+      - { field: category, label: Category }
+      - { field: expense_date, label: Expense Date }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: employee_name, card: { title: name, subtitle: employee_name, fields: [{ field: category, label: Category }, { field: amount_display, label: Total }, { field: status, label: Status }] } }
+      - { id: pivot, label: Pivot, icon: pivot, pivot: { fields: [{ field: employee_name, column: Employee }, { field: expense_date, column: Expense Date }, { field: amount, column: Total }], default: { rows: [employee_name], columns: [expense_date], measures: [{ field: amount, aggregate: sum, column: Total }] } } }
+      - { id: graph, label: Graph, icon: graph, category_field: employee_name, measure_field: amount }
+    page_size: 25
+    column_chooser: true
+    selectable: true
+    row_key: id
+    row_actions: menu
+    row_double_click_action: view_expense_detail
+    empty_state: { title: No expenses to approve, description: Submitted expenses in this department will appear here. }
+    labels: { selected: selected, filters: Filters, columns: Columns, clear_selection: Clear selection, select_all: Select all, select_row: Select row, previous_page: Previous page, next_page: Next page }
+    columns:
+      - { field: name, label: Expense, type: PrimaryEntityCell, sortable: true }
+      - { field: employee_name, label: Employee }
+      - { field: department_name, label: Department, optional: hide }
+      - { field: category, label: Category }
+      - { field: expense_date, label: Expense Date, sortable: true }
+      - { field: amount_display, label: Total, align: right }
+      - { field: receipt_label, label: Receipt, optional: hide }
+      - { field: payment_mode_label, label: Paid by, optional: hide }
+      - { field: status, label: Status, type: StatusChip }
+      - { field: actions, label: '', align: right, actions: [{ id: approve_department_expense, label: Approve, variant: primary, permission: expenses.manage, show_if: "row.status === 'Submitted'" }, { id: refuse_department_expense, label: Refuse, variant: danger, permission: expenses.manage, show_if: "row.status === 'Submitted'" }] }

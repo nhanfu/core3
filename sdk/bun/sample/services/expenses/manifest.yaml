@@ -22,6 +22,10 @@ menu:
           label: Expenses to Process
           icon: checklist
           permission: expenses.read
+        - path: /expenses/to-approve
+          label: Expense to Approve
+          icon: checklist
+          permission: expenses.read
         - path: /expenses/employee
           label: Employee Expenses
           icon: people
