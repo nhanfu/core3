@@ -911,3 +911,23 @@ the authenticated live addon status query, and Markdown whitespace validation.
   and focused test), `945d344d` (visual Kanban refinement), and the separate
   documentation/evidence commit recorded after this entry. The focused suite
   is `test/manufacturing_product_variants.integration.test.ts`.
+
+## Work Orders performance report bounded slice (2026-09-12)
+
+The selected Work Center action is the Odoo Work Orders performance report:
+Core3 adds `/manufacturing/work-orders-performance` with graph, pivot, list,
+and read-only form modes. The query is scoped to the active work center and
+completed work orders, with deterministic fixtures and explicit
+`manufacturing.read` access. The focused integration test passes 2 tests and
+16 assertions.
+
+Authenticated captures for the performance report were saved at both required
+viewports under `/tmp/core3-odoo-parity/manufacturing-next-20260912/`, including
+`core3-performance-desktop-1440x900-final.png`,
+`core3-performance-mobile-390x844-final.png`,
+`odoo-performance-desktop-1440x900.png`, and
+`odoo-performance-mobile-390x844.png`. Images remain outside Git. The source
+action and bounded report surface were verified; the live reference had no
+completed rows for the selected report, so no populated-result parity is
+claimed. The remaining visual difference is the shared Core3 Fluent shell
+versus Odoo's purple shell.
