@@ -8,7 +8,7 @@ datasources:
       forbidden: { status: 403, code: LIVECHAT_CHANNEL_DETAIL_FORBIDDEN, message: You do not have permission to view this Live Chat channel. }
       transport_error: { status: 503, code: LIVECHAT_CHANNEL_DETAIL_UNAVAILABLE, message: Live Chat channel details are temporarily unavailable. }
     query: |
-      SELECT id, row_version, name, website_name, active, joined, session_count,
+      SELECT id, row_version, sequence, name, website_name, active, joined, session_count,
         rating_percentage, operator_names, language_names, expertise_names,
         ongoing_sessions, notification_text, button_color, welcome_message,
         window_color, review_link, session_limit_label, limited_sessions_label,

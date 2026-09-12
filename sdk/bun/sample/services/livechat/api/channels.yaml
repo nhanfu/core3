@@ -7,7 +7,7 @@ datasources:
       forbidden: { status: 403, code: LIVECHAT_CHANNELS_FORBIDDEN, message: You do not have permission to view Live Chat channels. }
       transport_error: { status: 503, code: LIVECHAT_CHANNELS_UNAVAILABLE, message: Live Chat channels are temporarily unavailable. }
     query: |
-      SELECT id, row_version, name, website_name, active, joined, session_count,
+      SELECT id, row_version, sequence, name, website_name, active, joined, session_count,
         rating_percentage, operator_names, language_names, expertise_names,
         ongoing_sessions, notification_text, button_color, welcome_message,
         window_color, review_link, session_limit_label, limited_sessions_label,
@@ -25,7 +25,7 @@ datasources:
       FROM livechat_channels
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN FALSE ELSE TRUE END = TRUE
         AND (:q IS NULL OR name ILIKE '%' || :q || '%')
-      ORDER BY name, id
+      ORDER BY sequence NULLS LAST, id
 
 actions:
   - id: create_livechat_channel
@@ -44,6 +44,7 @@ actions:
       required: [name]
       defaults:
         active: true
+        sequence: 10
         website_name: Your Website
         button_text: Have a question?
         welcome_message: Hello, how can we help you today?

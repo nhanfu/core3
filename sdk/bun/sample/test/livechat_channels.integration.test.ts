@@ -42,7 +42,8 @@ describe('Live Chat channels parity', () => {
 
     const source = yaml('api/channels.yaml').datasources[0];
     const rows = await repository.querySource(source, { q: null, fixture_state: null }, 0, 50);
-    expect(rows.data.map((row: any) => row.name)).toEqual(['Support', 'YourWebsite.com']);
+    expect(rows.data.map((row: any) => row.name)).toEqual(['YourWebsite.com', 'Support']);
+    expect(rows.data.map((row: any) => row.sequence)).toEqual([10, 20]);
     expect(rows.data.find((row: any) => row.name === 'YourWebsite.com')).toMatchObject({
       session_count: 18, rating_percentage: 81, joined: true, session_summary: '18 Sessions', rating_summary: '81% Happy', join_label: 'Leave',
     });
