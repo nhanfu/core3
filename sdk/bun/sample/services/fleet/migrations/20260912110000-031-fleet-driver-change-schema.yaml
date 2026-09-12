@@ -1,0 +1,14 @@
+version: 0.0.31
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE fleet_vehicles ADD COLUMN IF NOT EXISTS future_driver_name VARCHAR;
+      ALTER TABLE fleet_vehicles ADD COLUMN IF NOT EXISTS next_assignation_date DATE;
+    down: |
+      ALTER TABLE fleet_vehicles DROP COLUMN IF EXISTS future_driver_name;
+      ALTER TABLE fleet_vehicles DROP COLUMN IF EXISTS next_assignation_date;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

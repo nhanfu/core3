@@ -7,6 +7,8 @@ components:
     status_field: state
     statusbar: [{ value: Available, label: Available }, { value: Assigned, label: Assigned }, { value: Maintenance, label: Maintenance }, { value: Retired, label: Retired }]
     status_colors: { Available: green, Assigned: blue, Maintenance: amber, Retired: red }
+    header_actions:
+      - { id: action_accept_driver_change, label: Apply New Driver, variant: primary, permission: fleet.write, show_if: "state.future_driver_name" }
     group_columns: 2
     stat_buttons:
       - { id: open_fleet_vehicle_assignment_logs, label: Drivers History, value_field: assignment_count, permission: fleet.read }
@@ -14,4 +16,4 @@ components:
       - title: Vehicle
         fields: [{ field: name, label: Vehicle }, { field: state, label: Status }, { field: license_plate, label: License plate }, { field: vehicle_type, label: Type }, { field: model, label: Model }, { field: manufacturer, label: Manufacturer }]
       - title: Assignment and records
-        fields: [{ field: driver_name, label: Driver }, { field: odometer, label: Odometer }, { field: fuel_type, label: Fuel }, { field: acquisition_date, label: Acquisition date }, { field: contract_end_date, label: Contract end date }]
+        fields: [{ field: driver_name, label: Driver }, { field: future_driver_name, label: Future Driver }, { field: next_assignation_date, label: Assignment Date }, { field: odometer, label: Odometer }, { field: fuel_type, label: Fuel }, { field: acquisition_date, label: Acquisition date }, { field: contract_end_date, label: Contract end date }]

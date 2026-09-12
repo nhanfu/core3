@@ -741,3 +741,48 @@ No fresh paired browser capture is claimed for this slice: the active Odoo
 reference does not have the Fleet addon installed, so the source action and
 authenticated visual workflow cannot be validated there. The implementation
 remains source-bounded and the screenshot gate is intentionally open.
+
+## Apply New Driver vehicle state checkpoint (2026-09-12)
+
+The bounded batch-7 selection is the uncovered vehicle-form state behind the
+Odoo button `Apply New Driver`, source method
+`fleet.vehicle.action_accept_driver_change`. The pinned addon defines this as
+an object action in `fleet_vehicle_views.xml`, visible only when
+`future_driver_id` is present; it promotes the future driver to the current
+driver and clears the future-driver plan. This is distinct from the excluded
+Drivers History stat action.
+
+The requested live audit at `http://localhost:8073` authenticated successfully
+against `core3_codex_demo_20260912`, but `ir.module.module` reported Fleet as
+`uninstalled`, so the Fleet menu/action could not be opened in the live
+database. Source XML/Python inspection was therefore used for the exact action
+contract, and this limitation is not presented as live Odoo visual parity.
+
+Core3 keeps the existing separate `vehicle-detail` page/API `page.id` pair and
+adds the exact `Apply New Driver` header action, future-driver and assignment
+date fields, and a service-owned mutation. Migrations
+`20260912110000-031-fleet-driver-change-schema.yaml` and
+`20260912111000-032-fleet-driver-change-data.yaml` add the deterministic
+future-driver state to `City Bike 02`, using the fixed reference date and an
+idempotent update. The mutation requires `fleet.write`, uses row-version
+checking, promotes the driver, clears the plan, and returns explicit
+`404 FLEET_VEHICLE_NOT_FOUND`, `409 FLEET_DRIVER_CHANGE_NOT_PLANNED`, and
+stale-record responses. Empty/not-found/transport datasource behavior remains
+owned by the paired vehicle detail API contract.
+
+Focused coverage: `bun test test/fleet_driver_change.integration.test.ts` — 2
+tests, 15 assertions. `bun run audit` passes with 565 pages, 572 routes, and
+978 datasources; ESLint, Fleet Sass, and `git diff --check` pass.
+
+Capture attempt: `/tmp/core3-odoo-parity/fleet-batch7-20260912/` was created,
+but no images are claimed or stored. Odoo could not expose Fleet because the
+addon is uninstalled. Core3's authenticated browser capture was attempted
+after a production asset build, but the isolated runtime could not start: the
+dev Vite watcher hit the host `EMFILE` file-descriptor limit, while the direct
+built server lacked its durable auth database. The paired desktop/mobile
+visual gate remains honestly open; no images were added to Git.
+
+This source object action has no independent create/delete/archive CRUD in
+Odoo; those operations remain intentionally absent, while the applicable
+update, empty, not-found, transport, permission, and stale-write contracts are
+covered.

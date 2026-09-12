@@ -1,0 +1,12 @@
+version: 0.0.32
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE fleet_vehicles SET future_driver_name = 'Doris Cole', next_assignation_date = DATE '2026-02-01', updated_at = TIMESTAMP '2026-01-15 00:00:00' WHERE id = 'fleet-demo-002';
+    down: |
+      UPDATE fleet_vehicles SET future_driver_name = NULL, next_assignation_date = NULL WHERE id = 'fleet-demo-002';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
