@@ -1,0 +1,23 @@
+version: 0.0.17
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_marketing_settings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        group_mass_mailing_campaign BOOLEAN NOT NULL DEFAULT false,
+        mass_mailing_split_contact_name BOOLEAN NOT NULL DEFAULT false,
+        show_blacklist_buttons BOOLEAN NOT NULL DEFAULT true,
+        mass_mailing_reports BOOLEAN NOT NULL DEFAULT false,
+        mass_mailing_outgoing_mail_server BOOLEAN NOT NULL DEFAULT false,
+        mass_mailing_mail_server_name VARCHAR NOT NULL DEFAULT 'Default Server'
+      );
+      INSERT INTO email_marketing_settings (id, row_version, group_mass_mailing_campaign, mass_mailing_split_contact_name, show_blacklist_buttons, mass_mailing_reports, mass_mailing_outgoing_mail_server, mass_mailing_mail_server_name)
+      VALUES ('email-marketing-settings', 1, true, false, true, true, false, 'Default Server')
+      ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS email_marketing_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

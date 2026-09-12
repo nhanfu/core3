@@ -687,3 +687,32 @@ Screenshots remain outside Git.
 Core3 adds the Odoo UTM Campaign Stages configuration action at `/email-marketing/campaign-stages`, with a detail form, page/API YAML joined by `page.id`, deterministic New/Schedule/Design/Sent rows, and manager-only CRUD with stale, duplicate, invalid, missing, and transport boundaries. The focused test passes 3 tests and 27 assertions.
 
 Authenticated paired captures are saved outside Git under `/tmp/core3-odoo-parity/email-marketing-next-20260912/` at 1440x900 and 390x844. The browser pass covered list, search, form, create/update/delete, request failures, page errors, and viewport overflow. Remaining differences are the shared Core3 Fluent shell versus Odoo's purple shell and deterministic fixture volume versus the live reference.
+
+## Email Marketing Settings bounded slice (2026-09-12)
+
+The next uncovered source-backed action is Odoo
+`action_mass_mailing_configuration` (`res.config.settings`, `form`), exposed
+from Configuration → Settings by `menu_mass_mailing_global_settings`. The
+source form in `addons/mass_mailing/views/res_config_settings_views.xml` is
+system-only and contains the Email Marketing app settings for Mailing
+Campaigns, Contact Naming, recipient blacklist controls, Mailing Reports, and
+the conditional dedicated outgoing mail server.
+
+Core3 adds the exact menu action at `/email-settings` with a full-width
+Odoo-style `SettingsView`. The presentation lives in
+`services/email-marketing/pages/settings.yaml`; its API datasource and save
+mutation live in `services/email-marketing/api/settings.yaml` and join by
+`page.id: email-settings`. Permission `email_marketing.settings` models the
+source `base.group_system` boundary. Migration
+`20260912130000-017-email-settings.yaml` seeds one fixed settings row with
+stable booleans, server label, and row version. The focused contract includes
+idempotent fixtures, empty/503/403 states, save, invalid values, missing row,
+and stale row-version errors in
+`test/email_marketing_settings.integration.test.ts`.
+
+Focused validation uses the repository's Bun test runner and passes 3 tests
+with 15 assertions after validating the single-record datasource shape and
+idempotent migration. An authenticated Odoo/Core3 browser comparison was not
+completed in this batch because the isolated runtime was unavailable before
+the browser pass. No screenshot or full visual-parity claim is made, and no
+images are committed.

@@ -1,0 +1,23 @@
+title: Email Marketing Settings
+page: { id: email-settings, route: /email-settings, auth: { require: [email_marketing.settings] } }
+components:
+  - type: SettingsView
+    id: email-marketing-settings-view
+    source: email_marketing_settings
+    title: Settings
+    save_action: save_email_marketing_settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: email-marketing
+        label: Email Marketing
+        icon: mail
+        sections:
+          - title: Email Marketing
+            fields:
+              - { field: group_mass_mailing_campaign, label: Mailing Campaigns, description: This tool is advised if your marketing campaign is composed of several emails., type: checkbox }
+              - { field: mass_mailing_split_contact_name, label: Contact Naming, description: Separate Mailing Contact Names into two fields, type: checkbox }
+              - { field: show_blacklist_buttons, label: Allow recipients to blacklist themselves, description: Allow the recipient to manage themselves their state in the blacklist via the unsubscription page., type: checkbox }
+              - { field: mass_mailing_reports, label: Mailing Reports, description: Send a report to the mailing responsible one day after the mailing has been sent., type: checkbox }
+              - { field: mass_mailing_outgoing_mail_server, label: Dedicated Server, description: Use a specific mail server in priority. Otherwise Odoo relies on the first outgoing mail server available (based on their sequencing) as it does for normal mails., type: checkbox }
+              - { field: mass_mailing_mail_server_name, label: Default Server, description: Dedicated outgoing mail server for mass mailings., type: text, show_if: "mass_mailing_outgoing_mail_server === true" }
+              - { field: configure_outgoing_mail_servers, label: Configure Outgoing Mail Servers, description: Configure outgoing mail servers used by Email Marketing., type: info, action_label: Configure, show_if: "mass_mailing_outgoing_mail_server === true" }

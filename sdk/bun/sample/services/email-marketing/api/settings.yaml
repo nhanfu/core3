@@ -1,0 +1,37 @@
+page: { id: email-settings }
+datasources:
+  - id: email_marketing_settings
+    single: true
+    permission: email_marketing.settings
+    error_states:
+      transport_error: { status: 503, code: EMAIL_MARKETING_SETTINGS_UNAVAILABLE, message: Email Marketing settings are temporarily unavailable. }
+      forbidden: { status: 403, code: EMAIL_MARKETING_SETTINGS_FORBIDDEN, message: You do not have access to Email Marketing settings. }
+    query: "SELECT id, row_version, group_mass_mailing_campaign, mass_mailing_split_contact_name, show_blacklist_buttons, mass_mailing_reports, mass_mailing_outgoing_mail_server, mass_mailing_mail_server_name FROM email_marketing_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = 'email-marketing-settings'"
+actions:
+  - id: save_email_marketing_settings
+    type: server_form
+    permission: email_marketing.settings
+    title: Save Email Marketing Settings
+    action: mass_mailing.settings.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [email_marketing_settings]
+    mutation:
+      operation: update
+      table: email_marketing_settings
+      key_field: id
+      fields: [group_mass_mailing_campaign, mass_mailing_split_contact_name, show_blacklist_buttons, mass_mailing_reports, mass_mailing_outgoing_mail_server, mass_mailing_mail_server_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_marketing_settings WHERE id = :id", status: 404, code: EMAIL_MARKETING_SETTINGS_NOT_FOUND, message: Email Marketing settings were not found. }
+        - { query: "SELECT id FROM email_marketing_settings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: EMAIL_MARKETING_SETTINGS_STALE, message: Email Marketing settings changed elsewhere. Reload before saving. }
+        - { query: "SELECT 1 AS ok FROM email_marketing_settings WHERE id = :id AND CAST(:group_mass_mailing_campaign AS BOOLEAN) IS NOT NULL AND CAST(:mass_mailing_split_contact_name AS BOOLEAN) IS NOT NULL AND CAST(:show_blacklist_buttons AS BOOLEAN) IS NOT NULL AND CAST(:mass_mailing_reports AS BOOLEAN) IS NOT NULL AND CAST(:mass_mailing_outgoing_mail_server AS BOOLEAN) IS NOT NULL", status: 422, code: EMAIL_MARKETING_SETTINGS_INVALID, message: Email Marketing settings values must be boolean. }
+      result: { query: "SELECT * FROM email_marketing_settings WHERE id = :id" }
+    fields:
+      - { field: group_mass_mailing_campaign, label: Mailing Campaigns, type: checkbox }
+      - { field: mass_mailing_split_contact_name, label: Contact Naming, type: checkbox }
+      - { field: show_blacklist_buttons, label: Allow recipients to blacklist themselves, type: checkbox }
+      - { field: mass_mailing_reports, label: Mailing Reports, type: checkbox }
+      - { field: mass_mailing_outgoing_mail_server, label: Dedicated Server, type: checkbox }
+      - { field: mass_mailing_mail_server_name, label: Default Server, type: text }
