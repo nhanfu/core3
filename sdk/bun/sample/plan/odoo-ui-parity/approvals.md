@@ -17,7 +17,8 @@ truthful Odoo reference.
 The path `../odoo` from this worktree resolves to
 `/home/nhanjs/projects/core3-worktrees/odoo`, which is missing. The separate
 local Odoo checkout inspected for the supplied reference is
-`/home/nhanjs/projects/odoo`, on branch `19.0` tracking `origin/19.0`.
+`/home/nhanjs/projects/odoo`, on branch `19.0` tracking `origin/19.0`, at
+revision `659759969d535d286b656c96b675e4612b925ddd`.
 
 The exact approvals paths checked in that checkout are absent:
 
@@ -35,6 +36,12 @@ An exhaustive tracked-file/path check of the supplied `/home/nhanjs/projects/odo
 matches for `approval` were unrelated descriptions in
 `account_peppol_response` and `l10n_dk_nemhandel_response`; these do not provide
 the Approvals application source, menus, views, assets, or demo data.
+
+The audit was reproduced with `git ls-tree -r --name-only HEAD` filtered for
+approval paths and direct existence checks for the three candidate addon paths
+above. The tracked-path query returned no Approvals addon or manifest; the only
+source-tree candidate was the unrelated
+`addons/website/static/src/interactions/cookies/cookies_approval.js` asset.
 
 Therefore no Odoo application menu tree, action identifiers, visibility groups,
 routes, views, responsive states, official demo-data declaration, or reference
