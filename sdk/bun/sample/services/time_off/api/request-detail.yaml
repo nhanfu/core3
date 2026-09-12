@@ -3,7 +3,8 @@ datasources:
   - id: leave_request_detail
     single: true
     permission: time_off.read
-    query: "SELECT id, row_version, name, employee_name, leave_type_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, days, reason, approver, state FROM leave_requests WHERE id = :id"
+    error_states: { transport_error: { status: 503, code: TIME_OFF_LEAVE_DETAIL_UNAVAILABLE, message: Leave request details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, employee_name, leave_type_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, days, reason, cancellation_reason, approver, state FROM leave_requests WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
   - id: leave_request_detail_states
     permission: time_off.read
     single: false
@@ -13,3 +14,30 @@ actions:
   - { id: approve_leave_request_detail, type: server, permission: time_off.manage, action: time_off.requests.approve, handler: order_transition, workflow: leave_requests, operation: approve, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
   - { id: refuse_leave_request_detail, type: server, permission: time_off.manage, action: time_off.requests.refuse, handler: order_transition, workflow: leave_requests, operation: refuse, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
   - { id: cancel_leave_request_detail, type: server, permission: time_off.write, action: time_off.requests.cancel, handler: order_transition, workflow: leave_requests, operation: cancel, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
+  - id: cancel_approved_leave_request_detail
+    type: server_form
+    permission: time_off.write
+    title: Cancel Time Off
+    action: time_off.requests.cancel_approved
+    handler: yaml_mutation
+    operation: update
+    prefill: state.leave_request_detail
+    params: { values: { state: Cancelled } }
+    refresh: [leave_request_detail]
+    modal_style: time_off_cancel
+    mutation:
+      operation: update
+      table: leave_requests
+      key_field: id
+      fields: [state, cancellation_reason]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM leave_requests WHERE id = :id", status: 404, code: TIME_OFF_LEAVE_NOT_FOUND, message: Time off request not found. }
+        - { query: "SELECT id FROM leave_requests WHERE id = :id AND row_version = :expected_row_version AND state = 'Approved'", status: 409, code: TIME_OFF_LEAVE_CANCEL_STALE, message: Only an unchanged approved time off request can be cancelled. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:cancellation_reason, '') AS VARCHAR)) <= 500", status: 422, code: TIME_OFF_LEAVE_CANCEL_REASON_INVALID, message: The cancellation reason must be 500 characters or fewer. }
+      result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
+    fields:
+      - { field: state, label: Status, type: hidden, default: Cancelled }
+      - { field: cancellation_reason, label: Reason, type: textarea, placeholder: Why do you want to cancel this approved time off ? }
+    submit_label: Cancel Time Off
+    cancel_label: Discard

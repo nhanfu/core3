@@ -12,9 +12,10 @@ components:
       - { id: approve_leave_request_detail, label: Approve, variant: primary, show_if: "row.state === 'Submitted'" }
       - { id: refuse_leave_request_detail, label: Refuse, variant: danger, show_if: "row.state === 'Submitted'" }
       - { id: cancel_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted'" }
+      - { id: cancel_approved_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Approved'" }
     group_columns: 2
     groups:
       - title: Leave
         fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: leave_type_name, label: Leave type }]
       - title: Dates and approval
-        fields: [{ field: date_from, label: From }, { field: date_to, label: To }, { field: days, label: Days }, { field: approver, label: Approver }, { field: reason, label: Reason }]
+        fields: [{ field: date_from, label: From }, { field: date_to, label: To }, { field: days, label: Days }, { field: approver, label: Approver }, { field: reason, label: Reason }, { field: cancellation_reason, label: Cancellation reason, show_if: "row.state === 'Cancelled'" }]

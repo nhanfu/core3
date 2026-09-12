@@ -1,0 +1,12 @@
+version: 0.0.15
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS cancellation_reason VARCHAR;
+    down: |
+      ALTER TABLE leave_requests DROP COLUMN IF EXISTS cancellation_reason;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
