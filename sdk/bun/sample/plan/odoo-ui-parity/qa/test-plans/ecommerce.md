@@ -42,6 +42,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-011 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |
 | ECOM-FUNC-012 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, prices, categories, carts, customers or orders | pass: focused idempotency suite; durable order restart verified on isolated DuckDB |
 | ECOM-FUNC-013 | Assets/import/export/print | Exercise product images/assets, catalog import/export and exposed print actions | product image upload/download and product import pass through the persisted YAML/API path; list export remains a client-side browser gate |
+| ECOM-FUNC-014 | Sales handoff outbox | Checkout emits one idempotent handoff envelope; a Sales worker can claim it once, read the owned order/lines, and acknowledge success/failure with stale-write protection | pass: `ecommerce_checkout.integration.test.ts` — 11 tests, 59 assertions; migration, pending/order/line operations, claim, acknowledgement, duplicate-claim, and duplicate-acknowledgement behavior verified |
 
 ## Workflow and integration cases
 
@@ -51,7 +52,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-WF-002 | Cart lifecycle | Add → update quantity → remove preserves price-list rules and totals | authenticated add/repeat-add/remove and retail price-list recalculation pass; anonymous add/repeat-add persistence is covered by ECOM-WF-006 |
 | ECOM-WF-006 | Anonymous cart | Public visitor adds a published product without authentication and can retrieve the same cart through its cookie | pass: public route contract, persisted anonymous mutation, and mobile browser API journey; guest checkout handoff remains planned |
 | ECOM-WF-003 | Checkout | Cart → customer/address → delivery/payment → order confirms without partial writes | pass: authenticated and guest service mutations plus unauthenticated browser guest checkout conversion; third-party payment integration remains planned |
-| ECOM-WF-004 | Sales integration | Created web order resolves customer/product references through owning services | planned integration gate |
+| ECOM-WF-004 | Sales integration | Created web order resolves customer/product references through owning services | bounded handoff outbox now persists the eCommerce order envelope and exposes order/line reads for the owning Sales consumer; Sales-side consumer remains a separate gate |
 | ECOM-WF-005 | Durable/external boundary | Payment, delivery, email, callbacks and cross-module commerce workflows use Temporal when durable; retry, replay, restart and compensation are tested | Temporal SDK 1.23.0 and Bun worker startup/workflow/timer-recovery/callback/retry-exhaustion/compensation/shutdown smoke pass; production provider adapter and paired Odoo comparison remain open |
 
 ## Permission and security cases

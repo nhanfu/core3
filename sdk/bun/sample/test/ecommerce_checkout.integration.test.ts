@@ -152,6 +152,30 @@ describe('eCommerce Checkout parity', () => {
     database.close();
   });
 
+  test('creates an idempotent Sales handoff and supports optimistic claim/acknowledgement', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'ecommerce_sales_handoff_test', ['schema', 'data']);
+    const api = yaml('api/checkout.yaml');
+    const checkout = api.actions.find((action: any) => action.id === 'confirm_ecommerce_checkout');
+    const order = await repository.executeMutation(checkout.mutation, { values: { cart_id: 'ecommerce-cart-open-001', customer_name: 'Acme Corporation', customer_email: 'buyer@acme.example', shipping_address: '1 Main Street', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' } }) as any;
+    const handoffs = await repository.query('SELECT * FROM ecommerce_sales_handoffs WHERE ecommerce_order_id = ?', [order.id]);
+    expect(handoffs).toHaveLength(1);
+    expect(handoffs[0]).toMatchObject({ ecommerce_order_id: order.id, order_number: order.order_number, state: 'Pending', attempt_count: 0, row_version: 1 });
+    expect((await repository.query('SELECT * FROM ecommerce_order_lines WHERE order_id = ?', [handoffs[0].ecommerce_order_id]))).toHaveLength(2);
+
+    const claim = api.actions.find((action: any) => action.id === 'claim_ecommerce_sales_handoff');
+    const claimed = await repository.executeMutation(claim.mutation, { values: { id: handoffs[0].id, expected_row_version: 1 } }) as any;
+    expect(claimed).toMatchObject({ state: 'Processing', attempt_count: 1, row_version: 2 });
+    await expect(repository.executeMutation(claim.mutation, { values: { id: handoffs[0].id, expected_row_version: 1 } })).rejects.toMatchObject({ status: 409, code: 'ECOMMERCE_SALES_HANDOFF_STALE' });
+
+    const acknowledge = api.actions.find((action: any) => action.id === 'acknowledge_ecommerce_sales_handoff');
+    const completed = await repository.executeMutation(acknowledge.mutation, { values: { id: handoffs[0].id, expected_row_version: 2, state: 'Succeeded', sales_order_id: 'sale-order-ecommerce-001', last_error: null } }) as any;
+    expect(completed).toMatchObject({ state: 'Succeeded', sales_order_id: 'sale-order-ecommerce-001', row_version: 3 });
+    await expect(repository.executeMutation(acknowledge.mutation, { values: { id: handoffs[0].id, expected_row_version: 2, state: 'Succeeded', sales_order_id: 'sale-order-ecommerce-001', last_error: null } })).rejects.toMatchObject({ status: 409, code: 'ECOMMERCE_SALES_HANDOFF_STALE' });
+    database.close();
+  });
+
   test('rejects invalid checkout input without creating an order', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);

@@ -41,6 +41,7 @@ actions:
       steps:
         - { query: "INSERT INTO ecommerce_orders (id, order_number, customer_id, customer_name, customer_email, amount_total, currency, state, date_order, company_name, cart_id, shipping_address, delivery_method, payment_method) SELECT :id, 'WEB/2026/' || LPAD(CAST((SELECT COUNT(*) + 1 FROM ecommerce_orders) AS VARCHAR), 4, '0'), c.customer_id, :customer_name, :customer_email, COALESCE((SELECT SUM(quantity * unit_price) FROM ecommerce_cart_lines WHERE cart_id = :cart_id), 0), c.currency, 'Quotation', TIMESTAMP '2026-09-13 09:00:00', c.company_name, c.id, :shipping_address, :delivery_method, :payment_method FROM ecommerce_carts c WHERE c.id = :cart_id AND (:company_name IS NULL OR c.company_name = :company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(c.customer_id, '')) IN (SELECT lower(id) FROM ecommerce_customers WHERE lower(COALESCE(email, '')) = lower(:current_user_email)))" }
         - { query: "INSERT INTO ecommerce_order_lines (id, order_id, product_id, product_name, unit_price, quantity, line_total) SELECT 'ecommerce-order-line-' || CAST(l.id AS VARCHAR), :id, l.product_id, l.product_name, l.unit_price, l.quantity, l.quantity * l.unit_price FROM ecommerce_cart_lines l WHERE l.cart_id = :cart_id" }
+        - { query: "INSERT INTO ecommerce_sales_handoffs (id, ecommerce_order_id, order_number, customer_name, customer_email, amount_total, currency, company_name) SELECT 'ecommerce-sales-handoff-' || o.id, o.id, o.order_number, o.customer_name, o.customer_email, o.amount_total, o.currency, o.company_name FROM ecommerce_orders o WHERE o.id = :id ON CONFLICT (ecommerce_order_id) DO NOTHING" }
         - { query: "UPDATE ecommerce_carts SET state = 'Converted', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :cart_id AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(customer_id, '')) IN (SELECT lower(id) FROM ecommerce_customers WHERE lower(COALESCE(email, '')) = lower(:current_user_email)))" }
       result: { query: "SELECT * FROM ecommerce_orders WHERE id = :id" }
     fields:
@@ -70,6 +71,7 @@ actions:
       steps:
         - { query: "INSERT INTO ecommerce_orders (id, order_number, customer_id, customer_name, customer_email, amount_total, currency, state, date_order, company_name, cart_id, shipping_address, delivery_method, payment_method) SELECT :id, 'WEB/2026/' || LPAD(CAST((SELECT COUNT(*) + 1 FROM ecommerce_orders) AS VARCHAR), 4, '0'), NULL, :customer_name, :customer_email, COALESCE((SELECT SUM(quantity * unit_price) FROM ecommerce_cart_lines WHERE cart_id = :cart_id), 0), c.currency, 'Quotation', TIMESTAMP '2026-09-13 09:00:00', c.company_name, c.id, :shipping_address, :delivery_method, :payment_method FROM ecommerce_carts c WHERE c.id = :cart_id" }
         - { query: "INSERT INTO ecommerce_order_lines (id, order_id, product_id, product_name, unit_price, quantity, line_total) SELECT 'ecommerce-order-line-' || CAST(l.id AS VARCHAR), :id, l.product_id, l.product_name, l.unit_price, l.quantity, l.quantity * l.unit_price FROM ecommerce_cart_lines l WHERE l.cart_id = :cart_id" }
+        - { query: "INSERT INTO ecommerce_sales_handoffs (id, ecommerce_order_id, order_number, customer_name, customer_email, amount_total, currency, company_name) SELECT 'ecommerce-sales-handoff-' || o.id, o.id, o.order_number, o.customer_name, o.customer_email, o.amount_total, o.currency, o.company_name FROM ecommerce_orders o WHERE o.id = :id ON CONFLICT (ecommerce_order_id) DO NOTHING" }
         - { query: "UPDATE ecommerce_carts SET state = 'Converted', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :cart_id" }
       result: { query: "SELECT * FROM ecommerce_orders WHERE id = :id" }
     fields:
@@ -79,3 +81,29 @@ actions:
       - { field: shipping_address, label: Shipping Address, type: textarea, required: true }
       - { field: delivery_method, label: Delivery Method, type: select, options_source: ecommerce_delivery_methods, required: true }
       - { field: payment_method, label: Payment Method, type: select, options_source: ecommerce_payment_methods, required: true }
+  - id: claim_ecommerce_sales_handoff
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.sales.handoff.claim
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      required: [id, expected_row_version]
+      guards:
+        - { query: "SELECT id FROM ecommerce_sales_handoffs WHERE id = :id AND row_version = :expected_row_version AND state IN ('Pending', 'Failed') AND attempt_count < 5", status: 409, code: ECOMMERCE_SALES_HANDOFF_STALE, message: This Sales handoff is no longer claimable. }
+      steps:
+        - { query: "UPDATE ecommerce_sales_handoffs SET state = 'Processing', attempt_count = attempt_count + 1, last_error = NULL, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND state IN ('Pending', 'Failed') AND attempt_count < 5", expect_changed: true, code: ECOMMERCE_SALES_HANDOFF_STALE, message: This Sales handoff was claimed by another worker. }
+      result: { query: "SELECT * FROM ecommerce_sales_handoffs WHERE id = :id" }
+  - id: acknowledge_ecommerce_sales_handoff
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.sales.handoff.acknowledge
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      required: [id, expected_row_version, state]
+      guards:
+        - { query: "SELECT id FROM ecommerce_sales_handoffs WHERE id = :id AND row_version = :expected_row_version AND state = 'Processing' AND :state IN ('Succeeded', 'Failed')", status: 409, code: ECOMMERCE_SALES_HANDOFF_STALE, message: This Sales handoff is not processing or has already been acknowledged. }
+      steps:
+        - { query: "UPDATE ecommerce_sales_handoffs SET state = :state, sales_order_id = :sales_order_id, last_error = :last_error, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version AND state = 'Processing'", expect_changed: true, code: ECOMMERCE_SALES_HANDOFF_STALE, message: This Sales handoff changed before acknowledgement. }
+      result: { query: "SELECT * FROM ecommerce_sales_handoffs WHERE id = :id" }
