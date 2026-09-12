@@ -8,5 +8,22 @@ datasources:
       transport_error: { status: 503, code: ECOMMERCE_SHOP_UNAVAILABLE, message: The shop is temporarily unavailable. }
     query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND active = TRUE AND is_published = TRUE AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') AND (:company_name IS NULL OR company_name = :company_name) ORDER BY website_sequence, name"
 actions:
-  - { id: shop_add_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }
+  - id: shop_add_to_cart
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.cart.add
+    handler: yaml_mutation
+    operation: create
+    params: { product_id: '{row.id}' }
+    refresh: [ecommerce_shop_products]
+    mutation:
+      guards:
+        - { query: "SELECT COALESCE((SELECT 'ecommerce-cart-' || id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)), 'ecommerce-cart-open-001') AS cart_id, 'ecommerce-cart-line-' || COALESCE((SELECT id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)), 'admin') || '-' || :product_id AS line_id", assign: true }
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND is_published = TRUE", status: 404, code: ECOMMERCE_SHOP_PRODUCT_UNAVAILABLE, message: This product is no longer available. }
+        - { query: "SELECT id FROM ecommerce_carts WHERE id = :cart_id AND state = 'Open' AND (COALESCE(:customer_scope, 'all') = 'all' OR customer_id = (SELECT id FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email)))", status: 403, code: ECOMMERCE_CART_OWNERSHIP_REQUIRED, message: This cart belongs to another customer. }
+      steps:
+        - { query: "INSERT INTO ecommerce_carts(id, customer_id, customer_name, currency, state) SELECT :cart_id, id, name, currency, 'Open' FROM ecommerce_customers WHERE lower(email) = lower(:current_user_email) ON CONFLICT (id) DO NOTHING" }
+        - { query: "INSERT INTO ecommerce_cart_lines(id, cart_id, product_id, product_name, unit_price, quantity) SELECT :line_id, :cart_id, id, name, sales_price, 1 FROM ecommerce_products WHERE id = :product_id ON CONFLICT (cart_id, product_id) DO UPDATE SET quantity = ecommerce_cart_lines.quantity + 1, row_version = ecommerce_cart_lines.row_version + 1" }
+        - { query: "UPDATE ecommerce_carts SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-13 10:00:00' WHERE id = :cart_id" }
+      result: { query: "SELECT * FROM ecommerce_cart_lines WHERE cart_id = :cart_id AND product_id = :product_id" }
   - { id: shop_view_cart, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/cart, params: {} }

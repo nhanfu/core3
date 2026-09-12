@@ -35,8 +35,8 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-004 | Unpaid Orders | Unpaid list filters persisted orders and reuses the guarded read-only order detail route | pass: focused suite |
 | ECOM-FUNC-005 | Abandoned Carts | Abandoned cart list, deterministic search/empty states and read-only detail navigation work | pass: focused suite |
 | ECOM-FUNC-006 | Customers | Customer summary list, search/filter, deterministic data and order navigation work | pass: focused suite |
-| ECOM-FUNC-007 | Cart | Persisted cart summary/lines, totals, product navigation and guarded quantity validation work | pass: focused suite; browser workflow planned |
-| ECOM-FUNC-008 | Shop | Public/product selection and add-to-cart route contract exposes only published products and navigates to the cart | pass: authenticated page contract and unauthenticated public catalog API; add-to-cart persistence remains planned |
+| ECOM-FUNC-007 | Cart | Persisted cart summary/lines, totals, product navigation and guarded quantity validation work | pass: focused suite and authenticated customer add-to-cart persistence; browser workflow planned |
+| ECOM-FUNC-008 | Shop | Public/product selection and add-to-cart route contract exposes only published products and navigates to the cart | pass: authenticated page contract, public catalog API, and persisted authenticated add-to-cart; anonymous cart remains planned |
 | ECOM-FUNC-009 | Checkout/order mutations | Customer, delivery, payment and order creation validate, copy cart lines, close the cart, and persist atomically | pass: focused service suite, authenticated browser flow, and durable restart verification |
 | ECOM-FUNC-010 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
 | ECOM-FUNC-011 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |
@@ -48,7 +48,7 @@ mutations use isolated databases and deterministic IDs.
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
 | ECOM-WF-001 | Catalog publication | Draft/unpublished → published → unpublished updates public visibility and version atomically | planned browser workflow |
-| ECOM-WF-002 | Cart lifecycle | Add → update quantity → remove preserves price-list rules and totals | planned expansion |
+| ECOM-WF-002 | Cart lifecycle | Add → update quantity → remove preserves price-list rules and totals | add/repeat-add persistence passes; remove and price-list recalculation remain planned |
 | ECOM-WF-003 | Checkout | Cart → customer/address → delivery/payment → order confirms without partial writes | pass: service mutation; authenticated browser/payment integration planned |
 | ECOM-WF-004 | Sales integration | Created web order resolves customer/product references through owning services | planned integration gate |
 | ECOM-WF-005 | Durable/external boundary | Payment, delivery, email, callbacks and cross-module commerce workflows use Temporal when durable; retry, replay, restart and compensation are tested | planned |

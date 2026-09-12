@@ -28,7 +28,8 @@ describe('eCommerce Shop parity', () => {
     expect(page.page).toMatchObject({ id: 'ecommerce-shop', route: '/ecommerce/shop' });
     expect(api.page).toEqual({ id: 'ecommerce-shop' });
     expect(page.components[0]).toMatchObject({ type: 'ListView', source: 'ecommerce_shop_products' });
-    expect(api.actions.map((action: any) => action.navigate_to)).toEqual(['/ecommerce/cart', '/ecommerce/cart']);
+    expect(api.actions.find((action: any) => action.id === 'shop_add_to_cart')).toMatchObject({ type: 'server', action: 'ecommerce.cart.add' });
+    expect(api.actions.find((action: any) => action.id === 'shop_view_cart')).toMatchObject({ type: 'navigate', navigate_to: '/ecommerce/cart' });
     expect(manifest.menu.groups[0].items.map((item: any) => item.path)).toContain('/ecommerce/shop');
   });
 
@@ -45,6 +46,11 @@ describe('eCommerce Shop parity', () => {
     const operation = yaml('operations.yaml').operations['ecommerce.public.shop'];
     const bound = bindNamedParams(operation.query, { q: null });
     expect((await repository.query(bound.statement, bound.values)).map((row: any) => row.name)).toEqual(rows.map((row: any) => row.name));
+    const addToCart = api.actions.find((action: any) => action.id === 'shop_add_to_cart');
+    const added = await repository.executeMutation(addToCart.mutation, { values: { product_id: 'ecommerce-product-mug' }, customer_scope: 'own', current_user_email: 'hello@workspace.example' });
+    expect(added).toMatchObject({ cart_id: 'ecommerce-cart-ecommerce-customer-002', product_id: 'ecommerce-product-mug', quantity: 1 });
+    const addedAgain = await repository.executeMutation(addToCart.mutation, { values: { product_id: 'ecommerce-product-mug' }, customer_scope: 'own', current_user_email: 'hello@workspace.example' });
+    expect(addedAgain).toMatchObject({ cart_id: 'ecommerce-cart-ecommerce-customer-002', product_id: 'ecommerce-product-mug', quantity: 2 });
     expect((await repository.querySource(source, { ...params, q: 'setup' }, 0, 50)).data).toEqual([]);
     expect(source.error_states.forbidden.status).toBe(403);
     database.close();
