@@ -45,11 +45,32 @@ ledger file.
 
 ### chat
 ### crm
+
+| Test ID | Odoo action/route | Core3 route | State | Desktop | Mobile | Result | Tester/date |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| CRM-PIPELINE-20260912 | `crm.crm_opportunity_report_action` / Pipeline Analysis | `/crm/analysis` | active opportunity analysis | Core3 capture present | Core3 capture present | contract correction verified; Odoo authentication throttled, no visual sign-off | shared tester 2026-09-12 |
+
+| Bug ID | Mismatch/failure | Evidence | Owner | Fix commit | Retest | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| CRM-BF-001 | Core3 used expected-closing month and My Pipeline default instead of Odoo creation-month pivot contract | Odoo source trace and focused test | crm agent | `90e349fd` | 2 tests / 20 assertions, audit, lint | fixed; visual retest open |
+
 ### order
+
+| Test ID | Odoo action/route | Core3 route | State | Desktop | Mobile | Result | Tester/date |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| SALES-TEMPLATE-20260912 | `sale.mail_template_menu` / Quotation Templates | `/order/quotation-templates` | populated list and detail | Core3 capture present | Core3 capture present | Odoo files were unauthenticated login pages; no visual sign-off | shared tester 2026-09-12 |
+
+| Bug ID | Mismatch/failure | Evidence | Owner | Fix commit | Retest | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| SALES-BF-001 | Reference login throttle prevented fresh authenticated Odoo comparison | capture directory | shared tester | `64c9022a` | Core3 rendered list/detail only | open |
 ### point-of-sale
 ### sale-subscription
 ### sale-renting
 ### accounting
+
+| Test ID | Odoo action/route | Core3 route | State | Desktop | Mobile | Result | Tester/date |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| ACCOUNTING-SALES-20260912 | Sales journal items action | `/accounting/sales` | populated list | Core3 capture attempted | pending | reference authentication throttled; no visual sign-off | shared tester 2026-09-12 |
 
 ### expenses
 
@@ -78,11 +99,27 @@ ledger file.
 ### manufacturing
 ### purchase
 ### maintenance
+
+| Test ID | Odoo action/route | Core3 route | State | Desktop | Mobile | Result | Tester/date |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| MAINTENANCE-DASHBOARD-20260912 | Maintenance team dashboard | `/maintenance` | populated team cards | Core3 capture present | Core3 capture present | Top Priorities action and card rendering verified; Odoo authentication throttled | shared tester 2026-09-12 |
+
+| Bug ID | Mismatch/failure | Evidence | Owner | Fix commit | Retest | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| MAINTENANCE-BF-001 | Card actions were declared in YAML but not rendered or counted | focused client/integration tests | maintenance agent | `2e64e62e` | 3 integration tests / 36 client tests | fixed; visual retest open |
 ### field-service
 ### helpdesk
 ### quality
 ### plm
 ### employees
+
+| Test ID | Odoo action/route | Core3 route | State | Desktop | Mobile | Result | Tester/date |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| EMPLOYEES-WORK-20260912 | `hr.employee` Work tab | `/employees` | active employee detail | Core3 capture present | Core3 capture present | import-map and conditional-group repairs verified; Odoo authentication throttled | shared tester 2026-09-12 |
+
+| Bug ID | Mismatch/failure | Evidence | Owner | Fix commit | Retest | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| EMPLOYEES-BF-001 | ActivityView import was missing and inactive-only form groups rendered unconditionally | browser error and focused test | employees agent | `a618fe94` | 1 client test, audit, lint | fixed; visual retest open |
 ### recruitment
 ### time-off
 ### appraisals
