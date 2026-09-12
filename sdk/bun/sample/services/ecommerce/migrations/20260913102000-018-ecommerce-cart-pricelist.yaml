@@ -1,0 +1,14 @@
+version: 0.0.31
+kind: schema
+description: eCommerce cart pricelist selection
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_carts ADD COLUMN IF NOT EXISTS pricelist_id VARCHAR;
+      UPDATE ecommerce_carts SET pricelist_id = 'ecommerce-pricelist-public' WHERE pricelist_id IS NULL;
+    down: |
+      ALTER TABLE ecommerce_carts DROP COLUMN IF EXISTS pricelist_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

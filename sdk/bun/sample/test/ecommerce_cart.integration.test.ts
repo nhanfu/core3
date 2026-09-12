@@ -15,7 +15,8 @@ describe('eCommerce Cart parity', () => {
     expect(page.page).toMatchObject({ id: 'ecommerce-cart', route: '/ecommerce/cart' });
     expect(api.page).toEqual({ id: 'ecommerce-cart' });
     expect(page.components[0]).toMatchObject({ type: 'OdooFormView', source: 'ecommerce_cart' });
-    expect(api.datasources.map((source: any) => source.id)).toEqual(['ecommerce_cart', 'ecommerce_cart_lines']);
+    expect(api.datasources.map((source: any) => source.id)).toEqual(['ecommerce_cart', 'ecommerce_cart_lines', 'ecommerce_cart_pricelists']);
+    expect(page.components[0].header_actions).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'apply_ecommerce_cart_pricelist' })]));
   });
 
   test('projects deterministic cart totals and guards quantity updates', async () => {
@@ -36,6 +37,14 @@ describe('eCommerce Cart parity', () => {
     expect(await repository.querySource(api.datasources[0], { id: 'ecommerce-cart-open-001', fixture_state: null }, 0, 1)).toMatchObject({ data: { item_count: 1, amount_total: 249 } });
     expect((await repository.querySource(api.datasources[1], { cart_id: 'ecommerce-cart-open-001' }, 0, 50)).data).toHaveLength(1);
     await expect(repository.executeMutation(remove.mutation, { id: 'ecommerce-cart-line-002', expected_row_version: 1, customer_scope: 'own', current_user_email: 'hello@workspace.example' })).rejects.toMatchObject({ status: 403, code: 'ECOMMERCE_CART_OWNERSHIP_REQUIRED' });
+    const database2 = await DuckDbDatabase.open(':memory:');
+    const repository2 = new YamlRepository(database2);
+    await migrateDatabase(repository2, join(root, 'migrations'), undefined, 'ecommerce_cart_pricelist_test', ['schema', 'data']);
+    const apply = api.actions.find((candidate: any) => candidate.id === 'apply_ecommerce_cart_pricelist');
+    const repriced = await repository2.executeMutation(apply.mutation, { id: 'ecommerce-cart-open-001', expected_row_version: 1, customer_scope: 'all', values: { pricelist_id: 'ecommerce-pricelist-retail' } });
+    expect(repriced).toMatchObject({ id: 'ecommerce-cart-open-001', pricelist_id: 'ecommerce-pricelist-retail' });
+    expect(await repository2.query('SELECT unit_price FROM ecommerce_cart_lines WHERE product_id = ?', ['ecommerce-product-chair'])).toEqual([{ unit_price: 229 }]);
+    database2.close();
     database.close();
   });
 });
