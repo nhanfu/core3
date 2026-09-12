@@ -3,7 +3,7 @@
 Module owner: accounting
 Wave: first execution wave
 QA assignment: dispatchable accounting QA slot (bounded event tasks)
-Status: ready-for-test (implementation inherited; owner verification in progress)
+Status: ready-for-test (runtime retested; full browser matrix in progress)
 Verification trigger: merge-candidate
 Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 
@@ -23,12 +23,12 @@ Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 | Timeout retests | `bun test --timeout 20000 ./test/accounting_journal_detail.integration.test.ts` | 2 pass, 13 assertions |
 | Timeout retests | `bun test --timeout 20000 ./test/accounting_journal_items_views.integration.test.ts` | 2 pass, 17 assertions |
 | Timeout retests | `bun test --timeout 20000 ./test/accounting_journals_catalog.integration.test.ts` | 3 pass, 38 assertions |
-| Runtime readiness | `bun run agent:module -- accounting --port=3011` | blocked before listen by global `PageSchemaError` in the app catalog; exact error is recorded in QA |
-| Authenticated browser | not started because no Core3 listener became ready | pending runtime repair |
+| Runtime readiness | `bun run agent:module -- accounting --port=4011`; `GET /api/modules` | pass; isolated accounting process listened and returned 200 |
+| Authenticated browser | `/accounting/journals`, 1440x900 and 390x844 | Core3 render pass; no page/request errors or horizontal overflow; Odoo paired comparison and remaining route matrix pending |
 
 ## Remaining gates
 
-- Repair the global malformed page definitions so the accounting module runner can start without changing another module in this worktree.
+- Preserve the verified runtime repair and expand the authenticated browser matrix across the remaining accounting routes.
 - Run authenticated Core3 desktop (`1440x900`) and mobile (`390x844`) checks against the committed candidate, including CRUD, persistence, workflow, and permission denial.
 - Compare the same states against the authenticated Odoo reference and keep captures under `/tmp/core3-odoo-parity/` only.
 - Resolve the combined-suite timeout policy (serial execution or a documented timeout) before module sign-off.
