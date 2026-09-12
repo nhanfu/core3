@@ -28,6 +28,7 @@ Candidate commit: `f7a38e86`
 - Authenticated delete probe: deleted an eligible Draft event successfully (200), while deletion of a Published event was rejected with the declared 409 `EVENT_NOT_DRAFT` guard.
 - The first browser attempt exposed an empty optional `end_at` timestamp defect; the form contract was corrected by declaring both event date fields as `datetime`, preserving Core3's text-based ISO date/time input convention.
 - Authenticated route matrix and paired Odoo comparison remain pending for full module sign-off.
+- Fresh module-scoped rerun on port 4025 passed the registered-menu matrix 28/28 (14 routes × desktop/mobile) with no page errors, failed requests, HTTP errors, or horizontal overflow; raw result: `/tmp/events-matrix-fresh.json`.
 
 ## Test-case inventory
 
@@ -35,7 +36,7 @@ Candidate commit: `f7a38e86`
 | --- | --- | --- | --- |
 | EVENTS-FUNC-001 | Focused functional/contract suite for event lifecycle, reports, CRUD, and guards | 82 tests, 608 assertions; `bun test ./test/events*.integration.test.ts --timeout 20000` | pass |
 | EVENTS-FUNC-002 | Authenticated create and persistence smoke | `/events`; created `QA Browser Event 20260912`; persisted in 1-11/11 list; screenshot artifact recorded | pass |
-| EVENTS-BROWSER-002 | Authenticated registered-menu route matrix | 14 routes × desktop/mobile = 28/28; raw JSON result recorded | pass |
+| EVENTS-BROWSER-002 | Authenticated registered-menu route matrix | Fresh module-scoped process: 14 routes × desktop/mobile = 28/28; raw JSON result recorded | pass |
 | EVENTS-PERM-001 | Read permission boundary | Fleet user denied `events.read` with expected 403/permission page | pass |
 | EVENTS-WORKFLOW-001 | Event lifecycle transitions with optimistic row versions | Authenticated sequence completed Draft → Published → In Progress → Completed; each response 200 and incremented `row_version` | pass |
 | EVENTS-WORKFLOW-002 | Registration persistence and capacity guard | Capacity-1 event accepted first registration (200) and rejected second registration (409) | pass |

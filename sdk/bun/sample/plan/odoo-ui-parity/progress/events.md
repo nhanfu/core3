@@ -29,6 +29,9 @@ then confirmed the optimistic-concurrency boundary by receiving 409
 Event deletion is now exposed from the event detail screen and was verified in
 the authenticated runtime: an eligible Draft event deleted successfully, while
 a Published event was rejected with `EVENT_NOT_DRAFT`.
+Fresh module-scoped browser verification on port 4025 also passed all 14
+registered menu routes at desktop and mobile (28/28), with no page/request
+errors or horizontal overflow.
 Full menu-tree coverage, permissions, complete browser CRUD/workflow coverage,
 and paired Odoo desktop/mobile comparison remain open. No full parity claim is
 made here.
