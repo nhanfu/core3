@@ -1,0 +1,13 @@
+version: 0.0.44
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_journal_items ADD COLUMN IF NOT EXISTS journal_type VARCHAR DEFAULT 'general';
+      UPDATE accounting_journal_items SET journal_type = CASE WHEN entry_name LIKE 'INV/%' THEN 'sales' WHEN entry_name LIKE 'BILL/%' THEN 'purchase' ELSE 'general' END WHERE journal_type = 'general';
+    down: |
+      ALTER TABLE accounting_journal_items DROP COLUMN IF EXISTS journal_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

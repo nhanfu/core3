@@ -1,0 +1,55 @@
+title: Sales
+page: { id: accounting-sales, route: /accounting/sales, breadcrumb: [Finance, Accounting, Transactions, Sales], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_sales_journal_items
+    search: { label: Search Sales, placeholder: 'Search journal entries, partners, or labels...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields: [{ field: partner_name, column: Partner }, { field: debit, column: Debit }, { field: credit, column: Credit }]
+          default: { rows: [partner_name], measures: [{ field: debit, aggregate: sum, column: Debit }, { field: credit, aggregate: sum, column: Credit }] }
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: item_month
+        measure_field: balance
+        measure_label: Balance
+        type: line
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: false
+        group_by: ''
+        card:
+          title: account_name
+          subtitle: label
+          fields: [{ field: item_date }, { field: amount_display }]
+      - id: card
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        card:
+          title: account_name
+          subtitle: label
+          fields: [{ field: item_date }, { field: amount_display }]
+    filters: [{ field: state, label: Status, options: [{ id: Posted, label: Posted }] }]
+    default_filters: { state: Posted }
+    empty_state: { title: No sales journal items, description: Try adjusting your search or filters. }
+    columns:
+      - { field: item_date, label: Date }
+      - { field: entry_name, label: Journal Entry, type: PrimaryEntityCell }
+      - { field: partner_name, label: Partner }
+      - { field: label, label: Label }
+      - { field: debit, label: Debit, align: right }
+      - { field: credit, label: Credit, align: right }
+      - { field: matching, label: Matching }
+    page_size: 50
+    row_key: id

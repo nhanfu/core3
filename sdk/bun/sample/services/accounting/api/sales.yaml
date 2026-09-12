@@ -1,0 +1,7 @@
+page: { id: accounting-sales }
+datasources:
+  - id: accounting_sales_journal_items
+    single: false
+    permission: accounting.read
+    pivot: { fields: [partner_name, debit, credit, balance] }
+    query: "SELECT id, row_version, CAST(item_date AS VARCHAR) AS item_date, strftime(item_date, '%B %Y') AS item_month, entry_name, partner_name, label, CASE WHEN label = 'Sales untaxed' THEN 'Account Receivable' ELSE label END AS account_name, debit, credit, debit - credit AS balance, CASE WHEN debit > 0 THEN 'DR' ELSE 'CR' END AS direction, printf('$ %.2f (%s)', CAST(CASE WHEN debit > 0 THEN debit ELSE credit END AS DOUBLE), CASE WHEN debit > 0 THEN 'DR' ELSE 'CR' END) AS amount_display, matching, 'Posted' AS state FROM accounting_journal_items WHERE journal_type = 'sales' AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR entry_name ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR label ILIKE '%' || :q || '%') ORDER BY item_date DESC, id"
