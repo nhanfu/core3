@@ -117,6 +117,25 @@ describe('Purchase Orders list and detail parity', () => {
     await expect(repository.executeMutation(approve.mutation, { id: 'po-demo-008', expected_row_version: 2 })).rejects.toThrow('Only unchanged purchase orders waiting for approval can be approved');
   });
 
+  test('exposes Odoo Set to Draft for cancelled orders with a row-version guard', async () => {
+    const page = yaml('pages/purchase-detail.yaml');
+    const api = yaml('api/purchase-detail.yaml');
+    const reset = api.actions.find((action: any) => action.id === 'reset_purchase_order_detail');
+    expect(page.components[0].header_actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'reset_purchase_order_detail', label: 'Set to Draft', permission: 'purchase.write', show_if: "state.purchase_order_detail.state === 'Cancelled'" }),
+    ]));
+    expect(reset).toMatchObject({ action: 'purchase.orders.reset_to_draft', permission: 'purchase.write', operation: 'update' });
+    expect(reset.mutation.guards[0].status).toBe(409);
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_reset_test_schema_migrations', ['schema', 'data']);
+    expect((await repository.query("SELECT state, row_version FROM purchase_orders WHERE id = 'po-demo-004'"))[0]).toEqual({ state: 'Cancelled', row_version: 1 });
+    await repository.executeMutation(reset.mutation, { id: 'po-demo-004', expected_row_version: 1 });
+    expect((await repository.query("SELECT state, row_version FROM purchase_orders WHERE id = 'po-demo-004'"))[0]).toEqual({ state: 'Draft', row_version: 2 });
+    await expect(repository.executeMutation(reset.mutation, { id: 'po-demo-004', expected_row_version: 2 })).rejects.toThrow('Only unchanged cancelled purchase orders can be set back to draft');
+  });
+
   test('keeps RFQs aligned with the Odoo action view family and page/API boundary', () => {
     const page = yaml('pages/purchase-rfqs.yaml');
     const list = page.components.find((component: any) => component.type === 'ListView');

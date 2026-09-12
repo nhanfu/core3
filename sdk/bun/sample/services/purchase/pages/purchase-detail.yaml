@@ -21,6 +21,7 @@ components:
       - { id: lock_purchase_order_detail, label: Lock, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed' && !state.purchase_order_detail.locked" }
       - { id: unlock_purchase_order_detail, label: Unlock, variant: secondary, permission: purchase.manage, show_if: "state.purchase_order_detail.locked" }
       - { id: cancel_purchase_order_detail, label: Cancel, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent' || state.purchase_order_detail.state === 'Confirmed'" }
+      - { id: reset_purchase_order_detail, label: Set to Draft, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Cancelled'" }
     editable: true
     group_columns: 2
     groups:

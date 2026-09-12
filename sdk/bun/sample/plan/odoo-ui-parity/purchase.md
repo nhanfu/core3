@@ -1081,3 +1081,32 @@ authenticated capture. Core3 startup also reproduced the exact runtime
 blocker `EMFILE: too many open files` while Vite watched
 `sdk/bun/sample/vite.config.ts`; its backend exited before a page could load.
 No screenshots were committed.
+
+## Purchase Order Set to Draft action — 2026-09-12
+
+The next uncovered source action after the approval and lock/unlock slices is
+Odoo's `button_draft`, labelled `Set to Draft` in `purchase_order_form`. The
+button is visible only while `state == 'cancel'`, has no additional group
+restriction in the source view, and changes the order to `draft` through
+`addons/purchase/models/purchase_order.py::button_draft`. It is a header action
+on the existing Purchase Order form, not a menu or standalone route.
+
+Core3 adds `reset_purchase_order_detail` to the existing `purchase-detail`
+page/API pair. It requires `purchase.write`, accepts only an unchanged
+Cancelled order, increments `row_version`, refreshes the detail source, and
+returns explicit invalid/stale errors. The existing `po-demo-004` deterministic
+Cancelled RFQ fixture exercises the transition; no page-local data or
+migration was added. Focused integration coverage verifies the exact label,
+permission, action contract, successful state/version transition, and repeat
+guard.
+
+Authenticated desktop/mobile capture was attempted under
+`/tmp/core3-odoo-parity/purchase-reset-to-draft-20260912/`. No visual-parity
+claim is made. Core3 announced port 3002 but Vite exited before serving with
+`EMFILE: too many open files` while watching
+`sdk/bun/sample/vite.config.ts`; the direct `/api/modules` probe then returned
+HTTP 000. Odoo `/web/login` probes at ports 8069 and 8073 returned HTTP 200,
+but this session has no persistent `js_repl`/Playwright browser interface and
+the worktree has no Playwright package, so authenticated 1440x900 and 390x844
+captures could not be completed. The blocker logs are local only and no
+screenshots are committed.
