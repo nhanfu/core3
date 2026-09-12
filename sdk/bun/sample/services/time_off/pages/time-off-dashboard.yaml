@@ -55,5 +55,5 @@ actions:
   - id: dashboard_open_request
     type: navigate
     permission: time_off.read
-    navigate_to: /leave-request-detail
+    navigate_to: /time-off/leave-request-detail
     params: { id: '{row.id}' }

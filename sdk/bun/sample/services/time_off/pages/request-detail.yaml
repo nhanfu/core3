@@ -1,5 +1,5 @@
 title: Leave Request
-page: { id: leave-request-detail, breadcrumb: [Human Resources, Time Off, Detail], auth: { require: [time_off.read] } }
+page: { id: leave-request-detail, route: /time-off/leave-request-detail, breadcrumb: [Human Resources, Time Off, Detail], auth: { require: [time_off.read] } }
 components:
   - type: OdooFormView
     source: leave_request_detail
@@ -10,6 +10,7 @@ components:
     header_actions:
       - { id: submit_leave_request_detail, label: Submit, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: approve_leave_request_detail, label: Approve, variant: primary, show_if: "row.state === 'Submitted'" }
+      - { id: back_to_approval_leave_request_detail, label: Back to Approval, variant: secondary, show_if: "row.state === 'Approved'" }
       - { id: refuse_leave_request_detail, label: Refuse, variant: danger, show_if: "row.state === 'Submitted'" }
       - { id: cancel_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted'" }
       - { id: cancel_approved_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Approved'" }

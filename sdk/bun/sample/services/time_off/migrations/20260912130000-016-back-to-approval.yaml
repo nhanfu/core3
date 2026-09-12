@@ -1,0 +1,12 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS leave_requests_approval_transition_idx ON leave_requests(state, row_version, employee_id, leave_type_id);
+    down: |
+      DROP INDEX IF EXISTS leave_requests_approval_transition_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

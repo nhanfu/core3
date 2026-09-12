@@ -40,5 +40,5 @@ actions:
   - id: approval_open
     type: navigate
     permission: time_off.manage
-    navigate_to: /leave-request-detail
+    navigate_to: /time-off/leave-request-detail
     params: { id: '{row.id}' }

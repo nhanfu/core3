@@ -12,6 +12,26 @@ datasources:
 actions:
   - { id: submit_leave_request_detail, type: server, permission: time_off.write, action: time_off.requests.submit, handler: order_transition, workflow: leave_requests, operation: submit, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
   - { id: approve_leave_request_detail, type: server, permission: time_off.manage, action: time_off.requests.approve, handler: order_transition, workflow: leave_requests, operation: approve, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
+  - id: back_to_approval_leave_request_detail
+    type: server
+    permission: time_off.manage
+    action: time_off.requests.back_to_approval
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
+    refresh: [leave_request_detail]
+    mutation:
+      steps:
+        - query: "UPDATE leave_balances SET used_days = used_days - (SELECT days FROM leave_requests WHERE id = :id) WHERE employee_id = (SELECT employee_id FROM leave_requests WHERE id = :id) AND leave_type_id = (SELECT leave_type_id FROM leave_requests WHERE id = :id) AND year = EXTRACT(YEAR FROM (SELECT date_from FROM leave_requests WHERE id = :id))"
+          expect_changed: true
+        - query: "UPDATE leave_requests SET state = 'Submitted', approver = NULL, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version AND state = 'Approved'"
+          expect_changed: true
+          status: 409
+          message: Leave request was changed by another user. Reload it before moving it back to approval.
+      guards:
+        - { query: "SELECT id FROM leave_requests WHERE id = :id", status: 404, code: TIME_OFF_LEAVE_NOT_FOUND, message: Time off request not found. }
+        - { query: "SELECT r.id FROM leave_requests r JOIN leave_balances b ON b.employee_id = r.employee_id AND b.leave_type_id = r.leave_type_id AND b.year = EXTRACT(YEAR FROM r.date_from) WHERE r.id = :id AND r.row_version = :expected_row_version AND r.state = 'Approved' AND b.used_days >= r.days", status: 409, code: TIME_OFF_LEAVE_BACK_TO_APPROVAL_INVALID, message: Only an unchanged approved request with recorded leave usage can return to approval. }
+      result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
   - { id: refuse_leave_request_detail, type: server, permission: time_off.manage, action: time_off.requests.refuse, handler: order_transition, workflow: leave_requests, operation: refuse, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
   - { id: cancel_leave_request_detail, type: server, permission: time_off.write, action: time_off.requests.cancel, handler: order_transition, workflow: leave_requests, operation: cancel, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
   - id: cancel_approved_leave_request_detail

@@ -642,4 +642,18 @@ desktop/mobile capture remains pending the live-reference gate.
   exceed the content viewport.
 - Run focused Time Off YAML/API/migration/browser checks, then `git diff --check`.
   All six gates now have written evidence; the installed disposable reference
-  satisfies the former live-addon prerequisite and this plan is `ready`.
+satisfies the former live-addon prerequisite and this plan is `ready`.
+
+## Back to Approval bounded action (2026-09-12)
+
+Odoo's approved leave form exposes `hr.leave.action_back_to_approval`, returning
+the request to approval and reversing approved balance usage. Core3 adds the
+manager-only action to the existing request-detail page/API seam. Migration
+`20260912130000-016-back-to-approval.yaml` supplies deterministic approved
+request and balance fixtures; focused coverage verifies the state transition,
+balance reversal, idempotent guard, missing request, stale row, and permission.
+
+The focused test passes 3 tests and 12 assertions. Capture was attempted under
+`/tmp/core3-odoo-parity/timeoff-batch4-20260912/`, but Vite stopped with
+`EMFILE: too many open files`; no Core3/Odoo visual parity claim or screenshot
+is made. Images remain outside Git.
