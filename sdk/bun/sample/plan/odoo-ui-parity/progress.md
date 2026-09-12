@@ -2,7 +2,8 @@
 
 Keep one module-ownership/sign-off row per module. Update it only when the
 long-lived module agent changes state or the shared tester signs off. Track
-intermediate test cases and repairs in `test-cases.md` and `bug-fixes.md`; do
+intermediate test cases and repairs in the matching module section of
+`module-qa.md`; do
 not create per-agent progress logs.
 
 | Date | Module | Bounded slice | Commit | Tests/audits | Browser captures | Blocker |

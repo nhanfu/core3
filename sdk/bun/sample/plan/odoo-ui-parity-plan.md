@@ -164,8 +164,8 @@ The shared mock-data contract is defined in
   not duplicated per module or per wave. It consumes the module agents'
   committed work, runs the shared test matrix and authenticated Odoo/Core3
   browser comparisons, records failures in
-  `odoo-ui-parity/test-cases.md`, records repairs in
-  `odoo-ui-parity/bug-fixes.md`, and re-tests fixes until every module's
+  `odoo-ui-parity/module-qa.md`, records each module's tests and repairs in
+  that module's section, and re-tests fixes until every module's
   accepted functionality is green. Module agents must respond to tester
   findings and keep ownership until the tester signs off or the blocker is
   explicitly recorded.
@@ -173,7 +173,8 @@ The shared mock-data contract is defined in
   not a per-slice activity log. A module agent adds or updates one row only
   when its module goal changes state: active, source-blocked, tester-failed,
   or parity-signed-off. Intermediate commits and failing attempts belong in
-  `test-cases.md` and `bug-fixes.md`; do not create per-agent progress logs.
+  the matching module section of `module-qa.md`; do not create per-agent
+  progress logs.
 - Every completed module must have corresponding test-case entries and a
   tester result before its progress row can say parity-signed-off. A source
   blocker may be recorded only with the exact missing addon/action evidence;
@@ -184,18 +185,18 @@ The shared mock-data contract is defined in
   its fields, validation, permissions, and actions remain declarative and
   maintainable.
 
-## Shared verification and repair ledgers
+## Shared verification and repair ledger
 
 The module-level plan files describe Odoo behavior and implementation scope.
-The execution ledgers beside this plan track cross-module verification:
+The single execution ledger beside this plan tracks cross-module verification
+with separate test-case and bug-fix tables for every module:
 
-- `odoo-ui-parity/test-cases.md` is the canonical test matrix. It records the
-  test case ID, module, Odoo route/action, Core3 route, fixture/state,
-  desktop/mobile capture paths, result, tester, and follow-up bug ID.
-- `odoo-ui-parity/bug-fixes.md` is the canonical repair queue. It records the
-  observed mismatch or failure, evidence, owning module agent, fix commit,
-  regression test, retest result, and remaining blocker.
+- `odoo-ui-parity/module-qa.md` is the canonical QA and repair ledger. Each
+  module section records its Odoo route/action, Core3 route, fixture/state,
+  desktop/mobile capture paths, test result, observed mismatch, evidence,
+  owner, fix commit, regression test, retest result, and blocker.
 
-The shared tester must update both ledgers as part of every verification pass.
+The shared tester must update the relevant module section as part of every
+verification pass. Do not create separate global test-case or bug-fix files.
 Screenshots remain temporary under `/tmp/core3-odoo-parity/` and must never be
 added to Git.
