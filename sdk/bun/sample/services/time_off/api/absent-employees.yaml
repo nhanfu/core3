@@ -1,0 +1,16 @@
+page: { id: absent-employees }
+datasources:
+  - id: absent_employee_departments
+    permission: time_off.read
+    single: false
+    query: "SELECT DISTINCT department_name AS value, department_name AS label FROM time_off_absent_employees WHERE active = TRUE ORDER BY department_name"
+  - id: absent_employees
+    permission: time_off.read
+    error_states: { transport_error: { status: 503, code: TIME_OFF_ABSENT_EMPLOYEES_UNAVAILABLE, message: Absent employee data is temporarily unavailable. } }
+    query: "SELECT id, employee_id, employee_name, department_name, company_name, job_title, time_off_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state FROM time_off_absent_employees WHERE active = TRUE AND (:q IS NULL OR employee_name ILIKE '%' || :q || '%' OR department_name ILIKE '%' || :q || '%' OR job_title ILIKE '%' || :q || '%') AND (:department_name IS NULL OR department_name = :department_name) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY department_name, employee_name, date_from, id"
+actions:
+  - id: open_absent_request
+    type: navigate
+    permission: time_off.read
+    navigate_to: /leave-requests
+    params: { employee_id: '{row.employee_id}' }

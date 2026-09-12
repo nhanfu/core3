@@ -1,0 +1,33 @@
+title: Absent Employees
+page: { id: absent-employees, route: /time-off/absent-employees, breadcrumb: [Human Resources, Time Off, Absent Employees], auth: { require: [time_off.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: absent_employees
+    responsive_card: true
+    search: { label: Search absent employees, placeholder: Search employee or department... }
+    filters:
+      - { field: department_name, label: Department, options_source: absent_employee_departments }
+    empty_state: { title: No absent employees found, description: No employees are on approved or validated time off for this date. }
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: employee_name, subtitle: department_name, fields: [{ field: time_off_name, label: Time Off }, { field: date_from, label: From }, { field: date_to, label: To }] }
+    columns:
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell }
+      - { field: department_name, label: Department }
+      - { field: job_title, label: Job Position }
+      - { field: time_off_name, label: Time Off }
+      - { field: date_from, label: Start }
+      - { field: date_to, label: End }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_absent_request, label: View Time Off, permission: time_off.read, variant: secondary }

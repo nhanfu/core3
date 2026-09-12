@@ -26,8 +26,9 @@ describe('Time Off Odoo view navigation', () => {
         }
       }
     }
-    expect(multiViewPages.sort()).toEqual([
-      'accrual-plans.yaml',
+      expect(multiViewPages.sort()).toEqual([
+        'absent-employees.yaml',
+        'accrual-plans.yaml',
       'allocations.yaml',
       'analysis.yaml',
       'balance.yaml',

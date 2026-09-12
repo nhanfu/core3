@@ -29,6 +29,7 @@ menu:
         - { path: /time-off-allocations, label: Allocations, icon: calendar, permission: time_off.read }
         - { path: /time-off-approval, label: All Time Off, icon: calendar, permission: time_off.manage }
         - { path: /time-off-overview, label: Overview, icon: calendar, permission: time_off.read }
+        - { path: /time-off/absent-employees, label: Absent Employees, icon: users, permission: time_off.read }
     - id: my-time
       label: My Time
       items:

@@ -1,0 +1,30 @@
+version: 0.0.14
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS time_off_absent_employees (
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        employee_name VARCHAR NOT NULL,
+        department_name VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        job_title VARCHAR NOT NULL,
+        time_off_name VARCHAR NOT NULL,
+        date_from DATE NOT NULL,
+        date_to DATE NOT NULL,
+        state VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      CREATE INDEX IF NOT EXISTS time_off_absent_employees_department_idx ON time_off_absent_employees(department_name, date_from);
+      INSERT OR IGNORE INTO time_off_absent_employees(id, employee_id, employee_name, department_name, company_name, job_title, time_off_name, date_from, date_to, state, active) VALUES
+        ('absent-employee-demo-001', 'employee-demo-002', 'Marc Demo', 'Product', 'YShip Demo Company', 'Product Manager', 'Annual Leave', '2026-09-15', '2026-09-18', 'Approved', TRUE),
+        ('absent-employee-demo-002', 'employee-demo-004', 'Paul Williams', 'Product', 'YShip Demo Company', 'Product Specialist', 'Personal Time Off', '2026-09-16', '2026-09-16', 'Validated', TRUE),
+        ('absent-employee-demo-003', 'employee-demo-003', 'Mitchell Admin', 'Management', 'YShip Demo Company', 'Administrator', 'Training Time Off', '2026-09-16', '2026-09-17', 'Approved', TRUE);
+    down: |
+      DROP INDEX IF EXISTS time_off_absent_employees_department_idx;
+      DROP TABLE IF EXISTS time_off_absent_employees;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

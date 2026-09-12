@@ -579,6 +579,41 @@ mobile.
   visibility matches the source group boundaries, including menu, field,
   button, record-rule, and company scope.
 
+### Current batch: Absent Employees context action
+
+The next uncovered source action is `hr_employee_action_from_department`
+(`Absent Employees`) from `addons/hr_holidays/views/hr_views.xml`. It is an
+embedded department action on the HR Department kanban, with model
+`hr.employee`, `list,kanban,form` views, default `On Time Off` filtering, and
+the active department carried into the search panel and employee default. The
+source domain is the employee Time Off status for confirmed or validated
+leave; the visible list contract includes employee, department, job position,
+and the current leave dates/status.
+
+The live-reference gate was attempted before implementation. The available
+8073 authenticated database does not have the Time Off app, while the 8069
+reference authenticated into `core3_reference` without `hr_holidays`; the
+documented `core3_personal` database was not available through the running
+reference endpoint. Therefore this batch records source/XML inventory and
+does not claim fresh Odoo screenshots or runtime parity evidence.
+
+Core3 adds the read-only, service-owned route
+`/time-off/absent-employees`, joined by `page.id: absent-employees` to
+`services/time_off/api/absent-employees.yaml`. It provides visible List/Cards
+tabs, department filtering, search, empty and explicit 503 transport states,
+and a row action that preserves employee context when returning to Leave
+Requests. Migration `0.0.14` seeds Marc Demo, Paul Williams, and Mitchell
+Admin with deterministic approved/validated 2026 leave, and is idempotent.
+The slice is read-only because the installed Odoo action delegates create/edit
+to the owning Employees model; no Time Off CRUD mutation is invented here.
+
+Focused evidence: `time_off_absent_employees.integration.test.ts` passes 2
+tests and 15 assertions, covering page/API separation, route/menu contract,
+stable seed ordering, department/search/empty behavior, migration idempotency,
+and the 503 error contract. Browser screenshots are intentionally not claimed
+until an authenticated Odoo database with `hr_holidays` is available; Core3
+desktop/mobile capture remains pending the live-reference gate.
+
 ### Functional and data
 
 - Stable fixture ordering and fixed relative dates render identically after
