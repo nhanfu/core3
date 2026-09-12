@@ -1,5 +1,5 @@
 title: Recurring Plans
-page: { id: recurring-plans, route: /recurring-plans, breadcrumb: [CRM, Configuration, Recurring Plans], auth: { require: [crm.manage] } }
+page: { id: recurring-plans, route: /recurring-plans, breadcrumb: [Recurring Plans], auth: { require: [crm.manage] } }
 
 components:
   - type: ListView
@@ -18,10 +18,15 @@ components:
         - { field: sequence, type: number, default: 10 }
         - { field: name, type: text, required: true, placeholder: Plan Name }
         - { field: number_of_months, type: number, required: true, default: 1 }
+    selectable: true
+    bulk_actions:
+      - { id: archive_selected_crm_recurring_plans, label: Archive selected, permission: crm.manage }
+      - { id: restore_selected_crm_recurring_plans, label: Restore selected, permission: crm.manage }
+      - { id: delete_selected_crm_recurring_plans, label: Delete selected, permission: crm.manage, variant: danger }
     columns:
-      - { field: sequence, label: ' ', type: HandleCell, sortable: false, mobile: false }
-      - { field: name, label: Plan Name, type: PrimaryEntityCell }
-      - { field: number_of_months, label: '# Months', align: right }
+      - { field: sequence, label: ' ', type: HandleCell, sortable: false, mobile: true }
+      - { field: name, label: Plan Name, type: PrimaryEntityCell, mobile: true }
+      - { field: number_of_months, label: '# Months', align: right, mobile: true }
     page_size: 50
     row_key: id
     row_actions: menu

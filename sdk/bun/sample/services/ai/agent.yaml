@@ -313,6 +313,31 @@ operations:
     method: POST
     permission: crm.manage
     preview: false
+  - id: crm.recurring_plans.create
+    route: /api/actions/crm.recurring_plans.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.recurring_plans.update
+    route: /api/actions/crm.recurring_plans.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.recurring_plans.archive
+    route: /api/actions/crm.recurring_plans.archive
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.recurring_plans.restore
+    route: /api/actions/crm.recurring_plans.restore
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.recurring_plans.bulk_delete
+    route: /api/actions/crm.recurring_plans.bulk_delete
+    method: POST
+    permission: crm.manage
+    preview: false
   - id: crm.activity_types.update
     route: /api/actions/crm.activity_types.update
     method: POST

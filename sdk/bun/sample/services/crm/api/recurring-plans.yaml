@@ -89,3 +89,45 @@ actions:
       guards:
         - { query: "SELECT id FROM crm_recurring_plans WHERE id = :id AND active = false", status: 404, code: CRM_RECURRING_PLAN_NOT_FOUND, message: Archived recurring plan not found. }
       result: { query: "SELECT * FROM crm_recurring_plans WHERE id = :id" }
+  - id: archive_selected_crm_recurring_plans
+    type: server
+    permission: crm.manage
+    action: crm.recurring_plans.archive
+    handler: yaml_mutation
+    operation: bulk_update
+    refresh: [crm_recurring_plans]
+    confirm: 'Archive {count} selected recurring plans?'
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :ids IS NOT NULL", status: 400, code: CRM_RECURRING_PLAN_SELECTION_REQUIRED, message: Select at least one recurring plan. }
+      steps:
+        - query: "UPDATE crm_recurring_plans SET active = FALSE, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id IN :ids"
+      result: { query: "SELECT TRUE AS archived" }
+  - id: restore_selected_crm_recurring_plans
+    type: server
+    permission: crm.manage
+    action: crm.recurring_plans.restore
+    handler: yaml_mutation
+    operation: bulk_update
+    refresh: [crm_recurring_plans]
+    confirm: 'Restore {count} selected recurring plans?'
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :ids IS NOT NULL", status: 400, code: CRM_RECURRING_PLAN_SELECTION_REQUIRED, message: Select at least one recurring plan. }
+      steps:
+        - query: "UPDATE crm_recurring_plans SET active = TRUE, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id IN :ids"
+      result: { query: "SELECT TRUE AS restored" }
+  - id: delete_selected_crm_recurring_plans
+    type: server
+    permission: crm.manage
+    action: crm.recurring_plans.bulk_delete
+    handler: yaml_mutation
+    operation: bulk_delete
+    refresh: [crm_recurring_plans]
+    confirm: 'Delete {count} selected recurring plans?'
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :ids IS NOT NULL", status: 400, code: CRM_RECURRING_PLAN_SELECTION_REQUIRED, message: Select at least one recurring plan. }
+      steps:
+        - query: "DELETE FROM crm_recurring_plans WHERE id IN :ids"
+      result: { query: "SELECT TRUE AS deleted" }

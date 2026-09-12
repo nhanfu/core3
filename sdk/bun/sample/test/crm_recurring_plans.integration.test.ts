@@ -11,7 +11,7 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, fil
 const action = (id: string) => yaml('api/recurring-plans.yaml').actions.find((entry: any) => entry.id === id);
 
 describe('CRM Recurring Plans bounded parity', () => {
-  test('maps Odoo action 402 and keeps the list-only page/API contract joined by page.id', () => {
+  test('maps Odoo action 379 and keeps the list-only page/API contract joined by page.id', () => {
     const odooMenu = readFileSync('/home/nhanjs/projects/odoo/addons/crm/views/crm_menu_views.xml', 'utf8');
     const odooViews = readFileSync('/home/nhanjs/projects/odoo/addons/crm/views/crm_recurring_plan_views.xml', 'utf8');
     const page = yaml('pages/recurring-plans.yaml');
@@ -27,7 +27,7 @@ describe('CRM Recurring Plans bounded parity', () => {
     expect(odooViews).toContain('<field name="number_of_months"/>');
     expect(page.datasources).toBeUndefined();
     expect(page.actions).toBeUndefined();
-    expect(page.page).toMatchObject({ id: 'recurring-plans', route: '/recurring-plans', auth: { require: ['crm.manage'] } });
+    expect(page.page).toMatchObject({ id: 'recurring-plans', route: '/recurring-plans', breadcrumb: ['Recurring Plans'], auth: { require: ['crm.manage'] } });
     expect(api.page).toEqual({ id: page.page.id });
     expect(discovered.pageDatasources.get('recurring-plans')).toContain('crm_recurring_plans');
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([
@@ -36,6 +36,10 @@ describe('CRM Recurring Plans bounded parity', () => {
     expect(page.components[0]).toMatchObject({ type: 'ListView', source: 'crm_recurring_plans', create_label: 'New' });
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual([' ', 'Plan Name', '# Months']);
     expect(page.components[0].filters).toEqual([{ field: 'active', label: 'Archived', options: [{ id: 'archived', label: 'Archived' }] }]);
+    expect(page.components[0].selectable).toBe(true);
+    expect(page.components[0].bulk_actions.map((entry: any) => entry.id)).toEqual([
+      'archive_selected_crm_recurring_plans', 'restore_selected_crm_recurring_plans', 'delete_selected_crm_recurring_plans',
+    ]);
     expect(yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration').items)
       .toContainEqual({ path: '/recurring-plans', label: 'Recurring Plans', icon: 'list', permission: 'crm.manage' });
   });
@@ -70,8 +74,11 @@ describe('CRM Recurring Plans bounded parity', () => {
     const update = action('update_crm_recurring_plan');
     const archive = action('archive_crm_recurring_plan');
     const unarchive = action('unarchive_crm_recurring_plan');
-    expect([create, update, archive, unarchive].every((entry: any) => entry.permission === 'crm.manage')).toBe(true);
-    expect([create, update, archive, unarchive].every((entry: any) => entry.handler === 'yaml_mutation')).toBe(true);
+    const bulkArchive = action('archive_selected_crm_recurring_plans');
+    const bulkRestore = action('restore_selected_crm_recurring_plans');
+    const bulkDelete = action('delete_selected_crm_recurring_plans');
+    expect([create, update, archive, unarchive, bulkArchive, bulkRestore, bulkDelete].every((entry: any) => entry.permission === 'crm.manage')).toBe(true);
+    expect([create, update, archive, unarchive, bulkArchive, bulkRestore, bulkDelete].every((entry: any) => entry.handler === 'yaml_mutation')).toBe(true);
     expect(update.mutation.concurrency).toEqual({ required: true });
     expect(archive.mutation.concurrency).toEqual({ required: true });
 
@@ -91,6 +98,10 @@ describe('CRM Recurring Plans bounded parity', () => {
     await expect(repository.executeMutation(archive.mutation, { id: created.id, expected_row_version: 3, values: { active: false } })).rejects.toMatchObject({ status: 404, code: 'CRM_RECURRING_PLAN_NOT_FOUND' });
     const restored = await repository.executeMutation(unarchive.mutation, { id: created.id, expected_row_version: 3, values: { active: true } });
     expect(restored).toMatchObject({ id: created.id, active: true, row_version: 4 });
+    await repository.executeMutation(bulkArchive.mutation, { ids: [created.id] });
+    await repository.executeMutation(bulkRestore.mutation, { ids: [created.id] });
+    await repository.executeMutation(bulkDelete.mutation, { ids: [created.id] });
+    expect((await repository.querySource(yaml('api/recurring-plans.yaml').datasources[0], { q: 'Biannual Updated', active: null, fixture_state: null }, 0, 50)).data).toEqual([]);
     await database.close();
   });
 });
