@@ -2,19 +2,28 @@
 
 Module owner: expenses module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: dormant
+Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: working tree after authenticated Expenses QA
 
 ## Current state
 
-This module is registered in odoo-parity-plan.md but has not yet produced a
-current-wave candidate or verified evidence in the active checkout. No parity
-claim is made here.
+The module has a current functional/browser QA candidate. No complete parity
+claim is made because paired Odoo visual adjudication and broader attachment,
+wizard, and CRUD interaction coverage remain open.
+
+## Current evidence (2026-09-12)
+
+- Expenses focused corpus: `bun test ./test/*expense*.integration.test.ts --timeout 20000` — 29 passed, 178 assertions, 0 failed across 8 files.
+- Fresh authenticated route matrix on port 4029 passed 10 registered routes
+  at desktop 1440x900 and mobile 390x844: 20/20, with no page/request errors,
+  HTTP failures, or horizontal overflow.
+- Fresh authenticated expense lifecycle passed for `expense-demo-draft`:
+  Draft → Submitted → Approved → Posted, row versions 1 → 4, with journal
+  and accounting date persisted. Fleet approval was denied with 403
+  `expenses.manage`.
 
 ## Next bounded task
 
-Record the complete Odoo menu/action/view inventory, implement the module
-functionality, and dispatch QA on the first committed candidate. Update this
-file only with evidence from the matching module owner.
-
+Complete fresh paired Odoo comparison and remaining attachment/wizard/CRUD
+interaction checks before module sign-off.
