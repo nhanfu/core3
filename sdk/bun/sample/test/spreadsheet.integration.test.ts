@@ -206,4 +206,47 @@ describe('Spreadsheet dashboard configuration parity', () => {
       for (const source of yaml(`api/${file}`).datasources) expect(source.permission, file).toBe('spreadsheet.manage');
     }
   });
+
+  test('declares the dashboard Share action with deterministic active and revoked link fixtures', async () => {
+    const page = yaml('pages/dashboard-detail.yaml');
+    const api = yaml('api/dashboard-detail.yaml');
+    expect(page.components.find((component: any) => component.type === 'ListView').actions).toContainEqual(expect.objectContaining({
+      id: 'share_dashboard', label: 'Share', permission: 'spreadsheet.read',
+    }));
+    expect(api.page.id).toBe('dashboard-detail');
+    const share = api.datasources.find((source: any) => source.id === 'spreadsheet_dashboard_share');
+    expect(share).toMatchObject({ single: true, permission: 'spreadsheet.read' });
+    expect(share.query).toContain("'/dashboard/share/' || s.dashboard_id || '/'");
+    const action = api.actions.find((candidate: any) => candidate.id === 'share_dashboard');
+    expect(action).toMatchObject({ type: 'server_form', action: 'spreadsheet.dashboard.share', operation: 'update' });
+    expect(action.params).toMatchObject({ dashboard_id: '{row.dashboard_id}', id: '{row.share_id}' });
+    expect(action.mutation.guards).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 409, code: 'SPREADSHEET_DASHBOARD_SHARE_STALE' }),
+      expect.objectContaining({ status: 422, code: 'SPREADSHEET_DASHBOARD_SHARE_UNAVAILABLE' }),
+    ]));
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_share_migrations', ['schema', 'data']);
+    expect((await repository.querySource(share, { id: 'sdb-sales', fixture_state: null }, 0, 1)).data).toMatchObject({
+      dashboard_id: 'sdb-sales', revoked: false, share_link: '/dashboard/share/sdb-sales/sales-dashboard-share-2026',
+    });
+    expect((await repository.querySource(share, { id: 'sdb-product', fixture_state: null }, 0, 1)).data).toMatchObject({
+      dashboard_id: 'sdb-product', revoked: true, share_link: null,
+    });
+    expect((await repository.querySource(share, { id: 'sdb-sales', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
+    await expect(repository.querySource(share, { id: 'sdb-sales', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({
+      status: 503, code: 'SPREADSHEET_DASHBOARD_SHARE_UNAVAILABLE',
+    });
+    const result = await repository.executeMutation(action.mutation, {
+      dashboard_id: 'sdb-sales', id: 'share-sales-2026', expected_row_version: 1, values: { revoked: false },
+    });
+    expect(result).toMatchObject({ dashboard_id: 'sdb-sales', revoked: false, share_link: '/dashboard/share/sdb-sales/sales-dashboard-share-2026' });
+    await expect(repository.executeMutation(action.mutation, {
+      dashboard_id: 'sdb-sales', id: 'share-sales-2026', expected_row_version: 0, values: { revoked: false },
+    })).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_SHARE_STALE' });
+    await expect(repository.executeMutation(action.mutation, {
+      dashboard_id: 'sdb-product', id: 'share-product-revoked-2026', expected_row_version: 1, values: { revoked: false },
+    })).resolves.toMatchObject({ dashboard_id: 'sdb-product', revoked: false });
+  });
 });

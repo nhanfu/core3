@@ -17,4 +17,37 @@ datasources:
   - id: spreadsheet_dashboard_table
     single: false
     permission: spreadsheet.read
-    query: "SELECT id, country, category, revenue, orders FROM spreadsheet_dashboard_rows WHERE dashboard_id = :id ORDER BY sequence"
+    query: "SELECT r.id, r.dashboard_id, r.country, r.category, r.revenue, r.orders, (SELECT s.id FROM spreadsheet_dashboard_shares s WHERE s.dashboard_id = r.dashboard_id ORDER BY s.created_at DESC, s.id LIMIT 1) AS share_id, (SELECT s.row_version FROM spreadsheet_dashboard_shares s WHERE s.dashboard_id = r.dashboard_id ORDER BY s.created_at DESC, s.id LIMIT 1) AS share_row_version FROM spreadsheet_dashboard_rows r WHERE r.dashboard_id = :id ORDER BY r.sequence"
+  - id: spreadsheet_dashboard_share
+    single: true
+    permission: spreadsheet.read
+    query: "SELECT s.id, s.row_version, s.dashboard_id, s.label, s.revoked, CASE WHEN s.revoked THEN NULL ELSE '/dashboard/share/' || s.dashboard_id || '/' || s.token END AS share_link FROM spreadsheet_dashboard_shares s JOIN spreadsheet_dashboards d ON d.id = s.dashboard_id WHERE s.dashboard_id = :id AND d.published = TRUE AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) ORDER BY s.created_at DESC, s.id LIMIT 1"
+    error_states:
+      transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_SHARE_UNAVAILABLE, message: Dashboard sharing is temporarily unavailable. }
+actions:
+  - id: share_dashboard
+    type: server_form
+    permission: spreadsheet.read
+    title: Share Dashboard
+    action: spreadsheet.dashboard.share
+    handler: yaml_mutation
+    operation: update
+    params: { dashboard_id: '{row.dashboard_id}', id: '{row.share_id}', expected_row_version: '{row.share_row_version}' }
+    refresh: [spreadsheet_dashboard_share]
+    mutation:
+      operation: update
+      table: spreadsheet_dashboard_shares
+      fields: [revoked]
+      defaults: { revoked: false }
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT s.id FROM spreadsheet_dashboard_shares s JOIN spreadsheet_dashboards d ON d.id = s.dashboard_id WHERE s.dashboard_id = :dashboard_id AND s.row_version = :expected_row_version AND d.published = TRUE", status: 409, code: SPREADSHEET_DASHBOARD_SHARE_STALE, message: This dashboard share changed or is no longer published. Reload before sharing. }
+        - { query: "SELECT s.id FROM spreadsheet_dashboard_shares s JOIN spreadsheet_dashboards d ON d.id = s.dashboard_id WHERE s.dashboard_id = :dashboard_id AND d.published = TRUE", status: 422, code: SPREADSHEET_DASHBOARD_SHARE_UNAVAILABLE, message: This dashboard does not have a share link. }
+      result: { query: "SELECT s.id, s.row_version, s.dashboard_id, s.label, s.revoked, '/dashboard/share/' || s.dashboard_id || '/' || s.token AS share_link FROM spreadsheet_dashboard_shares s WHERE s.dashboard_id = :dashboard_id AND s.revoked = FALSE ORDER BY s.created_at DESC, s.id LIMIT 1" }
+    fields:
+      - { field: share_link, label: Share Link, type: text, readonly: true }
+      - { field: revoked, label: Active, type: checkbox, default: false }
+  - id: download_dashboard
+    type: download
+    permission: spreadsheet.read
+    kind: spreadsheet-dashboard

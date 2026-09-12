@@ -404,3 +404,25 @@ HTTP readiness because Vite hit `EMFILE: too many open files` while watching
 `vite.config.ts`, and the backend separately stopped on the existing DuckDB
 parser error `Adding columns with constraints not yet supported`. No visual
 parity claim is made for this batch and no screenshots were added to Git.
+
+## 2026-09-12 bounded implementation batch: Dashboard Share action
+
+This batch adds the next visible dashboard action on the retained dashboard
+detail surface: `Share`. The source-aligned `/dashboard-detail` ListView action
+now joins the page-id-owned `api/dashboard-detail.yaml` contract to a
+permission-bound, row-version guarded share-link datasource and mutation. The
+deterministic migration seeds an active Sales link and a revoked Product link;
+unpublished, revoked, missing, stale, and transport-error branches are explicit.
+The generated link points to Odoo's public-share shape
+`/dashboard/share/<dashboard>/<token>`, but the public HTML/data/download
+controller remains deferred until the next access-boundary batch so this slice
+does not imply public-token support.
+
+Focused `spreadsheet.integration.test.ts` now passes 8 tests / 82 assertions,
+proving the visible action, page/API joining, stable 409/422/503 contracts,
+deterministic active-link output, revoked-link exclusion, row-version mutation,
+and not-found behavior. `bun run audit` passes with 591 pages, 598 routes, and
+1,020 datasources. Authenticated desktop/mobile browser
+verification was attempted but remains blocked by the existing local startup
+failures recorded above (`EMFILE` from Vite and the DuckDB constrained-column
+parser error); no visual parity claim or screenshot is made for this batch.

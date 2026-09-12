@@ -46,14 +46,3 @@ components:
     page_size: 10
     row_key: id
     empty_state: { title: Empty workbook, description: This dashboard has no readable spreadsheet data. }
-actions:
-  - id: share_dashboard
-    type: server
-    permission: spreadsheet.read
-    action: spreadsheet.dashboard.share
-    handler: yaml_mutation
-    operation: create
-  - id: download_dashboard
-    type: download
-    permission: spreadsheet.read
-    kind: spreadsheet-dashboard

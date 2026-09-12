@@ -1,0 +1,23 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS spreadsheet_dashboard_shares (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        dashboard_id VARCHAR NOT NULL, token VARCHAR NOT NULL,
+        label VARCHAR NOT NULL DEFAULT 'Dashboard share',
+        revoked BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_spreadsheet_dashboard_share_token ON spreadsheet_dashboard_shares(token);
+      INSERT OR IGNORE INTO spreadsheet_dashboard_shares(id, row_version, dashboard_id, token, label, revoked)
+      VALUES
+        ('share-sales-2026', 1, 'sdb-sales', 'sales-dashboard-share-2026', 'Sales dashboard share', false),
+        ('share-product-revoked-2026', 1, 'sdb-product', 'product-dashboard-share-2026', 'Product dashboard share', true);
+    down: |
+      DROP TABLE IF EXISTS spreadsheet_dashboard_shares;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
