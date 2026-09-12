@@ -21,22 +21,23 @@ Candidate commit: current working tree
   in focused reruns.
 - Focused Project suite: `bun test ./test/project*.integration.test.ts --timeout 20000` — 44 passed, 0 failed, 506 assertions across 15 files.
 - Authenticated module-scoped probes loaded the Project dashboard, milestone, activity, and portal surfaces with seeded IDs. Fleet user opening `/project/settings` received HTTP 403 with `Requires permission: project.settings`, with no browser errors.
-- The module-scoped process namespaces routes under `/project` (for example `/project/projects`); using unprefixed `/projects` or `/project/project/settings` is invalid in that runner. Properly namespaced Project list, detail, dashboard, stages, roles, tags, activity types, and activity plans routes loaded cleanly. `/project/tasks/detail` still fails because its declared `yaml.service.timesheets` dependency is not loaded by the single-module runner.
+- The module-scoped process namespaces routes under `/project` (for example `/project/projects`); using unprefixed `/projects` or `/project/project/settings` is invalid in that runner. Properly namespaced Project list, detail, dashboard, stages, roles, tags, activity types, and activity plans routes loaded cleanly. A dependency-aware process selecting `project,timesheets` also loaded `/project/tasks/detail?id=task-demo-002` with the timesheet datasource and no browser/request errors.
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | PROJECT-FUNC-001 | Focused functionality, dashboard, configuration, portal, task, and milestone contracts | 44 tests, 506 assertions; focused suite passed | pass |
-| PROJECT-BROWSER-001 | Authenticated seeded Project route probes | Proper `/project/*` list, detail, dashboard, and configuration routes loaded; task detail cross-service dependency remains | partial pass |
+| PROJECT-BROWSER-001 | Authenticated seeded Project route probes | Proper `/project/*` list, detail, dashboard, and configuration routes loaded; dependency-aware task detail also passed | pass |
+| PROJECT-CROSS-001 | Project task detail with Timesheets service dependency | `project,timesheets` process loaded `/project/tasks/detail?id=task-demo-002` with no browser/request errors | pass |
 | PROJECT-PERM-001 | Non-manager cannot open Project settings | Fleet user received HTTP 403 with `Requires permission: project.settings`; browser errors 0 | pass |
-| PROJECT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Route collision, cross-service runner dependency, full CRUD smoke, and paired Odoo comparison remain open | pending |
+| PROJECT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Functional and dependency-aware route evidence present; full CRUD smoke and paired Odoo comparison remain open | pending |
 
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
-| PROJECT-RUNTIME-001 | Unprefixed paths were invalid for the module-scoped runner; `/project/tasks/detail` raises missing `yaml.service.timesheets` because the runner loads only Project plus Auth | — | Proper namespaced routes passed; task detail requires a full-process or dependency-aware runner retest | follow-up |
+| PROJECT-RUNTIME-001 | Initial single-module task probe lacked the declared `yaml.service.timesheets` dependency | — | Dependency-aware `project,timesheets` process passed task detail; unprefixed paths remain invalid by runner design | fixed |
 
 ## Sign-off
 
