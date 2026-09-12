@@ -31,6 +31,34 @@ actions:
         - { query: "UPDATE purchase_orders SET acknowledged = true, acknowledged_at = DATE '2026-01-15', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'Confirmed' AND COALESCE(acknowledged, false) = false AND COALESCE(locked, false) = false AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_ACKNOWLEDGE_STALE, message: This purchase order changed or is no longer available for acknowledgement. Reload before acknowledging. }
       result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
   - { id: cancel_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.cancel, handler: order_transition, workflow: purchase_orders, operation: cancel, refresh: [purchase_order_detail] }
+  - id: lock_purchase_order_detail
+    type: server
+    permission: purchase.write
+    action: purchase.orders.lock
+    handler: yaml_mutation
+    operation: update
+    refresh: [purchase_order_detail]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Confirmed' AND COALESCE(locked, false) = false AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_LOCK_INVALID, message: Only unchanged confirmed purchase orders can be locked. Reload before locking. }
+      steps:
+        - { query: "UPDATE purchase_orders SET locked = true, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'Confirmed' AND COALESCE(locked, false) = false AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_LOCK_STALE, message: This purchase order changed or is no longer lockable. Reload before locking. }
+      result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
+  - id: unlock_purchase_order_detail
+    type: server
+    permission: purchase.manage
+    action: purchase.orders.unlock
+    handler: yaml_mutation
+    operation: update
+    refresh: [purchase_order_detail]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM purchase_orders WHERE id = :id AND COALESCE(locked, false) = true AND row_version = :expected_row_version", status: 409, code: PURCHASE_ORDER_UNLOCK_INVALID, message: Only unchanged locked purchase orders can be unlocked. Reload before unlocking. }
+      steps:
+        - { query: "UPDATE purchase_orders SET locked = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND COALESCE(locked, false) = true AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_ORDER_UNLOCK_STALE, message: This purchase order changed or is no longer locked. Reload before unlocking. }
+      result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
   - id: add_purchase_order_line
     type: server_form
     permission: purchase.write

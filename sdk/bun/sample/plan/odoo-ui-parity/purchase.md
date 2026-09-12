@@ -1007,3 +1007,39 @@ The focused test passes 2 tests and 12 assertions. Authenticated desktop/mobile
 capture was attempted under `/tmp/core3-odoo-parity/purchase-batch5-20260912/`,
 but Vite stopped with `EMFILE: too many open files` before a Core3 browser pass;
 no visual parity claim or screenshot is made. Images remain outside Git.
+
+## Purchase Order Lock and Unlock actions (2026-09-12)
+
+The next missing order-form action pair is Odoo's `Lock` / `Unlock` controls.
+The exact source trace is `addons/purchase/views/purchase_views.xml`,
+`purchase_order_form`: `button_lock` is labelled `Lock`, visible only when
+`state == 'purchase'`, `locked` is false, and `lock_confirmed_po == 'lock'`;
+`button_unlock` is labelled `Unlock`, visible when `locked` is true and gated
+by `purchase.group_purchase_manager`. The model implementations are
+`addons/purchase/models/purchase_order.py::button_lock` and `button_unlock`.
+Locking is a normal Purchase-user action; unlocking is manager-only and both
+actions are on the Purchase Order form rather than a new menu.
+
+Core3 adds the matching `Lock` and manager-only `Unlock` header actions to
+`pages/purchase-detail.yaml`. Their separate action contracts in
+`api/purchase-detail.yaml` use `page.id: purchase-detail`, require the current
+`row_version`, permit locking only a confirmed unlocked order, permit
+unlocking only a locked order, increment the version, refresh the detail
+datasource, and return explicit stale/state errors. Existing deterministic
+fixtures cover both states (`po-demo-005` is confirmed/unlocked and
+`po-demo-006` is received/locked); no page-local data or migration was needed.
+
+`test/purchase.integration.test.ts` covers exact labels, action IDs,
+`purchase.write` versus `purchase.manage` permissions, successful lock and
+unlock transitions, row-version increments, repeated-action guards, and the
+page/API binding. The focused run passed 10 tests and 100 assertions.
+
+Authenticated Core3 and Odoo desktop 1440x900 plus mobile 390x844 captures
+were attempted under `/tmp/core3-odoo-parity/purchase-lock-unlock-20260912/`.
+No capture or visual claim is made: the Core3 runtime could not become ready.
+Vite failed with `EMFILE: too many open files` while watching
+`sdk/bun/sample/vite.config.ts`, and the DuckDB startup path failed on an
+existing migration with `Parser Error: Adding columns with constraints not yet
+supported`. The shared runtime/migration repair is outside this bounded
+Purchase action slice; retry captures after those environment blockers are
+resolved. No images were added to Git.

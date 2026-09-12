@@ -73,6 +73,31 @@ describe('Purchase Orders list and detail parity', () => {
     expect(yaml('pages/purchase-detail.yaml').page.auth.require).toEqual(['purchase.read']);
   });
 
+  test('exposes Odoo Lock and manager-only Unlock with guarded row versions', async () => {
+    const page = yaml('pages/purchase-detail.yaml');
+    const api = yaml('api/purchase-detail.yaml');
+    const actions = api.actions.filter((action: any) => ['lock_purchase_order_detail', 'unlock_purchase_order_detail'].includes(action.id));
+    expect(page.components[0].header_actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'lock_purchase_order_detail', label: 'Lock', permission: 'purchase.write' }),
+      expect.objectContaining({ id: 'unlock_purchase_order_detail', label: 'Unlock', permission: 'purchase.manage' }),
+    ]));
+    expect(actions.map((action: any) => [action.id, action.action, action.permission])).toEqual([
+      ['lock_purchase_order_detail', 'purchase.orders.lock', 'purchase.write'],
+      ['unlock_purchase_order_detail', 'purchase.orders.unlock', 'purchase.manage'],
+    ]);
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_lock_test_schema_migrations', ['schema', 'data']);
+    const before = (await repository.query("SELECT row_version, locked FROM purchase_orders WHERE id = 'po-demo-005'"))[0];
+    expect(before).toEqual({ row_version: 1, locked: false });
+    await repository.executeMutation(actions[0].mutation, { id: 'po-demo-005', expected_row_version: 1 });
+    expect((await repository.query("SELECT row_version, locked FROM purchase_orders WHERE id = 'po-demo-005'"))[0]).toEqual({ row_version: 2, locked: true });
+    await expect(repository.executeMutation(actions[0].mutation, { id: 'po-demo-005', expected_row_version: 2 })).rejects.toThrow('Only unchanged confirmed purchase orders can be locked');
+    await repository.executeMutation(actions[1].mutation, { id: 'po-demo-005', expected_row_version: 2 });
+    expect((await repository.query("SELECT row_version, locked FROM purchase_orders WHERE id = 'po-demo-005'"))[0]).toEqual({ row_version: 3, locked: false });
+    await expect(repository.executeMutation(actions[1].mutation, { id: 'po-demo-005', expected_row_version: 3 })).rejects.toThrow('Only unchanged locked purchase orders can be unlocked');
+  });
+
   test('keeps RFQs aligned with the Odoo action view family and page/API boundary', () => {
     const page = yaml('pages/purchase-rfqs.yaml');
     const list = page.components.find((component: any) => component.type === 'ListView');

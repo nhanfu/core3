@@ -17,6 +17,8 @@ components:
       - { id: confirm_purchase_order_detail, label: Confirm Order, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Sent'" }
       - { id: receive_purchase_order_detail, label: Receive, variant: primary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed'" }
       - { id: acknowledge_purchase_order_detail, label: Acknowledge, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed' && !state.purchase_order_detail.acknowledged" }
+      - { id: lock_purchase_order_detail, label: Lock, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Confirmed' && !state.purchase_order_detail.locked" }
+      - { id: unlock_purchase_order_detail, label: Unlock, variant: secondary, permission: purchase.manage, show_if: "state.purchase_order_detail.locked" }
       - { id: cancel_purchase_order_detail, label: Cancel, variant: secondary, permission: purchase.write, show_if: "state.purchase_order_detail.state === 'Draft' || state.purchase_order_detail.state === 'Sent' || state.purchase_order_detail.state === 'Confirmed'" }
     editable: true
     group_columns: 2
