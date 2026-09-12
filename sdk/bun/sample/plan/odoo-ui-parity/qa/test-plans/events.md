@@ -52,7 +52,7 @@ and the linked confirmed order.
 | --- | --- | --- | --- | --- | --- |
 | EVENTS-WF-001 | workflow | Event lifecycle | State, published/completed metadata and row version update atomically | Forbidden transition/stale version returns 409 without partial write | pass |
 | EVENTS-WF-002 | workflow | Registration capacity | First attendee registers; capacity-1 second attempt is rejected | 409 capacity guard; no second registration | pass |
-| EVENTS-WF-003 | workflow | Attendee confirmation/cancellation | Registration state and event counts update; cancellation/reopen paths are guarded | Missing/cancelled/stale attendee returns stable error | planned |
+| EVENTS-WF-003 | workflow | Attendee confirmation/cancellation | Registration state and event counts update; cancellation/reopen paths are guarded | Missing/cancelled/stale attendee returns stable error | pass: focused registration confirmation test verifies Unconfirmed → Registered → Attended, cancellation, stale replay, and missing-record guards |
 | EVENTS-WF-004 | integration | Send attendee email | Composer submits registration identity and records sent audit row | Blank/cancelled recipient rejected; SMTP delivery remains explicit residual | pass |
 | EVENTS-WF-005 | integration | Badge/ticket generation | Stable event/attendee content and attachment/report contract render | Missing record and retry produce no duplicate audit side effect | planned |
 | EVENTS-WF-006 | integration | Linked Sales/CRM actions | Event-scoped confirmed orders/leads are read or created through declared service contract | Cross-module failure is visible and leaves source event unchanged | planned |

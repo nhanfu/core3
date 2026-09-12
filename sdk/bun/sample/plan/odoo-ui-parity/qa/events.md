@@ -46,6 +46,7 @@ Candidate commit: `f7a38e86`
 | EVENTS-PERM-001 | Read permission boundary | Fleet user denied `events.read` with expected 403/permission page | pass |
 | EVENTS-WORKFLOW-001 | Event lifecycle transitions with optimistic row versions | Authenticated sequence completed Draft → Published → In Progress → Completed; each response 200 and incremented `row_version` | pass |
 | EVENTS-WORKFLOW-002 | Registration persistence and capacity guard | Capacity-1 event accepted first registration (200) and rejected second registration (409) | pass |
+| EVENTS-WORKFLOW-003 | Attendee confirmation/cancellation lifecycle | `bun test ./test/events_registration_confirmation.integration.test.ts` — 4 tests; persisted `Unconfirmed → Registered → Attended`, cancellation, stale replay, missing-record, and deterministic migration assertions pass | pass |
 | EVENTS-FUNC-003 | Event edit, nullable datetime clear, and stale-row guard | Update returned 200 with row version increment; stale update returned 409 `STALE_RECORD` | pass |
 | EVENTS-FUNC-004 | Event delete and lifecycle safety guard | Eligible Draft delete returned 200; Published delete returned 409 `EVENT_NOT_DRAFT` | pass |
 | EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current evidence covers focused contracts, lifecycle/registration probes, and the complete current 33-route matrix; paired Odoo and broader browser CRUD remain open | pending |
