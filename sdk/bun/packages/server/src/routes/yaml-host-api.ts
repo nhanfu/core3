@@ -56,7 +56,11 @@ export function createYamlHostApi(services: YamlRuntimeContext[]) {
     const actionMatch = pathname.match(/^\/api\/actions\/([A-Za-z0-9_.-]+)$/);
     const datasourceMatch = pathname.match(/^\/api\/datasources\/([A-Za-z0-9_-]+)\/workflow$/);
     const attachmentMatch = services.find((service) => Object.values(service.storage?.attachments || {}).some((entry: any) => typeof entry?.download?.route === 'string' && pathname.startsWith(`${entry.download.route}/`)));
-    if (pageMatch) candidates = services.filter((service) => service.pages.has(pageMatch[1]));
+    if (pageMatch) candidates = services.filter((service) => service.pages.has(pageMatch[1])
+      || [...service.pages.values()].some((page: any) => {
+        const fileName = String(page.file || '').split(/[\\/]/).pop() || '';
+        return fileName.replace(/\.ya?ml$/i, '') === pageMatch[1];
+      }));
     else if (actionMatch) candidates = services.filter((service) => service.actions.has(actionMatch[1])
       || [...service.pages.values()].some((page: any) => (page.actions || []).some((action: any) => action.action === actionMatch[1])));
     else if (datasourceMatch) candidates = services.filter((service) => service.datasources.has(datasourceMatch[1]));

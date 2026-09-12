@@ -204,8 +204,14 @@ export class YamlServiceModule implements ModuleLifecycle {
     }
 
     const discovered = discoverPages(context.appsRoot);
+    const scopedPages = [...discovered.pages].filter(([, page]) => page.module === this.id);
+    const pageAliases = scopedPages.flatMap(([id, page]) => {
+      const fileName = String(page.file || '').split(/[\\/]/).pop() || '';
+      const stem = fileName.replace(/\.ya?ml$/i, '');
+      return stem && stem !== id && !discovered.pages.has(stem) ? [[stem, page.config] as [string, any]] : [];
+    });
     const pageMaps = {
-      pages: new Map([...discovered.pages].filter(([, page]) => page.module === this.id).map(([id, page]) => [id, page.config])),
+      pages: new Map([...scopedPages.map(([id, page]) => [id, page.config] as [string, any]), ...pageAliases]),
       datasources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === this.id).flatMap(([, sourceIds]) => sourceIds.map((id) => [id, discovered.datasources.get(id)!] as [string, any]))),
       pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === this.id)),
       catalogs: new Map([...discovered.catalogs].filter(([key]) => key.startsWith(`${this.id}:`))),
@@ -224,7 +230,12 @@ export class YamlServiceModule implements ModuleLifecycle {
         target.clear();
         for (const [key, value] of entries) target.set(key, value);
       };
-      replaceMap(pageMaps.pages, servicePages.map(([id, page]) => [id, page.config]));
+      const refreshedAliases = servicePages.flatMap(([id, page]) => {
+        const fileName = String(page.file || '').split(/[\\/]/).pop() || '';
+        const stem = fileName.replace(/\.ya?ml$/i, '');
+        return stem && stem !== id && !refreshed.pages.has(stem) ? [[stem, page.config] as [string, any]] : [];
+      });
+      replaceMap(pageMaps.pages, [...servicePages.map(([id, page]) => [id, page.config] as [string, any]), ...refreshedAliases]);
       replaceMap(pageMaps.datasources, serviceSources);
       replaceMap(pageMaps.pageSources, [...refreshed.pageDatasources].filter(([pageId]) => servicePages.some(([id]) => id === pageId)));
       replaceMap(pageMaps.catalogs, [...refreshed.catalogs].filter(([key]) => key.startsWith(`${this.id}:`)));

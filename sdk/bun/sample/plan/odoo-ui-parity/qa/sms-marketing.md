@@ -37,7 +37,7 @@ Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-market
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
-| SMS-BUG-001 | Desktop SMS Campaigns loaded `campaign-detail` from `form_view`, but the declared page ID was `sms-campaign-detail`, producing HTTP 404 | `working tree` | Renamed page file to `sms-campaign-detail.yaml`, updated reference/test path; desktop retest has no failed requests | fixed |
+| SMS-BUG-001 | Desktop SMS Campaigns loaded `campaign-detail` from `form_view`, but the declared page ID was `sms-campaign-detail`, producing HTTP 404 | `a3af7332` and current alias repair | Renamed the SMS page file and added shared file-stem aliases; desktop retest has no failed requests | fixed |
 
 ## Sign-off
 

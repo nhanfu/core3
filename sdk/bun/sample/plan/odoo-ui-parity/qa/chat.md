@@ -33,6 +33,7 @@ paired Odoo visual gates.
 | Bug ID | Failure | Fix | Retest | Status |
 | --- | --- | --- | --- | --- |
 | CHAT-QA-001 | Query-backed datasources also declared mock data, causing datasource schema failure and masking persistence behavior | removed redundant mock blocks; added migration-backed rows and guards | focused Chat suite passes | fixed |
+| CHAT-QA-002 | `form_view` file stem `channel-detail` was not accepted when canonical page ID was `chat-channel-detail`, causing detail-page lookup 404 | current working tree | Shared YAML page endpoint now registers/resolves file-stem aliases; authenticated `:4326` probes return HTTP 200 for both alias and canonical ID | fixed |
 
 ## Sign-off
 

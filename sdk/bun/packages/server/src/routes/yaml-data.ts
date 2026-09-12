@@ -16,8 +16,17 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
   const pageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);
   if (pageMatch && method === 'GET') {
     if (url.searchParams.get('cache') !== 'true') reloadPages?.();
-    const page = PAGES.get(pageMatch[1]);
-    if (!page) return apiError(404, `Unknown page: ${pageMatch[1]}`);
+    const requestedPageId = pageMatch[1];
+    // ListView form_view declarations reference a page file path. During the
+    // migration to page.id ownership, some existing paths use the file stem
+    // while the YAML page declares a module-qualified ID (for example
+    // `channel-detail` -> `chat-channel-detail`). Resolve that compatibility
+    // alias without changing the canonical discovered page ID.
+    const page = PAGES.get(requestedPageId) || [...PAGES.values()].find((candidate: any) => {
+      const fileName = String(candidate.file || '').split(/[\\/]/).pop() || '';
+      return fileName.replace(/\.ya?ml$/i, '') === requestedPageId;
+    });
+    if (!page) return apiError(404, `Unknown page: ${requestedPageId}`);
     for (const permission of page.page?.auth?.require || []) requirePerm(permission);
     try {
       return json(await prefetchedPageConfig(page, url, authUser), 200, pageCacheHeaders(url));
