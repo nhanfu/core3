@@ -14,6 +14,10 @@ Verification trigger: merge-candidate
 Candidate commit: ef85c2a7
 QA state: qa-failed
 
+Detailed execution matrix: [`test-plans/order.md`](test-plans/order.md). The
+module-scoped Sales suite passes; the remaining failure is repository-wide
+discovery of datasource contracts outside Order ownership.
+
 ## Test cases
 
 | Test ID | Odoo action/route | Core3 route | Functional scenario/state | Evidence | Result | Date |
