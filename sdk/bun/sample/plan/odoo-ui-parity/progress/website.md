@@ -2,19 +2,20 @@
 
 Module owner: website module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: dormant
+Status: active
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: pending commit for Website lifecycle slice
 
 ## Current state
 
-This module is registered in odoo-parity-plan.md but has not yet produced a
-current-wave candidate or verified evidence in the active checkout. No parity
-claim is made here.
+The Website page lifecycle now has focused integration evidence: a seeded Draft
+page publishes and unpublishes through the declared YAML workflow, increments
+row versions, rejects duplicate transitions, and enforces the manager-only
+unpublish permission. This is a bounded slice only; no full parity claim is
+made here.
 
 ## Next bounded task
 
-Record the complete Odoo menu/action/view inventory, implement the module
-functionality, and dispatch QA on the first committed candidate. Update this
-file only with evidence from the matching module owner.
-
+Add authenticated browser mutation/reload evidence, public visibility and
+site-scope checks, then continue with assets, persistence/restart, Fluent HTML,
+and paired Odoo comparison before module sign-off.

@@ -39,7 +39,7 @@ mutations use isolated databases and deterministic IDs.
 
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
-| WEBSITE-WF-001 | Page lifecycle | Draft → Published → Unpublished updates visibility, version and route resolution atomically | planned browser workflow |
+| WEBSITE-WF-001 | Page lifecycle | Draft → Published → Unpublished updates visibility, version and route resolution atomically | pass: `website_pages.integration.test.ts`; authenticated browser workflow remains planned |
 | WEBSITE-WF-002 | Page editing | Edit content through declared API/mutation contracts and reload without client-only state | pass at contract level |
 | WEBSITE-WF-003 | Site ordering | Website ordering selects the correct homepage and preserves multi-site scope | pass at contract level |
 | WEBSITE-WF-004 | Asset delivery | Asset references resolve safely and broken assets produce deterministic fallback state | planned |
