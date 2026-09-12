@@ -18,6 +18,7 @@ components:
     stat_buttons:
       - { id: event_registration_stats_detail, label: Registration, value_field: registration_count, permission: events.read }
       - { id: event_attendee_stats_detail, label: Attendees, value_field: attendee_count, permission: events.read }
+      - { id: event_leads_detail, label: Leads, value_field: lead_count, permission: events.read, show_if: "record.lead_count > 0" }
       - { id: event_sales_orders_detail, label: Sales, value_field: sale_price_total_display, permission: events.read, show_if: "record.sale_price_total > 0" }
     statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: In Progress, label: In Progress }, { value: Completed, label: Completed }, { value: Cancelled, label: Cancelled }]
     status_colors: { Draft: neutral, Published: blue, In Progress: amber, Completed: green, Cancelled: red }
@@ -154,6 +155,7 @@ actions:
   - { id: registration_desk_event_detail, type: navigate, permission: events.read, navigate_to: /events/registration-desk }
   - { id: event_registration_stats_detail, type: navigate, permission: events.read, navigate_to: /events/registration-statistics, params: { event_id: '{row.id}' } }
   - { id: event_attendee_stats_detail, type: navigate, permission: events.read, navigate_to: /events/attendees, params: { event_id: '{row.id}' } }
+  - { id: event_leads_detail, type: navigate, permission: events.read, navigate_to: /events/leads, params: { event_id: '{row.id}' } }
   - id: view_event_ticket
     type: navigate
     permission: events.read

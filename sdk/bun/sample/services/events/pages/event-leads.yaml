@@ -1,0 +1,35 @@
+title: Leads
+page: { id: event-leads, route: /events/leads, breadcrumb: [Marketing, Events, Event, Leads], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_linked_leads
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: stage, label: Stage, type: StatusChip }
+            - { field: salesperson, label: Salesperson }
+            - { field: expected_revenue_display, label: Expected Revenue }
+    search: { label: Search, placeholder: Search leads... }
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: salesperson, label: Salesperson }
+      - { field: expected_revenue_display, label: Expected Revenue, align: right }
+      - { field: probability_display, label: Probability, align: right }
+      - { field: expected_closing_label, label: Expected Closing }
+    page_size: 50
+    row_key: id
+    row_open_action: view_event_lead
+    empty_state: { title: No leads found, description: Leads generated from registrations for this event will appear here. }
+actions:
+  - { id: view_event_lead, type: navigate, permission: events.read, navigate_to: /lead-detail, params: { id: '{row.crm_lead_id}' } }

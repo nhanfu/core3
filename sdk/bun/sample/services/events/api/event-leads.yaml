@@ -1,0 +1,18 @@
+page: { id: event-leads }
+datasources:
+  - id: event_linked_leads
+    permission: events.read
+    error_states:
+      not_found: { status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+      transport_error: { status: 503, code: EVENT_LEADS_UNAVAILABLE, message: Event leads are temporarily unavailable. }
+    query: |
+      SELECT id, event_id, crm_lead_id, name, partner_name, stage, salesperson,
+        printf('$ %,.2f', CAST(expected_revenue AS DOUBLE)) AS expected_revenue_display,
+        CAST(probability AS VARCHAR) || '%' AS probability_display,
+        strftime(expected_closing, '%d %b %Y') AS expected_closing_label,
+        expected_revenue, probability
+      FROM event_linked_leads
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND event_id = COALESCE(NULLIF(:event_id, ''), 'event-demo-001')
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR salesperson ILIKE '%' || :q || '%')
+      ORDER BY expected_closing, name, id

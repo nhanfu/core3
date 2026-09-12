@@ -1109,6 +1109,17 @@ Core3 runtime could not be established alongside the active reference before
 the batch ended; the screenshot remains outside Git. Badge printing and
 scanner/device integration remain outside this bounded report surface.
 
+## Event Leads stat bounded slice (2026-09-12)
+
+Core3 adds the event-form Leads stat action at `/events/leads`, with separate
+page/API YAML joined by `page.id`, deterministic event-scoped lead fixtures,
+read-only `crm.read` access, search, empty, missing, and transport states. The
+focused test passes 3 tests and 13 assertions.
+
+The active Odoo source action and event-form stat were verified; no paired
+browser captures were completed before the isolated runtime pass ended, so no
+full visual parity claim is made. Images remain outside Git.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

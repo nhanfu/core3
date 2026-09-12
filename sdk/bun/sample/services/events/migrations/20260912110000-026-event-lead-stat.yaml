@@ -1,0 +1,31 @@
+version: 0.0.26
+description: Deterministic event-scoped CRM leads for the event form Leads stat action
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_linked_leads (
+        id VARCHAR PRIMARY KEY,
+        event_id VARCHAR NOT NULL,
+        crm_lead_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL,
+        partner_name VARCHAR NOT NULL,
+        stage VARCHAR NOT NULL,
+        salesperson VARCHAR NOT NULL,
+        expected_revenue DECIMAL(18, 2) NOT NULL DEFAULT 0,
+        probability INTEGER NOT NULL DEFAULT 10,
+        expected_closing DATE NOT NULL
+      );
+      INSERT INTO event_linked_leads
+        (id, event_id, crm_lead_id, name, partner_name, stage, salesperson, expected_revenue, probability, expected_closing)
+      VALUES
+        ('event-lead-design-fair-001', 'event-demo-001', 'crm-event-lead-001', 'Exhibition follow-up', 'Wood Corner, Willie Burke', 'Qualified', 'Mitchell Admin', 12500.00, 60, DATE '2026-02-10'),
+        ('event-lead-design-fair-002', 'event-demo-001', 'crm-event-lead-002', 'Hospitality partnership', 'Acme Corporation', 'New', 'Admin User', 8200.00, 20, DATE '2026-02-18')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_linked_leads WHERE id IN ('event-lead-design-fair-001', 'event-lead-design-fair-002');
+      DROP TABLE IF EXISTS event_linked_leads;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
