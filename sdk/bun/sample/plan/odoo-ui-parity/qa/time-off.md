@@ -37,6 +37,16 @@ Detailed execution matrix: [`test-plans/time-off.md`](test-plans/time-off.md). I
 
 ## Bugs and retests
 
+## QA retest ledger — `fc310247` (2026-09-13)
+
+- Draft request deletion: `bun test ./test/time_off_request_delete.integration.test.ts --timeout 20000` — 2 passed, 0 failed, 12 assertions.
+- Full focused Time Off suite: `bun test ./test/time_off*.integration.test.ts --timeout 20000` — 47 passed, 0 failed, 497 assertions across 18 files.
+- Deletion is limited to unchanged Draft requests; missing, non-Draft, and stale rows are rejected with deterministic 404/409 guards.
+
+This retest records a bounded CRUD slice only. Full actor permissions, restart
+persistence, remaining CRUD/workflows, and paired Odoo desktop/mobile evidence
+remain open.
+
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | — | No current-wave defect recorded | — | — | pending |

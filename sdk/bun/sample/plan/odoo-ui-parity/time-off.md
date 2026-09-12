@@ -800,3 +800,19 @@ watching `vite.config.ts`; the backend never became reachable on 3002. Odoo
 returned its login page at 8069, but no authenticated reference session was
 available in this worktree. No visual-parity claim or screenshots are made;
 the exact probe is `runtime-probe.log` in the reserved directory.
+
+## Draft leave request deletion (2026-09-13)
+
+The next concrete request CRUD gap was deletion: request creation and lifecycle
+transitions existed, but neither the list nor detail contract had a persisted
+delete action. Core3 now exposes `time_off.requests.delete` from both request
+surfaces, requiring `time_off.write`, a matching row version, and `state =
+'Draft'`. Missing rows return 404; non-Draft or stale rows return deterministic
+409; unchanged Draft requests are deleted from `leave_requests` and disappear
+after reload. The detail action is visible only while Draft.
+
+Focused coverage is in `test/time_off_request_delete.integration.test.ts`:
+2 tests and 12 assertions pass against idempotently migrated DuckDB fixtures,
+covering declaration, permission, persistence, missing records, non-Draft
+records, and stale-row rejection. This isolated branch does not alter
+aggregate progress or merge state.

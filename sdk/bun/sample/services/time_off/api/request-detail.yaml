@@ -34,6 +34,22 @@ actions:
       result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
   - { id: refuse_leave_request_detail, type: server, permission: time_off.manage, action: time_off.requests.refuse, handler: order_transition, workflow: leave_requests, operation: refuse, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
   - { id: cancel_leave_request_detail, type: server, permission: time_off.write, action: time_off.requests.cancel, handler: order_transition, workflow: leave_requests, operation: cancel, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
+  - id: delete_leave_request_detail
+    type: server
+    permission: time_off.write
+    action: time_off.requests.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete draft leave request?'
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
+    refresh: [leave_request_detail, leave_requests]
+    mutation:
+      operation: delete
+      table: leave_requests
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM leave_requests WHERE id = :id", status: 404, code: TIME_OFF_LEAVE_NOT_FOUND, message: Leave request not found. }
+        - { query: "SELECT id FROM leave_requests WHERE id = :id AND row_version = :expected_row_version AND state = 'Draft'", status: 409, code: TIME_OFF_LEAVE_DELETE_INVALID, message: Only an unchanged draft leave request can be deleted. }
   - id: cancel_approved_leave_request_detail
     type: server_form
     permission: time_off.write

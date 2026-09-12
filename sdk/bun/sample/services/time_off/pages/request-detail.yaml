@@ -14,6 +14,7 @@ components:
       - { id: refuse_leave_request_detail, label: Refuse, variant: danger, show_if: "row.state === 'Submitted'" }
       - { id: cancel_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted'" }
       - { id: cancel_approved_leave_request_detail, label: Cancel, variant: danger, show_if: "row.state === 'Approved'" }
+      - { id: delete_leave_request_detail, label: Delete, variant: danger, show_if: "row.state === 'Draft'" }
     group_columns: 2
     groups:
       - title: Leave

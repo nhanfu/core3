@@ -42,6 +42,21 @@ actions:
   - { id: approve_leave_request, type: server, permission: time_off.manage, action: time_off.requests.approve, handler: order_transition, workflow: leave_requests, operation: approve, refresh: [leave_requests] }
   - { id: refuse_leave_request, type: server, permission: time_off.manage, action: time_off.requests.refuse, handler: order_transition, workflow: leave_requests, operation: refuse, refresh: [leave_requests] }
   - { id: cancel_leave_request, type: server, permission: time_off.write, action: time_off.requests.cancel, handler: order_transition, workflow: leave_requests, operation: cancel, refresh: [leave_requests] }
+  - id: delete_leave_request
+    type: server
+    permission: time_off.write
+    action: time_off.requests.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete draft leave request {{row.name}}?'
+    refresh: [leave_requests]
+    mutation:
+      operation: delete
+      table: leave_requests
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM leave_requests WHERE id = :id", status: 404, code: TIME_OFF_LEAVE_NOT_FOUND, message: Leave request not found. }
+        - { query: "SELECT id FROM leave_requests WHERE id = :id AND row_version = :expected_row_version AND state = 'Draft'", status: 409, code: TIME_OFF_LEAVE_DELETE_INVALID, message: Only an unchanged draft leave request can be deleted. }
   - id: open_leave_request
     type: navigate
     permission: time_off.read
