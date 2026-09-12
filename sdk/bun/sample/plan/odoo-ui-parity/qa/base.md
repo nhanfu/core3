@@ -22,4 +22,6 @@ Runtime: `bun run agent:module -- base --port=4010`
 ## Decision
 
 `pending-qa`: implementation is testable, but attachment renderer coverage
-and paired Odoo comparison remain open.
+and paired Odoo comparison remain open. Authenticated evidence includes the
+mobile list and desktop/mobile detail; the desktop list capture is excluded
+because its run had a transient `/api/apps` failure.

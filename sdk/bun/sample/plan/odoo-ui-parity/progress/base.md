@@ -13,10 +13,11 @@ Candidate commit: `pending`
 - `bun run audit` — pass: 647 pages, 662 routes, 1112 datasources.
 - `bun run frontend:build` — pass.
 - `git diff --check` — pass.
-- Authenticated Chromium list/detail checks at desktop and mobile — pass;
-  rendered routes have no page/request errors or horizontal overflow.
-- Captures: `/tmp/core3-base-wave1-contacts-desktop-auth.png`,
-  `/tmp/core3-base-wave1-contacts-mobile-auth.png`,
+- Authenticated Chromium rendered the Contacts list on mobile and contact
+  detail on desktop/mobile — pass; those runs had no page/request errors or
+  horizontal overflow. A desktop list route also rendered earlier, but its
+  run included a transient `/api/apps` failure and is not sign-off evidence.
+- Captures: `/tmp/core3-base-wave1-contacts-mobile-verified.png`,
   `/tmp/core3-base-wave1-contact-detail-desktop-auth.png`,
   `/tmp/core3-base-wave1-contact-detail-mobile-auth.png`.
 
