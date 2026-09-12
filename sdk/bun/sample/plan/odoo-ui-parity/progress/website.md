@@ -4,7 +4,7 @@ Module owner: website module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: active
 Verification trigger: feature-complete
-Candidate commit: `0c995b07` (DEV-2 Menu Editor); prior public-renderer/runtime fixes remain in history
+Candidate commit: `770aeab4` (DEV-2 Menu Editor); prior public-renderer/runtime fixes remain in history
 
 ## Current state
 
@@ -53,3 +53,11 @@ the Core3 runtime; Menu Editor browser and restart evidence remain open.
 | 2026-09-13 | Published asset delivery | Seeded SVG is exposed only through a published page, returns `image/svg+xml`, loads at natural width 240 in mobile Chrome, and has no page errors | Core3 asset delivery pass; upload/editor asset workflow and paired Odoo comparison pending |
 | 2026-09-13 | Asset upload/download | Multipart upload persisted a private page asset and its storage key; authenticated download returned the exact four-byte fixture; temporary upload files were removed after the test | Core3 API pass; browser attachment interaction, public promotion, and paired Odoo comparison pending |
 | 2026-09-13 | Menu Editor service lifecycle | `website_menus.integration.test.ts`; declared create/update actions created and edited a menu item, persisted sequence/parent/target flags, rejected stale and case-insensitive duplicate routes, and left the original row unchanged on invalid-site update | Core3 service pass; authenticated browser interaction, restart replay, and paired Odoo comparison pending |
+
+## Review integration
+
+- Integrated commit: `770aeab4`.
+- Reviewer reran `website_menus.integration.test.ts`: 3 tests, 13 assertions,
+  0 failures, and the repository UI audit passed.
+- Dedicated browser Menu Editor, restart replay, and paired Odoo gates remain
+  pending; this is not module sign-off.

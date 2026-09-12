@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: pending DEV-4 isolated candidate
+Candidate commit: 40aee3ed (DEV-4 Sales handoff outbox)
 
 ## Current state
 
@@ -25,6 +25,15 @@ and ownership gates are still incomplete; no full parity claim is made here.
   11 passed, 59 assertions, 0 failures.
 - Remaining gate: a Sales-side consumer must use this contract to create/link
   the corresponding Sales order in its own database.
+
+## Review integration
+
+- Integrated commit: `40aee3ed`.
+- Reviewer reran `ecommerce_checkout.integration.test.ts`: 11 tests, 59
+  assertions, 0 failures, and the repository UI audit passed.
+- The Sales-side consumer, external provider certification, actor/company
+  browser matrix, and paired Odoo gates remain open; this is not module
+  sign-off.
 
 ## Next bounded task
 

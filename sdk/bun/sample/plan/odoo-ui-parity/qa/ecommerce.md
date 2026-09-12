@@ -26,7 +26,7 @@ QA state: qa-in-progress
 QA slot: wave-3 ecommerce assignment (one QA mapped to up to three developers)
 Module owner: ecommerce module owner
 Verification trigger: feature-complete
-Candidate commit: `c930aeb1`
+Candidate commit: `40aee3ed` (DEV-4 Sales handoff outbox; prior candidate evidence remains in history)
 
 ## DEV-4 bounded slice (2026-09-13)
 
@@ -39,7 +39,7 @@ Candidate commit: `c930aeb1`
   `Succeeded` or `Failed`.
 - Focused verification: `bun test ./test/ecommerce_checkout.integration.test.ts`
   — 11 passed, 59 assertions, 0 failures.
-- Commit: pending (DEV-4 isolated candidate; review/merge is still required).
+- Integrated commit: `40aee3ed`.
 - Boundary: this proves the eCommerce-owned handoff contract and retry/stale
   guards; it does not claim that a Sales consumer has created a record in the
   separate Sales database.

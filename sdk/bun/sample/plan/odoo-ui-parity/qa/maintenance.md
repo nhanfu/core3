@@ -12,7 +12,7 @@ QA state: qa-in-progress
 QA slot: QA-1 (single-module assignment)
 Module owner: maintenance module owner
 Verification trigger: feature-complete
-Candidate commit: pending commit for request-create validation
+Candidate commit: b09df475 (request-create validation)
 
 ## QA wave execution (2026-09-13)
 

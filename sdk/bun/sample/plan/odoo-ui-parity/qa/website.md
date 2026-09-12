@@ -12,7 +12,7 @@ QA state: active
 QA slot: dispatchable website assignment (pending wave dispatch)
 Module owner: website module owner
 Verification trigger: feature-complete
-Candidate commit: pending commit for Website lifecycle slice
+Candidate commit: 770aeab4 (DEV-2 Menu Editor)
 
 Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It is the module-level source for page publishing, public visibility, YAML/HTML rendering, actors, persistence, Temporal, and paired Odoo gates.
 

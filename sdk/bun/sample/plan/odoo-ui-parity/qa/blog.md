@@ -8,11 +8,11 @@
 - Artifacts: /tmp/core3-odoo-parity/module-matrix-20260912/blog-desktop.png and blog-mobile.png.
 - Boundary: this is route/render smoke evidence only; it does not sign off the complete menu tree, CRUD, permissions, workflows, persistence, or paired Odoo visual parity.
 
-QA state: candidate-ready
-QA slot: DEV-3 Blog assignment
+QA state: qa-in-progress
+QA slot: DEV-3 Blog assignment; dedicated QA pending
 Module owner: blog module owner
 Verification trigger: candidate commit
-Candidate commit: bead3e95
+Candidate commit: 2de4ba3f
 
 Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the module-level source for blogs, posts, taxonomy, publication, actors, persistence, Temporal, and paired Odoo gates.
 
@@ -20,7 +20,7 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| BLOG-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Candidate `bead3e95` covers one bounded CRUD slice; broader module gates remain open | pending |
+| BLOG-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Integrated candidate `2de4ba3f` covers one bounded CRUD slice; broader module gates remain open | pending |
 | BLOG-WF-001 | Post publication lifecycle | `bun test ./test/blog_blogs.integration.test.ts ./test/blog_tag_categories.integration.test.ts` — 5 tests, 29 assertions; authenticated YAML action transport publishes/unpublishes `blog-post-demo-002`, persists versions 2/3, records publication date, and rejects duplicate publish | pass for service/API workflow; public/browser visibility and Odoo comparison remain open |
 | BLOG-PUBLIC-001 | Published-only public list/detail | `bun test ./test/blog_public.integration.test.ts` — 2 tests, 8 assertions; persisted SQL returns only `blog-post-demo-001`, draft detail returns no row, public routes return published detail and 404 drafts, and unsupported methods return 405; unauthenticated browser captures `/tmp/core3-odoo-parity/blog-public-20260913-desktop.png` and `blog-public-20260913-mobile.png` returned list/detail 200 and draft detail 404 | pass for service/API and public desktop/mobile browser boundary; expected 404 probe console warning, assets and Odoo comparison remain open |
 | BLOG-PUBLIC-002 | Public post renderer | `bun test ./test/blog_public.integration.test.ts` — renderer contract asserts Fluent HTML, module-owned published post API, `/blog/post` route, and unsafe-tag filtering; unauthenticated browser checks at 1440x900 and 390x844 rendered published post with no errors/overflow, while draft returned Post unavailable | pass for Core3 public runtime; paired Odoo comparison and richer assets remain open |
@@ -40,7 +40,7 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 
 ## Current candidate
 
-- `BLOG-DEV-003`: Tag category deletion slice, commit `bead3e95`.
+- `BLOG-DEV-003`: Tag category deletion slice, integrated commit `2de4ba3f`.
 - Focused Blog suite: 13 tests, 71 assertions, 0 failures; UI audit passed
   (659 pages, 668 routes, 1,134 datasources); `git diff --check` passed.
 - Candidate is ready for dedicated QA; no module sign-off is implied.

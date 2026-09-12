@@ -4,7 +4,7 @@ Module owner: forum module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: pending developer commit
+Candidate commit: 6f4d67f7 (question edit/archive slice)
 
 ## Current state
 
@@ -21,6 +21,15 @@ module-completion claim is made here.
   and persists the archived state and version.
 - Browser mutation, restart/migration, full actor/company, answer, asset,
   import/export/print, Temporal, and paired Odoo gates remain open.
+
+## Review integration
+
+- Integrated commit: `6f4d67f7`.
+- Reviewer reran `forum_post_pages.integration.test.ts`: 4 tests, 32
+  assertions, 0 failures, and the repository UI audit passed.
+- Browser mutation, restart/migration, full actor/company, answer, asset,
+  import/export/print, Temporal, and paired Odoo gates remain open; this is not
+  module sign-off.
 
 ## Next bounded task
 

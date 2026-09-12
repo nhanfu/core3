@@ -4,7 +4,7 @@ Module owner: maintenance module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: pending commit for request-create validation
+Candidate commit: b09df475 (request-create validation)
 
 ## Current state
 
@@ -50,6 +50,14 @@ persisted and invalid attempts do not create partial rows.
   files.
 - Browser, actor/company, restart, and paired Odoo evidence remain outside this
   bounded implementation slice.
+
+## Review integration
+
+- Integrated commit: `b09df475`.
+- Reviewer reran `maintenance_request_create.integration.test.ts`: 1 test, 8
+  assertions, 0 failures, and the repository UI audit passed.
+- Dedicated browser and full actor/company QA remain pending; this is not module
+  sign-off.
 
 ## Next bounded task
 

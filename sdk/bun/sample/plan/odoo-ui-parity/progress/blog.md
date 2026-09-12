@@ -1,10 +1,10 @@
 # blog parity progress
 
 Module owner: blog module owner
-QA assignment: DEV-3 Blog candidate ready for QA
-Status: candidate-ready
+QA assignment: DEV-3 Blog candidate reviewed; dedicated QA pending
+Status: qa-in-progress
 Verification trigger: candidate commit
-Candidate commit: bead3e95
+Candidate commit: 2de4ba3f
 
 ## Current state
 
@@ -14,7 +14,7 @@ write coverage. No full-module parity claim is made here.
 
 ## Current-wave evidence
 
-- `bead3e95` adds the permissioned `blog.tag_categories.delete` action and the
+- `2de4ba3f` adds the permissioned `blog.tag_categories.delete` action and the
   list-row Delete affordance.
 - `bun test ./test/blog*.integration.test.ts --timeout 20000`: 13 passed, 71
   assertions, 0 failures.
@@ -25,6 +25,6 @@ write coverage. No full-module parity claim is made here.
 
 ## Next bounded task
 
-Dispatch QA against `bead3e95`, then continue the remaining Blog permission,
+Dispatch dedicated QA against `2de4ba3f`, then continue the remaining Blog permission,
 browser, restart, site-scope, Temporal, and paired Odoo gates. Update this
 file only with evidence from the matching module owner.
