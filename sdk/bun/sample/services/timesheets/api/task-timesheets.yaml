@@ -1,0 +1,62 @@
+page: { id: task-timesheets }
+datasources:
+  - id: task_timesheet_entries
+    permission: timesheets.read
+    workflow: timesheet_entries
+    pivot: { fields: [id, row_version, name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, time_spent_display, billable, unit_amount, state] }
+    error_states: { transport_error: { status: 503, code: TASK_TIMESHEETS_UNAVAILABLE, message: Task timesheets are temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.name, t.employee_id, t.employee_name, t.project_id, t.project_name, t.task_id, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display, t.billable, t.unit_amount, t.state FROM timesheet_entries t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.task_id = :task_id AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.employee_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (COALESCE(:work_date, '') = '' OR (:work_date = 'today' AND t.work_date = DATE '2026-01-15') OR (:work_date = 'this_week' AND t.work_date BETWEEN DATE '2026-01-12' AND DATE '2026-01-18') OR (:work_date = 'last_week' AND t.work_date BETWEEN DATE '2026-01-05' AND DATE '2026-01-11')) ORDER BY t.work_date DESC, t.id"
+actions:
+  - id: create_task_timesheet_entry
+    type: server_form
+    permission: timesheets.write
+    title: New task timesheet
+    action: timesheets.entries.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [task_timesheet_entries]
+    mutation:
+      operation: insert
+      table: timesheet_entries
+      fields: [name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, billable, unit_amount]
+      required: [name, task_id, task_name, project_id, project_name, work_date, description, hours]
+      defaults: { employee_id: employee-demo-001, employee_name: Admin User, billable: true, unit_amount: 125, state: Draft, row_version: 1 }
+      guards:
+        - { query: "SELECT id FROM timesheet_entries WHERE task_id = :task_id LIMIT 1", status: 404, code: TASK_TIMESHEET_NOT_FOUND, message: Task not found or has no timesheets. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL", status: 422, code: TIMESHEETS_ENTRY_INVALID, message: Enter a valid date and time between 0 and 24 hours. }
+      result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
+    fields: [{ field: name, label: Entry, type: text, required: true }, { field: task_id, label: Task ID, type: text, required: true }, { field: task_name, label: Task, type: text, required: true }, { field: project_id, label: Project ID, type: text, required: true }, { field: project_name, label: Project, type: text, required: true }, { field: employee_name, label: Employee, type: text }, { field: work_date, label: Date, type: date, required: true }, { field: description, label: Description, type: textarea, required: true }, { field: hours, label: Time Spent, type: number, required: true }]
+  - id: edit_task_timesheet_entry
+    type: server_form
+    permission: timesheets.write
+    title: Edit task timesheet
+    action: timesheets.entries.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [task_timesheet_entries]
+    mutation:
+      operation: update
+      table: timesheet_entries
+      fields: [work_date, description, hours, billable, unit_amount]
+      required: [work_date, description, hours]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND task_id = :task_id AND state IN ('Draft', 'Rejected')", status: 403, code: TASK_TIMESHEET_SCOPE, message: Only draft or rejected task timesheets can be edited. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL", status: 422, code: TIMESHEETS_ENTRY_INVALID, message: Enter a valid date and time between 0 and 24 hours. }
+      result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
+    fields: [{ field: work_date, label: Date, type: date, required: true }, { field: description, label: Description, type: textarea, required: true }, { field: hours, label: Time Spent, type: number, required: true }, { field: billable, label: Billable, type: checkbox }, { field: unit_amount, label: Unit amount, type: number }]
+  - id: delete_task_timesheet_entry
+    type: server
+    permission: timesheets.write
+    action: timesheets.entries.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete task timesheet entry {{row.name}}?'
+    refresh: [task_timesheet_entries]
+    mutation:
+      operation: delete
+      table: timesheet_entries
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM timesheet_entries WHERE id = :id AND task_id = :task_id AND state IN ('Draft', 'Rejected')", status: 403, code: TASK_TIMESHEET_SCOPE, message: Only draft or rejected task timesheets can be deleted. }]
+      result: { query: "SELECT :id AS id, TRUE AS deleted" }

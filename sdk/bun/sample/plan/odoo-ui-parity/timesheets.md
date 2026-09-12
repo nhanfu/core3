@@ -503,3 +503,46 @@ and cross-employee 403 protection. The focused integration test is
 Authenticated desktop 1440x900 and mobile 390x844 Odoo/Core3 captures were not
 completed in this isolated runtime, so visual parity is not claimed and the
 required captures remain pending under `/tmp/core3-odoo-parity/timesheets-batch4-20260912/`.
+
+## Task-context Timesheets action (2026-09-12)
+
+The next uncovered visible action is Odoo 19 `timesheet_action_task` from
+`addons/hr_timesheet/views/hr_timesheet_views.xml` (source revision and
+database are recorded in the reference gate above). It is a record-context
+action named `Task's Timesheets`, model `account.analytic.line`, with domain
+`[('task_id', 'in', active_ids)]`, context `{'is_timesheet': 1}`, and
+`view_mode: list`, using `timesheet_view_tree_user`. It is reached from the
+project task's Timesheets relation/stat context, not from the top-level
+Timesheets menu. The task form source is
+`addons/hr_timesheet/views/project_task_views.xml`; its embedded Timesheets
+tab uses the same employee/date/entry/Time Spent ordering and a mobile Kanban,
+but that embedded action is a separate deferred surface.
+
+Core3 implements the bounded `/task-timesheets` page/API pair. The layout-only
+page is joined to `services/timesheets/api/task-timesheets.yaml` by
+`page.id: task-timesheets`, and the project task detail form exposes a
+Timesheets stat button that passes `task_id` as the active record context. The
+API filters every read by task, retains Odoo's list-only action mode, and owns
+deterministic fixed-date fixtures plus Today/This Week/Last Week and
+Employee/Status filters. Create, edit, and delete require `timesheets.write`;
+all mutations require the task scope, draft/rejected state, row version, and
+positive time up to 24 hours. Missing task data returns 404, invalid values
+422, stale writes 409, cross-task/protected rows 403, and transport fixtures
+503. The source remains off the Timesheets menu, preserving Odoo's context
+placement.
+
+Focused `timesheets_task.integration.test.ts` passes 3 tests and 21
+assertions; the full Timesheets integration set passes 22 tests and 257
+assertions. The UI audit passes with 615 pages, 624 routes, and 1059
+datasources; `git diff --check` is clean. There is no Timesheets-specific CSS
+change in this slice.
+
+The required authenticated 1440x900 and 390x844 captures were attempted but
+not completed. Core3 startup on the isolated port 3015 failed because Vite
+hit `EMFILE: too many open files` watching
+`sdk/bun/sample/vite.config.ts`. The interactive browser capability is also
+unavailable in this session (`js_repl` is not exposed and the local
+`playwright` package cannot be resolved). The active Odoo reference at
+`http://127.0.0.1:8073/web/login` returned HTTP 200, but no authenticated Odoo
+or Core3 screenshot was created under `/tmp/core3-odoo-parity`; visual parity
+is therefore explicitly unclaimed and remains a follow-up gate.

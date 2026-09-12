@@ -10,6 +10,8 @@ components:
     statusbar: [{ value: Todo, label: To do }, { value: In Progress, label: In progress }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
     status_colors: { Todo: neutral, In Progress: blue, Done: green, Cancelled: red }
     labels: { save: Save, discard: Discard, editDetails: Edit task, workflowStatus: Task status }
+    stat_buttons:
+      - { id: open_task_timesheets, label: Timesheets, value_field: spent_hours, permission: timesheets.read }
     header_actions:
       - { id: edit_task, label: Edit, variant: secondary, permission: project.write }
       - { id: start_task, label: Start, variant: primary, permission: project.write, show_if: "state.project_task_detail.state === 'Todo'" }

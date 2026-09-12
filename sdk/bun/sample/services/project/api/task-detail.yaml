@@ -7,6 +7,11 @@ datasources:
     error_states: { transport_error: { status: 503, code: PROJECT_TASK_DETAIL_UNAVAILABLE, message: Task details are temporarily unavailable. } }
     query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.stage, t.assignee, t.priority, t.description, t.milestone_name, COALESCE(t.customer_name, p.customer_name) AS customer_name, COALESCE(t.company_name, 'Core3') AS company_name, COALESCE(t.tags, '') AS tags, COALESCE(t.subtask_summary, '0 / 0 (0%)') AS subtask_summary, COALESCE(t.subtask_names, '') AS subtask_names, COALESCE(t.blocked_by_summary, 'None') AS blocked_by_summary, COALESCE(t.blocked_by_names, '') AS blocked_by_names, t.planned_hours, t.spent_hours, t.state, COALESCE(t.active, TRUE) AS active, CAST(t.due_date AS VARCHAR) AS due_date, CAST(t.created_at AS VARCHAR) AS created_at FROM project_tasks t LEFT JOIN projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :id"
 actions:
+  - id: open_task_timesheets
+    type: navigate
+    permission: timesheets.read
+    navigate_to: /task-timesheets
+    params: { task_id: '{state.id}' }
   - id: edit_task
     type: server_form
     permission: project.write
