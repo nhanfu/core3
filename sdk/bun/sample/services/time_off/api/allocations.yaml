@@ -21,6 +21,36 @@ datasources:
     query: "SELECT id AS value, name AS label FROM accrual_plans WHERE state = 'Active' ORDER BY name"
 actions:
   - { id: schedule_allocation_activity, type: navigate, permission: time_off.manage, navigate_to: /time-off-allocations }
+  - id: approve_selected_allocations
+    type: server
+    permission: time_off.manage
+    action: time_off.allocations.bulk_approve
+    handler: yaml_mutation
+    operation: bulk_update
+    refresh: [time_off_allocations]
+    confirm: 'Approve {count} selected allocations?'
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids)", status: 400, code: TIME_OFF_ALLOCATION_SELECTION_REQUIRED, message: Select at least one allocation. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids AND state != 'Submitted')", status: 409, code: TIME_OFF_ALLOCATION_BULK_STATE_INVALID, message: Only submitted allocations can be approved. }
+      steps:
+        - query: "UPDATE leave_allocations SET state = 'Approved', row_version = row_version + 1 WHERE id IN :ids AND state = 'Submitted'"
+      result: { query: "SELECT TRUE AS approved" }
+  - id: refuse_selected_allocations
+    type: server
+    permission: time_off.manage
+    action: time_off.allocations.bulk_refuse
+    handler: yaml_mutation
+    operation: bulk_update
+    refresh: [time_off_allocations]
+    confirm: 'Refuse {count} selected allocations?'
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids)", status: 400, code: TIME_OFF_ALLOCATION_SELECTION_REQUIRED, message: Select at least one allocation. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids AND state != 'Submitted')", status: 409, code: TIME_OFF_ALLOCATION_BULK_STATE_INVALID, message: Only submitted allocations can be refused. }
+      steps:
+        - query: "UPDATE leave_allocations SET state = 'Refused', row_version = row_version + 1 WHERE id IN :ids AND state = 'Submitted'"
+      result: { query: "SELECT TRUE AS refused" }
   - id: view_allocation
     type: navigate
     permission: time_off.read

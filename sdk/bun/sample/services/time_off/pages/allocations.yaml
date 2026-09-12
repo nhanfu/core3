@@ -14,6 +14,10 @@ components:
     search: { label: Search allocations, placeholder: Search employee or allocation... }
     empty_state: { title: No allocation requests found, description: Create an allocation or adjust your search. }
     filters: [{ field: state, label: Status, options_source: allocation_states }]
+    selectable: true
+    bulk_actions:
+      - { id: approve_selected_allocations, label: Approve, permission: time_off.manage, variant: success }
+      - { id: refuse_selected_allocations, label: Refuse, permission: time_off.manage, variant: danger }
     view_navigation: tabs
     views:
       - id: list

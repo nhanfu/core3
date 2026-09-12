@@ -776,3 +776,27 @@ returned 404 for the Core3 `/api/modules` readiness probe, and no authenticated
 Time Off reference session was available in this worktree. The evidence
 directory contains only the server log; no visual-parity claim or screenshots
 are made.
+
+## Allocation bulk approval actions (2026-09-12)
+
+The next uncovered visible source actions are the `Approve` and `Refuse`
+selection actions in `hr_leave_allocation_view_tree`. Odoo exposes them in
+the allocation list header for responsible/manager groups; they act on
+selected allocation requests in the submitted/to-approve state.
+
+Core3 adds `Approve` and `Refuse` as manager-only declarative `bulk_actions`
+on `/time-off-allocations`. The page/API contract remains joined by
+`page.id: time-off-allocations`. The service mutations require at least one
+selected existing allocation, reject non-Submitted selections with deterministic
+409 validation, update selected rows to Approved or Refused, and increment row
+versions. Existing per-row actions and other allocation views are unchanged.
+
+Focused coverage is in `time_off_allocation_bulk_actions.integration.test.ts`;
+the full Time Off glob passes 45 tests and 485 assertions, the UI audit passes,
+ESLint exits cleanly, and `git diff --check` passes. Capture was attempted at
+1440x900 and 390x844 under `/tmp/core3-odoo-parity/timeoff-wave5-20260912/`,
+but Vite exited before page load with `EMFILE: too many open files` while
+watching `vite.config.ts`; the backend never became reachable on 3002. Odoo
+returned its login page at 8069, but no authenticated reference session was
+available in this worktree. No visual-parity claim or screenshots are made;
+the exact probe is `runtime-probe.log` in the reserved directory.
