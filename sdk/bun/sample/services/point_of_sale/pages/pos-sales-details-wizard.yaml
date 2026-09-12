@@ -36,10 +36,8 @@ components:
       - { type: LineItemField, id: balance, field: balance, label: Balance, readonly: true }
       - type: LineItemActions
         id: pos_sales_details_line_actions
-        edit_action: edit_pos_sales_details_line
         create_action: add_pos_sales_details_line
         actions:
-          - { id: edit_pos_sales_details_line, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
           - { id: delete_pos_sales_details_line, label: Delete, icon: trash, variant: danger, permission: pos.manage }
     columns:
       - { field: point_of_sale, label: Point of Sale, width: 220 }
@@ -51,5 +49,4 @@ components:
         sortable: false
         width: 84
         actions:
-          - { id: edit_pos_sales_details_line, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
           - { id: delete_pos_sales_details_line, label: Delete, icon: trash, variant: danger, permission: pos.manage }

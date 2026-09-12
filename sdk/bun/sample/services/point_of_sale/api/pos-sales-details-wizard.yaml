@@ -1,5 +1,9 @@
 page: { id: pos-sales-details-wizard }
 datasources:
+  - id: pos_sales_details_configs
+    permission: pos.read
+    error_states: { transport_error: { status: 503, code: POS_SALES_DETAILS_CONFIGS_UNAVAILABLE, message: Point of sale configurations are temporarily unavailable. } }
+    query: "SELECT name AS value, name AS label FROM pos_configs WHERE active = true ORDER BY name"
   - id: pos_sales_details_wizard
     single: true
     permission: pos.read
@@ -60,41 +64,13 @@ actions:
       generated: [line_id]
       guards:
         - { query: "SELECT id FROM pos_sales_details_wizards WHERE id = :id AND state = 'Draft'", status: 409, code: POS_SALES_DETAILS_WIZARD_LOCKED, message: Only draft sales details can be changed. }
-        - { query: "SELECT 1 AS ok WHERE CAST(:balance AS DECIMAL(18, 2)) >= 0", status: 422, code: POS_SALES_DETAILS_BALANCE, message: Balance cannot be negative. }
+        - { query: "SELECT id FROM pos_configs WHERE name = :point_of_sale AND active = true", status: 422, code: POS_SALES_DETAILS_CONFIG, message: Select an active point of sale. }
       steps:
         - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM pos_sales_details_wizard_lines WHERE wizard_id = :id", assign: true }
-        - { query: "INSERT INTO pos_sales_details_wizard_lines(id, wizard_id, sequence, point_of_sale, company, closing, balance) VALUES(:line_id, :id, :next_sequence, :point_of_sale, :company, NULLIF(:closing, ''), :balance)" }
+        - { query: "INSERT INTO pos_sales_details_wizard_lines(id, wizard_id, sequence, point_of_sale, company, closing, balance) SELECT :line_id, :id, :next_sequence, name, company, NULL, closing_balance FROM pos_configs WHERE name = :point_of_sale AND active = true" }
       result: { query: "SELECT * FROM pos_sales_details_wizard_lines WHERE id = :line_id" }
     fields:
-      - { field: point_of_sale, label: Point of Sale, type: text, required: true }
-      - { field: company, label: Company, type: text, required: true }
-      - { field: closing, label: Closing, type: text }
-      - { field: balance, label: Balance, type: money, required: true, min: 0 }
-  - id: edit_pos_sales_details_line
-    type: server_form
-    permission: pos.manage
-    title: Edit sales detail line
-    action: pos.sales_details.lines.update
-    handler: line_item
-    operation: update
-    domain: sales_details_wizard
-    prefill: row
-    params: { id: '{state.id}', line_id: '{row.id}' }
-    refresh: [pos_sales_details_wizard_lines]
-    mutation:
-      guards:
-        - { query: "SELECT id FROM pos_sales_details_wizards WHERE id = :id AND state = 'Draft'", status: 409, code: POS_SALES_DETAILS_WIZARD_LOCKED, message: Only draft sales details can be changed. }
-        - { query: "SELECT id FROM pos_sales_details_wizard_lines WHERE id = :line_id AND wizard_id = :id", status: 404, message: Sales detail line not found. }
-        - { query: "SELECT 1 AS ok WHERE length(trim(:point_of_sale)) > 0 AND length(trim(:company)) > 0 AND CAST(:balance AS DECIMAL(18, 2)) >= 0", status: 422, code: POS_SALES_DETAILS_LINE_VALUES, message: Point of Sale, Company, and a non-negative Balance are required. }
-        - { query: "SELECT id FROM pos_sales_details_wizard_lines WHERE id = :line_id AND wizard_id = :id AND row_version = :expected_row_version", status: 409, code: POS_SALES_DETAILS_LINE_STALE, message: Sales detail line changed; reload before saving. }
-      steps:
-        - { query: "UPDATE pos_sales_details_wizard_lines SET point_of_sale = :point_of_sale, company = :company, closing = NULLIF(:closing, ''), balance = :balance, row_version = row_version + 1 WHERE id = :line_id AND wizard_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_SALES_DETAILS_LINE_STALE }
-      result: { query: "SELECT * FROM pos_sales_details_wizard_lines WHERE id = :line_id" }
-    fields:
-      - { field: point_of_sale, label: Point of Sale, type: text, required: true }
-      - { field: company, label: Company, type: text, required: true }
-      - { field: closing, label: Closing, type: text }
-      - { field: balance, label: Balance, type: money, required: true, min: 0 }
+      - { field: point_of_sale, label: Point of Sale, type: select, options_source: pos_sales_details_configs, required: true }
   - id: delete_pos_sales_details_line
     type: server
     permission: pos.manage

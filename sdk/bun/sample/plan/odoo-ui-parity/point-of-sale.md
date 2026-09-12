@@ -374,15 +374,17 @@ layout and the footer actions remain touch-sized. Reference captures are
 `/tmp/odoo-pos-next-sales-details-wizard-{desktop,mobile}.png`; both had zero
 failed responses and viewport/body widths of 1440/1440 and 390/390.
 
-Core3 adds the disjoint `/point-of-sale/sales-details-wizard` route rather than
-changing the existing `/point-of-sale/sales-details` list. Its page/API
-fragments join through `pos-sales-details-wizard`, with fixed January 2026
-wizard and line fixtures, read/manager permissions, date-range and balance
-guards, line create/update/delete actions, explicit empty and transport-error
-datasource states, and a client Print action. The route is deliberately
-full-page because the YAML page runtime has no page-level modal contract; its
-form sheet and x2many line grid preserve the Odoo fields, labels, actions, and
-responsive structure.
+Core3 adds the disjoint `/point-of-sale/sales-details` wizard route while the
+existing all-sales-lines list remains `/point-of-sale/sales-details-lines`.
+Its page/API fragments join through `pos-sales-details-wizard`, with fixed
+January 2026 wizard fixtures, date-range guards, and an x2many selection bound
+to existing active `pos_configs`. Company, Closing, and Balance are
+read-only metadata columns from the selected configuration; Add a line and
+Delete remove or add selections, matching Odoo's `pos_config_ids` many2many
+field rather than inventing editable configuration records. The route is
+deliberately full-page because the YAML page runtime has no page-level modal
+contract; its form sheet and responsive line grid preserve the Odoo fields,
+labels, actions, and permissions.
 
 ## Shared primitives and fixtures
 
@@ -942,9 +944,16 @@ screenshot is made. Images remain outside Git.
 
 ## Sales Details wizard bounded slice (2026-09-12)
 
-Core3 completes the Odoo POS Sales Details action 703 through the visible report action and wizard route. The page/API contract preserves `page.id`, deterministic order-line aggregation, date/session filters, empty/error states, line actions, permissions, validation, and row-version guards. The focused test passes 4 tests and 26 assertions.
+Core3 completes the Odoo POS Sales Details action 703 through the visible report action and wizard route. The page/API contract preserves `page.id`, deterministic configuration-selection fixtures, date filters, empty/error states, active-configuration validation, permissioned add/remove selection, and wizard row-version guards. The focused test passes 4 tests and 25 assertions.
 
-Authenticated paired captures are saved under `/tmp/core3-odoo-parity/pos-next-20260912/` at 1440x900 and 390x844. The comparison covers the report/wizard surface and responsive width; remaining differences are the shared Fluent shell versus Odoo's purple shell and bounded deterministic fixtures. Images remain outside Git.
+The isolated Core3 runtime could not complete startup during this correction:
+DuckDB stopped at the pre-existing migration error `Adding columns with
+constraints not yet supported`, and Vite then hit the host `EMFILE` watcher
+limit. Therefore no current authenticated Core3 render or visual-parity claim
+is made for this correction. Odoo browser capture was attempted against the
+owned reference, but the action page did not settle before the bounded browser
+run timed out. Images remain outside Git; the exact runtime limitations are
+recorded here rather than treated as UI evidence.
 
 | Surface | Viewport | Capture | SHA-256 |
 | --- | --- | --- | --- |

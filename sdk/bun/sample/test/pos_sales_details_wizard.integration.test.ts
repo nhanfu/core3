@@ -34,8 +34,8 @@ describe('POS Sales Details wizard action 703 parity', () => {
     expect(action(api, 'edit_pos_sales_details')).toMatchObject({ type: 'server_form', permission: 'pos.manage', operation: 'update' });
     expect(action(api, 'add_pos_sales_details_line')).toMatchObject({ type: 'server_form', permission: 'pos.manage', operation: 'create' });
     expect(action(api, 'delete_pos_sales_details_line')).toMatchObject({ type: 'server', permission: 'pos.manage', operation: 'delete' });
-    expect(api.datasources[0].error_states.transport_error.status).toBe(503);
-    expect(api.datasources[1].query).toContain(':q IS NULL');
+    expect(api.datasources[1].error_states.transport_error.status).toBe(503);
+    expect(api.datasources[2].query).toContain(':q IS NULL');
     expect(page.components[1].empty_state.title).toBe('No point of sale lines');
     expect(yaml('migrations/20260911103000-022-pos-sales-details-wizard.yaml').type.postgres.up).not.toContain('CURRENT_');
   });
@@ -45,13 +45,13 @@ describe('POS Sales Details wizard action 703 parity', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'pos_sales_details_wizard_contract', ['schema', 'data']);
     const api = yaml('api/pos-sales-details-wizard.yaml');
-    const wizard = await repository.querySource(api.datasources[0], { id: null, fixture_state: null }, 0, 1);
+    const wizard = await repository.querySource(api.datasources[1], { id: null, fixture_state: null }, 0, 1);
     expect(wizard.data).toMatchObject({ id: 'pos-sales-wizard-demo-001', name: 'Sales Details', start_date: '2026-01-01 00:00:00' });
-    const lines = await repository.querySource(api.datasources[1], { id: 'pos-sales-wizard-demo-001', q: null, fixture_state: null }, 0, 50);
+    const lines = await repository.querySource(api.datasources[2], { id: 'pos-sales-wizard-demo-001', q: null, fixture_state: null }, 0, 50);
     expect(lines.data).toHaveLength(3);
-    expect((await repository.querySource(api.datasources[1], { id: 'pos-sales-wizard-demo-001', q: 'Furniture', fixture_state: null }, 0, 50)).data).toHaveLength(1);
-    expect((await repository.querySource(api.datasources[1], { id: 'pos-sales-wizard-demo-001', q: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
-    expect((await repository.querySource(api.datasources[0], { id: 'missing-wizard', fixture_state: null }, 0, 1)).data).toEqual({});
+    expect((await repository.querySource(api.datasources[2], { id: 'pos-sales-wizard-demo-001', q: 'Furniture', fixture_state: null }, 0, 50)).data).toHaveLength(1);
+    expect((await repository.querySource(api.datasources[2], { id: 'pos-sales-wizard-demo-001', q: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(api.datasources[1], { id: 'missing-wizard', fixture_state: null }, 0, 1)).data).toEqual({});
   });
 
   test('guards wizard and line CRUD with permissions, validation, and row versions', async () => {
@@ -66,28 +66,21 @@ describe('POS Sales Details wizard action 703 parity', () => {
     })).rejects.toMatchObject({ status: 422, code: 'POS_SALES_DETAILS_DATE_RANGE' });
 
     const add = action(api, 'add_pos_sales_details_line');
+    await expect(repository.executeMutation(add.mutation, {
+      id: 'pos-sales-wizard-demo-001', point_of_sale: 'Unknown POS',
+    })).rejects.toMatchObject({ status: 422, code: 'POS_SALES_DETAILS_CONFIG' });
     const created = await repository.executeMutation(add.mutation, {
-      id: 'pos-sales-wizard-demo-001', point_of_sale: 'Airport Shop', company: 'My Company (San Francisco)', closing: '', balance: 12.5,
+      id: 'pos-sales-wizard-demo-001', point_of_sale: 'Restaurant',
     });
-    expect(created).toMatchObject({ point_of_sale: 'Airport Shop', balance: 12.5 });
-
-    const update = action(api, 'edit_pos_sales_details_line');
-    const updated = await repository.executeMutation(update.mutation, {
-      id: 'pos-sales-wizard-demo-001', line_id: created.id, expected_row_version: 1,
-      point_of_sale: 'Airport Shop 2', company: 'My Company (San Francisco)', closing: '', balance: 15,
-    });
-    expect(updated).toMatchObject({ point_of_sale: 'Airport Shop 2', row_version: 2 });
+    expect(created).toMatchObject({ point_of_sale: 'Restaurant', balance: 0 });
 
     const remove = action(api, 'delete_pos_sales_details_line');
-    await expect(repository.executeMutation(remove.mutation, {
-      id: 'pos-sales-wizard-demo-001', line_id: created.id, expected_row_version: 1,
-    })).rejects.toMatchObject({ status: 409, code: 'POS_SALES_DETAILS_LINE_STALE' });
     await repository.executeMutation(remove.mutation, {
-      id: 'pos-sales-wizard-demo-001', line_id: created.id, expected_row_version: 2,
+      id: 'pos-sales-wizard-demo-001', line_id: created.id, expected_row_version: 1,
     });
     expect((await repository.query('SELECT id FROM pos_sales_details_wizard_lines WHERE id = ?', [created.id]))).toEqual([]);
     expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('pos-sales-details-wizard')).toEqual([
-      'pos_sales_details_wizard', 'pos_sales_details_wizard_lines',
+      'pos_sales_details_configs', 'pos_sales_details_wizard', 'pos_sales_details_wizard_lines',
     ]);
   });
 });
