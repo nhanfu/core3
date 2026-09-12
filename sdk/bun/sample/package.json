@@ -59,13 +59,19 @@
     "event-mediator": "bun ../med/src/event-mediator-server.ts",
     "test": "vitest run --environment jsdom --config ../packages/client/vitest.config.ts",
     "test:integration": "bun test ./test",
-    "audit": "bun scripts/audit-order-ui.ts"
+    "audit": "bun scripts/audit-order-ui.ts",
+    "temporal:worker:ecommerce": "bun temporal/ecommerce-worker.ts",
+    "temporal:start:ecommerce": "bun temporal/start-ecommerce-workflow.ts"
   },
   "dependencies": {
     "@core3/client": "workspace:*",
     "@core3/med": "workspace:*",
     "@core3/server": "workspace:*",
     "@duckdb/node-api": "^1.5.5-r.3",
+    "@temporalio/activity": "1.23.0",
+    "@temporalio/client": "1.23.0",
+    "@temporalio/worker": "1.23.0",
+    "@temporalio/workflow": "1.23.0",
     "apache-arrow": "^21.2.0",
     "duckdb": "^1.1.0",
     "jose": "^5.9.6",
