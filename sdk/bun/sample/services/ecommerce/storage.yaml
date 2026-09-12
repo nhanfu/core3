@@ -1,2 +1,13 @@
 database: duckdb
 
+files:
+  driver: local
+  path: ${ECOMMERCE_UPLOAD_ROOT:-.data/ecommerce-uploads}
+  credentials: {}
+
+attachments:
+  ecommerce_product_image:
+    download:
+      route: /api/ecommerce/product-images
+      permission: ecommerce.read
+      query: SELECT * FROM ecommerce_product_images WHERE id = :attachment_id

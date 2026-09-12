@@ -9,9 +9,31 @@ datasources:
       missing_record: { status: 404, code: ECOMMERCE_PRODUCT_NOT_FOUND, message: Product not found. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_UNAVAILABLE, message: Product details are temporarily unavailable. }
     query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id AND (:company_name IS NULL OR company_name = :company_name)"
+  - id: ecommerce_product_images
+    permission: ecommerce.read
+    query: "SELECT id, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE product_id = :id ORDER BY created_at DESC, id"
 actions:
   - { id: back_to_ecommerce_products, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
   - { id: add_ecommerce_product_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }
+  - id: upload_ecommerce_product_image
+    type: upload
+    action: ecommerce.products.images.upload
+    handler: attachment_metadata
+    permission: ecommerce.write
+    kind: ecommerce_product_image
+    params: { product_id: '{state.ecommerce_product_detail.id}' }
+    refresh: [ecommerce_product_images]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE", status: 404, code: ECOMMERCE_PRODUCT_NOT_FOUND, message: Product not found. }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_images(id, product_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :product_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)" }
+      result: { query: "SELECT id, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE id = :attachment_id" }
+  - id: download_ecommerce_product_image
+    type: download
+    permission: ecommerce.read
+    kind: ecommerce_product_image
   - id: edit_ecommerce_product
     type: server_form
     permission: ecommerce.write

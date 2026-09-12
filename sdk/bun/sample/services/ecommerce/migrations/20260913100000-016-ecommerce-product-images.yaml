@@ -1,0 +1,23 @@
+version: 0.0.29
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_images (
+        id VARCHAR PRIMARY KEY,
+        product_id VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        storage_key VARCHAR NOT NULL,
+        uploaded_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_product_images_product_idx ON ecommerce_product_images(product_id, created_at);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_images_product_idx;
+      DROP TABLE IF EXISTS ecommerce_product_images;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

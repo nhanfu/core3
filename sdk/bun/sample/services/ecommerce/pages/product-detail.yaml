@@ -4,6 +4,17 @@ components:
     source: ecommerce_product_detail
     editable: false
     title_field: name
+    attachment_source: ecommerce_product_images
+    attachment_page_size: 100
+    attachment_label: Product images
+    add_attachment_label: Add product image
+    no_attachments_label: No product images
+    uploading_label: Uploading image…
+    upload_failed_label: Image upload failed
+    download_label: Download image
+    attachment_accept: image/*
+    attachment_upload_action: upload_ecommerce_product_image
+    attachment_download_action: download_ecommerce_product_image
     header_actions:
       - { id: back_to_ecommerce_products, label: Back, variant: secondary }
       - { id: add_ecommerce_product_to_cart, label: Add to Cart, variant: primary, permission: ecommerce.write }

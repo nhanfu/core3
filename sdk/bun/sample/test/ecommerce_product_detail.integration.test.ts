@@ -4,11 +4,47 @@ import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const root = join(import.meta.dir, '../services/ecommerce');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('eCommerce Product detail parity', () => {
+  test('stores an uploaded product image and its metadata through the API', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'ecommerce_product_image_upload_test', ['schema', 'data']);
+    const apiDocument = yaml('api/product-detail.yaml');
+    const upload = apiDocument.actions.find((action: any) => action.id === 'upload_ecommerce_product_image');
+    const authUser = { sub: 'user-admin', email: 'admin@tms.local', name: 'Admin User', roles: ['admin'], permissions: ['ecommerce.read', 'ecommerce.write'] };
+    const uploadRoot = `/tmp/core3-ecommerce-upload-${crypto.randomUUID()}`;
+    const api = createYamlApi({
+      repository,
+      authProvider: {
+        async getCurrentUser() { return authUser; },
+        hasPermission(user: any, permission: string) { return user.permissions.includes(permission); },
+      },
+      sources: new Map(), pageSources: new Map(), pages: new Map([['ecommerce-product-detail', { actions: [upload] }]]),
+      catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
+      permissions: { permissions: ['ecommerce.read', 'ecommerce.write'], tables: {}, endpoints: {} },
+      uploadRoot, eventStore: {}, topics: {}, storage: {
+        attachments: { ecommerce_product_image: { download: { route: '/api/ecommerce/product-images', permission: 'ecommerce.read', query: 'SELECT * FROM ecommerce_product_images WHERE id = :attachment_id' } } },
+      },
+    });
+    const form = new FormData();
+    form.set('file', new File([new Uint8Array([137, 80, 78, 71])], 'mug.png', { type: 'image/png' }));
+    form.set('meta', JSON.stringify({ kind: 'ecommerce_product_image', product_id: 'ecommerce-product-mug' }));
+    const response = await api(new Request('http://core3.test/api/upload', { method: 'POST', body: form }), new URL('http://core3.test/api/upload'));
+    expect(response?.status).toBe(200);
+    const uploaded = await response?.json() as any;
+    expect(uploaded).toMatchObject({ product_id: 'ecommerce-product-mug', file_name: 'mug.png', mime_type: 'image/png', size_bytes: 4 });
+    expect((await repository.query('SELECT COUNT(*) AS count FROM ecommerce_product_images WHERE product_id = ?', ['ecommerce-product-mug']))[0].count).toBe(1);
+    const download = await api(new Request(`http://core3.test/api/ecommerce/product-images/${uploaded.id}`, { headers: { Authorization: 'Bearer test-token' } }), new URL(`http://core3.test/api/ecommerce/product-images/${uploaded.id}`));
+    expect(download?.status).toBe(200);
+    expect([...new Uint8Array(await download!.arrayBuffer())]).toEqual([137, 80, 78, 71]);
+    database.close();
+  });
+
   test('joins the products list navigation to a page/API-bound detail form', () => {
     const list = yaml('pages/products.yaml');
     const page = yaml('pages/product-detail.yaml');
@@ -17,7 +53,9 @@ describe('eCommerce Product detail parity', () => {
     expect(page.page).toMatchObject({ id: 'ecommerce-product-detail', route: '/ecommerce/products/detail' });
     expect(api.page).toEqual({ id: 'ecommerce-product-detail' });
     expect(page.components[0]).toMatchObject({ type: 'OdooFormView', source: 'ecommerce_product_detail' });
+    expect(page.components[0]).toMatchObject({ attachment_source: 'ecommerce_product_images', attachment_upload_action: 'upload_ecommerce_product_image' });
     expect(api.actions.find((action: any) => action.id === 'edit_ecommerce_product').permission).toBe('ecommerce.write');
+    expect(api.actions.find((action: any) => action.id === 'upload_ecommerce_product_image')).toMatchObject({ type: 'upload', kind: 'ecommerce_product_image' });
   });
 
   test('reads a persisted product and guards stale and duplicate edits', async () => {
@@ -33,6 +71,10 @@ describe('eCommerce Product detail parity', () => {
     expect(updated).toMatchObject({ name: 'Core3 Ceramic Mug Pro', sales_price: 22 });
     await expect(repository.executeMutation(edit.mutation, { id: 'ecommerce-product-mug', expected_row_version: 1, values: { name: 'Stale Mug' } })).rejects.toMatchObject({ status: 409 });
     await expect(repository.executeMutation(edit.mutation, { id: 'ecommerce-product-chair', expected_row_version: 1, values: { name: 'Chair', internal_reference: 'ECOM-MUG-001' } })).rejects.toMatchObject({ status: 409, code: 'ECOMMERCE_PRODUCT_REFERENCE_EXISTS' });
+    const upload = api.actions.find((action: any) => action.id === 'upload_ecommerce_product_image');
+    const image = await repository.executeMutation(upload.mutation, { product_id: 'ecommerce-product-mug', attachment_id: 'ecommerce-image-test-001', fileName: 'mug.png', mimeType: 'image/png', sizeBytes: 128, storageKey: 'image-key', current_user_id: 'user-admin' });
+    expect(image).toMatchObject({ product_id: 'ecommerce-product-mug', file_name: 'mug.png', mime_type: 'image/png', size_bytes: 128 });
+    expect((await repository.querySource(api.datasources[1], { id: 'ecommerce-product-mug' }, 0, 50)).data).toHaveLength(1);
     database.close();
   });
 });
