@@ -4,7 +4,7 @@ datasources:
   - id: forum_post_states
     permission: forum.read
     single: false
-    query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Closed','Closed'), ('Flagged','Flagged')) states(value, label)"
+    query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Closed','Closed'), ('Flagged','Flagged'), ('Archived','Archived')) states(value, label)"
   - id: forum_lookup
     permission: forum.read
     single: false
@@ -39,6 +39,8 @@ components:
       - { id: reopen_forum_post, label: Reopen, permission: forum.write, variant: primary, show_if: "row.state === 'Closed'" }
       - { id: flag_forum_post, label: Flag, permission: forum.write, variant: danger, show_if: "row.state === 'Active'" }
       - { id: unflag_forum_post, label: Unflag, permission: forum.write, variant: secondary, show_if: "row.state === 'Flagged'" }
+      - { id: edit_forum_post, label: Edit, permission: forum.write, variant: secondary, show_if: "row.state !== 'Archived'" }
+      - { id: archive_forum_post, label: Archive, permission: forum.manage, variant: danger, show_if: "row.state !== 'Archived'" }
 actions:
   - id: create_forum_post
     type: server_form
@@ -67,7 +69,32 @@ actions:
     permission: forum.read
     navigate_to: /forum-question-detail
     params: { id: '{row.id}' }
+  - id: edit_forum_post
+    type: server_form
+    permission: forum.write
+    title: Edit question
+    action: forum.posts.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [forum_posts]
+    mutation:
+      operation: update
+      table: forum_posts
+      fields: [title, content, tags]
+      required: [title]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM forum_posts WHERE id = :id", status: 404, code: FORUM_POST_NOT_FOUND, message: Forum post was not found. }
+        - { query: "SELECT 1 AS ok FROM forum_posts WHERE id = :id AND state <> 'Archived'", status: 409, code: FORUM_POST_ARCHIVED, message: Archived forum posts cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:title AS VARCHAR))) > 0", status: 422, code: FORUM_POST_TITLE_REQUIRED, message: A question title is required. }
+      result: { query: "SELECT * FROM forum_posts WHERE id = :id" }
+    fields:
+      - { field: title, label: Title, type: text, required: true }
+      - { field: content, label: Content, type: textarea }
+      - { field: tags, label: Tags, type: text }
   - { id: close_forum_post, type: server, permission: forum.write, action: forum.posts.close, handler: order_transition, workflow: forum_posts, operation: close, refresh: [forum_posts] }
   - { id: reopen_forum_post, type: server, permission: forum.write, action: forum.posts.reopen, handler: order_transition, workflow: forum_posts, operation: reopen, refresh: [forum_posts] }
   - { id: flag_forum_post, type: server, permission: forum.write, action: forum.posts.flag, handler: order_transition, workflow: forum_posts, operation: flag, refresh: [forum_posts] }
   - { id: unflag_forum_post, type: server, permission: forum.write, action: forum.posts.unflag, handler: order_transition, workflow: forum_posts, operation: unflag, refresh: [forum_posts] }
+  - { id: archive_forum_post, type: server, permission: forum.manage, action: forum.posts.archive, handler: order_transition, workflow: forum_posts, operation: archive, refresh: [forum_posts] }

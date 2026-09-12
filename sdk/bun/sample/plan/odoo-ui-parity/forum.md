@@ -1,7 +1,8 @@
-# Forum parity — bounded wave 3 slice
+# Forum parity — bounded wave 4 slice
 
-Status: in-progress. This slice is the authenticated Website → Configuration →
-Forum → Forums list action; it is not the anonymous `/forum` website route.
+Status: in-progress. This slice adds authenticated question moderation to the
+existing Forum Questions surface; it is not the anonymous `/forum` website
+route or the complete answer/taxonomy module.
 
 ## Source-backed Odoo trace
 
@@ -16,13 +17,17 @@ Reference: Odoo 19 `addons/website_forum`.
 | Row website action | `go_to_website` | existing Core3 question detail alias | `forum.read` |
 | Website → Configuration → Forum → Forums | `menu_forum_global` → `forum_forum_action` | `/forums` (action path alias) | `forum.read` |
 | Forums list | `forum_forum_view_tree` | List view | `forum.read` |
+| Forum Questions list | `forum_post_action` | `/forum-questions` | `forum.read` |
+| Question edit | `forum_post_view_form` | question detail edit form | `forum.write` |
+| Question archive | moderation action on `forum.post` | question row/detail action | `forum.manage` |
 
 This is the next uncovered source action after Forum Posts, by the source menu
 sequence. Odoo orders Forums before Ranks, Tags, Badges, and Close Reasons.
 The bounded view reproduces the sequence handle, Forum, Website, Total Posts,
 and Total Views columns; optional Total Answers and Total Favorites remain
 available in the datasource but hidden by default. Archived is a search filter.
-No write action is included in this slice.
+This wave adds permissioned title/content/tag editing with optimistic row
+version checks and a manager-only terminal archive transition.
 
 Odoo declares `view_mode=list,kanban,graph`, a Posts-default search context,
 no create button, and list fields Content, Website URL, Forum, # Views,
@@ -42,8 +47,11 @@ website object actions.
   datasource and joins by `page.id: forum-forums`.
 - Existing deterministic Forum migration fixtures provide two top-level posts,
   one answered and one unanswered, so Posts and Answered Posts are testable.
-- `forum.read` gates the list, state lookup, and row navigation. No write action
-  is exposed by this Odoo action; creation remains on the public website flow.
+- `forum.read` gates the list, state lookup, and row navigation. `forum.write`
+  gates question editing; `forum.manage` gates terminal archive. Archived
+  questions cannot be edited or archived again.
+- `forum_posts` declares `Archived` as a terminal state and the archive action
+  requires an expected row version.
 - `fixture_state=empty`, `fixture_state=transport_error`, search, status, and
   content-scope paths are covered by the focused test.
 - Forums active/archived, search, empty, and transport-error paths are covered
@@ -56,9 +64,22 @@ website object actions.
 - [x] Deterministic populated/search/empty/error fixtures tested.
 - [x] Authenticated permission boundary is declared; anonymous website route is
   explicitly outside this bounded slice.
+- [x] Permissioned question edit persistence, required-title validation, stale
+  update rejection, and archived-record guard tested.
+- [x] Manager-only archive transition and forbidden writer attempt tested with
+  persisted state and row-version assertions.
 - [ ] Odoo and Core3 authenticated desktop 1440×900 captures.
 - [ ] Odoo and Core3 authenticated mobile 390×844 captures.
 - [ ] Visual comparison sign-off after runtime/browser availability check.
+
+## Wave 4 developer evidence — 2026-09-13
+
+- Focused Forum corpus: `bun test ./test/forum*.integration.test.ts` — 8
+  passed, 56 assertions, 0 failures.
+- `git diff --check` passed in the isolated developer worktree.
+- Browser mutation, restart/migration reapply, complete actor/company matrix,
+  answer moderation, attachment/import/export, Temporal, and paired Odoo
+  comparison remain QA/main-agent gates.
 
 ## Runtime evidence and blockers — 2026-09-12
 

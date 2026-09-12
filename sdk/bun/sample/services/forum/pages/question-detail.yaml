@@ -20,3 +20,33 @@ components:
       - { field: answer_count, label: Answers }
       - { field: state, label: Status, type: StatusChip }
       - { field: closed_reason, label: Closed reason }
+    header_actions:
+      - { id: edit_forum_post_detail, label: Edit, variant: primary, permission: forum.write, show_if: "state.forum_post_detail.state !== 'Archived'" }
+      - { id: archive_forum_post_detail, label: Archive, variant: danger, permission: forum.manage, show_if: "state.forum_post_detail.state !== 'Archived'" }
+actions:
+  - id: edit_forum_post_detail
+    type: server_form
+    permission: forum.write
+    title: Edit question
+    action: forum.posts.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.forum_post_detail
+    params: { id: '{state.id}' }
+    refresh: [forum_post_detail]
+    mutation:
+      operation: update
+      table: forum_posts
+      fields: [title, content, tags]
+      required: [title]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM forum_posts WHERE id = :id", status: 404, code: FORUM_POST_NOT_FOUND, message: Forum post was not found. }
+        - { query: "SELECT 1 AS ok FROM forum_posts WHERE id = :id AND state <> 'Archived'", status: 409, code: FORUM_POST_ARCHIVED, message: Archived forum posts cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:title AS VARCHAR))) > 0", status: 422, code: FORUM_POST_TITLE_REQUIRED, message: A question title is required. }
+      result: { query: "SELECT * FROM forum_posts WHERE id = :id" }
+    fields:
+      - { field: title, label: Title, type: text, required: true }
+      - { field: content, label: Content, type: textarea }
+      - { field: tags, label: Tags, type: text }
+  - { id: archive_forum_post_detail, type: server, permission: forum.manage, action: forum.posts.archive, handler: order_transition, workflow: forum_posts, operation: archive, params: { id: '{state.id}' }, refresh: [forum_post_detail] }

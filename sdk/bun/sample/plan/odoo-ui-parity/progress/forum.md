@@ -2,19 +2,27 @@
 
 Module owner: forum module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: dormant
+Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: pending developer commit
 
 ## Current state
 
-This module is registered in odoo-parity-plan.md but has not yet produced a
-current-wave candidate or verified evidence in the active checkout. No parity
-claim is made here.
+The current developer wave adds permissioned question editing and manager-only
+archiving to the existing Forum Questions and Question Detail surfaces. No
+module-completion claim is made here.
+
+## Developer wave evidence — 2026-09-13
+
+- Forum focused corpus: 8 tests passed, 56 assertions, 0 failures.
+- Edit persists title/content/tags and increments `row_version`; stale and
+  blank-title writes are rejected.
+- Archive is terminal, requires `forum.manage`, rejects a `forum.write` actor,
+  and persists the archived state and version.
+- Browser mutation, restart/migration, full actor/company, answer, asset,
+  import/export/print, Temporal, and paired Odoo gates remain open.
 
 ## Next bounded task
 
-Record the complete Odoo menu/action/view inventory, implement the module
-functionality, and dispatch QA on the first committed candidate. Update this
-file only with evidence from the matching module owner.
-
+QA should verify the committed edit/archive candidate in authenticated desktop
+and mobile browsers, then run the remaining Forum actor and persistence gates.
