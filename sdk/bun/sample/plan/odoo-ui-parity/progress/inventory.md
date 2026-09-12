@@ -43,6 +43,11 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
   Core3 had no failures, while Odoo mobile recorded three navigation-aborted
   avatar/action requests and no page errors. Captures are under
   `/tmp/core3-odoo-parity/paired-inventory-20260912/`.
+- Fresh authenticated transfer workflow on port 4026 passed for
+  `receipt-00003`: Admin moved `Draft` → `Waiting` → `Ready` → `Done`, with
+  row versions 1 → 4, move completion persistence, and a timeline message;
+  a stale cancel returned 409 and `fleet@tms.local` received 403 for
+  `inventory.write`.
 
 ## Remaining blockers
 
@@ -54,3 +59,6 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
 - Literal `schema.yaml` / `demo.yaml` migration consolidation is blocked by
   the current timestamp-only migration discovery contract; do not rewrite
   existing migration history from this isolated module worktree.
+- Transfer edit/CRUD browser interaction, remaining transfer operation kinds,
+  and full Odoo workflow parity still require QA coverage; the single passing
+  receipt workflow is not module completion.

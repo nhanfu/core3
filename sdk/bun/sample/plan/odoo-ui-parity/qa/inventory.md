@@ -34,11 +34,25 @@ Authenticated user: `admin@tms.local`
 - Fresh module-scoped authenticated route matrix: 24 routes × desktop/mobile = 48/48 passed with valid seeded detail IDs, no page errors, HTTP failures, or horizontal overflow; raw result: `/tmp/inventory-matrix-isolated.json`.
 - Current paired Packages capture: Core3 and Odoo rendered at desktop/mobile under `/tmp/core3-odoo-parity/paired-inventory-20260912/`. Core3 had no failures; Odoo mobile recorded three navigation-aborted/avatar requests and no page errors, so this is comparison evidence rather than a clean zero-failure pair.
 
+## Transfer functional evidence (2026-09-12)
+
+- Fresh authenticated Admin workflow on port 4026 passed for receipt
+  `receipt-00003`: `Draft` → `Waiting` (confirm, row version 1 → 2) →
+  `Ready` (check availability, 2 → 3) → `Done` (validate, 3 → 4).
+- Validation persisted move completion (`done_quantity = quantity`) and
+  inserted the transfer timeline message. A stale cancel attempt returned the
+  declared 409 guard after the transfer was complete.
+- The fleet user (`fleet@tms.local`) was denied the same confirm mutation with
+  the declared 403 `inventory.write` permission boundary.
+- This proves one end-to-end state transition and permission boundary through
+  the authenticated mutation transport. Transfer edit UI/CRUD interaction,
+  the remaining operation kinds, and full Odoo workflow parity remain open.
+
 The previous Odoo-session blocker is superseded for the current reference. The
 Settings pair and remaining Inventory visual/interaction gates are still open.
 
 ## Dispatch notes
 
-The shared action transport retest passes for the Inventory Settings Save flow.
+The shared action transport retest and one authenticated transfer workflow pass.
 Keep the module open until the remaining Odoo paired surfaces, full Inventory
 CRUD/workflow browser checks, and migration-contract decision are complete.
