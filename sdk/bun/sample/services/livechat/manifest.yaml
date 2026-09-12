@@ -35,4 +35,5 @@ menu:
       items:
         - { path: /livechat/member-history, label: Member History, icon: history, permission: livechat.technical }
         - { path: /livechat/technical/ongoing-sessions, label: Ongoing Sessions, icon: message, permission: livechat.manage }
+        - { path: /livechat/technical/ongoing-sessions/in-call, label: Ongoing Call Sessions, icon: message, permission: livechat.manage }
         - { path: /livechat/technical/escalated-sessions, label: Escalated Sessions, icon: message, permission: livechat.manage }

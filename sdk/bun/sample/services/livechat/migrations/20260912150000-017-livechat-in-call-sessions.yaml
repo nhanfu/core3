@@ -1,0 +1,32 @@
+database:
+  driver: duckdb
+version: 0.0.17
+kind: data
+description: Add deterministic read-only Technical Live Chat in-call session fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_technical_in_call_sessions (
+        id VARCHAR PRIMARY KEY, row_version INTEGER NOT NULL DEFAULT 1,
+        session_date TIMESTAMP NOT NULL, customer_name VARCHAR NOT NULL,
+        participant_name VARCHAR NOT NULL, agents_name VARCHAR NOT NULL DEFAULT '',
+        country_name VARCHAR NOT NULL DEFAULT '', language_name VARCHAR NOT NULL DEFAULT '',
+        expertise_name VARCHAR NOT NULL DEFAULT '', duration_hour DOUBLE NOT NULL DEFAULT 0,
+        message_count INTEGER NOT NULL DEFAULT 0, rating_text VARCHAR NOT NULL DEFAULT '',
+        rating_feedback VARCHAR NOT NULL DEFAULT '', status VARCHAR NOT NULL DEFAULT 'ongoing',
+        in_call BOOLEAN NOT NULL DEFAULT FALSE
+      );
+      INSERT INTO livechat_technical_in_call_sessions
+        (id, session_date, customer_name, participant_name, agents_name, country_name, language_name, expertise_name, duration_hour, message_count, rating_text, rating_feedback, status, in_call)
+      VALUES
+        ('livechat-in-call-session-001',  TIMESTAMP '2026-09-12 09:15:00', 'Visitor', 'Visitor', 'Core3 Administrator', 'United States', 'English (US)', 'Support', 0.250000, 4, '', '', 'ongoing', TRUE),
+        ('livechat-in-call-session-002',  TIMESTAMP '2026-09-12 09:10:00', 'Visiteur', 'Visiteur', 'Core3 Administrator', 'Belgium', 'French / Français', '', 0.500000, 7, 'Happy', 'Clear guidance', 'ongoing', TRUE),
+        ('livechat-in-call-session-003',  TIMESTAMP '2026-09-12 09:00:00', 'Visitor #303', 'Visitor #303', 'Core3 Administrator', 'France', 'French / Français', 'Livechat', 0.750000, 2, 'Neutral', '', 'ongoing', TRUE),
+        ('livechat-in-call-session-004',  TIMESTAMP '2026-09-11 16:00:00', 'Closed Visitor', 'Closed Visitor', 'Core3 Administrator', '', 'English (US)', '', 1.000000, 5, '', '', 'closed', TRUE),
+        ('livechat-in-call-session-005',  TIMESTAMP '2026-09-12 08:45:00', 'Chat Visitor', 'Chat Visitor', 'Core3 Administrator', '', 'English (US)', '', 0.100000, 1, '', '', 'ongoing', FALSE)
+      ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS livechat_technical_in_call_sessions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

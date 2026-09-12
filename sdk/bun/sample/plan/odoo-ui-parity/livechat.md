@@ -931,3 +931,40 @@ backend session could be reached, so no screenshot claim is made and no image
 is committed. Odoo live UI capture was likewise not completed in this bounded
 attempt. The plan remains `planned` and the limitation is retained for the
 next runtime pass.
+
+## Bounded implementation slice: Technical — Ongoing Call Sessions (2026-09-12)
+
+The next uncovered menu-backed action is Technical → Ongoing Call Sessions,
+from `spreadsheet_dashboard_im_livechat.ongoing_sessions_agents_in_call_menu`
+and `ongoing_sessions_agents_in_call_action` in
+`addons/spreadsheet_dashboard_im_livechat/data/livechat_ongoing_sessions_actions.xml`.
+The Odoo window action is action 879 in the owned reference, model
+`discuss.channel`, shared search view, `list,form` modes, and context
+`{'search_default_ongoing': 1, 'search_default_in_call': 1}`. The menu label is
+“Ongoing Call Sessions” and it is restricted to
+`im_livechat.im_livechat_group_manager`. The shared read-only list/form shows
+Date, Customer, Agents, Country, Language, Expertise, Duration, Messages, and
+Rating, with Participants, Session Date, Rating, and Comment in the form.
+
+Core3 adds the disjoint routes `/livechat/technical/ongoing-sessions/in-call`
+and `/livechat/technical/ongoing-sessions/in-call/detail`, joined through page
+ids `livechat-technical-in-call-sessions` and
+`livechat-technical-in-call-session-detail`. The API and page fragments remain
+separate. Deterministic fixed-date fixtures include three ongoing in-call
+sessions, one closed in-call row, and one ongoing non-call row, proving the
+context facets rather than filtering an already pre-filtered fixture. Reads
+require `livechat.read`, navigation requires `livechat.manage`, and no CRUD
+actions are exposed because the source action is read-only.
+
+Focused validation is
+`test/livechat_technical_in_call_sessions.integration.test.ts`; it covers the
+action/menu/page/API contract, idempotent migration, matching/non-matching
+semantics, search/country/rating/empty/no-results/detail/transport states, and
+the no-CRUD permission boundary.
+
+Authenticated Odoo/Core3 viewport verification was attempted for this batch
+under `/tmp/core3-odoo-parity/livechat-batch4-20260912/`, but the interactive
+Playwright `js_repl` runtime is unavailable in this worktree. No screenshot or
+visual-parity claim is made. The runtime limitation is recorded here rather
+than substituting unauthenticated shell evidence; images, if produced in a
+follow-up runtime pass, must remain outside Git at 1440x900 and 390x844.

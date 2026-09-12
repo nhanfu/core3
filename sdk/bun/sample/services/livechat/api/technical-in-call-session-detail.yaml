@@ -1,0 +1,18 @@
+
+datasources:
+  - id: livechat_technical_in_call_session_detail
+    single: true
+    permission: livechat.read
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_IN_CALL_SESSION_DETAIL_UNAUTHORIZED, message: Sign in to view this ongoing call session. }
+      forbidden: { status: 403, code: LIVECHAT_IN_CALL_SESSION_DETAIL_FORBIDDEN, message: You do not have permission to view this ongoing call session. }
+      transport_error: { status: 503, code: LIVECHAT_IN_CALL_SESSION_DETAIL_UNAVAILABLE, message: This ongoing call session is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, CAST(session_date AS VARCHAR) AS session_date,
+        customer_name, participant_name, rating_text, rating_feedback
+      FROM livechat_technical_in_call_sessions
+      WHERE status = 'ongoing' AND in_call = TRUE
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND id = :id
+
+page: { id: livechat-technical-in-call-session-detail }
