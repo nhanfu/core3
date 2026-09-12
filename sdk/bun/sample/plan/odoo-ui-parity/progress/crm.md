@@ -6,10 +6,10 @@
 | Owning agent | `agent/odoo-crm-wave-20260912` |
 | State | `qa-in-progress` |
 | Current goal | Complete CRM Odoo menu/action parity with durable YAML-first storage, service/API contracts, CRUD, workflows, permissions, browser evidence, and regression coverage. |
-| Last commit | `85ebc4f9` (form-runtime repair) |
+| Last commit | `ecf1880f` (Base-owned contact conversion) |
 | Tester | QA slot pending dispatch |
 | Last verification | 2026-09-12 — Core3 authenticated memory runtime on `http://127.0.0.1:4012` |
-| Open bug IDs | `CRM-BOUNDARY-001`, `CRM-REF-001`, `CRM-VIS-001` (fixture cardinality only) |
+| Open bug IDs | `CRM-REF-001`, `CRM-VIS-001` (fixture cardinality only) |
 
 ## Bounded-slice history
 
@@ -17,6 +17,7 @@
 | --- | --- | --- | --- | --- | --- |
 | 2026-09-12 | Repair CRM tag catalog contract; add active filtering and row deletion; remove direct CRM SQL reads into isolated Base database for lead create/edit/convert transitions; update focused assertions | `3ad8bbd3b1d6649128a20af8fb41ac668ebe8c1c` | CRM focused suite: 51 pass, 2 fail (AI catalog boundary); `bun run audit`; `bun run lint`; `git diff --check` | `/tmp/core3-odoo-parity-crm-leads-desktop.png`, `/tmp/core3-odoo-parity-crm-leads-mobile.png`, `/tmp/core3-odoo-parity-crm-lead-created-desktop.png`; authenticated admin; Core3 route `/crm/leads` | `CRM-FUNC-001`: blank optional numeric/date form fields produce 500; populated create returned HTTP 200. `CRM-BOUNDARY-001`: contact-create still needs a declared Base create operation/orchestration. `CRM-AI-001`: shared AI allowlist lacks `crm.tags.delete` and cannot be changed in this CRM-only worktree. `CRM-REF-001`: no fresh authenticated Odoo comparison captured in this slice. |
 | 2026-09-12 | Empty optional fields in lead creation | `85ebc4f9` | authenticated browser mutation HTTP 200; created detail shows Expected revenue `0`, Expected closing `—`; no browser errors | no new screenshot requested; browser state verified | `CRM-FUNC-001` fixed; Base contact cross-service boundary and Odoo comparison remain open |
+| 2026-09-12 | Lead conversion creates customer through Base YAML service | `ecf1880f` | CRM/Base focused boundary regression included; 65 tests, 484 assertions across CRM and Base contact suites | isolated CRM/Base repositories verified Base contact creation and CRM link; no direct CRM Base-table write | synchronous service boundary fixed; Temporal durability is only required for future long-running cross-service workflows |
 | 2026-09-12 | Paired My Pipeline comparison | `4d7bb8c0` | authenticated Odoo/Core3 desktop and mobile captures; no page/request errors; no Core3 horizontal overflow | `/tmp/core3-odoo-parity/crm-paired-odoo-pipeline-desktop.png`, `crm-paired-core3-pipeline-desktop.png`, and mobile counterparts | `CRM-VIS-001`: fixture cardinality and mobile kanban geometry differ; functional workflow gates remain open |
 | 2026-09-12 | Mobile Pipeline kanban geometry repair | pending | CRM focused suite 60/60; CardView/ListView client tests 39/39; UI audit passed; authenticated mobile board scroll width 1764px in a 390px board with document overflow false | `/tmp/core3-odoo-parity/crm-paired-core3-pipeline-mobile-fixed.png` | mobile geometry fixed; matching fixture cardinality and full workflow comparison remain open |
 
