@@ -1308,3 +1308,39 @@ automation context (`js_repl`/Playwright package), so neither authenticated
 Odoo nor Core3 screenshots were captured and no visual-parity claim is made.
 The remaining Odoo purple-shell versus Core3 Fluent-shell comparison and live
 browser interaction evidence are explicit follow-up gates.
+
+## Amounts to Settle bounded action (2026-09-12)
+
+The installed Odoo `account` source exposes the next uncovered payment action
+as `account.action_amounts_to_settle` in
+`addons/account/views/account_move_views.xml` (window action, model
+`account.move.line`, `list` only). Its exact domain is posted entries with a
+due date, a non-zero residual, and a reconcilable account. It uses
+`view_move_line_payment_tree` and `view_account_move_line_payment_filter`;
+the visible source columns are Bill Date, Payment Date, Journal Entry, Partner,
+Reference, Label, Discount Amount, and Residual. The source empty helper is
+`Amounts to settle` / `Cool, it looks like you don't have any amount to
+settle.`. This action is not directly menu-bound in the installed Odoo build;
+Core3 exposes the action under Accounting -> Transactions so the dashboard
+action has an explicit route.
+
+Core3 adds `/accounting/amounts-to-settle` with presentation-only
+`pages/amounts-to-settle.yaml` and page-ID-matched
+`api/amounts-to-settle.yaml`. Migration
+`20260912080000-043-accounting-amounts-to-settle.yaml` owns three stable
+posted, due, reconcilable residual fixtures. The source is read-only and
+requires `accounting.read`; search, empty results, and the source domain
+boundaries are covered by `test/accounting_amounts_to_settle.integration.test.ts`.
+No payment, reconciliation, journal, vendor, or customer mutation is exposed
+by this slice.
+
+Focused validation passes 2 tests and 10 assertions; the YAML audit passes
+with 621 pages, 630 routes, and 1,065 datasources; `git diff --check` is clean.
+Authenticated Core3/Odoo captures were attempted under
+`/tmp/core3-odoo-parity/accounting-amounts-to-settle-20260912/` at 1440x900 and
+390x844. Core3 failed before browser startup with the exact environment error
+`EMFILE: too many open files` from Vite watching
+`sdk/bun/sample/vite.config.ts`; the backend then refused connections on
+`127.0.0.1:3001`. Odoo `/web/login` returned HTTP 200, but this session has no
+usable Playwright package/authenticated browser automation context. No images
+were captured and no visual-parity claim is made for this batch.

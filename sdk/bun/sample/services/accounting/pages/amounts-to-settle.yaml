@@ -1,0 +1,20 @@
+title: Amounts to Settle
+page: { id: accounting-amounts-to-settle, route: /accounting/amounts-to-settle, breadcrumb: [Accounting, Transactions, Amounts to Settle], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_amounts_to_settle
+    search: { label: Search Journal Items, placeholder: Search journal items... }
+    views: [{ id: list, label: List, icon: table, mobile: false }]
+    columns:
+      - { field: invoice_date, label: Bill Date, type: DateCell }
+      - { field: payment_date, label: Payment Date, type: DateCell }
+      - { field: journal_entry, label: Journal Entry, type: PrimaryEntityCell }
+      - { field: partner_name, label: Partner }
+      - { field: reference, label: Reference }
+      - { field: label, label: Label }
+      - { field: discount_amount_display, label: Discount Amount, align: right }
+      - { field: residual_display, label: Residual, align: right }
+    page_size: 50
+    row_key: id
+    empty_state: { title: Amounts to settle, description: 'Cool, it looks like you don''t have any amount to settle.' }

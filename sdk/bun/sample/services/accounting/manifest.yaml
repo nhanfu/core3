@@ -73,6 +73,10 @@ menu:
           label: Entries to Review
           icon: ledger
           permission: accounting.read
+        - path: /accounting/amounts-to-settle
+          label: Amounts to Settle
+          icon: ledger
+          permission: accounting.read
         - path: /accounting/payments
           label: Payments
           icon: bank

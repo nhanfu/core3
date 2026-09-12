@@ -1,0 +1,6 @@
+page: { id: accounting-amounts-to-settle }
+datasources:
+  - id: accounting_amounts_to_settle
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(payment_date AS VARCHAR) AS payment_date, journal_entry, partner_name, reference, label, printf('$ %,.2f', CAST(discount_amount AS DOUBLE)) AS discount_amount_display, printf('$ %,.2f', CAST(residual AS DOUBLE)) AS residual_display, residual, currency FROM accounting_amounts_to_settle WHERE parent_state = 'posted' AND due_date IS NOT NULL AND residual <> 0 AND reconcile = TRUE AND (:q IS NULL OR journal_entry ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(reference, '') ILIKE '%' || :q || '%' OR label ILIKE '%' || :q || '%') ORDER BY payment_date ASC, id ASC"
