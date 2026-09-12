@@ -165,3 +165,18 @@ Focused coverage is `sms_marketing_analysis.integration.test.ts`; it verifies
 the menu/page/API contract, migration idempotence, deterministic rows, filters,
 empty state, and read-only permission boundary. No authenticated screenshots
 are claimed in this wave because no browser rendering was performed.
+
+## Visual verification: SMS Marketing Analysis
+
+On 2026-09-12, the single-module runner (`bun run agent:module -- sms-marketing --port=3317`) was started after `bun install --frozen-lockfile` and the frontend production build. Authenticated Playwright using `/usr/bin/google-chrome` logged in as the seeded Core3 administrator and rendered the resolved route `/sms-marketing/sms-analysis?from_date=2026-01-01&to_date=2026-09-12` (the declared page route is `/sms-analysis`). Graph, Pivot, and List were inspected at 1440x900 and 390x844. Core3 captures are:
+
+- `/tmp/core3-odoo-parity/sms-visual2-20260912/core3-sms-analysis-desktop.png`
+- `/tmp/core3-odoo-parity/sms-visual2-20260912/core3-sms-analysis-mobile.png`
+- `/tmp/core3-odoo-parity/sms-visual2-20260912/core3-sms-analysis-pivot-desktop.png`
+- `/tmp/core3-odoo-parity/sms-visual2-20260912/core3-sms-analysis-pivot-mobile.png`
+- `/tmp/core3-odoo-parity/sms-visual2-20260912/core3-sms-analysis-list-desktop.png`
+- `/tmp/core3-odoo-parity/sms-visual2-20260912/core3-sms-analysis-list-mobile.png`
+
+The pass verified the Campaigns/Reporting shell, Graph/Pivot/List switcher, This year date filter, graph measure controls, seeded chart values, pivot totals, list density, and mobile layout. The mobile document remained 390px wide with no document-level horizontal overflow; list and pivot content is clipped at the viewport boundary. No browser console, page, or request errors were observed after the frontend build.
+
+The matching installed Odoo action is source-confirmed as `mass_mailing_sms.mailing_trace_report_action_sms`, with `graph,pivot,list`, the SMS domain, and SMS-specific removal of email-only Opened/Replied fields. Odoo was reached at `http://127.0.0.1:8069` using database `core3_reference`, but the available `admin`/`admin` credentials were rejected (`Wrong login/password`), so no authenticated Odoo graph/pivot/list capture or visual-parity claim is made. Odoo diagnostic login captures are at `/tmp/core3-odoo-parity/sms-visual2-20260912/odoo-sms-analysis-desktop.png` and `odoo-sms-analysis-mobile.png`. All images remain outside Git. No source change was justified by the available evidence.
