@@ -1,0 +1,36 @@
+page: { id: employee-skill-types }
+datasources:
+  - id: employee_skill_types
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_SKILL_TYPES_UNAVAILABLE, message: Skill types are temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.sequence, t.name, CASE WHEN t.is_certification THEN t.name || ' 🏅' ELSE t.name END AS display_name, t.color, t.active, CASE WHEN t.active THEN 'Active' ELSE 'Archived' END AS status, COALESCE((SELECT STRING_AGG(s.name, ', ' ORDER BY s.sequence, s.id) FROM employee_skills s WHERE s.skill_type_id = t.id), '') AS skills, COALESCE((SELECT STRING_AGG(l.name, ', ' ORDER BY l.level_progress DESC, l.id) FROM employee_skill_levels l WHERE l.skill_type_id = t.id), '') AS levels FROM employee_skill_types t WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND (:active IS NULL OR t.active = CAST(:active AS BOOLEAN)) AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR EXISTS (SELECT 1 FROM employee_skills s WHERE s.skill_type_id = t.id AND s.name ILIKE '%' || :q || '%')) ORDER BY t.sequence, t.id"
+actions:
+  - id: view_employee_skill_type
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/skill-types/detail
+    params: { id: '{row.id}' }
+  - id: create_employee_skill_type
+    type: server_form
+    permission: employees.write
+    title: Create Skill Type
+    action: employees.skill_types.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_skill_types]
+    mutation:
+      operation: insert
+      table: employee_skill_types
+      fields: [sequence, name, color, is_certification, active, row_version]
+      required: [name]
+      defaults: { sequence: 10, color: 0, is_certification: false, active: true, row_version: 1 }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'skill-type-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_SKILL_TYPE_NAME_REQUIRED, message: A skill type name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_skill_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMPLOYEES_SKILL_TYPE_EXISTS, message: A skill type with this name already exists. }
+      result: { query: "SELECT * FROM employee_skill_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Skill Type, type: text, required: true, placeholder: e.g. Languages }
+      - { field: color, label: Color, type: number, default: 0 }
+      - { field: is_certification, label: Certification, type: boolean, default: false }

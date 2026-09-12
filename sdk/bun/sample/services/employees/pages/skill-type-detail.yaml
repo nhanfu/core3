@@ -1,0 +1,35 @@
+title: Skill Type
+page: { id: employee-skill-type-detail, route: /employees/skill-types/detail, breadcrumb: [Employees, Configuration, Employee, Skill Types, Skill Type], auth: { require: [employees.read] } }
+components:
+  - type: OdooFormView
+    source: employee_skill_type_detail
+    title_field: name
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: new_employee_skill_type, label: New, variant: primary, permission: employees.write }
+      - { id: edit_employee_skill_type, label: Edit, variant: secondary, permission: employees.write }
+      - { id: archive_employee_skill_type, label: Archive, variant: danger, permission: employees.write, show_if: "state.employee_skill_type_detail.active === true" }
+      - { id: restore_employee_skill_type, label: Restore, variant: secondary, permission: employees.write, show_if: "state.employee_skill_type_detail.active === false" }
+    group_columns: 2
+    groups:
+      - title: Skill Type
+        fields:
+          - { field: name, label: Skill Type }
+          - { field: color, label: Color, type: ColorSwatch }
+          - { field: is_certification, label: Certification, type: boolean }
+          - { field: status, label: Status, type: StatusChip }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: employee_skill_type_skills
+    title: Skills
+    variant: odoo_x2many
+    row_key: id
+    children: [{ type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }, { type: LineItemField, id: name, field: name, label: Name, readonly: true }]
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: employee_skill_type_levels
+    title: Levels
+    variant: odoo_x2many
+    row_key: id
+    children: [{ type: LineItemField, id: name, field: name, label: Name, readonly: true }, { type: LineItemField, id: level_progress, field: level_progress, label: Progress, readonly: true }]

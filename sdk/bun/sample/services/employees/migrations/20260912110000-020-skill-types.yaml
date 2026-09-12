@@ -1,0 +1,18 @@
+version: 0.0.20
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_skill_types (id VARCHAR PRIMARY KEY NOT NULL, row_version BIGINT NOT NULL DEFAULT 1, sequence INTEGER NOT NULL DEFAULT 10, name VARCHAR NOT NULL UNIQUE, color INTEGER NOT NULL DEFAULT 0, is_certification BOOLEAN NOT NULL DEFAULT false, active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00', updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00');
+      CREATE TABLE IF NOT EXISTS employee_skills (id VARCHAR PRIMARY KEY NOT NULL, skill_type_id VARCHAR NOT NULL, sequence INTEGER NOT NULL DEFAULT 10, name VARCHAR NOT NULL);
+      CREATE TABLE IF NOT EXISTS employee_skill_levels (id VARCHAR PRIMARY KEY NOT NULL, skill_type_id VARCHAR NOT NULL, name VARCHAR NOT NULL, level_progress INTEGER NOT NULL DEFAULT 0);
+      INSERT OR IGNORE INTO employee_skill_types (id, sequence, name, color, is_certification, active) VALUES ('skill-type-technical', 10, 'Technical Skills', 2, false, true), ('skill-type-languages', 20, 'Languages', 4, false, true), ('skill-type-soft', 30, 'Soft Skills', 6, false, true), ('skill-type-certifications', 40, 'Certifications', 8, true, true), ('skill-type-archived', 50, 'Legacy Skills', 0, false, false);
+      INSERT OR IGNORE INTO employee_skills (id, skill_type_id, sequence, name) VALUES ('skill-python', 'skill-type-technical', 10, 'Python'), ('skill-sql', 'skill-type-technical', 20, 'SQL'), ('skill-english', 'skill-type-languages', 10, 'English'), ('skill-communication', 'skill-type-soft', 10, 'Communication'), ('skill-odoo-cert', 'skill-type-certifications', 10, 'Odoo Certification');
+      INSERT OR IGNORE INTO employee_skill_levels (id, skill_type_id, name, level_progress) VALUES ('level-beginner', 'skill-type-technical', 'Beginner', 25), ('level-intermediate', 'skill-type-technical', 'Intermediate', 50), ('level-expert', 'skill-type-technical', 'Expert', 100), ('level-a1', 'skill-type-languages', 'A1', 20), ('level-c1', 'skill-type-languages', 'C1', 80);
+      UPDATE employee_skill_types SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_skill_levels; DROP TABLE IF EXISTS employee_skills; DROP TABLE IF EXISTS employee_skill_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

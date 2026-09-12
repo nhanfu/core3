@@ -1,0 +1,57 @@
+page: { id: employee-skill-type-detail }
+datasources:
+  - id: employee_skill_type_detail
+    single: true
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_SKILL_TYPE_DETAIL_UNAVAILABLE, message: Skill type details are temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.name, t.color, t.is_certification, t.active, CASE WHEN t.active THEN 'Active' ELSE 'Archived' END AS status FROM employee_skill_types t WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND t.id = :id"
+  - id: employee_skill_type_skills
+    permission: employees.read
+    query: "SELECT id, sequence, name FROM employee_skills WHERE skill_type_id = :skill_type_id ORDER BY sequence, id"
+  - id: employee_skill_type_levels
+    permission: employees.read
+    query: "SELECT id, name, level_progress FROM employee_skill_levels WHERE skill_type_id = :skill_type_id ORDER BY level_progress DESC, id"
+actions:
+  - id: new_employee_skill_type
+    type: navigate
+    permission: employees.write
+    navigate_to: /employees/skill-types
+  - id: edit_employee_skill_type
+    type: server_form
+    permission: employees.write
+    title: Edit Skill Type
+    action: employees.skill_types.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_skill_type_detail
+    params: { id: '{state.id}' }
+    refresh: [employee_skill_type_detail, employee_skill_types]
+    mutation:
+      operation: update
+      table: employee_skill_types
+      fields: [name, color, is_certification]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employee_skill_types WHERE id = :id", status: 404, code: EMPLOYEES_SKILL_TYPE_NOT_FOUND, message: Skill type not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_SKILL_TYPE_NAME_REQUIRED, message: A skill type name is required. }
+      result: { query: "SELECT * FROM employee_skill_types WHERE id = :id" }
+    fields: [{ field: name, label: Skill Type, type: text, required: true }, { field: color, label: Color, type: number }, { field: is_certification, label: Certification, type: boolean }]
+  - id: archive_employee_skill_type
+    type: server
+    permission: employees.write
+    action: employees.skill_types.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_skill_type_detail, employee_skill_types]
+    mutation: { operation: update, table: employee_skill_types, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employee_skill_types WHERE id = :id AND active = true", status: 404, code: EMPLOYEES_SKILL_TYPE_NOT_FOUND, message: Active skill type not found. }] }
+  - id: restore_employee_skill_type
+    type: server
+    permission: employees.write
+    action: employees.skill_types.restore
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    refresh: [employee_skill_type_detail, employee_skill_types]
+    mutation: { operation: update, table: employee_skill_types, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT 1 FROM employee_skill_types WHERE id = :id AND active = false", status: 404, code: EMPLOYEES_SKILL_TYPE_NOT_FOUND, message: Archived skill type not found. }] }

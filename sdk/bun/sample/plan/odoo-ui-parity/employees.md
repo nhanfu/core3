@@ -889,3 +889,32 @@ Authenticated capture was attempted under
 `playwright-interactive` runtime is unavailable in this session. No
 authenticated Odoo/Core3 render or visual parity claim is made; screenshots
 remain outside Git.
+
+## Skill Types bounded action (2026-09-12)
+
+The next uncovered Employees action after Employee Records is the `hr_skills`
+action `hr_skill_type_action`, reached at Employees > Configuration > Employee
+> Skill Types. The source action is `hr.skill.type` with `list,form` modes and
+the HR-user menu/access boundary (`hr_skill_type_action`, `hr_skill_type_menu`,
+`access_hr_skill_type`). The list preserves Odoo's sequence handle, Skill
+Types, color, Skills, and Levels columns. The form preserves the Skill Type,
+color, Certification, Archived ribbon, and relation-backed Skills and Levels
+sections. Archived filtering and certification display are explicit.
+
+Core3 adds `/employees/skill-types` and `/employees/skill-types/detail`, with
+page-only YAML joined to `api/skill-types.yaml` and
+`api/skill-type-detail.yaml` by matching page IDs. Migration
+`20260912110000-020-skill-types.yaml` is idempotent, uses fixed
+`2026-01-15` timestamps, and seeds technical, language, soft-skill,
+certification, and archived types with stable Skills/Levels relations. Reads
+use `employees.read`; create, edit, archive, and restore use
+`employees.write`. Focused tests cover source mapping, deterministic ordering,
+relations, current/archived/empty/transport states, validation, stale-action
+contract, and permission boundaries.
+
+Authenticated Odoo/Core3 browser verification and 1440x900 / 390x844 captures
+were not completed: the required persistent `playwright-interactive` `js_repl`
+runtime is unavailable in this session, and no alternate authenticated browser
+runtime was available. No visual-parity claim is made and no screenshots are
+invented; the required artifact directory remains reserved at
+`/tmp/core3-odoo-parity/employees-batch6-20260912/`.
