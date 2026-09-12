@@ -1,0 +1,33 @@
+title: Sessions
+page: { id: livechat-technical-handled-by-bot-sessions, route: /livechat/technical/ongoing-sessions/handled-by-bot, breadcrumb: [Website, Live Chat, Technical, Sessions Handled by Bot], auth: { require: [livechat.manage] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_technical_handled_by_bot_sessions
+    search: { label: Search history, placeholder: Search... }
+    default_filters: { status: ongoing, handled_by_bot: true }
+    filters:
+      - { field: status, label: Status, options: [{ id: ongoing, label: Ongoing }] }
+      - { field: handled_by_bot, label: Handled by Bot, options: [{ id: handled-by-bot, label: Handled by Bot }] }
+      - { field: country_name, label: Country, options: ['United States', Belgium, France] }
+      - { field: rating_text, label: Rating, options: [Happy, Neutral, Unhappy, Unrated] }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: form, label: Form, icon: edit }
+    form_view: { page: apps/services/livechat/pages/technical-handled-by-bot-session-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_livechat_technical_handled_by_bot_session
+    row_double_click_action: view_livechat_technical_handled_by_bot_session
+    empty_state: { title: No sessions handled by a bot found, description: Ongoing sessions handled by a bot will appear here. }
+    columns:
+      - { field: session_date, label: Date, type: TextCell, mobile: true }
+      - { field: customer_name, label: Customer, type: PrimaryEntityCell, mobile: true }
+      - { field: agents_name, label: Agents, type: TextCell, mobile: true }
+      - { field: country_name, label: Country, type: TextCell, mobile: true }
+      - { field: language_name, label: Language, type: TextCell, mobile: true }
+      - { field: expertise_name, label: Expertise, type: TextCell, mobile: true }
+      - { field: duration_display, label: Duration, type: TextCell, mobile: true }
+      - { field: message_count, label: Messages, type: TextCell, mobile: true }
+      - { field: rating_text, label: Rating, type: StatusBadge, mobile: true }

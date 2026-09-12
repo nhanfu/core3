@@ -38,3 +38,4 @@ menu:
         - { path: /livechat/technical/ongoing-sessions/in-call, label: Ongoing Call Sessions, icon: message, permission: livechat.manage }
         - { path: /livechat/technical/escalated-sessions, label: Escalated Sessions, icon: message, permission: livechat.manage }
         - { path: /livechat/technical/ongoing-sessions/handled-by-agent, label: Sessions Handled by Agent, icon: message, permission: livechat.manage }
+        - { path: /livechat/technical/ongoing-sessions/handled-by-bot, label: Sessions Handled by Bot, icon: message, permission: livechat.manage }
