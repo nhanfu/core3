@@ -12,8 +12,10 @@ The focused Surveys suite passes 32 tests with 284 assertions. The
 module-scoped authenticated process passed 28/28 route checks across 14 routes
 at desktop and mobile sizes, and Fleet was denied `surveys.read` with HTTP 403.
 The shared process on port 3002 was stale and returned page 404s; it needs a
-fresh-process retest. Paired Odoo comparison and authenticated mutation
-persistence remain open. No parity claim is made here.
+fresh-process retest. A fresh authenticated lifecycle probe persisted a survey
+and question, then moved Draft → Published → Closed → Archived → Draft with
+row versions 1 → 5. Paired Odoo comparison remains open. No parity claim is
+made here.
 
 ## Next bounded task
 
