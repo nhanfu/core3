@@ -63,16 +63,21 @@ actions:
       steps: [{ query: "UPDATE email_mailings SET state = 'Sent', schedule_type = 'now', sent_date = TIMESTAMP '2026-01-15 11:30:00', calendar_date = TIMESTAMP '2026-01-15 11:30:00', sent = recipient_count, expected = recipient_count, delivered = recipient_count, received_ratio = 100, row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could be sent. }]
       result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
   - id: schedule_email_mailing
-    type: server
+    type: server_form
     permission: email_marketing.write
+    title: When do you want to send your mailing?
     action: email_marketing.mailings.schedule
     handler: yaml_mutation
     operation: update
+    prefill: state.email_mailing_detail
     refresh: [email_mailing_detail, email_mailings]
     mutation:
-      guards: [{ query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'Draft' AND active = true AND mail_server_available = true AND LENGTH(TRIM(subject)) > 0 AND LENGTH(TRIM(body)) > 0 AND recipient_count > 0", status: 409, code: EMAIL_MAILING_NOT_READY, message: A mailing needs a subject, body, recipients, and available mail server before scheduling. }]
-      steps: [{ query: "UPDATE email_mailings SET state = 'In Queue', schedule_type = 'scheduled', schedule_date = TIMESTAMP '2026-01-16 12:00:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could be scheduled. }]
+      guards:
+        - { query: "SELECT id FROM email_mailings WHERE id = :id AND state = 'Draft' AND active = true AND mail_server_available = true AND LENGTH(TRIM(subject)) > 0 AND LENGTH(TRIM(body)) > 0 AND recipient_count > 0", status: 409, code: EMAIL_MAILING_NOT_READY, message: A mailing needs a subject, body, recipients, and available mail server before scheduling. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:schedule_date AS TIMESTAMP) > TIMESTAMP '2026-01-15 11:30:00'", status: 422, code: EMAIL_MAILING_SCHEDULE_DATE_INVALID, message: Choose a future date and time. }
+      steps: [{ query: "UPDATE email_mailings SET state = 'In Queue', schedule_type = 'scheduled', schedule_date = CAST(:schedule_date AS TIMESTAMP), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_STATE_CHANGED, message: This mailing changed before it could be scheduled. }]
       result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
+    fields: [{ field: schedule_date, label: Send on, type: text, required: true, placeholder: YYYY-MM-DD HH:MM }]
   - id: cancel_email_mailing
     type: server
     permission: email_marketing.write

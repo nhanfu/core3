@@ -794,3 +794,42 @@ authenticated Core3 screen could be captured. The only attempt artifact is
 Discuss fallback captures at 1440x900 and 390x844);
 no visual-parity claim is made, and the runtime blocker must be cleared before
 desktop/mobile comparison evidence can be added. No image is committed.
+
+## Mailing Schedule wizard bounded slice (2026-09-12)
+
+This slice closes the next uncovered visible action reachable from the Mailings
+form: Odoo `mailing_mailing_schedule_date_action` (`mailing.mailing.schedule.date`,
+form, modal target). The source is
+`addons/mass_mailing/wizard/mailing_mailing_schedule_date_views.xml` at revision
+`65975996`; its ordered form field is **Send on** (`schedule_date`, required),
+with **Schedule** and **Discard** footer actions. The transient model writes the
+selected datetime to the mailing, marks `schedule_type` as scheduled, and then
+puts the mailing in queue. Odoo's parent mailing form exposes this flow through
+the Draft **Schedule** button; it is available to mailing users and remains
+responsive as a compact modal on mobile.
+
+Core3 keeps the existing page/API boundary (`page.id: mailing-detail`) and
+changes only `schedule_email_mailing` in
+`services/email-marketing/api/mailing-detail.yaml` to a `server_form`. Its
+presentation remains in `pages/mailing-detail.yaml`; the API owns the modal
+title, required ISO text field, future-date validation, permission, optimistic
+row version, deterministic state transition, and refresh targets. Native date
+controls are intentionally not used. The fixed comparison clock is
+`2026-01-15 11:30:00`; a valid example is `2026-01-16 12:00:00`.
+
+Focused validation in `test/email_marketing_mailings.integration.test.ts` passes
+4 tests with 63 assertions, including page/API discovery, exact wizard contract,
+valid scheduling, past-date rejection, not-ready and stale-row guards, and the
+existing send/cancel/retry boundaries. No migration or new fixture was needed:
+the existing deterministic mailing fixtures already cover Draft and queued
+states, and re-running their migrations remains idempotent.
+
+Capture attempt: Odoo health endpoints at `127.0.0.1:8069` and `:8073` returned
+200, but the required persistent Playwright browser runner is unavailable in
+this session (`js_repl` is not exposed and the worktree has no Playwright
+package). Core3 was not listening at `127.0.0.1:32615`. Therefore no
+authenticated desktop/mobile screenshots were produced under
+`/tmp/core3-odoo-parity/email-marketing-schedule-20260912/`, and this slice
+makes no visual-parity claim. When runtime access is restored, capture the Odoo
+and Core3 Draft mailing Schedule modal at 1440x900 and 390x844, recording failed
+requests, page errors, and horizontal overflow.

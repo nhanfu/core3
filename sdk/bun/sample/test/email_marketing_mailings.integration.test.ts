@@ -70,9 +70,12 @@ describe('Email Marketing Mailings parity action', () => {
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'email_mailings_workflow_test', ['schema', 'data']);
 
     const schedule = action('schedule_email_mailing');
-    const queued = await repository.executeMutation(schedule.mutation, { id: 'email-mailing-lead-feedback', expected_row_version: 1 });
+    expect(schedule).toMatchObject({ type: 'server_form', title: 'When do you want to send your mailing?', fields: [{ field: 'schedule_date', label: 'Send on', required: true }] });
+    await expect(repository.executeMutation(schedule.mutation, { id: 'email-mailing-lead-feedback', expected_row_version: 1, values: { schedule_date: '2026-01-15 10:00:00' } }))
+      .rejects.toMatchObject({ status: 422, code: 'EMAIL_MAILING_SCHEDULE_DATE_INVALID' });
+    const queued = await repository.executeMutation(schedule.mutation, { id: 'email-mailing-lead-feedback', expected_row_version: 1, values: { schedule_date: '2026-01-16 12:00:00' } });
     expect(queued).toMatchObject({ state: 'In Queue', schedule_type: 'scheduled', schedule_date: '2026-01-16T12:00:00.000Z', row_version: 2 });
-    await expect(repository.executeMutation(schedule.mutation, { id: 'email-mailing-lead-feedback', expected_row_version: 1 }))
+    await expect(repository.executeMutation(schedule.mutation, { id: 'email-mailing-lead-feedback', expected_row_version: 1, values: { schedule_date: '2026-01-17 12:00:00' } }))
       .rejects.toMatchObject({ status: 409, code: 'EMAIL_MAILING_NOT_READY' });
 
     const cancel = action('cancel_email_mailing');
