@@ -71,6 +71,21 @@ The local Odoo source trace is `sale_management/views/sale_management_menus.xml`
 
 This batch extends the existing route without adding a duplicate menu: the separate `sale-quotation-template-detail` API now carries the form settings and a deterministic `sale_quotation_template_lines` source, with guarded line creation/deletion and existing row-version template edits/archive/restore. The migration is idempotent and uses fixed defaults/fixtures. Focused contract coverage includes populated, filtered, empty, transport-error, forbidden-by-permission contract, validation, missing-record, stale-write, and template/line CRUD paths. The persistent `js_repl` required by the playwright-interactive skill was unavailable in this session; Core3 therefore has no authenticated 1440x900 or 390x844 captures for the form completion, and no visual parity claim is made. Odoo references remain the captures listed above; all image artifacts stay outside Git.
 
+## Quotation Templates visual comparison (2026-09-12)
+
+This continuation completed the paired Core3 visual pass for the bounded Quotation Templates slice. The built frontend was served from this worktree on an isolated local port; authenticated Core3 navigation covered the populated list and the `Office Furnitures` detail with its Lines grid at both requested viewports. The rendered YAML contract matches the Odoo reference data and labels without a source-backed correction required.
+
+| Surface | Viewport | Capture |
+| --- | --- | --- |
+| Odoo reference list | 1440x900 | `/tmp/core3-odoo-parity/sales-visual4-20260912/odoo-quotation-templates-desktop.png` |
+| Odoo reference list | 390x844 | `/tmp/core3-odoo-parity/sales-visual4-20260912/odoo-quotation-templates-mobile.png` |
+| Core3 list | 1440x900 | `/tmp/core3-odoo-parity/sales-visual4-20260912/core3-quotation-templates-desktop.png` |
+| Core3 list | 390x844 | `/tmp/core3-odoo-parity/sales-visual4-20260912/core3-quotation-templates-mobile.png` |
+| Core3 detail | 1440x900 | `/tmp/core3-odoo-parity/sales-visual4-20260912/core3-quotation-template-detail-desktop.png` |
+| Core3 detail | 390x844 | `/tmp/core3-odoo-parity/sales-visual4-20260912/core3-quotation-template-detail-mobile.png` |
+
+Core3 browser evidence: both viewports rendered one active template and the detail line `Office Desks`; body/document widths remained 1440/1440 and 390/390, with no page errors or failed application requests. The Odoo files in this directory were login-page captures after the local reference authentication throttle, not authenticated list views. No fresh authenticated Odoo comparison or visual parity claim is made for this run; `8073` was not used.
+
 ## Orders to Upsell bounded slice (2026-09-12)
 
 The next uncovered Odoo Sales action is `sale.menu_sale_order_upselling` → `sale.action_orders_upselling`, under To Invoice. Odoo uses a read-only `sale.order` list filtered to `invoice_status = upselling`, with search/grouping and the empty-state explanation that delivered quantities exceed ordered quantities under an order-based invoicing policy.
