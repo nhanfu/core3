@@ -52,7 +52,7 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | ECOMMERCE-FUNC-008 | Cart summary/lines, totals, navigation and quantity guard | `bun test ./test/ecommerce_cart.integration.test.ts` — 2 tests, 7 assertions | pass |
 | ECOMMERCE-FUNC-009 | Shop page/API, published-product visibility and cart navigation contract | `bun test ./test/ecommerce_shop.integration.test.ts` — 2 tests, 9 assertions | pass at contract level; authenticated add-to-cart persistence planned |
 | ECOMMERCE-FUNC-010 | Product detail page/API, persisted read, guarded edit, stale and duplicate-reference boundaries | `bun test ./test/ecommerce_product_detail.integration.test.ts` — 2 tests, 9 assertions | pass |
-| ECOMMERCE-FUNC-011 | Checkout validation, persisted order/line creation, cart conversion, and repeat-checkout guard | `bun test ./test/ecommerce_checkout.integration.test.ts` — 5 tests, 27 assertions | pass at service and API-handler level; authenticated browser workflow captured |
+| ECOMMERCE-FUNC-011 | Checkout validation, persisted order/line creation, cart conversion, and repeat-checkout guard | `bun test ./test/ecommerce_checkout.integration.test.ts` — 5 tests, 27 assertions; isolated durable runner created `WEB/2026/0004`, stopped, restarted, and returned it from `/api/query` | pass at service, API-handler, browser, and restart level |
 | ECOMMERCE-FUNC-012 | Migration rerun/idempotency and wrong-company isolation for catalog and commerce records | Same focused Checkout test — 4 tests, 22 assertions | pass at service level |
 | ECOMMERCE-PERM-013 | Authenticated customer ownership cannot be bypassed with caller-supplied customer/cart IDs | `bun test ./test/ecommerce_checkout.integration.test.ts` — 5 tests, 27 assertions; authenticated query ignores another customer ID and checkout mutation rejects a foreign cart with `ECOMMERCE_CHECKOUT_OWNERSHIP_REQUIRED` | pass for API-handler read/mutation boundary; wrong-company matrix remains pending |
 | ECOMMERCE-SCOPE-001 | Manifest-to-page/API coverage | Current implementation covers all 9 registered Ecommerce routes plus linked Product detail and Checkout routes | pass for route coverage; browser journey pending |
@@ -67,6 +67,6 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 
 - Functional: service-level checkout and authenticated Core3 submit path pass
 - Permissions: service-level company/customer boundaries pass; authenticated actor matrix pending
-- Persistence/data integrity: service-level checkout and migration rerun pass; restart workflow pending
+- Persistence/data integrity: checkout, migration rerun, and isolated durable restart pass
 - Desktop/mobile visual parity: Core3 evidence pass; paired Odoo blocked (`/shop` 404)
 - Tester decision: not signed off
