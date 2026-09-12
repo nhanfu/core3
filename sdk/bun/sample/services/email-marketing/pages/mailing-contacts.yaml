@@ -43,6 +43,9 @@ components:
       - { field: is_blacklisted, label: Blacklisted, type: StatusChip, optional: true }
     page_size: 50
     row_key: id
+    selectable: true
+    bulk_actions:
+      - { id: import_mailing_contacts, label: Import, permission: email_marketing.manage }
     row_open_action: edit_mailing_subscription
     row_double_click_action: edit_mailing_subscription
     row_actions: menu

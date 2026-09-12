@@ -14,6 +14,28 @@ datasources:
     permission: email_marketing.read
     query: "SELECT id AS value, name AS label FROM email_marketing_optout_reasons ORDER BY sequence, id"
 actions:
+  - id: import_mailing_contacts
+    type: server_form
+    permission: email_marketing.manage
+    title: Import Mailing Contacts
+    action: email_marketing.contacts.import
+    handler: yaml_mutation
+    operation: create
+    submit_label: Import
+    cancel_label: Discard
+    refresh: [mailing_subscriptions, mailing_subscription_lists]
+    mutation:
+      steps:
+        - query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:contact_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT CASE WHEN regexp_extract(line, '<([^>]+)>', 1) <> '' THEN regexp_extract(line, '<([^>]+)>', 1) ELSE line END AS email, CASE WHEN regexp_extract(line, '<([^>]+)>', 1) <> '' THEN trim(both '\"' from trim(regexp_replace(line, '\\s*<.*>$', ''))) ELSE line END AS name FROM lines WHERE line <> '') INSERT INTO mailing_contacts(id, row_version, name, email, company_name, message_bounce, is_blacklisted, active, created_at, updated_at) SELECT 'mailing-contact-import-' || regexp_replace(lower(email), '[^a-z0-9]+', '-', 'g'), 1, name, lower(email), 'Core3 Vietnam', 0, false, true, TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00' FROM parsed ON CONFLICT (email) DO NOTHING"
+        - query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:contact_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT CASE WHEN regexp_extract(line, '<([^>]+)>', 1) <> '' THEN regexp_extract(line, '<([^>]+)>', 1) ELSE line END AS email FROM lines WHERE line <> '') INSERT INTO mailing_subscriptions(id, row_version, contact_id, list_id, opt_out, subscription_date, created_at, updated_at) SELECT 'mailing-subscription-import-' || c.id || '-' || :mailing_list_id, 1, c.id, :mailing_list_id, false, TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00', TIMESTAMP '2026-01-15 12:00:00' FROM mailing_contacts c JOIN parsed p ON lower(c.email) = lower(p.email) WHERE c.active = true AND c.is_blacklisted = false ON CONFLICT (contact_id, list_id) DO NOTHING"
+        - query: "UPDATE mailing_lists SET subscriber_count = (SELECT COUNT(*) FROM mailing_subscriptions WHERE list_id = mailing_lists.id), contact_count = (SELECT COUNT(*) FROM mailing_subscriptions WHERE list_id = mailing_lists.id), updated_at = TIMESTAMP '2026-01-15 12:00:00' WHERE id = :mailing_list_id"
+      guards:
+        - { query: "SELECT id FROM mailing_lists WHERE id = :mailing_list_id AND active = true", status: 422, code: EMAIL_MAILING_IMPORT_LIST_INVALID, message: Select an active mailing list. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:contact_list AS VARCHAR))) > 0", status: 422, code: EMAIL_MAILING_IMPORT_CONTACTS_REQUIRED, message: Paste at least one mailing contact. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM (SELECT trim(unnest(string_split(CAST(:contact_list AS VARCHAR), chr(10)))) AS line) lines WHERE line <> '' AND NOT regexp_matches(CASE WHEN regexp_extract(line, '<([^>]+)>', 1) <> '' THEN regexp_extract(line, '<([^>]+)>', 1) ELSE line END, '^[^@ ]+@[^@ ]+\\.[^@ ]+$'))", status: 422, code: EMAIL_MAILING_IMPORT_EMAIL_INVALID, message: Each imported line must contain a valid email address. }
+    fields:
+      - { field: mailing_list_id, label: Import contacts in, type: select, options_source: mailing_subscription_lists, required: true }
+      - { field: contact_list, label: Contact List, type: textarea, required: true, placeholder: '"Damien Roberts" <d.roberts@example.com>\n"Rick Sanchez" <rick_sanchez@example.com>\nvictor_hugo@example.com' }
   - id: create_mailing_subscription
     type: server_form
     permission: email_marketing.manage

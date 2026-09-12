@@ -871,3 +871,24 @@ authenticated Odoo or Core3 captures could be produced at `1440x900` or
 slice makes no visual-parity claim. The exact probe outputs are retained in
 that directory as `health-8069.txt`, `health-8073.txt`, and
 `health-32615.txt`.
+
+## Mailing Contact Import wizard bounded slice (2026-09-12)
+
+The next uncovered action reachable from Odoo Mailing List Contacts is
+`mailing_contact_import_action` (`mailing.contact.import`, form, modal target),
+from `addons/mass_mailing/wizard/mailing_contact_import_views.xml`. Its form
+orders the many-to-many **Import contacts in** selector, explanatory copy,
+multiline **Contact List**, an **Upload a file** handoff to base import, then
+**Import** and **Discard**. Core3 implements the deterministic pasted-text
+path at `/mailing-contacts`: the list now exposes an Import bulk action and the
+API keeps the page/API join at `page.id: mailing-contacts`.
+
+The import accepts one plain or `Name <email>` address per line, validates the
+whole input, creates stable contacts idempotently, adds active non-blacklisted
+subscriptions to the selected active list, and refreshes list counts. It is
+protected by `email_marketing.manage`, with stable invalid-list, empty-input,
+invalid-email, 503 transport, and duplicate/idempotence behavior covered by
+`test/email_marketing_mailing_contact_import.integration.test.ts`. The Odoo
+base-import file upload is intentionally deferred as a separate integration
+surface; no visual-parity claim or screenshot is made because this slice has
+not completed an authenticated browser capture.
