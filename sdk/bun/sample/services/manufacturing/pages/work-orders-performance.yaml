@@ -1,0 +1,61 @@
+title: Work Orders Performance
+page: { id: manufacturing-work-orders-performance, route: /manufacturing/work-orders-performance, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers, Performance], auth: { require: [manufacturing.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_workorder_performance
+    search: { label: Search work orders performance, placeholder: 'Search work orders, operations, or products...' }
+    default_filters: { state: Finished }
+    view_navigation: tabs
+    filters:
+      - { field: workcenter, label: Work Center, options_source: mrp_workorder_performance_workcenters }
+      - { field: state, label: Status, options_source: mrp_workorder_performance_states }
+    group_by:
+      - { field: workcenter, label: Work Center }
+      - { field: operation_name, label: Operation }
+      - { field: production_name, label: Manufacturing Order }
+    default_group_by: workcenter
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: operation_name
+        measure_field: duration
+        measure_label: Real Duration (minutes)
+        type: bar
+        measures:
+          - { field: duration, label: Real Duration (minutes), aggregate: sum }
+          - { field: expected_duration, label: Expected Duration (minutes), aggregate: sum }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: operation_name, column: Operation }
+            - { field: workcenter, column: Work Center }
+            - { field: production_name, column: Manufacturing Order }
+            - { field: product_name, column: Product }
+            - { field: expected_duration, column: Expected Duration (minutes) }
+            - { field: duration, column: Real Duration (minutes) }
+          default:
+            rows: [operation_name]
+            measures:
+              - { field: duration, aggregate: sum, column: Real Duration (minutes) }
+              - { field: expected_duration, aggregate: sum, column: Expected Duration (minutes) }
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: form }
+    form_view: { page: apps/services/manufacturing/pages/work-orders-performance-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: view_mrp_workorder_performance
+    row_double_click_action: view_mrp_workorder_performance
+    row_actions: menu
+    empty_state: { title: No work orders performance data, description: Completed work orders appear here after manufacturing operations are finished. }
+    columns:
+      - { field: operation_name, label: Operation, type: PrimaryEntityCell, mobile: true }
+      - { field: workcenter, label: Work Center, mobile: true }
+      - { field: product_name, label: Product, mobile: true }
+      - { field: quantity, label: Quantity, align: right, mobile: true }
+      - { field: expected_duration, label: Expected Duration, align: right, mobile: false }
+      - { field: duration, label: Real Duration, align: right, mobile: true }
+      - { field: status_label, label: Status, type: StatusChip, mobile: false }

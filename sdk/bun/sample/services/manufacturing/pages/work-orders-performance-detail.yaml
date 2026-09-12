@@ -1,0 +1,31 @@
+title: Work Order Performance
+page: { id: manufacturing-work-orders-performance-detail, route: /manufacturing/work-orders-performance/detail, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers, Performance, Detail], auth: { require: [manufacturing.read] } }
+components:
+  - type: OdooFormView
+    source: mrp_workorder_performance_detail
+    title_field: record_title
+    subtitle_field: status_label
+    editable: false
+    group_columns: 2
+    header_actions:
+      - { id: back_to_mrp_workorder_performance, label: Back to Work Orders Performance, icon: arrow-left, permission: manufacturing.read }
+    groups:
+      - title: Work Order
+        fields:
+          - { field: operation_name, label: Work Order }
+          - { field: workcenter, label: Work Center }
+          - { field: product_name, label: Product }
+          - { field: quantity, label: Quantity }
+          - { field: production_name, label: Manufacturing Order }
+      - title: Time Tracking
+        fields:
+          - { field: date_start, label: Start Date }
+          - { field: date_finished, label: End Date }
+          - { field: expected_duration, label: Expected Duration }
+          - { field: duration, label: Real Duration }
+          - { field: company_name, label: Company }
+          - { field: status_label, label: Status, type: StatusChip }
+    status_field: state
+    statusbar:
+      - { value: Finished, label: Finished }
+      - { value: Cancelled, label: Cancelled }

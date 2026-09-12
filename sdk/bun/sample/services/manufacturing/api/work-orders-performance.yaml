@@ -1,0 +1,35 @@
+page: { id: manufacturing-work-orders-performance }
+datasources:
+  - id: mrp_workorder_performance_states
+    single: false
+    permission: manufacturing.read
+    query: "SELECT 'Finished' AS value, 'Finished' AS label"
+  - id: mrp_workorder_performance_workcenters
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT workcenter AS value, workcenter AS label FROM mrp_workorder_analysis WHERE state = 'Finished' ORDER BY workcenter"
+  - id: mrp_workorder_performance
+    single: false
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_WORKORDER_PERFORMANCE_UNAUTHORIZED, message: Sign in to view Work Orders Performance. }
+      forbidden: { status: 403, code: MRP_WORKORDER_PERFORMANCE_FORBIDDEN, message: You do not have permission to view Work Orders Performance. }
+      transport_error: { status: 503, code: MRP_WORKORDER_PERFORMANCE_UNAVAILABLE, message: Work Orders Performance is temporarily unavailable. }
+    query: |
+      SELECT id, row_version, operation_name, workcenter, production_name, product_name,
+        CAST(quantity AS DOUBLE) AS quantity, CAST(expected_duration AS DOUBLE) AS expected_duration,
+        CAST(duration AS DOUBLE) AS duration, CAST(date_start AS VARCHAR) AS date_start,
+        CAST(date_finished AS VARCHAR) AS date_finished, state, 'Finished' AS status_label, company_name
+      FROM mrp_workorder_analysis
+      WHERE state = 'Finished'
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:workcenter_id IS NULL OR workcenter = :workcenter_id OR workcenter = (SELECT name FROM mrp_workcenters WHERE id = :workcenter_id))
+        AND (:workcenter IS NULL OR workcenter = :workcenter)
+        AND (:q IS NULL OR operation_name ILIKE '%' || :q || '%' OR production_name ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%')
+      ORDER BY workcenter, date_finished, id
+actions:
+  - id: view_mrp_workorder_performance
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/work-orders-performance/detail
+    params: { id: '{row.id}' }
