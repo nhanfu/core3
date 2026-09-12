@@ -1,0 +1,13 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO forum_forums (id, name, description, mode, privacy, total_posts, active)
+      SELECT 'forum-demo-archived', 'Legacy Forum', 'Archived forum retained for administration views', 'Questions', 'Public', 0, FALSE
+      WHERE NOT EXISTS (SELECT 1 FROM forum_forums WHERE id = 'forum-demo-archived');
+    down: DELETE FROM forum_forums WHERE id = 'forum-demo-archived';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

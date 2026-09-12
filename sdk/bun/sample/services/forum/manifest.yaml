@@ -15,7 +15,7 @@ menu:
       label: Community
       items:
         - { path: /forum-questions, label: Questions, icon: help, permission: forum.read }
-        - { path: /forum, label: Forums, icon: forum, permission: forum.read }
+        - { path: /forums, label: Forums, icon: forum, permission: forum.read }
         - { path: /forum-tags, label: Tags, icon: tag, permission: forum.read }
     - id: reporting
       label: Reporting

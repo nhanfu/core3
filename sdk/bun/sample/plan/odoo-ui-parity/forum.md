@@ -1,7 +1,7 @@
-# Forum parity — bounded wave 2 slice
+# Forum parity — bounded wave 3 slice
 
-Status: in-progress. This slice is the authenticated Website content-management
-screen for public Forum posts; it is not the anonymous `/forum` website route.
+Status: in-progress. This slice is the authenticated Website → Configuration →
+Forum → Forums list action; it is not the anonymous `/forum` website route.
 
 ## Source-backed Odoo trace
 
@@ -14,6 +14,15 @@ Reference: Odoo 19 `addons/website_forum`.
 | Forum Post Pages kanban | `forum_post_view_kanban` | Kanban tab | `forum.read` |
 | Forum Post Pages graph | `forum_post_view_graph` | Graph tab | `forum.read` |
 | Row website action | `go_to_website` | existing Core3 question detail alias | `forum.read` |
+| Website → Configuration → Forum → Forums | `menu_forum_global` → `forum_forum_action` | `/forums` (action path alias) | `forum.read` |
+| Forums list | `forum_forum_view_tree` | List view | `forum.read` |
+
+This is the next uncovered source action after Forum Posts, by the source menu
+sequence. Odoo orders Forums before Ranks, Tags, Badges, and Close Reasons.
+The bounded view reproduces the sequence handle, Forum, Website, Total Posts,
+and Total Views columns; optional Total Answers and Total Favorites remain
+available in the datasource but hidden by default. Archived is a search filter.
+No write action is included in this slice.
 
 Odoo declares `view_mode=list,kanban,graph`, a Posts-default search context,
 no create button, and list fields Content, Website URL, Forum, # Views,
@@ -29,12 +38,16 @@ website object actions.
 - `pages/forum-post-pages.yaml` is presentation-only.
 - `api/forum-post-pages.yaml` owns datasources/actions and joins by
   `page.id: forum-post-pages`.
+- `pages/forums.yaml` is presentation-only; `api/forums.yaml` owns the Forums
+  datasource and joins by `page.id: forum-forums`.
 - Existing deterministic Forum migration fixtures provide two top-level posts,
   one answered and one unanswered, so Posts and Answered Posts are testable.
 - `forum.read` gates the list, state lookup, and row navigation. No write action
   is exposed by this Odoo action; creation remains on the public website flow.
 - `fixture_state=empty`, `fixture_state=transport_error`, search, status, and
   content-scope paths are covered by the focused test.
+- Forums active/archived, search, empty, and transport-error paths are covered
+  by the focused test; `forum.read` gates the action.
 
 ## Acceptance/evidence
 
@@ -63,3 +76,7 @@ website object actions.
   desktop and mobile route attempts were connection-refused.
 - Screenshots from these attempts are under `/tmp/core3-odoo-parity`; no visual
   parity claim is made for this slice until both runtimes are available.
+- Wave 3 capture attempt: Odoo still returns HTTP 404 for `/forum`. The fresh
+  Core3 runner found port 3001 occupied by an existing process (401 on `/forums`)
+  and then failed its frontend watcher with `EMFILE: too many open files`; no
+  authenticated browser session or desktop/mobile screenshot could be produced.

@@ -1,0 +1,21 @@
+page: { id: forum-forums }
+datasources:
+  - id: forum_forums
+    permission: forum.read
+    error_states:
+      unauthorized: { status: 401, code: FORUM_FORUMS_UNAUTHORIZED, message: Sign in to view Forums. }
+      forbidden: { status: 403, code: FORUM_FORUMS_FORBIDDEN, message: You do not have permission to view Forums. }
+      transport_error: { status: 503, code: FORUM_FORUMS_UNAVAILABLE, message: Forums are temporarily unavailable. }
+    query: |
+      SELECT f.id, f.row_version,
+        ROW_NUMBER() OVER (ORDER BY f.name, f.id) AS sequence,
+        f.name, NULL AS website_name, f.active,
+        (SELECT COUNT(*) FROM forum_posts p WHERE p.forum_id = f.id) AS total_posts,
+        COALESCE((SELECT SUM(p.views) FROM forum_posts p WHERE p.forum_id = f.id), 0) AS total_views,
+        COALESCE((SELECT SUM(p.answer_count) FROM forum_posts p WHERE p.forum_id = f.id), 0) AS total_answers,
+        0 AS total_favorites
+      FROM forum_forums f
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR f.name ILIKE '%' || :q || '%')
+        AND (:active IS NULL OR (:active = 'active' AND f.active = TRUE) OR (:active = 'archived' AND f.active = FALSE))
+      ORDER BY f.name, f.id

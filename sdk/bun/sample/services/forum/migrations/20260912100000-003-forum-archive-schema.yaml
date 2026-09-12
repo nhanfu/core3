@@ -1,0 +1,12 @@
+version: 0.0.3
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE forum_forums ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      UPDATE forum_forums SET active = TRUE WHERE active IS NULL;
+    down: ALTER TABLE forum_forums DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
