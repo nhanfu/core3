@@ -3,13 +3,15 @@ datasources:
   - id: maintenance_category_detail
     single: true
     permission: maintenance.read
-    query: "SELECT id, row_version, name, technician, company_name, active, color, note FROM maintenance_category_records WHERE id = :id"
+    query: "SELECT c.id, c.row_version, c.name, c.technician, c.company_name, c.active, c.color, c.note, COUNT(DISTINCT e.id) FILTER (WHERE e.archived = FALSE) AS equipment_count, COUNT(DISTINCT r.id) FILTER (WHERE r.archived = FALSE AND r.state NOT IN ('Repaired', 'Scrap')) AS maintenance_open_count FROM maintenance_category_records c LEFT JOIN maintenance_equipment e ON e.category_id = c.id LEFT JOIN maintenance_requests r ON r.category_id = c.id WHERE c.id = :id GROUP BY c.id, c.row_version, c.name, c.technician, c.company_name, c.active, c.color, c.note"
     error_states:
       unauthorized: { status: 401, code: MAINTENANCE_CATEGORY_DETAIL_UNAUTHENTICATED, message: Sign in to view this equipment category. }
       forbidden: { status: 403, code: MAINTENANCE_CATEGORY_DETAIL_FORBIDDEN, message: You do not have permission to view this equipment category. }
       missing_record: { status: 404, code: MAINTENANCE_CATEGORY_NOT_FOUND, message: Equipment category was not found. }
       transport_error: { status: 503, code: MAINTENANCE_CATEGORY_DETAIL_UNAVAILABLE, message: This equipment category is temporarily unavailable. }
 actions:
+  - { id: open_maintenance_equipment_from_category, type: navigate, permission: maintenance.read, navigate_to: /equipments, params: { category_id: '{row.id}' } }
+  - { id: open_maintenance_requests_from_category, type: navigate, permission: maintenance.read, navigate_to: /maintenance-requests, params: { category_id: '{row.id}' } }
   - id: edit_maintenance_category
     type: server_form
     permission: maintenance.manage

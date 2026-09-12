@@ -3,7 +3,11 @@ datasources:
   - id: maintenance_equipment
     single: false
     permission: maintenance.read
-    query: "SELECT id, row_version, name, serial_number, model, vendor_reference, category, location, owner, technician, team, CAST(next_preventive_date AS VARCHAR) AS next_preventive_date, state, archived FROM maintenance_equipment WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR serial_number ILIKE '%' || :q || '%' OR model ILIKE '%' || :q || '%' OR vendor_reference ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY name, id"
+    query: "SELECT id, row_version, name, serial_number, model, vendor_reference, category, category_id, location, owner, technician, team, CAST(next_preventive_date AS VARCHAR) AS next_preventive_date, state, archived FROM maintenance_equipment WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR serial_number ILIKE '%' || :q || '%' OR model ILIKE '%' || :q || '%' OR vendor_reference ILIKE '%' || :q || '%') AND (:category_id IS NULL OR category_id = :category_id) AND (:state IS NULL OR state = :state) ORDER BY name, id"
+  - id: maintenance_equipment_category_lookup
+    single: false
+    permission: maintenance.read
+    query: "SELECT id AS value, name AS label FROM maintenance_category_records WHERE active = TRUE ORDER BY name"
 actions:
   - id: create_maintenance_equipment
     type: server_form

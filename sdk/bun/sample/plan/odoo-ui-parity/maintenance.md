@@ -392,3 +392,30 @@ the authenticated route if the local service is available; images remain
 temporary and are never committed. Any unavailable runtime or uninstalled
 reference module is recorded as environment evidence, not presented as visual
 parity.
+
+## Bounded batch: Equipment Category stat actions (2026-09-12)
+
+This batch closes the two linked actions on Odoo's Equipment Category form:
+`hr_equipment_action_from_category_form` ("Equipment") and
+`hr_equipment_request_action_link` ("Maintenance"). Both actions are read-only
+and preserve the source category context when navigating to the Equipment or
+Maintenance Requests action. The category detail now reports active equipment
+and open-request counts, and both destination lists expose a Category facet.
+
+The page remains presentation-only. The category detail API owns the aggregate
+counts and navigation actions; the Equipment and Requests API fragments own
+their category predicates and lookup datasources, joined by matching `page.id`
+contracts. Existing fixed fixtures and idempotent migrations are unchanged.
+Focused coverage verifies the source action labels and routes, deterministic
+counts, filtered equipment and request rows, and an empty category result.
+
+Verification: `bun test ./test/maintenance*.integration.test.ts` from
+`sdk/bun/sample` — **23 passed, 0 failed, 263 assertions**. Authenticated
+browser capture was attempted under
+`/tmp/core3-odoo-parity/maintenance-batch5-20260912/` at 1440x900 and
+390x844, but no Core3 screenshots were produced: the local dev runtime hit
+`EMFILE` while Vite initialized file watchers and then stopped on DuckDB's
+existing migration limitation (`Adding columns with constraints not yet
+supported`). The local Odoo endpoint was reachable, but no new authenticated
+Maintenance comparison screen was claimed. This is a runtime evidence
+limitation, not visual parity evidence.

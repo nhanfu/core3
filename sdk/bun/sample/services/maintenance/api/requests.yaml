@@ -2,12 +2,13 @@ page: { id: maintenance-requests }
 datasources:
   - { id: maintenance_request_states, single: false, permission: maintenance.read, query: "SELECT id AS value, name AS label FROM maintenance_stages WHERE active = TRUE ORDER BY sequence" }
   - { id: maintenance_equipment_lookup, single: false, permission: maintenance.read, query: "SELECT id AS value, name AS label FROM maintenance_equipment WHERE archived = FALSE ORDER BY name" }
+  - { id: maintenance_request_category_lookup, single: false, permission: maintenance.read, query: "SELECT id AS value, name AS label FROM maintenance_category_records WHERE active = TRUE ORDER BY name" }
   - id: maintenance_requests
     single: false
     permission: maintenance.read
     error_states: { transport_error: { status: 503, code: MAINTENANCE_REQUESTS_UNAVAILABLE, message: Maintenance requests are temporarily unavailable. } }
     workflow: maintenance_requests
-    query: "SELECT r.id, r.row_version, r.name, r.equipment_id, r.equipment_name, r.category, r.team, r.request_type, r.description, r.priority, r.assigned_to, r.owner, r.stage, r.state, r.kanban_state, CAST(r.request_date AS VARCHAR) AS request_date, CAST(r.scheduled_date AS VARCHAR) AS scheduled_date, CAST(r.completed_date AS VARCHAR) AS completed_date, r.archived FROM maintenance_requests r WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.equipment_name ILIKE '%' || :q || '%' OR r.category ILIKE '%' || :q || '%' OR r.assigned_to ILIKE '%' || :q || '%') AND (:equipment_id IS NULL OR r.equipment_id = :equipment_id) AND (:state IS NULL OR r.state = :state) AND (:priority IS NULL OR r.priority = :priority) AND (:archived IS NULL OR (:archived = 'active' AND r.archived = FALSE) OR (:archived = 'archived' AND r.archived = TRUE)) ORDER BY r.request_date DESC, r.name"
+    query: "SELECT r.id, r.row_version, r.name, r.equipment_id, r.equipment_name, r.category, r.category_id, r.team, r.request_type, r.description, r.priority, r.assigned_to, r.owner, r.stage, r.state, r.kanban_state, CAST(r.request_date AS VARCHAR) AS request_date, CAST(r.scheduled_date AS VARCHAR) AS scheduled_date, CAST(r.completed_date AS VARCHAR) AS completed_date, r.archived FROM maintenance_requests r WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.equipment_name ILIKE '%' || :q || '%' OR r.category ILIKE '%' || :q || '%' OR r.assigned_to ILIKE '%' || :q || '%') AND (:equipment_id IS NULL OR r.equipment_id = :equipment_id) AND (:category_id IS NULL OR r.category_id = :category_id) AND (:state IS NULL OR r.state = :state) AND (:priority IS NULL OR r.priority = :priority) AND (:archived IS NULL OR (:archived = 'active' AND r.archived = FALSE) OR (:archived = 'archived' AND r.archived = TRUE)) ORDER BY r.request_date DESC, r.name"
 actions:
   - id: create_maintenance_request
     type: server_form

@@ -7,7 +7,7 @@ components:
     create_action: create_maintenance_equipment
     create_label: New equipment
     search: { label: Search equipment, placeholder: 'Search name, model, serial, or vendor reference...' }
-    filters: [{ field: state, label: Status, options: [Active, Archived] }]
+    filters: [{ field: category_id, label: Category, options_source: maintenance_equipment_category_lookup }, { field: state, label: Status, options: [Active, Archived] }]
     group_by: [{ field: technician, label: Technician }, { field: category, label: Category }, { field: owner, label: Owner }, { field: team, label: Team }]
     view_navigation: tabs
     views: [{ id: list, label: List, icon: table }, { id: kanban, label: Kanban, icon: dashboard, group_by: category, card: { title: name, subtitle: model, fields: [{ field: serial_number, label: Serial }, { field: technician, label: Technician }, { field: state, label: Status }] } }]
