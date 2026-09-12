@@ -87,10 +87,12 @@ actions:
       - { field: participant_emails, label: Participant email (separated by commas), type: text, required: true }
     mutation:
       generated: [thread_id]
-      guards: [{ query: "SELECT 1 AS ok WHERE length(trim(CAST(:title AS VARCHAR))) BETWEEN 1 AND 160 AND length(trim(CAST(:participant_emails AS VARCHAR))) > 0", status: 400, message: A valid conversation title and participant list are required }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:title AS VARCHAR))) BETWEEN 1 AND 160 AND length(trim(CAST(:participant_emails AS VARCHAR))) > 0", status: 400, message: A valid conversation title and participant list are required }
+        - { type: service, service: auth, operation: users.resolve_emails, request: { emails: participant_emails }, assign: true, status: 422, code: CHAT_PARTICIPANTS_INVALID, message: Every participant email must belong to an enabled user. }
       steps:
         - { query: "INSERT INTO chat_threads(id, title, thread_type, created_by) VALUES(:thread_id, trim(CAST(:title AS VARCHAR)), 'Group', :current_user_id)" }
-        - { query: "INSERT INTO chat_participants(thread_id, user_id, last_read_at) VALUES(:thread_id, :current_user_id, CURRENT_TIMESTAMP)" }
+        - { query: "INSERT INTO chat_participants(thread_id, user_id, last_read_at) SELECT :thread_id, user_id, CURRENT_TIMESTAMP FROM (SELECT :current_user_id AS user_id UNION SELECT trim(unnest) AS user_id FROM unnest(string_split(:user_ids_csv, ','))) participants WHERE trim(user_id) <> '' ON CONFLICT(thread_id, user_id) DO NOTHING" }
       result: { query: "SELECT :thread_id AS id, trim(CAST(:title AS VARCHAR)) AS title" }
   - id: send_message
     type: server

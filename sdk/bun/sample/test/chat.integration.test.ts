@@ -62,7 +62,18 @@ describe('Chat Discuss sidebar parity batch', () => {
 
   test('queries persisted conversations and enforces participant ownership for mutations', async () => {
     const database = await DuckDbDatabase.open(':memory:');
-    const repository = new YamlRepository(database);
+    const repository = new YamlRepository(database, (serviceName: string) => serviceName === 'auth' ? {
+      call: async (operation: string, request: Record<string, unknown>) => {
+        if (operation !== 'users.resolve_emails') return null;
+        const users = String(request.emails || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean);
+        const known = new Map([
+          ['dispatcher@tms.local', 'user-disp'],
+          ['operations@tms.local', 'user-ops'],
+        ]);
+        if (users.some((email) => !known.has(email))) return null;
+        return { user_ids_csv: users.map((email) => known.get(email)).join(',') };
+      },
+    } : null);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'chat_runtime_test', ['schema', 'data']);
 
     const threads = { ...yaml('api/chat.yaml').datasources.find((source: any) => source.id === 'chat_threads') };
@@ -76,11 +87,15 @@ describe('Chat Discuss sidebar parity batch', () => {
     const api = yaml('api/chat.yaml');
     const create = api.actions.find((action: any) => action.id === 'create_thread');
     const created = await repository.executeMutation(create.mutation, {
-      values: { title: 'QA conversation', participant_emails: 'dispatcher@tms.local' },
+      values: { title: 'QA conversation', participant_emails: 'dispatcher@tms.local, operations@tms.local' },
       current_user_id: 'user-admin',
     });
     expect(created).toMatchObject({ title: 'QA conversation' });
-    expect((await repository.query('SELECT user_id FROM chat_participants WHERE thread_id = ?', [created.id])).map((row: any) => row.user_id)).toEqual(['user-admin']);
+    expect((await repository.query('SELECT user_id FROM chat_participants WHERE thread_id = ? ORDER BY user_id', [created.id])).map((row: any) => row.user_id)).toEqual(['user-admin', 'user-disp', 'user-ops']);
+    await expect(repository.executeMutation(create.mutation, {
+      values: { title: 'Invalid recipients', participant_emails: 'missing@tms.local' },
+      current_user_id: 'user-admin',
+    })).rejects.toMatchObject({ status: 422, code: 'CHAT_PARTICIPANTS_INVALID' });
 
     const send = api.actions.find((action: any) => action.id === 'send_message');
     await expect(repository.executeMutation(send.mutation, { thread_id: 'chat-demo-thread', current_user_id: 'user-fleet', values: { content: 'forbidden' } }))
