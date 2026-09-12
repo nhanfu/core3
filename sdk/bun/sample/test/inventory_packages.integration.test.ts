@@ -26,7 +26,13 @@ describe('Inventory Packages Odoo action parity', () => {
       expect.objectContaining({ path: '/packages', page: 'packages', module: 'inventory' }),
       expect.objectContaining({ path: '/packages/detail', page: 'package-detail', module: 'inventory' }),
     ]));
-    expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'form']);
+    expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
+    expect(page.components[0].form_view).toMatchObject({ side_panel: false });
+    expect(page.components[0].empty_state).toMatchObject({
+      title: 'Create a new package',
+      illustration: 'package',
+    });
+    expect(page.components[0].empty_state.description).toContain('usually created via transfers');
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Package Name', 'Container', 'Package Type', 'Location', 'Company']);
     expect(parsed('manifest.yaml').menu.groups.find((group: any) => group.id === 'products').items).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/packages', label: 'Packages', permission: 'inventory.tracking' }),

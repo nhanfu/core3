@@ -21,7 +21,6 @@ components:
         icon: dashboard
         group_by: location_name
         card: { title: name, subtitle: package_type_name, fields: [{ field: location_name, label: Location }] }
-      - { id: form, label: Form, icon: form }
     columns:
       - { field: name, label: Package Name, type: PrimaryEntityCell, sortable: true }
       - { field: parent_package_name, label: Container }
@@ -33,4 +32,7 @@ components:
     row_open_action: view_inventory_package
     row_double_click_action: view_inventory_package
     form_view: { page: apps/services/inventory/pages/package-detail.yaml, side_panel: false }
-    empty_state: { title: No packages found, description: Create a package or adjust your search and filters. }
+    empty_state:
+      title: Create a new package
+      description: Packages are usually created via transfers (during pack operation) and can contain different products. Once created, the whole package can be moved at once, or products can be unpacked and moved as single units again.
+      illustration: package

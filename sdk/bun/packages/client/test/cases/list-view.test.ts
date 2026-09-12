@@ -101,6 +101,31 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('.o-list-view-tabs')?.textContent).not.toContain('Form');
   });
 
+  it('renders the package-specific Odoo empty help without adding a Form switcher', () => {
+    const container = mount(new ListView('packages', {
+      rows: [],
+      meta: { total: 0, page: 1, pageSize: 50 },
+      filters: { internal: 'internal', main_packages: 'main' },
+    }, [
+      { field: 'name', label: 'Package Name' },
+      { field: 'parent_package_name', label: 'Container' },
+    ], {
+      variant: 'odoo',
+      views: [{ id: 'list', label: 'List' }, { id: 'kanban', label: 'Kanban' }],
+      formView: { page: 'package-detail.yaml', sidePanel: false },
+      emptyState: {
+        title: 'Create a new package',
+        description: 'Packages are usually created via transfers.',
+        illustration: 'package',
+      },
+    }));
+
+    expect(container.querySelector('.o-list-view-switcher')?.textContent).not.toContain('Form');
+    expect(container.querySelector('.o-list-empty h3')?.textContent).toBe('Create a new package');
+    expect(container.querySelector('.o-list-empty p')?.textContent).toContain('usually created via transfers');
+    expect(container.querySelector('.o-list-empty-illustration svg')).not.toBeNull();
+  });
+
   it('commits search and option filters as removable facets', () => {
     const onFilterChange = vi.fn();
     const component = create({ onFilterChange });
