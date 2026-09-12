@@ -2,6 +2,16 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-13 Work Orders Analysis transport-error repair
+
+- Fixed `MANUFACTURING-WORA-001`: the public runtime datasource schema now
+  accepts the server-owned `{ status, code, message }` error envelope emitted
+  for a declared transport-error state, allowing the UI to render the 503
+  state instead of failing page validation.
+- Added a regression test using the active Work Orders Analysis page/API
+  contract and exact `MRP_WORKORDER_ANALYSIS_UNAVAILABLE` response. No
+  aggregate progress or unrelated module ledger was changed.
+
 ## 2026-09-13 Work Orders Analysis company-scope repair
 
 - Reimplemented the rejected candidate against the active

@@ -5,6 +5,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { validatePageDefinition } from '@core3/server/yaml/schema';
 
 const root = join(import.meta.dir, '..');
 const manufacturing = join(root, 'services/manufacturing');
@@ -138,6 +139,23 @@ describe('Manufacturing Work Orders Analysis Odoo action parity', () => {
     await expect(repository.querySource(source, { id: 'wora-progress-001', fixture_state: 'forbidden' }, 0, 1)).rejects.toMatchObject({ status: 403, code: 'MRP_WORKORDER_ANALYSIS_DETAIL_FORBIDDEN' });
     await expect(repository.querySource(source, { id: 'wora-progress-001', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'MRP_WORKORDER_ANALYSIS_DETAIL_UNAVAILABLE' });
     database.close();
+  });
+
+  test('accepts the public transport-error datasource envelope used to render 503 state', () => {
+    const page = yaml('pages/work-orders-analysis.yaml');
+    const api = yaml('api/work-orders-analysis.yaml');
+    const source = api.datasources.find((candidate: any) => candidate.id === 'mrp_workorder_analysis');
+    const publicSource = {
+      id: source.id,
+      single: source.single,
+      permission: source.permission,
+      error_states: source.error_states,
+      pivot: source.pivot,
+      error: { status: 503, code: 'MRP_WORKORDER_ANALYSIS_UNAVAILABLE', message: 'Work Orders Analysis is temporarily unavailable.' },
+      data: [],
+    };
+    expect(() => validatePageDefinition({ ...page, datasources: [publicSource], actions: api.actions }, { allowExternalSources: true })).not.toThrow();
+    expect(publicSource.error).toMatchObject({ status: 503, code: 'MRP_WORKORDER_ANALYSIS_UNAVAILABLE' });
   });
 });
 

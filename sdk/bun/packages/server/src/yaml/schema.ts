@@ -28,6 +28,8 @@ export type DatasourceDefinition = {
     states?: Record<string, unknown>;
   };
   error_states?: Record<string, { status?: number; code?: string; message: string }>;
+  /** Runtime error envelope returned with an empty datasource result. */
+  error?: { status: number; code: string; message: string };
   workflow?: string | WorkflowDefinition;
   workflow_states?: string;
   meta?: Record<string, unknown>;
@@ -96,7 +98,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'route', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'type', 'single', 'permission', 'query', 'data', 'mock_data', 'error_states', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window', 'service', 'operation', 'service_params', 'enrich', 'limit_param']);
+const DATASOURCE_KEYS = new Set(['id', 'type', 'single', 'permission', 'query', 'data', 'mock_data', 'error_states', 'error', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window', 'service', 'operation', 'service_params', 'enrich', 'limit_param']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -334,6 +336,15 @@ function validateDatasources(value: unknown, ids: Set<string>, options: PageVali
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
     if (source.mock_data !== undefined) validateMockData(source.mock_data, `${path}.mock_data`, issues);
     if (source.error_states !== undefined) validateErrorStates(source.error_states, `${path}.error_states`, issues);
+    if (source.error !== undefined) {
+      requireRecord(source.error, `${path}.error`, issues);
+      if (isRecord(source.error)) {
+        rejectUnknownKeys(source.error, new Set(['status', 'code', 'message']), `${path}.error`, issues);
+        if (typeof source.error.status !== 'number') issues.push(`${path}.error.status must be a number`);
+        requireString(source.error.code, `${path}.error.code`, issues);
+        requireString(source.error.message, `${path}.error.message`, issues);
+      }
+    }
     if (source.type !== undefined && source.type !== 'local' && source.type !== 'service') issues.push(`${path}.type must be local or service`);
     if (source.type === 'service') {
       requireString(source.service, `${path}.service`, issues);
