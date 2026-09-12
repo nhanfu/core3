@@ -73,6 +73,24 @@ outside Git if a later runtime pass becomes possible.
 
 ## Dependency / next gate
 
+## Bounded Core3 contract slice (2026-09-12)
+
+Because the Odoo addon remains absent, this batch does not assert parity. It
+hardens the already-existing Core3 Subscription Plans surface so it is ready
+for later source-backed reconciliation:
+
+- `pages/subscription-plans.yaml` now contains layout only, with its API
+  contract in `api/subscription-plans.yaml` joined by `page.id`.
+- The create and archive actions remain manager-only through
+  `subscriptions.manage`; duplicate and already-archived mutations have
+  explicit status/code guards.
+- `sale_subscription_plans` fixtures are checked for stable IDs, labels, and
+  migration idempotency in `test/sale_subscription_plans.integration.test.ts`.
+
+This is Core3 contract coverage, not an Odoo-derived menu, label, workflow, or
+visual claim. The source gate below remains the prerequisite for selecting a
+true parity batch.
+
 Before any Sale Subscription parity implementation or screen capture:
 
 1. Supply or install the matching Odoo `sale_subscription` addon in the local

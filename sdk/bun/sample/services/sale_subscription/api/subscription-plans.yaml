@@ -1,0 +1,55 @@
+page: { id: subscription-plans }
+datasources:
+  - id: subscription_plans
+    single: false
+    permission: subscriptions.read
+    query: "SELECT id, row_version, name, recurring_period, recurring_price, trial_days, active FROM sale_subscription_plans ORDER BY name"
+actions:
+  - id: create_subscription_plan
+    type: server_form
+    permission: subscriptions.manage
+    title: New subscription plan
+    action: subscriptions.plans.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [subscription_plans]
+    mutation:
+      operation: insert
+      table: sale_subscription_plans
+      fields: [name, recurring_period, recurring_price, trial_days, active]
+      required: [name]
+      defaults: { recurring_period: Monthly, recurring_price: 0, trial_days: 0, active: true, row_version: 1 }
+      guards:
+        - query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0"
+          status: 422
+          code: SUBSCRIPTION_PLAN_NAME_REQUIRED
+          message: Subscription plan name is required
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sale_subscription_plans WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))"
+          status: 409
+          code: SUBSCRIPTION_PLAN_EXISTS
+          message: Subscription plan already exists
+      result: { query: "SELECT * FROM sale_subscription_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan, type: text, required: true }
+      - { field: recurring_period, label: Recurrence, type: select, options: [Daily, Weekly, Monthly, Yearly] }
+      - { field: recurring_price, label: Recurring price, type: number }
+      - { field: trial_days, label: Trial days, type: number }
+  - id: archive_subscription_plan
+    type: server
+    permission: subscriptions.manage
+    action: subscriptions.plans.archive
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', values: { active: false } }
+    refresh: [subscription_plans]
+    mutation:
+      operation: update
+      table: sale_subscription_plans
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - query: "SELECT id FROM sale_subscription_plans WHERE id = :id AND active = true"
+          status: 409
+          code: SUBSCRIPTION_PLAN_ACTIVE_REQUIRED
+          message: Subscription plan is already archived
+      result: { query: "SELECT * FROM sale_subscription_plans WHERE id = :id" }
