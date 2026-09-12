@@ -41,6 +41,16 @@ database with demo loading explicitly known, recapture loaded authenticated
 states and record the database, user/groups, source revision, viewport, route,
 and failed-request list.
 
+## Current live reference recheck — 2026-09-12
+
+The earlier `core3_demo` uninstalled state is historical limitation evidence.
+A fresh authenticated recheck against Odoo database `core3_reference` rendered
+`/odoo/timesheets`, `/odoo/all-timesheets`, and
+`/odoo/timesheets-by-employee` for `codex@core3.local`; mobile navigation
+selected Odoo kanban variants where applicable. Paired captures are recorded
+in the QA ledger. This does not replace comparison of every enabled route and
+interaction.
+
 ## Source menus, actions, routes, and views
 
 Odoo `path` values below are web-client action aliases, not Python HTTP routes.
@@ -181,7 +191,7 @@ not direct SQL against another isolated service database.
   records/route and no unexpected failed requests, and save truthful captures
   under `/tmp/odoo-timesheets/` for each implemented desktop/mobile route and
   key empty/validation/settings state. The two existing uninstalled Apps
-  captures remain limitation evidence, not parity evidence.
+  captures remain historical limitation evidence, not parity evidence.
 - Run the focused timesheets YAML/API/migration/browser checks, then
   `git diff --check`; implementation is not complete until all required checks
   pass and any uninstalled or unavailable Odoo/dependency behavior is recorded
@@ -571,3 +581,23 @@ Focused coverage passes 24 Timesheets integration tests and 266 assertions;
 the UI audit passes with 646 pages, 661 routes, and 1110 datasources; the
 embedded test and `git diff --check` pass. No browser captures were created or
 claimed in this slice.
+
+## Batch 4 implementation and paired reference evidence — 2026-09-12
+
+Timesheets now has context-specific global CRUD action names for personal,
+employee, project, task, entry-detail, and all-timesheet-detail surfaces. This
+prevents one API fragment from overwriting another named mutation at runtime.
+Approval also assigns `project_id` and `hours` from the submitted row before
+calling the Project-owned hours mutation.
+
+Focused coverage passes 27 tests and 275 assertions. An isolated authenticated
+route matrix passes 26/26 checks across 13 routes at desktop and mobile. A
+fresh authenticated Admin CRUD smoke passes create -> edit -> delete, and the
+approval smoke passes create -> submit -> approve. Fleet permission checks
+return the expected 403 boundaries.
+
+The current authenticated Odoo reference is `core3_reference`. Paired loaded
+state captures for My Timesheets, All Timesheets, and By Employee completed
+12/12 across Core3/Odoo and desktop/mobile with no page/request failures:
+`/tmp/odoo-timesheets/*-20260912.png`. Remaining report routes, settings,
+context actions, and interaction-level parity comparison remain open.

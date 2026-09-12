@@ -20,7 +20,11 @@ Role-boundary smoke also confirms that Fleet is denied personal, all-timesheets,
 settings, and approval endpoints with the expected 403 permission errors.
 Authenticated Admin create -> edit -> delete also passes, with a post-delete
 edit rejected by the personal scope guard. Context-specific CRUD action names
-were separated after a real global-action collision was found.
+were separated after a real global-action collision was found. The current
+Odoo reference is available in `core3_reference`: paired authenticated captures
+for My Timesheets, All Timesheets, and By Employee at desktop and mobile
+completed 12/12 with no page/request failures. Full route and interaction
+comparison remains open.
 Full parameterized route coverage, role-specific permissions, broader CRUD
 persistence, and paired Odoo comparison remain open. No parity claim is made
 here.
