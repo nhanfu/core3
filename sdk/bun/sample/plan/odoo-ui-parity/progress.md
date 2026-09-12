@@ -10,6 +10,7 @@ updates in this file; do not create per-agent progress logs.
 | 2026-09-12 | Project | Embedded project milestones action | `c7ba4f31` | focused test 2/2; UI audit passed | blocked; no visual claim | browser capture unavailable |
 | 2026-09-12 | Employees | Employee Work tab parity | `cf396ff3` | focused test 3/3; UI audit passed | blocked; no visual claim | Core3 listener/browser unavailable |
 | 2026-09-12 | Recruitment | Applicant next activities view | `cca6c545` | focused test 2/2; UI audit passed | blocked; no visual claim | Core3 Vite `EMFILE` blocker |
+| 2026-09-12 | CRM | Reporting -> Pipeline Analysis | working tree | focused test 2/2; Odoo readiness 200; Core3 readiness refused | blocked; no visual claim | js_repl unavailable and Core3 3071 not listening |
 | 2026-09-12 | Fleet | Vehicle Services stat action states | `09a95ceb` | focused test 2/2, 14 assertions; audit, ESLint, and diff check passed | attempted 1440x900 and 390x844; no visual claim | Odoo Fleet uninstalled; Core3 `/api/modules` 502 and Vite `EMFILE`; see `fleet-batch-12.md` |
 | 2026-09-12 | Inventory | Products > Packages | `e49fb849` | focused test 3/3, 20 assertions; UI audit and diff check passed | blocked; no visual claim | Core3 Vite `EMFILE`; Playwright unavailable in worktree |
 | 2026-09-12 | Manufacturing | Work Center Operations stat action | `6adff01b` | focused test 2/2, 17 assertions; UI audit, lint, and diff check passed | blocked; no visual claim | Odoo 303 login redirect; no usable interactive Playwright/js_repl browser handle |

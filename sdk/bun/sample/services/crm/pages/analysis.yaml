@@ -1,84 +1,59 @@
 title: Pipeline Analysis
-page: { id: crm-analysis, breadcrumb: [Sales, CRM, Pipeline Analysis], auth: { require: [crm.read] } }
+page: { id: crm-analysis, route: /analysis, breadcrumb: [CRM, Reporting, Pipeline], auth: { require: [crm.read] } }
 components:
-  - type: StatRow
-    source: crm_pipeline_totals
-    title: Current pipeline
-    stats:
-      - { label: Open opportunities, field: lead_count }
-      - { label: Pipeline revenue, field: pipeline_revenue }
-      - { label: Weighted forecast, field: weighted_pipeline_revenue }
-      - { label: Average probability, field: average_probability }
-  - type: Chart
-    source: crm_pipeline_by_stage
-    title: Pipeline by stage
-    label_field: stage
-    value_field: revenue
-    variant: bar
-  - type: Chart
-    source: crm_pipeline_by_team
-    title: Pipeline by sales team
-    label_field: team
-    value_field: revenue
-    variant: bar
-  - type: Chart
-    source: crm_pipeline_by_source
-    title: Pipeline by lead source
-    label_field: source
-    value_field: revenue
-    variant: bar
-  - type: Chart
-    source: crm_win_loss
-    title: Won versus lost revenue
-    label_field: outcome
-    value_field: revenue
-    variant: bar
-  - type: Chart
-    source: crm_lost_by_reason
-    title: Lost revenue by reason
-    label_field: lost_reason
-    value_field: revenue
-    variant: bar
   - type: ListView
     variant: odoo
-    source: crm_source_performance
-    columns:
-      - { field: source, label: Lead source }
-      - { field: lead_count, label: Leads }
-      - { field: won_count, label: Won }
-      - { field: lost_count, label: Lost }
-      - { field: revenue, label: Revenue }
-      - { field: win_rate, label: Win rate }
-    row_key: source
-  - type: ListView
-    variant: odoo
-    source: crm_historical_lead_scoring
-    columns:
-      - { field: source, label: Lead source }
-      - { field: total_leads, label: Leads }
-      - { field: won_count, label: Won }
-      - { field: closed_count, label: Closed }
-      - { field: observed_win_rate, label: Observed win rate }
-      - { field: evidence_level, label: Evidence }
-    row_key: source
-  - type: ListView
-    variant: odoo
-    source: crm_lead_distribution
-    columns:
-      - { field: team, label: Sales team }
+    source: crm_pipeline_analysis
+    search: { label: Opportunities Analysis, placeholder: Search opportunities... }
+    default_filters: { record_type: opportunity, active: active, current_scope: current }
+    filters:
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: inactive, label: Archived }] }
+      - { field: team, label: Sales Team, options_source: crm_pipeline_analysis_teams }
+      - { field: salesperson, label: Salesperson, options_source: crm_pipeline_analysis_salespeople }
+      - { field: expected_closing_period, label: Expected Closing, options: [{ id: month, label: This Month }] }
+    group_by:
       - { field: salesperson, label: Salesperson }
-      - { field: lead_count, label: Leads }
-      - { field: open_count, label: Open }
-      - { field: won_count, label: Won }
-      - { field: lost_count, label: Lost }
-      - { field: expected_revenue, label: Expected revenue }
-    row_key: salesperson
-  - type: ListView
-    variant: odoo
-    source: crm_utm_campaign_performance
+      - { field: team, label: Sales Team }
+      - { field: stage, label: Stage }
+      - { field: expected_closing_month, label: Expected Closing }
+    default_group_by: stage
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: stage
+        measure_field: prorated_revenue
+        measure_label: Prorated Revenue
+        type: bar
+        measures: [{ field: prorated_revenue, label: Prorated Revenue, aggregate: sum }]
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: expected_closing_month, column: Expected Closing, type: date }
+            - { field: stage, column: Stage }
+            - { field: team, column: Sales Team }
+            - { field: salesperson, column: Salesperson }
+            - { field: prorated_revenue, column: Prorated Revenue }
+          default: { rows: [stage], columns: [expected_closing_month], measures: [{ field: prorated_revenue, aggregate: sum, column: Prorated Revenue }] }
+          date_ranges: { expected_closing_month: month }
+      - id: list
+        label: List
+        icon: table
+    show_pager: true
+    page_size: 50
+    row_key: id
+    row_open_action: view_pipeline_analysis_record
+    row_double_click_action: view_pipeline_analysis_record
+    empty_state: { title: No data found!, description: Use this menu to have an overview of your Pipeline. }
     columns:
-      - { field: campaign, label: Campaign }
-      - { field: lead_count, label: Leads }
-      - { field: won_count, label: Won }
-      - { field: revenue, label: Revenue }
-    row_key: campaign
+      - { field: name, label: Opportunity, type: PrimaryEntityCell, mobile: true }
+      - { field: stage, label: Stage, type: StatusChip, mobile: true }
+      - { field: salesperson, label: Salesperson, mobile: false }
+      - { field: team, label: Sales Team, mobile: false }
+      - { field: expected_closing, label: Expected Closing, type: Date, mobile: true }
+      - { field: probability, label: Probability, align: right, mobile: false }
+      - { field: prorated_revenue, label: Prorated Revenue, align: right, mobile: true }

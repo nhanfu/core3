@@ -617,3 +617,44 @@ Browser evidence boundary:
   Core3 runtime was available for authenticated desktop/mobile capture. No
   visual-parity claim is made for this batch, and no image artifacts were
   created under `/tmp/core3-odoo-parity`.
+
+## Batch: Reporting -> Pipeline Analysis (2026-09-12)
+
+Status: `implemented`; authenticated visual capture attempted but blocked.
+
+Reference trace:
+
+- `addons/crm/views/crm_menu_views.xml` declares Reporting sequence 2,
+  `crm_opportunity_report_menu`, action `crm.crm_opportunity_report_action`.
+- `addons/crm/report/crm_opportunity_report_views.xml` defines `Pipeline
+  Analysis` on `crm.lead`, with Graph, Pivot, List, and Form action modes;
+  its bound views are Graph, Pivot, and the reporting List. Graph groups by
+  stage and expected-closing month and measures prorated revenue. Pivot rows
+  are stage, columns are expected-closing month, and its measure is prorated
+  revenue. Search includes opportunity/lead, active/archived, team,
+  salesperson, and expected-closing filters; the action defaults to active
+  opportunities in My Pipeline.
+
+Core3 implementation:
+
+- `pages/analysis.yaml` and `api/analysis.yaml` remain joined by
+  `page.id: crm-analysis`; `/analysis` is the manifest Reporting -> Pipeline
+  Analysis route. The page is presentation-only and exposes Odoo-shaped Graph,
+  Pivot, and List tabs, opportunity-only rows, expected-closing grouping,
+  prorated revenue, row navigation, empty help, and responsive columns.
+- `crm_pipeline_analysis` is CRM-local and declares 401, 403, 409, and 503
+  states. Existing dashboard datasource IDs remain declared for compatibility
+  with older AI prompts but are not rendered by this action. Focused validation
+  passes: `bun test test/crm_pipeline_analysis.integration.test.ts` (2 tests,
+  19 assertions).
+
+Browser evidence boundary:
+
+- Odoo readiness at `http://127.0.0.1:8069/web/database/selector` returned
+  HTTP 200, but authenticated Playwright capture could not run because this
+  session has no `js_repl` capability.
+- Core3 readiness at `http://127.0.0.1:3071/api/modules` returned connection
+  refused (HTTP 000). No authenticated Core3 capture was possible. The
+  attempted directory `/tmp/core3-odoo-parity/crm-pipeline-analysis-20260912/`
+  contains only readiness probe text and no screenshots. No visual parity claim
+  is made for this batch.

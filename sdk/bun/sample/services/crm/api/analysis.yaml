@@ -1,5 +1,40 @@
 page: { id: crm-analysis }
 datasources:
+  - id: crm_pipeline_analysis_teams
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT team AS value, team AS label FROM crm_leads WHERE type = 'opportunity' AND NULLIF(team, '') IS NOT NULL ORDER BY team"
+  - id: crm_pipeline_analysis_salespeople
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT salesperson AS value, salesperson AS label FROM crm_leads WHERE type = 'opportunity' AND NULLIF(salesperson, '') IS NOT NULL ORDER BY salesperson"
+  - id: crm_pipeline_analysis
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_PIPELINE_ANALYSIS_UNAUTHORIZED, message: Sign in to view Pipeline Analysis. }
+      forbidden: { status: 403, code: CRM_PIPELINE_ANALYSIS_FORBIDDEN, message: You do not have permission to view Pipeline Analysis. }
+      conflict: { status: 409, code: CRM_PIPELINE_ANALYSIS_CONFLICT, message: The pipeline changed. Refresh to continue. }
+      transport_error: { status: 503, code: CRM_PIPELINE_ANALYSIS_UNAVAILABLE, message: Pipeline Analysis is temporarily unavailable. }
+    pivot: { fields: [id, row_version, name, type, active, stage, team, salesperson, expected_closing, expected_closing_month, probability, expected_revenue, prorated_revenue, record_count] }
+    query: |
+      SELECT id, row_version, name, type, active, stage,
+        COALESCE(NULLIF(team, ''), 'Unassigned team') AS team,
+        COALESCE(NULLIF(salesperson, ''), 'Unassigned') AS salesperson,
+        CAST(expected_closing AS VARCHAR) AS expected_closing,
+        strftime(expected_closing, '%Y-%m') AS expected_closing_month,
+        probability, CAST(expected_revenue AS DOUBLE) AS expected_revenue,
+        CAST(expected_revenue * probability / 100 AS DOUBLE) AS prorated_revenue,
+        1 AS record_count
+      FROM crm_leads
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN FALSE ELSE TRUE END
+        AND type = 'opportunity'
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(team, '') ILIKE '%' || :q || '%')
+        AND (:active IS NULL OR (active = TRUE AND :active = 'active') OR (active = FALSE AND :active = 'inactive'))
+        AND (:team IS NULL OR COALESCE(NULLIF(team, ''), 'Unassigned team') = :team)
+        AND (:salesperson IS NULL OR COALESCE(NULLIF(salesperson, ''), 'Unassigned') = :salesperson)
+        AND (:expected_closing_period IS NULL OR :expected_closing_period <> 'month' OR (expected_closing IS NOT NULL AND expected_closing >= DATE '2026-09-01'))
+      ORDER BY expected_closing, id
   - id: crm_pipeline_totals
     single: true
     permission: crm.read
@@ -8,14 +43,14 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT stage, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY stage ORDER BY lead_count DESC"
-  - id: crm_pipeline_by_team
-    single: false
-    permission: crm.read
-    query: "SELECT COALESCE(team, 'Unassigned') AS team, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY team ORDER BY revenue DESC"
   - id: crm_pipeline_by_source
     single: false
     permission: crm.read
     query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY revenue DESC"
+  - id: crm_pipeline_by_team
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(team, 'Unassigned') AS team, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY team ORDER BY revenue DESC"
   - id: crm_win_loss
     single: false
     permission: crm.read
@@ -35,8 +70,14 @@ datasources:
   - id: crm_lead_distribution
     single: false
     permission: crm.read
-    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE l.stage NOT IN ('Won', 'Lost')) AS open_count, COUNT(*) FILTER (WHERE l.stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE l.stage = 'Lost') AS lost_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS expected_revenue FROM crm_leads l GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') ORDER BY open_count DESC, team, salesperson"
+    query: "SELECT COALESCE(NULLIF(team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(salesperson, ''), 'Unassigned') AS salesperson, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE stage NOT IN ('Won', 'Lost')) AS open_count, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE stage = 'Lost') AS lost_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS expected_revenue FROM crm_leads GROUP BY COALESCE(NULLIF(team, ''), 'Unassigned team'), COALESCE(NULLIF(salesperson, ''), 'Unassigned') ORDER BY open_count DESC, team, salesperson"
   - id: crm_utm_campaign_performance
     single: false
     permission: crm.read
     query: "SELECT COALESCE(NULLIF(utm_campaign, ''), 'Unattributed') AS campaign, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY COALESCE(NULLIF(utm_campaign, ''), 'Unattributed') ORDER BY revenue DESC"
+actions:
+  - id: view_pipeline_analysis_record
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }
