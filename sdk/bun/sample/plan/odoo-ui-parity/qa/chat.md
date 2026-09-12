@@ -25,8 +25,8 @@ paired Odoo visual gates.
 | CHAT-FUNC-001 | Page/API page-id join and real query-backed datasources | `bun test ./test/chat*.integration.test.ts` — 21 tests, 142 assertions | pass |
 | CHAT-FUNC-002 | Persisted conversations, message reads, create mutation, participant permission boundary | same focused suite | pass |
 | CHAT-WORKFLOW-001 | Message send/read/unread/star lifecycle | `chat_message_lifecycle.integration.test.ts`; message and participant markers persist, thread version advances 1 → 3, stale star returns 409 | pass |
-| CHAT-REG-001 | Global page discovery and route/datasource audit | `bun run audit` — 647 pages, 662 routes, 1112 datasources | pass |
-| CHAT-BROWSER-001 | Authenticated desktop/mobile Odoo/Core3 comparison | no authenticated captures; browser capability unavailable | blocked |
+| CHAT-REG-001 | Global page discovery and route/datasource audit | `bun run audit` — 659 pages, 669 routes, 1134 datasources | pass |
+| CHAT-BROWSER-001 | Authenticated desktop/mobile Core3 route/render smoke | Isolated Chat runner `:4317` with admin login; seeded Discuss conversations rendered at 1440x900 and 390x844 with no page errors, failed requests, blank/redirect result, or horizontal overflow; captures `/tmp/core3-odoo-parity/chat-desktop.png` and `chat-mobile.png` | pass for Core3 runtime; paired Odoo comparison remains open |
 
 ## Bugs and retests
 
@@ -39,5 +39,5 @@ paired Odoo visual gates.
 - Functional: pass for focused scope
 - Permissions: pass for participant guard
 - Persistence/data integrity: pass for focused scope
-- Desktop/mobile visual parity: blocked
-- Tester decision: not signed off until committed candidate and browser evidence
+- Desktop/mobile visual parity: Core3 runtime pass; paired Odoo comparison pending
+- Tester decision: conditional; browser CRUD/actor matrix and paired Odoo comparison remain open
