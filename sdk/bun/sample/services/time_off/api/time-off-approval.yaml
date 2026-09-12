@@ -6,7 +6,7 @@ datasources:
     query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Waiting For Me'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"
   - id: time_off_approval_requests
     permission: time_off.manage
-    query: "SELECT r.id, r.name, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.state, r.reason FROM leave_requests r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from DESC"
+    query: "SELECT r.id, r.name, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.state, r.reason FROM leave_requests r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) AND (:leave_type_id IS NULL OR r.leave_type_id = :leave_type_id) ORDER BY r.date_from DESC"
   - id: multiple_request_types
     permission: time_off.manage
     single: false

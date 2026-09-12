@@ -8,6 +8,8 @@ components:
     statusbar: [{ value: Active, label: Active }, { value: Archived, label: Archived }]
     status_colors: { Active: green, Archived: neutral }
     editable: true
+    stat_buttons:
+      - { id: open_type_time_off, label: Time Off, value_field: group_days_leave, permission: time_off.manage }
     header_actions:
       - { id: edit_leave_type, label: Edit, variant: secondary, permission: time_off.manage }
     group_columns: 2

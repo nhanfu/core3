@@ -657,3 +657,32 @@ The focused test passes 3 tests and 12 assertions. Capture was attempted under
 `/tmp/core3-odoo-parity/timeoff-batch4-20260912/`, but Vite stopped with
 `EMFILE: too many open files`; no Core3/Odoo visual parity claim or screenshot
 is made. Images remain outside Git.
+
+## Time Off Type Time Off stat action (2026-09-12)
+
+The next uncovered installed source action is `hr.leave.type.action_see_group_leaves`
+from `addons/hr_holidays/views/hr_leave_type_views.xml`. Odoo renders a `Time Off`
+stat button on the Time Off Type form, visible for an existing type, and opens
+`hr_leave_action_action_approve_department` (`All Time Off`) with the selected
+type as both the domain and `default_holiday_status_id`. The destination retains
+the manager kanban, list, form, calendar, and activity modes and requires the
+Time Off Responsible/manager permission.
+
+Core3 adds the corresponding `Time Off` stat button to the existing
+`leave-type-detail` form. Its service-owned action navigates to the existing
+`/time-off-approval` page with `leave_type_id` and `default_holiday_status_id`
+context, and the approval datasource applies the type filter. The detail API
+computes Odoo's current-year Submitted/Approved `group_days_leave` measure from
+the fixed 2026 fixtures. No new route, mutation, or employee CRUD is introduced.
+
+Focused coverage in `time_off_type_stat_action.integration.test.ts` verifies the
+source action/context, page/API contract, permission boundary, current-year
+measure, populated filtered results, and an empty missing-type scope. No live
+Odoo mutation was made. Authenticated browser capture could not start: Core3
+exited during DuckDB migration initialization with `Parser Error: Adding columns
+with constraints not yet supported`; the available Odoo endpoints were not used
+for this action because no authenticated Time Off reference database was
+available. Therefore no visual-parity claim or screenshot is made for this
+batch; the required capture directory remains reserved at
+`/tmp/core3-odoo-parity/timeoff-batch5-20260912/` for a future runtime pass at
+1440x900 and 390x844.
