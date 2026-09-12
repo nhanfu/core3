@@ -1,0 +1,78 @@
+page: { id: sms-mailing-contacts }
+datasources:
+  - id: sms_subscriptions
+    single: false
+    permission: sms_marketing.read
+    error_states: { transport_error: { status: 503, code: SMS_MAILING_CONTACTS_UNAVAILABLE, message: Mailing list contacts are temporarily unavailable. } }
+    query: "SELECT s.id, s.row_version, s.contact_id, c.name AS contact_name, c.email, c.mobile, c.message_bounce, c.phone_sanitized_blacklisted, s.list_id, l.name AS list_name, s.opt_out, CASE WHEN c.phone_sanitized_blacklisted THEN 'Blacklisted' WHEN s.opt_out THEN 'Opted out' ELSE 'Subscribed' END AS status, CASE WHEN NOT c.phone_sanitized_blacklisted AND NOT s.opt_out AND c.phone_sanitized IS NOT NULL THEN true ELSE false END AS valid_sms, CAST(s.subscription_date AS VARCHAR) AS subscription_date, CAST(s.opt_out_datetime AS VARCHAR) AS opt_out_datetime FROM sms_subscriptions s JOIN sms_contacts c ON c.id = s.contact_id JOIN sms_lists l ON l.id = s.list_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:list_id IS NULL OR s.list_id = :list_id) AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.mobile ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') AND (:status IS NULL OR CASE WHEN c.phone_sanitized_blacklisted THEN 'Blacklisted' WHEN s.opt_out THEN 'Opted out' ELSE 'Subscribed' END = :status) AND (:valid_sms IS NULL OR (NOT c.phone_sanitized_blacklisted AND NOT s.opt_out AND c.phone_sanitized IS NOT NULL) = CAST(:valid_sms AS BOOLEAN)) AND (:phone_sanitized_blacklisted IS NULL OR c.phone_sanitized_blacklisted = CAST(:phone_sanitized_blacklisted AS BOOLEAN)) ORDER BY l.name, c.name, s.id"
+  - id: sms_subscription_lists
+    permission: sms_marketing.read
+    query: "SELECT id AS value, name AS label FROM sms_lists WHERE active = true ORDER BY name, id"
+  - id: sms_subscription_contacts
+    permission: sms_marketing.read
+    query: "SELECT id AS value, name || ' <' || mobile || '>' AS label FROM sms_contacts WHERE active = true ORDER BY name, id"
+actions:
+  - id: create_sms_subscription
+    type: server_form
+    permission: sms_marketing.write
+    title: Add contact to mailing list
+    action: sms_marketing.subscriptions.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sms_subscriptions]
+    mutation:
+      operation: insert
+      table: sms_subscriptions
+      fields: [contact_id, list_id, opt_out, subscription_date]
+      required: [contact_id, list_id]
+      before_steps: [{ query: "SELECT 'sms-subscription-' || :contact_id || '-' || :list_id AS id", assign: true }]
+      defaults: { row_version: 1, opt_out: false, subscription_date: '2026-09-12 16:00:00', created_at: '2026-09-12 16:00:00', updated_at: '2026-09-12 16:00:00' }
+      guards:
+        - { query: "SELECT id FROM sms_contacts WHERE id = :contact_id AND active = true AND phone_sanitized IS NOT NULL", status: 422, code: SMS_CONTACT_INVALID, message: Select an active contact with a phone number. }
+        - { query: "SELECT id FROM sms_lists WHERE id = :list_id AND active = true", status: 422, code: SMS_LIST_INVALID, message: Select an active SMS mailing list. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sms_subscriptions WHERE contact_id = :contact_id AND list_id = :list_id)", status: 409, code: SMS_SUBSCRIPTION_EXISTS, message: This contact is already on the selected mailing list. }
+        - { query: "SELECT 1 AS ok FROM sms_contacts WHERE id = :contact_id AND phone_sanitized_blacklisted = false", status: 409, code: SMS_CONTACT_BLACKLISTED, message: Blacklisted phone numbers cannot be subscribed. }
+      steps: [{ query: "UPDATE sms_lists SET contact_count_sms = contact_count_sms + 1 WHERE id = :list_id" }]
+      result: { query: "SELECT * FROM sms_subscriptions WHERE id = :id" }
+    fields:
+      - { field: contact_id, label: Mailing Contact, type: select, options_source: sms_subscription_contacts, required: true }
+      - { field: list_id, label: Mailing List, type: select, options_source: sms_subscription_lists, required: true }
+      - { field: opt_out, label: Opted Out, type: checkbox }
+      - { field: subscription_date, label: Subscription Date, type: text }
+  - id: edit_sms_subscription
+    type: server_form
+    permission: sms_marketing.write
+    title: Edit mailing list contact
+    action: sms_marketing.subscriptions.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [sms_subscriptions]
+    mutation:
+      operation: update
+      table: sms_subscriptions
+      fields: [opt_out, opt_out_datetime]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM sms_subscriptions WHERE id = :id", status: 404, code: SMS_SUBSCRIPTION_NOT_FOUND, message: Mailing list contact not found. }]
+      result: { query: "SELECT * FROM sms_subscriptions WHERE id = :id" }
+    fields: [{ field: opt_out, label: Opted Out, type: checkbox }, { field: opt_out_datetime, label: Unsubscription Date, type: text }]
+  - id: unsubscribe_sms_subscription
+    type: server
+    permission: sms_marketing.write
+    action: sms_marketing.subscriptions.unsubscribe
+    handler: yaml_mutation
+    refresh: [sms_subscriptions]
+    mutation:
+      guards: [{ query: "SELECT id FROM sms_subscriptions WHERE id = :id", status: 404, code: SMS_SUBSCRIPTION_NOT_FOUND, message: Mailing list contact not found. }, { query: "SELECT id FROM sms_subscriptions WHERE id = :id AND row_version = :expected_row_version AND opt_out = false", status: 409, code: SMS_SUBSCRIPTION_STATE_CHANGED, message: This subscription has changed. Reload before unsubscribing. }]
+      steps: [{ query: "UPDATE sms_subscriptions SET opt_out = true, opt_out_datetime = TIMESTAMP '2026-09-12 16:05:00', updated_at = TIMESTAMP '2026-09-12 16:05:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: SMS_SUBSCRIPTION_STATE_CHANGED, message: This subscription changed before it could be opted out. }]
+      result: { query: "SELECT * FROM sms_subscriptions WHERE id = :id" }
+  - id: subscribe_sms_subscription
+    type: server
+    permission: sms_marketing.write
+    action: sms_marketing.subscriptions.subscribe
+    handler: yaml_mutation
+    refresh: [sms_subscriptions]
+    mutation:
+      guards: [{ query: "SELECT id FROM sms_subscriptions WHERE id = :id", status: 404, code: SMS_SUBSCRIPTION_NOT_FOUND, message: Mailing list contact not found. }, { query: "SELECT id FROM sms_subscriptions WHERE id = :id AND row_version = :expected_row_version AND opt_out = true", status: 409, code: SMS_SUBSCRIPTION_STATE_CHANGED, message: This subscription has changed. Reload before resubscribing. }, { query: "SELECT s.id FROM sms_subscriptions s JOIN sms_contacts c ON c.id = s.contact_id WHERE s.id = :id AND c.phone_sanitized_blacklisted = false", status: 409, code: SMS_CONTACT_BLACKLISTED, message: Blacklisted phone numbers cannot be resubscribed. }]
+      steps: [{ query: "UPDATE sms_subscriptions SET opt_out = false, opt_out_datetime = NULL, updated_at = TIMESTAMP '2026-09-12 16:10:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: SMS_SUBSCRIPTION_STATE_CHANGED, message: This subscription changed before it could be resubscribed. }]
+      result: { query: "SELECT * FROM sms_subscriptions WHERE id = :id" }

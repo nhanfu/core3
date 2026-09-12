@@ -1,0 +1,42 @@
+title: Mailing List Contacts
+page: { id: sms-mailing-contacts, route: /sms-mailing-contacts, breadcrumb: [Marketing, SMS Marketing, Mailing Lists, Mailing List Contacts], auth: { require: [sms_marketing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: sms_subscriptions
+    create_action: create_sms_subscription
+    create_label: Create
+    search: { label: Mailing List Contacts, placeholder: 'Search name, phone, or list...' }
+    filters:
+      - { field: list_id, label: Mailing List, options_source: sms_subscription_lists }
+      - { field: status, label: Status, options: [{ id: Subscribed, label: Subscribed }, { id: Opted out, label: Opted out }, { id: Blacklisted, label: Blacklisted }] }
+      - { field: valid_sms, label: Valid SMS Recipients, options: [{ id: 'true', label: Valid SMS Recipients }] }
+      - { field: phone_sanitized_blacklisted, label: Exclude Blacklisted Phone, options: [{ id: 'false', label: Exclude Blacklisted Phone }] }
+    default_filters: { phone_sanitized_blacklisted: false }
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+        mobile: true
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: list_name
+        card: { compact: true, title: contact_name, subtitle: mobile, company_field: email, primary_metric: message_bounce, primary_metric_label: Bounces, fields: [{ field: list_name, label: Mailing List }, { field: status, label: Status }] }
+      - { id: form, label: Form, icon: form, mobile: false }
+    columns:
+      - { field: subscription_date, label: Subscription Date, type: DateTime }
+      - { field: contact_name, label: Mailing Contact, type: PrimaryEntityCell }
+      - { field: mobile, label: Mobile }
+      - { field: list_name, label: Mailing List }
+      - { field: status, label: Status, type: StatusChip }
+      - { field: message_bounce, label: Bounces, align: right, optional: true }
+      - { field: phone_sanitized_blacklisted, label: Phone Blacklisted, type: StatusChip, optional: true }
+    page_size: 50
+    row_key: id
+    row_open_action: edit_sms_subscription
+    row_double_click_action: edit_sms_subscription
+    row_actions: menu
+    empty_state: { title: No mailing contacts found, description: Add a contact to a mailing list or adjust your search and filters. }

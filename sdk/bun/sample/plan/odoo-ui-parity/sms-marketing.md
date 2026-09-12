@@ -113,3 +113,31 @@ attempt images are under
 `/tmp/core3-odoo-parity/sms-marketing-batch-20260912/` for all requested
 desktop/mobile dimensions, but they are unauthenticated diagnostics only.
 This batch makes no visual-parity claim and no images are added to Git.
+
+## Bounded action: SMS Marketing / Mailing List Contacts (wave 3)
+
+The next source menu/action after Mailing Lists is `SMS Marketing` → `Mailing
+Lists` → `Mailing List Contacts` (`mailing_contact_menu_sms` →
+`mailing_contact_action_sms`). The Odoo action is `mailing.contact`, ordered
+`list,form`, with context `mailing_sms: true` and the default
+`filter_not_phone_bl`. Its inherited list shows the base mailing-contact
+fields plus readonly **Mobile** and phone-blacklist state; the search adds
+**Valid SMS Recipients** and **Exclude Blacklisted Phone**. The form adds a
+mobile phone row with SMS-enabled phone interaction, and the kanban adds mobile
+under the contact identity. This contract was traced from
+`/home/nhanjs/projects/odoo/addons/mass_mailing_sms/views/mailing_contact_views.xml`;
+no Odoo frontend code is copied.
+
+Core3 implements the visible slice in `services/sms-marketing/pages/mailing-contacts.yaml`
+and `api/mailing-contacts.yaml`, joined by `page.id: sms-mailing-contacts`,
+with `sms_contacts` and `sms_subscriptions` deterministic fixtures. Reads use
+`sms_marketing.read`; add/edit/subscribe/unsubscribe use
+`sms_marketing.write`. Duplicate subscriptions, inactive/missing contacts,
+blacklisted phones, stale rows, empty results, and transport failures have
+explicit contracts. The focused integration test is
+`sms_marketing_contacts.integration.test.ts`.
+
+Authenticated Odoo/Core3 screenshots at 1440x900 and 390x844 are required
+under `/tmp/core3-odoo-parity/sms-marketing-wave3-20260912/`. If authentication
+or runtime startup is blocked, record the exact blocker here and make no
+visual-parity claim.

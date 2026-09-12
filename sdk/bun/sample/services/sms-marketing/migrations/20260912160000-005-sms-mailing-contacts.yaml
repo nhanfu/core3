@@ -1,0 +1,38 @@
+version: 0.0.5
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sms_contacts (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, email VARCHAR, mobile VARCHAR,
+        phone_sanitized VARCHAR, phone_sanitized_blacklisted BOOLEAN NOT NULL DEFAULT false,
+        message_bounce INTEGER NOT NULL DEFAULT 0, active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS sms_subscriptions (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, contact_id VARCHAR NOT NULL,
+        list_id VARCHAR NOT NULL, opt_out BOOLEAN NOT NULL DEFAULT false,
+        subscription_date TIMESTAMP NOT NULL, opt_out_datetime TIMESTAMP,
+        created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS sms_subscriptions_list_idx ON sms_subscriptions(list_id);
+      CREATE INDEX IF NOT EXISTS sms_subscriptions_contact_idx ON sms_subscriptions(contact_id);
+      INSERT OR IGNORE INTO sms_contacts(id, name, email, mobile, phone_sanitized, phone_sanitized_blacklisted, message_bounce, active, created_at, updated_at) VALUES
+        ('sms-contact-aristide-001', 'Aristide Antario', 'aristide@example.com', '+33 6 12 34 56 78', '+33612345678', false, 0, true, TIMESTAMP '2026-09-01 09:00:00', TIMESTAMP '2026-09-01 09:00:00'),
+        ('sms-contact-beverly-001', 'Beverly Bridge', 'beverly@example.com', '+1 415 555 0121', '+14155550121', false, 1, true, TIMESTAMP '2026-09-01 09:05:00', TIMESTAMP '2026-09-01 09:05:00'),
+        ('sms-contact-carol-001', 'Carol Cartridge', 'carol@example.com', '+1 415 555 0132', '+14155550132', false, 0, true, TIMESTAMP '2026-09-01 09:10:00', TIMESTAMP '2026-09-01 09:10:00'),
+        ('sms-contact-elsa-001', 'Elsa Ericson', 'elsa@example.com', '+1 415 555 0143', '+14155550143', true, 5, true, TIMESTAMP '2026-09-01 09:15:00', TIMESTAMP '2026-09-01 09:15:00'),
+        ('sms-contact-franz-001', 'Franz Faubourg', 'franz@example.com', '+33 6 98 76 54 32', '+33698765432', false, 0, true, TIMESTAMP '2026-09-01 09:20:00', TIMESTAMP '2026-09-01 09:20:00');
+      INSERT OR IGNORE INTO sms_subscriptions(id, row_version, contact_id, list_id, opt_out, subscription_date, opt_out_datetime, created_at, updated_at) VALUES
+        ('sms-subscription-aristide-001', 1, 'sms-contact-aristide-001', 'sms-list-demo-001', false, TIMESTAMP '2026-09-01 10:00:00', NULL, TIMESTAMP '2026-09-01 10:00:00', TIMESTAMP '2026-09-01 10:00:00'),
+        ('sms-subscription-beverly-001', 1, 'sms-contact-beverly-001', 'sms-list-demo-001', false, TIMESTAMP '2026-09-01 10:05:00', NULL, TIMESTAMP '2026-09-01 10:05:00', TIMESTAMP '2026-09-01 10:05:00'),
+        ('sms-subscription-carol-001', 1, 'sms-contact-carol-001', 'sms-list-demo-001', false, TIMESTAMP '2026-09-01 10:10:00', NULL, TIMESTAMP '2026-09-01 10:10:00', TIMESTAMP '2026-09-01 10:10:00'),
+        ('sms-subscription-elsa-001', 1, 'sms-contact-elsa-001', 'sms-list-demo-001', true, TIMESTAMP '2026-09-01 10:15:00', TIMESTAMP '2026-09-05 12:00:00', TIMESTAMP '2026-09-01 10:15:00', TIMESTAMP '2026-09-05 12:00:00'),
+        ('sms-subscription-franz-002', 1, 'sms-contact-franz-001', 'sms-list-demo-002', false, TIMESTAMP '2026-09-02 11:00:00', NULL, TIMESTAMP '2026-09-02 11:00:00', TIMESTAMP '2026-09-02 11:00:00');
+    down: |
+      DROP TABLE IF EXISTS sms_subscriptions;
+      DROP TABLE IF EXISTS sms_contacts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
