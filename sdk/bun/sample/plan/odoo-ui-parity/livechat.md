@@ -1,6 +1,6 @@
 # Live Chat — Odoo UI parity gate sub-plan
 
-Status: `planned` (incremental parity slices in progress)
+Status: `in-progress` (incremental parity slices in progress)
 
 The personal authenticated reference database at `http://localhost:8069` now
 has `im_livechat` installed with demo data. The slices below are independently

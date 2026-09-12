@@ -102,7 +102,7 @@ catalog records, and manufacturing/inventory records.
 | appraisals | hr_appraisal | unavailable in supplied source | `odoo-ui-parity/appraisals.md` | planned |
 | referrals | hr_referral | unavailable in supplied source | `odoo-ui-parity/referrals.md` | planned |
 | fleet | fleet | available | `odoo-ui-parity/fleet.md` | in-progress |
-| email-marketing | mass_mailing | available | `odoo-ui-parity/email-marketing.md` | planned |
+| email-marketing | mass_mailing | available | `odoo-ui-parity/email-marketing.md` | in-progress |
 | sms-marketing | mass_mailing_sms | available | `odoo-ui-parity/sms-marketing.md` | in-progress |
 | events | event | available | `odoo-ui-parity/events.md` | in-progress |
 | surveys | survey | available | `odoo-ui-parity/surveys.md` | in-progress |
@@ -113,7 +113,7 @@ catalog records, and manufacturing/inventory records.
 | ecommerce | website_sale | available; YAML-driven | `odoo-ui-parity/ecommerce.md` | in-progress |
 | blog | website_blog | available; YAML-driven | `odoo-ui-parity/blog.md` | in-progress |
 | forum | website_forum | available; YAML-driven | `odoo-ui-parity/forum.md` | in-progress |
-| livechat | im_livechat | available | `odoo-ui-parity/livechat.md` | planned |
+| livechat | im_livechat | available | `odoo-ui-parity/livechat.md` | in-progress |
 
 `auth` and `ai` are Core3 infrastructure, not Odoo-clone modules, and are outside
 this register.

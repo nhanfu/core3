@@ -1,6 +1,6 @@
 # Odoo 19 UI parity — Email Marketing
 
-Status: `planned`
+Status: `in-progress`
 
 This is the implementation gate for the Odoo 19 Community `mass_mailing`
 addon. The overall register remains a plan and evidence record; completed
