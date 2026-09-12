@@ -18,6 +18,14 @@ datasources:
   - id: contact_attachments
     permission: base.contacts.read
     query: "SELECT id, file_name, mime_type, size_bytes, uploaded_by, created_at FROM (VALUES ('contact-attachment-001', 'contact-brief.txt', 'text/plain', 128, 'Administrator', TIMESTAMP '2026-09-02 10:00:00')) attachments(id, file_name, mime_type, size_bytes, uploaded_by, created_at) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+  - id: livechat_partner_capabilities
+    single: true
+    permission: livechat.read
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_PARTNER_HISTORY_UNAUTHORIZED, message: Sign in to view Live Chat history for this contact. }
+      forbidden: { status: 403, code: LIVECHAT_PARTNER_HISTORY_FORBIDDEN, message: You do not have permission to view this contact's Live Chat history. }
+      transport_error: { status: 503, code: LIVECHAT_PARTNER_HISTORY_UNAVAILABLE, message: Contact Live Chat history is temporarily unavailable. }
+    query: "SELECT partner_id, livechat_channel_count, livechat_session_count FROM livechat_partner_capabilities WHERE partner_id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
 actions:
   - id: edit_contact_detail
     type: server_form
@@ -66,3 +74,8 @@ actions:
   - { id: open_contact_tasks, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: tasks } }
   - { id: open_contact_purchases, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: purchases } }
   - { id: open_contact_lots, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: lots } }
+  - id: open_contact_livechat
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat-sessions/all
+    params: { partner_id: '{state.contact_detail.id}' }

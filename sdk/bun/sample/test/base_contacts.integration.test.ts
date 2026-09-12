@@ -47,7 +47,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
     const detail = yaml('pages/contact-detail.yaml');
     const form = detail.components.find((component: any) => component.type === 'OdooFormView');
     expect(form).toMatchObject({ source: 'contact_detail', avatar_field: 'avatar_url', avatar_initials_field: 'avatar_initials', message_source: 'contact_messages', follower_source: 'contact_followers', attachment_source: 'contact_attachments', activity_action: 'schedule_activity' });
-    expect(form.stat_buttons.map((button: any) => button.label)).toEqual(['Opportunities', 'Invoiced', 'Meetings', 'Tasks', 'Purchases', 'Lots/Serial Numbers']);
+    expect(form.stat_buttons.map((button: any) => button.label)).toEqual(['Live Chat', 'Opportunities', 'Invoiced', 'Meetings', 'Tasks', 'Purchases', 'Lots/Serial Numbers']);
     expect(form.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Contacts', 'Sales & Purchase', 'Invoicing', 'Notes']);
     expect(detail.components.find((component: any) => component.type === 'ListView')).toMatchObject({ source: 'contact_activities', mount_in: 'previous-panel' });
     expect(yaml('api/contacts.yaml').actions.find((action: any) => action.id === 'view_contact')).toMatchObject({ navigate_to: '/contacts/detail', params: { id: '{row.id}' } });
@@ -78,7 +78,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
 
   test('keeps read/write permissions and transport-error contracts explicit', () => {
     for (const file of ['api/contacts.yaml', 'api/contact-detail.yaml']) {
-      for (const item of yaml(file).datasources) expect(item.permission, `${file}:${item.id}`).toMatch(/^base\.(contacts|activities)\.read$/);
+      for (const item of yaml(file).datasources) expect(item.permission, `${file}:${item.id}`).toMatch(/^(base\.(contacts|activities)|livechat)\.read$/);
     }
     expect(source('contacts.yaml', 'contacts').error_states.transport_error).toEqual({ status: 503, code: 'BASE_CONTACTS_DATA_UNAVAILABLE', message: 'Contacts data is temporarily unavailable' });
     expect(source('contact-detail.yaml', 'contact_detail').error_states.transport_error.status).toBe(503);

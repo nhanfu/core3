@@ -1102,3 +1102,35 @@ unavailable. No authenticated 1440x900 or 390x844 image was produced and no
 visual-parity claim is made. The follow-up must capture the channel form Rules
 tab and rule detail at both viewports after both authenticated runtimes are
 available.
+
+## Bounded implementation slice: Partner integration — Live Chat history stat (2026-09-12)
+
+The installed Odoo source adds a visible Live Chat stat button to the partner
+form (`addons/im_livechat/views/res_partner_views.xml`). The button is shown
+only when `livechat_channel_count` is non-zero, is restricted to
+`im_livechat_group_user`, and invokes `action_view_livechat_sessions` to open
+the existing live-chat conversation action filtered to visitor history for the
+current partner. This is a partner-form integration, not a new Live Chat menu.
+
+Core3 adds the matching `Live Chat` stat button to the existing Contacts detail
+page and joins its service-owned `livechat_partner_capabilities` datasource to
+the existing `contact-detail` API page id. The deterministic migration adds
+stable partner counts and partner ids to the existing All Conversations rows;
+the navigation action passes `partner_id` so the read-only history datasource
+returns only that contact's sessions. Reads and navigation require
+`livechat.read`; no partner or conversation CRUD is exposed by this slice.
+Default, missing/empty, unauthorized, forbidden, and transport-error metadata
+are explicit, and the migration is idempotent.
+
+Focused validation is `test/livechat_partner_history.integration.test.ts`:
+3 tests passed with 14 assertions. It verifies the Odoo stat/action contract,
+page/API join, deterministic count projection, partner-scoped history, and the
+read-only/failure boundary. `bun run audit` passed with 646 pages, 661 routes,
+and 1110 datasources; the workspace ESLint run and `git diff --check` passed.
+
+Authenticated Odoo/Core3 viewport evidence was not produced in this worktree:
+the interactive Playwright runtime is unavailable and the shared local Core3
+runtime was not started. No screenshot or visual-parity claim is made, and no
+image was added. A follow-up must exercise an authenticated Contacts partner
+form at 1440x900 and 390x844, verify the conditional stat button, click it, and
+confirm the filtered All Conversations route without horizontal overflow.

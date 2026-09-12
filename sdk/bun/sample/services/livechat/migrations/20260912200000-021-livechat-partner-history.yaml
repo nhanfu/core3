@@ -1,0 +1,30 @@
+version: 0.0.21
+kind: data
+description: Add deterministic partner Live Chat history capabilities
+type:
+  postgres:
+    up: |
+      ALTER TABLE livechat_all_conversations ADD COLUMN IF NOT EXISTS partner_id VARCHAR;
+      UPDATE livechat_all_conversations SET partner_id = CASE id
+        WHEN 'livechat-conversation-001' THEN 'contact-demo'
+        WHEN 'livechat-conversation-004' THEN 'contact-demo'
+        WHEN 'livechat-conversation-005' THEN 'contact-azure-brandon'
+        ELSE partner_id END
+      WHERE id IN ('livechat-conversation-001', 'livechat-conversation-004', 'livechat-conversation-005');
+      CREATE TABLE IF NOT EXISTS livechat_partner_capabilities (
+        partner_id VARCHAR PRIMARY KEY,
+        livechat_channel_count INTEGER NOT NULL DEFAULT 0,
+        livechat_session_count INTEGER NOT NULL DEFAULT 0
+      );
+      INSERT INTO livechat_partner_capabilities(partner_id, livechat_channel_count, livechat_session_count)
+      VALUES ('contact-demo', 2, 2), ('contact-azure-brandon', 1, 1)
+      ON CONFLICT (partner_id) DO UPDATE SET
+        livechat_channel_count = EXCLUDED.livechat_channel_count,
+        livechat_session_count = EXCLUDED.livechat_session_count;
+    down: |
+      DROP TABLE IF EXISTS livechat_partner_capabilities;
+      ALTER TABLE livechat_all_conversations DROP COLUMN IF EXISTS partner_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

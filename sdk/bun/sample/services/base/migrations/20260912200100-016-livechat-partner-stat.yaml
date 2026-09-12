@@ -1,0 +1,17 @@
+version: 0.0.16
+kind: data
+description: Add deterministic partner Live Chat stat projections
+type:
+  postgres:
+    up: |
+      ALTER TABLE base_contacts ADD COLUMN IF NOT EXISTS livechat_channel_count INTEGER DEFAULT 0;
+      UPDATE base_contacts SET livechat_channel_count = CASE id
+        WHEN 'contact-demo' THEN 2
+        WHEN 'contact-azure-brandon' THEN 1
+        ELSE 0 END
+      WHERE id IN ('contact-demo', 'contact-azure-brandon');
+    down: ALTER TABLE base_contacts DROP COLUMN IF EXISTS livechat_channel_count;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

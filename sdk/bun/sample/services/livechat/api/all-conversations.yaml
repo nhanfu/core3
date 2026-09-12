@@ -11,7 +11,7 @@ datasources:
     pivot:
       fields: [id, session_date, session_date_month, channel_name, agent_name, country_name, language_name, rating_text, duration_minutes, message_count]
     query: |
-      SELECT id, row_version, session_date, strftime(session_date, '%Y-%m') AS session_date_month,
+      SELECT id, row_version, partner_id, session_date, strftime(session_date, '%Y-%m') AS session_date_month,
         strftime(session_date, '%d %b %Y %H:%M') AS session_date_label,
         customer_name, COALESCE(NULLIF(customer_name, ''), 'Visitor') AS customer_display,
         participants, agents_name, agent_name, country_name, language_name, expertise_name,
@@ -24,6 +24,7 @@ datasources:
         AND (:q IS NULL OR customer_name ILIKE '%' || :q || '%' OR agents_name ILIKE '%' || :q || '%' OR channel_name ILIKE '%' || :q || '%' OR country_name ILIKE '%' || :q || '%' OR comment ILIKE '%' || :q || '%')
         AND (:rating_text IS NULL OR rating_text = :rating_text OR (:rating_text = 'Unrated' AND rating_text = ''))
         AND (:session_date IS NULL OR :session_date = 'last_365_days' OR session_date >= TIMESTAMP '2026-08-10 00:00:00')
+        AND (:partner_id IS NULL OR partner_id = :partner_id)
       ORDER BY session_date DESC, id DESC
 
 actions:
