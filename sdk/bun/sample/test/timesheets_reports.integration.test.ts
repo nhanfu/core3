@@ -22,6 +22,22 @@ describe('Timesheets reporting parity slice', () => {
     expect(source.pivot.fields).toEqual(expect.arrayContaining(['employee_name', 'project_name', 'task_name', 'month', 'hours', 'cost']));
   });
 
+  test('loads approval inputs before calling the Project hours contract', () => {
+    const workflow = yaml('pages/timesheet-workflow.yaml').workflow;
+    const approval = workflow.transitions.find((transition: any) => transition.id === 'approve');
+    const rowGuard = approval.mutation.guards.find((guard: any) => String(guard.query).includes('project_id'));
+    const serviceGuard = approval.mutation.guards.find((guard: any) => guard.type === 'service');
+    expect(rowGuard.assign).toBe(true);
+    expect(rowGuard.query).toContain('hours');
+    expect(serviceGuard).toMatchObject({ service: 'yaml.service.project', operation: 'project.projects.add_hours' });
+    expect(serviceGuard.request).toEqual({ project_id: 'project_id', hours: 'hours' });
+
+    const projectPage = Bun.YAML.parse(readFileSync(join(import.meta.dir, '../services/project/pages/project-detail.yaml'), 'utf8')) as any;
+    const projectAction = projectPage.actions.find((action: any) => action.action === 'project.projects.add_hours');
+    expect(projectAction).toMatchObject({ handler: 'yaml_mutation', permission: 'project.write' });
+    expect(projectAction.mutation.steps[0].query).toContain('spent_hours = spent_hours +');
+  });
+
   test('maps each Odoo report route to a layout-only page and matching API fragment', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const routes = discoverPageRoutes(discovered);

@@ -16,9 +16,10 @@ Candidate commit: current working tree
 
 ## Current regression evidence
 
-- Focused Timesheets suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 24 passed, 0 failed, 266 assertions across 8 files; the reporting retest after the fix passed 6/6 with 109 assertions.
+- Focused Timesheets suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 26 passed, 0 failed, 273 assertions across 8 files; the reporting retest after the fix passed 7/7 with 116 assertions.
 - Authenticated module-scoped route matrix: 13 routes × desktop/mobile; 22/26 bare-route checks were clean. The four failures were isolated: All Timesheets emitted late detail requests during route traversal, and Timesheet Analysis exposed a real missing-pivot-fields contract.
 - Fix: declared `pivot.fields` for `timesheet_analysis` in `services/timesheets/api/analysis.yaml`; a fresh authenticated retest rendered Pivot/Graph/List with no HTTP or browser failures.
+- Authenticated mutation smoke on a fresh `timesheets,project` runner: created Draft → Submitted → Approved with HTTP 200 at each step and row versions 1 → 3. Approval dispatched the Project-owned `project.projects.add_hours` mutation after loading `project_id` and `hours` from the submitted row.
 
 ## Test-case inventory
 
@@ -27,6 +28,7 @@ Candidate commit: current working tree
 | TIMESHEETS-FUNC-001 | Focused functionality, reports, scoped CRUD, settings, and embedded-task contracts | 24 tests, 266 assertions; focused suite passed | pass |
 | TIMESHEETS-BROWSER-001 | Authenticated route matrix | 22/26 initial bare-route checks; analysis clean after pivot fix; detail route traversal needs valid IDs | partial pass |
 | TIMESHEETS-FUNC-002 | Timesheet Analysis Pivot/Graph/List runtime | Missing API pivot contract fixed; fresh authenticated retest rendered all three views with no failures | pass |
+| TIMESHEETS-FUNC-003 | Cross-module approval workflow | Authenticated create → submit → approve passed; Project hours contract was invoked after approval inputs were assigned from the row | pass |
 | TIMESHEETS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Full parameterized route matrix, role boundaries, authenticated mutation smoke, and paired Odoo comparison remain open | pending |
 
 ## Bugs and retests

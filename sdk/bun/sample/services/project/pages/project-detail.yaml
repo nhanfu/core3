@@ -44,3 +44,16 @@ components:
       - { field: state, label: Status, type: StatusChip }
 actions:
   - { id: view_project_task, type: navigate, permission: project.read, navigate_to: /tasks/detail, params: { id: '{row.id}' } }
+  - id: project_add_hours
+    type: server
+    permission: project.write
+    action: project.projects.add_hours
+    handler: yaml_mutation
+    mutation:
+      guards:
+        - { query: "SELECT id FROM projects WHERE id = :project_id", status: 404, code: PROJECT_NOT_FOUND, message: Project not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:hours AS DECIMAL(18,3)) > 0", status: 422, code: PROJECT_HOURS_INVALID, message: Hours must be greater than zero. }
+      steps:
+        - query: "UPDATE projects SET spent_hours = spent_hours + CAST(:hours AS DECIMAL(18,3)), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :project_id"
+          expect_changed: true
+      result: { query: "SELECT id, spent_hours, row_version FROM projects WHERE id = :project_id" }

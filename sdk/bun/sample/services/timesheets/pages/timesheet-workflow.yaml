@@ -27,7 +27,7 @@ workflow:
       permission: timesheets.manage
       mutation:
         guards:
-          - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND state = 'Submitted'", status: 409, message: Only submitted timesheets can be approved }
+          - { query: "SELECT id, project_id, hours FROM timesheet_entries WHERE id = :id AND state = 'Submitted'", status: 409, message: Only submitted timesheets can be approved, assign: true }
           - type: service
             service: yaml.service.project
             operation: project.projects.add_hours

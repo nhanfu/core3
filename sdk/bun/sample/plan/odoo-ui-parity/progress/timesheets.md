@@ -8,13 +8,16 @@ Candidate commit: current working tree
 
 ## Current state
 
-The focused Timesheets suite passes 24 tests across 8 files with 266
+The focused Timesheets suite passes 26 tests across 8 files with 273
 assertions. The initial authenticated matrix covered 13 routes at desktop and
 mobile; Timesheet Analysis exposed a missing API pivot declaration, which was
 fixed by adding `pivot.fields` and reverified with authenticated Pivot/Graph/List
-rendering without failures. Full parameterized route coverage, role-specific
-permissions, authenticated mutation smoke, and paired Odoo comparison remain
-open. No parity claim is made here.
+rendering without failures. A fresh authenticated mutation smoke also completed
+Draft -> Submitted -> Approved, with approval dispatching the Project-owned
+hours mutation after assigning its cross-module inputs from the submitted row.
+Full parameterized route coverage, role-specific permissions, broader CRUD
+persistence, and paired Odoo comparison remain open. No parity claim is made
+here.
 
 ## Next bounded task
 
