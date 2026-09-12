@@ -14,6 +14,8 @@ Module owner: time-off module owner
 Verification trigger: feature-complete
 Candidate commit: `84d1b83c`
 
+Detailed execution matrix: [`test-plans/time-off.md`](test-plans/time-off.md). It is the module-level source for requests, allocations, approvals, actors, persistence, Temporal, and paired Odoo gates.
+
 ## Test-case inventory
 
 ## Current regression evidence

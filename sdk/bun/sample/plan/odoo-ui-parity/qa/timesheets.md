@@ -14,6 +14,8 @@ Module owner: timesheets module owner
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md). It is the module-level source for entries, approvals, Project integration, actors, persistence, Temporal, and paired Odoo gates.
+
 ## Current regression evidence
 
 - Focused Timesheets suite: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 27 passed, 0 failed, 275 assertions across 8 files; the reporting retest after the fix passed 8/8 with 118 assertions.
