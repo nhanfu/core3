@@ -45,10 +45,6 @@ menu:
           label: Bills of Materials
           icon: components
           permission: manufacturing.read
-        - path: /manufacturing-analysis
-          label: Production Analysis
-          icon: chart
-          permission: manufacturing.read
     - id: configuration
       label: Configuration
       items:

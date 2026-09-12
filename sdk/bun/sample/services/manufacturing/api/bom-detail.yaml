@@ -31,7 +31,8 @@ actions:
   - id: bom_overview
     type: navigate
     permission: manufacturing.read
-    navigate_to: /manufacturing/manufacturing-analysis
+    navigate_to: /manufacturing/boms/detail/overview
+    params: { id: '{state.id}' }
   - id: duplicate_mrp_bom
     type: server_form
     permission: manufacturing.write

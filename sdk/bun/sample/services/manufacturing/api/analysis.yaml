@@ -1,0 +1,20 @@
+page: { id: manufacturing-bom-overview }
+datasources:
+  - id: mrp_bom_overview
+    single: true
+    permission: manufacturing.read
+    error_states: { unauthorized: { status: 401, code: MRP_BOM_OVERVIEW_UNAUTHORIZED, message: Sign in to view the BoM Overview. }, forbidden: { status: 403, code: MRP_BOM_OVERVIEW_FORBIDDEN, message: You do not have permission to view the BoM Overview. }, missing_record: { status: 404, code: MRP_BOM_OVERVIEW_NOT_FOUND, message: Bill of materials not found. }, transport_error: { status: 503, code: MRP_BOM_OVERVIEW_UNAVAILABLE, message: The BoM Overview is temporarily unavailable. } }
+    query: "SELECT b.id, b.product_name, b.reference, b.product_quantity, b.uom, b.bom_type, COUNT(l.id) AS component_count, COALESCE(SUM(l.quantity * l.unit_cost), 0) AS total_cost FROM mrp_boms b LEFT JOIN mrp_bom_lines l ON l.bom_id = b.id WHERE b.id = :id AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found') GROUP BY b.id, b.product_name, b.reference, b.product_quantity, b.uom, b.bom_type"
+  - id: mrp_bom_overview_lines
+    permission: manufacturing.read
+    error_states: { transport_error: { status: 503, code: MRP_BOM_OVERVIEW_LINES_UNAVAILABLE, message: BoM components are temporarily unavailable. } }
+    query: "SELECT id, component_name, quantity, uom, availability_status, unit_cost, quantity * unit_cost AS total_cost FROM mrp_bom_lines WHERE bom_id = :id AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found') ORDER BY sequence, id"
+  - id: mrp_bom_overview_operations
+    permission: manufacturing.read
+    query: "SELECT id, name, workcenter, time_cycle FROM mrp_bom_operations WHERE bom_id = :id AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found') ORDER BY sequence, id"
+actions:
+  - id: back_to_mrp_bom_detail
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/boms/detail
+    params: { id: '{state.id}' }

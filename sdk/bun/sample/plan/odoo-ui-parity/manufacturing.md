@@ -937,3 +937,30 @@ versus Odoo's purple shell.
 Core3 adds the Work Center `Load` stat action at `/manufacturing/work-centers/load`, with page/API YAML joined by `page.id`, deterministic read-only load-report fixtures, work-center scoping, `manufacturing.read` permissions, and explicit empty/error/forbidden states. The focused test passes 2 tests and 15 assertions.
 
 Core3 captures are under `/tmp/core3-odoo-parity/manufacturing-batch4-20260912/`; the live Odoo report was source-confirmed but the selected reference had no populated load rows, so no populated-result or complete paired visual claim is made. Images remain outside Git.
+
+## BoM Overview bounded action (2026-09-12)
+
+Local Odoo source inspection identified `mrp.action_report_mrp_bom`, a client
+action with tag `mrp_bom_report`, launched by the BoM form stat button. Its
+source component renders BoM quantity and a recursive component table with
+Availability, Unit Cost, BoM Cost, and Operations. It has no standalone menu.
+
+Core3 replaces the former synthetic Production Analysis target with the
+module-qualified `/manufacturing/boms/detail/overview` page. The BoM detail
+button passes its selected `id`; presentation is in `pages/analysis.yaml` and
+the page-id-bound summary, component, and operation datasources are in
+`api/analysis.yaml`. Migration `20260912030000-019-bom-overview.yaml` adds
+fixed availability and unit-cost fixtures to existing BoM lines and is
+idempotent. Read access is `manufacturing.read`; the API declares 401/403/404
+and 503 states, while the focused test verifies page ownership, idempotent
+migration, deterministic populated/empty/missing/error data, and permissions.
+
+The first attempted test from `sdk/bun/sample` failed because that working
+directory cannot resolve the workspace alias `@core3/server/database/duckdb-database`.
+Running from the expected `sdk/bun` root after frozen-lockfile installation
+passed the contract test; this invocation limitation is retained as an
+evidence note. Authenticated desktop/mobile capture was attempted under
+`/tmp/core3-odoo-parity/manufacturing-batch5-20260912/`; the environment did
+not expose a usable interactive browser session in this worktree, so no visual
+signoff or image files are claimed. The action remains bounded: recursive
+multi-level costing, print/PDF export, and Odoo chatter are not synthesized.

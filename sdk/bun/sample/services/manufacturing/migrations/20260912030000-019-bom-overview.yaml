@@ -1,0 +1,15 @@
+version: 0.0.19
+description: Deterministic BoM Overview availability and cost fixtures
+type:
+  postgres:
+    up: |
+      ALTER TABLE mrp_bom_lines ADD COLUMN IF NOT EXISTS availability_status VARCHAR;
+      ALTER TABLE mrp_bom_lines ADD COLUMN IF NOT EXISTS unit_cost DECIMAL(18,3);
+      UPDATE mrp_bom_lines SET availability_status = COALESCE(availability_status, CASE WHEN component_name IN ('Desk Frame', 'Desk Top') THEN 'Available' ELSE 'Not Available' END), unit_cost = COALESCE(unit_cost, CASE component_name WHEN 'Desk Frame' THEN 125.00 WHEN 'Desk Top' THEN 80.00 WHEN 'Table Leg' THEN 18.50 WHEN 'Drawer Front' THEN 22.00 WHEN 'Laminate Sheet' THEN 14.00 ELSE 10.00 END);
+    down: |
+      ALTER TABLE mrp_bom_lines DROP COLUMN IF EXISTS unit_cost;
+      ALTER TABLE mrp_bom_lines DROP COLUMN IF EXISTS availability_status;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
