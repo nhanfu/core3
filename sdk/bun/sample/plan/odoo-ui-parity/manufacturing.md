@@ -931,3 +931,9 @@ action and bounded report surface were verified; the live reference had no
 completed rows for the selected report, so no populated-result parity is
 claimed. The remaining visual difference is the shared Core3 Fluent shell
 versus Odoo's purple shell.
+
+## Work Center Loads bounded slice (2026-09-12)
+
+Core3 adds the Work Center `Load` stat action at `/manufacturing/work-centers/load`, with page/API YAML joined by `page.id`, deterministic read-only load-report fixtures, work-center scoping, `manufacturing.read` permissions, and explicit empty/error/forbidden states. The focused test passes 2 tests and 15 assertions.
+
+Core3 captures are under `/tmp/core3-odoo-parity/manufacturing-batch4-20260912/`; the live Odoo report was source-confirmed but the selected reference had no populated load rows, so no populated-result or complete paired visual claim is made. Images remain outside Git.

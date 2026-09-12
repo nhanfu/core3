@@ -64,6 +64,10 @@ menu:
           label: Work Centers
           icon: tools
           permission: manufacturing.read
+        - path: /manufacturing/work-center-loads
+          label: Work Center Loads
+          icon: chart
+          permission: manufacturing.read
     - id: reporting
       label: Reporting
       items:

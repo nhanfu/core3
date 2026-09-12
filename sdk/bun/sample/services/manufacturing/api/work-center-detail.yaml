@@ -4,13 +4,18 @@ datasources:
     single: true
     permission: manufacturing.read
     error_states: { transport_error: { status: 503, code: MRP_WORKCENTER_DETAIL_UNAVAILABLE, message: Work center details are temporarily unavailable. } }
-    query: "SELECT id, row_version, name, COALESCE(code, '') AS code, active, sequence, tags, alternative_workcenters, productive_time, costs_hour, time_efficiency, oee_target, time_start, time_stop, resource_calendar, note, capacity_summary, working_state, company_name, planned_workorders, ready_workorders, progress_workorders, blocked_workorders, color, COALESCE((SELECT COUNT(*) FROM mrp_workcenter_productivity WHERE workcenter_id = mrp_workcenters.id AND LOWER(loss_type) <> 'productive'), 0) AS productivity_loss_count, COALESCE((SELECT COUNT(*) FROM mrp_workorder_analysis WHERE workcenter = mrp_workcenters.name AND state = 'Finished'), 0) AS performance_workorder_count FROM mrp_workcenters WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, name, COALESCE(code, '') AS code, active, sequence, tags, alternative_workcenters, productive_time, costs_hour, time_efficiency, oee_target, time_start, time_stop, resource_calendar, note, capacity_summary, working_state, company_name, planned_workorders, ready_workorders, progress_workorders, blocked_workorders, color, COALESCE((SELECT COUNT(*) FROM mrp_workcenter_productivity WHERE workcenter_id = mrp_workcenters.id AND LOWER(loss_type) <> 'productive'), 0) AS productivity_loss_count, COALESCE((SELECT SUM(duration_expected) FROM mrp_workcenter_loads WHERE workcenter_id = mrp_workcenters.id), 0) AS workcenter_load_minutes, COALESCE((SELECT COUNT(*) FROM mrp_workorder_analysis WHERE workcenter = mrp_workcenters.name AND state = 'Finished'), 0) AS performance_workorder_count FROM mrp_workcenters WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
 actions:
   - id: open_mrp_productivity_losses
     type: navigate
     permission: manufacturing.read
     navigate_to: /manufacturing/productivity-losses
     params: { workcenter_id: '{row.id}' }
+  - id: open_mrp_workcenter_loads
+    type: navigate
+    permission: manufacturing.read
+    navigate_to: /manufacturing/work-center-loads
+    params: { workcenter_id: '{row.id}', workcenter: '{row.name}' }
   - id: open_mrp_workorder_performance
     type: navigate
     permission: manufacturing.read

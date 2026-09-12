@@ -1,0 +1,21 @@
+page: { id: manufacturing-work-center-loads }
+datasources:
+  - id: mrp_workcenter_loads
+    single: false
+    permission: manufacturing.read
+    error_states:
+      unauthorized: { status: 401, code: MRP_WORKCENTER_LOADS_UNAUTHORIZED, message: Sign in to view Work Center Loads. }
+      forbidden: { status: 403, code: MRP_WORKCENTER_LOADS_FORBIDDEN, message: You do not have permission to view Work Center Loads. }
+      transport_error: { status: 503, code: MRP_WORKCENTER_LOADS_UNAVAILABLE, message: Work Center Load data is temporarily unavailable. }
+    query: |
+      SELECT id, workcenter_id, workcenter, production_name, operation_name,
+        CAST(duration AS DOUBLE) AS duration, CAST(duration_unit AS DOUBLE) AS duration_unit,
+        CAST(duration_expected AS DOUBLE) AS duration_expected, state,
+        CAST(planned_date AS VARCHAR) AS planned_date, company_name
+      FROM mrp_workcenter_loads
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN FALSE ELSE TRUE END
+        AND (:workcenter_id IS NULL OR workcenter_id = :workcenter_id)
+        AND (:workcenter IS NULL OR workcenter = :workcenter)
+        AND (:state IS NULL OR (:state = 'active' AND state IN ('To Do', 'In Progress')) OR (:state = 'todo' AND state = 'To Do') OR (:state = 'progress' AND state = 'In Progress') OR (:state = 'finished' AND state = 'Finished'))
+        AND (:q IS NULL OR workcenter ILIKE '%' || :q || '%' OR production_name ILIKE '%' || :q || '%' OR operation_name ILIKE '%' || :q || '%')
+      ORDER BY planned_date, production_name, operation_name, id

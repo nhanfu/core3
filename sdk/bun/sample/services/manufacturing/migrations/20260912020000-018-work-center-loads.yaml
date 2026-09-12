@@ -1,0 +1,27 @@
+version: 0.0.18
+description: Deterministic Work Center Loads report fixtures
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_workcenter_loads (
+        id VARCHAR PRIMARY KEY, workcenter_id VARCHAR NOT NULL, workcenter VARCHAR NOT NULL,
+        production_name VARCHAR NOT NULL, operation_name VARCHAR NOT NULL,
+        duration DECIMAL(18,2) NOT NULL DEFAULT 0, duration_unit DECIMAL(18,2) NOT NULL DEFAULT 0,
+        duration_expected DECIMAL(18,2) NOT NULL DEFAULT 0, state VARCHAR NOT NULL,
+        planned_date DATE NOT NULL, company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)'
+      );
+      DELETE FROM mrp_workcenter_loads WHERE id LIKE 'wcl-%';
+      INSERT INTO mrp_workcenter_loads (id, workcenter_id, workcenter, production_name, operation_name, duration, duration_unit, duration_expected, state, planned_date) VALUES
+        ('wcl-assembly-001', 'workcenter-assembly-1', 'Assembly 1', 'WH/MO/00001', 'Manual Assembly', 0, 0, 180, 'To Do', DATE '2026-01-15'),
+        ('wcl-assembly-002', 'workcenter-assembly-1', 'Assembly 1', 'WH/MO/00003', 'Cut panels', 30, 1.5, 45, 'In Progress', DATE '2026-01-15'),
+        ('wcl-assembly-003', 'workcenter-assembly-1', 'Assembly 1', 'WH/MO/00004', 'Drawer assembly', 28, 3.5, 30, 'Finished', DATE '2026-01-15'),
+        ('wcl-assembly-004', 'workcenter-assembly-1', 'Assembly 1', 'WH/MO/00007', 'Final inspection', 0, 0, 105, 'To Do', DATE '2026-01-16'),
+        ('wcl-drill-001', 'workcenter-drill-1', 'Drill 1', 'WH/MO/00003', 'Material replenishment', 0, 0, 25, 'In Progress', DATE '2026-01-15');
+    down: |
+      DELETE FROM mrp_workcenter_loads WHERE id LIKE 'wcl-%';
+      DROP TABLE IF EXISTS mrp_workcenter_loads;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

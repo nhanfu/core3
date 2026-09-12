@@ -1,0 +1,44 @@
+title: Work Center Loads
+page: { id: manufacturing-work-center-loads, route: /manufacturing/work-center-loads, breadcrumb: [Supply Chain, Manufacturing, Configuration, Work Centers, Load], auth: { require: [manufacturing.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_workcenter_loads
+    view_navigation: tabs
+    default_filters: { state: active }
+    filters:
+      - { field: state, label: Status, options: [{ id: active, label: To Do or In Progress }, { id: todo, label: To Do }, { id: progress, label: In Progress }, { id: finished, label: Finished }] }
+    group_by:
+      - { field: production_name, label: Manufacturing Order }
+      - { field: operation_name, label: Operation }
+      - { field: planned_date, label: Date }
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: production_name
+        measure_field: duration_expected
+        measure_label: Expected Duration (minutes)
+        type: bar
+        measures:
+          - { field: duration, label: Duration (minutes), aggregate: sum }
+          - { field: duration_unit, label: Duration Per Unit, aggregate: average }
+          - { field: duration_expected, label: Expected Duration (minutes), aggregate: sum }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: planned_date, column: Date }
+            - { field: operation_name, column: Operation }
+            - { field: production_name, column: Manufacturing Order }
+            - { field: duration, column: Duration (minutes) }
+            - { field: duration_unit, column: Duration Per Unit }
+            - { field: duration_expected, column: Expected Duration (minutes) }
+          default:
+            rows: [planned_date, operation_name]
+            measures:
+              - { field: duration, aggregate: sum, column: Duration (minutes) }
+              - { field: duration_unit, aggregate: average, column: Duration Per Unit }
+              - { field: duration_expected, aggregate: sum, column: Expected Duration (minutes) }
+    empty_state: { title: No work center load data, description: Work center load appears here when operations are scheduled or in progress. }
