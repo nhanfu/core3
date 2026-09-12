@@ -141,3 +141,27 @@ Authenticated Odoo/Core3 screenshots at 1440x900 and 390x844 are required
 under `/tmp/core3-odoo-parity/sms-marketing-wave3-20260912/`. If authentication
 or runtime startup is blocked, record the exact blocker here and make no
 visual-parity claim.
+
+## Bounded action: SMS Marketing / Reporting (wave 4)
+
+The next source menu/action is `SMS Marketing` → `Reporting` → `SMS Marketing
+Analysis` (`mass_mailing_sms_menu_reporting` → `mailing_trace_report_action_sms`).
+Odoo defines the action on `mailing.trace.report` with `graph,pivot,list` modes,
+the SMS domain, and primary graph/pivot/list views. Its SMS view removes the
+email-only Opened and Replied measures while retaining Scheduled, Processing,
+Pending, Sent, Delivered, Clicked, Bounced, Error, and Canceled metrics. Source
+evidence is `/home/nhanjs/projects/odoo/addons/mass_mailing_sms/report/mailing_trace_report_views.xml`.
+
+Core3 implements this visible read-only slice in `pages/analysis.yaml` and
+`api/analysis.yaml`, joined by `page.id: sms-analysis`. Migration
+`20260912170000-006-sms-trace-report.yaml` creates the report table and
+`20260912171000-007-sms-trace-report-demo.yaml` adds fixed, idempotent report
+fixtures for sent, queued, and draft SMS mailings. The API uses
+`sms_marketing.read` and explicitly covers unauthorized, forbidden, transport,
+empty, search, status, and date-range states. There are no write actions for
+this Odoo read-only report.
+
+Focused coverage is `sms_marketing_analysis.integration.test.ts`; it verifies
+the menu/page/API contract, migration idempotence, deterministic rows, filters,
+empty state, and read-only permission boundary. No authenticated screenshots
+are claimed in this wave because no browser rendering was performed.

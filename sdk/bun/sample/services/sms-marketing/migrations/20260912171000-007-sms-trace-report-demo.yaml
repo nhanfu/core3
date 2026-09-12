@@ -1,0 +1,11 @@
+version: 0.0.7
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO sms_mailing_trace_reports (id, name, mailing_type, campaign, scheduled_date, state, email_from, scheduled, processing, pending, sent, delivered, error, bounced, canceled, clicked, created_at, updated_at) VALUES ('sms-report-001', 'Delivery confirmation', 'sms', 'Transactional', TIMESTAMP '2026-09-11 14:00:00', 'Sent', 'Core3', 120, 0, 0, 120, 116, 0, 4, 0, 18, TIMESTAMP '2026-09-11 14:00:00', TIMESTAMP '2026-09-11 14:05:00'), ('sms-report-002', 'September maintenance', 'sms', 'Service updates', TIMESTAMP '2026-09-12 10:00:00', 'In Queue', 'Core3', 840, 0, 840, 0, 0, 0, 0, 0, 0, TIMESTAMP '2026-09-12 08:00:00', TIMESTAMP '2026-09-12 08:00:00'), ('sms-report-003', 'Welcome to Core3', 'sms', NULL, TIMESTAMP '2026-09-13 09:00:00', 'Draft', 'Core3', 24, 0, 0, 0, 0, 0, 0, 0, 0, TIMESTAMP '2026-09-12 08:30:00', TIMESTAMP '2026-09-12 08:30:00');
+    down: DELETE FROM sms_mailing_trace_reports WHERE id LIKE 'sms-report-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

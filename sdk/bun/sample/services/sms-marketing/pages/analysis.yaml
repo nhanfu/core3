@@ -1,21 +1,47 @@
 title: SMS Marketing Analysis
-page: { id: sms-analysis, breadcrumb: [Marketing, SMS Marketing, Analysis], auth: { require: [sms_marketing.read] } }
-datasources:
-  - id: sms_analysis_totals
-    single: true
-    permission: sms_marketing.read
-    query: "SELECT COUNT(*) AS campaign_count, COALESCE(SUM(recipient_count), 0) AS recipients, COALESCE(SUM(delivered_count), 0) AS delivered, COALESCE(SUM(failed_count), 0) AS failed FROM sms_campaigns"
-  - id: sms_analysis_states
-    permission: sms_marketing.read
-    query: "SELECT state AS category, COUNT(*) AS campaign_count FROM sms_campaigns GROUP BY state ORDER BY campaign_count DESC"
+page: { id: sms-analysis, route: /sms-analysis, breadcrumb: [Marketing, SMS Marketing, Reporting, SMS Marketing Analysis], auth: { require: [sms_marketing.read] } }
 components:
-  - type: StatRow
-    source: sms_analysis_totals
-    title: SMS delivery performance
-    stats: [{ label: Campaigns, field: campaign_count }, { label: Recipients, field: recipients }, { label: Delivered, field: delivered }, { label: Failed, field: failed }]
-  - type: Chart
-    source: sms_analysis_states
-    title: Campaigns by status
-    label_field: category
-    value_field: campaign_count
-    variant: bar
+  - type: ListView
+    variant: odoo
+    source: sms_mailing_trace_report
+    search: { label: Search..., placeholder: 'Search mailing, campaign, or sender...' }
+    date_range: { label: Date, from_field: from_date, to_field: to_date, default_preset: year, presets: [today, week, month, year] }
+    filters: [{ field: state, label: Status, options: [{ id: Draft, label: Draft }, { id: In Queue, label: In Queue }, { id: Sent, label: Sent }] }]
+    group_by: [{ field: campaign, label: Mass Mailing Campaign }, { field: state, label: State }, { field: email_from, label: Sent By }, { field: scheduled_date, label: Scheduled Period }]
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: name
+        measure_field: sent
+        measure_label: Sent
+        type: bar
+        measures: [{ field: scheduled, label: Scheduled, aggregate: sum }, { field: sent, label: Sent, aggregate: sum }, { field: delivered, label: Delivered, aggregate: sum }, { field: clicked, label: Clicked, aggregate: sum }, { field: bounced, label: Bounced, aggregate: sum }, { field: error, label: Error, aggregate: sum }]
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields: [{ field: name, column: Mailing }, { field: campaign, column: Mass Mailing Campaign }, { field: scheduled_date, column: Scheduled On, type: date }, { field: state, column: State }, { field: email_from, column: Sent By }, { field: scheduled, column: Scheduled }, { field: sent, column: Sent }, { field: delivered, column: Delivered }, { field: clicked, column: Clicked }, { field: bounced, column: Bounced }, { field: error, column: Error }]
+          default: { rows: [name], measures: [{ field: sent, aggregate: sum, column: Sent }, { field: delivered, aggregate: sum, column: Delivered }, { field: clicked, aggregate: sum, column: Clicked }] }
+      - { id: list, label: List, icon: table }
+    show_pager: true
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No data yet!, description: Come back once some SMS Mailings are sent to check out aggregated results. }
+    columns:
+      - { field: name, label: Mailing, type: PrimaryEntityCell, mobile: true }
+      - { field: campaign, label: Campaign, mobile: false }
+      - { field: scheduled_date, label: Scheduled On, type: DateTime, mobile: true }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+      - { field: scheduled, label: Scheduled, align: right, mobile: false }
+      - { field: processing, label: Processing, align: right, optional: true, mobile: false }
+      - { field: pending, label: Pending, align: right, optional: true, mobile: false }
+      - { field: sent, label: Sent, align: right, mobile: true }
+      - { field: delivered, label: Delivered, align: right, mobile: true }
+      - { field: clicked, label: Clicked, align: right, mobile: true }
+      - { field: canceled, label: Canceled, align: right, optional: true, mobile: false }
+      - { field: error, label: Error, align: right, optional: true, mobile: false }
+      - { field: bounced, label: Bounced, align: right, optional: true, mobile: false }

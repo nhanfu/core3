@@ -20,4 +20,4 @@ menu:
     - id: reporting
       label: Reporting
       items:
-        - { path: /sms-analysis, label: SMS Analysis, icon: chart, permission: sms_marketing.read }
+        - { path: /sms-analysis, label: SMS Marketing Analysis, icon: chart, permission: sms_marketing.read }
