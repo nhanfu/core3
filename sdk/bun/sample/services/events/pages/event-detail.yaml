@@ -15,6 +15,7 @@ components:
       - { id: start_event_detail, label: Start, variant: secondary, permission: events.write, show_if: "record.state === 'Published'" }
       - { id: complete_event_detail, label: Complete, variant: primary, permission: events.manage, show_if: "record.state === 'In Progress'" }
       - { id: cancel_event_detail, label: Cancel, variant: danger, permission: events.manage, show_if: "record.state !== 'Completed' && record.state !== 'Cancelled'" }
+      - { id: event_slots_detail, label: Slots, variant: secondary, permission: events.read, show_if: "record.multiple_slots" }
     stat_buttons:
       - { id: event_registration_stats_detail, label: Registration, value_field: registration_count, permission: events.read }
       - { id: event_attendee_stats_detail, label: Attendees, value_field: attendee_count, permission: events.read }
@@ -156,6 +157,7 @@ actions:
   - { id: event_registration_stats_detail, type: navigate, permission: events.read, navigate_to: /events/registration-statistics, params: { event_id: '{row.id}' } }
   - { id: event_attendee_stats_detail, type: navigate, permission: events.read, navigate_to: /events/attendees, params: { event_id: '{row.id}' } }
   - { id: event_leads_detail, type: navigate, permission: events.read, navigate_to: /events/leads, params: { event_id: '{row.id}' } }
+  - { id: event_slots_detail, type: navigate, permission: events.read, navigate_to: /events/slots, params: { event_id: '{row.id}' } }
   - id: view_event_ticket
     type: navigate
     permission: events.read

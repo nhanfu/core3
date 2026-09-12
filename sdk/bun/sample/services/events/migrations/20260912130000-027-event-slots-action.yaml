@@ -1,0 +1,20 @@
+version: 0.0.27
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO events(id, name, event_type, organizer, venue, description, capacity, registration_count, start_at, end_at, state)
+      VALUES ('event-slot-action-20260115', 'Multi-slot Design Workshop', 'Workshop', 'Events Team', 'Studio Hall', 'Deterministic calendar action fixture', 80, 3, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 17:00:00', 'Published')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_slots(id, event_id, name, start_at, end_at, seats, registration_count, state, row_version, date_tz, color)
+      VALUES
+        ('slot-action-20260115-opening', 'event-slot-action-20260115', 'Opening session', TIMESTAMP '2026-01-15 10:00:00', TIMESTAMP '2026-01-15 12:00:00', 40, 3, 'Open', 1, 'Europe/Brussels', '#875A7B'),
+        ('slot-action-20260115-closing', 'event-slot-action-20260115', 'Closing session', TIMESTAMP '2026-01-15 13:00:00', TIMESTAMP '2026-01-15 14:00:00', 25, 0, 'Open', 1, 'Europe/Brussels', '#00A09D')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM event_slots WHERE event_id = 'event-slot-action-20260115';
+      DELETE FROM events WHERE id = 'event-slot-action-20260115';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

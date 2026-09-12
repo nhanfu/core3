@@ -1147,3 +1147,17 @@ full visual parity claim is made. Images remain outside Git.
   checks, `bun run audit` where applicable, and `git diff --check` pass. The
   implementation commit may contain YAML/TS/docs only; screenshots remain in
   `/tmp`.
+
+## Event-scoped Slots bounded action (2026-09-12)
+
+Odoo's event slot action uses calendar/list/form views scoped to the active
+event. Core3 adds `/events/slots` with desktop calendar and mobile list views,
+page/API separation through `page.id`, deterministic two-slot fixtures, and
+permissioned create validation for event ownership, time range, and capacity.
+Migration `20260912130000-027-event-slots-action.yaml` is idempotent; the
+focused test passes 2 tests and 15 assertions.
+
+Capture was attempted under `/tmp/core3-odoo-parity/events-batch5-20260912/`,
+but the paired runtime could not be established after the documented schema
+and fixture-boundary failures. No visual parity claim or screenshot is made;
+images remain outside Git.

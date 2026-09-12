@@ -1,0 +1,76 @@
+title: Slots
+page: { id: event-slots, route: /events/slots, breadcrumb: [Marketing, Events, Event, Slots], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_slots
+    create_action: create_event_slot_from_action
+    create_label: New slot
+    search: { label: Search slots, placeholder: Search slots... }
+    view_navigation: tabs
+    views:
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        mobile: false
+        date_field: start_at
+        end_date_field: end_at
+        card:
+          title: name
+          subtitle: event_name
+          fields: [{ field: seats, label: Seats }, { field: availability, label: Availability }]
+      - id: list
+        label: List
+        icon: table
+        card:
+          title: name
+          subtitle: event_name
+          fields: [{ field: start_at, label: Starts }, { field: end_at, label: Ends }, { field: availability, label: Availability }]
+    columns:
+      - { field: name, label: Slot, type: PrimaryEntityCell }
+      - { field: event_name, label: Event }
+      - { field: start_at, label: From }
+      - { field: end_at, label: To }
+      - { field: seats, label: Seats, align: right }
+      - { field: availability, label: Availability }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_event_slot_from_action
+    row_double_click_action: view_event_slot_from_action
+    empty_state: { title: No slots, description: Create time slots for this event to organize its schedule. }
+actions:
+  - id: view_event_slot_from_action
+    type: navigate
+    permission: events.read
+    navigate_to: /events/slots/detail
+    params: { id: '{row.id}' }
+  - id: create_event_slot_from_action
+    type: server_form
+    permission: events.write
+    title: New event slot
+    action: events.slots.create
+    handler: yaml_mutation
+    operation: insert
+    params: { event_id: '{query.event_id}' }
+    refresh: [event_slots]
+    mutation:
+      operation: insert
+      table: event_slots
+      fields: [event_id, name, start_at, end_at, seats, date_tz, color]
+      required: [event_id, name, start_at, end_at]
+      defaults: { seats: 0, date_tz: Europe/Brussels, color: '#875A7B' }
+      guards:
+        - { query: "SELECT id FROM events WHERE id = :event_id", status: 404, code: EVENT_NOT_FOUND, message: Event not found. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:start_at AS TIMESTAMP) < CAST(:end_at AS TIMESTAMP)", status: 422, code: EVENT_SLOT_TIME_RANGE_INVALID, message: Slot end must be later than slot start. }
+        - { query: "SELECT 1 AS ok FROM events WHERE id = :event_id AND CAST(:start_at AS TIMESTAMP) >= start_at AND CAST(:end_at AS TIMESTAMP) <= end_at", status: 422, code: EVENT_SLOT_OUTSIDE_EVENT, message: Slot must be within the event time range. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:seats, 0) >= 0", status: 422, code: EVENT_SLOT_SEATS_INVALID, message: Slot seats must be zero or greater. }
+      result: { query: "SELECT * FROM event_slots WHERE id = :id" }
+    fields:
+      - { field: event_id, label: Event ID, type: text, required: true }
+      - { field: name, label: Slot, type: text, required: true }
+      - { field: start_at, label: Starts at, type: text, required: true }
+      - { field: end_at, label: Ends at, type: text, required: true }
+      - { field: date_tz, label: Timezone, type: text, default: Europe/Brussels }
+      - { field: seats, label: Seats per slot, type: number, min: 0, default: 0 }
+      - { field: color, label: Color, type: text, default: '#875A7B' }
