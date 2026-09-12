@@ -53,9 +53,24 @@ components:
   - type: ListView
     variant: odoo
     source: project_dashboard_milestones
+    create_action: create_project_milestone
+    create_label: New
+    search: { label: Search milestones, placeholder: Search milestones... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Kanban, icon: dashboard, mobile: true, card: { title: name, subtitle: due_date, fields: [{ field: state, label: Status, type: StatusChip }] } }
+      - { id: form, label: Form, icon: edit }
+    row_open_action: view_project_milestone
+    row_double_click_action: view_project_milestone
+    row_actions: menu
+    form_view: { page: apps/services/project/pages/project-milestone-detail.yaml, side_panel: true }
     columns:
-      - { field: name, label: Milestone, type: PrimaryEntityCell }
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Milestone, type: PrimaryEntityCell, mobile: true }
       - { field: due_date, label: Deadline, type: DateCell }
       - { field: state, label: Status, type: StatusChip }
+      - { field: task_summary, label: Tasks }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_project_milestone, label: Edit, icon: edit }, { id: mark_project_milestone, label: Mark reached, icon: check, show_if: 'row.is_reached !== true' }, { id: reopen_project_milestone, label: Reopen, icon: undo, show_if: 'row.is_reached === true' }, { id: delete_project_milestone, label: Delete, icon: trash, variant: danger }] }
     row_key: id
-    empty_state: { title: No milestones, description: Add milestones to track important project dates. }
+    empty_state: { title: No milestones found. Let's create one!, description: Track major progress points that must be reached to achieve success. }

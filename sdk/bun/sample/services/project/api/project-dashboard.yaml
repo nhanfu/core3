@@ -11,8 +11,92 @@ datasources:
     query: "SELECT u.id, u.row_version, u.project_id, p.name AS project_name, u.name, u.status, u.progress, CAST(u.progress AS VARCHAR) || '%' AS progress_display, u.user_name, CAST(u.date AS VARCHAR) AS date, CAST(COUNT(t.id) FILTER (WHERE t.state = 'Done') AS VARCHAR) || ' / ' || CAST(COUNT(t.id) AS VARCHAR) AS task_summary, CAST(COALESCE(SUM(t.planned_hours), 0) AS VARCHAR) || ' Hours' AS hours_display, u.description FROM project_updates u JOIN projects p ON p.id = u.project_id LEFT JOIN project_tasks t ON t.project_id = u.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND u.project_id = :id AND (:q IS NULL OR u.name ILIKE '%' || :q || '%' OR u.user_name ILIKE '%' || :q || '%' OR u.description ILIKE '%' || :q || '%') AND (:status IS NULL OR u.status = :status) GROUP BY u.id, u.row_version, u.project_id, p.name, u.name, u.status, u.progress, u.user_name, u.date, u.description ORDER BY u.date DESC, u.id DESC"
   - id: project_dashboard_milestones
     permission: project.read
-    query: "SELECT id, project_id, name, CAST(due_date AS VARCHAR) AS due_date, state FROM project_milestones WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND project_id = :id ORDER BY due_date NULLS LAST, id"
+    error_states: { transport_error: { status: 503, code: PROJECT_MILESTONES_UNAVAILABLE, message: Project milestones are temporarily unavailable. } }
+    query: "SELECT m.id, m.row_version, m.project_id, m.name, m.sequence, CAST(m.due_date AS VARCHAR) AS due_date, m.is_reached, CASE WHEN m.is_reached THEN 'Reached' WHEN m.due_date IS NOT NULL AND m.due_date < DATE '2026-01-15' THEN 'Late' ELSE 'Open' END AS state, CAST(COUNT(t.id) AS VARCHAR) || ' / ' || CAST(COUNT(t.id) FILTER (WHERE t.state IN ('Done', 'Cancelled')) AS VARCHAR) AS task_summary FROM project_milestones m LEFT JOIN project_tasks t ON t.milestone_name = m.name AND t.project_id = m.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.project_id = :id AND (:q IS NULL OR m.name ILIKE '%' || :q || '%') GROUP BY m.id, m.row_version, m.project_id, m.name, m.sequence, m.due_date, m.is_reached ORDER BY m.sequence, m.due_date NULLS LAST, m.is_reached DESC, m.name, m.id"
 actions:
+  - id: create_project_milestone
+    type: server_form
+    permission: project.write
+    title: New Milestone
+    action: project.milestones.create
+    handler: yaml_mutation
+    operation: create
+    params: { project_id: '{state.id}' }
+    refresh: [project_dashboard_milestones, project_dashboard_stats, project_detail]
+    mutation:
+      operation: insert
+      table: project_milestones
+      generated: [id]
+      fields: [project_id, name, sequence, due_date, is_reached, state]
+      required: [project_id, name]
+      defaults: { sequence: 10, is_reached: false, state: Open }
+      guards:
+        - { query: "SELECT id FROM projects WHERE id = :project_id AND COALESCE(archived, FALSE) = FALSE AND COALESCE(is_template, FALSE) = FALSE", status: 404, code: PROJECT_NOT_FOUND, message: Project not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PROJECT_MILESTONE_NAME_REQUIRED, message: A milestone name is required. }
+      result: { query: "SELECT * FROM project_milestones WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true, placeholder: 'e.g: Product Launch' }
+      - { field: due_date, label: Deadline, type: text }
+      - { field: is_reached, label: Reached, type: boolean }
+  - id: view_project_milestone
+    type: navigate
+    permission: project.read
+    navigate_to: /projects/detail/dashboard/milestone
+    params: { id: '{row.id}', project_id: '{row.project_id}' }
+  - id: edit_project_milestone
+    type: server_form
+    permission: project.write
+    title: Edit Milestone
+    action: project.milestones.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}' }
+    prefill: row
+    refresh: [project_dashboard_milestones, project_dashboard_stats, project_milestone_detail, project_detail]
+    mutation:
+      operation: update
+      table: project_milestones
+      fields: [name, sequence, due_date, is_reached, state]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM project_milestones WHERE id = :id", status: 404, code: PROJECT_MILESTONE_NOT_FOUND, message: Milestone not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PROJECT_MILESTONE_NAME_REQUIRED, message: A milestone name is required. }
+      result: { query: "SELECT * FROM project_milestones WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: due_date, label: Deadline, type: text }
+      - { field: is_reached, label: Reached, type: boolean }
+  - id: mark_project_milestone
+    type: server
+    permission: project.write
+    action: project.milestones.toggle_reached
+    handler: yaml_mutation
+    operation: update
+    params: { values: { is_reached: true, state: Reached } }
+    refresh: [project_dashboard_milestones, project_dashboard_stats, project_milestone_detail, project_detail]
+    mutation: { operation: update, table: project_milestones, fields: [is_reached, state], concurrency: { required: true }, result: { query: "SELECT * FROM project_milestones WHERE id = :id" } }
+  - id: reopen_project_milestone
+    type: server
+    permission: project.write
+    action: project.milestones.reopen
+    handler: yaml_mutation
+    operation: update
+    params: { values: { is_reached: false, state: Open } }
+    refresh: [project_dashboard_milestones, project_dashboard_stats, project_milestone_detail, project_detail]
+    mutation: { operation: update, table: project_milestones, fields: [is_reached, state], concurrency: { required: true }, result: { query: "SELECT * FROM project_milestones WHERE id = :id" } }
+  - id: delete_project_milestone
+    type: server
+    permission: project.write
+    action: project.milestones.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [project_dashboard_milestones, project_dashboard_stats, project_detail]
+    mutation:
+      operation: delete
+      table: project_milestones
+      concurrency: { required: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM project_milestones WHERE id = :id)", status: 404, code: PROJECT_MILESTONE_NOT_FOUND, message: Milestone not found. }]
   - id: create_project_update
     type: server_form
     permission: project.write

@@ -1,0 +1,26 @@
+title: Milestone
+page: { id: project-milestone-detail, route: /projects/detail/dashboard/milestone, breadcrumb: [Services, Project, Dashboard, Milestone], auth: { require: [project.read] } }
+components:
+  - type: OdooFormView
+    source: project_milestone_detail
+    title_field: name
+    subtitle_field: project_name
+    status_field: state
+    status_colors: { Open: blue, Late: red, Reached: green }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: back_to_project_dashboard, label: Dashboard, icon: arrow-left, permission: project.read }
+      - { id: edit_project_milestone, label: Edit, variant: primary, permission: project.write }
+      - { id: mark_project_milestone, label: Mark reached, variant: secondary, permission: project.write, show_if: 'state.project_milestone_detail.is_reached !== true' }
+      - { id: reopen_project_milestone, label: Reopen, variant: secondary, permission: project.write, show_if: 'state.project_milestone_detail.is_reached === true' }
+      - { id: delete_project_milestone, label: Delete, variant: danger, permission: project.write, confirm: Delete this milestone? }
+    group_columns: 2
+    groups:
+      - title: Milestone
+        fields:
+          - { field: project_name, label: Project, readonly: true }
+          - { field: name, label: Name, required: true }
+          - { field: due_date, label: Deadline, type: text }
+          - { field: task_summary, label: Tasks, readonly: true }
+          - { field: row_version, label: Record version, readonly: true }

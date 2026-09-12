@@ -863,3 +863,27 @@ pre-existing DuckDB migration constraint error, while Odoo was reachable at
 Core3/Odoo comparison images under `/tmp/core3-odoo-parity/project-batch3-20260912/`;
 authenticated visual parity remains an explicit follow-up gate, not a success
 claim.
+
+## Bounded slice: Embedded Project Milestones (2026-09-12)
+
+The next source action after task detail is Odoo's embedded
+`project_embedded_action_project_milestones` on a project record. Its source
+action is `project_milestone_action`, ordered list, kanban, form. The list order
+is sequence, deadline, reached descending, then name; visible fields are Name,
+Deadline, Reached, and a conditional View Tasks action. The form fields are
+Name (placeholder `e.g: Product Launch`), Deadline, and Reached, with task
+totals in the stat button. Managers and project users can read/write
+milestones; Core3 keeps the bounded service boundary at project users:
+`project.read` reads and `project.write` creates/edits/deletes or marks reached.
+
+The slice makes the existing project Dashboard Milestones embedded list
+actionable with Odoo List/Kanban/Form tabs, search, source empty-state copy,
+side-panel milestone detail, deterministic deadline/reached/task-summary
+fixtures, create/edit/delete, reached/reopen actions, 404/422/409 guards, and
+stable `PROJECT_MILESTONES_UNAVAILABLE` and
+`PROJECT_MILESTONE_DETAIL_UNAVAILABLE` transport contracts. Migration
+`20260912130000-014-project-milestones.yaml` adds stable sequence/reached/version
+fields and normalized fixture metadata. Focused coverage is
+`test/project_milestones.integration.test.ts`; authenticated desktop/mobile
+captures, if local runtimes are available, belong under
+`/tmp/core3-odoo-parity` and are not committed.

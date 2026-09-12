@@ -1,0 +1,67 @@
+page: { id: project-milestone-detail }
+datasources:
+  - id: project_milestone_detail
+    single: true
+    permission: project.read
+    error_states: { transport_error: { status: 503, code: PROJECT_MILESTONE_DETAIL_UNAVAILABLE, message: Project milestone details are temporarily unavailable. } }
+    query: "SELECT m.id, m.row_version, m.project_id, p.name AS project_name, m.name, m.sequence, CAST(m.due_date AS VARCHAR) AS due_date, m.is_reached, CASE WHEN m.is_reached THEN 'Reached' WHEN m.due_date IS NOT NULL AND m.due_date < DATE '2026-01-15' THEN 'Late' ELSE 'Open' END AS state, CAST(COUNT(t.id) AS VARCHAR) || ' / ' || CAST(COUNT(t.id) FILTER (WHERE t.state IN ('Done', 'Cancelled')) AS VARCHAR) AS task_summary FROM project_milestones m JOIN projects p ON p.id = m.project_id LEFT JOIN project_tasks t ON t.milestone_name = m.name AND t.project_id = m.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.id = :id GROUP BY m.id, m.row_version, m.project_id, p.name, m.name, m.sequence, m.due_date, m.is_reached"
+actions:
+  - id: back_to_project_dashboard
+    type: navigate
+    permission: project.read
+    navigate_to: /projects/detail/dashboard
+    params: { id: '{row.project_id}' }
+  - id: edit_project_milestone
+    type: server_form
+    permission: project.write
+    title: Edit Milestone
+    action: project.milestones.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.project_milestone_detail
+    refresh: [project_milestone_detail, project_dashboard_milestones, project_dashboard_stats, project_detail]
+    mutation:
+      operation: update
+      table: project_milestones
+      fields: [name, sequence, due_date, is_reached, state]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM project_milestones WHERE id = :id", status: 404, code: PROJECT_MILESTONE_NOT_FOUND, message: Milestone not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PROJECT_MILESTONE_NAME_REQUIRED, message: A milestone name is required. }
+      result: { query: "SELECT * FROM project_milestones WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: due_date, label: Deadline, type: text }
+      - { field: is_reached, label: Reached, type: boolean }
+  - id: mark_project_milestone
+    type: server
+    permission: project.write
+    action: project.milestones.toggle_reached
+    handler: yaml_mutation
+    operation: update
+    params: { values: { is_reached: true, state: Reached } }
+    refresh: [project_milestone_detail, project_dashboard_milestones, project_dashboard_stats, project_detail]
+    mutation: { operation: update, table: project_milestones, fields: [is_reached, state], concurrency: { required: true }, result: { query: "SELECT * FROM project_milestones WHERE id = :id" } }
+  - id: reopen_project_milestone
+    type: server
+    permission: project.write
+    action: project.milestones.reopen
+    handler: yaml_mutation
+    operation: update
+    params: { values: { is_reached: false, state: Open } }
+    refresh: [project_milestone_detail, project_dashboard_milestones, project_dashboard_stats, project_detail]
+    mutation: { operation: update, table: project_milestones, fields: [is_reached, state], concurrency: { required: true }, result: { query: "SELECT * FROM project_milestones WHERE id = :id" } }
+  - id: delete_project_milestone
+    type: server
+    permission: project.write
+    action: project.milestones.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [project_dashboard_milestones, project_dashboard_stats, project_detail]
+    mutation:
+      operation: delete
+      table: project_milestones
+      concurrency: { required: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM project_milestones WHERE id = :id)", status: 404, code: PROJECT_MILESTONE_NOT_FOUND, message: Milestone not found. }]

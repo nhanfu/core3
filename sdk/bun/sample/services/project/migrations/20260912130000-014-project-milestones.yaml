@@ -1,0 +1,19 @@
+version: 0.0.14
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE project_milestones ADD COLUMN IF NOT EXISTS sequence INTEGER DEFAULT 10;
+      ALTER TABLE project_milestones ADD COLUMN IF NOT EXISTS is_reached BOOLEAN DEFAULT FALSE;
+      ALTER TABLE project_milestones ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      ALTER TABLE project_milestones ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT TIMESTAMP '2026-01-15 00:00:00';
+      UPDATE project_milestones SET sequence = COALESCE(sequence, 10), is_reached = COALESCE(is_reached, state = 'Reached'), row_version = COALESCE(row_version, 1), created_at = COALESCE(created_at, TIMESTAMP '2026-01-15 00:00:00');
+    down: |
+      ALTER TABLE project_milestones DROP COLUMN IF EXISTS created_at;
+      ALTER TABLE project_milestones DROP COLUMN IF EXISTS row_version;
+      ALTER TABLE project_milestones DROP COLUMN IF EXISTS is_reached;
+      ALTER TABLE project_milestones DROP COLUMN IF EXISTS sequence;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
