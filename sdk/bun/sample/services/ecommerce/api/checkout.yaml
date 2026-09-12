@@ -8,7 +8,7 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_CHECKOUT_FORBIDDEN, message: You do not have permission to check out this cart. }
       missing_record: { status: 404, code: ECOMMERCE_CHECKOUT_CART_NOT_FOUND, message: Cart not found. }
       transport_error: { status: 503, code: ECOMMERCE_CHECKOUT_UNAVAILABLE, message: Checkout is temporarily unavailable. }
-    query: "SELECT c.id, c.row_version, c.customer_name, c.currency, c.state, COALESCE(SUM(l.quantity), 0) AS item_count, COALESCE(SUM(l.quantity * l.unit_price), 0) AS amount_total FROM ecommerce_carts c LEFT JOIN ecommerce_cart_lines l ON l.cart_id = c.id WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND c.id = COALESCE(:cart_id, 'ecommerce-cart-open-001') GROUP BY c.id, c.row_version, c.customer_name, c.currency, c.state"
+    query: "SELECT c.id, c.row_version, c.customer_name, c.currency, c.state, c.company_name, COALESCE(SUM(l.quantity), 0) AS item_count, COALESCE(SUM(l.quantity * l.unit_price), 0) AS amount_total FROM ecommerce_carts c LEFT JOIN ecommerce_cart_lines l ON l.cart_id = c.id WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND c.id = COALESCE(:cart_id, 'ecommerce-cart-open-001') AND (:company_name IS NULL OR c.company_name = :company_name) GROUP BY c.id, c.row_version, c.customer_name, c.currency, c.state, c.company_name"
   - id: ecommerce_delivery_methods
     permission: ecommerce.read
     query: "SELECT value, label FROM (VALUES ('Standard Delivery', 'Standard Delivery'), ('Express Delivery', 'Express Delivery')) methods(value, label)"

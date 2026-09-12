@@ -44,4 +44,21 @@ describe('eCommerce Checkout parity', () => {
     expect((await repository.query("SELECT COUNT(*) AS count FROM ecommerce_orders WHERE order_number LIKE 'WEB/2026/%'", []))[0].count).toBe(3);
     database.close();
   });
+
+  test('keeps company-scoped carts, customers, and orders isolated and migrations idempotent', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    const migrationRoot = join(root, 'migrations');
+    await migrateDatabase(repository, migrationRoot, undefined, 'ecommerce_checkout_scope_test', ['schema', 'data']);
+    await migrateDatabase(repository, migrationRoot, undefined, 'ecommerce_checkout_scope_test', ['schema', 'data']);
+    expect((await repository.query('SELECT COUNT(*) AS count FROM ecommerce_products'))[0].count).toBe(4);
+    expect((await repository.query('SELECT COUNT(*) AS count FROM ecommerce_orders'))[0].count).toBe(3);
+    const cartApi = yaml('api/cart.yaml');
+    const customerApi = yaml('api/customers.yaml');
+    const orderApi = yaml('api/orders.yaml');
+    expect((await repository.querySource(cartApi.datasources[0], { id: 'ecommerce-cart-open-001', company_name: 'Other Company', fixture_state: null }, 0, 1)).data).toEqual({});
+    expect((await repository.querySource(customerApi.datasources[0], { q: null, active: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(orderApi.datasources[0], { q: null, state: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
+    database.close();
+  });
 });

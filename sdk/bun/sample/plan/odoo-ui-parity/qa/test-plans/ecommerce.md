@@ -40,7 +40,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-009 | Checkout/order mutations | Customer, delivery, payment and order creation validate, copy cart lines, close the cart, and persist atomically | pass: focused service suite; browser and restart gates planned |
 | ECOM-FUNC-010 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
 | ECOM-FUNC-011 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |
-| ECOM-FUNC-012 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, prices, categories, carts, customers or orders | planned restart/migration gate |
+| ECOM-FUNC-012 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, prices, categories, carts, customers or orders | pass: focused restart/idempotency suite |
 | ECOM-FUNC-013 | Assets/import/export/print | Exercise product images/assets, catalog import/export and exposed print actions | planned browser interaction gate |
 
 ## Workflow and integration cases
@@ -59,8 +59,8 @@ mutations use isolated databases and deterministic IDs.
 | --- | --- | --- | --- |
 | ECOM-PERM-001 | Ecommerce Manager/editor | Catalog and pricelist mutations succeed according to role | pass at contract level; browser actor planned |
 | ECOM-PERM-002 | Public visitor | Only published catalog data is visible; cart/customer data is isolated | planned |
-| ECOM-PERM-003 | Authenticated customer | Own cart/order and checkout data only; other customers are denied | planned |
-| ECOM-PERM-004 | Wrong company | Products, prices, carts and orders are not leaked or mutable | planned |
+| ECOM-PERM-003 | Authenticated customer | Own cart/order and checkout data only; other customers are denied | planned: actor ownership still needs runtime coverage |
+| ECOM-PERM-004 | Wrong company | Products, prices, carts and orders are not leaked or mutable | pass for carts, customers, and orders at service-query level; product/pricelist scope remains open |
 | ECOM-PERM-005 | Unauthenticated/expired | Private routes redirect/401/403 without protected data | planned |
 | ECOM-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current product/pricelist/cart/order unchanged | pass at contract level |
 
