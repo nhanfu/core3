@@ -1,0 +1,33 @@
+version: 0.0.22
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS address_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS job_position_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS departure_reason_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS departure_description VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS departure_date DATE;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS additional_note VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS org_parent_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS org_direct_reports BIGINT;
+      UPDATE employees SET address_name = CASE id WHEN 'employee-demo-001' THEN 'Core3 Vietnam HQ, District 1' WHEN 'employee-demo-002' THEN 'Core3 Vietnam HQ, District 1' WHEN 'employee-demo-003' THEN 'Da Nang Engineering Office' WHEN 'employee-demo-004' THEN 'Hanoi Design Studio' ELSE address_name END WHERE address_name IS NULL;
+      UPDATE employees SET job_position_name = job_title WHERE job_position_name IS NULL;
+      UPDATE employees SET org_parent_name = CASE id WHEN 'employee-demo-001' THEN NULL ELSE 'Admin User' END WHERE org_parent_name IS NULL;
+      UPDATE employees SET org_direct_reports = CASE id WHEN 'employee-demo-001' THEN 2 WHEN 'employee-demo-002' THEN 0 WHEN 'employee-demo-003' THEN 0 WHEN 'employee-demo-004' THEN 0 ELSE org_direct_reports END;
+      UPDATE employees SET org_direct_reports = 0 WHERE org_direct_reports IS NULL;
+      UPDATE employees SET departure_reason_name = 'Resigned', departure_description = 'Moved to a new opportunity.', departure_date = DATE '2024-12-20' WHERE id = 'employee-demo-004';
+      UPDATE employees SET additional_note = CASE id WHEN 'employee-demo-001' THEN 'Owns operations and onboarding for the Vietnam team.' WHEN 'employee-demo-002' THEN 'Frontend platform specialist.' WHEN 'employee-demo-003' THEN 'Supports release verification and quality gates.' WHEN 'employee-demo-004' THEN 'Former product design lead.' ELSE additional_note END WHERE additional_note IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS address_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS job_position_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS departure_reason_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS departure_description;
+      ALTER TABLE employees DROP COLUMN IF EXISTS departure_date;
+      ALTER TABLE employees DROP COLUMN IF EXISTS additional_note;
+      ALTER TABLE employees DROP COLUMN IF EXISTS org_parent_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS org_direct_reports;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

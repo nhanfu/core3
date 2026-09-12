@@ -3,7 +3,7 @@ datasources:
   - id: employee_detail
     single: true
     permission: employees.read
-    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_title, manager_name, coach_name, work_location, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, timezone, barcode, presence, skills, resume_summary, street FROM employees WHERE id = :id"
+    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, timezone, barcode, presence, skills, resume_summary, street FROM employees WHERE id = :id"
 actions:
   - id: open_employee_timesheets
     type: navigate
@@ -22,7 +22,7 @@ actions:
     mutation:
       operation: update
       table: employees
-      fields: [name, work_email, work_phone, phone, private_email, company_name, department_name, job_title, manager_name, coach_name, work_location, employment_type, hire_date, contract_start, contract_end, birthday, wage, working_schedule, timezone, barcode, skills, resume_summary, street]
+      fields: [name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, departure_date, additional_note, employment_type, hire_date, contract_start, contract_end, birthday, wage, working_schedule, timezone, barcode, skills, resume_summary, street]
       required: [name]
       timestamps: true
       result: { query: "SELECT * FROM employees WHERE id = :id" }
@@ -31,10 +31,16 @@ actions:
       - { field: work_email, label: Work Email, type: text }
       - { field: work_phone, label: Work Phone, type: text }
       - { field: department_name, label: Department, type: text }
-      - { field: job_title, label: Job Position, type: text }
+      - { field: job_position_name, label: Job Position, type: text }
+      - { field: job_title, label: Job Title, type: text }
       - { field: manager_name, label: Manager, type: text }
       - { field: coach_name, label: Coach, type: text }
       - { field: work_location, label: Work Location, type: text }
+      - { field: address_name, label: Work Address, type: text }
+      - { field: departure_reason_name, label: Departure Reason, type: text }
+      - { field: departure_description, label: Departure Description, type: textarea }
+      - { field: departure_date, label: Departure Date, type: date }
+      - { field: additional_note, label: Note, type: textarea }
       - { field: hire_date, label: Start Date, type: date }
       - { field: contract_start, label: Contract Start, type: date }
       - { field: contract_end, label: Contract End, type: date }

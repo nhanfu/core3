@@ -967,3 +967,26 @@ the Core3 listener at `127.0.0.1:3003` was not running (`curl` returned
 connection refused). Odoo at `127.0.0.1:8069` returned the unauthenticated
 database/login page (HTTP 200), but no authenticated certification render was
 available. No screenshots were invented or committed.
+
+## Employee Work tab bounded view (2026-09-12)
+
+The next uncovered view state after Certifications is the Work tab of the
+`hr.employee` form from `addons/hr/views/hr_employee_views.xml`. Odoo orders
+Company, Department, Job Position, Job Title, Manager, Address, Work Location,
+an inactive-only Departure section (reason, description, date), an HR-user Note,
+and the organization-chart area. The form header remains HR-user-only for
+Launch Plan and version history, while authenticated readers can open the Work
+projection; writes use the existing HR-user `employees.write` boundary. Active
+and archived/departed states use stable `2026-01-15` fixtures and no page-local
+data.
+
+Core3 extends the existing `employee-detail` page/API join with the bounded Work
+projection and migration `20260912123000-022-employee-work-tab.yaml`. The
+focused test is `test/employees_employee_work_tab.integration.test.ts`; it
+covers page/API ownership, Odoo field ordering, deterministic active/departed
+records, and the read/write boundary. This slice does not claim the Odoo
+organization-chart interaction or authenticated visual parity: the required
+persistent browser runtime is unavailable in this session, and no alternate
+authenticated browser runtime was available. Capture attempts are reserved
+under `/tmp/core3-odoo-parity/employees-batch8-20260912/`; no screenshots are
+invented or committed.
