@@ -465,9 +465,11 @@ within a viewport-bounded document rather than adding a bespoke renderer.
 
 ## Activity Types bounded slice (2026-09-12)
 
-Core3 adds CRM Configuration > Activity Types at `/crm/activity-types`, with separate page/API YAML joined by `page.id`, deterministic Call/Email/Meeting/To-Do fixtures, manager CRUD, and duplicate/validation/stale/missing/permission guards. The focused test passes 2 tests and 18 assertions.
+Core3 adds CRM Configuration > Activity Types at `/crm/activity-types`, with separate page/API YAML joined by `page.id`, deterministic Call/Email/Meeting/To-Do fixtures, manager CRUD, and duplicate/validation/stale/missing/permission guards. The action follows the CRM override in `crm/views/mail_activity_views.xml`: its list domain is global activity types or `res.partner`, while the create context defaults the target model to `crm.lead`. The form preserves Odoo's `Action`, `Default User`, `Model`, `Default Summary`, delay, `Next Activity`, and `Default Note` fields; delay units are `days`, `weeks`, and `months`, and delay type includes `previous_activity`.
 
-Odoo list captures are under `/tmp/core3-odoo-parity/crm-next-20260912/odoo-activity-types-desktop.png` and `odoo-activity-types-mobile.png`. The isolated Core3 browser pair was not completed before the runtime pass ended, so no paired visual parity claim is made; screenshots remain outside Git.
+The focused test passes 2 tests and 20 assertions. The idempotent migration is `20260912143000-024-activity-type-action.yaml`.
+
+No new authenticated Core3 browser captures were produced for this continuation. The interactive Playwright skill could not run because `js_repl` is unavailable in this session; the local dev server also hit shared-worktree `EMFILE` watcher exhaustion, and the non-watching startup path exposed an existing event-mediator/migration startup failure. Therefore no paired visual parity claim is made. Any existing Odoo captures remain outside Git; the required batch evidence directory is `/tmp/core3-odoo-parity/crm-batch5-20260912/`.
 
 ## Batch: Configuration -> Lost Reasons (2026-09-12)
 

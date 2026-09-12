@@ -19,7 +19,7 @@ components:
           subtitle: res_model
           fields:
             - { field: summary, label: Default Summary }
-            - { field: default_user, label: Assigned to }
+            - { field: default_user_id, label: Assigned to }
     form_view: { page: apps/services/crm/pages/activity-type-detail.yaml, side_panel: true }
     row_key: id
     selectable: true

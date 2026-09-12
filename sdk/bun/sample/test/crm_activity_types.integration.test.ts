@@ -35,7 +35,9 @@ describe('CRM Activity Types Odoo action parity', () => {
     const source = api.datasources[0];
     const rows = (await repository.querySource(source, { q: null, active: null }, 0, 50)).data;
     expect(rows.map((row: any) => row.name)).toEqual(['Call', 'Meeting', 'Email', 'To-Do']);
-    expect(rows.every((row: any) => row.active && row.res_model === 'crm.lead')).toBe(true);
+    expect(rows.every((row: any) => row.active && (row.res_model === null || row.res_model === 'res.partner'))).toBe(true);
+    expect(rows.map((row: any) => row.default_user_id)).toEqual(['Salesperson', 'Salesperson', 'Salesperson', 'Salesperson']);
+    expect((await repository.querySource(source, { q: null, active: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(source, { q: 'meeting', active: null }, 0, 50)).data).toHaveLength(1);
     expect((await repository.querySource(source, { q: 'missing', active: null }, 0, 50)).data).toEqual([]);
     const create = api.actions.find((action: any) => action.id === 'create_crm_activity_type_action');
@@ -46,7 +48,7 @@ describe('CRM Activity Types Odoo action parity', () => {
     const created = await repository.executeMutation(create.mutation, { values: { name: 'Demo Review', summary: 'Review proposal' } });
     expect(created).toMatchObject({ name: 'Demo Review', active: true });
     await expect(repository.executeMutation(create.mutation, { values: { name: 'demo review' } })).rejects.toMatchObject({ status: 409, code: 'CRM_ACTIVITY_TYPE_EXISTS' });
-    const editValues = { name: 'Updated Review', sequence: 10, summary: 'Review proposal', delay_count: 0, delay_unit: 'days', delay_from: 'current_date', res_model: 'crm.lead', category: 'default' };
+    const editValues = { name: 'Updated Review', sequence: 10, summary: 'Review proposal', delay_count: 0, delay_unit: 'days', delay_from: 'current_date', res_model: 'res.partner', category: 'default' };
     const edited = await repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: editValues });
     expect(edited).toBeDefined();
     await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { ...editValues, name: 'Stale' } })).rejects.toMatchObject({ status: 409 });

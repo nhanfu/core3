@@ -5,7 +5,7 @@ datasources:
     error_states:
       forbidden: { status: 403, code: CRM_ACTIVITY_TYPES_FORBIDDEN, message: You do not have permission to manage activity types. }
       transport_error: { status: 503, code: CRM_ACTIVITY_TYPES_UNAVAILABLE, message: Activity types are temporarily unavailable. }
-    query: "SELECT id, row_version, sequence, name, summary, CAST(delay_count AS VARCHAR) || ' ' || delay_unit AS planned_in, delay_from, res_model, category, active FROM crm_activity_types WHERE ((COALESCE(:active, '') = '' AND active = true) OR (:active = 'archived' AND active = false)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(summary, '') ILIKE '%' || :q || '%') AND (res_model IS NULL OR res_model IN ('crm.lead', 'res.partner')) ORDER BY sequence, name"
+    query: "SELECT id, row_version, sequence, name, summary, default_user_id, CAST(delay_count AS VARCHAR) || ' ' || delay_unit AS planned_in, delay_from, res_model, category, active FROM crm_activity_types WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN FALSE ELSE TRUE END AND ((COALESCE(:active, '') = '' AND active = true) OR (:active = 'archived' AND active = false)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(summary, '') ILIKE '%' || :q || '%') AND (res_model IS NULL OR res_model = 'res.partner') ORDER BY sequence, name"
 actions:
   - id: create_crm_activity_type_action
     type: server_form
@@ -18,9 +18,9 @@ actions:
     mutation:
       operation: insert
       table: crm_activity_types
-      fields: [sequence, name, summary, delay_count, delay_unit, delay_from, res_model, category, active]
+      fields: [sequence, name, summary, default_user_id, delay_count, delay_unit, delay_from, res_model, category, chaining_type, triggered_next_type, suggested_next_types, default_note, active]
       required: [name]
-      defaults: { sequence: 10, active: true, row_version: 1, delay_count: 0, delay_unit: days, delay_from: current_date, category: default, res_model: crm.lead }
+      defaults: { sequence: 10, active: true, row_version: 1, delay_count: 0, delay_unit: days, delay_from: previous_activity, category: default, chaining_type: suggest, res_model: crm.lead }
       guards:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: CRM_ACTIVITY_TYPE_NAME_REQUIRED, message: An activity type name is required. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_activity_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: CRM_ACTIVITY_TYPE_EXISTS, message: Activity type already exists. }
@@ -28,10 +28,11 @@ actions:
     fields:
       - { field: name, label: Activity Type, type: text, required: true }
       - { field: summary, label: Default Summary, type: text }
+      - { field: default_user_id, label: Default User, type: text }
       - { field: delay_count, label: Planned in, type: number, default: 0 }
-      - { field: delay_unit, label: Unit, type: select, options: [minutes, hours, days, weeks, months] }
-      - { field: delay_from, label: Type, type: select, options: [current_date, completion] }
-      - { field: res_model, label: Available on, type: select, options: [crm.lead, res.partner] }
+      - { field: delay_unit, label: Delay units, type: select, options: [days, weeks, months] }
+      - { field: delay_from, label: Delay Type, type: select, options: [current_date, previous_activity] }
+      - { field: res_model, label: Model, type: select, options: [crm.lead, res.partner] }
   - id: edit_crm_activity_type_action
     type: server_form
     permission: crm.manage
@@ -44,7 +45,7 @@ actions:
     mutation:
       operation: update
       table: crm_activity_types
-      fields: [sequence, name, summary, delay_count, delay_unit, delay_from, res_model, category]
+      fields: [sequence, name, summary, default_user_id, delay_count, delay_unit, delay_from, res_model, category, chaining_type, triggered_next_type, suggested_next_types, default_note]
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM crm_activity_types WHERE id = :id", status: 404, code: CRM_ACTIVITY_TYPE_NOT_FOUND, message: Activity type not found. }
@@ -54,9 +55,9 @@ actions:
       - { field: name, label: Activity Type, type: text, required: true }
       - { field: summary, label: Default Summary, type: text }
       - { field: delay_count, label: Planned in, type: number }
-      - { field: delay_unit, label: Unit, type: select, options: [minutes, hours, days, weeks, months] }
-      - { field: delay_from, label: Type, type: select, options: [current_date, completion] }
-      - { field: res_model, label: Available on, type: select, options: [crm.lead, res.partner] }
+      - { field: delay_unit, label: Delay units, type: select, options: [days, weeks, months] }
+      - { field: delay_from, label: Delay Type, type: select, options: [current_date, previous_activity] }
+      - { field: res_model, label: Model, type: select, options: [crm.lead, res.partner] }
   - id: bulk_delete_crm_activity_types_action
     type: server
     permission: crm.manage

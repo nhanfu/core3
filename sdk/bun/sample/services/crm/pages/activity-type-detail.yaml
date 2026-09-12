@@ -10,12 +10,13 @@ components:
       - title: Activity Settings
         fields:
           - { field: name, label: Activity Type, type: text, required: true }
-          - { field: category, label: Category, type: select, options: [default, upload_file, phonecall] }
-          - { field: res_model, label: Available on, type: select, options: [crm.lead, res.partner] }
+          - { field: category, label: Action, type: select, options: [default, upload_file, phonecall] }
+          - { field: default_user_id, label: Default User, type: text }
+          - { field: res_model, label: Model, type: select, options: [crm.lead, res.partner] }
           - { field: summary, label: Default Summary, type: text }
           - { field: delay_count, label: Planned in, type: number }
-          - { field: delay_unit, label: Unit, type: select, options: [minutes, hours, days, weeks, months] }
-          - { field: delay_from, label: Type, type: select, options: [current_date, completion] }
+          - { field: delay_unit, label: Delay units, type: select, options: [days, weeks, months] }
+          - { field: delay_from, label: Delay Type, type: select, options: [current_date, previous_activity] }
       - title: Next Activity
         fields:
           - { field: chaining_type, label: Chaining Type, type: select, options: [suggest, trigger] }

@@ -6,4 +6,4 @@ datasources:
     error_states:
       forbidden: { status: 403, code: CRM_ACTIVITY_TYPES_FORBIDDEN, message: You do not have permission to manage activity types. }
       not_found: { status: 404, code: CRM_ACTIVITY_TYPE_NOT_FOUND, message: Activity type not found. }
-    query: "SELECT id, row_version, sequence, name, summary, delay_count, delay_unit, delay_from, res_model, category, active FROM crm_activity_types WHERE id = :id AND (res_model IS NULL OR res_model IN ('crm.lead', 'res.partner'))"
+    query: "SELECT id, row_version, sequence, name, summary, default_user_id, delay_count, delay_unit, delay_from, res_model, category, chaining_type, triggered_next_type, suggested_next_types, default_note, active FROM crm_activity_types WHERE id = :id AND (res_model IS NULL OR res_model = 'res.partner')"
