@@ -33,11 +33,11 @@ describe('Website Page Manager parity', () => {
     const source = yaml('api/pages.yaml').datasources.find((item: any) => item.id === 'website_pages');
 
     const rows = await repository.querySource(source, { q: null, state: null }, 0, 50);
-    expect(rows.data.map((row: any) => row.name)).toEqual(['Home', 'Contact us']);
+    expect(rows.data.map((row: any) => row.name)).toEqual(['Home', 'Docs Home', 'Contact us']);
     expect(rows.data[0]).toMatchObject({ state: 'Published', is_in_menu: true, is_seo_optimized: true });
-    expect(rows.data[1]).toMatchObject({ state: 'Draft', is_in_menu: true, is_seo_optimized: false });
+    expect(rows.data[2]).toMatchObject({ state: 'Draft', is_in_menu: true, is_seo_optimized: false });
     expect((await repository.querySource(source, { q: 'missing', state: null }, 0, 50)).data).toEqual([]);
-    expect((await repository.querySource(source, { q: null, state: 'Published' }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Home']);
+    expect((await repository.querySource(source, { q: null, state: 'Published' }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Home', 'Docs Home']);
     database.close();
   });
 

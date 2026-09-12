@@ -32,20 +32,20 @@ export default class WebsiteModule implements ModuleLifecycle {
   async handlePublicRoute(request: Request, url: URL, service: WebsiteService): Promise<Response | null> {
     if (url.pathname === '/api/public/website/pages') {
       if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
-      const result = await service.call('website.public.pages', { q: url.searchParams.get('q')?.trim() || null });
+      const result = await service.call('website.public.pages', { q: url.searchParams.get('q')?.trim() || null, website_id: url.searchParams.get('website_id')?.trim() || null });
       return this.json({ pages: result?.pages || [] });
     }
     if (url.pathname === '/api/public/website/page') {
       if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
       const path = url.searchParams.get('path') || '/';
-      const result = await service.call('website.public.page_by_path', { url: path });
+      const result = await service.call('website.public.page_by_path', { url: path, website_id: url.searchParams.get('website_id')?.trim() || null });
       const page = result?.pages?.[0];
       return page ? this.json({ page }) : this.json({ error: 'Page not found', code: 'WEBSITE_PUBLIC_PAGE_NOT_FOUND' }, 404);
     }
     const match = url.pathname.match(/^\/api\/public\/website\/pages\/([^/]+)$/);
     if (!match) return null;
     if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
-    const result = await service.call('website.public.page', { id: decodeURIComponent(match[1]) });
+    const result = await service.call('website.public.page', { id: decodeURIComponent(match[1]), website_id: url.searchParams.get('website_id')?.trim() || null });
     const page = result?.pages?.[0];
     return page ? this.json({ page }) : this.json({ error: 'Page not found', code: 'WEBSITE_PUBLIC_PAGE_NOT_FOUND' }, 404);
   }

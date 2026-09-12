@@ -1,0 +1,18 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO website_websites (id, name, domain, homepage_url, default_language)
+      SELECT 'website-demo-002', 'Core3 Docs', 'https://docs.core3.example', '/', 'English'
+      WHERE NOT EXISTS (SELECT 1 FROM website_websites WHERE id = 'website-demo-002');
+      INSERT INTO website_pages (id, website_id, website_name, name, url, content_html, is_homepage, is_in_menu, state, date_publish)
+      SELECT 'website-page-demo-003', 'website-demo-002', 'Core3 Docs', 'Docs Home', '/', '<p>Documentation homepage.</p>', FALSE, TRUE, 'Published', CURRENT_TIMESTAMP
+      WHERE NOT EXISTS (SELECT 1 FROM website_pages WHERE id = 'website-page-demo-003');
+    down: |
+      DELETE FROM website_pages WHERE id = 'website-page-demo-003';
+      DELETE FROM website_websites WHERE id = 'website-demo-002';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
