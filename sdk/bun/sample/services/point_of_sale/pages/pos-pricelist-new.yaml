@@ -1,0 +1,27 @@
+title: New
+page: { id: pos-pricelist-new, route: /point-of-sale/pricelists/new, breadcrumb: [Sales, Point of Sale, Products, Pricelists, New], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_pricelist_new
+    title_field: name
+    editable: true
+    initial_editing: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_pos_pricelists_new, label: Pricelists, variant: secondary, permission: pos.read }
+      - { id: create_pos_pricelist, label: Save, variant: primary, permission: pos.manage }
+    group_columns: 2
+    groups:
+      - title: Pricelist
+        fields:
+          - { field: name, label: Pricelist Name, type: text, required: true, placeholder: 'e.g. USD Retailers' }
+          - { field: currency, label: Currency, type: text, required: true, default: USD }
+          - { field: company, label: Company, type: text, required: true, default: My Company (San Francisco) }
+          - { field: country_groups, label: Country Groups, type: text, placeholder: All countries }
+    notebook:
+      tabs:
+        - id: pricelist_rules
+          label: Sales Prices
+          groups:
+            - title: Sales Prices
+              description: Define sales prices by product, quantity, and date after saving the pricelist.

@@ -1104,3 +1104,42 @@ migration bootstrap terminated with DuckDB’s parser error
 `Adding columns with constraints not yet supported`; `/api/modules` never
 became available. No authenticated Core3 render or visual-parity claim is
 made, and no screenshots were created or added to Git.
+
+## Current bounded batch: Pricelists New action
+
+The local Odoo 19 source audit on 2026-09-12 traces Point of Sale → Products
+→ Pricelists through menu `pos_config_menu_action_product_pricelist` to
+`product.product_pricelist_action2` in `point_of_sale/views/product_view.xml`.
+The action is `product.pricelist`, uses `list,kanban,form`, and supplies the
+context `default_base=list_price`. Its form view `product_pricelist_view` is
+titled “Products Price List”, has the `New` flow, fields Pricelist Name,
+Currency, Company, Country Groups, and a Sales Prices notebook containing the
+Pricelist Rules list. The POS menu is restricted by
+`product.group_product_pricelist`; the source access CSV gives POS users read
+access and POS managers create/write access.
+
+Core3 adds the visible `New` action to the existing Pricelists list and the
+service-owned `/point-of-sale/pricelists/new` form. The page and API fragments
+join through `pos-pricelist-new`; the form preserves the Odoo field labels,
+placeholder/default values, two-column desktop grouping, responsive form
+composition, and Sales Prices tab. New price rules remain deferred until the
+parent pricelist is saved, matching the existing saved-parent x2many contract.
+Creation is guarded by `pos.manage` (cashiers with `pos.write` can read the
+route but cannot see/submit Save), with required-field, duplicate-name, and
+transport-error boundaries. The existing list/detail read access remains
+`pos.read`.
+
+Focused coverage passes 2 tests and 13 assertions for the exact page/API join,
+Odoo labels/tab, deterministic defaults, cashier-versus-manager permission
+boundary, creation, duplicate rejection, and required-name validation. The
+UI audit and ESLint pass, and `git diff --check` is clean.
+
+Authenticated Core3 and Odoo captures at 1440×900 and 390×844 were attempted
+under `/tmp/core3-odoo-parity/pos-batch9-20260912/`. This session does not
+expose the required Playwright `js_repl` browser tool, and the fallback runtime
+probe failed before `/api/modules`: Vite exited with the exact host watcher
+error `EMFILE: too many open files` while watching
+`sdk/bun/sample/vite.config.ts`; the backend then stopped. No screenshots were
+created, and this batch makes no visual-parity claim. The bounded residuals
+are the unavailable browser evidence, Odoo purple shell/chatter, and adding
+Sales Prices lines after the new parent is saved.

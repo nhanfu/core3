@@ -1,0 +1,40 @@
+title: New Pricelist
+page: { id: pos-pricelist-new }
+datasources:
+  - id: pos_pricelist_new
+    single: true
+    permission: pos.read
+    error_states:
+      transport_error: { status: 503, code: POS_PRICELIST_NEW_UNAVAILABLE, message: The new pricelist form is temporarily unavailable. }
+    query: "SELECT NULL AS id, 1 AS row_version, '' AS name, '' AS country_groups, 'My Company (San Francisco)' AS company, 'USD' AS currency, true AS active"
+actions:
+  - id: back_to_pos_pricelists_new
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/pricelists
+  - id: create_pos_pricelist
+    type: server_form
+    permission: pos.manage
+    title: New Pricelist
+    action: pos.pricelists.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [pos_pricelists]
+    mutation:
+      operation: insert
+      table: pos_pricelists
+      generated: [id]
+      fields: [row_version, name, country_groups, company, currency, active]
+      required: [name, company, currency]
+      defaults: { row_version: 1, country_groups: 'All countries', company: 'My Company (San Francisco)', currency: USD, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: POS_PRICELIST_NAME_REQUIRED, message: Pricelist name is required. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:company AS VARCHAR))) BETWEEN 1 AND 120 AND length(trim(CAST(:currency AS VARCHAR))) BETWEEN 1 AND 12", status: 422, code: POS_PRICELIST_FIELDS_REQUIRED, message: Company and currency are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_pricelists WHERE LOWER(name) = LOWER(trim(CAST(:name AS VARCHAR))))", status: 409, code: POS_PRICELIST_NAME_EXISTS, message: A pricelist with this name already exists. }
+      result: { query: "SELECT * FROM pos_pricelists WHERE id = :id" }
+    fields:
+      - { field: name, label: Pricelist Name, type: text, required: true }
+      - { field: currency, label: Currency, type: text, required: true, default: USD }
+      - { field: company, label: Company, type: text, required: true, default: My Company (San Francisco) }
+      - { field: country_groups, label: Country Groups, type: text }
+      - { field: active, label: Active, type: checkbox, default: true }
