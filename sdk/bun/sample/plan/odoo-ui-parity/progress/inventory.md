@@ -66,3 +66,13 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
 - Remaining transfer CRUD browser interaction, remaining transfer operation kinds,
   and full Odoo workflow parity still require QA coverage; the single passing
   receipt workflow is not module completion.
+
+## QA review record — candidate `84dd0f48` (2026-09-13)
+
+- QA ledger `85fa66c1` confirmed the isolated transfer CRUD checks, workflow
+  regression, audit (648/663/1113), and diff hygiene.
+- Authenticated New/Delete and paired Odoo evidence were blocked; no module
+  sign-off was granted.
+- The product candidate was rejected by the merge agent because its page/test
+  changes conflict with the active transfer edit implementation. Rebase the
+  product candidate before another integration attempt.

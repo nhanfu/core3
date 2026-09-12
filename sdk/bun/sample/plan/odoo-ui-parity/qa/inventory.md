@@ -62,3 +62,12 @@ Keep the module open until the remaining Odoo paired surfaces, full Inventory
 CRUD/workflow browser checks, and migration-contract decision are complete.
 
 Detailed execution matrix: [`test-plans/inventory.md`](test-plans/inventory.md). It is the module-level source for transfer, stock, product, report, actor, persistence, Temporal, and paired Odoo gates.
+
+## Merge review record — candidate `84dd0f48` / QA `85fa66c1`
+
+- QA evidence was reviewed and retained: focused CRUD/workflow checks,
+  audit, and diff check passed; authenticated New/Delete and paired Odoo
+  comparison remained blocked.
+- QA-only changes were merged into this ledger. The product candidate was not
+  integrated because it conflicts with active transfer edit page/test code;
+  no Inventory sign-off is implied.
