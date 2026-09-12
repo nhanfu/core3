@@ -462,3 +462,9 @@ while Core3 deliberately seeds six deterministic rows so the parity slice is
 testable. Core3 uses the shared Fluent shell instead of Odoo's purple shell;
 the mobile list preserves the shared table's compact horizontal presentation
 within a viewport-bounded document rather than adding a bespoke renderer.
+
+## Activity Types bounded slice (2026-09-12)
+
+Core3 adds CRM Configuration > Activity Types at `/crm/activity-types`, with separate page/API YAML joined by `page.id`, deterministic Call/Email/Meeting/To-Do fixtures, manager CRUD, and duplicate/validation/stale/missing/permission guards. The focused test passes 2 tests and 18 assertions.
+
+Odoo list captures are under `/tmp/core3-odoo-parity/crm-next-20260912/odoo-activity-types-desktop.png` and `odoo-activity-types-mobile.png`. The isolated Core3 browser pair was not completed before the runtime pass ended, so no paired visual parity claim is made; screenshots remain outside Git.

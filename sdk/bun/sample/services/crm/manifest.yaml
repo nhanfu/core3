@@ -94,6 +94,15 @@ menu:
           label: CRM Settings
           icon: settings
           permission: crm.manage
+        - path: /crm/activity-types
+          label: Activities
+          icon: calendar
+          permission: crm.manage
+          children:
+            - path: /crm/activity-types
+              label: Activity Types
+              icon: calendar
+              permission: crm.manage
         - path: /recurring-plans
           label: Recurring Plans
           icon: list

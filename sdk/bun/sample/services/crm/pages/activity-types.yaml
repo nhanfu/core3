@@ -1,0 +1,39 @@
+title: Activity Types
+page: { id: crm-activity-types, route: /crm/activity-types, breadcrumb: [CRM, Configuration, Activities, Activity Types], auth: { require: [crm.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_activity_types_action
+    create_action: create_crm_activity_type_action
+    create_label: New
+    search: { label: Search, placeholder: Search... }
+    filters: [{ field: active, label: Archived, options: [{ id: archived, label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Kanban
+        icon: grid
+        card:
+          title: name
+          subtitle: res_model
+          fields:
+            - { field: summary, label: Default Summary }
+            - { field: default_user, label: Assigned to }
+    form_view: { page: apps/services/crm/pages/activity-type-detail.yaml, side_panel: true }
+    row_key: id
+    selectable: true
+    row_open_action: edit_crm_activity_type_action
+    row_double_click_action: edit_crm_activity_type_action
+    row_actions: menu
+    bulk_actions:
+      - { id: bulk_delete_crm_activity_types_action, label: Delete selected, permission: crm.manage, variant: danger }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, sortable: false, mobile: false }
+      - { field: name, label: Activity Type, type: PrimaryEntityCell, mobile: true }
+      - { field: summary, label: Summary, mobile: true }
+      - { field: planned_in, label: Planned in, mobile: false }
+      - { field: delay_from, label: Type, mobile: false }
+      - { field: res_model, label: Available on, mobile: false }
+    page_size: 50
+    empty_state: { title: Create an Activity Type, description: 'These represent the different categories of things you have to do, such as Call or Prepare meeting.' }

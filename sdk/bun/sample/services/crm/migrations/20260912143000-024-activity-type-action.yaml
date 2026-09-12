@@ -1,0 +1,33 @@
+version: 0.0.24
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_activity_types ADD COLUMN IF NOT EXISTS sequence INTEGER;
+      ALTER TABLE crm_activity_types ADD COLUMN IF NOT EXISTS summary VARCHAR;
+      ALTER TABLE crm_activity_types ADD COLUMN IF NOT EXISTS delay_count INTEGER;
+      ALTER TABLE crm_activity_types ADD COLUMN IF NOT EXISTS delay_unit VARCHAR;
+      ALTER TABLE crm_activity_types ADD COLUMN IF NOT EXISTS delay_from VARCHAR;
+      ALTER TABLE crm_activity_types ADD COLUMN IF NOT EXISTS res_model VARCHAR;
+      ALTER TABLE crm_activity_types ADD COLUMN IF NOT EXISTS category VARCHAR;
+      ALTER TABLE crm_activity_types ADD COLUMN IF NOT EXISTS row_version INTEGER;
+      UPDATE crm_activity_types SET sequence = COALESCE(sequence, 10), delay_count = COALESCE(delay_count, 0), delay_unit = COALESCE(delay_unit, 'days'), delay_from = COALESCE(delay_from, 'current_date'), category = COALESCE(category, 'default'), row_version = COALESCE(row_version, 1);
+      UPDATE crm_activity_types SET sequence = CASE name WHEN 'Call' THEN 1 WHEN 'Meeting' THEN 2 WHEN 'Email' THEN 3 WHEN 'To-Do' THEN 4 ELSE sequence END,
+        summary = CASE name WHEN 'Call' THEN 'Discuss next steps' WHEN 'Meeting' THEN 'Prepare meeting' WHEN 'Email' THEN 'Send a follow-up' WHEN 'To-Do' THEN 'Complete a task' ELSE summary END,
+        delay_count = CASE name WHEN 'Call' THEN 2 WHEN 'Meeting' THEN 5 WHEN 'Email' THEN 1 ELSE delay_count END,
+        delay_unit = CASE name WHEN 'Call' THEN 'days' WHEN 'Meeting' THEN 'days' WHEN 'Email' THEN 'hours' ELSE delay_unit END,
+        delay_from = CASE name WHEN 'Call' THEN 'current_date' WHEN 'Meeting' THEN 'current_date' WHEN 'Email' THEN 'completion' ELSE delay_from END,
+        res_model = CASE WHEN name IN ('Call', 'Meeting', 'Email', 'To-Do') THEN 'crm.lead' ELSE res_model END
+      WHERE name IN ('Call', 'Meeting', 'Email', 'To-Do');
+    down: |
+      ALTER TABLE crm_activity_types DROP COLUMN IF EXISTS category;
+      ALTER TABLE crm_activity_types DROP COLUMN IF EXISTS res_model;
+      ALTER TABLE crm_activity_types DROP COLUMN IF EXISTS delay_from;
+      ALTER TABLE crm_activity_types DROP COLUMN IF EXISTS delay_unit;
+      ALTER TABLE crm_activity_types DROP COLUMN IF EXISTS delay_count;
+      ALTER TABLE crm_activity_types DROP COLUMN IF EXISTS summary;
+      ALTER TABLE crm_activity_types DROP COLUMN IF EXISTS sequence;
+      ALTER TABLE crm_activity_types DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
