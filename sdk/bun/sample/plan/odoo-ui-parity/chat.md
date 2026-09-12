@@ -193,3 +193,45 @@ Capture Odoo/Core3 at 1440x900 and 390x844 for inbox, channel, direct message, t
   bounded attempt was terminated after 20 seconds; no authenticated browser
   context existed. No visual-parity claim is made and no image artifacts were
   added.
+
+## Odoo menu/action/view inventory
+
+Source: Odoo 19 `addons/mail/views/mail_menus.xml`,
+`addons/mail/data/ir_actions_client.xml`, and the Discuss view XML files.
+
+| Odoo menu | Action | Model/client surface | Views or state | Core3 surface |
+| --- | --- | --- | --- | --- |
+| Discuss | `action_discuss` | Discuss client action | Inbox, Starred, History, channels, direct messages, search, composer, attachments | `/chat/` + `ChatWorkspace` |
+| Discuss / Channels | `mail.discuss_channel_action` | `discuss.channel` | Kanban, Form; active/archived; Join/Leave | `/chat/channels` + `/chat/channels/detail` |
+| Discuss / Configuration / Notifications | `mail.discuss_notification_settings_action` | client action | medium dialog; channel notification choice; message sound | `/chat/notifications` |
+| Discuss / Configuration / Voice & Video | `mail.discuss_call_settings_action` | client action | medium dialog; voice/video devices and controls | `/chat/voice-video` |
+| Discuss / Configuration / Canned Responses | `mail.mail_canned_response_action` | `mail.canned.response` | List, Kanban, Form; shared/private and shortcut search | `/chat/canned-responses` |
+| Discuss / Configuration / Roles | `mail.res_role_action` | `res.role` | List, Form; role/user search and My Roles | `/chat/roles` + `/chat/roles/detail` |
+
+Technical Email/Discuss and Activities menus are group-restricted in Odoo and
+remain source inventory rather than ordinary user-facing Discuss navigation.
+The inactive Integrations hook is recorded but is not rendered until an
+integration module enables it.
+
+## Bounded batch — persisted Discuss datasource and participant security (20260912)
+
+- The primary Discuss thread, message, and attachment datasource paths now use
+  real SQL queries over Chat-owned tables. Thread visibility is participant
+  scoped; message and attachment reads require thread membership; participant
+  IDs are enriched through the Auth service boundary.
+- Conversation creation persists the current user as a participant. Sending,
+  uploading, reading, marking unread, and starring reject non-participants with
+  `CHAT_THREAD_FORBIDDEN`; not-found and optimistic-concurrency guards remain
+  explicit.
+- Added deterministic Operations-team fixtures and missing local demo
+  identities required by the existing Chat fixture contract. No Auth-owned user
+  table was introduced.
+- Focused verification passes 20/20 tests with 134 assertions across six Chat
+  integration suites; audit reports 647 pages, 662 routes, and 1112
+  datasources; frontend production build passes.
+- Literal `schema.yaml`/`demo.yaml` consolidation was not applied because the
+  current Core3 loader only discovers timestamped migration filenames; such
+  files would be ignored without a server-wide loader change outside Chat.
+- Authenticated browser verification remains blocked in this owner session:
+  `js_repl` and the sample Playwright dependency are unavailable. No new
+  screenshot or visual-parity claim is made.
