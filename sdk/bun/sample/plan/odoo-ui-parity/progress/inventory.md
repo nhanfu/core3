@@ -131,3 +131,24 @@ sign-off.
 - Full Inventory suite: 42 tests / 454 assertions passed across 14 files.
 - Audit passed: 659 pages, 668 routes, 1136 datasources. Inventory CSS build,
   scoped ESLint, and `git diff --check` passed.
+
+## QA retest ledger — repair commit `9c73da7f` (2026-09-13)
+
+- Exact target verified: `9c73da7feac10c5f40c849bffb1430e386b43dab`.
+- Browser-shaped interpolation PASS: `receipt-00003` resolves with
+  `expected_row_version: "1"`.
+- Full Inventory regression PASS: 42 tests / 454 assertions across 14 files;
+  audit 659/668/1136, Inventory CSS, frontend build, scoped ESLint, and diff
+  check all passed.
+- Authenticated Admin list smoke PASS at desktop 1440x900 and mobile 390x844:
+  6 seeded receipts, no page errors, no horizontal overflow. Captures are at
+  `/tmp/core3-odoo-parity/inventory-retest-9c73da7f/` outside Git.
+- Draft Delete browser flow remains unverified: the initial wrong detail URL
+  was corrected to `/inventory/transfer/detail`, but the bounded rerun got
+  HTTP 503 `Service host unavailable` after service-host exit and emitted no
+  mutation request. No live delete/persistence claim is made.
+- Existing paired Odoo captures are retained as historical reference only; no
+  fresh exact-commit pair was possible after the runtime failure.
+
+QA disposition: retest incomplete / blocked on authenticated Draft Delete; no
+Inventory sign-off or aggregate progress claim.

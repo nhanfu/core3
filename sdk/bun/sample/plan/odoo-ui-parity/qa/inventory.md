@@ -124,3 +124,30 @@ QA disposition: CONDITIONAL / BLOCKED on browser Draft Delete. Receipt create an
 - QA-only changes were merged into this ledger. The product candidate was not
   integrated because it conflicts with active transfer edit page/test code;
   no Inventory sign-off is implied.
+
+## QA retest — repair commit `9c73da7f` (2026-09-13)
+
+- Exact target: `HEAD=9c73da7feac10c5f40c849bffb1430e386b43dab` in
+  `inventory-dev4-20260913`.
+- Browser-shaped contract PASS: `receipt-00003` plus row version `1` resolves
+  to `expected_row_version: "1"`; duplicate, stale, non-Draft, move cleanup,
+  and persistence guards remain covered.
+- Full Inventory regression PASS: 42 tests / 454 assertions across 14 files.
+  Audit PASS (659 pages / 668 routes / 1136 datasources), Inventory CSS,
+  frontend build, scoped ESLint, and `git diff --check` PASS.
+- Authenticated Admin list smoke PASS on `http://localhost:4034`: desktop
+  1440x900 and mobile 390x844 rendered 6 seeded receipts with no page errors
+  or horizontal overflow. Captures: `/tmp/core3-odoo-parity/inventory-retest-9c73da7f/`.
+- Authenticated Draft Delete: NOT RETESTED / BLOCKED. The first probe used
+  `/inventory/receipts/detail` (wrong URL) and reached no form. The corrected
+  declared route `/inventory/transfer/detail` then returned HTTP 503
+  `Service host unavailable` after the isolated service host exited; no
+  `/api/mutate` request was emitted. No live deletion or reload-persistence
+  result is claimed, and the prior 502 is not re-signed as fixed.
+- Permissions/stale guards PASS only at integration boundary for this retest;
+  no browser mutation boundary was reached. Existing paired Odoo receipts
+  captures remain historical reference only; no fresh exact-commit pair was
+  made after the bounded runtime failure.
+
+QA disposition: RETEST INCOMPLETE / BLOCKED on authenticated Draft Delete. No
+Inventory sign-off or aggregate progress claim.
