@@ -1,0 +1,119 @@
+page: { id: pos-pricelist-detail }
+datasources:
+  - id: pos_pricelist_detail
+    single: true
+    permission: pos.read
+    error_states:
+      unauthorized: { status: 401, code: POS_PRICELIST_UNAUTHENTICATED, message: Sign in to view this pricelist. }
+      forbidden: { status: 403, code: POS_PRICELIST_FORBIDDEN, message: You do not have permission to view pricelists. }
+      not_found: { status: 404, code: POS_PRICELIST_NOT_FOUND, message: Pricelist not found. }
+      transport_error: { status: 503, code: POS_PRICELIST_UNAVAILABLE, message: Pricelist details are temporarily unavailable. }
+    query: "SELECT id, row_version, name, country_groups, company, currency, active FROM pos_pricelists WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+  - id: pos_pricelist_rules
+    permission: pos.read
+    error_states:
+      transport_error: { status: 503, code: POS_PRICELIST_RULES_UNAVAILABLE, message: Sales price rules are temporarily unavailable. }
+    query: "SELECT id, row_version, pricelist_id, rule_name, CAST(price AS DOUBLE) AS price, CAST(min_quantity AS DOUBLE) AS min_quantity, date_start, date_end FROM pos_pricelist_rules WHERE pricelist_id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 ORDER BY min_quantity, id"
+actions:
+  - id: back_to_pos_pricelists
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/pricelists
+  - id: print_pos_pricelist
+    type: client
+    permission: pos.read
+    handler: print
+  - id: edit_pos_pricelist
+    type: server_form
+    permission: pos.manage
+    title: Edit Pricelist
+    action: pos.pricelists.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.pos_pricelist_detail
+    refresh: [pos_pricelist_detail, pos_pricelists]
+    mutation:
+      operation: update
+      table: pos_pricelists
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, country_groups, company, currency, active]
+      required: [name, company, currency]
+      guards:
+        - { query: "SELECT id FROM pos_pricelists WHERE id = :id", status: 404, code: POS_PRICELIST_NOT_FOUND, message: Pricelist not found. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: POS_PRICELIST_NAME_REQUIRED, message: Pricelist name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_pricelists WHERE LOWER(name) = LOWER(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: POS_PRICELIST_NAME_EXISTS, message: A pricelist with this name already exists. }
+      result: { query: "SELECT * FROM pos_pricelists WHERE id = :id" }
+    fields:
+      - { field: name, label: Pricelist Name, type: text, required: true }
+      - { field: currency, label: Currency, type: text, required: true }
+      - { field: company, label: Company, type: text, required: true }
+      - { field: country_groups, label: Country Groups, type: text }
+      - { field: active, label: Active, type: checkbox }
+  - id: add_pos_pricelist_rule
+    type: server_form
+    permission: pos.manage
+    title: Add price rule
+    action: pos.pricelists.rules.create
+    handler: line_item
+    operation: create
+    domain: pos_pricelist
+    params: { id: '{state.id}' }
+    refresh: [pos_pricelist_detail, pos_pricelist_rules]
+    mutation:
+      generated: [line_id]
+      before_steps:
+        - { query: "SELECT 'pos-rule-' || :id || '-' || CAST(COALESCE(MAX(row_version), 0) + 1 AS VARCHAR) AS line_id FROM pos_pricelist_rules WHERE pricelist_id = :id", assign: true }
+      guards:
+        - { query: "SELECT id FROM pos_pricelists WHERE id = :id", status: 404, code: POS_PRICELIST_NOT_FOUND, message: Pricelist not found. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:rule_name AS VARCHAR))) BETWEEN 1 AND 120 AND CAST(:price AS DECIMAL(18,2)) >= 0 AND CAST(:min_quantity AS DECIMAL(18,2)) > 0", status: 422, code: POS_PRICELIST_RULE_INVALID, message: Apply on, price, and a positive minimum quantity are required. }
+      steps:
+        - { query: "INSERT INTO pos_pricelist_rules(id, pricelist_id, row_version, rule_name, price, min_quantity, date_start, date_end) VALUES(:line_id, :id, 1, trim(CAST(:rule_name AS VARCHAR)), CAST(:price AS DECIMAL(18,2)), CAST(:min_quantity AS DECIMAL(18,2)), NULLIF(:date_start, ''), NULLIF(:date_end, ''))" }
+      result: { query: "SELECT * FROM pos_pricelist_rules WHERE id = :line_id" }
+    fields:
+      - { field: rule_name, label: Apply on, type: text, required: true }
+      - { field: price, label: Price, type: number, min: 0, required: true }
+      - { field: min_quantity, label: Min Quantity, type: number, min: 0.01, default: 1, required: true }
+      - { field: date_start, label: Start Date, type: text }
+      - { field: date_end, label: End Date, type: text }
+  - id: edit_pos_pricelist_rule
+    type: server_form
+    permission: pos.manage
+    title: Edit price rule
+    action: pos.pricelists.rules.update
+    handler: line_item
+    operation: update
+    domain: pos_pricelist
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [pos_pricelist_rules]
+    mutation:
+      concurrency: { required: true }
+      fields: [rule_name, price, min_quantity, date_start, date_end]
+      guards:
+        - { query: "SELECT id FROM pos_pricelist_rules WHERE id = :line_id AND pricelist_id = :id", status: 404, code: POS_PRICELIST_RULE_NOT_FOUND, message: Price rule not found. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:rule_name AS VARCHAR))) BETWEEN 1 AND 120 AND CAST(:price AS DECIMAL(18,2)) >= 0 AND CAST(:min_quantity AS DECIMAL(18,2)) > 0", status: 422, code: POS_PRICELIST_RULE_INVALID, message: Apply on, price, and a positive minimum quantity are required. }
+      steps:
+        - { query: "UPDATE pos_pricelist_rules SET row_version = row_version + 1, rule_name = trim(CAST(:rule_name AS VARCHAR)), price = CAST(:price AS DECIMAL(18,2)), min_quantity = CAST(:min_quantity AS DECIMAL(18,2)), date_start = NULLIF(:date_start, ''), date_end = NULLIF(:date_end, '') WHERE id = :line_id AND pricelist_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_PRICELIST_RULE_STALE, message: This price rule changed or was deleted. Reload before saving. }
+      result: { query: "SELECT * FROM pos_pricelist_rules WHERE id = :line_id" }
+    fields:
+      - { field: rule_name, label: Apply on, type: text, required: true }
+      - { field: price, label: Price, type: number, min: 0, required: true }
+      - { field: min_quantity, label: Min Quantity, type: number, min: 0.01, required: true }
+      - { field: date_start, label: Start Date, type: text }
+      - { field: date_end, label: End Date, type: text }
+  - id: delete_pos_pricelist_rule
+    type: server
+    permission: pos.manage
+    action: pos.pricelists.rules.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [pos_pricelist_rules]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM pos_pricelist_rules WHERE id = :line_id AND pricelist_id = :id", status: 404, code: POS_PRICELIST_RULE_NOT_FOUND, message: Price rule not found. }
+      steps:
+        - { query: "DELETE FROM pos_pricelist_rules WHERE id = :line_id AND pricelist_id = :id AND row_version = :expected_row_version", expect_changed: true, code: POS_PRICELIST_RULE_STALE, message: This price rule changed or was deleted. Reload before deleting. }

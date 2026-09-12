@@ -926,6 +926,20 @@ Focused coverage passes 3 tests and 28 assertions. Audit, ESLint, global CSS
 build, and `git diff --check` pass. Screenshots are temporary `/tmp` evidence
 and are not committed.
 
+## Pricelists action 2 form bounded slice (2026-09-12)
+
+Odoo's `product_pricelist_action2` exposes list, kanban, and form views with
+Sales Prices rule lines. Core3 adds `/point-of-sale/pricelist-detail`, keeps
+the list/detail page and API fragments joined by `page.id`, and adds
+deterministic rule fixtures with guarded pricelist and rule CRUD, validation,
+stale-row, empty, missing, and permission states. Migration
+`20260912120000-040-pos-pricelist-detail.yaml` is idempotent.
+
+The focused test passes 2 tests and 20 assertions. Capture was attempted under
+`/tmp/core3-odoo-parity/pos-batch6-20260912/`, but Vite hit the host
+`EMFILE` watcher limit before a paired Core3 pass; no visual parity claim or
+screenshot is made. Images remain outside Git.
+
 ## Sales Details wizard bounded slice (2026-09-12)
 
 Core3 completes the Odoo POS Sales Details action 703 through the visible report action and wizard route. The page/API contract preserves `page.id`, deterministic order-line aggregation, date/session filters, empty/error states, line actions, permissions, validation, and row-version guards. The focused test passes 4 tests and 26 assertions.

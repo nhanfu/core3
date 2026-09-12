@@ -1,0 +1,58 @@
+title: Pricelist
+page: { id: pos-pricelist-detail, route: /point-of-sale/pricelist-detail, breadcrumb: [Sales, Point of Sale, Products, Pricelists, Pricelist], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_pricelist_detail
+    title_field: name
+    editable: true
+    group_columns: 2
+    header_actions:
+      - { id: back_to_pos_pricelists, label: Pricelists, variant: secondary, permission: pos.read }
+      - { id: print_pos_pricelist, label: Print, variant: secondary, permission: pos.read }
+      - { id: edit_pos_pricelist, label: Edit, variant: primary, permission: pos.manage }
+    groups:
+      - title: Pricelist
+        fields:
+          - { field: name, label: Pricelist Name }
+          - { field: currency, label: Currency }
+          - { field: company, label: Company }
+          - { field: country_groups, label: Country Groups }
+          - { field: active, label: Active }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: pos_pricelist_rules
+    parent_source: pos_pricelist_detail
+    title: Sales Prices
+    description: Define sales prices by product, quantity, and date.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_pos_pricelist_rule, label: Add a line, variant: primary, permission: pos.manage }
+    empty_state: { title: No price rules, description: Add a line to define a price for this pricelist. }
+    children:
+      - { type: LineItemField, id: rule_name, field: rule_name, label: Apply on, readonly: true }
+      - { type: LineItemField, id: price, field: price, label: Price, readonly: true }
+      - { type: LineItemField, id: min_quantity, field: min_quantity, label: Min Quantity, readonly: true }
+      - { type: LineItemField, id: date_start, field: date_start, label: Start Date, readonly: true }
+      - { type: LineItemField, id: date_end, field: date_end, label: End Date, readonly: true }
+      - type: LineItemActions
+        id: pos_pricelist_rule_actions
+        edit_action: edit_pos_pricelist_rule
+        create_action: add_pos_pricelist_rule
+        actions:
+          - { id: edit_pos_pricelist_rule, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_pricelist_rule, label: Delete, icon: trash, variant: danger, permission: pos.manage }
+    columns:
+      - { field: rule_name, label: Apply on, width: 240 }
+      - { field: price, label: Price, width: 120, align: right }
+      - { field: min_quantity, label: Min Quantity, width: 130, align: right }
+      - { field: date_start, label: Start Date, width: 140 }
+      - { field: date_end, label: End Date, width: 140 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_pos_pricelist_rule, label: Edit, icon: edit, variant: ghost, permission: pos.manage }
+          - { id: delete_pos_pricelist_rule, label: Delete, icon: trash, variant: danger, permission: pos.manage }

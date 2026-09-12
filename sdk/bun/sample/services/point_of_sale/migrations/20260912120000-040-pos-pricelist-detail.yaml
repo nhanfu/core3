@@ -1,0 +1,23 @@
+version: 0.0.40
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_pricelists ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      UPDATE pos_pricelists SET row_version = 1 WHERE row_version IS NULL;
+      CREATE TABLE IF NOT EXISTS pos_pricelist_rules (
+        id VARCHAR PRIMARY KEY, pricelist_id VARCHAR NOT NULL, row_version BIGINT NOT NULL DEFAULT 1,
+        rule_name VARCHAR NOT NULL, price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        min_quantity DECIMAL(18,2) NOT NULL DEFAULT 1, date_start VARCHAR, date_end VARCHAR
+      );
+      INSERT INTO pos_pricelist_rules(id, pricelist_id, row_version, rule_name, price, min_quantity, date_start, date_end) VALUES
+        ('pos-rule-public-coffee', 'pos-pricelist-public', 1, 'Coffee', 3.50, 1, '2026-01-15', NULL),
+        ('pos-rule-public-bulk', 'pos-pricelist-public', 1, 'All Products', 3.00, 10, '2026-01-15', '2026-12-31'),
+        ('pos-rule-members-coffee', 'pos-pricelist-members', 1, 'Coffee', 3.15, 1, '2026-01-15', NULL)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_pricelist_rules;
+      ALTER TABLE pos_pricelists DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

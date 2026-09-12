@@ -6,6 +6,9 @@ components:
     source: pos_pricelists
     search: { label: Search pricelists, placeholder: 'Search pricelist or country group...' }
     filters: [{ field: active, label: Status, options_source: pos_pricelist_active }]
+    row_open_action: view_pos_pricelist
+    row_double_click_action: view_pos_pricelist
+    form_view: { page: apps/services/point_of_sale/pages/pos-pricelist-detail.yaml, side_panel: false }
     columns:
       - { field: name, label: Pricelist Name, type: PrimaryEntityCell }
       - { field: country_groups, label: Country Groups }
@@ -14,3 +17,9 @@ components:
       - { field: active, label: Active, type: StatusChip }
     page_size: 50
     row_key: id
+actions:
+  - id: view_pos_pricelist
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/pricelist-detail
+    params: { id: '{row.id}' }
