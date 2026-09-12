@@ -7,5 +7,6 @@ components:
     subtitle_field: company_name
     status_field: active
     status_colors: { true: green, false: neutral }
+    header_actions: [{ id: edit_maintenance_team, label: Edit, variant: primary, permission: maintenance.manage }, { id: delete_maintenance_team_detail, label: Delete, variant: danger, permission: maintenance.manage, confirm: Delete this maintenance team? }]
     group_columns: 2
     groups: [{ title: Maintenance Team, fields: [{ field: name, label: Team Name }, { field: member_names, label: Team Members }, { field: company_name, label: Company }, { field: color, label: Color }, { field: note, label: Note }] }]

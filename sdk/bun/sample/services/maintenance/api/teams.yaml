@@ -17,4 +17,18 @@ actions:
     fields: [{ field: name, label: Team Name, type: text, required: true }, { field: member_names, label: Team Members, type: text }, { field: company_name, label: Company, type: text }, { field: color, label: Color, type: number }, { field: note, label: Note, type: text }]
   - { id: archive_maintenance_team, type: server, permission: maintenance.manage, action: maintenance.teams.archive, handler: yaml_mutation, operation: update, refresh: [maintenance_teams], params: { values: { active: false } }, mutation: { operation: update, table: maintenance_team_records, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_team_records WHERE id = :id" } } }
   - { id: reopen_maintenance_team, type: server, permission: maintenance.manage, action: maintenance.teams.reopen, handler: yaml_mutation, operation: update, refresh: [maintenance_teams], params: { values: { active: true } }, mutation: { operation: update, table: maintenance_team_records, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_team_records WHERE id = :id" } } }
+  - id: delete_maintenance_team
+    type: server
+    permission: maintenance.manage
+    action: maintenance.teams.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [maintenance_teams]
+    mutation:
+      operation: delete
+      table: maintenance_team_records
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_team_records WHERE id = :id", status: 404, code: MAINTENANCE_TEAM_NOT_FOUND, message: Maintenance team was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_requests WHERE team_id = :id) AND NOT EXISTS (SELECT 1 FROM maintenance_equipment WHERE team_id = :id)", status: 409, code: MAINTENANCE_TEAM_IN_USE, message: A maintenance team with equipment or requests cannot be deleted; archive it instead. }
   - { id: view_maintenance_team, type: navigate, permission: maintenance.read, navigate_to: /maintenance-teams/detail, params: { id: '{row.id}' } }

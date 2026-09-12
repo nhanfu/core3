@@ -314,3 +314,33 @@ responsive card fallback; Odoo’s purple shell, activity icons, and richer form
 widgets remain shared-shell/rendering residuals rather than page-specific
 workarounds. Core3 preserves the six names, summaries, planned delays, and
 activity-type form fields.
+
+## Bounded batch: Maintenance Teams delete action (2026-09-12)
+
+The bounded live audit targeted `http://localhost:8073` using the plan
+database and credentials. Authentication succeeded, but the active database
+reported `maintenance: uninstalled` and its loaded menu tree contained no
+Maintenance application entry. Consequently no authenticated Maintenance
+menu/action screen could be captured from that reference. The authoritative
+Odoo 19 source inventory still identifies Configuration > Maintenance Teams,
+`maintenance_team_action_settings`, and `/odoo/maintenance-teams` as the
+target action; the source addon XML remains the audit fallback until the
+reference database installs Maintenance.
+
+This batch closes the next uncovered team action: deleting a Maintenance Team
+from the list row action menu or team form. The action is placed under the
+existing Configuration > Maintenance Teams menu and is protected by
+`maintenance.manage`. It returns 404 for a missing team, 409 when equipment or
+requests still reference the team (with archive guidance), and 409 for a stale
+row version. The deterministic Internal Maintenance fixture exercises a
+successful delete; Metrology and Subcontractor remain linked fixtures for the
+guard. The list remains empty-safe and the detail form exposes the Odoo-style
+Delete header action.
+
+Focused verification is recorded by
+`test/maintenance_team_delete.integration.test.ts`; captures were attempted
+under `/tmp/core3-odoo-parity/maintenance-batch3-20260912/` at 1440x900 and
+390x844. The Odoo captures record the authenticated but uninstalled-module
+state. Core3 returned an authentication redirect for both viewports, so its
+captures are login-shell evidence only and do not claim authenticated feature
+parity. Images are temporary comparison evidence and are not committed.

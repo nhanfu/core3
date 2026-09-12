@@ -12,3 +12,17 @@ actions:
     refresh: [maintenance_team_detail]
     mutation: { operation: update, table: maintenance_team_records, fields: [name, member_names, company_name, color, note], required: [name], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_team_records WHERE id = :id" } }
     fields: [{ field: name, label: Team Name, type: text, required: true }, { field: member_names, label: Team Members, type: text }, { field: company_name, label: Company, type: text }, { field: color, label: Color, type: number }, { field: note, label: Note, type: text }]
+  - id: delete_maintenance_team_detail
+    type: server
+    permission: maintenance.manage
+    action: maintenance.teams.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [maintenance_teams]
+    mutation:
+      operation: delete
+      table: maintenance_team_records
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_team_records WHERE id = :id", status: 404, code: MAINTENANCE_TEAM_NOT_FOUND, message: Maintenance team was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_requests WHERE team_id = :id) AND NOT EXISTS (SELECT 1 FROM maintenance_equipment WHERE team_id = :id)", status: 409, code: MAINTENANCE_TEAM_IN_USE, message: A maintenance team with equipment or requests cannot be deleted; archive it instead. }
