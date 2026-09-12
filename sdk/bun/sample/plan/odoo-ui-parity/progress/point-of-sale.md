@@ -1,16 +1,42 @@
 # point-of-sale parity progress
 
 Module owner: point-of-sale module owner
-QA assignment: dispatchable QA slot (wave assignment pending)
+QA assignment: QA-2
 Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: `d5fab7ee`
+Candidate commit: `cdbc38ee`
 
 ## Current state
 
 The module has a current functional/browser QA candidate. No complete parity
-claim is made because broader route interaction, empty/error states, and fresh
-paired Odoo adjudication remain open.
+claim is made: the focused corpus and route smoke pass, but visual inspection
+found an oversized global launcher/icon rendering defect, while broader route
+interaction, empty/error states, actor/restart coverage, and fresh paired Odoo
+adjudication remain open.
+
+## QA-2 verification of `cdbc38ee` (2026-09-13)
+
+- POS corpus: 84 passed, 700 assertions, 0 failures across 24 files in 104.67s.
+- UI audit: 659 pages, 668 routes, 1,134 datasources; passed.
+- Authenticated desktop matrix: 72/72 registered POS routes loaded at
+  1440x900 with 0 console/page errors, 0 failed requests, 0 HTTP responses
+  >=400, and 0 horizontal overflow.
+- Authenticated mobile smoke for touch, orders, and configs at 390x844:
+  rendered with `overflow=false`.
+- Captures: `/tmp/pos-qa-cdbc38ee-orders-desktop.png`,
+  `/tmp/pos-qa-cdbc38ee-touch-desktop.png`,
+  `/tmp/pos-qa-cdbc38ee-orders-mobile.png`,
+  `/tmp/pos-qa-cdbc38ee-touch-mobile.png`,
+  `/tmp/pos-qa-cdbc38ee-configs-mobile.png`.
+- Open finding `POINT_OF_SALE-VISUAL-001`: global launcher/icon glyphs render
+  at extreme sizes and push POS content far below the fold. The candidate is
+  not visually signed off.
+
+## QA decision
+
+Conditional: functional/route smoke passes, but visual sign-off is blocked by
+`POINT_OF_SALE-VISUAL-001`. Fresh browser click-through, actor/restart,
+empty/error, and paired Odoo gates are still required.
 
 ## Current evidence (2026-09-12)
 
