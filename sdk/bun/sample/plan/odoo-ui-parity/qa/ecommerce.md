@@ -8,11 +8,11 @@
 - Artifacts: /tmp/core3-odoo-parity/module-matrix-20260912/ecommerce-desktop.png and ecommerce-mobile.png.
 - Boundary: this is route/render smoke evidence only; it does not sign off the complete menu tree, CRUD, permissions, workflows, persistence, or paired Odoo visual parity.
 
-QA state: dormant
+QA state: qa-in-progress
 QA slot: dispatchable ecommerce assignment (pending wave dispatch)
 Module owner: ecommerce module owner
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: working tree after Ecommerce Categories slice
 
 Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md). It is the module-level source for catalog, pricelists, commerce workflows, actors, persistence, Temporal, and paired Odoo gates.
 
@@ -21,6 +21,7 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | ECOMMERCE-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
+| ECOMMERCE-FUNC-002 | Categories page/API, deterministic data and permissioned CRUD contracts | `bun test ./test/ecommerce*.integration.test.ts` — 6 tests, 43 assertions | pass |
 
 ## Bugs and retests
 

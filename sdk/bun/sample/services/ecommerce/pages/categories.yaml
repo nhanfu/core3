@@ -1,0 +1,21 @@
+page: { id: ecommerce-categories, route: /ecommerce/categories, breadcrumb: [eCommerce, Products, Categories], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_categories
+    responsive_card: true
+    create_action: create_ecommerce_category
+    create_label: New
+    search: { label: Search categories, placeholder: Search category or parent... }
+    filters: [{ field: active, label: Status, options_source: ecommerce_category_active }]
+    columns:
+      - { field: name, label: Category, type: PrimaryEntityCell }
+      - { field: parent_name, label: Parent Category }
+      - { field: sequence, label: Sequence, align: right }
+      - { field: product_count, label: Products, align: right }
+      - { field: active, label: Active, type: StatusChip }
+    row_actions: menu
+    actions: [{ id: archive_ecommerce_category, label: Archive, permission: ecommerce.write, show_if: "row.active === true" }, { id: restore_ecommerce_category, label: Restore, permission: ecommerce.write, show_if: "row.active === false" }]
+    page_size: 50
+    row_key: id
+    empty_state: { title: No categories found, description: Create a category to organize products on your website. }

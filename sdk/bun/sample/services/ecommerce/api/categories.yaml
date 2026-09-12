@@ -1,0 +1,50 @@
+page: { id: ecommerce-categories }
+datasources:
+  - id: ecommerce_categories
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_CATEGORIES_UNAUTHENTICATED, message: Sign in to view eCommerce categories. }
+      forbidden: { status: 403, code: ECOMMERCE_CATEGORIES_FORBIDDEN, message: You do not have permission to view eCommerce categories. }
+      transport_error: { status: 503, code: ECOMMERCE_CATEGORIES_UNAVAILABLE, message: eCommerce categories are temporarily unavailable. }
+    query: "SELECT c.id, c.row_version, c.name, c.parent_name, c.sequence, c.active, COUNT(p.id) AS product_count FROM ecommerce_categories c LEFT JOIN ecommerce_products p ON p.category = c.name AND p.active = TRUE WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR COALESCE(c.parent_name, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR c.active = :active) GROUP BY c.id, c.row_version, c.name, c.parent_name, c.sequence, c.active ORDER BY c.sequence, c.name"
+  - id: ecommerce_category_active
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"
+actions:
+  - id: create_ecommerce_category
+    type: server_form
+    permission: ecommerce.write
+    title: New Category
+    action: ecommerce.categories.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_categories]
+    mutation:
+      operation: insert
+      table: ecommerce_categories
+      fields: [name, parent_name, sequence, active]
+      required: [name]
+      defaults: { sequence: 10, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ECOMMERCE_CATEGORY_NAME_REQUIRED, message: Category name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_categories WHERE name = :name)", status: 409, code: ECOMMERCE_CATEGORY_DUPLICATE, message: Category name already exists. }
+      result: { query: "SELECT * FROM ecommerce_categories WHERE id = :id" }
+    fields: [{ field: name, label: Category Name, type: text, required: true }, { field: parent_name, label: Parent Category, type: text }, { field: sequence, label: Sequence, type: number }, { field: active, label: Active, type: checkbox }]
+  - id: archive_ecommerce_category
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.categories.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_categories]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: ecommerce_categories, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM ecommerce_categories WHERE id = :id" } }
+  - id: restore_ecommerce_category
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.categories.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_categories]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: ecommerce_categories, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM ecommerce_categories WHERE id = :id" } }

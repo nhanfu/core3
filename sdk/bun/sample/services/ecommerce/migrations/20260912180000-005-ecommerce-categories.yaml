@@ -1,0 +1,22 @@
+version: 0.0.18
+kind: schema
+description: eCommerce product categories
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_categories (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        parent_name VARCHAR,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_categories_name_idx ON ecommerce_categories(name);
+    down: DROP TABLE IF EXISTS ecommerce_categories;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

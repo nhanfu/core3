@@ -1,0 +1,17 @@
+version: 0.0.19
+kind: data
+description: eCommerce product category demo data
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_categories (id, name, parent_name, sequence, active) VALUES
+        ('ecommerce-category-all', 'All', NULL, 10, TRUE),
+        ('ecommerce-category-accessories', 'Accessories', 'All', 20, TRUE),
+        ('ecommerce-category-office', 'Office', 'All', 30, TRUE),
+        ('ecommerce-category-legacy', 'Legacy', 'All', 40, FALSE)
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_categories WHERE id IN ('ecommerce-category-all', 'ecommerce-category-accessories', 'ecommerce-category-office', 'ecommerce-category-legacy');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
