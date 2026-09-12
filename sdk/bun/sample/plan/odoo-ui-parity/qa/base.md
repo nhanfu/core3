@@ -64,3 +64,10 @@ because its run had a transient `/api/apps` failure.
   persistence and download delivery still require QA follow-up.
 - Odoo paired comparison remains open; screenshots are outside Git under
   `/tmp/core3-base-contact-attachments-qa-*.png`.
+
+## QA review record — candidate `bb3487c2` / QA `1a404627`
+
+- The explicit upload probe exceeded the 30-second runner limit and was
+  stopped; the bounded retest reproduced `BASE-ATTACH-001`.
+- No browser/upload process remained running. Upload persistence, download
+  delivery, and paired Odoo comparison remain open; no sign-off is granted.

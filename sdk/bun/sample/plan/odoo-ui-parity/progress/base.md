@@ -41,3 +41,9 @@ Candidate commit: `ecf1880f`
   persistence/download delivery remain open and no end-to-end claim is made.
 - Focused evidence: client 31 tests; Base Contacts 5 tests / 61 assertions;
   audit 647/662/1112; frontend build; focused ESLint; diff check.
+
+## QA review record — candidate `bb3487c2` / QA `1a404627` (2026-09-13)
+
+- QA reproduced `BASE-ATTACH-001`: the real browser upload probe timed out,
+  and upload persistence/download delivery remain blocked.
+- Odoo paired comparison remains open; Base is not signed off.
