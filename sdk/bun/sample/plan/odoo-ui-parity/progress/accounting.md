@@ -5,7 +5,7 @@ Wave: first execution wave
 QA assignment: dispatchable accounting QA slot (bounded event tasks)
 Status: ready-for-test (implementation inherited; owner verification in progress)
 Verification trigger: merge-candidate
-Candidate commit: pending local accounting commit
+Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 
 ## Scope inventory
 

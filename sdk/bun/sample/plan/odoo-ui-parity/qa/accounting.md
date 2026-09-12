@@ -3,7 +3,7 @@
 QA slot: dispatchable accounting slot
 Module owner: accounting
 Verification trigger: merge-candidate
-Candidate commit: pending local accounting commit
+Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 QA state: qa-failed
 
 ## Test-case inventory
