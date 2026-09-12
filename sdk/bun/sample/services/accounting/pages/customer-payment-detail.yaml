@@ -1,0 +1,18 @@
+title: Customer Payment
+page: { id: accounting-customer-payment-detail, route: /accounting/customer-payment-detail, breadcrumb: [Invoicing, Customers, Payments, Payment], auth: { require: [accounting.read] } }
+components:
+  - type: OdooFormView
+    source: accounting_customer_payment_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: In Process, label: In Process }, { value: Paid, label: Paid }, { value: Canceled, label: Canceled }]
+    editable: false
+    group_columns: 2
+    groups:
+      - title: Payment
+        fields: [{ field: name, label: Payment }, { field: state, label: State }, { field: payment_type, label: Payment Type }, { field: partner_name, label: Customer }, { field: reference, label: Memo }]
+      - title: Payment information
+        fields: [{ field: payment_date, label: Date }, { field: journal, label: Journal }, { field: payment_method, label: Payment Method }, { field: amount, label: Amount }, { field: currency, label: Currency }]
+    notebook:
+      active: other-info
+      tabs: [{ id: other-info, label: Other Info, fields: [{ field: reference, label: Memo }, { field: payment_type, label: Payment Type }, { field: currency, label: Currency }] }]

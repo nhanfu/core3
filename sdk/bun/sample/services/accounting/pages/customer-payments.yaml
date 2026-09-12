@@ -1,0 +1,50 @@
+title: Customer Payments
+page: { id: accounting-customer-payments, route: /accounting/customer-payments, breadcrumb: [Invoicing, Customers, Payments], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_customer_payments
+    create_action: create_accounting_customer_payment
+    create_label: New
+    search: { label: Search payments, placeholder: Search... }
+    filters:
+      - { field: state, label: Status, options_source: customer_payment_states }
+    group_by:
+      - { field: partner_name, label: Customer }
+      - { field: journal, label: Journal }
+      - { field: payment_method, label: Payment Method }
+      - { field: state, label: Status }
+      - { field: payment_date, label: Payment Date }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: state
+        groups_source: customer_payment_states
+        card: { title: partner_name, subtitle: amount_display, fields: [{ field: name, label: Number }, { field: payment_date, label: Date }, { field: state, label: State }] }
+      - { id: graph, label: Graph, icon: graph, category_field: payment_method, measure_field: amount, type: bar, mobile: false }
+      - id: activity
+        label: Activity
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: partner_name
+        record_date_field: activity_date
+        activity_types: [{ id: todo, label: To-Do, icon: check }, { id: email, label: Email, icon: mail }, { id: done, label: Done, icon: check }]
+    columns:
+      - { field: payment_date, label: Date, type: DateCell, sortable: true }
+      - { field: name, label: Number, type: PrimaryEntityCell }
+      - { field: journal, label: Journal }
+      - { field: payment_method, label: Payment Method }
+      - { field: partner_name, label: Customer }
+      - { field: amount_currency_display, label: Amount in Currency, align: right }
+      - { field: amount_display, label: Amount, align: right }
+      - { field: state, label: State, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: view_accounting_customer_payment
+    row_double_click_action: view_accounting_customer_payment
+    form_view: { page: apps/services/accounting/pages/customer-payment-detail.yaml, side_panel: false }

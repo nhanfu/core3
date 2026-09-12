@@ -1,0 +1,32 @@
+page: { id: accounting-customer-payments }
+datasources:
+  - id: customer_payment_states
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('In Process','In Process'), ('Paid','Paid'), ('Canceled','Canceled'), ('Rejected','Rejected')) states(value, label)"
+  - id: accounting_customer_payments
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, name, partner_name, payment_type, amount, printf('%s %,.2f', currency, CAST(amount AS DOUBLE)) AS amount_currency_display, printf('$ %,.2f', CAST(amount AS DOUBLE)) AS amount_display, payment_method, journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, state, reference, CAST(payment_date AS VARCHAR) AS activity_date, partner_name AS activity_user, 1 AS activity_count, CASE state WHEN 'Paid' THEN 'done' WHEN 'Canceled' THEN 'overdue' WHEN 'Rejected' THEN 'overdue' WHEN 'In Process' THEN 'today' ELSE 'planned' END AS activity_state, CASE state WHEN 'Paid' THEN 'Payment paid' WHEN 'Canceled' THEN 'Review canceled payment' WHEN 'Rejected' THEN 'Review rejected payment' WHEN 'In Process' THEN 'Follow up payment' ELSE 'Complete payment' END AS activity_summary FROM accounting_payments WHERE payment_type = 'Inbound' AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty','not_found','no_results') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR journal ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY payment_date DESC"
+actions:
+  - id: view_accounting_customer_payment
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/customer-payment-detail
+    params: { id: '{row.id}' }
+  - id: create_accounting_customer_payment
+    type: server_form
+    permission: accounting.write
+    title: New customer payment
+    action: accounting.customer_payments.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: accounting_payments
+      fields: [name, partner_name, payment_type, amount, payment_method, journal, currency, payment_date, reference]
+      required: [name, partner_name, amount]
+      defaults: { payment_type: Inbound, payment_method: Bank, journal: Bank, currency: USD, state: Draft }
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0", status: 400, message: Payment amount must be positive }]
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+    fields: [{ field: name, label: Payment, type: text, required: true }, { field: partner_name, label: Customer, type: text, required: true }, { field: amount, label: Amount, type: number, required: true }, { field: payment_date, label: Date, type: text }, { field: journal, label: Journal, type: select, options: [Bank, Cash, Card, Miscellaneous] }, { field: payment_method, label: Payment Method, type: select, options: [Bank, Cash, Card, Other] }, { field: reference, label: Memo, type: text }]

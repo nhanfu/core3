@@ -1,0 +1,16 @@
+version: 0.0.42
+description: Deterministic customer payment action fixtures
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO accounting_payments (id, name, partner_name, payment_type, amount, payment_method, journal, currency, payment_date, state, reference)
+      VALUES
+        ('accounting-customer-payment-001', 'BNK1/2026/00001', 'Gemini Furniture', 'Inbound', 1650.00, 'Bank', 'Bank', 'USD', DATE '2026-01-12', 'Paid', 'INV/2026/0001'),
+        ('accounting-customer-payment-002', 'BNK1/2026/00002', 'Azure Interior', 'Inbound', 875.50, 'Card', 'Bank', 'USD', DATE '2026-01-11', 'In Process', 'SO/2026/0008'),
+        ('accounting-customer-payment-003', 'BNK1/2026/00003', 'Ready Mat', 'Inbound', 240.00, 'Bank', 'Cash', 'USD', DATE '2026-01-10', 'Draft', 'SO/2026/0009');
+    down: |
+      DELETE FROM accounting_payments WHERE id IN ('accounting-customer-payment-001', 'accounting-customer-payment-002', 'accounting-customer-payment-003');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

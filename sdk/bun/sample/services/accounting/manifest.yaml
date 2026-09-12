@@ -30,6 +30,10 @@ menu:
           label: Vendor Refunds
           icon: invoice
           permission: accounting.read
+        - path: /accounting/customer-payments
+          label: Payments
+          icon: bank
+          permission: accounting.read
         - path: /accounting/vendor-payments
           label: Vendor Payments
           icon: bank

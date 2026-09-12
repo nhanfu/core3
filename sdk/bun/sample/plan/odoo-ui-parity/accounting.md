@@ -1265,3 +1265,46 @@ An authenticated desktop/mobile comparison was attempted under
 `/tmp/core3-odoo-parity/accounting-batch6-20260912/`, but the isolated runtime
 was unavailable before the browser pass. No authenticated Core3 screenshot or
 full visual-parity claim is made, and images are not committed.
+
+## Customer Payments bounded action (2026-09-12)
+
+The next uncovered customer-facing Odoo action is `account.action_account_payments`
+from `addons/account/views/account_payment_view.xml`. Odoo labels it
+`Customer Payments`, targets `account.payment`, and declares
+`list,kanban,form,graph,activity`; its context sets inbound/customer defaults,
+the inbound search filter, and bank/cash journals. The installed list uses the
+shared payment list with `Customer` in the partner column and the exact visible
+columns `Date`, `Number`, `Journal`, `Payment Method`, `Customer`, `Amount in
+Currency`, `Amount`, and `State`. The action's empty helper is `Register a
+payment` followed by the liquidity-movement explanation. The source form is
+the shared payment form with Payment, Payment information, Other Info, and
+chatter sections. The source path is `/odoo/customer-payments`; Odoo's menu
+placement is Invoicing → Customers → Payments.
+
+Core3 adds `/accounting/customer-payments` and the read-only
+`/accounting/customer-payment-detail` form. The page YAML is presentation-only;
+`api/customer-payments.yaml` and `api/customer-payment-detail.yaml` own the
+datasources/actions and join their pages by `page.id`. The list has the source
+List/Kanban/Graph/Activity tabs, inbound-only query/domain, customer labels,
+search/status grouping, responsive Kanban cards, and an `accounting.write`
+guarded New action. Migration `20260912070000-042-accounting-customer-payments.yaml`
+seeds three deterministic inbound payments while retaining the existing inbound
+demo rows. Search, empty fixture, detail, positive-amount validation, and read /
+write permission boundaries are represented in the focused integration test.
+
+Focused validation passes 2 tests and 13 assertions. The UI audit passes with
+604 pages, 612 routes, and 1,040 datasources; `git diff --check` is clean. The
+existing All Payments migration was also made compatible with the installed
+DuckDB parser by adding its defaulted `unmatched` column without an inline
+`NOT NULL` constraint, then backfilling nulls.
+
+Authenticated capture was attempted under
+`/tmp/core3-odoo-parity/accounting-customer-payments-20260912/` at 1440x900 and
+390x844. Core3's isolated frontend terminated with
+`EMFILE: too many open files` while Vite watched
+`sdk/bun/sample/vite.config.ts`; its API then returned 503. Odoo `/web/login`
+returned HTTP 200, but this session lacks the required authenticated browser
+automation context (`js_repl`/Playwright package), so neither authenticated
+Odoo nor Core3 screenshots were captured and no visual-parity claim is made.
+The remaining Odoo purple-shell versus Core3 Fluent-shell comparison and live
+browser interaction evidence are explicit follow-up gates.

@@ -1,0 +1,6 @@
+page: { id: accounting-customer-payment-detail }
+datasources:
+  - id: accounting_customer_payment_detail
+    single: true
+    permission: accounting.read
+    query: "SELECT id, row_version, name, partner_name, payment_type, amount, payment_method, journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, state, reference FROM accounting_payments WHERE id = :id AND payment_type = 'Inbound'"

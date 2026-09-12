@@ -3,7 +3,8 @@ kind: data
 type:
   postgres:
     up: |
-      ALTER TABLE accounting_payments ADD COLUMN IF NOT EXISTS unmatched BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE accounting_payments ADD COLUMN IF NOT EXISTS unmatched BOOLEAN DEFAULT FALSE;
+      UPDATE accounting_payments SET unmatched = FALSE WHERE unmatched IS NULL;
       UPDATE accounting_payments SET unmatched = TRUE WHERE id IN ('accounting-payment-demo-001', 'accounting-all-payment-001', 'accounting-all-payment-002', 'accounting-all-payment-003');
       INSERT OR IGNORE INTO accounting_payments(id, name, partner_name, payment_type, amount, payment_method, journal, currency, payment_date, state, reference, unmatched)
       VALUES
