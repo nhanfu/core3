@@ -31,6 +31,7 @@ describe('Purchase Vendors parity', () => {
     expect(listView).toMatchObject({ source: 'purchase_vendors', row_open_action: 'view_purchase_vendor', responsive_card: true });
     expect(listView.views.map((view: any) => view.id)).toEqual(['list', 'card']);
     expect(listView.views[1]).toMatchObject({ label: 'Kanban', mobile: true, card: { title: 'name', subtitle: 'email', compact: true, avatar_field: 'name', contact_fields: [{ field: 'phone', icon: 'phone' }], badges: [{ field: 'vendor_tags' }], company_field: 'location_display', primary_metric: 'purchase_order_count' } });
+    expect(listView.columns.find((column: any) => column.field === 'name')?.label).toBe('Name');
     expect(listView.columns.map((column: any) => column.field)).toEqual(['name', 'email', 'phone', 'city', 'country', 'purchase_order_count', 'payment_terms', 'state']);
     expect(detail.components[0]).toMatchObject({ source: 'purchase_vendor_detail', status_field: 'state', editable: true });
     expect(detail.components[0].stat_buttons).toContainEqual(expect.objectContaining({ id: 'vendor_purchase_orders', value_field: 'purchase_order_count' }));
