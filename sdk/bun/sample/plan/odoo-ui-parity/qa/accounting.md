@@ -29,6 +29,7 @@ QA state: qa-in-progress
 | ACC-BROWSER-001 | Authenticated Odoo/Core3 reference | `/accounting/journals` | desktop authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-desktop.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-desktop.png` | functional pass; visual mismatch recorded as ACC-VIS-001 |
 | ACC-BROWSER-002 | Authenticated Odoo/Core3 reference | `/accounting/journals` | mobile authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-mobile.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-mobile.png` | functional pass; visual comparison pending repair |
 | ACC-RUNTIME-001 | Core3 module runner | accounting process | startup and zero unexpected API failures | `bun run agent:module -- accounting --port=4011`; `/api/modules` returned 200 | fixed/retested |
+| ACC-BROWSER-003 | Authenticated shell after login | `/accounting/journals` | menu catalog is loaded after authentication; Odoo-style shell chrome is visible at desktop and mobile | Node Playwright authenticated checks; `/tmp/core3-odoo-parity/accounting-paired/core3-desktop-shell-fixed.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-mobile-shell-fixed.png` | pass; 0 page/request errors, no horizontal overflow, 6 visible top-level menu entries |
 
 ## Bugs and retests
 
@@ -37,14 +38,14 @@ QA state: qa-in-progress
 | ACC-QA-001 | Combined accounting run timed out in four tests at Bun's default 5s per-test timeout | 4 timeout reports; each isolated file passed with `--timeout 20000` | none; test/runtime policy follow-up | isolated retests pass | open |
 | ACC-QA-002 | Isolated accounting runner previously failed during global page discovery before listening | `bun run agent:module -- accounting --port=3011`; malformed datasource error | global catalog/runtime state is now loadable | port 4011 runner and `/api/modules` pass | fixed/retested |
 | ACC-QA-003 | Stale runtime blocker in ledger after global catalog became loadable | isolated runner on port 4011 and authenticated Journals route | main-agent host/catalog integration state | `/api/modules` 200; desktop/mobile Journals render cleanly | retested; ledger updated |
-| ACC-VIS-001 | Core3 Journals frame does not match Odoo application chrome: missing purple top bar, equivalent menu chrome, and toolbar control placement | paired desktop/mobile captures under `/tmp/core3-odoo-parity/accounting-paired/` | shared shell ownership to be traced before Accounting-specific CSS | functional route is clean; visual repair pending | open |
+| ACC-VIS-001 | Core3 Journals frame did not match Odoo application chrome: missing purple top bar and equivalent menu chrome because the authenticated menu catalog was cached empty | paired captures plus authenticated DOM probe | `911faa78` documented the smoke matrix; current shell/auth repair is working-tree pending commit | desktop/mobile retest shows plum bar, 6 menu entries, zero errors, and no overflow | fixed/retested; paired visual comparison of toolbar geometry remains open |
 
 ## Sign-off
 
 - Functional: focused tests pass when run independently; combined-run policy open
 - Permissions: covered by focused accounting tests; authenticated browser confirmation pending
 - Persistence/data integrity: covered by focused mutation tests; browser reload confirmation pending
-- Desktop/mobile visual parity: comparison captured; ACC-VIS-001 and remaining accounting routes remain open
+- Desktop/mobile visual parity: shared shell/auth-chrome mismatch fixed and retested; ACC-VIS-001's remaining toolbar/layout comparison and accounting routes remain open
 - Tester decision: not signed off; runtime and browser gates remain open
 
 ## QA dispatch contract

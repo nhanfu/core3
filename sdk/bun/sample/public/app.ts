@@ -127,6 +127,9 @@ export async function setAuth(token: string, user: any) {
   _user = user;
   window.__CORE3_USER__ = user;
   client.setToken(token);
+  // The login page may have prefetched /api/menu without credentials. Drop
+  // that public/empty catalog before the authenticated shell is mounted.
+  await i18n.refreshMenu();
 }
 
 function showLogin(location: { langCode?: string }) {

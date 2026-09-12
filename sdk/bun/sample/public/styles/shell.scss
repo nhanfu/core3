@@ -28,8 +28,8 @@
 
 .app-header {
   height: var(--header-height);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: #714b67;
+  border-bottom: 1px solid #5f3e57;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -38,6 +38,41 @@
   top: 0;
   z-index: 100;
   flex-shrink: 0;
+}
+
+/* Odoo's application chrome is a persistent plum bar shared by module
+ * screens. Keep the shell-level chrome here so module styles cannot drift
+ * the navigation frame independently. */
+.app-header .header-nav-link,
+.app-header .header-nav-trigger,
+.app-header .header-nav-submenu-trigger,
+.app-header .header-nav-label,
+.app-header .header-nav-item-label,
+.app-header .header-nav-item-icon,
+.app-header .header-nav-chevron,
+.app-header .header-icon-btn,
+.app-header .header-user-name,
+.app-header .header-user-role,
+.app-header .header-time {
+  color: #fff;
+}
+.app-header .header-nav-link:hover,
+.app-header .header-nav-link.active,
+.app-header .header-nav-trigger:hover,
+.app-header .header-nav-group.open > .header-nav-trigger,
+.app-header .header-icon-btn:hover {
+  border-color: rgba(255, 255, 255, .24);
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+}
+.app-header .global-ai-search-form {
+  border-color: rgba(255, 255, 255, .24);
+  background: rgba(255, 255, 255, .12);
+  color: rgba(255, 255, 255, .8);
+}
+.app-header .global-ai-search-form input,
+.app-header .global-ai-search-form input::placeholder {
+  color: rgba(255, 255, 255, .9);
 }
 
 .app-header-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; overflow: visible; }
