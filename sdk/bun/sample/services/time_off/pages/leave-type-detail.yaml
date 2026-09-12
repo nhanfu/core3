@@ -10,6 +10,7 @@ components:
     editable: true
     stat_buttons:
       - { id: open_type_time_off, label: Time Off, value_field: group_days_leave, permission: time_off.manage }
+      - { id: open_type_allocations, label: Allocations, value_field: allocation_count, permission: time_off.manage }
     header_actions:
       - { id: edit_leave_type, label: Edit, variant: secondary, permission: time_off.manage }
     group_columns: 2

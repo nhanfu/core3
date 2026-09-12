@@ -686,3 +686,32 @@ available. Therefore no visual-parity claim or screenshot is made for this
 batch; the required capture directory remains reserved at
 `/tmp/core3-odoo-parity/timeoff-batch5-20260912/` for a future runtime pass at
 1440x900 and 390x844.
+
+## Time Off Type Allocations stat action (2026-09-12)
+
+The next uncovered installed source action is
+`hr.leave.type.action_see_days_allocated` from `hr_leave_type_views.xml`.
+Odoo exposes an `Allocations` stat button on an existing Time Off Type when
+allocation is required; it opens `hr_leave_allocation_action_all` with the
+selected type, approved-state, and current-year context.
+
+Core3 adds the matching `Allocations` stat button to the existing
+`leave-type-detail` form. Its service-owned action navigates to
+`/time-off-allocations` with `leave_type_id`, `state: Approved`, `year: 2026`,
+and the Odoo context keys. The existing allocations datasource now accepts
+those optional type/year filters while preserving its unscoped route. The
+detail datasource computes the deterministic current-year Submitted/Approved
+allocation count from the fixed fixtures. Layout and API remain separate and
+joined by `page.id`; no new route or mutation is introduced.
+
+Focused coverage is in `time_off_type_allocation_stat.integration.test.ts`:
+the focused test passes 1 test and 7 assertions, verifying the source action
+contract, page/API behavior, approved/current-year filtering, the count
+measure, and an empty missing-type scope. The full Time Off integration glob
+passes 41 tests and 465 assertions; the pre-existing
+`time_off_type_stat_action.integration.test.ts` also passes after preserving
+the original stat-button ordering. Authenticated browser evidence was
+attempted with `bun run dev --db=ddb --memory`, but startup failed before the
+frontend could load with DuckDB `Parser Error: Adding columns with constraints
+not yet supported`; therefore no desktop/mobile visual-parity claim or
+screenshots are made for this batch. Images remain outside Git.
