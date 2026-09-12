@@ -1,0 +1,29 @@
+version: 0.0.17
+kind: data
+description: Deterministic Inventory Settings form defaults
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_settings (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        group_stock_multi_locations BOOLEAN NOT NULL DEFAULT FALSE,
+        group_stock_multi_warehouses BOOLEAN NOT NULL DEFAULT FALSE,
+        group_stock_tracking_lot BOOLEAN NOT NULL DEFAULT FALSE,
+        group_stock_production_lot BOOLEAN NOT NULL DEFAULT FALSE,
+        group_stock_packaging BOOLEAN NOT NULL DEFAULT FALSE,
+        group_stock_adv_location BOOLEAN NOT NULL DEFAULT FALSE,
+        module_stock_barcode BOOLEAN NOT NULL DEFAULT FALSE,
+        group_stock_reception_report BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00'
+      );
+      INSERT INTO inventory_settings (id, company_name, group_stock_multi_locations, group_stock_multi_warehouses, group_stock_tracking_lot, group_stock_production_lot, group_stock_packaging, group_stock_adv_location, module_stock_barcode, group_stock_reception_report)
+      VALUES ('inventory-settings-demo', 'My Company (San Francisco)', TRUE, FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

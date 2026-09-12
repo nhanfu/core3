@@ -69,6 +69,10 @@ menu:
     - id: configuration
       label: Configuration
       items:
+        - path: /inventory/settings
+          label: Settings
+          icon: settings
+          permission: inventory.manage
         - path: /warehouses
           label: Warehouses
           icon: warehouse

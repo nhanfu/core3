@@ -1,0 +1,52 @@
+title: Inventory Settings
+page: { id: inventory-settings, route: /inventory/settings, breadcrumb: [Supply Chain, Inventory, Configuration, Settings], auth: { require: [inventory.manage] } }
+components:
+  - type: SettingsView
+    id: inventory-settings-view
+    source: inventory_settings
+    title: Settings
+    save_action: save_inventory_settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: inventory
+        label: Inventory
+        icon: warehouse
+        sections:
+          - title: Operations
+            fields:
+              - { field: group_stock_multi_locations, label: Storage Locations, description: Manage multiple locations and internal transfers., type: checkbox }
+              - { field: group_stock_multi_warehouses, label: Storage Warehouses, description: Manage multiple warehouses in one company., type: checkbox }
+              - { field: group_stock_tracking_lot, label: Lots and Serial Numbers, description: Track products by lots or serial numbers., type: checkbox }
+              - { field: group_stock_production_lot, label: Lots / Serial Numbers, description: Assign lots or serial numbers to stock operations., type: checkbox }
+              - { field: group_stock_packaging, label: Packages, description: Pack products into packages during transfers., type: checkbox }
+          - title: Advanced Operations
+            fields:
+              - { field: group_stock_adv_location, label: Storage Locations, description: Configure removal strategies and putaway rules., type: checkbox }
+              - { field: module_stock_barcode, label: Barcode Scanner, description: Process inventory operations with barcode scanning., type: checkbox }
+              - { field: group_stock_reception_report, label: Reception Report, description: View and allocate incoming quantities., type: checkbox }
+actions:
+  - id: save_inventory_settings
+    type: server
+    permission: inventory.manage
+    action: inventory.settings.update
+    handler: yaml_mutation
+    operation: update
+    params:
+      group_stock_multi_locations: '{row.group_stock_multi_locations}'
+      group_stock_multi_warehouses: '{row.group_stock_multi_warehouses}'
+      group_stock_tracking_lot: '{row.group_stock_tracking_lot}'
+      group_stock_production_lot: '{row.group_stock_production_lot}'
+      group_stock_packaging: '{row.group_stock_packaging}'
+      group_stock_adv_location: '{row.group_stock_adv_location}'
+      module_stock_barcode: '{row.module_stock_barcode}'
+      group_stock_reception_report: '{row.group_stock_reception_report}'
+    mutation:
+      operation: update
+      table: inventory_settings
+      key_field: id
+      fields: [group_stock_multi_locations, group_stock_multi_warehouses, group_stock_tracking_lot, group_stock_production_lot, group_stock_packaging, group_stock_adv_location, module_stock_barcode, group_stock_reception_report]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_settings WHERE id = :id", status: 404, code: INVENTORY_SETTINGS_NOT_FOUND, message: Inventory settings no longer exist. }
+        - { query: "SELECT id FROM inventory_settings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Inventory settings were changed by another user. Reload before saving. }
+      result: { query: "SELECT * FROM inventory_settings WHERE id = :id" }
