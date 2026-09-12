@@ -24,11 +24,27 @@ Candidate commit: working tree after vehicle create contract slice
 
 Detailed execution matrix: [`test-plans/fleet.md`](test-plans/fleet.md). It is the module-level source for the remaining CRUD, actor, persistence, Temporal, and paired Odoo gates.
 
+## QA-3 candidate verification (2026-09-13)
+
+- Candidate under test: `cae76032` (`feat: harden fleet vehicle creation contract`).
+- Functional corpus: `bun test ./test/fleet_vehicle_create.integration.test.ts ./test/fleet_vehicle_archive.integration.test.ts ./test/fleet_driver_change.integration.test.ts ./test/fleet_settings.integration.test.ts --timeout 20000` — **11 passed, 73 assertions, 0 failures** across 4 files.
+- Vehicle create persistence: Administrator created `QA Fleet Shuttle` in an isolated DuckDB database; the reload query returned the same ID, plate, and contract date. Required/type/odometer/date/duplicate guards returned the declared 422/409 errors without inserting rows.
+- Vehicle lifecycle/permission coverage: archive → restore passed with row versions `1 → 3`; stale archive was rejected; driver assignment and Fleet settings validation/persistence passed.
+- Authenticated browser create: Administrator created `QA Browser Fleet 20260913` from the mobile form (`390x844`), `/api/mutate` returned `200`, the row appeared in the list, and it remained after reload. No console errors, page errors, failed requests, or horizontal overflow were observed. Capture: `/tmp/core3-odoo-parity/fleet-qa-create-mobile-saved.png`.
+- Authenticated browser route/render: Administrator Vehicles rendered at desktop `1440x900` without errors or overflow. Capture: `/tmp/core3-odoo-parity/fleet-qa-desktop.png`.
+- Fleet-user boundary: `fleet@tms.local` had no `New vehicle` control; an authenticated direct `fleet.vehicles.create` request returned `403` with `Requires permission: fleet.write`. The same account was denied Fleet route access with `403 Requires permission: fleet.read`, so the expected Fleet User read/action case cannot pass with the current demo permissions.
+- Persistence boundary: browser reload and isolated database reload passed. Restart/migration persistence was not claimed because this runner used `--memory`; it remains open for a file-backed DuckDB run.
+
+QA state: qa-in-progress
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| FLEET-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
+| FLEET-QA3-001 | Candidate vehicle create validation, persistence, lifecycle, settings, and driver assignment | 11 tests / 73 assertions; isolated DuckDB and reload evidence | PASS |
+| FLEET-QA3-002 | Administrator authenticated mobile create and reload | `/tmp/core3-odoo-parity/fleet-qa-create-mobile-saved.png`; HTTP 200; no errors/overflow | PASS |
+| FLEET-QA3-003 | Fleet-user create/read boundary | UI action absent; authenticated create returned 403 `fleet.write`; Fleet route returned 403 `fleet.read` | FINDING |
+| FLEET-QA3-004 | File-backed restart/migration persistence | Not exercised by the memory runner | PENDING |
 
 ## Bugs and retests
 
@@ -40,13 +56,15 @@ Detailed execution matrix: [`test-plans/fleet.md`](test-plans/fleet.md). It is t
 | FLEET-004 | Permission boundary | Fleet user archive returned 403 `fleet.write` | PASS |
 | FLEET-005 | Fresh paired Odoo visual comparison and complete browser CRUD | Not complete for current candidate | pending |
 | FLEET-006 | Vehicle create validation and persistence | 2 focused tests / 10 assertions; valid create reloaded with database defaults; required/type/odometer/date/duplicate guards returned explicit 422/409 errors without inserting rows; full Fleet corpus 64/693 across 21 files | PASS for declarative API contract; authenticated browser create and restart persistence remain pending |
+| FLEET-QA3-001 | Current candidate focused create/permission/persistence verification | 11 tests / 73 assertions; Administrator browser create/reload passed; Fleet account lacked `fleet.read` and `fleet.write` in the demo permission set | PASS for tested candidate; permission fixture and restart gates remain open |
+| FLEET-QA3-002 | Fleet User expected read/action access | `fleet@tms.local` received 403 for Fleet route and `fleet.vehicles.create`; no New vehicle control rendered | OPEN — demo actor does not satisfy the plan's Fleet User expectation |
 
 ## Sign-off
 
 - Functional: pass for tested Fleet contracts and vehicle workflow
 - Current-wave vehicle create contract: pass; browser mutation and restart
   evidence remain open
-- Permissions: pass for tested write boundary
-- Persistence/data integrity: pass for archive/restore workflow
+- Permissions: pass for Administrator/Fleet-user write boundary; Fleet User read/action expectation is open because the demo actor lacks Fleet permissions
+- Persistence/data integrity: pass for isolated create reload and archive/restore workflow; file-backed restart remains open
 - Desktop/mobile visual parity: route smoke pass; paired parity pending
-- Tester decision: pass for route smoke; paired Odoo and complete interaction gates remain open
+- Tester decision: candidate create and browser smoke pass; permission-fixture, restart, paired Odoo, and complete interaction gates remain open

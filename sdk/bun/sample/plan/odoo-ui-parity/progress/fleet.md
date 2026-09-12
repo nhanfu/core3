@@ -40,8 +40,18 @@ coverage are still open.
   `bun test ./test/fleet*.integration.test.ts --timeout 20000` — 64 passed,
   693 assertions, 0 failures across 21 files.
 
+## QA-3 candidate verification (2026-09-13)
+
+- Candidate `cae76032` bounded corpus:
+  `bun test ./test/fleet_vehicle_create.integration.test.ts ./test/fleet_vehicle_archive.integration.test.ts ./test/fleet_driver_change.integration.test.ts ./test/fleet_settings.integration.test.ts --timeout 20000` — 11 passed, 73 assertions, 0 failures across 4 files.
+- Administrator browser create on isolated runner `http://localhost:4336/fleet/vehicles` passed at mobile `390x844`: `QA Browser Fleet 20260913` / `QA-BROWSER-0913` was submitted through the form with HTTP 200 and remained after reload. No console/page/request errors or horizontal overflow. Capture: `/tmp/core3-odoo-parity/fleet-qa-create-mobile-saved.png`.
+- Administrator desktop Vehicles render passed at `1440x900` with no errors or overflow. Capture: `/tmp/core3-odoo-parity/fleet-qa-desktop.png`.
+- `fleet@tms.local` rendered without the New vehicle action; its authenticated `fleet.vehicles.create` request returned 403 `Requires permission: fleet.write`, and Fleet route access returned 403 `Requires permission: fleet.read`. This is recorded as an open actor-fixture finding because the QA plan expects a Fleet User read/action boundary.
+- Browser reload and isolated DuckDB reload passed. File-backed restart/migration was not run because the QA runner used `--memory`.
+
 ## Next bounded task
 
-Complete fresh paired Odoo comparison, authenticated vehicle create/edit CRUD,
-actor/company boundaries, restart/migration proof, and browser workflow
-coverage before sign-off.
+Complete fresh paired Odoo comparison, authenticated vehicle edit CRUD,
+Fleet User permission fixture/read boundary, company boundaries,
+file-backed restart/migration proof, and browser workflow coverage before
+sign-off.
