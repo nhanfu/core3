@@ -1,0 +1,26 @@
+page: { id: company-detail }
+datasources:
+  - id: company_detail
+    single: true
+    permission: base.companies.read
+    error_states: { transport_error: { status: 503, code: BASE_COMPANY_UNAVAILABLE, message: Company data is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, company_type, email, phone, street, city, state_name, zip, country_name, currency_code, active FROM base_contacts WHERE id = :id AND is_company = true AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1"
+actions:
+  - id: edit_company_detail
+    type: server_form
+    permission: base.companies.write
+    title: Edit company
+    action: base.companies.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.company_detail
+    refresh: [company_detail]
+    mutation:
+      operation: update
+      table: base_contacts
+      fields: [name, email, phone, street, city, state_name, zip, country_name, currency_code]
+      required: [name]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM base_contacts WHERE id = :id AND is_company = true AND active = true", status: 404, code: BASE_COMPANY_NOT_FOUND, message: Active company not found. }]
+      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
+    fields: [{ field: name, label: Company name, type: text, required: true }, { field: email, label: Email, type: text }, { field: phone, label: Phone, type: text }, { field: street, label: Street, type: text }, { field: city, label: City, type: text }, { field: state_name, label: State, type: text }, { field: zip, label: ZIP, type: text }, { field: country_name, label: Country, type: text }, { field: currency_code, label: Currency, type: text }]

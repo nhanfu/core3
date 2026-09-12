@@ -1,0 +1,96 @@
+page: { id: companies }
+datasources:
+  - id: company_active_states
+    permission: base.companies.read
+    query: "SELECT value, label FROM (VALUES ('active', 'Active'), ('archived', 'Archived')) states(value, label)"
+  - id: companies
+    permission: base.companies.read
+    error_states: { transport_error: { status: 503, code: BASE_COMPANIES_UNAVAILABLE, message: Companies are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, email, phone, street, city, state_name, zip, country_name, currency_code, active FROM base_contacts WHERE is_company = true AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((COALESCE(:active, '') IN ('', 'active') AND active = true) OR (:active = 'archived' AND active = false)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(email, '') ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: create_company
+    type: server_form
+    permission: base.companies.write
+    title: New company
+    action: base.companies.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [companies]
+    mutation:
+      operation: insert
+      table: base_contacts
+      generated: [id]
+      fields: [name, company_type, email, phone, street, city, state_name, zip, country_name, currency_code, is_company, active]
+      required: [name]
+      defaults: { company_type: company, is_company: true, active: true }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts WHERE is_company = true AND active = true AND LOWER(name) = LOWER(:name))", status: 409, code: BASE_COMPANY_NAME_EXISTS, message: A company with this name already exists. }]
+      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
+    fields: [{ field: name, label: Company name, type: text, required: true }, { field: email, label: Email, type: text }, { field: phone, label: Phone, type: text }, { field: street, label: Street, type: text }, { field: city, label: City, type: text }, { field: state_name, label: State, type: text }, { field: zip, label: ZIP, type: text }, { field: country_name, label: Country, type: text }, { field: currency_code, label: Currency, type: text }]
+  - id: edit_company
+    type: server_form
+    permission: base.companies.write
+    title: Edit company
+    action: base.companies.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [companies]
+    mutation:
+      operation: update
+      table: base_contacts
+      fields: [name, email, phone, street, city, state_name, zip, country_name, currency_code]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND is_company = true AND active = true", status: 404, code: BASE_COMPANY_NOT_FOUND, message: Active company not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts WHERE is_company = true AND active = true AND LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: BASE_COMPANY_NAME_EXISTS, message: A company with this name already exists. }
+      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
+    fields: [{ field: name, label: Company name, type: text, required: true }, { field: email, label: Email, type: text }, { field: phone, label: Phone, type: text }, { field: street, label: Street, type: text }, { field: city, label: City, type: text }, { field: state_name, label: State, type: text }, { field: zip, label: ZIP, type: text }, { field: country_name, label: Country, type: text }, { field: currency_code, label: Currency, type: text }]
+  - id: archive_company
+    type: server
+    permission: base.companies.write
+    action: base.companies.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [companies]
+    params: { values: { active: false } }
+    mutation:
+      operation: update
+      table: base_contacts
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM base_contacts WHERE id = :id AND is_company = true AND active = true", status: 409, code: BASE_COMPANY_ALREADY_ARCHIVED, message: Company is already archived or unavailable. }]
+      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
+  - id: unarchive_company
+    type: server
+    permission: base.companies.write
+    action: base.companies.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [companies]
+    params: { values: { active: true } }
+    mutation:
+      operation: update
+      table: base_contacts
+      fields: [active]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM base_contacts WHERE id = :id AND is_company = true AND active = false", status: 409, code: BASE_COMPANY_ALREADY_ACTIVE, message: Company is already active or unavailable. }]
+      result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
+  - id: delete_company
+    type: server
+    permission: base.companies.write
+    action: base.companies.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [companies]
+    params: { id: '{row.id}' }
+    mutation:
+      operation: delete
+      table: base_contacts
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM base_contacts WHERE id = :id AND is_company = true", status: 404, code: BASE_COMPANY_NOT_FOUND, message: Company not found. }]
+  - id: view_company
+    type: navigate
+    permission: base.companies.read
+    navigate_to: /company-detail
+    params: { id: '{row.id}' }

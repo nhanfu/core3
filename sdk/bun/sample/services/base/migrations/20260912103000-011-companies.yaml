@@ -1,0 +1,16 @@
+version: 0.0.11
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO base_contacts(id, name, company_type, email, phone, street, city, state_name, zip, country_name, currency_code, is_company, active, parent_company_id, website, language_code)
+      VALUES
+        ('company-northwind', 'Northwind Traders', 'company', 'hello@northwind.core3.local', '+1 555 0120', '20 Harbor Way', 'Seattle', 'Washington', '98101', 'United States', 'USD', true, true, NULL, 'https://northwind.core3.local', 'en_US'),
+        ('company-archived', 'Archived Company', 'company', 'archived.company@core3.local', '+1 555 0121', 'Old Commerce Road', 'Portland', 'Oregon', '97201', 'United States', 'USD', true, false, NULL, NULL, 'en_US')
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, active = EXCLUDED.active, is_company = true, updated_at = EXCLUDED.updated_at;
+    down: |
+      DELETE FROM base_contacts WHERE id IN ('company-northwind', 'company-archived');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
