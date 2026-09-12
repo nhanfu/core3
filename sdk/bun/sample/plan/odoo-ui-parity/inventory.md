@@ -718,7 +718,7 @@ responses. Odoo reference and Core3 captures remain under `/tmp`:
 | Odoo Stock report | 1440x900 | `/tmp/odoo-inventory-stock-report-desktop-20260911.png` | `3c337ebeeafcab66f9bc3864f2059513820d4ef6f7347dcd932fd63659f4083a` |
 | Odoo Stock report | 390x844 | `/tmp/odoo-inventory-stock-report-mobile-20260911.png` | `7fcaf26bf7c18f050c1be68df07970f7716e2c8edfdfd0994f95f2dac54cf795` |
 | Core3 Stock report | 1440x900 | `/tmp/core3-inventory-stock-report-current-1440x900.png` | `e29447066de5452f7b0b7806df9419ec68088899e0087cc31e1787ce557638ab` |
-| Core3 Stock report | 390x844 | `/tmp/core3-inventory-stock-report-current-390x844-fixed.png` | `15bcf22aed163825b042e33e4926c70bbcd0a5e71977f817a4c4bcaf1d94bef7` |
+| Core3 Stock report | 390x844 | `/tmp/core3-inventory-stock-report-mobile-390x844-20260912.png` | `803424886fef0faedd4a853d22ba665d175d008f4fe499c92db10e4f40f55116` |
 
 The bounded residual is the Odoo purple shell/search panel and Inventory at
 Date wizard versus Core3's Fluent shell and shared date entry point. Images
