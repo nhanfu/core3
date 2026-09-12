@@ -681,3 +681,9 @@ The expected residuals are the shared Core3 Fluent shell versus Odoo's purple
 shell, the Core3 compact form modal versus Odoo's chatter form, and deterministic
 replacement fixtures versus the single active address in the live reference.
 Screenshots remain outside Git.
+
+## Campaign Stages bounded slice (2026-09-12)
+
+Core3 adds the Odoo UTM Campaign Stages configuration action at `/email-marketing/campaign-stages`, with a detail form, page/API YAML joined by `page.id`, deterministic New/Schedule/Design/Sent rows, and manager-only CRUD with stale, duplicate, invalid, missing, and transport boundaries. The focused test passes 3 tests and 27 assertions.
+
+Authenticated paired captures are saved outside Git under `/tmp/core3-odoo-parity/email-marketing-next-20260912/` at 1440x900 and 390x844. The browser pass covered list, search, form, create/update/delete, request failures, page errors, and viewport overflow. Remaining differences are the shared Core3 Fluent shell versus Odoo's purple shell and deterministic fixture volume versus the live reference.
