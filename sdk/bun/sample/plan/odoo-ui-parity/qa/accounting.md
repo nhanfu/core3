@@ -14,6 +14,17 @@ Verification trigger: merge-candidate
 Candidate commit: `35e618aa776b90e97f3c59a092114b3c7997e39f`
 QA state: qa-in-progress
 
+## Current regression evidence (2026-09-12)
+
+- Explicit-timeout Accounting suite: `bun test ./test/accounting_*.integration.test.ts --timeout 20000` — 90 passed, 1,010 assertions, 0 failed across 34 files.
+- The prior combined-run timeout is closed as a harness-timeout issue; the
+  explicit timeout completes the full current Accounting contract set.
+- Existing authenticated route evidence remains 80/80 desktop and 80/80
+  mobile on the module runner, plus journal create/reload and Fleet-user 403.
+- The detailed per-module checklist is approved at
+  `qa/test-plans/accounting.md`; paired Odoo toolbar/layout comparison and
+  broader browser CRUD/actor gates remain open.
+
 ## Test-case inventory
 
 | Test ID | Odoo action/route | Core3 route/surface | Functional scenario/state | Evidence | Result |
@@ -39,7 +50,7 @@ QA state: qa-in-progress
 
 | Bug ID | Failure | Evidence | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- | --- |
-| ACC-QA-001 | Combined accounting run timed out in four tests at Bun's default 5s per-test timeout | 4 timeout reports; each isolated file passed with `--timeout 20000` | none; test/runtime policy follow-up | isolated retests pass | open |
+| ACC-QA-001 | Combined accounting run timed out in four tests at Bun's default 5s per-test timeout | 4 timeout reports; each isolated file passed with `--timeout 20000` | explicit timeout command | Full 34-file run passed 90/90 with `--timeout 20000` | fixed |
 | ACC-QA-002 | Isolated accounting runner previously failed during global page discovery before listening | `bun run agent:module -- accounting --port=3011`; malformed datasource error | global catalog/runtime state is now loadable | port 4011 runner and `/api/modules` pass | fixed/retested |
 | ACC-QA-003 | Stale runtime blocker in ledger after global catalog became loadable | isolated runner on port 4011 and authenticated Journals route | main-agent host/catalog integration state | `/api/modules` 200; desktop/mobile Journals render cleanly | retested; ledger updated |
 | ACC-VIS-001 | Core3 Journals frame did not match Odoo application chrome: missing purple top bar and equivalent menu chrome because the authenticated menu catalog was cached empty | paired captures plus authenticated DOM probe | `911faa78` documented the smoke matrix; current shell/auth repair is working-tree pending commit | desktop/mobile retest shows plum bar, 6 menu entries, zero errors, and no overflow | fixed/retested; paired visual comparison of toolbar geometry remains open |
