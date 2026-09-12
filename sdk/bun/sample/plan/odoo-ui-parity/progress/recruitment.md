@@ -14,7 +14,9 @@ desktop and mobile; 30/30 passed after an isolated `/openings` retest, which
 also confirmed its normalized `/recruitment/openings` alias. Fleet was denied
 the manager-only Recruitment settings route with HTTP 403 and no browser
 errors. Authenticated CRUD mutation smoke, the full role matrix, and paired
-Odoo comparison remain open. No parity claim is made here.
+Odoo comparison remain open. An authenticated applicant was also created and
+advanced New → Screening → Interview → Offer → Hired with row versions 1 → 5.
+No parity claim is made here.
 
 ## Next bounded task
 
