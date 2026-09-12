@@ -7,6 +7,9 @@ components:
     subtitle_field: model
     status_field: state
     status_colors: { Active: green, Archived: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions: [{ id: edit_maintenance_equipment_detail, label: Edit, variant: primary, permission: maintenance.manage }, { id: archive_maintenance_equipment_detail, label: Archive, variant: danger, permission: maintenance.manage, show_if: 'record.archived === false' }, { id: reopen_maintenance_equipment_detail, label: Reopen, variant: secondary, permission: maintenance.manage, show_if: 'record.archived === true' }, { id: delete_maintenance_equipment_detail, label: Delete, variant: danger, permission: maintenance.manage, confirm: Delete this equipment? }]
     stat_buttons: [{ id: open_maintenance_requests_from_equipment, label: Maintenance, value_field: maintenance_open_count, permission: maintenance.read }]
     group_columns: 2
     groups: [{ title: Equipment, fields: [{ field: name, label: Equipment }, { field: state, label: Status }, { field: model, label: Model }, { field: serial_number, label: Serial number }, { field: vendor_reference, label: Vendor reference }, { field: category, label: Category }] }, { title: Ownership and maintenance, fields: [{ field: owner, label: Owner }, { field: technician, label: Technician }, { field: team, label: Team }, { field: location, label: Location }, { field: next_preventive_date, label: Next preventive date }, { field: warranty_date, label: Warranty date }, { field: cost, label: Cost }, { field: description, label: Description }] }]

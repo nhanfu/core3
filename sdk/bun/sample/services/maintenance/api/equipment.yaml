@@ -22,3 +22,53 @@ actions:
       - { field: location, label: Location, type: text }
       - { field: technician, label: Technician, type: text }
       - { field: preventive_interval_days, label: Preventive interval days, type: number }
+  - id: edit_maintenance_equipment
+    type: server_form
+    permission: maintenance.manage
+    title: Edit equipment
+    action: maintenance.equipment.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.maintenance_equipment_detail
+    refresh: [maintenance_equipment, maintenance_equipment_detail]
+    mutation:
+      operation: update
+      table: maintenance_equipment
+      fields: [name, serial_number, model, vendor_reference, category, category_id, location, owner, technician, team, team_id, preventive_interval_days, next_preventive_date, warranty_date, cost, description]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM maintenance_equipment WHERE id = :id", status: 404, code: MAINTENANCE_EQUIPMENT_NOT_FOUND, message: Equipment was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_equipment WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: MAINTENANCE_EQUIPMENT_NAME_EXISTS, message: An equipment with this name already exists. }
+      result: { query: "SELECT * FROM maintenance_equipment WHERE id = :id" }
+    fields:
+      - { field: name, label: Equipment, type: text, required: true }
+      - { field: serial_number, label: Serial number, type: text }
+      - { field: model, label: Model, type: text }
+      - { field: vendor_reference, label: Vendor reference, type: text }
+      - { field: category, label: Category, type: text }
+      - { field: location, label: Location, type: text }
+      - { field: owner, label: Owner, type: text }
+      - { field: technician, label: Technician, type: text }
+      - { field: team, label: Team, type: text }
+      - { field: preventive_interval_days, label: Preventive interval days, type: number }
+      - { field: next_preventive_date, label: Next preventive date, type: text }
+      - { field: warranty_date, label: Warranty date, type: text }
+      - { field: cost, label: Cost, type: number }
+      - { field: description, label: Description, type: textarea }
+  - { id: archive_maintenance_equipment, type: server, permission: maintenance.manage, action: maintenance.equipment.archive, handler: yaml_mutation, operation: update, refresh: [maintenance_equipment, maintenance_equipment_detail], params: { values: { archived: true, state: Archived } }, mutation: { operation: update, table: maintenance_equipment, fields: [archived, state], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_equipment WHERE id = :id" } } }
+  - { id: reopen_maintenance_equipment, type: server, permission: maintenance.manage, action: maintenance.equipment.reopen, handler: yaml_mutation, operation: update, refresh: [maintenance_equipment, maintenance_equipment_detail], params: { values: { archived: false, state: Active } }, mutation: { operation: update, table: maintenance_equipment, fields: [archived, state], concurrency: { required: true }, result: { query: "SELECT * FROM maintenance_equipment WHERE id = :id" } } }
+  - id: delete_maintenance_equipment
+    type: server
+    permission: maintenance.manage
+    action: maintenance.equipment.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [maintenance_equipment]
+    mutation:
+      operation: delete
+      table: maintenance_equipment
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM maintenance_equipment WHERE id = :id)", status: 404, code: MAINTENANCE_EQUIPMENT_NOT_FOUND, message: Equipment was not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_requests WHERE equipment_id = :id)", status: 409, code: MAINTENANCE_EQUIPMENT_IN_USE, message: Equipment with maintenance requests cannot be deleted. }

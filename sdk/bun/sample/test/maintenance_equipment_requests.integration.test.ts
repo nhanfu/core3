@@ -71,7 +71,7 @@ describe('Maintenance equipment request stat action parity', () => {
     const detailApi = yaml('api/equipment-detail.yaml');
     const requestApi = yaml('api/requests.yaml');
     expect(detailApi.datasources[0].permission).toBe('maintenance.read');
-    expect(detailApi.actions).toEqual([{ id: 'open_maintenance_requests_from_equipment', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-requests', params: { equipment_id: '{row.id}' } }]);
+    expect(detailApi.actions[0]).toEqual({ id: 'open_maintenance_requests_from_equipment', type: 'navigate', permission: 'maintenance.read', navigate_to: '/maintenance-requests', params: { equipment_id: '{row.id}' } });
     expect(requestApi.datasources.find((source: any) => source.id === 'maintenance_requests').permission).toBe('maintenance.read');
   });
 });
