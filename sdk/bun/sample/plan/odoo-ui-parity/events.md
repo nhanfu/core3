@@ -1095,6 +1095,20 @@ products, tickets, slots, and registrations. Reopen this batch after seeding
 or installing that source-backed reference data and repeat the authenticated
 desktop/mobile audit before implementing YAML/API fragments and mutations.
 
+## Attendee badge report bounded slice (2026-09-12)
+
+Core3 adds the attendee badge report boundary at
+`/events/attendees/badge-report`, with page/API YAML joined by `page.id`,
+deterministic attendee fixtures, and event-scoped read permissions. The focused
+integration test passes 3 tests and 17 assertions.
+
+The Odoo attendee detail reference was captured under
+`/tmp/core3-odoo-parity/events-next-20260912/odoo-attendee-detail.png`.
+No paired Core3/Odoo browser claim is made for this slice because the isolated
+Core3 runtime could not be established alongside the active reference before
+the batch ended; the screenshot remains outside Git. Badge printing and
+scanner/device integration remain outside this bounded report surface.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and
