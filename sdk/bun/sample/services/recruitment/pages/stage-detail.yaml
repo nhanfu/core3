@@ -1,0 +1,26 @@
+title: Stage
+page: { id: recruitment-stage-detail, route: /recruitment/stages/detail, breadcrumb: [Recruitment, Configuration, Job Positions, Stages, Stage], auth: { require: [recruitment.manage] } }
+components:
+  - type: OdooFormView
+    source: recruitment_stage_detail
+    editable: true
+    title_field: name
+    groups:
+      - title: Stage Definition
+        fields:
+          - { field: name, label: Stage Name, required: true }
+          - { field: sequence, label: Sequence, type: number, required: true }
+          - { field: template_name, label: Email Template, type: text }
+          - { field: fold, label: Folded in Recruitment Pipe, type: checkbox }
+          - { field: hired_stage, label: Hired Stage, type: checkbox }
+          - { field: job_names, label: Job Specific, type: text }
+          - { field: rotting_threshold_days, label: Days to rot, type: number }
+      - title: Tooltips
+        description: You can define here the labels that will be displayed for the kanban state instead of the default labels.
+        fields:
+          - { field: legend_normal, label: In Progress }
+          - { field: legend_blocked, label: Blocked }
+          - { field: legend_waiting, label: Waiting }
+          - { field: legend_done, label: Ready for Next Stage }
+      - title: Requirements
+        fields: [{ field: requirements, label: Requirements, type: textarea, placeholder: You can define the requirements here. }]

@@ -1,0 +1,8 @@
+page: { id: recruitment-stage-detail }
+datasources:
+  - id: recruitment_stage_detail
+    permission: recruitment.manage
+    error_states:
+      forbidden: { status: 403, code: RECRUITMENT_STAGE_FORBIDDEN, message: You do not have permission to manage recruitment stages. }
+      transport_error: { status: 503, code: RECRUITMENT_STAGE_UNAVAILABLE, message: Recruitment stage is temporarily unavailable. }
+    query: "SELECT * FROM recruitment_stages WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END"

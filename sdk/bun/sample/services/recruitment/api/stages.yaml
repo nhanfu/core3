@@ -1,0 +1,66 @@
+page: { id: recruitment-stages }
+datasources:
+  - id: recruitment_stages
+    permission: recruitment.manage
+    error_states:
+      forbidden: { status: 403, code: RECRUITMENT_STAGES_FORBIDDEN, message: You do not have permission to manage recruitment stages. }
+      transport_error: { status: 503, code: RECRUITMENT_STAGES_UNAVAILABLE, message: Recruitment stages are temporarily unavailable. }
+    query: "SELECT id, row_version, sequence, name, rotting_threshold_days, fold, hired_stage, CASE WHEN fold THEN 'Folded' ELSE 'Open' END AS fold_label, CASE WHEN hired_stage THEN 'Hired' ELSE 'Not hired' END AS hired_stage_label FROM recruitment_stages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: create_recruitment_stage
+    type: server_form
+    permission: recruitment.manage
+    title: New Stage
+    action: recruitment.stages.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_stages]
+    mutation:
+      operation: insert
+      table: recruitment_stages
+      generated: [id]
+      before_steps: [{ query: "SELECT 'recruitment-stage-custom-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      fields: [sequence, name, template_name, fold, hired_stage, job_names, rotting_threshold_days, legend_normal, legend_blocked, legend_waiting, legend_done, requirements]
+      required: [name]
+      defaults: { sequence: 10, fold: false, hired_stage: false, rotting_threshold_days: 0, legend_normal: In Progress, legend_blocked: Blocked, legend_waiting: Waiting, legend_done: Ready for Next Stage }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_STAGE_NAME_REQUIRED, message: A stage name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(TRY_CAST(:sequence AS INTEGER), 10) >= 0 AND COALESCE(TRY_CAST(:rotting_threshold_days AS INTEGER), 0) >= 0", status: 422, code: RECRUITMENT_STAGE_VALUES_INVALID, message: Sequence and days to rot must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_stages WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: RECRUITMENT_STAGE_NAME_EXISTS, message: A recruitment stage with this name already exists. }
+      result: { query: "SELECT * FROM recruitment_stages WHERE id = :id" }
+    fields: [{ field: name, label: Stage Name, type: text, required: true }, { field: sequence, label: Sequence, type: number, required: true, min: 0 }, { field: fold, label: Folded in Recruitment Pipe, type: checkbox }, { field: hired_stage, label: Hired Stage, type: checkbox }, { field: rotting_threshold_days, label: Days to rot, type: number, min: 0 }]
+  - id: edit_recruitment_stage
+    type: server_form
+    permission: recruitment.manage
+    title: Edit Stage
+    action: recruitment.stages.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [recruitment_stages, recruitment_stage_detail]
+    mutation:
+      operation: update
+      table: recruitment_stages
+      fields: [sequence, name, template_name, fold, hired_stage, job_names, rotting_threshold_days, legend_normal, legend_blocked, legend_waiting, legend_done, requirements]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM recruitment_stages WHERE id = :id", status: 404, code: RECRUITMENT_STAGE_NOT_FOUND, message: Recruitment stage not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: RECRUITMENT_STAGE_NAME_REQUIRED, message: A stage name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(TRY_CAST(:sequence AS INTEGER), 10) >= 0 AND COALESCE(TRY_CAST(:rotting_threshold_days AS INTEGER), 0) >= 0", status: 422, code: RECRUITMENT_STAGE_VALUES_INVALID, message: Sequence and days to rot must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM recruitment_stages WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: RECRUITMENT_STAGE_NAME_EXISTS, message: A recruitment stage with this name already exists. }
+      result: { query: "SELECT * FROM recruitment_stages WHERE id = :id" }
+    fields: [{ field: name, label: Stage Name, type: text, required: true }, { field: sequence, label: Sequence, type: number, required: true, min: 0 }, { field: template_name, label: Email Template, type: text }, { field: fold, label: Folded in Recruitment Pipe, type: checkbox }, { field: hired_stage, label: Hired Stage, type: checkbox }, { field: job_names, label: Job Specific, type: text }, { field: rotting_threshold_days, label: Days to rot, type: number, min: 0 }, { field: legend_normal, label: In Progress, type: text }, { field: legend_blocked, label: Blocked, type: text }, { field: legend_waiting, label: Waiting, type: text }, { field: legend_done, label: Ready for Next Stage, type: text }, { field: requirements, label: Requirements, type: textarea }]
+  - id: delete_recruitment_stage
+    type: server
+    permission: recruitment.manage
+    action: recruitment.stages.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete stage {{row.name}}?'
+    refresh: [recruitment_stages]
+    mutation:
+      operation: delete
+      table: recruitment_stages
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM recruitment_stages WHERE id = :id", status: 404, code: RECRUITMENT_STAGE_NOT_FOUND, message: Recruitment stage not found. }]

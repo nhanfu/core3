@@ -1,6 +1,48 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `batch-6-implemented`
+Status: `batch-7-implemented-visual-capture-blocked`
+
+## Batch 7 — Configuration → Job Positions → Stages
+
+Source evidence: Odoo 19 `addons/hr_recruitment/views/menuitems.xml` defines
+`menu_hr_recruitment_stage` under Recruitment → Configuration → Job Positions
+→ Stages, with action `hr_recruitment_stage_act`, model
+`hr.recruitment.stage`, and view modes `list,kanban,form`. The source action
+`addons/hr_recruitment/views/hr_recruitment_stage_views.xml` uses a list with
+Sequence, Stage Name, Days to rot, Folded in Recruitment Pipe, and Hired Stage;
+its kanban card shows the stage name and folded flag. The form has Stage
+Definition, Tooltips, and Requirements sections, including email template,
+job-specific stages, rotting threshold, four kanban legends, and requirements.
+The source menu is restricted to `base.group_no_one`; Core3 maps this hidden
+technical menu to the existing manager-equivalent `recruitment.manage` boundary
+and documents the deliberate visibility mapping.
+
+Core3 implements `/recruitment/stages` with page id `recruitment-stages`, a
+visible List/Kanban tab navigation, and a separate form page
+`/recruitment/stages/detail` with page id `recruitment-stage-detail`. Page YAML
+contains presentation only; `api/stages.yaml` and `api/stage-detail.yaml` bind
+their datasources/actions through matching page ids. Migration
+`20260912100000-010-recruitment-stages.yaml` is idempotent and seeds the six
+fixed Odoo stages, including the folded hired stage and realistic rotting and
+requirements fixtures. Manager-only datasource and mutations cover forbidden,
+transport, empty/not-found, duplicate/required/invalid values, missing rows,
+stale row versions, create, update, and delete states.
+
+Focused evidence:
+
+- `bun test test/recruitment_stages.integration.test.ts` — 3 passed, 0 failed,
+  31 assertions.
+- `bun run audit` from `sdk/bun/sample` — passed: 584 pages, 591 routes,
+  1003 datasources.
+- `bunx eslint test/recruitment_stages.integration.test.ts` — passed.
+- `git diff --check` — passed.
+
+Authenticated visual evidence is not available for this batch. The required
+Core3 runtime could not remain online because concurrent isolated parity agents
+exhausted the shared Linux file-watch limit (`EMFILE`); the direct server
+fallback also could not connect to the local database dependency. Therefore no
+desktop `1440x900` or mobile `390x844` Core3 capture, Odoo/Core3 comparison,
+or visual-parity claim is made. Screenshots were not added to Git.
 
 This document remains the implementation gate and evidence record. Batch 1
 implements the coherent Core3 job-position/openings and applicant queues,

@@ -1,0 +1,38 @@
+version: 0.0.10
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS recruitment_stages (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL UNIQUE,
+        template_name VARCHAR,
+        fold BOOLEAN NOT NULL DEFAULT FALSE,
+        hired_stage BOOLEAN NOT NULL DEFAULT FALSE,
+        job_names VARCHAR,
+        rotting_threshold_days INTEGER NOT NULL DEFAULT 0,
+        legend_normal VARCHAR NOT NULL DEFAULT 'In Progress',
+        legend_blocked VARCHAR NOT NULL DEFAULT 'Blocked',
+        legend_waiting VARCHAR NOT NULL DEFAULT 'Waiting',
+        legend_done VARCHAR NOT NULL DEFAULT 'Ready for Next Stage',
+        requirements VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        CONSTRAINT recruitment_stages_sequence_range CHECK (sequence >= 0),
+        CONSTRAINT recruitment_stages_rotting_range CHECK (rotting_threshold_days >= 0)
+      );
+      INSERT OR IGNORE INTO recruitment_stages(id, sequence, name, template_name, fold, hired_stage, rotting_threshold_days, requirements) VALUES
+        ('stage-new', 0, 'New', 'Recruitment: Application Acknowledgement', FALSE, FALSE, 0, NULL),
+        ('stage-qualification', 1, 'Qualification', NULL, FALSE, FALSE, 7, 'Review the application and confirm the candidate meets the basic requirements.'),
+        ('stage-first-interview', 2, 'First Interview', NULL, FALSE, FALSE, 14, NULL),
+        ('stage-second-interview', 3, 'Second Interview', NULL, FALSE, FALSE, 14, NULL),
+        ('stage-contract-proposal', 4, 'Contract Proposal', NULL, FALSE, FALSE, 21, NULL),
+        ('stage-contract-signed', 5, 'Contract Signed', NULL, TRUE, TRUE, 0, NULL);
+    down: |
+      DROP TABLE IF EXISTS recruitment_stages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

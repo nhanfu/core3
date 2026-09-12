@@ -1,0 +1,31 @@
+title: Stages
+page: { id: recruitment-stages, route: /recruitment/stages, breadcrumb: [Recruitment, Configuration, Job Positions, Stages], auth: { require: [recruitment.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_stages
+    create_action: create_recruitment_stage
+    create_label: New
+    search: { label: Search stages, placeholder: Search stages... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: fold_label
+        card: { title: name, fields: [{ field: fold_label, label: Folded in Recruitment Pipe }] }
+    form_view: { page: apps/services/recruitment/pages/stage-detail.yaml, side_panel: false }
+    row_key: id
+    row_open_action: edit_recruitment_stage
+    row_double_click_action: edit_recruitment_stage
+    row_actions: menu
+    empty_state: { title: Add a new stage in the recruitment process, description: 'Define here your stages of the recruitment process, for example qualification call, first interview, second interview, refused, hired.' }
+    columns:
+      - { field: sequence, label: Sequence, type: Number, sortable: true, mobile: false }
+      - { field: name, label: Stage Name, type: PrimaryEntityCell, sortable: true, mobile: true }
+      - { field: rotting_threshold_days, label: Days to rot, type: Number, sortable: true, optional: hide, mobile: false }
+      - { field: fold_label, label: Folded in Recruitment Pipe, type: StatusChip, mobile: true }
+      - { field: hired_stage_label, label: Hired Stage, type: StatusChip, mobile: true }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: edit_recruitment_stage, label: Edit, icon: edit }, { id: delete_recruitment_stage, label: Delete, icon: delete, variant: danger }] }
+    page_size: 25
