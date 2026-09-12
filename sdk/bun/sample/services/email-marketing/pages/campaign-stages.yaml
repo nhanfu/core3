@@ -1,0 +1,33 @@
+title: Campaign Stages
+page: { id: email-campaign-stages, route: /email-campaign-stages, breadcrumb: [Marketing, Email Marketing, Configuration, Campaign Stages], auth: { require: [email_marketing.manage] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: email_campaign_stages
+    create_action: create_email_campaign_stage
+    create_label: New
+    search: { label: Search stages, placeholder: Search stages... }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: form, label: Form, icon: edit, mobile: true }
+    form_view: { page: apps/services/email-marketing/pages/campaign-stage-detail.yaml, side_panel: true }
+    inline_edit:
+      create_action: create_email_campaign_stage_inline
+      update_action: update_email_campaign_stage_inline
+      save_label: Save
+      discard_label: Discard
+      fields:
+        - { field: sequence, type: number, default: 10 }
+        - { field: name, type: text, required: true, placeholder: 'e.g. "Brainstorming"' }
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, sortable: false, mobile: false }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: edit_email_campaign_stage, label: Edit, icon: edit }, { id: delete_email_campaign_stage, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    row_key: id
+    row_open_action: edit_email_campaign_stage
+    row_double_click_action: edit_email_campaign_stage
+    row_actions: menu
+    empty_state: { title: Create a stage for your campaigns, description: 'Stages allow you to organize your workflow (e.g. plan, design, in progress, done, …).' }

@@ -1,0 +1,22 @@
+version: 0.0.15
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS email_marketing_campaign_stages (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE,
+        sequence INTEGER NOT NULL DEFAULT 10
+      );
+      INSERT INTO email_marketing_campaign_stages(id, row_version, name, sequence) VALUES
+        ('email-campaign-stage-new', 1, 'New', 10),
+        ('email-campaign-stage-schedule', 1, 'Schedule', 10),
+        ('email-campaign-stage-design', 1, 'Design', 20),
+        ('email-campaign-stage-sent', 1, 'Sent', 30)
+        ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS email_marketing_campaign_stages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

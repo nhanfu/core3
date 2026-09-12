@@ -1,0 +1,15 @@
+title: Campaign Stage
+page: { id: email-campaign-stage-detail, route: /email-campaign-stages/detail, breadcrumb: [Marketing, Email Marketing, Configuration, Campaign Stages, Campaign Stage], auth: { require: [email_marketing.manage] } }
+
+components:
+  - type: OdooFormView
+    source: email_campaign_stage_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Stage }
+    group_columns: 1
+    groups:
+      - title: Stage
+        fields:
+          - { field: name, label: Name, type: text, required: true, placeholder: 'e.g. "Brainstorming"' }
+          - { field: sequence, label: Sequence, type: number }

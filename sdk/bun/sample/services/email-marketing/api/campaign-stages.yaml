@@ -1,0 +1,59 @@
+page: { id: email-campaign-stages }
+datasources:
+  - id: email_campaign_stages
+    permission: email_marketing.manage
+    error_states: { transport_error: { status: 503, code: EMAIL_CAMPAIGN_STAGES_UNAVAILABLE, message: Campaign stages are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, sequence FROM email_marketing_campaign_stages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, id"
+actions:
+  - id: create_email_campaign_stage
+    type: server_form
+    permission: email_marketing.manage
+    title: New Campaign Stage
+    action: email_marketing.campaign_stages.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [email_campaign_stages]
+    mutation:
+      operation: insert
+      table: email_marketing_campaign_stages
+      generated: [id]
+      fields: [name, sequence]
+      required: [name]
+      defaults: { sequence: 10, row_version: 1 }
+      before_steps: [{ query: "SELECT 'email-campaign-stage-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_CAMPAIGN_STAGE_NAME_REQUIRED, message: A campaign stage name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_campaign_stages WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMAIL_CAMPAIGN_STAGE_EXISTS, message: A campaign stage with this name already exists. }
+      result: { query: "SELECT * FROM email_marketing_campaign_stages WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number, default: 10 }]
+  - { id: create_email_campaign_stage_inline, type: server_form, permission: email_marketing.manage, title: New Campaign Stage, action: email_marketing.campaign_stages.create, handler: yaml_mutation, operation: create, refresh: [email_campaign_stages], mutation: { operation: insert, table: email_marketing_campaign_stages, generated: [id], fields: [name, sequence], required: [name], defaults: { sequence: 10, row_version: 1 }, before_steps: [{ query: "SELECT 'email-campaign-stage-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }], guards: [{ query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_CAMPAIGN_STAGE_NAME_REQUIRED, message: A campaign stage name is required. }, { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_campaign_stages WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMAIL_CAMPAIGN_STAGE_EXISTS, message: A campaign stage with this name already exists. }], result: { query: "SELECT * FROM email_marketing_campaign_stages WHERE id = :id" } }, fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number, default: 10 }] }
+  - id: edit_email_campaign_stage
+    type: server_form
+    permission: email_marketing.manage
+    title: Edit Campaign Stage
+    action: email_marketing.campaign_stages.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [email_campaign_stages, email_campaign_stage_detail]
+    mutation:
+      operation: update
+      table: email_marketing_campaign_stages
+      fields: [name, sequence]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM email_marketing_campaign_stages WHERE id = :id", status: 404, code: EMAIL_CAMPAIGN_STAGE_NOT_FOUND, message: Campaign stage not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_CAMPAIGN_STAGE_NAME_REQUIRED, message: A campaign stage name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_campaign_stages WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMAIL_CAMPAIGN_STAGE_EXISTS, message: A campaign stage with this name already exists. }
+      result: { query: "SELECT * FROM email_marketing_campaign_stages WHERE id = :id" }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number }]
+  - { id: update_email_campaign_stage_inline, type: server_form, permission: email_marketing.manage, title: Edit Campaign Stage, action: email_marketing.campaign_stages.update, handler: yaml_mutation, operation: update, prefill: row, refresh: [email_campaign_stages], mutation: { operation: update, table: email_marketing_campaign_stages, fields: [name, sequence], required: [name], concurrency: { required: true }, guards: [{ query: "SELECT id FROM email_marketing_campaign_stages WHERE id = :id", status: 404, code: EMAIL_CAMPAIGN_STAGE_NOT_FOUND, message: Campaign stage not found. }, { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMAIL_CAMPAIGN_STAGE_NAME_REQUIRED, message: A campaign stage name is required. }, { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM email_marketing_campaign_stages WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMAIL_CAMPAIGN_STAGE_EXISTS, message: A campaign stage with this name already exists. }], result: { query: "SELECT * FROM email_marketing_campaign_stages WHERE id = :id" } }, fields: [{ field: name, label: Name, type: text, required: true }, { field: sequence, label: Sequence, type: number }] }
+  - id: delete_email_campaign_stage
+    type: server
+    permission: email_marketing.manage
+    action: email_marketing.campaign_stages.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [email_campaign_stages]
+    mutation: { operation: delete, table: email_marketing_campaign_stages, concurrency: { required: true }, guards: [{ query: "SELECT id FROM email_marketing_campaign_stages WHERE id = :id", status: 404, code: EMAIL_CAMPAIGN_STAGE_NOT_FOUND, message: Campaign stage not found. }] }
