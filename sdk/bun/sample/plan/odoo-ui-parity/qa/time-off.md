@@ -1,69 +1,37 @@
-# time-off QA ledger
+# Time Off QA ledger
 
-## Representative browser matrix (2026-09-12)
-
-- Trigger: post-merge repository regression smoke.
-- Coverage: one registered module route, authenticated Core3, desktop 1440x900 and mobile 390x844.
-- Result: desktop and mobile render passed with no blank/redirect result, recorded page/request error, or horizontal overflow.
-- Artifacts: /tmp/core3-odoo-parity/module-matrix-20260912/time-off-desktop.png and time-off-mobile.png.
-- Boundary: this is route/render smoke evidence only; it does not sign off the complete menu tree, CRUD, permissions, workflows, persistence, or paired Odoo visual parity.
-
-QA state: qa-in-progress
-QA slot: dispatchable time-off assignment (pending wave dispatch)
 Module owner: time-off module owner
-Verification trigger: feature-complete
-Candidate commit: `84d1b83c`
+QA event: bounded candidate review
+Candidate: `6300ab0a` (`test(time-off): verify deletion roles and restart persistence`)
+Worktree: `/home/nhanjs/projects/core3-worktrees/time-off-draft-delete-20260913`
+Date: 2026-09-13
+Tester decision: conditional pass; reviewer sign-off required
 
-Detailed execution matrix: [`test-plans/time-off.md`](test-plans/time-off.md). It is the module-level source for requests, allocations, approvals, actors, persistence, Temporal, and paired Odoo gates.
+## Evidence
 
-## Test-case inventory
+- Deletion contract/tests: **PASS**, 4 tests / 24 assertions. Unchanged Draft
+  deletion succeeds; missing, non-Draft, stale, and repeated deletes are
+  rejected with deterministic guards.
+- Role declaration: **PASS**. List/detail deletion requires `time_off.write`;
+  responsible/manager `time_off.manage` tiers remain explicit.
+- Restart persistence: **PASS**. File-backed DuckDB close/reopen and migration
+  rerun preserve deletion.
+- Full focused regression: **PASS**, 49 tests / 509 assertions across 18 files.
+- Audit: **PASS**, 647 pages / 662 routes / 1,112 datasources.
+- Frontend build and diff-check: **PASS**. No local lint script/binary was
+  available; repository typecheck remains blocked by pre-existing shared and
+  unrelated service errors, with no candidate file implicated.
 
-## Current regression evidence
+## Blockers and open gates
 
-- Focused Time Off suite: `bun test ./test/time_off*.integration.test.ts --timeout 20000` — 47 passed, 0 failed, 497 assertions across 18 files.
-- Candidate `fc310247` isolated in `/home/nhanjs/projects/core3-worktrees/time-off-draft-delete-20260913`.
-- Authenticated HTTP deletion probes: missing id `404 TIME_OFF_LEAVE_NOT_FOUND`; non-Draft and stale Draft `409 TIME_OFF_LEAVE_DELETE_INVALID`; matching Draft deletion `200`.
-- Permission probes: dispatcher `403 Requires permission: time_off.write`; unauthenticated `401 UNAUTHORIZED`.
-- Candidate QA static evidence: `bun run audit` passed (647 pages, 662 routes, 1112 datasources); candidate diff-check passed. Repository typecheck remains blocked by pre-existing unrelated errors; no lint script is declared in `sdk/bun/sample/package.json`.
-- Browser/Odoo captures were unavailable in the candidate session; no new desktop/mobile screenshots or paired Odoo claims are made.
-- Authenticated registered-menu route matrix: 16 unique routes at desktop and mobile — 32/32 passed with no blank/redirect result, browser error, HTTP error, or horizontal overflow; raw result: `/tmp/core3-odoo-parity/timeoff-matrix-20260912.json`.
-- Authenticated approval workflow: created `QA Browser Leave 20260912`, submitted it, and approved it; all responses were 200 and row versions advanced `1 → 2 → 3`, with approver `Admin User` and state `Approved`.
-- Permission boundary: Fleet user opening `/time-off/time-off-approval` received the expected 403 `Requires permission: time_off.manage`; no browser errors were recorded.
-- Authenticated state-flow probe: a leave request reached `Refused` through Draft → Submitted → Refused, and a second request reached `Cancelled` through Draft → Submitted → Approved → Cancelled with `cancellation_reason` persisted; both sequences returned 200 and row versions advanced to 3 and 4 respectively.
+- `TIME_OFF-HTTP-001`: live Core3 backend failed to bind `127.0.0.1:3001`, so
+  authenticated actor enforcement was not revalidated for this candidate.
+- `TIME_OFF-VISUAL-001`: Playwright/js_repl was unavailable; no candidate
+  authenticated Core3 desktop/mobile screenshots were captured.
+- `TIME_OFF-ODOO-001`: paired authenticated Odoo desktop/mobile comparison is
+  pending; login/redirect availability is not comparison evidence.
+- `TIME_OFF-TYPE-001`: pre-existing repository typecheck failures remain.
+- `TIME_OFF-LINT-001`: no local lint command was available.
 
-| Test ID | Scenario | Evidence | Result |
-| --- | --- | --- | --- |
-| TIME_OFF-FUNC-001 | Focused functionality, reports, CRUD, and guards | 47 tests, 497 assertions; focused suite passed | pass |
-| TIME_OFF-BROWSER-001 | Authenticated registered-menu route matrix | 16 routes × desktop/mobile = 32/32; raw JSON result recorded | pass |
-| TIME_OFF-WORKFLOW-001 | Create, submit, and approve leave request | Authenticated sequence returned 200 at each step; row versions 1 → 2 → 3 | pass |
-| TIME_OFF-PERM-001 | Non-manager cannot open manager approval view | Fleet user received HTTP 403 with `Requires permission: time_off.manage`; browser errors 0 | pass |
-| TIME_OFF-WORKFLOW-002 | Refuse and cancel approved leave requests | Authenticated refusal and approved-cancellation sequences returned 200; final states and cancellation reason persisted; row versions 1 → 3 and 1 → 4 | pass |
-| TIME_OFF-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Functional and route evidence present; complete Odoo visual comparison and all permission boundaries remain open | pending |
-
-## Bugs and retests
-
-## QA retest ledger — `fc310247` (2026-09-13)
-
-- Draft request deletion: `bun test ./test/time_off_request_delete.integration.test.ts --timeout 20000` — 2 passed, 0 failed, 12 assertions.
-- Full focused Time Off suite: `bun test ./test/time_off*.integration.test.ts --timeout 20000` — 47 passed, 0 failed, 497 assertions across 18 files.
-- Deletion is limited to unchanged Draft requests; missing, non-Draft, and stale rows are rejected with deterministic 404/409 guards.
-
-This retest records a bounded CRUD slice only. Full actor permissions, restart
-persistence, remaining CRUD/workflows, and paired Odoo desktop/mobile evidence
-remain open.
-
-| Bug ID | Failure | Fix commit | Retest | Status |
-| --- | --- | --- | --- | --- |
-| — | No current-wave defect recorded | — | — | pending |
-
-The deletion retest found no regression. It records a bounded CRUD and
-permission slice only; full actor matrix, restart persistence, remaining
-CRUD/workflows, and paired Odoo evidence remain open.
-
-## Sign-off
-
-- Functional: partial pass (focused suite and approval workflow pass)
-- Permissions: partial pass (route access verified; role-specific mutation boundaries remain)
-- Persistence/data integrity: partial pass (request creation and state persistence verified)
-- Desktop/mobile visual parity: pending
-- Tester decision: not signed off
+Disposition: conditional bounded pass only. Preserve these blockers; do not
+claim full Time Off module sign-off or aggregate progress.
