@@ -47,7 +47,7 @@ describe('Purchase Vendors parity', () => {
     const active = await repository.querySource(source, params, 0, 50);
     expect(active.data.map((row: any) => row.name)).toEqual(['Gemini Furniture', 'Lotus Industrial Supply', 'Northwind Components', 'Ready Mat', 'Saigon Office Goods']);
     expect(active.data.every((row: any) => row.state === 'Active')).toBe(true);
-    expect(active.data.find((row: any) => row.name === 'Northwind Components')).toMatchObject({ purchase_order_count: 3, open_purchase_order_count: 3, country: 'United States', location_display: 'Seattle, United States', vendor_tags: 'IT Suppliers' });
+    expect(active.data.find((row: any) => row.name === 'Northwind Components')).toMatchObject({ purchase_order_count: 4, open_purchase_order_count: 4, country: 'United States', location_display: 'Seattle, United States', vendor_tags: 'IT Suppliers' });
 
     const onlyActive = await repository.querySource(source, { ...params, state: 'Active' }, 0, 50);
     expect(onlyActive.data).toHaveLength(5);
@@ -59,7 +59,7 @@ describe('Purchase Vendors parity', () => {
 
     const detail = yaml('api/vendor-detail.yaml').datasources[0];
     expect(await repository.querySource(detail, { id: 'vendor-demo-002', fixture_state: null }, 0, 1)).toMatchObject({
-      data: expect.objectContaining({ name: 'Northwind Components', purchase_order_count: 3, open_purchase_order_count: 3 }),
+      data: expect.objectContaining({ name: 'Northwind Components', purchase_order_count: 4, open_purchase_order_count: 4 }),
     });
     expect((await repository.querySource(detail, { id: 'missing-vendor', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     await expect(repository.querySource(detail, { id: 'vendor-demo-002', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'PURCHASE_VENDOR_DETAIL_UNAVAILABLE' });

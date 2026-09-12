@@ -391,6 +391,14 @@ Bun.serve({
       }
     }
 
+    // Static service assets must bypass module API handlers. YAML services may
+    // protect unmatched requests, but styles/scripts are needed by the
+    // unauthenticated login shell (and are resolved from the service tree).
+    if (req.method === 'GET' && url.pathname.startsWith('/services/')) {
+      const staticResponse = await serveStatic(url.pathname);
+      if (staticResponse) return staticResponse;
+    }
+
     // Module-owned public controller routes (for example Odoo-style share
     // links) are deliberately outside the authenticated /api namespace.
     try {
