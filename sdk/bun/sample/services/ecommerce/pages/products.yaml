@@ -1,0 +1,34 @@
+title: Products
+page: { id: ecommerce-products, route: /ecommerce/products, breadcrumb: [eCommerce, Products, Products], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_products
+    create_action: create_ecommerce_product
+    create_label: New
+    search: { label: Search products, placeholder: Search products by name or internal reference... }
+    filters: [{ field: published, label: Published, options_source: ecommerce_product_published }]
+    views:
+      - { id: kanban, label: Kanban, mobile: true, group_by: '' }
+      - { id: list, label: List, mobile: false }
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: internal_reference, label: Internal Reference }
+      - { field: category, label: Categories }
+      - { field: product_type, label: Product Type }
+      - { field: sales_price, label: Sales Price, align: right }
+      - { field: is_published, label: Is Published, type: StatusChip }
+    page_size: 40
+    row_key: id
+    row_double_click_action: view_ecommerce_product
+    row_actions: menu
+    selectable: true
+    empty_state: { title: No products found, description: Create a new product to sell it on your website. }
+    actions:
+      - { id: archive_ecommerce_product, label: Archive, permission: ecommerce.write, variant: danger, show_if: "row.active === true" }
+actions:
+  - id: view_ecommerce_product
+    type: navigate
+    permission: ecommerce.read
+    navigate_to: /ecommerce/products/detail
+    params: { id: '{row.id}' }

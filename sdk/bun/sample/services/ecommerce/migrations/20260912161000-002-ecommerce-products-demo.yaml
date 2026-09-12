@@ -1,0 +1,18 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_products (id, name, internal_reference, product_type, category, sales_price, website_sequence, is_published)
+      VALUES
+        ('ecommerce-product-mug', 'Core3 Ceramic Mug', 'CS-MUG-001', 'Goods', 'All / Accessories', 18.00, 10, TRUE),
+        ('ecommerce-product-chair', 'Ergonomic Office Chair', 'OF-CHAIR-004', 'Goods', 'All / Office', 249.00, 20, TRUE),
+        ('ecommerce-product-setup', 'Workspace Setup Service', 'SV-SETUP-001', 'Service', 'Services', 120.00, 30, FALSE),
+        ('ecommerce-product-lamp', 'Desk Lamp', 'OF-LAMP-002', 'Goods', 'All / Office', 46.50, 40, TRUE)
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_products WHERE id IN ('ecommerce-product-mug', 'ecommerce-product-chair', 'ecommerce-product-setup', 'ecommerce-product-lamp');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+

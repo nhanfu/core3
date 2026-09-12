@@ -1,0 +1,58 @@
+page: { id: ecommerce-products }
+datasources:
+  - id: ecommerce_products
+    single: false
+    permission: ecommerce.read
+    error_states: { forbidden: { status: 403, code: ECOMMERCE_PRODUCTS_FORBIDDEN, message: You do not have access to eCommerce products. }, transport_error: { status: 503, code: ECOMMERCE_PRODUCTS_UNAVAILABLE, message: eCommerce products are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(internal_reference, '') ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') AND (:published IS NULL OR is_published = :published) ORDER BY website_sequence, name"
+  - id: ecommerce_product_published
+    single: false
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES (true, 'Published'), (false, 'Unpublished')) statuses(value, label)"
+actions:
+  - id: create_ecommerce_product
+    type: server_form
+    permission: ecommerce.write
+    title: New product
+    action: ecommerce.products.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_products]
+    mutation:
+      operation: insert
+      table: ecommerce_products
+      fields: [name, internal_reference, product_type, category, sales_price, website_sequence, is_published]
+      required: [name]
+      defaults: { product_type: Goods, sales_price: 0, website_sequence: 10, is_published: false }
+      guards:
+        - query: "SELECT 1 AS ok WHERE :internal_reference IS NULL OR NOT EXISTS (SELECT 1 FROM ecommerce_products WHERE internal_reference = :internal_reference)"
+          status: 409
+          code: ECOMMERCE_PRODUCT_REFERENCE_EXISTS
+          message: Internal reference already exists
+      result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
+    fields:
+      - { field: name, label: Product Name, type: text, required: true }
+      - { field: internal_reference, label: Internal Reference, type: text }
+      - { field: product_type, label: Product Type, type: select, options: [Goods, Service] }
+      - { field: category, label: eCommerce Category, type: text }
+      - { field: sales_price, label: Sales Price, type: number }
+      - { field: website_sequence, label: Website Sequence, type: number }
+      - { field: is_published, label: Published, type: checkbox }
+  - id: archive_ecommerce_product
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.archive
+    handler: product_status
+    operation: archive
+    params: { id: '{row.id}' }
+    refresh: [ecommerce_products]
+    mutation:
+      guards:
+        - query: "SELECT id FROM ecommerce_products WHERE id = :id AND active = true"
+          status: 409
+          code: ECOMMERCE_PRODUCT_ALREADY_ARCHIVED
+          message: Product is already archived
+      steps:
+        - query: "UPDATE ecommerce_products SET active = false, is_published = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+      result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
+

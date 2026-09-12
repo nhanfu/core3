@@ -1,0 +1,48 @@
+id: ecommerce
+kind: domain-service
+database: duckdb
+migrations: migrations
+permissions: permissions.yaml
+storage: storage.yaml
+menu:
+  ecommerce:
+    path: /ecommerce
+    label: eCommerce
+    icon: cart
+    permission: ecommerce.read
+  groups:
+    - id: orders
+      label: Orders
+      items:
+        - path: /ecommerce/orders
+          label: Orders
+          icon: document
+          permission: ecommerce.read
+        - path: /ecommerce/unpaid-orders
+          label: Unpaid Orders
+          icon: invoice
+          permission: ecommerce.read
+        - path: /ecommerce/abandoned-carts
+          label: Abandoned Carts
+          icon: cart
+          permission: ecommerce.read
+        - path: /ecommerce/customers
+          label: Customers
+          icon: users
+          permission: ecommerce.read
+    - id: products
+      label: Products
+      items:
+        - path: /ecommerce/products
+          label: Products
+          icon: cube
+          permission: ecommerce.read
+        - path: /ecommerce/pricelists
+          label: Pricelists
+          icon: tag
+          permission: ecommerce.read
+        - path: /ecommerce/categories
+          label: Categories
+          icon: folder
+          permission: ecommerce.read
+

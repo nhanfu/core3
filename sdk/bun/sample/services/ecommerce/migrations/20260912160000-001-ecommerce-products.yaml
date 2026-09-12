@@ -1,0 +1,20 @@
+version: 0.0.1
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_products (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, internal_reference VARCHAR, product_type VARCHAR NOT NULL DEFAULT 'Goods',
+        category VARCHAR, sales_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+        website_sequence INTEGER NOT NULL DEFAULT 10, is_published BOOLEAN NOT NULL DEFAULT FALSE,
+        active BOOLEAN NOT NULL DEFAULT TRUE, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_products_internal_reference_idx ON ecommerce_products(internal_reference);
+    down: DROP TABLE IF EXISTS ecommerce_products;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+
