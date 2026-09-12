@@ -17,7 +17,19 @@ actions:
     handler: yaml_mutation
     operation: create
     refresh: [fleet_vehicles]
-    mutation: { operation: insert, table: fleet_vehicles, fields: [name, license_plate, vehicle_type, model, manufacturer, driver_employee_id, driver_name, odometer, fuel_type, acquisition_date, contract_end_date, trailer_hook], required: [name, license_plate] }
+    mutation:
+      operation: insert
+      table: fleet_vehicles
+      fields: [name, license_plate, vehicle_type, model, manufacturer, driver_employee_id, driver_name, odometer, fuel_type, acquisition_date, contract_end_date, trailer_hook]
+      required: [name, license_plate]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: FLEET_VEHICLE_NAME_REQUIRED, message: Vehicle name is required. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:license_plate AS VARCHAR))) BETWEEN 1 AND 32", status: 422, code: FLEET_VEHICLE_LICENSE_PLATE_REQUIRED, message: License plate is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:vehicle_type, 'Car') IN ('Car', 'Bike')", status: 422, code: FLEET_VEHICLE_TYPE_INVALID, message: Vehicle type must be Car or Bike. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:odometer AS DECIMAL(18,3)), 0) >= 0", status: 422, code: FLEET_VEHICLE_ODOMETER_INVALID, message: Odometer cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE (:acquisition_date IS NULL OR (regexp_matches(CAST(:acquisition_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:acquisition_date AS DATE) BETWEEN DATE '1900-01-01' AND DATE '2100-12-31')) AND (:contract_end_date IS NULL OR (regexp_matches(CAST(:contract_end_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:contract_end_date AS DATE) BETWEEN DATE '1900-01-01' AND DATE '2100-12-31')) AND (:acquisition_date IS NULL OR :contract_end_date IS NULL OR CAST(:contract_end_date AS DATE) >= CAST(:acquisition_date AS DATE))", status: 422, code: FLEET_VEHICLE_DATES_INVALID, message: Acquisition and contract dates are invalid. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicles WHERE LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: FLEET_VEHICLE_NAME_EXISTS, message: A vehicle with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicles WHERE LOWER(TRIM(license_plate)) = LOWER(TRIM(CAST(:license_plate AS VARCHAR))))", status: 409, code: FLEET_VEHICLE_LICENSE_PLATE_EXISTS, message: A vehicle with this license plate already exists. }
     fields:
       - { field: name, label: Vehicle, type: text, required: true }
       - { field: license_plate, label: License plate, type: text, required: true }

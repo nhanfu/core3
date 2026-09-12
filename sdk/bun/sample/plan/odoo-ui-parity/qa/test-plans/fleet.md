@@ -29,7 +29,7 @@ deterministic.
 
 | Case ID | Surface | Expected result and persistence assertion | Status |
 | --- | --- | --- | --- |
-| FLEET-FUNC-001 | Vehicles | List/detail search, filters, stats, edit and archive/restore preserve values after reload | pass: focused suite and workflow probe |
+| FLEET-FUNC-001 | Vehicles | List/detail search, filters, stats, create validation, and archive/restore preserve values after reload | pass: focused suite, create persistence test, and workflow probe; authenticated create/edit browser gate remains open |
 | FLEET-FUNC-002 | Vehicle operations | Driver change, contracts, odometers and services are vehicle-scoped and guarded | pass: focused suite |
 | FLEET-FUNC-003 | Configuration | Manufacturers, models, categories, statuses, tags, service types and activities support CRUD, validation and stale guards | pass: focused suite |
 | FLEET-FUNC-004 | Reporting | Cost, odometer and service reports expose deterministic grouped graph/pivot/list data | pass: focused suite |

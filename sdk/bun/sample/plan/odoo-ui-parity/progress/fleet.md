@@ -4,7 +4,7 @@ Module owner: fleet module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: working tree after authenticated Fleet QA
+Candidate commit: working tree after vehicle create contract slice
 
 ## Current state
 
@@ -26,7 +26,22 @@ coverage are still open.
   returned 409 `STALE_RECORD`; Fleet user archive returned 403
   `fleet.write`.
 
+## Current-wave developer evidence (2026-09-13)
+
+- Vehicle creation now declares stable guards for required name/license plate,
+  Car/Bike type, non-negative odometer, valid acquisition/contract dates, and
+  case-insensitive duplicate name/license plate checks in
+  `services/fleet/api/vehicles.yaml`.
+- `bun test ./test/fleet_vehicle_create.integration.test.ts --timeout 20000` —
+  2 passed, 10 assertions, 0 failures. A valid vehicle reloaded with database
+  defaults; seven invalid/duplicate requests returned explicit 422/409
+  errors and did not insert rows.
+- Full Fleet corpus
+  `bun test ./test/fleet*.integration.test.ts --timeout 20000` — 64 passed,
+  693 assertions, 0 failures across 21 files.
+
 ## Next bounded task
 
-Complete fresh paired Odoo comparison and expand browser CRUD/vehicle workflow
+Complete fresh paired Odoo comparison, authenticated vehicle create/edit CRUD,
+actor/company boundaries, restart/migration proof, and browser workflow
 coverage before sign-off.
