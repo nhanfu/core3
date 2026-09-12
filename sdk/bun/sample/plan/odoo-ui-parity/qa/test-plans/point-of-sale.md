@@ -1,0 +1,77 @@
+# Point of Sale detailed QA test plan
+
+Module: point-of-sale  
+QA owner: point-of-sale-qa  
+Developer owner: point-of-sale module owner  
+Reference addon/version: point_of_sale, Odoo 19 Community  
+Plan status: approved  
+Last reviewed: 2026-09-12
+
+This plan follows [`point-of-sale.md`](../../point-of-sale.md); executed
+evidence is recorded in [`../point-of-sale.md`](../point-of-sale.md).
+
+## Coverage inventory
+
+| Menu/action family | Core3 route families | Scope |
+| --- | --- | --- |
+| Cashier/touch | `/point-of-sale/touch` and session routes | Product search/add, customer, notes, discounts, taxes, payment, receipt and session state |
+| Sessions and orders | session, order, payment, sale-line and report routes | Open/close/control sessions, order/payment reads, lifecycle and reporting |
+| Products/catalog | products, variants, categories, tags, attributes, pricelists and customer routes | List/form/New CRUD, x2many rows, validation, archive and scoped totals |
+| Configuration | POS settings, payment methods, floors/tables, printers, note models and combos | Manager configuration, in-use guards, connection/workflow actions and mobile layouts |
+
+Actors are POS Manager, POS Cashier, ordinary POS user, Fleet ordinary user,
+wrong-company user and unauthenticated user. Fixtures must include stable
+products, taxes, customers, sessions, orders, tenders, floors/tables, printers,
+attributes, pricelists and reports. Mutations use isolated databases and
+generated IDs; no test may depend on wall-clock dates or a prior test's rows.
+
+## Functional and data cases
+
+| Case ID | Surface | Expected result and persistence assertion | Status |
+| --- | --- | --- | --- |
+| POS-FUNC-001 | Touch cashier | Load session, search/add products, change quantity/customer/notes and recalculate totals from service data | pass: bounded cashier evidence |
+| POS-FUNC-002 | Payments | Tender selection, partial/overpayment validation, payment creation and receipt state persist after reload | pass: bounded payment evidence |
+| POS-FUNC-003 | Sessions/orders | Session state controls, order list/detail, payments, sale lines and reports use real scoped datasources | pass at contract level; browser route matrix planned |
+| POS-FUNC-004 | Product/catalog CRUD | Products, variants, categories, tags, attributes, values and pricelists support declared CRUD, validation, stale and in-use guards | pass: focused corpus |
+| POS-FUNC-005 | Configuration CRUD | Payment methods, configurations, floors/tables, printers, note models and combo choices enforce manager permissions and persistence | pass: focused corpus |
+| POS-FUNC-006 | Customers/activity | Create customer, project totals, schedule activity and preserve links to POS-owned records | pass at contract level |
+| POS-FUNC-007 | Empty/error/not-found | Every list/form/report has deterministic empty, missing, forbidden and transport-error behavior | pass at contract level |
+| POS-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, sessions, orders or configuration rows | planned restart/migration gate |
+| POS-FUNC-009 | Attachments/import/export/print | Exercise receipts, attachments, product import/export and exposed report/print actions | planned browser interaction gate |
+
+## Workflow and integration cases
+
+| Case ID | Workflow/integration | Expected result | Status |
+| --- | --- | --- | --- |
+| POS-WF-001 | Session lifecycle | Opening → opened → closing/closed follows guards, updates versions and prevents unsafe edits during active sessions | pass at contract level; browser workflow planned |
+| POS-WF-002 | Cashier order lifecycle | Draft cart → payment → paid/receipt updates order and payment atomically; failed tender leaves the cart unchanged | pass: bounded payment evidence |
+| POS-WF-003 | Product/pricing | Product, tax, category, pricelist and combo selections calculate the declared price without client-only defaults | pass at contract level |
+| POS-WF-004 | Floor/preparation | Floor/table assignment and printer/preparation transitions remain scoped and recoverable | pass at contract level; browser interaction planned |
+| POS-WF-005 | Durable/external boundary | Payment, receipt delivery, printer callbacks and cross-module flows use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+
+## Permission and security cases
+
+| Case ID | Actor/scope | Expected result | Status |
+| --- | --- | --- | --- |
+| POS-PERM-001 | POS Manager | Configuration, catalog and session administration mutations succeed | planned browser actor gate |
+| POS-PERM-002 | POS Cashier | Touch order/payment actions work only for assigned open sessions | pass: bounded write evidence |
+| POS-PERM-003 | Fleet ordinary user | POS write/payment/configuration actions return 403 and do not change rows | pass: payment boundary |
+| POS-PERM-004 | Wrong company | Products, sessions, orders, payments and customers are not leaked or mutable | planned |
+| POS-PERM-005 | Unauthenticated/expired | Redirect/401/403 without protected data in the response | planned |
+| POS-PERM-006 | Stale/missing/invalid | 409/404/422 leaves the current order/session/configuration unchanged | pass at contract level |
+
+## Visual, responsive, and regression cases
+
+| Case ID | State | Viewport | Required assertion | Status |
+| --- | --- | --- | --- | --- |
+| POS-UI-001 | Touch cashier/payment | 1440x900, 390x844 | Product grid, cart, totals, tender dialog, receipt and touch targets match Odoo | pass for touch route only |
+| POS-UI-002 | Sessions/orders/catalog | both | Menus, list/form/kanban tabs, status actions, fields and responsive layout match Odoo | planned full matrix |
+| POS-UI-003 | Configuration/reporting | both | Settings, payment methods, floor/table, printer, graph/pivot/list and empty states match Odoo | planned paired capture |
+| POS-UI-004 | Current route regression | all manifest-owned POS routes | Authenticated desktop/mobile checks have no blank/redirect, page/request error or horizontal overflow | planned |
+
+## Exit criteria
+
+Full POS sign-off requires the focused corpus, authenticated end-to-end cashier
+and configuration CRUD, session/order/payment workflows, all actor boundaries,
+reload/restart persistence, complete responsive route coverage, and paired Odoo
+desktop/mobile comparisons. The verified touch slice is not module completion.

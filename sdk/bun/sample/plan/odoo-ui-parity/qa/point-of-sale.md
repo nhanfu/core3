@@ -14,6 +14,8 @@ Module owner: point-of-sale module owner
 Verification trigger: feature-complete
 Candidate commit: working tree after authenticated POS QA
 
+Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-sale.md). It is the module-level source for the remaining route, CRUD, actor, persistence, Temporal, and paired Odoo gates.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
