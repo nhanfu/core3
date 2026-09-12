@@ -932,6 +932,16 @@ completed rows for the selected report, so no populated-result parity is
 claimed. The remaining visual difference is the shared Core3 Fluent shell
 versus Odoo's purple shell.
 
+The source search contract is also represented in the report refinement: Work
+Center, Manufacturing Order, Product, and Finished/Status filtering, with Work
+Center, Operation, Manufacturing Order, Status, and Date grouping. The API
+keeps the source action's completed-work-order domain and adds deterministic
+Manufacturing Order/Product option datasources and equality filters. The focused
+test now passes 2 tests and 19 assertions. The isolated runtime could not be
+reached for fresh authenticated captures: frontend startup hit the host
+`EMFILE` watcher limit and the DuckDB migration runner rejected an existing
+constrained `ALTER TABLE`, so no new visual signoff or image claim is made.
+
 ## Work Center Loads bounded slice (2026-09-12)
 
 Core3 adds the Work Center `Load` stat action at `/manufacturing/work-centers/load`, with page/API YAML joined by `page.id`, deterministic read-only load-report fixtures, work-center scoping, `manufacturing.read` permissions, and explicit empty/error/forbidden states. The focused test passes 2 tests and 15 assertions.

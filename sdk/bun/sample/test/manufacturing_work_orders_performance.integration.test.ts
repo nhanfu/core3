@@ -30,7 +30,7 @@ describe('Manufacturing Work Orders Performance parity slice', () => {
     expect(page.datasources).toBeUndefined();
     expect(detail.datasources).toBeUndefined();
     expect(discovered.pageDatasources.get('manufacturing-work-orders-performance')).toEqual([
-      'mrp_workorder_performance_states', 'mrp_workorder_performance_workcenters', 'mrp_workorder_performance',
+      'mrp_workorder_performance_states', 'mrp_workorder_performance_workcenters', 'mrp_workorder_performance_productions', 'mrp_workorder_performance_products', 'mrp_workorder_performance',
     ]);
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([
       expect.objectContaining({ path: '/manufacturing/work-orders-performance', page: 'manufacturing-work-orders-performance', module: 'manufacturing' }),
@@ -38,6 +38,14 @@ describe('Manufacturing Work Orders Performance parity slice', () => {
     ]));
     expect(page.components[0].views.map((view: any) => view.id)).toEqual(['graph', 'pivot', 'list', 'form']);
     expect(page.components[0].view_navigation).toBe('tabs');
+    expect(page.components[0].filters).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field: 'production_name', label: 'Manufacturing Order' }),
+      expect.objectContaining({ field: 'product_name', label: 'Product' }),
+    ]));
+    expect(page.components[0].group_by).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field: 'state', label: 'Status' }),
+      expect.objectContaining({ field: 'date_start', label: 'Date' }),
+    ]));
     expect(detail.components[0]).toMatchObject({ type: 'OdooFormView', editable: false, source: 'mrp_workorder_performance_detail' });
   });
 
@@ -45,9 +53,10 @@ describe('Manufacturing Work Orders Performance parity slice', () => {
     const { database, repository } = await repositoryForTest();
     const api = yaml('api/work-orders-performance.yaml');
     const source = api.datasources.find((candidate: any) => candidate.id === 'mrp_workorder_performance');
-    const params = { q: null, workcenter_id: null, workcenter: null, fixture_state: null };
+    const params = { q: null, workcenter_id: null, workcenter: null, production_name: null, product_name: null, fixture_state: null };
     expect((await repository.querySource(source, params, 0, 50)).data.map((row: any) => row.id)).toEqual(['wora-finished-001', 'wora-finished-002']);
     expect((await repository.querySource(source, { ...params, workcenter_id: 'workcenter-assembly-1' }, 0, 50)).data).toMatchObject([{ id: 'wora-finished-001', status_label: 'Finished', duration: 28 }]);
+    expect((await repository.querySource(source, { ...params, production_name: 'WH/MO/00005' }, 0, 50)).data).toMatchObject([{ id: 'wora-finished-002', product_name: '[FURN_9666] Table' }]);
     expect((await repository.querySource(source, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { ...params, fixture_state: 'forbidden' }, 0, 50)).rejects.toMatchObject({ status: 403, code: 'MRP_WORKORDER_PERFORMANCE_FORBIDDEN' });
     const detail = yaml('api/work-orders-performance-detail.yaml').datasources[0];

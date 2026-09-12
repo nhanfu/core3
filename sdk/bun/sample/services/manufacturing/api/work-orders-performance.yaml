@@ -8,6 +8,14 @@ datasources:
     single: false
     permission: manufacturing.read
     query: "SELECT DISTINCT workcenter AS value, workcenter AS label FROM mrp_workorder_analysis WHERE state = 'Finished' ORDER BY workcenter"
+  - id: mrp_workorder_performance_productions
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT production_name AS value, production_name AS label FROM mrp_workorder_analysis WHERE state = 'Finished' ORDER BY production_name"
+  - id: mrp_workorder_performance_products
+    single: false
+    permission: manufacturing.read
+    query: "SELECT DISTINCT product_name AS value, product_name AS label FROM mrp_workorder_analysis WHERE state = 'Finished' ORDER BY product_name"
   - id: mrp_workorder_performance
     single: false
     permission: manufacturing.read
@@ -25,6 +33,8 @@ datasources:
         AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END
         AND (:workcenter_id IS NULL OR workcenter = :workcenter_id OR workcenter = (SELECT name FROM mrp_workcenters WHERE id = :workcenter_id))
         AND (:workcenter IS NULL OR workcenter = :workcenter)
+        AND (:production_name IS NULL OR production_name = :production_name)
+        AND (:product_name IS NULL OR product_name = :product_name)
         AND (:q IS NULL OR operation_name ILIKE '%' || :q || '%' OR production_name ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%')
       ORDER BY workcenter, date_finished, id
 actions:

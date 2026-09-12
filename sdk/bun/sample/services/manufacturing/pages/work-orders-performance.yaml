@@ -10,11 +10,15 @@ components:
     view_navigation: tabs
     filters:
       - { field: workcenter, label: Work Center, options_source: mrp_workorder_performance_workcenters }
+      - { field: production_name, label: Manufacturing Order, options_source: mrp_workorder_performance_productions }
+      - { field: product_name, label: Product, options_source: mrp_workorder_performance_products }
       - { field: state, label: Status, options_source: mrp_workorder_performance_states }
     group_by:
       - { field: workcenter, label: Work Center }
       - { field: operation_name, label: Operation }
       - { field: production_name, label: Manufacturing Order }
+      - { field: state, label: Status }
+      - { field: date_start, label: Date }
     default_group_by: workcenter
     views:
       - id: graph
