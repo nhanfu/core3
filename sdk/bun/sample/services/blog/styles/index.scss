@@ -9,5 +9,7 @@
 .blog-public-subtitle { color: #667085; font-size: 20px; line-height: 1.5; }
 .blog-public-meta { display: flex; gap: 16px; flex-wrap: wrap; color: #667085; font-size: 13px; }
 .blog-public-teaser { margin-top: 28px; color: #475467; font-size: 18px; line-height: 1.7; white-space: pre-wrap; }
+.blog-public-content { margin-top: 28px; color: #475467; font-size: 18px; line-height: 1.7; }
+.blog-public-content p { margin: 0 0 16px; }
 .blog-public-tags { margin-top: 24px; color: #714bca; font-size: 13px; font-weight: 700; }
 .blog-public-error, .blog-public-loading { display: grid; place-content: center; padding: 48px 24px; text-align: center; }

@@ -1,0 +1,14 @@
+version: 0.0.5
+kind: schema
+description: Blog post rich content
+type:
+  postgres:
+    up: |
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS content_html VARCHAR;
+      UPDATE blog_posts SET content_html = '<p>Learn how Core3 turns declarative YAML into durable services.</p>' WHERE id = 'blog-post-demo-001' AND content_html IS NULL;
+    down: |
+      ALTER TABLE blog_posts DROP COLUMN IF EXISTS content_html;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -18,6 +18,7 @@ describe('Blog public visibility parity', () => {
     const operations = yaml('operations.yaml').operations;
     const list = bindNamedParams(operations['blog.public.posts'].query, { q: null });
     expect((await repository.query(list.statement, list.values)).map((post: any) => post.id)).toEqual(['blog-post-demo-001']);
+    expect((await repository.query(list.statement, list.values))[0].content_html).toContain('Core3');
     const detail = bindNamedParams(operations['blog.public.post'].query, { id: 'blog-post-demo-002' });
     expect(await repository.query(detail.statement, detail.values)).toEqual([]);
     database.close();
@@ -43,5 +44,7 @@ describe('Blog public visibility parity', () => {
     expect(renderer).toContain("@core3/client/html");
     expect(renderer).toContain('/api/public/blog/posts/');
     expect(app).toContain("/^\\/blog\\/post\\/?$/");
+    expect(renderer).toContain('sanitizePublicHtml');
+    expect(renderer).toContain("['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED']");
   });
 });

@@ -49,7 +49,7 @@ actions:
     mutation:
       operation: insert
       table: blog_posts
-      fields: [blog_id, blog_name, name, subtitle, author_name, teaser, tags]
+      fields: [blog_id, blog_name, name, subtitle, author_name, teaser, content_html, tags]
       required: [blog_id, blog_name, name]
       guards: [{ query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active", status: 400, message: An active blog is required }]
       result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
@@ -60,6 +60,7 @@ actions:
       - { field: subtitle, label: Subtitle, type: text }
       - { field: author_name, label: Author, type: text }
       - { field: teaser, label: Teaser, type: textarea }
+      - { field: content_html, label: Content, type: textarea }
       - { field: tags, label: Tags, type: text }
   - id: view_blog_post
     type: navigate

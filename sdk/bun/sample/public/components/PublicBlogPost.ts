@@ -6,6 +6,7 @@ type BlogPost = {
   subtitle?: string;
   author_name?: string;
   teaser?: string;
+  content_html?: string;
   tags?: string;
   published_date?: string;
 };
@@ -17,6 +18,29 @@ function loadStyles() {
   style.href = '/services/blog/styles/index.css';
   style.dataset.blogPublicStyle = 'true';
   document.head.append(style);
+}
+
+const SAFE_TAGS = new Set(['P', 'H2', 'H3', 'STRONG', 'EM', 'UL', 'OL', 'LI', 'A', 'BR']);
+
+function sanitizePublicHtml(source: string | undefined): string {
+  const parser = new DOMParser();
+  const input = parser.parseFromString(source || '', 'text/html').body;
+  const output = document.createElement('div');
+  const copy = (parent: HTMLElement, node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) { parent.append(document.createTextNode(node.textContent || '')); return; }
+    if (!(node instanceof HTMLElement)) return;
+    if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED'].includes(node.tagName)) return;
+    if (!SAFE_TAGS.has(node.tagName)) { [...node.childNodes].forEach((child) => copy(parent, child)); return; }
+    const safe = document.createElement(node.tagName.toLowerCase());
+    if (node.tagName === 'A') {
+      const href = node.getAttribute('href') || '';
+      if (/^(https?:|mailto:|\/)/i.test(href)) safe.setAttribute('href', href);
+      if (node.getAttribute('target') === '_blank') { safe.setAttribute('target', '_blank'); safe.setAttribute('rel', 'noopener noreferrer'); }
+    }
+    parent.append(safe); [...node.childNodes].forEach((child) => copy(safe, child));
+  };
+  [...input.childNodes].forEach((node) => copy(output, node));
+  return output.innerHTML;
 }
 
 export async function mount(outlet: HTMLElement, postId: string) {
@@ -48,5 +72,6 @@ export async function mount(outlet: HTMLElement, postId: string) {
   if (post.author_name) html.take(meta).span.text(`By ${post.author_name}`);
   if (post.published_date) html.take(meta).time.attr('datetime', post.published_date).text(`Published ${post.published_date}`);
   if (post.teaser) html.take(article).div.className('blog-public-teaser').text(post.teaser);
+  if (post.content_html) html.take(article).div.className('blog-public-content').innerHTML(sanitizePublicHtml(post.content_html));
   if (post.tags) html.take(article).div.className('blog-public-tags').text(post.tags);
 }

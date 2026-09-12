@@ -1,0 +1,13 @@
+version: 0.0.6
+kind: data
+description: Blog post rich content demo
+type:
+  postgres:
+    up: |
+      UPDATE blog_posts SET content_html = '<p>Learn how Core3 turns declarative YAML into durable services.</p>' WHERE id = 'blog-post-demo-001' AND content_html IS NULL;
+    down: |
+      UPDATE blog_posts SET content_html = NULL WHERE id = 'blog-post-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

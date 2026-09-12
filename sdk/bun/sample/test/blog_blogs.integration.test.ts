@@ -60,4 +60,20 @@ describe('Blog Blogs parity slice', () => {
     expect(api.actions.map((action: any) => action.fields.map((field: any) => field.field))).toEqual([['name', 'subtitle'], ['name', 'subtitle']]);
     expect(api.datasources[0].error_states.transport_error.status).toBe(503);
   });
+
+  test('edits persisted post content through the detail contract', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'blog_post_content_test', ['schema', 'data']);
+    const detail = yaml('pages/post-detail.yaml');
+    const edit = detail.actions.find((action: any) => action.id === 'edit_blog_post_detail');
+    const updated = await repository.executeMutation(edit.mutation, {
+      id: 'blog-post-demo-001', expected_row_version: 1,
+      values: { blog_id: 'blog-demo-001', blog_name: 'Core3 Engineering', name: 'Shipping YAML-first services', subtitle: 'How page YAML replaced per-page UI code', author_name: 'Platform Team', teaser: 'Declarative services.', content_html: '<p>Persisted <strong>content</strong>.</p>', tags: 'yaml,services', },
+    });
+    expect(updated).toMatchObject({ id: 'blog-post-demo-001', content_html: '<p>Persisted <strong>content</strong>.</p>', row_version: 2 });
+    expect((await repository.query('SELECT content_html FROM blog_posts WHERE id = ?', ['blog-post-demo-001']))[0]).toEqual({ content_html: '<p>Persisted <strong>content</strong>.</p>' });
+    await expect(repository.executeMutation(edit.mutation, { id: 'blog-post-demo-001', expected_row_version: 1, values: { blog_id: 'blog-demo-001', blog_name: 'Core3 Engineering', name: 'Stale' } })).rejects.toMatchObject({ status: 409 });
+    database.close();
+  });
 });

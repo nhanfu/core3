@@ -69,6 +69,10 @@ export function createYamlHostApi(services: YamlRuntimeContext[]) {
     } else if (pathname === '/api/upload' && method === 'POST') {
       const kind = await uploadKind(request);
       if (kind) candidates = services.filter((service) => [...service.actions.values()].some((action: any) => action.type === 'upload' && action.kind === kind));
+    } else if (pathname === '/api/mutate' && method === 'POST') {
+      const body = await requestBody(request);
+      const mutation = typeof body?.mutation === 'string' ? body.mutation : '';
+      if (mutation) candidates = services.filter((service) => service.actions.has(mutation));
     }
     if (!candidates?.length) return null;
 
