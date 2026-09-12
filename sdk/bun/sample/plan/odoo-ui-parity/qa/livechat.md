@@ -21,6 +21,7 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
 - Live Chat formerly failing Looking for Help and partner-history cases now
   pass in focused reruns after deterministic fixture and contract repairs.
+- Focused Sessions suite: `bun test ./test/livechat_sessions.integration.test.ts` — 4 passed, 35 assertions; the lifecycle uses the Help Queue-owned `join` action and persists the session through close.
 - Authenticated desktop/mobile route matrix and Odoo comparison remain pending.
 
 ## Test-case inventory
@@ -28,6 +29,7 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | LIVECHAT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
+| LIVECHAT-WORKFLOW-001 | Visitor session lifecycle | Authenticated API test traverses In Progress → Waiting → In Progress → Looking for Help → In Progress → Closed, persists visitor/channel/operator/outcome and versions 1 → 6, and rejects closed-session replay | pass |
 
 ## Bugs and retests
 

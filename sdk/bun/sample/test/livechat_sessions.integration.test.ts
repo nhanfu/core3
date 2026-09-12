@@ -5,6 +5,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const sampleRoot = join(import.meta.dir, '..');
 const serviceRoot = join(sampleRoot, 'services/livechat');
@@ -75,5 +76,40 @@ describe('Live Chat Conversations — Sessions parity', () => {
       expect(action(id), id).toMatchObject({ permission: 'livechat.write', handler: 'order_transition', workflow: 'livechat_sessions' });
     }
     expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['livechat.read', 'livechat.write']));
+  });
+
+  test('executes the visitor session lifecycle with versioned persistence', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'livechat_session_lifecycle_test', ['schema', 'data']);
+    const discovered = discoverPages(sampleRoot);
+    const user = { sub: 'livechat-agent', email: 'agent@workspace.example', name: 'Live Chat Agent', permissions: ['livechat.read', 'livechat.write'] };
+    const api = createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return user; }, hasPermission(actor: any, permission: string) { return actor.permissions.includes(permission); } },
+      sources: new Map([...discovered.datasources].filter(([id]) => id.startsWith('livechat_'))),
+      pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === 'livechat')),
+      pages: new Map([...discovered.pages].filter(([, page]) => page.module === 'livechat').map(([id, page]) => [id, page.config])),
+      catalogs: discovered.catalogs,
+      menus: discovered.menus,
+      workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'livechat').map(([id, workflow]) => [id, workflow.config])),
+      workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'livechat').map(([id, workflow]) => [id, workflow.file])),
+      permissions: discovered.permissions.get('livechat')?.config || {},
+      uploadRoot: '/tmp/core3-livechat-test-uploads', eventStore: {}, topics: {},
+    });
+    const sessionId = 'livechat-session-demo-002';
+    const transition = (namespace: string, name: string, expected: number) => api(new Request(`http://livechat.test/api/actions/livechat.${namespace}.${name}`, {
+      method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: sessionId, expected_row_version: expected, values: {} }),
+    }), new URL(`http://livechat.test/api/actions/livechat.${namespace}.${name}`));
+
+    expect((await (await transition('sessions', 'wait', 1)).json())).toMatchObject({ id: sessionId, status: 'Waiting for Customer', row_version: 2 });
+    expect((await (await transition('sessions', 'resume', 2)).json())).toMatchObject({ id: sessionId, status: 'In Progress', row_version: 3 });
+    expect((await (await transition('sessions', 'help', 3)).json())).toMatchObject({ id: sessionId, status: 'Looking for Help', row_version: 4 });
+    expect((await (await transition('help_sessions', 'join', 4)).json())).toMatchObject({ id: sessionId, status: 'In Progress', row_version: 5 });
+    expect((await (await transition('sessions', 'close', 5)).json())).toMatchObject({ id: sessionId, status: 'Closed', outcome: 'Success', row_version: 6 });
+    expect((await repository.query('SELECT status, visitor_name, channel_id, operator_name, outcome, row_version FROM livechat_sessions WHERE id = ?', [sessionId]))[0]).toMatchObject({ status: 'Closed', visitor_name: 'Visitor B', channel_id: 'livechat-channel-demo-001', operator_name: 'Support Agent', outcome: 'Success', row_version: 6 });
+    await expect(transition('sessions', 'close', 5)).rejects.toMatchObject({ status: 409, code: 'LIVECHAT_SESSION_INVALID_STATE' });
+    database.close();
   });
 });

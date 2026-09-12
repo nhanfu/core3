@@ -43,7 +43,7 @@ technical queues must never expose unrelated company conversations.
 
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
-| LIVECHAT-WF-001 | Visitor session | New → ongoing → closed session preserves visitor, channel, operator and transcript relations | pass at contract level; browser workflow planned |
+| LIVECHAT-WF-001 | Visitor session | New → ongoing → closed session preserves visitor, channel, operator and transcript relations | pass: `livechat_sessions.integration.test.ts`; browser workflow remains planned |
 | LIVECHAT-WF-002 | Channel routing | Rule/expertise selection assigns eligible operators and rejects invalid or unauthorized changes | pass at contract level |
 | LIVECHAT-WF-003 | Chatbot handoff | Script steps/answers progress deterministically and hand off to an operator without losing transcript | pass at contract level |
 | LIVECHAT-WF-004 | Help/escalation queues | Looking-for-help and technical escalation actions preserve queue state and manager scope | pass at contract level |
