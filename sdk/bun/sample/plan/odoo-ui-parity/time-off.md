@@ -750,4 +750,29 @@ the original stat-button ordering. Authenticated browser evidence was
 attempted with `bun run dev --db=ddb --memory`, but startup failed before the
 frontend could load with DuckDB `Parser Error: Adding columns with constraints
 not yet supported`; therefore no desktop/mobile visual-parity claim or
-screenshots are made for this batch. Images remain outside Git.
+ screenshots are made for this batch. Images remain outside Git.
+
+## Allocation Activity view (2026-09-12)
+
+The next bounded installed Odoo view gap was the allocation Activity view.
+The source `hr_leave_allocation_action_my`, `hr_leave_allocation_action_all`,
+and `hr_leave_allocation_action_approve_department` actions expose
+`list,kanban,form,activity`; `hr_leave_allocation_view_activity` is titled
+`Allocation Requests` and renders employee, allocation days, and time-off type
+in each activity card. Core3 adds the visible Activity tab to All Allocations,
+keeps it desktop-only with responsive collection fallback, and adds the seven
+Odoo-observed activity types, deterministic state-derived activity slots, and
+manager-only scheduling action. The page and API remain joined by
+`page.id: time-off-allocations`; no allocation mutation or new route is added.
+
+Focused coverage is in `time_off_allocation_activity.integration.test.ts` and
+checks the Odoo activity labels, card fields, datasource slots, route, and
+`time_off.manage` permission. Authenticated browser capture was attempted at
+1440x900 and 390x844 under `/tmp/core3-odoo-parity/timeoff-wave4-20260912/`.
+The requested ports 3001 and 3002 were already occupied, so the bounded
+attempt selected fallback port 3003 and was terminated before an authenticated
+browser session could be established. The available Odoo endpoint at 8069
+returned 404 for the Core3 `/api/modules` readiness probe, and no authenticated
+Time Off reference session was available in this worktree. The evidence
+directory contains only the server log; no visual-parity claim or screenshots
+are made.

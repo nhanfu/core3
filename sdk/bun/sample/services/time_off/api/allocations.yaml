@@ -6,7 +6,7 @@ datasources:
     query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Waiting For Me'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"
   - id: time_off_allocations
     permission: time_off.read
-    query: "SELECT id, row_version, name, employee_name, leave_type_name, leave_type_id, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state, reason FROM leave_allocations WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) AND (:leave_type_id IS NULL OR leave_type_id = :leave_type_id) AND (:year IS NULL OR (date_from >= CAST(CAST(:year AS VARCHAR) || '-01-01' AS DATE) AND date_from < CAST(CAST(CAST(:year AS INTEGER) + 1 AS VARCHAR) || '-01-01' AS DATE))) ORDER BY date_from DESC, name"
+    query: "SELECT id, row_version, name, employee_name, leave_type_name, leave_type_id, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state, reason, CASE state WHEN 'Draft' THEN 'todo' WHEN 'Submitted' THEN 'time_off_approval' WHEN 'Approved' THEN 'time_off_second_approve' WHEN 'Refused' THEN 'call' ELSE 'todo' END AS activity_type, CASE state WHEN 'Draft' THEN 'Complete allocation request' WHEN 'Submitted' THEN 'Approve allocation request' WHEN 'Approved' THEN 'Review approved allocation' WHEN 'Refused' THEN 'Review refused allocation' ELSE 'Review allocation request' END AS activity_summary, CAST(date_from AS VARCHAR) AS activity_date, employee_name AS activity_user, CASE state WHEN 'Refused' THEN 'overdue' WHEN 'Approved' THEN 'done' WHEN 'Draft' THEN 'today' ELSE 'planned' END AS activity_state, 1 AS activity_count FROM leave_allocations WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) AND (:leave_type_id IS NULL OR leave_type_id = :leave_type_id) AND (:year IS NULL OR (date_from >= CAST(CAST(:year AS VARCHAR) || '-01-01' AS DATE) AND date_from < CAST(CAST(CAST(:year AS INTEGER) + 1 AS VARCHAR) || '-01-01' AS DATE))) ORDER BY date_from DESC, name"
   - id: group_allocation_employees
     permission: time_off.manage
     single: false
@@ -20,6 +20,7 @@ datasources:
     single: false
     query: "SELECT id AS value, name AS label FROM accrual_plans WHERE state = 'Active' ORDER BY name"
 actions:
+  - { id: schedule_allocation_activity, type: navigate, permission: time_off.manage, navigate_to: /time-off-allocations }
   - id: view_allocation
     type: navigate
     permission: time_off.read
