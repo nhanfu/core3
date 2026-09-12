@@ -5,7 +5,7 @@ components:
     variant: odoo
     source: crm_pipeline_analysis
     search: { label: Opportunities Analysis, placeholder: Search opportunities... }
-    default_filters: { record_type: opportunity, active: active, current_scope: current }
+    default_filters: { record_type: opportunity, active: active }
     filters:
       - { field: active, label: Status, options: [{ id: active, label: Active }, { id: inactive, label: Archived }] }
       - { field: team, label: Sales Team, options_source: crm_pipeline_analysis_teams }
@@ -33,13 +33,13 @@ components:
         show_leaf_rows: false
         pivot:
           fields:
-            - { field: expected_closing_month, column: Expected Closing, type: date }
+            - { field: created_month, column: Creation Date, type: date }
             - { field: stage, column: Stage }
             - { field: team, column: Sales Team }
             - { field: salesperson, column: Salesperson }
             - { field: prorated_revenue, column: Prorated Revenue }
-          default: { rows: [stage], columns: [expected_closing_month], measures: [{ field: prorated_revenue, aggregate: sum, column: Prorated Revenue }] }
-          date_ranges: { expected_closing_month: month }
+          default: { rows: [stage], columns: [created_month], measures: [{ field: prorated_revenue, aggregate: sum, column: Prorated Revenue }] }
+          date_ranges: { created_month: month }
       - id: list
         label: List
         icon: table

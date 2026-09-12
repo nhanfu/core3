@@ -495,6 +495,19 @@ Reference contract:
   missing. No Odoo or Core3 screenshot was produced and no visual parity claim
   is made for this batch.
 
+## Pipeline Analysis contract correction (2026-09-12)
+
+The source/action audit corrected the Core3 Pipeline Analysis pivot contract to
+use Creation Date month columns and removed the Core3-only My Pipeline default
+from the rendered page. Focused validation passes:
+`bun test test/crm_pipeline_analysis.integration.test.ts` (2 tests, 20
+assertions). Core3 graph, pivot, and list captures are under
+`/tmp/core3-odoo-parity/crm-visual4-20260912/` at both requested viewports.
+
+The Odoo capture attempt in this run was not authenticated because the local
+reference login was temporarily throttled. No visual parity claim is made
+until a fresh authenticated Odoo capture is obtained.
+
 Core3 implementation and evidence:
 
 - Page/API contracts join through page ID `crm-lost-reasons`; layout is

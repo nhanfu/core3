@@ -16,13 +16,14 @@ datasources:
       forbidden: { status: 403, code: CRM_PIPELINE_ANALYSIS_FORBIDDEN, message: You do not have permission to view Pipeline Analysis. }
       conflict: { status: 409, code: CRM_PIPELINE_ANALYSIS_CONFLICT, message: The pipeline changed. Refresh to continue. }
       transport_error: { status: 503, code: CRM_PIPELINE_ANALYSIS_UNAVAILABLE, message: Pipeline Analysis is temporarily unavailable. }
-    pivot: { fields: [id, row_version, name, type, active, stage, team, salesperson, expected_closing, expected_closing_month, probability, expected_revenue, prorated_revenue, record_count] }
+    pivot: { fields: [id, row_version, name, type, active, stage, team, salesperson, created_at, created_month, expected_closing, probability, expected_revenue, prorated_revenue, record_count] }
     query: |
       SELECT id, row_version, name, type, active, stage,
         COALESCE(NULLIF(team, ''), 'Unassigned team') AS team,
         COALESCE(NULLIF(salesperson, ''), 'Unassigned') AS salesperson,
+        CAST(created_at AS VARCHAR) AS created_at,
+        strftime(created_at, '%Y-%m') AS created_month,
         CAST(expected_closing AS VARCHAR) AS expected_closing,
-        strftime(expected_closing, '%Y-%m') AS expected_closing_month,
         probability, CAST(expected_revenue AS DOUBLE) AS expected_revenue,
         CAST(expected_revenue * probability / 100 AS DOUBLE) AS prorated_revenue,
         1 AS record_count

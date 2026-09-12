@@ -29,7 +29,7 @@ describe('CRM Pipeline Analysis parity', () => {
     const list = page.components[0];
     expect(list.views.map((view: any) => view.id)).toEqual(['graph', 'pivot', 'list']);
     expect(list.views[0]).toMatchObject({ category_field: 'stage', measure_field: 'prorated_revenue' });
-    expect(list.views[1].pivot.default).toMatchObject({ rows: ['stage'], columns: ['expected_closing_month'] });
+    expect(list.views[1].pivot.default).toMatchObject({ rows: ['stage'], columns: ['created_month'] });
   });
 
   test('returns deterministic opportunity, filter, empty, and failure states', async () => {
@@ -42,6 +42,7 @@ describe('CRM Pipeline Analysis parity', () => {
     expect(result.data.length).toBeGreaterThan(0);
     expect(result.data.every((row: any) => row.type === 'opportunity' && row.active === true)).toBe(true);
     expect(result.data[0]).toHaveProperty('prorated_revenue');
+    expect(result.data[0]).toHaveProperty('created_month');
     expect((await repository.querySource(source, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { ...params, fixture_state: 'forbidden' }, 0, 50)).rejects.toMatchObject({ status: 403, code: 'CRM_PIPELINE_ANALYSIS_FORBIDDEN' });
     await expect(repository.querySource(source, { ...params, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'CRM_PIPELINE_ANALYSIS_UNAVAILABLE' });
