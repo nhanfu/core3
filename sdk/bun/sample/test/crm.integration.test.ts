@@ -69,18 +69,25 @@ describe('CRM YAML lifecycle integration', () => {
 
   it('converts an unlinked lead while creating and linking a customer', async () => {
     const database = await DuckDbDatabase.open(':memory:');
-    const repository = new YamlRepository(database);
+    const baseDatabase = await DuckDbDatabase.open(':memory:');
+    const baseRepository = new YamlRepository(baseDatabase);
+    const baseCreate = parseYaml(join(import.meta.dir, '../services/base/api/contacts.yaml')).actions.find((candidate: any) => candidate.id === 'create_contact');
+    const repository = new YamlRepository(database, (name: string) => name === 'yaml.service.base'
+      ? { call: (operation: string, request: Record<string, unknown>) => operation === 'base.contacts.create' ? baseRepository.executeMutation(baseCreate.mutation, request) : undefined }
+      : undefined);
     await repository.run(`
       CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, type VARCHAR, partner_id VARCHAR, partner_name VARCHAR, email VARCHAR, phone VARCHAR, stage VARCHAR, row_version BIGINT DEFAULT 1, updated_at TIMESTAMP);
-      CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, name VARCHAR, email VARCHAR, phone VARCHAR, active BOOLEAN DEFAULT true);
       CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, completed_at TIMESTAMP);
       INSERT INTO crm_leads(id, type, email, phone, stage) VALUES ('lead-new-contact', 'lead', 'prospect@example.test', '+1 555 0199', 'New');
     `);
+    await baseRepository.run('CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, name VARCHAR, email VARCHAR, phone VARCHAR, active BOOLEAN DEFAULT true)');
     const conversion = action(yaml('pages/lead-detail.yaml'), 'convert_lead_create_contact_detail');
     const converted = await repository.executeMutation(conversion.mutation, {
       id: 'lead-new-contact', contact_name: 'Prospective Customer', contact_email: 'prospect@example.test', contact_phone: '+1 555 0199',
     });
-    expect(converted).toMatchObject({ type: 'opportunity', partner_name: 'Prospective Customer', partner_id: 'crm-lead-contact-lead-new-contact' });
+    expect(converted).toMatchObject({ type: 'opportunity', partner_name: 'Prospective Customer' });
+    expect(converted.partner_id).toBeTruthy();
+    expect((await baseRepository.query('SELECT id, name, email, phone FROM base_contacts WHERE id = ?', [converted.partner_id]))[0]).toMatchObject({ name: 'Prospective Customer', email: 'prospect@example.test', phone: '+1 555 0199' });
     expect((await repository.query("SELECT partner_name, email FROM crm_leads WHERE id = 'lead-new-contact'"))[0]).toMatchObject({ partner_name: 'Prospective Customer', email: 'prospect@example.test' });
     expect((await repository.query("SELECT summary, state FROM crm_activities WHERE lead_id = 'lead-new-contact'"))[0]).toMatchObject({ summary: 'Lead converted and customer created', state: 'done' });
   });

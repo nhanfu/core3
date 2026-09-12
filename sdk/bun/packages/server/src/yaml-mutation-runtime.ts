@@ -16,7 +16,7 @@ export type MutationDefinition = {
   concurrency?: false | { field?: string; input?: string; required?: boolean };
   scope?: { table?: string; field: string; message?: string; message_key?: string };
   message_key?: string;
-  guards?: Array<{ type?: 'query' | 'service'; query?: string; service?: string; operation?: string; request?: Record<string, unknown>; status?: number; message?: string; code?: string; message_key?: string; message_params?: Record<string, unknown>; assign?: boolean }>;
+  guards?: Array<{ type?: 'query' | 'service'; query?: string; service?: string; operation?: string; request?: Record<string, unknown>; status?: number; message?: string; code?: string; message_key?: string; message_params?: Record<string, unknown>; assign?: boolean; assign_to?: string; assign_from?: string }>;
   before_steps?: MutationStep[];
   steps?: MutationStep[];
   result?: { query?: string };
@@ -68,6 +68,12 @@ export class YamlMutationRuntime {
             // so a service/query guard can enrich a local insert or update.
             if (params.values && typeof params.values === 'object') Object.assign(params.values, response);
           }
+          if (guard.assign_to) {
+            if (!IDENTIFIER.test(String(guard.assign_to))) throw { status: 500, message: 'Service guard assignment field is invalid' };
+            const source = String(guard.assign_from || 'id');
+            params[String(guard.assign_to)] = response && typeof response === 'object' ? response[source] : response;
+            if (params.values && typeof params.values === 'object') params.values[String(guard.assign_to)] = params[String(guard.assign_to)];
+          }
           continue;
         }
         const { statement, values } = bindNamedParams(String(guard.query || ''), params);
@@ -96,10 +102,13 @@ export class YamlMutationRuntime {
     if (!this.resolveService) throw { status: 500, message: 'Service guards are unavailable in this repository' };
     const service = this.resolveService(String(guard.service || ''));
     if (!service || typeof service.call !== 'function') throw { status: 500, message: `Service does not support calls: ${guard.service}` };
-    const request = Object.fromEntries(Object.entries(guard.request || {}).map(([key, value]) => [
-      key,
-      typeof value === 'string' && Object.prototype.hasOwnProperty.call(params, value) ? params[value] : value,
-    ]));
+    const resolve = (value: unknown): unknown => {
+      if (typeof value === 'string' && Object.prototype.hasOwnProperty.call(params, value)) return params[value];
+      if (Array.isArray(value)) return value.map(resolve);
+      if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, nested]) => [key, resolve(nested)]));
+      return value;
+    };
+    const request = resolve(guard.request || {}) as Record<string, unknown>;
     return service.call(String(guard.operation || ''), request);
   }
 

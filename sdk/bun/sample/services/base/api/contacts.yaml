@@ -27,7 +27,7 @@ actions:
       table: base_contacts
       fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, is_company, notes]
       required: [name]
-      guards: [{ query: "SELECT id FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email)", status: 409, message: A contact with this email already exists }]
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email))", status: 409, message: A contact with this email already exists }]
       result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
     fields:
       - { field: name, label: Name, type: text, required: true }
