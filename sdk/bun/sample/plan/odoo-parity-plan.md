@@ -235,13 +235,14 @@ marked pass without evidence.
   session/login support. File watching is disabled; restart it manually after
   source changes.
 - There are exactly 38 persistent module owners: one Luna medium-effort
-  sub-agent for every actual module row in the module register. A logical wave
-  contains up to 10 module owners and exactly 10 QA owners, with one QA owner
-  assigned to each active module. The main agent schedules those 20 workers as
-  a wave; the main agent is the 21st coordinator and does not count as a module
-  or QA owner. If fewer than 10 modules are ready, unused QA slots remain
-  idle; never overload one QA owner with another module while an assigned
-  module is still under test.
+  sub-agent for every actual module row in the module register. A standard
+  logical wave contains up to 9 module owners and 3 QA owners: one QA owner
+  handles at most 3 paired module owners. The scheduler must never exceed 16
+  worker agents in total, including any bounded shared-tooling or integration
+  workers; the main agent is the 17th coordinator and does not count as a
+  worker. Unused capacity remains idle when fewer modules are ready, and QA
+  ownership must remain explicit rather than silently overloading a QA owner
+  beyond the three-module limit.
   `auth` and `ai` are excluded because they are Core3 infrastructure, not
   registered Odoo modules.
 - A module owner receives the complete module goal, not a short UI slice. It
@@ -268,34 +269,40 @@ marked pass without evidence.
 - Do not create fresh replacement agents. If an owner stops, the main agent
   resumes that same run/worktree or records a blocker and requests explicit
   direction; ownership remains stable for the lifetime of this plan.
-- Use 10 dispatchable QA slots for each logical wave, with one QA assignment
-  paired to each of up to 10 module owners. QA does not need a continuously
-  active process or a separate durable product goal, but each QA owner has a
-  durable module test plan and QA ledger. QA creates and reviews the detailed
-  test plan before development, then consumes the exact Core3 process or
-  worktree spawned by its paired developer, runs the planned functional and
-  authenticated Odoo/Core3 browser cases, records failures, and re-tests fixes.
-  Each module's results, failures, and repairs are recorded in
+- Use 3 dispatchable QA slots for each standard logical wave, with one QA
+  assignment explicitly mapped to up to 3 module owners. QA does not need a
+  continuously active process or a separate durable product goal, but each QA
+  owner has durable module test plans and QA ledgers for its assigned modules.
+  QA creates and reviews the detailed test plans before development, then
+  consumes the exact Core3 process or worktree spawned by each paired
+  developer, runs the planned functional and authenticated Odoo/Core3 browser
+  cases, records failures, and re-tests fixes. Each module's results, failures,
+  and repairs are recorded in
   `odoo-ui-parity/qa/<module>.md`; its pre-development cases are recorded in
   `odoo-ui-parity/qa/test-plans/<module>.md`. The module owner must respond to
   QA findings and retain ownership until all required cases pass or an exact
   blocker is recorded.
 - A wave has explicit phases: `qa-plan -> dev-batch -> qa-feedback -> repair
-  loop -> merge-gate`. In `qa-plan`, the 10 QA owners create or update the
-  detailed test plans and the main agent approves their scope. In `dev-batch`,
-  up to 10 paired developers implement against those plans while their paired
-  QA owners remain idle or prepare fixtures. When the dev batch submits a
-  candidate, the main agent pauses continuation work and activates the 10 QA
-  owners in parallel against the corresponding developer process/worktree.
-  QA returns a bounded pass, defect list, or blocker. The main agent dispatches
-  the same developer owner to repair only after feedback is recorded, then
-  reactivates the same paired QA owner for retest. A module proceeds to merge
-  only after its required cases pass or its exact blocker is approved.
+  loop -> merge-gate`. In `qa-plan`, the 3 QA owners create or update the
+  detailed test plans for their mapped modules and the main agent approves
+  their scope. In `dev-batch`, up to 9 paired developers implement against
+  those plans while their paired QA owners remain idle or prepare fixtures.
+  When the dev batch submits candidates, the main agent pauses continuation
+  work and activates the same 3 QA owners against the exact Core3 processes or
+  worktrees spawned by their mapped developers. QA returns a bounded pass,
+  defect list, or blocker per module. The main agent dispatches the same
+  developer owner to repair only after feedback is recorded, then reactivates
+  the same QA owner for retest. A module proceeds to merge only after its
+  required cases pass or its exact blocker is approved.
 - QA triggers are `test-plan-ready`, `feature-complete`, `merge-candidate`,
   `post-merge`, `refactor-impact`, and `release`. The module owner records the
   trigger and candidate commit in its module progress file; the main agent
-  creates a bounded event task for the paired QA owner. No QA slot continuously
-  polls, starts duplicate processes, or tests uncommitted developer work.
+  creates a bounded event task for the mapped QA owner with the module id,
+  developer process/worktree, candidate commit, and exact test-plan path. The
+  QA owner activates only for that event, tests the same Core3 process spawned
+  by the developer, and deactivates after recording the result. No QA slot
+  continuously polls, starts duplicate processes, or tests uncommitted
+  developer work.
 - `odoo-ui-parity/progress.md` is the QA-maintained aggregate and sign-off
   ledger. Module agents must not edit it directly. Each module agent
   owns and may update only `odoo-ui-parity/progress/<module>.md`, following
