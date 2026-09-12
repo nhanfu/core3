@@ -4,7 +4,7 @@ Module owner: project module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: current working tree
+Candidate commit: c49d8cb6f19b9f9dfb96e8f99de3db1c7765c6bc
 
 ## Current state
 
@@ -23,3 +23,21 @@ claim is made here.
 Run authenticated CRUD/workflow checks and paired Odoo desktop/mobile captures;
 use the dependency-aware process for Project task screens. Update this file
 only with evidence from the matching module owner.
+
+## QA checkpoint — c49d8cb6 (2026-09-13)
+
+Candidate `c49d8cb6f19b9f9dfb96e8f99de3db1c7765c6bc` was tested in its isolated
+worktree. The focused dashboard/Timesheets set passed 14/14 tests with 144
+assertions. The expanded `project*.integration.test.ts` plus
+`timesheets*.integration.test.ts` corpus passed 73/73 tests with 793
+assertions across 24 files, including scope, permission, empty/error,
+validation, stale-row, and persistence coverage. UI audit passed at 659 pages,
+668 routes, and 1,136 datasources; Project CSS and the full frontend build
+passed; `git diff --check` passed.
+
+The repository typecheck remains blocked by pre-existing errors outside the
+candidate files, and no lint script exists. Authenticated desktop/mobile
+browser proof and captures were unavailable because this session exposed no
+persistent `js_repl` runner and the worktree has no Playwright package. No
+full sign-off is claimed; actor CRUD, restart persistence, and paired Odoo
+comparison remain open.

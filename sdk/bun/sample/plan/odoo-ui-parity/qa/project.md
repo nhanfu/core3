@@ -12,7 +12,7 @@ QA state: qa-in-progress
 QA slot: dispatchable project assignment (pending wave dispatch)
 Module owner: project module owner
 Verification trigger: feature-complete
-Candidate commit: current working tree
+Candidate commit: c49d8cb6f19b9f9dfb96e8f99de3db1c7765c6bc
 
 ## Current regression evidence
 
@@ -70,3 +70,42 @@ Candidate commit: current working tree
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
+
+## QA execution — candidate c49d8cb6 (2026-09-13)
+
+- Candidate integrity: `HEAD` was exactly
+  `c49d8cb6f19b9f9dfb96e8f99de3db1c7765c6bc`; worktree was clean before and
+  after testing. No product files were changed.
+- Dashboard/Timesheets focused checks:
+  `bun test ./test/project_timesheets_dashboard.integration.test.ts
+  ./test/project_dashboard_updates.integration.test.ts ./test/project.integration.test.ts
+  ./test/timesheets_project.integration.test.ts ./test/timesheets_task.integration.test.ts
+  --timeout 20000` — 14 passed, 0 failed, 144 assertions.
+- Project/Timesheets regression corpus:
+  `bun test ./test/project*.integration.test.ts ./test/timesheets*.integration.test.ts
+  --timeout 20000` — 73 passed, 0 failed, 793 assertions across 24 files.
+  This covered project scoping, empty/not-found/transport-error contracts,
+  permission guards, CRUD validation, stale-row rejection, and migration or
+  reload-equivalent persistence assertions in the relevant suites.
+- Audit/hygiene: `bun run audit` passed (659 pages, 668 routes, 1,136
+  datasources); `git diff --check` passed.
+- Build: `bun run css:build:project` passed; `bun run frontend:build` passed
+  (Vite: 183 modules transformed). No lint script is defined in
+  `package.json`.
+- Typecheck: `bunx tsc -p tsconfig.typecheck.json --noEmit` failed on existing
+  errors in `../med`, `../packages/client`, `../packages/server`, and
+  unrelated services; no error referenced the candidate Project/Timesheets
+  files.
+- Authenticated desktop/mobile browser proof was not executable in this
+  session: the required persistent `js_repl` runner was unavailable and the
+  worktree had no `playwright` package. Therefore no captures were produced
+  and no visual, responsive, authenticated, restart, or paired-Odoo claim is
+  made.
+
+### QA decision
+
+No defect was reproduced in the candidate contract/runtime checks. The
+candidate slice is functionally green for the tested Project dashboard
+Timesheets integration, but remains not signed off because authenticated
+desktop/mobile proof, actor-matrix browser checks, restart persistence, and
+paired Odoo comparison are still open.
