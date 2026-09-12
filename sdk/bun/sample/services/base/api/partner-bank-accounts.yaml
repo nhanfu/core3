@@ -1,0 +1,90 @@
+page: { id: partner-bank-accounts }
+datasources:
+  - id: partner_bank_account_active_states
+    permission: base.reference.read
+    query: "SELECT value, label FROM (VALUES ('active', 'Active'), ('archived', 'Archived')) states(value, label)"
+  - id: partner_bank_account_partners
+    permission: base.reference.read
+    query: "SELECT id AS value, name AS label FROM base_contacts WHERE active = true ORDER BY name, id"
+  - id: partner_bank_account_banks
+    permission: base.reference.read
+    query: "SELECT id AS value, name AS label FROM base_banks WHERE active = true ORDER BY name, id"
+  - id: partner_bank_accounts
+    permission: base.reference.read
+    error_states: { transport_error: { status: 503, code: BASE_PARTNER_BANK_ACCOUNTS_UNAVAILABLE, message: Bank accounts are temporarily unavailable. } }
+    query: "SELECT id, row_version, acc_number, clearing_number, partner_id, partner_name, bank_id, bank_name, acc_holder_name, company_name, currency_code, allow_out_payment, note, active FROM base_partner_bank_accounts WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ((COALESCE(:active, '') IN ('', 'active') AND active = true) OR (:active = 'archived' AND active = false)) AND (:q IS NULL OR acc_number ILIKE '%' || :q || '%' OR COALESCE(bank_name, '') ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%') ORDER BY acc_number, id"
+actions:
+  - id: create_partner_bank_account
+    type: server_form
+    permission: base.reference.write
+    title: New Bank Account
+    action: base.reference.partner_bank_accounts.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [partner_bank_accounts]
+    mutation:
+      operation: insert
+      table: base_partner_bank_accounts
+      generated: [id]
+      fields: [acc_number, clearing_number, partner_id, partner_name, bank_id, bank_name, acc_holder_name, company_name, currency_code, allow_out_payment, note, active]
+      required: [acc_number, partner_id]
+      defaults: { row_version: 1, active: true, allow_out_payment: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:acc_number AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:partner_id AS VARCHAR))) > 0", status: 422, code: BASE_PARTNER_BANK_ACCOUNT_REQUIRED, message: Account Number and Partner are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_partner_bank_accounts WHERE LOWER(acc_number) = LOWER(TRIM(CAST(:acc_number AS VARCHAR))) AND active = true)", status: 409, code: BASE_PARTNER_BANK_ACCOUNT_EXISTS, message: A bank account with this number already exists. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :partner_id AND active = true", status: 422, code: BASE_PARTNER_BANK_ACCOUNT_PARTNER_INVALID, message: Select a valid partner. }
+      result: { query: "SELECT * FROM base_partner_bank_accounts WHERE id = :id" }
+    fields: [{ field: acc_number, label: Account Number, type: text, required: true }, { field: clearing_number, label: Clearing Number, type: text }, { field: partner_id, label: Partner, type: select, options_source: partner_bank_account_partners, required: true }, { field: acc_holder_name, label: Account Holder Name, type: text }, { field: bank_id, label: Bank, type: select, options_source: partner_bank_account_banks }, { field: allow_out_payment, label: Send Money?, type: checkbox }, { field: company_name, label: Company, type: text }, { field: currency_code, label: Currency, type: text }, { field: note, label: Note, type: textarea }]
+  - id: edit_partner_bank_account
+    type: server_form
+    permission: base.reference.write
+    title: Edit Bank Account
+    action: base.reference.partner_bank_accounts.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [partner_bank_accounts]
+    mutation:
+      operation: update
+      table: base_partner_bank_accounts
+      fields: [acc_number, clearing_number, partner_id, partner_name, bank_id, bank_name, acc_holder_name, company_name, currency_code, allow_out_payment, note]
+      required: [acc_number, partner_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM base_partner_bank_accounts WHERE id = :id AND active = true", status: 404, code: BASE_PARTNER_BANK_ACCOUNT_NOT_FOUND, message: Active bank account not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_partner_bank_accounts WHERE LOWER(acc_number) = LOWER(TRIM(CAST(:acc_number AS VARCHAR))) AND active = true AND id <> :id)", status: 409, code: BASE_PARTNER_BANK_ACCOUNT_EXISTS, message: A bank account with this number already exists. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :partner_id AND active = true", status: 422, code: BASE_PARTNER_BANK_ACCOUNT_PARTNER_INVALID, message: Select a valid partner. }
+      result: { query: "SELECT * FROM base_partner_bank_accounts WHERE id = :id" }
+    fields: [{ field: acc_number, label: Account Number, type: text, required: true }, { field: clearing_number, label: Clearing Number, type: text }, { field: partner_id, label: Partner, type: select, options_source: partner_bank_account_partners, required: true }, { field: acc_holder_name, label: Account Holder Name, type: text }, { field: bank_id, label: Bank, type: select, options_source: partner_bank_account_banks }, { field: allow_out_payment, label: Send Money?, type: checkbox }, { field: company_name, label: Company, type: text }, { field: currency_code, label: Currency, type: text }, { field: note, label: Note, type: textarea }]
+  - id: archive_partner_bank_account
+    type: server
+    permission: base.reference.write
+    action: base.reference.partner_bank_accounts.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [partner_bank_accounts]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: base_partner_bank_accounts, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM base_partner_bank_accounts WHERE id = :id AND active = true", status: 409, code: BASE_PARTNER_BANK_ACCOUNT_ALREADY_ARCHIVED, message: Bank account is already archived or unavailable. }], result: { query: "SELECT * FROM base_partner_bank_accounts WHERE id = :id" } }
+  - id: unarchive_partner_bank_account
+    type: server
+    permission: base.reference.write
+    action: base.reference.partner_bank_accounts.unarchive
+    handler: yaml_mutation
+    operation: update
+    refresh: [partner_bank_accounts]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: base_partner_bank_accounts, fields: [active], concurrency: { required: true }, guards: [{ query: "SELECT id FROM base_partner_bank_accounts WHERE id = :id AND active = false", status: 409, code: BASE_PARTNER_BANK_ACCOUNT_ALREADY_ACTIVE, message: Bank account is already active or unavailable. }], result: { query: "SELECT * FROM base_partner_bank_accounts WHERE id = :id" } }
+  - id: delete_partner_bank_account
+    type: server
+    permission: base.reference.write
+    action: base.reference.partner_bank_accounts.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [partner_bank_accounts]
+    params: { id: '{row.id}' }
+    mutation: { operation: delete, table: base_partner_bank_accounts, concurrency: { required: true }, guards: [{ query: "SELECT id FROM base_partner_bank_accounts WHERE id = :id", status: 404, code: BASE_PARTNER_BANK_ACCOUNT_NOT_FOUND, message: Bank account not found. }] }
+  - id: view_partner_bank_account
+    type: navigate
+    permission: base.reference.read
+    navigate_to: /base-partner-bank-account-detail
+    params: { id: '{row.id}' }

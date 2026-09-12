@@ -1,0 +1,24 @@
+title: Bank Accounts
+page: { id: partner-bank-accounts, route: /base-partner-bank-accounts, breadcrumb: [Contacts, Configuration, Bank Accounts, Bank Accounts], auth: { require: [base.reference.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: partner_bank_accounts
+    create_action: create_partner_bank_account
+    create_label: New
+    search: { label: Search bank accounts, placeholder: 'Search...' }
+    filters: [{ field: active, label: Status, options_source: partner_bank_account_active_states }]
+    columns:
+      - { field: acc_number, label: Account Number, type: PrimaryEntityCell }
+      - { field: partner_name, label: Partner, optional: hide }
+      - { field: bank_name, label: Bank, optional: show }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: allow_out_payment, label: Send Money?, type: boolean, optional: show }
+      - { field: active, label: Active, type: boolean, optional: hide }
+      - { field: id, label: ' ', sortable: false, actions: [{ id: archive_partner_bank_account, label: Archive, icon: archive, variant: danger, show_if: 'row.active === true' }, { id: unarchive_partner_bank_account, label: Unarchive, icon: refresh, show_if: 'row.active === false' }, { id: delete_partner_bank_account, label: Delete, icon: trash, variant: danger }] }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_partner_bank_account
+    row_double_click_action: view_partner_bank_account
+    empty_state: { title: No bank accounts found, description: Create a bank account to link it to you or your contacts. }

@@ -1,0 +1,13 @@
+version: 0.0.13
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_partner_bank_accounts (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, acc_number VARCHAR NOT NULL, clearing_number VARCHAR, partner_id VARCHAR NOT NULL, partner_name VARCHAR NOT NULL, bank_id VARCHAR, bank_name VARCHAR, acc_holder_name VARCHAR, company_name VARCHAR, currency_code VARCHAR, allow_out_payment BOOLEAN NOT NULL DEFAULT true, note VARCHAR, active BOOLEAN NOT NULL DEFAULT true);
+      INSERT INTO base_partner_bank_accounts(id, acc_number, clearing_number, partner_id, partner_name, bank_id, bank_name, acc_holder_name, company_name, currency_code, allow_out_payment, active) VALUES ('partner-bank-demo', 'BE68539007547034', '539', 'company-demo', 'Core3 Demo Company', 'bank-ing', 'ING', 'Core3 Demo Company', 'Core3 Demo Company', 'EUR', true, true), ('partner-bank-archived', 'FR7630006000011234567890189', NULL, 'contact-demo', 'Demo Contact', 'bank-bnp', 'BNP Paribas', 'Demo Contact', 'Core3 Demo Company', 'EUR', false, false) ON CONFLICT (id) DO UPDATE SET acc_number = EXCLUDED.acc_number, partner_name = EXCLUDED.partner_name, bank_name = EXCLUDED.bank_name, active = EXCLUDED.active;
+    down: |
+      DROP TABLE IF EXISTS base_partner_bank_accounts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

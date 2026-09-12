@@ -1,0 +1,15 @@
+title: Bank Account
+page: { id: partner-bank-account-detail, route: /base-partner-bank-account-detail, breadcrumb: [Contacts, Configuration, Bank Accounts, Bank Accounts, Detail], auth: { require: [base.reference.read] } }
+components:
+  - type: OdooFormView
+    source: partner_bank_account_detail
+    title_field: acc_number
+    status_field: active
+    header_actions: [{ id: edit_partner_bank_account_detail, label: Edit, variant: secondary, permission: base.reference.write }]
+    groups:
+      - title: Bank Account
+        fields: [{ field: acc_number, label: Account Number }, { field: clearing_number, label: Clearing Number }, { field: partner_name, label: Partner }, { field: acc_holder_name, label: Account Holder Name }, { field: bank_name, label: Bank }]
+      - title: Payment Details
+        fields: [{ field: allow_out_payment, label: Send Money?, type: checkbox }, { field: company_name, label: Company }, { field: currency_code, label: Currency }]
+      - title: Note
+        fields: [{ field: note, label: Note, type: textarea, wide: true }]

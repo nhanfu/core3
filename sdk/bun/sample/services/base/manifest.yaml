@@ -38,5 +38,6 @@ menu:
               permission: base.reference.read
               children:
                 - { path: /base-banks, label: Banks, icon: bank, permission: base.reference.read }
+                - { path: /base-partner-bank-accounts, label: Bank Accounts, icon: bank, permission: base.reference.read }
         - { path: /users, label: Users, icon: users, permission: auth.users.manage }
         - { path: /user-groups, label: User groups, icon: users, permission: auth.roles.manage }
