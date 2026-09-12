@@ -1,5 +1,23 @@
 # manufacturing parity progress
 
+## 2026-09-13 bounded retest — `MANUFACTURING-WORA-001` / `499edd41`
+
+- The exact authenticated desktop/mobile URL
+  `/manufacturing/work-orders-analysis?fixture_state=transport_error` was
+  exercised against the retest checkout. Both viewports reached the route with
+  zero page/request errors and no overflow, but showed the declared empty
+  state, not the declared 503 transport state. Captures and SHA-256 values are
+  recorded in `qa/manufacturing.md`.
+- The focused repair test passed: 5 tests / 50 assertions. It validates the
+  public 503 datasource envelope, plus company and permission/error guards.
+- The 19-file Manufacturing test glob stalled and was terminated after about
+  50 seconds; it has no aggregate result. Audit and both requested CSS builds
+  passed; diff check passed. ESLint remains blocked by two unrelated existing
+  optional-chaining errors in `test/website_public.integration.test.ts:31,33`.
+- Existing paired Odoo source captures remain available in the module plan;
+  no fresh Odoo probe was run. This bounded retest makes no aggregate progress
+  or sign-off claim.
+
 Module owner: manufacturing module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: in-progress

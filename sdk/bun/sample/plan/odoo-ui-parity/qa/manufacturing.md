@@ -1,5 +1,46 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-WORA-001 retest — commit `499edd41` (2026-09-13)
+
+- Retest target: `499edd41` (`fix(manufacturing): render work order analysis
+  transport errors`). The user-supplied path included an extra `/agent/`
+  segment and did not exist; the registered linked worktree used was
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-work-orders-analysis-transport`,
+  on branch `agent/odoo-ui-manufacturing-work-orders-analysis-transport`.
+- Authenticated browser probe used `admin@tms.local` on a fresh temporary Core3
+  runtime at `http://127.0.0.1:4313`. The exact URL
+  `/manufacturing/work-orders-analysis?fixture_state=transport_error` rendered
+  the declared empty state (`No Work Orders Analysis data`) at both 1440x900
+  and 390x844. It did not render the declared 503 text or code. Both passes
+  had `pageerror=0`, `requestfailed=0`, and no horizontal overflow
+  (`documentWidth=1440`, `bodyWidth=1424`; `documentWidth=390`,
+  `bodyWidth=374`). The temporary runtime was stopped after the probe.
+- Captures (outside Git):
+  `/tmp/core3-manufacturing-work-orders-analysis-transport-desktop-1440x900-20260913.png`
+  SHA-256 `8d057f6149c767177b974bde6c57f8117430bae115193b4a8eb2190ddf9ed5e3`;
+  `/tmp/core3-manufacturing-work-orders-analysis-transport-mobile-390x844-20260913.png`
+  SHA-256 `83cc0bc718438bcdadc0c9fee292c530d85ecad6068875c19c63edd9b30c9387`.
+- Focused repair suite: `bun test ./test/manufacturing_work_orders_analysis.integration.test.ts --timeout 20000` — 5 tests, 50 assertions passed, including the public 503 envelope schema acceptance, company isolation, unauthorized/forbidden/transport contracts, and detail guard.
+- Full Manufacturing glob (`19` integration files) did not complete: it was
+  still running at approximately 50 seconds with the test process at 99% CPU,
+  so the exact process was terminated and recorded as timeout/no aggregate
+  result. No conclusion is drawn from the partial output.
+- Guarded repository checks: audit passed (`659` pages, `668` routes, `1138`
+  datasources); `bun run css:build:global` and
+  `bun run css:build:manufacturing` passed; `git diff --check` passed. ESLint
+  failed on two unrelated existing `no-unsafe-optional-chaining` errors in
+  `test/website_public.integration.test.ts:31` and `:33`; no warnings or
+  product-code changes were introduced by this retest.
+- Paired Odoo evidence available from the prior bounded source inspection is
+  recorded in the module plan: desktop/mobile graph, pivot, list, and form
+  captures under `/tmp/odoo-manufacturing-work-orders-analysis-20260911/`
+  with hashes recorded there. No fresh Odoo probe was run in this retest.
+
+Retest decision: `MANUFACTURING-WORA-001` remains **not browser-verified**;
+the focused contract passes, but the exact authenticated transport URL did not
+show the declared 503 state. No Manufacturing sign-off or aggregate progress
+claim is made.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.
