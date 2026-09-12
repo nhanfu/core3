@@ -31,6 +31,7 @@ describe('Accounting Bank Statements Odoo action parity', () => {
       row_open_action: 'view_accounting_bank_statement',
     });
     expect(page.components[0].views.map((view: any) => view.label)).toEqual(['List', 'Pivot', 'Graph']);
+    expect(api.datasources[0].pivot.fields).toEqual(['statement_month', 'starting_balance', 'ending_balance']);
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual([
       'Reference', 'Date', 'Journal', 'Company', 'Starting Balance', 'Ending Balance',
     ]);
