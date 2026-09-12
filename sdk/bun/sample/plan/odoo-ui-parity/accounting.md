@@ -1182,3 +1182,38 @@ The comparison confirms the bounded list surface and responsive width. The
 remaining differences are the shared Core3 Fluent shell versus Odoo's purple
 shell and deterministic Core3 fixtures versus the live Odoo dataset. No
 cash-session posting or reconciliation workflow is claimed by this slice.
+
+## Credit Statements bounded action (2026-09-12)
+
+The bounded live Odoo 19 discovery pass against
+`core3_codex_demo_20260912` identified the uncovered source action
+`account.action_credit_statement_tree`, titled `Credit Statements`. It is
+distinct from the existing Bank Statements and Cash Registers actions: the
+source targets `account.bank.statement` with `journal_id.type = credit`, uses
+the shared statement list/search views, and exposes List, Pivot, and Graph
+modes. Its empty copy explains that a credit statement summarizes transactions
+on a credit account and can be reconciled to invoices.
+
+Core3 adds `/accounting/credit-statements` as a YAML-first page/API pair joined
+by `page.id`, with the Odoo Reference, Date, Journal, Company, Starting Balance,
+and Ending Balance columns, Empty/Invalid filters, List/Pivot/Graph tabs, and
+responsive cards. Migration
+`20260912040000-034-accounting-credit-statements.yaml` seeds three stable
+credit-journal rows, including an empty-line and invalid fixture. The source
+requires `accounting.read`; default, search, filter-empty, fixture-empty,
+transport-error, forbidden, and idempotent migration paths are covered by the
+focused integration test. This source action has no Odoo form or write workflow,
+so CRUD mutations are deliberately not exposed; the applicable list/report
+states are covered exactly.
+
+Authenticated Odoo/Core3 comparison was attempted at 1440x900 and 390x844
+under `/tmp/core3-odoo-parity/accounting-batch4-20260912/`. The Odoo action is
+not directly menu-bound in the installed database and the paired Core3 runtime
+was unavailable during this bounded implementation pass; exact runtime limits
+and any resulting screenshot omissions are recorded in the handoff.
+
+## Credit Statements bounded slice (2026-09-12)
+
+Core3 adds the source-supported Credit Statements action at `/accounting/credit-statements`, with separate page/API YAML joined by `page.id`, deterministic credit rows, read-only accounting permissions, filter/search/empty/transport states, and a bounded credit-only action contract. The focused test passes 2 tests and 17 assertions.
+
+The active Odoo action was source-confirmed, but it was not directly menu-bound in the installed reference. Odoo desktop/mobile captures are under `/tmp/core3-odoo-parity/accounting-batch4-20260912/`; Core3 pairing was blocked by the isolated runtime. No full visual parity claim is made; images remain outside Git.

@@ -1,0 +1,13 @@
+version: 0.0.34
+description: Accounting credit statements action fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_credit_statements (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, sequence INTEGER NOT NULL DEFAULT 10, reference VARCHAR NOT NULL, date DATE NOT NULL, journal VARCHAR NOT NULL DEFAULT 'Corporate Card', company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)', currency VARCHAR NOT NULL DEFAULT 'USD', starting_balance DECIMAL(18,2) NOT NULL DEFAULT 0, ending_balance DECIMAL(18,2) NOT NULL DEFAULT 0, line_numbers VARCHAR NOT NULL DEFAULT '', is_complete BOOLEAN NOT NULL DEFAULT TRUE, is_valid BOOLEAN NOT NULL DEFAULT TRUE, problem_description VARCHAR NOT NULL DEFAULT '');
+      INSERT INTO accounting_credit_statements (id,sequence,reference,date,journal,starting_balance,ending_balance,line_numbers,is_valid) VALUES ('accounting-credit-statement-001',10,'Credit Statement - 2026-01-15',DATE '2026-01-15','Corporate Card',4200,4875,'CARD/2026/00001',TRUE),('accounting-credit-statement-002',20,'Credit Statement - 2025-12-15',DATE '2025-12-15','Travel Card',1800,1800,'',TRUE),('accounting-credit-statement-003',30,'Credit Statement - 2025-11-15',DATE '2025-11-15','Corporate Card',7600,7525,'CARD/2025/00011',FALSE) ON CONFLICT (id) DO NOTHING;
+    down: DROP TABLE IF EXISTS accounting_credit_statements;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+permissions: [accounting.read]

@@ -1,0 +1,41 @@
+title: Credit Statements
+page: { id: accounting-credit-statements, route: /accounting/credit-statements, breadcrumb: [Finance, Accounting, Credit Statements], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_credit_statements
+    search: { label: Search Statements, placeholder: Search Statements... }
+    filters:
+      - { field: statement_filter, label: Filters, options: [{ id: empty, label: Empty }, { id: invalid, label: Invalid }] }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields: [{ field: statement_month, column: Date }, { field: starting_balance, column: Starting Balance }, { field: ending_balance, column: Ending Balance }]
+          default: { rows: [statement_month], measures: [{ field: starting_balance, aggregate: sum, column: Starting Balance }, { field: ending_balance, aggregate: sum, column: Ending Balance }] }
+      - id: graph
+        label: Graph
+        icon: graph
+        mobile: false
+        category_field: statement_month
+        measure_field: ending_balance
+        measure_label: Ending Balance
+        type: line
+    selectable: true
+    column_chooser: true
+    columns:
+      - { field: reference, label: Reference, type: PrimaryEntityCell }
+      - { field: date_display, label: Date }
+      - { field: journal, label: Journal }
+      - { field: company, label: Company }
+      - { field: starting_balance_display, label: Starting Balance, align: right }
+      - { field: ending_balance_display, label: Ending Balance, align: right }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    responsive_card: true
+    empty_state: { title: Register a bank statement, description: A credit statement is a summary of all financial transactions occurring over a given period of time on a credit account. You should receive this periodically from your bank. Odoo allows you to reconcile a statement line directly with the related sale or purchase invoices. }
