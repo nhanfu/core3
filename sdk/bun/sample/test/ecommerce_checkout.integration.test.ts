@@ -66,6 +66,14 @@ describe('eCommerce Checkout parity', () => {
     expect((await repository.querySource(cartApi.datasources[0], { id: 'ecommerce-cart-open-001', customer_id: 'ecommerce-customer-999', company_name: null, fixture_state: null }, 0, 1)).data).toEqual({});
     expect((await repository.querySource(customerApi.datasources[0], { q: null, active: null, customer_id: 'ecommerce-customer-999', company_name: null, fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(orderApi.datasources[0], { q: null, state: null, customer_id: 'ecommerce-customer-999', company_name: null, fixture_state: null }, 0, 50)).data).toEqual([]);
+    const customerContext = { q: null, state: null, company_name: null, fixture_state: null, customer_id: 'ecommerce-customer-001', customer_scope: 'own', current_user_email: 'hello@workspace.example' };
+    expect((await repository.querySource(orderApi.datasources[0], customerContext, 0, 50)).data).toEqual([]);
+    const checkoutApi = yaml('api/checkout.yaml');
+    const confirm = checkoutApi.actions.find((action: any) => action.id === 'confirm_ecommerce_checkout');
+    await expect(repository.executeMutation(confirm.mutation, {
+      customer_scope: 'own', current_user_email: 'hello@workspace.example',
+      values: { cart_id: 'ecommerce-cart-open-001', customer_name: 'Acme Corporation', customer_email: 'buyer@acme.example', shipping_address: '1 Main Street', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' },
+    })).rejects.toMatchObject({ status: 403, code: 'ECOMMERCE_CHECKOUT_OWNERSHIP_REQUIRED' });
     expect((await repository.querySource(productApi.datasources[0], { q: null, published: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(pricelistApi.datasources[0], { q: null, active: null, company_name: 'Other Company', fixture_state: null }, 0, 50)).data).toEqual([]);
     database.close();

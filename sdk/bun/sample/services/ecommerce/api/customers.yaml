@@ -6,7 +6,7 @@ datasources:
       unauthorized: { status: 401, code: ECOMMERCE_CUSTOMERS_UNAUTHENTICATED, message: Sign in to view eCommerce customers. }
       forbidden: { status: 403, code: ECOMMERCE_CUSTOMERS_FORBIDDEN, message: You do not have permission to view eCommerce customers. }
       transport_error: { status: 503, code: ECOMMERCE_CUSTOMERS_UNAVAILABLE, message: eCommerce customers are temporarily unavailable. }
-    query: "SELECT id, row_version, name, email, order_count, total_spent, currency, active, company_name FROM ecommerce_customers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(email, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) AND (:company_name IS NULL OR company_name = :company_name) AND (:customer_id IS NULL OR id = :customer_id) ORDER BY name, id"
+    query: "SELECT id, row_version, name, email, order_count, total_spent, currency, active, company_name FROM ecommerce_customers WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(email, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) AND (:company_name IS NULL OR company_name = :company_name) AND (:customer_id IS NULL OR id = :customer_id) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(email, '')) = lower(:current_user_email)) ORDER BY name, id"
   - id: ecommerce_customer_active
     permission: ecommerce.read
     query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"

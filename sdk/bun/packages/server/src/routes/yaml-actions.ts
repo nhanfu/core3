@@ -82,6 +82,8 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
           : (typeof body?.id === 'string' ? body.id : ''),
         current_user_id: String(authUser.sub || ''),
         current_user_name: activityActor.name,
+        current_user_email: String(authUser.email || ''),
+        customer_scope: authUser.roles?.includes('admin') ? 'all' : 'own',
         current_branch_id: String(authUser.branch_id || ''),
         view_scope: String(authUser.view_scope || 'all'),
       });

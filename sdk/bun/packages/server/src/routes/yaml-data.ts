@@ -43,6 +43,8 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
         ...(vm.params || {}),
         current_user_id: String(authUser.sub || ''),
         current_user_name: String(authUser.name || ''),
+        current_user_email: String(authUser.email || ''),
+        customer_scope: authUser.roles?.includes('admin') ? 'all' : 'own',
         current_branch_id: String(authUser.branch_id || ''),
         view_scope: String(authUser.view_scope || 'all'),
       }, vm.skip || 0, vm.top || 25, typeof vm.facetField === 'string' ? vm.facetField : undefined, vm.sort, vm.pivot));
@@ -159,6 +161,8 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
       expected_row_version: body.expected_row_version,
       current_user_id: activityActor.id || null,
       current_user_name: activityActor.name,
+      current_user_email: String(authUser.email || ''),
+      customer_scope: authUser.roles?.includes('admin') ? 'all' : 'own',
       current_branch_id: String(authUser.branch_id || ''),
       view_scope: String(authUser.view_scope || 'all'),
     }, (transition) => requirePerm(String(transition.permission || workflow.permission)));

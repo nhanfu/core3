@@ -135,6 +135,8 @@ export function createYamlApi(ctx: YamlApiContext) {
       ...params,
       current_user_id: String(user.sub || ''),
       current_user_name: String(user.name || ''),
+      current_user_email: String(user.email || ''),
+      customer_scope: user.roles?.includes('admin') ? 'all' : 'own',
       current_branch_id: String(user.branch_id || ''),
       view_scope: String(user.view_scope || 'all'),
     };

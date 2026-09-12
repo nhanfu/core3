@@ -37,7 +37,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-006 | Customers | Customer summary list, search/filter, deterministic data and order navigation work | pass: focused suite |
 | ECOM-FUNC-007 | Cart | Persisted cart summary/lines, totals, product navigation and guarded quantity validation work | pass: focused suite; browser workflow planned |
 | ECOM-FUNC-008 | Shop | Public/product selection and add-to-cart route contract exposes only published products and navigates to the cart | pass: focused suite; authenticated persistence planned |
-| ECOM-FUNC-009 | Checkout/order mutations | Customer, delivery, payment and order creation validate, copy cart lines, close the cart, and persist atomically | pass: focused service suite; browser and restart gates planned |
+| ECOM-FUNC-009 | Checkout/order mutations | Customer, delivery, payment and order creation validate, copy cart lines, close the cart, and persist atomically | pass: focused service suite and authenticated browser flow; restart gate planned |
 | ECOM-FUNC-010 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
 | ECOM-FUNC-011 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |
 | ECOM-FUNC-012 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate products, prices, categories, carts, customers or orders | pass: focused restart/idempotency suite |
@@ -55,11 +55,17 @@ mutations use isolated databases and deterministic IDs.
 
 ## Permission and security cases
 
+The API transport injects `current_user_email` and `customer_scope` from the
+authenticated token. Ecommerce customer/cart/order queries and checkout/cart
+line mutations must use that context; a submitted `customer_id` is only a
+narrowing filter and cannot substitute another customer. Admin users retain
+the all-customer scope.
+
 | Case ID | Actor/scope | Expected result | Status |
 | --- | --- | --- | --- |
 | ECOM-PERM-001 | Ecommerce Manager/editor | Catalog and pricelist mutations succeed according to role | pass at contract level; browser actor planned |
 | ECOM-PERM-002 | Public visitor | Only published catalog data is visible; cart/customer data is isolated | planned |
-| ECOM-PERM-003 | Authenticated customer | Own cart/order and checkout data only; other customers are denied | planned: actor ownership still needs runtime coverage |
+| ECOM-PERM-003 | Authenticated customer | Own cart/order and checkout data only; other customers are denied | pass: YAML service/mutation contract; HTTP actor coverage remains planned |
 | ECOM-PERM-004 | Wrong company | Products, prices, carts and orders are not leaked or mutable | pass at service-query level for products, pricelists, carts, customers, and orders; authenticated actor test remains open |
 | ECOM-PERM-005 | Unauthenticated/expired | Private routes redirect/401/403 without protected data | planned |
 | ECOM-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current product/pricelist/cart/order unchanged | pass at contract level |
