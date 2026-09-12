@@ -30,7 +30,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-FUNC-001 | Homepage | Published homepage loads through the declared client action and preserves site ordering | pass: focused suite |
 | WEBSITE-FUNC-002 | Page Manager | Search/filter, detail, create/edit, publish/unpublish and route metadata persist after reload | pass at contract level; browser mutation planned |
 | WEBSITE-FUNC-003 | Content binding | Page YAML remains presentation-only; API content is bound by `page.id` and rendered through shared components | pass: focused suite |
-| WEBSITE-FUNC-004 | Public/private visibility | Draft/private pages are denied publicly while published pages resolve their intended route | planned browser/public gate |
+| WEBSITE-FUNC-004 | Public/private visibility | Draft/private pages are denied publicly while published pages resolve their intended route | pass: `website_public.integration.test.ts`; authenticated/public browser gate remains planned |
 | WEBSITE-FUNC-005 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit and do not leak draft content | pass at contract level |
 | WEBSITE-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate sites/pages or moving content dates | planned restart/migration gate |
 | WEBSITE-FUNC-007 | Assets/import/export | Exercise image/asset binding, page import/export and exposed preview/print actions | planned browser interaction gate |
