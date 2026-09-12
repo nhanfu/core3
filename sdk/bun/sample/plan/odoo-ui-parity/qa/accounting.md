@@ -32,6 +32,8 @@ QA state: qa-in-progress
 | ACC-BROWSER-003 | Authenticated shell after login | `/accounting/journals` | menu catalog is loaded after authentication; Odoo-style shell chrome is visible at desktop and mobile | Node Playwright authenticated checks; `/tmp/core3-odoo-parity/accounting-paired/core3-desktop-shell-fixed.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-mobile-shell-fixed.png` | pass; 0 page/request errors, no horizontal overflow, 6 visible top-level menu entries |
 | ACC-BROWSER-004 | Authenticated Core3 route matrix | all 80 `/accounting/*` routes | route content settles at desktop `1440x900` with no redirect, blank outlet, page/request error, or horizontal overflow | Node Playwright route matrix, 2026-09-12 | 80/80 pass |
 | ACC-BROWSER-005 | Authenticated Core3 route matrix | all 80 `/accounting/*` routes | route content settles at mobile `390x844` with no redirect, blank outlet, page/request error, or horizontal overflow | Node Playwright route matrix, 2026-09-12 | 80/80 pass |
+| ACC-BROWSER-006 | Authenticated FormView CRUD and persistence | `/accounting/journals` | admin creates a journal, returns to the list, reloads, and sees the persisted row | Node Playwright authenticated browser check, 2026-09-12 | pass; create and reload both found `QA Browser Journal 20260912`, zero browser errors |
+| ACC-BROWSER-007 | Permission boundary | `/accounting/journals` as `fleet@tms.local` | unauthorized user cannot read the Accounting route | Node Playwright authenticated browser check, 2026-09-12 | pass; outlet reports `Requires permission: accounting.read` |
 
 ## Bugs and retests
 
