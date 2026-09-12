@@ -18,6 +18,21 @@
 | Odoo reference | authenticated `codex@core3.local` in `core3_reference` |
 | Result | `qa-in-progress` |
 
+## Current dependency-aware regression evidence (2026-09-12)
+
+- Focused CRM suite: `bun test ./test/crm*.integration.test.ts --timeout 20000`
+  — 60 passed, 423 assertions, 0 failed across 10 files.
+- A CRM-only runner initially failed `/crm/leads` and `/crm/lead-detail` at
+  both viewports. Server logs identified the exact cause: those page
+  prefetches invoke `yaml.service.base` and `yaml.service.order`, which are not
+  registered in a CRM-only process.
+- Correct topology `crm,base,order` on port 4036 passed all 28 manifest route
+  entries at desktop/mobile: 56/56 with no page errors, failed requests, HTTP
+  errors, blank states, or horizontal overflow. Valid seeded lead detail
+  `crm-demo-001` rendered at both viewports.
+- The detailed per-module checklist is approved at `qa/test-plans/crm.md`.
+  Paired Odoo and broader browser CRUD/actor gates remain open.
+
 ## Functional test cases
 
 | ID | Check | Evidence | Result |
@@ -50,4 +65,7 @@
 
 ## Sign-off
 
-Not signed off. Functional conversion boundary is fixed and regression-tested; fresh Odoo comparison, fixture parity, and Temporal durability for any long-running cross-service workflow remain open.
+Not signed off. Functional conversion boundary is fixed and regression-tested;
+the current dependency-aware route matrix passes. Fresh Odoo comparison, fixture
+parity, actor mutation coverage, and Temporal durability for any long-running
+cross-service workflow remain open.
