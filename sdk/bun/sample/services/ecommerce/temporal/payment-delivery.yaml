@@ -1,0 +1,46 @@
+workflow:
+  id: ecommerce_payment_delivery
+  runtime: temporal
+  task_queue: core3-ecommerce
+  permission: ecommerce.write
+  trigger: ecommerce.checkout.confirmed
+  input:
+    required: [order_id, payment_method, delivery_method]
+    fields: [order_id, payment_method, delivery_method, customer_email]
+  output:
+    fields: [order_id, payment_state, delivery_state]
+  retry:
+    maximum_attempts: 5
+    initial_interval: 2s
+    backoff_coefficient: 2
+  timeout: 24h
+  failure:
+    compensation: cancel_payment_and_release_delivery
+    terminal_state: Integration Failed
+  activities:
+    - id: authorize_payment
+      permission: ecommerce.write
+      idempotency_key: order_id
+      timeout: 15m
+      retryable_errors: [PAYMENT_PROVIDER_UNAVAILABLE, PAYMENT_TIMEOUT]
+    - id: create_delivery
+      permission: ecommerce.write
+      idempotency_key: order_id
+      timeout: 15m
+      retryable_errors: [DELIVERY_PROVIDER_UNAVAILABLE, DELIVERY_TIMEOUT]
+    - id: record_callback
+      permission: ecommerce.write
+      idempotency_key: callback_id
+      timeout: 5m
+    - id: cancel_payment_and_release_delivery
+      permission: ecommerce.write
+      idempotency_key: order_id
+      timeout: 15m
+      compensation: true
+  callbacks:
+    - id: payment_provider_callback
+      input: [callback_id, order_id, status, provider_reference]
+      activity: record_callback
+    - id: delivery_provider_callback
+      input: [callback_id, order_id, status, tracking_reference]
+      activity: record_callback

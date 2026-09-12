@@ -84,6 +84,16 @@ describe('eCommerce Checkout parity', () => {
     expect(api.actions.find((action: any) => action.id === 'confirm_ecommerce_checkout').params).toEqual({ cart_id: '{state.ecommerce_checkout_cart.id}' });
   });
 
+  test('declares the Temporal payment and delivery boundary without hiding runtime requirements', () => {
+    const contract = yaml('temporal/payment-delivery.yaml').workflow;
+    expect(contract).toMatchObject({ id: 'ecommerce_payment_delivery', runtime: 'temporal', task_queue: 'core3-ecommerce', permission: 'ecommerce.write', trigger: 'ecommerce.checkout.confirmed' });
+    expect(contract.input.required).toEqual(['order_id', 'payment_method', 'delivery_method']);
+    expect(contract.activities.map((activity: any) => activity.id)).toEqual(['authorize_payment', 'create_delivery', 'record_callback', 'cancel_payment_and_release_delivery']);
+    expect(contract.activities.every((activity: any) => activity.permission === 'ecommerce.write' && activity.idempotency_key)).toBe(true);
+    expect(contract.callbacks.map((callback: any) => callback.activity)).toEqual(['record_callback', 'record_callback']);
+    expect(contract.failure).toMatchObject({ compensation: 'cancel_payment_and_release_delivery', terminal_state: 'Integration Failed' });
+  });
+
   test('creates an order with copied lines and closes the cart atomically', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
