@@ -1,0 +1,22 @@
+version: 0.0.10
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO base_countries(code, name, currency_code) VALUES
+        ('AU', 'Australia', 'AUD'),
+        ('BR', 'Brazil', 'BRL'),
+        ('CA', 'Canada', 'CAD'),
+        ('CN', 'China', 'CNY'),
+        ('ES', 'Spain', 'EUR'),
+        ('FR', 'France', 'EUR'),
+        ('GB', 'United Kingdom', 'GBP'),
+        ('IN', 'India', 'INR'),
+        ('IT', 'Italy', 'EUR')
+      ON CONFLICT (code) DO NOTHING;
+    down: |
+      DELETE FROM base_countries WHERE code IN ('AU', 'BR', 'CA', 'CN', 'ES', 'FR', 'GB', 'IN', 'IT');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

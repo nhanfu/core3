@@ -195,3 +195,9 @@ Capture Odoo 19 and Core3 at `1440x900` and `390x844` for every inventory item, 
   2,131 live state rows while this bounded Core3 replacement retains the
   existing deterministic three-row base fixture; the purple Odoo shell and
   larger source catalog remain explicit reference differences.
+
+## Countries bounded slice (2026-09-12)
+
+Core3 adds the Contacts > Configuration > Localization > Countries action at `/base-countries`, with a page/API pair joined by `page.id`, deterministic country fixtures, read-only `base.reference.read` access, search, empty, and transport states. The focused test passes 3 tests and 15 assertions.
+
+The active Odoo reference produced desktop/mobile list and error-state captures under `/tmp/core3-odoo-parity/base-next-20260912/`. Core3 initial captures were also attempted, but the final paired comparison was not completed before the isolated browser process ended; no full visual parity claim is made. Images remain outside Git.

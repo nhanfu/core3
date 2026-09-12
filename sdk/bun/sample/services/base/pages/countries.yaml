@@ -1,0 +1,15 @@
+title: Countries
+page: { id: countries, route: /base-countries, breadcrumb: [Contacts, Configuration, Localization, Countries], auth: { require: [base.reference.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: countries
+    search: { label: Search countries, placeholder: 'Search...' }
+    columns:
+      - { field: name, label: Country, type: PrimaryEntityCell }
+      - { field: code, label: Code }
+    page_size: 80
+    row_key: code
+    row_open_action: view_country_from_localization
+    row_double_click_action: view_country_from_localization
+    empty_state: { title: No countries found, description: No countries match the current search. }

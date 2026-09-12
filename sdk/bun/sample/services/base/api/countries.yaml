@@ -1,0 +1,12 @@
+page: { id: countries }
+datasources:
+  - id: countries
+    permission: base.reference.read
+    error_states: { transport_error: { status: 503, code: BASE_COUNTRIES_UNAVAILABLE, message: Countries are temporarily unavailable. } }
+    query: "SELECT code, name, currency_code FROM base_countries WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR code ILIKE '%' || :q || '%') ORDER BY name, code"
+actions:
+  - id: view_country_from_localization
+    type: navigate
+    permission: base.reference.read
+    navigate_to: /base-country-detail
+    params: { id: '{row.code}' }
