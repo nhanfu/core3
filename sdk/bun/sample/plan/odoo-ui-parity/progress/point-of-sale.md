@@ -4,7 +4,7 @@ Module owner: point-of-sale module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: working tree after authenticated POS QA
+Candidate commit: `d5fab7ee`
 
 ## Current state
 
@@ -24,9 +24,14 @@ paired Odoo adjudication remain open.
   counted cash; adding House coffee recalculated the ticket to 7.70;
   overpayment returned 400; Cash payment persisted Paid/7.70; Fleet was
   denied `pos.write` with 403.
+- DEV-3 route interaction repair: POS Orders `view_pos_order` now navigates to
+  the registered POS detail route `/point-of-sale/order-detail` instead of the
+  generic Orders route `/order-detail`. The focused parity file passes 13/13
+  tests and 69 assertions; `bun run audit` passes with 659 pages, 668 routes,
+  and 1,134 datasources.
 
 ## Next bounded task
 
-Complete the remaining POS route interaction and empty/error coverage, then
+Complete the remaining POS empty/error coverage and route interactions, then
 run fresh paired Odoo/Core3 comparisons for the accepted cashier,
 configuration, and reporting surfaces before sign-off.

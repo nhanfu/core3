@@ -21,7 +21,7 @@ actions:
   - id: view_pos_order
     type: navigate
     permission: pos.read
-    navigate_to: /order-detail
+    navigate_to: /point-of-sale/order-detail
     params: { id: '{row.id}' }
   - id: create_pos_order
     type: server_form

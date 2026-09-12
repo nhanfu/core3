@@ -38,6 +38,25 @@ describe('POS session parity batch', () => {
   });
 });
 
+describe('POS Orders route interaction', () => {
+  test('opens the POS order detail route instead of the generic Orders route', () => {
+    const listPage = yaml('pages/pos-orders.yaml');
+    const listApi = yaml('api/pos-orders.yaml');
+    const detailPage = yaml('pages/pos-order-detail.yaml');
+    const detailApi = yaml('api/pos-order-detail.yaml');
+    const view = action(listApi, 'view_pos_order');
+
+    expect(listPage.page.route).toBe('/point-of-sale/orders');
+    expect(detailPage.page).toMatchObject({ id: 'pos-order-detail', route: '/point-of-sale/order-detail' });
+    expect(detailApi.page.id).toBe(detailPage.page.id);
+    expect(view).toMatchObject({
+      permission: 'pos.read',
+      navigate_to: detailPage.page.route,
+      params: { id: '{row.id}' },
+    });
+  });
+});
+
 describe('POS Orders Analysis parity', () => {
   test('registers the distinct Reporting Orders action and joins page/API by id', () => {
     const manifest = yaml('manifest.yaml');

@@ -12,7 +12,7 @@ QA state: qa-in-progress
 QA slot: dispatchable point-of-sale assignment (pending wave dispatch)
 Module owner: point-of-sale module owner
 Verification trigger: feature-complete
-Candidate commit: working tree after authenticated POS QA
+Candidate commit: `d5fab7ee`
 
 Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-sale.md). It is the module-level source for the remaining route, CRUD, actor, persistence, Temporal, and paired Odoo gates.
 
@@ -24,6 +24,7 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 | POINT_OF_SALE-002 | Touch route responsive render | Authenticated `/point-of-sale/touch` rendered at 1440x900 and 390x844 with House coffee, no page/request errors, HTTP failures, or overflow | PASS |
 | POINT_OF_SALE-003 | Cashier persistence and payment guards | Opening cash persisted; product add recalculated 7.70; overpayment 400; Cash payment persisted Paid 7.70 | PASS |
 | POINT_OF_SALE-004 | Permission boundary | Fleet payment attempt returned 403 `pos.write` | PASS |
+| POINT_OF_SALE-004A | POS Orders row interaction | `view_pos_order` resolves to the registered `/point-of-sale/order-detail` page and preserves the row ID parameter; focused parity file 13/13, 69 assertions | PASS |
 | POINT_OF_SALE-005 | Complete route interaction and fresh paired Odoo comparison | Existing module captures are recorded, but current-wave full route interaction and paired adjudication are incomplete | pending |
 
 ## Bugs and retests
@@ -34,7 +35,7 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 
 ## Sign-off
 
-- Functional: pass for the tested cashier/touch slice
+- Functional: pass for the tested cashier/touch slice and POS Orders row route contract
 - Permissions: pass for the tested write boundary
 - Persistence/data integrity: pass for the tested session/order/payment flow
 - Desktop/mobile visual parity: pass for touch route only; module parity pending
