@@ -1,0 +1,37 @@
+page: { id: livechat-channel-rule-detail }
+datasources:
+  - id: livechat_channel_rule_detail
+    single: true
+    permission: livechat.read
+    error_states:
+      forbidden: { status: 403, code: LIVECHAT_RULE_DETAIL_FORBIDDEN, message: You do not have permission to view this channel rule. }
+      transport_error: { status: 503, code: LIVECHAT_RULE_DETAIL_UNAVAILABLE, message: Channel rule details are temporarily unavailable. }
+    query: "SELECT id, row_version, channel_id, sequence, action, auto_popup_timer, chatbot_script_name, chatbot_enabled_condition, regex_url, country_names FROM livechat_channel_rules WHERE id = :id AND channel_id = :channel_id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+actions:
+  - { id: back_to_livechat_channel, type: navigate, permission: livechat.read, navigate_to: /livechat/channel/detail, params: { id: '{state.livechat_channel_rule_detail.channel_id}' } }
+  - id: edit_livechat_channel_rule_detail
+    type: server_form
+    permission: livechat.manage
+    title: Edit Channel Rule
+    action: im_livechat.channel.rules.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [livechat_channel_rule_detail, livechat_channel_rules, livechat_channel_detail]
+    mutation:
+      operation: update
+      table: livechat_channel_rules
+      fields: [sequence, action, auto_popup_timer, chatbot_script_name, chatbot_enabled_condition, regex_url, country_names]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_channel_rules WHERE id = :id AND channel_id = :channel_id", status: 404, code: LIVECHAT_RULE_NOT_FOUND, message: Channel rule not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:sequence AS INTEGER), 0) > 0", status: 422, code: LIVECHAT_RULE_SEQUENCE_INVALID, message: Matching order must be greater than zero. }
+      result: { query: "SELECT * FROM livechat_channel_rules WHERE id = :id" }
+    fields:
+      - { field: action, label: Live Chat Button, type: select, options: [display_button, display_button_and_text, auto_popup, hide_button] }
+      - { field: auto_popup_timer, label: Time to Open, type: number, min: 0 }
+      - { field: chatbot_script_name, label: Chatbot, type: text }
+      - { field: chatbot_enabled_condition, label: Enable ChatBot, type: select, options: [always, only_if_no_operator, only_if_operator] }
+      - { field: regex_url, label: URL Regex, type: text }
+      - { field: country_names, label: Countries, type: text }
+      - { field: sequence, label: Matching Order, type: number, min: 1 }

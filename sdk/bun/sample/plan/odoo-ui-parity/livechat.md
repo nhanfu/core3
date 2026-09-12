@@ -1063,3 +1063,42 @@ interactive Playwright `js_repl` runtime is unavailable in this worktree.
 No authenticated 1440x900 or 390x844 capture was produced and no
 visual-parity claim is made. If runtime access is restored, paired Odoo/Core3
 list/detail captures must remain outside Git under that directory.
+
+## Bounded implementation slice: Configuration — Channel Rules (2026-09-12)
+
+The next unimplemented visible part of the installed Odoo Channels form is the
+manager-only Rules notebook. The source is
+`/home/nhanjs/projects/odoo/addons/im_livechat/views/im_livechat_channel_views.xml`:
+the `im_livechat.channel.rule` one-to-many list is ordered by `sequence` and
+shows Live Chat Button action, Chatbot, URL Regex, and Countries. Its form
+supports Show, Show with notification, Open automatically, and Hide actions,
+the auto-popup timer, chatbot enable condition, URL regex, and country tags.
+ACLs grant read/create/write to Live Chat users and managers, but the channel
+form tab itself is manager-only; Core3 keeps the bounded editor manager-only
+and exposes read-only child rows to users.
+
+Core3 adds the service-owned `livechat_channel_rules` datasource to the
+existing `livechat-channel-detail` API/page join and a read-only/read-write
+detail route at `/livechat/channel/rules/detail`. Fixed ordered fixtures cover
+the `/shop` notification rule and a five-second no-operator auto-popup rule.
+Add/edit/delete mutations use `livechat.manage`, validate supported actions
+and positive matching order, enforce channel ownership and optimistic delete
+guards, and return explicit forbidden, missing, empty, and transport-error
+contracts. The migration is idempotent with stable ids; no screenshot text is
+embedded in the page YAML.
+
+Focused validation is `test/livechat_channel_rules.integration.test.ts`:
+3 tests passed with 12 assertions, including page/API joins, ordered fixture
+rows, empty state, manager permission, validation, and stale-delete metadata.
+`bun run audit` passed with 632 pages, 648 routes, and 1081 datasources;
+`bun run lint` and `git diff --check` passed.
+
+Authenticated Odoo/Core3 screenshots were attempted under
+`/tmp/core3-odoo-parity/livechat-channel-rules-20260912/`, but this worktree
+could not complete the required browser pass: Odoo returned HTTP 303 to the
+login redirect, Core3 was not listening on `127.0.0.1:3022`, and the
+interactive Playwright `js_repl` runtime and local Playwright package were
+unavailable. No authenticated 1440x900 or 390x844 image was produced and no
+visual-parity claim is made. The follow-up must capture the channel form Rules
+tab and rule detail at both viewports after both authenticated runtimes are
+available.

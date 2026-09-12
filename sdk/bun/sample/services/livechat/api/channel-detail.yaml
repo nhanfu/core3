@@ -25,11 +25,73 @@ datasources:
       WHERE id = :id
         AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE
 
+  - id: livechat_channel_rules
+    permission: livechat.read
+    query: |
+      SELECT id, row_version, channel_id, sequence, action,
+        CASE action WHEN 'display_button' THEN 'Show' WHEN 'display_button_and_text' THEN 'Show with notification' WHEN 'auto_popup' THEN 'Open automatically' ELSE 'Hide' END AS action_label,
+        auto_popup_timer, chatbot_script_name, chatbot_enabled_condition, regex_url, country_names
+      FROM livechat_channel_rules
+      WHERE channel_id = :id
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN FALSE ELSE TRUE END
+      ORDER BY sequence, id
+
 actions:
   - id: back_to_livechat_channels
     type: navigate
     permission: livechat.read
     navigate_to: /livechat
+
+  - id: add_livechat_channel_rule
+    type: server_form
+    permission: livechat.manage
+    title: Add Channel Rule
+    action: im_livechat.channel.rules.create
+    handler: line_item
+    operation: create
+    domain: livechat_channel
+    params: { id: '{state.id}' }
+    refresh: [livechat_channel_detail, livechat_channel_rules]
+    fields:
+      - { field: action, label: Live Chat Button, type: select, options: [display_button, display_button_and_text, auto_popup, hide_button], default: display_button }
+      - { field: auto_popup_timer, label: Time to Open, type: number, min: 0 }
+      - { field: chatbot_script_name, label: Chatbot, type: text }
+      - { field: chatbot_enabled_condition, label: Enable ChatBot, type: select, options: [always, only_if_no_operator, only_if_operator], default: always }
+      - { field: regex_url, label: URL Regex, type: text }
+      - { field: country_names, label: Countries, type: text }
+      - { field: sequence, label: Matching Order, type: number, min: 1 }
+    mutation:
+      generated: [line_id]
+      defaults: { action: display_button, auto_popup_timer: 0, chatbot_enabled_condition: always, regex_url: '', country_names: '', sequence: 10 }
+      guards:
+        - { query: "SELECT id FROM livechat_channels WHERE id = :id", status: 404, code: LIVECHAT_CHANNEL_NOT_FOUND, message: Live Chat channel not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:sequence AS INTEGER), 0) > 0", status: 422, code: LIVECHAT_RULE_SEQUENCE_INVALID, message: Matching order must be greater than zero. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:action, '') IN ('display_button', 'display_button_and_text', 'auto_popup', 'hide_button')", status: 422, code: LIVECHAT_RULE_ACTION_INVALID, message: Choose a supported Live Chat Button action. }
+      steps:
+        - { query: "INSERT INTO livechat_channel_rules(id, channel_id, sequence, action, auto_popup_timer, chatbot_script_name, chatbot_enabled_condition, regex_url, country_names) VALUES(:line_id, :id, COALESCE(CAST(:sequence AS INTEGER), 10), :action, COALESCE(CAST(:auto_popup_timer AS INTEGER), 0), COALESCE(:chatbot_script_name, ''), COALESCE(:chatbot_enabled_condition, 'always'), COALESCE(:regex_url, ''), COALESCE(:country_names, ''))" }
+      result: { query: "SELECT * FROM livechat_channel_rules WHERE id = :line_id" }
+
+  - id: edit_livechat_channel_rule
+    type: navigate
+    permission: livechat.manage
+    navigate_to: /livechat/channel/rules/detail
+    params: { id: '{row.id}', channel_id: '{state.id}' }
+
+  - id: delete_livechat_channel_rule
+    type: server
+    permission: livechat.manage
+    action: im_livechat.channel.rules.delete
+    handler: line_item
+    operation: delete
+    domain: livechat_channel
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [livechat_channel_detail, livechat_channel_rules]
+    mutation:
+      operation: delete
+      table: livechat_channel_rules
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_channel_rules WHERE id = :line_id AND channel_id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_RULE_STALE, message: This channel rule changed or was deleted. Reload before deleting. }
 
   - id: edit_livechat_channel
     type: server_form

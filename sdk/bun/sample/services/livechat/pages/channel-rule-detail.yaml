@@ -1,0 +1,17 @@
+title: Channel Rule
+page: { id: livechat-channel-rule-detail, route: /livechat/channel/rules/detail, breadcrumb: [Website, Live Chat, Channels, Rules], auth: { require: [livechat.read] } }
+components:
+  - type: OdooFormView
+    source: livechat_channel_rule_detail
+    title_field: action
+    header_actions:
+      - { id: back_to_livechat_channel, label: Channel, icon: arrow-left, permission: livechat.read }
+      - { id: edit_livechat_channel_rule_detail, label: Edit, icon: edit, permission: livechat.manage }
+    fields:
+      - { field: action, label: Live Chat Button, type: text }
+      - { field: auto_popup_timer, label: Time to Open, type: number }
+      - { field: chatbot_script_name, label: Chatbot, type: text }
+      - { field: chatbot_enabled_condition, label: Enable ChatBot, type: text }
+      - { field: regex_url, label: URL Regex, type: text }
+      - { field: country_names, label: Countries, type: text }
+      - { field: sequence, label: Matching Order, type: number }

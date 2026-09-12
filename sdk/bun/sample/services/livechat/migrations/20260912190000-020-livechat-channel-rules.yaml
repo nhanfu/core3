@@ -1,0 +1,25 @@
+version: 0.0.20
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_channel_rules (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        channel_id VARCHAR NOT NULL, sequence INTEGER NOT NULL DEFAULT 10,
+        action VARCHAR NOT NULL DEFAULT 'display_button', auto_popup_timer INTEGER NOT NULL DEFAULT 0,
+        chatbot_script_id VARCHAR, chatbot_script_name VARCHAR, chatbot_enabled_condition VARCHAR NOT NULL DEFAULT 'always',
+        regex_url VARCHAR, country_names VARCHAR NOT NULL DEFAULT '',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS livechat_channel_rules_channel_idx ON livechat_channel_rules(channel_id, sequence, id);
+      INSERT INTO livechat_channel_rules (id, channel_id, sequence, action, auto_popup_timer, chatbot_script_name, chatbot_enabled_condition, regex_url, country_names)
+      SELECT 'livechat-rule-demo-001', 'livechat-channel-demo-002', 10, 'display_button_and_text', 0, 'Welcome Bot', 'always', '/shop', 'United States, Canada'
+      WHERE NOT EXISTS (SELECT 1 FROM livechat_channel_rules WHERE id = 'livechat-rule-demo-001');
+      INSERT INTO livechat_channel_rules (id, channel_id, sequence, action, auto_popup_timer, chatbot_script_name, chatbot_enabled_condition, regex_url, country_names)
+      SELECT 'livechat-rule-demo-002', 'livechat-channel-demo-002', 20, 'auto_popup', 5, 'Lead Generation Bot', 'only_if_no_operator', '', ''
+      WHERE NOT EXISTS (SELECT 1 FROM livechat_channel_rules WHERE id = 'livechat-rule-demo-002');
+    down: |
+      DROP TABLE IF EXISTS livechat_channel_rules;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

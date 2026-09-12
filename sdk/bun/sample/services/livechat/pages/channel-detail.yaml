@@ -58,11 +58,6 @@ components:
           groups:
             - title: Rules
               fields:
-                - { field: rule_button_label, label: Live Chat Button }
-                - { field: rule_chatbot_label, label: Chatbot }
-                - { field: rule_url_regex, label: URL Regex }
-                - { field: rule_countries, label: Countries }
-                - { field: add_rule_label, label: '' }
                 - { field: rules_help, label: '' }
         - id: widget
           label: Widget
@@ -72,3 +67,24 @@ components:
                 - { field: widget_help, label: '' }
                 - { field: widget_script, label: '' }
                 - { field: widget_support_url, label: '' }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: livechat_channel_rules
+    parent_source: livechat_channel_detail
+    title: Rules
+    variant: odoo_x2many
+    row_key: id
+    actions:
+      - { id: add_livechat_channel_rule, label: Add a line, variant: primary, permission: livechat.manage }
+    empty_state: { title: No channel rules, description: Add a line to decide when the Live Chat button is shown. }
+    columns:
+      - { field: action_label, label: Live Chat Button }
+      - { field: chatbot_script_name, label: Chatbot }
+      - { field: regex_url, label: URL Regex }
+      - { field: country_names, label: Countries }
+      - field: actions
+        label: ''
+        sortable: false
+        actions:
+          - { id: edit_livechat_channel_rule, label: Edit, icon: edit, permission: livechat.manage }
+          - { id: delete_livechat_channel_rule, label: Delete, icon: trash, permission: livechat.manage }
