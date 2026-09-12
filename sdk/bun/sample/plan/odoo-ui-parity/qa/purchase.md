@@ -30,6 +30,16 @@ Candidate commit: none
   horizontal overflow. Desktop and mobile vendor lists also rendered cleanly.
 - Fleet user direct `purchase.vendors.create` mutation returned HTTP 403 with
   `Requires permission: purchase.manage`.
+- Fresh paired Odoo/Core3 Vendors captures at 1440x900 and 390x844 completed
+  against the active reference. Both runtimes reported no browser errors or
+  horizontal overflow. Artifacts:
+  `/tmp/core3-odoo-parity/purchase-vendors-paired-odoo-desktop.png`,
+  `purchase-vendors-paired-core3-desktop.png`,
+  `purchase-vendors-paired-odoo-mobile.png`, and
+  `purchase-vendors-paired-core3-mobile.png`.
+- The pair has an open fidelity finding: Odoo exposes 2 vendors and the action
+  label `New`, while Core3 exposes 5 seeded vendors and `New vendor`; the
+  differing vendor card/table fields and activity badges also require review.
 - Full Odoo/Core3 comparison and complete browser CRUD remain open.
 
 ## Test-case inventory
@@ -38,12 +48,14 @@ Candidate commit: none
 | --- | --- | --- | --- |
 | PURCHASE-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Detailed plan approved; current functional and route-smoke evidence recorded, but paired Odoo and full browser CRUD are open | pending |
 | PURCHASE-BROWSER-002 | Vendor create, reload persistence, and manager boundary | Isolated runner `:4318`; admin mobile create/reload passed; Fleet direct mutation received 403; `/tmp/core3-odoo-parity/purchase-vendors-desktop.png`, `purchase-vendors-mobile.png`, `purchase-vendor-create-mobile.png` | pass for tested slice |
+| PURCHASE-REF-001 | Fresh paired Odoo/Core3 Vendors comparison | Authenticated Odoo/Core3 desktop/mobile captures above; both clean for errors/overflow, but row cardinality/action-label/layout differences remain | finding open |
 
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | PURCHASE-001 | Authenticated route and acknowledge smoke | 46/46 route checks; PO acknowledge returned 200 and persisted after reload | PASS |
+| PURCHASE-VIS-001 | Vendors parity differs: Odoo has 2 rows and `New`; Core3 has 5 rows and `New vendor`, with different visible columns/activity badges | — | Fresh paired captures at both viewports recorded; data/label/layout adjudication still required | open |
 
 ## Sign-off
 
