@@ -42,6 +42,12 @@ describe('eCommerce Products parity', () => {
     const created = await repository.executeMutation(create.mutation, { values: { name: 'QA Travel Bottle', internal_reference: 'QA-BOTTLE-001', sales_price: 25 } });
     expect(created).toMatchObject({ name: 'QA Travel Bottle', internal_reference: 'QA-BOTTLE-001', active: true });
     await expect(repository.executeMutation(create.mutation, { values: { name: 'Duplicate', internal_reference: 'QA-BOTTLE-001' } })).rejects.toMatchObject({ status: 409, code: 'ECOMMERCE_PRODUCT_REFERENCE_EXISTS' });
+    const importer = api.actions.find((action: any) => action.id === 'import_ecommerce_products');
+    expect(importer.permission).toBe('ecommerce.write');
+    const imported = await repository.executeMutation(importer.mutation, { values: { product_list: 'Travel Mug|ECOM-IMP-001|25.50\nDesk Lamp|ECOM-IMP-002|44.00' } });
+    expect(imported).toMatchObject({ imported: 2 });
+    await expect(repository.executeMutation(importer.mutation, { values: { product_list: 'Invalid row' } })).rejects.toMatchObject({ status: 422, code: 'ECOMMERCE_PRODUCT_IMPORT_INVALID' });
+    expect((await repository.query("SELECT COUNT(*) AS count FROM ecommerce_products WHERE id LIKE 'ecommerce-product-import-%'", []))[0].count).toBe(2);
     database.close();
   });
 });

@@ -10,6 +10,23 @@ datasources:
     permission: ecommerce.read
     query: "SELECT value, label FROM (VALUES (true, 'Published'), (false, 'Unpublished')) statuses(value, label)"
 actions:
+  - id: import_ecommerce_products
+    type: server_form
+    permission: ecommerce.write
+    title: Import products
+    action: ecommerce.products.import
+    handler: yaml_mutation
+    operation: create
+    submit_label: Import
+    refresh: [ecommerce_products]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:product_list AS VARCHAR))) > 0", status: 422, code: ECOMMERCE_PRODUCT_IMPORT_REQUIRED, message: Add at least one product row. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM (SELECT trim(unnest(string_split(CAST(:product_list AS VARCHAR), chr(10)))) AS line) lines WHERE line <> '' AND NOT regexp_matches(line, '^[^|]+\\|[^|]+\\|[0-9]+(\\.[0-9]+)?$'))", status: 422, code: ECOMMERCE_PRODUCT_IMPORT_INVALID, message: Each row must use Name|Internal Reference|Sales Price format. }
+      steps:
+        - { query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:product_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS name, trim(split_part(line, '|', 2)) AS internal_reference, CAST(trim(split_part(line, '|', 3)) AS DECIMAL(12,2)) AS sales_price FROM lines WHERE line <> '') INSERT INTO ecommerce_products(id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active, company_name) SELECT 'ecommerce-product-import-' || regexp_replace(lower(internal_reference), '[^a-z0-9]+', '-', 'g'), 1, name, internal_reference, 'Goods', 'All Products', sales_price, 10, false, true, 'My Company' FROM parsed ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sales_price = EXCLUDED.sales_price, updated_at = TIMESTAMP '2026-09-13 10:00:00'" }
+      result: { query: "SELECT COUNT(*) AS imported FROM ecommerce_products WHERE id LIKE 'ecommerce-product-import-%'" }
+    fields: [{ field: product_list, label: Product List, type: textarea, required: true, placeholder: 'Travel Mug|ECOM-IMP-001|25.50\nDesk Lamp|ECOM-IMP-002|44.00' }]
   - id: create_ecommerce_product
     type: server_form
     permission: ecommerce.write
