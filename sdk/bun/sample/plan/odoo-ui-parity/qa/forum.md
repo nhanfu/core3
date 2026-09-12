@@ -21,7 +21,8 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | FORUM-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
-| FORUM-FUNC-001 | Forum and Post Pages YAML contract corpus | `bun test ./test/forum*.integration.test.ts` — 4 tests, 27 assertions | pass |
+| FORUM-FUNC-001 | Forum and Post Pages YAML contract corpus | `bun test ./test/forum*.integration.test.ts` — 5 tests, 33 assertions | pass |
+| FORUM-WORKFLOW-001 | Post close/reopen lifecycle | Focused test executes close and reopen, persists moderator reason and versions 1 → 3, and rejects invalid repeated transitions with 409 | pass |
 
 ## Bugs and retests
 

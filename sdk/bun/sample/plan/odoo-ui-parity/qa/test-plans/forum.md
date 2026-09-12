@@ -42,7 +42,7 @@ databases and deterministic IDs.
 
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
-| FORUM-WF-001 | Post lifecycle | Draft → Published → Closed/Reopened updates visibility and row version atomically | planned browser workflow |
+| FORUM-WF-001 | Post lifecycle | Draft → Published → Closed/Reopened updates visibility and row version atomically | close/reopen API workflow pass; browser workflow remains planned |
 | FORUM-WF-002 | Answer/moderation | Answer, accept, flag and moderation actions preserve author/post relations and audit events | planned |
 | FORUM-WF-003 | Forum taxonomy | Tags/badges remain linked to posts and cannot be deleted while referenced | planned |
 | FORUM-WF-004 | Website integration | Published content resolves through Website routes with correct site/company scope | planned integration gate |
