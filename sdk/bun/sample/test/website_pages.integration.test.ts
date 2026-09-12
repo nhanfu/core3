@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
@@ -101,6 +101,27 @@ describe('Website Page Manager parity', () => {
       values: { website_id: 'website-demo-001', website_name: 'Core3 Storefront', name: 'Stale', url: '/stale' },
     })).rejects.toMatchObject({ status: 409 });
     database.close();
+  });
+
+  test('preserves edited content across a file-backed database restart and migration replay', async () => {
+    const databasePath = `/tmp/core3-website-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `website_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const edit = yaml('api/pages.yaml').actions.find((action: any) => action.id === 'edit_website_page');
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    await firstRepository.executeMutation(edit.mutation, {
+      id: 'website-page-demo-001', expected_row_version: 1,
+      values: { website_id: 'website-demo-001', website_name: 'Core3 Storefront', name: 'Home updated', url: '/', content_html: '<p>Restart-safe content.</p>', is_indexed: true, is_homepage: true, is_in_menu: true, is_seo_optimized: true },
+    });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await secondRepository.query('SELECT name, content_html, state, row_version FROM website_pages WHERE id = ?', ['website-page-demo-001']))[0]).toMatchObject({ name: 'Home updated', content_html: '<p>Restart-safe content.</p>', state: 'Published', row_version: 2 });
+    second.close();
+    rmSync(databasePath, { force: true });
   });
 
   test('keeps Odoo view labels and permission boundaries explicit', () => {
