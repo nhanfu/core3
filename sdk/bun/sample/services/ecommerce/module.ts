@@ -41,6 +41,7 @@ export default class EcommerceModule implements ModuleLifecycle {
       const result = await service.call('ecommerce.public.shop', { q });
       return this.json({ products: result?.products || [] });
     }
+    if (url.pathname === '/api/public/ecommerce/checkout') return this.handlePublicCheckout(request, service);
     if (url.pathname !== '/api/public/ecommerce/cart') return null;
     const cartId = this.anonymousCartId(request.headers.get('cookie'));
     if (request.method === 'GET') {
@@ -58,6 +59,18 @@ export default class EcommerceModule implements ModuleLifecycle {
     const result = await service.call('ecommerce.cart.anonymous_add', { values: { cart_id: effectiveCartId, line_id: `${effectiveCartId}-${productId}`, product_id: productId } });
     const response = this.json({ cart_id: effectiveCartId, line: result });
     if (createdCart) response.headers.set('Set-Cookie', `${ANONYMOUS_CART_COOKIE}=${effectiveCartId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+    return response;
+  }
+
+  private async handlePublicCheckout(request: Request, service: EcommerceService): Promise<Response> {
+    if (request.method !== 'POST') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
+    const cartId = this.anonymousCartId(request.headers.get('cookie'));
+    if (!cartId) return this.json({ error: 'An anonymous cart is required', code: 'ECOMMERCE_PUBLIC_CHECKOUT_CART_REQUIRED' }, 422);
+    let body: any;
+    try { body = await request.json(); } catch { return this.json({ error: 'Checkout details are required', code: 'ECOMMERCE_PUBLIC_CHECKOUT_INPUT_REQUIRED' }, 422); }
+    const result = await service.call('ecommerce.checkout.anonymous_confirm', { values: { ...body, cart_id: cartId } });
+    const response = this.json({ order: result });
+    response.headers.set('Set-Cookie', `${ANONYMOUS_CART_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
     return response;
   }
 

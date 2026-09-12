@@ -5,11 +5,37 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
+import EcommerceModule from '../services/ecommerce/module';
 
 const root = join(import.meta.dir, '../services/ecommerce');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('eCommerce Checkout parity', () => {
+  test('converts an anonymous cookie cart through guest checkout and clears the cookie', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'ecommerce_guest_checkout_test', ['schema', 'data']);
+    const shopApi = yaml('api/shop.yaml');
+    const add = shopApi.actions.find((action: any) => action.id === 'anonymous_shop_add_to_cart');
+    await repository.executeMutation(add.mutation, { values: { cart_id: 'ecommerce-cart-anon-a11ce000-0000-4000-8000-000000000001', line_id: 'ecommerce-cart-anon-a11ce000-0000-4000-8000-000000000001-ecommerce-product-mug', product_id: 'ecommerce-product-mug' } });
+    const checkoutApi = yaml('api/checkout.yaml');
+    const guestCheckout = checkoutApi.actions.find((action: any) => action.id === 'anonymous_confirm_ecommerce_checkout');
+    const order = await repository.executeMutation(guestCheckout.mutation, { values: { cart_id: 'ecommerce-cart-anon-a11ce000-0000-4000-8000-000000000001', customer_name: 'Guest Buyer', customer_email: 'guest@example.com', shipping_address: '1 Guest Street', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' } }) as any;
+    expect(order).toMatchObject({ customer_id: null, customer_name: 'Guest Buyer', customer_email: 'guest@example.com', amount_total: 18, cart_id: 'ecommerce-cart-anon-a11ce000-0000-4000-8000-000000000001' });
+    expect((await repository.query('SELECT state FROM ecommerce_carts WHERE id = ?', ['ecommerce-cart-anon-a11ce000-0000-4000-8000-000000000001']))[0].state).toBe('Converted');
+    await expect(repository.executeMutation(guestCheckout.mutation, { values: { cart_id: 'ecommerce-cart-anon-a11ce000-0000-4000-8000-000000000001', customer_name: 'Guest Buyer', customer_email: 'guest@example.com', shipping_address: '1 Guest Street', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' } })).rejects.toMatchObject({ status: 403, code: 'ECOMMERCE_PUBLIC_CHECKOUT_CART_INVALID' });
+    const calls: any[] = [];
+    const module = new EcommerceModule();
+    const service = { async call(operation: string, request: any) { calls.push({ operation, request }); return { id: 'ecommerce-order-checkout-anon', customer_email: request.values.customer_email }; } };
+    const response = await module.handlePublicRoute(new Request('http://core3.test/api/public/ecommerce/checkout', { method: 'POST', headers: { cookie: 'core3_ecommerce_cart=ecommerce-cart-anon-a11ce000-0000-4000-8000-000000000001', 'content-type': 'application/json' }, body: JSON.stringify({ customer_name: 'Guest Buyer', customer_email: 'guest@example.com', shipping_address: '1 Guest Street', delivery_method: 'Standard Delivery', payment_method: 'Wire Transfer' }) }), new URL('http://core3.test/api/public/ecommerce/checkout'), service);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('set-cookie')).toContain('Max-Age=0');
+    expect(calls[0]).toMatchObject({ operation: 'ecommerce.checkout.anonymous_confirm', request: { values: { cart_id: 'ecommerce-cart-anon-a11ce000-0000-4000-8000-000000000001', customer_email: 'guest@example.com' } } });
+    const missingCart = await module.handlePublicRoute(new Request('http://core3.test/api/public/ecommerce/checkout', { method: 'POST', body: '{}' }), new URL('http://core3.test/api/public/ecommerce/checkout'), service);
+    expect(missingCart.status).toBe(422);
+    database.close();
+  });
+
   test('enforces authenticated customer ownership at the HTTP query boundary', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
