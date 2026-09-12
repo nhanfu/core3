@@ -1,0 +1,15 @@
+version: 0.0.3
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE website_pages ADD COLUMN IF NOT EXISTS is_in_menu BOOLEAN;
+      ALTER TABLE website_pages ADD COLUMN IF NOT EXISTS is_seo_optimized BOOLEAN;
+      UPDATE website_pages SET is_in_menu = COALESCE(is_in_menu, FALSE), is_seo_optimized = COALESCE(is_seo_optimized, FALSE);
+    down: |
+      ALTER TABLE website_pages DROP COLUMN IF EXISTS is_seo_optimized;
+      ALTER TABLE website_pages DROP COLUMN IF EXISTS is_in_menu;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

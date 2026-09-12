@@ -109,7 +109,7 @@ catalog records, and manufacturing/inventory records.
 | marketing-automation | marketing_automation | unavailable in supplied source | `odoo-ui-parity/marketing-automation.md` | planned |
 | project | project | available | `odoo-ui-parity/project.md` | in-progress |
 | timesheets | hr_timesheet | available | `odoo-ui-parity/timesheets.md` | in-progress |
-| website | website | available; YAML-driven | `odoo-ui-parity/website.md` | on-hold |
+| website | website | available; YAML-driven | `odoo-ui-parity/website.md` | in-progress |
 | ecommerce | website_sale | available; YAML-driven | `odoo-ui-parity/ecommerce.md` | in-progress |
 | blog | website_blog | available; YAML-driven | `odoo-ui-parity/blog.md` | on-hold |
 | forum | website_forum | available; YAML-driven | `odoo-ui-parity/forum.md` | on-hold |

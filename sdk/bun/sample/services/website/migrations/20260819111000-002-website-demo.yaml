@@ -6,11 +6,11 @@ type:
       INSERT INTO website_websites (id, name, domain, homepage_url, default_language)
       SELECT 'website-demo-001', 'Core3 Storefront', 'https://www.core3.example', '/', 'English'
       WHERE NOT EXISTS (SELECT 1 FROM website_websites WHERE id = 'website-demo-001');
-      INSERT INTO website_pages (id, website_id, website_name, name, url, is_homepage, state, date_publish)
-      SELECT 'website-page-demo-001', 'website-demo-001', 'Core3 Storefront', 'Home', '/', TRUE, 'Published', CURRENT_TIMESTAMP
+      INSERT INTO website_pages (id, website_id, website_name, name, url, is_homepage, is_in_menu, is_seo_optimized, state, date_publish)
+      SELECT 'website-page-demo-001', 'website-demo-001', 'Core3 Storefront', 'Home', '/', TRUE, TRUE, TRUE, 'Published', CURRENT_TIMESTAMP
       WHERE NOT EXISTS (SELECT 1 FROM website_pages WHERE id = 'website-page-demo-001');
-      INSERT INTO website_pages (id, website_id, website_name, name, url, state)
-      SELECT 'website-page-demo-002', 'website-demo-001', 'Core3 Storefront', 'Contact us', '/contactus', 'Draft'
+      INSERT INTO website_pages (id, website_id, website_name, name, url, is_in_menu, state)
+      SELECT 'website-page-demo-002', 'website-demo-001', 'Core3 Storefront', 'Contact us', '/contactus', TRUE, 'Draft'
       WHERE NOT EXISTS (SELECT 1 FROM website_pages WHERE id = 'website-page-demo-002');
       INSERT INTO website_menus (id, website_id, website_name, name, url, sequence)
       SELECT 'website-menu-demo-001', 'website-demo-001', 'Core3 Storefront', 'Home', '/', 10
