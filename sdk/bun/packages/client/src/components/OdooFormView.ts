@@ -45,6 +45,8 @@ export class OdooFormView extends BaseComponent {
       [String(this.def.source || 'record')]: record,
       ...record,
     };
+    const shouldRenderGroup = (group: any) =>
+      !group.show_if || Boolean(evalExpr(group.show_if, { row: record, record, state: actionState }));
     const visibleHeaderActions = headerActions.filter((action: any) =>
       !action.show_if || Boolean(evalExpr(action.show_if, { row: record, record, state: actionState }))
     );
@@ -262,9 +264,13 @@ export class OdooFormView extends BaseComponent {
     if (Array.isArray(this.def.groups) && this.def.groups.length) {
       if (this.def.group_columns) {
         const groups = html.take(sheet).div.className(`o-form-groups o-form-groups-${this.def.group_columns}`).ele();
-        for (const group of this.def.groups) renderFields(group.fields || [], group.title, groups, group.wide === true);
+        for (const group of this.def.groups) {
+          if (shouldRenderGroup(group)) renderFields(group.fields || [], group.title, groups, group.wide === true);
+        }
       } else {
-        for (const group of this.def.groups) renderFields(group.fields || [], group.title);
+        for (const group of this.def.groups) {
+          if (shouldRenderGroup(group)) renderFields(group.fields || [], group.title);
+        }
       }
     } else {
       renderFields(this.def.fields?.length ? this.def.fields : editFields);
@@ -319,7 +325,9 @@ export class OdooFormView extends BaseComponent {
           if (!embedded.contains(panel)) html.take(panel).attach(embedded);
         }
         if (Array.isArray(tab.groups)) {
-          for (const group of tab.groups) renderFields(group.fields || [], group.title, panel, group.wide === true);
+          for (const group of tab.groups) {
+            if (shouldRenderGroup(group)) renderFields(group.fields || [], group.title, panel, group.wide === true);
+          }
         } else if (Array.isArray(tab.fields)) {
           renderFields(tab.fields, undefined, panel);
         }

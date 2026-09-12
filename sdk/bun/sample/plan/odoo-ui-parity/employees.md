@@ -1008,3 +1008,10 @@ the isolated worktree. The dev runner failed before readiness with Vite
 fallback returned 401 JSON for direct employee navigation and then stopped on
 a port collision. No authenticated Core3 or Odoo Work-tab render was
 available; no visual-parity claim or screenshot is made.
+ 
+The isolated follow-up also repaired the missing ActivityView import-map entry
+and made conditional Odoo form groups honor `show_if`; the focused client test
+passes. The generated Core3 Work-tab captures are under
+`/tmp/core3-odoo-parity/employees-visual4-20260912/`. The Odoo files in that
+directory were not authenticated during the temporary reference throttle, so
+they are not treated as parity evidence.
