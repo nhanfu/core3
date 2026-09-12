@@ -100,9 +100,9 @@ describe('Purchase Orders list and detail parity', () => {
 
     const rfqs = apiSource('purchase-rfqs.yaml', 'purchase_rfqs');
     const defaultRfqs = await repository.querySource(rfqs, { q: null, state: null, vendor_id: null, fixture_state: null }, 0, 50);
-    expect(defaultRfqs.data.map((row: any) => row.id)).toEqual(['po-demo-008', 'po-demo-002', 'po-demo-001', 'po-demo-004']);
-    expect(defaultRfqs.data.map((row: any) => row.state)).toEqual(['To Approve', 'Sent', 'Draft', 'Cancelled']);
-    expect(defaultRfqs.data.map((row: any) => row.total_amount)).toEqual([1560, 3096, 625, 360]);
+    expect(defaultRfqs.data.map((row: any) => row.id)).toEqual(['po-demo-008', 'po-demo-002', 'po-demo-009', 'po-demo-001', 'po-demo-004']);
+    expect(defaultRfqs.data.map((row: any) => row.state)).toEqual(['To Approve', 'Sent', 'Draft', 'Draft', 'Cancelled']);
+    expect(defaultRfqs.data.map((row: any) => row.total_amount)).toEqual([1560, 3096, 1548, 625, 360]);
     expect(defaultRfqs.data.every((row: any) => row.company_name === 'Main Company (San Francisco)' && row.activity_count === 1)).toBe(true);
 
     const searched = await repository.querySource(rfqs, { q: 'Industrial label', state: null, vendor_id: null, fixture_state: null }, 0, 50);
@@ -114,7 +114,29 @@ describe('Purchase Orders list and detail parity', () => {
 
     expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['purchase.read', 'purchase.write', 'purchase.manage']));
     expect(yaml('pages/purchase-rfqs.yaml').page.auth.require).toEqual(['purchase.read']);
-    expect(yaml('api/purchase-rfqs.yaml').actions[0]).toMatchObject({ id: 'create_purchase_order', permission: 'purchase.write' });
+    expect(yaml('api/purchase-rfqs.yaml').actions.find((entry: any) => entry.id === 'create_purchase_order')).toMatchObject({ permission: 'purchase.write' });
+  });
+
+  test('merges same-vendor RFQs into the oldest survivor and cancels duplicates', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_rfq_merge_test_schema_migrations', ['schema', 'data']);
+
+    const page = yaml('api/purchase-rfqs.yaml');
+    const merge = page.actions.find((entry: any) => entry.id === 'merge_purchase_rfqs');
+    expect(merge).toMatchObject({ permission: 'accounting.write', action: 'purchase.rfqs.merge', operation: 'merge' });
+    expect(yaml('pages/purchase-rfqs.yaml').components[0].bulk_actions).toEqual([{ id: 'merge_purchase_rfqs', label: 'Merge RFQs', permission: 'accounting.write' }]);
+
+    const merged = await repository.executeMutation(merge.mutation, { selectedIds: ['po-demo-002', 'po-demo-009'] });
+    expect(merged).toMatchObject({ id: 'po-demo-009', state: 'Draft', reference: 'Docking station top-up, IT equipment refresh' });
+    expect(await repository.query("SELECT id, state FROM purchase_orders WHERE id IN ('po-demo-002', 'po-demo-009') ORDER BY id")).toEqual([
+      { id: 'po-demo-002', state: 'Cancelled' },
+      { id: 'po-demo-009', state: 'Draft' },
+    ]);
+    expect((await repository.query("SELECT quantity, total_amount, row_version FROM purchase_orders WHERE id = 'po-demo-009'"))[0]).toMatchObject({ quantity: 12, total_amount: 1548, row_version: 2 });
+
+    await expect(repository.executeMutation(merge.mutation, { selectedIds: ['po-demo-003', 'po-demo-006'] })).rejects.toThrow('Please select at least two unlocked RFQs');
+    await expect(repository.executeMutation(merge.mutation, { selectedIds: ['po-demo-001', 'po-demo-009'] })).rejects.toThrow('Selected RFQs must have the same vendor');
   });
 
   test('keeps Purchase Products aligned with the Odoo action view family and page/API boundary', () => {

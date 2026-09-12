@@ -936,3 +936,53 @@ shared Fluent shell. On mobile, the shared dense LineItemGrid is narrower than
 Odoo's card presentation and its quantity columns are visually clipped inside
 the grid; the page itself has no horizontal overflow. Screenshots remain in
 `/tmp` only and no image files are committed.
+
+## Merge RFQs list action — 2026-09-12
+
+The next disjoint source-defined Purchase action is `action_merger` (`Merge
+RFQs`) in `addons/purchase/views/purchase_views.xml`. Odoo binds it to the
+`purchase.order` list, exposes it from `Actions` after selecting records, and
+gates it with `account.group_account_invoice`. The authenticated live
+reference at `http://localhost:8073`, database
+`core3_codex_demo_20260912`, showed the exact sequence `Actions → Merge RFQs`
+for two selected RFQs. Odoo accepts RFQs in `draft` or `sent` state, groups by
+vendor/currency/destination, keeps the oldest RFQ, moves/combines its lines,
+and cancels the other RFQs. The desktop reference had zero failed requests and
+zero page errors; captures are local only under
+`/tmp/core3-odoo-parity/purchase-next-20260912/`.
+
+Core3 adds `Merge RFQs` as a selectable bulk action on the existing Requests
+for Quotation page. The page/API pair remains joined by `page.id:
+purchase-rfqs`; `api/purchase-rfqs.yaml` owns the `purchase.rfqs.merge`
+mutation, with `accounting.write` permission, same-vendor/unlocked/open-RFQ
+guards, deterministic oldest-survivor selection, line quantity/total
+recalculation, reference aggregation, duplicate cancellation, stale-row
+protection, and list refresh. Migration
+`20260912100000-023-purchase-rfq-merge.yaml` adds the stable same-vendor
+`PO/2026/0009` RFQ and its line fixture without changing other modules.
+
+The focused Purchase integration test covers action/label/permission
+declarations, deterministic fixture ordering, successful merge output,
+duplicate cancellation, line-independent totals, invalid state/vendor
+selection, and page/API binding. Odoo's mobile reference switches to Kanban
+and does not expose selection checkboxes or the list `Actions` menu at 390px;
+that responsive limitation is recorded as unavailable mobile action evidence,
+not replaced with an invented flow. Core3 authenticated captures for this
+slice remain pending if the isolated worktree runtime cannot bind a free
+backend/frontend pair; no screenshot is claimed in that case.
+
+## Bounded slice: Merge RFQs (2026-09-12)
+
+The Odoo Purchase RFQ list exposes the manager-only `Merge` action for two or
+more unlocked requests from the same vendor. Core3 keeps the existing RFQ
+page/API pair and adds `merge_purchase_rfqs` with the same-vendor, unlocked,
+minimum-selection, row-version, and permission guards. The oldest selected
+RFQ remains the survivor; quantities and totals are combined and the other
+selected records become cancelled.
+
+The implementation adds deterministic migration `0.0.23` and focused coverage
+inside `test/purchase.integration.test.ts`. The targeted merge test passes
+with 7 assertions. The broader existing Purchase suite currently has two
+unrelated 5-second fixture-query timeouts under the shared multi-runtime host;
+those are not claimed as green. No fresh Core3/Odoo screenshot is claimed for
+this slice and no image is committed.

@@ -60,6 +60,8 @@ components:
     page_size: 50
     row_key: id
     selectable: true
+    bulk_actions:
+      - { id: merge_purchase_rfqs, label: Merge RFQs, permission: accounting.write }
     row_open_action: view_purchase_order
     row_double_click_action: view_purchase_order
     row_actions: menu
