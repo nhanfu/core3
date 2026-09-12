@@ -4,7 +4,21 @@ datasources:
     single: true
     permission: project.read
     error_states: { transport_error: { status: 503, code: PROJECT_DASHBOARD_UNAVAILABLE, message: Project dashboard data is temporarily unavailable. } }
-    query: "SELECT p.id, p.name, COUNT(t.id) AS task_count, COUNT(t.id) FILTER (WHERE t.state = 'Done') AS closed_task_count, CAST(COUNT(t.id) FILTER (WHERE t.state = 'Done') AS VARCHAR) || ' / ' || CAST(COUNT(t.id) AS VARCHAR) AS task_summary, COALESCE(SUM(t.planned_hours), 0) AS hours, 0 AS timesheets, 0 AS sales_orders, 0 AS sales_order_items, 0 AS purchase_orders FROM projects p LEFT JOIN project_tasks t ON t.project_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id GROUP BY p.id, p.name"
+    query: "SELECT p.id, p.name, COUNT(t.id) AS task_count, COUNT(t.id) FILTER (WHERE t.state = 'Done') AS closed_task_count, CAST(COUNT(t.id) FILTER (WHERE t.state = 'Done') AS VARCHAR) || ' / ' || CAST(COUNT(t.id) AS VARCHAR) AS task_summary, COALESCE(SUM(t.planned_hours), 0) AS hours, 0 AS sales_orders, 0 AS sales_order_items, 0 AS purchase_orders FROM projects p LEFT JOIN project_tasks t ON t.project_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id GROUP BY p.id, p.name"
+  - id: project_dashboard_timesheets
+    type: service
+    service: yaml.service.timesheets
+    operation: timesheets.entries.project_summary
+    service_params: { project_id: id, fixture_state: fixture_state }
+    permission: timesheets.read
+    error_states: { transport_error: { status: 503, code: PROJECT_DASHBOARD_TIMESHEETS_UNAVAILABLE, message: Project timesheet totals are temporarily unavailable. } }
+  - id: project_dashboard_timesheet_entries
+    type: service
+    service: yaml.service.timesheets
+    operation: timesheets.entries.by_project
+    service_params: { project_id: id, fixture_state: fixture_state }
+    permission: timesheets.read
+    error_states: { transport_error: { status: 503, code: PROJECT_DASHBOARD_TIMESHEETS_UNAVAILABLE, message: Project timesheet entries are temporarily unavailable. } }
   - id: project_dashboard_updates
     permission: project.read
     error_states: { transport_error: { status: 503, code: PROJECT_DASHBOARD_UNAVAILABLE, message: Project dashboard data is temporarily unavailable. } }

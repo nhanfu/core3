@@ -45,6 +45,24 @@ Candidate commit: current working tree
 | --- | --- | --- | --- | --- |
 | PROJECT-RUNTIME-001 | Initial single-module task probe lacked the declared `yaml.service.timesheets` dependency | — | Dependency-aware `project,timesheets` process passed task detail; unprefixed paths remain invalid by runner design | fixed |
 
+## Candidate slice evidence — 2026-09-13
+
+- Scope: Project Dashboard Timesheets integration; Project consumes the
+  declared Timesheets `by_project` and `project_summary` operations through
+  `yaml.service.timesheets` with `timesheets.read`.
+- Focused checks: `bun test ./test/project_dashboard_updates.integration.test.ts
+  ./test/project_timesheets_dashboard.integration.test.ts
+  ./test/project.integration.test.ts --timeout 20000` — 8 passed, 0 failed,
+  100 assertions.
+- Audit: `bun run audit` — 659 pages, 668 routes, 1,136 datasources; passed.
+- Hygiene: `git diff --check` — passed.
+- Typecheck: `bunx tsc -p tsconfig.typecheck.json --noEmit` — blocked by
+  pre-existing errors in `../med`, `../packages/client`,
+  `../packages/server`, and unrelated service files; no lint script is
+  defined in `package.json`.
+- Browser/restart evidence: not run for this contract slice; authenticated
+  visual parity, restart persistence, and full actor CRUD remain pending.
+
 ## Sign-off
 
 - Functional: pending

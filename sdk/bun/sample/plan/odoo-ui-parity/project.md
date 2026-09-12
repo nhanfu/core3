@@ -887,3 +887,23 @@ fields and normalized fixture metadata. Focused coverage is
 `test/project_milestones.integration.test.ts`; authenticated desktop/mobile
 captures, if local runtimes are available, belong under
 `/tmp/core3-odoo-parity` and are not committed.
+
+## Bounded slice: Project Dashboard Timesheets integration (2026-09-13)
+
+The Project dashboard previously exposed a Timesheets stat backed by a
+hard-coded zero. This slice makes the dependency boundary explicit: the
+Timesheets service now declares `timesheets.entries.by_project` and
+`timesheets.entries.project_summary` operations, while Project consumes them
+through `yaml.service.timesheets` datasources with `timesheets.read` and a
+stable 503 transport contract. The dashboard now shows persisted project
+hours/entry totals and the project-scoped entry rows; Timesheets remains the
+owner of entry CRUD and approval workflow.
+
+Focused coverage is
+`test/project_timesheets_dashboard.integration.test.ts` plus the updated
+dashboard contract: page/API separation, service operation binding, project
+scope, deterministic empty behavior, persisted hour-total change, permission,
+and transport-error declarations pass. No migration was needed; the existing
+fixed Timesheets fixtures are reused. Authenticated browser evidence was not
+run in this bounded contract slice, so desktop/mobile visual parity and full
+actor CRUD smoke remain open.

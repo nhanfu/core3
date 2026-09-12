@@ -31,7 +31,7 @@ describe('Project Dashboard and Updates parity', () => {
     expect(updateApi.page).toEqual({ id: 'project-update-detail' });
     expect(discovered.pages.get('project-dashboard')?.config.page.route).toBe('/projects/detail/dashboard');
     expect(discovered.pageDatasources.get('project-dashboard')).toEqual([
-      'project_dashboard_stats', 'project_dashboard_updates', 'project_dashboard_milestones',
+      'project_dashboard_stats', 'project_dashboard_timesheets', 'project_dashboard_timesheet_entries', 'project_dashboard_updates', 'project_dashboard_milestones',
     ]);
     expect(discovered.pageDatasources.get('project-update-detail')).toEqual(['project_update_detail']);
   });
@@ -40,7 +40,7 @@ describe('Project Dashboard and Updates parity', () => {
     const page = yaml('pages/project-dashboard.yaml');
     const updateList = page.components.find((component: any) => component.source === 'project_dashboard_updates');
     const updateDetail = yaml('pages/project-update-detail.yaml').components[0];
-    expect(page.components.map((component: any) => component.type)).toEqual(['StatRow', 'ListView', 'ListView']);
+    expect(page.components.map((component: any) => component.type)).toEqual(['StatRow', 'StatRow', 'ListView', 'ListView', 'ListView']);
     expect(updateList.views.map((view: any) => view.id)).toEqual(['kanban', 'list', 'form']);
     expect(updateList.views[0].group_by).toBe('');
     expect(updateList.columns.map((column: any) => column.label)).toEqual(['Name', 'Author', 'Date', 'Progress', 'Status', ' ']);

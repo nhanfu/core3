@@ -7,10 +7,28 @@ components:
     stats:
       - { field: task_summary, label: Tasks }
       - { field: hours, label: Hours }
-      - { field: timesheets, label: Timesheets }
       - { field: sales_orders, label: Sales Orders }
       - { field: sales_order_items, label: Sales Order Items }
       - { field: purchase_orders, label: Purchase Orders }
+  - type: StatRow
+    source: project_dashboard_timesheets
+    title: Timesheets
+    stats:
+      - { field: timesheets, label: Hours logged }
+      - { field: timesheet_entry_count, label: Entries }
+  - type: ListView
+    variant: odoo
+    source: project_dashboard_timesheet_entries
+    columns:
+      - { field: work_date, label: Date, type: DateCell }
+      - { field: employee_name, label: Employee }
+      - { field: task_name, label: Task }
+      - { field: description, label: Description }
+      - { field: time_spent_display, label: Time Spent, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    row_key: id
+    page_size: 25
+    empty_state: { title: No timesheet entries, description: Record working hours from the Timesheets action. }
   - type: ListView
     variant: odoo
     source: project_dashboard_updates
