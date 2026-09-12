@@ -14,6 +14,8 @@ Module owner: fleet module owner
 Verification trigger: feature-complete
 Candidate commit: working tree after authenticated Fleet QA
 
+Detailed execution matrix: [`test-plans/fleet.md`](test-plans/fleet.md). It is the module-level source for the remaining CRUD, actor, persistence, Temporal, and paired Odoo gates.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
