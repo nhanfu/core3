@@ -23,6 +23,9 @@ versions advancing from 1 through 4.
 The registration probe accepted one attendee on a capacity-1 published event,
 returned a persisted registration record, and rejected the second attendee with
 the expected 409 capacity guard.
+The authenticated edit probe updated the event and cleared nullable `end_at`,
+then confirmed the optimistic-concurrency boundary by receiving 409
+`STALE_RECORD` for a replayed row version.
 Full menu-tree coverage, permissions, complete browser CRUD/workflow coverage,
 and paired Odoo desktop/mobile comparison remain open. No full parity claim is
 made here.

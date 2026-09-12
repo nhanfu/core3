@@ -24,6 +24,7 @@ Candidate commit: `f7a38e86`
 - Permission boundary: `fleet@tms.local` reached `/events` but received `Requires permission: events.read` with the expected 403 page-data response; no browser errors.
 - Authenticated lifecycle mutation probe: created `QA Lifecycle Event 20260912`, then advanced Draft → Published → In Progress → Completed with 200 responses and row versions 1 → 2 → 3 → 4.
 - Authenticated registration probe: created and published a capacity-1 event, registered the first attendee successfully (200, `Registered`), and the second attendee was rejected with the declared 409 capacity guard; the registration response included a persisted registration id and timestamp.
+- Authenticated edit probe: updated an event name/start time and explicitly cleared nullable `end_at` successfully (200, row version 1 → 2); replaying the old version was rejected with 409 `STALE_RECORD`.
 - The first browser attempt exposed an empty optional `end_at` timestamp defect; the form contract was corrected by declaring both event date fields as `datetime`, preserving Core3's text-based ISO date/time input convention.
 - Authenticated route matrix and paired Odoo comparison remain pending for full module sign-off.
 
@@ -37,6 +38,7 @@ Candidate commit: `f7a38e86`
 | EVENTS-PERM-001 | Read permission boundary | Fleet user denied `events.read` with expected 403/permission page | pass |
 | EVENTS-WORKFLOW-001 | Event lifecycle transitions with optimistic row versions | Authenticated sequence completed Draft → Published → In Progress → Completed; each response 200 and incremented `row_version` | pass |
 | EVENTS-WORKFLOW-002 | Registration persistence and capacity guard | Capacity-1 event accepted first registration (200) and rejected second registration (409) | pass |
+| EVENTS-FUNC-003 | Event edit, nullable datetime clear, and stale-row guard | Update returned 200 with row version increment; stale update returned 409 `STALE_RECORD` | pass |
 | EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current evidence covers focused contracts and one create flow; complete matrix/Odoo comparison not yet run | pending |
 
 ## Bugs and retests
