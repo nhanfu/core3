@@ -32,3 +32,13 @@ Complete the paired Odoo comparison and browser CRUD interaction checks for
 the remaining Manufacturing surfaces, then dispatch/retest QA against the
 committed candidate. Keep the migration consolidation decision separate from
 released migration history.
+
+## Merge review record — candidate `383583f6` / QA `112ed911`
+
+- QA evidence was reviewed: the candidate contract suite, audit, CSS build,
+  and diff check passed, while authenticated browser and paired Odoo gates
+  remained open.
+- The product candidate was rejected because the active checkout already has a
+  different Work Orders Analysis API/page/test contract, producing product
+  add/add conflicts. This QA record is historical and does not validate the
+  active implementation or grant Manufacturing sign-off.

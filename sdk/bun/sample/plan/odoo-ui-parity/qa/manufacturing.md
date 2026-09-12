@@ -38,3 +38,12 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
 - Persistence/data integrity: pass for tested workflow row versions/state changes
 - Desktop/mobile visual parity: pending
 - Tester decision: conditional; no module sign-off until paired Odoo and remaining interaction gates close
+
+## Merge review record — candidate `383583f6` / QA `112ed911`
+
+- The QA results were retained as conditional evidence: 10 tests/108
+  assertions, audit, CSS build, and diff check passed; authenticated browser,
+  actor/restart, and paired Odoo gates remained open.
+- The product candidate was not integrated because its API/page/test files
+  conflict with the active Work Orders Analysis implementation. No
+  Manufacturing sign-off is implied.
