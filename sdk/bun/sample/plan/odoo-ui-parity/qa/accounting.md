@@ -18,8 +18,8 @@ QA state: qa-in-progress
 | ACC-FUNC-006 | Bank statements, cash/credit registers, reconciliation | `/accounting/bank-statements`, `/accounting/cash-registers`, `/accounting/credit-statements`, `/accounting/reconciliation`, `/accounting/reconciliation-models` | list/pivot/graph, empty/error/forbidden, guarded payment/reconciliation mutation | focused accounting statement/reconciliation suites | pass in focused coverage; browser retest pending |
 | ACC-FUNC-007 | Reporting and analytic actions | `/accounting/analysis`, `/accounting/bills-analysis`, `/accounting/invoice-analysis`, `/accounting/analytic-items`, `/accounting/partner-ledger`, `/accounting/sales`, `/accounting/purchases` | deterministic report queries, filters, empty/error states, declared pivot fields | focused report/ledger suites | pass in focused coverage; browser retest pending |
 | ACC-FUNC-008 | Closing/configuration surfaces | `/accounting/closing`, `/accounting/secure-entries`, `/accounting/settings`, remaining configuration routes | permissioned settings, secure transition, catalog reads and forms | focused secure/configuration suites | pass in focused coverage; browser retest pending |
-| ACC-BROWSER-001 | Authenticated Odoo/Core3 reference | `/accounting/journals` | desktop authenticated render, seeded rows, no browser errors, overflow check | `/tmp/core3-odoo-parity/accounting/desktop-journals.png` | pass for Journals; full route matrix pending |
-| ACC-BROWSER-002 | Authenticated Odoo/Core3 reference | `/accounting/journals` | mobile authenticated render, seeded rows, no browser errors, overflow check | `/tmp/core3-odoo-parity/accounting/mobile-journals.png` | pass for Journals; full route matrix pending |
+| ACC-BROWSER-001 | Authenticated Odoo/Core3 reference | `/accounting/journals` | desktop authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-desktop.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-desktop.png` | functional pass; visual mismatch recorded as ACC-VIS-001 |
+| ACC-BROWSER-002 | Authenticated Odoo/Core3 reference | `/accounting/journals` | mobile authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-mobile.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-mobile.png` | functional pass; visual comparison pending repair |
 | ACC-RUNTIME-001 | Core3 module runner | accounting process | startup and zero unexpected API failures | `bun run agent:module -- accounting --port=4011`; `/api/modules` returned 200 | fixed/retested |
 
 ## Bugs and retests
@@ -29,13 +29,14 @@ QA state: qa-in-progress
 | ACC-QA-001 | Combined accounting run timed out in four tests at Bun's default 5s per-test timeout | 4 timeout reports; each isolated file passed with `--timeout 20000` | none; test/runtime policy follow-up | isolated retests pass | open |
 | ACC-QA-002 | Isolated accounting runner previously failed during global page discovery before listening | `bun run agent:module -- accounting --port=3011`; malformed datasource error | global catalog/runtime state is now loadable | port 4011 runner and `/api/modules` pass | fixed/retested |
 | ACC-QA-003 | Stale runtime blocker in ledger after global catalog became loadable | isolated runner on port 4011 and authenticated Journals route | main-agent host/catalog integration state | `/api/modules` 200; desktop/mobile Journals render cleanly | retested; ledger updated |
+| ACC-VIS-001 | Core3 Journals frame does not match Odoo application chrome: missing purple top bar, equivalent menu chrome, and toolbar control placement | paired desktop/mobile captures under `/tmp/core3-odoo-parity/accounting-paired/` | shared shell ownership to be traced before Accounting-specific CSS | functional route is clean; visual repair pending | open |
 
 ## Sign-off
 
 - Functional: focused tests pass when run independently; combined-run policy open
 - Permissions: covered by focused accounting tests; authenticated browser confirmation pending
 - Persistence/data integrity: covered by focused mutation tests; browser reload confirmation pending
-- Desktop/mobile visual parity: Journals Core3 render captured; Odoo comparison and remaining accounting routes remain open
+- Desktop/mobile visual parity: comparison captured; ACC-VIS-001 and remaining accounting routes remain open
 - Tester decision: not signed off; runtime and browser gates remain open
 
 ## QA dispatch contract
