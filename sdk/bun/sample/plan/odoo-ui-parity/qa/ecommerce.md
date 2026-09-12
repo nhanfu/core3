@@ -14,6 +14,11 @@ Module owner: ecommerce module owner
 Verification trigger: feature-complete
 Candidate commit: working tree after Ecommerce Categories slice
 
+Current isolated runner inventory (4041): the manifest registers 8 routes;
+page/API contracts are present for Products, Pricelists, Pricelist detail, and
+Categories. Orders, Unpaid Orders, Abandoned Carts, and Customers remain
+manifest-only entries without implemented page/API contracts.
+
 Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md). It is the module-level source for catalog, pricelists, commerce workflows, actors, persistence, Temporal, and paired Odoo gates.
 
 ## Test-case inventory
@@ -22,6 +27,7 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | --- | --- | --- | --- |
 | ECOMMERCE-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
 | ECOMMERCE-FUNC-002 | Categories page/API, deterministic data and permissioned CRUD contracts | `bun test ./test/ecommerce*.integration.test.ts` — 6 tests, 43 assertions | pass |
+| ECOMMERCE-SCOPE-001 | Manifest-to-page/API coverage | Isolated `/api/modules` inventory on port 4041 confirms 8 registered routes and 4 implemented page/API route families; 4 commerce route families remain unimplemented | pending |
 
 ## Bugs and retests
 
