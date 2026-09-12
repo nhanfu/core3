@@ -889,3 +889,36 @@ continues to report Fleet as uninstalled and the isolated Core3 runtime is
 blocked by the previously recorded DuckDB startup migration parser error.
 Therefore no visual parity claim or screenshot is made; any captures remain
 outside Git.
+
+## Vehicle Contracts stat action (2026-09-12)
+
+The next uncovered vehicle-form action was the `Contracts` stat button in
+Odoo's `fleet_vehicle_view_form`. Source revision `65975996` defines its
+`fa-book` button over `contract_count`, with
+`return_action_to_open` context
+`{'xml_id':'fleet_vehicle_log_contract_action', 'search_default_inactive': not active}`.
+The target `fleet_vehicle_log_contract_action` in
+`views/fleet_vehicle_cost_views.xml` is named `Contracts`, targets
+`fleet.vehicle.log.contract`, uses `list,kanban,form,graph,pivot,activity`, and
+defaults to open contracts. This preserves the vehicle domain and source
+action/view ordering rather than inventing a new menu.
+
+Core3 adds the read-permitted `Contracts` stat button to the existing
+`vehicle-detail` page/API pair, computes a deterministic non-closed
+`contract_count`, and navigates to `/fleet/contracts` with the current
+`vehicle_id` and open-contract default. The existing Contracts route already
+supports the vehicle filter and all declared list/kanban/form/graph/pivot/
+activity contracts; page YAML and API YAML remain separate and joined by
+`page.id`.
+
+Focused coverage is `test/fleet_vehicle_contract_action.integration.test.ts`:
+the exact Odoo source trace, action modes/context, page/API joins, permission,
+deterministic count, and vehicle-scoped rows pass alongside the existing
+Contracts suite. Browser capture was attempted under
+`/tmp/core3-odoo-parity/fleet-batch11-20260912/`, but Odoo Fleet is currently
+uninstalled and the required persistent Playwright/`js_repl` session is
+unavailable. Core3 briefly reached Vite-ready during a memory-mode start, but
+subsequent probes could not connect; earlier built-server fallbacks recorded
+the DuckDB migration parser error and Vite `EMFILE` limit. No authenticated
+desktop/mobile visual-parity claim or screenshot is made. Full batch notes are in
+`fleet-batch-11.md`.
