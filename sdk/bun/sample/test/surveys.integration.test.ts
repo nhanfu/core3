@@ -74,7 +74,7 @@ describe('Surveys parity catalog and workflow', () => {
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_registered_stat_migrations', ['schema', 'data']);
     const participantSource = participants.datasources[0];
     const all = await repository.querySource(participantSource, { q: null, state: null, quiz_status: null, survey_id: 'survey-demo-feedback', fixture_state: null }, 0, 50);
-    expect(all.data).toHaveLength(5);
+    expect(all.data).toHaveLength(6);
     expect(all.data.some((row: any) => row.state === 'In Progress')).toBe(true);
     expect((await repository.querySource(participantSource, { q: 'no registered match', state: null, quiz_status: null, survey_id: 'survey-demo-feedback', fixture_state: null }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(participantSource, { q: null, state: null, quiz_status: null, survey_id: 'survey-demo-feedback', fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'SURVEY_REGISTERED_PARTICIPANTS_UNAVAILABLE' });
@@ -105,6 +105,41 @@ describe('Surveys parity catalog and workflow', () => {
     }, 0, 50);
     expect(result.data).toHaveLength(2);
     expect(result.data.every((row: any) => row.quiz_status === 'Passed')).toBe(true);
+  });
+
+  test('exposes Odoo participant Attempts stat only for repeat attempts', async () => {
+    const detailPage = yaml('pages/participant-detail.yaml');
+    const detailApi = yaml('api/participant-detail.yaml');
+    const participantsApi = yaml('api/participants.yaml');
+    const form = detailPage.components.find((component: any) => component.type === 'OdooFormView');
+    const attempts = detailPage.actions.find((action: any) => action.id === 'participant_attempts');
+    expect(form.stat_buttons).toContainEqual(expect.objectContaining({
+      id: 'participant_attempts', label: 'Attempts', value_field: 'attempts_count', permission: 'surveys.read',
+      show_if: 'record.attempts_count > 1',
+    }));
+    expect(attempts).toMatchObject({
+      permission: 'surveys.read', navigate_to: '/surveys/participants',
+      params: { survey_id: '{row.survey_id}', contact: '{row.contact}', email: '{row.email}' },
+    });
+    expect(detailApi.datasources[0].query).toContain('attempts_count');
+    expect(participantsApi.datasources[0].query).toContain(':contact');
+    expect(participantsApi.datasources[0].query).toContain(':email');
+    expect(yaml('migrations/20260912110000-014-survey-attempts-stat-fixture.yaml').version).toBe('0.0.15');
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_attempts_stat_migrations', ['schema', 'data']);
+    const detail = await repository.querySource(detailApi.datasources[0], { id: 'participant-feedback' }, 0, 1);
+    expect(detail.data).toMatchObject({ attempts_count: 2, attempt_no: 1 });
+    const scoped = await repository.querySource(participantsApi.datasources[0], {
+      q: null, state: null, quiz_status: null, survey_id: 'survey-demo-feedback',
+      contact: 'Azure Interior', email: 'azure@example.com',
+    }, 0, 50);
+    expect(scoped.data.map((row: any) => row.id)).toEqual(['participant-feedback', 'participant-feedback-repeat']);
+    expect((await repository.querySource(participantsApi.datasources[0], {
+      q: null, state: null, quiz_status: null, survey_id: 'survey-demo-feedback',
+      contact: 'Nobody', email: 'nobody@example.com',
+    }, 0, 50)).data).toEqual([]);
   });
 
   test('registers the catalog forms and readonly detail routes', () => {

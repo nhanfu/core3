@@ -15,6 +15,8 @@ components:
       - { id: print_completed_answers, label: Print completed answers, permission: surveys.read, variant: primary, show_if: "record.state === 'Completed' && record.answer_count > 0" }
     statusbar: [{ value: New, label: New }, { value: In Progress, label: In Progress }, { value: Completed, label: Completed }]
     status_colors: { New: neutral, 'In Progress': blue, Completed: green }
+    stat_buttons:
+      - { id: participant_attempts, label: Attempts, value_field: attempts_count, permission: surveys.read, show_if: "record.attempts_count > 1" }
     group_columns: 2
     groups:
       - title: Participant
@@ -33,6 +35,11 @@ components:
       - { field: submitted_at, label: Submitted at }
     empty_state: { title: No answer lines, description: This participant has not submitted any answers. }
 actions:
+  - id: participant_attempts
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/participants
+    params: { survey_id: '{row.survey_id}', contact: '{row.contact}', email: '{row.email}' }
   - id: complete_survey_participant
     type: server
     permission: surveys.write

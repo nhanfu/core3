@@ -1,0 +1,15 @@
+version: 0.0.15
+description: Deterministic repeat completed attempt for Odoo participant Attempts stat parity
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_participants(id, survey_id, survey_name, contact, email, attempt_no, deadline, quiz_passed, score, state, created_at)
+      VALUES ('participant-feedback-repeat', 'survey-demo-feedback', 'Feedback Form', 'Azure Interior', 'azure@example.com', 2, DATE '2026-01-30', false, 0, 'Completed', TIMESTAMP '2026-01-15 09:10:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM survey_participants WHERE id = 'participant-feedback-repeat';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

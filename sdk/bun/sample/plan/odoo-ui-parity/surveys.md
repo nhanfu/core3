@@ -841,3 +841,38 @@ comparison was attempted under `/tmp/core3-odoo-parity/surveys-batch4-20260912/`
 but the isolated runtime did not expose a reachable Core3 listener, so no
 authenticated Core3 screenshot or full visual-parity claim is made. Images,
 if produced during the attempt, remain outside Git.
+
+## Bounded slice: Participant Attempts stat (2026-09-12)
+
+The next uncovered participant action in the installed Odoo 19 source is the
+readonly participant form's `Attempts` stat. In
+`addons/survey/views/survey_user_views.xml`, `action_redirect_to_attempts` is
+visible only when `attempts_count != 1`; its action reopens
+`survey.action_survey_user_input` (`Participants`, `list,kanban,form`) with
+`create=false`, the current survey, and the participant contact or email as
+the identity scope. The model implementation in
+`models/survey_user_input.py` counts completed, non-test attempts for the same
+survey and partner/email. This slice adds only that existing action to the
+Core3 participant detail form; it does not create a new route or renderer.
+
+Core3's page and API remain separate and joined by
+`page.id: survey-participant-detail`. The API adds `attempts_count`, and the
+existing Participants datasource accepts exact `survey_id`, `contact`, and
+`email` scopes. Migration `20260912110000-014-survey-attempts-stat-fixture.yaml`
+adds one fixed-date completed second attempt for Azure Interior; it is
+idempotent with `ON CONFLICT DO NOTHING` and uses the existing deterministic
+seed date `2026-01-15`.
+
+Acceptance coverage includes: the Attempts stat is permissioned and hidden
+for a single attempt; a repeat participant reports count 2 and navigates to
+the two matching attempts; a no-match identity returns an empty list; the
+existing 401/403/404/503 datasource contracts remain unchanged; and the
+existing optimistic participant workflow actions retain their stale/conflict
+guards. Focused Bun coverage is in `test/surveys.integration.test.ts`.
+
+The required authenticated Odoo/Core3 visual pass is assigned to
+`/tmp/core3-odoo-parity/surveys-batch5-20260912/` at 1440x900 and 390x844.
+This agent session has no `js_repl` capability, so the persistent
+`playwright-interactive` browser workflow cannot run here; no authenticated
+Core3 screenshot or visual-parity claim is made for this batch. Any runtime
+attempt artifacts remain outside Git.
