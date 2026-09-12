@@ -36,7 +36,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-005 | Abandoned Carts | Abandoned cart list, deterministic search/empty states and read-only detail navigation work | pass: focused suite |
 | ECOM-FUNC-006 | Customers | Customer summary list, search/filter, deterministic data and order navigation work | pass: focused suite |
 | ECOM-FUNC-007 | Cart | Persisted cart summary/lines, totals, product navigation and guarded quantity validation work | pass: focused suite and authenticated customer add-to-cart persistence; browser workflow planned |
-| ECOM-FUNC-008 | Shop | Public/product selection and add-to-cart route contract exposes only published products and navigates to the cart | pass: authenticated page contract, public catalog API, and persisted authenticated add-to-cart; anonymous cart remains planned |
+| ECOM-FUNC-008 | Shop | Public/product selection and add-to-cart route contract exposes only published products and navigates to the cart | pass: authenticated page contract, public catalog API, persisted authenticated add-to-cart, and cookie-scoped anonymous cart API |
 | ECOM-FUNC-009 | Checkout/order mutations | Customer, delivery, payment and order creation validate, copy cart lines, close the cart, and persist atomically | pass: focused service suite, authenticated browser flow, and durable restart verification |
 | ECOM-FUNC-010 | Categories | Category list, search/filter, deterministic hierarchy and permissioned create/archive/restore contracts work | pass: focused suite |
 | ECOM-FUNC-011 | Empty/error/not-found | Empty, unavailable, missing, forbidden and transport-error states are explicit | pass at contract level |
@@ -48,7 +48,8 @@ mutations use isolated databases and deterministic IDs.
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
 | ECOM-WF-001 | Catalog publication | Draft/unpublished → published → unpublished updates public visibility and version atomically | planned browser workflow |
-| ECOM-WF-002 | Cart lifecycle | Add → update quantity → remove preserves price-list rules and totals | add/repeat-add/remove persistence and retail price-list recalculation pass; browser price selection remains planned |
+| ECOM-WF-002 | Cart lifecycle | Add → update quantity → remove preserves price-list rules and totals | authenticated add/repeat-add/remove and retail price-list recalculation pass; anonymous add/repeat-add persistence is covered by ECOM-WF-006 |
+| ECOM-WF-006 | Anonymous cart | Public visitor adds a published product without authentication and can retrieve the same cart through its cookie | pass: public route contract and persisted anonymous mutation; public browser journey remains planned |
 | ECOM-WF-003 | Checkout | Cart → customer/address → delivery/payment → order confirms without partial writes | pass: service mutation; authenticated browser/payment integration planned |
 | ECOM-WF-004 | Sales integration | Created web order resolves customer/product references through owning services | planned integration gate |
 | ECOM-WF-005 | Durable/external boundary | Payment, delivery, email, callbacks and cross-module commerce workflows use Temporal when durable; retry, replay, restart and compensation are tested | planned |
@@ -64,7 +65,7 @@ the all-customer scope.
 | Case ID | Actor/scope | Expected result | Status |
 | --- | --- | --- | --- |
 | ECOM-PERM-001 | Ecommerce Manager/editor | Catalog and pricelist mutations succeed according to role | pass at contract level; browser actor planned |
-| ECOM-PERM-002 | Public visitor | Only published catalog data is visible; cart/customer data is isolated | pass: `/api/public/ecommerce/shop` returns only active/published products; public cart/customer flow remains planned |
+| ECOM-PERM-002 | Public visitor | Only published catalog data is visible; cart/customer data is isolated | pass: public shop and cookie-scoped anonymous cart contract; customer ownership remains covered by ECOM-PERM-003 |
 | ECOM-PERM-003 | Authenticated customer | Own cart/order and checkout data only; other customers are denied | pass: YAML service/mutation contract; HTTP actor coverage remains planned |
 | ECOM-PERM-004 | Wrong company | Products, prices, carts and orders are not leaked or mutable | pass at service-query level for products, pricelists, carts, customers, and orders; authenticated actor test remains open |
 | ECOM-PERM-005 | Unauthenticated/expired | Private routes redirect/401/403 without protected data | planned |

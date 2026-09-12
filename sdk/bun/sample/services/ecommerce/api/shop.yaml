@@ -27,3 +27,18 @@ actions:
         - { query: "UPDATE ecommerce_carts SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-13 10:00:00' WHERE id = :cart_id" }
       result: { query: "SELECT * FROM ecommerce_cart_lines WHERE cart_id = :cart_id AND product_id = :product_id" }
   - { id: shop_view_cart, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/cart, params: {} }
+  - id: anonymous_shop_add_to_cart
+    type: server
+    permission: ecommerce.read
+    action: ecommerce.cart.anonymous_add
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND is_published = TRUE AND company_name = 'My Company'", status: 404, code: ECOMMERCE_SHOP_PRODUCT_UNAVAILABLE, message: This product is no longer available. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_carts WHERE id = :cart_id) OR EXISTS (SELECT 1 FROM ecommerce_carts WHERE id = :cart_id AND state = 'Open' AND customer_id IS NULL AND id LIKE 'ecommerce-cart-anon-%')", status: 403, code: ECOMMERCE_PUBLIC_CART_INVALID, message: This anonymous cart is no longer available. }
+      steps:
+        - { query: "INSERT INTO ecommerce_carts(id, customer_id, customer_name, currency, state, company_name) VALUES (:cart_id, NULL, 'Guest Cart', 'USD', 'Open', 'My Company') ON CONFLICT (id) DO NOTHING" }
+        - { query: "INSERT INTO ecommerce_cart_lines(id, cart_id, product_id, product_name, unit_price, quantity) SELECT :line_id, :cart_id, id, name, sales_price, 1 FROM ecommerce_products WHERE id = :product_id ON CONFLICT (cart_id, product_id) DO UPDATE SET quantity = ecommerce_cart_lines.quantity + 1, row_version = ecommerce_cart_lines.row_version + 1" }
+        - { query: "UPDATE ecommerce_carts SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-13 10:00:00' WHERE id = :cart_id" }
+      result: { query: "SELECT * FROM ecommerce_cart_lines WHERE cart_id = :cart_id AND product_id = :product_id" }

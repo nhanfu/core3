@@ -2,3 +2,6 @@ operations:
   ecommerce.public.shop:
     result_key: products
     query: "SELECT id, name, internal_reference, product_type, category, sales_price, website_sequence, company_name FROM ecommerce_products WHERE active = TRUE AND is_published = TRUE AND company_name = 'My Company' AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') ORDER BY website_sequence, name"
+  ecommerce.public.cart:
+    result_key: lines
+    query: "SELECT l.id, l.cart_id, l.product_id, l.product_name, l.unit_price, l.quantity, l.quantity * l.unit_price AS line_total, SUM(l.quantity * l.unit_price) OVER () AS amount_total FROM ecommerce_cart_lines l JOIN ecommerce_carts c ON c.id = l.cart_id WHERE c.id = :cart_id AND c.state = 'Open' AND c.customer_id IS NULL AND c.id LIKE 'ecommerce-cart-anon-%' ORDER BY l.id"
