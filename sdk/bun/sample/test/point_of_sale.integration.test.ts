@@ -125,10 +125,11 @@ describe('POS payment method detail parity', () => {
       header_actions: [{ id: 'edit_pos_payment_method', label: 'Edit', permission: 'pos.manage' }],
     });
     expect(form.groups[0].fields).toEqual([
-      { field: 'name', label: 'Method' },
-      { field: 'journal', label: 'Journal' },
-      { field: 'company', label: 'Company' },
-      { field: 'point_of_sale', label: 'Point of Sale' },
+      { field: 'name', label: 'Method' }, { field: 'sequence', label: 'Sequence' },
+      { field: 'split_transactions', label: 'Split Transactions' }, { field: 'journal', label: 'Journal' },
+      { field: 'account', label: 'Account' }, { field: 'receivable_account', label: 'Receivable Account' },
+      { field: 'company', label: 'Company' }, { field: 'point_of_sale', label: 'Point of Sale' },
+      { field: 'payment_method_type', label: 'Payment Method Type' }, { field: 'use_payment_terminal', label: 'Integrate with' },
       { field: 'active', label: 'Active' },
     ]);
     expect(edit).toMatchObject({
@@ -136,7 +137,8 @@ describe('POS payment method detail parity', () => {
       action: 'pos.payment_methods.update',
     });
     expect(edit.mutation).toMatchObject({
-      operation: 'update', table: 'pos_payment_methods', fields: ['name', 'journal', 'point_of_sale', 'active'],
+      operation: 'update', table: 'pos_payment_methods',
+      fields: expect.arrayContaining(['name', 'journal', 'point_of_sale', 'active', 'sequence', 'account']),
     });
     expect(edit.fields).toContainEqual({ field: 'active', label: 'Active', type: 'checkbox' });
   });

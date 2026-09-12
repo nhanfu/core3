@@ -1069,3 +1069,38 @@ failures while the form itself rendered.
 The intended residual is Odoo's purple partner/chatter shell versus Core3's
 Fluent form shell and compact responsive layout. Images remain under `/tmp`
 and are not committed.
+
+## Current bounded batch: Payment Methods action 479 completion (2026-09-12)
+
+The local Odoo 19 source confirms Configuration → Payment Methods is menu
+`menu_pos_payment_method`, action `action_pos_payment_method_form` (479 in the
+owned reference), model `pos.payment.method`, and `list,kanban,form` modes.
+The menu is visible to `group_pos_manager,group_pos_user`; the action context
+groups by Account. The list exposes sequence, name, split transactions,
+journal, receivable/outstanding accounts, company, and Point of Sale. The
+form exposes method name, split transactions, journal, accounts, company,
+Point of Sale, payment method type, terminal integration, and archive state.
+
+Core3 completes the existing `/point-of-sale/payment-methods` action without
+adding a route: visible List/Kanban tabs, Account grouping, Active/Archived
+filtering, Odoo-shaped list/card fields, and explicit empty, forbidden,
+transport, and missing-detail states are service-owned through the existing
+`pos-payment-methods` and `pos-payment-method-detail` page/API joins. Migration
+`20260912130000-041-pos-payment-method-action.yaml` adds deterministic
+sequence, account, split, receivable, payment-type, and terminal fields with
+idempotent `ADD COLUMN IF NOT EXISTS` and fixed fixture updates. Manager-only
+detail updates retain required-name and stale/optimistic mutation coverage.
+
+Focused POS coverage passes 26 tests and 138 assertions, including the new
+action suite’s 3 tests and 23 assertions. `bun run audit` passes with 594
+pages, 601 routes, and 1,026 datasources; root ESLint, POS CSS generation,
+and `git diff --check` pass.
+
+Authenticated desktop/mobile captures were attempted under
+`/tmp/core3-odoo-parity/pos-batch8-20260912/`, but the required interactive
+Playwright/js_repl tooling was unavailable and Playwright is not installed in
+this worktree. The isolated runtime reached Vite readiness, then backend
+migration bootstrap terminated with DuckDB’s parser error
+`Adding columns with constraints not yet supported`; `/api/modules` never
+became available. No authenticated Core3 render or visual-parity claim is
+made, and no screenshots were created or added to Git.

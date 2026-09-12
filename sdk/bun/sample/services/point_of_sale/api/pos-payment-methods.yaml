@@ -2,7 +2,11 @@ page: { id: pos-payment-methods }
 datasources:
   - id: pos_payment_method_catalog
     permission: pos.read
-    query: "SELECT id, name, journal, company, point_of_sale, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(journal, '') ILIKE '%' || :q || '%') ORDER BY name, journal, id"
+    error_states: { forbidden: { status: 403, code: POS_PAYMENT_METHODS_FORBIDDEN, message: You do not have access to payment methods. }, transport_error: { status: 503, code: POS_PAYMENT_METHODS_UNAVAILABLE, message: POS payment methods are temporarily unavailable. } }
+    query: "SELECT id, name, sequence, split_transactions, journal, account, receivable_account, company, point_of_sale, payment_method_type, use_payment_terminal, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(journal, '') ILIKE '%' || :q || '%' OR COALESCE(account, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY account, sequence, name, id"
+  - id: pos_payment_method_active
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"
 actions:
   - id: view_pos_payment_method
     type: navigate

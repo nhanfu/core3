@@ -3,7 +3,8 @@ datasources:
   - id: pos_payment_method_detail
     single: true
     permission: pos.read
-    query: "SELECT id, name, journal, company, point_of_sale, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE id = :id"
+    error_states: { forbidden: { status: 403, code: POS_PAYMENT_METHOD_FORBIDDEN, message: You do not have access to this payment method. }, not_found: { status: 404, code: POS_PAYMENT_METHOD_NOT_FOUND, message: Payment method not found. }, transport_error: { status: 503, code: POS_PAYMENT_METHOD_UNAVAILABLE, message: POS payment method is temporarily unavailable. } }
+    query: "SELECT id, row_version, name, sequence, split_transactions, journal, account, receivable_account, company, point_of_sale, payment_method_type, use_payment_terminal, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN false ELSE true END"
 actions:
   - id: edit_pos_payment_method
     type: server_form
@@ -16,11 +17,19 @@ actions:
     mutation:
       operation: update
       table: pos_payment_methods
-      fields: [name, journal, point_of_sale, active]
+      key_field: id
+      concurrency: { required: true }
+      fields: [name, sequence, split_transactions, journal, account, receivable_account, point_of_sale, payment_method_type, use_payment_terminal, active]
       required: [name]
-      result: { query: "SELECT id, name, journal, company, point_of_sale, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE id = :id" }
+      result: { query: "SELECT id, row_version, name, sequence, split_transactions, journal, account, receivable_account, company, point_of_sale, payment_method_type, use_payment_terminal, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE id = :id" }
     fields:
       - { field: name, label: Method, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 1 }
+      - { field: split_transactions, label: Split Transactions, type: checkbox }
       - { field: journal, label: Journal, type: text }
+      - { field: account, label: Account, type: text }
+      - { field: receivable_account, label: Receivable Account, type: text }
       - { field: point_of_sale, label: Point of Sale, type: text }
+      - { field: payment_method_type, label: Payment Method Type, type: select, options: [{ value: manual, label: Manual }, { value: terminal, label: Terminal }, { value: qr_code, label: QR Code }] }
+      - { field: use_payment_terminal, label: Integrate with, type: text }
       - { field: active, label: Active, type: checkbox }

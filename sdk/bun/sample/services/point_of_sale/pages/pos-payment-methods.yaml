@@ -4,20 +4,43 @@ components:
   - type: ListView
     variant: odoo
     source: pos_payment_method_catalog
+    view_navigation: tabs
+    default_group_by: account
+    group_by: [{ field: account, label: Account }]
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: grid
+        mobile: true
+        group_by: account
+        card:
+          title: name
+          subtitle: journal
+          fields:
+            - { field: account, label: Account }
+            - { field: point_of_sale, label: Point of Sale }
+            - { field: active, label: Status }
     create_action: create_pos_payment_method
     create_label: New
     row_open_action: view_pos_payment_method
     row_double_click_action: view_pos_payment_method
     search: { label: Search payment methods, placeholder: Search payment method... }
+    filters:
+      - { field: active, label: Status, options_source: pos_payment_method_active }
     columns:
       - { field: name, label: Payment method, type: PrimaryEntityCell }
+      - { field: sequence, label: Sequence, align: right }
+      - { field: split_transactions, label: Split Transactions }
       - { field: journal, label: Journal }
+      - { field: account, label: Account }
       - { field: company, label: Company }
       - { field: point_of_sale, label: Point of Sale }
       - { field: active, label: Active, type: StatusChip }
     selectable: true
     page_size: 50
     row_key: id
+    empty_state: { title: Add a new payment method, description: Create payment methods to accept payments in Point of Sale. }
 actions:
   - id: create_pos_payment_method
     type: server_form

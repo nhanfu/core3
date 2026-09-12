@@ -1,0 +1,33 @@
+version: 0.0.41
+kind: data
+description: Complete Odoo POS payment method action fields and deterministic ordering
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_payment_methods ADD COLUMN IF NOT EXISTS sequence INTEGER;
+      ALTER TABLE pos_payment_methods ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE pos_payment_methods ADD COLUMN IF NOT EXISTS split_transactions BOOLEAN;
+      ALTER TABLE pos_payment_methods ADD COLUMN IF NOT EXISTS account VARCHAR;
+      ALTER TABLE pos_payment_methods ADD COLUMN IF NOT EXISTS receivable_account VARCHAR;
+      ALTER TABLE pos_payment_methods ADD COLUMN IF NOT EXISTS payment_method_type VARCHAR;
+      ALTER TABLE pos_payment_methods ADD COLUMN IF NOT EXISTS use_payment_terminal VARCHAR;
+      UPDATE pos_payment_methods SET
+        row_version = COALESCE(row_version, 1),
+        sequence = CASE id WHEN 'pos-method-cash-furniture' THEN 1 WHEN 'pos-method-card' THEN 2 WHEN 'pos-method-account' THEN 3 ELSE 4 END,
+        account = CASE WHEN journal ILIKE '%cash%' THEN 'Cash' WHEN journal = 'Bank' THEN 'Bank' ELSE 'Customer Receivable' END,
+        receivable_account = CASE WHEN name = 'Customer Account' THEN 'Account Receivable' ELSE 'POS Receivable' END,
+        payment_method_type = CASE WHEN name = 'Card' THEN 'terminal' ELSE 'manual' END,
+        use_payment_terminal = CASE WHEN name = 'Card' THEN 'Stripe' ELSE NULL END
+      WHERE id IN ('pos-method-card', 'pos-method-account', 'pos-method-cash-furniture', 'pos-method-cash-clothes', 'pos-method-cash-bakery');
+    down: |
+      ALTER TABLE pos_payment_methods DROP COLUMN IF EXISTS use_payment_terminal;
+      ALTER TABLE pos_payment_methods DROP COLUMN IF EXISTS payment_method_type;
+      ALTER TABLE pos_payment_methods DROP COLUMN IF EXISTS receivable_account;
+      ALTER TABLE pos_payment_methods DROP COLUMN IF EXISTS account;
+      ALTER TABLE pos_payment_methods DROP COLUMN IF EXISTS split_transactions;
+      ALTER TABLE pos_payment_methods DROP COLUMN IF EXISTS sequence;
+      ALTER TABLE pos_payment_methods DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -12,7 +12,13 @@ components:
       - title: Payment Method
         fields:
           - { field: name, label: Method }
+          - { field: sequence, label: Sequence }
+          - { field: split_transactions, label: Split Transactions }
           - { field: journal, label: Journal }
+          - { field: account, label: Account }
+          - { field: receivable_account, label: Receivable Account }
           - { field: company, label: Company }
           - { field: point_of_sale, label: Point of Sale }
+          - { field: payment_method_type, label: Payment Method Type }
+          - { field: use_payment_terminal, label: Integrate with }
           - { field: active, label: Active }
