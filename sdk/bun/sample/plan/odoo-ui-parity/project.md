@@ -727,6 +727,54 @@ The documented residual is Odoo's purple shell and full-page form treatment
 versus Core3's Fluent shell and shared modal New action. Images are not
 committed.
 
+## Bounded slice: Customer Portal Project Detail (2026-09-12)
+
+The next uncovered Project action is Odoo's authenticated/public portal
+controller `ProjectCustomerPortal.portal_my_project` at
+`/my/projects/<project_id>`, rendered by
+`addons/project/views/project_portal_project_project_templates.xml` as
+`portal_my_project`. The controller checks document access, excludes template
+projects, redirects collaborative projects to `project_sharing`, and defaults
+the task query to `stage_id`. The live/source portal layout is titled `Tasks`,
+keeps the portal searchbar, groups rows by `Stage`, and shows `There are no
+tasks.` when the project has no visible tasks. The source task table labels are
+`#`, `Name`, `Assignees`, `Milestone`, `Status`, and `Stage`; priority is a
+small leading control. Search covers task name, assignees, stage, status, and
+milestone. Task rows link to the project-scoped portal task route.
+
+Core3 adds the portal-scoped page `pages/portal-project-detail.yaml` at the
+deliberate static alias `/my/projects/detail?id=<project-id>` because the
+shared page discovery contract uses query parameters for record pages. The
+existing `/my/projects` action now opens this page instead of the internal
+project form. The service-owned `api/portal-project-detail.yaml` is joined by
+`page.id: project-portal-project-detail`, filters the requested project,
+excludes archived/template projects, and provides stage/status/priority/
+milestone/customer grouping, search, a mobile Cards mode, and stable empty,
+not-found, and `503 PROJECT_PORTAL_PROJECT_TASKS_UNAVAILABLE` contracts. The
+task link intentionally uses the existing Core3 task-detail alias as a
+follow-up boundary; a portal-specific task detail and Odoo project-sharing
+client remain separate slices.
+
+Focused coverage is `test/project_portal_project_detail.integration.test.ts`
+(3 tests): it verifies portal list-to-detail navigation, page/API separation,
+source labels and default grouping, project scoping, deterministic fixture
+ordering, search, empty/not-found behavior, and the portal permission/error
+contract. No migration was needed because the existing fixed Project task
+fixtures already supply the reference rows.
+
+Authenticated desktop/mobile capture was attempted for both Core3 and Odoo
+under `/tmp/core3-odoo-parity/project-portal-detail-20260912/`. This worktree
+does not expose the required persistent `playwright-interactive` `js_repl`;
+the fallback Chromium runner was used instead. Core3 failed exactly with
+`net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3002/my/projects/detail?id=project-demo-001`.
+Odoo at `http://127.0.0.1:8073` reached `/web/login`, but posting the planned
+credentials left the browser on the login URL, so it was not authenticated
+and no Odoo project screenshot was accepted. The only initial Odoo login
+image was discarded from the evidence directory. No authenticated images
+were produced and this slice makes no visual-parity claim. The exact Odoo
+source trace above and focused contract tests are the available evidence;
+authenticated desktop/mobile comparison remains an explicit follow-up gate.
+
 ## Bounded slice: Project Settings (2026-09-12)
 
 The next uncovered top-level Project action after Activity Plans and the

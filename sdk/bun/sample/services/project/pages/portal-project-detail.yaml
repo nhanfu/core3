@@ -1,0 +1,39 @@
+title: Tasks
+page: { id: project-portal-project-detail, route: /my/projects/detail, breadcrumb: [Project, Projects, Tasks], auth: { require: [project.portal] } }
+components:
+  - type: Html
+    tag: section
+    class: project-portal-heading
+    children:
+      - { type: Html, tag: h1, text: Tasks }
+      - { type: Html, tag: p, text: Follow and comment on tasks in your projects }
+  - type: ListView
+    variant: odoo
+    source: portal_project_tasks
+    search: { label: Search Tasks, placeholder: Search... }
+    group_by:
+      - { field: stage, label: Stage }
+      - { field: status, label: Status }
+      - { field: priority, label: Priority }
+      - { field: milestone_name, label: Milestone }
+      - { field: customer_name, label: Customer }
+    default_group_by: stage
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card: { title: name, subtitle: stage, fields: [{ field: assignee, label: Assignees }, { field: milestone_name, label: Milestone }, { field: status, label: Status }] }
+    row_key: id
+    row_open_action: view_portal_project_task
+    empty_state: { title: There are no tasks., description: There are no tasks. }
+    columns:
+      - { field: task_number, label: '#', align: left }
+      - { field: priority, label: Priority, type: StatusChip }
+      - { field: name, label: Name, type: PrimaryEntityCell, mobile: true }
+      - { field: assignee, label: Assignees, mobile: true }
+      - { field: milestone_name, label: Milestone, mobile: true }
+      - { field: status, label: Status, type: StatusChip, mobile: true }
+      - { field: stage, label: Stage, type: StatusChip, mobile: true }

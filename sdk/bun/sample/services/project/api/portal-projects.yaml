@@ -8,5 +8,5 @@ actions:
   - id: view_portal_project
     type: navigate
     permission: project.portal
-    navigate_to: /projects/detail
+    navigate_to: /my/projects/detail
     params: { id: '{row.id}' }

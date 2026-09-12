@@ -1,0 +1,13 @@
+page: { id: project-portal-project-detail }
+datasources:
+  - id: portal_project_tasks
+    permission: project.portal
+    single: false
+    query: "SELECT t.id, t.project_id, t.id AS task_number, t.name, COALESCE(NULLIF(t.assignee, ''), 'Unassigned') AS assignee, COALESCE(NULLIF(t.milestone_name, ''), '') AS milestone_name, COALESCE(NULLIF(t.stage, ''), 'No Stage') AS stage, COALESCE(NULLIF(t.state, ''), 'To Do') AS status, COALESCE(NULLIF(t.priority, ''), 'Normal') AS priority, p.name AS project_name, p.customer_name FROM project_tasks t INNER JOIN projects p ON p.id = t.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id AND COALESCE(p.is_template, FALSE) = FALSE AND COALESCE(p.archived, FALSE) = FALSE AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.assignee ILIKE '%' || :q || '%' OR t.stage ILIKE '%' || :q || '%' OR t.state ILIKE '%' || :q || '%' OR t.milestone_name ILIKE '%' || :q || '%') ORDER BY COALESCE(NULLIF(t.stage, ''), 'No Stage'), t.priority DESC, t.id"
+    error_states: { transport_error: { status: 503, code: PROJECT_PORTAL_PROJECT_TASKS_UNAVAILABLE, message: The customer portal project tasks are temporarily unavailable. } }
+actions:
+  - id: view_portal_project_task
+    type: navigate
+    permission: project.portal
+    navigate_to: /tasks/detail
+    params: { id: '{row.id}' }
