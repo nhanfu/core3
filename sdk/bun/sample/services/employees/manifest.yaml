@@ -17,6 +17,7 @@ menu:
         - { path: /employees, label: Employees, icon: users, permission: employees.read }
         - { path: /employees/directory, label: Directory, icon: contacts, permission: employees.read }
         - { path: /employees/activities, label: All activities, icon: activity, permission: employees.read }
+        - { path: /employees/versions, label: Employee Records, icon: history, permission: employees.read }
     - id: reporting
       label: Reporting
       items:

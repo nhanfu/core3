@@ -1,0 +1,17 @@
+version: 0.0.19
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_versions (id VARCHAR PRIMARY KEY NOT NULL, row_version BIGINT NOT NULL DEFAULT 1, employee_id VARCHAR NOT NULL, date_version DATE NOT NULL, contract_date_start DATE, contract_date_end DATE, additional_note VARCHAR, wage DOUBLE, contract_type_name VARCHAR, job_name VARCHAR, department_name VARCHAR, schedule_name VARCHAR, company_name VARCHAR, active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00', updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00');
+      INSERT OR IGNORE INTO employee_versions (id, employee_id, date_version, contract_date_start, contract_date_end, additional_note, wage, contract_type_name, job_name, department_name, schedule_name, company_name, active) SELECT 'employee-version-admin-current', id, DATE '2026-01-01', DATE '2025-01-01', NULL, 'Current employee record', 7200, 'Permanent', job_title, department_name, 'Standard 40 hours/week', company_name, true FROM employees WHERE id = 'employee-demo-001';
+      INSERT OR IGNORE INTO employee_versions (id, employee_id, date_version, contract_date_start, contract_date_end, additional_note, wage, contract_type_name, job_name, department_name, schedule_name, company_name, active) SELECT 'employee-version-admin-future', id, DATE '2026-01-10', DATE '2026-02-01', NULL, 'Upcoming promotion record', 7800, 'Permanent', job_title, department_name, 'Standard 40 hours/week', company_name, true FROM employees WHERE id = 'employee-demo-001';
+      INSERT OR IGNORE INTO employee_versions (id, employee_id, date_version, contract_date_start, contract_date_end, additional_note, wage, contract_type_name, job_name, department_name, schedule_name, company_name, active) SELECT 'employee-version-anh-expired', id, DATE '2025-01-01', DATE '2024-01-01', DATE '2025-12-31', 'Expired contract record', 6100, 'Temporary', job_title, department_name, 'Standard 35 hours/week', company_name, true FROM employees WHERE id = 'employee-demo-002';
+      INSERT OR IGNORE INTO employee_versions (id, employee_id, date_version, contract_date_start, contract_date_end, additional_note, wage, contract_type_name, job_name, department_name, schedule_name, company_name, active) SELECT 'employee-version-anh-archived', id, DATE '2024-01-01', DATE '2023-01-01', DATE '2024-12-31', 'Archived historical record', 5800, 'Temporary', job_title, department_name, 'Standard 35 hours/week', company_name, false FROM employees WHERE id = 'employee-demo-002';
+      UPDATE employee_versions SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP TABLE IF EXISTS employee_versions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

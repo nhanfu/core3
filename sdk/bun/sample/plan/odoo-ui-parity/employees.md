@@ -862,3 +862,30 @@ The focused test passes 3 tests and 30 assertions. Capture was attempted under
 `EMFILE: too many open files`, and the built-frontend fallback lacked the event
 mediator. No rendered parity claim or screenshot is made; images remain outside
 Git.
+
+## Employee Records bounded action (2026-09-12)
+
+The next uncovered core `hr` action after the existing Employees integrations is
+`action_hr_version` (`Employee Records`, `/odoo/versions`) from
+`views/hr_version_views.xml`. It is scoped to employee-linked `hr.version`
+rows and exposes `list,graph,pivot`, with Effective Date descending order,
+contract dates, employee, note, wage, contract type, job, department, schedule,
+company, and audit metadata. Running, Expired, Future, Archived, and
+Employee/Job/Department/Working Schedule grouping filters come from the source
+search view; contract dates and wage remain HR-manager fields. Core3 adds the
+read-only `/employees/versions` route, joined by `page.id: employee-versions`
+to `api/versions.yaml`, with stable employee relations and fixed
+`2026-01-15` fixture evaluation.
+
+Migration `20260912103000-019-employee-records.yaml` is idempotent and seeds
+current, future, expired, and archived records without page-local fixtures.
+Read access follows the Odoo HR-user `hr.version` access row; no CRUD action is
+exposed because the source list disables create. Focused tests cover source
+mapping, page/API ownership, deterministic ordering, relation projection,
+future/empty/transport states, and idempotent migration.
+
+Authenticated capture was attempted under
+`/tmp/core3-odoo-parity/employees-batch5-20260912/`, but the persistent
+`playwright-interactive` runtime is unavailable in this session. No
+authenticated Odoo/Core3 render or visual parity claim is made; screenshots
+remain outside Git.

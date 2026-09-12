@@ -1,0 +1,36 @@
+title: Employee Records
+page: { id: employee-versions, route: /employees/versions, breadcrumb: [Human Resources, Reporting, Employee Records], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_versions
+    search: { label: Search employee records, placeholder: 'Search employee, job, department, or schedule...' }
+    filters:
+      - { field: contract_state, label: Contract, options: [{ id: current, label: Running Contract }, { id: expired, label: Expired Contracts }, { id: future, label: Future Contracts }] }
+      - { field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
+    group_by:
+      - { field: employee_name, label: Employee }
+      - { field: job_name, label: Job Position }
+      - { field: department_name, label: Department }
+      - { field: schedule_name, label: Working Schedule }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: true }
+      - { id: graph, label: Graph, icon: graph, category_field: date_version, measure_field: wage, type: bar, mobile: false }
+      - { id: pivot, label: Pivot, icon: pivot, mobile: false, pivot: { fields: [{ field: employee_name, column: Employee }, { field: date_version, column: Effective Date }, { field: wage, column: Wage }, { field: department_name, column: Department }], default: { rows: [employee_name], columns: [date_version], measures: [{ field: wage, aggregate: avg, column: Wage }] } } }
+    columns:
+      - { field: date_version, label: Effective Date }
+      - { field: contract_date_start, label: Start, optional: show }
+      - { field: contract_date_end, label: End, optional: show }
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell }
+      - { field: additional_note, label: Note, optional: show }
+      - { field: wage, label: Wage, optional: hide, align: right }
+      - { field: contract_type_name, label: Contract Type, optional: show }
+      - { field: job_name, label: Job Position, optional: show }
+      - { field: department_name, label: Department, optional: show }
+      - { field: schedule_name, label: Working Schedule, optional: show }
+      - { field: company_name, label: Company, optional: hide }
+    page_size: 50
+    column_chooser: true
+    row_key: id
+    empty_state: { title: No employee records found, description: Employee contract records matching the current filters will appear here. }
