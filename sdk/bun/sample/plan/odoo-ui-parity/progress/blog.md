@@ -1,20 +1,30 @@
 # blog parity progress
 
 Module owner: blog module owner
-QA assignment: dispatchable QA slot (wave assignment pending)
-Status: dormant
-Verification trigger: feature-complete
-Candidate commit: none
+QA assignment: DEV-3 Blog candidate ready for QA
+Status: candidate-ready
+Verification trigger: candidate commit
+Candidate commit: bead3e95
 
 ## Current state
 
-This module is registered in odoo-parity-plan.md but has not yet produced a
-current-wave candidate or verified evidence in the active checkout. No parity
-claim is made here.
+This module is registered in odoo-parity-plan.md. The current candidate adds
+relation-safe deletion for unused tag categories with persisted CRUD and stale
+write coverage. No full-module parity claim is made here.
+
+## Current-wave evidence
+
+- `bead3e95` adds the permissioned `blog.tag_categories.delete` action and the
+  list-row Delete affordance.
+- `bun test ./test/blog*.integration.test.ts --timeout 20000`: 13 passed, 71
+  assertions, 0 failures.
+- The focused delete case proves persisted deletion, referenced-category
+  protection, stale-row rejection, and missing-record behavior.
+- Browser actor verification, restart/migration evidence, site scope, and
+  paired Odoo desktop/mobile comparison remain open.
 
 ## Next bounded task
 
-Record the complete Odoo menu/action/view inventory, implement the module
-functionality, and dispatch QA on the first committed candidate. Update this
+Dispatch QA against `bead3e95`, then continue the remaining Blog permission,
+browser, restart, site-scope, Temporal, and paired Odoo gates. Update this
 file only with evidence from the matching module owner.
-
