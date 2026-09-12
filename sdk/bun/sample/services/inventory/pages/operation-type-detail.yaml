@@ -1,0 +1,35 @@
+title: Operation Types
+page: { id: operation-type-detail, route: /operation-types/detail, breadcrumb: [Supply Chain, Inventory, Configuration, Operations Types, Operation Types], auth: { require: [inventory.manage] } }
+components:
+  - type: OdooFormView
+    source: inventory_operation_type_detail
+    title_field: name
+    status_field: active
+    status_badges: [{ value: true, label: Active, tone: green }, { value: false, label: Archived, tone: neutral }]
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_inventory_operation_types, label: Back to Operations Types, icon: arrow-left, permission: inventory.manage }
+      - { id: edit_inventory_operation_type, label: Edit, variant: primary, permission: inventory.manage }
+      - { id: archive_inventory_operation_type, label: Archive, variant: secondary, permission: inventory.manage, show_if: "record.active === true" }
+      - { id: restore_inventory_operation_type, label: Restore, variant: secondary, permission: inventory.manage, show_if: "record.active === false" }
+    group_columns: 2
+    groups:
+      - title: General
+        fields:
+          - { field: code, label: Type of Operation }
+          - { field: sequence_code, label: Sequence Prefix }
+          - { field: warehouse_name, label: Warehouse }
+          - { field: company_name, label: Company }
+          - { field: reservation_method, label: Reservation Method }
+          - { field: create_backorder, label: Create Backorder }
+          - { field: move_type, label: Move Type }
+          - { field: default_location_src_name, label: Default Source Location }
+          - { field: default_location_dest_name, label: Default Destination Location }
+          - { field: use_create_lots, label: Create New }
+          - { field: use_existing_lots, label: Use Existing ones }
+          - { field: set_package_type, label: Package Type }
+      - title: Hardware
+        fields:
+          - { field: auto_print_delivery_slip, label: Delivery Slip }
+          - { field: auto_print_return_slip, label: Return Slip }

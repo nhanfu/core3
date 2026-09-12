@@ -1,0 +1,31 @@
+version: 0.0.15
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS sequence_number INTEGER;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS warehouse_id VARCHAR;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS sequence_code VARCHAR;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS reservation_method VARCHAR;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS create_backorder VARCHAR;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS move_type VARCHAR;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS use_create_lots BOOLEAN;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS use_existing_lots BOOLEAN;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS set_package_type BOOLEAN;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS default_location_src_id VARCHAR;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS default_location_dest_id VARCHAR;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS auto_print_delivery_slip BOOLEAN;
+      ALTER TABLE inventory_operation_types ADD COLUMN IF NOT EXISTS auto_print_return_slip BOOLEAN;
+      UPDATE inventory_operation_types SET row_version = COALESCE(row_version, 1), active = COALESCE(active, TRUE), sequence_number = CASE code WHEN 'WH-IN' THEN 10 WHEN 'WH-OUT' THEN 20 WHEN 'WH-INT' THEN 30 ELSE COALESCE(sequence_number, 50) END, warehouse_id = COALESCE(warehouse_id, 'warehouse-main'), company_name = COALESCE(company_name, 'My Company (San Francisco)'), sequence_code = COALESCE(sequence_code, CASE code WHEN 'WH-IN' THEN 'IN' WHEN 'WH-OUT' THEN 'OUT' ELSE 'INT' END), reservation_method = COALESCE(reservation_method, 'at_confirmation'), create_backorder = COALESCE(create_backorder, 'ask'), move_type = COALESCE(move_type, 'direct'), use_create_lots = COALESCE(use_create_lots, FALSE), use_existing_lots = COALESCE(use_existing_lots, FALSE), set_package_type = COALESCE(set_package_type, FALSE), default_location_src_id = COALESCE(default_location_src_id, source_location_id), default_location_dest_id = COALESCE(default_location_dest_id, destination_location_id), auto_print_delivery_slip = COALESCE(auto_print_delivery_slip, FALSE), auto_print_return_slip = COALESCE(auto_print_return_slip, FALSE);
+      INSERT INTO inventory_operation_types(id, name, code, operation_kind, source_location_id, destination_location_id, sequence_number, warehouse_id, company_name, sequence_code, reservation_method, create_backorder, move_type, use_create_lots, use_existing_lots, set_package_type, default_location_src_id, default_location_dest_id, active) VALUES
+        ('operation-quality', 'Quality Control', 'WH-QC', 'internal', 'location-stock', 'location-transit', 40, 'warehouse-main', 'My Company (San Francisco)', 'QC', 'at_confirmation', 'ask', 'direct', TRUE, TRUE, TRUE, 'location-stock', 'location-transit', TRUE),
+        ('operation-archived', 'Legacy Dispatch', 'WH-OLD', 'delivery', 'location-stock', 'location-customer', 90, 'warehouse-main', 'My Company (San Francisco)', 'OLD', 'at_confirmation', 'ask', 'direct', FALSE, FALSE, FALSE, 'location-stock', 'location-customer', FALSE)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_operation_types WHERE id IN ('operation-quality', 'operation-archived');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

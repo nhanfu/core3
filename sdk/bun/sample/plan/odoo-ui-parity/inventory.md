@@ -724,6 +724,29 @@ The bounded residual is the Odoo purple shell/search panel and Inventory at
 Date wizard versus Core3's Fluent shell and shared date entry point. Images
 are not committed.
 
+## Operations Types bounded slice (2026-09-12)
+
+The installed Odoo source action is `stock.action_picking_type_list`, exposed
+as Inventory > Configuration > Operations Types by
+`addons/stock/views/stock_picking_type_views.xml` (`menu_pickingtype`, sequence
+2). Its list/form surface uses the `Operation Types` title, Operation Type
+search, active/archive state, and operation-type fields; the form includes
+warehouse, sequence, reservation, locations, lot/serial, package, and print
+settings.
+
+Core3 adds `/operation-types` and `/operation-types/detail` with separate
+page/API YAML joined by `page.id`, manager-only permissions, deterministic
+active/archived operation types, list filters/grouping, detail navigation, and
+guarded create/edit/archive/restore actions. The migration is idempotent and
+keeps open-transfer archive protection, duplicate-code, required-field,
+invalid-kind, not-found, stale, empty, and transport contracts explicit.
+
+Focused recovery verification: `bun test test/inventory_operation_types.integration.test.ts`
+passes 3 tests and 24 assertions; the UI audit passes with 604 pages, 612
+routes, and 1,039 datasources. The delegated run timed out before committing
+and no authenticated desktop/mobile capture was produced; this slice makes no
+visual-parity claim and adds no image files.
+
 ## Scrap Orders bounded slice (2026-09-12)
 
 Core3 adds the Inventory Operations > Adjustments Scrap Orders action at `/inventory/scraps`, with list/kanban/pivot/graph declarations, detail form, page/API YAML joined by `page.id`, deterministic Draft/Done fixtures, and create/edit/validate/stale-write/done-delete guards. The focused test passes 3 tests and 25 assertions.

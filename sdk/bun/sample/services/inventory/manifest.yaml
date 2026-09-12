@@ -73,6 +73,10 @@ menu:
           label: Locations
           icon: location
           permission: inventory.read
+        - path: /operation-types
+          label: Operations Types
+          icon: settings
+          permission: inventory.manage
         - path: /inventory-analysis
           label: Inventory Analysis
           icon: chart

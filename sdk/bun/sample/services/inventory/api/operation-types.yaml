@@ -1,0 +1,34 @@
+page: { id: operation-types }
+datasources:
+  - id: inventory_operation_types
+    single: false
+    permission: inventory.manage
+    error_states: { transport_error: { status: 503, code: INVENTORY_OPERATION_TYPES_UNAVAILABLE, message: Operation types are temporarily unavailable. } }
+    query: "SELECT p.id, p.row_version, p.name, p.code, p.sequence_number, p.company_name, p.active, p.warehouse_id, COALESCE(w.name, '') AS warehouse_name, p.operation_kind, p.sequence_code, p.reservation_method, p.create_backorder, p.move_type, p.use_create_lots, p.use_existing_lots, p.set_package_type, p.default_location_src_id, COALESCE(src.name, '') AS default_location_src_name, p.default_location_dest_id, COALESCE(dest.name, '') AS default_location_dest_name, p.auto_print_delivery_slip, p.auto_print_return_slip, CASE WHEN p.code IN ('WH-IN', 'WH-OUT') THEN TRUE ELSE FALSE END AS is_favorite FROM inventory_operation_types p LEFT JOIN inventory_warehouses w ON w.id = p.warehouse_id LEFT JOIN inventory_locations src ON src.id = p.default_location_src_id LEFT JOIN inventory_locations dest ON dest.id = p.default_location_dest_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (COALESCE(:active, 'active') = 'all' OR (COALESCE(:active, 'active') = 'active' AND p.active = TRUE) OR (COALESCE(:active, 'active') = 'archived' AND p.active = FALSE)) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.code ILIKE '%' || :q || '%' OR COALESCE(w.name, '') ILIKE '%' || :q || '%') AND (:is_favorite IS NULL OR (:is_favorite = 'favorite' AND p.code IN ('WH-IN', 'WH-OUT'))) ORDER BY p.sequence_number, p.name, p.id"
+actions:
+  - id: view_inventory_operation_type
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /operation-types/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_operation_type
+    type: server_form
+    permission: inventory.manage
+    title: New operation type
+    action: inventory.operation_types.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_operation_types]
+    mutation:
+      operation: insert
+      table: inventory_operation_types
+      generated: [id]
+      fields: [name, code, operation_kind, source_location_id, destination_location_id, sequence_number, warehouse_id, company_name, sequence_code, reservation_method, create_backorder, move_type, use_create_lots, use_existing_lots, set_package_type, default_location_src_id, default_location_dest_id, active]
+      required: [name, code, operation_kind, source_location_id, destination_location_id]
+      defaults: { sequence_number: 50, company_name: 'My Company (San Francisco)', sequence_code: NEW, reservation_method: at_confirmation, create_backorder: ask, move_type: direct, active: true, use_create_lots: false, use_existing_lots: false, set_package_type: false }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:code AS VARCHAR))) > 0", status: 422, code: INVENTORY_OPERATION_TYPE_FIELDS_REQUIRED, message: Operation type name and code are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_operation_types WHERE LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))))", status: 409, code: INVENTORY_OPERATION_TYPE_CODE_EXISTS, message: An operation type with this code already exists. }
+        - { query: "SELECT 1 AS ok WHERE :operation_kind IN ('receipt', 'delivery', 'internal')", status: 422, code: INVENTORY_OPERATION_TYPE_KIND_INVALID, message: Select a valid operation type. }
+      result: { query: "SELECT * FROM inventory_operation_types WHERE id = :id" }
+    fields: [{ field: name, label: Operation Type, type: text, required: true }, { field: code, label: Type of Operation, type: select, options: [{ value: receipt, label: Receipts }, { value: delivery, label: Delivery Orders }, { value: internal, label: Internal Transfers }], required: true }, { field: sequence_code, label: Sequence Prefix, type: text, required: true }, { field: warehouse_id, label: Warehouse, type: select }, { field: company_name, label: Company, type: text }]

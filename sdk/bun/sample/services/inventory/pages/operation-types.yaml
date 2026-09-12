@@ -1,0 +1,30 @@
+title: Operations Types
+page: { id: operation-types, route: /operation-types, breadcrumb: [Supply Chain, Inventory, Configuration, Operations Types], auth: { require: [inventory.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_operation_types
+    view_navigation: tabs
+    create_label: New
+    search: { label: Operation Type, placeholder: Search operation types... }
+    filters:
+      - { field: is_favorite, label: Favorites, options: [{ id: favorite, label: Favorites }] }
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }, { id: all, label: All }] }
+    group_by:
+      - { field: code, label: Type of Operation }
+      - { field: warehouse_name, label: Warehouse }
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: form, label: Form, icon: edit }
+    columns:
+      - { field: sequence_number, label: Sequence, type: Number, sortable: true, optional: hide }
+      - { field: name, label: Operation Type, type: PrimaryEntityCell, sortable: true }
+      - { field: warehouse_name, label: Warehouse }
+      - { field: company_name, label: Company }
+      - { field: active, label: Active, type: BooleanToggle, optional: hide }
+    page_size: 50
+    row_key: id
+    row_open_action: view_inventory_operation_type
+    row_double_click_action: view_inventory_operation_type
+    form_view: { page: apps/services/inventory/pages/operation-type-detail.yaml, side_panel: false }
+    empty_state: { title: No transfer found. Let's create one!, description: Transfers allow you to move products from one location to another. }
