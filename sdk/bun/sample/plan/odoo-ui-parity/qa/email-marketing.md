@@ -14,6 +14,8 @@ Module owner: email-marketing module owner
 Verification trigger: feature-complete
 Candidate commit: none
 
+Detailed execution matrix: [`test-plans/email-marketing.md`](test-plans/email-marketing.md). It is the module-level source for campaign, mailing, contact, reporting, actor, persistence, Temporal, and paired Odoo gates.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
