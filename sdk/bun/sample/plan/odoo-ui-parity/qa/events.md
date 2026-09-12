@@ -29,6 +29,12 @@ Candidate commit: `f7a38e86`
 - The first browser attempt exposed an empty optional `end_at` timestamp defect; the form contract was corrected by declaring both event date fields as `datetime`, preserving Core3's text-based ISO date/time input convention.
 - Authenticated route matrix and paired Odoo comparison remain pending for full module sign-off.
 - Fresh module-scoped rerun on port 4025 passed the registered-menu matrix 28/28 (14 routes × desktop/mobile) with no page errors, failed requests, HTTP errors, or horizontal overflow; raw result: `/tmp/events-matrix-fresh.json`.
+- Current module-scoped rerun on port 4033 checked all 33 registered Events
+  routes at desktop/mobile: 66/66 passed with no page errors, failed requests,
+  HTTP errors, redirect/blank states, or horizontal overflow.
+- The detailed per-module plan is approved at
+  `qa/test-plans/events.md`; paired Odoo and full browser interaction gates
+  remain separate from this route smoke.
 
 ## Test-case inventory
 
@@ -42,7 +48,7 @@ Candidate commit: `f7a38e86`
 | EVENTS-WORKFLOW-002 | Registration persistence and capacity guard | Capacity-1 event accepted first registration (200) and rejected second registration (409) | pass |
 | EVENTS-FUNC-003 | Event edit, nullable datetime clear, and stale-row guard | Update returned 200 with row version increment; stale update returned 409 `STALE_RECORD` | pass |
 | EVENTS-FUNC-004 | Event delete and lifecycle safety guard | Eligible Draft delete returned 200; Published delete returned 409 `EVENT_NOT_DRAFT` | pass |
-| EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current evidence covers focused contracts and one create flow; complete matrix/Odoo comparison not yet run | pending |
+| EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current evidence covers focused contracts, lifecycle/registration probes, and the complete current 33-route matrix; paired Odoo and broader browser CRUD remain open | pending |
 
 ## Bugs and retests
 
@@ -55,5 +61,5 @@ Candidate commit: `f7a38e86`
 - Functional: partial pass (focused suite and create flow pass)
 - Permissions: partial pass (route denial verified; mutation-specific boundaries remain)
 - Persistence/data integrity: partial pass (event and registration persistence verified; broader CRUD reload coverage remains)
-- Desktop/mobile visual parity: pending
+- Desktop/mobile visual parity: current route smoke pass; paired comparison pending
 - Tester decision: not signed off
