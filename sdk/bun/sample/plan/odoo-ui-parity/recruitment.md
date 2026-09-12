@@ -2,6 +2,42 @@
 
 Status: `batch-8-implemented-visual-capture-blocked`
 
+## Batch 9 — Applications → Next Activities
+
+Source trace: Odoo 19 `addons/hr_recruitment/views/hr_applicant_views.xml`
+defines `hr_applicant_view_tree_activity` for the All Applications action
+(`crm_case_categ0_act_job`). The view is titled `Next Activities`, orders by
+`activity_date_deadline`, and displays Applicant, Activity Deadline, Activity
+Type, Summary, Stage, and the activity exception decoration. The parent action
+exposes this applicant view alongside kanban, list, form, pivot, graph,
+calendar, and activity modes. Applicant read access is granted to recruitment
+users and interviewers; Core3 keeps this visible slice behind
+`recruitment.read`, while activity mutations remain outside this bounded batch.
+
+Core3 extends the page-id-joined `applicants` API datasource with deterministic
+activity fields and adds an `activity` view labeled `Next Activities`. Its
+cards show the deadline, summary, stage, assignee, and overdue status, with
+Email, Interview, and Call activity types. Migration
+`20260912120000-012-recruitment-applicant-activities.yaml` adds the service-owned
+columns and seeds fixed 2026-01-12, 2026-01-15, and 2026-01-20 deadlines for
+overdue, today, and upcoming examples. Null activity deadlines remain absent
+from the activity surface. Loading, empty, search, and transport-error
+handling continue through the existing page datasource contract; the focused
+test proves deterministic ordering, overdue filtering, search, and no-match
+empty results.
+
+Focused verification:
+
+- `bun test test/recruitment_applicant_activities.integration.test.ts` — 2
+  passed, 0 failed, 8 assertions.
+- `bun run audit` — passed: 633 pages, 649 routes, 1086 datasources.
+- Authenticated desktop/mobile visual capture is blocked. The required Core3
+  start attempt at the exact 1440x900 and 390x844 targets cannot reach an
+  authenticated page because Vite exits with `EMFILE: too many open files`
+  while watching `vite.config.ts`; no visual-parity claim is made and no
+  screenshots are committed. Odoo remains unverified in this run because the
+  browser session cannot be established with the available runtime tooling.
+
 ## Batch 8 — Configuration → Job Positions → Contract Types
 
 Source trace: Odoo 19 `addons/hr_recruitment/views/menuitems.xml` places the

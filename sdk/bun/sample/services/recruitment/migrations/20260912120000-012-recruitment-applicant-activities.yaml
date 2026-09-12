@@ -1,0 +1,23 @@
+version: 0.0.12
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS activity_date_deadline DATE;
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS activity_type VARCHAR;
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS activity_summary VARCHAR;
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS activity_exception VARCHAR;
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS activity_user VARCHAR;
+      UPDATE recruitment_applicants SET activity_date_deadline = DATE '2026-01-12', activity_type = 'Email', activity_summary = 'Confirm portfolio review', activity_exception = 'overdue', activity_user = 'Alex Chen' WHERE id = 'applicant-demo-002';
+      UPDATE recruitment_applicants SET activity_date_deadline = DATE '2026-01-15', activity_type = 'Interview', activity_summary = 'First interview with hiring panel', activity_exception = '', activity_user = 'Maya Singh' WHERE id = 'applicant-demo-003';
+      UPDATE recruitment_applicants SET activity_date_deadline = DATE '2026-01-20', activity_type = 'Call', activity_summary = 'Share interview preparation', activity_exception = '', activity_user = 'Recruitment Team' WHERE id = 'applicant-demo-001';
+    down: |
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS activity_date_deadline;
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS activity_type;
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS activity_summary;
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS activity_exception;
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS activity_user;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

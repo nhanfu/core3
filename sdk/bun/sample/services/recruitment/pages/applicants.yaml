@@ -16,6 +16,15 @@ components:
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
+      - id: activity
+        label: Next Activities
+        icon: activity
+        mobile: false
+        title_field: name
+        subtitle_field: activity_type
+        record_date_field: activity_date_deadline
+        activity_types: [{ id: Email, label: Email, icon: ✉ }, { id: Interview, label: Interview, icon: ◉ }, { id: Call, label: Call, icon: ☎ }]
+        card: { title: name, subtitle: activity_type, fields: [{ field: activity_date_deadline, label: Deadline }, { field: activity_summary, label: Summary }, { field: stage, label: Stage }, { field: activity_user, label: Assigned to }, { field: activity_exception, label: Status }] }
       - id: kanban
         label: Kanban
         icon: dashboard
