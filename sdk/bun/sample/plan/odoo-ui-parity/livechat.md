@@ -837,3 +837,34 @@ and `/tmp/core3-livechat-ongoing-sessions-mobile-detail-postfix-20260911.png`
 The visual review found that Odoo exposes the active `Ongoing` search facet;
 Core3 now declares the same default facet visibly while retaining the
 server-side ongoing domain. No screenshots are tracked in Git.
+
+## Channels continuation audit (2026-09-12)
+
+This branch revalidated the bounded Channels implementation and corrected the
+remaining deterministic card ordering drift: the datasource now owns an
+explicit `sequence`, returning `YourWebsite.com` before `Support` as shown by
+the installed Odoo action. The migration is idempotent and the focused suite
+passes 4 tests with 39 assertions. The implementation correction is committed
+as `a7f7be8c`.
+
+The active Odoo reference at `http://localhost:8073` was reachable. Prior
+authenticated paired captures remain valid source evidence and were copied
+without modification under `/tmp/core3-odoo-parity/livechat-channels-20260912`
+for this audit; no image is tracked. Their hashes are the same as the original
+captures: Odoo desktop list `217ae2ba5b3f6883a9475460b28ff54bd9829524166cd658a31211f1a31204e4`,
+Odoo desktop form `7505d0a4734dfaafc4fbac5fc3d4729da6205609bc69e4eedc0d4b2460bad6be`,
+Odoo mobile list `28624885ec1099ae52e8b849f60e835f832dba7d2185e13c1a0c32d5fcd4ebb1`,
+Odoo mobile form `63b1b6de002e8004714ad864567e12e20fcbd0d54a6f4c97fc3a6119a53dddde`,
+Core3 desktop list `8d6b536e3569e7d216e5e08b63a81e1fbe3d1588621a67d94854164343a5cc85`,
+Core3 desktop form `a94a15d430516996fb620c6f999b729018bc4c951e273c4859fabb60cb388cd6`,
+Core3 mobile list `31ff5d1637c37b261944a999330d5289343d1cb91c5c6568cc437d33248c1a55`,
+and Core3 mobile form `124c76ca8678b9178e12cf22adbab469f8062c9574e9dd177772305c1102aaf8`.
+
+A fresh authenticated browser comparison could not be completed in this
+continuation audit: the shared host's Vite watcher limit raised `EMFILE`, and
+the built Core3 server exposed a development import-map shell that rendered
+blank without the Vite source server. This is an environment limitation, not a
+visual-parity claim; the existing authenticated screenshots remain the latest
+trusted visual evidence. The known residuals remain the shared Fluent shell,
+generic card Join/Leave text actions, text-rendered agent values, and bounded
+read/display Options, Rules, and Widget tabs versus Odoo's richer controls.
