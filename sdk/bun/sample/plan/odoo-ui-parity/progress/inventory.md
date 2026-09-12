@@ -21,8 +21,7 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
 
 ## Evidence
 
-- Focused test: `bun test test/inventory_settings.integration.test.ts` — 3
-  tests, 14 assertions passed.
+- Focused Inventory suite: `bun test ./test/inventory*.integration.test.ts --timeout 20000` — 39 tests, 437 assertions passed across 13 files.
 - Baseline inventory suites: 31 passed and 5 concurrent-glob timeouts; all 5
   timeout suites pass individually, confirming resource contention.
 - UI audit: `bun run audit` — 648 pages, 663 routes, 1113 datasources passed.
@@ -36,14 +35,22 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
 - Direct authenticated mutation: `/api/mutate` with
   `inventory.settings.update`, `values`, and `expected_row_version` returned
   the updated row with incremented `row_version`.
+- Fresh authenticated module-scoped route matrix on port 4026: 24 routes ×
+  desktop/mobile = 48/48 passed with valid seeded detail IDs, no page/request
+  errors, HTTP failures, or horizontal overflow; raw result:
+  `/tmp/inventory-matrix-isolated.json`.
+- Current Odoo reference `core3_reference` paired Packages at desktop/mobile;
+  Core3 had no failures, while Odoo mobile recorded three navigation-aborted
+  avatar/action requests and no page errors. Captures are under
+  `/tmp/core3-odoo-parity/paired-inventory-20260912/`.
 
 ## Remaining blockers
 
 - Browser Save now passes through the shared mutation transport: the generic
   server action includes the SettingsView draft as `values`, and an
   authenticated Save followed by reload preserved the changed checkbox.
-- Odoo paired Settings screenshots were not captured because the local
-  reference credentials/session were not available in this run.
+- Odoo paired Settings screenshots remain open; the current reference session
+  is available and Packages has now been paired.
 - Literal `schema.yaml` / `demo.yaml` migration consolidation is blocked by
   the current timestamp-only migration discovery contract; do not rewrite
   existing migration history from this isolated module worktree.
