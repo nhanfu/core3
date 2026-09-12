@@ -49,7 +49,7 @@ mutations use isolated databases and deterministic IDs.
 | --- | --- | --- | --- |
 | ECOM-WF-001 | Catalog publication | Draft/unpublished → published → unpublished updates public visibility and version atomically | planned browser workflow |
 | ECOM-WF-002 | Cart lifecycle | Add → update quantity → remove preserves price-list rules and totals | authenticated add/repeat-add/remove and retail price-list recalculation pass; anonymous add/repeat-add persistence is covered by ECOM-WF-006 |
-| ECOM-WF-006 | Anonymous cart | Public visitor adds a published product without authentication and can retrieve the same cart through its cookie | pass: public route contract and persisted anonymous mutation; public browser journey remains planned |
+| ECOM-WF-006 | Anonymous cart | Public visitor adds a published product without authentication and can retrieve the same cart through its cookie | pass: public route contract, persisted anonymous mutation, and mobile browser API journey; guest checkout handoff remains planned |
 | ECOM-WF-003 | Checkout | Cart → customer/address → delivery/payment → order confirms without partial writes | pass: service mutation; authenticated browser/payment integration planned |
 | ECOM-WF-004 | Sales integration | Created web order resolves customer/product references through owning services | planned integration gate |
 | ECOM-WF-005 | Durable/external boundary | Payment, delivery, email, callbacks and cross-module commerce workflows use Temporal when durable; retry, replay, restart and compensation are tested | planned |
