@@ -61,7 +61,8 @@
     "test:integration": "bun test ./test",
     "audit": "bun scripts/audit-order-ui.ts",
     "temporal:worker:ecommerce": "bun temporal/ecommerce-worker.ts",
-    "temporal:start:ecommerce": "bun temporal/start-ecommerce-workflow.ts"
+    "temporal:start:ecommerce": "bun temporal/start-ecommerce-workflow.ts",
+    "temporal:callback:ecommerce": "bun temporal/send-ecommerce-callback.ts"
   },
   "dependencies": {
     "@core3/client": "workspace:*",

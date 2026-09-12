@@ -5,6 +5,7 @@ type DeliveryResult = { state: string; tracking_reference: string };
 
 const paymentResults = new Map<string, PaymentResult>();
 const deliveryResults = new Map<string, DeliveryResult>();
+const callbackResults = new Set<string>();
 
 function required(value: string, field: string): string {
   const normalized = String(value || '').trim();
@@ -31,9 +32,11 @@ export async function createDelivery(input: PaymentDeliveryInput & { payment_ref
 }
 
 export async function recordCallback(input: { callback_id: string; order_id: string; status: string }): Promise<{ recorded: boolean }> {
-  required(input.callback_id, 'callback_id');
+  const callbackId = required(input.callback_id, 'callback_id');
   required(input.order_id, 'order_id');
   required(input.status, 'status');
+  if (callbackResults.has(callbackId)) return { recorded: false };
+  callbackResults.add(callbackId);
   return { recorded: true };
 }
 

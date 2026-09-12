@@ -6,6 +6,7 @@ import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
 import EcommerceModule from '../services/ecommerce/module';
+import { recordCallback } from '../temporal/ecommerce-activities';
 
 const root = join(import.meta.dir, '../services/ecommerce');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -92,6 +93,11 @@ describe('eCommerce Checkout parity', () => {
     expect(contract.activities.every((activity: any) => activity.permission === 'ecommerce.write' && activity.idempotency_key)).toBe(true);
     expect(contract.callbacks.map((callback: any) => callback.activity)).toEqual(['record_callback', 'record_callback']);
     expect(contract.failure).toMatchObject({ compensation: 'cancel_payment_and_release_delivery', terminal_state: 'Integration Failed' });
+  });
+
+  test('records provider callbacks idempotently at the activity boundary', async () => {
+    expect(await recordCallback({ callback_id: 'callback-ecommerce-001', order_id: 'ecommerce-order-001', status: 'Authorized' })).toEqual({ recorded: true });
+    expect(await recordCallback({ callback_id: 'callback-ecommerce-001', order_id: 'ecommerce-order-001', status: 'Authorized' })).toEqual({ recorded: false });
   });
 
   test('creates an order with copied lines and closes the cart atomically', async () => {
