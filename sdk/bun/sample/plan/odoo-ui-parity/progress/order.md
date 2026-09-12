@@ -6,7 +6,7 @@
 | Owning agent | order module owner |
 | State | tester-failed |
 | Current goal | Execute the Sales (`sale_management`) menu/action/view scope with real YAML service queries, mutations, permissions, workflows, and authenticated browser evidence. |
-| Last commit | pending (`agent/order-wave-dev1`) |
+| Last commit | `a284eb78` (QA-5 ledger pending) |
 | Tester | QA slot assigned by main agent |
 | Last verification | 2026-09-13: Orders to Invoice bulk draft-invoice contract passes 3 tests and 12 assertions. |
 | Open bug IDs | ORDER-QA-001, ORDER-QA-002 |
@@ -19,3 +19,4 @@
 | 2026-09-12 | Existing Sales parity slices audit | existing work | Order detail, upsell, quotation templates, customer report, salesperson report, and Sales Teams tests were run; 14 passed, 2 failed during repository-wide discovery | Not run in this session | `ORDER-QA-001`: report tests hit unrelated repository-wide page schema errors; main integration owner must identify/fix outside-module source |
 | 2026-09-12 | Runtime readiness | — | Order YAML page/API fragments validate independently; no warnings assessed from a live browser runtime | Not captured | `ORDER-QA-002`: authenticated Core3/Odoo comparison remains open because `js_repl` is unavailable and no ready isolated frontend endpoint was provided |
 | 2026-09-13 | Orders to Invoice bulk invoice creation | pending (`agent/order-wave-dev1`) | `bun test test/sales_orders_to_invoice.integration.test.ts` — 3 tests, 18 assertions; `git diff --check` passes | Not captured | QA must exercise authenticated selection, confirmation, refresh, and accounting-side effects; draft orders remain in the queue until posting, and single-invoice accounting integration remains outside this bounded slice |
+| 2026-09-13 | QA-5 verification of candidate `a284eb78` | `qa/order-a284eb78` | Bulk suite 3/3, 18 assertions; Sales corpus 21/21, 191 assertions; unauthenticated page/mutation HTTP 401; authenticated desktop bulk confirmation and `/api/mutate` HTTP 200; 0 browser errors | `/tmp/order-qa-bulk-invoice-desktop.png` | `ORDER-QA-003`: bulk action is Order-local and has no Accounting source-invoice call/link; fresh mobile bulk interaction, restricted actor, restart, and paired Odoo checks remain open |
