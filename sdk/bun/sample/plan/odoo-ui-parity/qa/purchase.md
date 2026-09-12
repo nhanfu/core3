@@ -24,6 +24,12 @@ Candidate commit: none
   clicked through the UI, `/api/mutate` returned 200, the action disappeared,
   and the state remained correct after reload. Capture:
   `/tmp/core3-purchase-acknowledge-desktop.png`.
+- Authenticated Administrator vendor create workflow: on isolated runner `:4318`,
+  mobile `New vendor` saved `Browser QA Supplier 20260913` through `/api/mutate`
+  with HTTP 200; the row remained after reload with no browser errors or
+  horizontal overflow. Desktop and mobile vendor lists also rendered cleanly.
+- Fleet user direct `purchase.vendors.create` mutation returned HTTP 403 with
+  `Requires permission: purchase.manage`.
 - Full Odoo/Core3 comparison and complete browser CRUD remain open.
 
 ## Test-case inventory
@@ -31,6 +37,7 @@ Candidate commit: none
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | PURCHASE-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Detailed plan approved; current functional and route-smoke evidence recorded, but paired Odoo and full browser CRUD are open | pending |
+| PURCHASE-BROWSER-002 | Vendor create, reload persistence, and manager boundary | Isolated runner `:4318`; admin mobile create/reload passed; Fleet direct mutation received 403; `/tmp/core3-odoo-parity/purchase-vendors-desktop.png`, `purchase-vendors-mobile.png`, `purchase-vendor-create-mobile.png` | pass for tested slice |
 
 ## Bugs and retests
 
