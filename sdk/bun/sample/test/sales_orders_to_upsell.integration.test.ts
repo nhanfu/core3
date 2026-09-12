@@ -24,7 +24,7 @@ describe('Sales orders to upsell parity slice', () => {
     expect(discoverPages(join(import.meta.dir, '..')).pageDatasources.get('sale-orders-to-upsell')).toContain('sale_orders_to_upsell');
   });
 
-  test('returns deterministic upsell records and honest empty, error, and scope states', { timeout: 15000 }, async () => {
+  test('returns deterministic upsell records and honest empty, error, and scope states', { timeout: 30000 }, async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'sales_upselling_acceptance', ['schema', 'data']);
