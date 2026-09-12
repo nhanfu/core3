@@ -12,25 +12,30 @@ QA state: qa-in-progress
 QA slot: dispatchable recruitment assignment (pending wave dispatch)
 Module owner: recruitment module owner
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: current working tree
 
 ## Current regression evidence
 
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
 - Applicant view navigation and analysis contracts pass in focused reruns.
-- Authenticated route matrix and Odoo comparison remain pending.
+- Focused Recruitment suite: `bun test ./test/recruitment*.integration.test.ts --timeout 20000` — 35 passed, 0 failed, 336 assertions across 10 files.
+- Authenticated module-scoped route matrix: 15 routes × desktop/mobile; 29/30 completed cleanly on the first pass, and the `/openings` route passed an isolated retest at both the declared alias and normalized `/recruitment/openings` route. No persistent page, request, or overflow defect remains in this matrix.
+- Fleet user permission boundary: `/recruitment/settings` returned HTTP 403 with `Requires permission: recruitment.settings`, with no browser errors.
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| RECRUITMENT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
+| RECRUITMENT-FUNC-001 | Focused functionality, CRUD, workflow, catalogs, settings, and activity contracts | 35 tests, 336 assertions; focused suite passed | pass |
+| RECRUITMENT-BROWSER-001 | Authenticated registered-menu route matrix | 15 routes × desktop/mobile; 30/30 after isolated `/openings` retest | pass |
+| RECRUITMENT-PERM-001 | Non-manager cannot open Recruitment settings | Fleet user received HTTP 403 with `Requires permission: recruitment.settings`; browser errors 0 | pass |
+| RECRUITMENT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Functional, route, and one manager permission boundary pass; authenticated CRUD mutation smoke and paired Odoo comparison remain open | pending |
 
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
-| — | No current-wave QA run | — | — | pending |
+| RECRUITMENT-BROWSER-001 | Initial matrix observed a late applicant-detail request while leaving `/applicants`; `/openings` isolated retest was clean and normalized to `/recruitment/openings` | — | Isolated route retest passed with no errors | fixed |
 
 ## Sign-off
 
