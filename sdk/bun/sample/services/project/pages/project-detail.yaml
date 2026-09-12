@@ -12,6 +12,11 @@ components:
       - { id: open_project_dashboard, label: Dashboard, value_field: update_summary, permission: project.read }
     header_actions:
       - { id: preview_project_portal, label: Preview, variant: secondary, permission: project.read }
+    action_menu:
+      label: Actions
+      aria_label: Project actions
+      actions:
+        - { id: open_project_timesheets, label: Timesheets, icon: clock, permission: timesheets.read }
     group_columns: 2
     groups:
       - title: Project details

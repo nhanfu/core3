@@ -10,6 +10,11 @@ actions:
     permission: project.read
     navigate_to: /projects/detail/preview
     params: { id: '{row.id}' }
+  - id: open_project_timesheets
+    type: navigate
+    permission: timesheets.read
+    navigate_to: /project-timesheets
+    params: { project_id: '{state.id}' }
 datasources:
   - id: project_detail
     single: true

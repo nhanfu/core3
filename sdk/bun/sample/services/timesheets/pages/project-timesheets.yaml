@@ -1,0 +1,55 @@
+title: Timesheets
+page: { id: project-timesheets, route: /project-timesheets, breadcrumb: [Project, Timesheets], auth: { require: [timesheets.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: project_timesheet_entries
+    create_action: create_project_timesheet_entry
+    create_label: New
+    search: { label: Search timesheets, placeholder: 'Search project timesheets...' }
+    filters:
+      - { field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }
+      - { field: work_date, label: Date, options: [{ id: today, label: Today }, { id: this_week, label: This Week }, { id: last_week, label: Last Week }] }
+    group_by: [{ field: task_name, label: Task }, { field: employee_name, label: Employee }, { field: state, label: Status }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: task_name
+        mobile: false
+        card: { title: task_name, subtitle: employee_name, fields: [{ field: work_date, label: Date }, { field: time_spent_display, label: Time Spent }, { field: state, label: Status }] }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields: [{ field: task_name, column: Task }, { field: employee_name, column: Employee }, { field: work_date, column: Date, type: date }, { field: hours, column: Time Spent }, { field: unit_amount, column: Timesheet Costs }]
+          default: { rows: [task_name], columns: [work_date], measures: [{ field: hours, aggregate: sum, column: Time Spent }, { field: unit_amount, aggregate: sum, column: Timesheet Costs }] }
+      - { id: graph, label: Graph, icon: graph, category_field: task_name, series_field: employee_name, measure_field: hours, measure_label: Time Spent, type: bar, mobile: false }
+      - { id: form, label: Form, icon: form, mobile: false }
+    columns:
+      - { field: work_date, label: Date }
+      - { field: employee_name, label: Employee }
+      - { field: task_name, label: Task }
+      - { field: description, label: Description }
+      - { field: time_spent_display, label: Time Spent, align: right }
+      - { field: state, label: Status, type: StatusChip, optional: hide }
+      - field: id
+        label: ' '
+        sortable: false
+        width: 52
+        actions:
+          - { id: edit_project_timesheet_entry, label: Edit, icon: edit, show_if: "row.state === 'Draft' || row.state === 'Rejected'" }
+          - { id: delete_project_timesheet_entry, label: Delete, icon: trash, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Rejected'" }
+          - { id: submit_project_timesheet_entry, label: Submit, icon: send, show_if: "row.state === 'Draft' || row.state === 'Rejected'" }
+    page_size: 25
+    row_key: id
+    row_actions: menu
+    row_open_action: view_project_timesheet_entry
+    row_double_click_action: view_project_timesheet_entry
+    form_view: { page: apps/services/timesheets/pages/timesheet-detail.yaml, side_panel: true }
+    empty_state: { title: No timesheets, description: Track your working hours by projects every day. }
+actions:
+  - { id: view_project_timesheet_entry, type: navigate, permission: timesheets.read, navigate_to: /timesheets/detail, params: { id: '{row.id}', view_scope: project } }

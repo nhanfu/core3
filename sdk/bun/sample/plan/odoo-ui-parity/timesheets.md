@@ -466,3 +466,17 @@ compact layout hides the desktop mode switcher, so mobile evidence is the
 authenticated list state; desktop exercises the complete mode family. Rich
 Odoo relational autocomplete, chatter/attachments, calendar multi-create,
 full activity scheduling, and exact Odoo shell/icon styling remain deferred.
+
+## Project-scoped Timesheets bounded slice (2026-09-12)
+
+Core3 adds the project-detail Timesheets action at
+`/timesheets/project-timesheets`, with a separate page/API pair, `page.id`
+binding, project-scoped deterministic rows, filters, empty/error states, and
+`timesheets.read`/`timesheets.manage` guards for scoped CRUD. The focused test
+passes 3 tests and 23 assertions.
+
+The installed Odoo reference could not provide a valid `hr_timesheet` action in
+this database, and no paired browser captures were completed in the isolated
+runtime. The implementation is source- and contract-bounded; visual parity
+remains unclaimed and the screenshot gate stays open. Images remain outside
+Git.
