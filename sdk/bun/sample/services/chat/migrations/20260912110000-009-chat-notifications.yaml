@@ -1,0 +1,14 @@
+version: 0.0.9
+kind: data
+description: Add deterministic Discuss notification settings
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS chat_notification_settings (id VARCHAR PRIMARY KEY, row_version INTEGER NOT NULL DEFAULT 1, channel_notifications VARCHAR NOT NULL DEFAULT 'all', message_sound BOOLEAN NOT NULL DEFAULT TRUE);
+      INSERT INTO chat_notification_settings(id, row_version, channel_notifications, message_sound) VALUES ('chat-notification-settings', 1, 'mentions', TRUE) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS chat_notification_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

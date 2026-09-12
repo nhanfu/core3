@@ -1,0 +1,36 @@
+title: Notifications
+page: { id: chat-notifications, route: /chat/notifications, breadcrumb: [Discuss, Configuration, Notifications], auth: { require: [chat.read] } }
+
+components:
+  - type: SettingsView
+    id: chat-notifications-view
+    source: chat_notification_settings
+    title: Notifications
+    save_action: save_chat_notification_settings
+    tabs:
+      - id: discuss
+        label: Discuss
+        icon: message
+        sections:
+          - title: Channel Notifications
+            description: This setting will be applied to all channels using the default notification settings.
+            fields:
+              - { field: channel_notifications, label: Channel Notifications, type: radio, options: [{ value: all, label: All Messages }, { value: mentions, label: Mentions Only }, { value: no_notif, label: Nothing }] }
+          - title: Message sound
+            fields:
+              - { field: message_sound, label: Message sound, description: Play a sound when a new message arrives., type: checkbox }
+
+actions:
+  - id: save_chat_notification_settings
+    type: client
+    permission: chat.write
+    script: |
+      async ({ row, request }) => request('/api/actions/chat.notifications.update', {
+        method: 'POST',
+        body: {
+          id: row.id,
+          expected_row_version: row.row_version,
+          values: { channel_notifications: row.channel_notifications, message_sound: row.message_sound },
+        },
+      })
+

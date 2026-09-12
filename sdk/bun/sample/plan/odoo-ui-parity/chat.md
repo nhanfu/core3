@@ -80,3 +80,30 @@ Capture Odoo/Core3 at 1440x900 and 390x844 for inbox, channel, direct message, t
 - Core3 routes are `/chat/channels` and `/chat/channels/detail`, with page-only YAML joined to backend API YAML by `page.id`. Fixtures use `chat_channels`, `chat_channel_members`, and existing Auth-owned `chat_users`; migration `20260912100000-008-chat-channels.yaml` is deterministic and idempotent.
 - Acceptance coverage includes active/archived/member and empty/search states, forbidden/transport contracts, duplicate-name validation, not-found and optimistic-concurrency guards, and create/update/join/leave action declarations. Authenticated desktop/mobile evidence and exact runtime limitations are recorded after verification.
 - Runtime limitation: this worktree session did not expose `js_repl`, and `playwright` is not installed in the sample workspace, so authenticated Core3/Odoo browser rendering and the required 1440x900/390x844 captures could not be produced. No visual-parity claim is made for this batch; static YAML/schema, migration/query, audit, and build checks are the available evidence.
+
+## Bounded batch — Discuss Notifications action parity (20260912)
+
+- Source-backed action: Odoo `mail.discuss_notification_settings_action` from
+  `mail/data/ir_actions_client.xml`, exposed at Discuss → Configuration →
+  Notifications. The client action is a medium dialog without a footer and
+  presents Channel Notifications (`All Messages`, `Mentions Only`, `Nothing`)
+  plus the Message sound switch. Core3 exposes the same user-visible contract
+  at `/chat/notifications` using the shared `SettingsView`.
+- Core3 keeps page layout in `pages/notifications.yaml` and the datasource,
+  mutation, permissions, and error contracts in `api/notifications.yaml`, joined
+  by `page.id`. Migration
+  `20260912110000-009-chat-notifications.yaml` adds one deterministic,
+  idempotent `chat_notification_settings` row initialized to `Mentions Only`
+  and sound enabled. Saving requires `chat.write`; reading requires `chat.read`.
+- Acceptance coverage includes the exact configuration menu/page/API join,
+  supported notification choices, deterministic empty and transport states,
+  and valid save plus invalid-value, missing-record, and optimistic-concurrency
+  guards. Focused Chat coverage passes 9/9 tests and 61 assertions (Channels,
+  Canned Responses, and Notifications); UI audit passes with 593 pages, 600
+  routes, and 1021 datasources; frontend production build and `git diff --check`
+  pass.
+- Browser evidence was attempted but blocked in this worktree session: `js_repl`
+  is unavailable and `sdk/bun/sample/node_modules/playwright` is absent, so
+  authenticated Core3/Odoo rendering and 1440x900/390x844 captures could not be
+  produced. No visual-parity claim is made for this batch; no image files were
+  added.

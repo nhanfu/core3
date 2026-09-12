@@ -1,0 +1,25 @@
+page: { id: chat-notifications }
+datasources:
+  - id: chat_notification_settings
+    single: true
+    permission: chat.read
+    error_states: { forbidden: { status: 403, code: CHAT_NOTIFICATIONS_FORBIDDEN, message: You do not have permission to view notification settings. }, transport_error: { status: 503, code: CHAT_NOTIFICATIONS_UNAVAILABLE, message: Notification settings are temporarily unavailable. } }
+    query: "SELECT id, row_version, channel_notifications, message_sound FROM chat_notification_settings WHERE id = 'chat-notification-settings' AND COALESCE(:fixture_state, '') NOT IN ('empty', 'not_found')"
+actions:
+  - id: chat_notification_settings_update_server
+    type: server
+    permission: chat.write
+    action: chat.notifications.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: chat_notification_settings
+      key_field: id
+      fields: [channel_notifications, message_sound]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM chat_notification_settings WHERE id = :id", status: 404, code: CHAT_NOTIFICATIONS_NOT_FOUND, message: Notification settings no longer exist. }
+        - { query: "SELECT id FROM chat_notification_settings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: CHAT_NOTIFICATIONS_STALE, message: Notification settings were changed by another user. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:channel_notifications AS VARCHAR) IN ('all', 'mentions', 'no_notif') AND CAST(:message_sound AS BOOLEAN) IS NOT NULL", status: 422, code: CHAT_NOTIFICATIONS_VALUES_INVALID, message: Choose a valid channel notification setting and message sound value. }
+      result: { query: "SELECT id, row_version, channel_notifications, message_sound FROM chat_notification_settings WHERE id = :id" }
