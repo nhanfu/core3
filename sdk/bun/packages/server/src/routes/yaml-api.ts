@@ -278,6 +278,11 @@ export function createYamlApi(ctx: YamlApiContext) {
   const pathname = url.pathname;
   const method   = req.method;
 
+  // YAML page/data endpoints live under /api. Returning undefined for browser
+  // routes lets the host serve the SPA (and preserves module-owned public
+  // controller routes registered ahead of this handler).
+  if (!pathname.startsWith('/api/')) return undefined;
+
   // The shell needs module menus and global labels before authentication.
   if (pathname === '/api/menu' && method === 'GET') {
     const lang = requestLanguage(url);
