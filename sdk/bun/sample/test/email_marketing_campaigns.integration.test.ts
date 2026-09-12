@@ -31,6 +31,8 @@ describe('Email Marketing campaign and mailing list slice', () => {
 
     const campaigns = yaml('api/campaigns.yaml').datasources.find((source: any) => source.id === 'email_campaigns');
     const lists = yaml('api/lists.yaml').datasources.find((source: any) => source.id === 'mailing_lists');
+    const createCampaign = action('create_email_campaign');
+    expect(createCampaign.fields.find((field: any) => field.field === 'scheduled_at')?.type).toBe('datetime');
     expect((await repository.querySource(campaigns, { q: null, state: null, active: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id))
       .toEqual(['email-campaign-ab-001', 'email-campaign-sent-001', 'email-campaign-sending-001', 'email-campaign-scheduled-001', 'email-campaign-demo-001']);
     expect((await repository.querySource(lists, { q: null, active: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.name))
@@ -38,6 +40,15 @@ describe('Email Marketing campaign and mailing list slice', () => {
     expect((await repository.querySource(lists, { q: null, active: 'false', fixture_state: null }, 0, 50)).data.map((row: any) => row.name))
       .toEqual(['Archived Customers']);
     expect((await repository.querySource(lists, { q: null, active: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+
+    const createdCampaign = await repository.executeMutation(createCampaign.mutation, {
+      values: {
+        name: 'Browser-free optional schedule', subject: 'Optional schedule', sender_name: 'Core3 QA',
+        sender_email: 'qa@example.com', list_id: 'mailing-list-demo-001', list_name: 'Customers',
+        body: '<p>Campaign body</p>', recipient_count: 3,
+      },
+    });
+    expect(createdCampaign).toMatchObject({ name: 'Browser-free optional schedule', scheduled_at: null, state: 'Draft' });
 
     const createList = action('create_mailing_list');
     const createdList = await repository.executeMutation(createList.mutation, { values: { name: 'Event follow-up', description: 'A bounded fixture list' } });

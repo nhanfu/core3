@@ -53,7 +53,7 @@ actions:
       - { field: body, label: HTML body, type: textarea, required: true }
       - { field: recipient_model, label: Recipient model, type: text, default: res.partner }
       - { field: recipient_domain, label: Recipient domain, type: textarea }
-      - { field: scheduled_at, label: Scheduled at, type: text }
+      - { field: scheduled_at, label: Scheduled at, type: datetime }
       - { field: recipient_count, label: Recipients, type: number, required: true, min: 1 }
   - id: edit_email_campaign
     type: server_form
@@ -88,7 +88,7 @@ actions:
       - { field: body, label: HTML body, type: textarea, required: true }
       - { field: recipient_model, label: Recipient model, type: text }
       - { field: recipient_domain, label: Recipient domain, type: textarea }
-      - { field: scheduled_at, label: Scheduled at, type: text }
+      - { field: scheduled_at, label: Scheduled at, type: datetime }
       - { field: recipient_count, label: Recipients, type: number, required: true, min: 1 }
   - { id: schedule_email_campaign, type: server, permission: email_marketing.write, action: email_marketing.campaigns.schedule, handler: order_transition, workflow: email_campaigns, operation: schedule, refresh: [email_campaigns] }
   - { id: send_email_campaign, type: server, permission: email_marketing.write, action: email_marketing.campaigns.send, handler: order_transition, workflow: email_campaigns, operation: send, refresh: [email_campaigns] }
