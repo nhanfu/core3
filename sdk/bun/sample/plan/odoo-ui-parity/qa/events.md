@@ -17,25 +17,29 @@ Candidate commit: none
 ## Current regression evidence
 
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
-- Event attendee lifecycle and full-page-ticket contracts pass in focused
-  reruns.
-- Authenticated route matrix and Odoo comparison remain pending.
+- Focused Events suite: `bun test ./test/events*.integration.test.ts --timeout 20000` — 82 passed, 0 failed, 604 assertions across 29 files.
+- Authenticated Core3 browser create flow: admin opened `/events`, created `QA Browser Event 20260912` with required name/start time, received a successful mutation, and saw the persisted row after refresh; no page errors, failed requests, or HTTP errors.
+- Artifact: `/tmp/core3-odoo-parity/events-create-desktop-20260912.png`.
+- The first browser attempt exposed an empty optional `end_at` timestamp defect; the form contract was corrected by declaring both event date fields as `datetime`, preserving Core3's text-based ISO date/time input convention.
+- Authenticated route matrix and paired Odoo comparison remain pending for full module sign-off.
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
+| EVENTS-FUNC-001 | Focused functional/contract suite for event lifecycle, reports, CRUD, and guards | 82 tests, 604 assertions; `bun test ./test/events*.integration.test.ts --timeout 20000` | pass |
+| EVENTS-FUNC-002 | Authenticated create and persistence smoke | `/events`; created `QA Browser Event 20260912`; persisted in 1-11/11 list; screenshot artifact recorded | pass |
+| EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current evidence covers focused contracts and one create flow; complete matrix/Odoo comparison not yet run | pending |
 
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
-| — | No current-wave QA run | — | — | pending |
+| EVENTS-BROWSER-001 | Optional empty `end_at` submitted as an invalid timestamp during create | Current change; event `start_at`/`end_at` fields declared `datetime` | Retested authenticated create successfully; no errors/failed requests | fixed |
 
 ## Sign-off
 
-- Functional: pending
+- Functional: partial pass (focused suite and create flow pass)
 - Permissions: pending
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending

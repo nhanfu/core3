@@ -2,19 +2,23 @@
 
 Module owner: events module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: dormant
+Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: none
 
 ## Current state
 
-This module is registered in odoo-parity-plan.md but has not yet produced a
-current-wave candidate or verified evidence in the active checkout. No parity
-claim is made here.
+The focused Events suite passes 82 tests across 29 files with 604 assertions.
+Authenticated Core3 browser smoke also created and persisted `QA Browser Event
+20260912` from `/events`. The first browser attempt found an optional empty
+`end_at` timestamp conversion defect; the event form now declares `start_at` and
+`end_at` as Core3 `datetime` text fields, and the exact flow was retested clean.
+Full menu-tree coverage, permissions, complete browser CRUD/workflow coverage,
+and paired Odoo desktop/mobile comparison remain open. No full parity claim is
+made here.
 
 ## Next bounded task
 
-Record the complete Odoo menu/action/view inventory, implement the module
-functionality, and dispatch QA on the first committed candidate. Update this
-file only with evidence from the matching module owner.
-
+Run the authenticated Events route matrix, permission-boundary checks, state
+transitions/registration workflow, and paired Odoo desktop/mobile captures;
+then update this file only with evidence from the matching module owner.
