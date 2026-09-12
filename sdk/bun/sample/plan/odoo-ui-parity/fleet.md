@@ -729,3 +729,15 @@ widths, and no page errors or HTTP error responses. Images remain outside Git:
 The bounded visual residual is the shared Core3 Fluent shell versus Odoo's
 purple shell; labels, grouping, row ordering, responsive width, and form
 transition are preserved. Images remain under `/tmp` and are not committed.
+
+## Drivers history bounded slice (2026-09-12)
+
+Core3 adds the vehicle-detail `Drivers History` stat route and a page/API
+contract for assignment history. The slice provides deterministic assignment
+logs, vehicle-scoped reads, and manager-only create/edit/delete guards. The
+focused integration test passes 4 tests and 36 assertions.
+
+No fresh paired browser capture is claimed for this slice: the active Odoo
+reference does not have the Fleet addon installed, so the source action and
+authenticated visual workflow cannot be validated there. The implementation
+remains source-bounded and the screenshot gate is intentionally open.
