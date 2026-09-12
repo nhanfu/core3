@@ -23,10 +23,10 @@
   until a reference database with `website_sale` installed is available.
 
 QA state: qa-in-progress
-QA slot: dispatchable ecommerce assignment (pending wave dispatch)
+QA slot: wave-3 ecommerce assignment (one QA mapped to up to three developers)
 Module owner: ecommerce module owner
 Verification trigger: feature-complete
-Candidate commit: working tree after Ecommerce Categories slice
+Candidate commit: `c930aeb1`
 
 Current isolated runner inventory (4041): the manifest registers 9 routes;
  page/API contracts are present for all 9 manifest routes plus the linked
@@ -43,7 +43,7 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | ECOMMERCE-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Fresh-runtime authenticated mobile and desktop Shop → Cart → Checkout capture at `/tmp/core3-odoo-parity/ecommerce-checkout-20260913/`; desktop Confirm Order persisted the converted cart and mobile normal Checkout rendered before the mutation; no console/request failures | pending: paired Odoo comparison is blocked by reference 404; authenticated actor/company, restart, and external payment gates remain |
-| ECOMMERCE-FUNC-002 | Categories page/API, deterministic data and permissioned CRUD contracts | `bun test ./test/ecommerce*.integration.test.ts` — 18 tests, 97 assertions | pass |
+| ECOMMERCE-FUNC-002 | Categories page/API, deterministic data and permissioned CRUD contracts | `bun test ./test/ecommerce_categories.integration.test.ts` — 2 tests, 7 assertions | pass |
 | ECOMMERCE-FUNC-003 | Orders list/API, deterministic search/status/empty contracts | `bun test ./test/ecommerce_orders.integration.test.ts` — 2 tests, 8 assertions | pass |
 | ECOMMERCE-FUNC-004 | Order detail form/API, persisted read and not-found contract | Same focused Orders test — 2 tests, 13 assertions | pass |
 | ECOMMERCE-FUNC-005 | Unpaid Orders list/API and unpaid-state filter | `bun test ./test/ecommerce_unpaid_orders.integration.test.ts` — 2 tests, 8 assertions | pass |
