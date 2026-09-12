@@ -44,7 +44,7 @@ mutations and clean them up or isolate their database.
 | Case ID | Workflow | Expected result | Status |
 | --- | --- | --- | --- |
 | RECRUITMENT-WF-001 | Applicant hiring lifecycle | New → Screening → Interview → Offer → Hired updates the row and version atomically; invalid transitions return 409 | pass: authenticated workflow probe |
-| RECRUITMENT-WF-002 | Refuse/reopen | Refuse records reason and blocks invalid hiring actions; reopen restores the valid path | planned browser mutation gate |
+| RECRUITMENT-WF-002 | Refuse/reopen | Refuse records reason and blocks invalid hiring actions; reopen restores the valid path | refusal persistence, invalid-reason, and stale-replay contract pass; browser/reopen gate planned |
 | RECRUITMENT-WF-003 | Applicant/job-position link | Applicant remains scoped to its position and position counters reflect applicant changes | planned integration gate |
 | RECRUITMENT-WF-004 | Activities and notifications | Scheduled/completed activities remain linked to applicant and retry safely | planned |
 | RECRUITMENT-WF-005 | Durable/external boundary | Mail, timers, callbacks and cross-module hiring workflows use Temporal with retry, replay, restart and compensation coverage | planned |

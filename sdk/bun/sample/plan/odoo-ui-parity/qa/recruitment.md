@@ -12,16 +12,17 @@ QA state: qa-in-progress
 QA slot: dispatchable recruitment assignment (pending wave dispatch)
 Module owner: recruitment module owner
 Verification trigger: feature-complete
-Candidate commit: current working tree
+Candidate commit: pending commit for refusal workflow repair
 
 ## Current regression evidence
 
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
 - Applicant view navigation and analysis contracts pass in focused reruns.
-- Focused Recruitment suite: `bun test ./test/recruitment*.integration.test.ts --timeout 20000` — 35 passed, 0 failed, 336 assertions across 10 files.
+- Focused Recruitment suite: `bun test ./test/recruitment*.integration.test.ts --timeout 20000` — 36 passed, 0 failed, 340 assertions across 11 files.
 - Authenticated module-scoped route matrix: 15 routes × desktop/mobile; 29/30 completed cleanly on the first pass, and the `/openings` route passed an isolated retest at both the declared alias and normalized `/recruitment/openings` route. No persistent page, request, or overflow defect remains in this matrix.
 - Fleet user permission boundary: `/recruitment/settings` returned HTTP 403 with `Requires permission: recruitment.settings`, with no browser errors.
 - Authenticated applicant workflow on the module-scoped process: created an applicant for `JOB/2026/0001`, then advanced New → Screening → Interview → Offer → Hired; all responses returned 200 and the applicant row version advanced `1 → 5`.
+- Refusal workflow integration test: an open applicant records the selected refusal reason, becomes archived/rejected, increments `row_version`, rejects an inactive/missing reason with 422, and rejects stale replay with 409.
 - Detailed executable coverage is maintained in [`test-plans/recruitment.md`](test-plans/recruitment.md), including applicant/job-position/talent-pool CRUD, lifecycle, actor boundaries, persistence, Temporal boundaries, and paired Odoo visual gates.
 
 ## Test-case inventory
@@ -32,6 +33,7 @@ Candidate commit: current working tree
 | RECRUITMENT-BROWSER-001 | Authenticated registered-menu route matrix | 15 routes × desktop/mobile; 30/30 after isolated `/openings` retest | pass |
 | RECRUITMENT-PERM-001 | Non-manager cannot open Recruitment settings | Fleet user received HTTP 403 with `Requires permission: recruitment.settings`; browser errors 0 | pass |
 | RECRUITMENT-WORKFLOW-001 | Applicant create and hiring workflow | Authenticated create plus New → Screening → Interview → Offer → Hired returned 200; row version 1 → 5 | pass |
+| RECRUITMENT-WORKFLOW-002 | Applicant refusal with reason and concurrency guards | `recruitment_refuse_workflow.integration.test.ts` persists Rejected/archived/reason/version and verifies 422 invalid reason plus 409 stale replay | pass |
 | RECRUITMENT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Functional, route, and one manager permission boundary pass; authenticated CRUD mutation smoke and paired Odoo comparison remain open | pending |
 
 ## Bugs and retests

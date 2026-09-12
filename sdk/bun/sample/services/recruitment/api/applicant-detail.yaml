@@ -24,15 +24,11 @@ actions:
     params: { id: '{state.id}', expected_row_version: '{state.recruitment_applicant_detail.row_version}' }
     refresh: [recruitment_applicant_detail, recruitment_applicants]
     mutation:
-      operation: update
-      table: recruitment_applicants
-      fields: [refuse_reason_id]
       required: [refuse_reason_id]
-      concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM recruitment_applicants WHERE id = :id AND stage NOT IN ('Hired', 'Rejected') AND row_version = :expected_row_version", status: 409, code: RECRUITMENT_APPLICANT_REFUSE_STALE, message: Only a current open application can be refused. }
         - { query: "SELECT id FROM recruitment_refuse_reasons WHERE id = :refuse_reason_id AND active = TRUE", status: 422, code: RECRUITMENT_REFUSE_REASON_INVALID, message: Select an active refusal reason. }
-      steps: [{ query: "UPDATE recruitment_applicants SET stage = 'Rejected', archived = TRUE, refused_date = DATE '2026-01-15', row_version = :expected_row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :expected_row_version + 1", expect_changed: true, status: 409, code: STALE_RECORD, message: The application changed by another user. Reload it before refusing. }]
+      steps: [{ query: "UPDATE recruitment_applicants SET stage = 'Rejected', archived = TRUE, refuse_reason_id = :refuse_reason_id, refused_date = DATE '2026-01-15', row_version = :expected_row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The application changed by another user. Reload it before refusing. }]
       result: { query: "SELECT * FROM recruitment_applicants WHERE id = :id" }
     fields:
       - { field: refuse_reason_id, label: Reason, type: select, options_source: recruitment_applicant_refuse_reason_lookup, required: true }
