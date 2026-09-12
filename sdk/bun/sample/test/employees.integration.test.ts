@@ -116,6 +116,46 @@ describe('Employees Odoo action-mode parity batch', () => {
     }
   });
 
+  test('executes employee create, edit, archive, restore, and stale guards with deterministic persistence', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_records_crud', ['schema', 'data']);
+
+    const listApi = yaml('api/employees.yaml');
+    const detailApi = yaml('api/employee-detail.yaml');
+    const create = listApi.actions.find((action: any) => action.id === 'create_employee');
+    const edit = detailApi.actions.find((action: any) => action.id === 'edit_employee');
+    const archive = detailApi.actions.find((action: any) => action.id === 'archive_employee_detail');
+    const restore = detailApi.actions.find((action: any) => action.id === 'restore_employee_detail');
+
+    expect(create.mutation).toMatchObject({ generated: ['id'], before_steps: [{ assign: true }] });
+    const values = { employee_number: 'EMP-0099', name: 'Wave Four Employee', work_email: 'wave-four@core3.local', hire_date: '2026-09-13', employment_type: 'Employee' };
+    const created = await repository.executeMutation(create.mutation, { values });
+    expect(created).toMatchObject({ id: 'employee-emp-0099', employee_number: 'EMP-0099', name: values.name, active: true, state: 'Draft', row_version: 1 });
+
+    await expect(repository.executeMutation(create.mutation, { values: { ...values, name: 'Duplicate Number' } }))
+      .rejects.toMatchObject({ status: 409, code: 'EMPLOYEES_RECORD_NUMBER_EXISTS' });
+    await expect(repository.executeMutation(create.mutation, { values: { ...values, employee_number: 'EMP-0100', name: ' ' } }))
+      .rejects.toMatchObject({ status: 422, code: 'EMPLOYEES_RECORD_VALUES_INVALID' });
+
+    const edited = await repository.executeMutation(edit.mutation, {
+      id: created.id,
+      expected_row_version: 1,
+      values: { ...values, name: 'Wave Four Employee Updated', work_phone: '+84 901 000 099' },
+    });
+    expect(edited).toMatchObject({ id: created.id, name: 'Wave Four Employee Updated', work_phone: '+84 901 000 099', row_version: 2 });
+    await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { ...values, name: 'Stale Employee' } }))
+      .rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await expect(repository.executeMutation(edit.mutation, { id: 'missing-employee', expected_row_version: 1, values: { name: 'Missing' } }))
+      .rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_RECORD_NOT_FOUND' });
+
+    const archived = await repository.executeMutation(archive.mutation, { id: created.id, expected_row_version: 2, values: { active: false } });
+    expect(archived).toMatchObject({ id: created.id, active: false, row_version: 3 });
+    const restored = await repository.executeMutation(restore.mutation, { id: created.id, expected_row_version: 3, values: { active: true } });
+    expect(restored).toMatchObject({ id: created.id, active: true, row_version: 4 });
+    await database.close();
+  });
+
   test('adds the Odoo work-location configuration list/form with manager write boundary', async () => {
     const listPage = yaml('pages/work-locations.yaml');
     const detailPage = yaml('pages/work-location-detail.yaml');

@@ -31,6 +31,11 @@ actions:
       fields: [employee_number, name, work_email, work_phone, department_name, job_title, employment_type, hire_date]
       required: [employee_number, name, hire_date]
       defaults: { active: true, state: Draft }
+      generated: [id]
+      before_steps: [{ query: "SELECT 'employee-' || regexp_replace(lower(trim(CAST(:employee_number AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:employee_number AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND :hire_date IS NOT NULL", status: 422, code: EMPLOYEES_RECORD_VALUES_INVALID, message: Employee number, name, and start date are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employees WHERE LOWER(employee_number) = LOWER(TRIM(CAST(:employee_number AS VARCHAR))))", status: 409, code: EMPLOYEES_RECORD_NUMBER_EXISTS, message: An employee with this number already exists. }
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: employee_number, label: Employee number, type: text, required: true }
@@ -49,7 +54,7 @@ actions:
     operation: update
     refresh: [employees]
     params: { values: { active: false } }
-    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false }, concurrency: { required: true }, result: { query: "SELECT * FROM employees WHERE id = :id" } }
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = true", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Active employee not found. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }
   - id: restore_employee
     type: server
     permission: employees.write
@@ -58,4 +63,4 @@ actions:
     operation: update
     refresh: [employees]
     params: { values: { active: true } }
-    mutation: { operation: update, table: employees, fields: [active], defaults: { active: true }, concurrency: { required: true }, result: { query: "SELECT * FROM employees WHERE id = :id" } }
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = false", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Archived employee not found. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }
