@@ -29,7 +29,7 @@ describe('Fleet Drivers History / Assignment Logs parity', () => {
     expect(api.page.id).toBe(page.page.id);
     expect(page.components[0]).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'fleet_vehicle_assignment_logs' });
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Vehicle', 'Current Driver', 'Start Date', 'End Date']);
-    expect(vehiclePage.components[0].stat_buttons).toEqual([{ id: 'open_fleet_vehicle_assignment_logs', label: 'Drivers History', value_field: 'assignment_count', permission: 'fleet.read' }]);
+    expect(vehiclePage.components[0].stat_buttons).toContainEqual({ id: 'open_fleet_vehicle_assignment_logs', label: 'Drivers History', value_field: 'assignment_count', permission: 'fleet.read' });
     expect(action(vehicleApi, 'open_fleet_vehicle_assignment_logs')).toMatchObject({ type: 'navigate', navigate_to: '/fleet/vehicles/assignment-logs' });
     expect(api.datasources[1].permission).toBe('fleet.read');
     expect([action(api, 'create_fleet_vehicle_assignment_log'), action(api, 'update_fleet_vehicle_assignment_log'), action(api, 'delete_fleet_vehicle_assignment_log')].every((entry: any) => entry.permission === 'fleet.write')).toBe(true);

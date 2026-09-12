@@ -861,3 +861,31 @@ authenticated page: its first launch required the event mediator, and the
 retry then failed in existing DuckDB startup migrations with `Parser Error:
 Adding columns with constraints not yet supported`. No visual parity claim or
 image is made.
+
+## Vehicle Odometer Logs stat action (2026-09-12)
+
+The next uncovered action after Odometer Analysis was the `Odometer` stat
+button on the `fleet.vehicle` form. Odoo defines it in
+`fleet_vehicle_views.xml` as `return_action_to_open` with
+`xml_id=fleet_vehicle_odometer_action`, visible only for cars; the target
+action is `fleet.vehicle.odometer` with `list,form,graph` view order and a
+vehicle-scoped domain/default vehicle. Fleet officers retain read/write access
+to this model.
+
+Core3 adds the car-only `Odometer` stat button to the existing vehicle-detail
+page/API pair. Its action navigates to `/fleet/odometers` with
+`vehicle_id={state.id}`, reusing the existing list/form/graph surface and
+vehicle filter. The detail datasource now exposes deterministic
+`odometer_count`; no new route, menu, fixture, migration, or renderer was
+introduced. The page/API separation remains joined by `page.id:
+vehicle-detail`.
+
+Focused coverage is `test/fleet_vehicle_odometer_action.integration.test.ts`:
+source XML action/view/visibility mapping, stat/API contract, existing target
+view modes, vehicle scoping, and deterministic query policy. Authenticated
+visual verification was attempted under
+`/tmp/core3-odoo-parity/fleet-batch10-20260912/`; the local Odoo reference
+continues to report Fleet as uninstalled and the isolated Core3 runtime is
+blocked by the previously recorded DuckDB startup migration parser error.
+Therefore no visual parity claim or screenshot is made; any captures remain
+outside Git.
