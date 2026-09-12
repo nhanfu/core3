@@ -642,7 +642,43 @@ desktop/mobile capture remains pending the live-reference gate.
   exceed the content viewport.
 - Run focused Time Off YAML/API/migration/browser checks, then `git diff --check`.
   All six gates now have written evidence; the installed disposable reference
-satisfies the former live-addon prerequisite and this plan is `ready`.
+  satisfies the former live-addon prerequisite and this plan is `ready`.
+
+## Time Off Type Accruals stat action (2026-09-12)
+
+The next uncovered installed source action is
+`hr.leave.type.action_see_accrual_plans` from
+`addons/hr_holidays/views/hr_leave_type_views.xml`. Odoo shows the `Accruals`
+stat button only when the existing type has `accrual_count > 0`; it opens
+`open_view_accrual_plans` (`hr.leave.accrual.plan`, `list,form`) with domain
+`time_off_type_id = <type id>` and context `default_time_off_type_id`.
+The source stat order is `Allocations`, `Time Off`, `Accruals`; the action is
+manager/configuration-only in the existing Time Off Type form.
+
+Core3 adds the ordered, conditional `Accruals` stat to
+`services/time_off/pages/leave-type-detail.yaml` and the matching
+`open_type_accrual_plans` navigate action to
+`services/time_off/api/leave-type-detail.yaml`. The existing
+`/accrual-plans` list datasource now accepts the page context
+`time_off_type_id`, retaining its manager-only `time_off.manage` boundary and
+an empty result for a missing type. Migration `0.0.17` adds the nullable
+`accrual_plans.time_off_type_id`, links the two deterministic plans to the
+Annual and archived Legacy fixtures, and creates an idempotent lookup index.
+The page and API remain separate and are joined by `page.id`.
+
+Focused coverage is in `time_off_type_accrual_stat.integration.test.ts` and
+the existing stat tests: the full Time Off glob passes 42 tests and 473
+assertions. It verifies Odoo labels/order, action/context, manager permission,
+computed count, filtered populated results, and empty missing-type scope.
+The prescribed authenticated Core3 runtime/browser attempt at 1440x900 and
+390x844 could not reach `/api/modules`: backend startup exits at
+`packages/server/src/routes/yaml-api.ts:253` with the unrelated catalog error
+`Named action sms_marketing.mailings.cancel permission does not match its
+workflow transition` (frontend proxy returned 502). The live Odoo endpoint was
+not used for this action because no authenticated reference session was
+available in this worktree. Therefore no visual-parity claim or screenshots
+are made; the reserved evidence location is
+`/tmp/core3-odoo-parity/timeoff-batch6-20260912/` and remains image-free.
 
 ## Back to Approval bounded action (2026-09-12)
 

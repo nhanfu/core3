@@ -6,7 +6,7 @@ datasources:
     query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Archived','Archived')) states(value, label)"
   - id: accrual_plans
     permission: time_off.manage
-    query: "SELECT id, name, level_count, employee_count, state FROM accrual_plans WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY name"
+    query: "SELECT id, name, level_count, employee_count, state FROM accrual_plans WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) AND (:time_off_type_id IS NULL OR time_off_type_id = :time_off_type_id) ORDER BY name"
 actions:
   - id: view_accrual_plan
     type: navigate

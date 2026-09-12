@@ -3,8 +3,13 @@ datasources:
   - id: leave_type_detail
     single: true
     permission: time_off.manage
-    query: "SELECT id, name, code, allocation_days, requires_approval, state, COALESCE((SELECT SUM(r.days) FROM leave_requests r WHERE r.leave_type_id = leave_types.id AND r.state IN ('Submitted', 'Approved') AND r.date_from >= DATE '2026-01-01' AND r.date_from < DATE '2027-01-01'), 0) AS group_days_leave, (SELECT COUNT(*) FROM leave_allocations a WHERE a.leave_type_id = leave_types.id AND a.state IN ('Submitted', 'Approved') AND a.date_from >= DATE '2026-01-01' AND a.date_from < DATE '2027-01-01') AS allocation_count FROM leave_types WHERE id = :id"
+    query: "SELECT id, name, code, allocation_days, requires_approval, state, COALESCE((SELECT SUM(r.days) FROM leave_requests r WHERE r.leave_type_id = leave_types.id AND r.state IN ('Submitted', 'Approved') AND r.date_from >= DATE '2026-01-01' AND r.date_from < DATE '2027-01-01'), 0) AS group_days_leave, (SELECT COUNT(*) FROM leave_allocations a WHERE a.leave_type_id = leave_types.id AND a.state IN ('Submitted', 'Approved') AND a.date_from >= DATE '2026-01-01' AND a.date_from < DATE '2027-01-01') AS allocation_count, (SELECT COUNT(*) FROM accrual_plans p WHERE p.time_off_type_id = leave_types.id) AS accrual_count FROM leave_types WHERE id = :id"
 actions:
+  - id: open_type_accrual_plans
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /accrual-plans
+    params: { time_off_type_id: '{state.id}', default_time_off_type_id: '{state.id}' }
   - id: open_type_allocations
     type: navigate
     permission: time_off.manage

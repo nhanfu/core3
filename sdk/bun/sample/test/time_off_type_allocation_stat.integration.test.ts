@@ -29,6 +29,7 @@ describe('Time Off Type Allocations stat action', () => {
     await repository.run(`CREATE TABLE leave_types(id VARCHAR PRIMARY KEY, name VARCHAR, code VARCHAR, allocation_days DECIMAL(18,3), requires_approval BOOLEAN, state VARCHAR);`);
     await repository.run(`CREATE TABLE leave_requests(id VARCHAR, leave_type_id VARCHAR, days DECIMAL(18,3), state VARCHAR, date_from DATE);`);
     await repository.run(`CREATE TABLE leave_allocations(id VARCHAR, row_version INTEGER DEFAULT 1, name VARCHAR, employee_name VARCHAR, leave_type_name VARCHAR, leave_type_id VARCHAR, days DECIMAL(18,3), date_from DATE, date_to DATE, state VARCHAR, reason VARCHAR);`);
+    await repository.run(`CREATE TABLE accrual_plans(id VARCHAR PRIMARY KEY, time_off_type_id VARCHAR);`);
     await repository.run("INSERT INTO leave_types VALUES ('leave-type-annual', 'Annual Leave', 'AL', 25, TRUE, 'Active')");
     await repository.run("INSERT INTO leave_requests VALUES ('r-1', 'leave-type-annual', 2, 'Approved', '2026-03-02')");
     await repository.run("INSERT INTO leave_allocations(id, name, employee_name, leave_type_name, leave_type_id, days, date_from, date_to, state, reason) VALUES ('a-1', 'Annual allocation', 'Marc Demo', 'Annual Leave', 'leave-type-annual', 20, '2026-01-01', '2026-12-31', 'Approved', 'Yearly'), ('a-2', 'Old allocation', 'Marc Demo', 'Annual Leave', 'leave-type-annual', 5, '2025-01-01', '2025-12-31', 'Approved', 'Prior year'), ('a-3', 'Pending allocation', 'Marc Demo', 'Annual Leave', 'leave-type-annual', 5, '2026-04-01', '2026-12-31', 'Submitted', 'Pending')");

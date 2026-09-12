@@ -12,7 +12,7 @@ describe('Time Off Type Time Off stat action', () => {
     const page = yaml('pages/leave-type-detail.yaml');
     const detailApi = yaml('api/leave-type-detail.yaml');
     const approvalApi = yaml('api/time-off-approval.yaml');
-    const stat = page.components[0].stat_buttons[0];
+    const stat = page.components[0].stat_buttons.find((candidate: any) => candidate.id === 'open_type_time_off');
     const action = detailApi.actions.find((candidate: any) => candidate.id === 'open_type_time_off');
     const source = approvalApi.datasources.find((candidate: any) => candidate.id === 'time_off_approval_requests');
 
@@ -31,6 +31,7 @@ describe('Time Off Type Time Off stat action', () => {
     await repository.run(`CREATE TABLE leave_types(id VARCHAR PRIMARY KEY, name VARCHAR, code VARCHAR, allocation_days DECIMAL(18,3), requires_approval BOOLEAN, state VARCHAR);`);
     await repository.run(`CREATE TABLE leave_requests(id VARCHAR, name VARCHAR, employee_name VARCHAR, leave_type_id VARCHAR, leave_type_name VARCHAR, date_from DATE, date_to DATE, days DECIMAL(18,3), state VARCHAR, reason VARCHAR);`);
     await repository.run(`CREATE TABLE leave_allocations(id VARCHAR, leave_type_id VARCHAR, date_from DATE, state VARCHAR);`);
+    await repository.run(`CREATE TABLE accrual_plans(id VARCHAR PRIMARY KEY, time_off_type_id VARCHAR);`);
     await repository.run("INSERT INTO leave_types VALUES ('leave-type-annual', 'Annual Leave', 'AL', 25, TRUE, 'Active'), ('leave-type-sick', 'Sick Time Off', 'ST', 10, TRUE, 'Active')");
     await repository.run("INSERT INTO leave_requests VALUES ('r-1', 'Annual / Marc', 'Marc Demo', 'leave-type-annual', 'Annual Leave', '2026-03-02', '2026-03-03', 2, 'Approved', 'Vacation'), ('r-2', 'Sick / Paul', 'Paul Williams', 'leave-type-sick', 'Sick Time Off', '2026-04-06', '2026-04-06', 1, 'Approved', 'Appointment'), ('r-3', 'Annual / draft', 'Marc Demo', 'leave-type-annual', 'Annual Leave', '2026-05-01', '2026-05-01', 1, 'Draft', 'Unsubmitted')");
 
