@@ -33,7 +33,7 @@ describe('Employees Training Attendances parity', () => {
     expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'calendar']);
     expect([action(api, 'create_employee_training_attendance'), action(api, 'update_employee_training_attendance'), action(api, 'delete_employee_training_attendance')].every((entry: any) => entry.permission === 'employees.write')).toBe(true);
     expect(action(api, 'update_employee_training_attendance').mutation.concurrency).toMatchObject({ required: true });
-    expect(yaml('manifest.yaml').menu.groups).toContainEqual({ id: 'learning', label: 'Learning', items: [{ path: '/employees/training-attendances', label: 'Training Attendances', icon: 'education', permission: 'employees.read' }] });
+    expect(yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'learning').items).toContainEqual({ path: '/employees/training-attendances', label: 'Training Attendances', icon: 'education', permission: 'employees.read' });
     const discovered = discoverPages(join(import.meta.dir, '..'));
     expect(discovered.pages.get('employee-training-attendances')).toBeTruthy();
     expect(discovered.pageDatasources.get('employee-training-attendances')).toContain('employee_training_attendances');

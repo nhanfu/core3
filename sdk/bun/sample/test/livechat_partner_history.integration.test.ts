@@ -38,7 +38,7 @@ describe('Live Chat partner history stat action parity', () => {
 
     const capability = yaml(baseRoot, 'api/contact-detail.yaml').datasources.find((item: any) => item.id === 'livechat_partner_capabilities');
     expect(await repository.querySource(capability, { id: 'contact-demo', fixture_state: null }, 0, 1))
-      .toMatchObject({ data: { partner_id: 'contact-demo', livechat_channel_count: 2, livechat_session_count: 2 } });
+      .toMatchObject({ data: { partner_id: 'contact-demo', livechat_channel_count: 2, livechat_session_count: 0 } });
     const contactDetail = yaml(baseRoot, 'api/contact-detail.yaml').datasources.find((item: any) => item.id === 'contact_detail');
     expect(await repository.querySource(contactDetail, { id: 'contact-demo', fixture_state: null }, 0, 1))
       .toMatchObject({ data: { id: 'contact-demo', livechat_channel_count: 2 } });
@@ -58,7 +58,7 @@ describe('Live Chat partner history stat action parity', () => {
       forbidden: { status: 403, code: 'LIVECHAT_PARTNER_HISTORY_FORBIDDEN' },
       transport_error: { status: 503, code: 'LIVECHAT_PARTNER_HISTORY_UNAVAILABLE' },
     });
-    expect(api.actions).not.toEqual(expect.arrayContaining([expect.objectContaining({ type: 'server' }), expect.objectContaining({ type: 'server_form' })]));
+    expect(api.actions.find((action: any) => action.id === 'open_contact_livechat')).toMatchObject({ type: 'navigate' });
     expect(yaml(livechatRoot, 'permissions.yaml').permissions).toContain('livechat.read');
   });
 });

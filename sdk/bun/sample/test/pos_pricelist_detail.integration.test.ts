@@ -15,7 +15,7 @@ describe('POS Pricelists action 2 form parity', () => {
     const detail = yaml('pages/pos-pricelist-detail.yaml');
     const api = yaml('api/pos-pricelist-detail.yaml');
     expect(list.components[0]).toMatchObject({ row_open_action: 'view_pos_pricelist', row_double_click_action: 'view_pos_pricelist' });
-    expect(list.actions[0]).toMatchObject({ navigate_to: '/point-of-sale/pricelist-detail', permission: 'pos.read' });
+    expect(list.actions.find((candidate: any) => candidate.id === 'view_pos_pricelist')).toMatchObject({ navigate_to: '/point-of-sale/pricelist-detail', permission: 'pos.read' });
     expect(detail.page).toMatchObject({ id: 'pos-pricelist-detail', route: '/point-of-sale/pricelist-detail' });
     expect(api.page.id).toBe(detail.page.id);
     expect(detail.components[1]).toMatchObject({ source: 'pos_pricelist_rules', variant: 'odoo_x2many' });

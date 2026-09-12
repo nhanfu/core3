@@ -90,7 +90,10 @@ describe('Project list and task navigation parity', () => {
 
   test('keeps permission and task workflow boundaries explicit', () => {
     for (const file of ['api/projects.yaml', 'api/project-detail.yaml', 'api/tasks.yaml', 'api/task-detail.yaml']) {
-      for (const source of yaml(file).datasources) expect(source.permission, file).toBe('project.read');
+      for (const source of yaml(file).datasources) {
+        const allowed = file === 'api/task-detail.yaml' ? ['project.read', 'timesheets.read'] : ['project.read'];
+        expect(allowed, file).toContain(source.permission);
+      }
     }
     const workflow = yaml('pages/project-workflow.yaml').workflow;
     expect(workflow.permission).toBe('project.write');

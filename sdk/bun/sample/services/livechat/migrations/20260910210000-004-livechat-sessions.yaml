@@ -18,7 +18,7 @@ type:
       SELECT 'livechat-session-demo-004', 'livechat-channel-demo-001', 'Website Support', 'Visiteur', 'Support Agent', 'Closed', 'Escalated', 2.18, 1, 3, 'Belgium', '', CURRENT_TIMESTAMP - INTERVAL '3' DAY, CURRENT_TIMESTAMP - INTERVAL '3' DAY + INTERVAL '3' MINUTE
       WHERE NOT EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-004');
       INSERT INTO livechat_sessions (id, channel_id, channel_name, visitor_name, operator_name, status, outcome, duration_minutes, rating, message_count, country_name, avatar_url, started_at)
-      SELECT 'livechat-session-demo-005', 'livechat-channel-demo-001', 'Website Support', 'Visitor #306', 'Support Agent', 'Looking for Help', NULL, 6.33, NULL, 6, NULL, '', CURRENT_TIMESTAMP - INTERVAL '4' DAY
+      SELECT 'livechat-session-demo-005', 'livechat-channel-demo-001', 'Website Support', 'Visitor #306', 'Support Agent', 'Looking for Help', NULL, 6.33, NULL, 6, NULL, '', TIMESTAMP '2026-09-08 08:00:00'
       WHERE NOT EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-005');
       INSERT INTO livechat_sessions (id, channel_id, channel_name, visitor_name, operator_name, status, outcome, duration_minutes, rating, message_count, country_name, avatar_url, started_at)
       SELECT 'livechat-session-demo-006', 'livechat-channel-demo-001', 'Website Support', NULL, NULL, 'In Progress', NULL, 0, NULL, 1, 'United States', '', CURRENT_TIMESTAMP - INTERVAL '5' DAY

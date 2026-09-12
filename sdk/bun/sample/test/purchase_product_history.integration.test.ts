@@ -53,7 +53,7 @@ describe('Purchase Product History parity', () => {
     await expect(repository.querySource(source, { ...params, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'PURCHASE_PRODUCT_HISTORY_UNAVAILABLE' });
 
     const all = await repository.querySource(source, { product_name: null, q: null, fixture_state: null }, 0, 50);
-    expect(all.data).toHaveLength(4);
+    expect(all.data).toHaveLength(6);
   });
 
   test('keeps the Purchased stat aligned with the seeded history', async () => {

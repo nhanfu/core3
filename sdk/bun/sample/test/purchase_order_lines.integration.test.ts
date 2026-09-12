@@ -23,7 +23,7 @@ describe('Purchase order line editor parity', () => {
     expect(page.page).toMatchObject({ id: 'purchase-detail', route: '/purchase/detail', auth: { require: ['purchase.read'] } });
     expect(api.page.id).toBe('purchase-detail');
     expect(discovered.pageDatasources.get('purchase-detail')).toEqual(expect.arrayContaining(['purchase_order_detail', 'purchase_order_lines']));
-    expect(form.header_actions.map((entry: any) => entry.label)).toEqual(['Send RFQ', 'Confirm Order', 'Receive', 'Cancel']);
+    expect(form.header_actions.map((entry: any) => entry.label)).toEqual(['Send RFQ', 'Confirm Order', 'Approve Order', 'Receive', 'Acknowledge', 'Lock', 'Unlock', 'Cancel', 'Set to Draft']);
     expect(form.notebook.tabs.map((entry: any) => entry.label)).toEqual(['Products', 'Other Information']);
     expect(lines).toMatchObject({ type: 'LineItemGrid', source: 'purchase_order_lines', parent_source: 'purchase_order_detail', variant: 'odoo_x2many' });
     expect(lines.actions).toEqual([expect.objectContaining({ id: 'add_purchase_order_line', label: 'Add a product', permission: 'purchase.write' })]);

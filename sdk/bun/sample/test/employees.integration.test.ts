@@ -100,8 +100,8 @@ describe('Employees Odoo action-mode parity batch', () => {
     const migration = readFileSync(join(root, 'migrations/20260910140000-004-employees-action-modes.yaml'), 'utf8');
     expect(migration).not.toMatch(/CURRENT_DATE|CURRENT_TIMESTAMP|gen_random_uuid/i);
     expect(migration).toContain('employee-activity-001');
-    expect(yaml('manifest.yaml').menu.groups.map((group: any) => group.label)).toEqual(['People', 'Reporting', 'Configuration']);
-    expect(yaml('manifest.yaml').menu.groups[0].items.map((item: any) => item.label)).toEqual(['Employees', 'Directory', 'All activities']);
+    expect(yaml('manifest.yaml').menu.groups.map((group: any) => group.label)).toEqual(['People', 'Reporting', 'Learning', 'Configuration']);
+    expect(yaml('manifest.yaml').menu.groups[0].items.map((item: any) => item.label)).toEqual(['Employees', 'Directory', 'All activities', 'Employee Records']);
   });
 
   test('adds the Odoo work-location configuration list/form with manager write boundary', async () => {

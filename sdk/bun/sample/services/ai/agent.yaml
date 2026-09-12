@@ -214,6 +214,11 @@ operations:
     method: POST
     permission: crm.manage
     preview: false
+  - id: crm.tags.delete
+    route: /api/actions/crm.tags.delete
+    method: POST
+    permission: crm.manage
+    preview: false
   - id: crm.stages.create
     route: /api/actions/crm.stages.create
     method: POST

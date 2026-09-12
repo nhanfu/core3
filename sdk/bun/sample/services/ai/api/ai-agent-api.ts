@@ -73,7 +73,10 @@ async function yamlContext(appsRoot: string, paths: string[] = []): Promise<Arra
     'services/ai/agent.yaml', 'services/ai/permissions.yaml',
   ]);
   const context: Array<{ path: string; content: string }> = [];
-  for (const path of selected.slice(0, 20)) {
+  // `context_paths` is an explicit YAML allowlist. Do not silently truncate
+  // it when a module grows beyond twenty files; that drops required
+  // cross-module context (for example CRM's quotation handoff).
+  for (const path of selected.slice(0, 64)) {
     const file = safeYamlPath(appsRoot, path);
     if (!file) continue;
     const content = await Bun.file(file).text().catch(() => '');

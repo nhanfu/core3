@@ -52,14 +52,16 @@ describe('Project Dashboard and Updates parity', () => {
       'Project', 'Author', 'Status', 'Progress', 'Date', 'Tasks', 'Description', 'Record version',
     ]);
     expect(yaml('api/project-dashboard.yaml').actions.map((action: any) => action.id)).toEqual([
+      'create_project_milestone', 'view_project_milestone', 'edit_project_milestone', 'mark_project_milestone', 'reopen_project_milestone', 'delete_project_milestone',
       'create_project_update', 'view_project_update', 'edit_project_update', 'delete_project_update',
     ]);
     expect(yaml('api/project-update-detail.yaml').actions.map((action: any) => action.id)).toEqual([
       'back_to_project_dashboard', 'edit_project_update', 'delete_project_update',
     ]);
-    expect(yaml('api/project-dashboard.yaml').actions[0].permission).toBe('project.write');
-    expect(yaml('api/project-dashboard.yaml').actions[2].mutation.concurrency).toEqual({ required: true });
-    expect(yaml('api/project-dashboard.yaml').actions[3].mutation.operation).toBe('delete');
+    const dashboardActions = yaml('api/project-dashboard.yaml').actions;
+    expect(dashboardActions.find((action: any) => action.id === 'create_project_update').permission).toBe('project.write');
+    expect(dashboardActions.find((action: any) => action.id === 'edit_project_update').mutation.concurrency).toEqual({ required: true });
+    expect(dashboardActions.find((action: any) => action.id === 'delete_project_update').mutation.operation).toBe('delete');
   });
 
   test('returns deterministic dashboard data and enforces update CRUD validation/conflicts', async () => {

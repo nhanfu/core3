@@ -35,7 +35,7 @@ describe('Project task detail/form parity', () => {
     expect(form.groups.flatMap((group: any) => group.fields).map((field: any) => field.label)).toEqual([
       'Project', 'Milestone', 'Assignees', 'Tags', 'Customer', 'Stage', 'Priority', 'Deadline', 'Allocated Time', 'Spent Time',
     ]);
-    expect(form.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Description', 'Sub-tasks', 'Blocked By']);
+    expect(form.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Description', 'Sub-tasks', 'Blocked By', 'Timesheets']);
     expect(form.statusbar.map((state: any) => state.label)).toEqual(['To do', 'In progress', 'Done', 'Cancelled']);
     expect(form.header_actions.map((candidate: any) => candidate.id)).toEqual(['edit_task', 'start_task', 'complete_task', 'cancel_task']);
   });

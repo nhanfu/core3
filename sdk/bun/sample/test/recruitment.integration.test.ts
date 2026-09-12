@@ -13,7 +13,7 @@ const source = (file: string, id: string) => yaml(`api/${file}`).datasources.fin
 describe('Recruitment parity batch', () => {
   it('discovers service-owned API fragments for the core Odoo states', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
-    expect(discovered.pages.get('applicants')?.config.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
+    expect(discovered.pages.get('applicants')?.config.components[0].views.map((view: any) => view.id)).toEqual(['list', 'activity', 'kanban']);
     expect(discovered.pages.get('openings')?.config.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban']);
     expect(discovered.pageDatasources.get('applicants')).toContain('recruitment_applicants');
     expect(discovered.pageDatasources.get('applicant-detail')).toContain('recruitment_applicant_detail');
