@@ -14,7 +14,8 @@ across 16 routes. An authenticated request was created, submitted, and
 approved successfully, with row versions advancing from 1 to 3.
 The Fleet user permission boundary was also checked: `/time-off/time-off-approval`
 returned HTTP 403 with `Requires permission: time_off.manage`, with no browser
-errors.
+errors. Separate authenticated probes also persisted Refused and Cancelled
+states, including a cancellation reason, through their complete transitions.
 Complete permission boundaries, full CRUD/workflow coverage, and paired Odoo
 desktop/mobile comparison remain open. No full parity claim is made here.
 
