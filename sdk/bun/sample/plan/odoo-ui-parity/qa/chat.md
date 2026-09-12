@@ -14,6 +14,10 @@ Verification trigger: merge-candidate
 Candidate commit: `57888722f02e689191bc07fcec58f7bec19f49dc`
 QA state: ready-for-test
 
+Detailed execution matrix: [`test-plans/chat.md`](test-plans/chat.md). It is
+the module-level source for CRUD, workflow, actor, persistence, Temporal, and
+paired Odoo visual gates.
+
 ## Test cases
 
 | Test ID | Scenario | Evidence | Result |
