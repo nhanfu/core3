@@ -1,0 +1,20 @@
+title: Project Settings
+page: { id: project-settings, route: /project/settings, breadcrumb: [Project, Configuration, Settings], auth: { require: [project.settings] } }
+components:
+  - type: SettingsView
+    id: project-settings-view
+    source: project_settings
+    title: Settings
+    save_action: save_project_settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: project
+        label: Project
+        icon: project
+        sections:
+          - title: Tasks Management
+            fields:
+              - { field: group_project_stages, label: Project Stages, description: Track the progress of your projects, type: checkbox, action_label: Configure Stages }
+          - title: Time Management
+            fields:
+              - { field: module_hr_timesheet, label: Task Logs, description: Track time spent on projects and tasks, type: checkbox }

@@ -25,6 +25,7 @@ menu:
     - id: configuration
       label: Configuration
       items:
+        - { path: /project/settings, label: Settings, icon: settings, permission: project.settings }
         - { path: /project-stages, label: Project Stages, icon: workflow, permission: project.manage }
         - { path: /task-tags, label: Tags, icon: tag, permission: project.manage }
         - { path: /project-roles, label: Project Roles, icon: users, permission: project.manage }

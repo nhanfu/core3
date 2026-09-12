@@ -690,3 +690,44 @@ corresponding list and New form states; screenshots remain outside Git:
 The documented residual is Odoo's purple shell and full-page form treatment
 versus Core3's Fluent shell and shared modal New action. Images are not
 committed.
+
+## Bounded slice: Project Settings (2026-09-12)
+
+The next uncovered top-level Project action after Activity Plans and the
+record-linked Customer Portal Preview is Configuration > Settings. Odoo 19
+source evidence is `/home/nhanjs/projects/odoo/addons/project/views/project_menus.xml`
+(`project_config_settings_menu_action`, `base.group_system`) and
+`/home/nhanjs/projects/odoo/addons/project/views/res_config_settings_views.xml`
+(`project_config_settings_action`, `res.config.settings`, form-only). The
+source form is a Project app block visible to `project.group_project_manager`
+with `Tasks Management` > `Project Stages` and the `Configure Stages` action,
+followed by `Time Management` > `Task Logs`. The menu itself is inside the
+manager-only Configuration menu and additionally requires `base.group_system`;
+Core3 represents that combined manager/system boundary with the dedicated
+`project.settings` permission.
+
+Core3 adds `/project/settings` to the Configuration menu. The presentation-only
+`pages/settings.yaml` and service-owned `api/settings.yaml` join through
+`page.id: project-settings`. The API owns a singleton `project_settings`
+datasource and a `project.settings.update` mutation for the two source toggles,
+including unauthorized/forbidden/empty/not-found/503 states, required
+manager/system permission, and row-version stale-save protection. Migration
+`20260912100000-011-project-settings.yaml` is idempotent, uses the stable
+`project-settings-demo` row, and contains no moving-clock or generated values.
+
+Focused coverage is `test/project_settings.integration.test.ts` (3 tests, 17
+assertions): source menu/form labels and page/API separation, API discovery,
+idempotent fixed-date seeding, valid save, empty, missing-record, stale, and
+transport-error contracts all pass. `bun run audit` passes with 583 pages, 590
+routes, and 1002 datasources; TypeScript ESLint and `git diff --check` pass.
+
+Browser capture result: no Core3 authenticated capture was produced for this
+slice. The required persistent `js_repl` Playwright handle was not exposed in
+this session, and the documented fallback could not import Playwright from the
+fresh worktree. The isolated runtime also could not stay up: its all-service
+development startup hit the environment's `EMFILE` watcher limit and a
+pre-existing DuckDB migration constraint error, while Odoo was reachable at
+`http://localhost:8069`. Therefore there are no claimed 1440x900 or 390x844
+Core3/Odoo comparison images under `/tmp/core3-odoo-parity/project-batch3-20260912/`;
+authenticated visual parity remains an explicit follow-up gate, not a success
+claim.

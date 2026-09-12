@@ -1,0 +1,40 @@
+page: { id: project-settings }
+datasources:
+  - id: project_settings
+    single: true
+    permission: project.settings
+    error_states:
+      unauthorized: { status: 401, code: PROJECT_SETTINGS_UNAUTHORIZED, message: Sign in to view Project settings. }
+      forbidden: { status: 403, code: PROJECT_SETTINGS_FORBIDDEN, message: You do not have permission to manage Project settings. }
+      transport_error: { status: 503, code: PROJECT_SETTINGS_UNAVAILABLE, message: Project settings are temporarily unavailable. }
+    query: "SELECT id, row_version, company_name, group_project_stages, module_hr_timesheet FROM project_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = 'project-settings-demo'"
+actions:
+  - id: save_project_settings
+    type: client
+    permission: project.settings
+    script: |
+      async ({ row, request }) => request('/api/actions/project.settings.update', {
+        method: 'POST',
+        body: {
+          id: row.id,
+          expected_row_version: row.row_version,
+          values: { group_project_stages: row.group_project_stages, module_hr_timesheet: row.module_hr_timesheet },
+        },
+      })
+  - id: project_settings_update_server
+    type: server
+    permission: project.settings
+    action: project.settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: project_settings
+      key_field: id
+      fields: [group_project_stages, module_hr_timesheet]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM project_settings WHERE id = :id", status: 404, code: PROJECT_SETTINGS_NOT_FOUND, message: Project settings no longer exist. }
+        - { query: "SELECT id FROM project_settings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: PROJECT_SETTINGS_STALE, message: Project settings were changed by another user. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:group_project_stages AS BOOLEAN) IS NOT NULL AND TRY_CAST(:module_hr_timesheet AS BOOLEAN) IS NOT NULL", status: 422, code: PROJECT_SETTINGS_INVALID, message: Choose valid Project settings values. }
+      result: { query: "SELECT * FROM project_settings WHERE id = :id" }
