@@ -3,7 +3,7 @@
 QA slot: wave-1 order assignment
 Module owner: order module owner
 Verification trigger: merge-candidate
-Candidate commit: pending
+Candidate commit: ef85c2a7
 QA state: qa-failed
 
 ## Test cases
