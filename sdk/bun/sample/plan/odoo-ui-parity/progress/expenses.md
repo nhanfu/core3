@@ -4,7 +4,7 @@ Module owner: expenses module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: working tree after authenticated Expenses QA
+Candidate commit: `7dee93a857fe55a4d773336c2ee41098aea8ae8a`
 
 ## Current state
 
@@ -33,7 +33,22 @@ wizard, and CRUD interaction coverage remain open.
 - The replay keeps 10 migration versions and the duplicate receipt checksum
   intact; no duplicate seeded rows are created.
 
+## QA verification (2026-09-13)
+
+- Candidate-focused corpus rerun: `bun test ./test/*expense*.integration.test.ts --timeout 20000` — 30 passed, 182 assertions, 0 failed across 9 files.
+- Migration upgrade/replay, seeded counts, receipt checksum, activity behavior,
+  duplicate review, split-line validation/application, lifecycle guards, and
+  permission boundaries pass in the focused corpus. UI audit and
+  `git diff --check` pass.
+- Authenticated desktop/mobile evidence is limited to the existing 2026-09-12
+  route-smoke artifacts (`/tmp/core3-odoo-parity/module-matrix-20260912/`);
+  fresh Playwright retest was unavailable because persistent `js_repl` was not
+  exposed. No fresh Odoo comparison or full browser CRUD/actor claim is made.
+- Repository lint remains blocked by two unrelated pre-existing
+  `website_public.integration.test.ts` unsafe-optional-chaining errors; the
+  workspace TypeScript check likewise has pre-existing shared diagnostics.
+
 ## Next bounded task
 
-Complete fresh paired Odoo comparison and remaining attachment/wizard/CRUD
-interaction checks before module sign-off.
+Complete fresh authenticated desktop/mobile interaction and actor checks,
+paired Odoo comparison, and repository lint cleanup before module sign-off.
