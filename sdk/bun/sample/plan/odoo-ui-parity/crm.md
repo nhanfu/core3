@@ -566,3 +566,54 @@ Verification boundary:
 - Authenticated Odoo/Core3 desktop/mobile captures were not run after the
   test failure, so no visual parity claim or image artifact is recorded.
   Images remain outside Git under `/tmp/core3-odoo-parity/crm-batch4-20260912/`.
+
+## Batch: Reporting -> Leads Analysis (2026-09-12)
+
+Status: `implemented`; authenticated browser evidence blocked in this session.
+
+Reference trace:
+
+- Menu source: `/home/nhanjs/projects/odoo/addons/crm/views/crm_menu_views.xml`,
+  `crm_opportunity_report_menu_lead`, `CRM -> Reporting -> Leads`, sequence 3,
+  action `crm.crm_opportunity_report_action_lead`.
+- Action and views source:
+  `/home/nhanjs/projects/odoo/addons/crm/report/crm_opportunity_report_views.xml`.
+  The action is named `Leads Analysis`, model `crm.lead`, view modes
+  `graph,pivot,list`, and defaults active plus inactive records and the
+  creation-date year filter. The graph groups by creation month and team; the
+  pivot uses creation month rows, sales team columns, and lead count measure.
+  The empty help is `No data found!` followed by the creation-per-month
+  explanation.
+
+Core3 implementation:
+
+- Page/API contracts join through page ID `crm-leads-analysis`:
+  `services/crm/pages/leads-analysis.yaml` is presentation-only and
+  `services/crm/api/leads-analysis.yaml` owns datasources, pivot fields,
+  permissions, and response contracts.
+- Route `/leads-analysis` is the `CRM -> Reporting -> Leads` manifest item and
+  requires `crm.read`. It exposes Graph, Pivot, and List tabs, Odoo-derived
+  type/status/outcome/team/salesperson/date filters, creation-month grouping,
+  list row navigation to `/lead-detail`, and the Odoo empty-state copy.
+- Migration `20260912160000-026-leads-analysis-fixtures.yaml` (version
+  `0.0.26`) adds CRM-local `active` state, pins known fixture creation dates,
+  and seeds one stable archived lead. The query covers default, lead filter,
+  archived/status filters, search, empty/no-results, 401, 403, 409, and 503
+  contracts without cross-service SQL or generated fixture IDs.
+- Focused validation: `bun test test/crm_leads_analysis.integration.test.ts` —
+  2 tests passed, 20 assertions. `bun run audit` passed with 609 pages, 617
+  routes, and 1050 datasources. Changed TypeScript lint passed with zero
+  warnings; YAML files are outside the repository ESLint configuration.
+  `git diff --check` passed.
+
+Browser evidence boundary:
+
+- Odoo readiness probe `http://127.0.0.1:8069/web/database/selector` returned
+  HTTP 200, but no authenticated browser capture was possible because the
+  required interactive Playwright `js_repl` capability is unavailable in this
+  session. No Odoo screenshots were produced.
+- Core3 readiness probes `http://127.0.0.1:3071/api/modules` and
+  `http://127.0.0.1:3072/api/modules` both failed to connect (HTTP 000); no
+  Core3 runtime was available for authenticated desktop/mobile capture. No
+  visual-parity claim is made for this batch, and no image artifacts were
+  created under `/tmp/core3-odoo-parity`.

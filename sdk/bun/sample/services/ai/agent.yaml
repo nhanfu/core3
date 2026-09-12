@@ -16,6 +16,7 @@ context_paths:
   - services/crm/pages/lead-detail.yaml
   - services/crm/pages/activities.yaml
   - services/crm/pages/activity-detail.yaml
+  - services/crm/pages/leads-analysis.yaml
   - services/crm/pages/analysis.yaml
   - services/crm/pages/lost-opportunities.yaml
   - services/crm/pages/quality-leads.yaml

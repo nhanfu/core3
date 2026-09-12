@@ -73,6 +73,10 @@ menu:
           label: Activities
           icon: chart
           permission: crm.read
+        - path: /leads-analysis
+          label: Leads
+          icon: chart
+          permission: crm.read
     - id: configuration
       label: Configuration
       items:

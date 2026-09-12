@@ -1,0 +1,64 @@
+title: Leads Analysis
+page: { id: crm-leads-analysis, route: /leads-analysis, breadcrumb: [CRM, Reporting, Leads], auth: { require: [crm.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_leads_analysis
+    search: { label: Opportunities Analysis, placeholder: Search leads and opportunities... }
+    default_filters: { activity_state: all, creation_period: year }
+    filters:
+      - { field: record_type, label: Type, options: [{ id: lead, label: Leads }, { id: opportunity, label: Opportunities }] }
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: inactive, label: Archived }] }
+      - { field: won_status, label: Outcome, options: [{ id: won, label: Won }, { id: lost, label: Lost }] }
+      - { field: team, label: Sales Team, options_source: crm_leads_analysis_teams }
+      - { field: salesperson, label: Salesperson, options_source: crm_leads_analysis_salespeople }
+      - { field: creation_period, label: Creation Date, options: [{ id: year, label: This Year }] }
+    group_by:
+      - { field: salesperson, label: Salesperson }
+      - { field: team, label: Sales Team }
+      - { field: stage, label: Stage }
+      - { field: record_type, label: Type }
+      - { field: created_month, label: Creation Date }
+    default_group_by: created_month
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: stage
+        measure_field: record_count
+        measure_label: Leads
+        type: bar
+        measures: [{ field: record_count, label: Leads, aggregate: sum }]
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        show_leaf_rows: false
+        pivot:
+          fields:
+            - { field: created_month, column: Creation Date, type: date }
+            - { field: team, column: Sales Team }
+            - { field: salesperson, column: Salesperson }
+            - { field: stage, column: Stage }
+            - { field: record_type, column: Type }
+            - { field: record_count, column: Leads }
+            - { field: prorated_revenue, column: Expected Revenue }
+          default: { rows: [created_month], columns: [team], measures: [{ field: record_count, aggregate: sum, column: Leads }] }
+          date_ranges: { created_month: month }
+      - { id: list, label: List, icon: table }
+    show_pager: true
+    page_size: 50
+    row_key: id
+    row_open_action: view_lead_analysis_record
+    row_double_click_action: view_lead_analysis_record
+    empty_state: { title: No data found!, description: This analysis shows you how many leads have been created per month. }
+    columns:
+      - { field: name, label: Lead / Opportunity, type: PrimaryEntityCell, mobile: true }
+      - { field: record_type, label: Type, mobile: true }
+      - { field: stage, label: Stage, type: StatusChip, mobile: true }
+      - { field: salesperson, label: Salesperson, mobile: false }
+      - { field: team, label: Sales Team, mobile: false }
+      - { field: created_at, label: Creation Date, type: DateTime, mobile: true }
+      - { field: probability, label: Probability, align: right, mobile: false }
+      - { field: expected_revenue, label: Expected Revenue, align: right, mobile: false }

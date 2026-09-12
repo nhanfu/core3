@@ -1,0 +1,25 @@
+version: 0.0.26
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      UPDATE crm_leads SET active = TRUE WHERE active IS NULL;
+      INSERT INTO crm_leads(id, name, type, partner_name, email, source, expected_revenue, stage, probability, salesperson, team, expected_closing, active, created_at)
+      VALUES ('crm-leads-analysis-archived', 'Archived partner inquiry', 'lead', 'Initech', 'archive@initech.test', 'Referral', 18000, 'New', 10, 'Dispatcher User', 'Enterprise', DATE '2026-01-08', FALSE, TIMESTAMP '2026-01-08 08:30:00')
+      ON CONFLICT(id) DO UPDATE SET active = FALSE, created_at = TIMESTAMP '2026-01-08 08:30:00';
+      UPDATE crm_leads SET created_at = CASE id
+        WHEN 'crm-demo-001' THEN TIMESTAMP '2026-01-15 09:00:00'
+        WHEN 'crm-demo-002' THEN TIMESTAMP '2026-02-10 09:00:00'
+        WHEN 'crm-forecast-001' THEN TIMESTAMP '2026-03-12 09:00:00'
+        WHEN 'crm-forecast-002' THEN TIMESTAMP '2026-04-18 09:00:00'
+        WHEN 'crm-forecast-003' THEN TIMESTAMP '2026-05-21 09:00:00'
+        WHEN 'crm-forecast-004' THEN TIMESTAMP '2026-06-25 09:00:00'
+        ELSE created_at END;
+    down: |
+      DELETE FROM crm_leads WHERE id = 'crm-leads-analysis-archived';
+      ALTER TABLE crm_leads DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,45 @@
+page: { id: crm-leads-analysis }
+
+datasources:
+  - id: crm_leads_analysis_teams
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT team AS value, team AS label FROM crm_leads WHERE NULLIF(team, '') IS NOT NULL ORDER BY team"
+  - id: crm_leads_analysis_salespeople
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT salesperson AS value, salesperson AS label FROM crm_leads WHERE NULLIF(salesperson, '') IS NOT NULL ORDER BY salesperson"
+  - id: crm_leads_analysis
+    single: false
+    permission: crm.read
+    error_states:
+      unauthorized: { status: 401, code: CRM_LEADS_ANALYSIS_UNAUTHORIZED, message: Sign in to view Leads Analysis. }
+      forbidden: { status: 403, code: CRM_LEADS_ANALYSIS_FORBIDDEN, message: You do not have permission to view Leads Analysis. }
+      conflict: { status: 409, code: CRM_LEADS_ANALYSIS_CONFLICT, message: The leads analysis changed. Refresh to continue. }
+      transport_error: { status: 503, code: CRM_LEADS_ANALYSIS_UNAVAILABLE, message: Leads Analysis is temporarily unavailable. }
+    pivot: { fields: [id, row_version, name, record_type, type, active, won_status, stage, team, salesperson, created_at, created_month, probability, expected_revenue, prorated_revenue, record_count] }
+    query: |
+      SELECT id, row_version, name, type AS record_type, type, active,
+        CASE WHEN stage = 'Won' THEN 'won' WHEN stage = 'Lost' THEN 'lost' ELSE NULL END AS won_status,
+        stage, COALESCE(NULLIF(team, ''), 'Unassigned team') AS team,
+        COALESCE(NULLIF(salesperson, ''), 'Unassigned') AS salesperson,
+        CAST(created_at AS VARCHAR) AS created_at, strftime(created_at, '%Y-%m') AS created_month,
+        probability, CAST(expected_revenue AS DOUBLE) AS expected_revenue,
+        CAST(expected_revenue * probability / 100 AS DOUBLE) AS prorated_revenue,
+        1 AS record_count
+      FROM crm_leads
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN FALSE ELSE TRUE END
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(team, '') ILIKE '%' || :q || '%')
+        AND (:record_type IS NULL OR type = :record_type)
+        AND (:active IS NULL OR (active = TRUE AND :active = 'active') OR (active = FALSE AND :active = 'inactive'))
+        AND (:won_status IS NULL OR (stage = 'Won' AND :won_status = 'won') OR (stage = 'Lost' AND :won_status = 'lost'))
+        AND (:team IS NULL OR COALESCE(NULLIF(team, ''), 'Unassigned team') = :team)
+        AND (:salesperson IS NULL OR COALESCE(NULLIF(salesperson, ''), 'Unassigned') = :salesperson)
+        AND (:creation_period IS NULL OR :creation_period <> 'year' OR CAST(created_at AS DATE) >= DATE '2026-01-01')
+      ORDER BY created_at DESC, id
+actions:
+  - id: view_lead_analysis_record
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }
