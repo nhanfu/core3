@@ -28,7 +28,7 @@ describe('Project customer portal projects parity', () => {
     expect(page.title).toBe('Projects');
     expect(list.columns.map((column: any) => column.label)).toEqual(['Project', 'Tasks']);
     expect(list.empty_state.title).toBe('There are no projects.');
-    expect(yaml('api/portal-projects.yaml').actions).toEqual([{ id: 'view_portal_project', type: 'navigate', permission: 'project.portal', navigate_to: '/projects/detail', params: { id: '{row.id}' } }]);
+    expect(yaml('api/portal-projects.yaml').actions).toEqual([{ id: 'view_portal_project', type: 'navigate', permission: 'project.portal', navigate_to: '/my/projects/detail', params: { id: '{row.id}' } }]);
   });
 
   test('returns non-template projects and deterministic empty/not-found/error contracts', async () => {

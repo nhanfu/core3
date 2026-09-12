@@ -9,5 +9,5 @@ actions:
   - id: view_portal_project_task
     type: navigate
     permission: project.portal
-    navigate_to: /tasks/detail
-    params: { id: '{row.id}' }
+    navigate_to: /my/projects/task/detail
+    params: { project_id: '{row.project_id}', task_id: '{row.id}' }

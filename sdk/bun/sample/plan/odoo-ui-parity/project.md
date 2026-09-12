@@ -583,6 +583,54 @@ this slice makes no visual-parity claim. Source XML/controller/template
 evidence and static contract checks are the available verification for this
 batch; authenticated browser comparison remains a follow-up gate.
 
+## Bounded slice: Customer Portal Project Task Detail (2026-09-12)
+
+The next uncovered Project portal action is Odoo's authenticated/public
+controller `ProjectCustomerPortal.portal_my_project_task` at
+`/my/projects/<project_id>/task/<task_id>` in
+`addons/project/controllers/portal.py` (lines 176-189). It checks document
+access to the project, then restricts the task lookup to that project before
+rendering `project.portal_my_task`. The source template is
+`addons/project/views/project_portal_project_task_templates.xml`, template
+`portal_my_task` (lines 163-292), inherited from `portal.portal_sidebar`.
+Its visible contract is the `Task`/`History` sidebar, `Assignees` and
+`Customer` contact blocks, task title and number, `Stage:`, state and priority
+controls, `Project`, optional `Milestone`, `Deadline`, `Allocated Time`,
+optional `Description` and `Attachments`, and `Communication history`.
+The project breadcrumb links back to `/my/projects/<project_id>`; invalid
+project/task access redirects to `/my` in the source controller.
+
+Core3 maps the action to `/my/projects/task/detail?project_id=<project-id>&task_id=<task-id>`
+as a deliberate static alias because its page discovery contract uses query
+parameters for record pages. The portal project task list action now passes
+both IDs and no longer opens the internal editable `/tasks/detail` form.
+Presentation-only `pages/portal-project-task-detail.yaml` and service-owned
+`api/portal-project-task-detail.yaml` join by
+`page.id: project-portal-project-task-detail`. The read-only form exposes the
+source metadata, Description, and Communication history sections, plus a
+return-to-project action. The API query enforces project/task identity and
+excludes archived/template projects; it returns stable empty/not-found and
+`503 PROJECT_PORTAL_PROJECT_TASK_UNAVAILABLE` states under `project.portal`.
+
+Migration `20260912120000-013-project-portal-task-detail.yaml` adds the owned
+description field and deterministic descriptions to the existing stable task
+fixtures. It is idempotent and has no moving-clock or generated values.
+Focused coverage is
+`test/project_portal_task_detail.integration.test.ts` (3 tests, 16
+assertions): it verifies route/page/API separation, Odoo labels and read-only
+controls, deterministic detail fields, cross-project isolation, empty state,
+portal permission, and the transport-error contract.
+
+Authenticated Core3 and Odoo capture attempts were made for 1440x900 and
+390x844 under `/tmp/core3-odoo-parity/project-portal-task-detail-20260912/`.
+This session has no persistent `playwright-interactive` `js_repl`, and the
+fallback `import('playwright')` check from the fresh worktree failed because
+the package is unavailable. Endpoint checks also found the isolated Core3
+runtime unavailable and Odoo `http://127.0.0.1:8073` refused the connection.
+No authenticated screenshots were produced or accepted, and this slice makes
+no visual-parity claim. Authenticated desktop/mobile comparison remains an
+explicit follow-up gate.
+
 ## Required shared primitives
 
 Reuse generic contracts before adding Project-specific renderers:

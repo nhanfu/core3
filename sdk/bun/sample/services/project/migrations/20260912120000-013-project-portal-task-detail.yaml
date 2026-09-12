@@ -1,0 +1,17 @@
+version: 0.0.13
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS description VARCHAR;
+      UPDATE project_tasks SET description = CASE id
+        WHEN 'task-demo-001' THEN 'Complete the remaining module migration checks.'
+        WHEN 'task-demo-002' THEN 'Review the project delivery design.'
+        ELSE COALESCE(description, '')
+      END;
+    down: |
+      ALTER TABLE project_tasks DROP COLUMN IF EXISTS description;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
