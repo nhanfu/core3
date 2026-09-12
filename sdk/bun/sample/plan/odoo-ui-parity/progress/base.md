@@ -5,7 +5,7 @@ Status: `ready-for-qa`
 Owner: `agent/odoo-owner-base-wave1`
 QA owner: `QA-1` (dispatchable)
 Verification trigger: `feature-complete`
-Candidate commit: `pending`
+Candidate commit: `ecf1880f`
 
 ## Evidence
 
@@ -13,6 +13,9 @@ Candidate commit: `pending`
 - `bun run audit` — pass: 647 pages, 662 routes, 1112 datasources.
 - `bun run frontend:build` — pass.
 - `git diff --check` — pass.
+- Base contact duplicate-email guard was corrected to use `NOT EXISTS`; CRM's
+  isolated cross-service conversion test now creates and links a Base contact
+  through the registered YAML service.
 - Authenticated Chromium rendered the Contacts list on mobile and contact
   detail on desktop/mobile — pass; those runs had no page/request errors or
   horizontal overflow. A desktop list route also rendered earlier, but its
