@@ -19,8 +19,10 @@ workflow:
       to: New
       permission: recruitment.write
       mutation:
-        guards: [{ query: "SELECT id FROM recruitment_applicants WHERE id = :id AND stage = 'Rejected' AND archived = TRUE AND row_version = :expected_row_version", status: 409, code: RECRUITMENT_APPLICANT_REOPEN_STALE, message: Only the current refused application can be reopened. }]
-        steps: [{ query: "UPDATE recruitment_applicants SET stage = 'New', archived = FALSE, refuse_reason_id = NULL, refused_date = NULL, row_version = :expected_row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND stage = 'Rejected' AND archived = TRUE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The application changed by another user. Reload it before reopening. }]
+        guards:
+          - { query: "SELECT id FROM recruitment_applicants WHERE id = :id AND stage = 'Rejected' AND archived = TRUE AND row_version = :expected_row_version", status: 409, code: RECRUITMENT_APPLICANT_REOPEN_STALE, message: Only the current refused application can be reopened. }
+          - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR EXISTS (SELECT 1 FROM recruitment_applicants WHERE id = :id AND company_name = :current_company_name)", status: 403, code: RECRUITMENT_APPLICANT_COMPANY_SCOPE_REQUIRED, message: The application belongs to another company. }
+        steps: [{ query: "UPDATE recruitment_applicants SET stage = 'New', archived = FALSE, refuse_reason_id = NULL, refused_date = NULL, row_version = :expected_row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND stage = 'Rejected' AND archived = TRUE AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", expect_changed: true, status: 409, code: STALE_RECORD, message: The application changed by another user. Reload it before reopening. }]
         result: { query: "SELECT * FROM recruitment_applicants WHERE id = :id" }
     - id: screen
       from: [New]

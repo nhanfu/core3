@@ -1,0 +1,16 @@
+version: 0.0.13
+kind: schema
+type:
+  postgres:
+    up: |
+      -- This migration is intentionally self-contained: a candidate may be
+      -- cherry-picked onto a branch that has the foundation but not the
+      -- earlier company-scope migration.
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS company_name VARCHAR DEFAULT 'Core3 Demo Company';
+      UPDATE recruitment_applicants SET company_name = 'Core3 Demo Company' WHERE company_name IS NULL OR TRIM(company_name) = '';
+    down: |
+      ALTER TABLE recruitment_applicants DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
