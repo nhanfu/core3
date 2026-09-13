@@ -95,3 +95,18 @@ Fleet module while these blockers remain.
 - Preserved blockers: restart durability was not certified by the in-memory
   runner; browser/Odoo evidence, wrong-company isolation, and other runtime
   gates remain open. Fleet remains conditional and unsigned-off.
+
+## 2026-09-13 coordinator review: candidate `f9a8f127`
+
+- Integrated the bounded Fleet vehicle company-scope migration/API/create and
+  isolation repair as `b34b3b9f`. One expected detail-file conflict was
+  resolved by retaining the active Fleet actions together with the candidate
+  scope/edit contract; no unrelated files were imported.
+- Post-merge candidate tests passed: **5 tests, 19 assertions**. Candidate
+  corpus evidence remains **69 tests, 710 assertions**; migration replay,
+  file-backed restart, foreign-company isolation, permissions, audit (**661
+  pages, 670 routes, 1154 datasources**), Sass, build, ESLint, and diff-check
+  passed.
+- Fleet remains **conditional / unsigned-off**. Authenticated browser CRUD,
+  desktop/mobile visual/Odoo comparison, and broader Fleet scoping remain
+  blocked or pending.

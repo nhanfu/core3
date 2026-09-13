@@ -238,3 +238,17 @@ Sales and Purchases export coverage below.
   no horizontal overflow. Downloads remain under `/tmp`.
 - Scope: Sales and Purchases export only; broader Accounting attachment,
   print, and paired Odoo comparison gates remain open.
+
+## 2026-09-13 coordinator review: candidate `94a4703f`
+
+- Integrated the bounded Sales/Purchases journal-item export actions and
+  contract tests as `f43694ba`. Candidate-side Accounting plan/progress/QA
+  documentation was reconciled with the active ledger; no unrelated product
+  changes were imported.
+- Post-merge focused Sales/Purchases tests passed **4 tests, 29 assertions**.
+  Candidate evidence remains **90 tests, 1,017 assertions**, with YAML/API/
+  permission contracts, audit (**661 pages, 670 routes, 1154 datasources**),
+  ESLint, build, diff-check, and authenticated Chrome desktop/mobile XLSX
+  downloads passing.
+- Accounting remains **conditional / unsigned-off**. Broader attachment,
+  print, and authenticated paired Odoo comparison gates remain open.
