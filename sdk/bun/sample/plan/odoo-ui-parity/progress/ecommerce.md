@@ -21,10 +21,13 @@ and ownership gates are still incomplete; no full parity claim is made here.
 - Sales-facing operations expose the handoff envelope and copied order lines.
 - Claim/acknowledge mutations enforce attempt limits and optimistic row-version
   concurrency, including stale duplicate rejection.
-- Focused suite: `bun test ./test/ecommerce_checkout.integration.test.ts` —
-  11 passed, 59 assertions, 0 failures.
-- Remaining gate: a Sales-side consumer must use this contract to create/link
-  the corresponding Sales order in its own database.
+- Sales now owns a polling consumer that claims the envelope, reads the declared
+  order/line operations, imports source-linked Sales records, and acknowledges
+  success or failure. The source link and line IDs make retries idempotent.
+- Focused suite: `bun test ./test/ecommerce_sales_handoff_consumer.integration.test.ts ./test/ecommerce_checkout.integration.test.ts` —
+  14 passed, 69 assertions, 0 failures.
+- Remaining gates: authenticated actor/company matrix, external payment/delivery
+  certification, paired Odoo comparison, and central review/merge.
 
 ## Review integration
 

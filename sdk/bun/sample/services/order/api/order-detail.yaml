@@ -150,6 +150,30 @@ datasources:
     query: "SELECT name AS value, name AS label FROM sale_payment_terms WHERE active = true ORDER BY due_days, name"
 
 actions:
+  - id: import_ecommerce_sales_line
+    type: server
+    permission: orders.write
+    action: orders.ecommerce.handoff.import_line
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: order_lines
+      fields: [order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total, source_line_id]
+      required: [order_id, description, quantity, unit, unit_price, source_line_id]
+      defaults: { sequence: 10, tax_rate: 0, line_total: 0 }
+      guards:
+        - query: "SELECT 1 AS ok FROM orders WHERE id = :order_id AND status = 'Draft'"
+          status: 409
+          code: SALES_ECOMMERCE_ORDER_NOT_DRAFT
+          message: The imported Sales order is no longer a draft.
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM order_lines WHERE source_line_id = :source_line_id)"
+          status: 409
+          code: SALES_ECOMMERCE_LINE_ALREADY_IMPORTED
+          message: This eCommerce order line has already been imported.
+      steps:
+        - { query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :order_id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :order_id" }
+      result: { query: "SELECT * FROM order_lines WHERE id = :id" }
   - id: send_order_message
     type: server_form
     permission: orders.write

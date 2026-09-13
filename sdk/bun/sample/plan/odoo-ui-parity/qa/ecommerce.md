@@ -40,9 +40,14 @@ Candidate commit: `40aee3ed` (DEV-4 Sales handoff outbox; prior candidate eviden
 - Focused verification: `bun test ./test/ecommerce_checkout.integration.test.ts`
   — 11 passed, 59 assertions, 0 failures.
 - Integrated commit: `40aee3ed`.
+- Sales consumer verification: `bun test ./test/ecommerce_sales_handoff_consumer.integration.test.ts` —
+  3 tests, 10 assertions; real Sales migrations/YAML mutations create one
+  source-linked order and line, repeated polling remains idempotent, and a stale
+  claim never reaches Sales.
 - Boundary: this proves the eCommerce-owned handoff contract and retry/stale
-  guards; it does not claim that a Sales consumer has created a record in the
-  separate Sales database.
+  guards, plus the bounded Sales-side consumer; it does not claim full module
+  parity or paired Odoo parity.
+- Commit: `717cc3e8` (QA ledger commit follows; review/merge is still required).
 
 Current isolated runner inventory (4041): the manifest registers 9 routes;
  page/API contracts are present for all 9 manifest routes plus the linked
@@ -87,7 +92,7 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | ECOMMERCE-WF-019 | Guest checkout handoff | Checkout test plus unauthenticated mobile browser/API flow — validates guest identity and delivery/payment fields, copies anonymous cart lines into an order with `customer_id = NULL`, converts the cart, rejects repeat checkout, and clears the cart cookie | pass at service/API and unauthenticated browser/API level; external payment/delivery callbacks and paired Odoo comparison remain open |
 | ECOMMERCE-WF-020 | Catalog publication visibility | Product editor test toggles the seeded unpublished service into the public catalog and back, persists versions 1 → 3, and rejects stale replay with 409 | pass at service/API level; authenticated browser workflow and paired Odoo comparison remain open |
 | ECOMMERCE-WF-021 | Payment/delivery durable boundary contract | YAML contract test plus Bun runtime smoke: SDK `1.23.0` worker reached `RUNNING`, workflow returned `Authorized/Ready`, timer recovery completed across worker restart, payment/delivery signals were accepted through the Bun callback client, callback activity deduplication passed, an authenticated checkout action in the real Core3 Ecommerce module runner emitted `ecommerce.checkout.confirmed` and the dispatcher started the workflow, deterministic provider failure exhausted five attempts and ran compensation, and shutdown reached `STOPPED` against temporary Temporal Server `1.31.2`; checkout contract suite 10 tests, 52 assertions | pass for Bun startup, workflow execution, timer recovery, callback delivery/deduplication, real Core3 event dispatch, retry exhaustion, compensation, shutdown, and local provider adapter contract; external provider certification and paired Odoo comparison remain open |
-| ECOMMERCE-WF-022 | Sales handoff outbox claim and acknowledgement | Checkout test — authenticated checkout creates a single pending envelope; order/line operations expose the eCommerce-owned payload; claim increments attempt/version; stale duplicate claim and acknowledgement return 409; success stores the Sales order ID | pass: DEV-4 bounded slice; separate Sales database consumer remains open |
+| ECOMMERCE-WF-022 | Sales handoff outbox claim, import, and acknowledgement | Checkout plus Sales consumer tests — eCommerce emits one pending envelope; the Sales consumer claims it, reads declared order/line operations, creates source-linked Sales records idempotently, and acknowledges success; stale claim is isolated | pass for isolated cross-module contract and local Sales persistence; full authenticated deployment and paired Odoo comparison remain open |
 
 ## Bugs and retests
 

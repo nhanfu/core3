@@ -18,3 +18,17 @@ operations:
       FROM orders o
       WHERE o.opportunity_id = :opportunity_id
       ORDER BY o.order_date DESC
+  orders.ecommerce.handoff.order_by_source:
+    result_key: order
+    query: |
+      SELECT id, order_number, row_version, source_service, source_id
+      FROM orders
+      WHERE source_service = :source_service AND source_id = :source_id
+      LIMIT 1
+  orders.ecommerce.handoff.line_by_source:
+    result_key: line
+    query: |
+      SELECT id, order_id, source_line_id
+      FROM order_lines
+      WHERE source_line_id = :source_line_id
+      LIMIT 1

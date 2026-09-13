@@ -1,0 +1,21 @@
+version: 0.0.19
+kind: schema
+description: Sales provenance for eCommerce handoff imports
+type:
+  postgres:
+    up: |
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS source_service VARCHAR;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS source_id VARCHAR;
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS source_line_id VARCHAR;
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_orders_source ON orders(source_service, source_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_order_lines_source ON order_lines(source_line_id);
+    down: |
+      DROP INDEX IF EXISTS uq_order_lines_source;
+      DROP INDEX IF EXISTS uq_orders_source;
+      ALTER TABLE order_lines DROP COLUMN IF EXISTS source_line_id;
+      ALTER TABLE orders DROP COLUMN IF EXISTS source_id;
+      ALTER TABLE orders DROP COLUMN IF EXISTS source_service;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
