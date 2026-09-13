@@ -61,6 +61,28 @@ persisted and invalid attempts do not create partial rows.
 
 ## Next bounded task
 
+## QA verification (2026-09-13, candidate `ab1ea2e5`)
+
+- Focused Maintenance regression: **35 passed, 345 assertions, 0 failures**
+  across 15 files. Activity schedule/complete persistence, detail binding,
+  validation, archived-parent, permission metadata, and stale guards passed.
+- Audit and `git diff --check` passed; changed Maintenance tests lint clean.
+  Repository lint remains blocked by unrelated pre-existing errors at
+  `test/website_public.integration.test.ts:31,33`.
+- Full sample regression: **1113 passed, 1 failed**; only the unrelated
+  Spreadsheet dashboard Share fixture failed.
+- Authenticated Core3 desktop/mobile request-detail render passed at 1440x900
+  and 390x844. Captures are outside Git at
+  `/tmp/core3-odoo-parity/maintenance-candidate-desktop-final.png`,
+  `maintenance-candidate-mobile-final.png`, and
+  `maintenance-candidate-activity-modal.png`. Fleet browser access was denied
+  and hid the schedule action; unauthenticated detail API returned 401.
+- Odoo `:8069/odoo/maintenance` returned 303 to login, so no paired Odoo
+  capture or visual parity claim is made. The browser form save stalled; the
+  persistence claim is limited to the focused integration test.
+
+QA result: conditional fail / evidence-only; no module sign-off.
+
 Resolve `MAINT-QA-001`, then rerun the focused corpus and authenticated browser
 edit/concurrency checks. After that, cover the remaining actor/company,
 settings, activity/recurrence, full-route, and paired-Odoo gates before module

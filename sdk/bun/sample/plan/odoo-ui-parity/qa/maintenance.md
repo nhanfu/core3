@@ -95,6 +95,47 @@ concurrency finding; all executed focused checks pass otherwise.
 
 ## Sign-off
 
+## 2026-09-13 QA verification: candidate `ab1ea2e5`
+
+- Candidate verified at `ab1ea2e5aa7f73d59b5e45d33bd499c006e3075c` in the
+  assigned worktree. QA made no product-code changes.
+- Focused command `bun test ./test/maintenance*.integration.test.ts
+  --timeout 20000` from `sdk/bun/sample`: **35 passed, 345 assertions, 0
+  failed** across 15 files. Activity coverage proves request-detail binding,
+  schedule and complete persistence, invalid type/blank summary, archived
+  parent denial, and stale completion guards.
+- Static checks: `bun run audit` passed (**659 pages, 668 routes, 1135
+  datasources**); `git diff --check` passed; changed Maintenance test files
+  linted clean. Repository `bun run lint` is **blocked by two pre-existing
+  errors** at `test/website_public.integration.test.ts:31` and `:33`
+  (`no-unsafe-optional-chaining`), outside this candidate diff.
+- Full command `bun test ./test --timeout 20000`: **1113 passed, 1 failed**
+  across 348 files / 10,514 assertions. The sole failure is unrelated:
+  `Spreadsheet dashboard configuration parity > declares the dashboard Share
+  action with deterministic active and revoked link fixtures`.
+- Authenticated Core3 browser evidence used admin `admin@tms.local` and Chrome
+  at 1440x900 and 390x844 against the isolated runtime `:3002`. Request detail
+  `/maintenance/maintenance-requests/detail?id=maintenance-demo-001` rendered
+  with `Activities`, the bound `Schedule activity` action, and the schedule
+  modal. Both viewports had `scrollWidth === viewport width`, with zero page
+  errors and zero failed requests. Captures:
+  `/tmp/core3-odoo-parity/maintenance-candidate-desktop-final.png`,
+  `maintenance-candidate-mobile-final.png`, and
+  `maintenance-candidate-activity-modal.png`.
+- Permission browser check: Fleet user `fleet@tms.local` received the
+  `maintenance.read` denial page and saw no `Schedule activity` button;
+  unauthenticated detail API returned `401`. Activity UI save was attempted
+  but stalled, so no browser persistence claim is made; persistence is
+  supported by the focused integration test only.
+- Paired Odoo check: `http://127.0.0.1:8069/odoo/maintenance` was reachable but
+  returned `303` to `/web/login`; no authenticated Odoo capture was available,
+  so paired visual parity is not claimed.
+
+QA decision: **conditional fail / evidence-only**. The candidate activity
+slice passes focused contracts and authenticated rendering, but full
+regression, repository lint, authenticated browser persistence, and paired
+Odoo gates remain open. No module sign-off is issued.
+
 ## 2026-09-13 bounded DEV batch: Maintenance Request activities
 
 - Added service-owned `maintenance_request_activities` persistence with a
