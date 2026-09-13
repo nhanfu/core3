@@ -159,3 +159,9 @@ and permission boundaries passed. The candidate remains `pending-qa`.
   authenticated desktop/mobile browser interaction and captures remain open;
   paired authenticated Odoo visual comparison remains open. No full Base
   module sign-off is implied.
+
+## 2026-09-13 R2 coordinator dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-BASE-HIERARCHY-WAVE-20260913-R2` → `QA-BASE-HIERARCHY-WAVE-20260913-R2` | existing `agent/base-contact-attachments-qa` in `/home/nhanjs/projects/core3-worktrees/base-contact-attachments-qa` | Contact company hierarchy persistence, company/role boundaries, cycle/duplicate/invalid/missing/stale guards, and focused atomicity tests | dispatched in `42d189da`; awaiting self-contained product commit before QA |
