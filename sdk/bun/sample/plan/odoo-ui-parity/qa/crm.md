@@ -144,3 +144,21 @@ module sign-off is claimed.
   is available. Until a takeover is actually dispatched, CRM remains pending;
   its bounded task is duplicate replay, permission/invalid/missing handling,
   downstream rollback, stale/concurrent guards, and focused tests.
+
+## Reviewer reconciliation `31fd1443`: conditional bounded PASS (2026-09-13)
+
+- The existing CRM owner/worktree was valid at
+  `/home/nhanjs/projects/core3-worktrees/odoo-crm-wave-20260912`. The AI
+  YAML-context implementation was already present on active with the stronger
+  64-entry allowlist; only the candidate regression assertion was new and was
+  integrated as `56110795`.
+- Post-merge CRM verification passed **45 tests / 212 assertions**; related
+  CRM/Base verification passed QA's **72 tests / 507 assertions**. Audit passed
+  **661 pages / 670 routes / 1,158 datasources**; frontend build and diff-check
+  passed. QA reports lint clean.
+- Accepted evidence covers CRM/Base conversion, AI YAML context, duplicate,
+  invalid, missing, stale, permission, rollback, desktop/mobile browser, and
+  reload behavior.
+- Disposition: **conditional bounded PASS; reconciled**. File-backed restart
+  durability and authenticated Odoo comparison remain open. No full CRM
+  sign-off.

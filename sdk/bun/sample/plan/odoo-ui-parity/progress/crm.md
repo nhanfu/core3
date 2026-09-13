@@ -53,3 +53,13 @@ CRM remains pending for duplicate/permission/rollback/stale conversion tests.
 - Focused functional coverage includes lead conversion, activities, permissions/guards, team routing, reporting, activity plans, tags, stages, recurring plans, lost reasons, and leads analysis.
 - The CRM service remains YAML-first; no CRM-specific hand-built HTML renderer was added. Existing UI primitives render through Core3 `html.js`.
 - Migration consolidation to exactly `schema.yaml` and `demo.yaml` is not applied because the current migration loader only discovers timestamp/order filenames; changing loader behavior would cross the CRM-only file boundary. Existing development migration history is preserved.
+
+## Reviewer reconciliation `31fd1443` (2026-09-13)
+
+The AI YAML-context repair was already present on active; only the candidate
+regression assertion was new, integrated as `56110795`. CRM verification passed
+**45/212** and related CRM/Base QA passed **72/507**; audit **661/670/1,158**,
+frontend build, and diff-check passed. QA reports authenticated desktop/mobile,
+reload, conversion guards, rollback, and permission evidence. File-backed
+restart durability and authenticated Odoo comparison remain open; no full CRM
+sign-off.
