@@ -103,3 +103,15 @@ product merge is accepted. Route a same-owner root-cause repair for the live
 service list/selector/detail authorization and request/session binding, then
 re-run focused runtime isolation QA. Preserve open duckdb-memory restart and
 paired authenticated Odoo gates.
+
+## Reviewer reconciliation `d7c50906` (2026-09-13)
+
+Integrated as `fc560bde` after resolving only active-branch conflicts in the
+Fleet service slice. The merged diff contains identity-derived switched-company
+context plus service list/detail/selector predicates and mutation guards.
+Post-merge focused verification passed **5/83 assertions** and audit passed
+**661/670/1,154**; linked QA reports full Fleet **70 passed**, startup,
+build/lint, responsive browser, CRUD, permission, widening, and same-process
+persistence evidence. Fleet is conditionally accepted for this bounded slice.
+Process restart on duckdb-memory and fresh paired authenticated Odoo comparison
+remain open; no full Fleet sign-off is claimed.

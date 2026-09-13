@@ -226,3 +226,32 @@ or duplicate QA was created.
 - Process restart on duckdb-memory remains unverified and fresh paired
   authenticated Odoo comparison remains unavailable. Fleet remains
   **conditional/blocked**, with no full module sign-off.
+
+## Reviewer reconciliation `d7c50906`: conditional bounded PASS (2026-09-13)
+
+- The existing Fleet owner/worktree was valid:
+  `agent/fleet-next-wave` at
+  `/home/nhanjs/projects/core3-worktrees/fleet-next-wave`. The candidate was
+  self-contained for the Fleet service company-boundary slice. Its diff adds
+  `authenticatedCompanyName`, identity-derived context for query and prefetch
+  requests, service-list/detail/selector predicates, and service mutation
+  company guards. The owner worktree contained only QA/handoff ledger edits
+  outside the candidate.
+- Cherry-pick required conflict resolution against the active branch's older
+  Fleet service slice, but completed cleanly as `fc560bde`; only the candidate's
+  shared auth helper/routing and Fleet service files were retained. No
+  unrelated module or aggregate files were staged.
+- Post-integration focused verification passed **5 tests / 83 assertions**;
+  `bun run audit` passed with **661 pages / 670 routes / 1,154 datasources**;
+  commit diff-check passed. The linked QA evidence additionally reports the
+  Fleet suite **70 passed**, startup, build/lint, and no-error desktop/mobile
+  browser runs.
+- Authenticated evidence passed Demo → Vietnam → Demo isolation **6/2 → 0/0
+  → 6/2**, Demo detail denial, scoped prefetch/detail/selectors, ignored
+  non-admin query widening, CRUD/workflow/guards, Fleet User read **200** and
+  create **403**, same-process persistence/cleanup, and no failed browser
+  requests.
+- Disposition: **conditional bounded PASS; integrated**. DuckDB-memory process
+  restart durability remains unverified, and fresh paired authenticated Odoo
+  comparison remains unavailable. Fleet is not fully signed off; broader Fleet
+  parity gates remain open.
