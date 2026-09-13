@@ -935,6 +935,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     ? {
       createAction: inlineDefinition.create_action,
       updateAction: inlineDefinition.update_action,
+      clickToEdit: inlineDefinition.click_to_edit !== false,
       fields: (inlineDefinition.fields || []).map((field: any) => ({
         field: field.field,
         type: field.type,

@@ -8,6 +8,7 @@ components:
     views:
       - { id: list, label: List, icon: table }
     inline_edit:
+      click_to_edit: false
       create_action: create_employee_departure_reason_inline
       update_action: update_employee_departure_reason_inline
       save_label: Save

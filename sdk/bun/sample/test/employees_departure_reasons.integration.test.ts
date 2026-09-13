@@ -39,7 +39,7 @@ describe('Employees Departure Reasons bounded parity', () => {
     expect(detailPage.page).toMatchObject({ id: 'employee-departure-reason-detail', route: '/employees/departure-reasons/detail', auth: { require: ['employees.manage'] } });
     expect(listApi.page.id).toBe(listPage.page.id);
     expect(detailApi.page.id).toBe(detailPage.page.id);
-    expect(listPage.components[0]).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'employee_departure_reasons' });
+    expect(listPage.components[0]).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'employee_departure_reasons', row_open_action: 'view_employee_departure_reason', row_double_click_action: 'view_employee_departure_reason', inline_edit: { click_to_edit: false } });
     expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list']);
     expect(listPage.components[0].columns.map((column: any) => column.label)).toEqual([' ', 'Departure Reason', 'Country']);
     expect(listPage.components[0].columns.some((column: any) => column.actions)).toBe(false);
@@ -92,12 +92,14 @@ describe('Employees Departure Reasons bounded parity', () => {
     const create = action(listApi, 'create_employee_departure_reason_inline');
     const update = action(listApi, 'update_employee_departure_reason_inline');
     const edit = action(detailApi, 'edit_employee_departure_reason');
+    const archive = action(detailApi, 'archive_employee_departure_reason');
+    const restore = action(detailApi, 'restore_employee_departure_reason');
     const remove = action(listApi, 'delete_employee_departure_reason');
 
-    expect([create, update, edit, remove].every((entry: any) => entry.permission === 'employees.manage')).toBe(true);
-    expect([create, update, edit, remove].every((entry: any) => entry.handler === 'yaml_mutation')).toBe(true);
+    expect([create, update, edit, archive, restore, remove].every((entry: any) => entry.permission === 'employees.manage')).toBe(true);
+    expect([create, update, edit, archive, restore, remove].every((entry: any) => entry.handler === 'yaml_mutation')).toBe(true);
     expect(create.mutation.generated).toEqual(['id']);
-    expect(create.mutation.guards.map((guard: any) => guard.status)).toEqual([422, 409]);
+    expect(create.mutation.guards.map((guard: any) => guard.status)).toEqual([422, 409, 409]);
     expect(update.mutation.concurrency).toMatchObject({ required: true });
     expect(update.mutation.guards.map((guard: any) => guard.status)).toEqual([404, 422, 409]);
     expect(edit.mutation.concurrency).toMatchObject({ required: true });
@@ -106,6 +108,7 @@ describe('Employees Departure Reasons bounded parity', () => {
     const created = await repository.executeMutation(create.mutation, { values: { sequence: 10, name: 'Career Break', country_code: null } });
     expect(created).toMatchObject({ id: 'departure-reason-career-break', name: 'Career Break', sequence: 10, row_version: 1 });
     await expect(repository.executeMutation(create.mutation, { values: { name: ' career break ' } })).rejects.toMatchObject({ status: 409, code: 'EMPLOYEES_DEPARTURE_REASON_EXISTS' });
+    await expect(repository.executeMutation(create.mutation, { values: { name: 'Career-Break', sequence: 11 } })).rejects.toMatchObject({ status: 409, code: 'EMPLOYEES_DEPARTURE_REASON_EXISTS' });
     await expect(repository.executeMutation(create.mutation, { values: { name: '  ' } })).rejects.toMatchObject({ status: 422, code: 'EMPLOYEES_DEPARTURE_REASON_NAME_REQUIRED' });
 
     const edited = await repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { sequence: 11, name: 'Career Break Updated', country_code: 'VN' } });
@@ -115,10 +118,14 @@ describe('Employees Departure Reasons bounded parity', () => {
     await expect(repository.executeMutation(edit.mutation, { id: 'missing-departure-reason', expected_row_version: 1, values: { name: 'Missing' } })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_DEPARTURE_REASON_NOT_FOUND' });
     await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 2, values: { name: 'Fired' } })).rejects.toMatchObject({ status: 409, code: 'EMPLOYEES_DEPARTURE_REASON_EXISTS' });
 
+    const archived = await repository.executeMutation(archive.mutation, { id: created.id, expected_row_version: 2, values: { active: false } });
+    expect(archived).toMatchObject({ id: created.id, active: false, row_version: 3 });
+    const restored = await repository.executeMutation(restore.mutation, { id: created.id, expected_row_version: 3, values: { active: true } });
+    expect(restored).toMatchObject({ id: created.id, active: true, row_version: 4 });
     await expect(repository.executeMutation(remove.mutation, { id: 'departure-reason-fired', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'EMPLOYEES_DEPARTURE_REASON_DEFAULT' });
-    await repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 2 });
+    await repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 4 });
     expect((await repository.querySource(listApi.datasources[0], { q: 'Career Break', fixture_state: null }, 0, 50)).data).toEqual([]);
-    await expect(repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 2 })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_DEPARTURE_REASON_NOT_FOUND' });
+    await expect(repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 4 })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_DEPARTURE_REASON_NOT_FOUND' });
     await database.close();
   });
 });

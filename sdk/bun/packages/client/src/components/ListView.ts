@@ -68,6 +68,7 @@ export type ListViewInlineEditField = {
 export type ListViewInlineEdit = {
   createAction?: string;
   updateAction?: string;
+  clickToEdit?: boolean;
   fields: ListViewInlineEditField[];
   saveLabel?: string;
   discardLabel?: string;
@@ -977,7 +978,7 @@ export class ListView extends BaseComponent {
         this.selectFormRow(row);
         return;
       }
-      if (inline && !editing) {
+      if (inline && inline.clickToEdit !== false && !editing) {
         this.startInlineEdit(row, id);
         return;
       }
@@ -993,7 +994,7 @@ export class ListView extends BaseComponent {
       }, 250);
     });
     html.take(tr).event('dblclick', (event: MouseEvent) => {
-      if (inline && !editing) {
+      if (inline && inline.clickToEdit !== false && !editing) {
         this.startInlineEdit(row, id);
         return;
       }
