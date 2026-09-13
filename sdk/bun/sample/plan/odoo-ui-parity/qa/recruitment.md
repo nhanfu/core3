@@ -96,3 +96,14 @@ Candidate commit: pending commit for refusal workflow repair
 - Authenticated browser CRUD/refusal/reopen and paired Odoo comparison remain
   blocked by unavailable `js_repl`. Recruitment remains conditional and
   unsigned-off; broader module gates remain open.
+
+## 2026-09-13 coordinator dispatch: next bounded wave
+
+- Existing owner: `agent/odoo-recruitment-reopen-20260913`, worktree
+  `/home/nhanjs/projects/core3-worktrees/odoo-recruitment-reopen-20260913`,
+  base `9b61dfa`. Development event: `DEV-RECRUITMENT-WAVE-20260913`; QA
+  event: `QA-RECRUITMENT-WAVE-20260913`; handoff commit `1721f4e3`.
+- Candidate is pending. Target is one bounded authenticated CRUD/actor gap
+  around refusal/reopen. Focused tests, audit, CSS/frontend build, scoped
+  ESLint, and diff-check are required before triggering existing QA.
+  Aggregate progress remains untouched.

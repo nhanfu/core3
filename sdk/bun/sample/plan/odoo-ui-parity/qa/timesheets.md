@@ -92,3 +92,14 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: partial; three representative routes paired, remaining enabled routes and interaction states open
 - Tester decision: not signed off
+
+## 2026-09-13 coordinator dispatch: next bounded wave
+
+- Existing owner: `agent/odoo-ui-timesheets-next`, worktree
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-timesheets-next`, base
+  `813ff50b`. Development event: `DEV-TIMESHEETS-WAVE-20260913`; QA event:
+  `QA-TIMESHEETS-WAVE-20260913`; handoff commit `54ddd2b7`.
+- Candidate is pending. Target is the next bounded mock-data/employee-cost or
+  employee-validation repair. Focused tests, audit, CSS/frontend build,
+  scoped ESLint, and diff-check are required before triggering existing QA.
+  Aggregate progress remains untouched.
