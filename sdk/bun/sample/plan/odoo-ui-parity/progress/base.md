@@ -95,3 +95,12 @@ Candidate commit: `8fdf7be3`
   30-second runner limit and was stopped before completion; the subsequent
   bounded probe reproduced `BASE-ATTACH-001`. No hanging browser, upload
   probe, or port-4010 server remains.
+
+## Capacity recycle ownership update (2026-09-13)
+
+Base developer ownership remains `agent/odoo-owner-base-wave1` at
+`/home/nhanjs/projects/core3-worktrees/odoo-owner-base-wave1`, last commit
+`5ae2cdd1`, with six-file attachment work dirty and uncommitted. The QA context
+is `agent/base-contact-attachments-qa` at `42d189da`, ledger-only. Takeover is
+unsafe; the original owner must finish, test, and commit before QA. Base remains
+pending and no replacement dispatch was made.

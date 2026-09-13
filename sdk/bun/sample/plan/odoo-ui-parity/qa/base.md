@@ -165,3 +165,17 @@ and permission boundaries passed. The candidate remains `pending-qa`.
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-BASE-HIERARCHY-WAVE-20260913-R2` → `QA-BASE-HIERARCHY-WAVE-20260913-R2` | existing `agent/base-contact-attachments-qa` in `/home/nhanjs/projects/core3-worktrees/base-contact-attachments-qa` | Contact company hierarchy persistence, company/role boundaries, cycle/duplicate/invalid/missing/stale guards, and focused atomicity tests | dispatched in `42d189da`; awaiting self-contained product commit before QA |
+
+## Capacity recycle ownership update (2026-09-13)
+
+- Existing developer owner remains `agent/odoo-owner-base-wave1` in
+  `/home/nhanjs/projects/core3-worktrees/odoo-owner-base-wave1`, last commit
+  `5ae2cdd1`. Its six-file contact-attachment implementation is uncommitted;
+  takeover is unsafe and no replacement owner is authorized.
+- Existing QA context remains `agent/base-contact-attachments-qa` in
+  `/home/nhanjs/projects/core3-worktrees/base-contact-attachments-qa` at
+  `42d189da`, ledger-only. QA must wait for the original owner to finish,
+  test, and commit a self-contained candidate.
+- Dispatch status: **blocked on original owner completion**. Preserve the
+  dirty developer worktree and existing QA findings; resume coordination when
+  a committed candidate appears.
