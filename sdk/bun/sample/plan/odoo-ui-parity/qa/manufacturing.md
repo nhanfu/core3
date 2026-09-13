@@ -171,3 +171,20 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
   relations, quantity/state validation, company/permission scope, stale
   guards, and atomic no-partial-write tests. Candidate pending; existing
   ledgers and aggregate progress are preserved.
+## DEV/QA reconciliation — `DEV-MANUFACTURING-WAVE-20260913-R2` / `QA-MANUFACTURING-WAVE-20260913-R2`
+
+- The owner handoff `db8b6f4a` requested scrap/unbuild work, but authoritative
+  main already contains the implementation and parity history, including
+  `dd140fd1` (`feat(inventory): add scrap orders parity slice`) and the current
+  Manufacturing-owned contracts/tests. No duplicate owner product commit is
+  required.
+- QA event triggered/reconciled against the current implementation. Active
+  checkout command `bun test test/manufacturing_scrap_orders.integration.test.ts
+  test/manufacturing_unbuild_orders.integration.test.ts` passed **8 tests / 97
+  assertions**, covering page/API separation, Odoo action/menu/field contracts,
+  deterministic fixtures, create/edit/validate/unbuild, stale guards, and
+  completed-record deletion guards.
+- Disposition: **bounded QA pass; conditionally accepted**. Broader
+  Manufacturing blockers remain preserved: authenticated CRUD/actor and
+  restart evidence, paired Odoo visual comparison, Temporal/integration gates,
+  and complete module sign-off.
