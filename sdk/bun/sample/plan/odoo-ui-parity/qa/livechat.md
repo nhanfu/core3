@@ -71,6 +71,12 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 | LIVECHAT-BROWSER-001 | Authenticated Sessions list and detail side panel | Isolated runner `:4327`; desktop/mobile list and seeded Visitor A detail loaded without failed requests, page errors, or overflow; captures recorded above | pass for Core3 runtime; paired Odoo comparison and browser mutations remain open |
 | LIVECHAT-PERM-002 | Assigned operator session list/detail and transitions | Focused test proves assigned list exclusion and cross-operator close denial with unchanged row; detail and wait/resume/help/join denial remain untested | bounded pass for tested API contract; QA open |
 
+## R2 dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-LIVECHAT-WAVE-20260913-R2` → `QA-LIVECHAT-WAVE-20260913-R2` | existing `agent/livechat-next-wave` in `/home/nhanjs/projects/core3-worktrees/livechat-next-wave` | Assigned-operator wait/resume/help/join and session-detail permission transitions, with relation/version preservation and focused allowed/401/403/stale/missing/atomicity tests | dispatched in `8c4f7f9b`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
