@@ -9,6 +9,7 @@ components:
     statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Waiting For Me }, { value: Approved, label: Approved }, { value: Refused, label: Refused }, { value: Cancelled, label: Cancelled }]
     status_colors: { Draft: neutral, Submitted: amber, Approved: green, Refused: red, Cancelled: violet }
     header_actions:
+      - { id: edit_allocation_detail, label: Edit, variant: secondary, show_if: "row.state === 'Draft'" }
       - { id: submit_allocation_detail, label: Submit, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: approve_allocation_detail, label: Approve, variant: primary, show_if: "row.state === 'Submitted'" }
       - { id: refuse_allocation_detail, label: Refuse, variant: danger, show_if: "row.state === 'Submitted'" }

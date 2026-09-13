@@ -22,8 +22,9 @@ describe('Time Off allocation bulk actions', () => {
   test('bulk approval and refusal update only submitted allocations', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
-    await repository.run(`CREATE TABLE leave_allocations(id VARCHAR, state VARCHAR, row_version INTEGER);`);
-    await repository.run(`INSERT INTO leave_allocations VALUES ('submitted-1', 'Submitted', 1), ('submitted-2', 'Submitted', 1), ('draft-1', 'Draft', 1);`);
+    await repository.run(`CREATE TABLE leave_allocations(id VARCHAR, state VARCHAR, row_version INTEGER, employee_id VARCHAR, employee_name VARCHAR, leave_type_id VARCHAR, leave_type_name VARCHAR, days DECIMAL(18,3), date_from DATE, balance_applied BOOLEAN DEFAULT FALSE);`);
+    await repository.run(`CREATE TABLE leave_balances(id VARCHAR, employee_id VARCHAR, employee_name VARCHAR, leave_type_id VARCHAR, leave_type_name VARCHAR, year INTEGER, allocated_days DECIMAL(18,3), used_days DECIMAL(18,3), UNIQUE(employee_id, leave_type_id, year));`);
+    await repository.run(`INSERT INTO leave_allocations VALUES ('submitted-1', 'Submitted', 1, 'employee-1', 'Employee 1', 'type-1', 'Type 1', 2, '2026-01-01', FALSE), ('submitted-2', 'Submitted', 1, 'employee-2', 'Employee 2', 'type-1', 'Type 1', 3, '2026-01-01', FALSE), ('draft-1', 'Draft', 1, 'employee-3', 'Employee 3', 'type-1', 'Type 1', 1, '2026-01-01', FALSE);`);
     const actions = yaml('api/allocations.yaml').actions;
     const approve = actions.find((action: any) => action.id === 'approve_selected_allocations');
     const refuse = actions.find((action: any) => action.id === 'refuse_selected_allocations');

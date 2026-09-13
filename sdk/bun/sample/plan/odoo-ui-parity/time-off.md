@@ -816,3 +816,26 @@ Focused coverage is in `test/time_off_request_delete.integration.test.ts`:
 covering declaration, permission, persistence, missing records, non-Draft
 records, and stale-row rejection. This isolated branch does not alter
 aggregate progress or merge state.
+
+## Allocation and balance persistence gate (2026-09-13)
+
+The next concrete persistence gate closes the missing relationship between
+approved allocations and `leave_balances`. Migration `0.0.19` adds the
+nullable DuckDB-compatible `leave_allocations.balance_applied` marker and an
+idempotent balance lookup index. Existing approved fixtures are marked as
+already represented by their seeded balances; newly approved allocations
+atomically create a missing balance row when needed, add their days once, and
+mark the allocation applied. Bulk approval uses the same invariant. A Draft
+allocation now has a manager-only edit form with active-type, positive-day,
+valid-date, duplicate-name, and row-version guards.
+
+Regression coverage is in `test/time_off_balance_persistence.integration.test.ts`
+and the allocation workflow/bulk tests. It proves Draft create/edit,
+invalid-input and stale rejection, approval balance increment, repeated
+approval protection, request Draft -> Submitted -> Approved balance
+recalculation, migration replay, and file-backed close/reopen persistence.
+The full Time Off suite passes 53 tests and 550 assertions; audit passes with
+647 pages, 662 routes, and 1112 datasources; frontend CSS/Vite build,
+TypeScript-focused ESLint, and `git diff --check` pass. Authenticated browser,
+paired-Odoo, repository-wide typecheck, and Temporal gates remain open and are
+not claimed by this bounded candidate.

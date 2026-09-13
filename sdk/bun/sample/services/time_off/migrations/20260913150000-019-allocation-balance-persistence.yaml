@@ -1,0 +1,15 @@
+version: 0.0.19
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE leave_allocations ADD COLUMN IF NOT EXISTS balance_applied BOOLEAN;
+      UPDATE leave_allocations SET balance_applied = TRUE WHERE state = 'Approved' AND COALESCE(balance_applied, FALSE) = FALSE;
+      CREATE INDEX IF NOT EXISTS leave_allocations_balance_idx ON leave_allocations(employee_id, leave_type_id, date_from, state);
+    down: |
+      DROP INDEX IF EXISTS leave_allocations_balance_idx;
+      ALTER TABLE leave_allocations DROP COLUMN IF EXISTS balance_applied;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -27,8 +27,13 @@ workflow:
       to: Approved
       permission: time_off.manage
       mutation:
-        guards: [{ query: "SELECT id FROM leave_allocations WHERE id = :id AND row_version = :expected_row_version AND state = 'Submitted'", status: 409, code: INVALID_TRANSITION, message: Only submitted allocations can be approved }]
-        steps: [{ query: "UPDATE leave_allocations SET state = 'Approved', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, message: Allocation was changed by another user. Reload it before approving. }]
+        guards:
+          - { query: "SELECT id FROM leave_allocations WHERE id = :id AND row_version = :expected_row_version AND state = 'Submitted' AND COALESCE(balance_applied, FALSE) = FALSE", status: 409, code: INVALID_TRANSITION, message: Only submitted allocations without applied balance can be approved }
+          - { query: "SELECT 1 AS ok FROM leave_types WHERE id = (SELECT leave_type_id FROM leave_allocations WHERE id = :id) AND state = 'Active'", status: 422, code: TIME_OFF_ALLOCATION_TYPE_INVALID, message: Select an active Time Off Type. }
+        steps:
+          - query: "INSERT INTO leave_balances(id, employee_id, employee_name, leave_type_id, leave_type_name, year, allocated_days, used_days) SELECT 'leave-balance-' || employee_id || '-' || leave_type_id || '-' || CAST(EXTRACT(YEAR FROM date_from) AS INTEGER), employee_id, employee_name, leave_type_id, leave_type_name, CAST(EXTRACT(YEAR FROM date_from) AS INTEGER), 0, 0 FROM leave_allocations WHERE id = :id ON CONFLICT(employee_id, leave_type_id, year) DO NOTHING"
+          - query: "UPDATE leave_balances SET allocated_days = allocated_days + (SELECT days FROM leave_allocations WHERE id = :id) WHERE employee_id = (SELECT employee_id FROM leave_allocations WHERE id = :id) AND leave_type_id = (SELECT leave_type_id FROM leave_allocations WHERE id = :id) AND year = EXTRACT(YEAR FROM (SELECT date_from FROM leave_allocations WHERE id = :id))"
+          - { query: "UPDATE leave_allocations SET state = 'Approved', balance_applied = TRUE, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version AND state = 'Submitted' AND COALESCE(balance_applied, FALSE) = FALSE", expect_changed: true, status: 409, message: Allocation was changed by another user. Reload it before approving. }
         result: { query: "SELECT * FROM leave_allocations WHERE id = :id" }
     - id: refuse
       from: [Submitted]

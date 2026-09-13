@@ -179,18 +179,25 @@ describe('Time Off Odoo view navigation', () => {
 
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
+    await repository.run(`CREATE TABLE leave_types(id VARCHAR PRIMARY KEY, name VARCHAR, state VARCHAR);`);
+    await repository.run(`CREATE TABLE leave_balances(id VARCHAR PRIMARY KEY, employee_id VARCHAR, employee_name VARCHAR, leave_type_id VARCHAR, leave_type_name VARCHAR, year INTEGER, allocated_days DECIMAL(18,3), used_days DECIMAL(18,3), UNIQUE(employee_id, leave_type_id, year));`);
+    await repository.run("INSERT INTO leave_types VALUES ('leave-type-annual', 'Annual Leave', 'Active')");
+    await repository.run("INSERT INTO leave_balances VALUES ('balance-test', 'employee-1', 'Admin User', 'leave-type-annual', 'Annual Leave', 2026, 10, 0)");
     await repository.run(`CREATE TABLE leave_allocations(
       id VARCHAR PRIMARY KEY, name VARCHAR, employee_id VARCHAR, employee_name VARCHAR,
       leave_type_id VARCHAR, leave_type_name VARCHAR, days DECIMAL(18,3), date_from DATE,
-      date_to DATE, state VARCHAR, reason VARCHAR, row_version BIGINT DEFAULT 1
+      date_to DATE, state VARCHAR, reason VARCHAR, row_version BIGINT DEFAULT 1,
+      balance_applied BOOLEAN DEFAULT FALSE
     );`);
     const submit = workflow.transitions.find((transition: any) => transition.id === 'submit').mutation;
     const approve = workflow.transitions.find((transition: any) => transition.id === 'approve').mutation;
-    await repository.run("INSERT INTO leave_allocations VALUES ('allocation-test', 'ALLOC/TEST', 'employee-1', 'Admin User', 'leave-type-annual', 'Annual Leave', 5, '2026-01-15', '2026-01-19', 'Draft', 'Test', 1)");
+    await repository.run("INSERT INTO leave_allocations VALUES ('allocation-test', 'ALLOC/TEST', 'employee-1', 'Admin User', 'leave-type-annual', 'Annual Leave', 5, '2026-01-15', '2026-01-19', 'Draft', 'Test', 1, FALSE)");
     await repository.executeMutation(submit, { id: 'allocation-test', expected_row_version: 1 });
     expect(await repository.query("SELECT state, row_version FROM leave_allocations WHERE id = 'allocation-test'")).toEqual([{ state: 'Submitted', row_version: 2 }]);
     await expect(repository.executeMutation(submit, { id: 'allocation-test', expected_row_version: 2 })).rejects.toMatchObject({ status: 409 });
     await repository.executeMutation(approve, { id: 'allocation-test', expected_row_version: 2 });
+    expect((await repository.query("SELECT allocated_days FROM leave_balances WHERE employee_id = 'employee-1' AND leave_type_id = 'leave-type-annual'")).at(0)).toMatchObject({ allocated_days: 15 });
+    expect((await repository.query("SELECT state, balance_applied FROM leave_allocations WHERE id = 'allocation-test'")).at(0)).toEqual({ state: 'Approved', balance_applied: true });
     await expect(repository.executeMutation(approve, { id: 'allocation-test', expected_row_version: 2 })).rejects.toMatchObject({ status: 409 });
     database.close();
   });
