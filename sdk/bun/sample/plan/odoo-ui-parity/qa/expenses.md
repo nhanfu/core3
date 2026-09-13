@@ -75,3 +75,14 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
 - Migration/restart persistence: pass for upgrade and replay fixture invariants
 - Desktop/mobile visual parity: route rendering pass; paired Odoo parity pending
 - Tester decision: conditional; fresh browser interaction, authenticated actor matrix, paired Odoo comparison, and clean repository lint remain open
+## 2026-09-13 coordinator dispatch — bounded receipt wave
+
+- Existing owner `agent/odoo-expenses-dev-next-20260913` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/odoo-expenses-dev-next-20260913`,
+  based at `887fa7fb`. Development event:
+  `DEV-EXPENSES-WAVE-20260913-R2`; QA event:
+  `QA-EXPENSES-WAVE-20260913-R2`; handoff commit: `be5afa3b`.
+- Scope is a bounded receipt-processing attempt/result contract with persisted
+  failure and retry/replay idempotency, ownership/permission guards, and
+  focused no-duplicate/no-partial-write tests. Candidate pending; aggregate
+  progress and unrelated edits are preserved.
