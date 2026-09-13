@@ -230,6 +230,61 @@ Reviewer handoff: retain the broader export/attachment/print/Odoo gates
 explicitly. Journal Items export is browser-verified; this repair wave adds
 Sales and Purchases export coverage below.
 
+## Bounded QA event: Payment Terms candidate `b98f9e80` (2026-09-13)
+
+- Candidate checkout: `b98f9e801995c6dd5308661b72209356af638cb5` in the paired
+  developer worktree `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-payment-transactions-20260910`.
+  The worktree was clean before and after QA. No implementation files or
+  `progress.md` were changed; screenshots remain outside Git under `/tmp`.
+- Focused contract suite: `bun test
+  ./sdk/bun/sample/test/accounting_payment_terms.integration.test.ts
+  --timeout 20000` — **3 passed, 47 assertions, 0 failures**. This covers
+  page/detail binding, deterministic list/detail/search/empty/not-found/
+  transport states, write permissions, company-aware CRUD, validation,
+  stale/missing guards, and atomic rejection.
+- Accounting regression suite: from `sdk/bun/sample`, `bun test
+  ./test/accounting_*.integration.test.ts --timeout 20000` — **44 passed,
+  578 assertions, 0 failures across 15 files**.
+- Static checks: `bun run audit` — **404 pages, 410 routes, 708 datasources,
+  passed**; `git diff --check HEAD^ HEAD` passed; the candidate worktree
+  remained clean. The repository has no lint script in this checkout, so no
+  lint result is claimed.
+- Runtime: started the exact paired checkout with
+  `PORT=4339 bun scripts/dev.ts --db=ddb --memory`; `/api/modules` returned
+  HTTP 200. The runner required the existing event mediator and used port
+  3011 because port 3010 was occupied.
+- Authenticated browser: admin `admin@tms.local` on Core3 at `http://localhost:3002`,
+  desktop `1440x900` and mobile `390x844`. The Payment Terms list rendered
+  eight seeded rows; the Immediate Payment row opened the bound detail route
+  `/accounting/payment-term-detail?id=immediate`, with Edit/Archive/Delete
+  actions. Mobile had no horizontal overflow and zero console errors. The
+  empty-result search interaction was not conclusively exercised because
+  filling the search field alone did not submit the query.
+- Browser CRUD finding: **fail**. Admin opened New and entered a valid term,
+  but Save returned HTTP 500 and left the modal open: `Conversion Error: Could
+  not convert string '' to BOOL`. The submitted payload contained
+  `early_discount: ""`; no created row or persistence/reload evidence exists.
+  Retrying with normal checkbox input still submitted the empty value.
+  Evidence: `/tmp/accounting-payment-terms-browser-create.png` and request /
+  console capture from the bounded run.
+- Permission boundary: **pass**. `fleet@tms.local` received `Requires
+  permission: accounting.read` and no Accounting rows rendered.
+- Browser artifacts: `/tmp/accounting-payment-terms-login.png`,
+  `/tmp/accounting-payment-terms-admin-detail.png`,
+  `/tmp/accounting-payment-terms-mobile.png`, and
+  `/tmp/accounting-payment-terms-browser-create.png`; all are outside Git.
+- Odoo comparison: not run in this bounded event; no fresh authenticated Odoo
+  Payment Terms comparison was available.
+
+### Bounded verdict — **FAIL / not ready for reviewer reconciliation**
+
+Contract and regression tests pass, but authenticated admin create is broken
+by the empty boolean serialization and therefore persistence, edit, archive,
+restore, delete, and browser CRUD sign-off are withheld. The developer must
+normalize unchecked boolean form values (including `early_discount`) before a
+new `merge-candidate` QA event. Broader paired Odoo comparison and full
+Accounting export/attachment/print gates also remain open.
+
 ## Bounded QA event: Sales and Purchases exports (2026-09-13)
 
 - Trigger: `merge-candidate` Accounting repair wave.
@@ -281,3 +336,71 @@ Sales and Purchases export coverage below.
 Lifecycle decision: **stalled** after repeated unchanged polls and escalation
 `a8a6bf33`; handoff status recorded in `e3bea965`. Partial Payment Terms files
 remain preserved; QA was not triggered.
+
+## Bounded QA retest: Payment Terms repair `5914d094` (2026-09-13)
+
+- Candidate checkout: `5914d094a7abb301723b3db5f52669a9fbffbfa4` in the
+  existing paired worktree
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-payment-transactions-20260910`.
+  The worktree was clean before and after testing. No implementation files or
+  `progress.md` were modified; screenshots remain outside Git under `/tmp`.
+- Focused retest: `bun test ./test/accounting_payment_terms.integration.test.ts
+  --timeout 20000` from `sdk/bun/sample` — **3 passed, 51 assertions, 0
+  failures**. This includes the repaired blank-boolean path plus page/detail
+  binding, list/detail/search/empty/not-found/transport states, permissions,
+  company-aware CRUD, validation, stale/missing guards, and atomic rejection.
+- Full Accounting suite: `bun test ./test/accounting_*.integration.test.ts
+  --timeout 20000` — **44 passed, 582 assertions, 0 failures across 15
+  files**.
+- Static/runtime gates: `bun run audit` — **404 pages, 410 routes, 708
+  datasources, passed**; `git diff --check HEAD^ HEAD` passed; candidate
+  worktree remained clean. No lint script exists in this checkout, so lint is
+  not claimed. The existing module runner started from this worktree with
+  `PORT=4339 bun scripts/dev.ts --db=ddb --memory`; `/api/modules` returned
+  HTTP 200.
+- Authenticated browser: admin `admin@tms.local` on Core3, desktop
+  `1440x900`. The exact prior failure was retested by leaving Early Payment
+  Discount blank: create returned HTTP 200, no conversion error or console
+  error, and the new row appeared in the list. The submitted blank boolean no
+  longer caused HTTP 500.
+- Browser CRUD/persistence: the created row was opened at the bound detail
+  route, edited, reloaded through the list, archived, restored, and deleted.
+  Mutation responses were `[200, 200, 200, 200, 404]`; the final 404 was the
+  expected missing-detail response after deletion, and the deleted row was
+  absent after returning to the list. No unexpected browser errors occurred;
+  the expected post-delete 404 is retained as missing-record guard evidence.
+- Browser visual/permission evidence: prior authenticated mobile capture and
+  no-overflow evidence remain valid for the unchanged renderer; the prior
+  Fleet-user boundary returned `Requires permission: accounting.read` with no
+  rows. New screenshots are outside Git at
+  `/tmp/accounting-payment-terms-repair-create-desktop.png` and
+  `/tmp/accounting-payment-terms-repair-archived.png`.
+- Odoo comparison: not run in this bounded retest; broader Accounting export,
+  attachment, print, and paired Odoo comparison gates remain outside this
+  candidate.
+
+### Bounded verdict — **PASS for the Payment Terms repair; ready for reviewer reconciliation**
+
+The prior blank `early_discount` string-to-BOOL failure is fixed, and the
+bounded Payment Terms functional/browser lifecycle, guards, permissions,
+atomicity, focused suite, full Accounting suite, audit, and clean-worktree
+gates pass. Reviewer reconciliation is permitted for this candidate only;
+this does not sign off the broader Accounting module gates listed above.
+
+## 2026-09-13 coordinator reconciliation — Payment Terms `b98f9e80` + `5914d094`
+
+- The QA evidence is accepted for the bounded Payment Terms behavior: focused
+  `3 tests / 51 assertions`, Accounting regression `44 tests / 582 assertions`,
+  audit `404 pages / 410 routes / 708 datasources`, authenticated create/edit/
+  persistence/archive/restore/delete, permission and atomicity guards, and the
+  blank `early_discount` create path all pass.
+- Product integration was **not cherry-picked**. The active branch already
+  contains the Payment Terms implementation from the earlier `00501125`
+  lineage, and `b98f9e80` is a parallel contract that conflicts in the list/
+  detail API and page/test files. Blindly selecting either side would discard
+  active fields or guards. The active client already serializes unchecked
+  checkbox values; its current focused suite passes `3 tests / 43 assertions`.
+- This is a bounded reconciliation of evidence, not a duplicate product merge
+  or Accounting module sign-off. Broader export, attachment, print, and fresh
+  paired-Odoo comparison gates remain open. The owner worktree and its partial/
+  historical files remain preserved.

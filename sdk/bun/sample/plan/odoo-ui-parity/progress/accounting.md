@@ -33,6 +33,8 @@ Owner batch: bank statement attachment workflow (pending verification)
 | QA-1 candidate browser verification | `bun run agent:module -- accounting --port=4331`; authenticated Playwright | Admin desktop/mobile both exposed Export in the list utility menu and downloaded a valid 4,453-byte XLSX; Journal Items remained `1-4 / 4` with `INV/2026/0001` after reload; Fleet user received `Requires permission: accounting.read`; zero browser/request errors and no overflow | pass for candidate slice; broader Accounting sign-off remains open |
 | Journal Items export repair candidate | `99a8f86f`; focused client/export checks plus conditional browser evidence | DOM-attached anchor and deferred cleanup pass; desktop/mobile Journal Items rendered four rows without overflow; XLSX browser download event was not independently captured in this candidate event | conditional; broader Accounting export/attachment/print and Odoo gates remain open |
 
+| Payment Terms bounded reconciliation | `b98f9e80` + `5914d094`; QA candidate evidence and active-branch verification | Candidate QA passes focused `3/51`, Accounting `44/582`, audit `404/410/708`, authenticated CRUD lifecycle, permissions, guards, atomicity, and blank-checkbox create; active branch already owns the earlier compatible slice and its focused suite passes `3/43` | reconciled without duplicate merge; broader export/attachment/print/Odoo gates remain open |
+
 ## Remaining gates
 
 - Preserve the verified runtime repair and expand the authenticated browser matrix across the remaining accounting routes.
