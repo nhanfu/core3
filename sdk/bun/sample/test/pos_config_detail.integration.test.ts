@@ -28,6 +28,7 @@ describe('POS configuration detail edit parity', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'pos_config_detail_test_migrations', ['schema', 'data']);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'pos_config_detail_test_migrations', ['schema', 'data']);
     const api = yaml('api/pos-config-detail.yaml');
     const source = api.datasources[0];
     const edit = api.actions.find((candidate: any) => candidate.id === 'edit_pos_config');
@@ -40,6 +41,13 @@ describe('POS configuration detail edit parity', () => {
     await expect(repository.executeMutation(edit.mutation, {
       id: 'pos-config-restaurant', expected_row_version: 1, values: { name: 'missing', currency: '' },
     })).rejects.toMatchObject({ status: 422, code: 'POS_CONFIG_CURRENCY_REQUIRED' });
+    const create = yaml('api/pos-configs.yaml').actions.find((candidate: any) => candidate.id === 'create_pos_config');
+    await repository.executeMutation(create.mutation, {
+      id: 'pos-config-evening', values: { name: 'Evening Shop', currency: 'USD' },
+    });
+    await expect(repository.executeMutation(edit.mutation, {
+      id: 'pos-config-main', expected_row_version: 1, values: { name: 'Evening Shop', currency: 'USD' },
+    })).rejects.toMatchObject({ status: 409, code: 'POS_CONFIG_NAME_EXISTS' });
 
     const changed = await repository.executeMutation(edit.mutation, {
       id: 'pos-config-restaurant', expected_row_version: 1,
