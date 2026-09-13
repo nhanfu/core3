@@ -1,5 +1,18 @@
 # ecommerce QA ledger
 
+## Conditional review handoff — exact candidate `39ab71f` (2026-09-13)
+
+- Private product/pricelist/order/pricelist-rule permission contracts: **PASS**,
+  1 test / 25 assertions covering exact `ecommerce.read` plus 401/403 states.
+- Audit (659/668/1,134), full CSS, frontend build, and diff-check passed.
+- Conditional blockers preserved: repository ESLint has two unrelated Website
+  errors; candidate browser runtime returned 503 and no candidate browser/actor
+  evidence was obtained. Odoo `website_sale` is missing and `/shop` returns
+  404, so paired comparison remains blocked.
+
+Disposition: bounded permission-contract slice integrated conditionally; retain
+unsigned-off eCommerce module status and all browser/Odoo/actor gates.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.

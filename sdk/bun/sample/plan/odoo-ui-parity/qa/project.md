@@ -1,5 +1,21 @@
 # project QA ledger
 
+## Conditional review handoff — exact candidate `35199401` (2026-09-13)
+
+- Dashboard-to-Timesheets navigation contract: **PASS**. Project dashboard
+  rows bind single- and double-click to `/timesheets/detail`, require
+  `timesheets.read`, pass `view_scope: project_dashboard`, and retain the
+  declared side-panel form page.
+- Focused/regression suites, audit (659/668/1,136), Project CSS build, and
+  diff-check passed.
+- Blockers preserved: candidate backend readiness returned HTTP 503, so
+  authenticated browser/reload/restart evidence was unavailable; Playwright/
+  js_repl was unavailable; paired Odoo comparison remains pending.
+
+Disposition: bounded Project navigation change integrated conditionally. Keep
+broader Project CRUD, actor, restart, and Odoo gates open; no full module or
+aggregate sign-off.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.
