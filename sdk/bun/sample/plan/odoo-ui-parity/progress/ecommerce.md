@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: 40aee3ed (DEV-4 Sales handoff outbox)
+Candidate commit: `d9ea8e3c` (integrated from product `717cc3e8`; QA evidence `107e5a43`)
 
 ## Current state
 
@@ -26,6 +26,8 @@ and ownership gates are still incomplete; no full parity claim is made here.
   success or failure. The source link and line IDs make retries idempotent.
 - Focused suite: `bun test ./test/ecommerce_sales_handoff_consumer.integration.test.ts ./test/ecommerce_checkout.integration.test.ts` —
   14 passed, 69 assertions, 0 failures.
+- QA rerun confirms the focused suite passes with `--timeout 20000`; the default 5-second timeout fails the real local import test because it takes about 12.6 seconds. Audit and `git diff --check` pass. Repository lint has two unchanged baseline errors in `test/website_public.integration.test.ts`; the full regression was stopped before completion after unrelated timeout/stale-record failures, so no full-regression pass is claimed.
+- QA found no new authenticated browser or paired Odoo evidence for this Sales-only candidate. Existing Core3 checkout captures remain applicable; paired Odoo remains blocked by missing `website_sale` (`/shop` HTTP 404). QA remains bounded and unsigned off.
 - Remaining gates: authenticated actor/company matrix, external payment/delivery
   certification, paired Odoo comparison, and central review/merge.
 

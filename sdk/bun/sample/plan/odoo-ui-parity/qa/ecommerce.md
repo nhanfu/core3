@@ -26,7 +26,21 @@ QA state: qa-in-progress
 QA slot: wave-3 ecommerce assignment (one QA mapped to up to three developers)
 Module owner: ecommerce module owner
 Verification trigger: feature-complete
-Candidate commit: `40aee3ed` (DEV-4 Sales handoff outbox; prior candidate evidence remains in history)
+Candidate commit: `d9ea8e3c` (integrated from product `717cc3e8`; QA evidence `107e5a43`)
+
+## DEV-4 bounded QA (2026-09-13, candidate `717cc3e8518554b5a3424648132679428a13b2c4`)
+
+- Candidate identity verified in `agent/odoo-ecommerce-dev4-sales-handoff`; the user-supplied `/agent/` path segment is not a registered filesystem path.
+- Focused command with the default timeout: **13 passed, 1 failed, 64 assertions**. The failure was the real local import test timing out at 5,000 ms.
+- Focused rerun with `--timeout 20000`: **14 passed, 69 assertions, 0 failures**. The real local import took 12,552 ms, so default-timeout reproducibility remains a finding.
+- Sales polling/claim/ack: pass. The consumer polls pending envelopes, does not call Sales after a stale claim, acknowledges only after a successful claim, records failure only after a successful claim, and imports one source-linked order and line idempotently on a repeated poll.
+- YAML cross-module permissions: pass at contract level. Sales import order/line actions use `orders.write`, and the consumer calls declared eCommerce/Sales service operations. No authenticated HTTP actor/company matrix was established.
+- Audit: pass — `bun run audit`: 659 pages, 668 routes, 1134 datasources. `git diff --check 717cc3e8^ 717cc3e8`: pass.
+- Full regression: **not completed**; stopped at user request after partial execution. The partial run included eCommerce checkout passing, but also unrelated baseline failures/timeouts in Spreadsheet dashboard Share, Purchase Pricelists, Employees Settings, Purchase Units & Packagings, Live Chat Expertise, Accounting Sales, and Accounting Bills Analysis. No full-regression pass is claimed.
+- Lint: fail — two `no-unsafe-optional-chaining` errors in unchanged `test/website_public.integration.test.ts` lines 31 and 33; neither file nor line is in this candidate.
+- Authenticated checkout/browser: prior 2026-09-13 Core3 evidence remains applicable to the unchanged checkout surface: desktop 1440x900 and mobile 390x844 Shop → Cart → Checkout captures, successful desktop Confirm Order, and no console/page/request failures under `/tmp/core3-odoo-parity/ecommerce-checkout-20260913/`. No new browser capture was produced because the interactive Playwright kernel was unavailable.
+- Paired Odoo: blocked. Authenticated Odoo had no Website/eCommerce launcher app and `/shop` returned HTTP 404; no `website_sale` reference database was available.
+ - QA decision: **bounded slice not signed off**. Focused behavior passes only with the explicit timeout override; default focused execution, full regression, lint cleanliness, authenticated actor/company coverage, and paired Odoo evidence remain blockers.
 
 ## DEV-4 bounded slice (2026-09-13)
 
@@ -39,7 +53,7 @@ Candidate commit: `40aee3ed` (DEV-4 Sales handoff outbox; prior candidate eviden
   `Succeeded` or `Failed`.
 - Focused verification: `bun test ./test/ecommerce_checkout.integration.test.ts`
   — 11 passed, 59 assertions, 0 failures.
-- Integrated commit: `40aee3ed`.
+ - Integrated commit: `d9ea8e3c` (product source `717cc3e8`; QA source `107e5a43`).
 - Sales consumer verification: `bun test ./test/ecommerce_sales_handoff_consumer.integration.test.ts` —
   3 tests, 10 assertions; real Sales migrations/YAML mutations create one
   source-linked order and line, repeated polling remains idempotent, and a stale
