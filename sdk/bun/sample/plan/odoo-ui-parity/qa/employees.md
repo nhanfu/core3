@@ -246,3 +246,7 @@ mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-EMPLOYEES-DEPARTURE-WAVE-20260913-R2` → `QA-EMPLOYEES-DEPARTURE-WAVE-20260913-R2` | existing `agent/odoo-ui-employees-departure-reasons-20260910` in `/home/nhanjs/projects/core3-worktrees/odoo-ui-employees-departure-reasons-20260910` | Departure-reasons page/API CRUD, validation, archive/restore, company/role scope, stale/missing guards, and focused atomicity tests | dispatched in `860ca120`; awaiting self-contained product commit before QA |
+
+Lifecycle decision: **stalled** after repeated unchanged polls and escalation
+`a722470c`; handoff status recorded in `7ebb3f68`. Partial product files remain
+preserved; QA was not triggered.
