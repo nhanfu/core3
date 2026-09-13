@@ -19,9 +19,25 @@ workflow:
       permission: pos.write
       mutation:
         guards:
+          - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+            status: 401
+            code: POS_ORDER_UNAUTHENTICATED
+            message: Sign in before changing a POS order.
+          - query: "SELECT id FROM pos_orders WHERE id = :id"
+            status: 404
+            code: POS_ORDER_NOT_FOUND
+            message: POS order not found.
+          - query: "SELECT id FROM pos_orders WHERE id = :id AND company = :current_company_name"
+            status: 403
+            code: POS_ORDER_COMPANY_FORBIDDEN
+            message: POS order belongs to another company.
+          - query: "SELECT id FROM pos_orders WHERE id = :id AND row_version = :expected_row_version"
+            status: 409
+            code: POS_ORDER_STALE
+            message: POS order changed; reload before changing status.
           - query: "SELECT id FROM pos_orders WHERE id = :id AND state IN ('New', 'Paid')"
             status: 409
             message: Only open POS orders can be cancelled
         steps:
-          - query: "UPDATE pos_orders SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id"
+          - query: "UPDATE pos_orders SET state = 'Cancelled', actor_id = :current_user_id, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
         result: { query: "SELECT * FROM pos_orders WHERE id = :id" }

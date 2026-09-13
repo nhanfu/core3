@@ -119,6 +119,22 @@ actions:
     mutation:
       generated: [payment_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before registering a POS payment.
+        - query: "SELECT id FROM pos_orders WHERE id = :id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before registering a payment.
         - query: "SELECT id FROM pos_orders WHERE id = :id AND state IN ('New', 'Paid')"
           status: 409
           message: This POS order cannot receive a payment
@@ -126,12 +142,13 @@ actions:
           status: 400
           message: Payment must be positive and cannot exceed the remaining balance
       steps:
-        - query: "INSERT INTO pos_payments(id, order_id, method, amount) VALUES(:payment_id, :id, COALESCE(:payment_method, 'Cash'), :payment_amount)"
-        - query: "UPDATE pos_orders SET amount_paid = amount_paid + CAST(:payment_amount AS DECIMAL(18,2)), payment_method = :payment_method, state = CASE WHEN amount_paid + CAST(:payment_amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END, row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO pos_payments(id, order_id, method, amount, company, actor_id) SELECT :payment_id, :id, COALESCE(:payment_method, 'Cash'), CAST(:payment_amount AS DECIMAL(18,2)), company, :current_user_id FROM pos_orders WHERE id = :id AND company = :current_company_name"
+        - query: "UPDATE pos_orders SET amount_paid = amount_paid + CAST(:payment_amount AS DECIMAL(18,2)), payment_method = :payment_method, actor_id = :current_user_id, state = CASE WHEN amount_paid + CAST(:payment_amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
       result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
     fields:
       - { field: payment_amount, label: Payment amount, type: money, decimals: 2, required: true }
       - { field: payment_method, label: Payment method, type: select, options: [Cash, Bank, Card, Other], required: true }
+      - { field: expected_row_version, label: Expected version, type: number, required: true }
   - id: cancel_pos_order_detail
     type: server
     permission: pos.write

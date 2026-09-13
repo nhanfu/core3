@@ -9,11 +9,27 @@ workflow:
   status_query: SELECT state AS status FROM pos_sessions WHERE id = ?
   default_mutation:
     guards:
+      - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+        status: 401
+        code: POS_SESSION_UNAUTHENTICATED
+        message: Sign in before changing a POS session.
+      - query: "SELECT id FROM pos_sessions WHERE id = :id"
+        status: 404
+        code: POS_SESSION_NOT_FOUND
+        message: POS session not found.
+      - query: "SELECT id FROM pos_sessions WHERE id = :id AND company = :current_company_name"
+        status: 403
+        code: POS_SESSION_COMPANY_FORBIDDEN
+        message: POS session belongs to another company.
+      - query: "SELECT id FROM pos_sessions WHERE id = :id AND row_version = :expected_row_version"
+        status: 409
+        code: POS_SESSION_STALE
+        message: POS session changed; reload before changing status.
       - query: "SELECT id FROM pos_sessions WHERE id = :id AND state = :current_status"
         status: 409
         message: POS session changed; refresh and try again
     steps:
-      - query: "UPDATE pos_sessions SET state = :target_status, row_version = row_version + 1 WHERE id = :id"
+      - query: "UPDATE pos_sessions SET state = :target_status, actor_id = :current_user_id, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
     result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }
   states:
     - { id: Opening Control, label: Opening Control, color: neutral }
@@ -26,16 +42,26 @@ workflow:
       to: In Progress
       permission: pos.write
       mutation:
+        guards:
+          - { query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL", status: 401, code: POS_SESSION_UNAUTHENTICATED, message: Sign in before changing a POS session. }
+          - { query: "SELECT id FROM pos_sessions WHERE id = :id", status: 404, code: POS_SESSION_NOT_FOUND, message: POS session not found. }
+          - { query: "SELECT id FROM pos_sessions WHERE id = :id AND company = :current_company_name", status: 403, code: POS_SESSION_COMPANY_FORBIDDEN, message: POS session belongs to another company. }
+          - { query: "SELECT id FROM pos_sessions WHERE id = :id AND row_version = :expected_row_version", status: 409, code: POS_SESSION_STALE, message: POS session changed; reload before opening. }
         steps:
-          - query: "UPDATE pos_sessions SET state = 'In Progress', opened_at = COALESCE(opened_at, CURRENT_TIMESTAMP), row_version = row_version + 1 WHERE id = :id"
+          - query: "UPDATE pos_sessions SET state = 'In Progress', opened_at = COALESCE(opened_at, CURRENT_TIMESTAMP), actor_id = :current_user_id, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
         result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }
     - id: start_closing
       from: [In Progress]
       to: Closing Control
       permission: pos.write
       mutation:
+        guards:
+          - { query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL", status: 401, code: POS_SESSION_UNAUTHENTICATED, message: Sign in before changing a POS session. }
+          - { query: "SELECT id FROM pos_sessions WHERE id = :id", status: 404, code: POS_SESSION_NOT_FOUND, message: POS session not found. }
+          - { query: "SELECT id FROM pos_sessions WHERE id = :id AND company = :current_company_name", status: 403, code: POS_SESSION_COMPANY_FORBIDDEN, message: POS session belongs to another company. }
+          - { query: "SELECT id FROM pos_sessions WHERE id = :id AND row_version = :expected_row_version", status: 409, code: POS_SESSION_STALE, message: POS session changed; reload before closing. }
         steps:
-          - query: "UPDATE pos_sessions SET state = 'Closing Control', row_version = row_version + 1 WHERE id = :id"
+          - query: "UPDATE pos_sessions SET state = 'Closing Control', actor_id = :current_user_id, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
         result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }
     - id: close
       from: [Closing Control]
@@ -43,6 +69,9 @@ workflow:
       permission: pos.manage
       mutation:
         guards:
+          - { query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL", status: 401, code: POS_SESSION_UNAUTHENTICATED, message: Sign in before changing a POS session. }
+          - { query: "SELECT id FROM pos_sessions WHERE id = :id", status: 404, code: POS_SESSION_NOT_FOUND, message: POS session not found. }
+          - { query: "SELECT id FROM pos_sessions WHERE id = :id AND company = :current_company_name", status: 403, code: POS_SESSION_COMPANY_FORBIDDEN, message: POS session belongs to another company. }
           - query: "SELECT id FROM pos_sessions WHERE id = :id AND state = 'Closing Control'"
             status: 409
             message: Only closing sessions can be posted
@@ -59,6 +88,7 @@ workflow:
                 cash_difference = COALESCE(CAST(NULLIF(:closing_counted, '') AS DECIMAL(18,2)), CAST(:balance_end AS DECIMAL(18,2))) - COALESCE(expected_cash, balance_start),
                 discrepancy_reason = :discrepancy_reason,
                 closed_at = CURRENT_TIMESTAMP,
+                actor_id = :current_user_id,
                 row_version = row_version + 1
-              WHERE id = :id
+              WHERE id = :id AND company = :current_company_name
         result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }

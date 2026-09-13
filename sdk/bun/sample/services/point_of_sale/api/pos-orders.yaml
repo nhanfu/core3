@@ -8,6 +8,10 @@ datasources:
     single: false
     permission: pos.read
     workflow: pos_orders
+    error_states:
+      unauthorized: { status: 401, code: POS_ORDERS_UNAUTHORIZED, message: Sign in to view POS orders. }
+      forbidden: { status: 403, code: POS_ORDERS_FORBIDDEN, message: You do not have access to POS orders. }
+      transport_error: { status: 503, code: POS_ORDERS_UNAVAILABLE, message: POS orders are temporarily unavailable. }
     query: |
       SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name,
         o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid,
@@ -16,6 +20,7 @@ datasources:
       FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id
       WHERE (:q IS NULL OR o.name ILIKE '%' || :q || '%' OR o.partner_name ILIKE '%' || :q || '%')
         AND (:state IS NULL OR o.state = :state)
+        AND o.company = :current_company_name AND s.company = :current_company_name
       ORDER BY o.date_order DESC
 actions:
   - id: view_pos_order

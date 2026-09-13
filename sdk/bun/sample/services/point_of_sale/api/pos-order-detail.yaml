@@ -3,16 +3,17 @@ datasources:
   - id: pos_order_detail
     single: true
     permission: pos.read
-    query: "SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name, o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid, COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method, o.cashier_id, o.receipt_number, o.original_order_id, o.note, CAST(o.date_order AS VARCHAR) AS date_order FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :id"
+    error_states: { unauthorized: { status: 401, code: POS_ORDER_DETAIL_UNAUTHORIZED, message: Sign in to view this POS order. }, forbidden: { status: 403, code: POS_ORDER_DETAIL_FORBIDDEN, message: You do not have access to this POS order. }, not_found: { status: 404, code: POS_ORDER_NOT_FOUND, message: POS order not found. }, transport_error: { status: 503, code: POS_ORDER_DETAIL_UNAVAILABLE, message: POS order details are temporarily unavailable. } }
+    query: "SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name, o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid, COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method, o.cashier_id, o.actor_id, o.company, o.receipt_number, o.original_order_id, o.note, CAST(o.date_order AS VARCHAR) AS date_order FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :id AND o.company = :current_company_name AND s.company = :current_company_name"
   - id: pos_order_detail_lines
     single: false
     permission: pos.read
-    query: "SELECT id, order_id, product_name, quantity, price_unit, COALESCE(tax_rate, 0) AS tax_rate, COALESCE(discount, 0) AS discount, price_subtotal, COALESCE(price_tax, 0) AS price_tax, COALESCE(price_total, price_subtotal) AS price_total FROM pos_order_lines WHERE order_id = :id ORDER BY id"
+    query: "SELECT l.id, l.order_id, l.product_name, l.quantity, l.price_unit, COALESCE(l.tax_rate, 0) AS tax_rate, COALESCE(l.discount, 0) AS discount, l.price_subtotal, COALESCE(l.price_tax, 0) AS price_tax, COALESCE(l.price_total, l.price_subtotal) AS price_total FROM pos_order_lines l JOIN pos_orders o ON o.id = l.order_id WHERE l.order_id = :id AND o.company = :current_company_name ORDER BY l.id"
   - id: pos_order_detail_payments
     single: false
     permission: pos.read
-    query: "SELECT id, method, amount, state, CAST(payment_date AS VARCHAR) AS payment_date FROM pos_payments WHERE order_id = :id ORDER BY payment_date DESC"
+    query: "SELECT p.id, p.method, p.amount, p.state, p.actor_id, p.company, CAST(p.payment_date AS VARCHAR) AS payment_date FROM pos_payments p JOIN pos_orders o ON o.id = p.order_id WHERE p.order_id = :id AND p.company = :current_company_name AND o.company = :current_company_name ORDER BY p.payment_date DESC"
   - id: pos_order_operations
     single: false
     permission: pos.read
-    query: "SELECT operation_type, operation_id, expected_row_version, actor_id, CAST(created_at AS VARCHAR) AS created_at FROM pos_operations WHERE order_id = :id ORDER BY created_at DESC"
+    query: "SELECT operation_type, operation_id, expected_row_version, actor_id, CAST(created_at AS VARCHAR) AS created_at FROM pos_operations WHERE order_id = :id AND EXISTS (SELECT 1 FROM pos_orders o WHERE o.id = :id AND o.company = :current_company_name) ORDER BY created_at DESC"

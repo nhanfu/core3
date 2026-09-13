@@ -3,11 +3,12 @@ datasources:
   - id: pos_payment_detail
     single: true
     permission: pos.read
+    error_states: { unauthorized: { status: 401, code: POS_PAYMENT_DETAIL_UNAUTHORIZED, message: Sign in to view this POS payment. }, forbidden: { status: 403, code: POS_PAYMENT_DETAIL_FORBIDDEN, message: You do not have access to this POS payment. }, not_found: { status: 404, code: POS_PAYMENT_NOT_FOUND, message: POS payment not found. }, transport_error: { status: 503, code: POS_PAYMENT_DETAIL_UNAVAILABLE, message: POS payment details are temporarily unavailable. } }
     query: |
       SELECT p.id, p.amount, p.method, p.state,
         CAST(p.payment_date AS VARCHAR) AS payment_date,
-        o.name AS order_name, s.name AS session_name, s.currency AS currency
+        o.name AS order_name, s.name AS session_name, s.currency AS currency, p.company, p.actor_id
       FROM pos_payments p
       JOIN pos_orders o ON o.id = p.order_id
       JOIN pos_sessions s ON s.id = o.session_id
-      WHERE p.id = :id
+      WHERE p.id = :id AND p.company = :current_company_name AND o.company = :current_company_name AND s.company = :current_company_name

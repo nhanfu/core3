@@ -3,7 +3,11 @@ datasources:
   - id: pos_payments
     single: false
     permission: pos.read
-    query: "SELECT p.id, p.order_id, o.name AS order_name, p.method, p.amount, p.state, CAST(p.payment_date AS VARCHAR) AS payment_date FROM pos_payments p JOIN pos_orders o ON o.id = p.order_id ORDER BY p.payment_date DESC"
+    error_states:
+      unauthorized: { status: 401, code: POS_PAYMENTS_UNAUTHORIZED, message: Sign in to view POS payments. }
+      forbidden: { status: 403, code: POS_PAYMENTS_FORBIDDEN, message: You do not have access to POS payments. }
+      transport_error: { status: 503, code: POS_PAYMENTS_UNAVAILABLE, message: POS payments are temporarily unavailable. }
+    query: "SELECT p.id, p.order_id, o.name AS order_name, p.method, p.amount, p.state, p.actor_id, p.company, CAST(p.payment_date AS VARCHAR) AS payment_date FROM pos_payments p JOIN pos_orders o ON o.id = p.order_id WHERE p.company = :current_company_name AND o.company = :current_company_name ORDER BY p.payment_date DESC"
 actions:
   - id: view_pos_payment
     type: navigate

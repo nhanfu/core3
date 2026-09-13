@@ -1,0 +1,44 @@
+version: 0.0.44
+kind: schema
+description: POS actor and company boundaries for sessions, orders, and payments
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS company VARCHAR;
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS actor_id VARCHAR;
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS company VARCHAR;
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS actor_id VARCHAR;
+      ALTER TABLE pos_payments ADD COLUMN IF NOT EXISTS company VARCHAR;
+      ALTER TABLE pos_payments ADD COLUMN IF NOT EXISTS actor_id VARCHAR;
+      UPDATE pos_sessions SET company = COALESCE(company, 'Core3 Demo Company');
+      UPDATE pos_orders SET company = COALESCE(company, (SELECT s.company FROM pos_sessions s WHERE s.id = pos_orders.session_id), 'Core3 Demo Company');
+      UPDATE pos_payments SET company = COALESCE(company, (SELECT o.company FROM pos_orders o WHERE o.id = pos_payments.order_id), 'Core3 Demo Company');
+      CREATE INDEX IF NOT EXISTS idx_pos_sessions_company ON pos_sessions(company);
+      CREATE INDEX IF NOT EXISTS idx_pos_orders_company ON pos_orders(company);
+      CREATE INDEX IF NOT EXISTS idx_pos_payments_company ON pos_payments(company);
+      INSERT INTO pos_sessions(id, name, config, user_name, state, balance_start, company)
+      VALUES ('pos-session-r2-vietnam', 'POS/2026/09/13/VN01', 'Ho Chi Minh Shop', 'Vietnam Cashier', 'In Progress', 1000000, 'Core3 Vietnam Branch')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_orders(id, name, session_id, partner_name, state, amount_total, amount_paid, payment_method, company)
+      VALUES ('pos-order-r2-vietnam', 'POS/2026/09/13/VN01', 'pos-session-r2-vietnam', 'Vietnam Customer', 'Paid', 120000, 120000, 'Cash', 'Core3 Vietnam Branch')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_payments(id, order_id, method, amount, company)
+      VALUES ('pos-payment-r2-vietnam', 'pos-order-r2-vietnam', 'Cash', 120000, 'Core3 Vietnam Branch')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_payments WHERE id = 'pos-payment-r2-vietnam';
+      DELETE FROM pos_orders WHERE id = 'pos-order-r2-vietnam';
+      DELETE FROM pos_sessions WHERE id = 'pos-session-r2-vietnam';
+      DROP INDEX IF EXISTS idx_pos_payments_company;
+      DROP INDEX IF EXISTS idx_pos_orders_company;
+      DROP INDEX IF EXISTS idx_pos_sessions_company;
+      ALTER TABLE pos_payments DROP COLUMN IF EXISTS actor_id;
+      ALTER TABLE pos_payments DROP COLUMN IF EXISTS company;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS actor_id;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS company;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS actor_id;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS company;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

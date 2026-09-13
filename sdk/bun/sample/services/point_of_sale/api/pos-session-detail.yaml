@@ -4,8 +4,13 @@ datasources:
     single: true
     permission: pos.read
     workflow: pos_sessions
+    error_states:
+      unauthorized: { status: 401, code: POS_SESSION_DETAIL_UNAUTHORIZED, message: Sign in to view this POS session. }
+      forbidden: { status: 403, code: POS_SESSION_DETAIL_FORBIDDEN, message: You do not have access to this POS session. }
+      not_found: { status: 404, code: POS_SESSION_NOT_FOUND, message: POS session not found. }
+      transport_error: { status: 503, code: POS_SESSION_DETAIL_UNAVAILABLE, message: POS session details are temporarily unavailable. }
     query: |
-      SELECT s.id, s.row_version, s.name, s.config, s.user_name, s.state,
+      SELECT s.id, s.row_version, s.name, s.config, s.user_name, s.state, s.company, s.actor_id,
         s.currency, s.cashier_id,
         CAST(s.balance_start AS DOUBLE) AS balance_start,
         CAST(COALESCE(s.opening_counted, 0) AS DOUBLE) AS opening_counted,
@@ -18,38 +23,50 @@ datasources:
         (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id) AS order_count,
         CAST((SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders o WHERE o.session_id = s.id AND o.state = 'Paid') AS DOUBLE) AS total_paid,
         CAST((SELECT COALESCE(SUM(CASE WHEN m.movement_type = 'Cash In' THEN m.amount ELSE -m.amount END), 0) FROM pos_cash_movements m WHERE m.session_id = s.id) AS DOUBLE) AS net_cash_movements
-      FROM pos_sessions s WHERE s.id = :id
+      FROM pos_sessions s WHERE s.id = :id AND s.company = :current_company_name
 
   - id: pos_session_orders
     single: false
     permission: pos.read
+    error_states:
+      unauthorized: { status: 401, code: POS_SESSION_ORDERS_UNAUTHORIZED, message: Sign in to view session orders. }
+      forbidden: { status: 403, code: POS_SESSION_ORDERS_FORBIDDEN, message: You do not have access to session orders. }
+      transport_error: { status: 503, code: POS_SESSION_ORDERS_UNAVAILABLE, message: Session orders are temporarily unavailable. }
     query: |
       SELECT o.id, o.name, o.partner_name, o.state,
         CAST(o.amount_total AS DOUBLE) AS amount_total,
         CAST(o.amount_paid AS DOUBLE) AS amount_paid,
         o.payment_method, o.cashier_id,
         CAST(o.date_order AS VARCHAR) AS date_order
-      FROM pos_orders o WHERE o.session_id = :id
+      FROM pos_orders o WHERE o.session_id = :id AND o.company = :current_company_name
       ORDER BY o.date_order DESC
 
   - id: pos_session_cash_movements
     single: false
     permission: pos.read
+    error_states:
+      unauthorized: { status: 401, code: POS_SESSION_CASH_UNAUTHORIZED, message: Sign in to view cash movements. }
+      forbidden: { status: 403, code: POS_SESSION_CASH_FORBIDDEN, message: You do not have access to cash movements. }
+      transport_error: { status: 503, code: POS_SESSION_CASH_UNAVAILABLE, message: Cash movements are temporarily unavailable. }
     query: |
       SELECT id, movement_type,
         CAST(amount AS DOUBLE) AS amount,
         reason, cashier_id,
         CAST(created_at AS VARCHAR) AS created_at
-      FROM pos_cash_movements WHERE session_id = :id
+      FROM pos_cash_movements WHERE session_id = :id AND EXISTS (SELECT 1 FROM pos_sessions s WHERE s.id = :id AND s.company = :current_company_name)
       ORDER BY created_at DESC
 
   - id: pos_session_operations
     single: false
     permission: pos.read
+    error_states:
+      unauthorized: { status: 401, code: POS_SESSION_OPERATIONS_UNAUTHORIZED, message: Sign in to view session operations. }
+      forbidden: { status: 403, code: POS_SESSION_OPERATIONS_FORBIDDEN, message: You do not have access to session operations. }
+      transport_error: { status: 503, code: POS_SESSION_OPERATIONS_UNAVAILABLE, message: Session operations are temporarily unavailable. }
     query: |
       SELECT id, operation_type, operation_id, expected_row_version, actor_id,
         CAST(created_at AS VARCHAR) AS created_at
-      FROM pos_operations WHERE session_id = :id
+      FROM pos_operations WHERE session_id = :id AND EXISTS (SELECT 1 FROM pos_sessions s WHERE s.id = :id AND s.company = :current_company_name)
       ORDER BY created_at DESC
 
   - id: pos_session_detail_config_lookup
@@ -101,6 +118,18 @@ actions:
     mutation:
       generated: [movement_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_SESSION_UNAUTHENTICATED
+          message: Sign in before changing a POS session.
+        - query: "SELECT id FROM pos_sessions WHERE id = :id"
+          status: 404
+          code: POS_SESSION_NOT_FOUND
+          message: POS session not found.
+        - query: "SELECT id FROM pos_sessions WHERE id = :id AND company = :current_company_name"
+          status: 403
+          code: POS_SESSION_COMPANY_FORBIDDEN
+          message: POS session belongs to another company.
         - query: "SELECT id FROM pos_sessions WHERE id = :id AND state = 'In Progress'"
           status: 409
           message: Cash movements can only be added to sessions in progress
@@ -108,7 +137,7 @@ actions:
           status: 400
           message: Amount must be positive
       steps:
-        - query: "INSERT INTO pos_cash_movements(id, session_id, movement_type, amount, reason) VALUES(:movement_id, :id, :movement_type, CAST(:amount AS DECIMAL(18,2)), :reason)"
+        - query: "INSERT INTO pos_cash_movements(id, session_id, movement_type, amount, reason, cashier_id) VALUES(:movement_id, :id, :movement_type, CAST(:amount AS DECIMAL(18,2)), :reason, :current_user_name)"
       result: { query: "SELECT * FROM pos_cash_movements WHERE id = :movement_id" }
     fields:
       - { field: movement_type, label: Type, type: select, options: [Cash In, Cash Out], required: true }

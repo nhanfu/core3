@@ -8,13 +8,17 @@ datasources:
     single: false
     permission: pos.read
     workflow: pos_sessions
+    error_states:
+      unauthorized: { status: 401, code: POS_SESSIONS_UNAUTHORIZED, message: Sign in to view POS sessions. }
+      forbidden: { status: 403, code: POS_SESSIONS_FORBIDDEN, message: You do not have access to POS sessions. }
+      transport_error: { status: 503, code: POS_SESSIONS_UNAVAILABLE, message: POS sessions are temporarily unavailable. }
     query: |
       SELECT s.id, s.row_version, s.name, s.config, s.user_name, s.state, s.balance_start,
         s.balance_end, s.opening_counted, s.expected_cash, s.closing_counted, s.cash_difference,
         s.discrepancy_reason, CAST(s.opened_at AS VARCHAR) AS opened_at,
         CAST(s.closed_at AS VARCHAR) AS closed_at,
         (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id) AS order_count
-      FROM pos_sessions s ORDER BY s.opened_at DESC
+      FROM pos_sessions s WHERE s.company = :current_company_name ORDER BY s.opened_at DESC
   - id: pos_session_config_lookup
     single: false
     permission: pos.read
