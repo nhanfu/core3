@@ -148,3 +148,21 @@ Candidate commit: pending commit for refusal workflow repair
   authenticated refuse/reopen and reload QA.
 - Preserve restart and fresh authenticated Odoo comparison gates. Candidate
   remains blocked; no replacement owner or product merge was created.
+
+## QA retest disposition `ad1c528f`: blocked; same-owner numeric row-version repair (2026-09-13)
+
+- Live refusal now passes under `Core3 Demo Company`; the 39-test / 367-assertion
+  suite, guards, desktop/mobile rendering, build, audit, lint, and diff-check
+  remain green.
+- Critical defect `RECRUITMENT-REOPEN-001`: Restore sends
+  `expected_row_version` as VARCHAR, and DuckDB fails on `VARCHAR + INTEGER`.
+  The applicant remains Rejected/archived after the failed restore and reload.
+- Candidate `ad1c528f` remains held and must not be integrated. Repair is routed
+  to the existing owner/worktree
+  `agent/odoo-recruitment-reopen-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/odoo-recruitment-reopen-20260913`:
+  trace the action/runtime binding, serialize or cast the value numerically,
+  add refuse -> restore -> reload plus stale regression coverage, and return a
+  self-contained product commit before QA retest.
+- Preserve the file-backed restart and authenticated paired Odoo comparison
+  blockers. QA retest is not triggered until the repair candidate is submitted.

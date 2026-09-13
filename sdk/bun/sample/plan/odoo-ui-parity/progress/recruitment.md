@@ -51,3 +51,12 @@ persistence. Route fixture/company-context alignment to the existing owner
 `/home/nhanjs/projects/core3-worktrees/odoo-recruitment-reopen-20260913`, then
 rerun authenticated refusal/reopen and reload QA. Restart and paired Odoo
 remain open; no replacement or merge was made.
+
+## QA retest hold: `ad1c528f` (2026-09-13)
+
+Live refusal is fixed and verified, but Restore is blocked by
+`RECRUITMENT-REOPEN-001`: the UI/runtime binds `expected_row_version` as a
+VARCHAR and the reopen SQL attempts numeric addition. The same existing owner
+must submit a self-contained numeric serialization/cast repair with focused
+restore/reload and stale tests before `QA-RECRUITMENT-WAVE-20260913-R2` is
+triggered. Restart durability and authenticated Odoo comparison remain open.
