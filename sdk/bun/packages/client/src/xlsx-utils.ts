@@ -107,6 +107,11 @@ export function downloadXlsx(filename: string, workbook: Uint8Array): void {
   const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
   anchor.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => {
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }, 0);
 }

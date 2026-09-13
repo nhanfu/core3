@@ -1398,3 +1398,12 @@ downloads require `accounting.read` at
 Focused coverage uploads as an Accounting user, rejects the same upload for a
 read-only user, closes and reopens DuckDB, then downloads the original bytes.
 Import, print, and attachments on other Accounting routes remain open.
+
+## Journal Items export repair (2026-09-13)
+
+The shared ListView CSV/XLSX utilities now attach the download anchor to the
+document and defer object-URL cleanup, repairing the detached-anchor race
+without changing the page/API permission contract. Candidate static and test
+evidence passed; the bounded reviewer run did not independently capture the
+XLSX download event. Broader export, attachment, print, and paired Odoo gates
+remain open.

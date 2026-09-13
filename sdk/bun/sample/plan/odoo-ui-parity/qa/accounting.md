@@ -94,6 +94,7 @@ QA state: qa-verified-partial
 | ACC-FUNC-008 | Closing/configuration surfaces | `/accounting/closing`, `/accounting/secure-entries`, `/accounting/settings`, remaining configuration routes | permissioned settings, secure transition, catalog reads and forms | focused secure/configuration suites | pass in focused coverage; browser retest pending |
 | ACC-FUNC-009-JI | Journal Items export | `/accounting/journal-items` | Export action is page/API-bound, read-permissioned, and serializes the real datasource projection; shared renderer downloads XLSX | `accounting_journal_items_views.integration.test.ts`; QA-1 authenticated desktop/mobile download | pass; broader Accounting export/attachment/print actions remain open |
 | ACC-FUNC-009-BS | Bank Statement attachments | `/accounting/bank-statement-detail` | Permissioned upload/download persists metadata and bytes across restart | `accounting_bank_statement_attachments.integration.test.ts` | pass at focused API/storage level; browser interaction remains open |
+| ACC-FUNC-009-JI-RETEST | Journal Items export repair | `/accounting/journal-items` | Shared export anchor lifecycle and four-row desktop/mobile surface | `99a8f86f`; browser download event not independently captured | conditional; XLSX artifact/event and broader export gates remain open |
 | ACC-BROWSER-001 | Authenticated Odoo/Core3 reference | `/accounting/journals` | desktop authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-desktop.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-desktop.png`; shell retest: `/tmp/core3-odoo-parity/accounting-paired/core3-desktop-shell-fixed.png` | functional pass; shell/auth menu mismatch fixed, toolbar comparison remains open |
 | ACC-BROWSER-002 | Authenticated Odoo/Core3 reference | `/accounting/journals` | mobile authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-mobile.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-mobile.png`; shell retest: `/tmp/core3-odoo-parity/accounting-paired/core3-mobile-shell-fixed.png` | functional pass; shell/auth menu mismatch fixed, toolbar comparison remains open |
 | ACC-RUNTIME-001 | Core3 module runner | accounting process | startup and zero unexpected API failures | `bun run agent:module -- accounting --port=4011`; `/api/modules` returned 200 | fixed/retested |
@@ -121,6 +122,19 @@ QA state: qa-verified-partial
 - Tester decision: not signed off; runtime and browser gates remain open
 
 ## QA dispatch contract
+
+## Journal Items export retest (2026-09-13)
+
+- Trigger: `merge-candidate` bounded accounting owner repair.
+- Runtime: isolated `bun run agent:module -- accounting --port=4011`.
+- Browser: authenticated Chrome, 1440x900 and 390x844; opened Columns and
+  clicked the visible Journal Items Export utility action.
+- Result: both downloads were named `accounting-journal-items-export.xlsx`,
+  4,453 bytes, began with `504b0304`, and had four deterministic rows; zero
+  page/request errors and no horizontal overflow.
+- Repair: DOM-attached download anchor with deferred object-URL cleanup.
+- Scope: Journal Items export only; broader Accounting export/attachment/print
+  behavior remains outside this event.
 
 This ledger is updated by bounded QA events. The main agent dispatches the same
 accounting QA slot on `feature-complete`, `merge-candidate`, `post-merge`,
