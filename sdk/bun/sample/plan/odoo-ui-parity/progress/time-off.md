@@ -5,20 +5,17 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: `6300ab0a`
 
-## Current state
+## Bounded draft deletion slice
 
-The focused Time Off suite passes 47 tests across 18 files with 497 assertions.
-This branch advances request CRUD with permissioned deletion from the list and
-detail contracts. Only unchanged Draft requests can be deleted; the focused
-DuckDB test proves durable removal and deterministic 404/409 rejection for
-missing, non-Draft, and stale requests.
+Only unchanged Draft requests can be deleted from the list/detail contracts;
+missing, non-Draft, stale, and repeated deletes return deterministic guards.
+The candidate verifies explicit actor-role declarations and file-backed
+close/reopen migration persistence. Focused regression, audit, frontend build,
+and diff-check pass. No full-module parity claim is made.
 
-The candidate extends this with role declarations and file-backed restart
-persistence. Full actor boundaries, browser evidence, and paired Odoo remain
-open; no full parity claim is made.
+## Open gates
 
-## Candidate QA evidence
-
-- 49 focused tests / 509 assertions passed; audit and frontend build passed.
-- Live Core3 binding, browser tooling, paired Odoo, typecheck, and lint remain
-  blocked as recorded in the QA ledger.
+Live Core3 HTTP binding failed; Playwright/js_repl and authenticated candidate
+browser evidence are unavailable; paired Odoo desktop/mobile comparison,
+repository typecheck, and local lint remain open or blocked. Full actor,
+workflow/CRUD, and adapter coverage remain open.
