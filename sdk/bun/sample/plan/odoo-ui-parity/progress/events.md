@@ -4,7 +4,15 @@ Module owner: events module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Candidate commit: `f7a38e86`
+Candidate commit: `650be026a2849075ea1e2a3d6fcdedc897f0e1af`
+
+## Bounded QA result — 2026-09-13
+
+Candidate `650be026` was tested in `/home/nhanjs/projects/core3` without product-code changes. The attendee edit test passed 2/2 with 10 assertions, covering editable page/API ownership, persisted update and reload-source data, blank-name 422 `EVENT_ATTENDEE_NAME_REQUIRED`, missing-record 404 `EVENT_ATTENDEE_NOT_FOUND`, and stale-write 409 `STALE_RECORD`. The complete Events suite passed 84/84 tests with 618 assertions across 30 files.
+
+`bun run audit` passed (659 pages, 668 routes, 1,139 datasources), and `git diff 650be026^ 650be026 --check` passed. Repository lint is blocked by two non-Events `no-unsafe-optional-chaining` errors in `sample/test/website_public.integration.test.ts` lines 31 and 33. The candidate-specific full repository regression was stopped while still running and has no final result. No candidate-specific authenticated desktop/mobile browser captures or paired Odoo evidence were generated; prior 2026-09-12 artifacts are from candidate `f7a38e86` and remain un-attributed.
+
+QA decision remains not signed off. Evidence supports the bounded attendee-edit change and Events automated suite only; full regression completion, lint cleanup, authenticated responsive evidence, and paired Odoo comparison remain blockers.
 
 ## Current state
 

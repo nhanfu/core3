@@ -12,11 +12,23 @@ QA state: qa-in-progress
 QA slot: dispatchable events assignment (pending wave dispatch)
 Module owner: events module owner
 Verification trigger: feature-complete
-Candidate commit: `f7a38e86`
+Candidate commit: `650be026a2849075ea1e2a3d6fcdedc897f0e1af`
+
+## Bounded QA — candidate 650be026 (2026-09-13)
+
+- Exact candidate verified in `/home/nhanjs/projects/core3`; QA changed no product files.
+- `bun test ./test/events_attendee_edit.integration.test.ts --timeout 20000`: 2 passed, 0 failed, 10 assertions. Covers editable form/API ownership, persisted update and reload-source data, blank-name 422 `EVENT_ATTENDEE_NAME_REQUIRED`, missing-record 404 `EVENT_ATTENDEE_NOT_FOUND`, and stale-write 409 `STALE_RECORD`.
+- `bun test ./test/events*.integration.test.ts --timeout 20000`: 84 passed, 0 failed, 618 assertions across 30 files.
+- `bun test ./test --timeout 20000` was started but stopped while still running; no final result or pass count is claimed. The hanging test process was terminated by QA.
+- `bun run audit`: passed — 659 pages, 668 routes, 1,139 datasources; all discovered pages use supported shared components and routes.
+- `git diff 650be026^ 650be026 --check`: passed.
+- `bun run lint` from `sdk/bun`: failed on two non-Events errors in `sample/test/website_public.integration.test.ts` lines 31 and 33 (`no-unsafe-optional-chaining`); no Events lint error was reported.
+- No candidate-specific authenticated desktop/mobile browser captures or paired Odoo captures were generated in this bounded run. Existing 2026-09-12 artifacts belong to prior candidate `f7a38e86` and are not reattributed.
+- Decision: attendee edit and Events automated regression pass; QA remains not signed off due to incomplete full regression, red repository lint, and absent candidate-specific browser/Odoo evidence.
 
 ## Current regression evidence
 
-- Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.
+- Prior repository suite result predates candidate `650be026`; the candidate-specific rerun was interrupted and is recorded above.
 - Focused Events suite: `bun test ./test/events*.integration.test.ts --timeout 20000` — 82 passed, 0 failed, 608 assertions across 29 files.
 - Authenticated Core3 browser create flow: admin opened `/events`, created `QA Browser Event 20260912` with required name/start time, received a successful mutation, and saw the persisted row after refresh; no page errors, failed requests, or HTTP errors.
 - Artifact: `/tmp/core3-odoo-parity/events-create-desktop-20260912.png`.
@@ -49,7 +61,7 @@ Candidate commit: `f7a38e86`
 | EVENTS-WORKFLOW-003 | Attendee confirmation/cancellation lifecycle | `bun test ./test/events_registration_confirmation.integration.test.ts` — 4 tests; persisted `Unconfirmed → Registered → Attended`, cancellation, stale replay, missing-record, and deterministic migration assertions pass | pass |
 | EVENTS-FUNC-003 | Event edit, nullable datetime clear, and stale-row guard | Update returned 200 with row version increment; stale update returned 409 `STALE_RECORD` | pass |
 | EVENTS-FUNC-004 | Event delete and lifecycle safety guard | Eligible Draft delete returned 200; Published delete returned 409 `EVENT_NOT_DRAFT` | pass |
-| EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Current evidence covers focused contracts, lifecycle/registration probes, and the complete current 33-route matrix; paired Odoo and broader browser CRUD remain open | pending |
+| EVENTS-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Candidate attendee edit contracts pass; candidate-specific authenticated browser CRUD and paired Odoo evidence remain unavailable; full repository rerun was interrupted | pending |
 
 ## Bugs and retests
 
