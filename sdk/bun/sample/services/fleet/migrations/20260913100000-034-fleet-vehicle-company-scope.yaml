@@ -1,0 +1,17 @@
+version: 0.0.34
+kind: schema
+description: Add deterministic company scope to Fleet vehicles
+type:
+  postgres:
+    up: |
+      ALTER TABLE fleet_vehicles ADD COLUMN IF NOT EXISTS company_name VARCHAR DEFAULT 'Core3 Demo Company';
+      ALTER TABLE fleet_vehicles ALTER COLUMN company_name SET DEFAULT 'Core3 Demo Company';
+      UPDATE fleet_vehicles SET company_name = 'Core3 Demo Company' WHERE company_name IS NULL;
+      CREATE INDEX IF NOT EXISTS fleet_vehicles_company_idx ON fleet_vehicles(company_name, name, id);
+    down: |
+      DROP INDEX IF EXISTS fleet_vehicles_company_idx;
+      ALTER TABLE fleet_vehicles DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

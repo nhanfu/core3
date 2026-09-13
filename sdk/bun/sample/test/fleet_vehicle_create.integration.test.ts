@@ -14,7 +14,7 @@ describe('Fleet vehicle create contract', () => {
     expect(create.fields.map((field: any) => field.field)).toEqual([
       'name', 'license_plate', 'vehicle_type', 'model', 'manufacturer',
       'driver_name', 'odometer', 'fuel_type', 'acquisition_date',
-      'contract_end_date', 'trailer_hook',
+      'contract_end_date', 'trailer_hook', 'company_name',
     ]);
     expect(create.mutation.fields).toEqual(expect.arrayContaining(['acquisition_date', 'trailer_hook']));
   });

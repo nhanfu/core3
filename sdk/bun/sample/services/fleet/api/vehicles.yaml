@@ -6,7 +6,7 @@ datasources:
   - id: fleet_vehicles
     permission: fleet.read
     workflow: fleet_vehicles
-    query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.driver_name, v.odometer, v.fuel_type, v.state, v.trailer_hook, v.archived, CAST(v.contract_end_date AS VARCHAR) AS contract_end_date FROM fleet_vehicles v WHERE (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR v.license_plate ILIKE '%' || :q || '%' OR COALESCE(v.driver_name, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR v.state = :state) AND (:vehicle_type IS NULL OR v.vehicle_type = :vehicle_type) AND (:trailer_hook IS NULL OR v.trailer_hook = CAST(:trailer_hook AS BOOLEAN)) AND (COALESCE(:archived, FALSE) = TRUE OR COALESCE(v.archived, FALSE) = FALSE) ORDER BY v.name, v.id"
+    query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.driver_name, v.odometer, v.fuel_type, v.state, v.trailer_hook, v.archived, v.company_name, CAST(v.contract_end_date AS VARCHAR) AS contract_end_date FROM fleet_vehicles v WHERE (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR v.license_plate ILIKE '%' || :q || '%' OR COALESCE(v.driver_name, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR v.state = :state) AND (:vehicle_type IS NULL OR v.vehicle_type = :vehicle_type) AND (:trailer_hook IS NULL OR v.trailer_hook = CAST(:trailer_hook AS BOOLEAN)) AND (COALESCE(:archived, FALSE) = TRUE OR COALESCE(v.archived, FALSE) = FALSE) AND (COALESCE(:company_name, '') = '' OR v.company_name = :company_name) ORDER BY v.name, v.id"
 actions:
   - { id: view_fleet_vehicle, type: navigate, permission: fleet.read, navigate_to: /vehicles/detail, params: { id: '{row.id}' } }
   - id: create_fleet_vehicle
@@ -20,8 +20,9 @@ actions:
     mutation:
       operation: insert
       table: fleet_vehicles
-      fields: [name, license_plate, vehicle_type, model, manufacturer, driver_employee_id, driver_name, odometer, fuel_type, acquisition_date, contract_end_date, trailer_hook]
+      fields: [name, license_plate, vehicle_type, model, manufacturer, driver_employee_id, driver_name, odometer, fuel_type, acquisition_date, contract_end_date, trailer_hook, company_name]
       required: [name, license_plate]
+      defaults: { company_name: Core3 Demo Company }
       guards:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: FLEET_VEHICLE_NAME_REQUIRED, message: Vehicle name is required. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:license_plate AS VARCHAR))) BETWEEN 1 AND 32", status: 422, code: FLEET_VEHICLE_LICENSE_PLATE_REQUIRED, message: License plate is required. }
@@ -30,6 +31,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE (:acquisition_date IS NULL OR (regexp_matches(CAST(:acquisition_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:acquisition_date AS DATE) BETWEEN DATE '1900-01-01' AND DATE '2100-12-31')) AND (:contract_end_date IS NULL OR (regexp_matches(CAST(:contract_end_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:contract_end_date AS DATE) BETWEEN DATE '1900-01-01' AND DATE '2100-12-31')) AND (:acquisition_date IS NULL OR :contract_end_date IS NULL OR CAST(:contract_end_date AS DATE) >= CAST(:acquisition_date AS DATE))", status: 422, code: FLEET_VEHICLE_DATES_INVALID, message: Acquisition and contract dates are invalid. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicles WHERE LOWER(TRIM(name)) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: FLEET_VEHICLE_NAME_EXISTS, message: A vehicle with this name already exists. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM fleet_vehicles WHERE LOWER(TRIM(license_plate)) = LOWER(TRIM(CAST(:license_plate AS VARCHAR))))", status: 409, code: FLEET_VEHICLE_LICENSE_PLATE_EXISTS, message: A vehicle with this license plate already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: FLEET_VEHICLE_COMPANY_SCOPE_REQUIRED, message: Vehicle must belong to the current company. }
     fields:
       - { field: name, label: Vehicle, type: text, required: true }
       - { field: license_plate, label: License plate, type: text, required: true }
@@ -42,6 +44,7 @@ actions:
       - { field: acquisition_date, label: Acquisition date, type: text }
       - { field: contract_end_date, label: Contract end date, type: text }
       - { field: trailer_hook, label: Trailer Hook, type: checkbox }
+      - { field: company_name, label: Company, type: text }
   - { id: assign_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.assign, handler: order_transition, workflow: fleet_vehicles, operation: assign, refresh: [fleet_vehicles] }
   - { id: service_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.service, handler: order_transition, workflow: fleet_vehicles, operation: service, refresh: [fleet_vehicles] }
   - { id: release_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.release, handler: order_transition, workflow: fleet_vehicles, operation: release, refresh: [fleet_vehicles] }
