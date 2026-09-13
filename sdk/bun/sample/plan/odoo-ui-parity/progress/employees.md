@@ -64,3 +64,13 @@ concurrency to `expected_row_version`. Active focused verification passed **12
 tests / 167 assertions** and audit passed **661 pages / 670 routes / 1,154
 datasources**. Status remains conditional; browser, broader actor/restart, and
 paired Odoo gates remain open.
+
+## Coordinator reconciliation: departure-reasons navigation `1dc77ba2` (2026-09-13)
+
+The active branch already contains the exact bounded repair, so no duplicate
+merge was needed. It adds the generated-ID collision 409 guard and disables
+click-to-edit so row navigation reaches the detail route, with focused shared
+renderer support. Departure Reasons passed **3 tests / 60 assertions**; full
+Employees passed **12 / 167**; audit passed **661 / 670 / 1,154**. Status remains
+conditional pending browser lifecycle, broader actor/restart, and paired Odoo
+evidence.

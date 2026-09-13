@@ -265,3 +265,40 @@ preserved; QA was not triggered.
   Fresh authenticated browser, broader actor/restart coverage, and paired Odoo
   comparison remain open. Prior departure stalled-owner history and partial
   file findings are preserved; this does not sign off Employees.
+
+## Final active-runtime browser event: Departure Reasons `382a3d30` (2026-09-13)
+
+- Active runtime checkout `f7ef34e4` contains `382a3d30` and Events
+  `ab5496ba`; backend `127.0.0.1:3001` and frontend `localhost:3002` returned
+  HTTP 200, with mediator 3010 listening.
+- Admin desktop `1440x900`: New plus a unique departure reason and Save
+  returned HTTP 200; the new row rendered with zero console errors. Selecting
+  the row entered list inline-edit mode (`Save`/`Discard`) rather than opening
+  the detail route. Detail Edit/Archive/Restore, stale, and browser Delete
+  evidence therefore could not be reached.
+- Mobile, Fleet/unauthorized browser checks, and paired authenticated Odoo
+  comparison were not completed. Screenshot: `/tmp/employees-departure-final-desktop.png`
+  (outside Git).
+- Existing functional evidence: Employees focused lifecycle **12 tests / 167
+  assertions**, UI audit **661 pages / 670 routes / 1,154 datasources**, plus
+  candidate ESLint and diff-check evidence.
+
+### Bounded verdict — **CONDITIONAL FAIL / not ready for reviewer reconciliation**
+
+Employee creation passes in browser, but detail navigation and archive/restore,
+stale/permission, mobile, Delete, and paired Odoo gates remain unverified.
+
+## Coordinator reconciliation: departure-reasons navigation repair `1dc77ba2` (2026-09-13)
+
+- Ownership and scope are valid. The active branch already contains the exact
+  bounded candidate, including the generated-ID collision guard returning 409
+  `EMPLOYEES_DEPARTURE_REASON_EXISTS`, `click_to_edit: false` page binding, and
+  the minimal shared ListView/renderer plumbing required to honor that binding.
+  No duplicate cherry-pick was created.
+- Active verification passed: Departure Reasons **3 tests / 60 assertions**;
+  full Employees **12 tests / 167 assertions**; UI audit **661 pages / 670
+  routes / 1,154 datasources**. Candidate ESLint, diff-check, and clean
+  worktree evidence are retained.
+- Bounded disposition: **conditionally reconciled as already integrated**.
+  Browser detail/lifecycle, broader actor/restart, and paired Odoo gates remain
+  open; Employees is not signed off.
