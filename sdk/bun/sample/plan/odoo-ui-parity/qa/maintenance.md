@@ -265,6 +265,23 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
 - Preserve open gates: unrelated Website lint errors, file-backed mutation
   restart unavailable, and Odoo redirects to `/web/login`.
 
+## Reviewer reconciliation `377b8c05`: already represented on active branch (2026-09-13)
+
+- Owner QA passed Equipment edit/reload and guards, `activity_complete_action`,
+  chatter schedule -> complete with row version `1 -> 2`, desktop/mobile,
+  controlled restart, 37 tests / 372 assertions, builds, audit, targeted ESLint,
+  and diff-check.
+- The candidate was inspected against active Maintenance/shared runtime files.
+  After preserving newer active schema/client-test changes, cherry-pick became
+  empty; no duplicate product commit was created. The activity action and
+  runtime behavior are already present on active.
+- Active verification passed **36 tests / 355 assertions** across 16 Maintenance
+  files, including request activity completion; audit passed **661 pages / 670
+  routes / 1158 datasources**, Maintenance CSS build passed, and diff-check
+  passed.
+- Conditional status remains: unrelated Website lint errors, file-backed
+  mutation durability unavailable, and Odoo redirects to `/web/login`.
+
 ## QA hold `ad654394`: activity action missing; owner-branch repair required (2026-09-13)
 
 - QA found `MAINT-ACTIVITY-001`: `request-detail.yaml` lacks the required

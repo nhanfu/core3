@@ -110,6 +110,15 @@ rerun focused and authenticated persistence checks. No replacement was
 created; direct lifecycle reactivation is unavailable in this session. Restart
 and paired Odoo gates remain open.
 
+## Reconciled QA candidate: `377b8c05` (2026-09-13)
+
+The activity-completion behavior is already represented on the active branch;
+the candidate cherry-pick was empty after preserving newer shared schema/client
+changes. Active Maintenance verification passed 36/355, audit, CSS, and
+diff-check. QA's 37/372 and controlled-restart evidence is recorded. Module
+remains conditional due Website lint, file-backed mutation durability, and Odoo
+comparison blockers.
+
 ## QA hold: `ad654394` / `MAINT-ACTIVITY-001` (2026-09-13)
 
 Activity QA is blocked at 36 pass / 1 fail because `request-detail.yaml` lacks
