@@ -11,7 +11,7 @@ datasources:
   - id: leave_requests
     permission: time_off.read
     workflow: leave_requests
-    query: "SELECT r.id, r.row_version, r.name, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.reason, r.approver, r.state FROM leave_requests r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from DESC"
+    query: "SELECT r.id, r.row_version, r.name, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.reason, r.refusal_reason, r.approver, r.state FROM leave_requests r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from DESC"
 actions:
   - id: create_leave_request
     type: server_form
@@ -40,7 +40,32 @@ actions:
       - { field: reason, label: Reason, type: text }
   - { id: submit_leave_request, type: server, permission: time_off.write, action: time_off.requests.submit, handler: order_transition, workflow: leave_requests, operation: submit, refresh: [leave_requests] }
   - { id: approve_leave_request, type: server, permission: time_off.manage, action: time_off.requests.approve, handler: order_transition, workflow: leave_requests, operation: approve, refresh: [leave_requests] }
-  - { id: refuse_leave_request, type: server, permission: time_off.manage, action: time_off.requests.refuse, handler: order_transition, workflow: leave_requests, operation: refuse, refresh: [leave_requests] }
+  - id: refuse_leave_request
+    type: server_form
+    permission: time_off.manage
+    title: Refuse Time Off
+    action: time_off.requests.refuse
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}', values: { state: Refused } }
+    prefill: row
+    refresh: [leave_requests]
+    submit_label: Refuse
+    cancel_label: Discard
+    mutation:
+      operation: update
+      table: leave_requests
+      fields: [state, refusal_reason]
+      required: [refusal_reason]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM leave_requests WHERE id = :id", status: 404, code: TIME_OFF_LEAVE_NOT_FOUND, message: Time off request not found. }
+        - { query: "SELECT id FROM leave_requests WHERE id = :id AND row_version = :expected_row_version AND state = 'Submitted'", status: 409, code: TIME_OFF_LEAVE_REFUSE_INVALID, message: Only an unchanged submitted time off request can be refused. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(COALESCE(:refusal_reason, '') AS VARCHAR))) BETWEEN 1 AND 500", status: 422, code: TIME_OFF_LEAVE_REFUSAL_REASON_INVALID, message: Enter a refusal reason of 500 characters or fewer. }
+      result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
+    fields:
+      - { field: state, label: Status, type: hidden, default: Refused }
+      - { field: refusal_reason, label: Reason, type: textarea, required: true, placeholder: Why is this time off refused? }
   - { id: cancel_leave_request, type: server, permission: time_off.write, action: time_off.requests.cancel, handler: order_transition, workflow: leave_requests, operation: cancel, refresh: [leave_requests] }
   - id: delete_leave_request
     type: server

@@ -20,4 +20,4 @@ components:
       - title: Leave
         fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: leave_type_name, label: Leave type }]
       - title: Dates and approval
-        fields: [{ field: date_from, label: From }, { field: date_to, label: To }, { field: days, label: Days }, { field: approver, label: Approver }, { field: reason, label: Reason }, { field: cancellation_reason, label: Cancellation reason, show_if: "row.state === 'Cancelled'" }]
+        fields: [{ field: date_from, label: From }, { field: date_to, label: To }, { field: days, label: Days }, { field: approver, label: Approver }, { field: reason, label: Reason }, { field: refusal_reason, label: Refusal reason, show_if: "row.state === 'Refused'" }, { field: cancellation_reason, label: Cancellation reason, show_if: "row.state === 'Cancelled'" }]

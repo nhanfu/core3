@@ -38,6 +38,7 @@ components:
       - { field: days, label: Days, align: right }
       - { field: approver, label: Approver }
       - { field: state, label: Status, type: StatusChip }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: refuse_leave_request, label: Refuse, icon: close, variant: danger, permission: time_off.manage, show_if: "row.state === 'Submitted'" }, { id: delete_leave_request, label: Delete, icon: delete, variant: danger, permission: time_off.write, show_if: "row.state === 'Draft'" }] }
     page_size: 50
     row_key: id
     row_open_action: open_leave_request

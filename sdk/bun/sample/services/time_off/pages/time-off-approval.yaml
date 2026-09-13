@@ -33,6 +33,7 @@ components:
       - { field: date_to, label: End Date }
       - { field: days, label: Duration, align: right }
       - { field: state, label: Status, type: StatusChip }
+      - { field: id, label: '', sortable: false, mobile: false, actions: [{ id: refuse_approval_request, label: Refuse, icon: close, variant: danger, permission: time_off.manage, show_if: "row.state === 'Submitted'" }] }
     page_size: 50
     row_key: id
     row_open_action: approval_open
