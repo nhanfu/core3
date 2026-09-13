@@ -48,7 +48,9 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
       if (!action?.topic) return apiError(500, 'Chat attachment topic is not configured');
       const result: any = await (topics as TopicRouter).request(topicDefinition(action.topic, Number(action.topic_version || 1)), {
         threadId: meta.thread_id,
-        content: meta.content,
+        // Chat supports file-only messages. Keep the optional caption typed
+        // for the SQL mutation instead of binding undefined as DuckDB ANY.
+        content: meta.kind === 'chat_attachment' ? (meta.content ?? '') : meta.content,
         expected_row_version: meta.expected_row_version,
         attachment: fileMeta,
         actor: activityActor,

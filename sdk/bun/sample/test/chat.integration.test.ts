@@ -45,6 +45,12 @@ describe('Chat Discuss sidebar parity batch', () => {
     expect(api.actions.find((action: any) => action.id === 'mark_thread_unread')).toMatchObject({ permission: 'chat.write', action: 'chat.threads.mark_unread' });
     expect(api.actions.find((action: any) => action.id === 'toggle_thread_star')).toMatchObject({ permission: 'chat.write', action: 'chat.threads.toggle_star' });
     expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['chat.read', 'chat.write']));
+    const upload = api.actions.find((action: any) => action.id === 'upload_attachment');
+    expect(upload).toMatchObject({ type: 'upload', handler: 'chat_attachment', kind: 'chat_attachment', permission: 'chat.write' });
+    expect(upload.mutation.guards).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 403, code: 'CHAT_THREAD_FORBIDDEN' }),
+      expect.objectContaining({ status: 400, code: 'CHAT_ATTACHMENT_INVALID' }),
+    ]));
   });
 
   test('declares inbox state controls with deterministic mutation boundaries', () => {

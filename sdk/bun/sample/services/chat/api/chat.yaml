@@ -161,10 +161,12 @@ actions:
       generated: [message_id, attachment_id]
       guards:
         - { query: "SELECT 1 AS ok FROM chat_participants WHERE thread_id = :thread_id AND user_id = COALESCE(:current_user_id, 'user-admin')", status: 403, code: CHAT_THREAD_FORBIDDEN, message: You are not a participant in this conversation. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:fileName AS VARCHAR))) BETWEEN 1 AND 255 AND COALESCE(:sizeBytes, 0) BETWEEN 1 AND 5242880 AND length(trim(CAST(:storageKey AS VARCHAR))) BETWEEN 1 AND 512", status: 400, code: CHAT_ATTACHMENT_INVALID, message: Attachment metadata is invalid. }
       steps:
         - { query: "INSERT INTO chat_messages(id, thread_id, sender_id, body) VALUES(:message_id, :thread_id, :current_user_id, COALESCE(NULLIF(trim(CAST(:content AS VARCHAR)), ''), 'File uploaded'))" }
         - { query: "INSERT INTO chat_attachments(id, message_id, file_name, mime_type, size_bytes, storage_key) VALUES(:attachment_id, :message_id, :fileName, :mimeType, :sizeBytes, :storageKey)" }
-      result: { query: "SELECT :message_id AS id, :thread_id AS thread_id, :current_user_id AS sender_id, 'File uploaded' AS body" }
+        - { query: "UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :thread_id" }
+      result: { query: "SELECT :message_id AS id, :thread_id AS thread_id, :current_user_id AS sender_id, COALESCE(NULLIF(trim(CAST(:content AS VARCHAR)), ''), 'File uploaded') AS body, :attachment_id AS attachment_id, :message_id AS attachment_message_id, :fileName AS attachment_file_name, :mimeType AS attachment_mime_type, CAST(:sizeBytes AS BIGINT) AS attachment_size_bytes" }
   - id: download_attachment
     type: download
     permission: chat.read

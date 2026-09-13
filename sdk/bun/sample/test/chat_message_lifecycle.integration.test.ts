@@ -40,4 +40,35 @@ describe('Chat message lifecycle', () => {
       .rejects.toMatchObject({ status: 409, code: 'CHAT_THREAD_STALE' });
     database.close();
   });
+
+  test('persists uploaded attachments and returns renderable metadata', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'chat_attachment_lifecycle_test', ['schema', 'data']);
+    const upload = yaml('api/chat.yaml').actions.find((candidate: any) => candidate.id === 'upload_attachment');
+    const result = await repository.executeMutation(upload.mutation, {
+      thread_id: 'chat-demo-thread',
+      current_user_id: 'user-admin',
+      content: 'Please review the transcript',
+      fileName: 'transcript.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 2048,
+      storageKey: 'upload-key-transcript',
+    });
+
+    expect(result).toMatchObject({
+      thread_id: 'chat-demo-thread',
+      sender_id: 'user-admin',
+      body: 'Please review the transcript',
+      attachment_id: expect.any(String),
+      attachment_file_name: 'transcript.pdf',
+      attachment_mime_type: 'application/pdf',
+      attachment_size_bytes: 2048,
+    });
+    expect((await repository.query('SELECT file_name, storage_key, size_bytes FROM chat_attachments'))[0])
+      .toEqual({ file_name: 'transcript.pdf', storage_key: 'upload-key-transcript', size_bytes: 2048 });
+    expect((await repository.query("SELECT row_version FROM chat_threads WHERE id = 'chat-demo-thread'"))[0].row_version).toBe(2);
+
+    database.close();
+  });
 });

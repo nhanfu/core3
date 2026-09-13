@@ -439,10 +439,18 @@ export class ChatWorkspace extends BaseComponent {
             ...(this.state.messages || []).filter((item: any) => item.id !== message.id),
             message,
           ];
-          if (result.attachment?.id) {
+          const attachment = result.attachment || (result.attachment_id ? {
+            id: result.attachment_id,
+            message_id: result.attachment_message_id || message.id,
+            thread_id: message.thread_id,
+            file_name: result.attachment_file_name,
+            mime_type: result.attachment_mime_type,
+            size_bytes: result.attachment_size_bytes,
+          } : null);
+          if (attachment?.id) {
             this.state.attachments = [
-              ...(this.state.attachments || []).filter((item: any) => item.id !== result.attachment.id),
-              result.attachment,
+              ...(this.state.attachments || []).filter((item: any) => item.id !== attachment.id),
+              attachment,
             ];
           }
           this.state.threads = (this.state.threads || []).map((thread: any) => thread.id === message.thread_id
