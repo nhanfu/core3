@@ -140,3 +140,22 @@ and permission boundaries passed. The candidate remains `pending-qa`.
   permission/company scope, stale/no-partial-write behavior, persistence, and
   focused tests. Candidate pending; existing ledgers and aggregate progress
   are preserved.
+## DEV/QA reconciliation — `DEV-BASE-WAVE-20260913-R2` / `QA-BASE-WAVE-20260913-R2`
+
+- The owner handoff `5ae2cdd1` requested the contact attachment panel, but
+  authoritative main already contains the implementation across `3393d850`
+  (metadata persistence/API), `452ace97` (panel exposure), and `887fec41`
+  (registered attachment actions). No duplicate owner patch is required.
+- QA event triggered/reconciled against the existing implementation. Active
+  checkout command `bun test test/base_contacts.integration.test.ts` passed
+  **6 tests / 73 assertions**, covering page/API ownership, Contacts view
+  contracts, deterministic/search/empty data, permissions/transport errors,
+  archive/restore stale guards, and hierarchy persistence.
+- Bounded result: contact attachment panel/actions and guarded metadata
+  upload/download API are present in the existing implementation history; the
+  current repository contract is green. Base remains conditional/pending.
+- Explicit blockers preserved: authenticated attachment upload/download and
+  end-to-end persistence after browser reload/restart were not freshly proven;
+  authenticated desktop/mobile browser interaction and captures remain open;
+  paired authenticated Odoo visual comparison remains open. No full Base
+  module sign-off is implied.
