@@ -52,3 +52,13 @@ context alignment to the existing owner `agent/project-timesheets-dashboard-2026
 in `/home/nhanjs/projects/core3-worktrees/project-timesheets-dashboard-20260913`,
 then rerun authenticated upload/download/reload QA. Mobile completion, restart,
 and paired Odoo remain open; no replacement or merge was made.
+
+## QA hold: `38e7b078` / `PROJECT-ATTACH-001` (2026-09-13)
+
+Do not integrate: live admin company is `Core3 Demo Company`, while the seeded
+task company is `Core3`, causing the attachment scope guard to reject upload.
+Repair is routed to the existing owner at
+`/home/nhanjs/projects/core3-worktrees/project-timesheets-dashboard-20260913`
+(`agent/project-timesheets-dashboard-20260913`); the requested
+`project-20260913` path is not registered. Retest upload/list/download and
+reload before integration. Lint, restart, and Odoo gates remain open.

@@ -155,4 +155,14 @@ paired Odoo comparison are still open.
   reload QA.
 - Preserve open mobile upload completion, live restart durability, and fresh
   authenticated Odoo comparison gates. Candidate remains blocked; no duplicate
-  owner or product merge was created.
+owner or product merge was created.
+
+## Coordinator routing `38e7b078`: `PROJECT-ATTACH-001` held (2026-09-13)
+
+The candidate remains held pending the same-owner fixture/company-context
+repair. The registered owner is
+`agent/project-timesheets-dashboard-20260913` at
+`/home/nhanjs/projects/core3-worktrees/project-timesheets-dashboard-20260913`;
+the supplied `/home/nhanjs/projects/core3-worktrees/project-20260913` path is
+not registered. Do not integrate until authenticated upload/list/download and
+reload retest passes. Preserve lint, restart, and Odoo blockers.
