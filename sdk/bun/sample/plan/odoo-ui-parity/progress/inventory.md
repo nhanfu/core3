@@ -189,3 +189,14 @@ Inventory sign-off or aggregate progress claim.
 - Live stale and non-Draft deletes returned declared 409 guards; Fleet delete returned 403 `inventory.write` and the write action was hidden. Odoo login endpoint returned HTTP 200; historical authenticated paired receipts captures remain the available reference, with no fresh exact-commit Odoo pair claimed.
 
 QA disposition: evidence complete for this retest; no Inventory sign-off or aggregate progress claim.
+
+## QA disposition `f666cec5` (2026-09-13)
+
+Do not integrate the transfer-attachment candidate. QA found
+`INV-ATTACH-001`: authenticated admin is `Core3 Demo Company`, but transfer
+`WH/IN/00003` is seeded as `My Company`, causing live upload to return 403
+`INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED`. Route fixture/company-context
+alignment to the existing owner `agent/odoo-ui-inventory-dev4-20260913` in
+`/home/nhanjs/projects/core3-worktrees/inventory-dev4-20260913`, then retest
+live upload/download. Mobile completion, restart, and paired Odoo remain open;
+no replacement or duplicate merge was made.

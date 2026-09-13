@@ -228,3 +228,21 @@ no Inventory module sign-off or aggregate progress claim.
   exposed subset), ownership/company checks, safe missing/invalid handling,
   persistence, and focused stale/no-partial-write tests. Candidate pending;
   existing ledger edits and aggregate progress are preserved.
+
+## QA disposition `f666cec5`: blocked; same-owner repair required (2026-09-13)
+
+- Do **not** integrate `f666cec5`. Contract/file-backed coverage passed **47
+  tests / 490 assertions**, with build, audit, lint, and diff-check green.
+- Critical defect `INV-ATTACH-001`: authenticated admin context is `Core3 Demo
+  Company`, while seeded transfer `WH/IN/00003` uses `My Company`. Live transfer
+  attachment upload returns **403** `INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED`;
+  no live attachment is created, so browser upload/list/download persistence
+  cannot pass.
+- Repair is routed to the existing owner/worktree
+  `agent/odoo-ui-inventory-dev4-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/inventory-dev4-20260913`: align the
+  deterministic transfer fixture with authenticated company context or use a
+  valid company-scoped seed, then rerun live upload/download and focused QA.
+- Preserve open mobile upload completion, live restart durability, and fresh
+  authenticated Odoo comparison gates. Candidate remains blocked; no duplicate
+  owner or product merge was created.
