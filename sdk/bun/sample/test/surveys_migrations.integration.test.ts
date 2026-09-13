@@ -42,4 +42,23 @@ describe('Surveys migration replay and rollback', () => {
 
     database.close();
   });
+
+  test('rolls the complete chain down and back up on DuckDB', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    const table = 'surveys_migration_full_chain';
+
+    await migrateDatabase(repository, migrations, undefined, table, ['schema', 'data']);
+    await migrateDatabase(repository, migrations, '0.0.0', table, ['schema', 'data']);
+
+    expect(await repository.query(`SELECT version FROM ${table}`)).toEqual([]);
+    expect(await repository.query("SELECT table_name FROM information_schema.tables WHERE table_name IN ('surveys', 'survey_responses')")).toEqual([]);
+
+    await migrateDatabase(repository, migrations, undefined, table, ['schema', 'data']);
+    expect(await repository.query(`SELECT COUNT(*) AS count FROM ${table}`)).toEqual([{ count: 17 }]);
+    expect(await repository.query("SELECT COUNT(*) AS count FROM surveys WHERE id = 'survey-demo-feedback'")).toEqual([{ count: 1 }]);
+    expect(await repository.query("SELECT index_name FROM duckdb_indexes() WHERE index_name IN ('surveys_state_idx', 'survey_questions_survey_idx', 'survey_responses_survey_idx', 'survey_responses_access_token_idx', 'survey_responses_idempotency_key_idx')")).toHaveLength(5);
+
+    database.close();
+  });
 });
