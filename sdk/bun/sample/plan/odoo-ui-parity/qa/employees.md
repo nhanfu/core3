@@ -179,6 +179,27 @@ mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
   predicates before merging this regression guard. Preserve browser/Odoo,
   full-regression, broader actor, and restart blockers; no sign-off is issued.
 
+## 2026-09-13 coordinator reconciliation: candidate `279f8f4d`
+
+- Owner lineage proof reconciled successfully: Git reports the direct lineage
+  `279f8f4d -> c401c961`, and the candidate patch itself contains the complete
+  11-file Employees migration/API/history/company-scope/test bundle. The prior
+  ancestry concern was about the candidate branch history and is superseded
+  by this verified patch/lineage evidence.
+- Integrated the complete ordered candidate as `4dd70736`. Cherry-pick had
+  one expected conflict in the existing Directory test because active history
+  already carried the Core3-only assertion; resolution retained the candidate
+  `Other Company Employee` fixture expectation. No unrelated files were
+  imported.
+- Post-merge Employees suite passed: **55 tests, 657 assertions**. Audit
+  (**661 pages, 670 routes, 1154 datasources**), Employees test ESLint, Sass,
+  and diff-check passed. Candidate Core3 desktop/mobile smoke remains
+  accepted; Odoo authentication remains blocked.
+- Employees remains **conditional / unsigned-off**. Full regression/full lint,
+  broader actor coverage, restart durability, and authenticated Odoo detail/
+  history comparison remain open. No aggregate progress or module sign-off is
+  claimed.
+
 ## 2026-09-13 coordinator review: candidate `279f8f4d`
 
 - **Not integrated.** The candidate’s bounded API/migration/history/company-
