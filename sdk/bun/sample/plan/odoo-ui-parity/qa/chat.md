@@ -165,3 +165,27 @@ repository lint gate remain open or blocked.
   `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`. Preserve the missing
   thread domain code through the upload route/API error mapping, add the focused
   `CHAT_THREAD_NOT_FOUND` regression, and rerun Chat QA before review.
+
+## Coordinator reconciliation — final repair `85220b45` (2026-09-13)
+
+- Reviewed the exact ordered owner bundle in
+  `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1` on
+  `agent/chat-wave-dev1`; owner HEAD remains `85220b45` and its only dirty
+  content is QA/handoff documentation.
+- Cherry-picked the bounded bundle onto the active branch in order:
+  `902ae72d` -> `fb28c2bb`, `b25e95b3` -> `925948cb`, `de92faa4` ->
+  `af6018b5`, and `85220b45` -> `7f797528`. Shared runtime/transport edits
+  are required for Chat's declared multipart guard contract; no unrelated
+  module product changes were imported.
+- Active verification passed: `bun test ./test/chat*.integration.test.ts
+  --timeout 20000` (**24 passed, 0 failed, 173 assertions across 8 files**),
+  `bun run audit` (**661 pages, 670 routes, 1161 datasources**), frontend/CSS
+  production build, targeted ESLint, and `git diff --check`.
+- QA PASS is accepted for live 409 `CHAT_THREAD_STALE`, 403
+  `CHAT_THREAD_FORBIDDEN`, 404 `CHAT_THREAD_NOT_FOUND`, cleanup/no-partial-write,
+  caption/file-only upload identity/list/download, permissions, reload/
+  persistence, and desktop/mobile behavior.
+- Chat remains **conditional, not fully signed off**. Broader authenticated
+  browser/actor coverage, live durable restart, paired Odoo comparison, and
+  repository-wide lint remain open/blocked; repository lint retains unrelated
+  Website errors.

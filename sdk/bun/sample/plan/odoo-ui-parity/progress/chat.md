@@ -83,3 +83,17 @@ route-not-found without `CHAT_THREAD_NOT_FOUND`. Route this narrow domain-code
 repair to `agent/chat-wave-dev1` in
 `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`, add the focused
 regression, and rerun `QA-CHAT-WAVE-20260913-R2`. Do not integrate `de92faa4`.
+
+## Coordinator reconciliation — final attachment guard bundle (2026-09-13)
+
+- Integrated the exact ordered Chat bundle from owner HEAD `85220b45` as active
+  commits `fb28c2bb`, `925948cb`, `af6018b5`, and `7f797528`, corresponding to
+  source commits `902ae72d`, `b25e95b3`, `de92faa4`, and `85220b45`.
+- Active verification passed: focused Chat **24/24, 173 assertions**; audit
+  **661 pages / 670 routes / 1161 datasources**; frontend/CSS build; targeted
+  ESLint; and diff-check. The bundle is self-contained for attachment identity,
+  guard status propagation, missing-thread error identity, and atomic cleanup.
+- QA PASS is reconciled for 409/403/404 guard responses, uploads, identity,
+  list/download, reload/persistence, permissions, and desktop/mobile behavior.
+- State remains **conditional**: broader browser/actor coverage, live durable
+  restart, paired Odoo comparison, and repository-wide lint are still open.
