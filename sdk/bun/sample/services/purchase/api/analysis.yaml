@@ -1,8 +1,34 @@
 page: { id: purchase-analysis }
 datasources:
-  - id: purchase_analysis
+  - id: purchase_analysis_totals
+    single: true
+    permission: purchase.read
+    error_states: { transport_error: { status: 503, code: PURCHASE_ANALYSIS_TOTALS_UNAVAILABLE, message: Purchase analysis totals are temporarily unavailable. } }
+    query: "SELECT COUNT(*) AS order_count, COALESCE(SUM(p.quantity), 0) AS ordered_units, COALESCE(SUM(p.qty_received), 0) AS received_units, COALESCE(SUM(COALESCE(p.total_amount, p.quantity * p.unit_price)), 0) AS committed_value FROM purchase_orders p WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id <> 'po-demo-009' AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.vendor_name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%' OR p.buyer_name ILIKE '%' || :q || '%')"
+  - id: purchase_analysis_report
     permission: purchase.read
     error_states: { transport_error: { status: 503, code: PURCHASE_ANALYSIS_UNAVAILABLE, message: Purchase analysis is temporarily unavailable. } }
     pivot:
-      fields: [name, confirmation_date, confirmation_month, vendor_name, vendor_country, buyer_name, product_name, category_name, company_name, state, quantity, qty_received, qty_billed, untaxed_total, total_amount]
-    query: "SELECT p.id, p.name, CAST(COALESCE(p.order_date, DATE '2026-01-15') AS VARCHAR) AS confirmation_date, strftime(COALESCE(p.order_date, DATE '2026-01-15'), '%Y-%m') AS confirmation_month, p.vendor_name, '' AS vendor_country, p.buyer_name, p.product_name, CASE WHEN p.product_name LIKE 'Ergonomic office%' THEN 'Furniture / Office' ELSE 'Goods' END AS category_name, 'Main Company (San Francisco)' AS company_name, p.state, CAST(p.quantity AS DOUBLE) AS quantity, CAST(p.qty_received AS DOUBLE) AS qty_received, CAST(0 AS DOUBLE) AS qty_billed, CAST(COALESCE(p.total_amount, p.quantity * p.unit_price) AS DOUBLE) AS untaxed_total, CAST(COALESCE(p.total_amount, p.quantity * p.unit_price) AS DOUBLE) AS total_amount FROM purchase_orders p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.vendor_name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%' OR p.state ILIKE '%' || :q || '%') AND ((COALESCE(:report_scope, 'orders') = 'orders' AND p.state NOT IN ('Draft', 'Sent', 'Cancelled')) OR (:report_scope = 'rfq' AND p.state IN ('Draft', 'Sent'))) ORDER BY p.order_date, p.name"
+      fields: [vendor_name, buyer_name, product_name, order_month, state, order_date, ordered_quantity, received_quantity, billed_quantity, untaxed_total, total_amount]
+    query: |
+      SELECT
+        p.id,
+        p.name AS order_reference,
+        p.vendor_name,
+        COALESCE(p.buyer_name, 'Mitchell Admin') AS buyer_name,
+        p.product_name,
+        p.state,
+        CAST(p.order_date AS VARCHAR) AS order_date,
+        strftime(p.order_date, '%Y-%m') AS order_month,
+        CAST(p.quantity AS DOUBLE) AS ordered_quantity,
+        CAST(p.qty_received AS DOUBLE) AS received_quantity,
+        CAST(CASE WHEN p.state IN ('Confirmed', 'Received') THEN p.qty_received ELSE 0 END AS DOUBLE) AS billed_quantity,
+        CAST(p.quantity * p.unit_price AS DOUBLE) AS untaxed_total,
+        CAST(COALESCE(p.total_amount, p.quantity * p.unit_price) AS DOUBLE) AS total_amount,
+        p.currency,
+        'Main Company (San Francisco)' AS company_name
+      FROM purchase_orders p
+      WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND p.id <> 'po-demo-009'
+        AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.vendor_name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%' OR p.buyer_name ILIKE '%' || :q || '%')
+      ORDER BY p.order_date DESC, p.name

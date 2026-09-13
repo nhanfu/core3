@@ -1,0 +1,16 @@
+version: 0.0.27
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE purchase_receipts
+      SET company_name = 'Core3 Demo Company'
+      WHERE id = 'purchase-receipt-p00005';
+    down: |
+      UPDATE purchase_receipts
+      SET company_name = 'My Company (San Francisco)'
+      WHERE id = 'purchase-receipt-p00005';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

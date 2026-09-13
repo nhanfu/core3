@@ -3,16 +3,26 @@ datasources:
   - id: purchase_receipt_detail
     single: true
     permission: purchase.read
-    error_states: { transport_error: { status: 503, code: PURCHASE_RECEIPT_DETAIL_UNAVAILABLE, message: Receipt details are temporarily unavailable. } }
-    query: "SELECT r.id, r.row_version, r.name, r.vendor_name, r.operation_type, r.company_name, CAST(r.scheduled_date AS VARCHAR) AS scheduled_date, CAST(r.deadline AS VARCHAR) AS deadline, r.source_document, r.state, r.note, (SELECT COUNT(*) FROM purchase_receipt_lines l WHERE l.receipt_id = r.id) AS move_count FROM purchase_receipts r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id"
+    error_states:
+      unauthorized: { status: 401, code: PURCHASE_RECEIPT_DETAIL_UNAUTHORIZED, message: Sign in to view this receipt. }
+      forbidden: { status: 403, code: PURCHASE_RECEIPT_DETAIL_FORBIDDEN, message: You do not have permission to view this receipt. }
+      not_found: { status: 404, code: PURCHASE_RECEIPT_NOT_FOUND, message: Receipt not found. }
+      transport_error: { status: 503, code: PURCHASE_RECEIPT_DETAIL_UNAVAILABLE, message: Receipt details are temporarily unavailable. }
+    query: "SELECT r.id, r.row_version, r.name, r.vendor_name, r.operation_type, r.company_name, CAST(r.scheduled_date AS VARCHAR) AS scheduled_date, CAST(r.deadline AS VARCHAR) AS deadline, r.source_document, r.state, r.note, (SELECT COUNT(*) FROM purchase_receipt_lines l WHERE l.receipt_id = r.id) AS move_count FROM purchase_receipts r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) AND r.id = :id"
   - id: purchase_receipt_lines
     permission: purchase.read
-    error_states: { transport_error: { status: 503, code: PURCHASE_RECEIPT_LINES_UNAVAILABLE, message: Receipt move lines are temporarily unavailable. } }
-    query: "SELECT l.id, l.row_version, l.receipt_id, l.product_name, l.description, CAST(l.demand AS DOUBLE) AS demand, printf('%,.2f', CAST(l.demand AS DOUBLE)) AS demand_display, CAST(l.quantity AS DOUBLE) AS quantity, printf('%,.2f', CAST(l.quantity AS DOUBLE)) AS quantity_display, l.uom, r.state AS parent_state, r.row_version AS parent_row_version FROM purchase_receipt_lines l JOIN purchase_receipts r ON r.id = l.receipt_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.receipt_id = :id ORDER BY l.sequence, l.id"
+    error_states:
+      unauthorized: { status: 401, code: PURCHASE_RECEIPT_LINES_UNAUTHORIZED, message: Sign in to view receipt move lines. }
+      forbidden: { status: 403, code: PURCHASE_RECEIPT_LINES_FORBIDDEN, message: You do not have permission to view receipt move lines. }
+      transport_error: { status: 503, code: PURCHASE_RECEIPT_LINES_UNAVAILABLE, message: Receipt move lines are temporarily unavailable. }
+    query: "SELECT l.id, l.row_version, l.receipt_id, l.product_name, l.description, CAST(l.demand AS DOUBLE) AS demand, printf('%,.2f', CAST(l.demand AS DOUBLE)) AS demand_display, CAST(l.quantity AS DOUBLE) AS quantity, printf('%,.2f', CAST(l.quantity AS DOUBLE)) AS quantity_display, l.uom, r.state AS parent_state, r.row_version AS parent_row_version FROM purchase_receipt_lines l JOIN purchase_receipts r ON r.id = l.receipt_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) AND l.receipt_id = :id ORDER BY l.sequence, l.id"
   - id: purchase_receipt_timeline
     permission: purchase.read
-    error_states: { transport_error: { status: 503, code: PURCHASE_RECEIPT_TIMELINE_UNAVAILABLE, message: Receipt history is temporarily unavailable. } }
-    query: "SELECT actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM purchase_receipt_messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND receipt_id = :id UNION ALL SELECT 'OdooBot', 'purchase.receipt.created', 'Transfer created', 'This transfer has been created from: ' || r.source_document, CAST(r.scheduled_date AS VARCHAR) FROM purchase_receipts r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id AND NOT EXISTS (SELECT 1 FROM purchase_receipt_messages m WHERE m.receipt_id = r.id) ORDER BY created_at DESC"
+    error_states:
+      unauthorized: { status: 401, code: PURCHASE_RECEIPT_TIMELINE_UNAUTHORIZED, message: Sign in to view receipt history. }
+      forbidden: { status: 403, code: PURCHASE_RECEIPT_TIMELINE_FORBIDDEN, message: You do not have permission to view receipt history. }
+      transport_error: { status: 503, code: PURCHASE_RECEIPT_TIMELINE_UNAVAILABLE, message: Receipt history is temporarily unavailable. }
+    query: "SELECT m.actor_name, m.action, m.action_label, m.detail, CAST(m.created_at AS VARCHAR) AS created_at FROM purchase_receipt_messages m JOIN purchase_receipts r ON r.id = m.receipt_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) AND m.receipt_id = :id UNION ALL SELECT 'OdooBot', 'purchase.receipt.created', 'Transfer created', 'This transfer has been created from: ' || r.source_document, CAST(r.scheduled_date AS VARCHAR) FROM purchase_receipts r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) AND r.id = :id AND NOT EXISTS (SELECT 1 FROM purchase_receipt_messages m WHERE m.receipt_id = r.id) ORDER BY created_at DESC"
 actions:
   - { id: open_purchase_receipt_moves, type: navigate, permission: purchase.read, navigate_to: /purchase/receipt, params: { id: '{row.id}' } }
   - id: validate_purchase_receipt
@@ -25,7 +35,11 @@ actions:
     refresh: [purchase_receipt_detail, purchase_receipt_lines, purchase_receipt_timeline]
     mutation:
       guards:
-        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND state = 'Ready' AND row_version = :expected_row_version", status: 409, code: PURCHASE_RECEIPT_NOT_READY, message: Only ready receipts can be validated. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_user_name, '') <> ''", status: 401, code: PURCHASE_RECEIPT_UNAUTHORIZED, message: Sign in before validating a receipt. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id", status: 404, code: PURCHASE_RECEIPT_NOT_FOUND, message: Receipt not found. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND COALESCE(:current_company_name, '') <> '' AND company_name = :current_company_name", status: 403, code: PURCHASE_RECEIPT_COMPANY_SCOPE_REQUIRED, message: Receipt belongs to another company or no company is selected. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND state = 'Ready'", status: 409, code: PURCHASE_RECEIPT_NOT_READY, message: Only ready receipts can be validated. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_RECEIPT_STALE, message: This receipt changed. Reload before validating. }
         - { query: "SELECT id FROM purchase_receipt_lines WHERE receipt_id = :id AND demand > 0", status: 422, code: PURCHASE_RECEIPT_NO_LINES, message: A receipt needs at least one product line. }
       generated: [message_id]
       steps:
@@ -43,7 +57,11 @@ actions:
     refresh: [purchase_receipt_detail, purchase_receipt_lines, purchase_receipt_timeline]
     mutation:
       guards:
-        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND state IN ('Draft', 'Ready') AND row_version = :expected_row_version", status: 409, code: PURCHASE_RECEIPT_NOT_OPEN, message: Only open receipts can be cancelled. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_user_name, '') <> ''", status: 401, code: PURCHASE_RECEIPT_UNAUTHORIZED, message: Sign in before cancelling a receipt. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id", status: 404, code: PURCHASE_RECEIPT_NOT_FOUND, message: Receipt not found. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND COALESCE(:current_company_name, '') <> '' AND company_name = :current_company_name", status: 403, code: PURCHASE_RECEIPT_COMPANY_SCOPE_REQUIRED, message: Receipt belongs to another company or no company is selected. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND state IN ('Draft', 'Ready')", status: 409, code: PURCHASE_RECEIPT_NOT_OPEN, message: Only open receipts can be cancelled. }
+        - { query: "SELECT id FROM purchase_receipts WHERE id = :id AND row_version = :expected_row_version", status: 409, code: PURCHASE_RECEIPT_STALE, message: This receipt changed. Reload before cancelling. }
       steps:
         - { query: "UPDATE purchase_receipts SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: PURCHASE_RECEIPT_STALE, message: This receipt changed. Reload before cancelling. }
         - { query: "INSERT INTO purchase_receipt_messages(id, receipt_id, actor_name, action, action_label, detail, created_at) VALUES(:message_id, :id, :current_user_name, 'purchase.receipt.cancelled', 'Cancelled', 'Receipt cancelled', TIMESTAMP '2026-09-13 10:00:00')" }

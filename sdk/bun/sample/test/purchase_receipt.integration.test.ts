@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
@@ -76,9 +77,9 @@ describe('Purchase receipt stat action parity', () => {
     await expect(repository.executeMutation(remove.mutation, { id: 'purchase-receipt-p00012', line_id: lineId, parent_expected_row_version: 4, expected_row_version: 2 })).rejects.toMatchObject({ status: 409, code: 'PURCHASE_RECEIPT_LINE_STALE' });
 
     const validate = action('validate_purchase_receipt');
-    const done = await repository.executeMutation(validate.mutation, { id: 'purchase-receipt-p00012', expected_row_version: 4, current_user_name: 'Core3 Administrator' });
+    const done = await repository.executeMutation(validate.mutation, { id: 'purchase-receipt-p00012', expected_row_version: 4, current_user_name: 'Core3 Administrator', current_company_name: 'My Company (San Francisco)' });
     expect(done).toMatchObject({ id: 'purchase-receipt-p00012', state: 'Done', row_version: 5 });
-    await expect(repository.executeMutation(validate.mutation, { id: 'purchase-receipt-p00012', expected_row_version: 5 })).rejects.toMatchObject({ status: 409, code: 'PURCHASE_RECEIPT_NOT_READY' });
+    await expect(repository.executeMutation(validate.mutation, { id: 'purchase-receipt-p00012', expected_row_version: 5, current_user_name: 'Core3 Administrator', current_company_name: 'My Company (San Francisco)' })).rejects.toMatchObject({ status: 409, code: 'PURCHASE_RECEIPT_NOT_READY' });
     expect(action('validate_purchase_receipt').permission).toBe('purchase.write');
     expect(action('cancel_purchase_receipt').permission).toBe('purchase.write');
     expect(source('purchase_receipt_detail').permission).toBe('purchase.read');
@@ -91,11 +92,90 @@ describe('Purchase receipt stat action parity', () => {
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'purchase_receipt_cancel_migrations', ['schema', 'data']);
     const cancel = action('cancel_purchase_receipt');
 
-    expect((await repository.query("SELECT state, row_version FROM purchase_receipts WHERE id = 'purchase-receipt-p00005'"))[0]).toMatchObject({ state: 'Draft', row_version: 1 });
-    const cancelled = await repository.executeMutation(cancel.mutation, { id: 'purchase-receipt-p00005', expected_row_version: 1, current_user_name: 'Purchase User' });
+    expect((await repository.query("SELECT state, row_version, company_name FROM purchase_receipts WHERE id = 'purchase-receipt-p00005'"))[0]).toMatchObject({ state: 'Draft', row_version: 1, company_name: 'Core3 Demo Company' });
+    const cancelled = await repository.executeMutation(cancel.mutation, { id: 'purchase-receipt-p00005', expected_row_version: 1, current_user_name: 'Purchase User', current_company_name: 'Core3 Demo Company' });
     expect(cancelled).toMatchObject({ id: 'purchase-receipt-p00005', state: 'Cancelled', row_version: 2 });
     expect((await repository.query("SELECT actor_name, action, action_label, detail FROM purchase_receipt_messages WHERE receipt_id = 'purchase-receipt-p00005' ORDER BY created_at DESC LIMIT 1"))[0]).toMatchObject({ actor_name: 'Purchase User', action: 'purchase.receipt.cancelled', action_label: 'Cancelled', detail: 'Receipt cancelled' });
-    await expect(repository.executeMutation(cancel.mutation, { id: 'purchase-receipt-p00005', expected_row_version: 2, current_user_name: 'Purchase User' })).rejects.toMatchObject({ status: 409, code: 'PURCHASE_RECEIPT_NOT_OPEN' });
+    await expect(repository.executeMutation(cancel.mutation, { id: 'purchase-receipt-p00005', expected_row_version: 2, current_user_name: 'Purchase User', current_company_name: 'Core3 Demo Company' })).rejects.toMatchObject({ status: 409, code: 'PURCHASE_RECEIPT_NOT_OPEN' });
     database.close();
+  });
+
+  test('cancels the authenticated receipt and preserves state after close and reopen', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'core3-purchase-receipt-'));
+    const databasePath = join(directory, 'purchase-receipt.duckdb');
+    try {
+      const firstDatabase = await DuckDbDatabase.open(databasePath);
+      const firstRepository = new YamlRepository(firstDatabase);
+      await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, 'purchase_receipt_file_backed_cancel', ['schema', 'data']);
+      const cancel = action('cancel_purchase_receipt');
+      const cancelled = await firstRepository.executeMutation(cancel.mutation, {
+        id: 'purchase-receipt-p00005', expected_row_version: 1, current_user_name: 'Core3 Administrator', current_company_name: 'Core3 Demo Company',
+      });
+      expect(cancelled).toMatchObject({ id: 'purchase-receipt-p00005', state: 'Cancelled', row_version: 2, company_name: 'Core3 Demo Company' });
+      firstDatabase.close();
+
+      const reopenedDatabase = await DuckDbDatabase.open(databasePath);
+      const reopenedRepository = new YamlRepository(reopenedDatabase);
+      expect((await reopenedRepository.query("SELECT state, row_version, company_name FROM purchase_receipts WHERE id = 'purchase-receipt-p00005'"))[0]).toEqual({ state: 'Cancelled', row_version: 2, company_name: 'Core3 Demo Company' });
+      expect((await reopenedRepository.query("SELECT actor_name, action FROM purchase_receipt_messages WHERE receipt_id = 'purchase-receipt-p00005' ORDER BY created_at DESC LIMIT 1"))[0]).toEqual({ actor_name: 'Core3 Administrator', action: 'purchase.receipt.cancelled' });
+      reopenedDatabase.close();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  test('rejects unauthenticated, wrong-company, missing, and stale receipt mutations atomically', async () => {
+    const cancel = action('cancel_purchase_receipt');
+    const cases = [
+      { name: 'unauthenticated', params: { id: 'purchase-receipt-p00005', expected_row_version: 1, current_company_name: 'Core3 Demo Company' }, error: { status: 401, code: 'PURCHASE_RECEIPT_UNAUTHORIZED' } },
+      { name: 'wrong company', params: { id: 'purchase-receipt-p00005', expected_row_version: 1, current_user_name: 'Purchase User', current_company_name: 'Other Company' }, error: { status: 403, code: 'PURCHASE_RECEIPT_COMPANY_SCOPE_REQUIRED' } },
+      { name: 'missing receipt', params: { id: 'purchase-receipt-missing', expected_row_version: 1, current_user_name: 'Purchase User', current_company_name: 'Core3 Demo Company' }, error: { status: 404, code: 'PURCHASE_RECEIPT_NOT_FOUND' } },
+    ];
+
+    for (const scenario of cases) {
+      const database = await DuckDbDatabase.open(':memory:');
+      const repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(root, 'migrations'), undefined, `purchase_receipt_${scenario.name.replaceAll(' ', '_')}`, ['schema', 'data']);
+      const before = (await repository.query("SELECT state, row_version FROM purchase_receipts WHERE id = 'purchase-receipt-p00005'"))[0];
+      const messagesBefore = (await repository.query("SELECT COUNT(*) AS count FROM purchase_receipt_messages WHERE receipt_id = 'purchase-receipt-p00005'"))[0];
+      await expect(repository.executeMutation(cancel.mutation, scenario.params)).rejects.toMatchObject(scenario.error);
+      expect((await repository.query("SELECT state, row_version FROM purchase_receipts WHERE id = 'purchase-receipt-p00005'"))[0]).toEqual(before);
+      expect((await repository.query("SELECT COUNT(*) AS count FROM purchase_receipt_messages WHERE receipt_id = 'purchase-receipt-p00005'"))[0]).toEqual(messagesBefore);
+      database.close();
+    }
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'purchase_receipt_stale_atomicity', ['schema', 'data']);
+    const before = (await repository.query("SELECT state, row_version FROM purchase_receipts WHERE id = 'purchase-receipt-p00005'"))[0];
+    const messagesBefore = (await repository.query("SELECT COUNT(*) AS count FROM purchase_receipt_messages WHERE receipt_id = 'purchase-receipt-p00005'"))[0];
+    await expect(repository.executeMutation(cancel.mutation, { id: 'purchase-receipt-p00005', expected_row_version: 99, current_user_name: 'Purchase User', current_company_name: 'Core3 Demo Company' })).rejects.toMatchObject({ status: 409, code: 'PURCHASE_RECEIPT_STALE' });
+    expect((await repository.query("SELECT state, row_version FROM purchase_receipts WHERE id = 'purchase-receipt-p00005'"))[0]).toEqual(before);
+    expect((await repository.query("SELECT COUNT(*) AS count FROM purchase_receipt_messages WHERE receipt_id = 'purchase-receipt-p00005'"))[0]).toEqual(messagesBefore);
+    database.close();
+
+    const fulfillmentDatabase = await DuckDbDatabase.open(':memory:');
+    const fulfillmentRepository = new YamlRepository(fulfillmentDatabase);
+    await migrateDatabase(fulfillmentRepository, join(root, 'migrations'), undefined, 'purchase_receipt_fulfillment_stale_atomicity', ['schema', 'data']);
+    const validate = action('validate_purchase_receipt');
+    const receiptBefore = (await fulfillmentRepository.query("SELECT state, row_version FROM purchase_receipts WHERE id = 'purchase-receipt-p00012'"))[0];
+    const linesBefore = await fulfillmentRepository.query("SELECT id, quantity, row_version FROM purchase_receipt_lines WHERE receipt_id = 'purchase-receipt-p00012' ORDER BY id");
+    await expect(fulfillmentRepository.executeMutation(validate.mutation, { id: 'purchase-receipt-p00012', expected_row_version: 99, current_user_name: 'Purchase User', current_company_name: 'My Company (San Francisco)' })).rejects.toMatchObject({ status: 409, code: 'PURCHASE_RECEIPT_STALE' });
+    expect((await fulfillmentRepository.query("SELECT state, row_version FROM purchase_receipts WHERE id = 'purchase-receipt-p00012'"))[0]).toEqual(receiptBefore);
+    expect(await fulfillmentRepository.query("SELECT id, quantity, row_version FROM purchase_receipt_lines WHERE receipt_id = 'purchase-receipt-p00012' ORDER BY id")).toEqual(linesBefore);
+    fulfillmentDatabase.close();
+  });
+
+  test('declares authenticated read errors and company-scoped fulfillment guards', () => {
+    const api = yaml('api/purchase-receipt.yaml');
+    expect(api.datasources.find((item: any) => item.id === 'purchase_receipt_detail').error_states).toMatchObject({ unauthorized: { status: 401 }, forbidden: { status: 403 }, not_found: { status: 404 } });
+    for (const id of ['validate_purchase_receipt', 'cancel_purchase_receipt']) {
+      const guards = action(id).mutation.guards;
+      expect(guards.slice(0, 3).map((guard: any) => [guard.status, guard.code])).toEqual([
+        [401, 'PURCHASE_RECEIPT_UNAUTHORIZED'],
+        [404, 'PURCHASE_RECEIPT_NOT_FOUND'],
+        [403, 'PURCHASE_RECEIPT_COMPANY_SCOPE_REQUIRED'],
+      ]);
+    }
   });
 });
