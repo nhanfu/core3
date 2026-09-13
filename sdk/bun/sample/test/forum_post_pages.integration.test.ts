@@ -75,14 +75,48 @@ describe('Forum Posts website-content slice', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'forum_post_pages_schema_migrations', ['schema', 'data']);
     const source = yaml('api/forum-post-pages.yaml').datasources[1];
+    const states = yaml('api/forum-post-pages.yaml').datasources[0];
     const params = { q: null, state: null, content_scope: 'posts', fixture_state: null };
 
+    expect((await repository.querySource(states, {})).data).toEqual([
+      { value: 'Active', label: 'Active' },
+      { value: 'Closed', label: 'Closed' },
+      { value: 'Flagged', label: 'Flagged' },
+      { value: 'Archived', label: 'Archived' },
+    ]);
     const populated = await repository.querySource(source, params, 0, 50);
     expect(populated.data.map((row: any) => row.title)).toEqual(['Migration ordering across services', 'How do I add a new YAML service?']);
     expect(populated.data[0]).toMatchObject({ forum_name: 'Core3 Platform Q&A', answer_count: 0, is_seo_optimized: true });
     expect((await repository.querySource(source, { ...params, q: 'yaml' })).data).toHaveLength(1);
     expect((await repository.querySource(source, { ...params, fixture_state: 'empty' })).data).toEqual([]);
     await expect(repository.querySource(source, { ...params, fixture_state: 'transport_error' })).rejects.toMatchObject({ status: 503, code: 'FORUM_POST_PAGES_UNAVAILABLE' });
+    database.close();
+  });
+
+  test('creates a question atomically and keeps forum totals consistent', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'forum_post_create_test_migrations', ['schema', 'data']);
+    const create = yaml('pages/questions.yaml').actions.find((action: any) => action.id === 'create_forum_post');
+
+    expect(create).toMatchObject({ type: 'server_form', permission: 'forum.write', operation: 'create', handler: 'yaml_mutation' });
+    expect(create.mutation.steps).toHaveLength(1);
+    expect(await repository.executeMutation(create.mutation, {
+      id: 'forum-post-create-qa',
+      values: {
+        forum_id: 'forum-demo-001', forum_name: 'Core3 Platform Q&A', title: 'How do I test a Forum mutation?',
+        content: 'Use the isolated DuckDB fixture.', author_name: 'Forum QA', tags: 'testing,yaml',
+      },
+    })).toMatchObject({ id: 'forum-post-create-qa', title: 'How do I test a Forum mutation?', row_version: 1 });
+    expect((await repository.query('SELECT forum_name, title, tags, state FROM forum_posts WHERE id = ?', ['forum-post-create-qa']))[0]).toEqual({
+      forum_name: 'Core3 Platform Q&A', title: 'How do I test a Forum mutation?', tags: 'testing,yaml', state: 'Active',
+    });
+    expect((await repository.query('SELECT total_posts FROM forum_forums WHERE id = ?', ['forum-demo-001']))[0]).toEqual({ total_posts: 3 });
+    await expect(repository.executeMutation(create.mutation, {
+      id: 'forum-post-invalid-forum',
+      values: { forum_id: 'forum-demo-001', forum_name: 'Spoofed Forum', title: 'Should be rejected' },
+    })).rejects.toMatchObject({ status: 422, code: 'FORUM_NAME_MISMATCH' });
+    expect((await repository.query('SELECT COUNT(*) AS count FROM forum_posts WHERE id = ?', ['forum-post-invalid-forum']))[0].count).toBe(0);
     database.close();
   });
 

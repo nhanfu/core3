@@ -55,7 +55,11 @@ actions:
       table: forum_posts
       fields: [forum_id, forum_name, title, content, author_name, tags]
       required: [forum_id, forum_name, title]
-      guards: [{ query: "SELECT 1 AS ok FROM forum_forums WHERE id = :forum_id", status: 400, message: A valid forum is required }]
+      guards:
+        - { query: "SELECT 1 AS ok FROM forum_forums WHERE id = :forum_id", status: 400, code: FORUM_INVALID, message: A valid forum is required }
+        - { query: "SELECT 1 AS ok FROM forum_forums WHERE id = :forum_id AND name = :forum_name", status: 422, code: FORUM_NAME_MISMATCH, message: The selected forum name does not match the selected forum. }
+      steps:
+        - { query: "UPDATE forum_forums SET total_posts = total_posts + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :forum_id" }
       result: { query: "SELECT * FROM forum_posts WHERE id = :id" }
     fields:
       - { field: forum_id, label: Forum, type: select, options_source: forum_lookup, required: true }

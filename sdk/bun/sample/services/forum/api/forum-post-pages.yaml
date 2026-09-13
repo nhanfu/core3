@@ -2,7 +2,7 @@ page: { id: forum-post-pages }
 datasources:
   - id: forum_post_page_states
     permission: forum.read
-    query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Closed','Closed'), ('Flagged','Flagged')) states(value, label)"
+    query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Closed','Closed'), ('Flagged','Flagged'), ('Archived','Archived')) states(value, label)"
   - id: forum_post_pages
     permission: forum.read
     error_states:
