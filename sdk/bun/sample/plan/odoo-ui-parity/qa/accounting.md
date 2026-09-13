@@ -252,3 +252,14 @@ Sales and Purchases export coverage below.
   downloads passing.
 - Accounting remains **conditional / unsigned-off**. Broader attachment,
   print, and authenticated paired Odoo comparison gates remain open.
+## 2026-09-13 coordinator dispatch — bounded reconciliation wave
+
+- Existing owner `agent/odoo-accounting-bank-statement-attachments-20260913` is
+  assigned on `/home/nhanjs/projects/core3-worktrees/odoo-accounting-bank-
+  statement-attachments-20260913`, based at `f0024c0f`. Development event:
+  `DEV-ACCOUNTING-WAVE-20260913-R2`; QA event:
+  `QA-ACCOUNTING-WAVE-20260913-R2`; handoff commit: `97f1529b`.
+- Scope is atomic bank-statement reconciliation/unreconciliation with linked
+  balance/payment/journal updates, duplicate/stale/invalid/scope guards, and
+  focused no-partial-write tests. Candidate pending; ledgers and aggregate
+  progress are preserved.
