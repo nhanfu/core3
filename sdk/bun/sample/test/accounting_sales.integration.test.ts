@@ -16,6 +16,10 @@ describe('Accounting Sales journal action', () => {
     expect(page.datasources).toBeUndefined();
     expect(api.page).toEqual({ id: 'accounting-sales' });
     expect(page.components[0]).toMatchObject({ source: 'accounting_sales_journal_items', view_navigation: 'tabs' });
+    expect(page.components[0].actions).toEqual([
+      { id: 'accounting.sales.export', label: 'Export', title: 'Export Sales Journal Items', icon: 'download', permission: 'accounting.read' },
+    ]);
+    expect(api.actions).toContainEqual({ id: 'accounting.sales.export', type: 'client', permission: 'accounting.read' });
     expect(page.components[0].views.map((view: any) => view.id)).toEqual(['list', 'pivot', 'graph', 'kanban', 'card']);
     expect(api.datasources[0].permission).toBe('accounting.read');
     expect(api.datasources[0].query).toContain("journal_type = 'sales'");

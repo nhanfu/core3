@@ -43,6 +43,8 @@ components:
     filters: [{ field: state, label: Status, options: [{ id: Posted, label: Posted }] }]
     default_filters: { state: Posted }
     empty_state: { title: No sales journal items, description: Try adjusting your search or filters. }
+    actions:
+      - { id: accounting.sales.export, label: Export, title: Export Sales Journal Items, icon: download, permission: accounting.read }
     columns:
       - { field: item_date, label: Date }
       - { field: entry_name, label: Journal Entry, type: PrimaryEntityCell }

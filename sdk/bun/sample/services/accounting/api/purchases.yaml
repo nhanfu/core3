@@ -1,4 +1,8 @@
 page: { id: accounting-purchases }
+actions:
+  - id: accounting.purchases.export
+    type: client
+    permission: accounting.read
 datasources:
   - id: accounting_purchase_journal_items
     single: false

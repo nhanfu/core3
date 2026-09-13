@@ -1407,3 +1407,25 @@ without changing the page/API permission contract. Candidate static and test
 evidence passed; the bounded reviewer run did not independently capture the
 XLSX download event. Broader export, attachment, print, and paired Odoo gates
 remain open.
+Authenticated Chrome verification against the isolated accounting runner at
+`http://127.0.0.1:4011/accounting/journal-items` opened the Columns menu and
+clicked the real Export action at 1440x900 and 390x844. Both states downloaded
+`accounting-journal-items-export.xlsx`, 4,453 bytes with the XLSX ZIP signature
+`504b0304`, four deterministic rows, zero page/request errors, and no
+horizontal overflow. The focused client regression and full Accounting suite
+also pass; captures and downloaded files remain outside Git.
+
+## Sales and Purchases journal-item export wave (2026-09-13)
+
+The existing Sales and Purchases journal-item actions now expose page/API
+matched `accounting.read`-guarded Export controls. They reuse the real
+service-owned datasource projections and shared XLSX renderer; no fixture-only
+or client-only data path was added.
+
+Authenticated Chrome verification against the isolated Accounting runner at
+`http://127.0.0.1:4011` opened each Columns utility menu and clicked Export at
+1440x900 and 390x844. Sales downloaded
+`accounting-sales-export.xlsx` (3,578 bytes) and Purchases downloaded
+`accounting-purchases-export.xlsx` (3,585 bytes); every file had the XLSX ZIP
+signature `504b0304`, the expected two deterministic journal-item rows, zero
+page/request errors, and no horizontal overflow. Files remain outside Git.

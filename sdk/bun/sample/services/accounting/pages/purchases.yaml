@@ -44,6 +44,8 @@ components:
     empty_state: { title: No purchase journal items, description: Try adjusting your search or filters. }
     selectable: true
     column_chooser: true
+    actions:
+      - { id: accounting.purchases.export, label: Export, title: Export Purchase Journal Items, icon: download, permission: accounting.read }
     columns:
       - { field: item_date, label: Date }
       - { field: entry_name, label: Journal Entry, type: PrimaryEntityCell }

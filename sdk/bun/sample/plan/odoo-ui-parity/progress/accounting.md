@@ -68,3 +68,8 @@ This file records accounting progress only. The aggregate `progress.md` is QA-ow
 QA state for `9c19f5a4`: `qa-verified-partial`; this is not Accounting module
 sign-off. Browser upload/download, full regression, lint-equivalent, and
 paired Odoo gates remain open.
+## Repair wave: Sales and Purchases export (2026-09-13)
+
+Sales and Purchases now have page/API-bound, `accounting.read`-guarded Export
+actions. Focused contract tests and authenticated desktop/mobile XLSX download
+checks pass; broader Accounting attachment and print actions remain open.

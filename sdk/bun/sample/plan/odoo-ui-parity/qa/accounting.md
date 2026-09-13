@@ -184,3 +184,57 @@ does not remain active while dormant.
   was not independently captured in this review, so that remains conditional.
 - Broader export, attachment, print, and paired Odoo gates remain open;
   Accounting is unsigned-off.
+## Bounded QA event: Journal Items export candidate `99a8f86f` (2026-09-13)
+
+- Scope: exactly candidate `99a8f86f` in
+  `/home/nhanjs/projects/core3-worktrees/odoo-accounting-journal-items-export`.
+  No implementation files or aggregate `progress.md` were changed by this QA
+  event.
+- Runtime: the existing isolated Accounting runner on port `4011` remained
+  active throughout; `/api/modules` returned 200. No replacement runner was
+  started.
+- Focused gates: `accounting_journal_items_views.integration.test.ts` passed
+  2/2; the client `list-utils` regression passed 3/3; attachment component
+  coverage passed 31/31. The full Accounting suite passed 90/90 tests and
+  1,013 assertions across 34 files with `--timeout 20000`.
+- Static/build gates: `bun run audit` passed (659 pages, 669 routes, 1,134
+  datasources); targeted ESLint passed for `list-utils.ts`, `xlsx-utils.ts`,
+  and its regression test; `bun run frontend:build` passed; `git diff --check`
+  passed. The deferred cleanup assertion confirms the DOM anchor remains
+  attached through click and the object URL is revoked on the next tick.
+- Authenticated browser: Admin login reached `/accounting/journal-items` at
+  1440x900 and 390x844. Four deterministic Journal Items rows rendered on
+  desktop and the corresponding responsive card data rendered on mobile; both
+  viewports had no horizontal overflow or page errors. The real
+  `accounting.journal_items.export` Export control was present and clickable.
+- Download retest: authenticated Chrome emitted the Journal Items download on
+  both desktop and mobile; `accounting-journal-items-export.xlsx` was 4,453
+  bytes with signature `504b0304` and four deterministic rows. The browser
+  download blocker is closed for Journal Items.
+- Broader gates: Accounting-wide export, attachment download/upload, print,
+  and paired Odoo toolbar/layout comparison remain open; the passing
+  attachment component tests do not replace those browser gates. Permission
+  contract coverage remains passing (`accounting.read` on the export action),
+  while a fresh Fleet-user browser export-denial probe was not completed in
+  this bounded event.
+
+Reviewer handoff: retain the broader export/attachment/print/Odoo gates
+explicitly. Journal Items export is browser-verified; this repair wave adds
+Sales and Purchases export coverage below.
+
+## Bounded QA event: Sales and Purchases exports (2026-09-13)
+
+- Trigger: `merge-candidate` Accounting repair wave.
+- Runtime: existing isolated Accounting runner on port `4011`; `/api/modules`
+  returned 200.
+- Contract: Sales and Purchases page/API actions are both `accounting.read`
+  guarded and their focused tests passed 4/4.
+- Browser: authenticated Chrome opened the Columns utility menu and clicked
+  Export at 1440x900 and 390x844 for both `/accounting/sales` and
+  `/accounting/purchases`.
+- Evidence: Sales files were `accounting-sales-export.xlsx` (3,578 bytes) and
+  Purchases files were `accounting-purchases-export.xlsx` (3,585 bytes); all
+  had signature `504b0304`, expected two rows, zero page/request errors, and
+  no horizontal overflow. Downloads remain under `/tmp`.
+- Scope: Sales and Purchases export only; broader Accounting attachment,
+  print, and paired Odoo comparison gates remain open.
