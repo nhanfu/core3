@@ -33,3 +33,19 @@ Tester decision: conditional pass; reviewer sign-off required
 
 Disposition: conditional bounded pass only. Preserve blockers; no full Time Off
 module sign-off or aggregate progress claim.
+
+## 2026-09-13 coordinator review: candidate `691bb590`
+
+- Integrated only the bounded refusal-reason migration/forms/guards/detail
+  slice as `c6c209c1` on the active branch. The candidate is confined to
+  Time Off API/page contracts, one migration, and focused tests; no shared
+  runtime or unrelated work was imported.
+- Post-merge refusal test passed: **2 tests, 20 assertions**. Candidate
+  evidence remains **51 tests, 529 assertions**; audit (**647 pages, 662
+  routes, 1112 datasources**), frontend build, and diff-check passed.
+- Refusal reason persistence, manager-only forms, required-reason validation,
+  stale/non-Submitted guards, and refused-detail display are accepted for this
+  bounded slice. Typecheck and lint remain conditional blockers.
+- Time Off remains **conditional / unsigned-off**. Core3 listener failure,
+  unavailable `js_repl`/Playwright, role-matrix checks, authenticated
+  desktop/mobile evidence, and paired Odoo comparison remain open.
