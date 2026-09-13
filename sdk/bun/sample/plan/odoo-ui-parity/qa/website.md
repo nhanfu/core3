@@ -80,3 +80,11 @@ Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It 
   actor-boundary repair. Focused tests, audit, CSS/frontend build, scoped
   ESLint, and diff-check are required before triggering existing QA.
   Aggregate progress remains untouched.
+## 2026-09-13 coordinator reactivation
+
+- Existing owner `agent/odoo-website-dev2-menu-editor` is reactivated on the
+  same worktree for one concrete lifecycle/asset/Menu Editor scope, replay,
+  or actor-boundary repair with focused regression coverage.
+- Existing development event `DEV-WEBSITE-WAVE-20260913` and QA event
+  `QA-WEBSITE-WAVE-20260913` remain assigned. Candidate is pending; no
+  aggregate progress change.

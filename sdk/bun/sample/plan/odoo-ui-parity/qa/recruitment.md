@@ -107,3 +107,11 @@ Candidate commit: pending commit for refusal workflow repair
   around refusal/reopen. Focused tests, audit, CSS/frontend build, scoped
   ESLint, and diff-check are required before triggering existing QA.
   Aggregate progress remains untouched.
+## 2026-09-13 coordinator reactivation
+
+- Existing owner `agent/odoo-recruitment-reopen-20260913` is reactivated on
+  the same worktree for one concrete CRUD/refusal/reopen gap with focused
+  regression coverage.
+- Existing development event `DEV-RECRUITMENT-WAVE-20260913` and QA event
+  `QA-RECRUITMENT-WAVE-20260913` remain assigned. Candidate is pending; no
+  aggregate progress change.

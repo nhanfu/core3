@@ -103,3 +103,11 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
   employee-validation repair. Focused tests, audit, CSS/frontend build,
   scoped ESLint, and diff-check are required before triggering existing QA.
   Aggregate progress remains untouched.
+## 2026-09-13 coordinator reactivation
+
+- Existing owner `agent/odoo-ui-timesheets-next` is reactivated on the same
+  worktree. Resolve the literal `mock_data` audit exception for six sources
+  and add one focused employee-cost/employee-validation parity repair.
+- Existing development event `DEV-TIMESHEETS-WAVE-20260913` and QA event
+  `QA-TIMESHEETS-WAVE-20260913` remain assigned. Candidate is pending; no
+  aggregate progress change.
