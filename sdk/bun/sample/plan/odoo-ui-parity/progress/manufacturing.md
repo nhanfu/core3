@@ -80,4 +80,20 @@ released migration history.
 - The product candidate was rejected because the active checkout already has a
   different Work Orders Analysis API/page/test contract, producing product
   add/add conflicts. This QA record is historical and does not validate the
-  active implementation or grant Manufacturing sign-off.
+active implementation or grant Manufacturing sign-off.
+
+## Coordinator reconciliation — Work Orders Analysis browser repair (2026-09-13)
+
+- Reviewed owner lineage `cbd5d72f` -> `dcedc46b` -> `db7c31a8`. The active
+  branch retained its established `mrp_workorder_analysis` graph/pivot/detail
+  contracts; the incompatible replacement `mrp_workorders` model was not
+  imported.
+- Integrated the valid live Vite source bridge/loopback binding as active
+  `1dc88184`. Active focused verification passed **5 tests / 50 assertions**;
+  audit passed **661 pages / 670 routes / 1161 datasources**; frontend/CSS
+  build, targeted ESLint, and diff-check passed.
+- QA evidence for the bounded repair passed live PageField JavaScript,
+  authenticated desktop/mobile rendering, company isolation/spoof protection,
+  guard and migration checks, and **11 tests / 124 assertions**.
+- Manufacturing remains conditional: restart durability, Temporal/integration,
+  paired Odoo comparison, and repository-wide lint remain open or limited.

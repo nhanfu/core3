@@ -253,3 +253,29 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
   before triggering `QA-MANUFACTURING-WAVE-20260913-R2` again.
 - Preserve the API pass, repository-lint limitation, restart/Temporal, and
   paired-Odoo gates. No Manufacturing sign-off is made.
+
+## Coordinator reconciliation — final repair `db7c31a8` (2026-09-13)
+
+- Reviewed owner HEAD `db7c31a8` in
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-work-orders-analysis`
+  on `agent/odoo-ui-manufacturing-work-orders-analysis`; only QA
+  documentation is dirty.
+- Integrated the valid live-server repair as active `1dc88184`, adding the
+  workspace source bridge and binding Vite to `127.0.0.1`. Active verification
+  passed the established Manufacturing focused suite (**5 tests / 50
+  assertions**), audit (**661 pages / 670 routes / 1161 datasources**),
+  frontend/CSS build, targeted ESLint, and diff-check.
+- The `cbd5d72f` model-replacement portion was not cherry-picked verbatim: it
+  replaces the active `mrp_workorder_analysis` graph/pivot/detail contracts
+  with different `mrp_workorders` page/API IDs and would discard active
+  behavior. The active report already carries the company-scoped
+  `mrp_workorder_analysis` contract; no replacement model or unrelated route
+  was imported.
+- QA PASS is reconciled for live PageField JavaScript, authenticated
+  desktop/mobile rendering, Demo/Vietnam Branch isolation and spoof
+  protection, guards, migrations, **11 tests / 124 assertions**, builds,
+  audit, ESLint, and diff-check.
+- Disposition: **conditionally integrated bounded live-browser repair** as
+  `1dc88184`; no Manufacturing full sign-off. Restart durability,
+  Temporal/integration coverage, paired authenticated Odoo comparison, and
+  repository-wide lint remain open or limited.
