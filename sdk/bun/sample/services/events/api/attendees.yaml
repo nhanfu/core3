@@ -5,6 +5,35 @@ datasources:
     error_states: { transport_error: { status: 503, code: EVENTS_ATTENDEES_UNAVAILABLE, message: Attendee registrations are temporarily unavailable. } }
     query: "SELECT id, COALESCE(row_version, 1) AS row_version, event_name, attendee_name, attendee_email, ticket_type, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR attendee_name ILIKE '%' || :q || '%' OR event_name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY registered_at DESC"
 actions:
+  - id: create_event_attendee
+    type: server_form
+    permission: events.write
+    title: New attendee
+    action: events.registrations.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [event_attendees]
+    mutation:
+      operation: insert
+      table: event_registrations
+      fields: [event_id, event_name, attendee_name, attendee_email, attendee_phone, company_name, ticket_type, booked_by]
+      generated: [id, event_name]
+      defaults: { state: Registered, row_version: 1, booked_by: My Company (San Francisco) }
+      required: [event_id, attendee_name]
+      guards:
+        - { query: "SELECT e.name AS event_name, 'registration-' || :event_id || '-' || CAST(COUNT(r.id) + 1 AS VARCHAR) AS id FROM events e LEFT JOIN event_registrations r ON r.event_id = e.id WHERE e.id = :event_id AND e.state IN ('Published', 'In Progress') AND (e.capacity = 0 OR e.registration_count < e.capacity) GROUP BY e.id, e.name", assign: true, status: 409, code: EVENT_REGISTRATION_NOT_OPEN, message: The event is not open or has reached capacity. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:attendee_name, ''))) > 0", status: 422, code: EVENT_ATTENDEE_NAME_REQUIRED, message: An attendee name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:attendee_email, '') = '' OR (POSITION('@' IN CAST(:attendee_email AS VARCHAR)) > 1 AND POSITION('.' IN split_part(CAST(:attendee_email AS VARCHAR), '@', 2)) > 1)", status: 422, code: EVENT_ATTENDEE_EMAIL_INVALID, message: Enter a valid attendee email address. }
+      steps:
+        - { query: "UPDATE events SET registration_count = registration_count + 1, row_version = COALESCE(row_version, 0) + 1 WHERE id = :event_id AND state IN ('Published', 'In Progress') AND (capacity = 0 OR registration_count < capacity)", expect_changed: true, status: 409, code: EVENT_REGISTRATION_CAPACITY_CHANGED, message: The event capacity changed while registering the attendee. }
+      result: { query: "SELECT * FROM event_registrations WHERE id = :id" }
+    fields:
+      - { field: event_id, label: Event ID, type: text, required: true, placeholder: event-demo-002 }
+      - { field: attendee_name, label: Attendee, type: text, required: true }
+      - { field: attendee_email, label: Email, type: text }
+      - { field: attendee_phone, label: Phone, type: text }
+      - { field: company_name, label: Company, type: text }
+      - { field: ticket_type, label: Ticket type, type: text }
   - id: view_event_attendee
     type: navigate
     permission: events.read

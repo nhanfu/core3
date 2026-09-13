@@ -1,5 +1,26 @@
 # Events UI parity
 
+## Bounded batch: Attendee creation persistence (2026-09-13)
+
+The attendee CRUD gap was creation: the global Attendees list had no create
+action even though the event detail had an internal registration form. This
+slice adds a permissioned `New attendee` form to the page-owned Attendees
+ListView and its page-id-bound API action. The event name and deterministic
+registration id are derived server-side from the selected event; state,
+version, booking company, and registration timestamp remain persistence-owned.
+Open-event/capacity, required-name, email-shape, and atomic counter/version
+guards are explicit, and the action requires `events.write`.
+
+Focused validation in `test/events_attendee_create.integration.test.ts` passes
+2 tests and 10 assertions. The attendee edit, confirmation, and state
+regressions pass 9 tests and 94 assertions; the shared audit passes with 659
+pages, 668 routes, and 1,141 datasources; frontend build, configured ESLint,
+and `git diff --check` pass. Authenticated desktop/mobile browser evidence is
+still open because the persistent `js_repl` runtime is unavailable in this
+session; no screenshot is claimed. The next QA trigger is an authenticated
+1440x900 and 390x844 pass from `/events/attendees`, opening `New attendee`,
+creating a registration, and verifying the new row and capacity boundary.
+
 ## Bounded batch: Attendee edit persistence (2026-09-13)
 
 The attendee detail surface previously exposed registration workflow actions
