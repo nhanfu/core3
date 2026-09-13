@@ -91,6 +91,24 @@ actions:
         - { query: "UPDATE inventory_pickings SET state = 'Done', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version" }
         - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.validated', 'Validated', 'Transfer validated')" }
       result: { query: "SELECT * FROM inventory_pickings WHERE id = :id" }
+  - id: unreserve_inventory_transfer
+    type: server
+    permission: inventory.write
+    action: inventory.pickings.unreserve
+    handler: yaml_mutation
+    operation: unreserve
+    params: { id: '{state.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_lines, inventory_transfer_timeline]
+    mutation:
+      concurrency: { required: true }
+      generated: [message_id]
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state = 'Ready' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_UNRESERVE_NOT_ALLOWED, message: Only a current ready transfer can be unreserved. }
+      steps:
+        - { query: "UPDATE inventory_pickings SET state = 'Waiting', row_version = row_version + 1 WHERE id = :id AND state = 'Ready' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before it could be unreserved. Reload it before retrying. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.unreserved', 'Unreserved', 'Transfer reservations released')" }
+      result: { query: "SELECT * FROM inventory_pickings WHERE id = :id" }
   - id: cancel_inventory_transfer
     type: server
     permission: inventory.write

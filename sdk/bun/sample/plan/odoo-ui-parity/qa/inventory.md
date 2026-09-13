@@ -186,3 +186,13 @@ retain listener/process evidence; no browser deletion claim is made here.
 - Paired Odoo: `http://127.0.0.1:8069/web/login` answered HTTP 200 with title `Odoo`. Existing authenticated `core3_reference` receipt desktop/mobile captures remain available at `/tmp/core3-odoo-parity/inventory-a238bd3d-odoo-receipts-{desktop,mobile}.png`; no fresh authenticated exact-commit pair is claimed.
 
 QA disposition: browser Draft Delete, persistence, guards, permissions, full focused suite, audit, CSS, ESLint, and diff hygiene PASS. No module sign-off or aggregate progress claim.
+
+## Transfer operation QA — Unreserve (2026-09-13)
+
+- Contract and repository workflow test: PASS. Ready `receipt-00001` moved to
+  Waiting with `row_version` 1 → 2 and a persisted Unreserved timeline event.
+- Stale row and non-Ready state guards: PASS with
+  `INVENTORY_TRANSFER_UNRESERVE_NOT_ALLOWED` (409).
+- Authenticated browser capture: OPEN; this bounded change has no visual or
+  live mutation claim until QA exercises the form action through the healthy
+  Inventory runner.

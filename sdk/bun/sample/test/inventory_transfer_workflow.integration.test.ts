@@ -37,11 +37,30 @@ describe('Inventory receipts and deliveries transfer workflow parity', () => {
 
     const detail = yaml('pages/transfer-detail.yaml').components.find((component: any) => component.type === 'OdooFormView');
     expect(detail.statusbar.map((state: any) => state.value)).toEqual(['Draft', 'Waiting', 'Ready', 'Done', 'Cancelled']);
-    expect(detail.header_actions.map((candidate: any) => candidate.label)).toEqual(['Edit details', 'Delete', 'Mark as Todo', 'Check Availability', 'Validate', 'Cancel']);
+    expect(detail.header_actions.map((candidate: any) => candidate.label)).toEqual(['Edit details', 'Delete', 'Mark as Todo', 'Check Availability', 'Unreserve', 'Validate', 'Cancel']);
     expect(action('edit_inventory_transfer')).toMatchObject({ type: 'server_form', action: 'inventory.pickings.update', handler: 'yaml_mutation', operation: 'update' });
     expect(action('edit_inventory_transfer').mutation).toMatchObject({ table: 'inventory_pickings', fields: ['contact_name', 'scheduled_date', 'source_document'], concurrency: { required: true } });
+    expect(action('unreserve_inventory_transfer')).toMatchObject({ action: 'inventory.pickings.unreserve', permission: 'inventory.write', operation: 'unreserve' });
+    expect(action('unreserve_inventory_transfer').mutation).toMatchObject({ generated: ['message_id'] });
+    expect(action('unreserve_inventory_transfer')).toMatchObject({ permission: 'inventory.write' });
     expect(detail.notebook.tabs.map((tab: any) => tab.label)).toEqual(['Operations', 'Additional Info', 'Note']);
     expect(Bun.YAML.parse(readFileSync(join(serviceRoot, 'manifest.yaml'), 'utf8')).menu.groups.map((group: any) => group.label)).toEqual(['Transfers', 'Adjustments', 'Procurement', 'Reporting', 'Products', 'Configuration']);
+  });
+
+  test('unreserves a ready transfer with current-row and permission guards', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'inventory_transfer_unreserve_test_schema_migrations', ['schema', 'data']);
+    const unreserve = action('unreserve_inventory_transfer');
+
+    const updated = await repository.executeMutation(unreserve.mutation, { id: 'receipt-00001', expected_row_version: 1, current_user_name: 'Admin' });
+    expect(updated).toMatchObject({ id: 'receipt-00001', state: 'Waiting', row_version: 2 });
+    expect((await repository.querySource(source('transfer-detail.yaml', 'inventory_transfer_timeline'), { id: 'receipt-00001', fixture_state: null }, 0, 50)).data).toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: 'inventory.transfer.unreserved', action_label: 'Unreserved', detail: 'Transfer reservations released' }),
+    ]));
+
+    await expect(repository.executeMutation(unreserve.mutation, { id: 'receipt-00001', expected_row_version: 1, current_user_name: 'Admin' })).rejects.toMatchObject({ status: 409, code: 'INVENTORY_TRANSFER_UNRESERVE_NOT_ALLOWED' });
+    await expect(repository.executeMutation(unreserve.mutation, { id: 'receipt-00004', expected_row_version: 1, current_user_name: 'Admin' })).rejects.toMatchObject({ status: 409, code: 'INVENTORY_TRANSFER_UNRESERVE_NOT_ALLOWED' });
   });
 
   test('returns realistic deterministic fixtures and explicit empty/error states', async () => {

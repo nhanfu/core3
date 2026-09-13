@@ -845,3 +845,18 @@ requests or horizontal overflow. Direct authenticated API mutation succeeds.
 The Settings Save browser journey remains blocked by the shared server-action
 transport dropping `SettingsView` draft values; no shared runtime file is
 changed in this module slice.
+
+## Transfer form Unreserve operation (2026-09-13)
+
+Core3 now exposes Odoo's form-bound `action_unreserve_picking` behavior on the
+shared transfer detail. A current Ready transfer can be unreserved by an
+`inventory.write` user; the guarded mutation moves it back to Waiting,
+increments `row_version`, and records a deterministic timeline event. Missing,
+stale, and non-Ready transfers are rejected with explicit 404/409 contracts.
+Reservation quantities and move-line reservation records remain a follow-up
+when those Inventory domain primitives are implemented.
+
+Focused evidence: `test/inventory_transfer_workflow.integration.test.ts`
+passes the layout/action contract and the Ready-to-Waiting mutation,
+timeline, stale-row, and invalid-state assertions. Browser evidence for this
+new form action remains a QA follow-up; no visual sign-off is claimed here.

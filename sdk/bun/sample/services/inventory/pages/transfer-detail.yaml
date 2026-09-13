@@ -15,6 +15,7 @@ components:
       - { id: delete_inventory_transfer, label: Delete, variant: danger, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Draft'" }
       - { id: mark_inventory_transfer_todo, label: Mark as Todo, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Draft'" }
       - { id: check_inventory_transfer_availability, label: Check Availability, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Waiting' || state.inventory_transfer_detail.state === 'Draft'" }
+      - { id: unreserve_inventory_transfer, label: Unreserve, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: validate_inventory_transfer, label: Validate, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
     message_source: inventory_transfer_timeline

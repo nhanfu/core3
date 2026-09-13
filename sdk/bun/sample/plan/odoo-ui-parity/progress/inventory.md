@@ -67,6 +67,16 @@ Candidate commit: `3aec95dc` (`feat(inventory): add settings parity slice`)
   and full Odoo workflow parity still require QA coverage; the single passing
   receipt workflow is not module completion.
 
+## Transfer operation slice — Unreserve (2026-09-13)
+
+- Added the Odoo form-bound `Unreserve` action to transfer detail for current
+  Ready transfers, with `inventory.write` permission and row-version guard.
+- The mutation transitions Ready → Waiting, increments the row version, and
+  records `inventory.transfer.unreserved` in transfer history.
+- Focused workflow coverage passes the action contract, success persistence,
+  timeline event, stale-row, and non-Ready guards. Browser action capture is
+  still a QA follow-up; this does not sign off Inventory.
+
 ## QA review record — candidate `84dd0f48` (2026-09-13)
 
 - QA ledger `85fa66c1` confirmed the isolated transfer CRUD checks, workflow
