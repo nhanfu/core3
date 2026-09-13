@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'node:path';
+import { extname, resolve } from 'node:path';
 import { core3Components } from '@core3/client/vite';
 
 const sampleRoot = resolve(import.meta.dirname);
@@ -9,8 +9,49 @@ const serverRoot = resolve(sampleRoot, '../packages/server/src');
 const backendPort = Number(process.env.CORE3_BACKEND_PORT || '3001');
 const frontendPort = Number(process.env.CORE3_FRONTEND_PORT || '3002');
 
+function workspaceSourceBridge() {
+  const roots = {
+    client: clientRoot,
+    server: serverRoot,
+  } as const;
+
+  return {
+    name: 'core3-workspace-source-bridge',
+    configureServer(server: { middlewares: { use: (handler: (req: any, res: any, next: () => void) => void) => void } }) {
+      server.middlewares.use((request, _response, next) => {
+        const sourceUrl = String(request.url || '');
+        const match = sourceUrl.match(/^\/packages\/(client|server)\/src\/(.+?)(\?.*)?$/);
+        if (!match) {
+          next();
+          return;
+        }
+        let relativePath: string;
+        try {
+          relativePath = decodeURIComponent(match[2]);
+        } catch {
+          next();
+          return;
+        }
+        if (relativePath.includes('..') || relativePath.includes('\\')) {
+          next();
+          return;
+        }
+        const root = roots[match[1] as keyof typeof roots];
+        const absolutePath = resolve(root, relativePath);
+        if (!absolutePath.startsWith(`${root}/`)) {
+          next();
+          return;
+        }
+        const sourcePath = extname(absolutePath) ? absolutePath : `${absolutePath}.ts`;
+        request.url = `/@fs${sourcePath}${match[3] || ''}`;
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [core3Components()],
+  plugins: [workspaceSourceBridge(), core3Components()],
   root: publicRoot,
   publicDir: false,
   resolve: {
@@ -20,6 +61,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: '127.0.0.1',
     port: frontendPort,
     // The dev orchestrator checks the port before spawning Vite, but another
     // process can claim it in that small window. Let Vite advance to the next
