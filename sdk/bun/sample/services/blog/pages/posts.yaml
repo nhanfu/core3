@@ -8,7 +8,7 @@ datasources:
   - id: blog_lookup
     permission: blog.read
     single: false
-    query: "SELECT id AS value, name AS label FROM blog_blogs WHERE active ORDER BY name"
+    query: "SELECT id AS value, name AS label FROM blog_blogs WHERE active AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name)) ORDER BY name"
   - id: blog_posts
     permission: blog.read
     workflow: blog_posts

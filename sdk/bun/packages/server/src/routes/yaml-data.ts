@@ -49,17 +49,19 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
       return json({ data: workflow.states.map((state: any) => ({ value: state.id, label: labels[state.label] || state.label, color: state.color })), meta: {} });
     }
     try {
+      const currentCompanyName = authenticatedCompanyName(authUser);
       return json(await repository.querySource(source, {
         ...(vm.params || {}),
         current_user_id: String(authUser.sub || ''),
         current_user_name: String(authUser.name || ''),
         current_user_email: String(authUser.email || ''),
+        // Company switching is represented by authenticated session state, not
+        // by a caller-controlled query parameter. This also applies to admins.
         customer_scope: authUser.roles?.includes('admin') ? 'all' : 'own',
-        current_company_name: String(authUser.company?.name || authUser.company_name || ''),
         company_name: authUser.roles?.includes('admin')
           ? (vm.params || {}).company_name
-          : authenticatedCompanyName(authUser),
-        current_company_name: authenticatedCompanyName(authUser),
+          : currentCompanyName,
+        current_company_name: currentCompanyName,
         current_branch_id: String(authUser.branch_id || ''),
         view_scope: String(authUser.view_scope || 'all'),
       }, vm.skip || 0, vm.top || 25, typeof vm.facetField === 'string' ? vm.facetField : undefined, vm.sort, vm.pivot));

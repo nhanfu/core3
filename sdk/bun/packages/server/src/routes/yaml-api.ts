@@ -132,21 +132,24 @@ export function createYamlApi(ctx: YamlApiContext) {
           direction: params.sort_dir === 'desc' ? 'desc' : 'asc',
         }
       : undefined;
+    const currentCompanyName = authenticatedCompanyName(user);
     const serverParams = {
       ...params,
       current_user_id: String(user.sub || ''),
       current_user_name: String(user.name || ''),
       current_user_email: String(user.email || ''),
+      // The selected company is session state, including for admins. Keep it
+      // separate from the optional UI filter so datasource SQL cannot widen a
+      // request beyond the authenticated company boundary.
       customer_scope: user.roles?.includes('admin') ? 'all' : 'own',
-      current_company_name: String(user.company?.name || user.company_name || ''),
       // Non-admin company scope is identity-derived; never trust a caller's
       // company_name query parameter to widen the visible company boundary.
       company_name: user.roles?.includes('admin')
         ? params.company_name
-        : authenticatedCompanyName(user),
+        : currentCompanyName,
       // Keep the authenticated company available to declarations that use a
       // dedicated current_company_name parameter for tenant scoping.
-      current_company_name: authenticatedCompanyName(user),
+      current_company_name: currentCompanyName,
       current_branch_id: String(user.branch_id || ''),
       view_scope: String(user.view_scope || 'all'),
     };
