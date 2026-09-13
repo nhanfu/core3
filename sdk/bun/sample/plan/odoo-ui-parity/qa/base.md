@@ -117,3 +117,15 @@ and permission boundaries passed. The candidate remains `pending-qa`.
   browser capture timed out during hidden file-input interaction. Fresh
   browser capture and Odoo paired visual comparison remain open; no full
   module sign-off is claimed.
+
+## Reviewer disposition — candidate `c6be711f`
+
+- Integrated on the active branch as `d6df64b5`; scope is limited to Base
+  Contacts company-hierarchy selectors, persistence fields, and active-company
+  self/parent guards.
+- Post-merge verification passed: Base Contacts focused suite, 6 tests / 73
+  assertions; Base UI audit (659 pages / 668 routes / 1149 datasources),
+  targeted ESLint, and `git diff --check`.
+- Requested authenticated desktop/mobile browser smoke was unavailable. Existing
+  attachment evidence remains preserved but is not treated as fresh hierarchy
+  browser evidence. Base remains `pending-qa`; no module sign-off is claimed.
