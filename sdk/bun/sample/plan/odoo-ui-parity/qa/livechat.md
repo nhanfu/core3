@@ -84,3 +84,20 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
+
+## 2026-09-13 coordinator review: candidate `ef6d8237`
+
+- Integrated only the bounded Live Chat session-message persistence/timeline
+  slice as `002e7ab1`. The change is confined to the Live Chat detail API,
+  migration, page binding, and focused test; no unrelated work was imported.
+- Post-merge focused test passed: **3 tests, 15 assertions**. Candidate
+  evidence remains **62 tests, 650 assertions**; audit (**661 pages, 670
+  routes, 1154 datasources**), Live Chat Sass, Vite/frontend build, ESLint,
+  and diff-check passed.
+- Persisted fixtures, migration replay, timeline ordering, composer send,
+  operator scope, validation, message count, and row-version behavior are
+  accepted for this bounded slice.
+- Live Chat remains **conditional / unsigned-off**. Authenticated browser
+  composer/denial and visual evidence, durable restart persistence, and paired
+  authenticated Odoo comparison remain blocked by unavailable Playwright/
+  session, stopped Core3, and unauthenticated Odoo.
