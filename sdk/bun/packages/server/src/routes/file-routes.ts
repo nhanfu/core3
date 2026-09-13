@@ -58,9 +58,20 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
       });
       await eventStore?.publish({ operation: 'send_attachment', status: 'success', actorId: String(activityActor.id || ''), threadId: result.thread_id, messageId: result.id, message: result });
       return json(result);
-    } catch (error) {
+    } catch (error: any) {
       try { unlinkSync(targetPath); } catch { /* cleanup is best effort */ }
-      throw error;
+      // Multipart uploads are HTTP endpoints, so preserve declarative
+      // mutation guard statuses instead of leaking the thrown guard object to
+      // the host-level error handler (which turns it into a generic 500).
+      const status = Number(error?.status);
+      return apiError(
+        Number.isInteger(status) && status >= 400 && status <= 599 ? status : 500,
+        String(error?.message || 'Upload failed'),
+        typeof error?.code === 'string' ? error.code : undefined,
+        typeof error?.message_key === 'string' ? error.message_key : undefined,
+        error?.message_params && typeof error.message_params === 'object' ? error.message_params : undefined,
+        status >= 400 && status <= 599 ? undefined : String(error?.stack || error),
+      );
     }
   }
 

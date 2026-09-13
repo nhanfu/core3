@@ -66,7 +66,7 @@ describe('Chat multipart attachment upload', () => {
     rmSync(uploadRoot, { recursive: true, force: true });
   });
 
-  test('rejects stale, non-participant, and invalid uploads without database or file partial writes', async () => {
+  test('returns HTTP guard errors for stale, non-participant, and missing uploads without partial writes', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'chat_multipart_guard_test', ['schema', 'data']);
@@ -91,16 +91,26 @@ describe('Chat multipart attachment upload', () => {
       return api(new Request('http://chat.test/api/upload', { method: 'POST', body: form }), new URL('http://chat.test/api/upload'));
     };
 
-    await expect(request({ thread_id: 'chat-demo-thread', expected_row_version: 99 })).rejects.toMatchObject({ status: 409, code: 'CHAT_THREAD_STALE' });
+    const stale = await request({ thread_id: 'chat-demo-thread', expected_row_version: 99 });
+    expect(stale?.status).toBe(409);
+    expect(await stale!.json()).toMatchObject({ code: 'CHAT_THREAD_STALE' });
     expect((await repository.query('SELECT COUNT(*) AS count FROM chat_attachments'))[0].count).toBe(0);
     expect(readdirSync(uploadRoot)).toHaveLength(0);
 
     authUser.sub = 'user-fleet';
-    await expect(request({ thread_id: 'chat-demo-thread' })).rejects.toMatchObject({ status: 403, code: 'CHAT_THREAD_FORBIDDEN' });
+    const forbidden = await request({ thread_id: 'chat-demo-thread' });
+    expect(forbidden?.status).toBe(403);
+    expect(await forbidden!.json()).toMatchObject({ code: 'CHAT_THREAD_FORBIDDEN' });
     expect((await repository.query('SELECT COUNT(*) AS count FROM chat_messages'))[0].count).toBe(5);
     expect(readdirSync(uploadRoot)).toHaveLength(0);
 
     authUser.sub = 'user-admin';
+    const missing = await request({ thread_id: 'missing-chat-thread', expected_row_version: 1 });
+    expect(missing?.status).toBe(404);
+    expect(await missing!.json()).toMatchObject({ code: 'CHAT_THREAD_NOT_FOUND' });
+    expect((await repository.query('SELECT COUNT(*) AS count FROM chat_messages'))[0].count).toBe(5);
+    expect(readdirSync(uploadRoot)).toHaveLength(0);
+
     const invalid = await request({ thread_id: 'chat-demo-thread' }, []);
     expect(invalid?.status).toBe(400);
     expect((await repository.query('SELECT COUNT(*) AS count FROM chat_messages'))[0].count).toBe(5);
