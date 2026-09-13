@@ -77,7 +77,7 @@ describe('Employees Odoo action-mode parity batch', () => {
     expect(employees.data.find((row: any) => row.id === 'employee-demo-001')).toMatchObject({ activity_type: 'todo', activity_state: 'overdue' });
 
     const archived = await repository.querySource(employeeSource, { q: null, active: 'false', state: null, department_name: null }, 0, 50);
-    expect(archived.data.map((row: any) => row.id)).toEqual(['employee-demo-004']);
+    expect(archived.data.map((row: any) => row.id)).toEqual(['employee-demo-004', 'employee-demo-005']);
 
     const activitySource = yaml('api/activities.yaml').datasources.find((source: any) => source.id === 'employee_activities');
     const activities = await repository.querySource(activitySource, { q: null, timing: null, activity_type: null }, 0, 50);
@@ -153,6 +153,45 @@ describe('Employees Odoo action-mode parity batch', () => {
     expect(archived).toMatchObject({ id: created.id, active: false, row_version: 3 });
     const restored = await repository.executeMutation(restore.mutation, { id: created.id, expected_row_version: 3, values: { active: true } });
     expect(restored).toMatchObject({ id: created.id, active: true, row_version: 4 });
+    await database.close();
+  });
+
+  test('enforces actor company scope across employee reads and lifecycle persistence', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_company_scope', ['schema', 'data']);
+
+    const listApi = yaml('api/employees.yaml');
+    const detailApi = yaml('api/employee-detail.yaml');
+    const listSource = listApi.datasources.find((source: any) => source.id === 'employees');
+    const detailSource = detailApi.datasources[0];
+    const company = 'Core3 Vietnam';
+    const otherCompany = 'Other Company';
+
+    const coreRows = await repository.querySource(listSource, { q: null, active: 'false', state: null, department_name: null, current_company_name: company }, 0, 50);
+    expect(coreRows.data.map((row: any) => row.id)).toEqual(['employee-demo-004']);
+    const otherRows = await repository.querySource(listSource, { q: null, active: 'false', state: null, department_name: null, current_company_name: otherCompany }, 0, 50);
+    expect(otherRows.data.map((row: any) => row.id)).toEqual(['employee-demo-005']);
+    expect((await repository.querySource(detailSource, { id: 'employee-demo-005', current_company_name: company }, 0, 1)).data).toEqual({});
+
+    const create = listApi.actions.find((action: any) => action.id === 'create_employee');
+    const edit = detailApi.actions.find((action: any) => action.id === 'edit_employee');
+    const archive = detailApi.actions.find((action: any) => action.id === 'archive_employee_detail');
+    const restore = detailApi.actions.find((action: any) => action.id === 'restore_employee_detail');
+    const values = { employee_number: 'EMP-0098', name: 'Company Scoped Employee', company_name: company, hire_date: '2026-09-13' };
+
+    await expect(repository.executeMutation(create.mutation, { current_company_name: otherCompany, values })).rejects.toMatchObject({ status: 403, code: 'EMPLOYEES_COMPANY_SCOPE_REQUIRED' });
+    const created = await repository.executeMutation(create.mutation, { current_company_name: company, values });
+    expect(created).toMatchObject({ id: 'employee-emp-0098', company_name: company, active: true, row_version: 1 });
+    await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, current_company_name: otherCompany, values: { ...values, name: 'Cross Company Edit' } })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_RECORD_NOT_FOUND' });
+    const edited = await repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, current_company_name: company, values: { ...values, name: 'Company Scoped Employee Updated' } });
+    expect(edited).toMatchObject({ name: 'Company Scoped Employee Updated', company_name: company, row_version: 2 });
+    await expect(repository.executeMutation(archive.mutation, { id: created.id, expected_row_version: 2, current_company_name: otherCompany, values: { active: false } })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_RECORD_NOT_FOUND' });
+    const archived = await repository.executeMutation(archive.mutation, { id: created.id, expected_row_version: 2, current_company_name: company, values: { active: false } });
+    expect(archived).toMatchObject({ id: created.id, company_name: company, active: false, row_version: 3 });
+    await expect(repository.executeMutation(restore.mutation, { id: created.id, expected_row_version: 3, current_company_name: otherCompany, values: { active: true } })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_RECORD_NOT_FOUND' });
+    const restored = await repository.executeMutation(restore.mutation, { id: created.id, expected_row_version: 3, current_company_name: company, values: { active: true } });
+    expect(restored).toMatchObject({ id: created.id, company_name: company, active: true, row_version: 4 });
     await database.close();
   });
 
