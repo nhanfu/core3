@@ -22,6 +22,23 @@ Disposition: **conditional / not signed off; not integrated**. Return these
 repairs to the same Timesheets owner and rerun the bounded review against a new
 candidate; do not claim module or aggregate completion.
 
+## Review handoff — repair candidate `813ff50b` (2026-09-13)
+
+- Bounded repair integrated after conflict review as `0bba507c`, with its
+  prerequisite CRUD migration integrated as `0ee54d30`.
+- Verified in the merged active branch: employee-rate cost calculation (8 × 85
+  = 680), inactive-employee rejection, six runtime-only justification entries,
+  focused Timesheets CRUD suite (3 tests / 27 assertions in the merged slice),
+  YAML/API ownership boundary, migration ordering, and `git diff --check`.
+- The candidate's reported QA evidence remains recorded: focused 6 tests / 41
+  assertions, audit/CSS/frontend/diff-check pass. The literal `mock_data` audit
+  remains blocked because the scanner does not accept the runtime-only metadata
+  justifications.
+- Authenticated Core3 browser evidence and paired desktop/mobile Odoo
+  Timesheets comparison remain unavailable/pending. Broader module gates remain
+  open, so this is **conditional / not signed off** and does not imply module or
+  aggregate completion.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.

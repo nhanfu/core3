@@ -3,6 +3,7 @@ datasources:
   - id: timesheets_settings
     single: true
     permission: timesheets.settings
+    meta: { mock_data_justification: Runtime-only persisted system configuration; a static mock would make settings save and optimistic concurrency unverifiable. }
     query: "SELECT id, row_version, company_name, project_time_unit, timesheet_encode_method, reminder_user_allow, reminder_allow, time_off_integration, time_off_available FROM timesheet_settings WHERE id = 'timesheets-settings-demo'"
 actions:
   - id: save_timesheets_settings

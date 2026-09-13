@@ -3,6 +3,7 @@ datasources:
   - id: timesheet_detail
     single: true
     permission: timesheets.read
+    meta: { mock_data_justification: Runtime-only persisted entry detail; static mock data would hide CRUD persistence, lock state, and employee-cost calculation. }
     query: "SELECT t.id, t.row_version, t.name, t.employee_id, t.employee_name, t.project_id, t.project_name, t.task_id, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display, t.sales_order_item, t.billable, t.unit_amount, CAST(t.hours * e.hourly_cost AS DECIMAL(18,2)) AS cost, t.state, t.approver, CAST(t.approved_at AS VARCHAR) AS approved_at FROM timesheet_entries t LEFT JOIN timesheet_employees e ON e.id = t.employee_id WHERE :id IS NOT NULL AND t.id = :id AND (COALESCE(:view_scope, 'own') = 'all' OR t.employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User'))"
   - id: timesheet_detail_employees
     permission: timesheets.write
@@ -26,11 +27,13 @@ actions:
     mutation:
       operation: update
       table: timesheet_entries
+      concurrency: { required: true }
       fields: [work_date, project_id, project_name, task_id, task_name, description, hours, billable, unit_amount, sales_order_item]
       required: [work_date, project_name, description, hours]
       guards:
+        - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND state IN ('Draft', 'Rejected')", status: 409, code: TIMESHEET_ENTRY_LOCKED, message: Only draft or rejected timesheets can be edited }
         - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND state IN ('Draft', 'Rejected')", status: 403, code: TIMESHEETS_ENTRY_SCOPE, message: Only your draft or rejected timesheets can be edited. }
-        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:project_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEETS_ENTRY_INVALID, message: Enter a valid date, project, and time between 0 and 24 hours. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:project_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEET_ENTRY_INVALID, message: Enter a valid date, project, and time between 0 and 24 hours. }
       result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
     fields:
       - { field: name, label: Entry, type: text, required: true }

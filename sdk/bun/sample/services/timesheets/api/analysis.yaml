@@ -3,8 +3,10 @@ datasources:
   - id: timesheet_analysis_totals
     single: true
     permission: timesheets.read
-    query: "SELECT COUNT(*) AS entry_count, COALESCE(SUM(hours), 0) AS total_hours, COALESCE(SUM(hours) FILTER (WHERE state = 'Approved'), 0) AS approved_hours, COALESCE(SUM(hours) FILTER (WHERE billable), 0) AS billable_hours FROM timesheet_entries"
+    meta: { mock_data_justification: Runtime-only aggregate over persisted Timesheets entries; static mock data would hide persisted totals and cost behavior. }
+    query: "SELECT COUNT(*) AS entry_count, COALESCE(SUM(t.hours), 0) AS total_hours, COALESCE(SUM(t.hours) FILTER (WHERE t.state = 'Approved'), 0) AS approved_hours, COALESCE(SUM(t.hours) FILTER (WHERE t.billable), 0) AS billable_hours, COALESCE(SUM(t.hours * e.hourly_cost), 0) AS total_cost FROM timesheet_entries t JOIN timesheet_employees e ON e.id = t.employee_id"
   - id: timesheet_analysis
     permission: timesheets.read
     pivot: { fields: [id, employee_name, project_name, task_name, month, hours, cost, state] }
-    query: "SELECT t.id, t.employee_name, t.project_name, t.task_name, CAST(strftime(t.work_date, '%Y-%m') AS VARCHAR) AS month, t.hours, CAST(t.hours * t.unit_amount AS DECIMAL(18,2)) AS cost, t.state FROM timesheet_entries t WHERE (:q IS NULL OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%') ORDER BY month DESC, t.employee_name, t.project_name, t.id"
+    meta: { mock_data_justification: Runtime-only report over persisted employee costs; deterministic mock data would bypass the employee-cost calculation. }
+    query: "SELECT t.id, t.employee_name, t.project_name, t.task_name, CAST(strftime(t.work_date, '%Y-%m') AS VARCHAR) AS month, t.hours, e.hourly_cost, CAST(t.hours * e.hourly_cost AS DECIMAL(18,2)) AS cost, t.state FROM timesheet_entries t JOIN timesheet_employees e ON e.id = t.employee_id WHERE (:q IS NULL OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%') ORDER BY month DESC, t.employee_name, t.project_name, t.id"
