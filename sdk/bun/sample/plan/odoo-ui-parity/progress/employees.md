@@ -83,3 +83,13 @@ navigation, duplicate 409, archive/restore, stale 409, missing delete 404, and
 manager/ordinary-user boundaries. QA is **3/60 focused**, full Employees
 **12/167**, audit **661/670/1,154**. Company-switch and paired Odoo comparison
 remain open.
+
+## Reviewer reconciliation: company-scope follow-up `5707df6b` (2026-09-13)
+
+`5707df6b` is already active at `HEAD`; no duplicate merge was required. The
+company-scope migration, predicates, guards, and tests are present. Active QA
+passes **13/175 focused** and **57/684 full**, with audit **661/670/1,154** and
+lint/diff-check evidence passing. Company switch still returns HTTP 200 while
+the bearer token and rows remain scoped to the old company; Odoo `admin/admin`
+returns HTTP 400. Employees remains conditional pending token refresh and
+authenticated Odoo comparison.

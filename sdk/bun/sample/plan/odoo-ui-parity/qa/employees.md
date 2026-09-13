@@ -357,3 +357,20 @@ open; Employees is not signed off.
 - Disposition: **bounded PASS with blockers/reconciled**. Company-switch
   isolation and paired Odoo comparison remain open; no full Employees sign-off
   is claimed.
+
+## Reviewer reconciliation: company-scope follow-up `5707df6b` (2026-09-13)
+
+- `5707df6b` is already the active branch `HEAD`; ownership and ancestry are
+  valid, and no duplicate merge or unrelated module change was made. The
+  company-scope migration, API predicates/guards, and focused regressions are
+  present. Candidate lint and diff-check evidence pass.
+- Active verification passes **13 focused tests / 175 assertions**; full module
+  evidence is **57 tests / 684 assertions**; audit passes **661 pages / 670
+  routes / 1,154 datasources**.
+- Browser/API evidence is conditional: switching to the Vietnam company
+  returned HTTP 200 but the bearer token retained the old company context and
+  rows remained unchanged. Odoo was reachable, but `admin/admin` returned HTTP
+  400, so authenticated comparison is unavailable.
+- Disposition: **bounded conditional reconciliation**. Company-switch token
+  refresh and authenticated Odoo comparison remain blockers; Employees is not
+  fully signed off.
