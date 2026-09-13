@@ -6,6 +6,7 @@ QA assignment: dispatchable accounting QA slot (bounded event tasks)
 Status: qa-verified-partial (Journal Items export candidate)
 Verification trigger: merge-candidate
 Candidate commit: `fd00ae4d84e35cd87127a104701b8c30b44e7bfb`
+Owner batch: bank statement attachment workflow (pending verification)
 
 ## Scope inventory
 
@@ -28,6 +29,7 @@ Candidate commit: `fd00ae4d84e35cd87127a104701b8c30b44e7bfb`
 | Post-merge route matrix | All 80 Accounting routes at 1440x900 and 390x844 | 160 authenticated route checks; 80/80 desktop and 80/80 mobile passed after a 1.2s render settle; no blank/redirect, page/request error, or horizontal overflow | pass; full interaction and paired visual states remain open |
 | Authenticated CRUD boundary | Journals FormView and unauthorized Accounting read | Admin create/reload persisted a journal; Fleet Manager received `Requires permission: accounting.read` | pass; broader workflow and permission matrix remains open |
 | Journal Items export contract | `accounting_journal_items_views.integration.test.ts` | Page/API `page.id` binding, `accounting.read` action declaration, deterministic datasource projection, and RFC 4180 CSV serialization pass; shared renderer provides XLSX download | pass at contract level; authenticated download evidence and other Accounting export/attachment/print actions remain open |
+| Bank Statement attachment workflow | `accounting_bank_statement_attachments.integration.test.ts` | Write upload/read-only denial; metadata and storage key persist across DuckDB close/reopen; authenticated download returns original CSV bytes | pass at focused API/storage level; browser upload and paired Odoo comparison remain open |
 | QA-1 candidate browser verification | `bun run agent:module -- accounting --port=4331`; authenticated Playwright | Admin desktop/mobile both exposed Export in the list utility menu and downloaded a valid 4,453-byte XLSX; Journal Items remained `1-4 / 4` with `INV/2026/0001` after reload; Fleet user received `Requires permission: accounting.read`; zero browser/request errors and no overflow | pass for candidate slice; broader Accounting sign-off remains open |
 
 ## Remaining gates

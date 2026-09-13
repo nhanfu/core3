@@ -1,0 +1,12 @@
+version: 0.0.45
+description: Persist uploaded bank statement attachment storage keys
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_bank_statements ADD COLUMN IF NOT EXISTS storage_key VARCHAR;
+    down: |
+      ALTER TABLE accounting_bank_statements DROP COLUMN IF EXISTS storage_key;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

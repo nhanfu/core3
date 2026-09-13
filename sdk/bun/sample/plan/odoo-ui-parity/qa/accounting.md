@@ -56,6 +56,19 @@ QA state: qa-verified-partial
   and paired Odoo comparison remain open; this candidate is not full-module
   sign-off.
 
+## DEV-2 bank statement attachment workflow (2026-09-13)
+
+- Scope: `/accounting/bank-statement-detail` attachment upload/download.
+- `upload_accounting_bank_statement_attachment` requires `accounting.write`;
+  `download_accounting_bank_statement_attachment` requires `accounting.read`.
+- `bun test test/accounting_bank_statement_attachments.integration.test.ts`:
+  **1 passed, 11 assertions, 0 failures**. The test proves read-only upload
+  denial, metadata/storage-key persistence across DuckDB close/reopen, and
+  byte-accurate CSV download.
+- Finding: no defect found in this bounded contract. Browser upload, paired
+  Odoo comparison, and other Accounting attachment/print/import actions remain
+  open.
+
 ## Current regression evidence (2026-09-12)
 
 - Explicit-timeout Accounting suite: `bun test ./test/accounting_*.integration.test.ts --timeout 20000` — 90 passed, 1,013 assertions, 0 failed across 34 files.
@@ -80,6 +93,7 @@ QA state: qa-verified-partial
 | ACC-FUNC-007 | Reporting and analytic actions | `/accounting/analysis`, `/accounting/bills-analysis`, `/accounting/invoice-analysis`, `/accounting/analytic-items`, `/accounting/partner-ledger`, `/accounting/sales`, `/accounting/purchases` | deterministic report queries, filters, empty/error states, declared pivot fields | focused report/ledger suites | pass in focused coverage; browser retest pending |
 | ACC-FUNC-008 | Closing/configuration surfaces | `/accounting/closing`, `/accounting/secure-entries`, `/accounting/settings`, remaining configuration routes | permissioned settings, secure transition, catalog reads and forms | focused secure/configuration suites | pass in focused coverage; browser retest pending |
 | ACC-FUNC-009-JI | Journal Items export | `/accounting/journal-items` | Export action is page/API-bound, read-permissioned, and serializes the real datasource projection; shared renderer downloads XLSX | `accounting_journal_items_views.integration.test.ts`; QA-1 authenticated desktop/mobile download | pass; broader Accounting export/attachment/print actions remain open |
+| ACC-FUNC-009-BS | Bank Statement attachments | `/accounting/bank-statement-detail` | Permissioned upload/download persists metadata and bytes across restart | `accounting_bank_statement_attachments.integration.test.ts` | pass at focused API/storage level; browser interaction remains open |
 | ACC-BROWSER-001 | Authenticated Odoo/Core3 reference | `/accounting/journals` | desktop authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-desktop.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-desktop.png`; shell retest: `/tmp/core3-odoo-parity/accounting-paired/core3-desktop-shell-fixed.png` | functional pass; shell/auth menu mismatch fixed, toolbar comparison remains open |
 | ACC-BROWSER-002 | Authenticated Odoo/Core3 reference | `/accounting/journals` | mobile authenticated render, seeded rows, no browser errors, overflow check | paired captures: `/tmp/core3-odoo-parity/accounting-paired/odoo-mobile.png`, `/tmp/core3-odoo-parity/accounting-paired/core3-mobile.png`; shell retest: `/tmp/core3-odoo-parity/accounting-paired/core3-mobile-shell-fixed.png` | functional pass; shell/auth menu mismatch fixed, toolbar comparison remains open |
 | ACC-RUNTIME-001 | Core3 module runner | accounting process | startup and zero unexpected API failures | `bun run agent:module -- accounting --port=4011`; `/api/modules` returned 200 | fixed/retested |

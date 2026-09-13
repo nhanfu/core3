@@ -1385,3 +1385,16 @@ clean. The authenticated visual attempt at 1440x900 and 390x844 was blocked
 before browser startup because Vite hit `EMFILE: too many open files` while
 watching `sdk/bun/sample/vite.config.ts`; the backend fallback was therefore
 not usable. No screenshots were captured and no visual-parity claim is made.
+
+## Current batch: bank statement attachment workflow
+
+Bank Statement detail now exposes the Odoo Attachments tab through the
+page-ID-matched API fragment. Uploads require `accounting.write`, persist file
+metadata and the local storage key on the owned bank statement record, and
+increment its row version with an optimistic concurrency guard. Authenticated
+downloads require `accounting.read` at
+`/api/accounting/bank-statement-attachments/<statement-id>`.
+
+Focused coverage uploads as an Accounting user, rejects the same upload for a
+read-only user, closes and reopens DuckDB, then downloads the original bytes.
+Import, print, and attachments on other Accounting routes remain open.

@@ -7,3 +7,30 @@ datasources:
       forbidden: { status: 403, code: ACCOUNTING_BANK_STATEMENT_DETAIL_FORBIDDEN, message: You do not have access to this bank statement. }
       transport_error: { status: 503, code: ACCOUNTING_BANK_STATEMENT_DETAIL_UNAVAILABLE, message: Bank statement details are temporarily unavailable. }
     query: "SELECT id, row_version, reference, date, strftime(date, '%b') || ' ' || CAST(EXTRACT(DAY FROM date) AS VARCHAR) AS date_display, journal, company, currency, starting_balance, ending_balance, printf('$ %,.2f', CAST(starting_balance AS DOUBLE)) AS starting_balance_display, printf('$ %,.2f', CAST(ending_balance AS DOUBLE)) AS ending_balance_display, computed_balance, printf('$ %,.2f', CAST(computed_balance AS DOUBLE)) AS computed_balance_display, external_reference, first_line_index, line_numbers, is_complete, has_invalid_statements, is_valid, CASE WHEN is_complete THEN 'Yes' ELSE 'No' END AS is_complete_label, CASE WHEN has_invalid_statements THEN 'Yes' ELSE 'No' END AS has_invalid_statements_label, CASE WHEN is_valid THEN 'Yes' ELSE 'No' END AS is_valid_label, problem_description, attachment_name, attachment_type, attachment_size, attachment_company, attachment_created_by, attachment_created_on FROM accounting_bank_statements WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND id = :id"
+  - id: accounting_bank_statement_attachments
+    permission: accounting.read
+    query: "SELECT id, id AS statement_id, attachment_name AS file_name, attachment_type AS mime_type, attachment_size AS size_bytes, attachment_created_by AS uploaded_by, attachment_created_on AS created_on FROM accounting_bank_statements WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND attachment_name IS NOT NULL AND id = :id"
+actions:
+  - id: upload_accounting_bank_statement_attachment
+    type: upload
+    action: accounting.bank_statements.attachments.upload
+    handler: attachment_metadata
+    permission: accounting.write
+    kind: accounting_bank_statement_attachment
+    params: { id: '{state.accounting_bank_statement_detail.id}' }
+    refresh: [accounting_bank_statement_detail, accounting_bank_statement_attachments]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM accounting_bank_statements WHERE id = :id", status: 404, code: ACCOUNTING_BANK_STATEMENT_NOT_FOUND, message: Bank statement not found. }
+        - { query: "SELECT id FROM accounting_bank_statements WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Bank statement was changed. Reload it before uploading. }
+      steps:
+        - query: "UPDATE accounting_bank_statements SET attachment_name = :fileName, attachment_type = :mimeType, attachment_size = CAST(:sizeBytes AS VARCHAR), attachment_company = :current_company_name, attachment_created_by = :current_user_name, attachment_created_on = CURRENT_TIMESTAMP, storage_key = :storageKey, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: Bank statement was changed. Reload it before uploading.
+      result: { query: "SELECT id, id AS statement_id, attachment_name AS file_name, attachment_type AS mime_type, attachment_size AS size_bytes, attachment_created_by AS uploaded_by, attachment_created_on AS created_on FROM accounting_bank_statements WHERE id = :id" }
+  - id: download_accounting_bank_statement_attachment
+    type: download
+    permission: accounting.read
+    kind: accounting_bank_statement_attachment

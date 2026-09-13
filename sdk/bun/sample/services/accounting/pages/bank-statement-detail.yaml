@@ -3,6 +3,8 @@ page: { id: accounting-bank-statement-detail, route: /accounting/bank-statement-
 components:
   - type: OdooFormView
     source: accounting_bank_statement_detail
+    attachment_source: accounting_bank_statement_attachments
+    attachment_upload_action: upload_accounting_bank_statement_attachment
     title_field: reference
     subtitle_field: journal
     editable: false

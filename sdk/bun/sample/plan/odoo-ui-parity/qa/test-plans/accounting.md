@@ -38,7 +38,7 @@ required; development migrations must be idempotent.
 | ACC-FUNC-006 | functional | Settings/closing/secure entries | Manager settings and closing actions persist; secure transition is guarded | settings/secure tests | pass |
 | ACC-FUNC-007 | functional | Empty/error/forbidden | Every route has explicit empty, no-result, missing, 403 and 503 behavior | focused suite; matrix | pass |
 | ACC-FUNC-008 | data | Schema/demo | Reapply migrations on clean/existing development DB without duplicates or moving fixture values | focused suite | pass |
-| ACC-FUNC-009 | functional | Import/export/attachments/print | Exercise available import/export, attachment, report and print actions | Journal Items export contract: `accounting_journal_items_views.integration.test.ts`; remaining route actions require browser interaction gate | partial; Journal Items export contract pass, broader actions planned |
+| ACC-FUNC-009 | functional | Import/export/attachments/print | Exercise available import/export, attachment, report and print actions | Journal Items export contract; Bank Statement attachment contract: `accounting_bank_statement_attachments.integration.test.ts` | partial; Journal Items export and Bank Statement attachment pass, broader actions planned |
 
 ## Workflow and integration cases
 
