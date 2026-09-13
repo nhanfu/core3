@@ -95,3 +95,14 @@ Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-market
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off; bounded evidence recorded, browser/Odoo gates remain open
+## 2026-09-13 coordinator dispatch — bounded SMS wave
+
+- Existing owner `agent/sms-lifecycle-20260913` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/sms-owner-full-20260913`, based at
+  `325d0a45`. Development event: `DEV-SMS-WAVE-20260913-R2`; QA event:
+  `QA-SMS-WAVE-20260913-R2`; handoff commit: `00e807c2`.
+- Scope is the next bounded durable/external delivery contract: provider
+  attempt/callback or retry state with idempotent replay, preserving company
+  scope, ownership, cancellation, and row-version guards. Candidate pending;
+  aggregate progress untouched. Existing ledger edits in the owner worktree
+  are preserved.
