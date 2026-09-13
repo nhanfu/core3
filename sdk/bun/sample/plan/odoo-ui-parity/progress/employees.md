@@ -37,3 +37,20 @@ Run the complete parameterized route matrix, authenticated employee/catalog
 CRUD smoke against the primary employee mutation, actor matrix, and paired
 Odoo desktop/mobile captures. Update this file only with evidence from the
 matching module owner.
+
+## Bounded QA retest: candidate 6a4da038 (2026-09-13)
+
+Focused Employees QA passed: 53 tests, 647 assertions, 0 failures across 16
+files. The repaired Directory list query passed active and archived Core3
+company scoping, archived Other Company filtering, and cross-company detail
+denial. The company-scoped lifecycle test passed wrong-company restore denial
+with `404 EMPLOYEES_RECORD_NOT_FOUND` and unchanged persistence, followed by
+same-company restore to active=true at row version 4.
+
+The full `bun test ./test --timeout 20000` run was stopped with SIGINT (exit
+130) at finalization and is incomplete. UI audit passed at 659 pages, 669
+routes, and 1,134 datasources; Employees test ESLint and diff-check passed. No
+fresh authenticated desktop/mobile or paired Odoo captures were available;
+prior captures are explicitly non-candidate evidence. Status remains
+conditional/qa-in-progress, with full regression and fresh browser/Odoo
+evidence blocked; no aggregate progress or sign-off claim is changed.

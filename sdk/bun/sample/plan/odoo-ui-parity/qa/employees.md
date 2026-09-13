@@ -111,3 +111,37 @@ regression, and absent fresh paired browser/Odoo evidence.
   denial, and wrong-company restore denial (`404 EMPLOYEES_RECORD_NOT_FOUND`).
 - The remaining conditional blockers above are unchanged; no aggregate progress
   status is changed by this repair.
+
+## Bounded QA retest for candidate 6a4da038 (2026-09-13)
+
+- Candidate: `6a4da03859dc8124618d080f935543c9620da4ab`, clean linked worktree
+  `/home/nhanjs/projects/core3-worktrees/odoo-employees-wave-dev4`. The path
+  supplied for this retest included an extra `/agent/` segment and does not
+  exist; the linked worktree above is the exact branch/HEAD found by
+  `git worktree list`.
+- Focused command: `bun test ./test/employees*.integration.test.ts --timeout
+  20000` from `sdk/bun/sample` — **53 passed, 0 failed, 647 expect() calls
+  across 16 files** in 45.70s.
+- Candidate-specific evidence passed: active Directory scoped to Core3
+  Vietnam; archived Directory scoped to Core3 Vietnam; archived Directory
+  filtered to Other Company; cross-company Directory detail returned no row;
+  wrong-company restore returned `404 EMPLOYEES_RECORD_NOT_FOUND` and left
+  persistence unchanged; same-company restore persisted active=true at row
+  version 4. The prior archived cross-company leak did not reproduce.
+- Full `bun test ./test --timeout 20000` was started but stopped with SIGINT
+  (exit 130) at finalization after passing tests through the repository stream.
+  It has no valid full-suite pass/fail result and is not claimed as a full
+  regression pass.
+- `bun run scripts/audit-order-ui.ts` passed: 659 pages, 669 routes, 1,134
+  datasources. `bunx eslint test/employees*.integration.test.ts` passed.
+  `git diff --check HEAD` passed on the final ledger diff before commit.
+- No fresh authenticated desktop/mobile browser or paired Odoo capture was
+  available in this bounded retest. Existing non-candidate artifacts remain
+  `/tmp/core3-odoo-parity/module-matrix-20260912/employees-desktop.png`,
+  `employees-mobile.png`, and
+  `/tmp/core3-odoo-parity/employees-visual4-20260912/odoo-8069-employees-desktop.png`;
+  they are not candidate-specific evidence.
+
+QA state: conditional. Directory company scoping and wrong-company restore
+denial are retested pass. Full regression and fresh authenticated desktop,
+mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
