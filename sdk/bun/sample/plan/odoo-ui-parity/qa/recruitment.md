@@ -84,3 +84,15 @@ Candidate commit: pending commit for refusal workflow repair
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
+
+## Reviewer disposition — candidate `9b61dfa`
+
+- Integrated on the active branch as `082a558f`; scope is limited to the
+  applicant-list refusal form, active-reason lookup, required reason guard,
+  stale-row protection, and its focused regression test.
+- Post-merge verification passed: Recruitment suite 38 tests / 353 assertions,
+  UI audit (659 pages / 668 routes / 1150 datasources), targeted ESLint, CSS
+  compilation, and `git diff --check`.
+- Authenticated browser CRUD/refusal/reopen and paired Odoo comparison remain
+  blocked by unavailable `js_repl`. Recruitment remains conditional and
+  unsigned-off; broader module gates remain open.
