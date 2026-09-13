@@ -53,11 +53,29 @@ describe('SMS Marketing mailing action parity', () => {
   test('declares source permissions and transport/not-found contracts', () => {
     expect(listApi.datasources.every((source: any) => source.permission === 'sms_marketing.read')).toBe(true);
     expect(detailApi.datasources[0].error_states).toMatchObject({ missing_record: { status: 404, code: 'SMS_MAILING_NOT_FOUND' }, transport_error: { status: 503 } });
-    for (const id of ['create_sms_campaign', 'edit_sms_campaign', 'send_sms_campaign', 'schedule_sms_campaign', 'cancel_sms_campaign']) {
+    for (const id of ['create_sms_campaign', 'edit_sms_campaign', 'send_sms_campaign', 'schedule_sms_campaign', 'cancel_sms_campaign', 'complete_sms_campaign']) {
       expect(action(id), id).toBeDefined();
       expect(action(id).permission, id).toMatch(/^sms_marketing\.(read|write|manage)$/);
     }
+    expect(action('complete_sms_campaign')).toMatchObject({ permission: 'sms_marketing.manage', operation: 'complete', workflow: 'sms_campaigns' });
     expect(detailApi.datasources[0].query).not.toMatch(/CURRENT_(DATE|TIMESTAMP)|random_uuid|gen_random_uuid/i);
     expect(readFileSync(join(root, 'migrations/20260912150000-003-sms-mailing-action.yaml'), 'utf8')).not.toMatch(/CURRENT_(DATE|TIMESTAMP)|random_uuid|gen_random_uuid/i);
+  });
+
+  test('persists the full delivery lifecycle and rejects stale transitions', async () => {
+    const repository = new YamlRepository(await DuckDbDatabase.open(':memory:'));
+    await migrateDatabase(repository, root + '/migrations', undefined, 'sms_campaign_lifecycle_test', ['schema', 'data']);
+    const workflow = yaml('pages/sms-workflow.yaml').workflow;
+    const transition = (id: string) => workflow.transitions.find((candidate: any) => candidate.id === id);
+
+    const scheduled = await repository.executeMutation(transition('schedule').mutation, { id: 'sms-campaign-demo-004', expected_row_version: 1 });
+    expect(scheduled).toMatchObject({ state: 'In Queue', row_version: 2 });
+    const sending = await repository.executeMutation(transition('send').mutation, { id: 'sms-campaign-demo-004', expected_row_version: 2 });
+    expect(sending).toMatchObject({ state: 'Sending', row_version: 3 });
+    const sent = await repository.executeMutation(transition('complete').mutation, { id: 'sms-campaign-demo-004', expected_row_version: 3 });
+    expect(sent).toMatchObject({ state: 'Sent', row_version: 4, delivered_count: 24, failed_count: 0 });
+    await expect(repository.executeMutation(transition('complete').mutation, { id: 'sms-campaign-demo-004', expected_row_version: 3 })).rejects.toMatchObject({ status: 409, code: 'SMS_MAILING_STALE' });
+    const [persisted] = await repository.query('SELECT state, row_version, delivered_count FROM sms_campaigns WHERE id = ?', ['sms-campaign-demo-004']);
+    expect(persisted).toEqual({ state: 'Sent', row_version: 4, delivered_count: 24 });
   });
 });

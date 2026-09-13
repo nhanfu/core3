@@ -14,6 +14,7 @@ components:
       - { id: send_sms_campaign, label: Send, variant: primary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
       - { id: schedule_sms_campaign, label: Schedule, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
       - { id: cancel_sms_campaign, label: Cancel, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'In Queue'" }
+      - { id: complete_sms_campaign, label: Mark Sent, variant: primary, permission: sms_marketing.manage, show_if: "state.sms_marketing_mailing_detail.state === 'Sending'" }
     group_columns: 2
     groups:
       - title: Mailing
