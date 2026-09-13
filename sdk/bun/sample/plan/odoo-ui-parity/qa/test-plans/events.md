@@ -35,7 +35,7 @@ and the linked confirmed order.
 | --- | --- | --- | --- | --- | --- |
 | EVENTS-FUNC-001 | functional | Events list/detail | Search/filter/sort/paginate/open and create/edit event; reload retains values | events integration suite/browser create | pass |
 | EVENTS-FUNC-002 | functional | Event lifecycle | Draft → Published → In Progress → Completed; invalid/stale transitions are guarded | authenticated lifecycle probe | pass |
-| EVENTS-FUNC-003 | functional | Tickets and attendees | Create/update ticket and attendee; required fields and event scope persist | focused contracts | planned |
+| EVENTS-FUNC-003 | functional | Tickets and attendees | Create/update ticket and attendee; required fields and event scope persist | attendee edit focused test; ticket contracts | partial: attendee update passes; create remains open |
 | EVENTS-FUNC-004 | functional | Registration desk/statistics | Register, confirm, cancel and report registrations by event | registration/statistics tests | pass |
 | EVENTS-FUNC-005 | functional | Questions/answers | CRUD questions, answer choices and attendee answers; ordering and required guards persist | question/answer tests | planned |
 | EVENTS-FUNC-006 | functional | Slots/stages/tags | CRUD and validation with duplicate, missing and stale guards | slots/stages/tags tests | planned |
@@ -63,7 +63,7 @@ and the linked confirmed order.
 | Case ID | Actor/scope | Route/action | Expected result | Status |
 | --- | --- | --- | --- | --- |
 | EVENTS-PERM-001 | Administrator/Event Manager | All manager/settings/workflow actions | Allowed and persisted | planned |
-| EVENTS-PERM-002 | Event User | Ordinary event/attendee CRUD | `events.read/write` actions allowed within scope | planned |
+| EVENTS-PERM-002 | Event User | Ordinary event/attendee CRUD | `events.read/write` actions allowed within scope | attendee edit action declares `events.write`; authenticated actor matrix remains open | partial |
 | EVENTS-PERM-003 | Fleet ordinary user | Event route and direct API | 403 for missing `events.read/write`; no mutation | pass for read boundary; write probe planned |
 | EVENTS-PERM-004 | Cross-company user | Event/detail/registration/stat actions | No cross-company data leakage or mutation | planned |
 | EVENTS-PERM-005 | Unauthenticated/expired | All 33 routes and APIs | Redirect/401/403 without data leakage | planned |

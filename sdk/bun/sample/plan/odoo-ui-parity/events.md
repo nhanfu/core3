@@ -1,5 +1,21 @@
 # Events UI parity
 
+## Bounded batch: Attendee edit persistence (2026-09-13)
+
+The attendee detail surface previously exposed registration workflow actions
+but was read-only, leaving the approved attendee CRUD case incomplete. This
+bounded slice makes the detail form editable and adds the permissioned
+`events.registrations.update` action. It updates attendee name, email, phone,
+company, and ticket type while keeping event identity and workflow state
+server-owned. Required-name, missing-record, and optimistic-concurrency guards
+are explicit; the action requires `events.write`.
+
+Focused validation in `test/events_attendee_edit.integration.test.ts` passes 2
+tests and 10 assertions. The test proves page/API separation, persistence
+after reload, row-version advancement, blank-name rejection, missing-record
+handling, and stale-write rejection. The remaining attendee CRUD gap is
+creation; authenticated desktop/mobile Odoo comparison is still open.
+
 Status: in-progress
 
 ## Current batch: Event linked Sales Orders stat action
