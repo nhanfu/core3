@@ -1,0 +1,31 @@
+version: 0.0.24
+kind: data
+description: Persist Live Chat session conversation messages
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_session_messages (
+        id VARCHAR PRIMARY KEY,
+        session_id VARCHAR NOT NULL,
+        author_id VARCHAR,
+        author_name VARCHAR NOT NULL,
+        author_type VARCHAR NOT NULL DEFAULT 'operator',
+        body VARCHAR NOT NULL,
+        action VARCHAR NOT NULL DEFAULT 'message',
+        action_label VARCHAR NOT NULL DEFAULT 'Message',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS livechat_session_messages_session_idx ON livechat_session_messages(session_id, created_at);
+      INSERT INTO livechat_session_messages
+        (id, session_id, author_id, author_name, author_type, body, action, action_label, created_at)
+      VALUES
+        ('livechat-message-demo-001', 'livechat-session-demo-001', 'visitor-demo-a', 'Visitor A', 'visitor', 'I need help with my order.', 'message', 'Message', TIMESTAMP '2026-09-10 09:01:00'),
+        ('livechat-message-demo-002', 'livechat-session-demo-001', 'livechat-agent', 'Support Agent', 'operator', 'I can help with that. Please share your order number.', 'message', 'Message', TIMESTAMP '2026-09-10 09:02:00'),
+        ('livechat-message-demo-003', 'livechat-session-demo-002', 'visitor-demo-b', 'Visitor B', 'visitor', 'Hello, is anyone available?', 'message', 'Message', TIMESTAMP '2026-09-10 10:15:00')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS livechat_session_messages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

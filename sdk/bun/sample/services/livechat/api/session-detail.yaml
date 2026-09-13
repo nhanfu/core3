@@ -23,3 +23,36 @@ datasources:
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE
         AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)
         AND id = :id
+  - id: livechat_session_messages
+    single: false
+    permission: livechat.read
+    query: |
+      SELECT m.id, m.session_id, m.author_name, m.author_type, m.body AS detail,
+        m.action, m.action_label, CAST(m.created_at AS VARCHAR) AS created_at
+      FROM livechat_session_messages m
+      JOIN livechat_sessions s ON s.id = m.session_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND m.session_id = :id
+        AND (COALESCE(:view_scope, 'all') = 'all' OR s.operator_id = :current_user_id)
+      ORDER BY m.created_at, m.id
+
+actions:
+  - id: send_livechat_session_message
+    type: server_form
+    permission: livechat.write
+    title: Send message
+    action: livechat.sessions.message
+    handler: yaml_mutation
+    operation: message
+    params: { id: '{state.id}' }
+    refresh: [livechat_session_messages, livechat_session_detail]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id", status: 404, code: LIVECHAT_SESSION_NOT_FOUND, message: Live Chat session was not found. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)", status: 403, code: LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE, message: This Live Chat session is assigned to another operator. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000", status: 422, code: LIVECHAT_SESSION_MESSAGE_INVALID, message: Message content must be between 1 and 4000 characters. }
+      steps:
+        - { query: "INSERT INTO livechat_session_messages(id, session_id, author_id, author_name, author_type, body, action, action_label, created_at) VALUES(gen_random_uuid(), :id, :current_user_id, :current_user_name, 'operator', TRIM(CAST(:content AS VARCHAR)), 'message', 'Message', CURRENT_TIMESTAMP)" }
+        - { query: "UPDATE livechat_sessions SET message_count = COALESCE(message_count, 0) + 1, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }
+      result: { query: "SELECT id, session_id, author_name, author_type, body AS detail, action, action_label, CAST(created_at AS VARCHAR) AS created_at FROM livechat_session_messages WHERE session_id = :id ORDER BY created_at DESC, id DESC LIMIT 1" }

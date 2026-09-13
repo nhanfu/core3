@@ -17,3 +17,11 @@ components:
       - { field: rating, label: Satisfaction rating }
       - { field: started_label, label: Started }
       - { field: ended_at, label: Ended }
+    message_source: livechat_session_messages
+    chatter_label: Conversation
+    chatter_empty: No messages in this conversation yet.
+    message_label: Send message
+    message_action: send_livechat_session_message
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
