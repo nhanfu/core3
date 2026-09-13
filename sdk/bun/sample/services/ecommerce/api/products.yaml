@@ -3,7 +3,7 @@ datasources:
   - id: ecommerce_products
     single: false
     permission: ecommerce.read
-    error_states: { forbidden: { status: 403, code: ECOMMERCE_PRODUCTS_FORBIDDEN, message: You do not have access to eCommerce products. }, transport_error: { status: 503, code: ECOMMERCE_PRODUCTS_UNAVAILABLE, message: eCommerce products are temporarily unavailable. } }
+    error_states: { unauthorized: { status: 401, code: ECOMMERCE_PRODUCTS_UNAUTHENTICATED, message: Sign in to view eCommerce products. }, forbidden: { status: 403, code: ECOMMERCE_PRODUCTS_FORBIDDEN, message: You do not have access to eCommerce products. }, transport_error: { status: 503, code: ECOMMERCE_PRODUCTS_UNAVAILABLE, message: eCommerce products are temporarily unavailable. } }
     query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(internal_reference, '') ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') AND (:published IS NULL OR is_published = :published) AND (:company_name IS NULL OR company_name = :company_name) ORDER BY website_sequence, name"
   - id: ecommerce_product_published
     single: false

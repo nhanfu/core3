@@ -3,9 +3,18 @@ datasources:
   - id: ecommerce_pricelist_detail
     single: true
     permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRICELIST_DETAIL_UNAUTHENTICATED, message: Sign in to view this pricelist. }
+      forbidden: { status: 403, code: ECOMMERCE_PRICELIST_DETAIL_FORBIDDEN, message: You do not have access to this pricelist. }
+      missing_record: { status: 404, code: ECOMMERCE_PRICELIST_NOT_FOUND, message: eCommerce pricelist not found. }
+      transport_error: { status: 503, code: ECOMMERCE_PRICELIST_DETAIL_UNAVAILABLE, message: eCommerce pricelist details are temporarily unavailable. }
     query: "SELECT * FROM ecommerce_pricelists WHERE id = :id"
   - id: ecommerce_pricelist_rules
     permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRICELIST_RULES_UNAUTHENTICATED, message: Sign in to view pricelist rules. }
+      forbidden: { status: 403, code: ECOMMERCE_PRICELIST_RULES_FORBIDDEN, message: You do not have access to pricelist rules. }
+      transport_error: { status: 503, code: ECOMMERCE_PRICELIST_RULES_UNAVAILABLE, message: Pricelist rules are temporarily unavailable. }
     query: "SELECT id, apply_on, price, min_quantity, date_start, date_end FROM ecommerce_pricelist_rules WHERE pricelist_id = :id ORDER BY min_quantity, apply_on"
 actions:
   - id: edit_ecommerce_pricelist
