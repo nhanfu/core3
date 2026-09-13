@@ -11,6 +11,61 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, fil
 const apiSource = (file: string, id: string) => yaml(`api/${file}`).datasources.find((source: any) => source.id === id);
 
 describe('Purchase Orders list and detail parity', () => {
+   test('keeps the Vendors list/detail CRUD seam persisted, guarded, and actionable', async () => {
+    const vendorsPage = yaml('pages/vendors.yaml');
+    const vendorDetailPage = yaml('pages/vendor-detail.yaml');
+    const vendors = apiSource('vendors.yaml', 'purchase_vendors');
+    const detail = apiSource('vendor-detail.yaml', 'purchase_vendor_detail');
+    const create = yaml('api/vendors.yaml').actions.find((action: any) => action.id === 'create_purchase_vendor');
+    const update = yaml('api/vendor-detail.yaml').actions.find((action: any) => action.id === 'update_purchase_vendor');
+
+    expect(vendorsPage.page).toMatchObject({ id: 'vendors', route: '/vendors', auth: { require: ['purchase.read'] } });
+    expect(vendorDetailPage.page).toMatchObject({ id: 'vendor-detail', route: '/vendors/detail', auth: { require: ['purchase.read'] } });
+    expect(vendorDetailPage.components[0].header_actions).toEqual([
+      { id: 'update_purchase_vendor', label: 'Edit', variant: 'secondary', permission: 'purchase.manage' },
+    ]);
+    expect(create).toMatchObject({ type: 'server_form', permission: 'purchase.manage', operation: 'create', handler: 'yaml_mutation' });
+    expect(update).toMatchObject({ type: 'server_form', permission: 'purchase.manage', operation: 'update', handler: 'yaml_mutation' });
+    expect(update.mutation.guards).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: 404 }),
+      expect.objectContaining({ status: 409, code: 'STALE_RECORD' }),
+    ]));
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_vendor_crud_test_schema_migrations', ['schema', 'data']);
+
+    const initial = await repository.querySource(detail, { id: 'vendor-demo-002', fixture_state: null }, 0, 1);
+    expect(initial.data).toMatchObject({ id: 'vendor-demo-002', name: 'Northwind Components', row_version: 1 });
+    await repository.run("UPDATE purchase_vendors SET updated_at = TIMESTAMP '2026-01-01 00:00:00' WHERE id = 'vendor-demo-002'");
+    const timestampBeforeUpdate = (await repository.query("SELECT updated_at FROM purchase_vendors WHERE id = 'vendor-demo-002'"))[0].updated_at;
+    const timestampedUpdate = await repository.executeMutation(update.mutation, {
+      id: 'vendor-demo-002', expected_row_version: 1,
+      values: { name: 'Northwind Components', email: 'updated@northwind.example' },
+    }) as any;
+    expect(timestampedUpdate).toMatchObject({ id: 'vendor-demo-002', row_version: 2 });
+    expect(timestampedUpdate.updated_at).not.toBe(timestampBeforeUpdate);
+    const created = await repository.executeMutation(create.mutation, { values: {
+      name: 'Harbor Safety Supply', email: 'orders@harbor-safety.example', phone: '+1 415 555 0198',
+      payment_terms: 'Net 30', street: '88 Pier Avenue', city: 'Oakland', country: 'United States', vat: 'US-HSS-7712',
+    } }) as any;
+    expect(created).toMatchObject({ name: 'Harbor Safety Supply', state: 'Active', row_version: 1 });
+    const updated = await repository.executeMutation(update.mutation, {
+      id: created.id, expected_row_version: 1,
+      values: { name: 'Harbor Safety Supply West', email: 'west@harbor-safety.example', state: 'Active' },
+    }) as any;
+    expect(updated).toMatchObject({ id: created.id, name: 'Harbor Safety Supply West', row_version: 2 });
+    await expect(repository.executeMutation(update.mutation, {
+      id: created.id, expected_row_version: 1, values: { name: 'Stale vendor edit' },
+    })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await expect(repository.executeMutation(update.mutation, {
+      id: 'missing-vendor', expected_row_version: 1, values: { name: 'Missing vendor' },
+    })).rejects.toMatchObject({ status: 404 });
+
+    expect((await repository.querySource(vendors, { q: 'Harbor', state: null, fixture_state: null }, 0, 50)).data)
+      .toMatchObject([{ id: created.id, name: 'Harbor Safety Supply West' }]);
+    expect((await repository.querySource(vendors, { q: null, state: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+   });
   test('keeps Purchase Analysis report layout-only with page-id API ownership and Odoo view controls', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const page = yaml('pages/analysis.yaml');
