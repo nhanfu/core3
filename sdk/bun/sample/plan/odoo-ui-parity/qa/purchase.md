@@ -157,3 +157,20 @@ resolved or explicitly waived.
 - Same owner must rebase the receipt lifecycle repair with its required active
   Purchase contract dependencies, then rerun the full Purchase suite and gates.
 - Preserve authenticated Odoo comparison and unrelated Website lint blockers.
+
+## Reviewer reconciliation `8e67c355`: conditionally integrated (2026-09-13)
+
+- The self-contained receipt/analysis bundle was cherry-picked as `7c34b28c`.
+  The owner worktree later advanced to `db3e0caa`; that later HEAD was not
+  substituted for the candidate during review.
+- Active bounded verification passed receipt **7 tests / 56 assertions** and
+  Purchase Analysis **3 tests / 24 assertions**. Audit passed **661 pages / 670
+  routes / 1160 datasources**; Purchase CSS build and `git diff --check` passed.
+  The broader active Purchase run exceeded the review command window after
+  emitting many passes; owner QA records the complete **61 tests / 576
+  assertions** pass across 17 files.
+- Receipt cancel lifecycle, close/reopen persistence, timeline actor, analysis
+  totals/report, stale/actor/company/anonymous/atomicity guards, and
+  desktop/mobile evidence are accepted for this bounded slice.
+- Conditional status remains because authenticated Odoo comparison is
+  unavailable. Unrelated Website lint findings remain outside this slice.

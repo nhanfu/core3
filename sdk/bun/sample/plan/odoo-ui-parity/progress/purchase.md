@@ -50,3 +50,11 @@ found missing Purchase prerequisite contracts in Analysis, receipt activity
 actor handling, and receipt read error states. The provisional integration was
 reverted as `4265e3ac`; require a same-owner active-branch rebase before
 retest. Odoo comparison and unrelated Website lint remain open.
+
+## Integrated conditional bundle: `8e67c355` -> `7c34b28c` (2026-09-13)
+
+Receipt lifecycle and Purchase Analysis prerequisites are integrated. Active
+bounded verification passed receipt 7/56 and analysis 3/24; audit, Purchase
+CSS, and diff-check passed. Owner QA reports 61/576 with live cancel/reload,
+restart, guards, timeline, and desktop/mobile evidence. Authenticated Odoo
+comparison and unrelated Website lint remain open.
