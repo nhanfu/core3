@@ -62,3 +62,13 @@ Repair is routed to the existing owner at
 (`agent/project-timesheets-dashboard-20260913`); the requested
 `project-20260913` path is not registered. Retest upload/list/download and
 reload before integration. Lint, restart, and Odoo gates remain open.
+
+## QA hold: `0a20ed86` / `PROJECT-ATTACH-002` (2026-09-13)
+
+Upload/download and persistence pass, but normal Project `/api/query` and task
+detail prefetch omit active company context, so the browser shows zero
+attachments after successful upload. Route same-module takeover to the
+registered owner at
+`/home/nhanjs/projects/core3-worktrees/project-timesheets-dashboard-20260913`;
+do not touch unregistered `project-20260913`. Require root-cause context/cache
+repair, focused prefetch/list tests, and QA retest before integration.

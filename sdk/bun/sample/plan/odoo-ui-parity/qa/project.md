@@ -166,3 +166,16 @@ repair. The registered owner is
 the supplied `/home/nhanjs/projects/core3-worktrees/project-20260913` path is
 not registered. Do not integrate until authenticated upload/list/download and
 reload retest passes. Preserve lint, restart, and Odoo blockers.
+
+## Coordinator routing `PROJECT-ATTACH-002` (2026-09-13)
+
+- Hold `0a20ed86`; upload/download, guards, persistence, regressions, builds,
+  audit, ESLint, and diff-check pass, but normal `/api/query` and task-detail
+  prefetch omit active company context and show zero attachments after upload.
+- Same-module takeover is routed to the existing registered owner/worktree
+  `agent/project-timesheets-dashboard-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/project-timesheets-dashboard-20260913`.
+  Do not touch the unregistered `project-20260913` path.
+- Require root-cause request/session-context and cache/detail binding repair,
+  focused normal-prefetch/list and isolation regressions, a self-contained
+  commit, and QA retest before integration.
