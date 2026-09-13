@@ -65,3 +65,13 @@ wizard, and CRUD interaction coverage remain open.
 
 Complete fresh authenticated desktop/mobile interaction and actor checks,
 paired Odoo comparison, and repository lint cleanup before module sign-off.
+
+## Reviewer reconciliation `99fe4073` (2026-09-13)
+
+Integrated the bounded receipt-processing attempt/result and retry/replay slice
+as `f497301b`. Post-merge verification passed **38/217**, audit **661/670/1,158**,
+frontend build, and diff-check; QA reports authenticated desktop/mobile,
+permissions/company scope, CRUD/workflow, attachment/activity, idempotency, and
+migration/replay evidence. Temporal is not applicable to the synchronous
+provider boundary. File-backed live restart and fresh authenticated Odoo
+comparison remain open; no full Expenses sign-off.
