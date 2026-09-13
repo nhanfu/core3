@@ -201,3 +201,20 @@ Candidate commit: pending commit for refusal workflow repair
   genuinely self-contained candidate before QA retest.
 - Preserve open gates: file-backed restart unavailable, Odoo redirects to
   `/web/login`, and the sample package has no lint script.
+
+## Reviewer reconciliation `e77fcef2`: held for active-contract dependencies (2026-09-13)
+
+- Owner QA evidence passes: migration/startup, live refuse -> restore -> reload,
+  numeric version, stale 409, actor/company/anonymous 403/401, desktop/mobile,
+  39 tests / 370 assertions, builds, audit, targeted ESLint, and diff-check.
+- Active-branch verification still fails after cherry-pick: the focused suite
+  passes 2 tests but fails 2 because the active applicant detail query omits
+  `company_name`, and the active applicant-list datasource lacks `error_states`.
+  These are required company-scope contracts present in the owner lineage but
+  absent from the active branch.
+- Provisional cherry-pick was reverted as `6cebba05`; no Recruitment product
+  change is integrated. Same owner must rebase the complete company-scope API
+  contracts, schema/fixture migration, and reopen repair onto the current
+  active branch, then rerun QA.
+- Preserve open gates: unrelated Website full-lint errors, file-backed restart
+  unavailable, and Odoo redirecting to `/web/login`.

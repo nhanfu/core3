@@ -71,6 +71,16 @@ owner to return a self-contained ordered bundle or active-branch rebase before
 another QA retest. File-backed restart, authenticated Odoo, and package-lint
 gates remain open.
 
+## Reviewer hold: `e77fcef2` (2026-09-13)
+
+Owner QA passed, but active verification found missing company-scope contracts:
+the applicant detail query lacks `company_name` and the applicant list lacks
+`error_states`. Focused active tests therefore failed 2/4 after provisional
+integration. The candidate was reverted as `6cebba05`; require the same owner
+to rebase the full company-scope API/schema/fixture dependency plus reopen fix
+against active contracts before retest. Website lint, restart, and Odoo gates
+remain open.
+
 ## Reviewer hold: `45a30a12` (2026-09-13)
 
 QA passed the intended refusal/reopen behavior, but the submitted three-file
