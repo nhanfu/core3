@@ -178,3 +178,16 @@ mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
   validated `99b87bd8` company-scope implementation and `6a4da038` directory
   predicates before merging this regression guard. Preserve browser/Odoo,
   full-regression, broader actor, and restart blockers; no sign-off is issued.
+
+## 2026-09-13 coordinator review: candidate `279f8f4d`
+
+- **Not integrated.** The candidate’s bounded API/migration/history/company-
+  scope patch and 55-test/657-assertion evidence pass, but its ancestry still
+  includes `99b87bd8`, `6a4da038`, and `3de4903f`; it is not independently
+  self-contained for this active branch.
+- Same-owner repair required: provide a genuinely self-contained candidate
+  lineage or obtain explicit approval for the complete three-commit dependency
+  bundle before review/merge. Do not cherry-pick `279f8f4d` alone.
+- Preserve the conditional blockers: unauthenticated Odoo, full regression,
+  broader actor matrix, and restart persistence. No module sign-off or
+  aggregate progress claim is made.
