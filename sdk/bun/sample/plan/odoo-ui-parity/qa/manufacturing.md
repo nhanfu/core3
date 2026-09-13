@@ -200,3 +200,34 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
   Manufacturing blockers remain preserved: authenticated CRUD/actor and
   restart evidence, paired Odoo visual comparison, Temporal/integration gates,
   and complete module sign-off.
+
+## QA retest — Work Orders Analysis scope candidate `cbd5d72f` (2026-09-13)
+
+- Candidate worktree: `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-work-orders-analysis`,
+  owner `agent/odoo-ui-manufacturing-work-orders-analysis`, exact HEAD
+  `cbd5d72f`. The owner worktree is dirty only because QA documentation was
+  updated; no unrelated product changes were accepted.
+- Bounded API evidence passed: company scoping, caller-parameter spoof
+  protection, fail-closed behavior, 401/403/404/503 contracts, and **10 tests /
+  117 assertions**. Candidate integration is held.
+- `MANUFACTURING-SCOPE-001`: live Vietnam fixture rows belong to **Core3
+  Vietnam**, while the authenticated browser company is **Core3 Vietnam
+  Branch**, so the live scoped dataset is empty. Align deterministic fixture
+  company context and add a live non-empty company-switch proof.
+- `MANUFACTURING-BROWSER-002`: authenticated browser rendering is blocked by
+  Vite serving `PageField` with the wrong MIME type. Trace the actual asset
+  resolution/serving path and repair it in the same owner worktree; do not
+  paper over the report scope predicates.
+- Repository-wide lint has no executable `bun run lint` script in this
+  candidate checkout; preserve that tooling limitation rather than claiming a
+  repository lint pass.
+
+### Disposition and repair handoff
+
+- **BLOCKED — do not integrate `cbd5d72f`.** Route a same-worktree repair to
+  `agent/odoo-ui-manufacturing-work-orders-analysis` at the exact path above.
+  Require fixture/company-context alignment, root-cause Vite `PageField` MIME
+  repair, focused runtime tests, and a fresh authenticated browser proof
+  before re-triggering `QA-MANUFACTURING-WAVE-20260913-R2`.
+- Preserve the existing API pass and broader restart, actor, Temporal, and
+  paired-Odoo gates; no Manufacturing module sign-off is made.
