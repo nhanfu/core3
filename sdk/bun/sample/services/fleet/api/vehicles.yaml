@@ -39,7 +39,9 @@ actions:
       - { field: driver_name, label: Driver, type: text }
       - { field: odometer, label: Odometer, type: number }
       - { field: fuel_type, label: Fuel type, type: text }
+      - { field: acquisition_date, label: Acquisition date, type: text }
       - { field: contract_end_date, label: Contract end date, type: text }
+      - { field: trailer_hook, label: Trailer Hook, type: checkbox }
   - { id: assign_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.assign, handler: order_transition, workflow: fleet_vehicles, operation: assign, refresh: [fleet_vehicles] }
   - { id: service_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.service, handler: order_transition, workflow: fleet_vehicles, operation: service, refresh: [fleet_vehicles] }
   - { id: release_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.release, handler: order_transition, workflow: fleet_vehicles, operation: release, refresh: [fleet_vehicles] }

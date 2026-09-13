@@ -9,6 +9,16 @@ const serviceRoot = join(import.meta.dir, '../services/fleet');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
 
 describe('Fleet vehicle create contract', () => {
+  test('exposes every persisted vehicle field in the create form', () => {
+    const create = yaml('api/vehicles.yaml').actions.find((entry: any) => entry.id === 'create_fleet_vehicle');
+    expect(create.fields.map((field: any) => field.field)).toEqual([
+      'name', 'license_plate', 'vehicle_type', 'model', 'manufacturer',
+      'driver_name', 'odometer', 'fuel_type', 'acquisition_date',
+      'contract_end_date', 'trailer_hook',
+    ]);
+    expect(create.mutation.fields).toEqual(expect.arrayContaining(['acquisition_date', 'trailer_hook']));
+  });
+
   test('persists a valid vehicle with database defaults and survives a reload query', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
