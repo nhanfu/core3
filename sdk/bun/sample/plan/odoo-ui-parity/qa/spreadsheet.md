@@ -147,3 +147,9 @@ Detailed execution matrix: [`test-plans/spreadsheet.md`](test-plans/spreadsheet.
   desktop/mobile and paired Odoo comparison are blocked, the candidate runtime
   page/source registry previously returned 404, and broader workbook,
   export/share, actor, restart, and Temporal gates remain pending.
+
+## 2026-09-13 R2 coordinator dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-SPREADSHEET-REGISTRY-WAVE-20260913-R2` → `QA-SPREADSHEET-REGISTRY-WAVE-20260913-R2` | existing `agent/spreadsheet-registry-404-20260913` in `/home/nhanjs/projects/core3-worktrees/spreadsheet-registry-404-20260913` | Dashboard filter persistence/restoration, company scope, invalid/stale/duplicate guards, 401/403 refusal, and focused no-partial-write tests | dispatched in `bdb2b6ce`; awaiting self-contained product commit before QA |
