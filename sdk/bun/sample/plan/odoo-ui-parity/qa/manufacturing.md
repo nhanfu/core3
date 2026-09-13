@@ -148,6 +148,8 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
 
 | `DEV-MANUFACTURING-SCOPE-WAVE-20260913-R2` → `QA-MANUFACTURING-SCOPE-WAVE-20260913-R2` | existing `agent/odoo-ui-manufacturing-work-orders-analysis-scope` in `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-work-orders-analysis-scope` | Grouped Work Orders Analysis dimensions/filters, company scope, deterministic empty/invalid handling, and focused refusal tests | dispatched in `b42778e5`; awaiting self-contained product commit before QA |
 
+| `DEV-MANUFACTURING-TRANSPORT-UI-WAVE-20260913-R2` → `QA-MANUFACTURING-TRANSPORT-UI-WAVE-20260913-R2` | existing `agent/odoo-ui-manufacturing-work-orders-analysis-transport-ui` in `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-work-orders-analysis-transport-ui` | Work Orders Analysis report export/print binding, scoped projection, permission/error boundaries, and focused no-side-effect tests | dispatched in `0c89cff9`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
