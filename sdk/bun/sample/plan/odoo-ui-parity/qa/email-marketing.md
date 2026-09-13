@@ -138,3 +138,17 @@ Detailed execution matrix: [`test-plans/email-marketing.md`](test-plans/email-ma
 - Review must verify the Email Marketing-only diff and active contracts before
   integration. Actor/company, restart/browser mutation, complete route-tree,
   and paired Odoo gates remain open; no full module sign-off is implied.
+
+## Review reconciliation: `54f08872`
+
+- The candidate YAML/test product slice is already present on active as
+  equivalent commit `efe5c846`; cherry-picking `54f08872` was empty after the
+  active ledger conflict was preserved. No duplicate product merge was made.
+- Active focused verification: `bun test
+  ./test/email_marketing_mailings.integration.test.ts --timeout 20000` — **5
+  pass, 69 assertions**. Candidate QA’s recipient regression, audit, targeted
+  ESLint, diff-check, and authenticated desktop/mobile route/wizard evidence
+  remain applicable.
+- Later owner HEAD `826f9556` remains dispatch-only and was not substituted.
+  Actor/company, restart/browser mutation, complete route-tree, and paired Odoo
+  gates remain open; this is conditional bounded reconciliation only.
