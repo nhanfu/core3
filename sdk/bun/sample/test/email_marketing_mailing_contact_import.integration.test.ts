@@ -39,6 +39,14 @@ describe('Email Marketing mailing contact import wizard', () => {
       .toEqual([{ count: 2 }]);
     expect(await repository.query('SELECT subscriber_count, contact_count FROM mailing_lists WHERE id = ?', ['mailing-list-empty-001']))
       .toEqual([{ subscriber_count: 2, contact_count: 2 }]);
+
+    const normalizedValues = { mailing_list_id: 'mailing-list-empty-001', contact_list: '  "Normalized Person" < normalized.person@example.com >  \r\n  trimmed.person@example.com  \r\n' };
+    await repository.executeMutation(action.mutation, { values: normalizedValues });
+    await repository.executeMutation(action.mutation, { values: normalizedValues });
+    expect(await repository.query('SELECT name, email FROM mailing_contacts WHERE email IN (?, ?) ORDER BY email', ['normalized.person@example.com', 'trimmed.person@example.com']))
+      .toEqual([{ name: 'Normalized Person', email: 'normalized.person@example.com' }, { name: 'trimmed.person@example.com', email: 'trimmed.person@example.com' }]);
+    expect(await repository.query('SELECT COUNT(*) AS count FROM mailing_subscriptions WHERE list_id = ? AND contact_id IN (SELECT id FROM mailing_contacts WHERE email IN (?, ?))', ['mailing-list-empty-001', 'normalized.person@example.com', 'trimmed.person@example.com']))
+      .toEqual([{ count: 2 }]);
   });
 
   test('enforces list, email, permission, transport, and deferred upload boundaries', () => {
