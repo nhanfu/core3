@@ -111,6 +111,22 @@ Candidate commit: working tree after authenticated manufacturing QA
   authenticated CRUD/actor, restart, and other open Manufacturing gates remain
   conditional; no module sign-off or aggregate progress update is implied.
 
+## MRP-FUNC-008 migration replay — QA review of exact candidate `47544151` (2026-09-13)
+
+- Focused replay: **PASS**, 1 test / 7 assertions. Existing MO, work-order,
+  and move rows survived a second migration ledger and fixture rows remained
+  singletons.
+- Full Manufacturing corpus: **PASS**, 61 tests / 687 assertions across 20
+  files. Audit passed at 659 pages / 668 routes / 1,138 datasources; global and
+  Manufacturing CSS, targeted ESLint, and `git diff --check` passed.
+- Authenticated Core3 transport-error browser evidence passed at 1440x900 and
+  390x844 with zero page/request errors and no overflow; exact Odoo login was
+  available but no authenticated paired Odoo capture was obtained.
+
+QA disposition: **PASS for review handoff of bounded candidate `47544151`**;
+paired Odoo, CRUD/actor, restart, and other broader Manufacturing gates remain
+open. No module sign-off or aggregate progress claim.
+
 Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufacturing.md). It is the module-level source for manufacturing CRUD, workflows, actors, persistence, Temporal, and paired Odoo gates.
 
 ## Test-case inventory

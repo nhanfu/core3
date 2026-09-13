@@ -36,3 +36,21 @@
 ### Tester decision
 
 The bounded persistence/audit implementation is supported by the focused integration evidence and static quality checks above. This ledger does **not** sign off the complete Purchase module, authenticated cancellation UI, stale cancellation guard, actor permission boundary, full regression, or Odoo visual parity.
+
+## Conditional review handoff — candidate `0f5620e8` (2026-09-13)
+
+- Purchase Analysis bounded API/page slice: **conditional pass**. Focused
+  suite passed 9 tests / 95 assertions; audit, Purchase Sass, Vite frontend,
+  API normal/search/repeat/empty behavior, 401/403 boundaries, and diff-check
+  passed.
+- Blocker `QA-PURCHASE-ANALYSIS-BROWSER-001`: authenticated Core3 desktop/mobile
+  browser comparison and fresh paired Odoo captures were unavailable because
+  persistent `js_repl` was unavailable and Playwright was not installed in the
+  candidate worktree.
+- Blocker `QA-PURCHASE-TS-001`: repository TypeScript remains non-clean from
+  pre-existing shared `med`, client/server, and unrelated AI diagnostics; no
+  candidate Purchase file was implicated.
+
+Disposition: retain as **conditional only**; do not integrate or sign off the
+Purchase module until browser/Odoo evidence and the TypeScript blocker are
+resolved or explicitly waived.

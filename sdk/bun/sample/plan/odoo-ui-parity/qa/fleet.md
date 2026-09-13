@@ -68,3 +68,18 @@ QA state: qa-in-progress
 - Persistence/data integrity: pass for isolated create reload and archive/restore workflow; file-backed restart remains open
 - Desktop/mobile visual parity: route smoke pass; paired parity pending
 - Tester decision: candidate create and browser smoke pass; permission-fixture, restart, paired Odoo, and complete interaction gates remain open
+
+## Conditional review handoff — candidate `e1a61d00` (2026-09-13)
+
+- Vehicle edit persistence/validation/duplicates/stale-save API, auth guards,
+  UI audit, Fleet Sass/frontend build, and `git diff --check` passed.
+- Blocker `QA-FLEET-SUITE-001`: the full Fleet suite has a 5-second
+  `fleet_service_types` timeout; no full-suite pass is claimed.
+- Blocker `QA-FLEET-BROWSER-001`: authenticated candidate browser and restart
+  verification were not executable; no candidate desktop/mobile mutation or
+  file-backed restart evidence is claimed.
+- Blocker `QA-FLEET-ODOO-001`: fresh authenticated Odoo comparison was not
+  executable. Full ESLint also remains blocked by unrelated Website errors.
+
+Disposition: retain as **conditional only**; do not integrate or sign off the
+Fleet module while these blockers remain.

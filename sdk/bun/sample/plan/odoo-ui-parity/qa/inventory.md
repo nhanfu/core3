@@ -187,6 +187,28 @@ retain listener/process evidence; no browser deletion claim is made here.
 
 QA disposition: browser Draft Delete, persistence, guards, permissions, full focused suite, audit, CSS, ESLint, and diff hygiene PASS. No module sign-off or aggregate progress claim.
 
+## Transfer operation QA — exact candidate `d73bed5b` (2026-09-13)
+
+- Focused workflow: **PASS**, 4 tests / 50 assertions; Ready `receipt-00001`
+  moved to Waiting, row version 1 → 2, and the Unreserved timeline event
+  persisted. Stale-row and non-Ready guards returned the declared 409.
+- Full Inventory regression: **PASS**, 44 tests / 462 assertions across 14
+  files. Audit passed at 659 pages / 668 routes / 1,136 datasources; Inventory
+  CSS, frontend build, scoped ESLint, and `git diff --check` passed.
+- Authenticated Admin browser on `http://127.0.0.1:4386`: desktop 1440x900
+  showed Unreserve, emitted `inventory.pickings.unreserve` with
+  `receipt-00001` and version `1`, and returned HTTP 200 Ready → Waiting;
+  reload preserved Waiting and hid Unreserve. Mobile 390x844 had no overflow.
+  Captures: `/tmp/inventory-d73-ready-before.png`,
+  `/tmp/inventory-d73-waiting-after.png`, `/tmp/inventory-d73-waiting-reload.png`,
+  `/tmp/inventory-d73-mobile-receipts.png`.
+- Fresh authenticated Odoo pairing and Fleet browser authentication were not
+  available in this bounded run; contract permission coverage passed. The
+  broader Inventory module remains open.
+
+QA disposition: **PASS for review handoff of candidate `d73bed5b` Unreserve**;
+no Inventory module sign-off or aggregate progress claim.
+
 ## Transfer operation QA — Unreserve (2026-09-13)
 
 - Contract and repository workflow test: PASS. Ready `receipt-00001` moved to
