@@ -117,3 +117,14 @@ Detailed execution matrix: [`test-plans/spreadsheet.md`](test-plans/spreadsheet.
 - Odoo paired evidence was unavailable: `/tmp/odoo-spreadsheet-personal-*.png` files were absent. No Odoo visual parity claim is made.
 - Quality gates: Spreadsheet Sass build passed; `bun run audit` passed with 659 pages, 668 routes, and 1137 datasources; focused ESLint passed (exit 0); `git diff --check 0b023a13^ 0b023a13` passed.
 - Finding: no regression found in the repaired authenticated page/source registry or dashboard filter route. Evidence only; complete functionality, permissions, persistence, and Odoo parity remain unsigned off.
+## 2026-09-13 coordinator dispatch — bounded share lifecycle wave
+
+- Existing owner `agent/spreadsheet-runtime-filters-20260913` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/spreadsheet-runtime-filters-20260913`,
+  based at `20da1518`. Development event:
+  `DEV-SPREADSHEET-WAVE-20260913-R2`; QA event:
+  `QA-SPREADSHEET-WAVE-20260913-R2`; handoff commit: `125774b0`.
+- Scope is token share create/revoke, valid-invalid access boundaries,
+  read-only snapshot access, and focused stale/company/unauthorized guards.
+  Candidate pending; aggregate progress untouched. Existing owner-ledger edits
+  are preserved.
