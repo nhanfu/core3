@@ -5,6 +5,9 @@ datasources:
     permission: forum.read
     single: true
     query: "SELECT * FROM forum_posts WHERE id = :id"
+  - id: forum_post_answers
+    permission: forum.read
+    query: "SELECT id, row_version, post_id, forum_id, forum_name, content, author_name, state, created_at FROM forum_answers WHERE post_id = :id ORDER BY created_at, id"
 components:
   - type: OdooFormView
     source: forum_post_detail
@@ -23,6 +26,38 @@ components:
     header_actions:
       - { id: edit_forum_post_detail, label: Edit, variant: primary, permission: forum.write, show_if: "state.forum_post_detail.state !== 'Archived'" }
       - { id: archive_forum_post_detail, label: Archive, variant: danger, permission: forum.manage, show_if: "state.forum_post_detail.state !== 'Archived'" }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: forum_post_answers
+    parent_source: forum_post_detail
+    title: Answers
+    variant: odoo_x2many
+    row_key: id
+    actions:
+      - { id: add_forum_answer, label: Add answer, variant: primary, permission: forum.write }
+    empty_state: { title: No answers, description: Be the first to answer this question. }
+    children:
+      - { type: LineItemField, id: content, field: content, label: Answer, input_type: textarea, required: true }
+      - { type: LineItemField, id: author_name, field: author_name, label: Author, readonly: true }
+      - { type: LineItemField, id: state, field: state, label: Status, readonly: true }
+      - type: LineItemActions
+        id: forum_answer_actions
+        actions:
+          - { id: edit_forum_answer, label: Edit, icon: edit, variant: ghost, permission: forum.write }
+          - { id: accept_forum_answer, label: Accept, icon: check, variant: primary, permission: forum.manage, show_if: "row.state === 'Active'" }
+          - { id: flag_forum_answer, label: Flag, icon: flag, variant: danger, permission: forum.manage, show_if: "row.state === 'Active'" }
+    columns:
+      - { field: content, label: Answer, width: 480 }
+      - { field: author_name, label: Author, width: 180 }
+      - { field: state, label: Status, width: 120 }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 180
+        actions:
+          - { id: edit_forum_answer, label: Edit, icon: edit, variant: ghost, permission: forum.write }
+          - { id: accept_forum_answer, label: Accept, icon: check, variant: primary, permission: forum.manage, show_if: "row.state === 'Active'" }
+          - { id: flag_forum_answer, label: Flag, icon: flag, variant: danger, permission: forum.manage, show_if: "row.state === 'Active'" }
 actions:
   - id: edit_forum_post_detail
     type: server_form
@@ -50,3 +85,86 @@ actions:
       - { field: content, label: Content, type: textarea }
       - { field: tags, label: Tags, type: text }
   - { id: archive_forum_post_detail, type: server, permission: forum.manage, action: forum.posts.archive, handler: order_transition, workflow: forum_posts, operation: archive, params: { id: '{state.id}' }, refresh: [forum_post_detail] }
+  - id: add_forum_answer
+    type: server_form
+    permission: forum.write
+    title: Add answer
+    action: forum.answers.create
+    handler: line_item
+    operation: create
+    domain: forum_post
+    params: { id: '{state.id}' }
+    refresh: [forum_post_detail, forum_post_answers]
+    fields:
+      - { field: content, label: Answer, type: textarea, required: true }
+      - { field: author_name, label: Author, type: text, required: true }
+    mutation:
+      generated: [line_id]
+      guards:
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND state IN ('Active', 'Closed') AND row_version = :parent_expected_row_version", status: 409, code: FORUM_POST_STALE, message: The question changed or is no longer accepting answers. Reload before answering. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:content AS VARCHAR), ''))) BETWEEN 1 AND 10000", status: 422, code: FORUM_ANSWER_REQUIRED, message: An answer is required. }
+        - { query: "SELECT 1 AS ok WHERE TRIM(COALESCE(CAST(:author_name AS VARCHAR), '')) = TRIM(COALESCE(CAST(:current_user_name AS VARCHAR), ''))", status: 403, code: FORUM_ANSWER_ACTOR, message: The answer author must be the authenticated user. }
+        - { query: "SELECT 1 AS ok FROM forum_forums f JOIN forum_posts p ON p.forum_id = f.id WHERE p.id = :id AND p.forum_id = f.id AND p.forum_name = f.name AND (:forum_id IS NULL OR p.forum_id = :forum_id) AND (:forum_name IS NULL OR p.forum_name = :forum_name)", status: 422, code: FORUM_ANSWER_RELATION_INVALID, message: The question relation is invalid. }
+      steps:
+        - { query: "INSERT INTO forum_answers(id, post_id, forum_id, forum_name, content, author_name, state, row_version) SELECT :line_id, p.id, p.forum_id, p.forum_name, TRIM(:content), TRIM(:author_name), 'Active', 1 FROM forum_posts p WHERE p.id = :id" }
+        - { query: "UPDATE forum_posts SET answer_count = answer_count + 1, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: FORUM_POST_STALE, message: The question changed while adding the answer. Reload before saving. }
+      result: { query: "SELECT * FROM forum_answers WHERE id = :line_id" }
+  - id: edit_forum_answer
+    type: server_form
+    permission: forum.write
+    title: Edit answer
+    action: forum.answers.update
+    handler: line_item
+    operation: update
+    domain: forum_post
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [forum_post_detail, forum_post_answers]
+    fields: [{ field: content, label: Answer, type: textarea, required: true }]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: FORUM_POST_STALE, message: The question changed. Reload before editing. }
+        - { query: "SELECT id FROM forum_answers WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version AND author_name = :current_user_name AND state <> 'Flagged'", status: 403, code: FORUM_ANSWER_FORBIDDEN, message: You can edit only your own active answer. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:content AS VARCHAR), ''))) BETWEEN 1 AND 10000", status: 422, code: FORUM_ANSWER_REQUIRED, message: An answer is required. }
+      steps:
+        - { query: "UPDATE forum_answers SET content = TRIM(:content), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version", expect_changed: true, code: FORUM_ANSWER_STALE, message: The answer changed. Reload before saving. }
+        - { query: "UPDATE forum_posts SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: FORUM_POST_STALE, message: The question changed while saving. Reload before saving. }
+      result: { query: "SELECT * FROM forum_answers WHERE id = :line_id" }
+  - id: accept_forum_answer
+    type: server
+    permission: forum.manage
+    action: forum.answers.accept
+    handler: line_item
+    operation: update
+    domain: forum_post
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [forum_post_detail, forum_post_answers]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: FORUM_POST_STALE, message: The question changed. Reload before moderating. }
+        - { query: "SELECT id FROM forum_answers WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version AND state = 'Active'", status: 409, code: FORUM_ANSWER_STALE, message: The answer changed or is no longer active. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM forum_answers WHERE post_id = :id AND state = 'Accepted' AND id <> :line_id)", status: 409, code: FORUM_ANSWER_ALREADY_ACCEPTED, message: This question already has an accepted answer. }
+      steps:
+        - { query: "UPDATE forum_answers SET state = 'Accepted', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version", expect_changed: true, code: FORUM_ANSWER_STALE, message: The answer changed. Reload before moderating. }
+        - { query: "UPDATE forum_posts SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: FORUM_POST_STALE, message: The question changed while accepting. Reload before saving. }
+      result: { query: "SELECT * FROM forum_answers WHERE id = :line_id" }
+  - id: flag_forum_answer
+    type: server
+    permission: forum.manage
+    action: forum.answers.flag
+    handler: line_item
+    operation: update
+    domain: forum_post
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [forum_post_detail, forum_post_answers]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM forum_posts WHERE id = :id AND row_version = :parent_expected_row_version", status: 409, code: FORUM_POST_STALE, message: The question changed. Reload before moderating. }
+        - { query: "SELECT id FROM forum_answers WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version AND state = 'Active'", status: 409, code: FORUM_ANSWER_STALE, message: The answer changed or is no longer active. }
+      steps:
+        - { query: "UPDATE forum_answers SET state = 'Flagged', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version", expect_changed: true, code: FORUM_ANSWER_STALE, message: The answer changed. Reload before moderating. }
+        - { query: "UPDATE forum_posts SET row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: FORUM_POST_STALE, message: The question changed while flagging. Reload before saving. }
+      result: { query: "SELECT * FROM forum_answers WHERE id = :line_id" }

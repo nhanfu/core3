@@ -1,0 +1,21 @@
+version: 0.0.5
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS forum_answers (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        post_id VARCHAR NOT NULL, forum_id VARCHAR NOT NULL, forum_name VARCHAR NOT NULL,
+        content VARCHAR NOT NULL, author_name VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Active',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS forum_answers_post_idx ON forum_answers(post_id);
+      CREATE INDEX IF NOT EXISTS forum_answers_state_idx ON forum_answers(state);
+    down: |
+      DROP TABLE IF EXISTS forum_answers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
