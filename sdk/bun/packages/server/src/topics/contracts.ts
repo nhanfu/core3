@@ -45,13 +45,14 @@ export type TopicHandler<TRequest = unknown, TResponse = unknown> = {
   handle(payload: TRequest, context: TopicHandlerContext): Promise<TResponse> | TResponse;
 };
 
-export type TopicError = { code: string; message: string; message_key?: string; message_params?: Record<string, unknown>; retryable?: boolean };
+export type TopicError = { code: string; message: string; status?: number; message_key?: string; message_params?: Record<string, unknown>; retryable?: boolean };
 
 export function topicError(error: unknown): TopicError {
-  const value = error as { code?: unknown; message?: unknown; message_key?: unknown; message_params?: unknown; retryable?: unknown } | null;
+  const value = error as { code?: unknown; message?: unknown; status?: unknown; message_key?: unknown; message_params?: unknown; retryable?: unknown } | null;
   return {
     code: typeof value?.code === 'string' ? value.code : 'TOPIC_HANDLER_FAILED',
     message: String(value?.message || 'Topic handler failed'),
+    ...(Number.isInteger(value?.status) && Number(value.status) >= 100 && Number(value.status) <= 599 ? { status: Number(value.status) } : {}),
     ...(typeof value?.message_key === 'string' ? { message_key: value.message_key } : {}),
     ...(value?.message_params && typeof value.message_params === 'object' ? { message_params: value.message_params as Record<string, unknown> } : {}),
     ...(typeof value?.retryable === 'boolean' ? { retryable: value.retryable } : {}),

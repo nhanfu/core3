@@ -6,6 +6,8 @@ import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
 import { topicMutationInput } from '@core3/server/yaml-service';
+import { DirectTopicRouter } from '@core3/server/topics/direct';
+import { topicDefinition } from '@core3/server/topics/contracts';
 
 const root = join(import.meta.dir, '../services/chat');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -18,6 +20,11 @@ describe('Chat multipart attachment upload', () => {
     const upload = yaml('api/chat.yaml').actions.find((candidate: any) => candidate.id === 'upload_attachment');
     const authUser = { sub: 'user-admin', email: 'admin@tms.local', name: 'Admin User', roles: ['admin'], permissions: ['chat.read', 'chat.write'] };
     const uploadRoot = `/tmp/core3-chat-upload-${crypto.randomUUID()}`;
+    const topics = new DirectTopicRouter();
+    topics.register({ definition: topicDefinition(upload.topic, Number(upload.topic_version || 1)), handle: async (payload: any) => repository.executeMutation(upload.mutation, {
+      ...topicMutationInput(payload), current_user_id: payload.actor.id, current_user_name: payload.actor.name,
+      expected_row_version: payload.expected_row_version ?? null,
+    }) });
     const api = createYamlApi({
       repository,
       authProvider: { async getCurrentUser() { return authUser; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
@@ -25,12 +32,7 @@ describe('Chat multipart attachment upload', () => {
       catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
       permissions: { permissions: ['chat.read', 'chat.write'], tables: {}, endpoints: {} },
       uploadRoot, eventStore: { async publish() {} }, storage: yaml('storage.yaml'),
-      topics: { request: async (_definition: unknown, payload: any) => repository.executeMutation(upload.mutation, {
-        ...topicMutationInput(payload),
-        current_user_id: payload.actor.id,
-        current_user_name: payload.actor.name,
-        expected_row_version: payload.expected_row_version ?? null,
-      }) },
+      topics,
     });
     const request = (file: File, meta: Record<string, unknown>) => {
       const form = new FormData();
@@ -73,16 +75,18 @@ describe('Chat multipart attachment upload', () => {
     const upload = yaml('api/chat.yaml').actions.find((candidate: any) => candidate.id === 'upload_attachment');
     const authUser = { sub: 'user-admin', email: 'admin@tms.local', name: 'Admin User', roles: ['admin'], permissions: ['chat.read', 'chat.write'] };
     const uploadRoot = `/tmp/core3-chat-guard-upload-${crypto.randomUUID()}`;
+    const topics = new DirectTopicRouter();
+    topics.register({ definition: topicDefinition(upload.topic, Number(upload.topic_version || 1)), handle: async (payload: any) => repository.executeMutation(upload.mutation, {
+      ...topicMutationInput(payload), current_user_id: payload.actor.id, current_user_name: payload.actor.name,
+      expected_row_version: payload.expected_row_version ?? null,
+    }) });
     const api = createYamlApi({
       repository,
       authProvider: { async getCurrentUser() { return authUser; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
       sources: new Map(), pageSources: new Map(), pages: new Map([['chat', { actions: [upload] }]]),
       catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
       permissions: { permissions: ['chat.read', 'chat.write'], tables: {}, endpoints: {} }, uploadRoot, eventStore: {}, storage: yaml('storage.yaml'),
-      topics: { request: async (_definition: unknown, payload: any) => repository.executeMutation(upload.mutation, {
-        ...topicMutationInput(payload), current_user_id: payload.actor.id, current_user_name: payload.actor.name,
-        expected_row_version: payload.expected_row_version ?? null,
-      }) },
+      topics,
     });
     const request = (meta: Record<string, unknown>, bytes = [88, 89, 90]) => {
       const form = new FormData();
