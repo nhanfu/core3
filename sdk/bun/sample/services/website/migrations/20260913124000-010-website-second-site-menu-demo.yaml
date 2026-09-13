@@ -1,0 +1,14 @@
+version: 0.0.10
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO website_menus (id, website_id, website_name, name, url, sequence)
+      SELECT 'website-menu-demo-003', 'website-demo-002', 'Core3 Docs', 'Docs Home', '/', 10
+      WHERE NOT EXISTS (SELECT 1 FROM website_menus WHERE id = 'website-menu-demo-003');
+    down: |
+      DELETE FROM website_menus WHERE id = 'website-menu-demo-003';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

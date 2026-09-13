@@ -42,12 +42,11 @@ actions:
       fields: [website_id, website_name, name, url, parent_name, new_window, sequence]
       required: [website_id, website_name, name, url]
       guards:
-        - { query: "SELECT 1 AS ok FROM website_websites WHERE id = :website_id", status: 400, code: WEBSITE_INVALID_SITE, message: A valid website is required }
+        - { query: "SELECT name AS website_name FROM website_websites WHERE id = :website_id", assign: true, status: 400, code: WEBSITE_INVALID_SITE, message: A valid website is required }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM website_menus WHERE website_id = :website_id AND LOWER(url) = LOWER(TRIM(CAST(:url AS VARCHAR))))", status: 409, code: WEBSITE_MENU_ROUTE_EXISTS, message: A menu item with this URL already exists for this website. }
       result: { query: "SELECT * FROM website_menus WHERE id = :id" }
     fields:
       - { field: website_id, label: Website, type: select, options_source: website_menu_lookup, required: true }
-      - { field: website_name, label: Website name, type: text, required: true }
       - { field: name, label: Menu label, type: text, required: true }
       - { field: url, label: URL, type: text, required: true }
       - { field: parent_name, label: Parent menu, type: text }
@@ -70,13 +69,12 @@ actions:
       concurrency: { required: true }
       guards:
         - { query: "SELECT id FROM website_menus WHERE id = :id", status: 404, code: WEBSITE_MENU_NOT_FOUND, message: Website menu item not found. }
-        - { query: "SELECT 1 AS ok FROM website_websites WHERE id = :website_id", status: 400, code: WEBSITE_INVALID_SITE, message: A valid website is required }
+        - { query: "SELECT name AS website_name FROM website_websites WHERE id = :website_id", assign: true, status: 400, code: WEBSITE_INVALID_SITE, message: A valid website is required }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM website_menus WHERE website_id = :website_id AND LOWER(url) = LOWER(TRIM(CAST(:url AS VARCHAR))) AND id <> :id)", status: 409, code: WEBSITE_MENU_ROUTE_EXISTS, message: A menu item with this URL already exists for this website. }
       timestamps: true
       result: { query: "SELECT * FROM website_menus WHERE id = :id" }
     fields:
       - { field: website_id, label: Website, type: select, options_source: website_menu_lookup, required: true }
-      - { field: website_name, label: Website name, type: text, required: true }
       - { field: name, label: Menu label, type: text, required: true }
       - { field: url, label: URL, type: text, required: true }
       - { field: parent_name, label: Parent menu, type: text }

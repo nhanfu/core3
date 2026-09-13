@@ -94,7 +94,12 @@ export class YamlMutationRuntime {
         const { statement, values } = bindNamedParams(String(guard.query || ''), params);
         const rows = await queryOnConnection(connection, statement, values);
         if (!rows[0]) throw { status: Number(guard.status || 400), message: String(guard.message || 'Mutation rejected'), ...(guard.code ? { code: guard.code } : {}), ...(guard.message_key ? { message_key: guard.message_key } : {}), ...(guard.message_params ? { message_params: guard.message_params } : {}) };
-        if (guard.assign) Object.assign(params, rows[0]);
+        if (guard.assign) {
+          Object.assign(params, rows[0]);
+          // Server-form callers keep submitted fields under `values`; mirror
+          // guard-derived values there before the record mutation reads them.
+          if (params.values && typeof params.values === 'object') Object.assign(params.values, rows[0]);
+        }
       }
       for (const step of definition.before_steps || []) await this.executeStep(connection, step, params);
       if (definition.operation) await this.executeRecordMutation(connection, definition, params);
