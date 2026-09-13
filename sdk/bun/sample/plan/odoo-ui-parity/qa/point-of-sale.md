@@ -129,3 +129,9 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 - POS remains **conditional / unsigned-off**. Core3 runtime, authenticated
   browser, actor, restart, desktop/mobile, and paired Odoo evidence remain
   blocked by the unavailable `js_repl`/Playwright session and stopped runtime.
+
+## 2026-09-13 R2 coordinator dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-POS-VISUAL-WAVE-20260913-R2` → `QA-POS-VISUAL-WAVE-20260913-R2` | existing `agent/odoo-pos-visual-nav-20260913` in `/home/nhanjs/projects/core3-worktrees/odoo-pos-visual-nav-20260913` | Configuration payment-method/floor-table manager and company guards, validation, stale/missing refusal, and focused atomicity tests | dispatched in `ffc85191`; awaiting self-contained product commit before QA |
