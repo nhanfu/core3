@@ -137,3 +137,22 @@ paired Odoo comparison are still open.
   missing/invalid handling, and reload-equivalent persistence with focused
   tests. Candidate pending; aggregate progress untouched. Existing owner-ledger
   edits are preserved.
+
+## QA disposition `38e7b078`: blocked; same-owner repair required (2026-09-13)
+
+- Do **not** integrate `38e7b078`. Project/Timesheets coverage passed **75
+  tests / 817 assertions**, with attachment guards, build, audit, lint, and
+  diff-check green.
+- Critical defect `PROJECT-ATTACH-001`: authenticated admin context is `Core3
+  Demo Company`, while task `task-demo-002` is seeded with company `Core3`.
+  Live upload returns **403** `PROJECT_TASK_COMPANY_SCOPE_REQUIRED`; no live
+  attachment is created, so upload/list/download persistence cannot pass.
+- Repair is routed to the existing owner/worktree
+  `agent/project-timesheets-dashboard-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/project-timesheets-dashboard-20260913`:
+  align the deterministic task fixture with authenticated company context or
+  use a valid company-scoped seed, then rerun authenticated upload/download and
+  reload QA.
+- Preserve open mobile upload completion, live restart durability, and fresh
+  authenticated Odoo comparison gates. Candidate remains blocked; no duplicate
+  owner or product merge was created.

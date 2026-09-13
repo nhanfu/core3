@@ -41,3 +41,14 @@ browser proof and captures were unavailable because this session exposed no
 persistent `js_repl` runner and the worktree has no Playwright package. No
 full sign-off is claimed; actor CRUD, restart persistence, and paired Odoo
 comparison remain open.
+
+## QA disposition `38e7b078` (2026-09-13)
+
+Do not integrate the Project task-attachment candidate. QA found
+`PROJECT-ATTACH-001`: admin context is `Core3 Demo Company`, but
+`task-demo-002` is seeded as `Core3`, causing live upload to return 403
+`PROJECT_TASK_COMPANY_SCOPE_REQUIRED` before persistence. Route fixture/company
+context alignment to the existing owner `agent/project-timesheets-dashboard-20260913`
+in `/home/nhanjs/projects/core3-worktrees/project-timesheets-dashboard-20260913`,
+then rerun authenticated upload/download/reload QA. Mobile completion, restart,
+and paired Odoo remain open; no replacement or merge was made.
