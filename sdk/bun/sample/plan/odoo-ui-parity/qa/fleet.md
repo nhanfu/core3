@@ -110,3 +110,13 @@ Fleet module while these blockers remain.
 - Fleet remains **conditional / unsigned-off**. Authenticated browser CRUD,
   desktop/mobile visual/Odoo comparison, and broader Fleet scoping remain
   blocked or pending.
+## 2026-09-13 coordinator dispatch — bounded service lifecycle wave
+
+- Existing owner `agent/fleet-next-wave` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/fleet-next-wave`, based at `f9a8f127`.
+  Development event: `DEV-FLEET-WAVE-20260913-R2`; QA event:
+  `QA-FLEET-WAVE-20260913-R2`; handoff commit: `e3d14960`.
+- Scope is vehicle-service create/edit/complete persistence with cost/date/state
+  and vehicle relation, validation, company/permission, duplicate/stale, and
+  atomic no-partial-write tests. Candidate pending; existing ledger and
+  aggregate progress are preserved.
