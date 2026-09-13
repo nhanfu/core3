@@ -90,3 +90,22 @@ Conditional only. The bounded Chat suite, focused permission/persistence
 checks, audit, and diff check pass. Do not sign off Chat: authenticated browser
 CRUD/actor/restart checks, paired desktop/mobile visual evidence, and the
 repository lint gate remain open or blocked.
+
+## 2026-09-13 coordinator review: candidate `b4b7b5de`
+
+- Integrated only the bounded Chat attachment metadata repair as `86e85206`.
+  The change is limited to Chat attachment contracts/tests, Chat workspace
+  metadata mapping, and Chat-specific upload caption normalization; no
+  unrelated candidate work was imported.
+- Post-merge Chat integration tests passed: **22 tests, 148 assertions**;
+  focused client Chat tests passed: **16 tests**. Candidate audit (**659
+  pages, 668 routes, 1134 datasources**), frontend build, and diff-check
+  passed.
+- The attachment contract and repository persistence path pass, but the
+  authenticated upload smoke returned HTTP 500
+  `You are not a participant in this conversation`; no upload/browser
+  rendering or restart claim is made from that result. Full sample/client
+  suites and ESLint retain unrelated failures.
+- Chat remains **conditional / unsigned-off**. Authenticated desktop/mobile
+  visual evidence, participant actor/thread verification, durable restart
+  upload evidence, and paired Odoo comparison remain open.
