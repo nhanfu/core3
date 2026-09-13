@@ -142,3 +142,18 @@ resolved or explicitly waived.
   authenticated Cancel/fulfillment mutation and reload checks.
 - Preserve live restart and authenticated paired Odoo gates. Candidate remains
   blocked; no product merge or replacement owner was created.
+
+## Reviewer reconciliation `120cc740`: held for active Purchase dependencies (2026-09-13)
+
+- Owner QA passed the repaired receipt lifecycle: Draft -> Cancelled `1 -> 2`,
+  reload/mobile, file-backed reopen, stale/wrong-company/Fleet/anonymous/missing/
+  closed replay and atomicity, 59 tests, build/audit/CSS/targeted ESLint, and
+  diff-check. `PURCHASE-RECEIPT-001` is resolved in the owner lineage.
+- Active verification exposed missing prerequisite Purchase contracts: the
+  broader suite failed in Purchase Analysis datasource mapping, receipt
+  activity actor handling (`purchase_receipt_messages.actor_name` NOT NULL),
+  and receipt read error-state declarations. The provisional cherry-pick was
+  reverted as `4265e3ac`; no Purchase product change is integrated.
+- Same owner must rebase the receipt lifecycle repair with its required active
+  Purchase contract dependencies, then rerun the full Purchase suite and gates.
+- Preserve authenticated Odoo comparison and unrelated Website lint blockers.

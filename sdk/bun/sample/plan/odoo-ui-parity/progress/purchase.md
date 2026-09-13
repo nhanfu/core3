@@ -42,3 +42,11 @@ to the existing owner `agent/odoo-ui-purchase-receipt-lifecycle-20260913` in
 `/home/nhanjs/projects/core3-worktrees/purchase-receipt-lifecycle-20260913`,
 then rerun authenticated mutation/reload QA. Restart and paired Odoo remain
 open; no replacement or merge was made.
+
+## Reviewer hold: `120cc740` (2026-09-13)
+
+Owner QA passed the receipt company-context repair, but active verification
+found missing Purchase prerequisite contracts in Analysis, receipt activity
+actor handling, and receipt read error states. The provisional integration was
+reverted as `4265e3ac`; require a same-owner active-branch rebase before
+retest. Odoo comparison and unrelated Website lint remain open.
