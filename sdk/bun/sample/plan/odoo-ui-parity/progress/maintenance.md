@@ -97,3 +97,15 @@ sign-off.
 - Authenticated desktop/mobile and Odoo evidence are blocked. Runtime retries did not provide a usable API/frontend pair: distributed startup had no backend listener, and the in-process gateway returned `503` from `/api/modules` with an unavailable service host. No captures or browser persistence/permission claims are made.
 
 QA result: **conditional fail / evidence-only**; no module sign-off and no aggregate progress update.
+
+## QA disposition `b6592b87` (2026-09-13)
+
+Do not integrate the Maintenance equipment-edit candidate. QA found
+`MAINT-UI-001`: authenticated admin is `Core3 Demo Company` while seeded
+equipment rows use `My Company`, causing the edit company guard to reject valid
+admin edits. Route fixture/company-context alignment to the existing owner
+`agent/maintenance-request-create-wave` in
+`/home/nhanjs/projects/core3-worktrees/maintenance-request-create-wave`, then
+rerun focused and authenticated persistence checks. No replacement was
+created; direct lifecycle reactivation is unavailable in this session. Restart
+and paired Odoo gates remain open.

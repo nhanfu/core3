@@ -229,3 +229,23 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-MAINTENANCE-WAVE-20260913-R2` → `QA-MAINTENANCE-WAVE-20260913-R2` | existing `agent/maintenance-request-create-wave` in `/home/nhanjs/projects/core3-worktrees/maintenance-request-create-wave` | Maintenance Request create/edit persistence, validation, assignment relations, permissions, stale guards, and focused no-partial-write tests | dispatched in `d18abde4`; awaiting self-contained product commit before QA |
+
+## QA disposition `b6592b87`: blocked; same-owner repair required (2026-09-13)
+
+- Do **not** integrate `b6592b87`. Contracts and automated coverage passed
+  (**37 tests / 371 assertions**), with audit/build/lint/diff-check and
+  responsive rendering green.
+- Critical defect `MAINT-UI-001`: authenticated admin context is `Core3 Demo
+  Company`, but seeded Maintenance equipment rows use `My Company`; equipment
+  edit therefore returns `Equipment belongs to another company.` Browser
+  persistence cannot pass while those identities disagree.
+- Repair is routed to the existing owner/worktree
+  `agent/maintenance-request-create-wave` at
+  `/home/nhanjs/projects/core3-worktrees/maintenance-request-create-wave`.
+  Align deterministic fixtures with the authenticated company context or use a
+  valid company-scoped seed, then rerun focused tests and authenticated edit/
+  persistence/permission evidence before reactivating QA.
+- No replacement owner was created. A direct agent lifecycle handle is not
+  available in this session, so the request is recorded for the same owner and
+  QA retest remains pending. Restart durability and paired authenticated Odoo
+  comparison remain open.
