@@ -4,7 +4,7 @@ Module owner: livechat module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: working
 Verification trigger: feature-complete
-Candidate commit: 61296530
+Candidate commit: 0875bcae3d1ef2291fee5fa1842ae4ab08c44700
 
 ## Current state
 
@@ -21,10 +21,16 @@ help, join, and close transitions reject another operator's session with
 identity and a stable second-operator fixture.
 
 Focused validation: `bun test ./test/livechat_sessions.integration.test.ts
---timeout 20000` — 5 passed, 38 assertions. The boundary test verifies the
-assigned list projection and that a forbidden close leaves status and
-`row_version` unchanged. Audit, lint, and diff-check are run for the candidate
-below. Browser actor-matrix and restart evidence remain open.
+--timeout 20000` — 5 passed, 38 assertions. The full Live Chat-focused suite
+passed 59 tests and 635 assertions across 18 files. The boundary test verifies
+assigned list exclusion and that a forbidden close leaves status and
+`row_version` unchanged; assigned detail and the other four guarded actions
+remain untested. `bun run audit` and candidate diff-check passed; Live Chat test
+lint passed. Repository lint is blocked by unrelated existing errors in
+`sample/test/website_public.integration.test.ts:31,33`. Repository-wide
+regression was interrupted (exit 130) before completion. No browser/Odoo probe,
+restart persistence check, or new capture was run; authenticated desktop/mobile
+actor evidence and paired Odoo comparison remain open.
 
 ## Next bounded task
 

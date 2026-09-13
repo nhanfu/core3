@@ -12,7 +12,7 @@ QA state: qa-in-progress
 QA slot: dispatchable livechat assignment (pending wave dispatch)
 Module owner: livechat module owner
 Verification trigger: feature-complete
-Candidate commit: 61296530
+Candidate commit: 0875bcae3d1ef2291fee5fa1842ae4ab08c44700
 
 Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). It is the module-level source for sessions, channels, bots, reporting, actors, persistence, Temporal, and paired Odoo gates.
 
@@ -30,18 +30,36 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
   `livechat-sessions-mobile.png`, and the detail state was verified from the
   authenticated browser.
 
-## Assigned operator scope evidence (2026-09-13)
+## Bounded QA execution for assigned operator scope (2026-09-13)
 
-- Focused test: `bun test ./test/livechat_sessions.integration.test.ts --timeout 20000`
-  — 5 passed, 38 assertions.
-- `view_scope: assigned` returns only sessions whose durable `operator_id`
-  matches the authenticated operator. A close request for another operator's
-  session returns 403 with `LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE`; the
-  session remains `In Progress` at `row_version` 1.
-- Migration reapplication remains covered by the existing session migration
-  tests; the new stable second-operator fixture is inserted idempotently.
-- This is API/contract evidence only. Authenticated browser actor coverage,
-  restart verification, and paired Odoo comparison remain open.
+- Candidate checked out exactly as `0875bcae3d1ef2291fee5fa1842ae4ab08c44700`.
+- Focused: `bun test ./test/livechat_sessions.integration.test.ts --timeout 20000`
+  — 5 passed, 38 assertions, 0 failed.
+- Full Live Chat-focused: `bun test ./test/livechat*.integration.test.ts --timeout 20000`
+  — 59 passed, 635 assertions across 18 files, 0 failed.
+- Repository-wide `bun test ./test --timeout 20000` was interrupted at the
+  user's request with exit 130 while still running; it is incomplete and is
+  not reported as a pass.
+- `view_scope: assigned` list filtering was exercised: the authenticated
+  `livechat-agent` projection excluded `livechat-session-scope-001`, assigned
+  to `other-livechat-agent`. A cross-operator `close` returned 403 with
+  `LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE`; the row remained `In Progress`,
+  `row_version` 1. The focused test did not exercise assigned detail, or each
+  of `wait`, `resume`, `help`, and `join` as cross-operator requests.
+- Migration/fixture evidence is limited to the focused in-memory migration
+  run and its idempotent stable second-operator fixture. No restart or
+  durable on-disk reload was run.
+- Audit passed: `bun run audit` reported 659 pages, 668 routes, and 1139
+  datasources. Candidate `git diff --check HEAD^ HEAD` passed. Live Chat test
+  lint passed: `bunx eslint sample/test/livechat_sessions.integration.test.ts`.
+- Repository lint is blocked by two unrelated existing errors in
+  `sample/test/website_public.integration.test.ts` lines 31 and 33
+  (`no-unsafe-optional-chaining`); no Live Chat lint error was reported.
+- No browser or Odoo probe was run and no new captures were produced in this
+  bounded execution. Existing `/tmp/core3-odoo-parity/livechat-sessions-*.png`
+  captures predate this candidate and are not candidate-specific evidence.
+  Authenticated desktop/mobile actor coverage, overflow/request-error checks,
+  and paired Odoo comparison remain open.
 
 ## Test-case inventory
 
@@ -49,9 +67,9 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 | --- | --- | --- | --- |
 | LIVECHAT-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | No current-wave candidate has been submitted | pending |
 | LIVECHAT-WORKFLOW-001 | Visitor session lifecycle | Authenticated API test traverses In Progress → Waiting → In Progress → Looking for Help → In Progress → Closed, persists visitor/channel/operator/outcome and versions 1 → 6, and rejects closed-session replay | pass |
-| LIVECHAT-FUNC-001 | Sessions, channels, bots, configuration, history, reporting, and technical views | Full focused suite 58/58, 632 assertions across 18 files | pass for tested contracts |
+| LIVECHAT-FUNC-001 | Sessions, channels, bots, configuration, history, reporting, and technical views | Full Live Chat-focused suite 59/59, 635 assertions across 18 files | pass for tested contracts |
 | LIVECHAT-BROWSER-001 | Authenticated Sessions list and detail side panel | Isolated runner `:4327`; desktop/mobile list and seeded Visitor A detail loaded without failed requests, page errors, or overflow; captures recorded above | pass for Core3 runtime; paired Odoo comparison and browser mutations remain open |
-| LIVECHAT-PERM-002 | Assigned operator session list/detail and transitions | Focused Sessions test; assigned operator cannot see or close another operator's session, and the row is unchanged | pass at API/contract level; browser actor matrix remains open |
+| LIVECHAT-PERM-002 | Assigned operator session list/detail and transitions | Focused test proves assigned list exclusion and cross-operator close denial with unchanged row; detail and wait/resume/help/join denial remain untested | bounded pass for tested API contract; QA open |
 
 ## Bugs and retests
 
