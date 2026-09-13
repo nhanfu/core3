@@ -57,3 +57,13 @@ contacting external addresses.
 - Verification: focused mailing suite passes **5 tests, 69 assertions**;
   audit and lint are pending final verification.
 - No migration or fixture change; no browser or visual-parity claim.
+
+## Next event: review of `54f08872`
+
+The recipient-validation candidate is ready for central review from existing
+owner/worktree `agent/email-marketing-recipient-workflow-20260913` at
+`/home/nhanjs/projects/core3-worktrees/email-marketing-recipient-workflow-20260913`.
+Review the self-contained mailing-detail YAML/test slice before integration;
+the later owner HEAD `826f9556` is dispatch-only and is not the candidate.
+Actor/company, restart/browser mutation, complete route-tree, and paired Odoo
+gates remain open.

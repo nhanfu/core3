@@ -122,3 +122,19 @@ Detailed execution matrix: [`test-plans/email-marketing.md`](test-plans/email-ma
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
+
+## Next review handoff: recipient validation `54f08872`
+
+- Candidate `54f08872` is a self-contained Email Marketing slice covering
+  every-recipient validation, CRLF/whitespace normalization, persisted
+  multiline recipients, first-address compatibility mirroring, and stale-row
+  protection. QA recorded the focused, audit, targeted ESLint, diff-check, and
+  authenticated canonical-route desktop/mobile evidence above.
+- Route the next event to the central review/integration gate from existing
+  owner `agent/email-marketing-recipient-workflow-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/email-marketing-recipient-workflow-20260913`,
+  candidate `54f08872`. Do not substitute later dispatch-only HEAD
+  `826f9556`.
+- Review must verify the Email Marketing-only diff and active contracts before
+  integration. Actor/company, restart/browser mutation, complete route-tree,
+  and paired Odoo gates remain open; no full module sign-off is implied.
