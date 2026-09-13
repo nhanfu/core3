@@ -55,3 +55,11 @@ Complete fresh paired Odoo comparison, authenticated vehicle edit CRUD,
 Fleet User permission fixture/read boundary, company boundaries,
 file-backed restart/migration proof, and browser workflow coverage before
 sign-off.
+
+## R2 candidate handoff: service company boundaries `1e55ca16` (2026-09-13)
+
+Existing Fleet owner `agent/fleet-next-wave` has a self-contained candidate at
+`/home/nhanjs/projects/core3-worktrees/fleet-next-wave`. Focused QA is **3/64**,
+Fleet corpus **69/718**, audit **659/669/1,134**, and ESLint/Sass/frontend
+build/diff-check pass. Ready for the existing module QA event; browser, Odoo,
+and restart gates remain open.

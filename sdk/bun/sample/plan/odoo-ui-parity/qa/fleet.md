@@ -133,4 +133,18 @@ Fleet module while these blockers remain.
 - Disposition: **bounded QA pass; conditionally accepted**. Broader Fleet
   blockers remain preserved: authenticated Core3 CRUD/browser evidence, paired
   Odoo comparison, broader company scoping across services/odometers/contracts
-  and reports, and process-restart/runtime gates. Fleet is not fully signed off.
+and reports, and process-restart/runtime gates. Fleet is not fully signed off.
+
+## R2 candidate ready for QA: service company boundaries `1e55ca16` (2026-09-13)
+
+- Existing owner/worktree: `agent/fleet-next-wave` at
+  `/home/nhanjs/projects/core3-worktrees/fleet-next-wave`. The self-contained
+  three-file product commit scopes service lists/details/selectors/mutations by
+  company and adds duplicate active-log protection plus cross-company,
+  invalid, duplicate, stale, and atomicity tests.
+- Candidate evidence: focused **3 tests / 64 assertions**; Fleet **69 tests /
+  718 assertions**; audit **659 pages / 669 routes / 1,134 datasources**;
+  ESLint, Sass/frontend builds, and diff-check pass. Candidate is ready for
+  the existing `QA-FLEET-WAVE-20260913-R2` event; it is not integrated before
+  module QA.
+- Browser, Odoo, and restart gates remain open. No full Fleet sign-off.

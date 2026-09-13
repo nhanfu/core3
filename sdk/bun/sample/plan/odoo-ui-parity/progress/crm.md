@@ -39,6 +39,15 @@
 
 ## Current coverage
 
+## Capacity-recycle CRM takeover authorization (2026-09-13)
+
+Same-module takeover is authorized only in inherited worktree
+`/home/nhanjs/projects/core3-worktrees/odoo-crm-wave-20260912`, branch
+`agent/odoo-crm-wave-20260912`, at `c5c3d6c3`, inheriting the dirty QA/handoff
+docs and conversion findings. No product changes or visible process were found;
+the takeover is not dispatched because no lifecycle handle is available here.
+CRM remains pending for duplicate/permission/rollback/stale conversion tests.
+
 - Odoo source inventory checked against `crm_menu_views.xml`, lead, team, and tag view sources.
 - Existing Core3 routes cover leads, pipeline, activities, teams, reporting, settings, configuration, tags, stages, recurring plans, and lost reasons.
 - Focused functional coverage includes lead conversion, activities, permissions/guards, team routing, reporting, activity plans, tags, stages, recurring plans, lost reasons, and leads analysis.

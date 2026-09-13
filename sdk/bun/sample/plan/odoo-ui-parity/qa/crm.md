@@ -114,4 +114,18 @@ Not signed off. The singular tag deletion allowlist and binding repair passed fo
   evidence, authenticated desktop/mobile browser parity, and paired Odoo
   comparison. Existing AI YAML-context, mock-data, typecheck, broader CRM
   regression, and full module gates remain open. No full CRM completion or
-  module sign-off is claimed.
+module sign-off is claimed.
+
+## Capacity-recycle CRM takeover authorization (2026-09-13)
+
+- Authorize only a same-module takeover for the recorded conversion task, in
+  the exact inherited worktree `/home/nhanjs/projects/core3-worktrees/odoo-crm-wave-20260912`
+  on `agent/odoo-crm-wave-20260912` at `c5c3d6c3`.
+- The owner worktree is dirty only in QA/handoff documentation; no product
+  changes or visible owner process were found. The takeover must inherit those
+  docs and existing CRM-to-Base conversion findings, and must not start a
+  parallel implementation or touch other module files.
+- Dispatch is not executable in this session because no agent lifecycle handle
+  is available. Until a takeover is actually dispatched, CRM remains pending;
+  its bounded task is duplicate replay, permission/invalid/missing handling,
+  downstream rollback, stale/concurrent guards, and focused tests.
