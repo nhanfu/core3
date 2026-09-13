@@ -62,3 +62,14 @@ Route the repair to existing owner `agent/chat-wave-dev1` in
 `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`; trace guard/error
 translation, retain atomicity, and add focused HTTP regressions before
 `QA-CHAT-WAVE-20260913-R2` retest. Do not integrate `902ae72d`.
+
+## R2 retest blocker: `b25e95b3`
+
+The repair passes upload identity, list/download, reload, cleanup,
+no-partial-write, desktop/mobile, 24 tests/173 assertions, audit, builds,
+ESLint, and diff-check. `CHAT-HTTP-GUARD-001` remains open because stale,
+non-participant, and missing-thread uploads still return HTTP 500 despite
+correct domain codes. Root cause: topic normalization drops status during error
+translation. Route the same-module status-preservation repair to
+`agent/chat-wave-dev1` in `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`,
+then rerun focused HTTP QA. Do not integrate `b25e95b3`.

@@ -135,3 +135,18 @@ repository lint gate remain open or blocked.
   atomicity; add focused HTTP regressions for stale, non-participant, and
   missing-thread cases. Require a self-contained repair and fresh QA retest
   before any review/integration.
+
+## QA retest blocker: `b25e95b3` (2026-09-13)
+
+- Passed: multipart uploads, identity/list/download, reload, cleanup and
+  no-partial-write behavior, desktop/mobile, **24 tests / 173 assertions**,
+  audit, builds, ESLint, and diff-check.
+- `CHAT-HTTP-GUARD-001` remains blocked: live stale, non-participant, and
+  missing-thread uploads still return HTTP 500 rather than declared 409/403/404,
+  although the domain error codes are now correct.
+- Root cause: topic normalization drops the status field during error
+  translation. Route a same-module repair to existing owner
+  `agent/chat-wave-dev1` in `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`.
+  Preserve status through topic normalization, add focused HTTP status
+  regressions for all three guards, and require a self-contained repair before
+  QA retest. Do not integrate `b25e95b3`.
