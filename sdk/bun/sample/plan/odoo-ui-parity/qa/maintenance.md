@@ -95,6 +95,25 @@ concurrency finding; all executed focused checks pass otherwise.
 
 ## Sign-off
 
+## 2026-09-13 bounded DEV batch: Maintenance Request activities
+
+- Added service-owned `maintenance_request_activities` persistence with a
+  deterministic schema/index and a fixed migration fixture contract.
+- Request detail now binds the activity message source and exposes the
+  permissioned `Schedule activity` action. Scheduling validates active parent
+  request, activity type, summary, and ISO due date; generated IDs are stable
+  per request/count.
+- Added permissioned activity completion with `row_version` concurrency,
+  deterministic completion timestamp, and explicit not-found/stale behavior.
+- Module test: `test/maintenance_request_activities.integration.test.ts` —
+  schedule/complete persistence, validation, archived-parent denial, and stale
+  replay coverage; **1 passed, 12 assertions**.
+- Full Maintenance corpus after the slice — **35 tests, 345 assertions, 0
+  failures** across 15 files.
+- Browser screenshots were not claimed: the persistent Playwright surface is
+  unavailable in this session. Runtime authenticated UI verification remains
+  an existing blocker for the broader Maintenance matrix.
+
 - Functional: pass for executed repository contracts and request edit/lifecycle checks; browser edit control remains unverified
 - Permissions: pass for tested request read/write denial boundary; full actor/company matrix remains open
 - Persistence/data integrity: pass for changed-value updates and lifecycle; identical stale no-op replay is fixed and covered

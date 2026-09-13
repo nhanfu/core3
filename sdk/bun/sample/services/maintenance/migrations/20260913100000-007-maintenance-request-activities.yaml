@@ -1,0 +1,28 @@
+version: 0.0.7
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS maintenance_request_activities (
+        id VARCHAR PRIMARY KEY,
+        request_id VARCHAR NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        activity_type VARCHAR NOT NULL,
+        summary VARCHAR NOT NULL,
+        due_date DATE,
+        assigned_to VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'planned',
+        completed_at TIMESTAMP,
+        actor_name VARCHAR NOT NULL DEFAULT 'Maintenance User',
+        action VARCHAR NOT NULL DEFAULT 'maintenance.requests.activity.scheduled',
+        action_label VARCHAR NOT NULL DEFAULT 'Activity scheduled',
+        detail VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS maintenance_request_activities_request_idx ON maintenance_request_activities(request_id, due_date, id);
+    down: DROP TABLE IF EXISTS maintenance_request_activities;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
