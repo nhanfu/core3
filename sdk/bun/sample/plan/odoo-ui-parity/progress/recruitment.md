@@ -60,3 +60,13 @@ VARCHAR and the reopen SQL attempts numeric addition. The same existing owner
 must submit a self-contained numeric serialization/cast repair with focused
 restore/reload and stale tests before `QA-RECRUITMENT-WAVE-20260913-R2` is
 triggered. Restart durability and authenticated Odoo comparison remain open.
+
+## Reviewer hold: `1553df22` (2026-09-13)
+
+QA passed the repair behavior, but the commit depends on `ad1c528f`'s
+company-context migration/test changes and fails when cherry-picked alone onto
+the active Recruitment history (`company_name` is absent in the active schema
+path). Provisional integration was reverted as `48727baa`. Require the same
+owner to return a self-contained ordered bundle or active-branch rebase before
+another QA retest. File-backed restart, authenticated Odoo, and package-lint
+gates remain open.

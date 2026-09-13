@@ -166,3 +166,21 @@ Candidate commit: pending commit for refusal workflow repair
   self-contained product commit before QA retest.
 - Preserve the file-backed restart and authenticated paired Odoo comparison
   blockers. QA retest is not triggered until the repair candidate is submitted.
+
+## Reviewer reconciliation `1553df22`: held for dependency repair (2026-09-13)
+
+- QA evidence is accepted for the owner worktree: live refuse -> restore ->
+  reload, numeric row version, stale 409
+  `RECRUITMENT_APPLICANT_REOPEN_STALE`, actor 403/anonymous 401, desktop/mobile,
+  39-test suite, audit/build/ESLint, and diff-check passed.
+- The candidate is **not independently self-contained** on the active branch.
+  Its regression requires the company-context schema/fixture migration and
+  test changes from `ad1c528f`; cherry-picking `1553df22` alone caused the
+  active focused test to fail with `Referenced update column company_name not
+  found in table!` and the reload assertion could not find `company_name`.
+- The provisional cherry-pick was reverted as `48727baa`; no Recruitment
+  product change is integrated. Same owner must return an ordered,
+  self-contained bundle or a rebased repair against active Recruitment
+  contracts, then trigger QA retest.
+- Preserve open gates: file-backed restart unavailable, Odoo routes redirect to
+  login, and the sample package has no lint script.
