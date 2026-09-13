@@ -231,3 +231,25 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
   before re-triggering `QA-MANUFACTURING-WAVE-20260913-R2`.
 - Preserve the existing API pass and broader restart, actor, Temporal, and
   paired-Odoo gates; no Manufacturing module sign-off is made.
+
+## QA retest — live browser repair `dcedc46b` (2026-09-13)
+
+- The same owner/worktree is now at exact HEAD `dcedc46b`:
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-work-orders-analysis`
+  on `agent/odoo-ui-manufacturing-work-orders-analysis`. QA documentation is
+  the only reported worktree modification.
+- API/company scoping, guard contracts, migration, build, audit, targeted
+  ESLint, and diff-check gates pass. Integration remains held.
+- `MFG-BROWSER-001` remains open: the live Vite server still serves
+  `/packages/client/src/components/PageField` as `text/html`, leaving
+  `/manufacturing/workorders` blank at both desktop and mobile viewports.
+
+### Disposition and next handoff
+
+- **BLOCKED — do not integrate `dcedc46b`.** Route a same-worktree live-server
+  repair to the existing Manufacturing owner. Trace the actual Vite/module
+  resolution and MIME response path, fix the root cause, and provide a fresh
+  authenticated desktop/mobile proof that `/manufacturing/workorders` renders
+  before triggering `QA-MANUFACTURING-WAVE-20260913-R2` again.
+- Preserve the API pass, repository-lint limitation, restart/Temporal, and
+  paired-Odoo gates. No Manufacturing sign-off is made.
