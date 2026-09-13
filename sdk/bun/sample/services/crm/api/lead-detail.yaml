@@ -167,6 +167,7 @@ actions:
       table: crm_leads
       fields: [name, type, partner_id, partner_name, email, phone, description, source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, probability, salesperson, team, expected_closing]
       required: [name]
+      normalize_empty: [expected_revenue, probability, expected_closing]
       timestamps: true
       guards:
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR LENGTH(TRIM(CAST(:partner_id AS VARCHAR))) > 0"

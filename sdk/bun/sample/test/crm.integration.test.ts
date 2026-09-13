@@ -5,6 +5,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { migrateDatabase } from '@core3/server/migrations';
 import { createAiAgentApi } from '../services/ai/api/ai-agent-api.ts';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const crmRoot = join(import.meta.dir, '../services/crm');
 const parseYaml = (file: string) => Bun.YAML.parse(readFileSync(file, 'utf8')) as any;
@@ -167,6 +168,53 @@ describe('CRM YAML lifecycle integration', () => {
       id: 'allowed-lead', values: { name: 'Allowed', type: 'lead', team: 'Lead Team' },
     });
     expect(created.id).toBe('allowed-lead');
+  });
+
+  it('normalizes blank optional lead values at the authenticated API boundary', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await repository.run(`
+      CREATE TABLE crm_leads(
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, type VARCHAR, partner_id VARCHAR,
+        partner_name VARCHAR, email VARCHAR, phone VARCHAR, description VARCHAR, source VARCHAR,
+        utm_campaign VARCHAR, utm_medium VARCHAR, utm_source VARCHAR, tags VARCHAR, priority INTEGER,
+        expected_revenue DECIMAL(18,2), stage VARCHAR, probability INTEGER, salesperson VARCHAR,
+        team VARCHAR, expected_closing DATE, row_version BIGINT DEFAULT 1,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE crm_sources(name VARCHAR PRIMARY KEY, active BOOLEAN);
+      CREATE TABLE crm_teams(name VARCHAR PRIMARY KEY, use_leads BOOLEAN, active BOOLEAN);
+      CREATE TABLE crm_team_members(id VARCHAR PRIMARY KEY, team_id VARCHAR, user_name VARCHAR, active BOOLEAN);
+    `);
+    const leads = yaml('pages/leads.yaml');
+    const create = action(leads, 'create_lead');
+    const edit = action(leads, 'edit_lead');
+    const authUser = { sub: 'crm-user', email: 'admin@tms.local', name: 'CRM Admin', roles: ['admin'], permissions: ['crm.write'] };
+    const api = createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return authUser; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
+      sources: new Map(), pageSources: new Map(), pages: new Map([['leads', { actions: [create, edit] }]]),
+      catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
+      permissions: { permissions: ['crm.write'], tables: {}, endpoints: {} }, uploadRoot: '/tmp', eventStore: {}, topics: {},
+    });
+    const request = (actionName: string, body: Record<string, unknown>) => api(new Request(`http://crm.test/api/actions/${actionName}`, {
+      method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    }), new URL(`http://crm.test/api/actions/${actionName}`));
+
+    const createdResponse = await request('crm.leads.create', {
+      id: 'blank-optionals-lead', values: { name: 'Blank optionals', expected_revenue: '', probability: '', expected_closing: '' },
+    });
+    expect(createdResponse?.status).toBe(200);
+    expect(await createdResponse?.json()).toMatchObject({ id: 'blank-optionals-lead', expected_revenue: 0, probability: 10, expected_closing: null });
+
+    const updatedResponse = await request('crm.leads.update', {
+      id: 'blank-optionals-lead', expected_row_version: 1,
+      values: { name: 'Blank optionals cleared', expected_revenue: '', probability: '', expected_closing: '' },
+    });
+    expect(updatedResponse?.status).toBe(200);
+    expect(await updatedResponse?.json()).toMatchObject({ expected_revenue: null, probability: null, expected_closing: null });
+    expect((await repository.query('SELECT expected_revenue, probability, expected_closing FROM crm_leads WHERE id = ?', ['blank-optionals-lead']))[0]).toEqual({ expected_revenue: null, probability: null, expected_closing: null });
+    database.close();
   });
 
   it('chains the next planned activity when an activity is completed', async () => {

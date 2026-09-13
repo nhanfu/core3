@@ -12,6 +12,8 @@ export type MutationDefinition = {
   fields?: string[];
   required?: string[];
   defaults?: Record<string, unknown>;
+  /** Empty form values are omitted on insert and become NULL on update. */
+  normalize_empty?: string[];
   id_input?: string;
   id_prefix?: string;
   timestamps?: boolean;
@@ -45,7 +47,8 @@ const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 function sameMutationValue(left: unknown, right: unknown): boolean {
   if (left === right) return true;
   if ((left === null || left === undefined || left === '') && (right === null || right === undefined || right === '')) return true;
-  if (typeof left === 'number' || typeof right === 'number' || typeof left === 'bigint' || typeof right === 'bigint') {
+  if (left !== null && left !== undefined && left !== '' && right !== null && right !== undefined && right !== ''
+    && (typeof left === 'number' || typeof right === 'number' || typeof left === 'bigint' || typeof right === 'bigint')) {
     const leftNumber = Number(left);
     const rightNumber = Number(right);
     if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) return leftNumber === rightNumber;
@@ -62,6 +65,16 @@ export class YamlMutationRuntime {
   async execute(connection: MutationConnection, definition: MutationDefinition, input: Record<string, any> = {}): Promise<any> {
     const params = { ...input };
     if (params.values && typeof params.values === 'object') {
+      const values = params.values as Record<string, unknown>;
+      for (const field of definition.normalize_empty || []) {
+        if (!IDENTIFIER.test(field)) throw { status: 500, message: 'Normalized mutation field is invalid' };
+        if (!Object.prototype.hasOwnProperty.call(values, field)) continue;
+        const value = values[field];
+        if (typeof value === 'string' && !value.trim()) {
+          if (definition.operation === 'insert') delete values[field];
+          else values[field] = null;
+        }
+      }
       for (const [field, value] of Object.entries(params.values)) {
         if (!Object.prototype.hasOwnProperty.call(params, field)) params[field] = value;
       }
