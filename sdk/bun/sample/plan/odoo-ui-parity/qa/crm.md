@@ -88,3 +88,14 @@ Not signed off. The singular tag deletion allowlist and binding repair passed fo
   comparison remain unavailable due runtime discovery and missing Playwright.
 - CRM remains **conditional / unsigned-off**. The known AI-context baseline,
   broader runtime/browser, and paired visual gates remain open.
+## 2026-09-13 coordinator dispatch — bounded conversion boundary wave
+
+- Existing owner `agent/odoo-crm-wave-20260912` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/odoo-crm-wave-20260912`, based at
+  `af26e16f`. Development event: `DEV-CRM-WAVE-20260913-R2`; QA event:
+  `QA-CRM-WAVE-20260913-R2`; handoff commit: `c5c3d6c3`.
+- Scope is failure-atomic CRM-to-Base contact conversion beyond the happy
+  path: duplicate replay, permission denial, invalid/missing source,
+  downstream failure rollback, and stale/concurrent guards, with focused
+  tests. Candidate pending; existing ledger, unrelated edits, and aggregate
+  progress are preserved.
