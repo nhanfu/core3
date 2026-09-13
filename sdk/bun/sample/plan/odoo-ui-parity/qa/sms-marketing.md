@@ -14,6 +14,21 @@ Module owner: sms-marketing module owner
 Verification trigger: feature-complete
 Candidate commit: working tree after SMS Marketing QA planning
 
+## Candidate 2fb85b60 bounded QA (2026-09-13)
+
+- Exact candidate verified at `2fb85b60ce7fa1c5e84b37d80107c60b78dc0357` in the developer checkout. Product code was not changed by QA.
+- Focused regression: `bun test ./test/sms_marketing*.integration.test.ts --timeout 20000` — **14 passed, 134 expectations, 0 failed** across five files. This covers schedule, send, cancel, Mark Sent/completion, stale row-version rejection, durable delivery counters, list/contact contracts, and analysis boundaries.
+- Static timeout review: all four replacement detail actions (`send`, `schedule`, `cancel`, `complete/Mark Sent`) use `AbortController`, abort after exactly 10,000 ms, clear the timer, reload only after a successful mutation, and throw visible action errors for aborts: `Sending`, `Scheduling`, `Cancelling`, and `Completing SMS campaign timed out. Please try again.`
+- UI audit: `bun scripts/audit-order-ui.ts` — passed, 659 pages, 668 routes, 1,140 datasources.
+- Scoped lint: `bunx eslint sample/test/sms_marketing_campaigns.integration.test.ts sample/test/sms_marketing_transition_timeout.integration.test.ts` — passed with no warnings. Full `bun run lint` remains red only on unrelated pre-existing `sample/test/website_public.integration.test.ts:31,33` (`no-unsafe-optional-chaining`).
+- CSS and diff hygiene: Sass compilation to `/tmp/sms-qa-2fb85b60.css` passed; `git diff --check 2fb85b60^ 2fb85b60 -- services/sms-marketing test/sms_marketing_campaigns.integration.test.ts test/sms_marketing_transition_timeout.integration.test.ts` passed.
+- Authenticated Core3 browser attempt: single-module runtime on `localhost:4330` accepted `admin@tms.local` / `admin123`. Desktop 1440x900 reached the authenticated SMS Campaigns shell with no page errors and no horizontal overflow (`1440/1440/1440`), but campaign content did not render in the bounded wait. Mobile 390x844 redirected to login after `/api/auth/me` failed. Captures: `/tmp/sms-2fb85b60-desktop.png`, `/tmp/sms-2fb85b60-mobile.png`. No completed browser click/reload transition claim is made.
+- Odoo: `http://127.0.0.1:8069/web/login` was reachable, but no authenticated SMS Marketing comparison was available; no paired Odoo claim is made.
+
+### Separate discovery blocker
+
+- `activity_complete_action` is a supported generic `OdooFormView` property in the shared schema/renderer and is exercised by Maintenance, but no SMS Marketing declaration, action, or Odoo SMS-specific mapping was discovered. This is unrelated to candidate `2fb85b60`'s lifecycle reload timeout repair and remains a discovery/parity blocker, not a candidate failure.
+
 ## Bounded QA execution (2026-09-13, candidate `7db5dde23c1258861fdd59341aff4d98e73782f0`)
 
 - Focused regression: `bun test ./test/sms_marketing*.integration.test.ts --timeout 20000` — **13 passed, 93 expectations, 0 failed** across four files. This includes lifecycle transitions, stale completion rejection, durable row-version/counter assertions, list/contact permissions and failure contracts, and SMS analysis boundaries.
@@ -47,8 +62,8 @@ Detailed execution matrix: [`test-plans/sms-marketing.md`](test-plans/sms-market
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| SMS_MARKETING-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Candidate `7db5dde2` bounded QA; browser and Odoo gates remain open | pending |
-| SMS-FUNC-001 | SMS campaign, list, contact, and analysis contract corpus | `bun test ./test/sms_marketing*.integration.test.ts` — 13 tests, 93 expectations | pass |
+| SMS_MARKETING-PENDING-001 | Complete module functionality, permissions, persistence, and desktop/mobile authenticated browser matrix | Candidate `2fb85b60` bounded QA; contract lifecycle passes, browser/Odoo gates remain open | pending |
+| SMS-FUNC-001 | SMS campaign, list, contact, and analysis contract corpus | Candidate `2fb85b60`: 14 tests, 134 expectations | pass |
 | SMS-BROWSER-001 | Authenticated campaign route and view-mode loading | Isolated runner `:4323`; desktop and mobile rendered without errors or overflow; detail form-view request now resolves after page-ID filename correction | pass for Core3 runtime; paired Odoo comparison remains open |
 
 ## Bugs and retests

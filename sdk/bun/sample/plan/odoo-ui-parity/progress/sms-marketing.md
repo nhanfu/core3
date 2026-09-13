@@ -2,9 +2,9 @@
 
 Module owner: sms-marketing module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: active - bounded QA executed; sign-off gates remain open
+Status: active - candidate 2fb85b60 bounded QA recorded; sign-off gates remain open
 Verification trigger: focused contract suite and module audit
-Candidate commit: this module-owned commit
+Candidate commit: 2fb85b60ce7fa1c5e84b37d80107c60b78dc0357
 
 ## Current state
 
@@ -17,8 +17,27 @@ No authenticated visual-parity claim is made here.
 
 ## Next bounded task
 
-Dispatch QA on the committed lifecycle candidate, then exercise authenticated
-campaign workflows and company/actor boundaries before updating module sign-off.
+Re-run authenticated campaign workflows with a stable service/runtime, then
+exercise actor/company boundaries and paired Odoo comparison before updating
+module sign-off. Do not treat the separate `activity_complete_action`
+discovery gap as part of this timeout candidate.
+
+## QA checkpoint (2026-09-13, candidate `2fb85b60`)
+
+The exact candidate passed the focused SMS suite: 14 tests / 134 expectations /
+0 failures. The four lifecycle reload actions are statically bounded at 10
+seconds, clear their timers, reload after success, and expose distinct timeout
+errors. UI audit passed at 659 pages / 668 routes / 1,140 datasources; scoped
+SMS ESLint, Sass compilation, and candidate diff-check passed. Full-repo lint
+has only unrelated existing errors at `website_public.integration.test.ts:31,33`.
+
+Authenticated Core3 desktop reached the SMS shell at 1440x900 without page
+errors or horizontal overflow, but campaign data did not render in the bounded
+wait; mobile redirected to login after `/api/auth/me` failed. Therefore no
+browser transition, cleanup/reload persistence, or mobile workflow claim is
+made. Odoo was reachable only at login, so no paired authenticated comparison
+is claimed. The separate `activity_complete_action` discovery blocker is
+recorded in the QA ledger and is unrelated to this candidate.
 
 ## QA checkpoint (2026-09-13, candidate `7db5dde23c1258861fdd59341aff4d98e73782f0`)
 
