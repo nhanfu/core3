@@ -1,9 +1,5 @@
 title: Blog Tags
-page: { id: blog-tags, breadcrumb: [Website, Blog, Tags], auth: { require: [blog.read] } }
-datasources:
-  - id: blog_tags
-    permission: blog.read
-    query: "SELECT t.id, t.row_version, t.name, t.category, t.color, (SELECT COUNT(*) FROM blog_posts p WHERE p.tags ILIKE '%' || t.name || '%') AS post_count FROM blog_tags t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.category ILIKE '%' || :q || '%') ORDER BY t.name"
+page: { id: blog-tags, route: /blog-tags, breadcrumb: [Website, Configuration, Blog, Tags], auth: { require: [blog.read] } }
 components:
   - type: ListView
     variant: odoo
@@ -16,24 +12,7 @@ components:
       - { field: category, label: Category }
       - { field: post_count, label: Posts, align: right }
       - { field: color, label: Color, align: right }
+      - { field: id, label: '', sortable: false, actions: [{ id: edit_blog_tag, label: Edit, icon: edit }, { id: delete_blog_tag, label: Delete, icon: trash, variant: danger }] }
     page_size: 50
     row_key: id
-actions:
-  - id: create_blog_tag
-    type: server_form
-    permission: blog.write
-    title: New tag
-    action: blog.tags.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [blog_tags]
-    mutation:
-      operation: insert
-      table: blog_tags
-      fields: [name, category, color]
-      required: [name]
-      result: { query: "SELECT * FROM blog_tags WHERE id = :id" }
-    fields:
-      - { field: name, label: Tag name, type: text, required: true }
-      - { field: category, label: Category, type: text }
-      - { field: color, label: Color, type: number }
+    row_open_action: edit_blog_tag

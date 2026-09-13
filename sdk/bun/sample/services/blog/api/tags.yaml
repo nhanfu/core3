@@ -1,0 +1,76 @@
+page: { id: blog-tags }
+datasources:
+  - id: blog_tags
+    permission: blog.read
+    error_states:
+      unauthorized: { status: 401, code: BLOG_TAGS_UNAUTHORIZED, message: Sign in to view tags. }
+      forbidden: { status: 403, code: BLOG_TAGS_FORBIDDEN, message: You do not have permission to view tags. }
+      transport_error: { status: 503, code: BLOG_TAGS_UNAVAILABLE, message: Tags are temporarily unavailable. }
+    query: "SELECT t.id, t.row_version, t.name, t.category, t.color, (SELECT COUNT(*) FROM blog_posts p WHERE p.tags ILIKE '%' || t.name || '%') AS post_count FROM blog_tags t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.category ILIKE '%' || :q || '%') ORDER BY t.name, t.id"
+  - id: blog_tag_detail
+    single: true
+    permission: blog.read
+    error_states:
+      missing_record: { status: 404, code: BLOG_TAG_NOT_FOUND, message: Tag not found. }
+    query: "SELECT id, row_version, name, category, color FROM blog_tags WHERE id = :id"
+actions:
+  - id: create_blog_tag
+    type: server_form
+    permission: blog.write
+    title: New tag
+    action: blog.tags.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [blog_tags]
+    mutation:
+      operation: insert
+      table: blog_tags
+      fields: [name, category, color]
+      required: [name]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: BLOG_TAG_NAME_REQUIRED, message: A tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: BLOG_TAG_EXISTS, message: A tag with this name already exists. }
+      result: { query: "SELECT * FROM blog_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Tag name, type: text, required: true }
+      - { field: category, label: Category, type: text }
+      - { field: color, label: Color, type: number }
+  - id: edit_blog_tag
+    type: server_form
+    permission: blog.write
+    title: Edit tag
+    action: blog.tags.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{row.id}' }
+    prefill: row
+    refresh: [blog_tags, blog_tag_detail]
+    mutation:
+      operation: update
+      table: blog_tags
+      fields: [name, category, color]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM blog_tags WHERE id = :id", status: 404, code: BLOG_TAG_NOT_FOUND, message: Tag not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: BLOG_TAG_NAME_REQUIRED, message: A tag name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: BLOG_TAG_EXISTS, message: A tag with this name already exists. }
+      result: { query: "SELECT * FROM blog_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Tag name, type: text, required: true }
+      - { field: category, label: Category, type: text }
+      - { field: color, label: Color, type: number }
+  - id: delete_blog_tag
+    type: server
+    permission: blog.write
+    action: blog.tags.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [blog_tags]
+    mutation:
+      operation: delete
+      table: blog_tags
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM blog_tags WHERE id = :id", status: 404, code: BLOG_TAG_NOT_FOUND, message: Tag not found. }
+        - { query: "SELECT 1 AS ok FROM blog_tags t WHERE t.id = :id AND NOT EXISTS (SELECT 1 FROM blog_posts p WHERE p.tags ILIKE '%' || t.name || '%')", status: 409, code: BLOG_TAG_IN_USE, message: A tag used by blog posts cannot be deleted. }
