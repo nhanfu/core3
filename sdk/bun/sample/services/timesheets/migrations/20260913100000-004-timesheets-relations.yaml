@@ -1,0 +1,37 @@
+version: 0.0.4
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS timesheet_employees (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, company_name VARCHAR NOT NULL,
+        hourly_cost DECIMAL(18,2) NOT NULL DEFAULT 0, active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      CREATE TABLE IF NOT EXISTS timesheet_projects (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, company_name VARCHAR NOT NULL,
+        allow_timesheets BOOLEAN NOT NULL DEFAULT TRUE, has_analytic_account BOOLEAN NOT NULL DEFAULT TRUE,
+        active BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      CREATE TABLE IF NOT EXISTS timesheet_tasks (
+        id VARCHAR PRIMARY KEY, project_id VARCHAR NOT NULL, name VARCHAR NOT NULL,
+        open BOOLEAN NOT NULL DEFAULT TRUE
+      );
+      INSERT OR IGNORE INTO timesheet_employees(id, name, company_name, hourly_cost) VALUES
+        ('employee-demo-001', 'Admin User', 'My Company', 85.00),
+        ('employee-demo-002', 'Demo Employee', 'My Company', 60.00);
+      INSERT OR IGNORE INTO timesheet_projects(id, name, company_name, allow_timesheets, has_analytic_account) VALUES
+        ('project-demo-001', 'Core3 Implementation', 'My Company', TRUE, TRUE),
+        ('project-demo-002', 'Customer Delivery', 'My Company', TRUE, TRUE),
+        ('project-demo-closed', 'Archived Project', 'My Company', FALSE, FALSE);
+      INSERT OR IGNORE INTO timesheet_tasks(id, project_id, name, open) VALUES
+        ('task-demo-001', 'project-demo-001', 'Complete module migration', TRUE),
+        ('task-demo-002', 'project-demo-001', 'Quality analysis', TRUE),
+        ('task-demo-closed', 'project-demo-002', 'Closed delivery task', FALSE);
+    down: |
+      DROP TABLE IF EXISTS timesheet_tasks;
+      DROP TABLE IF EXISTS timesheet_projects;
+      DROP TABLE IF EXISTS timesheet_employees;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
