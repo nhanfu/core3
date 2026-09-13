@@ -95,3 +95,13 @@ attachment, print, or report action; invoice printing belongs to invoice/report
 scope. The negative-contract test is present on active and passes **4/64**;
 audit passes **661/670/1,154** and diff-check passes. No unsupported actions
 were added; broader Accounting scope gates remain open.
+
+## Reviewer reconciliation `fd00ae4d` (2026-09-13)
+
+Journal Items export is already present on active as `fd00ae4d`; the attempted
+cherry-pick was empty and no duplicate merge was made. Active contract
+verification passed **2/20**, Accounting **90/1,013**, with audit, build, and
+diff-check green. QA confirms valid 4,453-byte XLSX output with four rows,
+desktop/mobile reload evidence, and Fleet actor 403. Fresh authenticated Odoo
+Journal Items comparison and broader export/attachment/print/Odoo gates remain
+open; no full sign-off.

@@ -745,3 +745,17 @@ sign-off is claimed.
 - Disposition: **bounded evidence reconciled**. Accounting-wide export and
   bank-statement attachment remain separate scopes; invoice printing remains
   invoice/report scope. Broader Accounting sign-off remains open.
+
+## Reviewer reconciliation `fd00ae4d`: conditional bounded PASS (2026-09-13)
+
+- The existing QA worktree was valid. The exact Journal Items export
+  implementation and test are already present on active as `fd00ae4d`; the
+  cherry-pick was empty, so no duplicate implementation commit was created.
+- Active verification passed the Journal Items contract **2 tests / 20
+  assertions** and Accounting **90 tests / 1,013 assertions**; audit, build,
+  and diff-check passed. QA confirms a valid **4,453-byte XLSX** ZIP artifact
+  with four data rows, desktop/mobile four-row rendering and reload, and Fleet
+  actor **403** for `accounting.read`.
+- Disposition: **conditional bounded PASS; reconciled**. Fresh authenticated
+  Odoo Journal Items comparison and broader Accounting export, attachment,
+  print, and Odoo gates remain open. No full Accounting sign-off.
