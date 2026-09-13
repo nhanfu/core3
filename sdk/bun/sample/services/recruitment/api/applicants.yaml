@@ -8,6 +8,10 @@ datasources:
     permission: recruitment.read
     single: false
     query: "SELECT id AS value, name || ' - ' || job_title AS label FROM recruitment_openings WHERE state IN ('Open','Draft') ORDER BY name, id"
+  - id: recruitment_applicant_list_refuse_reason_lookup
+    permission: recruitment.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM recruitment_refuse_reasons WHERE active = TRUE ORDER BY sequence, name, id"
   - id: recruitment_applicants
     permission: recruitment.read
     workflow: recruitment_applicants
@@ -43,4 +47,23 @@ actions:
   - { id: interview_applicant, type: server, permission: recruitment.write, action: recruitment.applicants.interview, handler: order_transition, workflow: recruitment_applicants, operation: interview, refresh: [recruitment_applicants] }
   - { id: offer_applicant, type: server, permission: recruitment.write, action: recruitment.applicants.offer, handler: order_transition, workflow: recruitment_applicants, operation: offer, refresh: [recruitment_applicants] }
   - { id: hire_applicant, type: server, permission: recruitment.manage, action: recruitment.applicants.hire, handler: order_transition, workflow: recruitment_applicants, operation: hire, refresh: [recruitment_applicants] }
-  - { id: reject_applicant, type: server, permission: recruitment.manage, action: recruitment.applicants.reject, handler: order_transition, workflow: recruitment_applicants, operation: reject, refresh: [recruitment_applicants] }
+  - id: reject_applicant
+    type: server_form
+    permission: recruitment.manage
+    title: Refuse application
+    submit_label: Refuse
+    cancel_label: Discard
+    action: recruitment.applicants.refuse_with_reason
+    handler: yaml_mutation
+    operation: refuse
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [recruitment_applicants]
+    mutation:
+      required: [refuse_reason_id]
+      guards:
+        - { query: "SELECT id FROM recruitment_applicants WHERE id = :id AND stage NOT IN ('Hired', 'Rejected') AND row_version = :expected_row_version", status: 409, code: RECRUITMENT_APPLICANT_REFUSE_STALE, message: Only a current open application can be refused. }
+        - { query: "SELECT id FROM recruitment_refuse_reasons WHERE id = :refuse_reason_id AND active = TRUE", status: 422, code: RECRUITMENT_REFUSE_REASON_INVALID, message: Select an active refusal reason. }
+      steps: [{ query: "UPDATE recruitment_applicants SET stage = 'Rejected', archived = TRUE, refuse_reason_id = :refuse_reason_id, refused_date = DATE '2026-01-15', row_version = :expected_row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The application changed by another user. Reload it before refusing. }]
+      result: { query: "SELECT * FROM recruitment_applicants WHERE id = :id" }
+    fields:
+      - { field: refuse_reason_id, label: Reason, type: select, options_source: recruitment_applicant_list_refuse_reason_lookup, required: true }
