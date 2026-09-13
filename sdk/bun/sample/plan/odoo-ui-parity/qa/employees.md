@@ -393,3 +393,50 @@ open; Employees is not signed off.
 - Disposition: **bounded conditional reconciliation, already integrated**.
   Token refresh and authenticated Odoo comparison remain blockers; Employees is
   not fully signed off.
+
+## Bounded live company-switch trace after `a6b09d14` (2026-09-13)
+
+- Reproduction used the live Core3 HTTP contracts with the seeded admin account
+  (`admin@tms.local` / `admin123`) and the same bearer token throughout.
+- `POST /api/v1/company/switch` with `{"company_id":"company-vietnam"}`
+  returned **HTTP 200** and the Vietnam company object.
+- The subsequent `GET /api/auth/me` using the unchanged bearer token returned
+  `company_id: "company-vietnam"` and the Vietnam company object. This proves
+  the auth service rehydrates the selected company from the persisted profile;
+  token rotation is not required by the current auth contract.
+- The subsequent Employees page datasource request on the fresh in-memory
+  runtime returned no departure rows after the switch; that runtime had no
+  Vietnam departure-reason fixture to compare against Demo Company rows.
+  No client/auth repair was justified from this run.
+- The actual browser/UI reproduction could not be completed in this bounded
+  trace: the dev runtime repeatedly became unreachable on `127.0.0.1:3001` and
+  `localhost:3002` during Playwright navigation, despite initially reporting
+  startup. The interactive Playwright handle is not exposed in this session.
+  UI request capture, profile refresh callback, and the post-switch datasource
+  request therefore remain uncertified.
+- Disposition: **BLOCKED** — stable live runtime plus browser network evidence
+  with company fixtures is still required. No speculative auth/client edit or
+  unrelated module change was made.
+
+## Employees deterministic company-switch fixtures (2026-09-13)
+
+- Scope: Employees departure reasons only. Added migration
+  `20260913140000-026-departure-reason-demo-companies.yaml`, which keeps the
+  three deterministic defaults on `Core3 Demo Company` and seeds
+  `departure-reason-vietnam-transfer` / `Vietnam Transfer` and
+  `departure-reason-vietnam-contract` / `Vietnam Contract End` on
+  `Core3 Vietnam Branch`. The migration is idempotent and does not change the
+  existing company predicates, permission declarations, or lifecycle guards.
+- Focused company-switch regression: **15 tests / 193 assertions passed**.
+  It verifies both page and `/api/query` datasource requests return the three
+  Demo rows before switching, then return only the two Vietnam rows after the
+  authenticated company context changes; old-company IDs are excluded.
+- Full Employees integration suite: **58 tests / 697 assertions passed** across
+  17 files.
+- UI audit: **661 pages / 670 routes / 1,154 datasources passed**.
+- Targeted Employees ESLint: **passed**. `git diff --check`: **passed**.
+- Full repository ESLint remains blocked by three pre-existing unrelated
+  errors: unused `api` in `test/spreadsheet.integration.test.ts` and two
+  unsafe optional-chaining errors in `test/website_public.integration.test.ts`.
+- No browser or authenticated Odoo sign-off is claimed. No unrelated module
+  files were changed.

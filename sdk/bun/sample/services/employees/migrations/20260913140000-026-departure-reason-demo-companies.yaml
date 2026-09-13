@@ -1,0 +1,21 @@
+version: 0.0.26
+kind: data
+description: Seed deterministic departure reasons for the demo companies
+type:
+  postgres:
+    up: |
+      UPDATE employee_departure_reasons
+      SET company_name = 'Core3 Demo Company'
+      WHERE id IN ('departure-reason-fired', 'departure-reason-resigned', 'departure-reason-retired');
+      INSERT OR IGNORE INTO employee_departure_reasons
+        (id, sequence, name, country_code, company_name, active, row_version)
+      VALUES
+        ('departure-reason-vietnam-transfer', 10, 'Vietnam Transfer', 'VN', 'Core3 Vietnam Branch', true, 1),
+        ('departure-reason-vietnam-contract', 11, 'Vietnam Contract End', 'VN', 'Core3 Vietnam Branch', true, 1);
+    down: |
+      DELETE FROM employee_departure_reasons
+      WHERE id IN ('departure-reason-vietnam-transfer', 'departure-reason-vietnam-contract');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

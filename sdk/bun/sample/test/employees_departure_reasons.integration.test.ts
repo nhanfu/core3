@@ -62,11 +62,14 @@ describe('Employees Departure Reasons bounded parity', () => {
     const populated = await repository.querySource(listSource, { q: null, fixture_state: null }, 0, 50);
     expect(populated.data.map((row: any) => row.id)).toEqual([
       'departure-reason-fired', 'departure-reason-resigned', 'departure-reason-retired',
+      'departure-reason-vietnam-transfer', 'departure-reason-vietnam-contract',
     ]);
     expect(populated.data.map((row: any) => ({ sequence: row.sequence, name: row.name, country_code: row.country_code, row_version: row.row_version }))).toEqual([
       { sequence: 0, name: 'Fired', country_code: null, row_version: 1 },
       { sequence: 1, name: 'Resigned', country_code: null, row_version: 1 },
       { sequence: 2, name: 'Retired', country_code: null, row_version: 1 },
+      { sequence: 10, name: 'Vietnam Transfer', country_code: 'VN', row_version: 1 },
+      { sequence: 11, name: 'Vietnam Contract End', country_code: 'VN', row_version: 1 },
     ]);
     expect(await repository.query("SELECT created_at, updated_at FROM employee_departure_reasons WHERE id = 'departure-reason-fired'")).toEqual([
       { created_at: '2026-01-15T00:00:00.000Z', updated_at: '2026-01-15T00:00:00.000Z' },

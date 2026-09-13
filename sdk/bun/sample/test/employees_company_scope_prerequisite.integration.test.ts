@@ -24,13 +24,16 @@ describe('Employees company-scope prerequisite', () => {
       expect(yaml(file).datasources.find((source: any) => source.id === id)?.query, file)
         .toContain('current_company_name');
     }
+    const demoMigration = readFileSync(join(root, 'migrations/20260913140000-026-departure-reason-demo-companies.yaml'), 'utf8');
+    expect(demoMigration).toContain("departure-reason-vietnam-transfer");
+    expect(demoMigration).toContain("'Core3 Vietnam Branch'");
+    expect(demoMigration).toContain("'Core3 Demo Company'");
   });
 
   test('uses the switched auth company for page and /api/query datasource requests', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_company_switch_routes_test', ['schema', 'data']);
-    await repository.query("INSERT INTO employee_departure_reasons (id, row_version, sequence, name, country_code, company_name, active) VALUES ('departure-reason-vietnam-switch', 1, 99, 'Vietnam transfer', 'VN', 'Core3 Vietnam Branch', true)");
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const employeePages = new Map([...discovered.pages]
       .filter(([, page]) => page.module === 'employees')
@@ -66,8 +69,9 @@ describe('Employees company-scope prerequisite', () => {
       body: JSON.stringify({ sourceId: 'employee_departure_reasons', params: { active: null, q: null }, top: 50 }),
     }), new URL('http://employees.test/api/query'));
     const demoPage = await (await pageRequest()).json();
-    expect(demoPage.datasources.find((source: any) => source.id === 'employee_departure_reasons').data
-      .every((row: any) => row.company_name === 'Core3 Demo Company')).toBe(true);
+    const demoRows = demoPage.datasources.find((source: any) => source.id === 'employee_departure_reasons').data;
+    expect(demoRows.map((row: any) => row.id)).toEqual(['departure-reason-fired', 'departure-reason-resigned', 'departure-reason-retired']);
+    expect(demoRows.every((row: any) => row.company_name === 'Core3 Demo Company')).toBe(true);
     const demoQuery = await (await queryRequest()).json();
     expect(demoQuery.data.every((row: any) => row.company_name === 'Core3 Demo Company')).toBe(true);
 
@@ -77,7 +81,7 @@ describe('Employees company-scope prerequisite', () => {
     currentCompany = { id: 'company-vietnam', name: 'Core3 Vietnam Branch' };
     const switchedPage = await (await pageRequest()).json();
     const switchedRows = switchedPage.datasources.find((source: any) => source.id === 'employee_departure_reasons').data;
-    expect(switchedRows.length).toBeGreaterThan(0);
+    expect(switchedRows.map((row: any) => row.id)).toEqual(['departure-reason-vietnam-transfer', 'departure-reason-vietnam-contract']);
     expect(switchedRows.every((row: any) => row.company_name === 'Core3 Vietnam Branch')).toBe(true);
     expect(switchedRows.every((row: any) => row.company_name !== 'Core3 Demo Company')).toBe(true);
     const switchedQuery = await (await queryRequest()).json();
