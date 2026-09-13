@@ -66,3 +66,19 @@ resolved or explicitly waived.
 - Preserved blockers: direct timestamp before/after assertion, repository
   TypeScript diagnostics, authenticated desktop/mobile browser evidence, and
   fresh Odoo comparison. Purchase remains conditional and unsigned-off.
+
+## 2026-09-13 coordinator review: repair candidate `19eec536`
+
+- **Not integrated.** The candidate is a one-test diff, but its patch context
+  depends on an older `purchase.integration.test.ts` structure. Cherry-picking
+  it onto the active branch imported a 55-line Vendor test context and produced
+  three unrelated active-contract failures (15 tests: 12 passed, 3 failed)
+  in Vendor route and Purchase Analysis datasource assertions.
+- The attempted integration was reverted as `03b22d62`; no candidate code is
+  retained. Same-owner repair required: rebase the timestamp/version assertion
+  onto the active Purchase test structure or provide a standalone test file,
+  with no route-contract changes.
+- Candidate evidence remains conditional bounded pass (10 tests / 110
+  assertions, API persistence, timestamp/version, audit/CSS/Vite/diff-check).
+  Preserve TypeScript and authenticated Core3/Odoo browser blockers; no
+  Purchase module sign-off is issued.
