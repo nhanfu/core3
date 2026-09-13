@@ -4,6 +4,7 @@ import { describe, expect, it } from 'bun:test';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { discoverPages } from '@core3/server/discovery';
+import { discoverMigrations, migrateDatabase } from '@core3/server/migrations';
 
 const root = join(import.meta.dir, '../services/accounting');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -70,5 +71,37 @@ describe('Accounting payment terms configuration', () => {
     await repository.executeMutation(remove, { ...context, id: 'immediate', values: { expected_row_version: 3 } });
     expect((await repository.query("SELECT COUNT(*) AS count FROM accounting_config_payment_terms WHERE id = 'immediate'"))[0].count).toBe(0);
     await expect(repository.executeMutation(remove, { ...context, id: 'does-not-exist', values: { expected_row_version: 1 } })).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('uses the filename order for the company-scope migration and replays startup cleanly', async () => {
+    const migrationsRoot = join(root, 'migrations');
+    const migrations = discoverMigrations(migrationsRoot);
+    const paymentTermsMigration = migrations.find((migration) => migration.file === '20260913194000-010-payment-terms-company-scope.yaml');
+
+    expect(paymentTermsMigration?.version).toBe('0.0.10');
+    expect(paymentTermsMigration?.legacyOrder).toBe(10);
+    expect(migrations.map((migration) => migration.version)).toEqual([
+      '0.0.1', '0.0.2', '0.0.3', '0.0.4', '0.0.5',
+      '0.0.6', '0.0.7', '0.0.8', '0.0.9', '0.0.10',
+    ]);
+
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, migrationsRoot, undefined, 'accounting_config_test_schema_migrations');
+    await migrateDatabase(repository, migrationsRoot, undefined, 'accounting_config_test_schema_migrations');
+
+    expect((await repository.query(
+      'SELECT version FROM accounting_config_test_schema_migrations',
+    )).map((row) => row.version).sort((left, right) => {
+      const [leftMajor, leftMinor, leftPatch] = String(left).split('.').map(Number);
+      const [rightMajor, rightMinor, rightPatch] = String(right).split('.').map(Number);
+      return leftMajor - rightMajor || leftMinor - rightMinor || leftPatch - rightPatch;
+    })).toEqual([
+      '0.0.1', '0.0.2', '0.0.3', '0.0.4', '0.0.5',
+      '0.0.6', '0.0.7', '0.0.8', '0.0.9', '0.0.10',
+    ]);
+    expect((await repository.query(
+      "SELECT company_name FROM accounting_config_payment_terms WHERE id = 'vn-net15'",
+    ))[0].company_name).toBe('Core3 Vietnam Branch');
   });
 });
