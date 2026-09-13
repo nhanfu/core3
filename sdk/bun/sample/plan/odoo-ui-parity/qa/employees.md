@@ -456,3 +456,22 @@ open; Employees is not signed off.
   Odoo comparison remain blockers; no browser/Odoo sign-off is added.
 - Disposition: **bounded conditional reconciliation, already integrated**;
   Employees remains unsigned-off.
+
+## Final company/Odoo runtime reconciliation (2026-09-13)
+
+- Runtime/browser evidence passes against the integrated Employees implementation:
+  backend and frontend returned HTTP 200, mediator was listening, and the
+  authenticated Demo admin switched Demo → `company-vietnam` with HTTP 200 and
+  exactly two Vietnam-only rows, then switched back to exactly three Demo rows
+  (`Fired`, `Resigned`, `Retired`). Core3 desktop and mobile checks passed.
+- Odoo Employees loaded at both desktop and mobile viewports. The Odoo
+  Departure Reasons list/detail/action was not reached, so that paired scope
+  remains unverified.
+- No distinct `/api/query` request was observed in the runtime trace. Rendered
+  page datasource data verified the company boundary, but direct `/api/query`
+  browser evidence remains open; contract coverage still exists in the focused
+  tests.
+- Disposition: **bounded runtime PASS with explicit evidence gaps**. No
+  implementation change or unsupported sign-off is made; Employees remains
+  conditional pending direct `/api/query` observation and Odoo Departure
+  Reasons comparison.

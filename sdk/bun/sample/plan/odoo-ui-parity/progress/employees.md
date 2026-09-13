@@ -94,6 +94,15 @@ the bearer token and rows remain scoped to the old company; Odoo `admin/admin`
 returns HTTP 400. Employees remains conditional pending token refresh and
 authenticated Odoo comparison.
 
+## Final company/Odoo runtime reconciliation (2026-09-13)
+
+Core3 backend/frontend returned 200 with mediator listening. Authenticated Demo
+admin switching produced exactly two Vietnam-only rows, then exactly three Demo
+rows (`Fired`, `Resigned`, `Retired`); desktop/mobile Core3 checks passed. Odoo
+Employees loaded desktop/mobile. A distinct `/api/query` request was not
+observed, and Odoo Departure Reasons list/detail/action was not reached, so
+those evidence gaps remain open. Employees status remains conditional.
+
 ## Reviewer reconciliation: deterministic company fixtures `0a04f9ac` (2026-09-13)
 
 `0a04f9ac` is active at `HEAD`; no duplicate merge was needed. Migration
