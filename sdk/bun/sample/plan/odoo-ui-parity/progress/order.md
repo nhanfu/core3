@@ -20,6 +20,16 @@ no merge was performed. Focused evidence is **3/15**, audit **659/669/1,137**,
 and diff-check passes. Build/lint confirmation plus authenticated browser,
 restricted actor, restart, and paired Odoo gates remain open.
 
+## Reviewer reconciliation `59af3991` (2026-09-13)
+
+Integrated quotation-template-to-order conversion as `7992f95e`. The
+self-contained three-file slice passed post-merge focused verification **3/15**,
+audit **661/670/1,157**, frontend build, and diff-check; QA reports full Sales
+**25/213**, targeted ESLint, authenticated desktop/mobile, branch/permission,
+rollback, persistence, and file-backed replay evidence. Live app-server restart
+under duckdb-memory and fresh paired authenticated Odoo comparison remain open;
+no full Order sign-off.
+
 | Date | Slice | Commit | Tests/audits | Browser captures | Blocker or next action |
 | --- | --- | --- | --- | --- | --- |
 | 2026-09-12 | Orders to Upsell functional timeout repair | `ef85c2a7` | `bun test test/sales_orders_to_upsell.integration.test.ts` passes after increasing the migration-backed test timeout to 30s | No authenticated browser evidence: persistent `js_repl` is unavailable in this session | QA must repeat authenticated desktop/mobile route checks |

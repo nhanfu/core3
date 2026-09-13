@@ -99,6 +99,25 @@ discovery of datasource contracts outside Order ownership.
 - Order remains **conditional / unsigned-off**. Pre-existing TypeScript
   diagnostics, unavailable Core3/browser/Playwright evidence, authenticated
   desktop/mobile persistence checks, and paired Odoo comparison remain open.
+
+## Reviewer reconciliation `59af3991`: conditional bounded PASS (2026-09-13)
+
+- Ownership was valid in `agent/order-wave-dev1` at
+  `/home/nhanjs/projects/core3-worktrees/order-wave-dev1`; the candidate was a
+  self-contained three-file quotation-template-to-order slice. It cherry-picked
+  cleanly as `7992f95e` with no unrelated files.
+- Post-merge focused conversion verification passed **3 tests / 15 assertions**;
+  audit passed **661 pages / 670 routes / 1,157 datasources**; frontend build
+  and diff-check passed. QA additionally reports targeted ESLint, full Sales
+  **25 tests / 213 assertions**, and file-backed replay passing.
+- Accepted QA evidence covers deterministic Draft creation (total **1,750**
+  plus activity), duplicate/stale/invalid guards, atomic rollback/no partial
+  order, branch/permission scope, authenticated desktop/mobile rendering,
+  reload persistence, and file-backed migration replay.
+- Disposition: **conditional bounded PASS; integrated**. Live app-server
+  restart remains limited by the duckdb-memory runner, and fresh paired
+  authenticated Odoo comparison remains unavailable. Order remains unsigned
+  off for broader parity gates.
 ## 2026-09-13 coordinator dispatch — bounded template workflow wave
 
 - Existing owner `agent/order-wave-dev1` is assigned on
