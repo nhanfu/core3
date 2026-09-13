@@ -10,7 +10,7 @@ datasources:
     permission: employees.read
     pivot:
       fields: [state, department_name, job_title, employment_type, hire_date, activity_count]
-    query: "SELECT e.id, e.row_version, e.employee_number, e.name, e.image_url, e.work_email, e.work_phone, e.department_name, e.job_title, e.manager_name, e.employment_type, e.state, e.active, CAST(e.hire_date AS VARCHAR) AS hire_date, COALESCE(a.activity_type, 'todo') AS activity_type, a.activity_summary, CAST(a.activity_date AS VARCHAR) AS activity_date, a.activity_user, COALESCE(a.activity_state, 'planned') AS activity_state, COALESCE(a.activity_count, 0) AS activity_count FROM employees e LEFT JOIN employee_activities a ON a.employee_id = e.id AND a.is_primary = true WHERE ((:active IS NULL AND COALESCE(e.active, true) = true) OR (:active IS NOT NULL AND e.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) AND (:department_name IS NULL OR e.department_name = :department_name) ORDER BY e.name, e.id"
+    query: "SELECT e.id, e.row_version, e.employee_number, e.name, e.image_url, e.work_email, e.work_phone, e.department_name, e.job_title, e.manager_name, e.employment_type, e.state, e.active, e.company_name, CAST(e.hire_date AS VARCHAR) AS hire_date, COALESCE(a.activity_type, 'todo') AS activity_type, a.activity_summary, CAST(a.activity_date AS VARCHAR) AS activity_date, a.activity_user, COALESCE(a.activity_state, 'planned') AS activity_state, COALESCE(a.activity_count, 0) AS activity_count FROM employees e LEFT JOIN employee_activities a ON a.employee_id = e.id AND a.is_primary = true WHERE ((:active IS NULL AND COALESCE(e.active, true) = true) OR (:active IS NOT NULL AND e.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) AND (:department_name IS NULL OR e.department_name = :department_name) AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name) ORDER BY e.name, e.id"
 actions:
   - id: view_employee
     type: navigate
@@ -28,7 +28,7 @@ actions:
     mutation:
       operation: insert
       table: employees
-      fields: [employee_number, name, work_email, work_phone, department_name, job_title, employment_type, hire_date]
+      fields: [employee_number, name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date]
       required: [employee_number, name, hire_date]
       defaults: { active: true, state: Draft }
       generated: [id]
@@ -36,12 +36,14 @@ actions:
       guards:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:employee_number AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND :hire_date IS NOT NULL", status: 422, code: EMPLOYEES_RECORD_VALUES_INVALID, message: Employee number, name, and start date are required. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employees WHERE LOWER(employee_number) = LOWER(TRIM(CAST(:employee_number AS VARCHAR))))", status: 409, code: EMPLOYEES_RECORD_NUMBER_EXISTS, message: An employee with this number already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: EMPLOYEES_COMPANY_SCOPE_REQUIRED, message: Employee must belong to the current company. }
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: employee_number, label: Employee number, type: text, required: true }
       - { field: name, label: Name, type: text, required: true }
       - { field: work_email, label: Work Email, type: text }
       - { field: work_phone, label: Work Phone, type: text }
+      - { field: company_name, label: Company, type: text }
       - { field: department_name, label: Department, type: text }
       - { field: job_title, label: Job Position, type: text }
       - { field: employment_type, label: Employment Type, type: select, options: [{ value: Employee, label: Employee }, { value: Contractor, label: Contractor }, { value: Intern, label: Intern }] }
@@ -54,7 +56,7 @@ actions:
     operation: update
     refresh: [employees]
     params: { values: { active: false } }
-    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = true", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Active employee not found. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Active employee not found in the current company. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }
   - id: restore_employee
     type: server
     permission: employees.write
@@ -63,4 +65,4 @@ actions:
     operation: update
     refresh: [employees]
     params: { values: { active: true } }
-    mutation: { operation: update, table: employees, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = false", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Archived employee not found. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = false AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Archived employee not found in the current company. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }

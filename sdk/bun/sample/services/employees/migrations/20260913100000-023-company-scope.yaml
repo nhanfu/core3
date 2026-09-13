@@ -1,0 +1,13 @@
+version: 0.0.23
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO employees (id, auth_user_id, employee_number, name, work_email, company_name, department_id, department_name, job_title, employment_type, hire_date, state, active)
+      VALUES ('employee-demo-005', 'user-other-company', 'EMP-0005', 'Other Company Employee', 'other@other-company.local', 'Other Company', 'department-engineering', 'Engineering', 'Operations Specialist', 'Employee', DATE '2025-08-20', 'Terminated', false);
+    down: |
+      DELETE FROM employees WHERE id = 'employee-demo-005';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

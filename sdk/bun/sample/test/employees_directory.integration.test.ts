@@ -36,9 +36,7 @@ describe('Employees Directory parity', () => {
     expect((await repository.querySource(source, { ...defaults, q: 'anh' }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Nguyen Minh Anh']);
     expect((await repository.querySource(source, { ...defaults, newly_hired: 'true' }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Tran Bao Long']);
     expect((await repository.querySource(source, { ...defaults, active: 'archived' }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Le Thu Ha']);
-    // The directory fixtures contain no archived employee for another company;
-    // the actor scope must therefore not manufacture or leak one.
-    expect((await repository.querySource(source, { ...defaults, active: 'archived', current_company_name: 'Other Company' }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(source, { ...defaults, active: 'archived', current_company_name: 'Other Company' }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Other Company Employee']);
     expect((await repository.querySource(source, { ...defaults, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     await expect(repository.querySource(source, { ...defaults, fixture_state: 'transport_error' }, 0, 50)).rejects.toMatchObject({ status: 503, code: 'EMPLOYEES_DIRECTORY_UNAVAILABLE' });
     const detail = yaml('api/directory-detail.yaml').datasources[0];
