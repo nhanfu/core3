@@ -23,7 +23,9 @@ actions:
       table: accounting_config_payment_terms
       generated: [id]
       before_steps: [{ query: "SELECT 'accounting-payment-term-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
-      fields: [name, company, description, early_discount, state]
+      # Lifecycle state is controlled by archive/restore; new terms always
+      # start Active through the mutation default.
+      fields: [name, company, description, early_discount]
       boolean_fields: [early_discount]
       required: [name, company, description]
       defaults: { company: 'My Company (San Francisco)', description: Due on receipt, early_discount: false, state: Active, sequence: 1000 }
@@ -38,4 +40,3 @@ actions:
       - { field: company, label: Company, type: text, required: true, default: 'My Company (San Francisco)' }
       - { field: description, label: Due Rule, type: text, required: true, default: Due on receipt }
       - { field: early_discount, label: Early Discount, type: checkbox }
-      - { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }

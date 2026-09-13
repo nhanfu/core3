@@ -5,6 +5,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { evalExpr } from '@core3/client/expr';
 
 const serviceRoot = join(import.meta.dir, '../services/accounting');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
@@ -69,8 +70,18 @@ describe('Accounting Payment Terms Odoo configuration parity', () => {
     }
     const create = action('create_accounting_payment_term');
     expect(create.mutation.boolean_fields).toEqual(['early_discount']);
+    expect(create.mutation.fields).toEqual(['name', 'company', 'description', 'early_discount']);
+    expect(create.fields.some((field: any) => field.field === 'state')).toBe(false);
     const created = await repository.executeMutation(create.mutation, { values: { name: 'Wire Terms', company: 'My Company (San Francisco)', description: '45 days after invoice date', early_discount: false } });
     expect(created).toMatchObject({ name: 'Wire Terms', company: 'My Company (San Francisco)', description: '45 days after invoice date', state: 'Active', row_version: 1 });
+    const listSource = yaml('api/config-payment-terms.yaml').datasources[0];
+    expect((await repository.querySource(listSource, { q: 'Wire Terms', state: 'active', fixture_state: null }, 0, 50)).data).toMatchObject([{ id: created.id, state: 'Active' }]);
+    const detailSource = yaml('api/payment-term-detail.yaml').datasources[0];
+    expect((await repository.querySource(detailSource, { id: created.id, fixture_state: null }, 0, 1)).data).toMatchObject({ id: created.id, state: 'Active' });
+    const detailPage = yaml('pages/payment-term-detail.yaml').components[0];
+    const actionContext = { state: { accounting_payment_term_detail: { ...created, state: 'Active' } } };
+    expect(evalExpr(detailPage.header_actions.find((item: any) => item.id === 'archive_accounting_payment_term').show_if, actionContext)).toBe(true);
+    expect(evalExpr(detailPage.header_actions.find((item: any) => item.id === 'restore_accounting_payment_term').show_if, actionContext)).toBe(false);
     const blankBoolean = await repository.executeMutation(create.mutation, { values: { name: 'Blank Early Discount', company: 'My Company (San Francisco)', description: 'Due on receipt', early_discount: '' } });
     expect(blankBoolean).toMatchObject({ name: 'Blank Early Discount', early_discount: false });
     expect(await repository.query("SELECT early_discount FROM accounting_config_payment_terms WHERE name = 'Blank Early Discount'")).toEqual([{ early_discount: false }]);
@@ -87,6 +98,10 @@ describe('Accounting Payment Terms Odoo configuration parity', () => {
     const edited = await repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Wire Terms Updated', company: 'My Company (San Francisco)', description: '60 days after invoice date', early_discount: true, state: 'Active' } });
     expect(edited).toMatchObject({ id: created.id, name: 'Wire Terms Updated', early_discount: true, row_version: 2 });
     expect(edited.state).toBe('Active');
+    expect((await repository.querySource(detailSource, { id: created.id, fixture_state: null }, 0, 1)).data).toMatchObject({ id: created.id, state: 'Active' });
+    const editedContext = { state: { accounting_payment_term_detail: { ...edited, state: 'Active' } } };
+    expect(evalExpr(detailPage.header_actions.find((item: any) => item.id === 'archive_accounting_payment_term').show_if, editedContext)).toBe(true);
+    expect(evalExpr(detailPage.header_actions.find((item: any) => item.id === 'restore_accounting_payment_term').show_if, editedContext)).toBe(false);
     await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Stale', company: 'My Company (San Francisco)', description: 'Due on receipt' } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
     await expect(repository.executeMutation(edit.mutation, { id: 'missing-payment-term', expected_row_version: 1, values: { name: 'Missing', company: 'My Company (San Francisco)', description: 'Due on receipt' } })).rejects.toMatchObject({ status: 404, code: 'ACCOUNTING_PAYMENT_TERM_NOT_FOUND' });
 
