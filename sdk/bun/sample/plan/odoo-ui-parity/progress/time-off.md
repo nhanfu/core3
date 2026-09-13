@@ -7,6 +7,14 @@ Candidate commit: `6300ab0a`
 
 ## Bounded draft deletion slice
 
+## QA-pending candidate `047cbd03` (2026-09-13)
+
+Allocation-balance persistence candidate is queued in existing
+`agent/time-off-draft-delete-20260913`; no merge was performed. Focused evidence
+is **2/19**, audit **647/662/1,112**. Build/lint/diff-check confirmation,
+browser actor/restart, paired Odoo, typecheck, Temporal, and broader workflow
+gates remain open.
+
 Only unchanged Draft requests can be deleted from the list/detail contracts;
 missing, non-Draft, stale, and repeated deletes return deterministic guards.
 The candidate verifies explicit actor-role declarations and file-backed

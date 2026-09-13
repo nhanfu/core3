@@ -13,6 +13,13 @@
 
 ## Bounded-slice history
 
+## QA-pending candidate `59af3991` (2026-09-13)
+
+Quotation-template conversion is queued in existing `agent/order-wave-dev1`;
+no merge was performed. Focused evidence is **3/15**, audit **659/669/1,137**,
+and diff-check passes. Build/lint confirmation plus authenticated browser,
+restricted actor, restart, and paired Odoo gates remain open.
+
 | Date | Slice | Commit | Tests/audits | Browser captures | Blocker or next action |
 | --- | --- | --- | --- | --- | --- |
 | 2026-09-12 | Orders to Upsell functional timeout repair | `ef85c2a7` | `bun test test/sales_orders_to_upsell.integration.test.ts` passes after increasing the migration-backed test timeout to 30s | No authenticated browser evidence: persistent `js_repl` is unavailable in this session | QA must repeat authenticated desktop/mobile route checks |

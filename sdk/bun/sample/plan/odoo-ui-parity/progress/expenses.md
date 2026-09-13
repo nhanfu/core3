@@ -8,6 +8,14 @@ Candidate commit: `7dee93a857fe55a4d773336c2ee41098aea8ae8a`
 
 ## Current state
 
+## QA-pending candidate `99fe4073` (2026-09-13)
+
+Receipt processing candidate is queued in existing
+`agent/odoo-expenses-dev-next-20260913`; no merge was performed. Focused
+receipt/migration evidence is **6/23**, audit **659/668/1,137**. Build/lint/
+diff-check confirmation and authenticated actor/browser, restart,
+Temporal/provider, and Odoo gates remain open.
+
 The module has a current functional/browser QA candidate. No complete parity
 claim is made because paired Odoo visual adjudication and broader attachment,
 wizard, and CRUD interaction coverage remain open.

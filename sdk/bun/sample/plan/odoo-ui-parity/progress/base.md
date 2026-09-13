@@ -9,6 +9,13 @@ Candidate commit: `8fdf7be3`
 
 ## Evidence
 
+## QA-pending candidate `a1644b7c` (2026-09-13)
+
+Existing Base owner candidate is queued for the existing QA owner; no merge was
+performed. Coordinator focused evidence is **6/68**, audit **647/662/1,114**;
+candidate build/lint/diff-check confirmation, browser attachment upload/download,
+restart, actor, and paired Odoo gates remain open.
+
 - `bun test ./test/base_*.integration.test.ts` — 29 tests / 295 assertions pass.
 - `bun run audit` — pass: 647 pages, 662 routes, 1112 datasources.
 - `bun run frontend:build` — pass.

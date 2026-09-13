@@ -77,6 +77,17 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
 - Tester decision: conditional; fresh browser interaction, authenticated actor matrix, paired Odoo comparison, and clean repository lint remain open
 ## 2026-09-13 coordinator dispatch — bounded receipt wave
 
+## QA-pending receipt-processing candidate `99fe4073` (2026-09-13)
+
+- Existing owner/worktree: `agent/odoo-expenses-dev-next-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/odoo-expenses-dev-next-20260913`;
+  candidate is not merged and awaits existing Expenses QA.
+- Coordinator evidence: receipt-processing plus migration tests **6 tests / 23
+  assertions** and audit **659 pages / 668 routes / 1,137 datasources** pass.
+  Candidate build and targeted lint/diff-check confirmation remain with QA.
+- Authenticated actor/browser, restart, Temporal/provider, paired Odoo, and
+  repository lint gates remain open.
+
 - Existing owner `agent/odoo-expenses-dev-next-20260913` is assigned on
   `/home/nhanjs/projects/core3-worktrees/odoo-expenses-dev-next-20260913`,
   based at `887fa7fb`. Development event:

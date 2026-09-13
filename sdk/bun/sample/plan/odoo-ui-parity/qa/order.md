@@ -112,6 +112,16 @@ discovery of datasource contracts outside Order ownership.
 
 ## 2026-09-13 R2 coordinator dispatch
 
+## QA-pending quotation-template candidate `59af3991` (2026-09-13)
+
+- Existing owner/worktree: `agent/order-wave-dev1` at
+  `/home/nhanjs/projects/core3-worktrees/order-wave-dev1`; candidate is not
+  merged and awaits existing Order QA.
+- Coordinator evidence: focused suite **3 tests / 15 assertions** and audit
+  **659 pages / 669 routes / 1,137 datasources** pass; diff-check passes.
+  Candidate build and targeted lint confirmation remain with QA.
+- Browser, restricted actor, restart, and paired Odoo gates remain open.
+
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-ORDER-CROSS-MODULE-WAVE-20260913-R2` → `QA-ORDER-CROSS-MODULE-WAVE-20260913-R2` | existing `agent/order-qa-003-cross-module-20260913` in `/home/nhanjs/projects/core3-worktrees/order-qa-003-cross-module-20260913` | CRM/Base customer reference resolution, company/permission/stale/missing guards, downstream rollback, and focused atomicity tests | dispatched in `b50cd200`; awaiting self-contained product commit before QA |

@@ -162,6 +162,17 @@ and permission boundaries passed. The candidate remains `pending-qa`.
 
 ## 2026-09-13 R2 coordinator dispatch
 
+## QA-pending candidate `a1644b7c` (2026-09-13)
+
+- Existing owner/worktree: `agent/odoo-owner-base-wave1` at
+  `/home/nhanjs/projects/core3-worktrees/odoo-owner-base-wave1`; candidate is
+  not merged and awaits the existing Base QA owner.
+- Coordinator evidence: Base Contacts suite **6 tests / 68 assertions** and
+  audit **647 pages / 662 routes / 1,114 datasources** pass. Candidate
+  build/lint/diff-check confirmation remains with QA.
+- Browser attachment upload/download, restart, actor, and paired Odoo gates
+  remain open.
+
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-BASE-HIERARCHY-WAVE-20260913-R2` → `QA-BASE-HIERARCHY-WAVE-20260913-R2` | existing `agent/base-contact-attachments-qa` in `/home/nhanjs/projects/core3-worktrees/base-contact-attachments-qa` | Contact company hierarchy persistence, company/role boundaries, cycle/duplicate/invalid/missing/stale guards, and focused atomicity tests | dispatched in `42d189da`; awaiting self-contained product commit before QA |

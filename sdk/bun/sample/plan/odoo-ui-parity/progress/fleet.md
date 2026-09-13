@@ -8,6 +8,13 @@ Candidate commit: working tree after vehicle create contract slice
 
 ## Current state
 
+## QA-pending candidate `1e55ca16` (2026-09-13)
+
+Service company-scope candidate is queued for the existing Fleet QA owner; no
+merge was performed. Focused **3/64**, full **69/718**, audit **659/669/1,134**,
+ESLint/Sass/frontend builds, and diff-check pass. Browser CRUD, restart,
+paired Odoo, and broader Fleet scope remain open.
+
 The module has a current functional/browser QA candidate. No complete parity
 claim is made because fresh paired Odoo adjudication and remaining interaction
 coverage are still open.

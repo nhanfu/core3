@@ -137,6 +137,16 @@ and reports, and process-restart/runtime gates. Fleet is not fully signed off.
 
 ## R2 candidate ready for QA: service company boundaries `1e55ca16` (2026-09-13)
 
+## QA-pending candidate confirmation `1e55ca16` (2026-09-13)
+
+- Existing owner/worktree remains `agent/fleet-next-wave` at
+  `/home/nhanjs/projects/core3-worktrees/fleet-next-wave`; candidate is not
+  merged and awaits existing Fleet QA.
+- Focused **3/64**, full Fleet **69/718**, audit **659/669/1,134**;
+  ESLint/Sass/frontend builds and diff-check pass.
+- Browser CRUD, restart durability, paired Odoo, and broader Fleet scope remain
+  open.
+
 - Existing owner/worktree: `agent/fleet-next-wave` at
   `/home/nhanjs/projects/core3-worktrees/fleet-next-wave`. The self-contained
   three-file product commit scopes service lists/details/selectors/mutations by

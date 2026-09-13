@@ -51,6 +51,17 @@ module sign-off or aggregate progress claim.
   desktop/mobile evidence, and paired Odoo comparison remain open.
 ## 2026-09-13 coordinator dispatch — bounded balance persistence wave
 
+## QA-pending allocation-balance candidate `047cbd03` (2026-09-13)
+
+- Existing owner/worktree: `agent/time-off-draft-delete-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/time-off-draft-delete-20260913`;
+  candidate is not merged and awaits existing Time Off QA.
+- Coordinator evidence: allocation/balance suite **2 tests / 19 assertions**
+  and audit **647 pages / 662 routes / 1,112 datasources** pass. Candidate
+  build, targeted lint, and diff-check confirmation remain with QA.
+- Browser actor/restart, paired Odoo, typecheck/lint, Temporal, and broader
+  workflow/CRUD gates remain open.
+
 - Existing owner `agent/time-off-draft-delete-20260913` is assigned on
   `/home/nhanjs/projects/core3-worktrees/time-off-draft-delete-20260913`, based
   at `691bb590`. Development event: `DEV-TIME-OFF-WAVE-20260913-R2`; QA event:
