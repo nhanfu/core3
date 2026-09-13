@@ -160,3 +160,14 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
 - The product candidate was not integrated because its API/page/test files
   conflict with the active Work Orders Analysis implementation. No
   Manufacturing sign-off is implied.
+## 2026-09-13 coordinator dispatch — bounded scrap/unbuild wave
+
+- Existing owner `agent/odoo-ui-manufacturing-next-wave` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-next-wave`,
+  based at `72919440`. Development event:
+  `DEV-MANUFACTURING-WAVE-20260913-R2`; QA event:
+  `QA-MANUFACTURING-WAVE-20260913-R2`; handoff commit: `db8b6f4a`.
+- Scope is a bounded scrap/unbuild mutation slice preserving MO/move
+  relations, quantity/state validation, company/permission scope, stale
+  guards, and atomic no-partial-write tests. Candidate pending; existing
+  ledgers and aggregate progress are preserved.
