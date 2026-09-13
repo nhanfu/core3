@@ -124,3 +124,9 @@ Candidate commit: pending commit for refusal workflow repair
 
 - No product diff exists after the checkpoint; owner was re-prompted. QA event
   remains untriggered pending implementation and focused tests.
+
+## 2026-09-13 R2 coordinator dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-RECRUITMENT-WAVE-20260913-R2` → `QA-RECRUITMENT-WAVE-20260913-R2` | existing `agent/odoo-recruitment-reopen-20260913` in `/home/nhanjs/projects/core3-worktrees/odoo-recruitment-reopen-20260913` | Applicant close/reopen persistence, required reasons, permissions, stale/duplicate guards, and focused no-partial-write tests | dispatched in `bba9ff02`; awaiting self-contained product commit before QA |
