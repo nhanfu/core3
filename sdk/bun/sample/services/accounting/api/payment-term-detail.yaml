@@ -18,7 +18,10 @@ actions:
     mutation:
       operation: update
       table: accounting_config_payment_terms
-      fields: [name, company, description, early_discount, state]
+      # Lifecycle state is controlled by the dedicated archive/restore actions;
+      # keeping it out of the edit payload prevents an empty select from
+      # erasing state and hiding both conditional lifecycle actions.
+      fields: [name, company, description, early_discount]
       boolean_fields: [early_discount]
       required: [name, company, description]
       concurrency: { required: true }
@@ -34,7 +37,6 @@ actions:
       - { field: company, label: Company, type: text, required: true }
       - { field: description, label: Due Rule, type: text, required: true }
       - { field: early_discount, label: Early Discount, type: checkbox }
-      - { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }
   - id: archive_accounting_payment_term
     type: server
     permission: accounting.write

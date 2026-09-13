@@ -82,8 +82,11 @@ describe('Accounting Payment Terms Odoo configuration parity', () => {
 
     const edit = action('edit_accounting_payment_term');
     expect(edit.mutation.concurrency.required).toBe(true);
+    expect(edit.mutation.fields).toEqual(['name', 'company', 'description', 'early_discount']);
+    expect(edit.fields.some((field: any) => field.field === 'state')).toBe(false);
     const edited = await repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Wire Terms Updated', company: 'My Company (San Francisco)', description: '60 days after invoice date', early_discount: true, state: 'Active' } });
     expect(edited).toMatchObject({ id: created.id, name: 'Wire Terms Updated', early_discount: true, row_version: 2 });
+    expect(edited.state).toBe('Active');
     await expect(repository.executeMutation(edit.mutation, { id: created.id, expected_row_version: 1, values: { name: 'Stale', company: 'My Company (San Francisco)', description: 'Due on receipt' } })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
     await expect(repository.executeMutation(edit.mutation, { id: 'missing-payment-term', expected_row_version: 1, values: { name: 'Missing', company: 'My Company (San Francisco)', description: 'Due on receipt' } })).rejects.toMatchObject({ status: 404, code: 'ACCOUNTING_PAYMENT_TERM_NOT_FOUND' });
 
