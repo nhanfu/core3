@@ -6,13 +6,31 @@ import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 
 const root = join(import.meta.dir, '../services/order');
+const accountingRoot = join(import.meta.dir, '../services/accounting');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
+const accountingYaml = (file: string) => Bun.YAML.parse(readFileSync(join(accountingRoot, file), 'utf8')) as any;
 
-async function repositoryForTest() {
+async function repositoryForTest(accountingCall?: (operation: string, request: Record<string, unknown>) => Promise<any>) {
   const database = await DuckDbDatabase.open(':memory:');
-  const repository = new YamlRepository(database);
+  const accountingDatabase = await DuckDbDatabase.open(':memory:');
+  const accountingRepository = new YamlRepository(accountingDatabase);
+  await accountingRepository.run(`CREATE TABLE accounting_invoices (
+    id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL,
+    partner_name VARCHAR, invoice_type VARCHAR NOT NULL DEFAULT 'Customer Invoice',
+    invoice_date DATE, due_date DATE, amount_untaxed DECIMAL(18,2) NOT NULL DEFAULT 0,
+    amount_tax DECIMAL(18,2) NOT NULL DEFAULT 0, amount_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+    amount_residual DECIMAL(18,2) NOT NULL DEFAULT 0, state VARCHAR NOT NULL DEFAULT 'Draft',
+    reference VARCHAR, source_service VARCHAR, source_type VARCHAR, source_id VARCHAR,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`);
+  const sourceAction = accountingYaml('pages/invoices.yaml').actions.find((candidate: any) => candidate.id === 'create_accounting_invoice_from_source');
+  const repository = new YamlRepository(database, (name: string) => name === 'yaml.service.accounting'
+    ? { call: accountingCall || ((operation: string, request: Record<string, unknown>) => operation === 'accounting.invoices.create_from_source'
+      ? accountingRepository.executeMutation(sourceAction.mutation, request)
+      : undefined) }
+    : undefined);
   await migrateDatabase(repository, join(root, 'migrations'), undefined, 'sales_orders_to_invoice_test', ['schema', 'data']);
-  return { database, repository };
+  return { database, repository, accountingDatabase, accountingRepository };
 }
 
 describe('Sales orders to invoice parity slice', () => {
@@ -35,7 +53,7 @@ describe('Sales orders to invoice parity slice', () => {
   });
 
   test('creates draft invoices atomically and blocks duplicate creation', async () => {
-    const { database, repository } = await repositoryForTest();
+    const { database, repository, accountingDatabase, accountingRepository } = await repositoryForTest();
     const api = yaml('api/sale-to-invoice.yaml');
     const source = api.datasources.find((candidate: any) => candidate.id === 'sale_orders_to_invoice');
     const action = api.actions.find((candidate: any) => candidate.id === 'create_invoices_from_selected_orders');
@@ -59,6 +77,12 @@ describe('Sales orders to invoice parity slice', () => {
       expect.objectContaining({ order_id: 'order-demo-06', invoice_number: 'INV/DH-2026-0106', state: 'Draft', amount: 9200000 }),
       expect.objectContaining({ order_id: 'order-demo-07', invoice_number: 'INV/DH-2026-0107', state: 'Draft', amount: 11800000 }),
     ]);
+    const linked = await repository.query('SELECT order_id, accounting_invoice_id FROM sale_invoices WHERE order_id IN (?, ?) ORDER BY order_id', selectedIds);
+    expect(linked.every((row: any) => row.accounting_invoice_id)).toBe(true);
+    expect(await accountingRepository.query("SELECT source_service, source_type, source_id FROM accounting_invoices WHERE source_service = 'order' ORDER BY source_id")).toEqual([
+      { source_service: 'order', source_type: 'sale_order', source_id: 'order-demo-06' },
+      { source_service: 'order', source_type: 'sale_order', source_id: 'order-demo-07' },
+    ]);
     expect((await repository.querySource(source, { ...params, q: 'DH-2026-0106' }, 0, 50)).data).toEqual([
       expect.objectContaining({ id: 'order-demo-06', invoice_status: 'To invoice' }),
     ]);
@@ -69,10 +93,11 @@ describe('Sales orders to invoice parity slice', () => {
 
     await expect(repository.executeMutation(action.mutation, { ...params, selectedIds: [] })).rejects.toMatchObject({ status: 400, code: 'SALES_INVOICE_SELECTION_REQUIRED' });
     await database.close();
+    await accountingDatabase.close();
   }, 30000);
 
   test('rejects mixed branch or already invoiced selections without partial writes', async () => {
-    const { database, repository } = await repositoryForTest();
+    const { database, repository, accountingDatabase } = await repositoryForTest();
     const action = yaml('api/sale-to-invoice.yaml').actions.find((candidate: any) => candidate.id === 'create_invoices_from_selected_orders');
     const params = { view_scope: 'branch', current_branch_id: 'branch-hcm', selectedIds: ['order-demo-06', 'order-demo-02'] };
 
@@ -82,5 +107,22 @@ describe('Sales orders to invoice parity slice', () => {
     await expect(repository.executeMutation(action.mutation, { view_scope: 'all', current_branch_id: 'branch-hcm', selectedIds: ['order-demo-03'] })).rejects.toMatchObject({ status: 409, code: 'SALES_INVOICE_SELECTION_INVALID' });
     expect(await repository.query("SELECT COUNT(*) AS count FROM sale_invoices WHERE order_id = 'order-demo-03'")).toEqual([{ count: 1 }]);
     await database.close();
+    await accountingDatabase.close();
+  }, 30000);
+
+  test('rolls back local links when Accounting rejects and retains stale protection', async () => {
+    const { database, repository, accountingDatabase } = await repositoryForTest(async () => {
+      throw { status: 503, code: 'ACCOUNTING_UNAVAILABLE', message: 'Accounting unavailable' };
+    });
+    const action = yaml('api/sale-to-invoice.yaml').actions.find((candidate: any) => candidate.id === 'create_invoices_from_selected_orders');
+    const params = { view_scope: 'all', current_branch_id: 'branch-hcm', selectedIds: ['order-demo-06'] };
+
+    await expect(repository.executeMutation(action.mutation, params)).rejects.toMatchObject({ status: 503, code: 'ACCOUNTING_UNAVAILABLE' });
+    expect(await repository.query("SELECT COUNT(*) AS count FROM sale_invoices WHERE order_id = 'order-demo-06'")).toEqual([{ count: 0 }]);
+    expect(action.permission).toBe('orders.write');
+    expect(action.mutation.guards[1]).toMatchObject({ status: 409, code: 'SALES_INVOICE_SELECTION_INVALID' });
+
+    await database.close();
+    await accountingDatabase.close();
   }, 30000);
 });

@@ -40,9 +40,31 @@ actions:
           code: SALES_INVOICE_SELECTION_INVALID
           message: Only approved, uninvoiced orders in the current branch scope can be invoiced.
       steps:
-        - query: "INSERT INTO sale_invoices(id, order_id, invoice_number, state, amount, invoice_date) SELECT gen_random_uuid(), o.id, 'INV/' || o.order_number, 'Draft', CAST(o.total_amount AS DECIMAL(18,2)), CURRENT_DATE FROM orders o WHERE o.id IN :selectedIds AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Approved' AND NOT EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id OR i.invoice_number = 'INV/' || o.order_number) AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)"
-          expect_changed: true
-          status: 409
-          code: SALES_INVOICE_SELECTION_CHANGED
-          message: The selected orders changed. Reload and try again.
+        - for_each:
+            input: selectedIds
+            as: selected_order_id
+            steps:
+              - query: "SELECT o.customer_name, o.order_number, 'INV/' || o.order_number AS invoice_number, o.total_amount, CURRENT_DATE AS invoice_date FROM orders o WHERE o.id = :selected_order_id"
+                assign: true
+              - type: service
+                service: yaml.service.accounting
+                operation: accounting.invoices.create_from_source
+                request:
+                  name: invoice_number
+                  partner_name: customer_name
+                  invoice_type: Customer Invoice
+                  invoice_date: invoice_date
+                  amount_untaxed: total_amount
+                  amount_total: total_amount
+                  amount_residual: total_amount
+                  reference: order_number
+                  source_service: order
+                  source_type: sale_order
+                  source_id: selected_order_id
+                assign: true
+              - query: "INSERT INTO sale_invoices(id, order_id, invoice_number, accounting_invoice_id, state, amount, invoice_date) SELECT gen_random_uuid(), o.id, 'INV/' || o.order_number, :accounting_invoice_id, 'Draft', CAST(o.total_amount AS DECIMAL(18,2)), CURRENT_DATE FROM orders o WHERE o.id = :selected_order_id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Approved' AND NOT EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id OR i.invoice_number = 'INV/' || o.order_number) AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)"
+                expect_changed: true
+                status: 409
+                code: SALES_INVOICE_SELECTION_CHANGED
+                message: The selected orders changed. Reload and try again.
       result: { query: "SELECT COUNT(*) AS created_count FROM sale_invoices WHERE order_id IN :selectedIds AND state = 'Draft'" }

@@ -62,7 +62,7 @@ discovery of datasource contracts outside Order ownership.
 | --- | --- | --- | --- | --- | --- |
 | ORDER-QA-001 | Customer and salesperson report tests failed when `discoverPages()` validated the full sample; invalid datasource error was recorded as outside Order ownership | `bun run audit` now passes; Sales-focused suite also passes 18/18 | — | Retested in `sdk/bun/sample`; no current discovery defect | fixed |
 | ORDER-QA-002 | Authenticated visual/browser verification could not start because persistent `js_repl` is unavailable in this session | Skill precondition failure; no browser artifact claimed | — | Re-run from browser-capable QA session | open |
-| ORDER-QA-003 | Bulk Orders to Invoice does not invoke the Accounting source-invoice service or set `accounting_invoice_id` | `sale-to-invoice.yaml` bulk mutation has only an Order-local `INSERT INTO sale_invoices`; Accounting source-linkage is absent | `a284eb78` | Requires product integration and a cross-module retest | open |
+| ORDER-QA-003 | Bulk Orders to Invoice does not invoke the Accounting source-invoice service or set `accounting_invoice_id` | `sale-to-invoice.yaml` now iterates selected orders through `yaml.service.accounting` / `accounting.invoices.create_from_source`, then persists the returned ID in `sale_invoices.accounting_invoice_id` | `54f4db20` | `bun test test/sales_orders_to_invoice.integration.test.ts`: 4 tests, 24 assertions; Accounting linkage, failure rollback, permission declaration, duplicate, branch-scope, and stale-selection guards pass | fixed |
 
 ## Sign-off
 

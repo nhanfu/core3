@@ -25,7 +25,20 @@ export type MutationDefinition = {
   generated?: string[];
 };
 
-export type MutationStep = { query: string; assign?: boolean; expect_changed?: boolean; status?: number; message?: string; code?: string; message_key?: string } | string;
+export type MutationStep = {
+  query?: string;
+  type?: 'query' | 'service';
+  service?: string;
+  operation?: string;
+  request?: Record<string, unknown>;
+  assign?: boolean;
+  for_each?: { input: string; as?: string; steps: MutationStep[] };
+  expect_changed?: boolean;
+  status?: number;
+  message?: string;
+  code?: string;
+  message_key?: string;
+} | string;
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -114,8 +127,22 @@ export class YamlMutationRuntime {
     return service.call(String(guard.operation || ''), request);
   }
 
-  private async executeStep(connection: MutationConnection, step: MutationStep, params: Record<string, any>): Promise<void> {
+  private async executeStep(connection: MutationConnection, step: MutationStep, params: Record<string, any>, item?: unknown): Promise<void> {
     const definition = typeof step === 'string' ? { query: step } : step;
+    if (definition.for_each) {
+      const values = this.resolve(definition.for_each.input, params, item);
+      if (!Array.isArray(values)) throw { status: 500, message: `Mutation iteration input is not an array: ${definition.for_each.input}` };
+      for (const value of values) {
+        const childParams = { ...params, ...(definition.for_each.as ? { [definition.for_each.as]: value } : {}) };
+        for (const childStep of definition.for_each.steps || []) await this.executeStep(connection, childStep, childParams, value);
+      }
+      return;
+    }
+    if (definition.type === 'service') {
+      const response = await this.executeServiceStep(definition, params, item);
+      if (definition.assign && response && typeof response === 'object') Object.assign(params, response);
+      return;
+    }
     const { statement, values } = bindNamedParams(String(definition.query || ''), params);
     if (definition.assign) {
       const [row] = await queryOnConnection(connection, statement, values);
@@ -131,6 +158,29 @@ export class YamlMutationRuntime {
         };
       }
     }
+  }
+
+  private async executeServiceStep(step: any, params: Record<string, any>, item?: unknown): Promise<any> {
+    if (!this.resolveService) throw { status: 500, message: 'Service steps are unavailable in this repository' };
+    const service = this.resolveService(String(step.service || ''));
+    if (!service || typeof service.call !== 'function') throw { status: 500, message: `Service does not support calls: ${step.service}` };
+    return service.call(String(step.operation || ''), this.resolveRequest(step.request || {}, params, item));
+  }
+
+  private resolveRequest(value: unknown, params: Record<string, any>, item?: unknown): any {
+    if (Array.isArray(value)) return value.map((entry) => this.resolveRequest(entry, params, item));
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, nested]) => [key, this.resolveRequest(nested, params, item)]));
+    if (typeof value === 'string') {
+      if (Object.prototype.hasOwnProperty.call(params, value)) return params[value];
+      if (value === '$item') return item;
+    }
+    return value;
+  }
+
+  private resolve(path: string, params: Record<string, any>, item?: unknown): unknown {
+    if (path === '$item') return item;
+    if (path.startsWith('$item.')) return path.slice('$item.'.length).split('.').reduce((current: any, key) => current == null ? undefined : current[key], item);
+    return path.split('.').reduce((current: any, key) => current == null ? undefined : current[key], params);
   }
 
   private async executeRecordMutation(connection: MutationConnection, definition: MutationDefinition, params: Record<string, any>): Promise<void> {
