@@ -100,3 +100,13 @@ Candidate commit: `650be026a2849075ea1e2a3d6fcdedc897f0e1af`
 - Persistence/data integrity: partial pass (event and registration persistence verified; broader CRUD reload coverage remains)
 - Desktop/mobile visual parity: current route smoke pass; paired comparison pending
 - Tester decision: not signed off
+## 2026-09-13 coordinator dispatch — bounded attendee-create wave
+
+- Existing owner `agent/events-next-wave-20260913` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/events-next-wave`, based at `715568b9`.
+  Development event: `DEV-EVENTS-WAVE-20260913-R2`; QA event:
+  `QA-EVENTS-WAVE-20260913-R2`; handoff commit: `b407a867`.
+- Scope is Event attendee creation with event/ticket relation, identity and
+  count persistence, required/capacity/duplicate/scope/stale guards, and
+  atomic no-partial-write focused tests. Candidate pending; existing ledgers
+  and aggregate progress are preserved.
