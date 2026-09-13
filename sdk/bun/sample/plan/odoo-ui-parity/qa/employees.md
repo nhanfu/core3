@@ -474,4 +474,18 @@ open; Employees is not signed off.
 - Disposition: **bounded runtime PASS with explicit evidence gaps**. No
   implementation change or unsupported sign-off is made; Employees remains
   conditional pending direct `/api/query` observation and Odoo Departure
-  Reasons comparison.
+Reasons comparison.
+
+## Reviewer reconciliation: final Odoo/company QA handoff (2026-09-13)
+
+- The linked QA handoff is accepted for the bounded list/company-context
+  surface: Odoo menu `hr.menu_hr_departure_reason_tree` opened `/odoo/action-400`;
+  Odoo and Core3 desktop/mobile lists both showed `Fired`, `Resigned`, and
+  `Retired`. Core3 detail Edit/Archive and Odoo create/inline-edit states were
+  reachable. Existing Demo ↔ Vietnam company-context evidence remains valid.
+- Verdict: **PASS for list and company context; PARTIAL for full parity**.
+  Odoo exposes inline editing from this list action rather than a separate
+  detail/action state, so no unsupported equivalence is claimed.
+- Remaining gaps are explicit: no distinct browser `/api/query` request was
+  observed (rendered datasource data was verified), and Odoo Departure Reasons
+  detail/action state was not reached. No implementation files were changed.

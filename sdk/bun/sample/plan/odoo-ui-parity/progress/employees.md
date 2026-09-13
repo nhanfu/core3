@@ -120,3 +120,12 @@ passes **2/13**, full Employees **58/692**, audit **661/670/1,154**, with lint
 and diff-check passing. Real company-switch token refresh remains blocked
 (HTTP 200 switch but old bearer scope/unchanged rows); Odoo `admin/admin`
 returns HTTP 400. Employees remains conditional.
+
+## Reviewer reconciliation: final Odoo/company QA handoff (2026-09-13)
+
+Authenticated Odoo `hr.menu_hr_departure_reason_tree` → `/odoo/action-400` and
+Core3 desktop/mobile lists both showed Fired, Resigned, and Retired; Core3
+detail Edit/Archive and Odoo create/inline-edit were reachable. Company context
+remains verified. Status is **PASS for list/company context, PARTIAL for full
+parity**: no distinct browser `/api/query` request was observed, and Odoo
+Departure Reasons detail/action state was not reached. No full sign-off.
