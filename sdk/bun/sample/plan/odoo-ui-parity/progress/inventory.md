@@ -170,3 +170,12 @@ Inventory sign-off or aggregate progress claim.
 - Added client transport regression for the browser-shaped Delete payload.
   Full Inventory suite passes 43 tests / 455 assertions; audit 659/668/1136,
   Inventory CSS, scoped ESLint, and diff-check pass.
+
+## QA retest ledger — exact candidate `31441d3f` (2026-09-13)
+
+- Requested worktree path was absent; exact commit `31441d3f1a916a7aa5c0601dd2fe2473f34208fc` was retested at `/home/nhanjs/projects/core3-worktrees/inventory-dev4-20260913`.
+- Full Inventory suite passed 43/43 tests and 455 assertions across 14 files; audit passed 659 pages / 668 routes / 1136 datasources; Inventory CSS, scoped ESLint, and `git diff --check` passed.
+- Healthy module runner: agent PID `3578442`, server PID `3578446`, `*:4314`, `/api/modules` HTTP 200. Authenticated Admin Playwright desktop proved Draft `WH/IN/00003` Delete posted `expected_row_version="1"` and reload persisted deletion (`1-5 / 5`, reference absent). Artifacts remain outside Git at `/tmp/inventory-31441-{draft-before-delete,after-delete}.png`.
+- Live stale and non-Draft deletes returned declared 409 guards; Fleet delete returned 403 `inventory.write` and the write action was hidden. Odoo login endpoint returned HTTP 200; historical authenticated paired receipts captures remain the available reference, with no fresh exact-commit Odoo pair claimed.
+
+QA disposition: evidence complete for this retest; no Inventory sign-off or aggregate progress claim.

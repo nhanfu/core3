@@ -174,3 +174,15 @@ Inventory sign-off or aggregate progress claim.
 
 QA should rerun authenticated Draft Delete with a live gateway target and
 retain listener/process evidence; no browser deletion claim is made here.
+
+## QA retest — exact candidate `31441d3f` (2026-09-13)
+
+- Requested path `/home/nhanjs/projects/core3-worktrees/agent/odoo-ui-inventory-dev4-20260913` was absent. Exact commit `31441d3f1a916a7aa5c0601dd2fe2473f34208fc` was retested at `/home/nhanjs/projects/core3-worktrees/inventory-dev4-20260913`.
+- Full Inventory suite: `bun test ./test/inventory*.integration.test.ts --timeout 20000` — PASS, 43 tests / 455 assertions across 14 files. Audit — PASS, 659 pages / 668 routes / 1136 datasources. Inventory CSS, scoped ESLint, and `git diff --check` — PASS.
+- Healthy runtime: `bun run agent:module -- inventory --port=4314`, file watching disabled. Agent PID `3578442` (parent `3578426`) and server PID `3578446` listened on `*:4314`; `/api/modules` returned 200. The dead gateway was not used.
+- Authenticated Playwright via `/usr/bin/google-chrome`, Admin `admin@tms.local`, desktop 1440x900: Draft `WH/IN/00003` showed Delete. Clicking sent one POST to `/api/mutate` with `inventory.pickings.delete`, `id=receipt-00003`, and `expected_row_version="1"`; no page/request errors occurred. Capture: `/tmp/inventory-31441-draft-before-delete.png`.
+- Persistence PASS: reload returned `1-5 / 5` and `WH/IN/00003` was absent; capture: `/tmp/inventory-31441-after-delete.png`.
+- Live guards PASS: Admin stale delete (`receipt-00003`, version 99) returned HTTP 409 `INVENTORY_TRANSFER_DELETE_NOT_ALLOWED`; Admin non-Draft delete (`receipt-00001`, version 1) returned the same 409; Fleet delete returned HTTP 403 `inventory.write`. Fleet lacked Inventory read permission, so Delete was hidden and no unauthorized mutation was allowed.
+- Paired Odoo: `http://127.0.0.1:8069/web/login` answered HTTP 200 with title `Odoo`. Existing authenticated `core3_reference` receipt desktop/mobile captures remain available at `/tmp/core3-odoo-parity/inventory-a238bd3d-odoo-receipts-{desktop,mobile}.png`; no fresh authenticated exact-commit pair is claimed.
+
+QA disposition: browser Draft Delete, persistence, guards, permissions, full focused suite, audit, CSS, ESLint, and diff hygiene PASS. No module sign-off or aggregate progress claim.
