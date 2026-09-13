@@ -97,4 +97,46 @@ describe('Project task attachments', () => {
     rmSync(databasePath, { force: true });
     rmSync(uploadRoot, { recursive: true, force: true });
   });
+
+  test('propagates the authenticated company to normal list and task-detail prefetch while isolating other companies', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'project_task_attachment_route_context', ['schema', 'data']);
+    const api = yaml('api/task-detail.yaml');
+    const page = yaml('pages/project-task-detail.yaml');
+    const upload = action(api, 'upload_project_task_attachment');
+    await repository.executeMutation(upload.mutation, {
+      task_id: 'task-demo-002', expected_row_version: 1, current_company_name: 'Core3 Demo Company',
+      current_user_id: 'project-user', attachment_id: 'project-task-attachment-route-context',
+      fileName: 'route-context.pdf', mimeType: 'application/pdf', sizeBytes: 4, storageKey: 'project/route-context.pdf',
+    });
+
+    const user: any = {
+      sub: 'project-editor', email: 'editor@workspace.example', name: 'Project Editor', roles: ['user'],
+      company: { name: 'Core3 Demo Company' }, permissions: ['project.read', 'project.write'],
+    };
+    const handle = createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return user; }, hasPermission(actor: any, permission: string) { return actor.permissions.includes(permission); } },
+      sources: new Map(api.datasources.map((source: any) => [source.id, source])),
+      pageSources: new Map([['project-task-detail', ['project_task_detail', 'project_task_attachments']]]),
+      pages: new Map([['project-task-detail', { ...page, actions: api.actions }]]),
+      catalogs: new Map(), menus: new Map(), workflows: new Map([['project_tasks', yaml('pages/project-workflow.yaml').workflow]]), workflowFiles: new Map(),
+      permissions: { permissions: ['project.read', 'project.write', 'project.manage'], tables: {}, endpoints: {} },
+      uploadRoot: '/tmp/core3-project-task-route-context-uploads', eventStore: {}, topics: {}, storage: yaml('storage.yaml'),
+    });
+    const query = () => handle(new Request('http://project.test/api/query', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sourceId: 'project_task_attachments', params: { id: 'task-demo-002' }, top: 100 }),
+    }), new URL('http://project.test/api/query'));
+    const prefetch = () => handle(new Request('http://project.test/api/pages/project-task-detail?id=task-demo-002&cache=true'), new URL('http://project.test/api/pages/project-task-detail?id=task-demo-002&cache=true'));
+
+    expect((await (await query()).json()).data).toHaveLength(1);
+    expect((await (await prefetch()).json()).datasources.find((source: any) => source.id === 'project_task_attachments').data).toHaveLength(1);
+
+    user.company = { name: 'Other Company' };
+    expect((await (await query()).json()).data).toEqual([]);
+    expect((await (await prefetch()).json()).datasources.find((source: any) => source.id === 'project_task_attachments').data).toEqual([]);
+    database.close();
+  });
 });
