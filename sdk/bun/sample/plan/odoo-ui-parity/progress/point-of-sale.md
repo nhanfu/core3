@@ -71,3 +71,17 @@ empty/error, and paired Odoo gates are still required.
 Complete the remaining POS empty/error coverage and route interactions, then
 run fresh paired Odoo/Core3 comparisons for the accepted cashier,
 configuration, and reporting surfaces before sign-off.
+
+## Coordinator reconciliation — POS actor/company boundary slice (2026-09-13)
+
+- Integrated candidate `cc1f7faf` as active `5542870a`; corrected its migration
+  version collision in active `ea8b4363` (`0.0.44` -> `0.0.45`).
+- Active focused verification passed **7 tests / 39 assertions**; audit passed
+  **661 pages / 670 routes / 1161 datasources**; POS Sass, targeted ESLint,
+  and diff-check passed.
+- QA PASS evidence covers session/order/payment Demo/Vietnam Branch isolation,
+  spoof protection, actor and permission guards, 401/403/404/503, stale and
+  atomic rejection, workflow context, authenticated desktop/mobile, and
+  reload/persistence (**100 tests / 787 assertions**).
+- POS remains conditional. Restart durability, restricted-actor breadth, and
+  paired Odoo comparison remain open.

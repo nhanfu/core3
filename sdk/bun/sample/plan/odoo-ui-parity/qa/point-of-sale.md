@@ -135,3 +135,28 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-POS-VISUAL-WAVE-20260913-R2` → `QA-POS-VISUAL-WAVE-20260913-R2` | existing `agent/odoo-pos-visual-nav-20260913` in `/home/nhanjs/projects/core3-worktrees/odoo-pos-visual-nav-20260913` | Configuration payment-method/floor-table manager and company guards, validation, stale/missing refusal, and focused atomicity tests | dispatched in `ffc85191`; awaiting self-contained product commit before QA |
+
+## Coordinator reconciliation — actor/company boundary candidate `cc1f7faf` (2026-09-13)
+
+- The exact candidate was reviewed in
+  `/home/nhanjs/projects/core3-worktrees/odoo-pos-dev3-route-errors` on
+  `agent/odoo-pos-dev3-route-errors`; owner HEAD was `cc1f7faf` and the
+  worktree had only an untracked owner QA ledger. The candidate scope is
+  limited to POS session/order/payment YAML contracts, routing context, a POS
+  migration, and focused actor/company tests.
+- Cherry-pick integrated the product bundle as active `5542870a`. Its migration
+  initially reused active version `0.0.44`; active focused testing exposed the
+  collision with `20260913100000-044-pos-config-detail.yaml`. The valid
+  same-module ordering repair is active `ea8b4363`, changing the actor-boundary
+  migration to `0.0.45`.
+- Active verification after the repair: **7 tests / 39 assertions** across
+  actor/company boundaries, POS configuration CRUD/guards, and visual
+  navigation; audit **661 pages / 670 routes / 1161 datasources**; POS Sass
+  build, targeted ESLint, and diff-check passed.
+- QA PASS is reconciled for Demo/Vietnam Branch session/order/payment
+  isolation, spoofed-filter resistance, actor capture, 401/403/404/503,
+  stale/missing/atomicity, workflow context, authenticated desktop/mobile,
+  reload/persistence, and **100 tests / 787 assertions**.
+- Disposition: **conditionally integrated** as `5542870a` + `ea8b4363`.
+  Restart durability, restricted-actor breadth, and paired Odoo comparison
+  remain open; no full POS sign-off is made.
