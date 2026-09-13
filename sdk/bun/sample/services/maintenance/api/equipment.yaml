@@ -17,7 +17,19 @@ actions:
     handler: yaml_mutation
     operation: create
     refresh: [maintenance_equipment]
-    mutation: { operation: insert, table: maintenance_equipment, fields: [name, serial_number, model, vendor_reference, category, location, owner, technician, team, preventive_interval_days, next_preventive_date, warranty_date, cost, description], required: [name], result: { query: "SELECT * FROM maintenance_equipment WHERE id = :id" } }
+    mutation:
+      operation: insert
+      table: maintenance_equipment
+      fields: [name, serial_number, model, vendor_reference, category, location, owner, technician, team, preventive_interval_days, next_preventive_date, warranty_date, cost, description]
+      required: [name]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: MAINTENANCE_EQUIPMENT_NAME_REQUIRED, message: Equipment name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM maintenance_equipment WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: MAINTENANCE_EQUIPMENT_NAME_EXISTS, message: An equipment with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE :next_preventive_date IS NULL OR LENGTH(TRIM(CAST(:next_preventive_date AS VARCHAR))) = 0 OR TRY_CAST(:next_preventive_date AS DATE) IS NOT NULL", status: 422, code: MAINTENANCE_EQUIPMENT_PREVENTIVE_DATE_INVALID, message: Next preventive date must be a valid ISO date. }
+        - { query: "SELECT 1 AS ok WHERE :warranty_date IS NULL OR LENGTH(TRIM(CAST(:warranty_date AS VARCHAR))) = 0 OR TRY_CAST(:warranty_date AS DATE) IS NOT NULL", status: 422, code: MAINTENANCE_EQUIPMENT_WARRANTY_DATE_INVALID, message: Warranty date must be a valid ISO date. }
+        - { query: "SELECT 1 AS ok WHERE :preventive_interval_days IS NULL OR TRY_CAST(:preventive_interval_days AS INTEGER) >= 0", status: 422, code: MAINTENANCE_EQUIPMENT_INTERVAL_INVALID, message: Preventive interval must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE :cost IS NULL OR TRY_CAST(:cost AS DECIMAL(12,2)) >= 0", status: 422, code: MAINTENANCE_EQUIPMENT_COST_INVALID, message: Cost must be zero or greater. }
+      result: { query: "SELECT * FROM maintenance_equipment WHERE id = :id" }
     fields:
       - { field: name, label: Equipment, type: text, required: true }
       - { field: serial_number, label: Serial number, type: text }
@@ -26,6 +38,10 @@ actions:
       - { field: location, label: Location, type: text }
       - { field: technician, label: Technician, type: text }
       - { field: preventive_interval_days, label: Preventive interval days, type: number }
+      - { field: next_preventive_date, label: Next preventive date, type: text }
+      - { field: warranty_date, label: Warranty date, type: text }
+      - { field: cost, label: Cost, type: number }
+      - { field: description, label: Description, type: textarea }
   - id: edit_maintenance_equipment
     type: server_form
     permission: maintenance.manage
