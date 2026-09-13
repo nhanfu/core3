@@ -109,3 +109,11 @@ admin edits. Route fixture/company-context alignment to the existing owner
 rerun focused and authenticated persistence checks. No replacement was
 created; direct lifecycle reactivation is unavailable in this session. Restart
 and paired Odoo gates remain open.
+
+## Reviewer hold: `fc5accff` (2026-09-13)
+
+Owner QA passed, but active verification failed 1/37: the active equipment edit
+mutation lacks the candidate-required invalid/stale/company guard set. The
+provisional integration was reverted as `068a5db5`. Same owner must rebase the
+complete guard contract plus company fixture repair against active APIs before
+retest. Website lint, file-backed restart, and Odoo gates remain open.

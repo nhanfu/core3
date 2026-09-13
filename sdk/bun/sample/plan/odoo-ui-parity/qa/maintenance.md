@@ -249,3 +249,18 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
   available in this session, so the request is recorded for the same owner and
   QA retest remains pending. Restart durability and paired authenticated Odoo
   comparison remain open.
+
+## Reviewer reconciliation `fc5accff`: held for active-contract mismatch (2026-09-13)
+
+- Owner QA evidence passes migration/startup and controlled restart, authenticated
+  Equipment edit/reload, wrong-company/no-partial, stale 409, invalid 422,
+  duplicate 409, missing 404, Fleet 403, desktop/mobile, 37 tests / 372
+  assertions, builds, audit, targeted ESLint, and diff-check.
+- Active verification after provisional cherry-pick passed 36/37 tests but
+  failed the extended-edit contract: active `edit_maintenance_equipment`
+  guards lack the expected invalid, stale, and company guard set.
+- Provisional integration was reverted as `068a5db5`; no Maintenance product
+  change is integrated. Same owner must rebase the complete guard contract and
+  company-context fixture repair onto the active APIs, then rerun focused QA.
+- Preserve open gates: unrelated Website lint errors, file-backed mutation
+  restart unavailable, and Odoo redirects to `/web/login`.
