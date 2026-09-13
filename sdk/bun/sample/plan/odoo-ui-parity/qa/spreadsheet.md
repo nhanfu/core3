@@ -92,3 +92,15 @@ Detailed execution matrix: [`test-plans/spreadsheet.md`](test-plans/spreadsheet.
   `POST /api/query` for `spreadsheet_dashboard_filter_state` returned 200 with
   the seeded admin row on the full in-memory candidate. Browser visual parity
   remains outside this repair.
+
+## Registry repair retest — commit `0b023a13` (2026-09-13)
+
+- Worktree: `/home/nhanjs/projects/core3-worktrees/spreadsheet-registry-404-20260913`; HEAD was exactly `0b023a13`.
+- Authenticated actor: `admin@tms.local` / `admin123`; login returned HTTP 200. Runtime: `bun scripts/dev.ts --db=ddb --memory`.
+- `/api/pages/dashboards` returned 200 with 7 registered sources and populated counts `9,6,6,4,5,5,1`; `?q=not-found` returned 200 with empty group/dashboard results; `?fixture_state=transport_error` returned 200 with source-scoped 503 objects for dashboards, workbooks, and filter state.
+- `POST /api/query` for `spreadsheet_dashboard_filter_state` returned 200 with the admin row (`sdfs-sales-admin`, `This year`), 200 with `{data:{}}` for dashboard id `not-found`, and 503 with `SPREADSHEET_DASHBOARD_FILTER_UNAVAILABLE` for `transport_error`.
+- Focused regression: `bun test ./test/spreadsheet.integration.test.ts` — 12 pass, 0 fail, 120 assertions.
+- Fresh authenticated browser route `/spreadsheet/dashboards`: desktop 1440x900 and mobile 390x844; both had zero failed requests/page errors and exact document width. Captures remain outside Git: `/tmp/core3-odoo-parity/spreadsheet-registry-retest-desktop.png` (SHA-256 `8d057f6149c767177b974bde6c57f8117430bae115193b4a8eb2190ddf9ed5e3`) and `spreadsheet-registry-retest-mobile.png` (SHA-256 `83cc0bc718438bcdadc0c9fee292c530d85ecad6068875c19c63edd9b30c9387`).
+- Odoo paired evidence was unavailable: `/tmp/odoo-spreadsheet-personal-*.png` files were absent. No Odoo visual parity claim is made.
+- Quality gates: Spreadsheet Sass build passed; `bun run audit` passed with 659 pages, 668 routes, and 1137 datasources; focused ESLint passed (exit 0); `git diff --check 0b023a13^ 0b023a13` passed.
+- Finding: no regression found in the repaired authenticated page/source registry or dashboard filter route. Evidence only; complete functionality, permissions, persistence, and Odoo parity remain unsigned off.

@@ -26,3 +26,11 @@ Re-run the authenticated desktop/mobile candidate matrix after the runtime
 registry is healthy, then cover reload/restart persistence, actor/company
 boundaries, workbook runtime, and share/export workflows. Keep full module
 sign-off open until the plan exit criteria are met.
+
+## QA retest ledger — `0b023a13` (2026-09-13)
+
+Retested in the isolated worktree at the exact repair commit. Authenticated Core3 in-memory HTTP evidence confirms `/api/pages/dashboards` is 200 and exposes all seven page-owned sources, including populated and empty results. `fixture_state=transport_error` produces source-scoped 503 contracts while the page envelope stays 200. Authenticated filter-source `POST /api/query` returns 200 with the admin row, 200 with `{data:{}}` for an unknown dashboard, and 503 with `SPREADSHEET_DASHBOARD_FILTER_UNAVAILABLE` for the transport fixture.
+
+Focused regression passed: 12/12 tests, 120 assertions. Spreadsheet CSS, repository UI audit (659 pages, 668 routes, 1137 datasources), focused ESLint, and commit diff-check passed. Fresh authenticated Core3 desktop/mobile browser captures are outside Git at `/tmp/core3-odoo-parity/spreadsheet-registry-retest-{desktop,mobile}.png`; both had zero failed requests/page errors and no horizontal overflow. Odoo comparison captures were unavailable, so no paired parity claim is recorded.
+
+QA finding: no regression found for this repair. This ledger does not change module status or constitute functional, permission, persistence, or Odoo parity sign-off.
