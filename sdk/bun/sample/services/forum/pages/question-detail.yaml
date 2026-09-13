@@ -97,16 +97,15 @@ actions:
     refresh: [forum_post_detail, forum_post_answers]
     fields:
       - { field: content, label: Answer, type: textarea, required: true }
-      - { field: author_name, label: Author, type: text, required: true }
     mutation:
       generated: [line_id]
       guards:
         - { query: "SELECT id FROM forum_posts WHERE id = :id AND state IN ('Active', 'Closed') AND row_version = :parent_expected_row_version", status: 409, code: FORUM_POST_STALE, message: The question changed or is no longer accepting answers. Reload before answering. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:content AS VARCHAR), ''))) BETWEEN 1 AND 10000", status: 422, code: FORUM_ANSWER_REQUIRED, message: An answer is required. }
-        - { query: "SELECT 1 AS ok WHERE TRIM(COALESCE(CAST(:author_name AS VARCHAR), '')) = TRIM(COALESCE(CAST(:current_user_name AS VARCHAR), ''))", status: 403, code: FORUM_ANSWER_ACTOR, message: The answer author must be the authenticated user. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(CAST(:current_user_name AS VARCHAR), ''))) > 0", status: 403, code: FORUM_ANSWER_ACTOR, message: An authenticated answer author is required. }
         - { query: "SELECT 1 AS ok FROM forum_forums f JOIN forum_posts p ON p.forum_id = f.id WHERE p.id = :id AND p.forum_id = f.id AND p.forum_name = f.name AND (:forum_id IS NULL OR p.forum_id = :forum_id) AND (:forum_name IS NULL OR p.forum_name = :forum_name)", status: 422, code: FORUM_ANSWER_RELATION_INVALID, message: The question relation is invalid. }
       steps:
-        - { query: "INSERT INTO forum_answers(id, post_id, forum_id, forum_name, content, author_name, state, row_version) SELECT :line_id, p.id, p.forum_id, p.forum_name, TRIM(:content), TRIM(:author_name), 'Active', 1 FROM forum_posts p WHERE p.id = :id" }
+        - { query: "INSERT INTO forum_answers(id, post_id, forum_id, forum_name, content, author_name, state, row_version) SELECT :line_id, p.id, p.forum_id, p.forum_name, TRIM(:content), TRIM(:current_user_name), 'Active', 1 FROM forum_posts p WHERE p.id = :id" }
         - { query: "UPDATE forum_posts SET answer_count = answer_count + 1, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, code: FORUM_POST_STALE, message: The question changed while adding the answer. Reload before saving. }
       result: { query: "SELECT * FROM forum_answers WHERE id = :line_id" }
   - id: edit_forum_answer
