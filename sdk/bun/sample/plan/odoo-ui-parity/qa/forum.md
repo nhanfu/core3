@@ -42,6 +42,12 @@ Detailed execution matrix: [`test-plans/forum.md`](test-plans/forum.md). It is t
 | FORUM-WORKFLOW-001 | Post close/reopen lifecycle | Focused test executes close and reopen, persists moderator reason and versions 1 → 3, and rejects invalid repeated transitions with 409 | pass |
 | FORUM-FUNC-002 | Permissioned question edit and manager archive | `forum_post_pages.integration.test.ts`; edit persistence/stale/title guards and manager-only terminal archive pass in isolated repository tests | pass for service contract; browser, restart, full actor matrix, and paired Odoo gates remain open |
 
+## R2 dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-FORUM-WAVE-20260913-R2` → `QA-FORUM-WAVE-20260913-R2` | existing `agent/forum-post-moderation-wave` in `/home/nhanjs/projects/core3-worktrees/forum-post-moderation-wave` | Answer create/edit or accept/flag moderation relation, preserving post/author links, stale guards, actor permissions, and atomic no-partial-write behavior with focused tests | dispatched in `301f7fe1`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
