@@ -18,6 +18,8 @@ Candidate commit: current working tree
 
 ## Current regression evidence
 
+- Public response retry/idempotency follow-up: `surveys_public_response.integration.test.ts` verifies repeated start with the same key returns the original answer, repeated submit with the same key returns 200, and the response row/count remain single-write; migration `0.0.17` adds a durable unique key.
+
 - Focused Surveys suite: `bun test ./test/surveys*.integration.test.ts --timeout 20000` — 33 passed, 0 failed, 299 assertions across 5 files.
 - Module-scoped authenticated route matrix on the developer process (`bun run agent:module -- surveys --port=4010`): 14 routes × desktop/mobile = 28/28 passed, with no blank page, browser error, HTTP error, or horizontal overflow.
 - Fleet user permission boundary: `/surveys` returned HTTP 403 with `Requires permission: surveys.read`, with no browser errors.

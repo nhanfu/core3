@@ -125,7 +125,7 @@ actions:
     mutation:
       operation: insert
       table: survey_responses
-      fields: [survey_id, survey_name, answer_data, access_token]
+      fields: [survey_id, survey_name, answer_data, access_token, idempotency_key]
       required: [survey_id, survey_name, answer_data]
       defaults: { state: In Progress }
       generated: [access_token]
@@ -134,6 +134,7 @@ actions:
       - { field: survey_id, label: Survey ID, type: text, required: true }
       - { field: survey_name, label: Survey, type: text, required: true }
       - { field: answer_data, label: Answers, type: text, required: true }
+      - { field: idempotency_key, label: Idempotency key, type: text }
   - id: public_survey_submit
     type: server_form
     permission: surveys.write
@@ -143,7 +144,7 @@ actions:
     mutation:
       operation: update
       table: survey_responses
-      fields: [answer_data, respondent_name, respondent_email]
+      fields: [answer_data, respondent_name, respondent_email, idempotency_key]
       required: [answer_data]
       concurrency: false
       steps:
@@ -154,6 +155,7 @@ actions:
       - { field: answer_data, label: Answers, type: text, required: true }
       - { field: respondent_name, label: Respondent, type: text }
       - { field: respondent_email, label: Email, type: text }
+      - { field: idempotency_key, label: Idempotency key, type: text }
   - id: public_survey_progress
     type: server_form
     permission: surveys.write

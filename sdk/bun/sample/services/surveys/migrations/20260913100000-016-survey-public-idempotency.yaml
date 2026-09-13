@@ -1,0 +1,13 @@
+version: 0.0.17
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR;
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_responses_idempotency_key_idx ON survey_responses(survey_id, idempotency_key);
+    down: |
+      DROP INDEX IF EXISTS survey_responses_idempotency_key_idx;
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS idempotency_key;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

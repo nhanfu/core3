@@ -67,4 +67,44 @@ describe('Surveys public response workflow', () => {
     expect(duplicate.status).toBe(409);
     database.close();
   });
+
+  test('retries start and submit idempotently without duplicate responses or counts', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_public_idempotency_test', ['schema', 'data']);
+    const operations = yaml('operations.yaml').operations;
+    const surveyApi = yaml('pages/surveys.yaml');
+    const actions = Object.fromEntries(['public_survey_start', 'public_survey_submit'].map((id) => [id, surveyApi.actions.find((candidate: any) => candidate.id === id)]));
+    const service = {
+      async call(operation: string, request: any = {}) {
+        if (operations[operation]) {
+          const definition = operations[operation];
+          const bound = bindNamedParams(definition.query, request);
+          return { [definition.result_key]: await repository.query(bound.statement, bound.values) };
+        }
+        const action = operation === 'surveys.public.start' ? actions.public_survey_start : actions.public_survey_submit;
+        return repository.executeMutation(action.mutation, request);
+      },
+    };
+    const module = new SurveysModule() as any;
+    const token = 'b135640d-14d4-4748-9ef6-344ca256531e';
+    const route = (path: string, init: RequestInit = {}) => module.handlePublicRoute(new Request(`http://survey.test${path}`, init), new URL(`http://survey.test${path}`), service);
+    const headers = { 'Content-Type': 'application/json' };
+    const initialSurvey = (await repository.query('SELECT response_count FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0];
+    const initialResponses = (await repository.query("SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = ? AND state = 'Submitted'", ['survey-demo-feedback']))[0].count;
+    const startBody = JSON.stringify({ idempotency_key: 'qa-start-retry-001' });
+    const firstStart = await (await route(`/api/public/surveys/${token}/start`, { method: 'POST', headers, body: startBody })).json();
+    const retryStart = await (await route(`/api/public/surveys/${token}/start`, { method: 'POST', headers, body: startBody })).json();
+    expect(retryStart.answer).toMatchObject({ id: firstStart.answer.id, access_token: firstStart.answer.access_token });
+    expect((await repository.query('SELECT COUNT(*) AS count FROM survey_responses WHERE idempotency_key = ?', ['qa-start-retry-001']))[0].count).toBe(1);
+
+    const submit = (body: Record<string, unknown>) => route(`/api/public/surveys/${token}/submit`, { method: 'POST', headers, body: JSON.stringify(body) });
+    const submitBody = { answer_token: firstStart.answer.access_token, answers: { 'question-feedback-rating': '5', 'question-feedback-service': 'Excellent', 'question-feedback-recommend': 'Yes' }, idempotency_key: 'qa-submit-retry-001' };
+    expect((await submit(submitBody)).status).toBe(200);
+    const retrySubmit = await submit({ ...submitBody, answers: {} });
+    expect(retrySubmit.status).toBe(200);
+    expect((await repository.query('SELECT response_count FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0].response_count).toBe(initialSurvey.response_count + 1);
+    expect((await repository.query("SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = ? AND state = 'Submitted'", ['survey-demo-feedback']))[0].count).toBe(initialResponses + 1);
+    database.close();
+  });
 });

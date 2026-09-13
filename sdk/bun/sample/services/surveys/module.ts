@@ -86,14 +86,37 @@ export default class SurveysModule implements ModuleLifecycle {
         if (!answer) return this.json({ error: 'Survey response is unavailable' }, 404);
         return this.json({ survey: detail, answer });
       }
-      const result = await service.call('surveys.public.start', {
-        values: {
+      const idempotencyKey = this.idempotencyKey(body.idempotency_key);
+      if (idempotencyKey) {
+        const existing = (await service.call('survey.public.response_by_idempotency_key', {
+          idempotency_key: idempotencyKey,
           survey_id: detail.id,
-          survey_name: detail.name,
-          answer_data: '{}',
-          access_token: crypto.randomUUID(),
-        },
-      });
+        }))?.response?.[0];
+        if (existing) return this.json({ survey: detail, answer: existing });
+      }
+      let result;
+      try {
+        result = await service.call('surveys.public.start', {
+          values: {
+            survey_id: detail.id,
+            survey_name: detail.name,
+            answer_data: '{}',
+            access_token: crypto.randomUUID(),
+            idempotency_key: idempotencyKey || null,
+          },
+        });
+      } catch (error) {
+        // A concurrent retry can win the unique-key race between the lookup
+        // above and the insert. Replay that committed response instead of
+        // leaking a database constraint error to the public client.
+        if (!idempotencyKey) throw error;
+        const existing = (await service.call('survey.public.response_by_idempotency_key', {
+          idempotency_key: idempotencyKey,
+          survey_id: detail.id,
+        }))?.response?.[0];
+        if (!existing) throw error;
+        result = existing;
+      }
       return this.json({ survey: detail, answer: result });
     }
 
@@ -101,7 +124,13 @@ export default class SurveysModule implements ModuleLifecycle {
     if (!this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
     const response = await readResponse(answerToken);
     if (!response) return this.json({ error: 'Survey response is unavailable' }, 404);
-    if (response.state === 'Submitted') return this.json({ error: 'This survey response is already submitted' }, 409);
+    const idempotencyKey = this.idempotencyKey(body.idempotency_key);
+    if (response.state === 'Submitted') {
+      if (idempotencyKey && response.idempotency_key === idempotencyKey) {
+        return this.json({ survey: detail, answer: response });
+      }
+      return this.json({ error: 'This survey response is already submitted' }, 409);
+    }
     const answers = body.answers && typeof body.answers === 'object' ? body.answers : {};
     if (operation === 'progress') {
       const result = await service.call('surveys.public.progress', {
@@ -124,6 +153,7 @@ export default class SurveysModule implements ModuleLifecycle {
         answer_data: JSON.stringify(answers),
         respondent_name: typeof body.respondent_name === 'string' ? body.respondent_name.trim() : undefined,
         respondent_email: typeof body.respondent_email === 'string' ? body.respondent_email.trim() : undefined,
+        idempotency_key: idempotencyKey || undefined,
       },
     });
     return this.json({ survey: detail, answer: result });
@@ -131,6 +161,11 @@ export default class SurveysModule implements ModuleLifecycle {
 
   private isToken(value: string): boolean {
     return /^[A-Za-z0-9-]{16,100}$/.test(value);
+  }
+
+  private idempotencyKey(value: unknown): string {
+    const key = typeof value === 'string' ? value.trim() : '';
+    return key && key.length <= 200 ? key : '';
   }
 
   private json(data: unknown, status = 200): Response {
