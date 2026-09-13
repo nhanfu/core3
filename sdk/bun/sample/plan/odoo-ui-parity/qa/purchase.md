@@ -54,3 +54,15 @@ The bounded persistence/audit implementation is supported by the focused integra
 Disposition: retain as **conditional only**; do not integrate or sign off the
 Purchase module until browser/Odoo evidence and the TypeScript blocker are
 resolved or explicitly waived.
+
+## Reviewer disposition — candidate `2afe3fc4`
+
+- Integrated on the active branch as `38497c93`; the bounded Vendor CRUD delta
+  preserves the richer active vendor list/detail contract and adds timestamp
+  mutation behavior plus stale/not-found guards and a dedicated regression
+  test.
+- Post-merge Vendor verification passed: 2 tests / 8 assertions, with the
+  candidate's broader 90-test / 1,013-assertion evidence retained separately.
+- Preserved blockers: direct timestamp before/after assertion, repository
+  TypeScript diagnostics, authenticated desktop/mobile browser evidence, and
+  fresh Odoo comparison. Purchase remains conditional and unsigned-off.
