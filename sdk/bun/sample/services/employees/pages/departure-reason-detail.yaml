@@ -10,6 +10,8 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Details }
     header_actions:
       - { id: edit_employee_departure_reason, label: Edit, variant: secondary, permission: employees.manage }
+      - { id: archive_employee_departure_reason, label: Archive, variant: danger, permission: employees.manage, show_if: "state.employee_departure_reason_detail.active === true" }
+      - { id: restore_employee_departure_reason, label: Restore, variant: secondary, permission: employees.manage, show_if: "state.employee_departure_reason_detail.active === false" }
     groups:
       - title: Departure Reason
         fields:

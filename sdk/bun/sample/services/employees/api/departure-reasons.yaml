@@ -3,7 +3,7 @@ datasources:
   - id: employee_departure_reasons
     permission: employees.manage
     error_states: { transport_error: { status: 503, code: EMPLOYEES_DATA_UNAVAILABLE, message: Employee configuration is temporarily unavailable } }
-    query: "SELECT id, row_version, sequence, name, country_code FROM employee_departure_reasons WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(country_code, '') ILIKE '%' || :q || '%') ORDER BY sequence, id"
+    query: "SELECT id, row_version, sequence, name, country_code, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status FROM employee_departure_reasons WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND ((:active IS NULL AND active = true) OR (:active IS NOT NULL AND active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(country_code, '') ILIKE '%' || :q || '%') ORDER BY sequence, id"
 actions:
   - id: view_employee_departure_reason
     type: navigate
@@ -42,12 +42,13 @@ actions:
     handler: yaml_mutation
     operation: update
     refresh: [employee_departure_reasons]
+    params: { expected_row_version: '{row.row_version}' }
     mutation:
       operation: update
       table: employee_departure_reasons
       fields: [sequence, name, country_code]
       required: [name]
-      concurrency: { required: true }
+      concurrency: { required: true, field: row_version, input: expected_row_version }
       guards:
         - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_DEPARTURE_REASON_NAME_REQUIRED, message: A departure reason name is required. }

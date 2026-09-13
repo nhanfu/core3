@@ -1,0 +1,13 @@
+version: 0.0.24
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_departure_reasons ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      UPDATE employee_departure_reasons SET active = true WHERE active IS NULL;
+    down: |
+      ALTER TABLE employee_departure_reasons DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

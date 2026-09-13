@@ -261,8 +261,19 @@ describe('Employees Odoo action-mode parity batch', () => {
     expect(listApi.actions.filter((action: any) => action.type === 'server_form').every((action: any) => action.permission === 'employees.manage')).toBe(true);
     expect(detailApi.actions.every((action: any) => action.permission === 'employees.manage')).toBe(true);
     expect(listApi.actions.find((action: any) => action.id === 'create_employee_departure_reason_inline')?.mutation).toMatchObject({ generated: ['id'] });
-    expect(listApi.actions.find((action: any) => action.id === 'update_employee_departure_reason_inline')?.mutation.timestamps).toBeUndefined();
-    expect(detailApi.actions.find((action: any) => action.id === 'edit_employee_departure_reason')?.mutation.timestamps).toBeUndefined();
+    const listUpdate = listApi.actions.find((action: any) => action.id === 'update_employee_departure_reason_inline');
+    const detailEdit = detailApi.actions.find((action: any) => action.id === 'edit_employee_departure_reason');
+    expect(listUpdate?.mutation.timestamps).toBeUndefined();
+    expect(detailEdit?.mutation.timestamps).toBeUndefined();
+    expect(listUpdate?.mutation).toMatchObject({ concurrency: { required: true, field: 'row_version', input: 'expected_row_version' } });
+    expect(detailEdit?.mutation).toMatchObject({ concurrency: { required: true, field: 'row_version', input: 'expected_row_version' } });
+    expect(listUpdate?.params).toEqual({ expected_row_version: '{row.row_version}' });
+    expect(detailEdit?.params).toEqual({ expected_row_version: '{row.row_version}' });
+    expect(detailApi.actions.map((action: any) => action.id)).toEqual([
+      'edit_employee_departure_reason', 'archive_employee_departure_reason', 'restore_employee_departure_reason',
+    ]);
+    expect(detailApi.actions.find((action: any) => action.id === 'archive_employee_departure_reason')).toMatchObject({ action: 'employees.departure_reasons.archive', params: { values: { active: false } } });
+    expect(detailApi.actions.find((action: any) => action.id === 'restore_employee_departure_reason')).toMatchObject({ action: 'employees.departure_reasons.restore', params: { values: { active: true } } });
     expect(yaml('manifest.yaml').menu.groups.find((group: any) => group.id === 'configuration').items).toContainEqual({ path: '/employees/departure-reasons', label: 'Departure Reasons', icon: 'list', permission: 'employees.manage' });
 
     const migration = readFileSync(join(root, 'migrations/20260910170000-006-departure-reasons.yaml'), 'utf8');
@@ -281,7 +292,7 @@ describe('Employees Odoo action-mode parity batch', () => {
       'departure-reason-resigned',
       'departure-reason-retired',
     ]);
-    expect(populated.data[0]).toMatchObject({ sequence: 0, name: 'Fired', country_code: null });
+    expect(populated.data[0]).toMatchObject({ sequence: 0, name: 'Fired', country_code: null, active: true, status: 'Active' });
 
     const filtered = await repository.querySource(source, { q: 'resign', fixture_state: null }, 0, 50);
     expect(filtered.data.map((row: any) => row.name)).toEqual(['Resigned']);
@@ -294,5 +305,53 @@ describe('Employees Odoo action-mode parity batch', () => {
     expect(detail.data).toMatchObject({ id: 'departure-reason-resigned', name: 'Resigned', country_code: null });
     const missing = await repository.querySource(detailSource, { id: 'missing-departure-reason', fixture_state: 'not_found' }, 0, 1);
     expect(missing.data).toEqual({});
+  });
+
+  test('runs departure-reason archive and restore with row-version guards', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_departure_reason_lifecycle', ['schema', 'data']);
+
+    const listApi = yaml('api/departure-reasons.yaml');
+    const detailApi = yaml('api/departure-reason-detail.yaml');
+    const create = listApi.actions.find((action: any) => action.id === 'create_employee_departure_reason_inline');
+    const edit = detailApi.actions.find((action: any) => action.id === 'edit_employee_departure_reason');
+    const archive = detailApi.actions.find((action: any) => action.id === 'archive_employee_departure_reason');
+    const restore = detailApi.actions.find((action: any) => action.id === 'restore_employee_departure_reason');
+    const created = await repository.executeMutation(create.mutation, { values: { sequence: 10, name: 'Lifecycle reason', country_code: 'VN' } });
+    expect(created).toMatchObject({ active: true, row_version: 1 });
+
+    const edited = await repository.executeMutation(edit.mutation, {
+      id: created.id,
+      expected_row_version: created.row_version,
+      values: { sequence: 11, name: 'Lifecycle reason updated', country_code: 'VN' },
+    });
+    expect(edited).toMatchObject({ active: true, row_version: 2, name: 'Lifecycle reason updated' });
+    await expect(repository.executeMutation(edit.mutation, {
+      id: created.id, expected_row_version: 1,
+      values: { sequence: 12, name: 'Stale lifecycle reason', country_code: 'VN' },
+    })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await expect(repository.executeMutation(edit.mutation, {
+      id: created.id, values: { sequence: 12, name: 'Missing version', country_code: 'VN' },
+    })).rejects.toMatchObject({ status: 400 });
+
+    const archived = await repository.executeMutation(archive.mutation, {
+      id: created.id, expected_row_version: 2, values: { active: false },
+    });
+    expect(archived).toMatchObject({ active: false, row_version: 3 });
+    await expect(repository.executeMutation(archive.mutation, {
+      id: created.id, expected_row_version: 3, values: { active: false },
+    })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_DEPARTURE_REASON_NOT_FOUND' });
+    const archivedRows = await repository.querySource(listApi.datasources[0], { q: null, active: 'false', fixture_state: null }, 0, 50);
+    expect(archivedRows.data.find((row: any) => row.id === created.id)).toMatchObject({ active: false, status: 'Archived' });
+
+    const restored = await repository.executeMutation(restore.mutation, {
+      id: created.id, expected_row_version: 3, values: { active: true },
+    });
+    expect(restored).toMatchObject({ active: true, row_version: 4 });
+    await expect(repository.executeMutation(restore.mutation, {
+      id: created.id, expected_row_version: 3, values: { active: true },
+    })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_DEPARTURE_REASON_NOT_FOUND' });
+    await database.close();
   });
 });
