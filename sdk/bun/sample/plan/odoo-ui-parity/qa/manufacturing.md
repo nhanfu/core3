@@ -138,6 +138,12 @@ Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufactur
 | MANUFACTURING-003 | Permission boundary | Fleet user plan action returned 403 `manufacturing.write` | PASS |
 | MANUFACTURING-004 | Fresh paired Odoo/Core3 visual comparison for every accepted surface | Existing source captures are recorded, but no fresh current-wave pair is adjudicated | pending |
 
+## R2 dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-MANUFACTURING-WAVE-20260913-R2` → `QA-MANUFACTURING-WAVE-20260913-R2` | existing `agent/odoo-ui-manufacturing-work-orders-analysis` in `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-work-orders-analysis` | Work Orders Analysis graph/pivot/list/detail actor and company boundaries, 401/403 refusal, wrong-company isolation, and focused deterministic empty/guard tests | dispatched in `37515e06`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
