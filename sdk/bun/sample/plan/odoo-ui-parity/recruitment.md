@@ -290,6 +290,7 @@ deferred.
 ### Focused verification
 
 - `bun test test/recruitment_refuse_reasons.integration.test.ts` — 4 passed, 0 failed, 52 assertions
+- `bun test test/recruitment_refuse_workflow.integration.test.ts` — refusal and applicant restore lifecycle pass, including persisted `Rejected → New` reopen, refusal metadata clearing, Recruitment User permission declaration, and stale replay guard.
 - `bun run audit` — passed: 478 pages, 485 routes, 834 datasources
 - `bunx eslint test/recruitment_refuse_reasons.integration.test.ts` — passed
 - `bun run css:build:global` and `bun run css:build:recruitment` — passed

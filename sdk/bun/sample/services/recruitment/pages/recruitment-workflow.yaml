@@ -14,6 +14,14 @@ workflow:
     - { id: Hired, label: Hired, color: green, terminal: true }
     - { id: Rejected, label: Rejected, color: red, terminal: true }
   transitions:
+    - id: reopen
+      from: [Rejected]
+      to: New
+      permission: recruitment.write
+      mutation:
+        guards: [{ query: "SELECT id FROM recruitment_applicants WHERE id = :id AND stage = 'Rejected' AND archived = TRUE AND row_version = :expected_row_version", status: 409, code: RECRUITMENT_APPLICANT_REOPEN_STALE, message: Only the current refused application can be reopened. }]
+        steps: [{ query: "UPDATE recruitment_applicants SET stage = 'New', archived = FALSE, refuse_reason_id = NULL, refused_date = NULL, row_version = :expected_row_version + 1, updated_at = TIMESTAMP '2026-01-15 09:00:00' WHERE id = :id AND stage = 'Rejected' AND archived = TRUE AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The application changed by another user. Reload it before reopening. }]
+        result: { query: "SELECT * FROM recruitment_applicants WHERE id = :id" }
     - id: screen
       from: [New]
       to: Screening

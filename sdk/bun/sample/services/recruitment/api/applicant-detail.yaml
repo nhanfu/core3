@@ -8,6 +8,15 @@ datasources:
     permission: recruitment.read
     query: "SELECT id AS value, name AS label FROM recruitment_refuse_reasons WHERE active = TRUE ORDER BY sequence, name, id"
 actions:
+  - id: reopen_applicant_detail
+    type: server
+    permission: recruitment.write
+    action: recruitment.applicants.reopen
+    handler: order_transition
+    workflow: recruitment_applicants
+    operation: reopen
+    params: { id: '{state.id}', expected_row_version: '{state.recruitment_applicant_detail.row_version}' }
+    refresh: [recruitment_applicant_detail, recruitment_applicants]
   - { id: screen_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.screen, handler: order_transition, workflow: recruitment_applicants, operation: screen, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
   - { id: interview_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.interview, handler: order_transition, workflow: recruitment_applicants, operation: interview, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
   - { id: offer_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.offer, handler: order_transition, workflow: recruitment_applicants, operation: offer, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }

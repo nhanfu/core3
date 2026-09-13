@@ -30,4 +30,26 @@ describe('Recruitment refusal workflow', () => {
     })).rejects.toMatchObject({ status: 409, code: 'RECRUITMENT_APPLICANT_REFUSE_STALE' });
     database.close();
   });
+
+  test('restores a refused applicant to New, persists across reload, and is available to recruitment users', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'recruitment_reopen_workflow_test', ['schema', 'data']);
+    const detail = yaml('api/applicant-detail.yaml');
+    const workflow = yaml('pages/recruitment-workflow.yaml').workflow;
+    const reopen = detail.actions.find((candidate: any) => candidate.id === 'reopen_applicant_detail');
+
+    expect(reopen).toMatchObject({ permission: 'recruitment.write', action: 'recruitment.applicants.reopen', operation: 'reopen' });
+    expect(reopen.params).toEqual({ id: '{state.id}', expected_row_version: '{state.recruitment_applicant_detail.row_version}' });
+    expect(workflow.transitions.find((transition: any) => transition.id === 'reopen')).toMatchObject({ from: ['Rejected'], to: 'New', permission: 'recruitment.write' });
+
+    const transition = workflow.transitions.find((candidate: any) => candidate.id === 'reopen');
+    const restored = await repository.executeMutation(transition.mutation, { id: 'applicant-demo-004', expected_row_version: 1 });
+    expect(restored).toMatchObject({ id: 'applicant-demo-004', stage: 'New', archived: false, refuse_reason_id: null, refused_date: null, row_version: 2 });
+    expect(await repository.query('SELECT stage, archived, refuse_reason_id, refused_date, row_version FROM recruitment_applicants WHERE id = ?', ['applicant-demo-004'])).toEqual([
+      { stage: 'New', archived: false, refuse_reason_id: null, refused_date: null, row_version: 2 },
+    ]);
+    await expect(repository.executeMutation(transition.mutation, { id: 'applicant-demo-004', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'RECRUITMENT_APPLICANT_REOPEN_STALE' });
+    database.close();
+  });
 });

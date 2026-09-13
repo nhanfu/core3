@@ -42,7 +42,7 @@ describe('Recruitment parity batch', () => {
   it('preserves guarded workflow transitions and hired-count consistency steps', () => {
     const workflow = yaml('pages/recruitment-workflow.yaml').workflow;
     expect(workflow.states.map((state: any) => state.id)).toEqual(['New', 'Screening', 'Interview', 'Offer', 'Hired', 'Rejected']);
-    expect(workflow.transitions.map((transition: any) => transition.id)).toEqual(['screen', 'interview', 'offer', 'hire', 'reject']);
+    expect(workflow.transitions.map((transition: any) => transition.id)).toEqual(['reopen', 'screen', 'interview', 'offer', 'hire', 'reject']);
     expect(workflow.transitions.every((transition: any) => transition.mutation.guards?.[0]?.status === 409)).toBe(true);
     expect(workflow.transitions.find((transition: any) => transition.id === 'hire').mutation.steps).toHaveLength(2);
   });

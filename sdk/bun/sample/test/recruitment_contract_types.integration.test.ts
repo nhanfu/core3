@@ -56,6 +56,6 @@ describe('Recruitment Contract Types parity action', () => {
     expect(action('edit_recruitment_contract_type').mutation.concurrency.required).toBe(true);
     expect(action('delete_recruitment_contract_type').mutation.concurrency.required).toBe(true);
     expect(yaml('api/applicants.yaml').actions.some((candidate: any) => candidate.id.includes('contract_type'))).toBe(false);
-    expect(yaml('pages/recruitment-workflow.yaml').workflow.transitions.map((transition: any) => transition.id)).toEqual(['screen', 'interview', 'offer', 'hire', 'reject']);
+    expect(yaml('pages/recruitment-workflow.yaml').workflow.transitions.map((transition: any) => transition.id)).toEqual(['reopen', 'screen', 'interview', 'offer', 'hire', 'reject']);
   });
 });
