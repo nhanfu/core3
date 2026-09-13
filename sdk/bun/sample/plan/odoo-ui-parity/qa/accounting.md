@@ -366,6 +366,44 @@ remain preserved; QA was not triggered.
   prior `5914d094` browser pass is not reused as proof for `114e2c0b`.
 - Odoo comparison: not run; paired authenticated Odoo evidence remains open.
 
+## Final browser retest: integrated Payment Terms `b54a6a66` / Events `ab5496ba` (2026-09-13)
+
+- Runtime attribution: active checkout `bc584a84` contains both
+  `b54a6a66` and `ab5496ba`; backend `127.0.0.1:3001/api/modules` and
+  frontend `localhost:3002` were live with mediator 3010 listening. No
+  implementation or `progress.md` files were changed.
+- Admin browser at `1440x900` used role/label/state-based locators. Create
+  with blank `early_discount` returned HTTP 200 and no console errors, but a
+  fresh list navigation did not contain the created row (`persisted=false`).
+  The detail route opened and edit/save returned HTTP 200, but the detail
+  rendered `Status —` rather than `Status Active`.
+- Post-edit action inspection: role-based Archive count was **0**. DOM/action
+  inspection exposed only `Edit` and `Delete`; no Archive button,
+  `data-action`, `data-mutation`, or titled Archive control was present.
+  Consequently archive, archived-state verification, restore, and delete
+  lifecycle proof could not be completed. Mutation statuses observed before
+  the blocked action were `[200, 200]`; no HTTP 500 or console error occurred.
+- Mobile Admin at `390x844` loaded the Payment Terms list with zero console
+  errors and no horizontal overflow. Screenshot: outside Git at
+  `/tmp/accounting-payment-terms-b54a6a66-mobile.png`.
+- Fleet browser permission check returned HTTP 403 with visible
+  `Requires permission: accounting.read`; no Accounting list rendered.
+- Existing functional evidence for the integrated repair remains focused **3
+  tests / 48 assertions**, full Accounting **91 tests / 1,033 assertions**,
+  and audit **661 pages / 670 routes / 1,154 datasources**. Those suites cover
+  guards, permissions, validation, stale/missing, and atomicity contracts but
+  do not override the browser persistence/status/action failures.
+- Odoo `http://127.0.0.1:8069/web/login` returned HTTP 200, but the available
+  `admin/admin` credentials were rejected (`Wrong login/password`), so paired
+  authenticated Odoo comparison was not possible.
+
+### Bounded verdict — **FAIL / not ready for reviewer reconciliation**
+
+Blank create avoids the prior BOOL/500 failure, but candidate browser
+persistence is not demonstrated, state is not Active after edit, and the
+Archive action is absent. Archive/restore/delete, paired Odoo comparison, and
+full candidate browser lifecycle therefore remain failing or unverified.
+
 ### Bounded verdict — **CONDITIONAL FAIL / not ready for reviewer reconciliation**
 
 All available functional, full-regression, audit, and clean-worktree gates
@@ -603,3 +641,21 @@ open.
 
 Bounded disposition: **conditionally integrated; Accounting remains unsigned
 off** pending fresh browser evidence and the broader module gates.
+
+## Coordinator reconciliation: Payment Terms create-state repair `66429611` (2026-09-13)
+
+- The candidate is a self-contained same-module change in the Payment Terms
+  create API contract and focused integration test. It removes lifecycle
+  `state` from create fields while retaining the `Active` mutation default;
+  dedicated Archive/Restore actions remain responsible for lifecycle state.
+- The active branch already contains the candidate's exact final product files
+  through the existing Accounting lineage. Cherry-pick of `66429611` was
+  therefore empty and was skipped; no duplicate product commit was created.
+- Active verification after reconciliation: focused suite **3 tests / 60
+  assertions passed**; `bun run audit` passed with **661 pages / 670 routes /
+  1,154 datasources**; candidate-reported full Accounting **91 tests / 1,045
+  assertions**, diff-check, and clean candidate worktree are retained as
+  evidence.
+- This is bounded conditional reconciliation only. Fresh browser and paired
+  Odoo evidence, plus broader export, attachment, and print gates, remain open;
+  Accounting is not fully signed off.
