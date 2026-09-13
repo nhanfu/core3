@@ -40,3 +40,14 @@ No parity claim is made here.
 Run an authenticated applicant/opening CRUD and workflow smoke, complete the
 role-specific permission matrix, and capture paired Odoo desktop/mobile
 screens. Update this file only with evidence from the matching module owner.
+
+## QA disposition `e9a19a8f` (2026-09-13)
+
+Hold the Recruitment refusal candidate. QA found
+`RECRUITMENT-REFUSE-001`: admin context is `Core3 Demo Company`, but the seeded
+applicant is `My Company (San Francisco)`, so live refusal fails before
+persistence. Route fixture/company-context alignment to the existing owner
+`agent/odoo-recruitment-reopen-20260913` in
+`/home/nhanjs/projects/core3-worktrees/odoo-recruitment-reopen-20260913`, then
+rerun authenticated refusal/reopen and reload QA. Restart and paired Odoo
+remain open; no replacement or merge was made.

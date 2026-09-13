@@ -130,3 +130,21 @@ Candidate commit: pending commit for refusal workflow repair
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-RECRUITMENT-WAVE-20260913-R2` → `QA-RECRUITMENT-WAVE-20260913-R2` | existing `agent/odoo-recruitment-reopen-20260913` in `/home/nhanjs/projects/core3-worktrees/odoo-recruitment-reopen-20260913` | Applicant close/reopen persistence, required reasons, permissions, stale/duplicate guards, and focused no-partial-write tests | dispatched in `bba9ff02`; awaiting self-contained product commit before QA |
+
+## QA disposition `e9a19a8f`: blocked; same-owner repair required (2026-09-13)
+
+- Hold and do **not** integrate `e9a19a8f`. Recruitment QA passed **39 tests /
+  367 assertions**, with refusal/reopen contracts, validation, stale/replay,
+  actor/company/unauthenticated guards, atomicity, build, audit, CSS, lint, and
+  diff-check green.
+- Critical defect `RECRUITMENT-REFUSE-001`: authenticated admin context is
+  `Core3 Demo Company`, while the seeded applicant is `My Company (San
+  Francisco)`. Live refusal is rejected by the company-scope guard before
+  persistence.
+- Repair is routed to the existing owner/worktree
+  `agent/odoo-recruitment-reopen-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/odoo-recruitment-reopen-20260913`:
+  align the deterministic applicant fixture/company context, then rerun
+  authenticated refuse/reopen and reload QA.
+- Preserve restart and fresh authenticated Odoo comparison gates. Candidate
+  remains blocked; no replacement owner or product merge was created.
