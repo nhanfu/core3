@@ -49,3 +49,13 @@ module sign-off or aggregate progress claim.
 - Time Off remains **conditional / unsigned-off**. Core3 listener failure,
   unavailable `js_repl`/Playwright, role-matrix checks, authenticated
   desktop/mobile evidence, and paired Odoo comparison remain open.
+## 2026-09-13 coordinator dispatch — bounded balance persistence wave
+
+- Existing owner `agent/time-off-draft-delete-20260913` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/time-off-draft-delete-20260913`, based
+  at `691bb590`. Development event: `DEV-TIME-OFF-WAVE-20260913-R2`; QA event:
+  `QA-TIME-OFF-WAVE-20260913-R2`; handoff commit: `f8dab29a`.
+- Scope is allocation/balance persistence across file-backed restart and
+  migration replay, with recalculation, validation, scope, stale, and atomic
+  guards plus focused tests. Candidate pending; existing ledger and aggregate
+  progress are preserved.
