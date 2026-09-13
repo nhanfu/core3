@@ -14,6 +14,8 @@ export type MutationDefinition = {
   defaults?: Record<string, unknown>;
   /** Empty form values are omitted on insert and become NULL on update. */
   normalize_empty?: string[];
+  /** Form checkbox fields are coerced before values reach the database driver. */
+  boolean_fields?: string[];
   id_input?: string;
   id_prefix?: string;
   timestamps?: boolean;
@@ -73,6 +75,18 @@ export class YamlMutationRuntime {
         if (typeof value === 'string' && !value.trim()) {
           if (definition.operation === 'insert') delete values[field];
           else values[field] = null;
+        }
+      }
+      for (const field of definition.boolean_fields || []) {
+        if (!IDENTIFIER.test(field)) throw { status: 500, message: 'Boolean mutation field is invalid' };
+        if (!Object.prototype.hasOwnProperty.call(values, field)) continue;
+        const value = values[field];
+        if (typeof value === 'string') {
+          const normalized = value.trim().toLowerCase();
+          if (!normalized || ['0', 'false', 'off', 'no'].includes(normalized)) values[field] = false;
+          else if (['1', 'true', 'on', 'yes'].includes(normalized)) values[field] = true;
+        } else if (typeof value === 'number') {
+          values[field] = value !== 0;
         }
       }
       for (const [field, value] of Object.entries(params.values)) {

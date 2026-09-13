@@ -68,8 +68,14 @@ describe('Accounting Payment Terms Odoo configuration parity', () => {
       expect(action(id).handler, id).toBe('yaml_mutation');
     }
     const create = action('create_accounting_payment_term');
+    expect(create.mutation.boolean_fields).toEqual(['early_discount']);
     const created = await repository.executeMutation(create.mutation, { values: { name: 'Wire Terms', company: 'My Company (San Francisco)', description: '45 days after invoice date', early_discount: false } });
     expect(created).toMatchObject({ name: 'Wire Terms', company: 'My Company (San Francisco)', description: '45 days after invoice date', state: 'Active', row_version: 1 });
+    const blankBoolean = await repository.executeMutation(create.mutation, { values: { name: 'Blank Early Discount', company: 'My Company (San Francisco)', description: 'Due on receipt', early_discount: '' } });
+    expect(blankBoolean).toMatchObject({ name: 'Blank Early Discount', early_discount: false });
+    expect(await repository.query("SELECT early_discount FROM accounting_config_payment_terms WHERE name = 'Blank Early Discount'")).toEqual([{ early_discount: false }]);
+    await expect(repository.executeMutation(create.mutation, { values: { name: ' ', company: 'My Company (San Francisco)', description: 'Due on receipt', early_discount: '' } })).rejects.toMatchObject({ status: 422, code: 'ACCOUNTING_PAYMENT_TERM_NAME_REQUIRED' });
+    expect(Number((await repository.query("SELECT COUNT(*) AS n FROM accounting_config_payment_terms WHERE name = ' '"))[0].n)).toBe(0);
     await expect(repository.executeMutation(create.mutation, { values: { name: ' ', company: 'My Company (San Francisco)', description: 'Due on receipt' } })).rejects.toMatchObject({ status: 422, code: 'ACCOUNTING_PAYMENT_TERM_NAME_REQUIRED' });
     await expect(repository.executeMutation(create.mutation, { values: { name: 'Missing Rule', company: 'My Company (San Francisco)', description: ' ' } })).rejects.toMatchObject({ status: 422, code: 'ACCOUNTING_PAYMENT_TERM_RULE_REQUIRED' });
     await expect(repository.executeMutation(create.mutation, { values: { name: 'wire terms', company: 'My Company (San Francisco)', description: 'Duplicate' } })).rejects.toMatchObject({ status: 409, code: 'ACCOUNTING_PAYMENT_TERM_EXISTS' });

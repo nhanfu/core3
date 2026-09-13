@@ -19,6 +19,7 @@ actions:
       operation: update
       table: accounting_config_payment_terms
       fields: [name, company, description, early_discount, state]
+      boolean_fields: [early_discount]
       required: [name, company, description]
       concurrency: { required: true }
       guards:
