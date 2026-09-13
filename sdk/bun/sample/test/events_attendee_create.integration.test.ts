@@ -18,6 +18,9 @@ describe('Events attendee creation parity', () => {
 
     expect(page.components[0]).toMatchObject({ source: 'event_attendees', create_action: 'create_event_attendee' });
     expect(create).toMatchObject({ type: 'server_form', permission: 'events.write', action: 'events.registrations.create', handler: 'yaml_mutation', operation: 'create' });
+    const eventRegistration = yaml('pages/events.yaml').actions.find((candidate: any) => candidate.id === 'register_event_attendee');
+    expect(eventRegistration).toMatchObject({ action: 'events.registrations.register', operation: 'register' });
+    expect(eventRegistration.action).not.toBe(create.action);
     expect(create.mutation).toMatchObject({ operation: 'insert', table: 'event_registrations', required: ['event_id', 'attendee_name'] });
     expect(discovered.pageDatasources.get('attendees')).toContain('event_attendees');
   });

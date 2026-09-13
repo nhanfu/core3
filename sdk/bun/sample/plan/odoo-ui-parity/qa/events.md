@@ -100,6 +100,22 @@ Candidate commit: `650be026a2849075ea1e2a3d6fcdedc897f0e1af`
 - Persistence/data integrity: partial pass (event and registration persistence verified; broader CRUD reload coverage remains)
 - Desktop/mobile visual parity: current route smoke pass; paired comparison pending
 - Tester decision: not signed off
+
+## Coordinator reconciliation — repair candidate `0a099a86`
+
+- Candidate `0a099a864234867deb4680a17d6f0b869dbc1b1e` is self-contained to
+  the Events page action and two focused regression assertions. The API-owned
+  attendee create action remains `events.registrations.create` with
+  `operation: create`; the event-list registration action is now the distinct
+  `events.registrations.register` with `operation: register`.
+- Focused retest: `bun test test/events_attendee_create.integration.test.ts
+  test/events_states.integration.test.ts --timeout 20000` — **5 tests / 63
+  assertions passed**. Candidate evidence also records Events regression
+  **86 tests / 631 assertions**, audit **659 pages / 668 routes / 1,141
+  datasources**, diff-check, and a clean owner worktree.
+- Product/test files were integrated; the candidate's stale duplicate ledger
+  text was not imported. Browser/permission/Odoo and unrelated Website lint
+  blockers remain; this is not full Events sign-off.
 ## 2026-09-13 coordinator dispatch — bounded attendee-create wave
 
 - Existing owner `agent/events-next-wave-20260913` is assigned on

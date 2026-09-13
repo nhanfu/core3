@@ -88,6 +88,7 @@ describe('Events datasource ownership and state parity', () => {
 
     const eventPage = yaml('pages/events.yaml');
     const registration = eventPage.actions.find((action: any) => action.id === 'register_event_attendee');
+    expect(registration).toMatchObject({ action: 'events.registrations.register', operation: 'register' });
     expect(registration.mutation.guards[0]).toMatchObject({ status: 409, message: 'The event is not open or has reached capacity' });
     expect(eventPage.actions.find((action: any) => action.id === 'create_event').mutation.required).toEqual(['name', 'start_at']);
     const detailEdit = yaml('pages/event-detail.yaml').actions.find((action: any) => action.id === 'edit_event_detail');

@@ -141,7 +141,7 @@ actions:
     type: server_form
     permission: events.write
     title: Register attendee
-    action: events.registrations.create
+    action: events.registrations.register
     handler: yaml_mutation
     operation: register
     refresh: [events]

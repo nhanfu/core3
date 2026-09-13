@@ -49,3 +49,12 @@ made here.
 Run the authenticated registration/attendee CRUD workflow and paired Odoo
 desktop/mobile captures for the remaining Events screens; then update this file
 only with evidence from the matching module owner.
+
+## Coordinator reconciliation — `0a099a86`
+
+The bounded registration-action repair is integrated: page registration uses
+`events.registrations.register`/`operation: register`, while API attendee
+creation remains `events.registrations.create`/`operation: create`. Focused
+verification passed 5 tests / 63 assertions; candidate regression and audit
+evidence passed. Permission actor matrix, fresh browser CRUD, repository lint,
+and paired Odoo gates remain open.
