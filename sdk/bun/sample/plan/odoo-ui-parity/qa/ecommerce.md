@@ -127,6 +127,22 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | --- | --- | --- | --- |
 | `DEV-ECOMMERCE-WAVE-20260913-R2` → `QA-ECOMMERCE-WAVE-20260913-R2` | existing `agent/odoo-ecommerce-dev4-sales-handoff` in `/home/nhanjs/projects/core3-worktrees/odoo-ecommerce-dev4-sales-handoff` | Authenticated customer/company boundary for cart, checkout, and order routes, including own/foreign/unauthenticated actors, 401/403 behavior, wrong-company isolation, and focused stale/forbidden mutation tests | dispatched in `8cc55885`; awaiting self-contained product commit before QA |
 
+## 2026-09-13 bounded review — candidate `39ab71fd`
+
+- Reviewed the existing self-contained Ecommerce permission-contract patch in
+  `/home/nhanjs/projects/core3-worktrees/odoo-ecommerce-dev2` (`5` Ecommerce
+  API/YAML/test files only: order detail, pricelists, products, and the focused
+  permission test).
+- Triggered/reconciled bounded QA evidence: `bun test
+  ./test/ecommerce_permissions.integration.test.ts --timeout 20000` passed
+  **1 test / 25 assertions**; `bun run audit` passed with **659 pages, 668
+  routes, and 1134 datasources**; `git diff --check 39ab71fd^ 39ab71fd`
+  passed.
+- Disposition: **bounded conditional pass** for private-route 401/403
+  contracts. Authenticated actor/company browser matrix, restart durability,
+  external payment, and paired Odoo comparison remain open; Ecommerce is not
+  signed off.
+
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
