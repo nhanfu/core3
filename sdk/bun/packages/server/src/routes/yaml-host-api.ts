@@ -83,6 +83,11 @@ export function createYamlHostApi(services: YamlRuntimeContext[]) {
     for (const service of candidates) {
       const response = await call(service, request, url, server);
       if (response === undefined) return undefined;
+      // An upload candidate is selected by its declarative `kind`, so a 404
+      // from the owning service is a semantic upload response (for example a
+      // missing Chat thread), not evidence that another service should claim
+      // the request. Preserve its status and error code for the client.
+      if (pathname === '/api/upload' && method === 'POST' && response) return response;
       if (response && response.status !== 404) return response;
     }
     return null;

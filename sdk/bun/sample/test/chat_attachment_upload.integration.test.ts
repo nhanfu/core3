@@ -5,6 +5,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
+import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
 import { topicMutationInput } from '@core3/server/yaml-service';
 import { DirectTopicRouter } from '@core3/server/topics/direct';
 import { topicDefinition } from '@core3/server/topics/contracts';
@@ -34,11 +35,15 @@ describe('Chat multipart attachment upload', () => {
       uploadRoot, eventStore: { async publish() {} }, storage: yaml('storage.yaml'),
       topics,
     });
+    const hostApi = createYamlHostApi([{
+      id: 'chat', api, pages: new Map(), datasources: new Map(), menus: new Map(),
+      actions: new Map([['upload_attachment', upload]]), storage: yaml('storage.yaml'),
+    } as any]);
     const request = (file: File, meta: Record<string, unknown>) => {
       const form = new FormData();
       form.set('file', file);
       form.set('meta', JSON.stringify({ kind: 'chat_attachment', ...meta }));
-      return api(new Request('http://chat.test/api/upload', { method: 'POST', body: form }), new URL('http://chat.test/api/upload'));
+      return hostApi(new Request('http://chat.test/api/upload', { method: 'POST', body: form }), new URL('http://chat.test/api/upload'));
     };
 
     const captioned = await request(new File([new Uint8Array([67, 72, 65, 84])], 'caption.txt', { type: 'text/plain' }), {
@@ -88,11 +93,15 @@ describe('Chat multipart attachment upload', () => {
       permissions: { permissions: ['chat.read', 'chat.write'], tables: {}, endpoints: {} }, uploadRoot, eventStore: {}, storage: yaml('storage.yaml'),
       topics,
     });
+    const hostApi = createYamlHostApi([{
+      id: 'chat', api, pages: new Map(), datasources: new Map(), menus: new Map(),
+      actions: new Map([['upload_attachment', upload]]), storage: yaml('storage.yaml'),
+    } as any]);
     const request = (meta: Record<string, unknown>, bytes = [88, 89, 90]) => {
       const form = new FormData();
       form.set('file', new File([new Uint8Array(bytes)], 'guard.txt', { type: 'text/plain' }));
       form.set('meta', JSON.stringify({ kind: 'chat_attachment', ...meta }));
-      return api(new Request('http://chat.test/api/upload', { method: 'POST', body: form }), new URL('http://chat.test/api/upload'));
+      return hostApi(new Request('http://chat.test/api/upload', { method: 'POST', body: form }), new URL('http://chat.test/api/upload'));
     };
 
     const stale = await request({ thread_id: 'chat-demo-thread', expected_row_version: 99 });
