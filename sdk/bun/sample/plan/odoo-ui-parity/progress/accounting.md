@@ -35,6 +35,7 @@ Owner batch: bank statement attachment workflow (pending verification)
 
 | Payment Terms bounded reconciliation | `b98f9e80` + `5914d094`; QA candidate evidence and active-branch verification | Candidate QA passes focused `3/51`, Accounting `44/582`, audit `404/410/708`, authenticated CRUD lifecycle, permissions, guards, atomicity, and blank-checkbox create; active branch already owns the earlier compatible slice and its focused suite passes `3/43` | reconciled without duplicate merge; broader export/attachment/print/Odoo gates remain open |
 | Payment Terms conflict/takeover request | Active checkbox serialization vs candidate server `boolean_fields` safeguard | Browser UI path is covered on active; generic direct blank-boolean normalization and regression test are missing from active | same-module takeover requested; dispatch blocked by unavailable agent orchestration; no module sign-off |
+| Payment Terms narrow repair integration | `114e2c0b` | Server `boolean_fields` normalization and active Payment Terms declarations/test integrated as `ebd29063`; focused active retest 3/48 and diff-check pass; candidate broader QA 91/1033 remains conditional for runtime attribution | bounded repair integrated; export/attachment/print/Odoo gates remain open |
 
 ## Remaining gates
 

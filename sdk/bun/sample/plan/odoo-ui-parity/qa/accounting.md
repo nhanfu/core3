@@ -337,6 +337,72 @@ Lifecycle decision: **stalled** after repeated unchanged polls and escalation
 `a8a6bf33`; handoff status recorded in `e3bea965`. Partial Payment Terms files
 remain preserved; QA was not triggered.
 
+## Bounded QA retest: active-contract Payment Terms repair `114e2c0b` (2026-09-13)
+
+- Candidate checkout: `114e2c0bcb4ec42e9269d6530eb0628250d599b8` in the existing
+  paired worktree `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-payment-transactions-20260910`.
+  The worktree was clean before and after QA. No implementation files or
+  `progress.md` were changed; no screenshots were created because the browser
+  runtime was unavailable.
+- Focused suite: `bun test ./test/accounting_payment_terms.integration.test.ts
+  --timeout 20000` from `sdk/bun/sample` — **3 passed, 48 assertions, 0
+  failures**. This covers page/detail binding, deterministic list/detail,
+  search/empty/detail/transport states, write permissions, company-aware CRUD,
+  validation, missing/stale guards, atomic rejection, and the repaired blank
+  boolean contract.
+- Full Accounting suite: `bun test ./test/accounting_*.integration.test.ts
+  --timeout 20000` — **91 passed, 1,033 assertions, 0 failures across 35
+  files**. The first observation exceeded 30 seconds; the same confirmed test
+  process was bounded and re-polled, then completed in 45.39 seconds.
+- Static evidence: `bun run audit` — **661 pages, 670 routes, 1,154
+  datasources, passed**; `git diff --check HEAD^ HEAD` passed; candidate
+  worktree remained clean. No lint script exists in this checkout, so lint is
+  not claimed.
+- Runtime/browser blocker: no listener was available on the exact existing
+  runner ports `4339`, `3002`, or mediator `3010` when the browser retest was
+  attempted. Therefore authenticated admin create with blank `early_discount`,
+  browser persistence/CRUD lifecycle, browser permission boundary, viewport
+  fit, and fresh browser evidence for this commit are **unverified**. The
+  prior `5914d094` browser pass is not reused as proof for `114e2c0b`.
+- Odoo comparison: not run; paired authenticated Odoo evidence remains open.
+
+### Bounded verdict — **CONDITIONAL FAIL / not ready for reviewer reconciliation**
+
+All available functional, full-regression, audit, and clean-worktree gates
+pass, but this event cannot certify the active-contract repair in the browser
+because the exact runtime was unavailable. Remaining gates are a fresh
+authenticated browser check of blank-`early_discount` create (no HTTP 500 or
+string-to-BOOL error), persistence and CRUD lifecycle, browser permission and
+guard behavior, plus paired authenticated Odoo comparison. Re-run the same QA
+event when the existing runner is available; no implementation change is
+requested from this QA event.
+
+## Browser retry evidence: Payment Terms `114e2c0b` (2026-09-13)
+
+- Live endpoints were reachable: backend `http://127.0.0.1:3001/api/modules`
+  returned HTTP 200 and frontend `http://localhost:3002/` returned HTTP 200;
+  mediator port 3010 was listening.
+- Authenticated Chrome/Playwright retry at desktop `1440x900` loaded
+  `http://localhost:3002/accounting/payment-terms` with
+  `admin@tms.local`. A new Payment Term was entered while leaving
+  `early_discount` blank. Save returned HTTP 200, the row appeared in the
+  list, no BOOL conversion/HTTP 500 message appeared, and there were zero
+  console/request-failure errors. Screenshot is outside Git at
+  `/tmp/accounting-payment-terms-114e2c0b-browser-retry.png`.
+- Attribution blocker: the live server process cwd is the primary checkout
+  `/home/nhanjs/projects/core3/sdk/bun/sample` at `ab5496ba`; git ancestry
+  confirms `114e2c0b` is **not** in that runtime. The retry therefore proves
+  the live environment behavior only, not candidate `114e2c0b`. No candidate
+  worktree or implementation files were modified.
+
+### Bounded browser verdict — **CONDITIONAL / candidate not certifiable**
+
+Blank-boolean browser behavior passes on the live runtime, but candidate
+attribution remains blocked until the same existing process is restarted from
+the `114e2c0b` worktree (or the candidate is integrated). Full candidate
+browser CRUD persistence, permissions, guards, atomicity, desktop/mobile, and
+paired Odoo evidence consequently remain unverified for this event.
+
 ## Bounded QA retest: Payment Terms repair `5914d094` (2026-09-13)
 
 - Candidate checkout: `5914d094a7abb301723b3db5f52669a9fbffbfa4` in the
@@ -422,3 +488,20 @@ this does not sign off the broader Accounting module gates listed above.
 - Reviewer dispatch is currently blocked because no agent orchestration tool is
   available in this session. Broader export/attachment/print/Odoo gates remain
   open and Accounting is not signed off.
+
+## Coordinator integration — narrow repair `114e2c0b`
+
+- The inherited Accounting repair was cherry-picked cleanly as `ebd29063`.
+  It is limited to `YamlMutationRuntime` boolean normalization, the active
+  Payment Terms create/update declarations, and the direct blank-boolean
+  regression test. No Events files or unrelated module ledgers were imported.
+- Active focused retest: `bun test
+  test/accounting_payment_terms.integration.test.ts --timeout 20000` — **3
+  tests / 48 assertions passed**. `git diff --check ebd29063^ ebd29063` passed.
+- Candidate QA reports Accounting `91 tests / 1,033 assertions`, audit and
+  browser evidence as passing for the bounded repair. That result remains
+  **conditional** for review because the candidate worktree lacked the already
+  integrated Events repair and could not establish clean runtime attribution;
+  my combined local Accounting invocation did not complete a final summary.
+- Broader export, attachment, print, and paired Odoo comparison gates remain
+  open. This is not Accounting module sign-off.
