@@ -66,7 +66,7 @@ Decision: **blocked / not signed off**. The migration repair itself passes the r
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | SURVEYS-RUNTIME-001 | Shared process was stale and did not serve registered Surveys pages | — | Fresh module-scoped process served all 28 checks; shared-process restart/retest remains required | follow-up |
-| SURVEYS-MIGRATION-001 | DuckDB full-chain rollback to `0.0.16` fails because dependent entries prevent altering `survey_responses` | — | Forward apply/reapply is stable; rollback/replay-down remains required | blocker |
+| SURVEYS-MIGRATION-001 | DuckDB full-chain rollback to `0.0.16` previously failed because dependent entries prevented altering `survey_responses` | `5b7dd7e5` | Active checkout retest passed full-chain rollback to `0.0.0`/re-upgrade and preserved five indexes | fixed |
 
 ## Sign-off
 
@@ -86,6 +86,25 @@ Decision: **blocked / not signed off**. The migration repair itself passes the r
   and `git diff --check`.
 - Authenticated persistence/actor/browser evidence and paired Odoo comparison
   remain open. Surveys remains conditional and unsigned-off.
+
+## DEV/QA reconciliation — `DEV-SURVEYS-WAVE-20260913-R2` / `QA-SURVEYS-WAVE-20260913-R2`
+
+- The owner handoff at `6b704c7d` requested the migration repair, but the
+  authoritative active branch already contains the self-contained product
+  candidate `5b7dd7e5` (`fix(surveys): make DuckDB rollback chain replayable`).
+  No duplicate owner implementation commit is required.
+- Candidate scope review: exactly four Surveys-owned files — migrations `005`,
+  `009`, `015`, and `test/surveys_migrations.integration.test.ts`; no
+  aggregate progress or unrelated module files are included.
+- QA event triggered/reconciled against `5b7dd7e5`. Active-checkout command
+  `bun test test/surveys_migrations.integration.test.ts` passed **3 tests / 11
+  assertions**, including complete DuckDB chain rollback and re-upgrade with
+  index preservation. Existing audit, Surveys Sass build, and diff-check
+  evidence also passed.
+- Disposition: **bounded QA pass; integrated candidate accepted**. Broader
+  Surveys status remains conditional/unsigned-off: authenticated actor and
+  restart coverage, paired Odoo comparison, and the unrelated schema/audit
+  and full-regression gates remain open.
 ## 2026-09-13 coordinator dispatch — bounded repair wave
 
 - Existing owner `agent/odoo-ui-surveys-next-wave-current` is assigned on
