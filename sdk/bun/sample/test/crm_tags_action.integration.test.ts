@@ -91,4 +91,20 @@ describe('CRM Tags Odoo action parity', () => {
     await expect(repository.executeMutation(remove.mutation, { id: created.id, expected_row_version: 2 })).rejects.toMatchObject({ status: 404, code: 'CRM_TAG_NOT_FOUND' });
     database.close();
   });
+
+  test('registers singular tag deletion in the AI allowlist with the CRM guard', () => {
+    const agent = Bun.YAML.parse(readFileSync(join(import.meta.dir, '../services/ai/agent.yaml'), 'utf8')) as any;
+    expect(agent.operations).toContainEqual({
+      id: 'crm.tags.delete',
+      route: '/api/actions/crm.tags.delete',
+      method: 'POST',
+      permission: 'crm.manage',
+      preview: false,
+    });
+    const detail = yaml('api/tag-detail.yaml');
+    expect(action(detail, 'delete_crm_tag_detail')).toMatchObject({
+      action: 'crm.tags.delete',
+      permission: 'crm.manage',
+    });
+  });
 });

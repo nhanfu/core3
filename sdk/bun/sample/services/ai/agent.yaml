@@ -309,6 +309,11 @@ operations:
     method: POST
     permission: crm.manage
     preview: false
+  - id: crm.tags.delete
+    route: /api/actions/crm.tags.delete
+    method: POST
+    permission: crm.manage
+    preview: false
   - id: crm.tags.bulk_delete
     route: /api/actions/crm.tags.bulk_delete
     method: POST
