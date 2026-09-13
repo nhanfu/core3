@@ -129,3 +129,14 @@ and permission boundaries passed. The candidate remains `pending-qa`.
 - Requested authenticated desktop/mobile browser smoke was unavailable. Existing
   attachment evidence remains preserved but is not treated as fresh hierarchy
   browser evidence. Base remains `pending-qa`; no module sign-off is claimed.
+## 2026-09-13 coordinator dispatch — bounded contact attachment wave
+
+- Existing owner `agent/odoo-owner-base-wave1` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/odoo-owner-base-wave1`, based at
+  `a353b408`. Development event: `DEV-BASE-WAVE-20260913-R2`; QA event:
+  `QA-BASE-WAVE-20260913-R2`; handoff commit: `5ae2cdd1`.
+- Scope is the contact-detail attachment panel binding to the existing
+  page-id-owned metadata/upload/download API, with empty/error states,
+  permission/company scope, stale/no-partial-write behavior, persistence, and
+  focused tests. Candidate pending; existing ledgers and aggregate progress
+  are preserved.
