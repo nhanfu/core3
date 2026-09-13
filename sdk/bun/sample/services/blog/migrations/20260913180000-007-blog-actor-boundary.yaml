@@ -1,0 +1,23 @@
+version: 0.0.7
+kind: schema
+description: Blog company and site boundary
+type:
+  postgres:
+    up: |
+      ALTER TABLE blog_blogs ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE blog_post_attachments ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      UPDATE blog_blogs SET company_name = 'Core3 Demo Company' WHERE company_name IS NULL OR TRIM(company_name) = '';
+      UPDATE blog_posts p SET company_name = COALESCE(NULLIF(TRIM(p.company_name), ''), b.company_name, 'Core3 Demo Company') FROM blog_blogs b WHERE b.id = p.blog_id;
+      UPDATE blog_post_attachments a SET company_name = COALESCE(NULLIF(TRIM(a.company_name), ''), p.company_name, 'Core3 Demo Company') FROM blog_posts p WHERE p.id = a.post_id;
+      CREATE INDEX IF NOT EXISTS blog_blogs_company_idx ON blog_blogs(company_name);
+      CREATE INDEX IF NOT EXISTS blog_posts_scope_idx ON blog_posts(company_name, blog_id, state);
+      CREATE INDEX IF NOT EXISTS blog_post_attachments_scope_idx ON blog_post_attachments(company_name, post_id);
+    down: |
+      ALTER TABLE blog_post_attachments DROP COLUMN IF EXISTS company_name;
+      ALTER TABLE blog_posts DROP COLUMN IF EXISTS company_name;
+      ALTER TABLE blog_blogs DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

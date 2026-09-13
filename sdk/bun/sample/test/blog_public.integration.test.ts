@@ -35,7 +35,7 @@ describe('Blog public visibility parity', () => {
     expect(await detail?.json()).toEqual({ post: { id: 'blog-post-demo-001', state: 'Published' } });
     expect((await module.handlePublicRoute(new Request('http://blog.test/api/public/blog/posts/blog-post-demo-002'), new URL('http://blog.test/api/public/blog/posts/blog-post-demo-002'), service))?.status).toBe(404);
     expect((await module.handlePublicRoute(new Request('http://blog.test/api/public/blog/posts', { method: 'POST' }), new URL('http://blog.test/api/public/blog/posts'), service))?.status).toBe(405);
-    expect(calls).toEqual([{ operation: 'blog.public.posts', request: { q: 'yaml' } }, { operation: 'blog.public.post', request: { id: 'blog-post-demo-001' } }, { operation: 'blog.public.post', request: { id: 'blog-post-demo-002' } }]);
+    expect(calls).toEqual([{ operation: 'blog.public.posts', request: { q: 'yaml', blog_id: null } }, { operation: 'blog.public.post', request: { id: 'blog-post-demo-001', blog_id: null } }, { operation: 'blog.public.post', request: { id: 'blog-post-demo-002', blog_id: null } }]);
   });
 
   test('declares a Fluent public post renderer and published-only browser route', () => {

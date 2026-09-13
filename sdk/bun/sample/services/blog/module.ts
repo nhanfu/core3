@@ -33,13 +33,15 @@ export default class BlogModule implements ModuleLifecycle {
     if (url.pathname === '/api/public/blog/posts') {
       if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
       const q = url.searchParams.get('q')?.trim() || null;
-      const result = await service.call('blog.public.posts', { q });
+      const blogId = url.searchParams.get('blog_id')?.trim() || null;
+      const result = await service.call('blog.public.posts', { q, blog_id: blogId });
       return this.json({ posts: result?.posts || result?.data || [] });
     }
     const match = url.pathname.match(/^\/api\/public\/blog\/posts\/([^/]+)$/);
     if (!match) return null;
     if (request.method !== 'GET') return this.json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
-    const result = await service.call('blog.public.post', { id: decodeURIComponent(match[1]) });
+    const blogId = url.searchParams.get('blog_id')?.trim() || null;
+    const result = await service.call('blog.public.post', { id: decodeURIComponent(match[1]), blog_id: blogId });
     const posts = result?.posts || result?.data || [];
     if (!posts.length) return this.json({ error: 'Post not found', code: 'BLOG_PUBLIC_POST_NOT_FOUND' }, 404);
     return this.json({ post: posts[0] });

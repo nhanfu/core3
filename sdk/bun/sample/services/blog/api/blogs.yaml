@@ -6,7 +6,7 @@ datasources:
       unauthorized: { status: 401, code: BLOG_BLOGS_UNAUTHORIZED, message: Sign in to view blogs. }
       forbidden: { status: 403, code: BLOG_BLOGS_FORBIDDEN, message: You do not have permission to view blogs. }
       transport_error: { status: 503, code: BLOG_BLOGS_UNAVAILABLE, message: Blogs are temporarily unavailable. }
-    query: "SELECT b.id, b.row_version, b.name, b.subtitle, b.active, b.sequence, (SELECT COUNT(*) FROM blog_posts p WHERE p.blog_id = b.id) AS post_count FROM blog_blogs b WHERE (:q IS NULL OR b.name ILIKE '%' || :q || '%' OR b.subtitle ILIKE '%' || :q || '%') ORDER BY b.sequence, b.name, b.id"
+    query: "SELECT b.id, b.row_version, b.name, b.subtitle, b.active, b.sequence, b.company_name, (SELECT COUNT(*) FROM blog_posts p WHERE p.blog_id = b.id AND (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name))) AS post_count FROM blog_blogs b WHERE (COALESCE(:current_company_name, :company_name, '') = '' OR b.company_name = COALESCE(:current_company_name, :company_name)) AND (:q IS NULL OR b.name ILIKE '%' || :q || '%' OR b.subtitle ILIKE '%' || :q || '%') ORDER BY b.sequence, b.name, b.id"
   - id: blog_detail
     single: true
     permission: blog.read
@@ -15,7 +15,7 @@ datasources:
       forbidden: { status: 403, code: BLOG_DETAIL_FORBIDDEN, message: You do not have permission to view this blog. }
       missing_record: { status: 404, code: BLOG_NOT_FOUND, message: Blog not found. }
       transport_error: { status: 503, code: BLOG_DETAIL_UNAVAILABLE, message: This blog is temporarily unavailable. }
-    query: "SELECT id, row_version, name, subtitle, active, sequence FROM blog_blogs WHERE id = :id"
+    query: "SELECT id, row_version, name, subtitle, active, sequence, company_name FROM blog_blogs WHERE id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))"
 actions:
   - id: create_blog
     type: server_form
@@ -28,15 +28,17 @@ actions:
     mutation:
       operation: insert
       table: blog_blogs
-      fields: [name, subtitle]
+      fields: [name, subtitle, company_name]
       required: [name]
       guards:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: BLOG_NAME_REQUIRED, message: A blog name is required. }
-        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_blogs WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: BLOG_EXISTS, message: A blog with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: A blog must belong to the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_blogs WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name))", status: 409, code: BLOG_EXISTS, message: A blog with this name already exists. }
       result: { query: "SELECT * FROM blog_blogs WHERE id = :id" }
     fields:
       - { field: name, label: Blog Name, type: text, required: true }
       - { field: subtitle, label: Blog Subtitle, type: text }
+      - { field: company_name, label: Company, type: text }
   - id: edit_blog
     type: server_form
     permission: blog.write
@@ -50,14 +52,16 @@ actions:
     mutation:
       operation: update
       table: blog_blogs
-      fields: [name, subtitle]
+      fields: [name, subtitle, company_name]
       required: [name]
       concurrency: { required: true }
       guards:
-        - { query: "SELECT id FROM blog_blogs WHERE id = :id", status: 404, code: BLOG_NOT_FOUND, message: Blog not found. }
+        - { query: "SELECT id FROM blog_blogs WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: BLOG_NOT_FOUND, message: Blog not found. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: A blog must belong to the current company. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: BLOG_NAME_REQUIRED, message: A blog name is required. }
-        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_blogs WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: BLOG_EXISTS, message: A blog with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_blogs WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name))", status: 409, code: BLOG_EXISTS, message: A blog with this name already exists. }
       result: { query: "SELECT * FROM blog_blogs WHERE id = :id" }
     fields:
       - { field: name, label: Blog Name, type: text, required: true }
       - { field: subtitle, label: Blog Subtitle, type: text }
+      - { field: company_name, label: Company, type: text }

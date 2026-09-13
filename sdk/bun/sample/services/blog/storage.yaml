@@ -8,4 +8,4 @@ attachments:
     download:
       route: /api/blog/post-attachments
       permission: blog.read
-      query: SELECT * FROM blog_post_attachments WHERE id = :attachment_id
+      query: SELECT a.* FROM blog_post_attachments a JOIN blog_posts p ON p.id = a.post_id WHERE a.id = :attachment_id AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)

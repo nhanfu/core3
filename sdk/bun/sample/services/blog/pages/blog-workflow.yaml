@@ -16,7 +16,7 @@ workflow:
       to: Published
       permission: blog.write
       mutation:
-        guards: [{ query: "SELECT id FROM blog_posts WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft blog posts can be published }]
+        guards: [{ query: "SELECT id FROM blog_posts WHERE id = :id AND state = 'Draft' AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: BLOG_POST_SCOPE_REQUIRED, message: Only a current-company draft blog post can be published }]
         steps: [{ query: "UPDATE blog_posts SET state = 'Published', published_date = COALESCE(published_date, CURRENT_TIMESTAMP), row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
     - id: unpublish
@@ -24,7 +24,7 @@ workflow:
       to: Draft
       permission: blog.write
       mutation:
-        guards: [{ query: "SELECT id FROM blog_posts WHERE id = :id AND state = 'Published'", status: 409, message: Only published blog posts can be unpublished }]
+        guards: [{ query: "SELECT id FROM blog_posts WHERE id = :id AND state = 'Published' AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: BLOG_POST_SCOPE_REQUIRED, message: Only a current-company published blog post can be unpublished }]
         steps: [{ query: "UPDATE blog_posts SET state = 'Draft', row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
     - id: archive
@@ -32,6 +32,6 @@ workflow:
       to: Archived
       permission: blog.manage
       mutation:
-        guards: [{ query: "SELECT id FROM blog_posts WHERE id = :id AND state IN ('Draft', 'Published')", status: 409, message: Only draft or published blog posts can be archived }]
+        guards: [{ query: "SELECT id FROM blog_posts WHERE id = :id AND state IN ('Draft', 'Published') AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: BLOG_POST_SCOPE_REQUIRED, message: Only a current-company blog post can be archived }]
         steps: [{ query: "UPDATE blog_posts SET state = 'Archived', row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM blog_posts WHERE id = :id" }

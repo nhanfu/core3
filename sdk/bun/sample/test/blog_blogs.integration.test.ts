@@ -56,8 +56,8 @@ describe('Blog Blogs parity slice', () => {
     expect(page.components[0].row_open_action).toBe('edit_blog');
     expect(api.actions.map((action: any) => action.id)).toEqual(['create_blog', 'edit_blog']);
     expect(api.actions.every((action: any) => action.permission === 'blog.write')).toBe(true);
-    expect(api.actions[0].mutation.guards.map((guard: any) => guard.code)).toEqual(['BLOG_NAME_REQUIRED', 'BLOG_EXISTS']);
-    expect(api.actions.map((action: any) => action.fields.map((field: any) => field.field))).toEqual([['name', 'subtitle'], ['name', 'subtitle']]);
+    expect(api.actions[0].mutation.guards.map((guard: any) => guard.code)).toEqual(['BLOG_NAME_REQUIRED', 'BLOG_COMPANY_SCOPE_REQUIRED', 'BLOG_EXISTS']);
+    expect(api.actions.map((action: any) => action.fields.map((field: any) => field.field))).toEqual([['name', 'subtitle', 'company_name'], ['name', 'subtitle', 'company_name']]);
     expect(api.datasources[0].error_states.transport_error.status).toBe(503);
   });
 

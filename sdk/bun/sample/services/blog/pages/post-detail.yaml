@@ -4,10 +4,10 @@ datasources:
   - id: blog_post_detail
     permission: blog.read
     single: true
-    query: "SELECT * FROM blog_posts WHERE id = :id"
+    query: "SELECT * FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))"
   - id: blog_post_attachments
     permission: blog.read
-    query: "SELECT id, post_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM blog_post_attachments WHERE post_id = :id ORDER BY created_at DESC, id"
+    query: "SELECT a.id, a.post_id, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM blog_post_attachments a JOIN blog_posts p ON p.id = a.post_id WHERE a.post_id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name)) ORDER BY a.created_at DESC, a.id"
 components:
   - type: OdooFormView
     source: blog_post_detail
@@ -41,10 +41,10 @@ actions:
     mutation:
       generated: [attachment_id]
       guards:
-        - { query: "SELECT id FROM blog_posts WHERE id = :post_id", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
+        - { query: "SELECT id FROM blog_posts WHERE id = :post_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
       steps:
-        - { query: "INSERT INTO blog_post_attachments(id, post_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :post_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)" }
-      result: { query: "SELECT id, post_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM blog_post_attachments WHERE id = :attachment_id" }
+        - { query: "INSERT INTO blog_post_attachments(id, post_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, company_name) SELECT :attachment_id, :post_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id, company_name FROM blog_posts WHERE id = :post_id" }
+      result: { query: "SELECT id, post_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM blog_post_attachments WHERE id = :attachment_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)" }
   - id: download_blog_post_attachment
     type: download
     permission: blog.read
@@ -66,12 +66,13 @@ actions:
     mutation:
       operation: update
       table: blog_posts
-      fields: [blog_id, blog_name, name, subtitle, author_name, teaser, content_html, tags]
+      fields: [blog_id, blog_name, company_name, name, subtitle, author_name, teaser, content_html, tags]
       required: [blog_id, blog_name, name]
       concurrency: { required: true }
       guards:
-        - { query: "SELECT id FROM blog_posts WHERE id = :id", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
-        - { query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active", status: 400, code: BLOG_BLOG_REQUIRED, message: An active blog is required. }
+        - { query: "SELECT id FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
+        - { query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: The blog belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: A post must belong to the current company. }
       result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
     fields:
       - { field: blog_id, label: Blog, type: select, options_source: blog_lookup, required: true }
