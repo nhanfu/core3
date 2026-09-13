@@ -125,3 +125,15 @@ candidate slice is functionally green for the tested Project dashboard
 Timesheets integration, but remains not signed off because authenticated
 desktop/mobile proof, actor-matrix browser checks, restart persistence, and
 paired Odoo comparison are still open.
+## 2026-09-13 coordinator dispatch — bounded attachment wave
+
+- Existing owner `agent/project-timesheets-dashboard-20260913` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/project-timesheets-dashboard-20260913`,
+  based at `35199401`. Development event:
+  `DEV-PROJECT-WAVE-20260913-R2`; QA event:
+  `QA-PROJECT-WAVE-20260913-R2`; handoff commit: `b5c6cf36`.
+- Scope is one Project task/project attachment contract slice: permissioned
+  upload/list/download or currently exposed subset, ownership checks, safe
+  missing/invalid handling, and reload-equivalent persistence with focused
+  tests. Candidate pending; aggregate progress untouched. Existing owner-ledger
+  edits are preserved.
