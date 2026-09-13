@@ -56,3 +56,16 @@ Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It 
 - Persistence/data integrity: pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
+
+## Reviewer disposition — candidate `760f171f`
+
+- Integrated on the active branch as `b6cda7b6`; the bounded change adds the
+  declared Menu Editor column `Edit` action and its contract assertion.
+- Post-merge verification passed: Menu Editor 5 tests / 20 assertions, the
+  broader Website slice 20 tests / 97 assertions, Website UI audit, Website
+  Sass build, and `git diff --check`.
+- Recorded authenticated Core3 evidence covers desktop edit/save/reload,
+  second-site persistence, mobile `More actions` without overflow, dispatcher
+  403, and publish → unpublish → publish HTTP 200 lifecycle refreshes.
+- Paired authenticated Odoo visual comparison remains blocked. Website is
+  **conditional / not signed off**; broader module gates remain open.
