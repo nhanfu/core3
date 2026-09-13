@@ -34,3 +34,16 @@ Retested in the isolated worktree at the exact repair commit. Authenticated Core
 Focused regression passed: 12/12 tests, 120 assertions. Spreadsheet CSS, repository UI audit (659 pages, 668 routes, 1137 datasources), focused ESLint, and commit diff-check passed. Fresh authenticated Core3 desktop/mobile browser captures are outside Git at `/tmp/core3-odoo-parity/spreadsheet-registry-retest-{desktop,mobile}.png`; both had zero failed requests/page errors and no horizontal overflow. Odoo comparison captures were unavailable, so no paired parity claim is recorded.
 
 QA finding: no regression found for this repair. This ledger does not change module status or constitute functional, permission, persistence, or Odoo parity sign-off.
+
+## Coordinator reconciliation — Registry candidate `0b023a13` (2026-09-13)
+
+- The runtime registry repair is already represented on active by `eca2ad0d`;
+  the later owner dispatch HEAD `bdb2b6ce` was not substituted.
+- The candidate's deletion of existing company-visibility coverage was not
+  accepted. Active retained that regression and removed only its unused local
+  in `75d69ebd`.
+- Active verification passed **13 tests / 126 assertions**, audit **661 / 670 /
+  1161**, targeted ESLint, and diff-check. Candidate evidence also confirms
+  authenticated dashboard desktop/mobile registry, query, and error behavior.
+- Spreadsheet remains active/conditional: Odoo comparison, broader workbook,
+  export/share, actor, restart, and Temporal gates remain open.

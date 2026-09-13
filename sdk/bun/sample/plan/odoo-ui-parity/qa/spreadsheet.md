@@ -153,3 +153,12 @@ Detailed execution matrix: [`test-plans/spreadsheet.md`](test-plans/spreadsheet.
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-SPREADSHEET-REGISTRY-WAVE-20260913-R2` → `QA-SPREADSHEET-REGISTRY-WAVE-20260913-R2` | existing `agent/spreadsheet-registry-404-20260913` in `/home/nhanjs/projects/core3-worktrees/spreadsheet-registry-404-20260913` | Dashboard filter persistence/restoration, company scope, invalid/stale/duplicate guards, 401/403 refusal, and focused no-partial-write tests | dispatched in `bdb2b6ce`; awaiting self-contained product commit before QA |
+
+## Coordinator reconciliation — Registry candidate `0b023a13` (2026-09-13)
+
+- Exact candidate reviewed in `/home/nhanjs/projects/core3-worktrees/spreadsheet-registry-404-20260913` on
+  `agent/spreadsheet-registry-404-20260913`; owner later HEAD `bdb2b6ce` was not substituted.
+- The wrapped runtime registry implementation is already active as `eca2ad0d`, with its required host/runtime prerequisites. The candidate's `server.ts` and Spreadsheet module product changes are therefore already represented; no duplicate cherry-pick was made.
+- The candidate's test/doc patch was not applied verbatim because it removed the existing company-visibility regression and carried stale ledger edits. Active retained coverage was lint-cleaned in `75d69ebd` without deleting that test.
+- Active verification: Spreadsheet suite **13 tests / 126 assertions**, audit **661 pages / 670 routes / 1161 datasources**, targeted ESLint, and diff-check passed. Candidate QA additionally verified authenticated desktop/mobile registry/query/error behavior, Sass, audit 659/668/1137, ESLint, and diff-check.
+- Disposition: **conditionally reconciled as active-equivalent implementation** (`eca2ad0d` + `75d69ebd`); no module sign-off. Odoo comparison, broader workbook/export/share/actor coverage, restart durability, and Temporal gates remain open.
