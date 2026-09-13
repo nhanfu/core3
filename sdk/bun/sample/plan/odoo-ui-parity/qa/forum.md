@@ -1,5 +1,21 @@
 # forum QA ledger
 
+## Conditional review handoff — exact candidate `eea0e68b` (2026-09-13)
+
+- Forum integrity/filter/persistence slice: **PASS**, 9 tests / 64 assertions.
+  Archived filtering, forum-name mismatch rejection, atomic `total_posts`
+  increment, successful authenticated HTTP creation, and no-partial-write
+  rejection are covered.
+- Audit (659/668/1,134), Forum CSS, targeted ESLint, and diff-check passed.
+- Conditional blockers preserved: authenticated desktop/mobile browser mutation
+  and reload evidence, and durable restart verification, were unavailable due
+  to missing Playwright/js_repl and the memory-backed runner. No browser or
+  visual parity claim is made.
+
+Disposition: bounded Forum change integrated conditionally; preserve browser,
+durable-restart, actor, and Odoo gates. No full Forum module sign-off or
+aggregate progress claim.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.
