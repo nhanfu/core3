@@ -37,7 +37,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'card', 'kanban']);
     expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ label: 'Cards', card: { title: 'name', subtitle: 'email', image_field: 'avatar_url' } });
     expect(list.views.filter((view: any) => view.mobile === false).map((view: any) => view.id)).toEqual(['list', 'kanban']);
-    expect(yaml('api/contacts.yaml').datasources.map((item: any) => item.id)).toEqual(['contact_active_states', 'contacts', 'contact_types', 'contact_countries']);
+    expect(yaml('api/contacts.yaml').datasources.map((item: any) => item.id)).toEqual(['contact_active_states', 'contacts', 'contact_types', 'contact_countries', 'contact_parent_companies']);
     expect(list.filters[0]).toMatchObject({ field: 'active', label: 'Status', options_source: 'contact_active_states' });
     expect(list.columns.find((column: any) => column.field === 'id').actions).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'archive_contact', label: 'Archive', show_if: 'row.active === true' }),
@@ -68,6 +68,10 @@ describe('Base Contacts list/card/detail parity batch', () => {
     expect(defaults.data.find((row: any) => row.id === 'contact-demo')).toMatchObject({ name: 'Demo Contact', avatar_initials: 'D', category_count: 1, activity_count: 1 });
     expect((await repository.querySource(contacts, { q: 'Leonie', active: null, company_type: null, country_name: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['contact-berlin']);
     expect((await repository.querySource(contacts, { q: null, active: null, company_type: 'person', country_name: 'Vietnam', fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['contact-gemini-edwin', 'contact-gemini-jesse']);
+    expect((await repository.querySource(source('contacts.yaml', 'contact_parent_companies'), {}, 0, 50)).data).toEqual(expect.arrayContaining([
+      { value: 'company-azure', label: 'Azure Interior' },
+      { value: 'company-gemini', label: 'Gemini Furniture' },
+    ]));
     expect((await repository.querySource(contacts, { q: null, active: 'archived', company_type: null, country_name: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['company-archived', 'contact-archived', 'contact-archive-filter']);
     expect((await repository.querySource(contacts, { q: null, active: null, company_type: null, country_name: null, fixture_state: 'empty' })).data).toEqual([]);
 
@@ -112,6 +116,33 @@ describe('Base Contacts list/card/detail parity batch', () => {
     expect(restored).toMatchObject({ id: 'contact-demo', active: true, row_version: 3 });
     await expect(repository.executeMutation(restore.mutation, { id: 'contact-demo', expected_row_version: 2 })).rejects.toMatchObject({ status: 409, code: 'BASE_CONTACT_ALREADY_ACTIVE' });
     await expect(repository.executeMutation(archive.mutation, { id: 'missing-contact', expected_row_version: 1 })).rejects.toMatchObject({ status: 404, code: 'BASE_CONTACT_NOT_FOUND' });
+    database.close();
+  });
+
+  test('persists a valid company hierarchy and declares guarded parent writes', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'base_contacts_hierarchy_test_migrations', ['schema', 'data']);
+    const actions = yaml('api/contacts.yaml').actions;
+    const edit = actions.find((candidate: any) => candidate.id === 'edit_contact');
+    const created = await repository.executeMutation(actions.find((candidate: any) => candidate.id === 'create_contact').mutation, {
+      name: 'Hierarchy QA Contact', company_type: 'person', email: 'hierarchy-qa@core3.local', parent_company_id: 'company-azure', is_company: false,
+    });
+    expect(created).toMatchObject({ name: 'Hierarchy QA Contact', parent_company_id: 'company-azure' });
+    const updated = await repository.executeMutation(edit.mutation, {
+      id: created.id, row_version: created.row_version, expected_row_version: created.row_version, name: 'Hierarchy QA Contact', company_type: 'person', email: 'hierarchy-qa@core3.local', parent_company_id: 'company-gemini', is_company: false,
+    });
+    expect(updated).toMatchObject({ id: created.id, parent_company_id: 'company-gemini' });
+    await expect(repository.executeMutation(edit.mutation, {
+      id: created.id, row_version: updated.row_version, expected_row_version: updated.row_version, name: 'Hierarchy QA Contact', company_type: 'person', email: 'hierarchy-qa@core3.local', parent_company_id: 'contact-berlin', is_company: false,
+    })).rejects.toMatchObject({ status: 422, code: 'BASE_PARENT_COMPANY_INVALID' });
+    await expect(repository.executeMutation(edit.mutation, {
+      id: created.id, row_version: updated.row_version, expected_row_version: updated.row_version, name: 'Hierarchy QA Contact', company_type: 'person', email: 'hierarchy-qa@core3.local', parent_company_id: created.id, is_company: false,
+    })).rejects.toMatchObject({ status: 422, code: 'BASE_PARENT_COMPANY_INVALID' });
+    expect(edit.mutation.fields).toContain('parent_company_id');
+    expect(edit.mutation.guards).toEqual(expect.arrayContaining([expect.objectContaining({ code: 'BASE_PARENT_COMPANY_INVALID', status: 422 })]));
+    expect(yaml('api/contact-detail.yaml').actions.find((candidate: any) => candidate.id === 'edit_contact_detail').mutation.fields).toContain('parent_company_id');
+    expect(yaml('api/contacts.yaml').datasources.find((candidate: any) => candidate.id === 'contact_parent_companies').permission).toBe('base.contacts.read');
     database.close();
   });
 });

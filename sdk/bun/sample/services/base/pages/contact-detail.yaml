@@ -32,7 +32,7 @@ components:
           - { field: company_type, label: Type }
           - { field: email, label: Email }
           - { field: phone, label: Phone }
-          - { field: parent_company_name, label: Company }
+          - { field: parent_company_id, label: Company, options_source: contact_detail_parent_companies }
           - { field: website, label: Website }
           - { field: categories, label: Tags }
       - title: Address

@@ -15,6 +15,9 @@ datasources:
   - id: contact_followers
     permission: base.contacts.read
     query: "SELECT id, name, email FROM (VALUES ('contact-follower-admin', 'Administrator', 'admin@tms.local')) followers(id, name, email) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+  - id: contact_detail_parent_companies
+    permission: base.contacts.read
+    query: "SELECT id AS value, name AS label FROM base_contacts WHERE is_company = true AND active = true ORDER BY name, id"
   - id: contact_attachments
     permission: base.contacts.read
     query: "SELECT id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM (SELECT id, file_name, mime_type, size_bytes, uploaded_by, created_at FROM base_contact_attachments WHERE contact_id = :id UNION ALL SELECT 'contact-attachment-001', 'contact-brief.txt', 'text/plain', 128, 'Administrator', TIMESTAMP '2026-09-02 10:00:00' WHERE :id = 'contact-demo') attachments WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
@@ -39,10 +42,12 @@ actions:
     mutation:
       operation: update
       table: base_contacts
-      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, currency_code, is_company, notes]
+      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, parent_company_id, currency_code, is_company, notes]
       required: [name]
       timestamps: true
-      guards: [{ query: "SELECT id FROM base_contacts WHERE id = :id AND active = true", status: 409, message: Archived contacts cannot be edited }]
+      guards:
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true", status: 409, message: Archived contacts cannot be edited }
+        - { query: "SELECT 1 WHERE :parent_company_id IS NULL OR (:parent_company_id <> :id AND EXISTS (SELECT 1 FROM base_contacts WHERE id = :parent_company_id AND is_company = true AND active = true))", status: 422, code: BASE_PARENT_COMPANY_INVALID, message: Parent must be an active company and cannot be the contact itself. }
     fields:
       - { field: name, label: Name, type: text, required: true }
       - { field: company_type, label: Type, type: select, options: [{ value: person, label: Person }, { value: company, label: Company }, { value: other, label: Other }] }
@@ -54,6 +59,7 @@ actions:
       - { field: state_name, label: State, type: text }
       - { field: zip, label: ZIP, type: text }
       - { field: country_name, label: Country, type: text }
+      - { field: parent_company_id, label: Company, type: select, options_source: contact_detail_parent_companies }
       - { field: currency_code, label: Currency, type: text }
       - { field: is_company, label: Is a company, type: checkbox }
       - { field: notes, label: Notes, type: textarea }

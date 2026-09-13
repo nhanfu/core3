@@ -13,6 +13,9 @@ datasources:
   - id: contact_countries
     permission: base.contacts.read
     query: "SELECT DISTINCT country_name AS value, country_name AS label FROM base_contacts WHERE active = true AND country_name IS NOT NULL ORDER BY country_name"
+  - id: contact_parent_companies
+    permission: base.contacts.read
+    query: "SELECT id AS value, name AS label FROM base_contacts WHERE is_company = true AND active = true ORDER BY name, id"
 actions:
   - id: create_contact
     type: server_form
@@ -26,9 +29,11 @@ actions:
       operation: insert
       table: base_contacts
       id_input: contact_id
-      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, is_company, notes]
+      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, parent_company_id, is_company, notes]
       required: [name]
-      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email))", status: 409, code: BASE_CONTACT_EMAIL_EXISTS, message: A contact with this email already exists }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email))", status: 409, code: BASE_CONTACT_EMAIL_EXISTS, message: A contact with this email already exists }
+        - { query: "SELECT 1 WHERE :parent_company_id IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :parent_company_id AND is_company = true AND active = true)", status: 422, code: BASE_PARENT_COMPANY_INVALID, message: Parent must be an active company. }
       result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
     fields:
       - { field: name, label: Name, type: text, required: true }
@@ -41,6 +46,7 @@ actions:
       - { field: state_name, label: State, type: text }
       - { field: zip, label: ZIP, type: text }
       - { field: country_name, label: Country, type: text }
+      - { field: parent_company_id, label: Company, type: select, options_source: contact_parent_companies }
       - { field: is_company, label: Is a company, type: checkbox }
       - { field: notes, label: Notes, type: textarea }
   - id: create_contact_from_crm
@@ -71,12 +77,13 @@ actions:
     mutation:
       operation: update
       table: base_contacts
-      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, currency_code, is_company, notes]
+      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, parent_company_id, currency_code, is_company, notes]
       required: [name]
       timestamps: true
       guards:
         - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true", status: 409, message: Archived contacts cannot be edited }
         - { query: "SELECT 1 AS ok WHERE :email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email) AND id <> :id)", status: 409, message: A contact with this email already exists }
+        - { query: "SELECT 1 WHERE :parent_company_id IS NULL OR (:parent_company_id <> :id AND EXISTS (SELECT 1 FROM base_contacts WHERE id = :parent_company_id AND is_company = true AND active = true))", status: 422, code: BASE_PARENT_COMPANY_INVALID, message: Parent must be an active company and cannot be the contact itself. }
     fields:
       - { field: name, label: Name, type: text, required: true }
       - { field: company_type, label: Type, type: select, options_source: contact_types }
@@ -89,6 +96,7 @@ actions:
       - { field: zip, label: ZIP, type: text }
       - { field: country_name, label: Country, type: text }
       - { field: currency_code, label: Currency, type: text }
+      - { field: parent_company_id, label: Company, type: select, options_source: contact_parent_companies }
       - { field: is_company, label: Is a company, type: checkbox }
       - { field: notes, label: Notes, type: textarea }
   - id: duplicate_contact
@@ -100,8 +108,8 @@ actions:
     operation: create
     prefill: row
     refresh: [contacts]
-    mutation: { operation: insert, table: base_contacts, fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, currency_code, is_company, notes], required: [name], defaults: { active: true } }
-    fields: [{ field: name, label: Name, type: text, required: true }, { field: company_type, label: Type, type: select, options_source: contact_types }, { field: email, label: Email, type: text }, { field: phone, label: Phone, type: text }, { field: street, label: Street, type: text }, { field: city, label: City, type: text }, { field: country_name, label: Country, type: text }, { field: notes, label: Notes, type: textarea }]
+    mutation: { operation: insert, table: base_contacts, fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, parent_company_id, currency_code, is_company, notes], required: [name], defaults: { active: true } }
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: company_type, label: Type, type: select, options_source: contact_types }, { field: email, label: Email, type: text }, { field: phone, label: Phone, type: text }, { field: parent_company_id, label: Company, type: select, options_source: contact_parent_companies }, { field: street, label: Street, type: text }, { field: city, label: City, type: text }, { field: country_name, label: Country, type: text }, { field: notes, label: Notes, type: textarea }]
   - id: archive_contact
     type: server
     permission: base.contacts.write
