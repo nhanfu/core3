@@ -46,7 +46,7 @@ describe('Expenses migration persistence gate', () => {
       duplicates: 1,
       split_lines: 2,
     });
-    expect(await repository.query(`SELECT version FROM ${migrationTable} ORDER BY version`)).toHaveLength(10);
+    expect(await repository.query(`SELECT version FROM ${migrationTable} ORDER BY version`)).toHaveLength(11);
     expect(await repository.query(
       "SELECT receipt_checksum FROM expenses WHERE id = 'expense-demo-submitted-2'",
     )).toEqual([{ receipt_checksum: 'sha256:receipt-air-duplicate' }]);

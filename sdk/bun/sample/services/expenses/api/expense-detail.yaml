@@ -20,7 +20,10 @@ datasources:
         e.duplicate_candidate,
         e.reimbursement_status, e.refusal_reason, e.state AS status,
         e.split_expense_origin_id,
-        (SELECT COUNT(*) FROM expenses split WHERE split.split_expense_origin_id = e.id OR e.split_expense_origin_id = split.split_expense_origin_id) AS split_expense_count
+        (SELECT COUNT(*) FROM expenses split WHERE split.split_expense_origin_id = e.id OR e.split_expense_origin_id = split.split_expense_origin_id) AS split_expense_count,
+        (SELECT state FROM expense_receipt_processing rp WHERE rp.expense_id = e.id) AS processing_state,
+        (SELECT attempt_count FROM expense_receipt_processing rp WHERE rp.expense_id = e.id) AS processing_attempt_count,
+        (SELECT failure_reason FROM expense_receipt_processing rp WHERE rp.expense_id = e.id) AS processing_failure_reason
       FROM expenses e WHERE e.id = :id AND (:fixture_state IS NULL OR :fixture_state <> 'empty')
   - id: expense_detail_activity
     single: false
@@ -90,6 +93,18 @@ datasources:
         COALESCE(CAST(e.accounting_date AS VARCHAR), '2026-09-12') AS accounting_date
       FROM expenses e
       WHERE e.id = :id AND e.state = 'Approved'
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+  - id: expense_receipt_processing
+    single: true
+    permission: expenses.read
+    error_states: { transport_error: { status: 503, code: EXPENSE_RECEIPT_PROCESSING_UNAVAILABLE, message: Receipt processing status is temporarily unavailable } }
+    query: |
+      SELECT id, expense_id, company_name, state, attempt_count, request_key,
+        receipt_reference, attachment_id, provider_code, failure_reason,
+        CAST(last_attempt_at AS VARCHAR) AS last_attempt_at,
+        CAST(processed_at AS VARCHAR) AS processed_at, row_version
+      FROM expense_receipt_processing
+      WHERE expense_id = :id
         AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
 actions:
   - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
@@ -396,6 +411,39 @@ actions:
         - query: "UPDATE expenses SET receipt_reference = :fileName, receipt_label = 'Receipt attached', receipt_checksum = 'uploaded:' || :attachment_id, row_version = row_version + 1 WHERE id = :id"
         - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES('expense-activity-' || :id || '-attachment-' || :attachment_id, :id, :current_user_name, 'expenses.attachments.upload', 'Receipt attached', :fileName)"
       result: { query: "SELECT id, expense_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM expense_attachments WHERE id = :attachment_id" }
+  - id: process_expense_receipt
+    type: server_form
+    permission: expenses.write
+    title: Process Receipt
+    submit_label: Process Receipt
+    cancel_label: Cancel
+    action: expenses.detail.receipt.process
+    handler: yaml_mutation
+    operation: receipt_process
+    params: { id: '{state.id}' }
+    refresh: [expense_detail, expense_detail_activity, expense_detail_attachments, expense_receipt_processing]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id", status: 404, code: EXPENSE_RECEIPT_EXPENSE_NOT_FOUND, message: This expense no longer exists. }
+        - { query: "SELECT id FROM expenses WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: EXPENSE_RECEIPT_COMPANY_FORBIDDEN, message: This receipt belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:request_key AS VARCHAR))) BETWEEN 1 AND 120 AND LENGTH(TRIM(CAST(:receipt_reference AS VARCHAR))) BETWEEN 1 AND 255", status: 422, code: EXPENSE_RECEIPT_INPUT_INVALID, message: A request key and receipt reference are required. }
+        - { query: "SELECT 1 AS ok WHERE :provider_result IN ('success', 'failure')", status: 422, code: EXPENSE_RECEIPT_RESULT_INVALID, message: Receipt processing result must be success or failure. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM expense_receipt_processing WHERE expense_id = :id AND state = 'Succeeded' AND COALESCE(request_key, '') <> :request_key)", status: 409, code: EXPENSE_RECEIPT_IDEMPOTENCY_CONFLICT, message: This expense already has a successful receipt with another request key. }
+      steps:
+        - query: "INSERT INTO expense_receipt_processing(id, expense_id, company_name, state, attempt_count, row_version) SELECT 'receipt-processing-' || id, id, COALESCE(company_name, 'Core3 Demo Company'), 'Pending', 0, 1 FROM expenses WHERE id = :id ON CONFLICT (id) DO NOTHING"
+        - query: "UPDATE expense_receipt_processing SET state = CASE WHEN :provider_result = 'success' THEN 'Succeeded' ELSE 'Failed' END, attempt_count = CASE WHEN state = 'Succeeded' AND request_key = :request_key THEN attempt_count ELSE attempt_count + 1 END, request_key = :request_key, receipt_reference = :receipt_reference, attachment_id = CASE WHEN :provider_result = 'success' THEN 'receipt-processed-' || :id ELSE attachment_id END, provider_code = :provider_code, failure_reason = CASE WHEN :provider_result = 'failure' THEN COALESCE(NULLIF(TRIM(:failure_reason), ''), 'Receipt provider failed') ELSE NULL END, last_attempt_at = TIMESTAMP '2026-09-13 15:00:00', processed_at = CASE WHEN :provider_result = 'success' THEN TIMESTAMP '2026-09-13 15:00:00' ELSE NULL END, row_version = row_version + 1 WHERE expense_id = :id AND company_name = CASE WHEN COALESCE(:current_company_name, '') = '' THEN company_name ELSE :current_company_name END"
+        - query: "INSERT INTO expense_attachments(id, expense_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) SELECT 'receipt-processed-' || :id, :id, :receipt_reference, COALESCE(NULLIF(:mime_type, ''), 'application/pdf'), COALESCE(CAST(:size_bytes AS BIGINT), 0), 'expenses/receipts/' || :id || '/' || :receipt_reference, :current_user_id WHERE :provider_result = 'success' ON CONFLICT (id) DO NOTHING"
+        - query: "UPDATE expenses SET receipt_reference = CASE WHEN :provider_result = 'success' THEN :receipt_reference ELSE receipt_reference END, receipt_label = CASE WHEN :provider_result = 'success' THEN 'Receipt processed' ELSE 'Receipt processing failed' END, receipt_checksum = CASE WHEN :provider_result = 'success' THEN 'processed:' || :id ELSE receipt_checksum END, row_version = CASE WHEN :provider_result = 'success' AND receipt_reference IS DISTINCT FROM :receipt_reference THEN row_version + 1 ELSE row_version END WHERE id = :id"
+        - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) SELECT 'expense-activity-' || :id || '-receipt-' || :request_key || '-' || :provider_result, :id, :current_user_name, CASE WHEN :provider_result = 'success' THEN 'expenses.receipt.processed' ELSE 'expenses.receipt.failed' END, CASE WHEN :provider_result = 'success' THEN 'Receipt processed' ELSE 'Receipt processing failed' END, CASE WHEN :provider_result = 'success' THEN 'Receipt processed by ' || COALESCE(:provider_code, 'provider') ELSE COALESCE(NULLIF(TRIM(:failure_reason), ''), 'Receipt provider failed') END WHERE NOT EXISTS (SELECT 1 FROM expense_activity WHERE id = 'expense-activity-' || :id || '-receipt-' || :request_key || '-' || :provider_result)"
+      result: { query: "SELECT * FROM expense_receipt_processing WHERE expense_id = :id" }
+    fields:
+      - { field: receipt_reference, label: Receipt reference, type: text, required: true }
+      - { field: provider_code, label: Provider, type: text, default: expense_ocr }
+      - { field: provider_result, label: Provider result, type: select, required: true, options: [{ value: success, label: Success }, { value: failure, label: Failure }] }
+      - { field: failure_reason, label: Failure reason, type: textarea }
+      - { field: request_key, label: Request key, type: text, required: true }
+      - { field: mime_type, label: MIME type, type: text, default: application/pdf }
+      - { field: size_bytes, label: Size in bytes, type: number, default: 0 }
   - id: download_expense_attachment
     type: download
     permission: expenses.read

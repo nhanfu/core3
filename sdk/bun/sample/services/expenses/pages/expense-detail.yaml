@@ -19,6 +19,7 @@ components:
     header_actions:
       - { id: edit_expense_detail, label: Edit, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft'" }
       - { id: submit_expense_detail, label: Submit, variant: primary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft'" }
+      - { id: process_expense_receipt, label: Process receipt, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft' || state.expense_detail.status === 'Submitted'" }
       - { id: review_duplicate_expense, label: Review duplicate, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Submitted' && state.expense_detail.duplicate_candidate" }
       - { id: approve_expense_detail, label: Approve, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Submitted' && !state.expense_detail.duplicate_candidate" }
       - { id: post_expense_detail, label: Post journal entry, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Approved'" }
@@ -65,6 +66,9 @@ components:
                 - { field: receipt_checksum, label: Receipt fingerprint }
                 - { field: duplicate_candidate, label: Duplicate check }
                 - { field: refusal_reason, label: Refusal reason, show_if: "state.expense_detail.status === 'Refused'" }
+                - { field: processing_state, label: Processing state }
+                - { field: processing_attempt_count, label: Processing attempts }
+                - { field: processing_failure_reason, label: Processing failure }
         - id: activity
           label: Chatter
           content_slot: true

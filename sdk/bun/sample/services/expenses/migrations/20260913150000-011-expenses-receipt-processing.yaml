@@ -1,0 +1,31 @@
+version: 0.0.11
+description: Persisted receipt processing attempts and deterministic retry state
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS expense_receipt_processing (
+        id VARCHAR PRIMARY KEY,
+        expense_id VARCHAR NOT NULL UNIQUE,
+        company_name VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Pending',
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        request_key VARCHAR,
+        receipt_reference VARCHAR,
+        attachment_id VARCHAR,
+        provider_code VARCHAR,
+        failure_reason VARCHAR,
+        last_attempt_at TIMESTAMP,
+        processed_at TIMESTAMP,
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS idx_expense_receipt_processing_expense ON expense_receipt_processing(expense_id);
+      INSERT INTO expense_receipt_processing(id, expense_id, company_name, state, attempt_count, row_version)
+      SELECT 'receipt-processing-' || id, id, COALESCE(company_name, 'Core3 Demo Company'), 'Pending', 0, 1
+      FROM expenses
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS expense_receipt_processing;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
