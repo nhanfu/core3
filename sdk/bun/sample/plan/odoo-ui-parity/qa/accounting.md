@@ -404,3 +404,21 @@ this does not sign off the broader Accounting module gates listed above.
   or Accounting module sign-off. Broader export, attachment, print, and fresh
   paired-Odoo comparison gates remain open. The owner worktree and its partial/
   historical files remain preserved.
+
+## 2026-09-13 explicit conflict finding and takeover request
+
+- Active branch verification confirms `PageFormModal` already serializes an
+  HTML checkbox through `el.checked`; the authenticated blank-
+  `early_discount` browser path is therefore behaviorally covered on active.
+- Active `YamlMutationRuntime` has `normalize_empty` but no candidate
+  `boolean_fields` support, and the active Payment Terms mutations do not
+  declare that safeguard. The candidate-only direct mutation regression
+  (`early_discount: ''` and `display_on_invoice: ''` become `false`, while an
+  invalid request remains atomic) is not present in the active focused test.
+- The full `b98f9e80` product patch remains a conflicting parallel contract,
+  not a safe merge. A same-module takeover is requested for the narrow server
+  normalization/test gap, rebased onto the active Payment Terms contracts;
+  no replacement owner or duplicate implementation is authorized here.
+- Reviewer dispatch is currently blocked because no agent orchestration tool is
+  available in this session. Broader export/attachment/print/Odoo gates remain
+  open and Accounting is not signed off.
