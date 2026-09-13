@@ -872,6 +872,18 @@ slice makes no visual-parity claim. The exact probe outputs are retained in
 that directory as `health-8069.txt`, `health-8073.txt`, and
 `health-32615.txt`.
 
+## Mailing Test recipient validation hardening (2026-09-13)
+
+The existing `action_mail_mass_mailing_test` contract previously validated only
+the first line of the multiline recipient field. The API now validates the
+complete newline-delimited address list, rejects an invalid address anywhere
+in the input, and stores a deterministic LF-normalized, outer-trimmed value.
+`last_test_email` continues to mirror the first normalized address. The focused
+mailings contract adds invalid-second-recipient and CRLF persistence coverage;
+no migration is needed because the existing `last_test_recipients` column is
+used. This is a persistence/recipient-workflow hardening slice only: it does
+not send real email, add a durable scheduler, or claim browser parity.
+
 ## Mailing Contact Import wizard bounded slice (2026-09-12)
 
 The next uncovered action reachable from Odoo Mailing List Contacts is

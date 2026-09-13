@@ -137,8 +137,8 @@ actions:
     mutation:
       concurrency: { required: true }
       guards:
-        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:last_test_recipients AS VARCHAR))) > 0 AND regexp_matches(TRIM(split_part(replace(CAST(:last_test_recipients AS VARCHAR), chr(13), ''), chr(10), 1)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$')", status: 422, code: EMAIL_MAILING_TEST_EMAIL_INVALID, message: Enter one valid email address per line. }
-      steps: [{ query: "UPDATE email_mailings SET last_test_recipients = CAST(:last_test_recipients AS VARCHAR), last_test_email = split_part(replace(CAST(:last_test_recipients AS VARCHAR), chr(13), ''), chr(10), 1), row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_TEST_STATE_CHANGED, message: This mailing changed before its test could be sent. }]
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:last_test_recipients AS VARCHAR))) > 0 AND regexp_matches(TRIM(replace(CAST(:last_test_recipients AS VARCHAR), chr(13), '')), '^[^@ \\r\\n]+@[^@ \\r\\n]+\\.[^@ \\r\\n]+(\\n[^@ \\r\\n]+@[^@ \\r\\n]+\\.[^@ \\r\\n]+)*$')", status: 422, code: EMAIL_MAILING_TEST_EMAIL_INVALID, message: Enter one valid email address per line. }
+      steps: [{ query: "UPDATE email_mailings SET last_test_recipients = TRIM(replace(CAST(:last_test_recipients AS VARCHAR), chr(13), '')), last_test_email = split_part(TRIM(replace(CAST(:last_test_recipients AS VARCHAR), chr(13), '')), chr(10), 1), row_version = row_version + 1, updated_at = TIMESTAMP '2026-01-15 11:30:00' WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, code: EMAIL_MAILING_TEST_STATE_CHANGED, message: This mailing changed before its test could be sent. }]
       result: { query: "SELECT * FROM email_mailings WHERE id = :id" }
     fields: [{ field: last_test_recipients, label: Recipients, type: textarea, required: true, placeholder: "email1@example.com\\nemail2@example.com" }]
   - id: add_email_mailing_template

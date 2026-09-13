@@ -116,10 +116,14 @@ describe('Email Marketing Mailings parity action', () => {
       id: 'email-mailing-lead-feedback', expected_row_version: 1,
       values: { last_test_recipients: 'not-an-email' },
     })).rejects.toMatchObject({ status: 422, code: 'EMAIL_MAILING_TEST_EMAIL_INVALID' });
+    await expect(repository.executeMutation(mailingTest.mutation, {
+      id: 'email-mailing-lead-feedback', expected_row_version: 1,
+      values: { last_test_recipients: 'valid@example.com\nnot-an-email' },
+    })).rejects.toMatchObject({ status: 422, code: 'EMAIL_MAILING_TEST_EMAIL_INVALID' });
 
     const sent = await repository.executeMutation(mailingTest.mutation, {
       id: 'email-mailing-lead-feedback', expected_row_version: 1,
-      values: { last_test_recipients: 'qa@example.com\nmarketing@example.com' },
+      values: { last_test_recipients: '  qa@example.com\r\nmarketing@example.com  ' },
     });
     expect(sent).toMatchObject({
       last_test_recipients: 'qa@example.com\nmarketing@example.com',
