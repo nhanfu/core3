@@ -94,6 +94,15 @@ the bearer token and rows remain scoped to the old company; Odoo `admin/admin`
 returns HTTP 400. Employees remains conditional pending token refresh and
 authenticated Odoo comparison.
 
+## Reviewer reconciliation: deterministic company fixtures `0a04f9ac` (2026-09-13)
+
+`0a04f9ac` is active at `HEAD`; no duplicate merge was needed. Migration
+`20260913140000-026` seeds two deterministic Vietnam Branch departure reasons,
+and page/`/api/query` tests now assert Demo versus Vietnam rows. Full Employees
+passes **58/697**, audit **661/670/1,154**, targeted ESLint and diff-check pass.
+Full-repo lint retains three unrelated Spreadsheet/Website errors. Company
+switch token refresh and authenticated Odoo comparison remain open.
+
 ## Reviewer reconciliation: datasource company propagation `77bebdf5` (2026-09-13)
 
 `77bebdf5` is already active; no duplicate merge was needed. Shared `/api/pages`

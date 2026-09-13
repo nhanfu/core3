@@ -440,3 +440,19 @@ open; Employees is not signed off.
   unsafe optional-chaining errors in `test/website_public.integration.test.ts`.
 - No browser or authenticated Odoo sign-off is claimed. No unrelated module
   files were changed.
+
+## Reviewer reconciliation: deterministic company fixtures `0a04f9ac` (2026-09-13)
+
+- `0a04f9ac` is already the active `HEAD`; ownership and scope are valid. It
+  adds only Employees migration `20260913140000-026` and related test updates,
+  preserving the existing company predicates and routing fix. No duplicate
+  implementation or unrelated module change was made.
+- Active verification passes **58 tests / 697 assertions** across 17 files;
+  audit passes **661 pages / 670 routes / 1,154 datasources**. Targeted
+  Employees ESLint and diff-check pass. Full-repository lint remains blocked by
+  three unrelated pre-existing Spreadsheet/Website errors.
+- The deterministic two-company fixture makes page and `/api/query` scope
+  assertions concrete. Runtime company-switch token refresh and authenticated
+  Odoo comparison remain blockers; no browser/Odoo sign-off is added.
+- Disposition: **bounded conditional reconciliation, already integrated**;
+  Employees remains unsigned-off.
