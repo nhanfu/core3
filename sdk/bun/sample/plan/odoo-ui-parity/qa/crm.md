@@ -71,3 +71,20 @@ Not signed off. The singular tag deletion allowlist and binding repair passed fo
   open; typecheck and CRM mock-data audits remain blocked; authenticated
   browser and Odoo comparison remain unavailable. CRM is conditional and
   unsigned-off.
+
+## 2026-09-13 coordinator review: candidate `af26e16f`
+
+- Integrated the bounded empty typed-form normalization repair as `d0be043c`.
+  The five-file patch is self-contained after resolving one test-file conflict
+  by retaining the active authenticated API regression and adding the
+  candidate client transport assertions; no unrelated files were imported.
+- Post-merge CRM integration test passed **41 tests, 197 assertions**. The
+  candidate’s bounded CRM/Base evidence remains **67 pass / 1 known AI
+  YAML-context baseline failure**; audit (**661 pages, 670 routes, 1154
+  datasources**), CRM CSS, targeted ESLint, and diff-check passed.
+- Normalization now covers modal and inline form transport, blank optional
+  numeric/date values, numeric comma conversion, and CRM defaults. Odoo
+  authenticated HTTP evidence is retained; Core3 API/browser and Odoo visual
+  comparison remain unavailable due runtime discovery and missing Playwright.
+- CRM remains **conditional / unsigned-off**. The known AI-context baseline,
+  broader runtime/browser, and paired visual gates remain open.

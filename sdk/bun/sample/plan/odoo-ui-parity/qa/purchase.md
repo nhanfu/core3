@@ -82,3 +82,14 @@ resolved or explicitly waived.
   assertions, API persistence, timestamp/version, audit/CSS/Vite/diff-check).
   Preserve TypeScript and authenticated Core3/Odoo browser blockers; no
   Purchase module sign-off is issued.
+
+## 2026-09-13 coordinator reconciliation: candidate `19eec536`
+
+- The candidate’s timestamp/version repair was **not retained** because its
+  one-test diff was not self-contained against the active Purchase test
+  structure. The attempted cherry-pick imported stale Vendor test context and
+  caused three active-contract failures; that attempt was reverted as
+  `03b22d62`.
+- Same-owner repair remains required: rebase the timestamp assertion onto the
+  active tests or submit a standalone test. Preserve the candidate’s
+  conditional evidence and the TypeScript/authenticated Core3/Odoo blockers.
