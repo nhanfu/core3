@@ -93,3 +93,12 @@ lint/diff-check evidence passing. Company switch still returns HTTP 200 while
 the bearer token and rows remain scoped to the old company; Odoo `admin/admin`
 returns HTTP 400. Employees remains conditional pending token refresh and
 authenticated Odoo comparison.
+
+## Reviewer reconciliation: datasource company propagation `77bebdf5` (2026-09-13)
+
+`77bebdf5` is already active; no duplicate merge was needed. Shared `/api/pages`
+and `/api/query` now pass authenticated `current_company_name`. Focused QA
+passes **2/13**, full Employees **58/692**, audit **661/670/1,154**, with lint
+and diff-check passing. Real company-switch token refresh remains blocked
+(HTTP 200 switch but old bearer scope/unchanged rows); Odoo `admin/admin`
+returns HTTP 400. Employees remains conditional.

@@ -374,3 +374,22 @@ open; Employees is not signed off.
 - Disposition: **bounded conditional reconciliation**. Company-switch token
   refresh and authenticated Odoo comparison remain blockers; Employees is not
   fully signed off.
+
+## Reviewer reconciliation: datasource company propagation `77bebdf5` (2026-09-13)
+
+- Ownership and scope are valid. `77bebdf5` is already present in the active
+  ancestry and its final three-file product/test tree matches active: the
+  shared `/api/pages` and `/api/query` routes now derive and pass
+  `current_company_name` from the authenticated user company. No duplicate
+  implementation or unrelated module change was made.
+- Active focused prerequisite test passes **2 tests / 13 assertions**; full
+  Employees evidence is **58 tests / 692 assertions**; audit passes **661
+  pages / 670 routes / 1,154 datasources**. Candidate ESLint and diff-check
+  evidence pass.
+- The regression proves rehydrated auth context scopes both page and query
+  datasource results. Real runtime evidence remains blocked: company switch
+  returns HTTP 200 but the bearer token remains scoped to the old company and
+  rows are unchanged; Odoo `admin/admin` returns HTTP 400.
+- Disposition: **bounded conditional reconciliation, already integrated**.
+  Token refresh and authenticated Odoo comparison remain blockers; Employees is
+  not fully signed off.
