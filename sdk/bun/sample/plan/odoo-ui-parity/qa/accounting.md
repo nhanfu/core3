@@ -277,3 +277,7 @@ Sales and Purchases export coverage below.
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-ACCOUNTING-PAYMENT-TERMS-WAVE-20260913-R2` → `QA-ACCOUNTING-PAYMENT-TERMS-WAVE-20260913-R2` | existing `agent/odoo-ui-accounting-payment-transactions-20260910` in `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-payment-transactions-20260910` | Payment Terms page/API binding, CRUD validation, manager/company permissions, stale/missing guards, and focused atomicity tests | dispatched in `e845b30f`; awaiting self-contained product commit before QA |
+
+Lifecycle decision: **stalled** after repeated unchanged polls and escalation
+`a8a6bf33`; handoff status recorded in `e3bea965`. Partial Payment Terms files
+remain preserved; QA was not triggered.
