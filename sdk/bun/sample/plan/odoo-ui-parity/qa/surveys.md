@@ -114,3 +114,9 @@ Decision: **blocked / not signed off**. The migration repair itself passes the r
 - Target is the bounded `SURVEYS-MIGRATION-001` rollback/replay-down repair
   with focused regression tests. Candidate is pending; aggregate progress is
   untouched. Existing ledger edits in the owner worktree are preserved.
+
+## 2026-09-13 R2 coordinator dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-SURVEYS-WAVE-20260913-R2` → `QA-SURVEYS-WAVE-20260913-R2` | existing `agent/odoo-ui-surveys-next-wave-current` in `/home/nhanjs/projects/core3-worktrees/surveys-next-wave` | Published/token-scoped participant start/progress/submit/print boundaries, invalid/expired and duplicate/stale refusal, and focused no-disclosure/no-mutation tests | dispatched in `3951d9ea`; awaiting self-contained product commit before QA |
