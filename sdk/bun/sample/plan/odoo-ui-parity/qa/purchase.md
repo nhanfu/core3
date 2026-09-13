@@ -105,3 +105,9 @@ resolved or explicitly waived.
   self-contained candidate, then trigger the existing Purchase QA owner for
   retest and return the evidence here. No duplicate owner/worktree was
   created.
+
+## 2026-09-13 R2 coordinator dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-PURCHASE-RECEIPT-WAVE-20260913-R2` → `QA-PURCHASE-RECEIPT-WAVE-20260913-R2` | existing `agent/odoo-ui-purchase-receipt-lifecycle-20260913` in `/home/nhanjs/projects/core3-worktrees/purchase-receipt-lifecycle-20260913` | Receipt cancellation/fulfillment stale and actor/company guards, 401/403 and missing references, and focused unchanged-row/no-partial-write tests | dispatched in `8111d52c`; awaiting self-contained product commit before QA |
