@@ -93,3 +93,15 @@ resolved or explicitly waived.
 - Same-owner repair remains required: rebase the timestamp assertion onto the
   active tests or submit a standalone test. Preserve the candidate’s
   conditional evidence and the TypeScript/authenticated Core3/Odoo blockers.
+
+## 2026-09-13 coordinator dispatch
+
+- Dispatched to the existing Purchase developer owner on
+  `agent/odoo-ui-purchase-analysis` at
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-purchase-analysis`.
+- Durable owner handoff: `qa/purchase-repair-handoff.md`, commit `989c2621`.
+  The owner must repair against current active contracts, run the focused
+  Purchase suite plus audit/build/diff-check and scoped ESLint, commit a
+  self-contained candidate, then trigger the existing Purchase QA owner for
+  retest and return the evidence here. No duplicate owner/worktree was
+  created.
