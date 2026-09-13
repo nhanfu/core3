@@ -120,3 +120,9 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 
 - No product diff exists after the checkpoint; owner was re-prompted. QA event
   remains untriggered pending implementation and focused tests.
+
+## 2026-09-13 R2 coordinator dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-TIMESHEETS-VISUAL-WAVE-20260913-R2` → `QA-TIMESHEETS-VISUAL-WAVE-20260913-R2` | existing `agent/odoo-ui-timesheets-visual3-20260912` in `/home/nhanjs/projects/core3-worktrees/timesheets-visual3-20260912` | File-backed restart persistence for entries/approvals and linked hours, migration replay, scope, stale/duplicate/employee guards, and focused tests | dispatched in `096f7239`; awaiting self-contained product commit before QA |
