@@ -46,14 +46,18 @@ describe('Accounting bank statement attachments', () => {
     const staleForm = new FormData();
     staleForm.set('file', new File([new Uint8Array([83, 84, 65, 76, 69])], 'stale.csv', { type: 'text/csv' }));
     staleForm.set('meta', JSON.stringify({ kind: 'accounting_bank_statement_attachment', id: 'accounting-bank-statement-001', expected_row_version: 1 }));
-    await expect(createApi()(new Request('http://accounting.test/api/upload', { method: 'POST', body: staleForm }), new URL('http://accounting.test/api/upload'))).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    const staleResponse = await createApi()(new Request('http://accounting.test/api/upload', { method: 'POST', body: staleForm }), new URL('http://accounting.test/api/upload'));
+    expect(staleResponse?.status).toBe(409);
+    expect(await staleResponse?.json()).toMatchObject({ code: 'STALE_RECORD' });
     expect((await repository.query('SELECT attachment_name, attachment_size, row_version FROM accounting_bank_statements WHERE id = ?', ['accounting-bank-statement-001']))[0]).toEqual({ attachment_name: 'statement.csv', attachment_size: '4', row_version: 2 });
 
     user.company = { name: 'Core3 Vietnam Branch' };
     const crossCompanyForm = new FormData();
     crossCompanyForm.set('file', new File([new Uint8Array([67, 82, 79, 83, 83])], 'cross.csv', { type: 'text/csv' }));
     crossCompanyForm.set('meta', JSON.stringify({ kind: 'accounting_bank_statement_attachment', id: 'accounting-bank-statement-001', expected_row_version: 2 }));
-    await expect(createApi()(new Request('http://accounting.test/api/upload', { method: 'POST', body: crossCompanyForm }), new URL('http://accounting.test/api/upload'))).rejects.toMatchObject({ status: 404, code: 'ACCOUNTING_BANK_STATEMENT_NOT_FOUND' });
+    const crossCompanyUpload = await createApi()(new Request('http://accounting.test/api/upload', { method: 'POST', body: crossCompanyForm }), new URL('http://accounting.test/api/upload'));
+    expect(crossCompanyUpload?.status).toBe(404);
+    expect(await crossCompanyUpload?.json()).toMatchObject({ code: 'ACCOUNTING_BANK_STATEMENT_NOT_FOUND' });
     expect((await repository.query('SELECT attachment_name, storage_key FROM accounting_bank_statements WHERE id = ?', ['accounting-bank-statement-001']))[0]).toEqual(expect.objectContaining({ attachment_name: 'statement.csv', storage_key: uploaded.storage_key }));
     const crossCompanyDownload = await createApi()(new Request('http://accounting.test/api/accounting/bank-statement-attachments/accounting-bank-statement-001'), new URL('http://accounting.test/api/accounting/bank-statement-attachments/accounting-bank-statement-001'));
     expect(crossCompanyDownload?.status).toBe(404);
