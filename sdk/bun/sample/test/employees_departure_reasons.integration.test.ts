@@ -99,7 +99,7 @@ describe('Employees Departure Reasons bounded parity', () => {
     expect([create, update, edit, archive, restore, remove].every((entry: any) => entry.permission === 'employees.manage')).toBe(true);
     expect([create, update, edit, archive, restore, remove].every((entry: any) => entry.handler === 'yaml_mutation')).toBe(true);
     expect(create.mutation.generated).toEqual(['id']);
-    expect(create.mutation.guards.map((guard: any) => guard.status)).toEqual([422, 409, 409]);
+    expect(create.mutation.guards.map((guard: any) => guard.status)).toEqual([422, 409, 409, 403]);
     expect(update.mutation.concurrency).toMatchObject({ required: true });
     expect(update.mutation.guards.map((guard: any) => guard.status)).toEqual([404, 422, 409]);
     expect(edit.mutation.concurrency).toMatchObject({ required: true });

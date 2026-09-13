@@ -1,0 +1,14 @@
+version: 0.0.25
+kind: data
+description: Scope departure reasons to the selected employee company
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_departure_reasons ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      UPDATE employee_departure_reasons SET company_name = 'Core3 Demo Company' WHERE company_name IS NULL OR TRIM(company_name) = '';
+    down: |
+      ALTER TABLE employee_departure_reasons DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

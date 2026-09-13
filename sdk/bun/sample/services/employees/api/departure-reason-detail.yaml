@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: employees.manage
     error_states: { transport_error: { status: 503, code: EMPLOYEES_DATA_UNAVAILABLE, message: Employee configuration is temporarily unavailable } }
-    query: "SELECT id, row_version, sequence, name, country_code, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status FROM employee_departure_reasons WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id, row_version, sequence, name, country_code, company_name, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status FROM employee_departure_reasons WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
 actions:
   - id: edit_employee_departure_reason
     type: server_form
@@ -23,14 +23,15 @@ actions:
       required: [name]
       concurrency: { required: true, field: row_version, input: expected_row_version }
       guards:
-        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found. }
+        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found in the current company. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_DEPARTURE_REASON_NAME_REQUIRED, message: A departure reason name is required. }
-        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departure_reasons WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMPLOYEES_DEPARTURE_REASON_EXISTS, message: A departure reason with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departure_reasons WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND company_name = (SELECT company_name FROM employee_departure_reasons WHERE id = :id) AND id <> :id)", status: 409, code: EMPLOYEES_DEPARTURE_REASON_EXISTS, message: A departure reason with this name already exists for this company. }
       result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" }
     fields:
       - { field: sequence, label: Sequence, type: number }
       - { field: name, label: Departure Reason, type: text, required: true }
       - { field: country_code, label: Country, type: text, placeholder: Optional country code }
+      - { field: company_name, label: Company, type: text }
   - id: archive_employee_departure_reason
     type: server
     permission: employees.manage
@@ -46,7 +47,7 @@ actions:
       defaults: { active: false }
       concurrency: { required: true, field: row_version, input: expected_row_version }
       guards:
-        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id AND active = true", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Active departure reason not found. }
+        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Active departure reason not found in the current company. }
       result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" }
   - id: restore_employee_departure_reason
     type: server
@@ -63,5 +64,5 @@ actions:
       defaults: { active: true }
       concurrency: { required: true, field: row_version, input: expected_row_version }
       guards:
-        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id AND active = false", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Archived departure reason not found. }
+        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id AND active = false AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Archived departure reason not found in the current company. }
       result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" }

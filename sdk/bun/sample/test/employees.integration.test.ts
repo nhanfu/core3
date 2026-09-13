@@ -354,4 +354,32 @@ describe('Employees Odoo action-mode parity batch', () => {
     })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_DEPARTURE_REASON_NOT_FOUND' });
     await database.close();
   });
+
+  test('isolates departure reasons across two selected companies', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'employees_departure_reason_company_scope', ['schema', 'data']);
+    const listApi = yaml('api/departure-reasons.yaml');
+    const detailApi = yaml('api/departure-reason-detail.yaml');
+    const list = listApi.datasources[0];
+    const detail = detailApi.datasources[0];
+    const create = listApi.actions.find((action: any) => action.id === 'create_employee_departure_reason_inline');
+    const archive = detailApi.actions.find((action: any) => action.id === 'archive_employee_departure_reason');
+    const restore = detailApi.actions.find((action: any) => action.id === 'restore_employee_departure_reason');
+    const demo = await repository.querySource(list, { q: null, active: null, fixture_state: null, current_company_name: 'Core3 Demo Company' }, 0, 50);
+    expect(demo.data.every((row: any) => row.company_name === 'Core3 Demo Company')).toBe(true);
+    const branch = await repository.executeMutation(create.mutation, {
+      current_company_name: 'Core3 Vietnam Branch',
+      values: { sequence: 10, name: 'Branch relocation', country_code: 'VN', company_name: 'Core3 Vietnam Branch' },
+    });
+    expect(branch).toMatchObject({ company_name: 'Core3 Vietnam Branch', active: true });
+    expect((await repository.querySource(list, { q: null, active: null, fixture_state: null, current_company_name: 'Core3 Demo Company' }, 0, 50)).data.map((row: any) => row.id)).not.toContain(branch.id);
+    expect((await repository.querySource(list, { q: null, active: null, fixture_state: null, current_company_name: 'Core3 Vietnam Branch' }, 0, 50)).data.map((row: any) => row.id)).toEqual([branch.id]);
+    expect((await repository.querySource(detail, { id: branch.id, fixture_state: null, current_company_name: 'Core3 Demo Company' }, 0, 1)).data).toEqual({});
+    await expect(repository.executeMutation(archive.mutation, { id: branch.id, expected_row_version: 1, current_company_name: 'Core3 Demo Company', values: { active: false } })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_DEPARTURE_REASON_NOT_FOUND' });
+    const archived = await repository.executeMutation(archive.mutation, { id: branch.id, expected_row_version: 1, current_company_name: 'Core3 Vietnam Branch', values: { active: false } });
+    expect(archived).toMatchObject({ company_name: 'Core3 Vietnam Branch', active: false, row_version: 2 });
+    await expect(repository.executeMutation(restore.mutation, { id: branch.id, expected_row_version: 2, current_company_name: 'Core3 Demo Company', values: { active: true } })).rejects.toMatchObject({ status: 404, code: 'EMPLOYEES_DEPARTURE_REASON_NOT_FOUND' });
+    await database.close();
+  });
 });

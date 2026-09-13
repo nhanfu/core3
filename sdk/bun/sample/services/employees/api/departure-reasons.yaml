@@ -3,7 +3,7 @@ datasources:
   - id: employee_departure_reasons
     permission: employees.manage
     error_states: { transport_error: { status: 503, code: EMPLOYEES_DATA_UNAVAILABLE, message: Employee configuration is temporarily unavailable } }
-    query: "SELECT id, row_version, sequence, name, country_code, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status FROM employee_departure_reasons WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND ((:active IS NULL AND active = true) OR (:active IS NOT NULL AND active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(country_code, '') ILIKE '%' || :q || '%') ORDER BY sequence, id"
+    query: "SELECT id, row_version, sequence, name, country_code, company_name, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS status FROM employee_departure_reasons WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND ((:active IS NULL AND active = true) OR (:active IS NOT NULL AND active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(country_code, '') ILIKE '%' || :q || '%') AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) ORDER BY sequence, id"
 actions:
   - id: view_employee_departure_reason
     type: navigate
@@ -21,20 +21,22 @@ actions:
     mutation:
       operation: insert
       table: employee_departure_reasons
-      fields: [sequence, name, country_code]
+      fields: [sequence, name, country_code, company_name]
       required: [name]
-      defaults: { sequence: 10, row_version: 1 }
+      defaults: { sequence: 10, row_version: 1, company_name: 'Core3 Demo Company' }
       generated: [id]
       before_steps: [{ query: "SELECT 'departure-reason-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id", assign: true }]
       guards:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_DEPARTURE_REASON_NAME_REQUIRED, message: A departure reason name is required. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departure_reasons WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: EMPLOYEES_DEPARTURE_REASON_EXISTS, message: A departure reason with this name already exists. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departure_reasons WHERE id = 'departure-reason-' || regexp_replace(lower(trim(CAST(:name AS VARCHAR))), '[^a-z0-9]+', '-', 'g'))", status: 409, code: EMPLOYEES_DEPARTURE_REASON_EXISTS, message: A departure reason with this identifier already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: EMPLOYEES_COMPANY_SCOPE_REQUIRED, message: Departure reason must belong to the current company. }
       result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" }
     fields:
       - { field: sequence, label: Sequence, type: number, default: 10 }
       - { field: name, label: Departure Reason, type: text, required: true }
       - { field: country_code, label: Country, type: text, placeholder: Optional country code }
+      - { field: company_name, label: Company, type: text, default: 'Core3 Demo Company' }
   - id: update_employee_departure_reason_inline
     type: server_form
     permission: employees.manage
@@ -51,7 +53,7 @@ actions:
       required: [name]
       concurrency: { required: true, field: row_version, input: expected_row_version }
       guards:
-        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found. }
+        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found in the current company. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_DEPARTURE_REASON_NAME_REQUIRED, message: A departure reason name is required. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_departure_reasons WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: EMPLOYEES_DEPARTURE_REASON_EXISTS, message: A departure reason with this name already exists. }
       result: { query: "SELECT * FROM employee_departure_reasons WHERE id = :id" }
@@ -71,5 +73,5 @@ actions:
       table: employee_departure_reasons
       concurrency: { required: true }
       guards:
-        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found. }
+        - { query: "SELECT id FROM employee_departure_reasons WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_DEPARTURE_REASON_NOT_FOUND, message: Departure reason not found in the current company. }
         - { query: "SELECT 1 AS ok WHERE :id NOT IN ('departure-reason-fired', 'departure-reason-resigned', 'departure-reason-retired')", status: 409, code: EMPLOYEES_DEPARTURE_REASON_DEFAULT, message: Default departure reasons cannot be deleted. }

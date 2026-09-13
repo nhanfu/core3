@@ -146,6 +146,45 @@ QA state: conditional. Directory company scoping and wrong-company restore
 denial are retested pass. Full regression and fresh authenticated desktop,
 mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
 
+## Employees departure-reasons company/Odoo follow-up (2026-09-13)
+
+- Scope: departure-reasons only. Existing lifecycle, duplicate-ID, and
+  `click_to_edit: false` navigation fixes were preserved.
+- Self-contained implementation added in the working tree:
+  migration `20260913130000-025-departure-reason-company-scope.yaml` adds and
+  backfills `company_name`; list/detail reads and edit/archive/restore/delete
+  guards accept `current_company_name`; create enforces the selected company.
+- Functional verification: `bun test ./test/employees.integration.test.ts
+  --timeout 20000` passed **13 tests / 175 assertions**. Departure acceptance
+  plus the action-mode suite passed **16 tests / 235 assertions**. Full module
+  command `bun test ./test/employees*.integration.test.ts --timeout 20000`
+  passed **57 tests / 684 assertions** across 17 files.
+- Static verification: `bun run scripts/audit-order-ui.ts` passed (**661
+  pages, 670 routes, 1,154 datasources**); `bunx eslint
+  test/employees*.integration.test.ts` passed; `git diff --check` passed.
+- Core3 browser/API probe used `admin@tms.local` / `admin123` against the live
+  runtime (backend `3001`, frontend `3002`, mediator `3010`). Login exposed
+  both companies: `company-demo` / `Core3 Demo Company` and `company-vietnam` /
+  `Core3 Vietnam Branch`. Before switching, the departure page returned the
+  three Demo Company rows. `POST /api/v1/company/switch` to `company-vietnam`
+  returned **HTTP 200** with the Vietnam Branch company, but the same bearer
+  token then returned the same three Demo Company rows from
+  `/api/pages/employee-departure-reasons?lc=en`. This is an existing auth
+  company-context refresh blocker, so authenticated company-switch isolation
+  is **blocked**, not passed.
+- Odoo runtime: `http://127.0.0.1:8069` is reachable and redirects the
+  Employees route to `/web/login` (**303**, login page **200**). The available
+  attempted credential `admin/admin` was rejected (**HTTP 400**); no valid
+  authenticated local Odoo credential was available, so an authenticated
+  Departure Reasons comparison is **blocked**. No Odoo claim is made.
+- No screenshot was captured for this follow-up because the required
+  authenticated company-switch and paired Odoo states were not available.
+
+Follow-up verdict: **CONDITIONAL FAIL — functional company predicates and
+tests pass, but authenticated company-switch isolation and paired authenticated
+Odoo comparison remain blocked by the existing auth token refresh and missing
+Odoo credentials.**
+
 ## 2026-09-13 coordinator review: candidate `c8f461f4`
 
 - Integrated the bounded employee-history relation/API/page binding as
