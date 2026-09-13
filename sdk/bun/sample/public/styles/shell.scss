@@ -80,13 +80,20 @@
 .app-switcher-button { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; padding: 0; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--color-text); cursor: pointer; font: inherit; }
 .app-switcher-button:hover { border-color: var(--color-primary); background: var(--color-surface-muted); }
 .app-switcher-icon, .app-switcher-item-icon { display: inline-flex; color: var(--color-primary); }
-.app-switcher-icon svg, .app-switcher-item-icon svg { width: 17px; height: 17px; }
+// Icon renders a span wrapper around the SVG. Bound both layers here so a
+// generic SVG rule cannot let launcher glyphs grow with the available tile.
+.app-switcher-icon > .svg-icon,
+.app-switcher-item-icon > .svg-icon,
+.launcher-close-button > .svg-icon,
+.launcher-search-icon > .svg-icon { display: inline-flex; width: 17px; height: 17px; flex: 0 0 17px; align-items: center; justify-content: center; }
+.app-switcher-icon > .svg-icon svg,
+.app-switcher-item-icon > .svg-icon svg { display: block; width: 17px; height: 17px; max-width: 17px; max-height: 17px; }
 .app-switcher-menu { display: none; position: fixed; z-index: 100; inset: 0; width: 100vw; min-height: 100vh; padding: 88px clamp(24px, 8vw, 128px) 40px; grid-template-columns: repeat(4, minmax(180px, 220px)); justify-content: center; align-content: center; gap: 12px; background: var(--color-bg); overflow-y: auto; }
 .app-switcher-menu.open { display: grid; }
 .launcher-backdrop { display: block; position: fixed; z-index: 0; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; cursor: default; }
 .launcher-close-button { display: grid; position: fixed; z-index: 3; top: 24px; right: 28px; place-items: center; width: 40px; height: 40px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface); color: var(--color-text-secondary); cursor: pointer; box-shadow: var(--shadow-sm); }
 .launcher-close-button:hover { background: var(--color-surface-muted); color: var(--color-text); }
-.launcher-close-button svg { width: 18px; height: 18px; }
+.launcher-close-button > .svg-icon, .launcher-close-button > .svg-icon svg { width: 18px; height: 18px; max-width: 18px; max-height: 18px; flex-basis: 18px; }
 .app-switcher-item { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-height: 92px; width: 100%; padding: 12px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-surface); color: var(--color-text); text-align: left; cursor: pointer; font: inherit; box-shadow: var(--shadow-sm); transition: border-color .15s, box-shadow .15s, transform .15s; }
 .app-switcher-item:hover, .app-switcher-item.active { border-color: var(--color-primary-mid); background: var(--color-primary-light); box-shadow: var(--shadow-md); transform: translateY(-1px); }
 .app-switcher-item.disabled { color: var(--color-text-muted); cursor: not-allowed; }
@@ -132,7 +139,7 @@
 .launcher-search { position: fixed; z-index: 2; top: clamp(72px, 12vh, 120px); left: 50%; display: flex; align-items: center; gap: 8px; width: min(640px, calc(100vw - 48px)); height: 44px; padding: 0 13px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); color: var(--color-text-muted); box-shadow: var(--shadow-md); transform: translateX(-50%); }
 .launcher-search:focus-within { border-color: var(--color-primary-mid); box-shadow: 0 0 0 3px var(--color-primary-light); }
 .launcher-search-icon { display: inline-flex; }
-.launcher-search-icon svg { width: 16px; height: 16px; }
+.launcher-search-icon > .svg-icon, .launcher-search-icon > .svg-icon svg { width: 16px; height: 16px; max-width: 16px; max-height: 16px; flex-basis: 16px; }
 .launcher-search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: .82rem; }
 
 @media (max-width: 1100px) { .global-ai-search { width: min(360px, calc(100% - 300px)); } }

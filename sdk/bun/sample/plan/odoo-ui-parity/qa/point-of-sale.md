@@ -57,7 +57,7 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | POINT_OF_SALE-BROWSER-001 | Initial full-route harness reused a page and captured late requests from the previous route | — | Discarded; isolated touch contexts rerun cleanly | closed |
-| POINT_OF_SALE-VISUAL-001 | Authenticated desktop/mobile captures show oversized global launcher/icon glyphs and POS content displaced far below the fold | `cdbc38ee` | Captures listed above; visual inspection completed 2026-09-13 | open |
+| POINT_OF_SALE-VISUAL-001 | Authenticated desktop/mobile captures show oversized global launcher/icon glyphs and POS content displaced far below the fold | `cdbc38ee` | `pos_visual_navigation.integration.test.ts` verifies bounded wrapper/inner SVG selectors; global and POS CSS builds pass. A fresh post-fix screenshot was not completed before the bounded probe was stopped. | retest pending |
 
 ## Sign-off
 
@@ -66,3 +66,19 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 - Persistence/data integrity: pass for the tested session/order/payment flow
 - Desktop/mobile visual parity: **fail/open** for `POINT_OF_SALE-VISUAL-001`; module parity pending
 - Tester decision: conditional; broader route and paired Odoo gates remain open
+
+## DEV follow-up: launcher bounds and Orders navigation (2026-09-13)
+
+- Dedicated worktree/branch: `agent/odoo-pos-visual-nav-20260913`.
+- The shared launcher stylesheet now bounds the `.svg-icon` wrapper and inner
+  SVG for the switcher, launcher tiles, close control, and search control;
+  generic SVG sizing cannot expand those glyphs to the tile or viewport.
+- The Orders YAML contract retains both row-open and double-click actions to
+  `/point-of-sale/order-detail` with `{row.id}`. The focused test records this
+  alongside the CSS regression guard.
+- Focused verification: 15 POS tests passed, 76 assertions; `bun run audit`
+  passed (659 pages, 668 routes, 1,139 datasources); global and POS CSS builds
+  passed; `git diff --check` passed before commit.
+- Browser limitation: the isolated server was stopped at the user-requested
+  bounded-finalization point. No post-fix desktop/mobile screenshot or fresh
+  click-through is claimed; `POINT_OF_SALE-VISUAL-001` remains retest pending.

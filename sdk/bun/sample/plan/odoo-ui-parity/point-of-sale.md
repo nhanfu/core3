@@ -254,6 +254,16 @@ denomination behavior remain deferred.
 
 ## Current batch: Product Variants list and detail parity contract
 
+## Current follow-up: launcher glyph containment and Orders row navigation
+
+The shared shell launcher now explicitly constrains both the icon wrapper and
+its nested SVG for the application switcher, launcher tiles, close control,
+and search control. This addresses the recorded oversized-glyph failure mode
+without changing module routing. POS Orders continues to declare both row-open
+and double-click navigation to `/point-of-sale/order-detail` with the selected
+row ID. The focused POS regression test, CSS builds, and UI audit pass; fresh
+post-fix browser captures remain a QA retest item.
+
 ### Odoo menu and action contract (inspected 2026-09-10)
 
 - Addon/version: `point_of_sale`, Odoo 19 Community; the fresh owned reference
