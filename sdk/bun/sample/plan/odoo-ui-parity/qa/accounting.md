@@ -403,6 +403,42 @@ the `114e2c0b` worktree (or the candidate is integrated). Full candidate
 browser CRUD persistence, permissions, guards, atomicity, desktop/mobile, and
 paired Odoo evidence consequently remain unverified for this event.
 
+## Final candidate-attributed QA event: Payment Terms `ebd29063` from `114e2c0b` (2026-09-13)
+
+- Active runtime attribution: primary checkout `a99adb7a` contains the
+  integrated source repair `ebd29063` and Events runtime repair `ab5496ba`;
+  backend process cwd is `/home/nhanjs/projects/core3/sdk/bun/sample`.
+  Backend `http://127.0.0.1:3001/api/modules` and frontend
+  `http://localhost:3002/` both returned HTTP 200; mediator 3010 was
+  listening. No implementation or `progress.md` files were changed.
+- Authenticated browser blank-boolean retry: admin `admin@tms.local` at
+  desktop `1440x900` opened `/accounting/payment-terms`, created a new term
+  with `early_discount` left blank, and received HTTP 200. The row appeared
+  in the list, no string-to-BOOL/HTTP 500 error appeared, and console/request
+  error count was zero. Screenshot remains outside Git at
+  `/tmp/accounting-payment-terms-ebd29063-browser-retry.png`.
+- Browser lifecycle attempt: create and list persistence were reached, but the
+  bounded edit/archive/restore/delete sequence could not be certified. After
+  the edit interaction, the detail surface did not expose the expected
+  Archive control within the 5-second bound; the run terminated without
+  archive/restore/delete proof. This is an exact browser blocker, not a
+  functional-test pass. No screenshot or implementation change was made for
+  the failed sequence.
+- Desktop/mobile and permission browser checks were not completed in this
+  final candidate-attributed run. Existing focused contract evidence covers
+  guards, permissions, validation, stale/missing behavior, and atomicity; it
+  does not replace the missing browser lifecycle evidence.
+- Paired authenticated Odoo comparison was not available in this event.
+
+### Bounded verdict — **CONDITIONAL FAIL / not ready for reviewer reconciliation**
+
+Blank `early_discount` browser create is verified against the integrated live
+runtime, and prior functional suites remain passing, but authenticated
+browser edit/archive/restore/delete, fresh mobile/permission evidence, and
+paired Odoo comparison remain open. Re-run the lifecycle with the detail
+surface exposing Archive/Restore and complete the desktop/mobile and paired
+Odoo gates before reviewer sign-off.
+
 ## Bounded QA retest: Payment Terms repair `5914d094` (2026-09-13)
 
 - Candidate checkout: `5914d094a7abb301723b3db5f52669a9fbffbfa4` in the
@@ -505,3 +541,65 @@ this does not sign off the broader Accounting module gates listed above.
   my combined local Accounting invocation did not complete a final summary.
 - Broader export, attachment, print, and paired Odoo comparison gates remain
   open. This is not Accounting module sign-off.
+
+## Robust browser QA retry: integrated Payment Terms `ebd29063` / source `114e2c0b` (2026-09-13)
+
+- Active checkout `a99adb7a` contains `ebd29063` and `ab5496ba`. Backend
+  `127.0.0.1:3001/api/modules` and frontend `localhost:3002` returned HTTP
+  200; mediator 3010 was listening. No implementation or `progress.md` files
+  were changed.
+- Authenticated Admin browser at `1440x900` used semantic `Payment Terms *`
+  and `Due Rule` locators, left `early_discount` blank, and created a unique
+  term. The mutation returned HTTP 200, the row appeared, a fresh list load
+  retained it, and there was no conversion/500 message or console error.
+- After state-based edit/save, the detail DOM rendered `Status —` and exposed
+  only `Edit` and `Delete`. A DOM/action scan found no Archive button,
+  `data-action`, `data-mutation`, or titled Archive control. The expected
+  Archive action could not be invoked; archive/restore and the complete
+  browser lifecycle are therefore unverified. This is the exact action-DOM
+  blocker, not a brittle post-edit selector failure.
+- Authenticated Admin mobile at `390x844` loaded with zero console errors and
+  no horizontal overflow. Screenshot: outside Git at
+  `/tmp/accounting-payment-terms-ebd29063-robust-mobile.png`.
+- Authenticated Fleet received HTTP 403 and visible `Requires permission:
+  accounting.read`; no Accounting list rendered. The expected 403 was the
+  only recorded permission-route error.
+- Existing integrated functional evidence remains focused **3 tests / 48
+  assertions**, full Accounting **91 tests / 1,033 assertions**, and audit
+  **661 pages / 670 routes / 1,154 datasources**. These cover guards,
+  atomicity, validation, stale/missing, and permission contracts, but do not
+  replace missing Archive/Restore browser evidence. Screenshots remain under
+  `/tmp/accounting-payment-terms-ebd29063-create-desktop.png`,
+  `/tmp/accounting-payment-terms-robust2-after-edit.png`, and the mobile path
+  above.
+- Paired authenticated Odoo comparison was unavailable.
+
+### Bounded verdict — **CONDITIONAL FAIL / not ready for reviewer reconciliation**
+
+Blank `early_discount` create, persistence, mobile fit, and Fleet permission
+denial pass. The active detail contract returns `Status —` and omits Archive,
+so browser archive/restore/delete lifecycle sign-off remains blocked; paired
+Odoo comparison and broader Accounting export/attachment/print gates remain
+open.
+
+## Coordinator integration: Payment Terms lifecycle repair `cb493662` (2026-09-13)
+
+- Ownership and ancestry are valid: the inherited Accounting owner worktree was
+  clean, and `cb493662` was based on the active `114e2c0b` repair lineage. The
+  candidate is self-contained in the Payment Terms detail contract and focused
+  test; no unrelated module files or ledger changes were imported.
+- Cherry-picked onto the active branch as `b54a6a66`. The edit mutation now
+  permits only `name`, `company`, `description`, and `early_discount`; the edit
+  form no longer declares `state`. Dedicated Archive and Restore actions still
+  write `state` with concurrency guards, and the focused test verifies this.
+- Post-integration verification: focused Payment Terms **3 tests / 51
+  assertions passed**; `bun run audit` passed with **661 pages / 670 routes /
+  1,154 datasources**; `git diff --check` passed. Candidate evidence reports
+  Accounting **91 tests / 1,036 assertions** and a clean candidate worktree.
+- Fresh authenticated browser QA against `b54a6a66` is **blocked** because the
+  required persistent `js_repl`/Playwright capability is unavailable in this
+  review session. No fresh browser pass is claimed. Paired Odoo comparison and
+  broader export, attachment, and print gates remain open.
+
+Bounded disposition: **conditionally integrated; Accounting remains unsigned
+off** pending fresh browser evidence and the broader module gates.
