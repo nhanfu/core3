@@ -70,3 +70,13 @@ Existing Fleet owner `agent/fleet-next-wave` has a self-contained candidate at
 Fleet corpus **69/718**, audit **659/669/1,134**, and ESLint/Sass/frontend
 build/diff-check pass. Ready for the existing module QA event; browser, Odoo,
 and restart gates remain open.
+
+## QA disposition: `1e55ca16` blocked, same-owner repair required (2026-09-13)
+
+Fleet QA deactivated with **DEFECTS / BLOCKED**. Do not merge `1e55ca16`.
+Route the repair to existing owner `agent/fleet-next-wave` in
+`/home/nhanjs/projects/core3-worktrees/fleet-next-wave`: bind service
+list/detail/selector predicates to live `current_company_name`, then retest
+the Demo/Vietnam switch sequence. Fleet User fixture, process restart, and
+paired Odoo remain open. QA retest dispatch is pending unavailable agent
+lifecycle capacity; no replacement was created.

@@ -158,3 +158,22 @@ and reports, and process-restart/runtime gates. Fleet is not fully signed off.
   the existing `QA-FLEET-WAVE-20260913-R2` event; it is not integrated before
   module QA.
 - Browser, Odoo, and restart gates remain open. No full Fleet sign-off.
+
+## QA disposition and same-owner repair routing for `1e55ca16` (2026-09-13)
+
+- The existing Fleet QA event is deactivated with **DEFECTS / BLOCKED**. Do
+  not merge or promote `1e55ca16`.
+- Critical repair routed back to the same owner/worktree
+  `agent/fleet-next-wave` at
+  `/home/nhanjs/projects/core3-worktrees/fleet-next-wave`: replace or correctly
+  bind service list/detail/vehicle-selector predicates using `current_company_name`
+  on live page/query requests, then rerun the Demo → Vietnam service/detail/
+  selector isolation sequence and focused tests.
+- Preserved blockers: Fleet User lacks a usable Fleet-read fixture; in-memory
+  runner restart durability is unverified; paired authenticated Odoo comparison
+  is unavailable. The QA ledger and handoff docs in that worktree are dirty
+  QA state and must be inherited, not overwritten.
+- Required next event after a self-contained repair commit: existing
+  `QA-FLEET-WAVE-20260913-R2` retest. Dispatch cannot be executed in this
+  session because no agent lifecycle handle is available; no replacement owner
+  or duplicate QA was created.
