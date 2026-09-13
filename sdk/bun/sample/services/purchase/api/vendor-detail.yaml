@@ -32,10 +32,12 @@ actions:
       fields: [name, email, phone, street, city, country, vat, payment_terms]
       required: [name]
       concurrency: { required: true }
+      timestamps: true
       guards:
         - { query: "SELECT id FROM purchase_vendors WHERE id = :id", status: 404, code: PURCHASE_VENDOR_NOT_FOUND, message: Vendor not found. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: PURCHASE_VENDOR_NAME_REQUIRED, message: A vendor name is required. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM purchase_vendors WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: PURCHASE_VENDOR_NAME_EXISTS, message: A vendor with this name already exists. }
+        - { query: "SELECT id FROM purchase_vendors WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Vendor was changed by another user }
       result: { query: "SELECT * FROM purchase_vendors WHERE id = :id" }
     fields:
       - { field: name, label: Vendor, type: text, required: true }

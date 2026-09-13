@@ -15,6 +15,7 @@ components:
       - { id: archive_purchase_vendor_detail, label: Archive, variant: danger, permission: purchase.manage, show_if: "row.state === 'Active'" }
       - { id: restore_purchase_vendor_detail, label: Restore, variant: secondary, permission: purchase.manage, show_if: "row.state === 'Inactive'" }
       - { id: delete_purchase_vendor_detail, label: Delete, icon: trash, variant: danger, permission: purchase.manage }
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
     group_columns: 2
     groups:
       - title: Contact

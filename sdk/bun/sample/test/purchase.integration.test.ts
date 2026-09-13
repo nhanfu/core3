@@ -11,6 +11,49 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, fil
 const apiSource = (file: string, id: string) => yaml(`api/${file}`).datasources.find((source: any) => source.id === id);
 
 describe('Purchase Orders list and detail parity', () => {
+  test('keeps Purchase Analysis report layout-only with page-id API ownership and Odoo view controls', () => {
+    const discovered = discoverPages(join(import.meta.dir, '..'));
+    const page = yaml('pages/analysis.yaml');
+    const list = page.components.find((component: any) => component.type === 'ListView');
+    const source = apiSource('analysis.yaml', 'purchase_analysis_report');
+
+    expect(page.datasources).toBeUndefined();
+    expect(page.page).toMatchObject({ id: 'purchase-analysis', route: '/purchase-analysis', auth: { require: ['purchase.read'] } });
+    expect(yaml('api/analysis.yaml').page.id).toBe('purchase-analysis');
+    expect(discovered.pages.get('purchase-analysis')?.config.page.id).toBe('purchase-analysis');
+    expect(discovered.pageDatasources.get('purchase-analysis')).toEqual(expect.arrayContaining(['purchase_analysis_totals', 'purchase_analysis_report']));
+    expect(list).toMatchObject({ source: 'purchase_analysis_report', view_navigation: 'tabs', empty_state: { title: 'No purchase analysis data' } });
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'pivot', 'graph']);
+    expect(list.views.find((view: any) => view.id === 'pivot')?.pivot.default).toMatchObject({ rows: ['vendor_name'], columns: ['order_month'] });
+    expect(list.views.find((view: any) => view.id === 'graph')).toMatchObject({ category_field: 'vendor_name', measure_field: 'total_amount' });
+    expect(source.permission).toBe('purchase.read');
+    expect(source.pivot.fields.map((field: any) => typeof field === 'string' ? field : field.field)).toEqual([
+      'vendor_name', 'buyer_name', 'product_name', 'order_month', 'state', 'order_date',
+      'ordered_quantity', 'received_quantity', 'billed_quantity', 'untaxed_total', 'total_amount',
+    ]);
+  });
+
+  test('returns deterministic Purchase Analysis rows, totals, search, and empty fixtures', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'purchase_analysis_test_schema_migrations', ['schema', 'data']);
+
+    const report = apiSource('analysis.yaml', 'purchase_analysis_report');
+    const defaultReport = await repository.querySource(report, { q: null, fixture_state: null }, 0, 50);
+    expect(defaultReport.data).toHaveLength(8);
+    expect(defaultReport.data.slice(0, 3).map((row: any) => row.order_reference)).toEqual(['PO/2026/0008', 'PO/2026/0002', 'PO/2026/0001']);
+    expect(defaultReport.data[0]).toMatchObject({ vendor_name: 'Northwind Components', product_name: 'Industrial label printers', ordered_quantity: 6, received_quantity: 0, billed_quantity: 0, total_amount: 1560 });
+    expect(defaultReport.data.every((row: any) => row.company_name === 'Main Company (San Francisco)' && row.order_month.startsWith('2026-'))).toBe(true);
+
+    const totals = apiSource('analysis.yaml', 'purchase_analysis_totals');
+    expect(await repository.querySource(totals, { q: null, fixture_state: null }, 0, 1)).toMatchObject({ data: { order_count: 8, ordered_units: 678, received_units: 26, committed_value: 13126 } });
+    expect((await repository.querySource(report, { q: 'Northwind', fixture_state: null }, 0, 50)).data.map((row: any) => row.order_reference)).toEqual(['PO/2026/0008', 'PO/2026/0002', 'PO/2026/0005']);
+    expect((await repository.querySource(totals, { q: 'Northwind', fixture_state: null }, 0, 1)).data).toMatchObject({ order_count: 3, ordered_units: 48, received_units: 6, committed_value: 6006 });
+    expect((await repository.querySource(report, { q: 'No matching purchase', fixture_state: null }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(report, { q: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(totals, { q: null, fixture_state: 'empty' }, 0, 1)).data).toMatchObject({ order_count: 0, ordered_units: 0, received_units: 0, committed_value: 0 });
+  });
+
   test('keeps the list/detail pages layout-only and owned by page-id API fragments', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const screens = [
