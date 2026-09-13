@@ -111,3 +111,14 @@ Base developer ownership remains `agent/odoo-owner-base-wave1` at
 is `agent/base-contact-attachments-qa` at `42d189da`, ledger-only. Takeover is
 unsafe; the original owner must finish, test, and commit before QA. Base remains
 pending and no replacement dispatch was made.
+
+## Reviewer reconciliation `a1644b7c` (2026-09-13)
+
+Integrated the bounded Base Contacts attachment/hierarchy slice as `eda49a35`
+after preserving active CRM/contact-ID and inline attachment behavior during
+conflict resolution. Contacts focused verification passed **6/73 assertions**;
+audit passed **661/670/1,154**; frontend build and diff-check passed, with QA
+targeted ESLint green. Authenticated exact-content upload/download, reload,
+hierarchy, stale/CRUD/permission, dispatcher-403, and desktop/mobile evidence
+passed. Restart durability under duckdb-memory and fresh paired authenticated
+Odoo comparison remain open; no full Base sign-off.

@@ -190,3 +190,21 @@ and permission boundaries passed. The candidate remains `pending-qa`.
 - Dispatch status: **blocked on original owner completion**. Preserve the
   dirty developer worktree and existing QA findings; resume coordination when
   a committed candidate appears.
+
+## Reviewer reconciliation `a1644b7c`: conditional bounded PASS (2026-09-13)
+
+- Existing owner/worktree was valid: `agent/odoo-owner-base-wave1` at
+  `/home/nhanjs/projects/core3-worktrees/odoo-owner-base-wave1`. Conflict
+  resolution preserved active CRM/contact-ID and inline-content behavior while
+  applying the missing detail row-version concurrency and nullable attachment
+  content contract.
+- Integrated as `eda49a35`. Post-merge Contacts verification passed **6 tests /
+  73 assertions**; audit passed **661 pages / 670 routes / 1,154 datasources**;
+  frontend build and diff-check passed. QA's targeted ESLint also passed.
+- Authenticated upload/download exact-content and reload persistence,
+  hierarchy/stale/CRUD/permissions, dispatcher **403** and administrator
+  behavior, and desktop/mobile no-overflow/no-error evidence passed.
+- Disposition: **conditional bounded PASS; integrated**. Restart durability
+  remains unverified under the duckdb-memory runner, and fresh paired
+  authenticated Odoo comparison remains unavailable. Base is not fully signed
+  off.
