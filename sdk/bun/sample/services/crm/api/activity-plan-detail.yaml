@@ -1,0 +1,90 @@
+page: { id: crm-activity-plan-detail }
+datasources:
+  - id: crm_activity_plan_detail
+    single: true
+    permission: crm.manage
+    error_states:
+      not_found: { status: 404, code: CRM_ACTIVITY_PLAN_NOT_FOUND, message: Activity plan not found. }
+    query: "SELECT id, row_version, name, active FROM crm_activity_plans WHERE id = :id"
+  - id: crm_activity_plan_steps_detail
+    single: false
+    permission: crm.manage
+    query: "SELECT id, row_version, sequence, activity_type, summary, delay_days, active FROM crm_activity_plan_steps WHERE plan_id = :id ORDER BY sequence, id"
+actions:
+  - id: edit_crm_activity_plan_detail
+    type: server_form
+    permission: crm.manage
+    title: Edit Activity Plan
+    action: crm.activity_plans.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.crm_activity_plan_detail
+    refresh: [crm_activity_plan_detail, crm_activity_plan_steps_detail]
+    mutation:
+      operation: update
+      table: crm_activity_plans
+      fields: [name, active]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_activity_plans WHERE id = :id", status: 404, code: CRM_ACTIVITY_PLAN_NOT_FOUND, message: Activity plan not found. }
+      result: { query: "SELECT * FROM crm_activity_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan Name, type: text, required: true }
+      - { field: active, label: Active, type: checkbox }
+  - id: create_crm_activity_plan_step_detail
+    type: server_form
+    permission: crm.manage
+    title: New Activity Plan Step
+    action: crm.activity_plan_steps.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_activity_plan_steps_detail]
+    mutation:
+      operation: insert
+      table: crm_activity_plan_steps
+      fields: [plan_id, sequence, activity_type, summary, delay_days, active]
+      required: [plan_id, activity_type, summary]
+      defaults: { sequence: 10, delay_days: 0, active: true, row_version: 1 }
+      guards:
+        - { query: "SELECT id FROM crm_activity_plans WHERE id = :plan_id AND active = true", status: 400, code: CRM_ACTIVITY_PLAN_INACTIVE, message: Select an active activity plan. }
+        - { query: "SELECT id FROM crm_activity_types WHERE name = :activity_type AND active = true", status: 400, code: CRM_ACTIVITY_TYPE_INACTIVE, message: Select an active activity type. }
+      result: { query: "SELECT * FROM crm_activity_plan_steps WHERE id = :id" }
+    fields:
+      - { field: plan_id, label: Activity plan, type: hidden, default: '{state.crm_activity_plan_detail.id}', required: true }
+      - { field: sequence, label: Sequence, type: number, default: 10 }
+      - { field: activity_type, label: Activity Type, type: text, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: delay_days, label: Delay (days), type: number, default: 0 }
+  - id: edit_crm_activity_plan_step_detail
+    type: server_form
+    permission: crm.manage
+    title: Edit Activity Plan Step
+    action: crm.activity_plan_steps.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_activity_plan_steps_detail]
+    mutation:
+      operation: update
+      table: crm_activity_plan_steps
+      fields: [sequence, activity_type, summary, delay_days, active]
+      required: [activity_type, summary]
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM crm_activity_plan_steps WHERE id = :id AND plan_id = :plan_id", status: 404, code: CRM_ACTIVITY_PLAN_STEP_NOT_FOUND, message: Activity plan step not found. }]
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: activity_type, label: Activity Type, type: text, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: delay_days, label: Delay (days), type: number }
+      - { field: active, label: Active, type: checkbox }
+  - id: toggle_crm_activity_plan_step_detail
+    type: server
+    permission: crm.manage
+    action: crm.activity_plan_steps.toggle
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_activity_plan_steps_detail]
+    mutation:
+      guards: [{ query: "SELECT id FROM crm_activity_plan_steps WHERE id = :id", status: 404, code: CRM_ACTIVITY_PLAN_STEP_NOT_FOUND, message: Activity plan step not found. }]
+      steps: [{ query: "UPDATE crm_activity_plan_steps SET active = NOT active, row_version = row_version + 1 WHERE id = :id" }]

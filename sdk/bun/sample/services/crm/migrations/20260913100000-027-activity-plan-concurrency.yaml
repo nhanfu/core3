@@ -1,0 +1,15 @@
+version: 0.0.27
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_activity_plans ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE crm_activity_plan_steps ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      UPDATE crm_activity_plans SET row_version = 1 WHERE row_version IS NULL;
+      UPDATE crm_activity_plan_steps SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      ALTER TABLE crm_activity_plan_steps DROP COLUMN IF EXISTS row_version;
+      ALTER TABLE crm_activity_plans DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,25 @@
+title: Activity Plan
+page: { id: crm-activity-plan-detail, route: /crm/activity-plans/detail, breadcrumb: [CRM, Configuration, Activities, Activity Plans, Activity Plan], auth: { require: [crm.manage] } }
+components:
+  - type: OdooFormView
+    source: crm_activity_plan_detail
+    title_field: name
+    editable: true
+    groups:
+      - title: Activity Plan
+        fields:
+          - { field: name, label: Plan Name, type: text, required: true }
+          - { field: active, label: Active, type: checkbox }
+  - type: ContactGrid
+    source: crm_activity_plan_steps_detail
+    row_key: id
+    columns:
+      - { field: sequence, label: Sequence, align: right }
+      - { field: activity_type, label: Activity Type }
+      - { field: summary, label: Summary }
+      - { field: delay_days, label: Delay (days), align: right }
+      - { field: active, label: Active, type: StatusChip }
+    actions:
+      - { id: create_crm_activity_plan_step_detail, label: Add step, permission: crm.manage, variant: primary }
+      - { id: edit_crm_activity_plan_step_detail, label: Edit, permission: crm.manage, variant: ghost }
+      - { id: toggle_crm_activity_plan_step_detail, label: Toggle active, permission: crm.manage, variant: ghost }

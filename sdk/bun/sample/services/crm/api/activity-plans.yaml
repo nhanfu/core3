@@ -1,0 +1,65 @@
+page: { id: crm-activity-plans }
+datasources:
+  - id: crm_activity_plans_action
+    single: false
+    permission: crm.manage
+    error_states:
+      forbidden: { status: 403, code: CRM_ACTIVITY_PLANS_FORBIDDEN, message: You do not have permission to manage activity plans. }
+      transport_error: { status: 503, code: CRM_ACTIVITY_PLANS_UNAVAILABLE, message: Activity plans are temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.name, p.active, COUNT(s.id) AS step_count FROM crm_activity_plans p LEFT JOIN crm_activity_plan_steps s ON s.plan_id = p.id AND s.active = true WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN FALSE ELSE TRUE END AND ((COALESCE(:active, '') = '' AND p.active = true) OR (:active = 'archived' AND p.active = false)) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%') GROUP BY p.id, p.row_version, p.name, p.active ORDER BY p.name"
+actions:
+  - id: create_crm_activity_plan_action
+    type: server_form
+    permission: crm.manage
+    title: New Activity Plan
+    action: crm.activity_plans.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_activity_plans_action]
+    mutation:
+      operation: insert
+      table: crm_activity_plans
+      fields: [name, active]
+      required: [name]
+      defaults: { active: true, row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: CRM_ACTIVITY_PLAN_NAME_REQUIRED, message: An activity plan name is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_activity_plans WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: CRM_ACTIVITY_PLAN_EXISTS, message: Activity plan already exists. }
+      result: { query: "SELECT * FROM crm_activity_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan Name, type: text, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_crm_activity_plan_action
+    type: server_form
+    permission: crm.manage
+    title: Edit Activity Plan
+    action: crm.activity_plans.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_activity_plans_action]
+    mutation:
+      operation: update
+      table: crm_activity_plans
+      fields: [name, active]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_activity_plans WHERE id = :id", status: 404, code: CRM_ACTIVITY_PLAN_NOT_FOUND, message: Activity plan not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_activity_plans WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: CRM_ACTIVITY_PLAN_EXISTS, message: Activity plan already exists. }
+      result: { query: "SELECT * FROM crm_activity_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan Name, type: text, required: true }
+      - { field: active, label: Active, type: checkbox }
+  - id: delete_selected_crm_activity_plans
+    type: server
+    permission: crm.manage
+    action: crm.activity_plans.bulk_delete
+    handler: yaml_mutation
+    operation: bulk_delete
+    refresh: [crm_activity_plans_action]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE :ids IS NOT NULL", status: 400, code: CRM_ACTIVITY_PLAN_SELECTION_REQUIRED, message: Select at least one activity plan. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_activity_plan_steps WHERE plan_id IN :ids)", status: 409, code: CRM_ACTIVITY_PLAN_IN_USE, message: Remove the plan steps before deleting an activity plan. }
+      steps: [{ query: "DELETE FROM crm_activity_plans WHERE id IN :ids" }]
