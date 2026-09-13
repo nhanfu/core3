@@ -70,6 +70,19 @@ Detailed execution matrix: [`test-plans/spreadsheet.md`](test-plans/spreadsheet.
 | --- | --- | --- | --- | --- |
 | SPREADSHEET-BROWSER-001 | Candidate dev runtime did not expose Spreadsheet page/source registry to authenticated API (`/api/pages/dashboards` and filter source 404; `/api/modules` listed module) | — | Re-run authenticated desktop/mobile/Odoo matrix with a clean candidate runtime | blocked for browser evidence |
 
+## Reviewer disposition — candidate `20da1518`
+
+- Integrated on the active branch as `6b1cc8c1`; scope is limited to dashboard
+  company visibility predicates, Acme fixtures/migration, and the visibility
+  regression test.
+- Post-merge verification passed: Spreadsheet suite 13 tests / 126 assertions,
+  UI audit (661 pages / 670 routes / 1153 datasources), Spreadsheet Sass build,
+  and `git diff --check`.
+- The candidate-reported unused-variable ESLint failure remains recorded as a
+  candidate QA blocker. Authenticated browser/Odoo comparison was blocked by
+  backend bind/runtime 502. Spreadsheet remains conditional with no full
+  module sign-off.
+
 ## Sign-off
 
 - Functional: pass for candidate contract slice; full module pending
