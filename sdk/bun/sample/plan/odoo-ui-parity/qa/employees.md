@@ -145,3 +145,20 @@ regression, and absent fresh paired browser/Odoo evidence.
 QA state: conditional. Directory company scoping and wrong-company restore
 denial are retested pass. Full regression and fresh authenticated desktop,
 mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
+
+## 2026-09-13 coordinator review: candidate `c8f461f4`
+
+- Integrated the bounded employee-history relation/API/page binding as
+  `a8ebe1b8`. The candidate diff is limited to five Employees-owned files;
+  its earlier company-scope prerequisite lineage was not imported.
+- History-specific post-merge tests passed: **2 tests, 24 assertions**.
+  Candidate evidence remains **54 tests, 652 assertions**, with audit, test
+  ESLint, Employees Sass, diff-check, authenticated Core3 desktop/mobile, and
+  authenticated Odoo list evidence recorded as passing.
+- A broader active-branch probe exposed two baseline company-scope failures:
+  11 tests / 157 assertions yielded 2 failures because prerequisite migration
+  `99b87bd8` is not on the active branch. That broader prerequisite was not
+  folded into this bounded review and requires separate owner coordination.
+- Employees remains **conditional / unsigned-off**. Full regression/full lint,
+  actor matrix, restart durability, and Odoo detail/history comparison remain
+  open; no aggregate progress or module sign-off is claimed.
