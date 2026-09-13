@@ -99,3 +99,19 @@ Not signed off. The singular tag deletion allowlist and binding repair passed fo
   downstream failure rollback, and stale/concurrent guards, with focused
   tests. Candidate pending; existing ledger, unrelated edits, and aggregate
   progress are preserved.
+## QA reconciliation — `DEV-CRM-WAVE-20260913-R2` / `QA-CRM-WAVE-20260913-R2`
+
+- Current authoritative CRM evidence: `bun test test/crm.integration.test.ts`
+  passed **41 tests / 197 expect() calls**.
+- Existing bounded implementation is present: successful lead conversion is
+  declared in `services/crm/api/lead-detail.yaml`, and customer creation uses
+  the allowlisted Base service contract in `services/base/api/contacts.yaml`.
+- Disposition: **conditional bounded result only**. The CRM-to-Base wave is not
+  fully verified because duplicate replay/idempotency, downstream Base failure
+  rollback of the CRM lead, and stale/concurrent conversion guards remain
+  unproven or missing.
+- Explicit runtime blockers remain: authenticated actor/permission execution
+  evidence, authenticated desktop/mobile browser parity, and paired Odoo
+  comparison. Existing AI YAML-context, mock-data, typecheck, broader CRM
+  regression, and full module gates remain open. No full CRM completion or
+  module sign-off is claimed.
