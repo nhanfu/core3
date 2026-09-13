@@ -195,3 +195,14 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
   authenticated Odoo comparison remain unavailable. The full repository suite
   was hanging during QA and has no terminal result here. Maintenance is not
   signed off.
+## 2026-09-13 coordinator dispatch — bounded Equipment repair wave
+
+- Existing owner `agent/maintenance-request-create-wave` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/maintenance-request-create-wave`,
+  based at `d858d9d2`. Development event:
+  `DEV-MAINTENANCE-WAVE-20260913-R2`; QA event:
+  `QA-MAINTENANCE-WAVE-20260913-R2`; handoff commit: `73c74bb2`.
+- Scope is permissioned Equipment extended-field update persistence and the
+  explicit invalid warranty-date mutation guard, with focused validation,
+  scope, stale, and no-partial-update tests. Candidate pending; all existing
+  ledger edits and aggregate progress are preserved.
