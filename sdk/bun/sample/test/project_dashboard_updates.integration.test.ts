@@ -52,6 +52,7 @@ describe('Project Dashboard and Updates parity', () => {
       'Project', 'Author', 'Status', 'Progress', 'Date', 'Tasks', 'Description', 'Record version',
     ]);
     expect(yaml('api/project-dashboard.yaml').actions.map((action: any) => action.id)).toEqual([
+      'view_project_dashboard_timesheet_entry',
       'create_project_milestone', 'view_project_milestone', 'edit_project_milestone', 'mark_project_milestone', 'reopen_project_milestone', 'delete_project_milestone',
       'create_project_update', 'view_project_update', 'edit_project_update', 'delete_project_update',
     ]);

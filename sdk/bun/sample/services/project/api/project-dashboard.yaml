@@ -28,6 +28,11 @@ datasources:
     error_states: { transport_error: { status: 503, code: PROJECT_MILESTONES_UNAVAILABLE, message: Project milestones are temporarily unavailable. } }
     query: "SELECT m.id, m.row_version, m.project_id, m.name, m.sequence, CAST(m.due_date AS VARCHAR) AS due_date, m.is_reached, CASE WHEN m.is_reached THEN 'Reached' WHEN m.due_date IS NOT NULL AND m.due_date < DATE '2026-01-15' THEN 'Late' ELSE 'Open' END AS state, CAST(COUNT(t.id) AS VARCHAR) || ' / ' || CAST(COUNT(t.id) FILTER (WHERE t.state IN ('Done', 'Cancelled')) AS VARCHAR) AS task_summary FROM project_milestones m LEFT JOIN project_tasks t ON t.milestone_name = m.name AND t.project_id = m.project_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND m.project_id = :id AND (:q IS NULL OR m.name ILIKE '%' || :q || '%') GROUP BY m.id, m.row_version, m.project_id, m.name, m.sequence, m.due_date, m.is_reached ORDER BY m.sequence, m.due_date NULLS LAST, m.is_reached DESC, m.name, m.id"
 actions:
+  - id: view_project_dashboard_timesheet_entry
+    type: navigate
+    permission: timesheets.read
+    navigate_to: /timesheets/detail
+    params: { id: '{row.id}', view_scope: project_dashboard }
   - id: create_project_milestone
     type: server_form
     permission: project.write

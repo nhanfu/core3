@@ -24,6 +24,17 @@ describe('Project dashboard Timesheets integration', () => {
     expect(source.service_params).toEqual({ project_id: 'id', fixture_state: 'fixture_state' });
     expect(source.error_states.transport_error).toMatchObject({ status: 503, code: 'PROJECT_DASHBOARD_TIMESHEETS_UNAVAILABLE' });
     expect(entries).toMatchObject({ type: 'service', service: 'yaml.service.timesheets', operation: 'timesheets.entries.by_project', permission: 'timesheets.read' });
+    expect(page.components.find((component: any) => component.source === 'project_dashboard_timesheet_entries')).toMatchObject({
+      row_open_action: 'view_project_dashboard_timesheet_entry',
+      row_double_click_action: 'view_project_dashboard_timesheet_entry',
+      form_view: { page: 'apps/services/timesheets/pages/timesheet-detail.yaml', side_panel: true },
+    });
+    expect(api.actions).toContainEqual(expect.objectContaining({
+      id: 'view_project_dashboard_timesheet_entry',
+      permission: 'timesheets.read',
+      navigate_to: '/timesheets/detail',
+      params: { id: '{row.id}', view_scope: 'project_dashboard' },
+    }));
     expect(discovered.pageDatasources.get('project-dashboard')).toContain('project_dashboard_timesheets');
   });
 
