@@ -137,7 +137,7 @@ actions:
     handler: line_item
     operation: update
     domain: forum_post
-    params: { id: '{state.id}', line_id: '{row.id}' }
+    params: { id: '{state.id}', line_id: '{row.id}', parent_expected_row_version: '{state.forum_post_detail.row_version}', expected_row_version: '{row.row_version}' }
     refresh: [forum_post_detail, forum_post_answers]
     mutation:
       concurrency: { required: true }
@@ -156,7 +156,7 @@ actions:
     handler: line_item
     operation: update
     domain: forum_post
-    params: { id: '{state.id}', line_id: '{row.id}' }
+    params: { id: '{state.id}', line_id: '{row.id}', parent_expected_row_version: '{state.forum_post_detail.row_version}', expected_row_version: '{row.row_version}' }
     refresh: [forum_post_detail, forum_post_answers]
     mutation:
       concurrency: { required: true }

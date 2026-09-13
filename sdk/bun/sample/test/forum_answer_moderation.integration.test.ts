@@ -122,4 +122,70 @@ describe('Forum answer creation and moderation', () => {
     expect((await repository.query('SELECT state FROM forum_answers WHERE id = ?', ['forum-answer-qa-002']))[0]).toEqual({ state: 'Flagged' });
     database.close();
   });
+
+  test('binds parent versions for live authenticated accept and flag actions', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, root + '/migrations', undefined, 'forum_answer_moderation_http', ['schema', 'data']);
+    const discovered = discoverPages(join(import.meta.dir, '..'));
+    const user = { sub: 'forum-live-moderator', email: 'live-moderator@workspace.example', name: 'Live Forum Moderator', permissions: ['forum.read', 'forum.write', 'forum.manage'] };
+    const api = createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return user; }, hasPermission(actor: any, permission: string) { return actor.permissions.includes(permission); } },
+      sources: new Map([...discovered.datasources].filter(([id]) => id.startsWith('forum_'))),
+      pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === 'forum')),
+      pages: new Map([...discovered.pages].filter(([, page]) => page.module === 'forum').map(([id, page]) => [id, page.config])),
+      catalogs: discovered.catalogs,
+      menus: discovered.menus,
+      workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'forum').map(([id, workflow]) => [id, workflow.config])),
+      workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'forum').map(([id, workflow]) => [id, workflow.file])),
+      permissions: discovered.permissions.get('forum')?.config || {},
+      uploadRoot: '/tmp/core3-forum-answer-moderation-http', eventStore: {}, topics: {},
+    });
+    const request = (action: string, body: Record<string, unknown>) => api(new Request(`http://forum.test/api/actions/${action}`, {
+      method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    }), new URL(`http://forum.test/api/actions/${action}`));
+    const create = (id: string, parentExpected: number) => request('forum.answers.create', {
+      id: 'forum-post-demo-001', line_id: id, parent_expected_row_version: parentExpected,
+      values: { content: `Live answer ${id}`, author_name: 'Spoofed browser author' },
+    });
+    const moderate = (action: 'accept' | 'flag', lineId: string, parentExpected: number, expected: number) => request(`forum.answers.${action}`, {
+      id: 'forum-post-demo-001', line_id: lineId, parent_expected_row_version: parentExpected, expected_row_version: expected, values: {},
+    });
+
+    const configResponse = await api(new Request('http://forum.test/api/pages/forum-question-detail?id=forum-post-demo-001', {
+      headers: { Authorization: 'Bearer test-token' },
+    }), new URL('http://forum.test/api/pages/forum-question-detail?id=forum-post-demo-001'));
+    const config = await configResponse.json() as any;
+    expect(config.actions.find((action: any) => action.id === 'accept_forum_answer').params)
+      .toMatchObject({ parent_expected_row_version: '{state.forum_post_detail.row_version}', expected_row_version: '{row.row_version}' });
+    expect(config.actions.find((action: any) => action.id === 'flag_forum_answer').params)
+      .toMatchObject({ parent_expected_row_version: '{state.forum_post_detail.row_version}', expected_row_version: '{row.row_version}' });
+
+    const first = await (await create('forum-answer-live-accept', 1)).json() as any;
+    const second = await (await create('forum-answer-live-flag', 2)).json() as any;
+    expect(first).toMatchObject({ state: 'Active', author_name: 'Live Forum Moderator', row_version: 1 });
+    expect(second).toMatchObject({ state: 'Active', author_name: 'Live Forum Moderator', row_version: 1 });
+
+    const accepted = await (await moderate('accept', first.id, 3, first.row_version)).json() as any;
+    expect(accepted).toMatchObject({ id: first.id, state: 'Accepted', row_version: 2 });
+    expect((await repository.query('SELECT row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0]).toEqual({ row_version: 4 });
+
+    await expect(moderate('flag', second.id, 3, second.row_version)).rejects.toMatchObject({ status: 409, code: 'FORUM_POST_STALE' });
+    expect((await repository.query('SELECT state, row_version FROM forum_answers WHERE id = ?', [second.id]))[0]).toEqual({ state: 'Active', row_version: 1 });
+    expect((await repository.query('SELECT row_version FROM forum_posts WHERE id = ?', ['forum-post-demo-001']))[0]).toEqual({ row_version: 4 });
+
+    const flagged = await (await moderate('flag', second.id, 4, second.row_version)).json() as any;
+    expect(flagged).toMatchObject({ id: second.id, state: 'Flagged', row_version: 2 });
+    user.permissions.splice(user.permissions.indexOf('forum.manage'), 1);
+    await expect(moderate('flag', second.id, 5, flagged.row_version)).rejects.toMatchObject({ status: 403 });
+    expect((await repository.query('SELECT state, row_version FROM forum_answers WHERE id = ?', [second.id]))[0]).toEqual({ state: 'Flagged', row_version: 2 });
+
+    const reloaded = await api(new Request('http://forum.test/api/pages/forum-question-detail?id=forum-post-demo-001', {
+      headers: { Authorization: 'Bearer test-token' },
+    }), new URL('http://forum.test/api/pages/forum-question-detail?id=forum-post-demo-001'));
+    expect((await reloaded.json()).datasources.find((source: any) => source.id === 'forum_post_answers').data)
+      .toEqual(expect.arrayContaining([expect.objectContaining({ id: first.id, state: 'Accepted' }), expect.objectContaining({ id: second.id, state: 'Flagged' })]));
+    database.close();
+  });
 });
