@@ -1,5 +1,38 @@
 # recruitment QA ledger
 
+## Bounded QA finalization — 2026-09-13
+
+- Candidate under test: `d1b2cb6615b421ac3235943e2389f366690b2ff1`
+  (`feat(recruitment): restore refused applicants`). The supplied path with an
+  `agent/` segment does not exist; the exact matching linked worktree was
+  `/home/nhanjs/projects/core3-worktrees/odoo-recruitment-reopen-20260913`.
+- Focused regression: `bun test ./test/recruitment*.integration.test.ts
+  --timeout 20000` — 37 passed, 0 failed, 346 assertions, 11 files.
+- Reopen/refusal evidence on this HEAD: refusal persists `Rejected`, archived,
+  refusal reason, and incremented row version; reopen persists `New`, active,
+  clears `refuse_reason_id` and `refused_date`, increments the version, survives
+  reload, and stale replay returns 409 (`RECRUITMENT_APPLICANT_REOPEN_STALE`).
+  Invalid refusal reason returns 422 (`RECRUITMENT_REFUSE_REASON_INVALID`).
+  The reopen action is declared for `recruitment.write`.
+- Static gates: `bun run audit` passed (659 pages, 668 routes, 1139
+  datasources); `bunx eslint test/recruitment*.integration.test.ts` passed;
+  `git diff --check` passed.
+- Mock-data audit: failed globally (659 pages); the Recruitment datasources
+  `recruitment_*` have no `mock_data` declarations. This is the known
+  service-backed datasource audit blocker and was not changed by this slice.
+- Full regression: `bun test ./test --timeout 20000` was intentionally stopped
+  at the user's finalization request with exit 130. It had emitted passing
+  tests through `test/manufacturing_workcenter_operations.integration.test.ts`
+  (the next test had not completed); no full-suite total is claimed.
+- Browser/Odoo: no new probe was started in this finalization window; no new
+  authenticated desktop/mobile captures or paired Odoo evidence are claimed.
+  Existing ledger evidence remains route/render smoke only and does not satisfy
+  the plan's CRUD, full permission, persistence, or paired visual exit gates.
+- QA decision: not signed off. Remaining gates are authenticated applicant
+  CRUD/refuse/reopen browser evidence at 1440x900 and 390x844, full actor and
+  wrong-company/unauthenticated boundaries, restart persistence, paired Odoo
+  comparison, and an unblocked full regression.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.
