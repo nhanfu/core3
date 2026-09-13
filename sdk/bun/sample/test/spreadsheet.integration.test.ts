@@ -150,7 +150,6 @@ describe('Spreadsheet dashboard configuration parity', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_company_scope_migrations', ['schema', 'data']);
-    const api = yaml('api/dashboards.yaml');
     const source = (id: string) => apiSource('dashboards.yaml', id);
     const params = { q: null, state: null, favorite: null, company_name: 'Acme Corporation' };
     const dashboards = await repository.querySource(source('spreadsheet_dashboards_landing'), params, 0, 50);
