@@ -212,3 +212,15 @@ mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
 - Preserve the conditional blockers: unauthenticated Odoo, full regression,
   broader actor matrix, and restart persistence. No module sign-off or
   aggregate progress claim is made.
+## 2026-09-13 coordinator dispatch — bounded activity-plan wave
+
+- Existing owner `agent/odoo-employees-wave-dev4-self-contained` is assigned
+  on `/home/nhanjs/projects/core3-worktrees/odoo-employees-wave-dev4`, based at
+  `279f8f4d`. Development event: `DEV-EMPLOYEES-WAVE-20260913-R2`; QA event:
+  `QA-EMPLOYEES-WAVE-20260913-R2`; handoff commits: `7baa8739` and corrected
+  owner-handle commit `75a003c4`.
+- Scope is one activity-plan launch/onboarding/offboarding workflow slice with
+  ordered responsible steps, action/detail contracts, duplicate/inactive/
+  missing/permission/company/stale guards, and focused atomicity tests.
+  Candidate pending; existing ledgers, unrelated edits, and aggregate
+  progress are preserved.
