@@ -1,0 +1,20 @@
+version: 0.0.8
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE maintenance_equipment SET company_name = 'Core3 Demo Company' WHERE company_name = 'My Company';
+      UPDATE maintenance_requests SET company_name = 'Core3 Demo Company' WHERE company_name = 'My Company';
+      UPDATE maintenance_team_records SET company_name = 'Core3 Demo Company' WHERE company_name = 'My Company';
+      UPDATE maintenance_category_records SET company_name = 'Core3 Demo Company' WHERE company_name = 'My Company';
+      UPDATE maintenance_settings SET company_name = 'Core3 Demo Company' WHERE company_name = 'My Company';
+    down: |
+      UPDATE maintenance_equipment SET company_name = 'My Company' WHERE company_name = 'Core3 Demo Company';
+      UPDATE maintenance_requests SET company_name = 'My Company' WHERE company_name = 'Core3 Demo Company';
+      UPDATE maintenance_team_records SET company_name = 'My Company' WHERE company_name = 'Core3 Demo Company';
+      UPDATE maintenance_category_records SET company_name = 'My Company' WHERE company_name = 'Core3 Demo Company';
+      UPDATE maintenance_settings SET company_name = 'My Company' WHERE company_name = 'Core3 Demo Company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

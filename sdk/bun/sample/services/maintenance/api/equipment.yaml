@@ -21,6 +21,7 @@ actions:
       operation: insert
       table: maintenance_equipment
       fields: [name, serial_number, model, vendor_reference, category, location, owner, technician, team, preventive_interval_days, next_preventive_date, warranty_date, cost, description]
+      defaults: { company_name: Core3 Demo Company }
       required: [name]
       guards:
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: MAINTENANCE_EQUIPMENT_NAME_REQUIRED, message: Equipment name is required. }
