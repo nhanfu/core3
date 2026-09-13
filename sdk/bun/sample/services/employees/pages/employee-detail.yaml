@@ -12,6 +12,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
     stat_buttons:
       - { id: open_employee_timesheets, label: Timesheets, value_field: employee_number, permission: timesheets.read }
+      - { id: open_employee_history, label: History, value_field: version_count, permission: employees.read }
     header_actions:
       - { id: edit_employee, label: Edit, variant: secondary, permission: employees.write }
       - { id: archive_employee_detail, label: Archive, variant: danger, permission: employees.write, show_if: "state.employee_detail.active === true" }

@@ -3,12 +3,17 @@ datasources:
   - id: employee_detail
     single: true
     permission: employees.read
-    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, timezone, barcode, presence, skills, resume_summary, street FROM employees WHERE id = :id"
+    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, timezone, barcode, presence, skills, resume_summary, street, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
 actions:
   - id: open_employee_timesheets
     type: navigate
     permission: timesheets.read
     navigate_to: /employee-timesheets
+    params: { employee_id: '{state.id}' }
+  - id: open_employee_history
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/versions
     params: { employee_id: '{state.id}' }
   - id: edit_employee
     type: server_form
@@ -26,8 +31,9 @@ actions:
       required: [name]
       timestamps: true
       guards:
-        - { query: "SELECT id FROM employees WHERE id = :id", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Employee not found. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Employee not found in the current company. }
         - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: EMPLOYEES_RECORD_NAME_REQUIRED, message: Employee name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: EMPLOYEES_COMPANY_SCOPE_REQUIRED, message: Employee must belong to the current company. }
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: name, label: Employee Name, type: text, required: true }
@@ -66,7 +72,7 @@ actions:
     operation: update
     refresh: [employee_detail]
     params: { values: { active: false } }
-    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = true", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Active employee not found. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Active employee not found in the current company. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }
   - id: restore_employee_detail
     type: server
     permission: employees.write
@@ -75,4 +81,4 @@ actions:
     operation: update
     refresh: [employee_detail]
     params: { values: { active: true } }
-    mutation: { operation: update, table: employees, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = false", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Archived employee not found. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM employees WHERE id = :id AND active = false AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_RECORD_NOT_FOUND, message: Archived employee not found in the current company. }], result: { query: "SELECT * FROM employees WHERE id = :id" } }

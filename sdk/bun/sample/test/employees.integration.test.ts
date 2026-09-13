@@ -10,6 +10,12 @@ const root = join(import.meta.dir, '../services/employees');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
 
 describe('Employees Odoo action-mode parity batch', () => {
+  test('exposes employee history from the persisted version relation', () => {
+    const form = yaml('pages/employee-detail.yaml').components[0];
+    expect(form.stat_buttons).toContainEqual({ id: 'open_employee_history', label: 'History', value_field: 'version_count', permission: 'employees.read' });
+    expect(yaml('api/employee-detail.yaml').actions).toContainEqual(expect.objectContaining({ id: 'open_employee_history', navigate_to: '/employees/versions', permission: 'employees.read', params: { employee_id: '{state.id}' } }));
+    expect(yaml('api/employee-detail.yaml').datasources[0].query).toContain('version_count');
+  });
   test('keeps the bounded pages layout-only and discoverable by page id', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const routes = [
