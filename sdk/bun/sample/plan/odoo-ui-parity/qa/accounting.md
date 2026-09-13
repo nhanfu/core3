@@ -759,3 +759,24 @@ sign-off is claimed.
 - Disposition: **conditional bounded PASS; reconciled**. Fresh authenticated
   Odoo Journal Items comparison and broader Accounting export, attachment,
   print, and Odoo gates remain open. No full Accounting sign-off.
+
+## QA disposition — bank-statement attachment candidate `a754d624` (2026-09-13)
+
+- Candidate worktree: `/home/nhanjs/projects/core3-worktrees/odoo-accounting-bank-statement-attachments-20260913`,
+  owner `agent/odoo-accounting-bank-statement-attachments-20260913`, exact
+  HEAD `a754d624`. QA/handoff documentation is the only reported dirty content.
+- Upload/download storage, persistence, guards, authenticated browser and
+  regression/build gates pass. Direct API download works.
+- Defect `ACCOUNTING-ATTACHMENT-UI-001`: the visible Chromium download control
+  is disabled because `attachment_download_action` is missing from
+  `bank-statement-detail.yaml`. This blocks the required UI download journey
+  despite the direct API contract passing.
+
+### Repair handoff
+
+- **BLOCKED — do not integrate `a754d624`.** Route the same owner to repair the
+  missing `attachment_download_action` in the exact worktree above, bind it to
+  the declared download API/action contract, and rerun authenticated browser
+  upload/download plus focused Accounting QA before integration review.
+- Preserve restart and paired authenticated Odoo comparison gates; no full
+  Accounting sign-off is made.
