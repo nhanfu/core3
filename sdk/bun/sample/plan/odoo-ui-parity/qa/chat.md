@@ -109,3 +109,14 @@ repository lint gate remain open or blocked.
 - Chat remains **conditional / unsigned-off**. Authenticated desktop/mobile
   visual evidence, participant actor/thread verification, durable restart
   upload evidence, and paired Odoo comparison remain open.
+## 2026-09-13 coordinator dispatch — bounded attachment identity repair
+
+- Existing owner `agent/chat-wave-dev1` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`, based at `b4b7b5de`.
+  Development event: `DEV-CHAT-WAVE-20260913-R2`; QA event:
+  `QA-CHAT-WAVE-20260913-R2`; handoff commit: `439bf4f0`.
+- Scope is the reported multipart attachment participant/thread identity HTTP
+  500: authorized upload success, persisted metadata, file-only/captioned
+  messages, ownership/permission and invalid/stale/no-partial-write guards,
+  with focused tests. Candidate pending; existing ledger and aggregate
+  progress are preserved.
