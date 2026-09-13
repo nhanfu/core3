@@ -170,3 +170,17 @@ does not remain active while dormant.
 - Decision: **not signed off**. Browser upload/download, completed combined
   regression, lint-equivalent check, and paired authenticated Odoo evidence
   remain open.
+
+## Reviewer disposition — candidate `99a8f86f`
+
+- Integrated on the active branch as `3e047bd7`; scope is limited to shared
+  CSV/XLSX download-anchor lifecycle behavior and the Journal Items export
+  client regression.
+- Post-merge verification passed: client Vitest export tests, Accounting
+  Journal Items contract tests, full merged Accounting suite (91 tests / 1,024
+  assertions), UI audit, Sass build, targeted checks, and `git diff --check`.
+- The candidate's authenticated desktop/mobile Journal Items rendering and
+  four-row/no-overflow evidence is preserved. The XLSX browser download event
+  was not independently captured in this review, so that remains conditional.
+- Broader export, attachment, print, and paired Odoo gates remain open;
+  Accounting is unsigned-off.
