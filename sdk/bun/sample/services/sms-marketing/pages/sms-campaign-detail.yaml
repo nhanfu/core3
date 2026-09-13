@@ -11,10 +11,10 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: new_sms_campaign, label: New, variant: primary, permission: sms_marketing.write }
-      - { id: send_sms_campaign, label: Send, variant: primary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
-      - { id: schedule_sms_campaign, label: Schedule, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
-      - { id: cancel_sms_campaign, label: Cancel, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'In Queue'" }
-      - { id: complete_sms_campaign, label: Mark Sent, variant: primary, permission: sms_marketing.manage, show_if: "state.sms_marketing_mailing_detail.state === 'Sending'" }
+      - { id: send_sms_campaign_reload, label: Send, variant: primary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
+      - { id: schedule_sms_campaign_reload, label: Schedule, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'Draft'" }
+      - { id: cancel_sms_campaign_reload, label: Cancel, variant: secondary, permission: sms_marketing.write, show_if: "state.sms_marketing_mailing_detail.state === 'In Queue'" }
+      - { id: complete_sms_campaign_reload, label: Mark Sent, variant: primary, permission: sms_marketing.manage, show_if: "state.sms_marketing_mailing_detail.state === 'Sending'" }
     group_columns: 2
     groups:
       - title: Mailing
@@ -28,3 +28,78 @@ components:
         - { id: settings, label: Settings, groups: [{ title: Options, fields: [{ field: sms_allow_unsubscribe, label: Allow Unsubscribe }] }, { title: Tracking, fields: [{ field: campaign_name, label: Campaign }] }] }
 actions:
   - { id: new_sms_campaign, type: navigate, permission: sms_marketing.write, navigate_to: /sms-campaigns }
+  # Workflow buttons deliberately reload the detail route after the mutation.
+  # The generic renderer refreshes every declared source sequentially; if a
+  # source request never settles, the form submit remains pending forever.
+  - id: send_sms_campaign_reload
+    type: client
+    permission: sms_marketing.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 10000)
+        try {
+          await request('/api/mutate', { method: 'POST', signal: controller.signal, body: { mutation: 'sms_marketing.mailings.send', id: row.id, expected_row_version: row.row_version } })
+          window.location.reload()
+        } catch (error) {
+          if (error?.name === 'AbortError') throw new Error('Sending SMS campaign timed out. Please try again.')
+          throw error
+        } finally {
+          clearTimeout(timeout)
+        }
+      }
+  - id: schedule_sms_campaign_reload
+    type: client
+    permission: sms_marketing.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 10000)
+        try {
+          await request('/api/mutate', { method: 'POST', signal: controller.signal, body: { mutation: 'sms_marketing.mailings.schedule', id: row.id, expected_row_version: row.row_version } })
+          window.location.reload()
+        } catch (error) {
+          if (error?.name === 'AbortError') throw new Error('Scheduling SMS campaign timed out. Please try again.')
+          throw error
+        } finally {
+          clearTimeout(timeout)
+        }
+      }
+  - id: cancel_sms_campaign_reload
+    type: client
+    permission: sms_marketing.write
+    script: |
+      // js
+      async ({ row, request }) => {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 10000)
+        try {
+          await request('/api/mutate', { method: 'POST', signal: controller.signal, body: { mutation: 'sms_marketing.mailings.cancel', id: row.id, expected_row_version: row.row_version } })
+          window.location.reload()
+        } catch (error) {
+          if (error?.name === 'AbortError') throw new Error('Cancelling SMS campaign timed out. Please try again.')
+          throw error
+        } finally {
+          clearTimeout(timeout)
+        }
+      }
+  - id: complete_sms_campaign_reload
+    type: client
+    permission: sms_marketing.manage
+    script: |
+      // js
+      async ({ row, request }) => {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 10000)
+        try {
+          await request('/api/mutate', { method: 'POST', signal: controller.signal, body: { mutation: 'sms_marketing.mailings.complete', id: row.id, expected_row_version: row.row_version } })
+          window.location.reload()
+        } catch (error) {
+          if (error?.name === 'AbortError') throw new Error('Completing SMS campaign timed out. Please try again.')
+          throw error
+        } finally {
+          clearTimeout(timeout)
+        }
+      }

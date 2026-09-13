@@ -27,6 +27,15 @@ describe('SMS Marketing mailing action parity', () => {
     expect(listPage.components[0].columns.map((column: any) => column.label)).toEqual(['Date', 'Title', 'Recipients', 'Sent', 'Clicked (%)', 'Bounced (%)', 'Status']);
     expect(detailPage.components[0].notebook.tabs.map((tab: any) => tab.label)).toEqual(['SMS Content', 'Settings']);
     expect(yaml('manifest.yaml').menu.groups[0].items[0]).toMatchObject({ path: '/sms-campaigns', label: 'SMS Marketing' });
+    const workflowActions = detailPage.components[0].header_actions.map((button: any) => button.id).filter((id: string) => id.endsWith('_reload'));
+    expect(workflowActions).toEqual(['send_sms_campaign_reload', 'schedule_sms_campaign_reload', 'cancel_sms_campaign_reload', 'complete_sms_campaign_reload']);
+    for (const id of workflowActions) {
+      const workflowAction = detailPage.actions.find((candidate: any) => candidate.id === id);
+      expect(workflowAction, id).toMatchObject({ type: 'client', permission: expect.stringMatching(/^sms_marketing\.(write|manage)$/) });
+      expect(workflowAction.script).toContain('AbortController');
+      expect(workflowAction.script).toContain('setTimeout(() => controller.abort(), 10000)');
+      expect(workflowAction.script).toContain('window.location.reload()');
+    }
   });
 
   test('seeds idempotently and supports search, empty, create, validation, and stale update', async () => {
