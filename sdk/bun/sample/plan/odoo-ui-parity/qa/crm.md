@@ -57,3 +57,17 @@
 ## Sign-off
 
 Not signed off. The singular tag deletion allowlist and binding repair passed focused QA. Broader AI catalog YAML-context regression, incomplete related-suite aggregate, unresolved functional/atomicity coverage, and missing authenticated desktop/mobile/Odoo evidence keep CRM bounded and unsigned-off.
+
+## Reviewer disposition — candidate `fa7561f3`
+
+- Integrated on the active branch as `b1322f05`; scope is limited to CRM
+  Activity Plans list/detail pages, manager-only CRUD and ordered-step guards,
+  menu registration, migration backfill, and focused tests.
+- Post-merge verification passed: Activity Plans 2 tests / 16 assertions, UI
+  audit (661 pages / 670 routes / 1153 datasources), targeted ESLint, CRM CSS
+  build, and `git diff --check`.
+- Preserved blockers: CRM broader regression remains 38 pass / 1 fail on the
+  AI YAML-context expectation; optional numeric/date normalization remains
+  open; typecheck and CRM mock-data audits remain blocked; authenticated
+  browser and Odoo comparison remain unavailable. CRM is conditional and
+  unsigned-off.
