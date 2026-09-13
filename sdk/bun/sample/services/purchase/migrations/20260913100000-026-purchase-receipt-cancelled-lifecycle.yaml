@@ -1,0 +1,19 @@
+version: 0.0.26
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO purchase_receipts(id, purchase_order_id, name, vendor_name, operation_type, company_name, scheduled_date, deadline, source_document, state, note)
+      VALUES ('purchase-receipt-p00005', 'po-demo-005', 'WH/IN/00005', 'Northwind Components', 'YourCompany: Receipts', 'My Company (San Francisco)', TIMESTAMP '2026-09-13 09:00:00', TIMESTAMP '2026-09-15 17:00:00', 'P00005', 'Draft', 'Awaiting warehouse confirmation.');
+      INSERT OR IGNORE INTO purchase_receipt_lines(id, receipt_id, sequence, product_name, description, demand, quantity, uom)
+      VALUES ('purchase-receipt-line-0005-10', 'purchase-receipt-p00005', 10, 'Warehouse barcode scanners', 'Warehouse barcode scanners', 12, 0, 'Units');
+      INSERT OR IGNORE INTO purchase_receipt_messages(id, receipt_id, actor_name, action, action_label, detail, created_at)
+      VALUES ('purchase-receipt-message-0005', 'purchase-receipt-p00005', 'OdooBot', 'purchase.receipt.created', 'Transfer created', 'This transfer has been created from: P00005', TIMESTAMP '2026-09-13 09:00:00');
+    down: |
+      DELETE FROM purchase_receipt_messages WHERE receipt_id = 'purchase-receipt-p00005';
+      DELETE FROM purchase_receipt_lines WHERE receipt_id = 'purchase-receipt-p00005';
+      DELETE FROM purchase_receipts WHERE id = 'purchase-receipt-p00005';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

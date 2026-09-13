@@ -84,4 +84,18 @@ describe('Purchase receipt stat action parity', () => {
     expect(source('purchase_receipt_detail').permission).toBe('purchase.read');
     database.close();
   });
+
+  test('persists cancellation state and audit history for a draft receipt', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'purchase_receipt_cancel_migrations', ['schema', 'data']);
+    const cancel = action('cancel_purchase_receipt');
+
+    expect((await repository.query("SELECT state, row_version FROM purchase_receipts WHERE id = 'purchase-receipt-p00005'"))[0]).toMatchObject({ state: 'Draft', row_version: 1 });
+    const cancelled = await repository.executeMutation(cancel.mutation, { id: 'purchase-receipt-p00005', expected_row_version: 1, current_user_name: 'Purchase User' });
+    expect(cancelled).toMatchObject({ id: 'purchase-receipt-p00005', state: 'Cancelled', row_version: 2 });
+    expect((await repository.query("SELECT actor_name, action, action_label, detail FROM purchase_receipt_messages WHERE receipt_id = 'purchase-receipt-p00005' ORDER BY created_at DESC LIMIT 1"))[0]).toMatchObject({ actor_name: 'Purchase User', action: 'purchase.receipt.cancelled', action_label: 'Cancelled', detail: 'Receipt cancelled' });
+    await expect(repository.executeMutation(cancel.mutation, { id: 'purchase-receipt-p00005', expected_row_version: 2, current_user_name: 'Purchase User' })).rejects.toMatchObject({ status: 409, code: 'PURCHASE_RECEIPT_NOT_OPEN' });
+    database.close();
+  });
 });

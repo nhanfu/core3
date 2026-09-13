@@ -26,6 +26,7 @@ components:
     message_action_labels:
       purchase.receipt.created: Transfer created
       purchase.receipt.validated: Validated
+      purchase.receipt.cancelled: Cancelled
       purchase.receipt.message: Message
       purchase.receipt.note: Note
     content_slot: true

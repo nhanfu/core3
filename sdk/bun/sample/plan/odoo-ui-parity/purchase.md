@@ -1110,3 +1110,19 @@ but this session has no persistent `js_repl`/Playwright browser interface and
 the worktree has no Playwright package, so authenticated 1440x900 and 390x844
 captures could not be completed. The blocker logs are local only and no
 screenshots are committed.
+
+## Receipt cancellation lifecycle bounded follow-up — 2026-09-13
+
+The receipt workflow contract required cancellation to leave an auditable
+history entry, but the existing mutation only changed the receipt state. This
+follow-up adds migration `20260913100000-026-purchase-receipt-cancelled-lifecycle.yaml`
+with a stable Draft `WH/IN/00005` receipt for `PO/2026/0005` and one realistic
+warehouse barcode scanner move line. Cancellation now atomically updates the
+state/version and inserts the acting user's `purchase.receipt.cancelled`
+message; closed receipts remain guarded against repeat cancellation.
+
+`test/purchase_receipt.integration.test.ts` covers the seeded Draft fixture,
+persisted Cancelled state/version, actor/action/detail audit data, and invalid
+repeat transition. Focused validation passed 4 tests and 35 assertions.
+Browser evidence was not added in this backend-focused follow-up; existing
+visual and authenticated browser gates remain open.

@@ -2,19 +2,20 @@
 
 Module owner: purchase module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: dormant
+Status: candidate-ready
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: pending commit
 
 ## Current state
 
-This module is registered in odoo-parity-plan.md but has not yet produced a
-current-wave candidate or verified evidence in the active checkout. No parity
-claim is made here.
+The 2026-09-13 isolated candidate adds the missing Purchase receipt
+Draft/Ready-to-Cancel audit lifecycle, with a deterministic Draft receipt and
+focused persistence/workflow coverage. This is a bounded candidate, not a
+full Purchase parity claim; authenticated browser and visual gates remain
+open.
 
 ## Next bounded task
 
-Record the complete Odoo menu/action/view inventory, implement the module
-functionality, and dispatch QA on the first committed candidate. Update this
-file only with evidence from the matching module owner.
-
+Dispatch QA on the committed candidate, including authenticated receipt
+cancellation browser evidence and the remaining Purchase visual/security
+gates. Update this file only with evidence from the matching module owner.
