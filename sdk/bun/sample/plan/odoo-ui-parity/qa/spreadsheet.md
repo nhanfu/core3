@@ -128,3 +128,22 @@ Detailed execution matrix: [`test-plans/spreadsheet.md`](test-plans/spreadsheet.
   read-only snapshot access, and focused stale/company/unauthorized guards.
   Candidate pending; aggregate progress untouched. Existing owner-ledger edits
   are preserved.
+## DEV/QA reconciliation — `DEV-SPREADSHEET-WAVE-20260913-R2` / `QA-SPREADSHEET-WAVE-20260913-R2`
+
+- The existing owner handoff `125774b0` requested the share-token lifecycle
+  slice, but authoritative main already contains the implementation across
+  `cf1a98b4` (public dashboard sharing) and `cc403b96` (dashboard share
+  action). No duplicate owner product commit is required.
+- Current scope review: the existing implementation and tests cover share
+  action/revocation fixtures, stale row-version guards, public valid/revoked/
+  missing routes, unauthorized export, and company visibility. These commits
+  are Spreadsheet-scoped; no aggregate progress change is included.
+- QA event triggered/reconciled against the authoritative implementation.
+  Active-checkout command `bun test test/spreadsheet.integration.test.ts`
+  passed **13 tests / 126 assertions**, including the share lifecycle and
+  access-boundary cases.
+- Disposition: **bounded QA pass; conditionally accepted for the requested
+  share slice**. Full Spreadsheet sign-off remains open because authenticated
+  desktop/mobile and paired Odoo comparison are blocked, the candidate runtime
+  page/source registry previously returned 404, and broader workbook,
+  export/share, actor, restart, and Temporal gates remain pending.
