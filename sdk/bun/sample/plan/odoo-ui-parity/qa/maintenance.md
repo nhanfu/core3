@@ -160,3 +160,15 @@ Odoo gates remain open. No module sign-off is issued.
 - Persistence/data integrity: pass for changed-value updates and lifecycle; identical stale no-op replay is fixed and covered
 - Desktop/mobile visual parity: authenticated request list/detail smoke pass; paired Odoo comparison pending
 - Tester decision: conditional; request-create validation is verified, while full CRUD, actor, integration, browser, and paired Odoo gates remain open
+
+## 2026-09-13 bounded QA: candidate `f8e3219a`
+
+- Candidate: `f8e3219a2e535c4732249750572a0029907a4e8d`; QA made no product-code changes.
+- Focused Maintenance corpus: `bun test ./test/maintenance*.integration.test.ts --timeout 20000` — **35 passed, 345 assertions, 0 failed** across 15 files. Schedule/complete persistence, `{row.id}` request interpolation, validation, archived-parent denial, permission metadata, and stale completion guards passed.
+- Browser-shaped client transport: `bunx vitest run --config ../packages/client/vitest.config.ts test/cases/maintenance-request-activities.test.ts` — **1 test passed**. It proves the schedule modal sends `request_id: request-1`, and chatter Mark done sends `id: activity-1` with `expected_row_version: 1`. An initial direct Bun invocation failed only because it omitted the jsdom/Vitest harness (`window`/`document` undefined); rerun with the repository config passed.
+- `bun run audit` passed: **659 pages, 668 routes, 1140 datasources**. `git diff --check` and targeted ESLint over candidate-touched files passed clean.
+- Full `bun test ./test --timeout 20000` was started but did not yield a terminal result in the bounded QA window; no full-regression pass is claimed.
+- Authenticated browser blocker: distributed runtime startup exposed no backend listener at its announced port. The in-process retry exposed gateway `:4360`, but `/api/modules` returned **503** because service host `:4361` was unavailable. A `:4370` retry was stopped before login/capture. No authenticated desktop/mobile screenshot, reload-persistence, console/request, permission, or stale-guard claim is made.
+- Odoo: no authenticated comparison was available; no paired Odoo evidence or visual parity claim.
+
+QA decision: **conditional fail / evidence-only**. Repository and browser-shaped transport checks pass, but live authenticated desktop/mobile, full-regression terminal evidence, and Odoo gates remain open. No module sign-off.

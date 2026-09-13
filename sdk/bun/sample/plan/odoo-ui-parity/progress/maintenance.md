@@ -87,3 +87,13 @@ Resolve `MAINT-QA-001`, then rerun the focused corpus and authenticated browser
 edit/concurrency checks. After that, cover the remaining actor/company,
 settings, activity/recurrence, full-route, and paired-Odoo gates before module
 sign-off.
+
+## QA verification (2026-09-13, candidate `f8e3219a`)
+
+- Focused Maintenance regression: **35 tests, 345 assertions, 0 failures** across 15 files.
+- jsdom/Vitest browser-shaped activity transport: **1 test passed**; schedule interpolates the detail request ID and Mark done sends the activity ID plus expected row version.
+- Audit passed (**659 pages, 668 routes, 1140 datasources**); `git diff --check` and targeted ESLint passed.
+- Full sample regression was started without a terminal result in the bounded window; it is not signed off.
+- Authenticated desktop/mobile and Odoo evidence are blocked. Runtime retries did not provide a usable API/frontend pair: distributed startup had no backend listener, and the in-process gateway returned `503` from `/api/modules` with an unavailable service host. No captures or browser persistence/permission claims are made.
+
+QA result: **conditional fail / evidence-only**; no module sign-off and no aggregate progress update.
