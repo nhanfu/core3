@@ -113,3 +113,14 @@ resolved or explicitly waived.
 | `DEV-PURCHASE-RECEIPT-WAVE-20260913-R2` → `QA-PURCHASE-RECEIPT-WAVE-20260913-R2` | existing `agent/odoo-ui-purchase-receipt-lifecycle-20260913` in `/home/nhanjs/projects/core3-worktrees/purchase-receipt-lifecycle-20260913` | Receipt cancellation/fulfillment stale and actor/company guards, 401/403 and missing references, and focused unchanged-row/no-partial-write tests | dispatched in `8111d52c`; awaiting self-contained product commit before QA |
 
 | `DEV-PURCHASE-ANALYSIS-WAVE-20260913-R2` → `QA-PURCHASE-ANALYSIS-WAVE-20260913-R2` | existing `agent/odoo-ui-purchase-analysis` in `/home/nhanjs/projects/core3-worktrees/odoo-ui-purchase-analysis` | Purchase Analysis graph/pivot/list filters and measures, company/permission boundaries, deterministic empty/missing/invalid/transport states, and focused refusal tests | dispatched in `1736911a`; awaiting self-contained product commit before QA |
+
+## 2026-09-13 lifecycle decision — Purchase Analysis R2
+
+- Handoff `1736911a` was re-polled after the unresolved `0f5620e8` contract
+  conflict and repeated repair requests. The owner worktree has no new commit
+  or implementation diff; only its pre-existing untracked `qa/purchase.md`
+  remains.
+- The same-owner repair is therefore **stalled/terminal for this wave**. The
+  active branch remains unchanged, and the conditional `0f5620e8` evidence and
+  its browser/TypeScript blockers are preserved. No Purchase module sign-off
+  is implied.
