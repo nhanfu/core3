@@ -104,6 +104,12 @@ QA state: qa-verified-partial
 | ACC-BROWSER-006 | Authenticated FormView CRUD and persistence | `/accounting/journals` | admin creates a journal, returns to the list, reloads, and sees the persisted row | Node Playwright authenticated browser check, 2026-09-12 | pass; create and reload both found `QA Browser Journal 20260912`, zero browser errors |
 | ACC-BROWSER-007 | Permission boundary | `/accounting/journals` as `fleet@tms.local` | unauthorized user cannot read the Accounting route | Node Playwright authenticated browser check, 2026-09-12 | pass; outlet reports `Requires permission: accounting.read` |
 
+## R2 dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-ACCOUNTING-CONFIG-WAVE-20260913-R2` → `QA-ACCOUNTING-CONFIG-WAVE-20260913-R2` | existing `agent/odoo-ui-accounting-config` in `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-config` | Payment-terms/configuration page/API binding, CRUD validation, company/role boundaries, stale/missing guards, and focused no-partial-write tests | dispatched in `3326062b`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Evidence | Fix commit | Retest | Status |
