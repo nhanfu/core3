@@ -1,0 +1,15 @@
+version: 0.0.19
+type:
+  postgres:
+    up: |
+      UPDATE inventory_pickings
+      SET company_name = 'Core3 Demo Company'
+      WHERE id = 'receipt-00003' AND name = 'WH/IN/00003';
+    down: |
+      UPDATE inventory_pickings
+      SET company_name = 'My Company'
+      WHERE id = 'receipt-00003' AND name = 'WH/IN/00003';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
