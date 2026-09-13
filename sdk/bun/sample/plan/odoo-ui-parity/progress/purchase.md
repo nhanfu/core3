@@ -31,3 +31,14 @@ Re-run the authenticated receipt cancellation flow after a healthy candidate
 backend is available, including desktop/mobile captures, paired Odoo evidence,
 direct stale-version and actor-permission probes, then complete the full
 regression without changing this evidence boundary.
+
+## QA disposition `c14ca127` (2026-09-13)
+
+Do not integrate the Purchase receipt candidate. QA found
+`PURCHASE-RECEIPT-001`: admin context is `Core3 Demo Company`, but receipt
+`WH/IN/00005` is `My Company (San Francisco)`, so live Cancel returns the
+company-scope error before persistence. Route fixture/company-context alignment
+to the existing owner `agent/odoo-ui-purchase-receipt-lifecycle-20260913` in
+`/home/nhanjs/projects/core3-worktrees/purchase-receipt-lifecycle-20260913`,
+then rerun authenticated mutation/reload QA. Restart and paired Odoo remain
+open; no replacement or merge was made.

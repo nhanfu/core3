@@ -124,3 +124,21 @@ resolved or explicitly waived.
   active branch remains unchanged, and the conditional `0f5620e8` evidence and
   its browser/TypeScript blockers are preserved. No Purchase module sign-off
   is implied.
+
+## QA disposition `c14ca127`: blocked; same-owner repair required (2026-09-13)
+
+- Do **not** integrate `c14ca127`. Focused receipt QA passed **6 tests / 53
+  assertions** and full Purchase passed **58 tests / 558 assertions**; lifecycle
+  guards, actor contracts, atomicity, build, audit, CSS, lint, and diff-check
+  passed.
+- Critical defect `PURCHASE-RECEIPT-001`: authenticated admin is `Core3 Demo
+  Company`, while `WH/IN/00005` is seeded as `My Company (San Francisco)`.
+  Live Cancel returns the company-scope error before mutation, so live
+  cancellation and persistence cannot be signed off.
+- Repair is routed to existing owner/worktree
+  `agent/odoo-ui-purchase-receipt-lifecycle-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/purchase-receipt-lifecycle-20260913`:
+  align the deterministic receipt fixture/company context, then rerun
+  authenticated Cancel/fulfillment mutation and reload checks.
+- Preserve live restart and authenticated paired Odoo gates. Candidate remains
+  blocked; no product merge or replacement owner was created.
