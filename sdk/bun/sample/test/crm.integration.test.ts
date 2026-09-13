@@ -685,6 +685,7 @@ describe('CRM YAML lifecycle integration', () => {
       'services/crm/pages/lead-workflow.yaml',
       'services/order/pages/sale-quotations.yaml',
     ]));
+    expect(generated.yaml_context.some((entry: any) => entry.path === 'services/order/pages/sale-quotations.yaml')).toBe(true);
     const agent = Bun.YAML.parse(readFileSync(join(import.meta.dir, '../services/ai/agent.yaml'), 'utf8')) as any;
     expect(agent.context_paths).toEqual(expect.arrayContaining([
       'services/crm/pages/quality-leads.yaml', 'services/crm/pages/configuration.yaml',
