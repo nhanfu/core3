@@ -83,3 +83,15 @@ QA state: qa-in-progress
 
 Disposition: retain as **conditional only**; do not integrate or sign off the
 Fleet module while these blockers remain.
+
+## Reviewer disposition — candidate `04b6f208`
+
+- Integrated on the active branch as `4aaa428f`; scope is limited to exposing
+  persisted `acquisition_date` and `trailer_hook` fields in the Fleet vehicle
+  create form and its regression assertion.
+- Post-merge verification passed: 3 candidate tests / 12 assertions, Fleet UI
+  audit (661 pages / 670 routes / 1153 datasources), targeted ESLint, Fleet
+  Sass build, and `git diff --check`.
+- Preserved blockers: restart durability was not certified by the in-memory
+  runner; browser/Odoo evidence, wrong-company isolation, and other runtime
+  gates remain open. Fleet remains conditional and unsigned-off.
