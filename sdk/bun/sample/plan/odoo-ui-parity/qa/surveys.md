@@ -86,3 +86,12 @@ Decision: **blocked / not signed off**. The migration repair itself passes the r
   and `git diff --check`.
 - Authenticated persistence/actor/browser evidence and paired Odoo comparison
   remain open. Surveys remains conditional and unsigned-off.
+## 2026-09-13 coordinator dispatch — bounded repair wave
+
+- Existing owner `agent/odoo-ui-surveys-next-wave-current` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/surveys-next-wave`, based at
+  `78a4142f`. Development event: `DEV-SURVEYS-WAVE-20260913-R2`; QA event:
+  `QA-SURVEYS-WAVE-20260913-R2`; handoff commit: `6b704c7d`.
+- Target is the bounded `SURVEYS-MIGRATION-001` rollback/replay-down repair
+  with focused regression tests. Candidate is pending; aggregate progress is
+  untouched. Existing ledger edits in the owner worktree are preserved.
