@@ -75,6 +75,28 @@ export function loadYamlServiceDefinition(service: DiscoveredYamlService): YamlS
   };
 }
 
+/**
+ * Convert the public topic envelope into the scalar parameters consumed by a
+ * declarative mutation.  Upload topics intentionally keep attachment metadata
+ * nested so the transport can carry it as one value; SQL mutations still use
+ * the existing fileName/mimeType/sizeBytes/storageKey parameter names.
+ */
+export function topicMutationInput(payload: any): Record<string, unknown> {
+  const values = payload?.values && typeof payload.values === 'object' ? payload.values : payload;
+  const attachment = payload?.attachment && typeof payload.attachment === 'object' ? payload.attachment : undefined;
+  return {
+    ...(values || {}),
+    ...(typeof payload?.threadId === 'string' ? { thread_id: payload.threadId } : {}),
+    ...(typeof payload?.thread_id === 'string' ? { thread_id: payload.thread_id } : {}),
+    ...(attachment ? {
+      ...(attachment.fileName !== undefined ? { fileName: attachment.fileName } : {}),
+      ...(attachment.mimeType !== undefined ? { mimeType: attachment.mimeType } : {}),
+      ...(attachment.sizeBytes !== undefined ? { sizeBytes: attachment.sizeBytes } : {}),
+      ...(attachment.storageKey !== undefined ? { storageKey: attachment.storageKey } : {}),
+    } : {}),
+  };
+}
+
 function resolveServiceDatabase(
   database: YamlServiceManifest['database'],
   serviceConfigs: Record<string, any>,
@@ -257,7 +279,7 @@ export class YamlServiceModule implements ModuleLifecycle {
       this.topics.register({
         definition: topicDefinition(String(declaration.id), Number(declaration.version || 1)),
         handle: (payload: any) => this.repository!.executeMutation(action.mutation, {
-          ...(payload?.values && typeof payload.values === 'object' ? payload.values : payload),
+          ...topicMutationInput(payload),
           current_user_id: payload?.actor?.id || payload?.current_user_id || null,
           current_user_name: payload?.actor?.name || payload?.current_user_name || '',
           view_scope: 'all',

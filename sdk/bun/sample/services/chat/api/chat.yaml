@@ -160,7 +160,9 @@ actions:
     mutation:
       generated: [message_id, attachment_id]
       guards:
+        - { query: "SELECT id FROM chat_threads WHERE id = :thread_id", status: 404, code: CHAT_THREAD_NOT_FOUND, message: Conversation not found. }
         - { query: "SELECT 1 AS ok FROM chat_participants WHERE thread_id = :thread_id AND user_id = COALESCE(:current_user_id, 'user-admin')", status: 403, code: CHAT_THREAD_FORBIDDEN, message: You are not a participant in this conversation. }
+        - { query: "SELECT id FROM chat_threads WHERE id = :thread_id AND (CAST(:expected_row_version AS BIGINT) IS NULL OR row_version = CAST(:expected_row_version AS BIGINT))", status: 409, code: CHAT_THREAD_STALE, message: Conversation was changed by another user. Reload before sending the attachment. }
         - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:fileName AS VARCHAR))) BETWEEN 1 AND 255 AND COALESCE(:sizeBytes, 0) BETWEEN 1 AND 5242880 AND length(trim(CAST(:storageKey AS VARCHAR))) BETWEEN 1 AND 512", status: 400, code: CHAT_ATTACHMENT_INVALID, message: Attachment metadata is invalid. }
       steps:
         - { query: "INSERT INTO chat_messages(id, thread_id, sender_id, body) VALUES(:message_id, :thread_id, :current_user_id, COALESCE(NULLIF(trim(CAST(:content AS VARCHAR)), ''), 'File uploaded'))" }

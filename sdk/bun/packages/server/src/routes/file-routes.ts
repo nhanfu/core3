@@ -52,7 +52,7 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
         // Chat supports file-only messages. Keep the optional caption typed
         // for the SQL mutation instead of binding undefined as DuckDB ANY.
         content: meta.kind === 'chat_attachment' ? (meta.content ?? '') : meta.content,
-        expected_row_version: meta.expected_row_version,
+        expected_row_version: meta.expected_row_version ?? null,
         attachment: fileMeta,
         actor: activityActor,
       });
