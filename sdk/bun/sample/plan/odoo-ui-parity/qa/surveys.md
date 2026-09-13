@@ -9,10 +9,21 @@
 - Boundary: this is route/render smoke evidence only; it does not sign off the complete menu tree, CRUD, permissions, workflows, persistence, or paired Odoo visual parity.
 
 QA state: qa-in-progress
-QA slot: dispatchable surveys assignment (pending wave dispatch)
+QA slot: bounded migration-repair candidate QA
 Module owner: surveys module owner
 Verification trigger: feature-complete
-Candidate commit: `1859b836edadc73bad3b432a7622b73fba684fa3`
+Candidate commit: `f7b9a24e7100e0821688ef006dec187212bb36de`
+
+## Bounded QA rerun: candidate f7b9a24e (2026-09-13)
+
+- Migration matrix: **pass** on fresh in-memory DuckDB. Latest `0.0.17` applied all 17 migrations and exposed `survey_responses_access_token_idx`, `survey_responses_survey_idx`, and `survey_responses_idempotency_key_idx`. A submitted `qa-preserved` response survived rollback to `0.0.16`; the two earlier indexes remained. Upgrade plus two replays restored the idempotency index, retained the response, and retained 17 migration rows. The candidate migration tests passed 2/2.
+- Migration error probe: requesting nonexistent target `9.9.9` returned success/no-op and left the schema/data unchanged. This is a migration-runner behavior finding, not a candidate sign-off criterion; it should be fixed or explicitly specified separately.
+- Focused Surveys tests: **33 pass, 3 fail, 292 assertions** across 36 tests. Failures in `surveys.integration.test.ts`, `surveys_delete.integration.test.ts`, and `surveys_invite.integration.test.ts` all fail discovery on `components[0].activity_complete_action is not allowed`; the key is in Maintenance, not Surveys, and is unchanged by `f7b9a24e`.
+- Audit: **fail**, same `activity_complete_action` schema error. Scoped `git diff --check` passed.
+- Full repository test: started, then stopped on request while still running. It had reached an unrelated `sales_orders_to_upsell` timeout at 30,000 ms and later continued; no full-suite result is claimed. Surveys migration tests passed when reached.
+- Browser evidence: fresh module process on `http://127.0.0.1:4047` served public `/surveys` HTML with 200 and authenticated login succeeded. Headless Chrome authenticated desktop 1440x900 and mobile 390x844 navigated to `/surveys`, with zero page errors, zero failed requests, and no horizontal overflow; both rendered an empty body, so no desktop/mobile visual or Odoo parity claim is made. Captures: `/tmp/core3-qa-surveys-f7b9-desktop.png`, `/tmp/core3-qa-surveys-f7b9-mobile.png`.
+
+Decision: **blocked / not signed off**. The migration repair itself passes the requested rollback, dependent-index, preservation, upgrade, and replay checks. Open blockers are the unrelated schema/audit failures, incomplete full repository regression, empty authenticated browser render, and no paired Odoo evidence.
 
 ## Test-case inventory
 
