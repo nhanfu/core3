@@ -63,6 +63,14 @@ Repair is routed to the existing owner at
 `project-20260913` path is not registered. Retest upload/list/download and
 reload before integration. Lint, restart, and Odoo gates remain open.
 
+## Integrated conditional attachment repair: `b79579a6` (2026-09-13)
+
+The complete Project attachment sequence is active as `18605b41`, `10e441c6`,
+and `d32e5aa2`. Project-only verification passed 49/546 and attachment tests
+passed 3/25; audit, CSS, and diff-check passed. Combined Timesheets had four
+unrelated baseline failures. Odoo comparison remains open; no full Project
+sign-off is claimed.
+
 ## QA hold: `0a20ed86` / `PROJECT-ATTACH-002` (2026-09-13)
 
 Upload/download and persistence pass, but normal Project `/api/query` and task

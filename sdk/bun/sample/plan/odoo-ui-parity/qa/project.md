@@ -179,3 +179,20 @@ reload retest passes. Preserve lint, restart, and Odoo blockers.
 - Require root-cause request/session-context and cache/detail binding repair,
   focused normal-prefetch/list and isolation regressions, a self-contained
   commit, and QA retest before integration.
+
+## Reviewer reconciliation `b79579a6`: conditionally integrated (2026-09-13)
+
+- The complete ordered Project attachment history is active:
+  `18605b41` (attachment base), `10e441c6` (company fixture), and `d32e5aa2`
+  (normal query/prefetch company context). The requested `b79579a6` change was
+  represented by the final commit; no duplicate implementation was created.
+- Active Project verification passed **49 tests / 546 assertions** across 17
+  files; the dedicated attachment suite passed **3 tests / 25 assertions**.
+  Audit passed **661 pages / 670 routes / 1161 datasources**; Project CSS and
+  diff-check passed.
+- QA records 76 Project/Timesheets tests, Demo/Vietnam zero-row isolation,
+  normal/cached prefetch, upload/list/download, file-backed reopen/restart,
+  guards, and clean desktop/mobile browser behavior.
+- The combined Project/Timesheets run has four unrelated pre-existing
+  Timesheets contract failures; authenticated Odoo comparison remains open.
+  No Project attachment defect remains in this bounded slice.
