@@ -1,5 +1,22 @@
 # email-marketing QA ledger
 
+## Bounded review handoff — exact candidate `6f86823a` (2026-09-13)
+
+- Recipient normalization/validation and idempotent persistence: **PASS**.
+  CRLF, outer whitespace, named-address trimming, invalid-email rejection,
+  duplicate-safe contacts/subscriptions, and refreshed list counts are covered.
+- Focused Email Marketing suite: **PASS**, 46 tests / 459 assertions. Full
+  repository run: **PASS**, 1,132 tests / 10,631 assertions. Audit, Email
+  Marketing CSS, applicable ESLint, and diff-check passed.
+- Blocker `EMAIL-MARKETING-BROWSER-001`: authenticated desktop/mobile import
+  modal comparison was unavailable because js_repl/Playwright was unavailable;
+  no candidate-specific modal screenshots or interaction claim is made.
+- Paired authenticated Odoo comparison and broader actor/company, restart,
+  Temporal, provider, and full route-tree gates remain open.
+
+Disposition: bounded normalization change integrated; preserve the browser/Odoo
+blocker and pending unsigned-off module status.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.
