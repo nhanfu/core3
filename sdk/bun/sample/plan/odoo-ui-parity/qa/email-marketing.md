@@ -103,6 +103,12 @@ Detailed execution matrix: [`test-plans/email-marketing.md`](test-plans/email-ma
 | EMAIL_MARKETING-BROWSER-001 | Authenticated Mailings list at desktop/mobile | Isolated runner `:4354`; canonical route rendered seeded states with 0 page/request errors and no overflow; desktop/mobile captures above | pass for Core3 runtime; paired Odoo comparison remains open |
 | EMAIL_MARKETING-BROWSER-002 | Mailing Test recipient wizard | Desktop authenticated capture shows Odoo-shaped wizard and multiline Recipients field; mobile list capture passes without side-panel wizard | pass for captured Core3 states; mobile wizard interaction remains open |
 
+## R2 dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-EMAIL-MARKETING-WAVE-20260913-R2` → `QA-EMAIL-MARKETING-WAVE-20260913-R2` | existing `agent/email-marketing-recipient-workflow-20260913` in `/home/nhanjs/projects/core3-worktrees/email-marketing-recipient-workflow-20260913` | Marketing actor/company boundaries for campaign, mailing, contact, and settings mutations, with 401/403, wrong-company, stale/missing, and unchanged-row focused tests | dispatched in `826f9556`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
