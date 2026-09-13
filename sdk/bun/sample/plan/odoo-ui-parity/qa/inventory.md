@@ -246,3 +246,19 @@ no Inventory module sign-off or aggregate progress claim.
 - Preserve open mobile upload completion, live restart durability, and fresh
   authenticated Odoo comparison gates. Candidate remains blocked; no duplicate
   owner or product merge was created.
+
+## Reviewer reconciliation `b5bd4325`: conditionally integrated (2026-09-13)
+
+- Ordered Inventory attachment commits are active: `1540e5f9` (attachment
+  surface), `724f78ec` (company fixture), and `f8651357` (detail datasource
+  company context). Requested `b5bd4325` was already represented by
+  `f8651357`; its cherry-pick was empty, so no duplicate was created.
+- Active verification passed **48 tests / 497 assertions** across 15 files,
+  including upload/prefetch/query/list/download, company isolation, guards, and
+  file-backed persistence. Audit passed **661 pages / 670 routes / 1159
+  datasources**; Inventory CSS and diff-check passed.
+- QA records Demo -> Vietnam zero-row isolation, desktop/mobile/reload,
+  restart auth boundary, and clean builds/lint/diff checks. The datasource
+  defect is resolved for this bounded slice.
+- Conditional status remains because authenticated Odoo comparison and
+  unrelated Website full-lint errors remain open.

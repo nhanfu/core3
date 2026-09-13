@@ -200,3 +200,10 @@ alignment to the existing owner `agent/odoo-ui-inventory-dev4-20260913` in
 `/home/nhanjs/projects/core3-worktrees/inventory-dev4-20260913`, then retest
 live upload/download. Mobile completion, restart, and paired Odoo remain open;
 no replacement or duplicate merge was made.
+
+## Integrated conditional attachment context: `b5bd4325` (2026-09-13)
+
+The Inventory transfer attachment bundle is active as `1540e5f9`, `724f78ec`,
+and `f8651357`; `b5bd4325` was empty because its context propagation was
+already present. Active verification passed 48/497, audit, Inventory CSS, and
+diff-check. Odoo comparison and unrelated Website lint remain open.
