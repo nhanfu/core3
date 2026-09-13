@@ -801,3 +801,26 @@ sign-off is claimed.
   verification, and focused Accounting QA before review.
 - Preserve restart and paired authenticated Odoo gates; no full Accounting
   sign-off is made.
+
+## Coordinator reconciliation — final bank-statement route repair `bbce65a8` (2026-09-13)
+
+- Owner lineage was reviewed in
+  `/home/nhanjs/projects/core3-worktrees/odoo-accounting-bank-statement-attachments-20260913`
+  on `agent/odoo-accounting-bank-statement-attachments-20260913`; exact QA
+  HEAD was `bbce65a8`, with only owner QA/handoff documentation dirty.
+- The base attachment implementation was already active as `d6806d3a`; the
+  ordered follow-ups integrated as `926f95ba` (company context), `720c63fa`
+  (`attachment_download_action`), and `6d64122c` (Accounting-specific client
+  download route). Active guard assertions were adapted to the active HTTP
+  response contract in `77cbf736`; existing company/atomicity coverage was
+  retained rather than removed.
+- Active verification passed the attachment test (**1 test / 18 assertions**),
+  targeted ESLint, Accounting Sass, audit (**661 pages / 670 routes / 1161
+  datasources**), and diff-check. QA evidence is accepted for **91 tests /
+  1,029 assertions**, Chromium desktop/mobile download controls, exact CSV
+  bytes/MIME/metadata/actor/company/key, reload persistence, guards, and
+  atomicity.
+- Disposition: **conditionally integrated bounded Accounting attachment route
+  bundle**. Fresh authenticated Odoo comparison, file-backed/live restart
+  limitations, and the missing-jsdom client DOM test environment remain open;
+  no full Accounting sign-off is made.

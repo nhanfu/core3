@@ -105,3 +105,16 @@ diff-check green. QA confirms valid 4,453-byte XLSX output with four rows,
 desktop/mobile reload evidence, and Fleet actor 403. Fresh authenticated Odoo
 Journal Items comparison and broader export/attachment/print/Odoo gates remain
 open; no full sign-off.
+
+## Coordinator reconciliation — bank-statement attachment route bundle (2026-09-13)
+
+- Reconciled owner candidate `bbce65a8` against active prerequisites. The base
+  implementation is active as `d6806d3a`; follow-up commits are active as
+  `926f95ba`, `720c63fa`, and `6d64122c`, with active guard-test adaptation
+  `77cbf736` retaining existing coverage.
+- Active attachment verification passed **1/18 assertions**, targeted ESLint,
+  Accounting Sass, audit **661/670/1161**, and diff-check. QA reports **91 /
+  1,029** Accounting tests plus exact Chromium CSV download, persistence,
+  metadata, guards, and atomicity evidence.
+- Accounting remains conditional: paired Odoo comparison, restart/file-backed
+  limitations, and missing-jsdom client DOM testing remain open.
