@@ -75,3 +75,14 @@ Decision: **blocked / not signed off**. The migration repair itself passes the r
 - Persistence/data integrity: partial pass (authenticated Close persistence and contract tests pass; restart coverage remains)
 - Desktop/mobile visual parity: current route smoke pass; paired comparison pending
 - Tester decision: bounded candidate QA recorded; not signed off. Full regression, rollback/replay-down, complete actor mutation matrix, and full paired Odoo visual comparison remain open.
+
+## Reviewer disposition — candidate `78a4142f`
+
+- Integrated on the active branch as `5b7dd7e5`; scope is limited to Surveys
+  migration rollback/replay fixes, dependency preservation, deterministic data,
+  and the migration regression test.
+- Post-merge verification passed the migration suite (3 tests / 11 assertions),
+  UI audit (661 pages / 670 routes / 1153 datasources), Surveys Sass build,
+  and `git diff --check`.
+- Authenticated persistence/actor/browser evidence and paired Odoo comparison
+  remain open. Surveys remains conditional and unsigned-off.
