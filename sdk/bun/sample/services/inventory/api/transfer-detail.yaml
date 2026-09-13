@@ -15,8 +15,38 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_DATA_UNAVAILABLE, message: Transfer history is temporarily unavailable. } }
     query: "SELECT actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM inventory_transfer_messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND picking_id = :id UNION ALL SELECT 'OdooBot', 'inventory.transfer.created', 'Transfer created', 'Transfer created', CAST(p.scheduled_date AS VARCHAR) FROM inventory_pickings p WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :id AND NOT EXISTS (SELECT 1 FROM inventory_transfer_messages m WHERE m.picking_id = p.id) ORDER BY created_at DESC"
+  - id: inventory_transfer_attachments
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_ATTACHMENTS_UNAVAILABLE, message: Transfer documents are temporarily unavailable. } }
+    query: "SELECT a.id, a.picking_id, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM inventory_transfer_attachments a JOIN inventory_pickings p ON p.id = a.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND a.picking_id = :id AND p.company_name = :current_company_name ORDER BY a.created_at DESC, a.id"
 
 actions:
+  - id: upload_inventory_transfer_attachment
+    type: upload
+    action: inventory.transfers.attachments.upload
+    handler: attachment_metadata
+    permission: inventory.write
+    kind: inventory_transfer_attachment
+    params: { picking_id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_attachments, inventory_transfer_timeline, inventory_transfer_detail]
+    mutation:
+      generated: [attachment_id]
+      scope: { table: inventory_pickings, field: company_name, message: Transfer is outside the current company scope, message_key: errors.inventory_transfer_outside_company }
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :picking_id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :picking_id AND company_name = :current_company_name", status: 403, code: INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :picking_id AND company_name = :current_company_name AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: The transfer changed before the document could be uploaded. Reload it before retrying. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(:fileName)) BETWEEN 1 AND 255 AND :sizeBytes > 0", status: 422, code: INVENTORY_TRANSFER_ATTACHMENT_INVALID, message: A non-empty document is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_transfer_attachments WHERE picking_id = :picking_id AND file_name = :fileName)", status: 409, code: INVENTORY_TRANSFER_ATTACHMENT_DUPLICATE, message: This document is already attached to the transfer. }
+      steps:
+        - { query: "INSERT INTO inventory_transfer_attachments(id, picking_id, company_name, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :picking_id, :current_company_name, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)" }
+        - { query: "UPDATE inventory_pickings SET row_version = row_version + 1 WHERE id = :picking_id AND company_name = :current_company_name AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before the document could be uploaded. }
+      result: { query: "SELECT id, picking_id, company_name, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM inventory_transfer_attachments WHERE id = :attachment_id" }
+  - id: download_inventory_transfer_attachment
+    type: download
+    permission: inventory.read
+    kind: inventory_transfer_attachment
   - id: delete_inventory_transfer
     type: server
     permission: inventory.write

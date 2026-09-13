@@ -3,6 +3,13 @@ page: { id: transfer-detail, route: /inventory/transfer/detail, breadcrumb: [Sup
 components:
   - type: OdooFormView
     source: inventory_transfer_detail
+    attachment_source: inventory_transfer_attachments
+    attachment_panel_open: true
+    attachment_label: Documents
+    add_attachment_label: Add document
+    no_attachments_label: No documents attached
+    attachment_upload_action: upload_inventory_transfer_attachment
+    attachment_download_action: download_inventory_transfer_attachment
     title_field: name
     subtitle_field: operation_type_name
     status_field: state

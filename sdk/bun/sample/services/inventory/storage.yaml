@@ -1,3 +1,13 @@
 database:
   storage:
     driver: duckdb
+files:
+  driver: local
+  path: ${INVENTORY_UPLOAD_ROOT:-.data/uploads}
+  credentials: {}
+attachments:
+  inventory_transfer_attachment:
+    download:
+      route: /api/inventory/transfer-attachments
+      permission: inventory.read
+      query: SELECT a.* FROM inventory_transfer_attachments a JOIN inventory_pickings p ON p.id = a.picking_id WHERE a.id = :attachment_id AND p.company_name = :current_company_name

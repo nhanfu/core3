@@ -1,0 +1,23 @@
+version: 0.0.18
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_attachments (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        picking_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL DEFAULT 'application/octet-stream',
+        size_bytes BIGINT NOT NULL DEFAULT 0,
+        storage_key VARCHAR NOT NULL,
+        uploaded_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(picking_id, file_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_transfer_attachments_picking ON inventory_transfer_attachments(picking_id, created_at);
+    down: |
+      DROP TABLE IF EXISTS inventory_transfer_attachments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
