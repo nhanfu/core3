@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
@@ -144,5 +145,69 @@ describe('Base Contacts list/card/detail parity batch', () => {
     expect(yaml('api/contact-detail.yaml').actions.find((candidate: any) => candidate.id === 'edit_contact_detail').mutation.fields).toContain('parent_company_id');
     expect(yaml('api/contacts.yaml').datasources.find((candidate: any) => candidate.id === 'contact_parent_companies').permission).toBe('base.contacts.read');
     database.close();
+  });
+
+  test('reopens a file-backed database with contact attachment metadata intact', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'core3-base-contact-attachments-'));
+    const databasePath = join(root, 'base.duckdb');
+    const migrationTable = 'base_contacts_attachment_restart_migrations';
+    const upload = yaml('api/contact-detail.yaml').actions.find((candidate: any) => candidate.id === 'upload_contact_attachment');
+
+    try {
+      const firstDatabase = await DuckDbDatabase.open(databasePath);
+      const firstRepository = new YamlRepository(firstDatabase);
+      await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, migrationTable, ['schema', 'data']);
+
+      const uploaded = await firstRepository.executeMutation(upload.mutation, {
+        contact_id: 'contact-demo',
+        current_user_id: 'base-restart-qa',
+        fileName: 'restart-proof.txt',
+        mimeType: 'text/plain',
+        sizeBytes: 23,
+        storageKey: 'contacts/contact-demo/restart-proof.txt',
+      }) as any;
+      expect(uploaded).toMatchObject({
+        contact_id: 'contact-demo',
+        file_name: 'restart-proof.txt',
+        mime_type: 'text/plain',
+        size_bytes: 23,
+        uploaded_by: 'base-restart-qa',
+      });
+      const attachmentId = uploaded.id;
+      firstDatabase.close();
+
+      const reopenedDatabase = await DuckDbDatabase.open(databasePath);
+      const reopenedRepository = new YamlRepository(reopenedDatabase);
+      await migrateDatabase(reopenedRepository, join(serviceRoot, 'migrations'), undefined, migrationTable, ['schema', 'data']);
+
+      expect(await reopenedRepository.query(
+        'SELECT id, contact_id, file_name, mime_type, size_bytes, storage_key, uploaded_by FROM base_contact_attachments WHERE id = ?',
+        [attachmentId],
+      )).toEqual([{
+        id: attachmentId,
+        contact_id: 'contact-demo',
+        file_name: 'restart-proof.txt',
+        mime_type: 'text/plain',
+        size_bytes: 23,
+        storage_key: 'contacts/contact-demo/restart-proof.txt',
+        uploaded_by: 'base-restart-qa',
+      }]);
+      const reopenedAttachments = (await reopenedRepository.querySource(
+        source('contact-detail.yaml', 'contact_attachments'),
+        { id: 'contact-demo', fixture_state: null },
+        0,
+        50,
+      )).data;
+      expect(reopenedAttachments.find((attachment: any) => attachment.id === attachmentId)).toMatchObject({
+        id: attachmentId,
+        file_name: 'restart-proof.txt',
+        mime_type: 'text/plain',
+        size_bytes: 23,
+        uploaded_by: 'base-restart-qa',
+      });
+      reopenedDatabase.close();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
