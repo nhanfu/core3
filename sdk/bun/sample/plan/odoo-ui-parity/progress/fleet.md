@@ -80,3 +80,14 @@ list/detail/selector predicates to live `current_company_name`, then retest
 the Demo/Vietnam switch sequence. Fleet User fixture, process restart, and
 paired Odoo remain open. QA retest dispatch is pending unavailable agent
 lifecycle capacity; no replacement was created.
+
+## QA retest `7f00561a`: blocked, root-cause repair routed (2026-09-13)
+
+Startup, CRUD/workflow, guards, Fleet User read 200/create 403, responsive
+desktop/mobile, and same-process reload passed. Evidence: focused **3/67**,
+full Fleet **69/721**, audit **659/669/1,134**, CSS/frontend/ESLint/diff-check
+pass. Critical live defect remains: Vietnam sees all six Demo services, Demo
+detail remains accessible, and selectors expose two Demo vehicles. Route a
+client/session/API-param/datasource/cache/detail-authorization trace to the
+same owner/worktree; no speculative predicate-only edit. Restart and Odoo
+remain open, and QA retest dispatch awaits an available lifecycle handle.

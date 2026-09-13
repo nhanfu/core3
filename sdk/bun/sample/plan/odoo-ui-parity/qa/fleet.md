@@ -175,5 +175,27 @@ and reports, and process-restart/runtime gates. Fleet is not fully signed off.
   QA state and must be inherited, not overwritten.
 - Required next event after a self-contained repair commit: existing
   `QA-FLEET-WAVE-20260913-R2` retest. Dispatch cannot be executed in this
-  session because no agent lifecycle handle is available; no replacement owner
-  or duplicate QA was created.
+session because no agent lifecycle handle is available; no replacement owner
+or duplicate QA was created.
+
+## QA retest `7f00561a`: persistent runtime isolation defect (2026-09-13)
+
+- Retest evidence: startup/API **200**; focused service suite **3 tests / 67
+  assertions**; full Fleet **69 tests / 721 assertions across 23 files**; audit
+  **659 pages / 669 routes / 1,134 datasources**; Fleet CSS/frontend builds,
+  targeted ESLint, and diff-check pass. Desktop/mobile rendering, CRUD/workflow,
+  guards, same-process reload, and Fleet User read-only (read 200/create 403)
+  passed.
+- Critical failure persists in the authenticated runtime: Demo → Vietnam still
+  exposes all six Demo services; Demo detail `fleet-service-001` remains
+  accessible; and vehicle selectors expose two Demo vehicles. Do not merge
+  `1e55ca16` or promote `7f00561a`.
+- Same-owner root-cause task routed to `agent/fleet-next-wave` in
+  `/home/nhanjs/projects/core3-worktrees/fleet-next-wave`: trace the actual
+  client request/session context, API params, datasource binding, cache, and
+  detail authorization end to end. Do not make another speculative
+  predicate-only edit. Require a self-contained repair plus focused live
+  Demo/Vietnam proof before reactivating QA.
+- Fleet User fixture/read coverage, process-restart durability, and paired Odoo
+  remain open. QA is deactivated pending the repair; dispatch cannot be
+  performed in this session because no agent lifecycle handle is available.
