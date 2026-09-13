@@ -91,3 +91,15 @@ detail remains accessible, and selectors expose two Demo vehicles. Route a
 client/session/API-param/datasource/cache/detail-authorization trace to the
 same owner/worktree; no speculative predicate-only edit. Restart and Odoo
 remain open, and QA retest dispatch awaits an available lifecycle handle.
+
+## Reviewer reconciliation `dbcd2430` (2026-09-13)
+
+The reported QA PASS is not reproducible on the active branch. The candidate
+was temporarily cherry-picked as `8372b826`; its new isolation regression
+failed because the Fleet service list and vehicle selector queries do not use
+the propagated company context, and Demo rows remained visible after switching
+to Vietnam. The temporary integration was reverted as `2b95d27d`; no Fleet
+product merge is accepted. Route a same-owner root-cause repair for the live
+service list/selector/detail authorization and request/session binding, then
+re-run focused runtime isolation QA. Preserve open duckdb-memory restart and
+paired authenticated Odoo gates.

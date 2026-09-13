@@ -199,3 +199,30 @@ or duplicate QA was created.
 - Fleet User fixture/read coverage, process-restart durability, and paired Odoo
   remain open. QA is deactivated pending the repair; dispatch cannot be
   performed in this session because no agent lifecycle handle is available.
+
+## Reviewer reconciliation `dbcd2430`: blocked; QA PASS not reproducible (2026-09-13)
+
+- Ownership and lineage were valid in the existing `agent/fleet-next-wave`
+  worktree at `/home/nhanjs/projects/core3-worktrees/fleet-next-wave`, after
+  the prior Fleet service-boundary repairs. The candidate added request-context
+  propagation and one Fleet isolation regression test; no unrelated product
+  files were present in the owner worktree.
+- A clean cherry-pick was temporarily made as `8372b826`, but post-integration
+  focused verification failed: **3 passed / 1 failed, 62 assertions** in
+  `test/fleet_services.integration.test.ts`. After switching the authenticated
+  user to Vietnam, `fleet_services` still returned all six Demo rows. The three
+  legacy CRUD/workflow/guard checks passed.
+- Root cause is concrete: `services/fleet/api/services.yaml` does not apply
+  either `:company_name` or `:current_company_name` to the service-list query,
+  and the vehicle selector query is likewise unscoped. Propagating context alone
+  cannot enforce the claimed isolation. The temporary integration was reverted
+  as `2b95d27d`; `dbcd2430` is **not integrated**.
+- The linked QA report's Demo → Vietnam → Demo `6/2 → 0/0 → 6/2`, detail-denial,
+  selector, CRUD, actor, responsive, same-process persistence, audit/build/lint
+  evidence is preserved as an unconfirmed report, not accepted as active-branch
+  evidence. Required next action is a same-owner repair covering the actual
+  service list, selector, detail query/authorization, and client/session request
+  binding, followed by focused runtime proof.
+- Process restart on duckdb-memory remains unverified and fresh paired
+  authenticated Odoo comparison remains unavailable. Fleet remains
+  **conditional/blocked**, with no full module sign-off.
