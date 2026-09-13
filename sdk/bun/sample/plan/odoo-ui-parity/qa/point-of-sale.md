@@ -68,6 +68,12 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 | POINT_OF_SALE-004B | Authenticated route matrix | 72/72 POS routes loaded on desktop; 0 console/page errors, failed requests, HTTP >=400 responses, or horizontal overflow | PASS (route smoke) |
 | POINT_OF_SALE-005 | Complete route interaction and fresh paired Odoo comparison | Existing module captures are recorded, but current-wave full route interaction and paired adjudication are incomplete | pending |
 
+## R2 dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-POS-WAVE-20260913-R2` → `QA-POS-WAVE-20260913-R2` | existing `agent/odoo-pos-dev3-route-errors` in `/home/nhanjs/projects/core3-worktrees/odoo-pos-dev3-route-errors` | POS session/order/payment actor and company boundaries, 401/403 refusal, stale/missing guards, and atomic unchanged-row focused tests | dispatched in `200d5091`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
