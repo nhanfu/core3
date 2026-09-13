@@ -25,7 +25,7 @@ describe('Accounting bank statement attachments', () => {
     expect(apiDocument.page).toEqual({ id: 'accounting-bank-statement-detail' });
     expect(upload).toMatchObject({ type: 'upload', permission: 'accounting.write', kind: 'accounting_bank_statement_attachment' });
     expect(download).toMatchObject({ type: 'download', permission: 'accounting.read', kind: 'accounting_bank_statement_attachment' });
-    const user: any = { sub: 'accounting-manager', name: 'Accounting Manager', permissions: ['accounting.read', 'accounting.write'] };
+    const user: any = { sub: 'accounting-manager', name: 'Accounting Manager', company: { name: 'Core3 Demo Company' }, permissions: ['accounting.read', 'accounting.write'] };
     const createApi = (activeRepository = repository) => createYamlApi({
       repository: activeRepository,
       authProvider: { async getCurrentUser() { return user; }, hasPermission(candidate: any, permission: string) { return candidate.permissions.includes(permission); } },
@@ -40,8 +40,24 @@ describe('Accounting bank statement attachments', () => {
     user.permissions = ['accounting.read', 'accounting.write'];
     const uploadedResponse = await createApi()(new Request('http://accounting.test/api/upload', { method: 'POST', body: form }), new URL('http://accounting.test/api/upload'));
     expect(uploadedResponse?.status).toBe(200);
-    expect(await repository.query('SELECT attachment_name, attachment_type, attachment_size, storage_key FROM accounting_bank_statements WHERE id = ?', ['accounting-bank-statement-001'])).toEqual([expect.objectContaining({ attachment_name: 'statement.csv', attachment_type: 'text/csv', attachment_size: '4' })]);
+    expect(await repository.query('SELECT attachment_name, attachment_type, attachment_size, attachment_company, attachment_created_by, storage_key, row_version FROM accounting_bank_statements WHERE id = ?', ['accounting-bank-statement-001'])).toEqual([expect.objectContaining({ attachment_name: 'statement.csv', attachment_type: 'text/csv', attachment_size: '4', attachment_company: 'Core3 Demo Company', attachment_created_by: 'Accounting Manager', row_version: 2 })]);
     const uploaded = (await repository.query('SELECT storage_key FROM accounting_bank_statements WHERE id = ?', ['accounting-bank-statement-001']))[0] as any;
+
+    const staleForm = new FormData();
+    staleForm.set('file', new File([new Uint8Array([83, 84, 65, 76, 69])], 'stale.csv', { type: 'text/csv' }));
+    staleForm.set('meta', JSON.stringify({ kind: 'accounting_bank_statement_attachment', id: 'accounting-bank-statement-001', expected_row_version: 1 }));
+    await expect(createApi()(new Request('http://accounting.test/api/upload', { method: 'POST', body: staleForm }), new URL('http://accounting.test/api/upload'))).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    expect((await repository.query('SELECT attachment_name, attachment_size, row_version FROM accounting_bank_statements WHERE id = ?', ['accounting-bank-statement-001']))[0]).toEqual({ attachment_name: 'statement.csv', attachment_size: '4', row_version: 2 });
+
+    user.company = { name: 'Core3 Vietnam Branch' };
+    const crossCompanyForm = new FormData();
+    crossCompanyForm.set('file', new File([new Uint8Array([67, 82, 79, 83, 83])], 'cross.csv', { type: 'text/csv' }));
+    crossCompanyForm.set('meta', JSON.stringify({ kind: 'accounting_bank_statement_attachment', id: 'accounting-bank-statement-001', expected_row_version: 2 }));
+    await expect(createApi()(new Request('http://accounting.test/api/upload', { method: 'POST', body: crossCompanyForm }), new URL('http://accounting.test/api/upload'))).rejects.toMatchObject({ status: 404, code: 'ACCOUNTING_BANK_STATEMENT_NOT_FOUND' });
+    expect((await repository.query('SELECT attachment_name, storage_key FROM accounting_bank_statements WHERE id = ?', ['accounting-bank-statement-001']))[0]).toEqual(expect.objectContaining({ attachment_name: 'statement.csv', storage_key: uploaded.storage_key }));
+    const crossCompanyDownload = await createApi()(new Request('http://accounting.test/api/accounting/bank-statement-attachments/accounting-bank-statement-001'), new URL('http://accounting.test/api/accounting/bank-statement-attachments/accounting-bank-statement-001'));
+    expect(crossCompanyDownload?.status).toBe(404);
+    user.company = { name: 'Core3 Demo Company' };
     database.close();
     const restartedDatabase = await DuckDbDatabase.open(databasePath);
     const restartedRepository = new YamlRepository(restartedDatabase);

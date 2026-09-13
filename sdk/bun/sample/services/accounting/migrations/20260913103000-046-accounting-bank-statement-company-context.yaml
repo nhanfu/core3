@@ -1,0 +1,18 @@
+version: 0.0.46
+description: Align bank statement fixtures with the authenticated Core3 company context
+type:
+  postgres:
+    up: |
+      UPDATE accounting_bank_statements
+      SET company = 'Core3 Demo Company',
+          attachment_company = CASE WHEN attachment_name IS NULL THEN NULL ELSE 'Core3 Demo Company' END
+      WHERE company = 'My Company (San Francisco)';
+    down: |
+      UPDATE accounting_bank_statements
+      SET company = 'My Company (San Francisco)',
+          attachment_company = CASE WHEN attachment_name IS NULL THEN NULL ELSE 'My Company (San Francisco)' END
+      WHERE company = 'Core3 Demo Company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
