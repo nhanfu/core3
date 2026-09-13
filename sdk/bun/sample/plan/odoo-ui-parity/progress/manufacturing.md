@@ -36,6 +36,21 @@ The module has a current functional/browser QA candidate. No complete parity
 claim is made here because paired Odoo visual adjudication and remaining CRUD
 interaction coverage are still open.
 
+## 2026-09-13 migration replay repair
+
+- Repaired migration `0.0.6` so fixture cleanup is limited to its own six MOs,
+  six work orders, four moves, and the two known legacy demo work orders plus
+  `mo-demo-001`; existing Manufacturing rows are preserved on replay.
+- Added `test/manufacturing_migrations.integration.test.ts` covering a full
+  chain replay under a second migration ledger, existing-row preservation, and
+  fixture singleton counts.
+- Verified: Manufacturing `61 tests / 687 assertions`; audit `659/668/1,138`;
+  global and Manufacturing CSS; targeted ESLint; and `git diff --check` all
+  pass. Full lint still reports only the pre-existing website errors noted in
+  the QA ledger.
+- Candidate remains in-progress: this closes `MRP-FUNC-008`, but does not
+  close paired Odoo, browser CRUD/actor, restart, or complete-module gates.
+
 ## Current evidence (2026-09-12)
 
 - Manufacturing focused corpus: `bun test ./test/manufacturing*.integration.test.ts --timeout 20000` — 59 passed, 674 assertions, 0 failed across 19 files.

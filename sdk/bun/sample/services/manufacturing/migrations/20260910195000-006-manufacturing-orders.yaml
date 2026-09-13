@@ -27,9 +27,9 @@ type:
         reserved_quantity DECIMAL(18,3) NOT NULL DEFAULT 0, uom VARCHAR NOT NULL DEFAULT 'Units',
         lot_name VARCHAR, state VARCHAR NOT NULL DEFAULT 'Waiting'
       );
-      DELETE FROM mrp_production_moves;
-      DELETE FROM mrp_workorders;
-      DELETE FROM mrp_productions;
+      DELETE FROM mrp_production_moves WHERE id IN ('move-progress-raw', 'move-progress-finished', 'move-done-raw', 'move-done-finished');
+      DELETE FROM mrp_workorders WHERE id IN ('wo-demo-001', 'wo-demo-002', 'wo-progress-001', 'wo-progress-002', 'wo-confirmed-001', 'wo-to-close-001', 'wo-done-001', 'wo-cancelled-001');
+      DELETE FROM mrp_productions WHERE id IN ('mo-demo-001', 'mo-draft-001', 'mo-confirmed-001', 'mo-progress-001', 'mo-to-close-001', 'mo-done-001', 'mo-cancelled-001');
       INSERT INTO mrp_productions (id, row_version, name, product_id, product_name, bom_id, quantity, qty_produced, state, planned_date, reference, priority, company_name, warehouse_name, origin, availability, locked, created_at) VALUES
         ('mo-draft-001', 1, 'MO/2026/0001', 'product-furn-7800', '[FURN_7800] Desk Combination', 'bom-desk-combination', 5, 0, 'Draft', DATE '2026-01-15', 'SO/2026/0001', 'Normal', 'My Company (San Francisco)', 'WH/Stock', 'SO/2026/0001', 'Waiting', FALSE, TIMESTAMP '2026-01-15 08:00:00'),
         ('mo-confirmed-001', 1, 'MO/2026/0002', 'product-furn-8522', '[FURN_8522] Table Top', 'bom-table-top-odoo', 12, 0, 'Confirmed', DATE '2026-01-15', 'SO/2026/0002', 'Urgent', 'My Company (San Francisco)', 'WH/Stock', 'SO/2026/0002', 'Waiting', FALSE, TIMESTAMP '2026-01-15 08:01:00'),

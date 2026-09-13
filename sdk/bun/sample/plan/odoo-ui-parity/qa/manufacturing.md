@@ -81,6 +81,36 @@ Module owner: manufacturing module owner
 Verification trigger: feature-complete
 Candidate commit: working tree after authenticated manufacturing QA
 
+## MRP-FUNC-008 migration replay repair — pending owner verification
+
+- Root cause: migration `0.0.6` previously deleted every row from
+  `mrp_productions`, `mrp_workorders`, and `mrp_production_moves` before
+  inserting its deterministic fixtures. A replay through a new migration
+  ledger could therefore erase existing Manufacturing data.
+- Owner repair narrows cleanup to the six MO, six work-order, and four move
+  fixture IDs owned by that migration. New focused coverage is in
+  `test/manufacturing_migrations.integration.test.ts`: it applies the full
+  chain under two ledgers, inserts existing rows between runs, and asserts
+  those rows and fixture counts survive without duplication.
+- Browser, audit, CSS, lint, and diff-check verification is pending for this
+  owner change; no module sign-off or aggregate progress update is implied.
+
+## MRP-FUNC-008 migration replay — owner verification (2026-09-13)
+
+- Focused replay test passes: `1 test / 7 assertions`. Full Manufacturing
+  corpus passes `61 tests / 687 assertions` across 20 files.
+- The test applies the full Manufacturing migration chain under two ledgers,
+  inserts existing MO/work-order/move rows between applications, and proves
+  those rows survive while deterministic fixtures remain singletons.
+- Audit passes (`659` pages, `668` routes, `1,138` datasources); global and
+  Manufacturing CSS builds pass; targeted ESLint and `git diff --check` pass.
+  Repository-wide `bun run lint` remains blocked only by the two pre-existing
+  website optional-chaining errors at `test/website_public.integration.test.ts`
+  lines 31 and 33.
+- This closes the migration replay sub-gate for the candidate. Paired Odoo,
+  authenticated CRUD/actor, restart, and other open Manufacturing gates remain
+  conditional; no module sign-off or aggregate progress update is implied.
+
 Detailed execution matrix: [`test-plans/manufacturing.md`](test-plans/manufacturing.md). It is the module-level source for manufacturing CRUD, workflows, actors, persistence, Temporal, and paired Odoo gates.
 
 ## Test-case inventory
