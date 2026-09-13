@@ -41,7 +41,7 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
-| `DEV-BLOG-WAVE-20260913-R2` → `QA-BLOG-WAVE-20260913-R2` | existing `agent/blog-wave-dev3` in `/home/nhanjs/projects/core3-worktrees/blog-wave-dev3` | Blog site/company actor boundaries for blogs, posts, and assets, private 401/403 behavior, published/draft visibility, and focused stale/missing/atomicity tests | owner later HEAD `15814f8f` remains dispatch-only; bounded Tags candidate was reviewed from `1c4b35c3` |
+| `DEV-BLOG-WAVE-20260913-R2` → `QA-BLOG-WAVE-20260913-R2` | existing `agent/blog-wave-dev3` in `/home/nhanjs/projects/core3-worktrees/blog-wave-dev3` | Blog site/company actor boundaries for blogs, posts, and assets, private 401/403 behavior, published/draft visibility, and focused stale/missing/atomicity tests | owner handle unavailable (no running owner process; HEAD `15814f8f` remains dispatch-only). Approved same-module takeover requested in this exact worktree; agent dispatch is unavailable here, so QA cannot yet be triggered |
 
 ## Bugs and retests
 
@@ -59,6 +59,19 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 - Dedicated QA completed for the bounded Tags candidate; active focused retest passed; no module sign-off is implied.
 - Odoo desktop/mobile comparison was not feasible; restart/site scope, complete
   Blog menu/workflows, and paired Odoo gates remain open.
+
+## R2 takeover request
+
+- Take over only in `/home/nhanjs/projects/core3-worktrees/blog-wave-dev3`,
+  inheriting the Blog ledger, Tags history, and owner findings; do not start a
+  parallel worktree or replace `1c4b35c3`/`c1b243af`.
+- Bounded task: implement site/company actor boundaries for Blog blogs, posts,
+  and assets; prove private 401/403, published/draft visibility, scoped
+  mutations, and focused stale/missing/atomicity behavior. Commit a
+  self-contained candidate, then trigger `QA-BLOG-WAVE-20260913-R2` against
+  that exact worktree.
+- Status: takeover not dispatched because no agent-dispatch handle is exposed
+  in the current environment.
 
 ## Sign-off
 

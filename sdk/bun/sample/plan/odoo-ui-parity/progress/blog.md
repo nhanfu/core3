@@ -31,6 +31,9 @@ deletion. No full-module parity claim is made here.
 
 ## Next bounded task
 
-Continue the remaining Blog permission,
-browser, restart, site-scope, Temporal, and paired Odoo gates. Update this
-file only with evidence from the matching module owner.
+Same-module takeover in `/home/nhanjs/projects/core3-worktrees/blog-wave-dev3`
+must implement and test the site/company actor-boundary slice (private 401/403,
+published/draft visibility, scoped mutations, stale/missing/atomicity), then
+trigger `QA-BLOG-WAVE-20260913-R2`. Owner handle is unavailable and no
+agent-dispatch handle is exposed here; keep this event pending. Tags/restart,
+full menu-workflow, Temporal, and paired Odoo gates remain open.
