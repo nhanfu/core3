@@ -143,6 +143,9 @@ export function createYamlApi(ctx: YamlApiContext) {
       company_name: user.roles?.includes('admin')
         ? params.company_name
         : String(user.company?.name || user.company_name || params.company_name || ''),
+      // Keep the authenticated company available to declarations that use a
+      // dedicated current_company_name parameter for tenant scoping.
+      current_company_name: String(user.company?.name || user.company_name || ''),
       current_branch_id: String(user.branch_id || ''),
       view_scope: String(user.view_scope || 'all'),
     };

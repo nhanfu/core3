@@ -58,6 +58,7 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
         company_name: authUser.roles?.includes('admin')
           ? (vm.params || {}).company_name
           : String(authUser.company?.name || authUser.company_name || (vm.params || {}).company_name || ''),
+        current_company_name: String(authUser.company?.name || authUser.company_name || ''),
         current_branch_id: String(authUser.branch_id || ''),
         view_scope: String(authUser.view_scope || 'all'),
       }, vm.skip || 0, vm.top || 25, typeof vm.facetField === 'string' ? vm.facetField : undefined, vm.sort, vm.pivot));
