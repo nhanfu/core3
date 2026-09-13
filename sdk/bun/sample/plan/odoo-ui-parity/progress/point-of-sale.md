@@ -4,7 +4,17 @@ Module owner: point-of-sale module owner
 QA assignment: QA-2
 Status: in-progress
 Verification trigger: feature-complete
-Candidate commit: `cdbc38ee`
+Candidate commit: `b9eb2ea1`
+
+## QA-2 bounded verification of `b9eb2ea1` (2026-09-13)
+
+- Candidate regression: 2 tests passed, 7 assertions; launcher bounds and POS Orders row action contract pass.
+- UI audit passed: 659 pages, 668 routes, 1,139 datasources. Global and POS CSS builds passed; `git diff --check` passed.
+- Full POS glob was started but hung and was stopped at finalization; no full-corpus pass is claimed.
+- Repository lint is not clean because of two `no-unsafe-optional-chaining` errors in unrelated `sample/test/website_public.integration.test.ts` lines 31 and 33.
+- Candidate runtime started on `4340/4341` and was stopped. Authenticated desktop/mobile browser execution timed out without usable output or captures. Odoo selector returned 200, but authenticated paired POS evidence is unavailable.
+
+QA decision remains conditional. Visual regression, authenticated Orders-row detail click-through, actor/restart, full desktop/mobile evidence, and paired Odoo gates remain open.
 
 ## Current state
 

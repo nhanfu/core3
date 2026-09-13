@@ -12,7 +12,23 @@ QA state: qa-in-progress
 QA slot: QA-2
 Module owner: point-of-sale module owner
 Verification trigger: feature-complete
-Candidate commit: `cdbc38ee`
+Candidate commit: `b9eb2ea1`
+
+## QA-2 verification of developer candidate `b9eb2ea1` (2026-09-13)
+
+- Candidate worktree: `/home/nhanjs/projects/core3-worktrees/odoo-pos-visual-nav-20260913`, branch `agent/odoo-pos-visual-nav-20260913`; initial status was clean.
+- Candidate regression test: `bun test ./test/pos_visual_navigation.integration.test.ts --timeout 20000` — **2 passed, 0 failed, 7 assertions**. It verifies launcher wrapper/inner-SVG bounds and both Orders row-open/double-click actions to `/point-of-sale/order-detail` with `{row.id}`.
+- UI audit: `bun run audit` — **passed**, 659 pages, 668 routes, 1,139 datasources.
+- CSS: `bun run css:build:global && bun run css:build:point-of-sale` — **passed**; generated outputs were unchanged.
+- Diff hygiene: `git diff --check HEAD` — **passed**.
+- Repository lint: **failed** on two existing errors in `sample/test/website_public.integration.test.ts:31:19` and `:33:19` (`no-unsafe-optional-chaining`); no POS-file lint error was reported.
+- Full POS corpus: `bun test ./test/pos*.integration.test.ts --timeout 20000` was started but hung during execution and was terminated at bounded finalization. No full-suite pass is claimed.
+- Candidate runtime was started on backend `4340` / Vite `4341` with `bun run dev --db=ddb --memory`, then stopped. The authenticated browser probe exceeded its bounded window and produced no usable result or capture.
+- Captures: none from `b9eb2ea1`. Existing `/tmp/pos-qa-cdbc38ee-*` and prior captures are not retested evidence for this candidate.
+- Odoo: `http://127.0.0.1:8069/web/database/selector` returned HTTP 200, but no authenticated paired POS capture was produced.
+- Actor boundaries, restart persistence, full desktop/mobile route evidence, and authenticated Orders-row detail navigation remain unverified.
+
+QA decision: **conditional / retest pending**. The candidate-specific static and contract checks pass, but the requested browser, full-corpus, actor/restart, and paired-Odoo evidence gates are incomplete. No module sign-off is made.
 
 ## QA-2 verification of integrated candidate `cdbc38ee` (2026-09-13)
 
