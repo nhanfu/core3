@@ -17,30 +17,30 @@ workflow:
       to: In Queue
       permission: sms_marketing.write
       mutation:
-        guards: [{ query: "SELECT id FROM sms_campaigns WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed. Reload before scheduling. }, { query: "SELECT id FROM sms_campaigns WHERE id = :id AND state = 'Draft' AND message <> '' AND recipient_count > 0", status: 409, message: An SMS campaign needs a message and opt-in recipients }]
-        steps: [{ query: "UPDATE sms_campaigns SET state = 'In Queue', scheduled_at = COALESCE(scheduled_at, TIMESTAMP '2026-09-12 12:00:00'), row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed. Reload before scheduling. }]
+        guards: [{ query: "SELECT id FROM sms_campaigns WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed or is outside your company. Reload before scheduling. }, { query: "SELECT id FROM sms_campaigns WHERE id = :id AND state = 'Draft' AND message <> '' AND recipient_count > 0", status: 409, message: An SMS campaign needs a message and opt-in recipients }]
+        steps: [{ query: "UPDATE sms_campaigns SET state = 'In Queue', scheduled_at = COALESCE(scheduled_at, TIMESTAMP '2026-09-12 12:00:00'), row_version = row_version + 1 WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed or is outside your company. Reload before scheduling. }]
         result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
     - id: send
       from: [In Queue]
       to: Sending
       permission: sms_marketing.write
       mutation:
-        guards: [{ query: "SELECT id FROM sms_campaigns WHERE id = :id AND state = 'In Queue' AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed. Reload before sending. }]
-        steps: [{ query: "UPDATE sms_campaigns SET state = 'Sending', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed. Reload before sending. }]
+        guards: [{ query: "SELECT id FROM sms_campaigns WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND state = 'In Queue' AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed or is outside your company. Reload before sending. }]
+        steps: [{ query: "UPDATE sms_campaigns SET state = 'Sending', row_version = row_version + 1 WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed or is outside your company. }]
         result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
     - id: complete
       from: [Sending]
       to: Sent
       permission: sms_marketing.manage
       mutation:
-        guards: [{ query: "SELECT id FROM sms_campaigns WHERE id = :id AND state = 'Sending' AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed. Reload before completing. }]
-        steps: [{ query: "UPDATE sms_campaigns SET state = 'Sent', sent_at = TIMESTAMP '2026-09-12 12:00:00', delivered_count = recipient_count, failed_count = 0, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed. Reload before completing. }]
+        guards: [{ query: "SELECT id FROM sms_campaigns WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND state = 'Sending' AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed or is outside your company. Reload before completing. }]
+        steps: [{ query: "UPDATE sms_campaigns SET state = 'Sent', sent_at = TIMESTAMP '2026-09-12 12:00:00', delivered_count = recipient_count, failed_count = 0, row_version = row_version + 1 WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed or is outside your company. }]
         result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
     - id: cancel
       from: [Draft, In Queue]
       to: Draft
       permission: sms_marketing.write
       mutation:
-        guards: [{ query: "SELECT id FROM sms_campaigns WHERE id = :id AND state IN ('Draft', 'In Queue') AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed. Reload before cancelling. }]
-        steps: [{ query: "UPDATE sms_campaigns SET state = 'Draft', scheduled_at = NULL, row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed. Reload before cancelling. }]
+        guards: [{ query: "SELECT id FROM sms_campaigns WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND state IN ('Draft', 'In Queue') AND row_version = :expected_row_version", status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed or is outside your company. Reload before cancelling. }]
+        steps: [{ query: "UPDATE sms_campaigns SET state = 'Draft', scheduled_at = NULL, row_version = row_version + 1 WHERE id = :id AND (:company_name IS NULL OR company_name = :company_name) AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SMS_MAILING_STALE, message: The SMS campaign changed or is outside your company. }]
         result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }

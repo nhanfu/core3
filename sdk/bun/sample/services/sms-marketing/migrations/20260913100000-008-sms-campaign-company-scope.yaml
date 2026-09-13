@@ -1,0 +1,13 @@
+version: 0.0.8
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE sms_campaigns ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      UPDATE sms_campaigns SET company_name = 'Core3 Demo Company' WHERE company_name IS NULL;
+    down: |
+      ALTER TABLE sms_campaigns DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

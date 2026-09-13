@@ -18,7 +18,7 @@ components:
     group_columns: 2
     groups:
       - title: Mailing
-        fields: [{ field: subject, label: Title }, { field: recipient_model_label, label: Recipients }, { field: mailing_list_names, label: Mailing Lists }, { field: responsible, label: Responsible }]
+        fields: [{ field: subject, label: Title }, { field: company_name, label: Company }, { field: recipient_model_label, label: Recipients }, { field: mailing_list_names, label: Mailing Lists }, { field: responsible, label: Responsible }]
       - title: Delivery
         fields: [{ field: sent, label: Sent }, { field: expected, label: Expected }, { field: scheduled, label: Scheduled }, { field: failed, label: Failed }, { field: bounced, label: Bounced }, { field: schedule_date, label: Scheduled for }, { field: sent_date, label: Sent Date }]
     notebook:
