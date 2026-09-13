@@ -120,3 +120,18 @@ repository lint gate remain open or blocked.
   messages, ownership/permission and invalid/stale/no-partial-write guards,
   with focused tests. Candidate pending; existing ledger and aggregate
   progress are preserved.
+
+## QA retest blocker: `902ae72d` (2026-09-13)
+
+- Multipart caption/file-only uploads, identity propagation, list/download,
+  authenticated desktop/mobile, reload, contract guards, audit/builds/ESLint,
+  and diff-check passed: **24 tests / 167 assertions**.
+- `CHAT-HTTP-GUARD-001`: live stale, non-participant, and missing-thread
+  attachment upload requests return HTTP 500 instead of the declared 409, 403,
+  and 404 responses. Candidate `902ae72d` is **blocked and not integrated**.
+- Route a same-module repair only to existing owner
+  `agent/chat-wave-dev1` in `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`.
+  Trace the upload action's guard/error translation and preserve transaction
+  atomicity; add focused HTTP regressions for stale, non-participant, and
+  missing-thread cases. Require a self-contained repair and fresh QA retest
+  before any review/integration.

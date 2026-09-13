@@ -53,3 +53,12 @@ by `post-merge` after integration.
 - QA state: **conditional / not signed off**. Browser CRUD, actor boundaries,
   restart persistence, and paired Odoo desktop/mobile comparison remain
   blocked or unexecuted.
+
+## R2 blocker: `CHAT-HTTP-GUARD-001`
+
+QA candidate `902ae72d` is blocked: live stale, non-participant, and
+missing-thread multipart uploads return HTTP 500 instead of declared 409/403/404.
+Route the repair to existing owner `agent/chat-wave-dev1` in
+`/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`; trace guard/error
+translation, retain atomicity, and add focused HTTP regressions before
+`QA-CHAT-WAVE-20260913-R2` retest. Do not integrate `902ae72d`.
