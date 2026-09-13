@@ -81,6 +81,15 @@ to rebase the full company-scope API/schema/fixture dependency plus reopen fix
 against active contracts before retest. Website lint, restart, and Odoo gates
 remain open.
 
+## Integrated conditional repair: `ec35bb47` -> `8a77e514` (2026-09-13)
+
+The corrected self-contained company-scope and numeric reopen bundle is
+integrated. Active focused workflow verification passed 4/4 with 34 assertions;
+audit, Recruitment CSS, and diff-check passed. QA reports 39/370 plus live
+desktop/mobile and controlled restart evidence. Recruitment remains conditional
+because full lint has unrelated Website errors, file-backed mutation restart is
+unavailable, and authenticated Odoo comparison redirects to `/web/login`.
+
 ## Reviewer hold: `45a30a12` (2026-09-13)
 
 QA passed the intended refusal/reopen behavior, but the submitted three-file

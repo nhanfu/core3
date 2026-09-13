@@ -218,3 +218,20 @@ Candidate commit: pending commit for refusal workflow repair
   active branch, then rerun QA.
 - Preserve open gates: unrelated Website full-lint errors, file-backed restart
   unavailable, and Odoo redirecting to `/web/login`.
+
+## Reviewer reconciliation `ec35bb47`: conditionally integrated (2026-09-13)
+
+- The corrected self-contained Recruitment bundle was cherry-picked as
+  `8a77e514`. It includes the company-scope schema/data migrations, applicant
+  list error contracts, scoped refusal/reopen API/workflow bindings, and focused
+  regression coverage.
+- Active verification passed the focused workflow suite **4/4, 34 assertions**;
+  `bun run audit` passed (**661 pages / 670 routes / 1158 datasources**), the
+  Recruitment CSS build passed, and `git diff --check` passed. The owner QA
+  evidence additionally reports **39 tests / 370 assertions**, controlled
+  restart, live refuse -> restore -> reload, numeric version, stale 409,
+  actor/company/anonymous 403/401, and desktop/mobile/reload success.
+- Conditional status is preserved. Full repository lint remains blocked by
+  unrelated Website errors at `sample/test/website_public.integration.test.ts`
+  lines 31 and 33; file-backed mutation restart is unavailable; authenticated
+  Odoo routes redirect to `/web/login`.
