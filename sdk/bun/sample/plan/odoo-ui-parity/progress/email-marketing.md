@@ -4,7 +4,7 @@ Module owner: email-marketing module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: dormant
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: `54f08872ce52db5c18013430ec694a654a37d2bd`
 
 ## Current state
 
@@ -17,6 +17,29 @@ claim is made here.
 Record the complete Odoo menu/action/view inventory, implement the module
 functionality, and dispatch QA on the first committed candidate. Update this
 file only with evidence from the matching module owner.
+
+## QA verification of candidate `54f08872` (2026-09-13)
+
+- Focused email-marketing regression: **46 passed, 457 assertions, 0 failed**
+  across 14 files.
+- Candidate recipient slice passed every-recipient validation, CRLF and outer
+  whitespace normalization, persisted multiline values, first-address mirror,
+  and optimistic stale-row guard. The corpus also passed campaign/mailing
+  workflow, contact recipient workflow, eligibility, idempotent persistence,
+  and declared permission/error contract checks.
+- `bun run audit` passed: 659 pages, 668 routes, 1,139 datasources.
+- `git diff --check HEAD^ HEAD` passed. There is no package `lint` script;
+  direct ESLint on the changed TypeScript test passed and YAML was ignored by
+  configuration with one warning.
+- Authenticated isolated runner `:4354` passed the canonical Email Marketing
+  Mailings route at 1440x900 and 390x844 with no page/request errors and no
+  horizontal overflow. Desktop Test wizard capture passed. Captures are in
+  `/tmp/core3-odoo-parity/email-marketing-campaigns-54f08872-desktop.png`,
+  `email-marketing-campaigns-54f08872-mobile.png`, and
+  `email-marketing-campaigns-54f08872-desktop-test-wizard.png`.
+- Odoo `:8069` was reachable but unauthenticated login redirected; no paired
+  Odoo capture is claimed. Full actor/company, restart/browser mutation,
+  complete route-tree, and paired Odoo gates remain open. No sign-off is made.
 
 ## Mailing Test recipient validation hardening (2026-09-13)
 
