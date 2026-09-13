@@ -82,6 +82,29 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 - Paired Odoo visual parity: pending
 - Tester decision: bounded pass, conditionally reconciled on active `c1b243af`; no full module sign-off
 
+## Review reconciliation: Blog actor-boundary repair `f5786b78`
+
+- The active branch lacked the blocked parent’s Blog company-boundary
+  prerequisite, so the valid ordered bundle was integrated as prerequisite
+  `be30c03f` (`6ae81b4e` Blog boundary/schema/API/page changes) plus repair
+  `d8b51f1a` (the `f5786b78` selected-company read propagation and regression
+  test). The later owner HEAD was not substituted.
+- Conflict review retained the active generic `authenticatedCompanyName`
+  helper and existing shared routing behavior while adding
+  `current_company_name` propagation, Blog lookup scoping, and actor regression
+  coverage. No unrelated module files were included.
+- Active verification: Blog suite **18 pass, 0 fail, 100 assertions**; audit
+  **661 pages / 670 routes / 1,161 datasources**; Blog Sass, frontend build,
+  targeted ESLint, and `git diff --check` passed.
+- QA evidence reconciled: Vietnam isolation, query-parameter widening
+  resistance, detail-prefetch isolation, 401/403, visibility,
+  upload/download, guards, desktop/mobile, and file-backed restart persistence
+  passed. Live upload persistence across process restart remains limited by the
+  memory-mode runner; authenticated paired Odoo comparison remains open.
+- Disposition: **conditionally integrated bounded Blog actor-boundary repair**;
+  full Blog sign-off remains open for live restart durability, full menu and
+  workflow coverage, and Odoo parity.
+
 ## R2 actor-boundary retest and repair
 
 - QA candidate `6ae81b4e` is **BLOCKED**. Private 401/403, published-versus-draft

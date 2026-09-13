@@ -50,3 +50,13 @@ published/draft visibility, scoped mutations, stale/missing/atomicity), then
 trigger `QA-BLOG-WAVE-20260913-R2`. Owner handle is unavailable and no
 agent-dispatch handle is exposed here; keep this event pending. Tags/restart,
 full menu-workflow, Temporal, and paired Odoo gates remain open.
+
+## R2 repair reconciliation
+
+QA repair `f5786b78` is conditionally integrated with prerequisite `be30c03f`
+and active repair commit `d8b51f1a`. Active Blog verification is 18 tests/100
+assertions with audit 661/670/1161, Sass, frontend build, targeted ESLint, and
+diff-check passing. Vietnam read isolation, detail prefetch, and query-widening
+resistance are covered. Live process-restart upload persistence is limited by
+the memory-mode runner; authenticated Odoo comparison and full menu/workflow
+gates remain open.
