@@ -162,3 +162,19 @@ mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
 - Employees remains **conditional / unsigned-off**. Full regression/full lint,
   actor matrix, restart durability, and Odoo detail/history comparison remain
   open; no aggregate progress or module sign-off is claimed.
+
+## 2026-09-13 coordinator review: repair candidate `3de4903f`
+
+- **Not integrated.** The exact candidate contains only
+  `employees_company_scope_prerequisite.integration.test.ts`; it assumes
+  ancestor implementation `99b87bd8` and directory repair `6a4da038`, neither
+  of which is present on the active branch.
+- Applying the exact commit alone would fail because migration
+  `20260913100000-023-company-scope.yaml` is absent. The active branch already
+  showed the corresponding two company-scope baseline failures during the
+  prior bounded history review.
+- Concrete repair required from the same owner: provide a self-contained
+  candidate, or an explicitly approved dependency handoff, including the
+  validated `99b87bd8` company-scope implementation and `6a4da038` directory
+  predicates before merging this regression guard. Preserve browser/Odoo,
+  full-regression, broader actor, and restart blockers; no sign-off is issued.
