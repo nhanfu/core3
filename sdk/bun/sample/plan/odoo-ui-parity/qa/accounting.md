@@ -110,6 +110,8 @@ QA state: qa-verified-partial
 | --- | --- | --- | --- |
 | `DEV-ACCOUNTING-CONFIG-WAVE-20260913-R2` → `QA-ACCOUNTING-CONFIG-WAVE-20260913-R2` | existing `agent/odoo-ui-accounting-config` in `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-config` | Payment-terms/configuration page/API binding, CRUD validation, company/role boundaries, stale/missing guards, and focused no-partial-write tests | dispatched in `3326062b`; awaiting self-contained product commit before QA |
 
+| `DEV-ACCOUNTING-VISUAL-WAVE-20260913-R2` → `QA-ACCOUNTING-VISUAL-WAVE-20260913-R2` | existing `agent/odoo-ui-accounting-visual2-20260912` in `/home/nhanjs/projects/core3-worktrees/accounting-visual2-20260912` | Bank-statement attachment upload/download binding, metadata/byte persistence, company/role permissions, stale/missing/invalid guards, and focused atomicity tests | dispatched in `74e4cdbd`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Evidence | Fix commit | Retest | Status |
