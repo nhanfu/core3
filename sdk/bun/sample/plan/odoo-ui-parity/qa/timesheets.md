@@ -1,5 +1,27 @@
 # timesheets QA ledger
 
+## Review handoff — candidate `ffa83031` (2026-09-13)
+
+- Conditional evidence reviewed: focused 6 tests / 37 assertions, migrations,
+  CRUD/concurrency, selectors, validation, frontend build, audit, and
+  diff-check pass.
+- Candidate-scope repairs required before integration:
+  1. replace the zero employee-cost calculation (`hours * unit_amount`) with
+     the intended employee hourly-cost derivation, and add a regression
+     assertion for the seeded `Admin User` cost;
+  2. declare `mock_data` for `all_timesheet_entries`,
+     `timesheet_analysis_totals`, `timesheet_analysis`, `timesheet_entries`,
+     `timesheets_settings`, and `timesheet_detail`, or document and obtain
+     approval for each runtime-only exception;
+  3. commit the inactive-employee rejection assertion already exercised by QA.
+- Environmental blockers preserved: live authenticated browser evidence is
+  unavailable, and the available Odoo reference has Timesheets uninstalled.
+  Pre-existing shared TypeScript diagnostics remain open.
+
+Disposition: **conditional / not signed off; not integrated**. Return these
+repairs to the same Timesheets owner and rerun the bounded review against a new
+candidate; do not claim module or aggregate completion.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.
