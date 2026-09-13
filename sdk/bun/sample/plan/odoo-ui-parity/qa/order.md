@@ -84,3 +84,18 @@ discovery of datasource contracts outside Order ownership.
 - Persistence/data integrity: Accounting linkage and rollback pass in isolated tests; candidate browser reload/restart persistence pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off; repository-wide discovery and browser evidence remain open
+
+## 2026-09-13 coordinator review: candidate `ecc15927`
+
+- Integrated only the bounded Order restart-persistence/idempotent-migration
+  test as `cf94c702` on the active branch. The ownership boundary is clean:
+  one Order-owned test file and no product, shared-runtime, or unrelated
+  changes.
+- Post-merge focused test passed: **1 test, 7 assertions**. Candidate Sales
+  regression evidence remains **19 tests, 180 assertions**; restart persistence
+  and double migration replay retained stable order, line, template, and line
+  counts. Candidate audit (**659 pages, 669 routes, 1134 datasources**), Order
+  CSS, scoped ESLint, and diff-check passed.
+- Order remains **conditional / unsigned-off**. Pre-existing TypeScript
+  diagnostics, unavailable Core3/browser/Playwright evidence, authenticated
+  desktop/mobile persistence checks, and paired Odoo comparison remain open.
