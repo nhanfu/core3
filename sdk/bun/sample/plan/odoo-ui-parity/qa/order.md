@@ -109,3 +109,9 @@ discovery of datasource contracts outside Order ownership.
   persistence, validation, duplicate/missing/stale guards, permission/company
   scope, and focused tests. Candidate pending; aggregate progress untouched.
   Existing owner-ledger edits are preserved.
+
+## 2026-09-13 R2 coordinator dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-ORDER-CROSS-MODULE-WAVE-20260913-R2` → `QA-ORDER-CROSS-MODULE-WAVE-20260913-R2` | existing `agent/order-qa-003-cross-module-20260913` in `/home/nhanjs/projects/core3-worktrees/order-qa-003-cross-module-20260913` | CRM/Base customer reference resolution, company/permission/stale/missing guards, downstream rollback, and focused atomicity tests | dispatched in `b50cd200`; awaiting self-contained product commit before QA |
