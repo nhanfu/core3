@@ -27,3 +27,13 @@ Live Core3 HTTP binding failed; Playwright/js_repl and authenticated candidate
 browser evidence are unavailable; paired Odoo desktop/mobile comparison,
 repository typecheck, and local lint remain open or blocked. Full actor,
 workflow/CRUD, and adapter coverage remain open.
+
+## Reviewer reconciliation `047cbd03` (2026-09-13)
+
+Integrated allocation-balance persistence as `c4250943`, preserving the active
+progress ledger during conflict resolution. Post-merge Time Off verification
+passed **53/550**, audit **661/670/1,158**, frontend build, and diff-check;
+QA reports balance idempotency, row-version/workflow recalculation,
+CRUD/permissions, authenticated desktop/mobile, reload, and file-backed reopen
+evidence. Temporal is not applicable to the synchronous local workflow. Fresh
+authenticated paired Odoo comparison remains open; no full sign-off.

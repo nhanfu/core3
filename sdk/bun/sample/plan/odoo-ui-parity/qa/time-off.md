@@ -70,3 +70,21 @@ module sign-off or aggregate progress claim.
   migration replay, with recalculation, validation, scope, stale, and atomic
   guards plus focused tests. Candidate pending; existing ledger and aggregate
   progress are preserved.
+
+## Reviewer reconciliation `047cbd03`: conditional bounded PASS (2026-09-13)
+
+- Existing owner/worktree was valid: `agent/time-off-draft-delete-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/time-off-draft-delete-20260913`.
+  The bounded allocation-balance candidate integrated as `c4250943`; its
+  progress-ledger conflict was resolved by preserving the active ledger.
+- Post-merge verification passed **53 tests / 550 assertions** across 20 files,
+  including balance persistence/reopen **2 tests / 19 assertions**. Audit passed
+  **661 pages / 670 routes / 1,158 datasources**; frontend build and diff-check
+  passed. QA reports targeted ESLint also passed.
+- Accepted evidence covers allocation balance application/idempotency,
+  row-version and workflow recalculation, CRUD/permissions, authenticated
+  desktop/mobile rendering, reload and file-backed reopen persistence.
+- Temporal is **not applicable** to the synchronous local workflow; no durable
+  external workflow boundary is configured.
+- Disposition: **conditional bounded PASS; integrated**. Fresh authenticated
+  paired Odoo comparison remains open. No full Time Off sign-off.
