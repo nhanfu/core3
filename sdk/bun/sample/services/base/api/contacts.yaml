@@ -91,6 +91,7 @@ actions:
       fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, parent_company_id, currency_code, is_company, notes]
       required: [name]
       timestamps: true
+      concurrency: { field: row_version, input: expected_row_version }
       guards:
         - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true", status: 409, message: Archived contacts cannot be edited }
         - { query: "SELECT 1 AS ok WHERE :email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email) AND id <> :id)", status: 409, message: A contact with this email already exists }
@@ -106,8 +107,8 @@ actions:
       - { field: state_name, label: State, type: text }
       - { field: zip, label: ZIP, type: text }
       - { field: country_name, label: Country, type: text }
-      - { field: currency_code, label: Currency, type: text }
-      - { field: parent_company_id, label: Company, type: select, options_source: contact_parent_companies }
+       - { field: currency_code, label: Currency, type: text }
+       - { field: parent_company_id, label: Company, type: select, options_source: contact_parent_companies }
       - { field: is_company, label: Is a company, type: checkbox }
       - { field: notes, label: Notes, type: textarea }
   - id: duplicate_contact

@@ -68,6 +68,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
     ]);
     expect(defaults.data.find((row: any) => row.id === 'contact-demo')).toMatchObject({ name: 'Demo Contact', avatar_initials: 'D', category_count: 1, activity_count: 1 });
     expect((await repository.querySource(contacts, { q: 'Leonie', active: null, company_type: null, country_name: null, fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['contact-berlin']);
+    expect((await repository.querySource(source('contacts.yaml', 'contact_parent_companies'), {}, 0, 50)).data).toEqual(expect.arrayContaining([{ value: 'company-azure', label: 'Azure Interior' }]));
     expect((await repository.querySource(contacts, { q: null, active: null, company_type: 'person', country_name: 'Vietnam', fixture_state: null }, 0, 50)).data.map((row: any) => row.id)).toEqual(['contact-gemini-edwin', 'contact-gemini-jesse']);
     expect((await repository.querySource(source('contacts.yaml', 'contact_parent_companies'), {}, 0, 50)).data).toEqual(expect.arrayContaining([
       { value: 'company-azure', label: 'Azure Interior' },
