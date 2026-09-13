@@ -1,0 +1,14 @@
+version: 0.0.44
+kind: data
+description: POS configuration detail optimistic edit support
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_configs ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      UPDATE pos_configs SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      ALTER TABLE pos_configs DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

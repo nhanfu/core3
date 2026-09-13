@@ -8,12 +8,16 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit details }
     header_actions:
       - { id: back_to_pos_configs, label: Point of Sales, variant: secondary, permission: pos.read }
-      - { id: edit_pos_config, label: Edit, variant: primary, permission: pos.manage }
-    group_columns: 1
+      - { id: edit_pos_config, label: Edit, variant: secondary, permission: pos.manage }
+    group_columns: 2
     groups:
       - title: Point of Sale
         fields:
           - { field: name, label: Point of Sale? }
+          - { field: company, label: Company }
+          - { field: currency, label: Currency }
+          - { field: receipt_header, label: Receipt header, type: textarea, wide: true }
+          - { field: receipt_footer, label: Receipt footer, type: textarea, wide: true }
       - title: Configuration
         fields:
           - { field: login_with_employees, label: Log in with Employees?, description: Allow staff to log in and switch between selected employees., type: checkbox }

@@ -12,7 +12,7 @@ actions:
   - id: edit_pos_config
     type: server_form
     permission: pos.manage
-    title: Edit Point of Sale
+    title: Edit Point of Sale configuration
     action: pos.configs.update
     handler: yaml_mutation
     operation: update
@@ -24,16 +24,21 @@ actions:
       table: pos_configs
       key_field: id
       concurrency: { required: true }
-      fields: [name, login_with_employees, epos_printer, iot_box, active]
+      fields: [name, company, currency, receipt_header, receipt_footer, login_with_employees, epos_printer, iot_box, active]
       required: [name]
       guards:
         - { query: "SELECT id FROM pos_configs WHERE id = :id", status: 404, code: POS_CONFIG_NOT_FOUND, message: Point of Sale configuration not found. }
         - { query: "SELECT 1 AS ok WHERE length(trim(:name)) BETWEEN 1 AND 80", status: 422, code: POS_CONFIG_NAME_REQUIRED, message: Point of Sale name is required. }
+        - { query: "SELECT 1 AS ok WHERE length(trim(COALESCE(:currency, ''))) BETWEEN 1 AND 12", status: 422, code: POS_CONFIG_CURRENCY_REQUIRED, message: Currency is required. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_configs WHERE LOWER(name) = LOWER(:name) AND id <> :id)", status: 409, code: POS_CONFIG_NAME_EXISTS, message: A Point of Sale with this name already exists. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_sessions s JOIN pos_configs c ON c.name = s.config WHERE c.id = :id AND s.state IN ('Opening Control', 'In Progress', 'Closing Control'))", status: 409, code: POS_CONFIG_SESSION_OPEN, message: Close the active session before changing this Point of Sale configuration. }
       result: { query: "SELECT * FROM pos_configs WHERE id = :id" }
     fields:
       - { field: name, label: Point of Sale?, type: text, required: true }
+      - { field: company, label: Company, type: text }
+      - { field: currency, label: Currency, type: text, required: true }
+      - { field: receipt_header, label: Receipt header, type: textarea }
+      - { field: receipt_footer, label: Receipt footer, type: textarea }
       - { field: login_with_employees, label: Log in with Employees?, type: checkbox, default: false }
       - { field: epos_printer, label: ePOS Printer?, type: checkbox, default: false }
       - { field: iot_box, label: IoT Box, type: checkbox, default: false }
