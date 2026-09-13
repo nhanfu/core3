@@ -218,3 +218,13 @@ no Inventory module sign-off or aggregate progress claim.
 - Authenticated browser capture: OPEN; this bounded change has no visual or
   live mutation claim until QA exercises the form action through the healthy
   Inventory runner.
+## 2026-09-13 coordinator dispatch — bounded transfer attachment wave
+
+- Existing owner `agent/odoo-ui-inventory-dev4-20260913` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/inventory-dev4-20260913`, based at
+  `d73bed5b`. Development event: `DEV-INVENTORY-WAVE-20260913-R2`; QA event:
+  `QA-INVENTORY-WAVE-20260913-R2`; handoff commit: `8248d078`.
+- Scope is permissioned transfer-document attachment upload/list/download (or
+  exposed subset), ownership/company checks, safe missing/invalid handling,
+  persistence, and focused stale/no-partial-write tests. Candidate pending;
+  existing ledger edits and aggregate progress are preserved.
