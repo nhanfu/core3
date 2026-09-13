@@ -4,6 +4,7 @@ import { handleFileRoutes } from './file-routes.ts';
 import { handleDataRoutes } from './yaml-data.ts';
 import { handleActionRoutes } from './yaml-actions.ts';
 import { handleEventRoutes } from '@core3/server/routes/event-websocket';
+import { authenticatedCompanyName } from './auth-context.ts';
 import type { ModuleServer } from '../module.ts';
 import type { TopicRouter } from '../topics/direct.ts';
 
@@ -137,12 +138,14 @@ export function createYamlApi(ctx: YamlApiContext) {
       current_user_name: String(user.name || ''),
       current_user_email: String(user.email || ''),
       customer_scope: user.roles?.includes('admin') ? 'all' : 'own',
-      current_company_name: String(user.company?.name || user.company_name || ''),
       // Non-admin company scope is identity-derived; never trust a caller's
       // company_name query parameter to widen the visible company boundary.
       company_name: user.roles?.includes('admin')
         ? params.company_name
-        : String(user.company?.name || user.company_name || params.company_name || ''),
+        : authenticatedCompanyName(user),
+      // Keep the authenticated company available to declarations that use a
+      // dedicated current_company_name parameter for tenant scoping.
+      current_company_name: authenticatedCompanyName(user),
       current_branch_id: String(user.branch_id || ''),
       view_scope: String(user.view_scope || 'all'),
     };
