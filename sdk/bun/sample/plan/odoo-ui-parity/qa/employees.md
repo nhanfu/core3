@@ -224,3 +224,19 @@ mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
   missing/permission/company/stale guards, and focused atomicity tests.
   Candidate pending; existing ledgers, unrelated edits, and aggregate
   progress are preserved.
+## DEV/QA reconciliation — `DEV-EMPLOYEES-WAVE-20260913-R2` / `QA-EMPLOYEES-WAVE-20260913-R2`
+
+- The owner handoff `75a003c4` requested activity-plan workflow work, but
+  authoritative main already contains the bounded configuration slice through
+  `6130f0ea`/`8374c42d`, including migration `20260912090000-016` and related
+  APIs/pages. No duplicate owner patch is required.
+- QA event triggered/reconciled against the existing implementation. Active
+  checkout command `bun test test/employees_activity_plans.integration.test.ts`
+  passed **3 tests / 39 assertions**, covering page/API binding, seeded plans,
+  CRUD, validation, duplicate, stale, archive/restore, and missing-record
+  guards.
+- Disposition: **bounded QA pass; conditionally accepted for activity-plan
+  configuration**. The launch/onboarding/offboarding execution workflow itself
+  remains unverified/missing; ordered-step execution, responsible-role runtime
+  transitions, actor/browser execution, restart behavior, and paired Odoo
+  comparison remain open. No full Employees sign-off is implied.
