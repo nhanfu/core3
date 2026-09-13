@@ -4,7 +4,7 @@ Module owner: website module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: active
 Verification trigger: feature-complete
-Candidate commit: `770aeab4` (DEV-2 Menu Editor); prior public-renderer/runtime fixes remain in history
+Candidate commit: `760f171f` (DEV-2 Menu Editor row-action parity); prior public-renderer/runtime fixes remain in history
 
 ## Current state
 
@@ -39,12 +39,12 @@ These are Core3 runtime checks, not paired Odoo visual sign-off.
 
 ## Next bounded task
 
-Add authenticated browser permission/site-scope checks for the Menu Editor and
-page lifecycle, then continue with assets/import/export, richer rendered page
-content, and paired Odoo comparison before module sign-off. Menu Editor service
-actor/site-scope and file-backed restart/migration replay are now verified in the
-Core3 runtime; authenticated browser interaction, process restart, and Odoo
-comparison remain open.
+Complete authenticated browser permission/site-scope checks for the page
+publish/unpublish lifecycle, then continue with assets/import/export, richer
+rendered page content, and paired Odoo comparison before module sign-off. Menu
+Editor service and browser actor/site-scope behavior plus file-backed
+restart/migration replay are verified; page lifecycle browser interaction,
+process restart, and Odoo comparison remain open.
 
 ## Runtime evidence
 
@@ -57,11 +57,13 @@ comparison remain open.
 | 2026-09-13 | Published asset delivery | Seeded SVG is exposed only through a published page, returns `image/svg+xml`, loads at natural width 240 in mobile Chrome, and has no page errors | Core3 asset delivery pass; upload/editor asset workflow and paired Odoo comparison pending |
 | 2026-09-13 | Asset upload/download | Multipart upload persisted a private page asset and its storage key; authenticated download returned the exact four-byte fixture; temporary upload files were removed after the test | Core3 API pass; browser attachment interaction, public promotion, and paired Odoo comparison pending |
 | 2026-09-13 | Menu Editor service lifecycle | `website_menus.integration.test.ts`; declared create/update actions created and edited a menu item, persisted sequence/parent/target flags, rejected stale and case-insensitive duplicate routes, and left the original row unchanged on invalid-site update | Core3 service pass; authenticated browser interaction, restart replay, and paired Odoo comparison pending |
+| 2026-09-13 | Menu Editor actor/site scope and restart | `bun test ./test/website_menus.integration.test.ts --timeout 20000`; read-only actor received action-endpoint 403 with no insert; site name was canonicalized from `website_id`; second-site menu retained scope/name/sequence/version across close/reopen and migration replay | Core3 service/API and persistence pass; authenticated browser interaction and paired Odoo comparison pending |
+| 2026-09-13 | Menu Editor row-action/browser boundary | Single-module server on `:4316`; Odoo `website_pages_tree_view` uses a row object action. Core3 now declares the permissioned `edit_website_menu` action on the Menu column, so desktop/mobile authenticated admin rows expose `More actions` → `Edit`; second-site edit retained its canonical Website selection, Save and reload preserved the changed label/URL, and dispatcher was denied with `Requires permission: website.read` | Core3 browser interaction, permission, and site-scope pass; next incomplete functionality is authenticated page publish/unpublish workflow plus paired Odoo desktop/mobile comparison |
 ## Review integration
 
-- Integrated commit: `770aeab4`.
-- Reviewer reran `website_menus.integration.test.ts`: 3 tests, 13 assertions,
-  0 failures, and the repository UI audit passed.
-- Dedicated browser Menu Editor, restart replay, and paired Odoo gates remain
-  pending; this is not module sign-off.
- | 2026-09-13 | Menu Editor actor/site scope and restart | `bun test ./test/website_menus.integration.test.ts --timeout 20000`; read-only actor received action-endpoint 403 with no insert; site name was canonicalized from `website_id`; second-site menu retained scope/name/sequence/version across close/reopen and migration replay | Core3 service/API and persistence pass; authenticated browser interaction and paired Odoo comparison pending |
+- Integrated candidate: `760f171f`.
+- Bounded Menu Editor row-action, authenticated desktop/mobile persistence,
+  second-site scope, dispatcher 403, focused tests, build, audit, and
+  diff-check evidence were reviewed.
+- Paired authenticated Odoo visual comparison and broader Website gates remain
+  open; this is not module sign-off.

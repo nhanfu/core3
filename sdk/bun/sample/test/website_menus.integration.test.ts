@@ -19,6 +19,9 @@ describe('Website Menu Editor parity', () => {
     const edit = page.actions.find((action: any) => action.id === 'edit_website_menu');
 
     expect(list).toMatchObject({ row_open_action: 'edit_website_menu', row_double_click_action: 'edit_website_menu', row_actions: 'menu' });
+    expect(list.columns.find((column: any) => column.field === 'name')).toMatchObject({
+      actions: [{ id: 'edit_website_menu', label: 'Edit', icon: 'edit' }],
+    });
     expect(datasource.query).toContain('website_id');
     expect(create).toMatchObject({ permission: 'website.write', action: 'website.menus.create' });
     expect(edit).toMatchObject({ permission: 'website.write', action: 'website.menus.update', operation: 'update', prefill: 'row' });

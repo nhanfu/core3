@@ -77,8 +77,9 @@ permissioned `website-homepage` page and its `open_website_homepage` client-acti
 contract. The established Core3 `/website` route is already the Websites list, so
 `/website-homepage` is a deliberate route alias; the source menu/action identity
 and ordering remain recorded here. The preview uses a safe YAML text tree and a
-deterministic Core3 Storefront homepage state; Menu Editor (sequence 20) remains
-unimplemented.
+deterministic Core3 Storefront homepage state. Menu Editor (sequence 20) is now
+implemented as a permissioned, persistent YAML CRUD slice with desktop/mobile
+authenticated browser evidence recorded in the Website QA ledger.
 
 Focused Website tests pass (6 tests, 27 assertions). The required authenticated
 desktop/mobile captures were attempted but not produced: Playwright/js_repl was
@@ -89,6 +90,6 @@ visual-parity claim is made and no screenshot files were added.
 
 ## Follow-up
 
-Website preview/Homepage, Menu Editor, Analytics, themes, SEO filters, tracked
-pages, and public/portal page rendering remain separate slices. No Odoo
-frontend code is copied.
+Website preview/Homepage, Analytics, themes, SEO filters, tracked pages,
+page publish/unpublish browser workflow, import/export, and public/portal page
+rendering remain separate slices. No Odoo frontend code is copied.

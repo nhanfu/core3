@@ -34,7 +34,7 @@ mutations use isolated databases and deterministic IDs.
 | WEBSITE-FUNC-005 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit and do not leak draft content | pass at contract level |
 | WEBSITE-FUNC-006 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate sites/pages or moving content dates | planned restart/migration gate |
 | WEBSITE-FUNC-007 | Assets/import/export | Exercise image/asset binding, page import/export and exposed preview/print actions | planned browser interaction gate |
-| WEBSITE-FUNC-008 | Menu Editor CRUD | Create/edit menu labels, URL, parent, target, sequence, per-site duplicate URL guards, invalid-site rejection, stale-write protection, and persisted ordering | pass: `website_menus.integration.test.ts`; canonical site naming and restart replay pass; authenticated browser interaction and Odoo comparison remain planned |
+| WEBSITE-FUNC-008 | Menu Editor CRUD | Create/edit menu labels, URL, parent, target, sequence, per-site duplicate URL guards, invalid-site rejection, stale-write protection, and persisted ordering | pass: `website_menus.integration.test.ts`; canonical site naming, restart replay, and authenticated desktop/mobile browser edit/reload pass; paired Odoo comparison remains planned |
 
 ## Workflow and integration cases
 
@@ -51,7 +51,7 @@ mutations use isolated databases and deterministic IDs.
 
 | Case ID | Actor/scope | Expected result | Status |
 | --- | --- | --- | --- |
-| WEBSITE-PERM-001 | Website Manager/Editor | Page/site mutations and preview actions succeed according to role | pass: Menu Editor action endpoint rejects read-only actor; authenticated browser gate remains planned |
+| WEBSITE-PERM-001 | Website Manager/Editor | Page/site mutations and preview actions succeed according to role | pass for Menu Editor: action endpoint rejects read-only actor and authenticated dispatcher route shows `Requires permission: website.read`; page lifecycle browser gate remains planned |
 | WEBSITE-PERM-002 | Public visitor | Only published public pages and assets are visible | planned |
 | WEBSITE-PERM-003 | Wrong company/site | Other-site pages, drafts and settings are not leaked or mutable | planned |
 | WEBSITE-PERM-004 | Unauthenticated/expired | Private routes redirect/401/403 without draft content in the response | planned |
@@ -62,7 +62,7 @@ mutations use isolated databases and deterministic IDs.
 | Case ID | State | Viewport | Required assertion | Status |
 | --- | --- | --- | --- | --- |
 | WEBSITE-UI-001 | Homepage/public page | 1440x900, 390x844 | Navigation, content width, typography, assets and responsive layout match Odoo | planned paired capture |
-| WEBSITE-UI-002 | Page Manager/edit | both | Manager list/detail/edit states, actions and permission messages match Odoo | planned paired capture |
+| WEBSITE-UI-002 | Page Manager/edit | both | Manager list/detail/edit states, actions and permission messages match Odoo | Menu Editor row-action/form state passes Core3 desktop/mobile browser checks; paired Odoo capture remains planned |
 | WEBSITE-UI-003 | Empty/draft/error states | both | Visibility and error states do not expose content or overflow | planned |
 | WEBSITE-UI-004 | Current route regression | all manifest-owned Website routes | Authenticated/public desktop/mobile checks have no blank/redirect, page/request error or overflow | planned |
 

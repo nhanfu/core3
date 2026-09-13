@@ -16,7 +16,11 @@ components:
     create_label: New menu item
     search: { label: Search menus, placeholder: 'Search menu or URL...' }
     columns:
-      - { field: name, label: Menu, type: PrimaryEntityCell }
+      - field: name
+        label: Menu
+        type: PrimaryEntityCell
+        actions:
+          - { id: edit_website_menu, label: Edit, icon: edit }
       - { field: website_name, label: Website }
       - { field: url, label: URL }
       - { field: parent_name, label: Parent menu }
