@@ -120,3 +120,17 @@ Fleet module while these blockers remain.
   and vehicle relation, validation, company/permission, duplicate/stale, and
   atomic no-partial-write tests. Candidate pending; existing ledger and
   aggregate progress are preserved.
+## DEV/QA reconciliation — `DEV-FLEET-WAVE-20260913-R2` / `QA-FLEET-WAVE-20260913-R2`
+
+- The owner handoff `e3d14960` requested vehicle-service work, but authoritative
+  main already contains the implementation and parity history, including
+  `869774ed` (`feat(fleet): add services logs parity slice`) and the later
+  service-form repair `b008bff1`. No duplicate owner product patch is required.
+- QA event triggered/reconciled against the existing implementation. Active
+  checkout command `bun test test/fleet_services.integration.test.ts` passed
+  **3 tests / 56 assertions**, covering CRUD, relation and validation,
+  lifecycle workflow, archive/delete, and stale guards.
+- Disposition: **bounded QA pass; conditionally accepted**. Broader Fleet
+  blockers remain preserved: authenticated Core3 CRUD/browser evidence, paired
+  Odoo comparison, broader company scoping across services/odometers/contracts
+  and reports, and process-restart/runtime gates. Fleet is not fully signed off.
