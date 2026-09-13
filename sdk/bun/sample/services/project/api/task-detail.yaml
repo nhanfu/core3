@@ -12,6 +12,9 @@ datasources:
     operation: timesheets.entries.by_task
     service_params: { task_id: id, fixture_state: fixture_state }
     permission: timesheets.read
+  - id: project_task_attachments
+    permission: project.read
+    query: "SELECT a.id, a.task_id, a.company_name, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM project_task_attachments a JOIN project_tasks t ON t.id = a.task_id WHERE t.id = :id AND t.company_name = :current_company_name ORDER BY a.created_at DESC, a.id"
 actions:
   - id: open_task_timesheets
     type: navigate
@@ -45,6 +48,29 @@ actions:
       - { field: description, label: Description, type: textarea, wide: true }
       - { field: due_date, label: Deadline, type: date }
       - { field: planned_hours, label: Allocated Time, type: number }
+  - id: upload_project_task_attachment
+    type: upload
+    action: project.tasks.attachments.upload
+    handler: attachment_metadata
+    permission: project.write
+    kind: project_task_attachment
+    params: { task_id: '{state.project_task_detail.id}', expected_row_version: '{state.project_task_detail.row_version}' }
+    refresh: [project_task_attachments]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :task_id", status: 404, code: PROJECT_TASK_NOT_FOUND, message: Task was not found. }
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :task_id AND company_name = :current_company_name", status: 403, code: PROJECT_TASK_COMPANY_SCOPE_REQUIRED, message: Task is outside the current company. }
+        - { query: "SELECT 1 AS ok FROM project_tasks WHERE id = :task_id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Task was changed by another user. Reload it before uploading. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:fileName, '') <> '' AND COALESCE(:mimeType, '') <> '' AND COALESCE(:sizeBytes, -1) >= 0", status: 422, code: PROJECT_TASK_ATTACHMENT_INVALID, message: A valid attachment is required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM project_task_attachments WHERE task_id = :task_id AND lower(file_name) = lower(:fileName))", status: 409, code: PROJECT_TASK_ATTACHMENT_DUPLICATE, message: This attachment already exists on the task. }
+      steps:
+        - { query: "INSERT INTO project_task_attachments(id, task_id, company_name, file_name, mime_type, size_bytes, storage_key, uploaded_by) SELECT :attachment_id, t.id, t.company_name, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id FROM project_tasks t WHERE t.id = :task_id", expect_changed: true, status: 404, code: PROJECT_TASK_NOT_FOUND, message: Task was not found. }
+      result: { query: "SELECT id, task_id, company_name, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM project_task_attachments WHERE id = :attachment_id" }
+  - id: download_project_task_attachment
+    type: download
+    permission: project.read
+    kind: project_task_attachment
   - id: start_task
     type: server
     permission: project.write

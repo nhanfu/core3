@@ -1,0 +1,25 @@
+version: 0.0.15
+kind: schema
+description: Persist permissioned Project task attachments
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS project_task_attachments (
+        id VARCHAR PRIMARY KEY,
+        task_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        file_name VARCHAR NOT NULL,
+        mime_type VARCHAR NOT NULL,
+        size_bytes BIGINT NOT NULL DEFAULT 0,
+        storage_key VARCHAR NOT NULL UNIQUE,
+        uploaded_by VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(task_id, file_name)
+      );
+      CREATE INDEX IF NOT EXISTS project_task_attachments_task_idx ON project_task_attachments(task_id, created_at);
+    down: |
+      DROP TABLE IF EXISTS project_task_attachments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

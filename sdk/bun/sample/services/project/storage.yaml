@@ -1,3 +1,14 @@
 database:
   storage:
     driver: duckdb
+
+files:
+  driver: local
+  path: ${PROJECT_UPLOAD_ROOT:-.data/project-uploads}
+
+attachments:
+  project_task_attachment:
+    download:
+      route: /api/project/task-attachments
+      permission: project.read
+      query: SELECT a.* FROM project_task_attachments a JOIN project_tasks t ON t.id = a.task_id WHERE a.id = :attachment_id AND t.company_name = :current_company_name

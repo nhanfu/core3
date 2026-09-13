@@ -3,6 +3,13 @@ page: { id: project-task-detail, route: /tasks/detail, breadcrumb: [Services, Pr
 components:
   - type: OdooFormView
     source: project_task_detail
+    attachment_source: project_task_attachments
+    attachment_page_size: 100
+    attachment_label: Attachments
+    add_attachment_label: Add attachment
+    no_attachments_label: No attachments yet
+    attachment_upload_action: upload_project_task_attachment
+    attachment_download_action: download_project_task_attachment
     editable: true
     title_field: name
     subtitle_field: project_name
