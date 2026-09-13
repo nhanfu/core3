@@ -39,3 +39,13 @@ no full Order sign-off.
 | 2026-09-13 | QA-5 verification of candidate `a284eb78` | `qa/order-a284eb78` | Bulk suite 3/3, 18 assertions; Sales corpus 21/21, 191 assertions; unauthenticated page/mutation HTTP 401; authenticated desktop bulk confirmation and `/api/mutate` HTTP 200; 0 browser errors | `/tmp/order-qa-bulk-invoice-desktop.png` | `ORDER-QA-003`: bulk action is Order-local and has no Accounting source-invoice call/link; fresh mobile bulk interaction, restricted actor, restart, and paired Odoo checks remain open |
 | 2026-09-13 | ORDER-QA-003 cross-module repair | `54f4db20` | `bun test test/sales_orders_to_invoice.integration.test.ts`: 4/4 tests, 24 assertions; `bun run scripts/audit-order-ui.ts` passes (659 pages, 668 routes, 1139 datasources); targeted ESLint and `git diff --check` pass | Not captured | Authenticated mobile/restricted-actor/restart/paired-Odoo retests remain open; aggregate progress was intentionally not edited |
 | 2026-09-13 | QA-6 verification of candidate `61422c4e` | pending QA ledger commit | Focused Orders to Invoice case set 4/4 pass; Accounting linkage, persisted `accounting_invoice_id`, rollback, duplicate/branch/stale/permission guards covered; audit passes 659 pages/668 routes/1139 datasources; `git diff --check HEAD^ HEAD` clean; ESLint 0 errors plus one ignored-YAML warning; Sales glob stopped after 12 passes | None for this candidate | No authenticated browser, restricted actor, restart, or paired Odoo evidence; not signed off |
+
+## Next event: central review of `61422c4e`
+
+The bounded QA candidate `61422c4e` is ready for review from
+`agent/order-qa-003-cross-module-20260913` at
+`/home/nhanjs/projects/core3-worktrees/order-qa-003-cross-module-20260913`.
+Review must inspect the shared mutation-runtime extension and Order-owned
+Accounting linkage before integration. The later developer HEAD `59af3991` is
+dispatch-only and is not the candidate. Browser mobile/restricted-actor,
+restart, and paired Odoo evidence remain open.

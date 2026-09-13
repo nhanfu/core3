@@ -144,3 +144,19 @@ discovery of datasource contracts outside Order ownership.
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-ORDER-CROSS-MODULE-WAVE-20260913-R2` → `QA-ORDER-CROSS-MODULE-WAVE-20260913-R2` | existing `agent/order-qa-003-cross-module-20260913` in `/home/nhanjs/projects/core3-worktrees/order-qa-003-cross-module-20260913` | CRM/Base customer reference resolution, company/permission/stale/missing guards, downstream rollback, and focused atomicity tests | dispatched in `b50cd200`; awaiting self-contained product commit before QA |
+
+## Next review handoff: Orders to Invoice `61422c4e`
+
+- QA is complete for the bounded Accounting-linked bulk-invoice repair:
+  focused 4/4, audit 659/668/1139, targeted ESLint, and diff-check passed;
+  service linkage, persisted `accounting_invoice_id`, duplicate/branch/stale/
+  permission guards, and Accounting-failure rollback are covered.
+- Route the next event to the central review/integration gate using QA branch
+  `agent/order-qa-003-cross-module-20260913` at
+  `/home/nhanjs/projects/core3-worktrees/order-qa-003-cross-module-20260913`,
+  candidate `61422c4e`. Do not use the developer owner’s later dispatch-only
+  HEAD `59af3991` as a substitute.
+- Review must verify the shared mutation-runtime extension remains scoped and
+  self-contained before any merge. Candidate-level authenticated mobile,
+  restricted-actor, restart, and paired Odoo evidence remain open; this is a
+  conditional review handoff, not full Order sign-off.
