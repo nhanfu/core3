@@ -46,3 +46,24 @@ Owner batch: bank statement attachment workflow (pending verification)
 ## Ownership boundary
 
 This file records accounting progress only. The aggregate `progress.md` is QA-owned and is not edited by the module owner.
+
+## QA verification: candidate `9c19f5a4` (2026-09-13)
+
+- Focused attachment test: **1 pass, 11 assertions, 0 failures**; read/write
+  permissions, restart persistence, optimistic concurrency, and download
+  bytes are covered.
+- `bun run audit`: pass — 659 pages, 668 routes, 1,140 datasources.
+- `git diff --check 9c19f5a4^ 9c19f5a4`: pass.
+- `bun run lint` is unavailable because this worktree has no `lint` script.
+- Combined Accounting regression was terminated after hanging before its
+  summary; it is unverified.
+- Authenticated Core3 desktop/mobile captures are outside Git at
+  `/tmp/core3-odoo-parity/accounting-bank-statement-attachments-20260913/`.
+  Runtime health and viewport fit passed, and mobile exposed the attachment
+  file input, but upload/download persistence was not proven end-to-end.
+- Odoo login endpoint returned HTTP 200; no fresh authenticated paired
+  attachment evidence was completed.
+
+QA state for `9c19f5a4`: `qa-verified-partial`; this is not Accounting module
+sign-off. Browser upload/download, full regression, lint-equivalent, and
+paired Odoo gates remain open.

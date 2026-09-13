@@ -126,3 +126,33 @@ This ledger is updated by bounded QA events. The main agent dispatches the same
 accounting QA slot on `feature-complete`, `merge-candidate`, `post-merge`,
 `refactor-impact`, or `release`; the slot exits after recording evidence and
 does not remain active while dormant.
+
+## Candidate QA: `9c19f5a4` (2026-09-13)
+
+- Exact checkout: `9c19f5a44c5427a55d550382558032ef9ae65620`; product worktree
+  was clean before QA. No product files were changed.
+- Focused attachment contract: `bun test
+  ./test/accounting_bank_statement_attachments.integration.test.ts
+  --timeout 20000` — **1 passed, 11 assertions, 0 failures**. Covers
+  read-only upload denial, write upload, restart persistence of metadata and
+  storage key, optimistic row-version guard, and byte-accurate CSV download.
+- Static gates: `bun run audit` passed (659 pages, 668 routes, 1,140
+  datasources); `git diff --check 9c19f5a4^ 9c19f5a4` passed. No `lint` script
+  exists (`error: Script not found "lint"`), so no lint result is claimed.
+- Full regression `bun test ./test/accounting*.integration.test.ts --timeout
+  20000` was started but hung before Bun's summary and was terminated. No
+  full-regression sign-off is claimed.
+- Authenticated Core3 browser attempt used the isolated runner on port 4339,
+  `admin@tms.local`, desktop `1440x900`, and mobile `390x844`. After a
+  frontend rebuild, the list/detail route had zero page errors, failed
+  requests, or horizontal overflow. Captures outside Git:
+  `/tmp/core3-odoo-parity/accounting-bank-statement-attachments-20260913/`
+  (`desktop-initial.png`, `mobile-initial.png`, `mobile-uploaded.png`). The
+  mobile detail exposed the file input, but upload/download persistence was
+  not verified end-to-end and desktop detail interaction was unreliable.
+- Odoo `/web/login` returned HTTP 200, but no fresh authenticated paired
+  bank-statement attachment comparison or captures were completed. Existing
+  Odoo captures do not prove this candidate slice.
+- Decision: **not signed off**. Browser upload/download, completed combined
+  regression, lint-equivalent check, and paired authenticated Odoo evidence
+  remain open.
