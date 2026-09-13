@@ -7,7 +7,20 @@ type:
     down: |
       DROP INDEX IF EXISTS survey_responses_idempotency_key_idx;
       ALTER TABLE survey_responses DROP COLUMN IF EXISTS idempotency_key;
-  duckdb: postgres
+  duckdb:
+    up: |
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR;
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_responses_idempotency_key_idx ON survey_responses(survey_id, idempotency_key);
+    down: |
+      -- survey_responses_access_token_idx is owned by 0.0.5 but DuckDB keeps
+      -- it as a dependency while altering this table. Preserve it across the
+      -- dev rollback so replaying 0.0.17 does not silently lose that index.
+      DROP INDEX IF EXISTS survey_responses_access_token_idx;
+      DROP INDEX IF EXISTS survey_responses_survey_idx;
+      DROP INDEX IF EXISTS survey_responses_idempotency_key_idx;
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS idempotency_key;
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_responses_access_token_idx ON survey_responses(access_token);
+      CREATE INDEX IF NOT EXISTS survey_responses_survey_idx ON survey_responses(survey_id);
   mysql: postgres
   oracle: postgres
   sqlserver: postgres
