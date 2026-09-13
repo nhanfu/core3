@@ -98,3 +98,15 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 - Browser limitation: the isolated server was stopped at the user-requested
   bounded-finalization point. No post-fix desktop/mobile screenshot or fresh
   click-through is claimed; `POINT_OF_SALE-VISUAL-001` remains retest pending.
+
+## Reviewer disposition — candidate `bcf33752`
+
+- Integrated on the active branch as `ca87d3ef`; the bounded POS configuration
+  detail edit preserves existing session guards and adds editable company,
+  currency, and receipt fields with optimistic concurrency and validation.
+- Post-merge verification passed: POS focused subset 15 tests / 82 assertions,
+  UI audit (659 pages / 668 routes / 1147 datasources), installed-Sass global
+  and POS builds, and `git diff --check`.
+- Package Sass PATH shim limitation remains recorded. Authenticated Core3
+  desktop/mobile and Odoo browser evidence remain unavailable. POS remains
+  conditional / unsigned-off; visual and broader module gates remain open.
