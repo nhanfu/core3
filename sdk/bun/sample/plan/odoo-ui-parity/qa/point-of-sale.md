@@ -110,3 +110,16 @@ Detailed execution matrix: [`test-plans/point-of-sale.md`](test-plans/point-of-s
 - Package Sass PATH shim limitation remains recorded. Authenticated Core3
   desktop/mobile and Odoo browser evidence remain unavailable. POS remains
   conditional / unsigned-off; visual and broader module gates remain open.
+
+## 2026-09-13 coordinator review: repair candidate `03d8b8ff`
+
+- Integrated the bounded POS configuration migration-replay and duplicate-
+  guard test repair as `fbdb2d52`. The candidate changed one POS-owned test
+  file; active configuration contracts were preserved.
+- Post-merge focused test passed: **2 tests, 14 assertions**. Candidate POS
+  evidence remains **33 tests, 223 assertions**; migration replay, guards,
+  audit (**661 pages, 670 routes, 1154 datasources**), global/POS CSS, and
+  diff-check passed.
+- POS remains **conditional / unsigned-off**. Core3 runtime, authenticated
+  browser, actor, restart, desktop/mobile, and paired Odoo evidence remain
+  blocked by the unavailable `js_repl`/Playwright session and stopped runtime.
