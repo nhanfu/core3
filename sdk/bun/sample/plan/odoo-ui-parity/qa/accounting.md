@@ -659,3 +659,74 @@ off** pending fresh browser evidence and the broader module gates.
 - This is bounded conditional reconciliation only. Fresh browser and paired
   Odoo evidence, plus broader export, attachment, and print gates, remain open;
   Accounting is not fully signed off.
+
+## Final active-runtime browser event: Payment Terms `b54a6a66` (2026-09-13)
+
+- Active runtime checkout `bc584a84` contains `b54a6a66`, `66429611`, and
+  Events `ab5496ba`; backend `127.0.0.1:3001` and frontend `localhost:3002`
+  returned HTTP 200, with mediator 3010 listening.
+- Admin desktop `1440x900`: blank `early_discount` create returned HTTP 200
+  with no BOOL/500 or console error, but the fresh list check reported
+  `persisted=false`. Edit/save returned HTTP 200; detail rendered `Status —`,
+  not Active. Role-based Archive count was 0, and DOM/action inspection found
+  only Edit/Delete and no Archive action metadata. Mutation statuses: `[200,
+  200]`. Archive, archived state, Restore, and Delete were not certifiable.
+- Admin mobile `390x844` had no horizontal overflow and zero console errors;
+  Fleet received HTTP 403 with `Requires permission: accounting.read`.
+  Screenshot: `/tmp/accounting-payment-terms-b54a6a66-mobile.png` (outside
+  Git). Paired authenticated Odoo comparison was unavailable.
+- Existing functional evidence: focused **3 tests / 48 assertions**, full
+  Accounting **91 tests / 1,033 assertions**, audit **661 pages / 670 routes /
+  1,154 datasources**.
+
+### Bounded verdict — **FAIL / not ready for reviewer reconciliation**
+
+Blank create avoids the BOOL failure, but persistence, Active state, Archive,
+Restore, Delete, and paired Odoo gates remain open.
+
+## Final active-runtime browser retest: Payment Terms (2026-09-13)
+
+- Runtime checkout `7948370a` contains the integrated Payment Terms repairs;
+  backend `http://127.0.0.1:3001/api/modules` and frontend
+  `http://localhost:3002` were live with mediator 3010 listening. No
+  implementation or `progress.md` files were changed.
+- Admin desktop `1440x900` used role/label/state-based locators and explicit
+  waits. Blank `early_discount` create returned HTTP 200 with no conversion,
+  HTTP 500, or browser errors. The row was found after a fresh list reload.
+- The full lifecycle passed: detail opened; edit/save preserved `Status
+  Active`; Archive was present and produced `Status Archived` with Restore;
+  Restore returned `Status Active`; Delete confirmation completed and the row
+  was absent from the list afterward. The archived-state screenshot is outside
+  Git at `/tmp/accounting-payment-current-archived.png`.
+- Admin mobile `390x844` had zero console errors and no horizontal overflow;
+  screenshot: `/tmp/accounting-payment-current-mobile.png`. Fleet received
+  HTTP 403 with `Requires permission: accounting.read` and no list content.
+- Existing functional evidence remains focused **3 tests / 48 assertions**,
+  full Accounting **91 tests / 1,033 assertions**, and audit **661 pages / 670
+  routes / 1,154 datasources**; guards, permissions, validation, stale/missing,
+  and atomicity are covered by the suites.
+- Odoo `/web/login` was reachable at HTTP 200, but authenticated comparison
+  was unavailable because the available credentials were rejected. Broader
+  Accounting export, attachment, print, and paired Odoo gates remain open.
+
+### Bounded verdict — **PASS for the Payment Terms slice; ready for reviewer reconciliation**
+
+The requested browser lifecycle and contract gates pass against the current
+integrated runtime. This is bounded to Payment Terms and does not constitute
+full Accounting module sign-off until the broader export/attachment/print and
+paired authenticated Odoo comparisons are completed.
+
+## Reviewer reconciliation: final Payment Terms evidence (2026-09-13)
+
+- Active ownership/history is valid: `b54a6a66` and `66429611` are present on
+  the active branch; no duplicate implementation or unrelated module files
+  were introduced. Candidate diff-check, clean-worktree, and warning/lint
+  evidence are retained.
+- Final browser evidence passes the bounded slice: blank `early_discount`
+  create/reload, edit preserving Active, Archive to Archived, Restore to
+  Active, Delete/list removal, Fleet permission 403, and clean mobile layout.
+  Focused QA is **3 tests / 60 assertions**; full Accounting is **91 / 1,045**;
+  audit is **661 / 670 / 1,154**.
+- Disposition: **bounded PASS/reconciled**. Export, attachment, print, and
+  authenticated paired-Odoo comparisons remain open; no full Accounting
+  sign-off is claimed.

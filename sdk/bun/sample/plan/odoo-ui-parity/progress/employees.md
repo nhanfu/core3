@@ -74,3 +74,12 @@ renderer support. Departure Reasons passed **3 tests / 60 assertions**; full
 Employees passed **12 / 167**; audit passed **661 / 670 / 1,154**. Status remains
 conditional pending browser lifecycle, broader actor/restart, and paired Odoo
 evidence.
+
+## Reviewer reconciliation: final Departure Reasons browser PASS with blockers (2026-09-13)
+
+Integrated commits `382a3d30`/`1dc77ba2` are active and ownership/diff/warning
+checks are valid. Final browser evidence passes bounded desktop/mobile CRUD,
+navigation, duplicate 409, archive/restore, stale 409, missing delete 404, and
+manager/ordinary-user boundaries. QA is **3/60 focused**, full Employees
+**12/167**, audit **661/670/1,154**. Company-switch and paired Odoo comparison
+remain open.

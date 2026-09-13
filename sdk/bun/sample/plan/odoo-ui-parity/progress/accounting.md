@@ -79,3 +79,11 @@ paired Odoo gates remain open.
 Sales and Purchases now have page/API-bound, `accounting.read`-guarded Export
 actions. Focused contract tests and authenticated desktop/mobile XLSX download
 checks pass; broader Accounting attachment and print actions remain open.
+
+## Reviewer reconciliation: final Payment Terms browser PASS (2026-09-13)
+
+Integrated commits `b54a6a66`/`66429611` are active and ownership/diff/warning
+checks are valid. Final browser evidence passes bounded create/reload, edit,
+Archive/Restore, Delete, Fleet 403, and mobile checks. QA is **3/60 focused**,
+**91/1,045 full**, audit **661/670/1,154**. Export, attachment, print, and
+paired Odoo comparison remain open.

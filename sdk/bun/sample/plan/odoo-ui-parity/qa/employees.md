@@ -301,4 +301,20 @@ stale/permission, mobile, Delete, and paired Odoo gates remain unverified.
   worktree evidence are retained.
 - Bounded disposition: **conditionally reconciled as already integrated**.
   Browser detail/lifecycle, broader actor/restart, and paired Odoo gates remain
-  open; Employees is not signed off.
+open; Employees is not signed off.
+
+## Reviewer reconciliation: final Departure Reasons evidence (2026-09-13)
+
+- Active ownership/history is valid: `382a3d30` and `1dc77ba2` are present on
+  the active branch. The bounded repair remains self-contained, with no
+  duplicate implementation or unrelated module changes; ESLint and diff-check
+  evidence pass.
+- Final browser evidence passes with blockers: desktop/mobile CRUD and detail
+  navigation, generated-ID duplicate 409
+  `EMPLOYEES_DEPARTURE_REASON_EXISTS`, archive/restore, stale 409, missing
+  delete 404, manager access, and ordinary-user denial. Focused QA is **3
+  tests / 60 assertions** for Departure Reasons and full Employees is **12 /
+  167**; audit is **661 / 670 / 1,154**.
+- Disposition: **bounded PASS with blockers/reconciled**. Company-switch
+  isolation and paired Odoo comparison remain open; no full Employees sign-off
+  is claimed.
