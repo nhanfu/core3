@@ -12,4 +12,4 @@ attachments:
     download:
       route: /api/base/contacts/attachments
       permission: base.contacts.read
-      query: SELECT id, contact_id, file_name, mime_type, size_bytes, storage_key FROM base_contact_attachments WHERE id = :attachment_id
+      query: SELECT id, contact_id, file_name, mime_type, size_bytes, storage_key, CAST(NULL AS VARCHAR) AS content_base64 FROM base_contact_attachments WHERE id = :attachment_id
