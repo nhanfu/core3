@@ -16,9 +16,9 @@ describe('Maintenance Request activities parity', () => {
     const activity = api.datasources.find((source: any) => source.id === 'maintenance_request_activity');
     const schedule = action(api, 'schedule_maintenance_request_activity');
     const complete = action(api, 'complete_maintenance_request_activity');
-    expect(page.components[0]).toMatchObject({ message_source: 'maintenance_request_activity' });
+    expect(page.components[0]).toMatchObject({ message_source: 'maintenance_request_activity', activity_complete_action: 'complete_maintenance_request_activity' });
     expect(activity.query).toContain('request_id = :id');
-    expect(schedule).toMatchObject({ type: 'server_form', permission: 'maintenance.write', operation: 'create', params: { request_id: '{state.id}' } });
+    expect(schedule).toMatchObject({ type: 'server_form', permission: 'maintenance.write', operation: 'create', params: { request_id: '{row.id}' } });
     expect(complete).toMatchObject({ type: 'server', permission: 'maintenance.write', operation: 'update', params: { id: '{row.id}' } });
 
     const database = await DuckDbDatabase.open(':memory:');

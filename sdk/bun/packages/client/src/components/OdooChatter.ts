@@ -159,5 +159,19 @@ export class OdooChatter extends BaseComponent {
     html.take(content).p.text(String(actionLabel));
     const detailValue = message[this.def.message_detail_field || 'detail'] || '';
     html.take(content).span.text(String(this.def.message_detail_labels?.[detailValue] || detailValue));
+    if (this.def.activity_complete_action && String(message.state || '').toLowerCase() === 'planned') {
+      const complete = html.take(content).button
+        .type('button')
+        .className('o-form-chatter-complete')
+        .text(String(this.def.activity_complete_label || 'Mark done'))
+        .ele() as HTMLButtonElement;
+      html.take(complete).event('click', () => {
+        complete.disabled = true;
+        void Promise.resolve(this.submit(String(this.def.activity_complete_action), {
+          id: message.id,
+          row_version: message.row_version,
+        })).finally(() => { complete.disabled = false; });
+      });
+    }
   }
 }

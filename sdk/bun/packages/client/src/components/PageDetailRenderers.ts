@@ -183,7 +183,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
         : undefined),
     }));
   }
-  for (const key of ['message_action', 'note_action', 'follower_add_action', 'follower_remove_action', 'attachment_upload_action', 'attachment_download_action']) {
+  for (const key of ['message_action', 'note_action', 'activity_complete_action', 'follower_add_action', 'follower_remove_action', 'attachment_upload_action', 'attachment_download_action']) {
     const action = (config.actions || []).find((candidate: any) => candidate.id === def[key]);
     if (!action || !hasPermission(ctx.user, action.permission)) delete formDef[key];
   }

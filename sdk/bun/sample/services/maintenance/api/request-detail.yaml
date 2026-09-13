@@ -13,7 +13,7 @@ actions:
     action: maintenance.requests.activity.schedule
     handler: yaml_mutation
     operation: create
-    params: { request_id: '{state.id}' }
+    params: { request_id: '{row.id}' }
     refresh: [maintenance_request_activity, maintenance_request_detail]
     mutation:
       operation: insert
