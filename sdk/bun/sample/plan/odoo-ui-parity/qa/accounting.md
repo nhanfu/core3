@@ -780,3 +780,24 @@ sign-off is claimed.
   upload/download plus focused Accounting QA before integration review.
 - Preserve restart and paired authenticated Odoo comparison gates; no full
   Accounting sign-off is made.
+
+## QA retest — attachment download binding `5fcd1417` (2026-09-13)
+
+- Same owner/worktree verified at exact HEAD `5fcd1417`:
+  `/home/nhanjs/projects/core3-worktrees/odoo-accounting-bank-statement-attachments-20260913`
+  on `agent/odoo-accounting-bank-statement-attachments-20260913`.
+- The visible download control is now enabled. Persistence, metadata/bytes,
+  guards, browser behavior, regressions, and build gates pass.
+- `ACCOUNTING-ATTACHMENT-UI-002`: clicking the UI control incorrectly requests
+  `/api/chat/attachments/...` and receives 404 instead of calling the declared
+  Accounting bank-statement attachment endpoint. The UI journey therefore
+  remains blocked despite direct API behavior passing.
+
+### Repair handoff
+
+- **BLOCKED — do not integrate `5fcd1417`.** Route the same owner/worktree to
+  trace the attachment action's source/route binding and point it to the
+  Accounting endpoint, then rerun authenticated click/download, metadata/byte
+  verification, and focused Accounting QA before review.
+- Preserve restart and paired authenticated Odoo gates; no full Accounting
+  sign-off is made.
