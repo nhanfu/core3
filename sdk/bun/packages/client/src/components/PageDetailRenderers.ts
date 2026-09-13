@@ -4,6 +4,20 @@ import { html } from '@core3/client/html';
 import { PageRenderHandlerRegistry } from '@core3/client/components/PageRenderHandlerRegistry';
 import { ComLoader } from '@core3/client/components/ComLoader';
 
+export function attachmentDownloadPath(kind: unknown, id: unknown): string {
+  const encodedId = encodeURIComponent(String(id || ''));
+  const routes: Record<string, string> = {
+    employee_document: '/hr/employee-documents',
+    contract_document: '/hr/contract-documents',
+    company_document: '/org/company-documents',
+    order_attachment: '/orders/attachments',
+    expense_attachment: '/expenses/attachments',
+    base_contact_attachment: '/base/contacts/attachments',
+    accounting_bank_statement_attachment: '/accounting/bank-statement-attachments',
+  };
+  return `${routes[String(kind)] || '/chat/attachments'}/${encodedId}`;
+}
+
 export class PageDetailRenderers extends BaseComponent {
   readonly renderers: any;
 
@@ -43,19 +57,6 @@ const owner = this;
 
 function mountOwned<T extends BaseComponent>(component: T, container: HTMLElement): T {
   return owner.mountChild(component, container);
-}
-
-function attachmentDownloadPath(kind: unknown, id: unknown): string {
-  const encodedId = encodeURIComponent(String(id || ''));
-  const routes: Record<string, string> = {
-    employee_document: '/hr/employee-documents',
-    contract_document: '/hr/contract-documents',
-    company_document: '/org/company-documents',
-    order_attachment: '/orders/attachments',
-    expense_attachment: '/expenses/attachments',
-    base_contact_attachment: '/base/contacts/attachments',
-  };
-  return `${routes[String(kind)] || '/chat/attachments'}/${encodedId}`;
 }
 
 async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
@@ -197,27 +198,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
   }
   const attachmentDownloadAction = (config.actions || []).find((candidate: any) => candidate.id === formDef.attachment_download_action);
   if (attachmentDownloadAction) {
-    formDef.resolve_attachment_blob = (row: any) => {
-      const id = encodeURIComponent(String(row?.id || ''));
-      const path = attachmentDownloadAction.kind === 'employee_document'
-        ? `/hr/employee-documents/${id}`
-        : attachmentDownloadAction.kind === 'contract_document'
-          ? `/hr/contract-documents/${id}`
-          : attachmentDownloadAction.kind === 'company_document'
-            ? `/org/company-documents/${id}`
-            : attachmentDownloadAction.kind === 'order_attachment'
-              ? `/orders/attachments/${id}`
-              : attachmentDownloadAction.kind === 'expense_attachment'
-                ? `/expenses/attachments/${id}`
-              : attachmentDownloadAction.kind === 'website_page_asset'
-                ? `/website/page-assets/${id}`
-              : attachmentDownloadAction.kind === 'blog_post_attachment'
-                ? `/blog/post-attachments/${id}`
-              : attachmentDownloadAction.kind === 'ecommerce_product_image'
-                ? `/ecommerce/product-images/${id}`
-              : `/chat/attachments/${id}`;
-      return client.fetchFile(path);
-    };
+    formDef.resolve_attachment_blob = (row: any) => client.fetchFile(attachmentDownloadPath(attachmentDownloadAction.kind, row?.id));
   }
   formDef.header_actions = (def.header_actions || []).filter((button: any) => {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);

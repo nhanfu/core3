@@ -11,6 +11,7 @@ import { OdooFormView } from '@core3/client/components/OdooFormView';
 import { OdooChatter } from '@core3/client/components/OdooChatter';
 import { OdooFollowerManager } from '@core3/client/components/OdooFollowerManager';
 import { OdooAttachmentPanel } from '@core3/client/components/OdooAttachmentPanel';
+import { attachmentDownloadPath } from '@core3/client/components/PageDetailRenderers';
 import { ScheduleGrid } from '@core3/client/components/ScheduleGrid';
 import { i18n } from '@core3/client/i18n';
 
@@ -383,6 +384,38 @@ describe('document detail components', () => {
     container.querySelector<HTMLButtonElement>('.o-form-attachment-download')!.click();
     await Promise.resolve();
     expect(submitted).toEqual([{ action: 'download_contact_attachment', params: expect.objectContaining({ id: 'file-1' }) }]);
+  });
+
+  it('clicks an Accounting attachment and resolves the protected route and bytes', async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      expect(String(input)).toBe('/accounting/bank-statement-attachments/accounting-bank-statement-001');
+      return new Response(new Uint8Array([65, 67, 67, 84]), { status: 200, headers: { 'content-type': 'text/csv' } });
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+    try {
+      const component = new OdooFormView('accounting-form', {
+        record: { id: 'accounting-bank-statement-001' },
+        attachments: [{ id: 'accounting-bank-statement-001', file_name: 'statement.csv', mime_type: 'text/csv', size_bytes: 4 }],
+      }, {
+        attachment_source: 'accounting_bank_statement_attachments',
+        attachment_panel_open: true,
+        attachment_download_action: 'download_accounting_bank_statement_attachment',
+      });
+      const downloaded: Array<{ path: string; bytes: number[] }> = [];
+      component._onAction = async (action: string, params: any) => {
+        expect(action).toBe('download_accounting_bank_statement_attachment');
+        const response = await fetch(attachmentDownloadPath('accounting_bank_statement_attachment', params.id));
+        downloaded.push({ path: attachmentDownloadPath('accounting_bank_statement_attachment', params.id), bytes: [...new Uint8Array(await response.arrayBuffer())] });
+      };
+      const container = mount(component);
+      container.querySelector<HTMLButtonElement>('.o-form-attachment-download')!.click();
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(downloaded).toEqual([{ path: '/accounting/bank-statement-attachments/accounting-bank-statement-001', bytes: [65, 67, 67, 84] }]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   it('propagates upload actions from the form to the attachment panel', async () => {
