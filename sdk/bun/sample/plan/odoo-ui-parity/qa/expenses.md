@@ -2,11 +2,16 @@
 
 ## Candidate QA evidence (2026-09-13)
 
-- Candidate under test: `7dee93a857fe55a4d773336c2ee41098aea8ae8a` (`test(expenses): close migration replay persistence gate`). The candidate changes only the Expenses migration integration test and ledger/plan documentation; no product implementation files are changed.
-- Focused command: `bun test ./test/*expense*.integration.test.ts --timeout 20000` from `sdk/bun/sample` — 30 passed, 182 assertions, 0 failed across 9 files.
+- Candidate under test: `1d9df642` (`feat(expenses): add import export and print actions`). This candidate adds the Expenses list import/export/print contracts, deterministic import persistence test, and module plan/QA updates.
+- Focused command: `bun test ./test/*expense*.integration.test.ts --timeout 20000` from `sdk/bun/sample` — 33 passed, 198 assertions, 0 failed across 10 files.
 - Migration upgrade/replay: `expenses_migrations.integration.test.ts` upgraded an in-memory database from `0.0.2` to latest, replayed the latest schema/data migration, and preserved 2 sheets, 9 expenses, 8 activities, 0 runtime attachments, 1 duplicate candidate, 2 split lines, 10 migration versions, and the `sha256:receipt-air-duplicate` checksum without duplicate seeded rows.
 - Receipt/activity/split behavior: focused tests pass receipt-required approval, refusal reason plus activity persistence, duplicate approve/refuse activity and stale replay guards, and split-line CRUD, exact-total validation, matching application, relation, and activity persistence.
 - Permissions/regressions: focused permission tests pass the manager action metadata/boundaries and Fleet ordinary-user 403; stale/missing/invalid mutations preserve rows. The full UI audit passes (659 pages, 668 routes, 1136 datasources). `git diff --check` passes.
+- Import/export/print: `expenses_import_export.integration.test.ts` passes 3
+  tests and 16 assertions. Import persistence, deterministic IDs, sheet-total
+  recalculation, replay safety, malformed-row rejection, and company-scope
+  denial are covered; export/print permissions and datasource binding are
+  asserted. Relevant ESLint and `bun run css:build:expenses` pass.
 - Static gates: `bun run lint` fails on two unrelated existing errors in `sdk/bun/sample/test/website_public.integration.test.ts:31` and `:33` (`no-unsafe-optional-chaining`); no warnings or Expenses diagnostics were reported. `bunx tsc --noEmit --pretty false` also fails on existing shared `packages/*`, `services/ai`, and server/client diagnostics; no Expenses-specific diagnostic appeared.
 
 ## Representative browser matrix (2026-09-12)
@@ -21,7 +26,7 @@ QA state: qa-in-progress
 QA slot: dispatchable expenses assignment (pending wave dispatch)
 Module owner: expenses module owner
 Verification trigger: feature-complete
-Candidate commit: `7dee93a857fe55a4d773336c2ee41098aea8ae8a`
+Candidate commit: `1d9df642`
 
 Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). It is the module-level source for expense CRUD, workflows, actors, persistence, Temporal, and paired Odoo gates.
 
@@ -29,13 +34,13 @@ Detailed execution matrix: [`test-plans/expenses.md`](test-plans/expenses.md). I
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| EXPENSES-001 | Focused Expenses contract corpus | 30 focused tests / 182 assertions across 9 files | PASS |
+| EXPENSES-001 | Focused Expenses contract corpus | 33 focused tests / 198 assertions across 10 files | PASS |
 | EXPENSES-002 | Registered route responsive matrix | 10 routes × desktop/mobile = 20/20; no page/request errors, HTTP failures, or overflow | PASS |
 | EXPENSES-003 | Expense lifecycle persistence | `expense-demo-draft` Draft → Submitted → Approved → Posted, versions 1 → 4; journal/date persisted | PASS |
 | EXPENSES-004 | Manager permission boundary | Fleet approval returned 403 `expenses.manage` | PASS |
 | EXPENSES-005 | Fresh paired Odoo visual and full interaction coverage | Not yet completed for the current candidate | pending |
 | EXPENSES-006 | Migration upgrade/replay persistence | 0.0.2 → latest upgrade plus replay preserved 2 sheets, 9 expenses, 8 activities, 0 runtime attachments, 1 duplicate candidate, and 2 split lines | PASS |
-| EXPENSES-007 | Candidate browser retest | Persistent Playwright `js_repl` unavailable in this session; existing authenticated route-smoke PNGs are retained as prior evidence only | BLOCKED |
+| EXPENSES-007 | Candidate browser retest | Fresh authenticated interaction/actor retest remains unavailable; existing route-smoke PNGs are retained as prior evidence only | BLOCKED |
 
 ## Bugs and retests
 

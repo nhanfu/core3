@@ -47,6 +47,11 @@ wizard, and CRUD interaction coverage remain open.
 - Repository lint remains blocked by two unrelated pre-existing
   `website_public.integration.test.ts` unsafe-optional-chaining errors; the
   workspace TypeScript check likewise has pre-existing shared diagnostics.
+- Import/export/print follow-up: service-owned deterministic expense import
+  persists sheets and expenses, recalculates sheet totals, enforces malformed
+  row and company-scope guards, and is replay-safe. Export and print are
+  read-permissioned actions over the loaded datasource. Focused test, full
+  Expenses corpus, relevant ESLint, and Expenses CSS build pass.
 
 ## Next bounded task
 

@@ -68,3 +68,48 @@ actions:
         - query: "UPDATE expenses SET state = 'Draft', refusal_reason = NULL, row_version = row_version + 1 WHERE id = :id"
         - query: "INSERT INTO expense_activity(id, expense_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'expenses.reset', 'Reset', 'Reset to draft')"
       result: { query: "SELECT * FROM expenses WHERE id = :id" }
+  - id: view_expense_detail
+    type: navigate
+    permission: expenses.read
+    navigate_to: /expenses/detail
+    params: { id: '{row.id}' }
+  - id: import_expenses
+    type: server_form
+    permission: expenses.write
+    title: Import expenses
+    action: expenses.import
+    handler: yaml_mutation
+    operation: create
+    submit_label: Import
+    refresh: [expenses_my]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:expense_list AS VARCHAR))) > 0", status: 422, code: EXPENSE_IMPORT_REQUIRED, message: Add at least one expense row. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM (SELECT trim(unnest(string_split(CAST(:expense_list AS VARCHAR), chr(10)))) AS line) lines WHERE line <> '' AND NOT regexp_matches(line, '^[^|]+\\|[^|]+\\|[^|]+\\|[0-9]{4}-[0-9]{2}-[0-9]{2}\\|[0-9]+(\\.[0-9]{1,2})?\\|(Company|Employee)$'))", status: 422, code: EXPENSE_IMPORT_INVALID, message: "Each row must use Name|Employee|Category|YYYY-MM-DD|Amount|Company or Employee format." }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: EXPENSE_COMPANY_SCOPE_REQUIRED, message: Imported expenses must belong to the current company. }
+      steps:
+        - { query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:expense_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS name, trim(split_part(line, '|', 2)) AS employee_name, trim(split_part(line, '|', 3)) AS category, CAST(trim(split_part(line, '|', 4)) AS DATE) AS expense_date, CAST(trim(split_part(line, '|', 5)) AS DECIMAL(18,2)) AS amount, trim(split_part(line, '|', 6)) AS payment_method FROM lines WHERE line <> ''), keyed AS (SELECT *, 'expense-sheet-import-' || regexp_replace(lower(employee_name), '[^a-z0-9]+', '-', 'g') AS sheet_id FROM parsed) INSERT INTO expense_sheets(id, row_version, name, employee_name, manager_name, state, expense_date, amount_total, amount_reimbursed, note, created_at) SELECT DISTINCT sheet_id, 1, 'Imported expenses — ' || employee_name, employee_name, NULL, 'Draft', expense_date, 0, 0, 'Imported through Expenses', TIMESTAMP '2026-09-13 10:00:00' FROM keyed ON CONFLICT (id) DO NOTHING" }
+        - { query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:expense_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS name, trim(split_part(line, '|', 2)) AS employee_name, trim(split_part(line, '|', 3)) AS category, CAST(trim(split_part(line, '|', 4)) AS DATE) AS expense_date, CAST(trim(split_part(line, '|', 5)) AS DECIMAL(18,2)) AS amount, trim(split_part(line, '|', 6)) AS payment_method FROM lines WHERE line <> ''), keyed AS (SELECT *, 'expense-sheet-import-' || regexp_replace(lower(employee_name), '[^a-z0-9]+', '-', 'g') AS sheet_id, 'expense-import-' || regexp_replace(lower(employee_name || '-' || name), '[^a-z0-9]+', '-', 'g') AS expense_id FROM parsed) INSERT INTO expenses(id, row_version, sheet_id, name, category, expense_date, employee_name, amount, payment_method, description, receipt_reference, state, created_at) SELECT expense_id, 1, sheet_id, name, category, expense_date, employee_name, amount, payment_method, 'Imported through Expenses', NULL, 'Draft', TIMESTAMP '2026-09-13 10:00:00' FROM keyed ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, category = EXCLUDED.category, expense_date = EXCLUDED.expense_date, employee_name = EXCLUDED.employee_name, amount = EXCLUDED.amount, payment_method = EXCLUDED.payment_method" }
+        - { query: "UPDATE expense_sheets s SET amount_total = (SELECT COALESCE(SUM(e.amount), 0) FROM expenses e WHERE e.sheet_id = s.id) WHERE s.id LIKE 'expense-sheet-import-%'" }
+      result: { query: "SELECT COUNT(*) AS imported FROM expenses WHERE id LIKE 'expense-import-%'" }
+    fields:
+      - { field: expense_list, label: Expense List, type: textarea, required: true, placeholder: "Team breakfast|Admin User|Meals|2026-09-13|24.50|Employee" }
+      - { field: company_name, label: Company, type: text, default: My Company }
+  - id: export_expenses
+    type: client
+    permission: expenses.read
+    script: |
+      // js
+      ({ state }) => {
+        const rows = Array.isArray(state.expenses_my) ? state.expenses_my : [];
+        const columns = ['name', 'employee_name', 'category', 'expense_date', 'amount', 'payment_mode', 'status'];
+        const csv = [columns.join(','), ...rows.map((row) => columns.map((column) => JSON.stringify(String(row[column] ?? ''))).join(','))].join('\\n');
+        const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+        const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'expenses.csv'; anchor.click(); URL.revokeObjectURL(url);
+      }
+  - id: print_expenses
+    type: client
+    permission: expenses.read
+    script: |
+      // js
+      () => { window.print() }

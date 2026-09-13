@@ -490,3 +490,19 @@ The primary Odoo database still has `hr_expense` uninstalled, so this batch
 does not claim an authenticated visual capture. The department graph/pivot
 surface is otherwise source-backed and covered by the focused integration
 test.
+
+## Import/export/print follow-up (2026-09-13)
+
+The next bounded functional gap, EXPENSE-FUNC-009, is implemented on My
+Expenses. The page remains presentation-only and joins the service-owned API
+through `page.id`. Import is a permissioned server form that validates
+deterministic pipe-delimited rows, enforces the current-company boundary,
+persists expense sheets and expenses with stable IDs, recalculates sheet
+totals, and is safe to replay. Export downloads the loaded service datasource
+as CSV, and Print invokes the browser print flow; both are read-permissioned
+client actions. Existing receipt upload/download remains the persisted receipt
+preview path.
+
+The focused contract/persistence test and full Expenses corpus pass. Fresh
+authenticated interaction capture, actor matrix, and paired Odoo comparison
+remain open for the QA wave.

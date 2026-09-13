@@ -36,7 +36,7 @@ and split lines. Mutations use isolated databases and deterministic dates/IDs.
 | EXPENSE-FUNC-006 | Reporting | Expense and department reports expose deterministic grouped data and department scope | pass: focused suite |
 | EXPENSE-FUNC-007 | Empty/error/not-found | Missing, empty, forbidden and transport-error states are explicit for each datasource | pass at contract level |
 | EXPENSE-FUNC-008 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate expenses, receipts or activities | pass: upgrade/replay persistence test |
-| EXPENSE-FUNC-009 | Receipts/import/export/print | Exercise receipt upload/preview, expense import/export and exposed report/print actions | planned browser interaction gate |
+| EXPENSE-FUNC-009 | Receipts/import/export/print | Exercise receipt upload/preview, expense import/export and exposed report/print actions | pass: import persistence/guards and action contracts; browser interaction gate remains |
 
 ## Workflow and integration cases
 
