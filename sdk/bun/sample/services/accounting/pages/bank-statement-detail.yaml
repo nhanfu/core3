@@ -5,6 +5,7 @@ components:
     source: accounting_bank_statement_detail
     attachment_source: accounting_bank_statement_attachments
     attachment_upload_action: upload_accounting_bank_statement_attachment
+    attachment_download_action: download_accounting_bank_statement_attachment
     title_field: reference
     subtitle_field: journal
     editable: false

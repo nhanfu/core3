@@ -21,7 +21,7 @@ describe('Accounting bank statement attachments', () => {
     const apiDocument = yaml('api/bank-statement-detail.yaml');
     const upload = apiDocument.actions.find((action: any) => action.id === 'upload_accounting_bank_statement_attachment');
     const download = apiDocument.actions.find((action: any) => action.id === 'download_accounting_bank_statement_attachment');
-    expect(page.components[0]).toMatchObject({ attachment_source: 'accounting_bank_statement_attachments', attachment_upload_action: upload.id });
+    expect(page.components[0]).toMatchObject({ attachment_source: 'accounting_bank_statement_attachments', attachment_upload_action: upload.id, attachment_download_action: download.id });
     expect(apiDocument.page).toEqual({ id: 'accounting-bank-statement-detail' });
     expect(upload).toMatchObject({ type: 'upload', permission: 'accounting.write', kind: 'accounting_bank_statement_attachment' });
     expect(download).toMatchObject({ type: 'download', permission: 'accounting.read', kind: 'accounting_bank_statement_attachment' });
