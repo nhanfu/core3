@@ -12,7 +12,7 @@ QA state: qa-in-progress
 QA slot: dispatchable livechat assignment (pending wave dispatch)
 Module owner: livechat module owner
 Verification trigger: feature-complete
-Candidate commit: none
+Candidate commit: 61296530
 
 Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). It is the module-level source for sessions, channels, bots, reporting, actors, persistence, Temporal, and paired Odoo gates.
 
@@ -30,6 +30,19 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
   `livechat-sessions-mobile.png`, and the detail state was verified from the
   authenticated browser.
 
+## Assigned operator scope evidence (2026-09-13)
+
+- Focused test: `bun test ./test/livechat_sessions.integration.test.ts --timeout 20000`
+  — 5 passed, 38 assertions.
+- `view_scope: assigned` returns only sessions whose durable `operator_id`
+  matches the authenticated operator. A close request for another operator's
+  session returns 403 with `LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE`; the
+  session remains `In Progress` at `row_version` 1.
+- Migration reapplication remains covered by the existing session migration
+  tests; the new stable second-operator fixture is inserted idempotently.
+- This is API/contract evidence only. Authenticated browser actor coverage,
+  restart verification, and paired Odoo comparison remain open.
+
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
@@ -38,6 +51,7 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 | LIVECHAT-WORKFLOW-001 | Visitor session lifecycle | Authenticated API test traverses In Progress → Waiting → In Progress → Looking for Help → In Progress → Closed, persists visitor/channel/operator/outcome and versions 1 → 6, and rejects closed-session replay | pass |
 | LIVECHAT-FUNC-001 | Sessions, channels, bots, configuration, history, reporting, and technical views | Full focused suite 58/58, 632 assertions across 18 files | pass for tested contracts |
 | LIVECHAT-BROWSER-001 | Authenticated Sessions list and detail side panel | Isolated runner `:4327`; desktop/mobile list and seeded Visitor A detail loaded without failed requests, page errors, or overflow; captures recorded above | pass for Core3 runtime; paired Odoo comparison and browser mutations remain open |
+| LIVECHAT-PERM-002 | Assigned operator session list/detail and transitions | Focused Sessions test; assigned operator cannot see or close another operator's session, and the row is unchanged | pass at API/contract level; browser actor matrix remains open |
 
 ## Bugs and retests
 

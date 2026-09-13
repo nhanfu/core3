@@ -32,6 +32,7 @@ datasources:
         CAST(started_at AS VARCHAR) AS started_at, CAST(ended_at AS VARCHAR) AS ended_at
       FROM livechat_sessions
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END
+        AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)
         AND (:q IS NULL OR visitor_name ILIKE '%' || :q || '%' OR operator_name ILIKE '%' || :q || '%' OR channel_name ILIKE '%' || :q || '%')
         AND (:session_date IS NULL OR :session_date = 'all' OR started_at >= CURRENT_TIMESTAMP - INTERVAL '30' DAY)
       ORDER BY started_at DESC, id

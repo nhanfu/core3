@@ -21,4 +21,5 @@ datasources:
         CAST(started_at AS VARCHAR) AS started_at, CAST(ended_at AS VARCHAR) AS ended_at
       FROM livechat_sessions
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE
+        AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)
         AND id = :id

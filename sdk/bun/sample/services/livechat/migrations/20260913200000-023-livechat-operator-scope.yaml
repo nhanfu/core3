@@ -1,0 +1,17 @@
+version: 0.0.23
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE livechat_sessions ADD COLUMN IF NOT EXISTS operator_id VARCHAR;
+      UPDATE livechat_sessions SET operator_id = 'livechat-agent' WHERE operator_id IS NULL AND operator_name = 'Support Agent';
+      INSERT INTO livechat_sessions (id, channel_id, channel_name, visitor_name, operator_name, operator_id, status, duration_minutes, started_at)
+      SELECT 'livechat-session-scope-001', 'livechat-channel-demo-001', 'Website Support', 'Visitor Scope', 'Other Operator', 'other-livechat-agent', 'In Progress', 0, CURRENT_TIMESTAMP
+      WHERE NOT EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-scope-001');
+    down: |
+      DELETE FROM livechat_sessions WHERE id = 'livechat-session-scope-001';
+      ALTER TABLE livechat_sessions DROP COLUMN IF EXISTS operator_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

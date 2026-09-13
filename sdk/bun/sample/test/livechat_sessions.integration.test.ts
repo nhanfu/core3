@@ -112,4 +112,29 @@ describe('Live Chat Conversations — Sessions parity', () => {
     await expect(transition('sessions', 'close', 5)).rejects.toMatchObject({ status: 409, code: 'LIVECHAT_SESSION_INVALID_STATE' });
     database.close();
   });
+
+  test('limits assigned operators to their sessions without changing another row', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'livechat_operator_scope_test', ['schema', 'data']);
+    const discovered = discoverPages(sampleRoot);
+    let currentUser: any = { sub: 'livechat-agent', email: 'agent@workspace.example', name: 'Live Chat Agent', permissions: ['livechat.read', 'livechat.write'], view_scope: 'assigned' };
+    const api = createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return currentUser; }, hasPermission(actor: any, permission: string) { return actor.permissions.includes(permission); } },
+      sources: new Map([...discovered.datasources].filter(([id]) => id.startsWith('livechat_'))),
+      pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === 'livechat')),
+      pages: new Map([...discovered.pages].filter(([, page]) => page.module === 'livechat').map(([id, page]) => [id, page.config])),
+      catalogs: discovered.catalogs, menus: discovered.menus,
+      workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'livechat').map(([id, workflow]) => [id, workflow.config])),
+      workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'livechat').map(([id, workflow]) => [id, workflow.file])),
+      permissions: discovered.permissions.get('livechat')?.config || {}, uploadRoot: '/tmp/core3-livechat-test-uploads', eventStore: {}, topics: {},
+    });
+    const query = () => api(new Request('http://livechat.test/api/query', { method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' }, body: JSON.stringify({ sourceId: 'livechat_sessions', params: { q: null, session_date: 'all' }, top: 50 }) }), new URL('http://livechat.test/api/query'));
+    expect((await (await query()).json()).data.map((row: any) => row.id)).not.toContain('livechat-session-scope-001');
+    currentUser = { ...currentUser, sub: 'other-livechat-agent', name: 'Other Operator' };
+    await expect(api(new Request('http://livechat.test/api/actions/livechat.sessions.close', { method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'livechat-session-demo-002', expected_row_version: 1, values: {} }) }), new URL('http://livechat.test/api/actions/livechat.sessions.close'))).rejects.toMatchObject({ status: 403, code: 'LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE' });
+    expect(await repository.query('SELECT status, row_version FROM livechat_sessions WHERE id = ?', ['livechat-session-demo-002'])).toEqual([{ status: 'In Progress', row_version: 1 }]);
+    database.close();
+  });
 });
