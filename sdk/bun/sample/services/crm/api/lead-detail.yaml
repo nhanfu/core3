@@ -139,18 +139,14 @@ actions:
           message: Customer name is required
         - type: service
           service: yaml.service.base
-          operation: base.contacts.create
+          operation: base.contacts.create_from_crm
           request:
-            values:
-              name: contact_name
-              email: contact_email
-              phone: contact_phone
-          assign_to: contact_id
-          status: 409
-          code: CRM_CONTACT_CREATE_FAILED
-          message: Customer could not be created
+            lead_id: id
+            name: contact_name
+            email: contact_email
+            phone: contact_phone
       steps:
-        - query: "UPDATE crm_leads SET partner_id = :contact_id, partner_name = :contact_name, email = :contact_email, phone = :contact_phone, type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead'"
+        - query: "UPDATE crm_leads SET partner_id = 'crm-lead-contact-' || :id, partner_name = :contact_name, email = :contact_email, phone = :contact_phone, type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead'"
         - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'Lead converted and customer created', 'done', CURRENT_TIMESTAMP)"
       result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
     fields:

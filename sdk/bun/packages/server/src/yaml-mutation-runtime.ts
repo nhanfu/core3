@@ -12,6 +12,8 @@ export type MutationDefinition = {
   fields?: string[];
   required?: string[];
   defaults?: Record<string, unknown>;
+  id_input?: string;
+  id_prefix?: string;
   timestamps?: boolean;
   concurrency?: false | { field?: string; input?: string; required?: boolean };
   scope?: { table?: string; field: string; message?: string; message_key?: string };
@@ -143,7 +145,10 @@ export class YamlMutationRuntime {
       if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) throw { status: 400, message: `${field} is required` };
     }
     if (operation === 'insert') {
-      const id = String(params.id || crypto.randomUUID());
+      const inputId = definition.id_input ? params[definition.id_input] : undefined;
+      const id = String((inputId !== undefined && inputId !== null && inputId !== ''
+        ? `${definition.id_prefix || ''}${inputId}`
+        : params.id) || crypto.randomUUID());
       params.id = id;
       const insertFields = [...requested];
       const insertValues = insertFields.map((field) => values[field]);
