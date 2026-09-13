@@ -160,3 +160,20 @@ discovery of datasource contracts outside Order ownership.
   self-contained before any merge. Candidate-level authenticated mobile,
   restricted-actor, restart, and paired Odoo evidence remain open; this is a
   conditional review handoff, not full Order sign-off.
+
+## Review reconciliation: `61422c4e`
+
+- The candidate is self-contained within Order plus the declared generic
+  mutation-runtime service-step extension. Its Order YAML and focused test
+  tree are already present on active as equivalent commit `cd553ac4`; the
+  active runtime is newer and contains the candidate's `for_each`, service
+  call, request resolution, and assignment behavior plus additional existing
+  guards. No older runtime downgrade was applied.
+- Active focused verification: `bun test
+  ./test/sales_orders_to_invoice.integration.test.ts --timeout 120000` — **4
+  pass, 24 assertions**. Candidate QA's audit, targeted ESLint, and diff-check
+  evidence remain valid for the unchanged product tree.
+- Disposition: conditionally reconciled without a duplicate cherry-pick.
+  Active product equivalent: `cd553ac4`; candidate `61422c4e` was not merged
+  separately. Mobile/restricted-actor, restart, and paired Odoo evidence remain
+  open.
