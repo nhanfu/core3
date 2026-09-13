@@ -19,6 +19,24 @@ states, including a cancellation reason, through their complete transitions.
 Complete permission boundaries, full CRUD/workflow coverage, and paired Odoo
 desktop/mobile comparison remain open. No full parity claim is made here.
 
+## QA evidence for fc310247 (2026-09-13)
+
+- Isolated deletion test passed: 2 tests, 12 assertions.
+- Full focused Time Off regression passed: 47 tests, 497 assertions across 18
+  files.
+- Authenticated admin HTTP checks passed: missing request 404, non-Draft 409,
+  stale Draft 409, matching Draft 200; failed guards left no deletion and the
+  deleted row was absent on subsequent lookup.
+- Permission checks passed: dispatcher 403 for missing `time_off.write`, and
+  unauthenticated request 401.
+- `bun run audit` and `git diff --check fc310247^ fc310247` passed.
+- Repository typecheck remains red on pre-existing errors outside the candidate;
+  the sample package declares no lint script.
+- No authenticated desktop/mobile browser or paired Odoo screenshots were
+  available in this session. Odoo was reachable only at its unauthenticated
+  login redirect. Restart persistence and the complete actor/adapter matrix
+  remain unverified.
+
 ## Next bounded task
 
 Run role-specific permission checks, cancellation/refusal/balance persistence

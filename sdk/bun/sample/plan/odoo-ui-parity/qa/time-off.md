@@ -20,7 +20,12 @@ Detailed execution matrix: [`test-plans/time-off.md`](test-plans/time-off.md). I
 
 ## Current regression evidence
 
-- Focused Time Off suite: `bun test ./test/time_off*.integration.test.ts --timeout 20000` — 45 passed, 0 failed, 485 assertions across 17 files.
+- Focused Time Off suite: `bun test ./test/time_off*.integration.test.ts --timeout 20000` — 47 passed, 0 failed, 497 assertions across 18 files.
+- Candidate `fc310247` isolated in `/home/nhanjs/projects/core3-worktrees/time-off-draft-delete-20260913`.
+- Authenticated HTTP deletion probes: missing id `404 TIME_OFF_LEAVE_NOT_FOUND`; non-Draft and stale Draft `409 TIME_OFF_LEAVE_DELETE_INVALID`; matching Draft deletion `200`.
+- Permission probes: dispatcher `403 Requires permission: time_off.write`; unauthenticated `401 UNAUTHORIZED`.
+- Candidate QA static evidence: `bun run audit` passed (647 pages, 662 routes, 1112 datasources); candidate diff-check passed. Repository typecheck remains blocked by pre-existing unrelated errors; no lint script is declared in `sdk/bun/sample/package.json`.
+- Browser/Odoo captures were unavailable in the candidate session; no new desktop/mobile screenshots or paired Odoo claims are made.
 - Authenticated registered-menu route matrix: 16 unique routes at desktop and mobile — 32/32 passed with no blank/redirect result, browser error, HTTP error, or horizontal overflow; raw result: `/tmp/core3-odoo-parity/timeoff-matrix-20260912.json`.
 - Authenticated approval workflow: created `QA Browser Leave 20260912`, submitted it, and approved it; all responses were 200 and row versions advanced `1 → 2 → 3`, with approver `Admin User` and state `Approved`.
 - Permission boundary: Fleet user opening `/time-off/time-off-approval` received the expected 403 `Requires permission: time_off.manage`; no browser errors were recorded.
@@ -28,7 +33,7 @@ Detailed execution matrix: [`test-plans/time-off.md`](test-plans/time-off.md). I
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| TIME_OFF-FUNC-001 | Focused functionality, reports, CRUD, and guards | 45 tests, 485 assertions; focused suite passed | pass |
+| TIME_OFF-FUNC-001 | Focused functionality, reports, CRUD, and guards | 47 tests, 497 assertions; focused suite passed | pass |
 | TIME_OFF-BROWSER-001 | Authenticated registered-menu route matrix | 16 routes × desktop/mobile = 32/32; raw JSON result recorded | pass |
 | TIME_OFF-WORKFLOW-001 | Create, submit, and approve leave request | Authenticated sequence returned 200 at each step; row versions 1 → 2 → 3 | pass |
 | TIME_OFF-PERM-001 | Non-manager cannot open manager approval view | Fleet user received HTTP 403 with `Requires permission: time_off.manage`; browser errors 0 | pass |
@@ -50,6 +55,10 @@ remain open.
 | Bug ID | Failure | Fix commit | Retest | Status |
 | --- | --- | --- | --- | --- |
 | — | No current-wave defect recorded | — | — | pending |
+
+The deletion retest found no regression. It records a bounded CRUD and
+permission slice only; full actor matrix, restart persistence, remaining
+CRUD/workflows, and paired Odoo evidence remain open.
 
 ## Sign-off
 
