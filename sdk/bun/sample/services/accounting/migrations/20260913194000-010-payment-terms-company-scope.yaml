@@ -1,0 +1,18 @@
+version: 0.0.1
+description: Company-scoped Accounting payment terms
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_config_payment_terms ADD COLUMN IF NOT EXISTS company_name VARCHAR DEFAULT 'Core3 Demo Company';
+      UPDATE accounting_config_payment_terms SET company_name = 'Core3 Demo Company' WHERE company_name IS NULL OR trim(company_name) = '';
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_accounting_payment_terms_company_name ON accounting_config_payment_terms(company_name, lower(name));
+      INSERT INTO accounting_config_payment_terms(id, name, description, state, company_name)
+      VALUES ('vn-net15', 'Net 15', '15 days', 'Active', 'Core3 Vietnam Branch')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP INDEX IF EXISTS uq_accounting_payment_terms_company_name;
+      ALTER TABLE accounting_config_payment_terms DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

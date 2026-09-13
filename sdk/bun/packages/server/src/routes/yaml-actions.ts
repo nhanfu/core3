@@ -87,6 +87,7 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
         current_company_name: String(authUser.company?.name || authUser.company_name || ''),
         company_name: authUser.roles?.includes('admin') ? undefined : String(authUser.company?.name || authUser.company_name || ''),
         current_branch_id: String(authUser.branch_id || ''),
+        current_company_name: String(authUser.company?.name || authUser.company_name || ''),
         view_scope: String(authUser.view_scope || 'all'),
       });
       if (actionDefinition.event && typeof eventStore?.publish === 'function') await (eventStore as EventStore).publish({

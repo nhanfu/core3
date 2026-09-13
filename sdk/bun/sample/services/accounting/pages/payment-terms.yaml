@@ -7,14 +7,91 @@ components:
     create_action: create_accounting_payment_term
     create_label: New
     search: { label: Search payment terms, placeholder: Search payment term... }
-    filters: [{ field: state, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }] }]
     columns:
-      - { field: name, label: Payment Terms, type: PrimaryEntityCell }
-      - { field: company, label: Company }
+      - { field: name, label: Payment term, type: PrimaryEntityCell }
+      - { field: description, label: Due rule }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: company_name, label: Company, optional: hide }
     page_size: 50
-    responsive_card: true
     row_key: id
     row_actions: menu
-    row_open_action: view_accounting_payment_term
-    row_double_click_action: view_accounting_payment_term
-    empty_state: { title: No payment terms found, description: Create a payment term or adjust your search. }
+    actions:
+      - { id: edit_accounting_payment_term, label: Edit, permission: accounting.manage, variant: ghost }
+      - { id: archive_accounting_payment_term, label: Archive or restore, permission: accounting.manage, variant: ghost }
+      - { id: delete_accounting_payment_term, label: Delete, permission: accounting.manage, variant: danger }
+actions:
+  - id: create_accounting_payment_term
+    type: server_form
+    permission: accounting.manage
+    title: New Payment Term
+    action: accounting.payment_terms.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_payment_terms]
+    mutation:
+      operation: insert
+      table: accounting_config_payment_terms
+      fields: [name, description, state, company_name]
+      required: [name, company_name]
+      defaults: { state: Active }
+      guards:
+        - { query: "SELECT c.name AS company_name FROM users u JOIN auth_companies c ON c.id = u.current_company_id WHERE u.id = :current_user_id", status: 403, message: A current company is required, assign: true }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 400, message: Payment term name is required and must be at most 120 characters }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_payment_terms WHERE company_name = :company_name AND lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, message: Payment term already exists for this company }
+      result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name" }
+    fields: [{ field: name, label: Payment Term, type: text, required: true }, { field: description, label: Due Rule, type: text }, { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]
+  - id: edit_accounting_payment_term
+    type: server_form
+    permission: accounting.manage
+    title: Edit Payment Term
+    action: accounting.payment_terms.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [accounting_payment_terms]
+    mutation:
+      operation: update
+      table: accounting_config_payment_terms
+      fields: [name, description, state]
+      required: [name]
+      concurrency: { field: row_version, input: expected_row_version, required: true }
+      guards:
+        - { query: "SELECT c.name AS company_name FROM users u JOIN auth_companies c ON c.id = u.current_company_id WHERE u.id = :current_user_id", status: 403, message: A current company is required, assign: true }
+        - { query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name", status: 404, message: Payment term is missing or belongs to another company }
+        - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 400, message: Payment term name is required and must be at most 120 characters }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_payment_terms WHERE company_name = :company_name AND lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, message: Payment term already exists for this company }
+      result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name" }
+    fields: [{ field: name, label: Payment Term, type: text, required: true }, { field: description, label: Due Rule, type: text }, { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]
+  - id: archive_accounting_payment_term
+    type: server_form
+    permission: accounting.manage
+    title: Archive or restore Payment Term
+    action: accounting.payment_terms.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [accounting_payment_terms]
+    mutation:
+      operation: update
+      table: accounting_config_payment_terms
+      fields: [state]
+      required: [state]
+      concurrency: { field: row_version, input: expected_row_version, required: true }
+      guards:
+        - { query: "SELECT c.name AS company_name FROM users u JOIN auth_companies c ON c.id = u.current_company_id WHERE u.id = :current_user_id", status: 403, message: A current company is required, assign: true }
+        - { query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name", status: 404, message: Payment term is missing or belongs to another company }
+      result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name" }
+    fields: [{ field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]
+  - id: delete_accounting_payment_term
+    type: server
+    permission: accounting.manage
+    action: accounting.payment_terms.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [accounting_payment_terms]
+    mutation:
+      operation: delete
+      table: accounting_config_payment_terms
+      concurrency: { field: row_version, input: expected_row_version, required: true }
+      guards:
+        - { query: "SELECT c.name AS company_name FROM users u JOIN auth_companies c ON c.id = u.current_company_id WHERE u.id = :current_user_id", status: 403, message: A current company is required, assign: true }
+        - { query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name", status: 404, message: Payment term is missing or belongs to another company }
