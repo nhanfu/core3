@@ -206,3 +206,20 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
   explicit invalid warranty-date mutation guard, with focused validation,
   scope, stale, and no-partial-update tests. Candidate pending; all existing
   ledger edits and aggregate progress are preserved.
+## DEV/QA reconciliation — `DEV-MAINTENANCE-WAVE-20260913-R2` / `QA-MAINTENANCE-WAVE-20260913-R2`
+
+- The owner handoff `73c74bb2` requested the Equipment repair, but the
+  authoritative active branch already contains `409665d0` (`feat(maintenance):
+  validate equipment creation`). No duplicate owner patch is required.
+- Candidate scope is self-contained: `services/maintenance/api/equipment.yaml`
+  and `test/maintenance_equipment_create.integration.test.ts`; current
+  lifecycle coverage remains in the Maintenance-owned test set.
+- QA event triggered/reconciled against the existing implementation. Active
+  checkout command `bun test test/maintenance_equipment_create.integration.test.ts
+  test/maintenance_equipment_lifecycle.integration.test.ts` passed **3 tests /
+  26 assertions**, covering equipment fields, warranty validation, edit/
+  archive/reopen behavior, concurrency, and linked-delete guards.
+- Disposition: **bounded QA pass; conditionally accepted**. Broader Maintenance
+  blockers remain preserved: authenticated Core3 browser evidence, authenticated
+  Odoo comparison, full repository lint/type issues, full regression completion,
+  broader actor/company matrix, and complete module sign-off gates.
