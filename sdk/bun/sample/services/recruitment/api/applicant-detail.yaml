@@ -15,10 +15,7 @@ actions:
     handler: order_transition
     workflow: recruitment_applicants
     operation: reopen
-    # handleAction supplies the numeric row version from the loaded detail
-    # record. Do not interpolate it here: interpolation serializes values as
-    # strings before the guarded SQL mutation is executed.
-    params: { id: '{state.id}' }
+    params: { id: '{state.id}', expected_row_version: '{state.recruitment_applicant_detail.row_version}' }
     refresh: [recruitment_applicant_detail, recruitment_applicants]
   - { id: screen_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.screen, handler: order_transition, workflow: recruitment_applicants, operation: screen, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
   - { id: interview_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.interview, handler: order_transition, workflow: recruitment_applicants, operation: interview, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
