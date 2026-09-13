@@ -271,3 +271,9 @@ Sales and Purchases export coverage below.
   balance/payment/journal updates, duplicate/stale/invalid/scope guards, and
   focused no-partial-write tests. Candidate pending; ledgers and aggregate
   progress are preserved.
+
+## 2026-09-13 coordinator dispatch — Payment Terms R2
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-ACCOUNTING-PAYMENT-TERMS-WAVE-20260913-R2` → `QA-ACCOUNTING-PAYMENT-TERMS-WAVE-20260913-R2` | existing `agent/odoo-ui-accounting-payment-transactions-20260910` in `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-payment-transactions-20260910` | Payment Terms page/API binding, CRUD validation, manager/company permissions, stale/missing guards, and focused atomicity tests | dispatched in `e845b30f`; awaiting self-contained product commit before QA |
