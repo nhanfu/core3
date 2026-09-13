@@ -184,3 +184,20 @@ Candidate commit: pending commit for refusal workflow repair
   contracts, then trigger QA retest.
 - Preserve open gates: file-backed restart unavailable, Odoo routes redirect to
   login, and the sample package has no lint script.
+
+## Reviewer reconciliation `45a30a12`: held for active-schema incompatibility (2026-09-13)
+
+- QA evidence is recorded: live refuse -> restore -> reload, numeric version,
+  stale 409, actor/company/anonymous 403/401, desktop/mobile/reload, 39 tests /
+  370 assertions, audit/build/ESLint, and diff-check passed.
+- The candidate's three-file product patch is not executable against the active
+  branch as submitted. Migration 014 runs `UPDATE recruitment_applicants SET
+  company_name ...`, but the active Recruitment schema has no `company_name`;
+  all four focused tests fail at migration startup with DuckDB
+  `Referenced column "company_name" not found in FROM clause`.
+- Provisional cherry-pick was reverted as `092d831a`; no Recruitment product
+  change is integrated. Same owner must rebase/repair the migration against the
+  active schema, rerun the focused suite and required gates, and return a
+  genuinely self-contained candidate before QA retest.
+- Preserve open gates: file-backed restart unavailable, Odoo redirects to
+  `/web/login`, and the sample package has no lint script.

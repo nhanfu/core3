@@ -70,3 +70,14 @@ path). Provisional integration was reverted as `48727baa`. Require the same
 owner to return a self-contained ordered bundle or active-branch rebase before
 another QA retest. File-backed restart, authenticated Odoo, and package-lint
 gates remain open.
+
+## Reviewer hold: `45a30a12` (2026-09-13)
+
+QA passed the intended refusal/reopen behavior, but the submitted three-file
+candidate is incompatible with the active schema: migration 014 references
+`recruitment_applicants.company_name`, which does not exist on the active
+branch, and all four focused tests fail during migration startup. The
+provisional integration was reverted as `092d831a`. Same owner must rebase the
+company-scope schema/fixture dependency and numeric reopen repair into a
+self-contained candidate before QA retest. Restart, Odoo, and package-lint
+gates remain open.
