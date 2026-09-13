@@ -13,6 +13,26 @@ const action = (id: string) => yaml('api/config-payment-terms.yaml').actions.fin
   ?? yaml('api/payment-term-detail.yaml').actions.find((candidate: any) => candidate.id === id);
 
 describe('Accounting Payment Terms Odoo configuration parity', () => {
+  test('keeps unsupported export, attachment, and print actions out of the configuration scope', () => {
+    const listPage = yaml('pages/payment-terms.yaml');
+    const detailPage = yaml('pages/payment-term-detail.yaml');
+    const listApi = yaml('api/config-payment-terms.yaml');
+    const detailApi = yaml('api/payment-term-detail.yaml');
+    const paymentTermActions = [...(listApi.actions ?? []), ...(detailApi.actions ?? [])];
+
+    // Odoo account_payment_term_views.xml declares only list, kanban, and
+    // form views for account.payment.term. Invoice printing consumes payment
+    // term data in the invoice report; it is not a Payment Terms action.
+    expect(listPage.components[0].export_action).toBeUndefined();
+    expect(detailPage.components[0].header_actions).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: expect.stringMatching(/export|print|attachment/i) }),
+    ]));
+    expect(paymentTermActions).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: expect.stringMatching(/export|print|attachment/i) }),
+    ]));
+    expect(yaml('storage.yaml').attachments?.accounting_payment_term).toBeUndefined();
+  });
+
   test('keeps list/detail layouts separate and joins API fragments by page.id', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const listPage = yaml('pages/payment-terms.yaml');

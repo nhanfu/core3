@@ -729,4 +729,19 @@ paired authenticated Odoo comparisons are completed.
   audit is **661 / 670 / 1,154**.
 - Disposition: **bounded PASS/reconciled**. Export, attachment, print, and
   authenticated paired-Odoo comparisons remain open; no full Accounting
-  sign-off is claimed.
+sign-off is claimed.
+
+## Reviewer reconciliation: Payment Terms output-scope follow-up `4d0eb4f0` (2026-09-13)
+
+- Odoo source review confirms Payment Terms configuration has no module-specific
+  export, attachment, print, or report action. Invoice printing consumes
+  payment-term data under invoice/report scope, so no unsupported Payment Terms
+  actions were added.
+- The valid focused negative-contract test was applied to the active Accounting
+  test file. Active verification passes **4 tests / 64 assertions** (higher
+  than the candidate's 55 because later active lifecycle assertions remain),
+  audit passes **661 pages / 670 routes / 1,154 datasources**, and diff-check
+  passes. Candidate clean-worktree and warning evidence are retained.
+- Disposition: **bounded evidence reconciled**. Accounting-wide export and
+  bank-statement attachment remain separate scopes; invoice printing remains
+  invoice/report scope. Broader Accounting sign-off remains open.

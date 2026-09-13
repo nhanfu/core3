@@ -87,3 +87,11 @@ checks are valid. Final browser evidence passes bounded create/reload, edit,
 Archive/Restore, Delete, Fleet 403, and mobile checks. QA is **3/60 focused**,
 **91/1,045 full**, audit **661/670/1,154**. Export, attachment, print, and
 paired Odoo comparison remain open.
+
+## Reviewer reconciliation: Payment Terms output scope `4d0eb4f0` (2026-09-13)
+
+Odoo source review verified that Payment Terms has no module-specific export,
+attachment, print, or report action; invoice printing belongs to invoice/report
+scope. The negative-contract test is present on active and passes **4/64**;
+audit passes **661/670/1,154** and diff-check passes. No unsupported actions
+were added; broader Accounting scope gates remain open.
