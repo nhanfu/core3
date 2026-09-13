@@ -115,3 +115,8 @@ Candidate commit: pending commit for refusal workflow repair
 - Existing development event `DEV-RECRUITMENT-WAVE-20260913` and QA event
   `QA-RECRUITMENT-WAVE-20260913` remain assigned. Candidate is pending; no
   aggregate progress change.
+## 2026-09-13 owner checkpoint
+
+- `81882de6` and `1d43601f` are dispatch/checkpoint commits only; no product
+  candidate has been submitted. QA remains untriggered pending a self-contained
+  implementation commit and evidence.

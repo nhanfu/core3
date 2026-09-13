@@ -88,3 +88,8 @@ Detailed execution matrix: [`test-plans/website.md`](test-plans/website.md). It 
 - Existing development event `DEV-WEBSITE-WAVE-20260913` and QA event
   `QA-WEBSITE-WAVE-20260913` remain assigned. Candidate is pending; no
   aggregate progress change.
+## 2026-09-13 owner checkpoint
+
+- `7919d102` and `8b05d448` are dispatch/checkpoint commits only; no product
+  candidate has been submitted. QA remains untriggered pending a self-contained
+  implementation commit and evidence.

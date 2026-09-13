@@ -111,3 +111,8 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Existing development event `DEV-TIMESHEETS-WAVE-20260913` and QA event
   `QA-TIMESHEETS-WAVE-20260913` remain assigned. Candidate is pending; no
   aggregate progress change.
+## 2026-09-13 owner checkpoint
+
+- `22f581f3` and `737c264d` are dispatch/checkpoint commits only; no product
+  candidate has been submitted. QA remains untriggered pending a self-contained
+  implementation commit and evidence.
