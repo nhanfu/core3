@@ -150,3 +150,18 @@ repository lint gate remain open or blocked.
   Preserve status through topic normalization, add focused HTTP status
   regressions for all three guards, and require a self-contained repair before
   QA retest. Do not integrate `b25e95b3`.
+
+## QA retest blocker: `de92faa4` (2026-09-13)
+
+- Stale and non-participant behavior now passes with HTTP 409
+  `CHAT_THREAD_STALE` and HTTP 403 `CHAT_THREAD_FORBIDDEN`; cleanup,
+  no-partial-write, and all prior upload/list/download/browser/tooling gates
+  remain passing.
+- `CHAT-HTTP-GUARD-001` is narrowed: missing-thread upload returns HTTP 404 but
+  only the generic API route-not-found response, not declared
+  `CHAT_THREAD_NOT_FOUND`. Candidate `de92faa4` remains blocked and is not
+  integrated.
+- Route the same-worktree repair to existing owner `agent/chat-wave-dev1` at
+  `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`. Preserve the missing
+  thread domain code through the upload route/API error mapping, add the focused
+  `CHAT_THREAD_NOT_FOUND` regression, and rerun Chat QA before review.

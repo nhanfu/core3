@@ -73,3 +73,13 @@ correct domain codes. Root cause: topic normalization drops status during error
 translation. Route the same-module status-preservation repair to
 `agent/chat-wave-dev1` in `/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`,
 then rerun focused HTTP QA. Do not integrate `b25e95b3`.
+
+## R2 retest blocker: `de92faa4`
+
+Stale and non-participant uploads now correctly return 409
+`CHAT_THREAD_STALE` and 403 `CHAT_THREAD_FORBIDDEN`. The remaining
+`CHAT-HTTP-GUARD-001` defect is missing-thread upload: it returns generic 404
+route-not-found without `CHAT_THREAD_NOT_FOUND`. Route this narrow domain-code
+repair to `agent/chat-wave-dev1` in
+`/home/nhanjs/projects/core3-worktrees/chat-wave-dev1`, add the focused
+regression, and rerun `QA-CHAT-WAVE-20260913-R2`. Do not integrate `de92faa4`.
