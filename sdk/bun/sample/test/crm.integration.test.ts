@@ -89,7 +89,7 @@ describe('CRM YAML lifecycle integration', () => {
     await baseRepository.run("CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, name VARCHAR, email VARCHAR, phone VARCHAR, active BOOLEAN DEFAULT true, row_version BIGINT DEFAULT 1)");
     const conversion = action(yaml('pages/lead-detail.yaml'), 'convert_lead_create_contact_detail');
     const converted = await repository.executeMutation(conversion.mutation, {
-      id: 'lead-new-contact', contact_name: 'Prospective Customer', contact_email: 'prospect@example.test', contact_phone: '+1 555 0199',
+      id: 'lead-new-contact', expected_row_version: 1, contact_name: 'Prospective Customer', contact_email: 'prospect@example.test', contact_phone: '+1 555 0199',
     });
     expect(converted).toMatchObject({ type: 'opportunity', partner_name: 'Prospective Customer', partner_id: 'crm-lead-contact-lead-new-contact' });
     expect((await baseRepository.query("SELECT id, name, email, phone, active FROM base_contacts WHERE id = 'crm-lead-contact-lead-new-contact'"))[0]).toEqual({
@@ -101,12 +101,73 @@ describe('CRM YAML lifecycle integration', () => {
     baseDatabase.close();
   });
 
+  it('rejects duplicate replay before creating another Base contact', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const baseDatabase = await DuckDbDatabase.open(':memory:');
+    const baseRepository = new YamlRepository(baseDatabase);
+    const repository = new YamlRepository(database, (serviceName: string) => serviceName === 'yaml.service.base' ? { call: (operation: string, request: Record<string, unknown>) => baseRepository.executeMutation(action(yaml('../base/api/contacts.yaml'), 'create_contact_from_crm').mutation, request) } : undefined);
+    await repository.run("CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, type VARCHAR, partner_id VARCHAR, partner_name VARCHAR, email VARCHAR, phone VARCHAR, stage VARCHAR, row_version BIGINT DEFAULT 1, updated_at TIMESTAMP); CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, completed_at TIMESTAMP); INSERT INTO crm_leads(id, type, email, stage) VALUES ('lead-duplicate-1', 'lead', 'same@example.test', 'New'), ('lead-duplicate-2', 'lead', 'same@example.test', 'New');");
+    await baseRepository.run("CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, name VARCHAR, email VARCHAR, phone VARCHAR, active BOOLEAN DEFAULT true, row_version BIGINT DEFAULT 1)");
+    const conversion = action(yaml('pages/lead-detail.yaml'), 'convert_lead_create_contact_detail');
+    await repository.executeMutation(conversion.mutation, { id: 'lead-duplicate-1', expected_row_version: 1, contact_name: 'Same Customer', contact_email: 'same@example.test' });
+    await expect(repository.executeMutation(conversion.mutation, { id: 'lead-duplicate-2', expected_row_version: 1, contact_name: 'Same Customer', contact_email: 'same@example.test' })).rejects.toMatchObject({ status: 409, code: 'BASE_CONTACT_EXISTS' });
+    expect((await baseRepository.query('SELECT COUNT(*) AS count FROM base_contacts'))[0].count).toBe(1);
+    expect((await repository.query("SELECT type, partner_id, row_version FROM crm_leads WHERE id = 'lead-duplicate-2'"))[0]).toMatchObject({ type: 'lead', partner_id: null, row_version: 1 });
+    database.close(); baseDatabase.close();
+  });
+
+  it('keeps both stores unchanged when Base permission is denied', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const baseDatabase = await DuckDbDatabase.open(':memory:');
+    let calls = 0;
+    const baseRepository = new YamlRepository(baseDatabase);
+    const repository = new YamlRepository(database, (serviceName: string) => serviceName === 'yaml.service.base' ? { call: async () => { calls++; throw { status: 403, code: 'PERMISSION_DENIED', message: 'Requires permission: base.contacts.write' }; } } : undefined);
+    await repository.run("CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, type VARCHAR, partner_id VARCHAR, partner_name VARCHAR, email VARCHAR, phone VARCHAR, stage VARCHAR, row_version BIGINT DEFAULT 1, updated_at TIMESTAMP); CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, completed_at TIMESTAMP); INSERT INTO crm_leads(id, type, email, stage) VALUES ('lead-permission', 'lead', 'permission@example.test', 'New');");
+    await baseRepository.run("CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, name VARCHAR, email VARCHAR, phone VARCHAR, active BOOLEAN DEFAULT true, row_version BIGINT DEFAULT 1)");
+    const conversion = action(yaml('pages/lead-detail.yaml'), 'convert_lead_create_contact_detail');
+    await expect(repository.executeMutation(conversion.mutation, { id: 'lead-permission', expected_row_version: 1, contact_name: 'Denied Customer' })).rejects.toMatchObject({ status: 403, code: 'PERMISSION_DENIED' });
+    expect(calls).toBe(1);
+    expect((await repository.query("SELECT type, partner_id, row_version FROM crm_leads WHERE id = 'lead-permission'"))[0]).toMatchObject({ type: 'lead', partner_id: null, row_version: 1 });
+    expect((await baseRepository.query('SELECT COUNT(*) AS count FROM base_contacts'))[0].count).toBe(0);
+    database.close(); baseDatabase.close();
+  });
+
+  it('compensates a created Base contact when a later CRM step fails', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const baseDatabase = await DuckDbDatabase.open(':memory:');
+    const baseRepository = new YamlRepository(baseDatabase);
+    const repository = new YamlRepository(database, (serviceName: string) => serviceName === 'yaml.service.base' ? { call: (operation: string, request: Record<string, unknown>) => {
+      const baseAction = action(yaml('../base/api/contacts.yaml'), operation === 'base.contacts.delete_from_crm' ? 'delete_contact_from_crm' : 'create_contact_from_crm');
+      return baseRepository.executeMutation(baseAction.mutation, request);
+    } } : undefined);
+    await repository.run("CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, type VARCHAR, partner_id VARCHAR, partner_name VARCHAR, email VARCHAR, phone VARCHAR, stage VARCHAR, row_version BIGINT DEFAULT 1, updated_at TIMESTAMP); CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR UNIQUE, state VARCHAR, completed_at TIMESTAMP); INSERT INTO crm_leads(id, type, email, stage) VALUES ('lead-rollback', 'lead', 'rollback@example.test', 'New'); INSERT INTO crm_activities(id, lead_id, activity_type, summary, state) VALUES ('existing', 'lead-rollback', 'stage_change', 'Lead converted and customer created', 'done');");
+    await baseRepository.run("CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, name VARCHAR, email VARCHAR, phone VARCHAR, active BOOLEAN DEFAULT true, row_version BIGINT DEFAULT 1)");
+    const conversion = action(yaml('pages/lead-detail.yaml'), 'convert_lead_create_contact_detail');
+    await expect(repository.executeMutation(conversion.mutation, { id: 'lead-rollback', expected_row_version: 1, contact_name: 'Rollback Customer', contact_email: 'rollback@example.test' })).rejects.toBeDefined();
+    expect((await baseRepository.query('SELECT COUNT(*) AS count FROM base_contacts'))[0].count).toBe(0);
+    expect((await repository.query("SELECT type, partner_id, row_version FROM crm_leads WHERE id = 'lead-rollback'"))[0]).toMatchObject({ type: 'lead', partner_id: null, row_version: 1 });
+    database.close(); baseDatabase.close();
+  });
+
+  it('rejects missing and stale sources before invoking Base', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    let calls = 0;
+    const repository = new YamlRepository(database, (serviceName: string) => serviceName === 'yaml.service.base' ? { call: async () => { calls++; return {}; } } : undefined);
+    await repository.run("CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, type VARCHAR, partner_id VARCHAR, partner_name VARCHAR, email VARCHAR, phone VARCHAR, stage VARCHAR, row_version BIGINT DEFAULT 1, updated_at TIMESTAMP); CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, completed_at TIMESTAMP); INSERT INTO crm_leads(id, type, email, stage, row_version) VALUES ('lead-stale', 'lead', 'stale@example.test', 'New', 2);");
+    const conversion = action(yaml('pages/lead-detail.yaml'), 'convert_lead_create_contact_detail');
+    await expect(repository.executeMutation(conversion.mutation, { id: 'missing-lead', expected_row_version: 1, contact_name: 'Missing' })).rejects.toMatchObject({ status: 409 });
+    await expect(repository.executeMutation(conversion.mutation, { id: 'lead-stale', expected_row_version: 1, contact_name: 'Stale' })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    expect(calls).toBe(0);
+    database.close();
+  });
+
   it('declares customer creation as a Base service contract with both permissions', () => {
     const conversion = action(yaml('pages/lead-detail.yaml'), 'convert_lead_create_contact_detail');
     expect(conversion).toMatchObject({ permission: 'crm.write', permissions: ['base.contacts.write'] });
     expect(conversion.mutation.guards).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: 'service', service: 'yaml.service.base', operation: 'base.contacts.create_from_crm', request: { lead_id: 'id', name: 'contact_name', email: 'contact_email', phone: 'contact_phone' } }),
     ]));
+    expect(conversion.mutation.guards.find((guard: any) => guard.type === 'service').compensation).toMatchObject({ service: 'yaml.service.base', operation: 'base.contacts.delete_from_crm' });
     const baseCreate = Bun.YAML.parse(readFileSync(join(import.meta.dir, '../services/base/api/contacts.yaml'), 'utf8')) as any;
     expect(baseCreate.actions.find((candidate: any) => candidate.action === 'base.contacts.create').mutation).toMatchObject({ id_input: 'contact_id' });
   });

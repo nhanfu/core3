@@ -64,6 +64,17 @@ actions:
       required: [name]
       guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM base_contacts WHERE id = 'crm-lead-contact-' || :lead_id OR (active = true AND email IS NOT NULL AND lower(email) = lower(:email)))", status: 409, code: BASE_CONTACT_EXISTS, message: A contact with this email or CRM link already exists }]
       result: { query: "SELECT * FROM base_contacts WHERE id = :id" }
+  - id: delete_contact_from_crm
+    type: server
+    permission: base.contacts.write
+    action: base.contacts.delete_from_crm
+    handler: yaml_mutation
+    operation: delete
+    mutation:
+      operation: delete
+      table: base_contacts
+      guards: [{ query: "SELECT id FROM base_contacts WHERE id = :id AND id = 'crm-lead-contact-' || :lead_id AND row_version = :expected_row_version", status: 409, code: BASE_CONTACT_COMPENSATION_STALE, message: CRM contact compensation could not verify the created contact }]
+      result: { query: "SELECT COUNT(*) AS count FROM base_contacts WHERE id = :id" }
   - { id: view_contact, type: navigate, permission: base.contacts.read, navigate_to: /contacts/detail, params: { id: '{row.id}' } }
   - id: edit_contact
     type: server_form

@@ -22,7 +22,7 @@ export type MutationDefinition = {
   concurrency?: false | { field?: string; input?: string; required?: boolean };
   scope?: { table?: string; field: string; message?: string; message_key?: string };
   message_key?: string;
-  guards?: Array<{ type?: 'query' | 'service'; query?: string; service?: string; operation?: string; request?: Record<string, unknown>; status?: number; message?: string; code?: string; message_key?: string; message_params?: Record<string, unknown>; assign?: boolean; assign_to?: string; assign_from?: string }>;
+  guards?: Array<{ type?: 'query' | 'service'; query?: string; service?: string; operation?: string; request?: Record<string, unknown>; compensation?: { service: string; operation: string; request?: Record<string, unknown> }; status?: number; message?: string; code?: string; message_key?: string; message_params?: Record<string, unknown>; assign?: boolean; assign_to?: string; assign_from?: string }>;
   before_steps?: MutationStep[];
   steps?: MutationStep[];
   result?: { query?: string };
@@ -66,6 +66,7 @@ export class YamlMutationRuntime {
 
   async execute(connection: MutationConnection, definition: MutationDefinition, input: Record<string, any> = {}): Promise<any> {
     const params = { ...input };
+    const compensations: Array<{ definition: NonNullable<MutationDefinition['guards']>[number]['compensation']; response: any }> = [];
     if (params.values && typeof params.values === 'object') {
       const values = params.values as Record<string, unknown>;
       for (const field of definition.normalize_empty || []) {
@@ -102,6 +103,7 @@ export class YamlMutationRuntime {
       for (const guard of definition.guards || []) {
         if (guard.type === 'service') {
           const response = await this.executeServiceGuard(guard, params);
+          if (guard.compensation) compensations.push({ definition: guard.compensation, response });
           if (!response) throw { status: Number(guard.status || 400), message: String(guard.message || 'Mutation rejected'), ...(guard.code ? { code: guard.code } : {}), ...(guard.message_key ? { message_key: guard.message_key } : {}), ...(guard.message_params ? { message_params: guard.message_params } : {}) };
           if (guard.assign) {
             Object.assign(params, response);
@@ -141,6 +143,9 @@ export class YamlMutationRuntime {
       return result;
     } catch (error) {
       await runOnConnection(connection, 'ROLLBACK').catch(() => {});
+      for (const compensation of compensations.reverse()) {
+        try { await this.executeCompensation(compensation.definition, compensation.response, params); } catch { /* preserve the original domain failure */ }
+      }
       throw error;
     }
   }
@@ -157,6 +162,19 @@ export class YamlMutationRuntime {
     };
     const request = resolve(guard.request || {}) as Record<string, unknown>;
     return service.call(String(guard.operation || ''), request);
+  }
+
+  private async executeCompensation(definition: NonNullable<MutationDefinition['guards']>[number]['compensation'], response: any, params: Record<string, any>): Promise<void> {
+    if (!definition || !this.resolveService) return;
+    const service = this.resolveService(String(definition.service || ''));
+    if (!service || typeof service.call !== 'function') return;
+    const request = Object.fromEntries(Object.entries(definition.request || {}).map(([key, value]) => [
+      key,
+      typeof value === 'string' && value.startsWith('$response.')
+        ? response?.[value.slice('$response.'.length)]
+        : typeof value === 'string' && Object.prototype.hasOwnProperty.call(params, value) ? params[value] : value,
+    ]));
+    await service.call(String(definition.operation || ''), request);
   }
 
   private async executeStep(connection: MutationConnection, step: MutationStep, params: Record<string, any>, item?: unknown): Promise<void> {

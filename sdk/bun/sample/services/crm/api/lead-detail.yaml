@@ -127,12 +127,13 @@ actions:
     action: crm.leads.convert_create_contact
     handler: yaml_mutation
     operation: convert_create_contact
-    params: { id: '{state.id}' }
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
     refresh: [crm_lead_detail, crm_lead_activities]
     mutation:
       guards:
-        - query: "SELECT id FROM crm_leads WHERE id = :id AND type = 'lead' AND partner_id IS NULL AND stage NOT IN ('Won', 'Lost')"
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND type = 'lead' AND partner_id IS NULL AND stage NOT IN ('Won', 'Lost') AND row_version = :expected_row_version"
           status: 409
+          code: STALE_RECORD
           message: Only an open lead without a linked contact can create a customer
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:contact_name, '') AS VARCHAR)), '') IS NOT NULL"
           status: 400
@@ -145,8 +146,16 @@ actions:
             name: contact_name
             email: contact_email
             phone: contact_phone
+          compensation:
+            service: yaml.service.base
+            operation: base.contacts.delete_from_crm
+            request: { id: '$response.id', lead_id: id, expected_row_version: '$response.row_version' }
       steps:
-        - query: "UPDATE crm_leads SET partner_id = 'crm-lead-contact-' || :id, partner_name = :contact_name, email = :contact_email, phone = :contact_phone, type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead'"
+        - query: "UPDATE crm_leads SET partner_id = 'crm-lead-contact-' || :id, partner_name = :contact_name, email = :contact_email, phone = :contact_phone, type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead' AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: Lead was changed by another user. Reload it before converting.
         - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'Lead converted and customer created', 'done', CURRENT_TIMESTAMP)"
       result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
     fields:
