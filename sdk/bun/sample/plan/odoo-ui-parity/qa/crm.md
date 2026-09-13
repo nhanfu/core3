@@ -58,6 +58,21 @@
 
 Not signed off. The singular tag deletion allowlist and binding repair passed focused QA. Broader AI catalog YAML-context regression, incomplete related-suite aggregate, unresolved functional/atomicity coverage, and missing authenticated desktop/mobile/Odoo evidence keep CRM bounded and unsigned-off.
 
+## Reviewer reconciliation — candidate `bc381d4a`
+
+- Integrated on the active branch as `e1be8e05` after resolving the shared
+  mutation-runtime type conflict while preserving the active runtime fields.
+- The bounded CRM-to-Base conversion cases pass: happy path, duplicate replay,
+  Base permission denial, downstream failure compensation, missing source,
+  stale source, and contract declaration. The focused selection returned 11
+  pass / 101 assertions; the full CRM integration suite returned 45 pass / 211
+  assertions; the related CRM suite returned 73 pass / 511 assertions.
+- Audit passed with 661 pages, 670 routes, and 1,158 datasources. CRM CSS
+  build, changed-file review, and `git diff --check` passed.
+- This is a conditional bounded result, not full CRM sign-off. Authenticated
+  actor/browser evidence, restart durability, typecheck, and paired Odoo
+  comparison remain open gates. No other module was changed by this review.
+
 ## Reviewer disposition — candidate `fa7561f3`
 
 - Integrated on the active branch as `b1322f05`; scope is limited to CRM
