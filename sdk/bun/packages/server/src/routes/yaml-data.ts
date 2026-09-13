@@ -54,6 +54,7 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
         current_user_name: String(authUser.name || ''),
         current_user_email: String(authUser.email || ''),
         customer_scope: authUser.roles?.includes('admin') ? 'all' : 'own',
+        current_company_name: String(authUser.company?.name || authUser.company_name || ''),
         company_name: authUser.roles?.includes('admin')
           ? (vm.params || {}).company_name
           : String(authUser.company?.name || authUser.company_name || (vm.params || {}).company_name || ''),
