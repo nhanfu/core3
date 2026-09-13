@@ -1,5 +1,29 @@
 # events QA ledger
 
+## Bounded QA — candidate `715568b9` (2026-09-13)
+
+- Attendee creation API/page contract and server-derived fields: **PASS**.
+  `New attendee` is page-owned at `/events/attendees`, requires `events.write`,
+  derives the registration ID and event name, and persists `Registered` with
+  row version 1.
+- Persistence/capacity/validation: **PASS**. Event registration count and row
+  version increment atomically; blank name, malformed email, and closed/full
+  event guards return the declared 422/409 errors.
+- Focused test: **PASS**, 2 tests / 10 assertions. Events regression: **PASS**,
+  86 tests / 628 assertions across 31 files. Audit (659/668/1,141), frontend
+  build, and diff-check passed.
+- Permission boundary: **CONDITIONAL**. The `events.write` declaration passes,
+  but no candidate-specific Event User/Fleet direct-write actor matrix ran.
+- Blockers: no Core3 listener or persistent Playwright/js_repl was available,
+  so authenticated desktop/mobile CRUD, refresh, and screenshots were not
+  verified; paired authenticated Odoo comparison remains pending. Repository
+  ESLint remains red only on unrelated Website errors at
+  `sample/test/website_public.integration.test.ts:31` and `:33`.
+
+Disposition: bounded automated change integrated; preserve the conditional
+browser, permission, Odoo, and unrelated lint blockers. No full Events module
+sign-off or aggregate progress claim.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.

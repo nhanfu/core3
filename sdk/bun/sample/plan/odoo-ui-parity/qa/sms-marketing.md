@@ -1,5 +1,21 @@
 # sms-marketing QA ledger
 
+## Candidate `325d0a45` bounded review (2026-09-13)
+
+- Company-scope migration/backfill, list/detail filtering, lifecycle write
+  ownership, actor-company create derivation, and explicit 401/403/404
+  contracts: **PASS** at isolated API/DuckDB level.
+- Focused SMS regression: **PASS**, 17 tests / 145 assertions. Audit (659/668/
+  1,141), SMS Sass, explicit-test ESLint, Vite build, and diff-check passed.
+- Conditional blockers preserved: authenticated lifecycle actor matrix and
+  reliable browser CRUD/reload evidence were not completed; file-backed restart,
+  Temporal/provider boundaries, and authenticated paired Odoo desktop/mobile
+  comparison remain open. YAML lint is not claimed because the service YAML is
+  ignored by ESLint.
+
+Disposition: bounded company-scope change integrated; SMS Marketing remains
+unsigned off and no aggregate progress claim is made.
+
 ## Representative browser matrix (2026-09-12)
 
 - Trigger: post-merge repository regression smoke.
