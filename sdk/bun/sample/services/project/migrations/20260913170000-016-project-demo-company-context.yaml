@@ -1,0 +1,17 @@
+version: 0.0.16
+kind: data
+description: Align Project demo task company scope with the authenticated demo tenant
+type:
+  postgres:
+    up: |
+      UPDATE project_tasks
+      SET company_name = 'Core3 Demo Company'
+      WHERE company_name IS NULL OR company_name = 'Core3';
+    down: |
+      UPDATE project_tasks
+      SET company_name = 'Core3'
+      WHERE company_name = 'Core3 Demo Company';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

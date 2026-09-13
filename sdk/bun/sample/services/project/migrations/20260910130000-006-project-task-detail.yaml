@@ -11,7 +11,7 @@ type:
       ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS blocked_by_summary VARCHAR;
       ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS blocked_by_names VARCHAR;
       ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS active BOOLEAN;
-      UPDATE project_tasks t SET customer_name = COALESCE(t.customer_name, p.customer_name), company_name = COALESCE(t.company_name, 'Core3') FROM projects p WHERE p.id = t.project_id;
+      UPDATE project_tasks t SET customer_name = COALESCE(t.customer_name, p.customer_name), company_name = COALESCE(t.company_name, 'Core3 Demo Company') FROM projects p WHERE p.id = t.project_id;
       UPDATE project_tasks SET tags = CASE id
         WHEN 'task-demo-001' THEN 'Architecture, Internal'
         WHEN 'task-demo-002' THEN 'Design, Priority'

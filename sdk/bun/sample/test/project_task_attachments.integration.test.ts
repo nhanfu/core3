@@ -28,10 +28,10 @@ describe('Project task attachments', () => {
     expect(upload).toMatchObject({ type: 'upload', handler: 'attachment_metadata', permission: 'project.write', kind: 'project_task_attachment' });
     expect(yaml('storage.yaml').attachments.project_task_attachment.download).toMatchObject({ permission: 'project.read', route: '/api/project/task-attachments' });
 
-    const valid = { task_id: 'task-demo-002', expected_row_version: 1, current_company_name: 'Core3', current_user_id: 'project-user', fileName: 'brief.pdf', mimeType: 'application/pdf', sizeBytes: 4, storageKey: 'project/brief.pdf' };
+    const valid = { task_id: 'task-demo-002', expected_row_version: 1, current_company_name: 'Core3 Demo Company', current_user_id: 'project-user', fileName: 'brief.pdf', mimeType: 'application/pdf', sizeBytes: 4, storageKey: 'project/brief.pdf' };
     const created = await repository.executeMutation(upload.mutation, { ...valid, attachment_id: 'project-task-attachment-001' });
-    expect(created).toMatchObject({ task_id: valid.task_id, company_name: 'Core3', file_name: 'brief.pdf', size_bytes: 4, uploaded_by: 'project-user' });
-    expect((await repository.querySource(list, { id: valid.task_id, current_company_name: 'Core3' }, 0, 50)).data).toHaveLength(1);
+    expect(created).toMatchObject({ task_id: valid.task_id, company_name: 'Core3 Demo Company', file_name: 'brief.pdf', size_bytes: 4, uploaded_by: 'project-user' });
+    expect((await repository.querySource(list, { id: valid.task_id, current_company_name: 'Core3 Demo Company' }, 0, 50)).data).toHaveLength(1);
     expect((await repository.querySource(list, { id: valid.task_id, current_company_name: 'Other Company' }, 0, 50)).data).toEqual([]);
 
     await expect(repository.executeMutation(upload.mutation, { ...valid, attachment_id: 'project-task-attachment-002' }))
@@ -55,7 +55,7 @@ describe('Project task attachments', () => {
     const api = yaml('api/task-detail.yaml');
     const upload = action(api, 'upload_project_task_attachment');
     const download = action(api, 'download_project_task_attachment');
-    const user: any = { sub: 'project-editor', email: 'editor@workspace.example', name: 'Project Editor', roles: ['user'], company: { name: 'Core3' }, permissions: ['project.read', 'project.write'] };
+    const user: any = { sub: 'project-editor', email: 'editor@workspace.example', name: 'Project Editor', roles: ['user'], company: { name: 'Core3 Demo Company' }, permissions: ['project.read', 'project.write'] };
     const createApi = (repository: YamlRepository) => createYamlApi({
       repository,
       authProvider: { async getCurrentUser() { return user; }, hasPermission(candidate: any, permission: string) { return candidate.permissions.includes(permission); } },
@@ -72,7 +72,7 @@ describe('Project task attachments', () => {
     const createdResponse = await createApi(firstRepository)(new Request('http://project.test/api/upload', { method: 'POST', body: form }), new URL('http://project.test/api/upload'));
     expect(createdResponse?.status).toBe(200);
     const created = await createdResponse!.json() as any;
-    expect(created).toMatchObject({ task_id: 'task-demo-002', file_name: 'plan.txt', company_name: 'Core3', size_bytes: 4 });
+    expect(created).toMatchObject({ task_id: 'task-demo-002', file_name: 'plan.txt', company_name: 'Core3 Demo Company', size_bytes: 4 });
     const downloaded = await createApi(firstRepository)(new Request(`http://project.test/api/project/task-attachments/${created.id}`), new URL(`http://project.test/api/project/task-attachments/${created.id}`));
     expect(downloaded?.status).toBe(200);
     expect([...new Uint8Array(await downloaded!.arrayBuffer())]).toEqual([80, 82, 79, 74]);
@@ -89,7 +89,7 @@ describe('Project task attachments', () => {
     await migrateDatabase(secondRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
     expect(await secondRepository.query('SELECT file_name, size_bytes FROM project_task_attachments WHERE id = ?', [created.id]))
       .toEqual([{ file_name: 'plan.txt', size_bytes: 4 }]);
-    user.company = { name: 'Core3' };
+    user.company = { name: 'Core3 Demo Company' };
     const reopenedDownload = await createApi(secondRepository)(new Request(`http://project.test/api/project/task-attachments/${created.id}`), new URL(`http://project.test/api/project/task-attachments/${created.id}`));
     expect(reopenedDownload?.status).toBe(200);
     expect([...new Uint8Array(await reopenedDownload!.arrayBuffer())]).toEqual([80, 82, 79, 74]);
