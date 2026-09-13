@@ -1,10 +1,10 @@
 # blog parity progress
 
 Module owner: blog module owner
-QA assignment: DEV-3 Blog candidate reviewed; dedicated QA pending
-Status: qa-in-progress
+QA assignment: DEV-3 Blog candidate reviewed; dedicated QA reconciled
+Status: bounded-pass-conditional
 Verification trigger: candidate commit
-Candidate commit: 1c4b35c3
+Candidate commit: 1c4b35c3; active equivalent product commit c1b243af
 
 ## Current state
 
@@ -23,11 +23,14 @@ deletion. No full-module parity claim is made here.
   blank-name rejection, stale-row rejection, and referenced-tag protection.
 - `bun run audit`, `bun run css:build:blog`, targeted ESLint, and `git diff
   --check` all pass.
+- The candidate product tree is already present on the active branch as
+  `c1b243af`; cherry-pick of `1c4b35c3` was empty after ledger conflicts were
+  preserved. Active focused retest: 2 tests, 13 assertions, 0 failures.
 - Browser actor verification, restart/migration evidence, site scope, and
   paired Odoo desktop/mobile comparison remain open.
 
 ## Next bounded task
 
-Dispatch QA against the candidate commit, then continue the remaining Blog permission,
+Continue the remaining Blog permission,
 browser, restart, site-scope, Temporal, and paired Odoo gates. Update this
 file only with evidence from the matching module owner.
