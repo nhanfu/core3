@@ -1,0 +1,21 @@
+{
+  "name": "core3",
+  "version": "1.0.0",
+  "description": "A shared TypeScript framework for processing client YAML and rendering ERP pages. The framework provides YAML-driven components, embedded SQL, OOP rendering, CRUD, and controlled extension points through direct imports from `apps/lib`.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nhanfu/core3.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nhanfu/core3/issues"
+  },
+  "homepage": "https://github.com/nhanfu/core3#readme"
+}

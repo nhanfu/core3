@@ -237,13 +237,14 @@ marked pass without evidence.
 - There are exactly 38 persistent module owners: one Luna medium-effort
   sub-agent for every actual module row in the module register. Agent counts
   are supplied with each goal submission, not hard-coded in this plan:
-  `DEV_AGENTS`, `QA_AGENTS`, and `REVIEW_AGENTS`. The scheduler must never
-  exceed 16 worker agents in total, including developers, QA, review/merge,
-  shared-tooling, and integration workers; the main agent is the 17th
-  dispatcher and does not count as a worker. The submitted allocation must
-  satisfy `DEV_AGENTS + QA_AGENTS + REVIEW_AGENTS <= 16`; unused capacity
-  remains idle. QA ownership must remain explicit and must not exceed the
-  per-QA module limit declared in the goal.
+  `DEV_AGENTS`, `QA_AGENTS`, and `REVIEW_AGENTS`. For the squad model, these
+  values are equal: `SQUADS = DEV_AGENTS = QA_AGENTS = REVIEW_AGENTS`, and
+  `SQUADS * 3 <= 16`. Each squad contains one developer, one QA owner, and one
+  review/merge owner. The scheduler must never exceed 16 worker agents in
+  total, including shared-tooling and integration workers; the main agent is
+  the 17th dispatcher and does not count as a worker. Unused capacity remains
+  idle. A QA or reviewer must not be silently shared across squads unless the
+  goal explicitly declares that exception.
   `auth` and `ai` are excluded because they are Core3 infrastructure, not
   registered Odoo modules.
 - A module owner receives the complete module goal, not a short UI slice. It
@@ -276,11 +277,11 @@ marked pass without evidence.
 - Do not create fresh replacement agents. If an owner stops, the main agent
   resumes that same run/worktree or records a blocker and requests explicit
   direction; ownership remains stable for the lifetime of this plan.
-- Use the submitted number of dispatchable QA slots for each wave. Each QA
-  assignment is explicitly mapped to one or more module owners, subject to the
-  per-QA module limit declared at goal submission. QA does not need a
-  continuously active process or a separate durable product goal, but each QA
-  owner has durable module test plans and QA ledgers for its assigned modules.
+- Use the submitted number of squads for each wave. Each squad is explicitly
+  mapped to a module owner and its QA and review/merge partners. QA does not
+  need a continuously active process or a separate durable product goal, but
+  each QA owner has a durable module test plan and QA ledger. The review/merge
+  owner receives the same candidate immediately after QA returns `pass`.
   QA creates and reviews the detailed test plans before development, then
   consumes the exact Core3 process or worktree spawned by each paired
   developer, runs the planned functional and authenticated Odoo/Core3 browser
@@ -290,32 +291,29 @@ marked pass without evidence.
   `odoo-ui-parity/qa/test-plans/<module>.md`. The module owner must respond to
   QA findings and retain ownership until all required cases pass or an exact
   blocker is recorded.
-- A wave is an overlapping pipeline, not a barrier sequence. Its logical
-  states are `qa-plan -> dev-batch -> qa-feedback -> repair loop -> merge-gate`,
-  but each module advances independently. QA owners begin testing a completed
-  candidate as soon as its developer emits `feature-complete` or
-  `merge-candidate`; developers immediately continue with other ready modules
-  while QA tests the candidate. A QA result is a bounded pass, defect list, or
-  blocker per module. The same developer owner repairs findings while other
-  developers and QA owners continue their assigned work. The review/merge
-  agent reviews and merges each independently validated module without waiting
-  for the rest of the wave. Only dependency conflicts, shared-file ownership,
-  or global infrastructure changes may pause a downstream dispatch.
-- At goal submission, record the wave allocation and pipeline policy in the
-  dispatch record: `DEV_AGENTS`, `QA_AGENTS`, `REVIEW_AGENTS`, `MAX_WORKERS=16`,
-  and `MAX_MODULES_PER_QA`. For example, `QA_AGENTS=5` may test the first five
-  completed modules while `DEV_AGENTS=5` starts five unrelated ready modules;
-  both sets run concurrently as long as the worker limit and dependency rules
-  are respected.
+- A wave is a set of independent squads, not a barrier sequence. Each squad
+  follows `qa-plan -> development -> QA -> review/merge`, and the review step
+  starts immediately after that squad's QA pass. Other squads continue their
+  own stages concurrently. A QA result is a bounded pass, defect list, or
+  blocker per module. The same developer repairs findings, the same QA owner
+  retests them, and the same reviewer re-reviews the repair. Only dependency
+  conflicts, shared-file ownership, or global infrastructure changes may pause
+  a squad or downstream dispatch.
+- At goal submission, record `SQUADS`, `DEV_AGENTS`, `QA_AGENTS`,
+  `REVIEW_AGENTS`, `MAX_WORKERS=16`, and the module mapping in the dispatch
+  record. For example, `SQUADS=5` creates 5 developers, 5 QA owners, and 5
+  review/merge owners. Each squad may immediately advance its own module while
+  the other four squads are still developing.
 - QA triggers are `test-plan-ready`, `feature-complete`, `merge-candidate`,
   `post-merge`, `refactor-impact`, and `release`. The module owner records the
   trigger and candidate commit in its module progress file; the main agent
   creates a bounded event task for the mapped QA owner with the module id,
   developer process/worktree, candidate commit, and exact test-plan path. The
   QA owner activates only for that event, tests the same Core3 process spawned
-  by the developer, and deactivates after recording the result. No QA slot
-  continuously polls, starts duplicate processes, or tests uncommitted
-  developer work.
+  by the developer, and deactivates after recording the result. On `pass`, the
+  main agent dispatches the same candidate immediately to that squad's
+  review/merge owner. No QA or review slot continuously polls, starts duplicate
+  processes, or tests uncommitted developer work.
 - `odoo-ui-parity/progress.md` is the QA-maintained aggregate and sign-off
   ledger. Module agents must not edit it directly. Each module agent
   owns and may update only `odoo-ui-parity/progress/<module>.md`, following
@@ -386,10 +384,11 @@ evidence, never an implicit fixture-only success.
    the existing module owner, mapped QA owner, or review/merge agent.
 2. Include the module id, worktree/process, dependency status, trigger,
    candidate commit, exact test-plan path, and expected output in every task.
-3. Wait for the assigned agent's recorded result; do not duplicate work or
-   perform review, testing, or merge actions itself.
+3. Consume recorded agent results and dispatch the next ready squad or
+   handoff; do not block unrelated squads or perform review, testing, or merge
+   actions itself.
 4. Dispatch repairs to the same module owner after QA or review feedback, then
    dispatch QA retest and review/merge again as separate bounded events.
-5. Keep each wave within the submitted `DEV_AGENTS`, `QA_AGENTS`, and
-   `REVIEW_AGENTS` allocation and the `MAX_WORKERS=16` global limit, including
-   the review/merge agent.
+5. Keep each wave within the submitted squad allocation:
+   `DEV_AGENTS = QA_AGENTS = REVIEW_AGENTS = SQUADS`, with
+   `SQUADS * 3 <= MAX_WORKERS=16`, including the review/merge agents.
