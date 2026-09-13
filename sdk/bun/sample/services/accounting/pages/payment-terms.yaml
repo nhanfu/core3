@@ -35,7 +35,7 @@ actions:
       required: [name, company_name]
       defaults: { state: Active }
       guards:
-        - { query: "SELECT c.name AS company_name FROM users u JOIN auth_companies c ON c.id = u.current_company_id WHERE u.id = :current_user_id", status: 403, message: A current company is required, assign: true }
+        - { query: "SELECT :current_company_name AS company_name WHERE :current_company_name IS NOT NULL AND length(trim(CAST(:current_company_name AS VARCHAR))) > 0", status: 403, message: A current company is required, assign: true }
         - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 400, message: Payment term name is required and must be at most 120 characters }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_payment_terms WHERE company_name = :company_name AND lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, message: Payment term already exists for this company }
       result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name" }
@@ -56,7 +56,7 @@ actions:
       required: [name]
       concurrency: { field: row_version, input: expected_row_version, required: true }
       guards:
-        - { query: "SELECT c.name AS company_name FROM users u JOIN auth_companies c ON c.id = u.current_company_id WHERE u.id = :current_user_id", status: 403, message: A current company is required, assign: true }
+        - { query: "SELECT :current_company_name AS company_name WHERE :current_company_name IS NOT NULL AND length(trim(CAST(:current_company_name AS VARCHAR))) > 0", status: 403, message: A current company is required, assign: true }
         - { query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name", status: 404, message: Payment term is missing or belongs to another company }
         - { query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120", status: 400, message: Payment term name is required and must be at most 120 characters }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM accounting_config_payment_terms WHERE company_name = :company_name AND lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, message: Payment term already exists for this company }
@@ -77,7 +77,7 @@ actions:
       required: [state]
       concurrency: { field: row_version, input: expected_row_version, required: true }
       guards:
-        - { query: "SELECT c.name AS company_name FROM users u JOIN auth_companies c ON c.id = u.current_company_id WHERE u.id = :current_user_id", status: 403, message: A current company is required, assign: true }
+        - { query: "SELECT :current_company_name AS company_name WHERE :current_company_name IS NOT NULL AND length(trim(CAST(:current_company_name AS VARCHAR))) > 0", status: 403, message: A current company is required, assign: true }
         - { query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name", status: 404, message: Payment term is missing or belongs to another company }
       result: { query: "SELECT * FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name" }
     fields: [{ field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]
@@ -93,5 +93,5 @@ actions:
       table: accounting_config_payment_terms
       concurrency: { field: row_version, input: expected_row_version, required: true }
       guards:
-        - { query: "SELECT c.name AS company_name FROM users u JOIN auth_companies c ON c.id = u.current_company_id WHERE u.id = :current_user_id", status: 403, message: A current company is required, assign: true }
+        - { query: "SELECT :current_company_name AS company_name WHERE :current_company_name IS NOT NULL AND length(trim(CAST(:current_company_name AS VARCHAR))) > 0", status: 403, message: A current company is required, assign: true }
         - { query: "SELECT id FROM accounting_config_payment_terms WHERE id = :id AND company_name = :company_name", status: 404, message: Payment term is missing or belongs to another company }

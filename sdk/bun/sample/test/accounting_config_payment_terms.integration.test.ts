@@ -24,6 +24,10 @@ describe('Accounting payment terms configuration', () => {
     expect(source.query).toContain('company_name = :current_company_name');
     for (const id of ['create_accounting_payment_term', 'edit_accounting_payment_term', 'archive_accounting_payment_term', 'delete_accounting_payment_term']) {
       expect(action(page, id).permission).toBe('accounting.manage');
+      const companyGuard = action(page, id).mutation.guards[0];
+      expect(companyGuard.query).toContain(':current_company_name');
+      expect(companyGuard.query).not.toMatch(/\busers\b|auth_companies/);
+      expect(companyGuard.assign).toBe(true);
     }
   });
 
@@ -31,15 +35,11 @@ describe('Accounting payment terms configuration', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await repository.run(`
-      CREATE TABLE auth_companies(id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL);
-      CREATE TABLE users(id VARCHAR PRIMARY KEY, current_company_id VARCHAR);
       CREATE TABLE accounting_config_payment_terms(
         id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
         name VARCHAR NOT NULL, description VARCHAR, state VARCHAR NOT NULL DEFAULT 'Active',
         company_name VARCHAR NOT NULL
       );
-      INSERT INTO auth_companies VALUES ('company-demo', 'Core3 Demo Company'), ('company-vietnam', 'Core3 Vietnam Branch');
-      INSERT INTO users VALUES ('manager-demo', 'company-demo'), ('manager-vietnam', 'company-vietnam');
       INSERT INTO accounting_config_payment_terms VALUES
         ('immediate', 1, 'Immediate Payment', 'Due on receipt', 'Active', 'Core3 Demo Company'),
         ('vn-net15', 1, 'Net 15', '15 days', 'Active', 'Core3 Vietnam Branch');
@@ -51,7 +51,7 @@ describe('Accounting payment terms configuration', () => {
     const remove = action(page, 'delete_accounting_payment_term').mutation;
     const context = { current_user_id: 'manager-demo', current_company_name: 'Core3 Demo Company' };
 
-    const created = await repository.executeMutation(create, { ...context, values: { name: 'Net 45', description: '45 days', state: 'Active' } });
+    const created = await repository.executeMutation(create, { ...context, values: { name: 'Net 45', description: '45 days', state: 'Active', company_name: 'Core3 Vietnam Branch' } });
     expect(created.name).toBe('Net 45');
     expect(created.company_name).toBe('Core3 Demo Company');
     expect((await repository.query('SELECT COUNT(*) AS count FROM accounting_config_payment_terms WHERE company_name = \'Core3 Demo Company\''))[0].count).toBe(2);
@@ -59,6 +59,9 @@ describe('Accounting payment terms configuration', () => {
     await expect(repository.executeMutation(create, { ...context, values: { name: ' immediate payment ' } })).rejects.toMatchObject({ status: 409 });
     await expect(repository.executeMutation(create, { ...context, values: { name: '   ' } })).rejects.toMatchObject({ status: 400 });
     expect((await repository.query("SELECT COUNT(*) AS count FROM accounting_config_payment_terms WHERE name = '   '"))[0].count).toBe(0);
+
+    await expect(repository.executeMutation(create, { current_user_id: 'manager-demo', values: { name: 'No Company' } })).rejects.toMatchObject({ status: 403 });
+    expect((await repository.query("SELECT COUNT(*) AS count FROM accounting_config_payment_terms WHERE name = 'No Company'"))[0].count).toBe(0);
 
     await expect(repository.executeMutation(edit, { ...context, id: 'vn-net15', values: { id: 'vn-net15', name: 'Spoofed', expected_row_version: 1 } })).rejects.toMatchObject({ status: 404 });
     expect((await repository.query("SELECT name FROM accounting_config_payment_terms WHERE id = 'vn-net15'"))[0].name).toBe('Net 15');
