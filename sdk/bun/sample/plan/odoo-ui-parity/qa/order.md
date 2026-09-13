@@ -99,3 +99,13 @@ discovery of datasource contracts outside Order ownership.
 - Order remains **conditional / unsigned-off**. Pre-existing TypeScript
   diagnostics, unavailable Core3/browser/Playwright evidence, authenticated
   desktop/mobile persistence checks, and paired Odoo comparison remain open.
+## 2026-09-13 coordinator dispatch — bounded template workflow wave
+
+- Existing owner `agent/order-wave-dev1` is assigned on
+  `/home/nhanjs/projects/core3-worktrees/order-wave-dev1`, based at `ecc15927`.
+  Development event: `DEV-ORDER-WAVE-20260913-R2`; QA event:
+  `QA-ORDER-WAVE-20260913-R2`; handoff commit: `3b568dbf`.
+- Scope is Order-owned quotation-template-to-order creation with atomic line
+  persistence, validation, duplicate/missing/stale guards, permission/company
+  scope, and focused tests. Candidate pending; aggregate progress untouched.
+  Existing owner-ledger edits are preserved.
