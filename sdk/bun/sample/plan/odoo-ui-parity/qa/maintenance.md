@@ -223,3 +223,9 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
   blockers remain preserved: authenticated Core3 browser evidence, authenticated
   Odoo comparison, full repository lint/type issues, full regression completion,
   broader actor/company matrix, and complete module sign-off gates.
+
+## 2026-09-13 R2 coordinator dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-MAINTENANCE-WAVE-20260913-R2` → `QA-MAINTENANCE-WAVE-20260913-R2` | existing `agent/maintenance-request-create-wave` in `/home/nhanjs/projects/core3-worktrees/maintenance-request-create-wave` | Maintenance Request create/edit persistence, validation, assignment relations, permissions, stale guards, and focused no-partial-write tests | dispatched in `d18abde4`; awaiting self-contained product commit before QA |
