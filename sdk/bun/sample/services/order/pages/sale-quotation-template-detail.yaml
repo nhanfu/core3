@@ -10,6 +10,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: edit_sale_quotation_template, label: Edit, variant: secondary, permission: orders.write }
+      - { id: create_sale_order_from_template, label: Use Template, variant: primary, permission: orders.write, show_if: "state.sale_quotation_template_detail.active === true" }
       - { id: archive_sale_quotation_template, label: Archive, variant: danger, permission: orders.write, show_if: "state.sale_quotation_template_detail.active === true" }
       - { id: restore_sale_quotation_template, label: Restore, variant: secondary, permission: orders.write, show_if: "state.sale_quotation_template_detail.active === false" }
     group_columns: 2
