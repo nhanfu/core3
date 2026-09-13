@@ -54,3 +54,13 @@ fresh authenticated desktop/mobile or paired Odoo captures were available;
 prior captures are explicitly non-candidate evidence. Status remains
 conditional/qa-in-progress, with full regression and fresh browser/Odoo
 evidence blocked; no aggregate progress or sign-off claim is changed.
+
+## Coordinator reconciliation: departure-reasons `382a3d30` (2026-09-13)
+
+The active branch already contains the exact bounded repair, so no duplicate
+merge was needed. It restores departure-reason Archive/Restore contracts and
+page bindings, adds active/status projections, and maps edit/archive/restore
+concurrency to `expected_row_version`. Active focused verification passed **12
+tests / 167 assertions** and audit passed **661 pages / 670 routes / 1,154
+datasources**. Status remains conditional; browser, broader actor/restart, and
+paired Odoo gates remain open.

@@ -250,3 +250,18 @@ mobile, and paired Odoo evidence remain blockers; no sign-off is granted.
 Lifecycle decision: **stalled** after repeated unchanged polls and escalation
 `a722470c`; handoff status recorded in `7ebb3f68`. Partial product files remain
 preserved; QA was not triggered.
+
+## Coordinator reconciliation: departure-reasons repair `382a3d30` (2026-09-13)
+
+- Ownership and scope are valid. The active branch already contains the exact
+  six-file same-module repair `382a3d30`; it adds departure-reason Archive and
+  Restore actions/page bindings, exposes active/status in list and detail
+  sources, and maps `expected_row_version` to the row-version concurrency
+  guard. No duplicate cherry-pick was created.
+- Active verification passed: Employees focused lifecycle suite **12 tests /
+  167 assertions**; UI audit **661 pages / 670 routes / 1,154 datasources**;
+  candidate ESLint and diff-check evidence passed.
+- Bounded disposition: **conditionally reconciled as already integrated**.
+  Fresh authenticated browser, broader actor/restart coverage, and paired Odoo
+  comparison remain open. Prior departure stalled-owner history and partial
+  file findings are preserved; this does not sign off Employees.
