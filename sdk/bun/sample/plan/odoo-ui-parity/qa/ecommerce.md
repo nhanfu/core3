@@ -121,6 +121,12 @@ Detailed execution matrix: [`test-plans/ecommerce.md`](test-plans/ecommerce.md).
 | ECOMMERCE-WF-021 | Payment/delivery durable boundary contract | YAML contract test plus Bun runtime smoke: SDK `1.23.0` worker reached `RUNNING`, workflow returned `Authorized/Ready`, timer recovery completed across worker restart, payment/delivery signals were accepted through the Bun callback client, callback activity deduplication passed, an authenticated checkout action in the real Core3 Ecommerce module runner emitted `ecommerce.checkout.confirmed` and the dispatcher started the workflow, deterministic provider failure exhausted five attempts and ran compensation, and shutdown reached `STOPPED` against temporary Temporal Server `1.31.2`; checkout contract suite 10 tests, 52 assertions | pass for Bun startup, workflow execution, timer recovery, callback delivery/deduplication, real Core3 event dispatch, retry exhaustion, compensation, shutdown, and local provider adapter contract; external provider certification and paired Odoo comparison remain open |
 | ECOMMERCE-WF-022 | Sales handoff outbox claim, import, and acknowledgement | Checkout plus Sales consumer tests — eCommerce emits one pending envelope; the Sales consumer claims it, reads declared order/line operations, creates source-linked Sales records idempotently, and acknowledges success; stale claim is isolated | pass for isolated cross-module contract and local Sales persistence; full authenticated deployment and paired Odoo comparison remain open |
 
+## R2 dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-ECOMMERCE-WAVE-20260913-R2` → `QA-ECOMMERCE-WAVE-20260913-R2` | existing `agent/odoo-ecommerce-dev4-sales-handoff` in `/home/nhanjs/projects/core3-worktrees/odoo-ecommerce-dev4-sales-handoff` | Authenticated customer/company boundary for cart, checkout, and order routes, including own/foreign/unauthenticated actors, 401/403 behavior, wrong-company isolation, and focused stale/forbidden mutation tests | dispatched in `8cc55885`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
