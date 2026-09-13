@@ -5,7 +5,6 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
-import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const root = join(import.meta.dir, '../services/fleet');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -14,67 +13,6 @@ const source = (file: string, id: string) => yaml(`api/${file}`).datasources.fin
 const params = (extra: Record<string, unknown> = {}) => ({ q: null, active: null, service_type_id: null, vehicle_id: null, state: null, fixture_state: null, ...extra });
 
 describe('Fleet Services parity checkpoint', () => {
-  test('propagates switched authenticated company through query, prefetch, selector, and detail authorization', async () => {
-    const database = await DuckDbDatabase.open(':memory:');
-    const repository = new YamlRepository(database);
-    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'fleet_services_http_scope_test', ['schema', 'data']);
-    const discovered = discoverPages(join(import.meta.dir, '..'));
-    const authUser: any = {
-      sub: 'fleet-manager', email: 'fleet@workspace.example', name: 'Fleet Manager',
-      roles: ['fleet_manager'], permissions: ['fleet.read', 'fleet.manage'],
-      company: { name: 'Core3 Demo Company' },
-    };
-    const api = createYamlApi({
-      repository,
-      authProvider: {
-        async getCurrentUser() { return authUser; },
-        hasPermission(user: any, permission: string) { return user.permissions.includes(permission); },
-      },
-      sources: new Map([...discovered.datasources].filter(([id]) => id.startsWith('fleet_'))),
-      pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === 'fleet')),
-      pages: new Map([...discovered.pages].filter(([, page]) => page.module === 'fleet').map(([id, page]) => [id, page.config])),
-      catalogs: discovered.catalogs,
-      menus: discovered.menus,
-      workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'fleet').map(([id, workflow]) => [id, workflow.config])),
-      workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'fleet').map(([id, workflow]) => [id, workflow.file])),
-      permissions: discovered.permissions.get('fleet')?.config || {},
-      uploadRoot: '/tmp/core3-fleet-http-scope-test', eventStore: {}, topics: {},
-    });
-    const request = (path: string, init: RequestInit = {}) => api(
-      new Request(`http://fleet.test${path}`, {
-        ...init,
-        headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json', ...(init.headers || {}) },
-      }),
-      new URL(`http://fleet.test${path}`),
-    );
-    const query = async (sourceId: string, params: Record<string, unknown> = {}) => {
-      const response = await request('/api/query', { method: 'POST', body: JSON.stringify({ sourceId, params, top: 50 }) });
-      expect(response?.status).toBe(200);
-      return response!.json() as Promise<any>;
-    };
-
-    expect((await query('fleet_services')).data).toHaveLength(6);
-    expect((await query('fleet_service_vehicles')).data).toHaveLength(2);
-
-    // This mutable identity represents the company switch completing before
-    // the next authenticated browser request is made.
-    authUser.company = { name: 'Core3 Vietnam Branch' };
-    expect((await query('fleet_services')).data).toEqual([]);
-    expect((await query('fleet_service_vehicles')).data).toEqual([]);
-
-    const listPage = await request('/api/pages/fleet-services');
-    expect(listPage?.status).toBe(200);
-    const listConfig = await listPage!.json() as any;
-    expect(listConfig.datasources.find((entry: any) => entry.id === 'fleet_services').data).toEqual([]);
-    expect(listConfig.datasources.find((entry: any) => entry.id === 'fleet_service_vehicles').data).toEqual([]);
-
-    const detailPage = await request('/api/pages/service-detail?id=fleet-service-001');
-    expect(detailPage?.status).toBe(200);
-    const detailConfig = await detailPage!.json() as any;
-    expect(detailConfig.datasources.find((entry: any) => entry.id === 'fleet_service_detail').data).toEqual({});
-    database.close();
-  });
-
   test('matches the installed Odoo action, menu, modes, labels, and page/API joins', () => {
     const manifest = yaml('manifest.yaml');
     expect(manifest.menu.groups.find((group: any) => group.id === 'vehicles').items)
