@@ -223,8 +223,11 @@ const moduleManifest = modules.map((module) => ({
 }));
 await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs, eventBus });
 const yamlServiceContexts = modules
-  .filter((module): module is YamlServiceModule => module instanceof YamlServiceModule)
-  .map((module) => module.getRuntimeContext())
+  .flatMap((module) => {
+    if (module instanceof YamlServiceModule) return [module.getRuntimeContext()];
+    const getRuntimeContext = (module as any).getRuntimeContext;
+    return typeof getRuntimeContext === 'function' ? [getRuntimeContext.call(module)] : [];
+  })
   .filter((context): context is NonNullable<typeof context> => Boolean(context));
 const yamlApiHandlers = yamlServiceContexts.map((context) => context.api);
 const providerEndpoint = String(process.env.CORE3_AI_AGENT_PROVIDER_URL || '').trim();

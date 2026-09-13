@@ -6,6 +6,7 @@ import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
+import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
 import SpreadsheetModule from '../services/spreadsheet/module';
 
 const serviceRoot = join(import.meta.dir, '../services/spreadsheet');
@@ -39,6 +40,38 @@ describe('Spreadsheet dashboard configuration parity', () => {
       'spreadsheet_dashboard_filter_state',
     ]);
     expect(api.datasources.every((source: any) => source.permission === 'spreadsheet.read')).toBe(true);
+  });
+
+  test('keeps the wrapped Spreadsheet runtime visible to the aggregate page/source registry', async () => {
+    const calls: string[] = [];
+    const spreadsheetPage = { page: { id: 'dashboards', route: '/dashboards' }, title: 'Dashboards' };
+    const spreadsheetSource = { id: 'spreadsheet_dashboard_filter_state', permission: 'spreadsheet.read', query: 'SELECT 1' };
+    const runtime = {
+      id: 'spreadsheet',
+      pages: new Map([['dashboards', spreadsheetPage]]),
+      datasources: new Map([[spreadsheetSource.id, spreadsheetSource]]),
+      menus: new Map(), catalogs: new Map(), actions: new Map(), storage: {},
+      api: async (request: Request, url: URL) => {
+        calls.push(url.pathname);
+        if (url.pathname === '/api/pages/dashboards') {
+          if (url.searchParams.get('fixture_state') === 'transport_error') return new Response(JSON.stringify({ error: 'Dashboard unavailable', code: 'SPREADSHEET_DASHBOARD_UNAVAILABLE' }), { status: 503 });
+          return new Response(JSON.stringify({ ...spreadsheetPage, datasources: [{ ...spreadsheetSource, data: [], meta: { total: 0 } }] }), { status: 200 });
+        }
+        if (url.pathname === '/api/query') return new Response(JSON.stringify({ data: [], meta: { total: 0 } }), { status: 200 });
+        return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 });
+      },
+    };
+    const host = createYamlHostApi([runtime as any]);
+    const detail = await host(new Request('http://spreadsheet.test/api/pages/dashboards', { headers: { Authorization: 'Bearer viewer' } }), new URL('http://spreadsheet.test/api/pages/dashboards'));
+    expect(detail?.status).toBe(200);
+    const detailPayload = await detail!.json();
+    expect(detailPayload.datasources[0]).toMatchObject({ id: spreadsheetSource.id, data: [] });
+    const unavailable = await host(new Request('http://spreadsheet.test/api/pages/dashboards?fixture_state=transport_error', { headers: { Authorization: 'Bearer viewer' } }), new URL('http://spreadsheet.test/api/pages/dashboards?fixture_state=transport_error'));
+    expect(unavailable?.status).toBe(503);
+    const query = await host(new Request('http://spreadsheet.test/api/query', { method: 'POST', headers: { Authorization: 'Bearer viewer', 'Content-Type': 'application/json' }, body: JSON.stringify({ sourceId: spreadsheetSource.id }) }), new URL('http://spreadsheet.test/api/query'));
+    expect(query?.status).toBe(200);
+    expect(await query?.json()).toMatchObject({ data: [] });
+    expect(calls).toEqual(['/api/pages/dashboards', '/api/pages/dashboards', '/api/query']);
   });
 
   test('returns deterministic client-action dashboard, workbook, figure, and stable error fixtures', async () => {

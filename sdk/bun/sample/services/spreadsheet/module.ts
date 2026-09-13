@@ -1,5 +1,6 @@
 import { loadYamlServiceManifest, YamlServiceModule } from '@core3/server/yaml-service';
 import type { ModuleContext, ModuleLifecycle } from '@core3/server/module';
+import type { YamlRuntimeContext } from '@core3/server/yaml-service';
 
 type SpreadsheetService = { call(operation: string, request?: Record<string, unknown>): Promise<any> };
 
@@ -34,6 +35,9 @@ export default class SpreadsheetModule implements ModuleLifecycle {
   }
 
   uninstall(context: ModuleContext): void { this.delegate?.uninstall(context); }
+
+  /** Expose the delegated YAML registry to the host's aggregate API router. */
+  getRuntimeContext(): YamlRuntimeContext | null { return this.delegate?.getRuntimeContext() || null; }
 
   async handleShareRoute(request: Request, url: URL, service: SpreadsheetService): Promise<Response | null> {
     const match = url.pathname.match(/^\/dashboard\/(share|data|download)\/([^/]+)\/([A-Za-z0-9_-]+)$/);

@@ -77,3 +77,18 @@ Detailed execution matrix: [`test-plans/spreadsheet.md`](test-plans/spreadsheet.
 - Persistence/data integrity: pass for repository slice; authenticated reload/restart pending
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off
+
+## Registry repair retest (2026-09-13)
+
+- Root cause: the aggregate host registry omitted Spreadsheet because its YAML
+  runtime is wrapped by `SpreadsheetModule`; the full host could list the
+  manifest while page/source requests were handled by another module or 404.
+- Fix: Spreadsheet exposes its delegated runtime context and the host includes
+  runtime contexts from lifecycle modules that provide the contract.
+- Focused regression: `bun test ./test/spreadsheet.integration.test.ts` — 12
+  passed, 120 assertions. It covers the Spreadsheet page/source registry,
+  valid empty data, and 503 error behavior.
+- Live authenticated retest: `GET /api/pages/dashboards` returned 200 and
+  `POST /api/query` for `spreadsheet_dashboard_filter_state` returned 200 with
+  the seeded admin row on the full in-memory candidate. Browser visual parity
+  remains outside this repair.

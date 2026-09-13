@@ -507,3 +507,23 @@ stale row version, page/API discovery, and existing share/public-boundary
 regression coverage. Visual authenticated browser capture was not run in this
 batch; prior local startup blockers remain recorded above. No screenshots were
 added to Git.
+
+## 2026-09-13 bounded repair: wrapped Spreadsheet registry visibility
+
+QA reproduced a full-runtime registry failure where `/api/modules` listed the
+Spreadsheet manifest but `/api/pages/dashboards` and the filter datasource
+query returned 404. The root cause was ownership split: the host aggregate
+registry collected only direct `YamlServiceModule` runtime contexts, while
+Spreadsheet is a lifecycle module wrapping a YAML delegate. Its delegate API
+was therefore absent from the aggregate host router.
+
+Spreadsheet now exposes its delegated `YamlRuntimeContext`, and the host
+includes runtime contexts from modules that provide that contract. The
+regression test covers the Spreadsheet page/source registry, a valid empty
+source response, and a stable 503 transport-error response.
+
+Live full-module retest used an in-memory candidate on ports 3031/3032 with
+the seeded admin account: authenticated `GET /api/pages/dashboards` returned
+200 with the Spreadsheet page, and authenticated `POST /api/query` for
+`spreadsheet_dashboard_filter_state` returned 200 with the seeded filter row.
+No screenshot was required for this registry repair.
