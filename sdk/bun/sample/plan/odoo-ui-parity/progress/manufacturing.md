@@ -1,5 +1,11 @@
 # manufacturing parity progress
 
+## 2026-09-13 retest — `MANUFACTURING-WORA-001` / `63b8d712`
+
+- Authenticated `admin@tms.local` browser evidence now verifies the exact `/manufacturing/work-orders-analysis?fixture_state=transport_error` URL at `1440x900` and `390x844`. Both render the `Data unavailable` alert with message `Work Orders Analysis is temporarily unavailable.` and `503 MRP_WORKORDER_ANALYSIS_UNAVAILABLE`; both have zero page/request errors and no horizontal overflow. Capture paths and SHA-256 values are recorded in `qa/manufacturing.md`.
+- Renderer regression passes 12/12; focused Work Orders Analysis passes 5 tests / 50 assertions; full Manufacturing passes 60 tests / 680 assertions across 19 files. Audit, global/manufacturing CSS builds, targeted ESLint, and diff check pass. Full sample ESLint still reports only the two pre-existing website optional-chaining errors at `test/website_public.integration.test.ts:31,33`.
+- Existing paired Odoo graph/pivot/list/form evidence remains available in `plan/odoo-ui-parity/manufacturing.md`; no fresh Odoo probe was run. This retest verifies the repair only and makes no complete-module or aggregate-progress sign-off.
+
 ## 2026-09-13 bounded retest — `MANUFACTURING-WORA-001` / `499edd41`
 
 - The exact authenticated desktop/mobile URL

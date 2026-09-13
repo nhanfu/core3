@@ -1,5 +1,16 @@
 # manufacturing QA ledger
 
+## MANUFACTURING-WORA-001 retest — candidate `63b8d712` (2026-09-13)
+
+- Worktree correction: the requested `/home/nhanjs/projects/core3-worktrees/agent/` path does not exist. The registered worktree used was `/home/nhanjs/projects/core3-worktrees/odoo-ui-manufacturing-work-orders-analysis-transport-ui`, at the exact requested candidate `63b8d7127963e5a8b93a3df811e12b56315cde4b`; checkout was clean before testing.
+- Authenticated browser: `admin@tms.local` / `admin123`, isolated runtime backend `http://localhost:4313`, Vite frontend `http://localhost:4315`. Exact URL `/manufacturing/work-orders-analysis?fixture_state=transport_error` rendered the `role=alert` state at desktop `1440x900` and mobile `390x844`: `Data unavailable`, `Work Orders Analysis is temporarily unavailable.`, and `503 MRP_WORKORDER_ANALYSIS_UNAVAILABLE`. Both had `pageerror=0`, `requestfailed=0`, and `documentWidth=bodyWidth=innerWidth` (`1440` / `390`).
+- Fresh captures, intentionally outside Git, were visually inspected: `/tmp/core3-manufacturing-work-orders-analysis-transport-ui-desktop-1440x900-20260913.png` (SHA-256 `5854441e1fba3a5dbdf967c7eed8e3fb4e398175c8c1c97571983aa01bba8e70`) and `/tmp/core3-manufacturing-work-orders-analysis-transport-ui-mobile-390x844-20260913.png` (SHA-256 `0b4a4ac0807d277bfe1353ad6ef4f6b49fe521785fb65aed0d4be365f784845d`).
+- Renderer regression: `bunx vitest run --config vitest.config.ts test/cases/page-renderer-list-view.test.ts` from `sdk/bun/packages/client` — 12 tests passed. Focused Manufacturing: `bun test ./test/manufacturing_work_orders_analysis.integration.test.ts --timeout 20000` — 5 tests / 50 assertions passed. Full Manufacturing: `bun test ./test/manufacturing*.integration.test.ts --timeout 20000` — 60 tests / 680 assertions passed across 19 files.
+- Repository checks: targeted ESLint for the three changed client files passed with zero warnings; `bun run audit` passed (`659` pages, `668` routes, `1,138` datasources); `bun run css:build:global` and `bun run css:build:manufacturing` passed; `git diff --check` passed. Full sample ESLint remains non-clean because of two pre-existing `no-unsafe-optional-chaining` errors in `test/website_public.integration.test.ts:31` and `:33`; no warnings or product-code changes were introduced by this retest.
+- Paired Odoo evidence available from the prior bounded reference pass remains recorded in `plan/odoo-ui-parity/manufacturing.md`: authenticated desktop/mobile Work Orders Analysis graph, pivot, list, and form captures under `/tmp/odoo-manufacturing-work-orders-analysis-20260911/`, with hashes and dimensions. No fresh Odoo probe was run in this retest.
+
+Retest decision: the exact transport-error UI repair is **browser-verified** on authenticated desktop/mobile, and the renderer/focused/full-suite and repository checks above pass. This ledger does not sign off complete Manufacturing parity, CRUD, permissions, workflows, or aggregate progress; those remain governed by the existing open gates.
+
 ## MANUFACTURING-WORA-001 repair — pending browser retest (2026-09-13)
 
 - Repair target: the active Work Orders Analysis transport-error route now
