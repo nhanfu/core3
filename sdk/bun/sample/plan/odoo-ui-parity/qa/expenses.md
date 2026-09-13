@@ -1,5 +1,24 @@
 # expenses QA ledger
 
+## Conditional review handoff — exact candidate `887fa7fb` (2026-09-13)
+
+- Bounded import/export/print contract: **conditional pass**. Expenses tests
+  passed when reached; import persistence, deterministic IDs, sheet-total
+  recalculation, replay safety, malformed-row and company-scope guards, plus
+  permissioned export/print actions are covered.
+- Candidate-local audit, Expenses Sass, frontend build, applicable ESLint, and
+  `git diff --check` passed. No Expenses-specific TypeScript diagnostic was
+  reported.
+- Blocker `EXPENSES-HTTP-001`: the full repository run did not finish cleanly
+  because Core3 startup encountered a port collision; candidate browser QA was
+  unavailable and no candidate interaction/screenshot claim is made.
+- Blockers retained: pre-existing Website ESLint errors, shared TypeScript
+  diagnostics, authenticated browser/actor coverage, and paired Odoo desktop/
+  mobile comparison remain open.
+
+Disposition: bounded Expenses change integrated conditionally; preserve all
+blockers and do not claim full module sign-off or aggregate progress.
+
 ## Candidate QA evidence (2026-09-13)
 
 - Candidate under test: `1d9df642` (`feat(expenses): add import export and print actions`). This candidate adds the Expenses list import/export/print contracts, deterministic import persistence test, and module plan/QA updates.
