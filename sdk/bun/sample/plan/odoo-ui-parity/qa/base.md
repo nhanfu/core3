@@ -208,3 +208,19 @@ and permission boundaries passed. The candidate remains `pending-qa`.
   remains unverified under the duckdb-memory runner, and fresh paired
   authenticated Odoo comparison remains unavailable. Base is not fully signed
   off.
+
+## Reviewer reconciliation `6867ff7b`: conditional bounded PASS (2026-09-13)
+
+- The existing Base owner/worktree was valid and the repair was a self-contained
+  Contacts test addition. It integrated cleanly as `339d44f4`; no unrelated
+  product or aggregate files were changed.
+- Post-merge focused Contacts verification passed **7 tests / 76 assertions**;
+  full Base passed **31 tests / 310 assertions** across 9 files; audit passed
+  **661 pages / 670 routes / 1,158 datasources**; frontend build and
+  diff-check passed. QA targeted ESLint also passed.
+- Accepted evidence covers file-backed upload → close → reopen → migration
+  replay, exact authenticated upload/download, hierarchy/CRUD/stale/reload/
+  permissions, and desktop/mobile rendering.
+- Disposition: **conditional bounded PASS; integrated**. The shared renderer's
+  attachment-panel upload/list/download UI journey remains open, as does fresh
+  paired authenticated Odoo comparison. Base is not fully signed off.

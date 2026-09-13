@@ -122,3 +122,12 @@ targeted ESLint green. Authenticated exact-content upload/download, reload,
 hierarchy, stale/CRUD/permission, dispatcher-403, and desktop/mobile evidence
 passed. Restart durability under duckdb-memory and fresh paired authenticated
 Odoo comparison remain open; no full Base sign-off.
+
+## Reviewer reconciliation `6867ff7b` (2026-09-13)
+
+Integrated the Base attachment durability repair as `339d44f4`. Post-merge
+Contacts passed **7/76**, full Base **31/310**, audit **661/670/1,158**,
+frontend build, and diff-check; QA reports file-backed reopen/replay, exact
+upload/download, hierarchy/CRUD/stale/permission, and desktop/mobile evidence.
+The shared attachment-panel UI journey and fresh authenticated Odoo comparison
+remain open; no full Base sign-off.
