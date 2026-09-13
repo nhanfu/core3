@@ -172,3 +172,26 @@ Odoo gates remain open. No module sign-off is issued.
 - Odoo: no authenticated comparison was available; no paired Odoo evidence or visual parity claim.
 
 QA decision: **conditional fail / evidence-only**. Repository and browser-shaped transport checks pass, but live authenticated desktop/mobile, full-regression terminal evidence, and Odoo gates remain open. No module sign-off.
+
+## 2026-09-13 coordinator review: candidate `d858d9d2`
+
+- Integrated only the bounded Equipment create contract and focused test as
+  `409665d0` on the active branch. The ownership boundary is clean: two
+  Maintenance-owned files, no migration or shared-runtime changes, and no
+  unrelated worktree changes were imported.
+- Post-merge focused Maintenance suite: **36 passed, 355 assertions, 0
+  failures** across 16 files. `bun run audit` passed (**661 pages, 670 routes,
+  1153 datasources**); `bun run css:build:maintenance` and `git diff --check`
+  passed. Targeted ESLint reported 0 errors and the expected ignored-YAML
+  warning; repository lint remains blocked by the two unrelated Website
+  `no-unsafe-optional-chaining` errors.
+- The API contract validates trimmed required names, case-insensitive
+  duplicates, ISO preventive/warranty dates, non-negative interval and cost,
+  and exposes the extended Equipment fields. Focused persistence and
+  no-partial-insert evidence passed. The warranty-date rejection was not
+  directly executed and remains a follow-up if required by the plan.
+- QA remains **conditional fail / evidence-only**. Browser `js_repl`/Playwright,
+  authenticated Core3 desktop/mobile create and permission evidence, and
+  authenticated Odoo comparison remain unavailable. The full repository suite
+  was hanging during QA and has no terminal result here. Maintenance is not
+  signed off.
