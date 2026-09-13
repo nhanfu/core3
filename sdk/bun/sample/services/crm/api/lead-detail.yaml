@@ -195,8 +195,8 @@ actions:
       - { field: tags, label: Tags, type: text, placeholder: 'e.g. urgent, enterprise' }
       - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3] }
       - { field: description, label: Notes, type: textarea }
-      - { field: expected_revenue, label: Expected revenue, type: number }
-      - { field: probability, label: Probability, type: number }
+      - { field: expected_revenue, label: Expected revenue, type: number, default: 0 }
+      - { field: probability, label: Probability, type: number, default: 10 }
       - { field: salesperson, label: Salesperson, type: text }
       - { field: team, label: Sales team, type: select, options_source: crm_sales_teams_detail }
       - { field: expected_closing, label: Expected closing, type: date }

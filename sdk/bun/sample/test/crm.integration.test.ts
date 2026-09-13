@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'bun:test';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { normalizeFormValue } from '@core3/client/components/PageFormModal';
 import { migrateDatabase } from '@core3/server/migrations';
 import { createAiAgentApi } from '../services/ai/api/ai-agent-api.ts';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
@@ -215,6 +216,14 @@ describe('CRM YAML lifecycle integration', () => {
     expect(await updatedResponse?.json()).toMatchObject({ expected_revenue: null, probability: null, expected_closing: null });
     expect((await repository.query('SELECT expected_revenue, probability, expected_closing FROM crm_leads WHERE id = ?', ['blank-optionals-lead']))[0]).toEqual({ expected_revenue: null, probability: null, expected_closing: null });
     database.close();
+  });
+
+  it('normalizes blank optional lead number/date values before CRM transport', () => {
+    expect(normalizeFormValue({ type: 'number', default: 0 }, '')).toBe(0);
+    expect(normalizeFormValue({ type: 'number' }, '')).toBeNull();
+    expect(normalizeFormValue({ type: 'money' }, '1250,50')).toBe(1250.5);
+    expect(normalizeFormValue({ type: 'date' }, '   ')).toBeNull();
+    expect(normalizeFormValue({ type: 'date' }, '2026-09-13')).toBe('2026-09-13');
   });
 
   it('chains the next planned activity when an activity is completed', async () => {

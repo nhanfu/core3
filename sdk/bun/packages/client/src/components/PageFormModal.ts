@@ -30,6 +30,18 @@ function safeMailPreview(value: unknown) {
   return template.innerHTML;
 }
 
+/** Keep optional typed form values compatible with nullable SQL columns. */
+export function normalizeFormValue(fieldDef: any, value: unknown): unknown {
+  const text = typeof value === 'string' ? value.trim() : value;
+  if (['number', 'money'].includes(String(fieldDef?.type)) && text === '') return fieldDef?.default ?? null;
+  if (fieldDef?.type === 'date' && text === '') return null;
+  if (['number', 'money'].includes(String(fieldDef?.type)) && typeof text === 'string') {
+    const numeric = Number(text.replace(',', '.'));
+    return Number.isFinite(numeric) ? numeric : value;
+  }
+  return text;
+}
+
 export class PageFormModal extends BaseComponent {
   private readonly componentLoader = new ComLoader();
   readonly openFormModal: any;
@@ -310,7 +322,7 @@ export class PageFormModal extends BaseComponent {
 
           const changes = Object.entries(inputs).map(([field, entry]) => ({
             field,
-            value: readFieldValue(entry),
+            value: normalizeFormValue(entry.fieldDef, readFieldValue(entry)),
           }));
 
               html.take(saveBtn).prop('disabled', true).replaceText(i18n.tKey('labels.saving', {}, 'Saving…'));

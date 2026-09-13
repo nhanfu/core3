@@ -4,7 +4,7 @@ import { navigate, getPageParams, pushParams, replaceParams } from '@core3/clien
 import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 import { EventPopup } from '@core3/client/components/EventPopup';
 import { resolveDatePreset } from '@core3/client/components/ListToolbar';
-import { PageFormModal } from '@core3/client/components/PageFormModal';
+import { PageFormModal, normalizeFormValue } from '@core3/client/components/PageFormModal';
 import { PageGridRenderers } from '@core3/client/components/PageGridRenderers';
 import { PageDetailRenderers } from '@core3/client/components/PageDetailRenderers';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
@@ -652,7 +652,7 @@ export class PageRuntime extends BaseComponent {
       const id = values.id ?? pageParams.id ?? ctx.state.id;
       const changes = (actionDef.fields || [])
         .filter((field: any) => field.field !== 'id' && values[field.field] !== undefined)
-        .map((field: any) => ({ field: field.field, value: values[field.field] }));
+        .map((field: any) => ({ field: field.field, value: normalizeFormValue(field, values[field.field]) }));
       await client.patch({ table: actionDef.table, action: actionDef.operation, id: actionDef.operation === 'insert' ? null : id, expected_row_version: values.row_version, scope: actionDef.scope, changes });
       if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
       return;
