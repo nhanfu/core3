@@ -146,6 +146,26 @@ describe('Spreadsheet dashboard configuration parity', () => {
     database.close();
   });
 
+  test('enforces company visibility across dashboard and dependent workbook sources', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_company_scope_migrations', ['schema', 'data']);
+    const api = yaml('api/dashboards.yaml');
+    const source = (id: string) => apiSource('dashboards.yaml', id);
+    const params = { q: null, state: null, favorite: null, company_name: 'Acme Corporation' };
+    const dashboards = await repository.querySource(source('spreadsheet_dashboards_landing'), params, 0, 50);
+    expect(dashboards.data.map((row: any) => row.id)).toContain('sdb-acme');
+    expect(dashboards.data.map((row: any) => row.id)).toContain('sdb-sales');
+    const global = await repository.querySource(source('spreadsheet_dashboards_landing'), { ...params, company_name: 'Other Corporation' }, 0, 50);
+    expect(global.data.map((row: any) => row.id)).toContain('sdb-sales');
+    expect(global.data.map((row: any) => row.id)).not.toContain('sdb-acme');
+    const workbooks = await repository.querySource(source('spreadsheet_dashboard_workbooks'), { company_name: 'Other Corporation' }, 0, 50);
+    expect(workbooks.data.map((row: any) => row.id)).not.toContain('sdb-acme');
+    const summaries = await repository.querySource(source('spreadsheet_dashboard_summaries_landing'), { company_name: 'Acme Corporation' }, 0, 50);
+    expect(summaries.data.find((row: any) => row.dashboard_id === 'sdb-acme')).toMatchObject({ dashboard_id: 'sdb-acme', revenue: 118400 });
+    database.close();
+  });
+
   test('publishes and archives a dashboard through YAML workflow actions', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
@@ -290,7 +310,7 @@ describe('Spreadsheet dashboard configuration parity', () => {
       'Sales', 'Finance', 'Logistics', 'Services', 'Marketing', 'Website', 'Human Resources',
     ]);
     expect((await repository.querySource(groups, { q: null, fixture_state: 'all' }, 0, 50)).data.map((row: any) => row.name)).toEqual([
-      'Sales', 'Finance', 'Logistics', 'Services', 'Marketing', 'Website', 'Human Resources', 'Unpopulated', 'Custom dashboards',
+      'Sales', 'Finance', 'Logistics', 'Services', 'Marketing', 'Website', 'Human Resources', 'Unpopulated', 'Custom dashboards', 'Acme Company dashboards',
     ]);
     expect((await repository.querySource(groups, { q: 'Finance', fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Finance']);
     expect((await repository.querySource(groups, { q: null, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);

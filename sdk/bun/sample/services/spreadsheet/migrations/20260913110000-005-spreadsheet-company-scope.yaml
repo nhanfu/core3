@@ -1,0 +1,29 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO spreadsheet_dashboard_groups
+        (id, row_version, name, sequence, company_name, official, dashboard_count)
+      VALUES
+        ('sdg-acme', 1, 'Acme Company dashboards', 100, 'Acme Corporation', false, 1);
+      INSERT OR IGNORE INTO spreadsheet_dashboards
+        (id, group_id, name, sequence, state, published, favorite, company_name, snapshot_status, workbook_snapshot)
+      VALUES
+        ('sdb-acme', 'sdg-acme', 'Acme Revenue', 10, 'Published', true, false, 'Acme Corporation', 'ready',
+         '{"version":1,"sheets":[{"name":"Sheet1","cells":{"A1":"Acme Revenue","B2":"=SUM(B5:B7)"}}],"figures":["kpi","chart"],"filters":["date"]}');
+      INSERT OR IGNORE INTO spreadsheet_dashboard_summaries VALUES ('sdb-acme', 118400.00, 804, 301);
+      INSERT OR IGNORE INTO spreadsheet_dashboard_chart_points VALUES
+        ('sdp-acme-01','sdb-acme',1,'Jan',18400),('sdp-acme-02','sdb-acme',2,'Feb',23700),('sdp-acme-03','sdb-acme',3,'Mar',29100);
+      INSERT OR IGNORE INTO spreadsheet_dashboard_rows VALUES
+        ('sdr-acme-01','sdb-acme',1,'United States','Hardware',40200,188),('sdr-acme-02','sdb-acme',2,'Vietnam','Services',31600,214);
+    down: |
+      DELETE FROM spreadsheet_dashboard_rows WHERE dashboard_id = 'sdb-acme';
+      DELETE FROM spreadsheet_dashboard_chart_points WHERE dashboard_id = 'sdb-acme';
+      DELETE FROM spreadsheet_dashboard_summaries WHERE dashboard_id = 'sdb-acme';
+      DELETE FROM spreadsheet_dashboards WHERE id = 'sdb-acme';
+      DELETE FROM spreadsheet_dashboard_groups WHERE id = 'sdg-acme';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

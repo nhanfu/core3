@@ -3,36 +3,36 @@ datasources:
   - id: spreadsheet_dashboard_groups_landing
     single: false
     permission: spreadsheet.read
-    query: "SELECT id, row_version, name, company_name, official, dashboard_count FROM spreadsheet_dashboard_groups WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name"
+    query: "SELECT id, row_version, name, company_name, official, dashboard_count FROM spreadsheet_dashboard_groups WHERE (company_name = 'Global' OR company_name = COALESCE(:company_name, '')) AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name"
   - id: spreadsheet_dashboards_landing
     single: false
     permission: spreadsheet.read
     workflow: spreadsheet_dashboards
-    query: "SELECT d.id, d.row_version, d.group_id, d.name, g.name AS group_name, d.state, d.favorite, d.company_name, d.published, d.snapshot_status FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE d.state <> 'Archived' AND d.published = TRUE AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR g.name ILIKE '%' || :q || '%') AND (:state IS NULL OR d.state = :state) AND (:favorite IS NULL OR d.favorite = CAST(:favorite AS BOOLEAN)) ORDER BY d.sequence, d.name"
+    query: "SELECT d.id, d.row_version, d.group_id, d.name, g.name AS group_name, d.state, d.favorite, d.company_name, d.published, d.snapshot_status FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE (d.company_name = 'Global' OR d.company_name = COALESCE(:company_name, '')) AND (g.company_name = 'Global' OR g.company_name = COALESCE(:company_name, '')) AND d.state <> 'Archived' AND d.published = TRUE AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR g.name ILIKE '%' || :q || '%') AND (:state IS NULL OR d.state = :state) AND (:favorite IS NULL OR d.favorite = CAST(:favorite AS BOOLEAN)) ORDER BY d.sequence, d.name"
     error_states:
       transport_error: { status: 503, code: SPREADSHEET_DASHBOARDS_UNAVAILABLE, message: Published dashboards are temporarily unavailable. }
   - id: spreadsheet_dashboard_workbooks
     single: false
     permission: spreadsheet.read
-    query: "SELECT id, name, snapshot_status, workbook_snapshot FROM spreadsheet_dashboards WHERE state <> 'Archived' AND published = TRUE ORDER BY sequence, name"
+    query: "SELECT d.id, d.name, d.snapshot_status, d.workbook_snapshot FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE (d.company_name = 'Global' OR d.company_name = COALESCE(:company_name, '')) AND (g.company_name = 'Global' OR g.company_name = COALESCE(:company_name, '')) AND d.state <> 'Archived' AND d.published = TRUE ORDER BY d.sequence, d.name"
     error_states:
       transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_WORKBOOKS_UNAVAILABLE, message: Dashboard workbooks are temporarily unavailable. }
   - id: spreadsheet_dashboard_summaries_landing
     single: false
     permission: spreadsheet.read
-    query: "SELECT dashboard_id, revenue, orders, customers FROM spreadsheet_dashboard_summaries ORDER BY dashboard_id"
+    query: "SELECT s.dashboard_id, s.revenue, s.orders, s.customers FROM spreadsheet_dashboard_summaries s JOIN spreadsheet_dashboards d ON d.id = s.dashboard_id JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE (d.company_name = 'Global' OR d.company_name = COALESCE(:company_name, '')) AND (g.company_name = 'Global' OR g.company_name = COALESCE(:company_name, '')) ORDER BY s.dashboard_id"
   - id: spreadsheet_dashboard_chart_landing
     single: false
     permission: spreadsheet.read
-    query: "SELECT dashboard_id, sequence, period, revenue FROM spreadsheet_dashboard_chart_points ORDER BY dashboard_id, sequence"
+    query: "SELECT p.dashboard_id, p.sequence, p.period, p.revenue FROM spreadsheet_dashboard_chart_points p JOIN spreadsheet_dashboards d ON d.id = p.dashboard_id JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE (d.company_name = 'Global' OR d.company_name = COALESCE(:company_name, '')) AND (g.company_name = 'Global' OR g.company_name = COALESCE(:company_name, '')) ORDER BY p.dashboard_id, p.sequence"
   - id: spreadsheet_dashboard_rows_landing
     single: false
     permission: spreadsheet.read
-    query: "SELECT dashboard_id, sequence, country, category, revenue, orders FROM spreadsheet_dashboard_rows ORDER BY dashboard_id, sequence"
+    query: "SELECT r.dashboard_id, r.sequence, r.country, r.category, r.revenue, r.orders FROM spreadsheet_dashboard_rows r JOIN spreadsheet_dashboards d ON d.id = r.dashboard_id JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE (d.company_name = 'Global' OR d.company_name = COALESCE(:company_name, '')) AND (g.company_name = 'Global' OR g.company_name = COALESCE(:company_name, '')) ORDER BY r.dashboard_id, r.sequence"
   - id: spreadsheet_dashboard_filter_state
     single: true
     permission: spreadsheet.read
-    query: "SELECT id, row_version, dashboard_id, user_id, date_range FROM spreadsheet_dashboard_filter_states WHERE dashboard_id = COALESCE(:dashboard_id, 'sdb-sales') AND user_id = :current_user_id"
+    query: "SELECT f.id, f.row_version, f.dashboard_id, f.user_id, f.date_range FROM spreadsheet_dashboard_filter_states f JOIN spreadsheet_dashboards d ON d.id = f.dashboard_id JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE (d.company_name = 'Global' OR d.company_name = COALESCE(:company_name, '')) AND (g.company_name = 'Global' OR g.company_name = COALESCE(:company_name, '')) AND f.dashboard_id = COALESCE(:dashboard_id, 'sdb-sales') AND f.user_id = :current_user_id"
     error_states:
       transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_FILTER_UNAVAILABLE, message: Dashboard filters are temporarily unavailable. }
 actions:
