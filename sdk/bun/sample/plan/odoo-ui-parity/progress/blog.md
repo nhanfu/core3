@@ -29,6 +29,19 @@ deletion. No full-module parity claim is made here.
 - Browser actor verification, restart/migration evidence, site scope, and
   paired Odoo desktop/mobile comparison remain open.
 
+## R2 blocker
+
+QA candidate `6ae81b4e` is blocked by `BLOG-ACTOR-001`: the normal authenticated
+private `/api/query` and detail datasource path leak Demo-company blog, post, and
+attachment rows after switching to Core3 Vietnam, although direct download is
+correctly denied with 404. Route a same-module repair in
+`/home/nhanjs/projects/core3-worktrees/blog-wave-dev3` to trace session/company
+context through query, prefetch, and attachment reads, then add focused runtime
+isolation evidence before QA retest. The Blog-only login's `Unknown page:
+dashboard` warning is also retained. No integration is permitted until this is
+fixed; Tags remain integrated and broader restart/full-workflow/Odoo gates stay
+open.
+
 ## Next bounded task
 
 Same-module takeover in `/home/nhanjs/projects/core3-worktrees/blog-wave-dev3`

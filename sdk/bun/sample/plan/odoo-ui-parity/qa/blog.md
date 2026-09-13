@@ -81,3 +81,23 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 - Core3 desktop/mobile runtime: pass
 - Paired Odoo visual parity: pending
 - Tester decision: bounded pass, conditionally reconciled on active `c1b243af`; no full module sign-off
+
+## R2 actor-boundary retest and repair
+
+- QA candidate `6ae81b4e` is **BLOCKED**. Private 401/403, published-versus-draft
+  visibility, upload/download, persistence, actor mutation guards, regressions,
+  build/audit/ESLint/diff-check, and desktop/mobile evidence passed.
+- `BLOG-ACTOR-001`: after an authenticated Admin switches to Core3 Vietnam,
+  normal private `/api/query` still exposes Demo-company rows for blogs, posts,
+  and attachments. Direct attachment download correctly returns 404. The
+  Blog-only login also logs `Unknown page: dashboard`; direct Blog routes work.
+- Route the repair only to the registered Blog context in
+  `/home/nhanjs/projects/core3-worktrees/blog-wave-dev3`: trace the actual
+  session/company parameter through `/api/query`, page/detail datasource
+  prefetch, and attachment reads; repair the root cause and add focused
+  company-isolation/query/detail tests. Do not make a predicate-only or
+  unrelated-module change. Require a self-contained commit and fresh runtime
+  proof before `QA-BLOG-WAVE-20260913-R2` retest.
+- Current owner context is at `6ae81b4e` with no new product commit after the
+  blocked retest. Same-module takeover is required in this exact worktree;
+  dispatch remains pending until an owner/takeover handle is available.
