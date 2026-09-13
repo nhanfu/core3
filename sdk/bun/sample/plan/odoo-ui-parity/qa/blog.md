@@ -37,6 +37,12 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 | BLOG-UI-006 | Tags desktop/mobile runtime | Authenticated Admin desktop/mobile captures rendered list, New, Edit/Delete controls with no overflow or page errors; paired Odoo visual comparison was not run | pass for Core3 responsive runtime |
 | BLOG-QA-007 | Candidate regression/tooling gates | 15 tests / 84 assertions; audit 659 pages / 668 routes / 1,135 datasources; Blog Sass, targeted ESLint, and diff-check passed | pass; YAML ESLint is not applicable and reports its standard ignored-file warning |
 
+## R2 dispatch
+
+| Event | Owner/worktree | Bounded scope | Status |
+| --- | --- | --- | --- |
+| `DEV-BLOG-WAVE-20260913-R2` → `QA-BLOG-WAVE-20260913-R2` | existing `agent/blog-wave-dev3` in `/home/nhanjs/projects/core3-worktrees/blog-wave-dev3` | Blog site/company actor boundaries for blogs, posts, and assets, private 401/403 behavior, published/draft visibility, and focused stale/missing/atomicity tests | dispatched in `15814f8f`; awaiting self-contained product commit before QA |
+
 ## Bugs and retests
 
 | Bug ID | Failure | Fix commit | Retest | Status |
