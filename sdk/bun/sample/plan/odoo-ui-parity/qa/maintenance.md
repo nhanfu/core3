@@ -264,3 +264,16 @@ QA decision: **conditional fail / evidence-only**. Repository and browser-shaped
   company-context fixture repair onto the active APIs, then rerun focused QA.
 - Preserve open gates: unrelated Website lint errors, file-backed mutation
   restart unavailable, and Odoo redirects to `/web/login`.
+
+## QA hold `ad654394`: activity action missing; owner-branch repair required (2026-09-13)
+
+- QA found `MAINT-ACTIVITY-001`: `request-detail.yaml` lacks the required
+  `activity_complete_action`; the focused activity check is **36 pass / 1 fail**.
+- `ad654394` was tested from a detached/non-owner context and is not on the
+  existing owner branch, which remains `fc5accff` in
+  `/home/nhanjs/projects/core3-worktrees/maintenance-request-create-wave`.
+- Same owner must bring the candidate changes onto its branch, restore/add the
+  action, resolve active-contract conflicts, commit a self-contained candidate,
+  and rerun full active Maintenance QA before retest. No product merge was made.
+- Preserve unrelated Website lint errors, file-backed mutation restart, and
+  authenticated Odoo comparison blockers.

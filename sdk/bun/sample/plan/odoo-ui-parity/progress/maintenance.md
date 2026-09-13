@@ -110,6 +110,14 @@ rerun focused and authenticated persistence checks. No replacement was
 created; direct lifecycle reactivation is unavailable in this session. Restart
 and paired Odoo gates remain open.
 
+## QA hold: `ad654394` / `MAINT-ACTIVITY-001` (2026-09-13)
+
+Activity QA is blocked at 36 pass / 1 fail because `request-detail.yaml` lacks
+`activity_complete_action`. The candidate was tested detached and is absent
+from the existing owner branch (`fc5accff`). Same owner must bring the valid
+changes onto that branch, add the missing action, commit, and rerun full active
+Maintenance QA. No product merge; lint, restart, and Odoo blockers remain.
+
 ## Reviewer hold: `fc5accff` (2026-09-13)
 
 Owner QA passed, but active verification failed 1/37: the active equipment edit
