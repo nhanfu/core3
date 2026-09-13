@@ -110,3 +110,17 @@ Candidate commit: `650be026a2849075ea1e2a3d6fcdedc897f0e1af`
   count persistence, required/capacity/duplicate/scope/stale guards, and
   atomic no-partial-write focused tests. Candidate pending; existing ledgers
   and aggregate progress are preserved.
+
+## Coordinator reconciliation — candidate `715568b9` (2026-09-13)
+
+- Re-ran the bounded candidate checks from the Events owner worktree:
+  `bun test ./test/events_attendee_create.integration.test.ts --timeout 20000`
+  passed **2 tests / 10 assertions**; the Events corpus passed **86 tests / 628
+  assertions** across 31 files.
+- The candidate's self-contained Events product content is already represented
+  in the active checkout; attempting to cherry-pick `715568b9` produced an
+  empty cherry-pick, so no duplicate product commit was created.
+- QA disposition: **bounded conditional pass** for attendee creation. Candidate
+  browser CRUD/reload, mutation actor matrix, and paired authenticated Odoo
+  comparison remain open; unrelated Website ESLint errors remain recorded.
+  Events is not fully signed off.
