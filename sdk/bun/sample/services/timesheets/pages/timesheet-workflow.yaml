@@ -18,7 +18,7 @@ workflow:
       to: Submitted
       permission: timesheets.write
       mutation:
-        guards: [{ query: "SELECT id FROM timesheet_entries WHERE id = :id AND state IN ('Draft', 'Rejected') AND hours > 0 AND description <> ''", status: 409, message: A timesheet needs positive hours and a description }]
+        guards: [{ query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND state IN ('Draft', 'Rejected') AND hours > 0 AND description <> ''", status: 409, message: A timesheet needs positive hours and a description }]
         steps: [{ query: "UPDATE timesheet_entries SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
     - id: approve
@@ -27,12 +27,14 @@ workflow:
       permission: timesheets.manage
       mutation:
         guards:
-          - { query: "SELECT id, project_id, hours FROM timesheet_entries WHERE id = :id AND state = 'Submitted'", status: 409, message: Only submitted timesheets can be approved, assign: true }
+          - { query: "SELECT id, project_id, hours FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND state = 'Submitted'", status: 409, message: Only submitted timesheets can be approved, assign: true }
           - type: service
             service: yaml.service.project
             operation: project.projects.add_hours
             request: { project_id: project_id, hours: hours }
         steps:
+          - query: "UPDATE projects SET spent_hours = COALESCE(spent_hours, 0) + (SELECT hours FROM timesheet_entries WHERE id = :id) WHERE id = (SELECT project_id FROM timesheet_entries WHERE id = :id)"
+          - query: "UPDATE project_tasks SET spent_hours = COALESCE(spent_hours, 0) + (SELECT hours FROM timesheet_entries WHERE id = :id) WHERE id = (SELECT task_id FROM timesheet_entries WHERE id = :id)"
           - query: "UPDATE timesheet_entries SET state = 'Approved', approver = :current_user_name, approved_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id"
         result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
     - id: reject
@@ -40,7 +42,7 @@ workflow:
       to: Rejected
       permission: timesheets.manage
       mutation:
-        guards: [{ query: "SELECT id FROM timesheet_entries WHERE id = :id AND state = 'Submitted'", status: 409, message: Only submitted timesheets can be rejected }]
+        guards: [{ query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND state = 'Submitted'", status: 409, message: Only submitted timesheets can be rejected }]
         steps: [{ query: "UPDATE timesheet_entries SET state = 'Rejected', approver = :current_user_name, row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
     - id: cancel

@@ -1,0 +1,15 @@
+version: 0.0.7
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE timesheet_entries ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      UPDATE timesheet_entries SET company_name = COALESCE(NULLIF(company_name, ''), 'Core3 Demo Company');
+      CREATE INDEX IF NOT EXISTS timesheet_entries_company_employee_idx ON timesheet_entries(company_name, employee_id);
+    down: |
+      DROP INDEX IF EXISTS timesheet_entries_company_employee_idx;
+      ALTER TABLE timesheet_entries DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

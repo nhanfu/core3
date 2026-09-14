@@ -18,7 +18,7 @@ datasources:
     workflow: timesheet_entries
     error_states: { transport_error: { status: 503, code: TIMESHEETS_ENTRIES_UNAVAILABLE, message: My Timesheets are temporarily unavailable. } }
     meta: { mock_data_justification: Runtime-only persisted entry list; static mock data would make CRUD results and permissions unverifiable. }
-    query: "SELECT t.id, t.row_version, t.name, t.employee_id, t.employee_name, t.project_id, t.project_name, t.task_id, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display, t.sales_order_item, t.billable, t.unit_amount, e.hourly_cost, CAST(t.hours * e.hourly_cost AS DECIMAL(18,2)) AS cost, t.state, t.approver, CAST(t.approved_at AS VARCHAR) AS approved_at FROM timesheet_entries t JOIN timesheet_employees e ON e.id = t.employee_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (COALESCE(:work_date, '') = '' OR (:work_date = 'today' AND t.work_date = DATE '2026-01-15') OR (:work_date = 'this_week' AND t.work_date BETWEEN DATE '2026-01-12' AND DATE '2026-01-18') OR (:work_date = 'last_week' AND t.work_date BETWEEN DATE '2026-01-05' AND DATE '2026-01-11')) ORDER BY t.work_date DESC, t.id"
+    query: "SELECT t.id, t.row_version, t.name, t.company_name, t.employee_id, t.employee_name, t.project_id, t.project_name, t.task_id, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display, t.sales_order_item, t.billable, t.unit_amount, e.hourly_cost, CAST(t.hours * e.hourly_cost AS DECIMAL(18,2)) AS cost, t.state, t.approver, CAST(t.approved_at AS VARCHAR) AS approved_at FROM timesheet_entries t JOIN timesheet_employees e ON e.id = t.employee_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND t.employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (COALESCE(:work_date, '') = '' OR (:work_date = 'today' AND t.work_date = DATE '2026-01-15') OR (:work_date = 'this_week' AND t.work_date BETWEEN DATE '2026-01-12' AND DATE '2026-01-18') OR (:work_date = 'last_week' AND t.work_date BETWEEN DATE '2026-01-05' AND DATE '2026-01-11')) ORDER BY t.work_date DESC, t.id"
 actions:
   - id: create_timesheet_entry
     type: server_form
@@ -31,10 +31,16 @@ actions:
     mutation:
       operation: insert
       table: timesheet_entries
-      fields: [name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, billable, unit_amount, sales_order_item]
+      fields: [name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, billable, unit_amount, sales_order_item, company_name]
       required: [name, work_date, project_name, description, hours]
       defaults: { employee_id: employee-demo-001, employee_name: Admin User, billable: true, unit_amount: 125, state: Draft, row_version: 1 }
+      before_steps:
+        - query: "SELECT COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS employee_name, CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END AS employee_id"
+          assign: true
+      steps:
+        - query: "UPDATE timesheet_entries SET company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'), employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User'), employee_id = CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END WHERE id = :id"
       guards:
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM timesheet_entries WHERE name = :name)", status: 409, code: TIMESHEETS_ENTRY_DUPLICATE, message: A timesheet with this entry number already exists. }
         - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:project_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEET_ENTRY_INVALID, message: Enter a valid date, project, and time between 0 and 24 hours. }
         - { query: "SELECT id FROM timesheet_employees WHERE id = :employee_id AND name = :employee_name AND active", status: 422, code: TIMESHEET_EMPLOYEE_INVALID, message: Select an active employee in this company }
         - { query: "SELECT id FROM timesheet_projects WHERE id = :project_id AND name = :project_name AND active AND allow_timesheets AND has_analytic_account", status: 422, code: TIMESHEET_PROJECT_INVALID, message: Select an active timesheetable project with an analytic account }
@@ -67,9 +73,11 @@ actions:
       fields: [work_date, project_id, project_name, task_id, task_name, description, hours, billable, unit_amount, sales_order_item]
       required: [work_date, project_name, description, hours]
       guards:
-        - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND state IN ('Draft', 'Rejected')", status: 403, code: TIMESHEETS_ENTRY_SCOPE, message: Only your draft or rejected timesheets can be edited. }
+        - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND state IN ('Draft', 'Rejected')", status: 403, code: TIMESHEETS_ENTRY_SCOPE, message: Only your draft or rejected timesheets can be edited. }
         - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:project_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEETS_ENTRY_INVALID, message: Enter a valid date, project, and time between 0 and 24 hours. }
       result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
+      steps:
+        - query: "UPDATE timesheet_entries SET company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'), employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User'), employee_id = CASE COALESCE(NULLIF(:current_user_name, ''), 'Admin User') WHEN 'Morgan Taylor' THEN 'employee-demo-002' WHEN 'Priya Shah' THEN 'employee-demo-003' ELSE 'employee-demo-001' END WHERE id = :id"
     fields:
       - { field: work_date, label: Date, type: date, required: true }
       - { field: project_id, label: Project ID, type: text }
@@ -94,7 +102,7 @@ actions:
       table: timesheet_entries
       concurrency: { required: true }
       guards:
-        - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND state IN ('Draft', 'Rejected')", status: 403, code: TIMESHEETS_ENTRY_SCOPE, message: Only your draft or rejected timesheets can be deleted. }
+        - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AND state IN ('Draft', 'Rejected')", status: 403, code: TIMESHEETS_ENTRY_SCOPE, message: Only your draft or rejected timesheets can be deleted. }
       result: { query: "SELECT :id AS id, TRUE AS deleted" }
   - { id: submit_timesheet_entry, type: server, permission: timesheets.write, action: timesheets.entries.submit, handler: order_transition, workflow: timesheet_entries, operation: submit, refresh: [timesheet_entries] }
   - { id: approve_timesheet_entry, type: server, permission: timesheets.manage, action: timesheets.entries.approve, handler: order_transition, workflow: timesheet_entries, operation: approve, refresh: [timesheet_entries] }
