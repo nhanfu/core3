@@ -824,3 +824,57 @@ sign-off is claimed.
   bundle**. Fresh authenticated Odoo comparison, file-backed/live restart
   limitations, and the missing-jsdom client DOM test environment remain open;
   no full Accounting sign-off is made.
+
+## QA blocker — configuration candidate `08d3dce0` (2026-09-13)
+
+- **BLOCKED: `ACCOUNTING-CONFIG-MIGRATION-001`.** Startup fails because the new
+  migration declares version `0.0.1`, colliding with existing migration order
+  `001` (reported as duplicate migration order `010`). The Payment Terms
+  contract itself passed **2 tests / 21 assertions**; audit, CSS, ESLint, and
+  diff-check passed.
+- Chromium and file-backed persistence could not be exercised because startup
+  is blocked. Full frontend failures for missing services/ecommerce/styles/
+  `index.scss` are unrelated and remain recorded as repository blockers.
+- Hold `08d3dce0` and route the repair to the same owner/worktree
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-config`
+  (`agent/odoo-ui-accounting-config`). Correct the migration version/order,
+  verify clean startup and replay, then rerun focused Payment Terms tests,
+  audit/CSS/ESLint/diff-check, and the available persistence/browser checks
+  before re-triggering module QA.
+
+## QA retest blocker — configuration candidate `1a6fac5b` (2026-09-13)
+
+- The migration repair now passes startup/replay and list rendering: **3 tests /
+  26 assertions**. Audit, CSS, ESLint, and diff-check also pass.
+- **BLOCKED: `ACCOUNTING-CONFIG-SERVICE-BOUNDARY-001`.** Live Payment Terms CRUD
+  fails because the company guard queries a missing `users` table in the
+  Accounting service database. Demo↔Vietnam isolation, CRUD, reload/file-backed
+  persistence, and browser evidence therefore remain unavailable.
+- Hold `1a6fac5b` and route a same-owner repair to
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-config`
+  (`agent/odoo-ui-accounting-config`). The owner must correct the service-boundary
+  company/actor lookup without importing cross-service tables, then rerun live
+  CRUD, company isolation, reload/file-backed, focused tests, and module QA.
+  The aggregate frontend missing Ecommerce stylesheet remains unrelated.
+
+## Reviewer reconciliation — Payment Terms configuration bundle (2026-09-15)
+
+- The registered owner lineage was verified at
+  `/home/nhanjs/projects/core3-worktrees/odoo-ui-accounting-config`:
+  `08d3dce0` → `1a6fac5b` → `7a0a532c`. The product bundle integrated onto the
+  active branch as `7ce434bb`, `f67e27a7`, and `1c8166e6`.
+- The active branch already had an Accounting-owned Payment Terms contract with
+  `company`/`early_discount` fields. The conflicting candidate YAML was
+  reconciled by retaining the configuration slice's `company_name` scope and
+  CRUD actions while preserving active shared contracts. The candidate's
+  migration version also collided with an existing active `0.0.10`; the
+  minimal active repair assigned it unique version `0.0.47` and adapted only
+  its migration assertion in `77fdf7f5`.
+- Active verification passed the focused configuration suite: **3 tests / 40
+  assertions**, including startup/replay, CRUD, company boundary, duplicate,
+  invalid, stale, missing, and atomicity checks. `bun run audit` passed at
+  **661 pages / 670 routes / 1,162 datasources**; product diff-check passed.
+- Disposition: **conditionally integrated bounded Accounting Payment Terms
+  configuration**. Preserve the unrelated missing eCommerce stylesheet,
+  `/api/v1/notifications` 404, file-backed restart, and authenticated Odoo
+  comparison blockers. No full Accounting sign-off is made.
