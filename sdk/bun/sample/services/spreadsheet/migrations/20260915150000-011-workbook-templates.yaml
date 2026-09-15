@@ -1,0 +1,14 @@
+version: 0.0.11
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE spreadsheet_workbook_templates (
+        id VARCHAR PRIMARY KEY, owner_id VARCHAR NOT NULL, company_name VARCHAR NOT NULL,
+        name VARCHAR NOT NULL, description VARCHAR NOT NULL,
+        workbook_snapshot VARCHAR NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX spreadsheet_workbook_templates_owner ON spreadsheet_workbook_templates (owner_id, company_name);
+    down: |
+      DROP TABLE spreadsheet_workbook_templates;
+  duckdb: postgres

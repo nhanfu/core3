@@ -1,4 +1,5 @@
 import { bindNamedParams, queryOnConnection, runOnConnection } from '@core3/server/database/sql';
+import type { DatabaseDriver } from '@core3/server/database/types';
 
 export type MutationConnection = {
   run(sql: string, ...args: any[]): any;
@@ -27,6 +28,8 @@ export type MutationDefinition = {
   steps?: MutationStep[];
   result?: { query?: string };
   generated?: string[];
+  transaction_conflict?: { code: string; message: string };
+  transaction_isolation?: Partial<Record<DatabaseDriver, 'serializable'>>;
 };
 
 export type MutationStep = {
@@ -62,7 +65,7 @@ function sameMutationValue(left: unknown, right: unknown): boolean {
 }
 
 export class YamlMutationRuntime {
-  constructor(private readonly resolveService?: (name: string) => any) {}
+  constructor(private readonly resolveService?: (name: string) => any, private readonly driver?: DatabaseDriver) {}
 
   async execute(connection: MutationConnection, definition: MutationDefinition, input: Record<string, any> = {}): Promise<any> {
     const params = { ...input };
@@ -98,7 +101,9 @@ export class YamlMutationRuntime {
       if (!IDENTIFIER.test(field)) throw { status: 500, message: 'Generated mutation field is invalid' };
       if (!params[field]) params[field] = crypto.randomUUID();
     }
-    await runOnConnection(connection, 'BEGIN TRANSACTION');
+    const isolation = this.driver ? definition.transaction_isolation?.[this.driver] : undefined;
+    if (isolation !== undefined && (isolation !== 'serializable' || this.driver !== 'postgres')) throw { status: 500, message: 'Unsupported mutation transaction isolation' };
+    await runOnConnection(connection, isolation === 'serializable' ? 'BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE' : 'BEGIN TRANSACTION');
     try {
       for (const guard of definition.guards || []) {
         if (guard.type === 'service') {
@@ -145,6 +150,12 @@ export class YamlMutationRuntime {
       await runOnConnection(connection, 'ROLLBACK').catch(() => {});
       for (const compensation of compensations.reverse()) {
         try { await this.executeCompensation(compensation.definition, compensation.response, params); } catch { /* preserve the original domain failure */ }
+      }
+      const conflict = definition.transaction_conflict;
+      const databaseError = error as { code?: string; errno?: string; message?: string };
+      const sqlState = databaseError?.code === 'ERR_POSTGRES_SERVER_ERROR' ? databaseError.errno : databaseError?.code;
+      if (conflict && (['40001', '40P01'].includes(String(sqlState)) || databaseError?.message === 'TransactionContext Error: Conflict on update!')) {
+        throw Object.assign(new Error(conflict.message, { cause: error }), { status: 409, code: conflict.code });
       }
       throw error;
     }

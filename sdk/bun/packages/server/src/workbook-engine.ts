@@ -49,7 +49,7 @@ export class WorkbookEngine {
   }
 
   async invalidate(id: string) { if (this.worker) await this.request({ operation: 'invalidate', id }); }
-  async render(mode: 'freeze' | 'export', head: string, state: WorkbookState, catalog: any[], read: (query: any) => Promise<{ data: any[] }>, maxQueries: number) {
+  async render(mode: 'freeze' | 'export' | 'prepare_export', head: string, state: WorkbookState, catalog: any[], read: (query: any) => Promise<{ data: any[] }>, maxQueries: number) {
     const id = randomUUID();
     try {
       let result = await this.request({ operation: 'render', mode, id, head, state, catalog });

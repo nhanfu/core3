@@ -9,6 +9,73 @@ max_import_expanded_bytes: 268435456
 max_import_files: 10000
 max_share_days: 30
 max_data_queries: 10000
+print_max_cells: 100000
+print_max_figure_pixels: 16777216
+print_page_setup:
+  paper_sizes:
+    - { id: a4, label: A4, width_mm: 210, height_mm: 297 }
+    - { id: letter, label: Letter, width_mm: 215.9, height_mm: 279.4 }
+    - { id: legal, label: Legal, width_mm: 215.9, height_mm: 355.6 }
+  default_paper: a4
+  margin_mm: 12
+  max_margin_mm: 50
+  max_repeat_rows: 20
+import_jobs:
+  poll_ms: 1000
+  lease_ms: 180000
+  max_attempts: 3
+  max_pending_per_user: 3
+  retention_ms: 604800000
+export_jobs:
+  poll_ms: 1000
+  lease_ms: 180000
+  max_attempts: 3
+  max_pending_per_user: 3
+  retention_ms: 86400000
+  max_artifact_bytes: 67108864
+documents:
+  route: /documents
+  service: documents
+  source: document_workbook_references
+  read_permission: documents.read
+  link_permission: documents.write
+  max_links: 100
+templates:
+  budget:
+    name: Budget planner
+    description: Compare planned and actual expenses, with calculated variance and totals.
+    permission: spreadsheet.write
+    snapshot:
+      sheets:
+        - id: sheet-1
+          name: Budget
+          colNumber: 26
+          rowNumber: 100
+          cells:
+            A1: Category
+            B1: Planned
+            C1: Actual
+            D1: Variance
+            A2: People
+            A3: Operations
+            A4: Marketing
+            A5: Other
+            A6: Total
+            B2: '0'
+            B3: '0'
+            B4: '0'
+            B5: '0'
+            C2: '0'
+            C3: '0'
+            C4: '0'
+            C5: '0'
+            D2: '=B2-C2'
+            D3: '=B3-C3'
+            D4: '=B4-C4'
+            D5: '=B5-C5'
+            B6: '=SUM(B2:B5)'
+            C6: '=SUM(C2:C5)'
+            D6: '=B6-C6'
 sources:
   sales_orders:
     label: Sales orders
@@ -96,6 +163,173 @@ allowed_commands:
   - REMOVE_PIVOT
   - DUPLICATE_PIVOT
 operations:
+  export_job_create:
+    mutation:
+      guards:
+        - { query: "SELECT 1 WHERE (SELECT COUNT(*) FROM spreadsheet_export_jobs WHERE owner_id = :current_user_id AND company_name = :current_company_name AND state IN ('queued', 'running') AND expires_at_ms > :now) < :max_pending", status: 429, code: WORKBOOK_EXPORT_LIMIT, message: Wait for an existing export or cancel it before creating another. }
+      steps:
+        - query: "INSERT INTO spreadsheet_export_jobs (id, workbook_id, revision_id, owner_id, company_name, name, workbook_snapshot, required_permissions, created_at_ms, updated_at_ms, expires_at_ms) VALUES (:job_id, :id, :revision_id, :current_user_id, :current_company_name, :name, :workbook_snapshot, :required_permissions, :now, :now, :expires_at_ms)"
+      result: { query: "SELECT id, name, state, revision_id FROM spreadsheet_export_jobs WHERE id = :job_id" }
+  export_jobs:
+    query: >-
+      SELECT j.id, j.workbook_id, j.name, j.state, j.attempts, j.error, j.revision_id, j.expires_at_ms
+      FROM spreadsheet_export_jobs j JOIN spreadsheet_workbooks w ON w.id = j.workbook_id
+      WHERE j.owner_id = :current_user_id AND j.company_name = :current_company_name AND j.expires_at_ms > :now
+        AND w.company_name = :current_company_name
+        AND (w.owner_id = :current_user_id OR w.visibility = 'internal' OR EXISTS (SELECT 1 FROM spreadsheet_workbook_members m WHERE m.workbook_id = w.id AND m.user_id = :current_user_id))
+      ORDER BY j.created_at_ms DESC LIMIT 100
+  export_job:
+    query: "SELECT id, workbook_id, name, state, attempts, error, revision_id, expires_at_ms, required_permissions FROM spreadsheet_export_jobs WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name AND expires_at_ms > :now"
+  export_job_artifact:
+    query: "SELECT artifact_base64 FROM spreadsheet_export_jobs WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name AND state = 'completed' AND expires_at_ms > :now"
+  export_job_cancel:
+    mutation:
+      guards:
+        - { query: "SELECT id FROM spreadsheet_export_jobs WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name", status: 404, code: WORKBOOK_EXPORT_NOT_FOUND, message: Export unavailable. }
+      steps:
+        - query: "UPDATE spreadsheet_export_jobs SET state = 'cancelled', workbook_snapshot = NULL, artifact_base64 = NULL, lease_token = NULL, updated_at_ms = :now WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name AND state IN ('queued', 'running', 'cancelled')"
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_EXPORT_FINISHED
+          message: Export has already finished.
+  export_job_cleanup:
+    mutation:
+      steps:
+        - query: "DELETE FROM spreadsheet_export_jobs WHERE expires_at_ms <= :now"
+        - query: "UPDATE spreadsheet_export_jobs SET state = 'failed', error = 'Export worker retry limit reached', workbook_snapshot = NULL, lease_token = NULL, updated_at_ms = :now WHERE state = 'running' AND lease_until < :now AND attempts >= :max_attempts"
+  export_job_next:
+    query: "SELECT id FROM spreadsheet_export_jobs WHERE (state = 'queued' OR (state = 'running' AND lease_until < :now)) AND attempts < :max_attempts AND expires_at_ms > :now ORDER BY created_at_ms, id LIMIT 1"
+  export_job_claim:
+    mutation:
+      steps:
+        - query: "UPDATE spreadsheet_export_jobs SET state = 'running', attempts = attempts + 1, lease_token = :lease_token, lease_until = :lease_until, updated_at_ms = :now WHERE id = :job_id AND (state = 'queued' OR (state = 'running' AND lease_until < :now)) AND attempts < :max_attempts AND expires_at_ms > :now"
+      result: { query: "SELECT id, workbook_snapshot, attempts FROM spreadsheet_export_jobs WHERE id = :job_id AND lease_token = :lease_token AND state = 'running'" }
+  export_job_owned:
+    query: "SELECT id FROM spreadsheet_export_jobs WHERE id = :job_id AND lease_token = :lease_token AND state = 'running' AND lease_until >= :now AND expires_at_ms > :now"
+  export_job_finish:
+    mutation:
+      steps:
+        - query: "UPDATE spreadsheet_export_jobs SET state = 'completed', workbook_snapshot = NULL, artifact_base64 = :artifact_base64, error = NULL, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token AND lease_until >= :now AND expires_at_ms > :now"
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_EXPORT_LEASE_LOST
+          message: Export was cancelled, expired or taken over by another worker.
+  export_job_fail:
+    mutation:
+      steps:
+        - query: "UPDATE spreadsheet_export_jobs SET state = :state, error = :error, workbook_snapshot = CASE WHEN :state = 'queued' THEN workbook_snapshot ELSE NULL END, lease_token = NULL, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token"
+  import_job_create:
+    mutation:
+      guards:
+        - { query: "SELECT 1 WHERE (SELECT COUNT(*) FROM spreadsheet_import_jobs WHERE owner_id = :current_user_id AND company_name = :current_company_name AND state IN ('queued', 'running')) < :max_pending", status: 429, code: WORKBOOK_IMPORT_LIMIT, message: Wait for an existing import or cancel it before uploading another. }
+      steps:
+        - query: "INSERT INTO spreadsheet_import_jobs (id, workbook_id, owner_id, company_name, name, input_base64, created_at_ms, updated_at_ms) VALUES (:job_id, :workbook_id, :current_user_id, :current_company_name, :name, :input_base64, :now, :now)"
+      result: { query: "SELECT id, name, state FROM spreadsheet_import_jobs WHERE id = :job_id" }
+  import_jobs:
+    query: "SELECT id, name, state, attempts, error, warnings, CASE WHEN state = 'completed' THEN workbook_id ELSE NULL END AS workbook_id FROM spreadsheet_import_jobs WHERE owner_id = :current_user_id AND company_name = :current_company_name ORDER BY created_at_ms DESC LIMIT 100"
+  import_job:
+    query: "SELECT id, name, state, attempts, error, warnings, CASE WHEN state = 'completed' THEN workbook_id ELSE NULL END AS workbook_id FROM spreadsheet_import_jobs WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name"
+  import_job_cancel:
+    mutation:
+      guards:
+        - { query: "SELECT id FROM spreadsheet_import_jobs WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name", status: 404, code: WORKBOOK_IMPORT_NOT_FOUND, message: Import unavailable. }
+      steps:
+        - query: "UPDATE spreadsheet_import_jobs SET state = 'cancelled', input_base64 = NULL, lease_token = NULL, updated_at_ms = :now WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name AND state IN ('queued', 'running', 'cancelled')"
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_IMPORT_FINISHED
+          message: Import has already finished.
+  import_job_cleanup:
+    mutation:
+      steps:
+        - query: "UPDATE spreadsheet_import_jobs SET state = 'failed', error = 'Import worker retry limit reached', input_base64 = NULL, lease_token = NULL, updated_at_ms = :now WHERE state = 'running' AND lease_until < :now AND attempts >= :max_attempts"
+        - query: "DELETE FROM spreadsheet_import_jobs WHERE updated_at_ms < :expire_before AND state IN ('completed', 'failed', 'cancelled')"
+  import_job_next:
+    query: "SELECT id FROM spreadsheet_import_jobs WHERE (state = 'queued' OR (state = 'running' AND lease_until < :now)) AND attempts < :max_attempts ORDER BY created_at_ms, id LIMIT 1"
+  import_job_claim:
+    mutation:
+      steps:
+        - query: "UPDATE spreadsheet_import_jobs SET state = 'running', attempts = attempts + 1, lease_token = :lease_token, lease_until = :lease_until, updated_at_ms = :now WHERE id = :job_id AND (state = 'queued' OR (state = 'running' AND lease_until < :now)) AND attempts < :max_attempts"
+      result: { query: "SELECT id, input_base64, attempts FROM spreadsheet_import_jobs WHERE id = :job_id AND lease_token = :lease_token AND state = 'running'" }
+  import_job_owned:
+    query: "SELECT id FROM spreadsheet_import_jobs WHERE id = :job_id AND lease_token = :lease_token AND state = 'running' AND lease_until >= :now"
+  import_job_finish:
+    mutation:
+      steps:
+        - query: "UPDATE spreadsheet_import_jobs SET state = 'completed', input_base64 = NULL, warnings = :warnings, error = NULL, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token AND lease_until >= :now"
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_IMPORT_LEASE_LOST
+          message: Import was cancelled or taken over by another worker.
+        - query: "INSERT INTO spreadsheet_workbooks (id, name, owner_id, company_name, workbook_snapshot) SELECT workbook_id, name, owner_id, company_name, :workbook_snapshot FROM spreadsheet_import_jobs WHERE id = :job_id AND lease_token = :lease_token"
+        - query: "INSERT INTO spreadsheet_workbook_checkpoints (workbook_id, revision_id, sequence, actor_id, label, workbook_snapshot, verified) SELECT workbook_id, 'START_REVISION', 0, owner_id, 'Imported', :workbook_snapshot, TRUE FROM spreadsheet_import_jobs WHERE id = :job_id AND lease_token = :lease_token"
+  import_job_fail:
+    mutation:
+      steps:
+        - query: "UPDATE spreadsheet_import_jobs SET state = :state, error = :error, input_base64 = CASE WHEN :state = 'queued' THEN input_base64 ELSE NULL END, lease_token = NULL, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token"
+  document_links:
+    query: "SELECT document_id FROM spreadsheet_workbook_documents WHERE workbook_id = :id ORDER BY document_id"
+  document_workbooks:
+    query: >-
+      SELECT w.id, w.name, w.owner_id, w.company_name, w.archived, w.row_version, w.updated_at
+      FROM spreadsheet_workbook_documents d JOIN spreadsheet_workbooks w ON w.id = d.workbook_id
+      LEFT JOIN spreadsheet_workbook_members m ON m.workbook_id = w.id AND m.user_id = :current_user_id
+      WHERE d.document_id = :document_id AND w.company_name = :current_company_name AND w.archived = FALSE
+        AND (w.owner_id = :current_user_id OR m.user_id IS NOT NULL OR w.visibility = 'internal')
+        AND lower(w.name) LIKE '%' || lower(:q) || '%'
+      ORDER BY w.updated_at DESC, w.id LIMIT 200
+  link_document:
+    mutation:
+      guards:
+        - { query: "SELECT id FROM spreadsheet_workbooks WHERE id = :id AND owner_id = :current_user_id AND company_name = :current_company_name AND archived = FALSE", status: 403, code: WORKBOOK_FORBIDDEN, message: Only the owner of an active workbook can link a document. }
+        - { query: "SELECT 1 WHERE EXISTS (SELECT 1 FROM spreadsheet_workbook_documents WHERE workbook_id = :id AND document_id = :document_id) OR (SELECT COUNT(*) FROM spreadsheet_workbook_documents WHERE workbook_id = :id) < :max_links", status: 422, code: WORKBOOK_DOCUMENT_LIMIT, message: This workbook has reached its document link limit. }
+      steps:
+        - query: "INSERT INTO spreadsheet_workbook_documents (workbook_id, document_id, created_by) VALUES (:id, :document_id, :current_user_id) ON CONFLICT (workbook_id, document_id) DO NOTHING"
+  unlink_document:
+    mutation:
+      guards:
+        - { query: "SELECT id FROM spreadsheet_workbooks WHERE id = :id AND owner_id = :current_user_id AND company_name = :current_company_name", status: 403, code: WORKBOOK_FORBIDDEN, message: Only the workbook owner can remove document links. }
+      steps:
+        - query: "DELETE FROM spreadsheet_workbook_documents WHERE workbook_id = :id AND document_id = :document_id"
+  templates:
+    query: "SELECT id, name, description, row_version, published, (owner_id = :current_user_id) AS can_manage FROM spreadsheet_workbook_templates WHERE (owner_id = :current_user_id OR published = TRUE) AND company_name = :current_company_name ORDER BY name, id"
+  template:
+    query: "SELECT workbook_snapshot FROM spreadsheet_workbook_templates WHERE id = :template_id AND (owner_id = :current_user_id OR published = TRUE) AND company_name = :current_company_name"
+  create_template:
+    mutation:
+      guards:
+        - { query: "SELECT id FROM spreadsheet_workbooks WHERE id = :id AND owner_id = :current_user_id AND company_name = :current_company_name AND archived = FALSE AND head_revision_id = :base_revision", status: 409, code: WORKBOOK_TEMPLATE_STALE, message: Workbook changed before the template was saved. Reload and try again. }
+      steps:
+        - query: "INSERT INTO spreadsheet_workbook_templates (id, owner_id, company_name, name, description, workbook_snapshot) VALUES (:template_id, :current_user_id, :current_company_name, :name, :description, :workbook_snapshot)"
+      result: { query: "SELECT id, name, description FROM spreadsheet_workbook_templates WHERE id = :template_id" }
+  delete_template:
+    mutation:
+      guards:
+        - { query: "SELECT id FROM spreadsheet_workbook_templates WHERE id = :template_id AND owner_id = :current_user_id AND company_name = :current_company_name", status: 404, code: WORKBOOK_TEMPLATE_NOT_FOUND, message: Template unavailable. }
+      steps:
+        - query: "DELETE FROM spreadsheet_workbook_templates WHERE id = :template_id AND owner_id = :current_user_id AND company_name = :current_company_name"
+  update_template:
+    mutation:
+      guards:
+        - { query: "SELECT id FROM spreadsheet_workbook_templates WHERE id = :template_id AND owner_id = :current_user_id AND company_name = :current_company_name", status: 404, code: WORKBOOK_TEMPLATE_NOT_FOUND, message: Template unavailable. }
+      steps:
+        - query: "UPDATE spreadsheet_workbook_templates SET name = :name, description = :description, row_version = row_version + 1 WHERE id = :template_id AND owner_id = :current_user_id AND company_name = :current_company_name AND row_version = :row_version"
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_TEMPLATE_STALE
+          message: Template changed. Reopen the template catalog and try again.
+      result: { query: "SELECT id, name, description, row_version FROM spreadsheet_workbook_templates WHERE id = :template_id AND owner_id = :current_user_id AND company_name = :current_company_name" }
+  publish_template:
+    mutation:
+      guards:
+        - { query: "SELECT id FROM spreadsheet_workbook_templates WHERE id = :template_id AND owner_id = :current_user_id AND company_name = :current_company_name", status: 404, code: WORKBOOK_TEMPLATE_NOT_FOUND, message: Template unavailable. }
+      steps:
+        - query: "UPDATE spreadsheet_workbook_templates SET published = :published, row_version = row_version + 1 WHERE id = :template_id AND owner_id = :current_user_id AND company_name = :current_company_name AND row_version = :row_version"
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_TEMPLATE_STALE
+          message: Template changed. Reopen the template catalog and try again.
+      result: { query: "SELECT id, published, row_version FROM spreadsheet_workbook_templates WHERE id = :template_id AND owner_id = :current_user_id AND company_name = :current_company_name" }
   viewer_filters:
     query: "SELECT filter_values FROM spreadsheet_workbook_viewer_filters WHERE workbook_id = :id AND user_id = :current_user_id"
   save_viewer_filters:

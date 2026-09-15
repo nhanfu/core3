@@ -1,0 +1,17 @@
+version: 0.0.15
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE spreadsheet_import_jobs (
+        id VARCHAR PRIMARY KEY, workbook_id VARCHAR NOT NULL UNIQUE,
+        owner_id VARCHAR NOT NULL, company_name VARCHAR NOT NULL, name VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'queued', attempts INTEGER NOT NULL DEFAULT 0,
+        input_base64 VARCHAR, warnings VARCHAR NOT NULL DEFAULT '[]', error VARCHAR,
+        lease_token VARCHAR, lease_until BIGINT NOT NULL DEFAULT 0,
+        created_at_ms BIGINT NOT NULL, updated_at_ms BIGINT NOT NULL
+      );
+      CREATE INDEX spreadsheet_import_jobs_pending ON spreadsheet_import_jobs (state, created_at_ms);
+    down: |
+      DROP TABLE spreadsheet_import_jobs;
+  duckdb: postgres

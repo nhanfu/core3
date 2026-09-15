@@ -3,6 +3,47 @@ datasources:
   - id: spreadsheet_dashboard_groups_configuration
     single: false
     permission: spreadsheet.manage
-    query: "SELECT id, row_version, name, sequence, company_name, official, dashboard_count FROM spreadsheet_dashboard_groups WHERE (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (official = true OR :fixture_state = 'all') AND (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name"
+    query: "SELECT g.id, g.row_version, g.name, g.sequence, g.company_name, g.official, (SELECT COUNT(*) FROM spreadsheet_dashboards d WHERE d.group_id = g.id AND (d.company_name = 'Global' OR d.company_name = :company_name)) AS dashboard_count FROM spreadsheet_dashboard_groups g WHERE (g.company_name = 'Global' OR g.company_name = :company_name) AND (:fixture_state IS NULL OR :fixture_state <> 'empty') AND (:q IS NULL OR g.name ILIKE '%' || :q || '%') ORDER BY g.sequence, g.name, g.id"
     error_states:
       transport_error: { status: 503, code: SPREADSHEET_DASHBOARD_GROUPS_UNAVAILABLE, message: Dashboard groups are temporarily unavailable. }
+actions:
+  - id: reorder_dashboard_groups
+    type: server
+    permission: spreadsheet.dashboard.manage
+    action: spreadsheet.dashboard.groups.reorder
+    params: { id: '{row.id}', target_id: '{row.target_id}', order_signature: '{row.order_signature}' }
+    handler: yaml_mutation
+    operation: update
+    refresh: [spreadsheet_dashboard_groups_configuration]
+    mutation:
+      transaction_conflict: { code: SPREADSHEET_DASHBOARD_GROUP_ORDER_STALE, message: The group list changed. Reload before reordering. }
+      transaction_isolation: { postgres: serializable }
+      guards:
+        - { query: "SELECT id FROM spreadsheet_dashboard_groups WHERE id = :id AND (company_name = 'Global' OR company_name = :company_name)", status: 403, code: SPREADSHEET_DASHBOARD_GROUP_FORBIDDEN, message: This dashboard group is unavailable in your company. }
+        - { query: "SELECT id FROM spreadsheet_dashboard_groups WHERE id = :target_id AND id <> :id AND (company_name = 'Global' OR company_name = :company_name)", status: 403, code: SPREADSHEET_DASHBOARD_GROUP_FORBIDDEN, message: The destination group is unavailable in your company. }
+        - { query: "SELECT 1 WHERE :order_signature = (SELECT STRING_AGG(id || ':' || CAST(row_version AS VARCHAR), '|' ORDER BY sequence, name, id) FROM spreadsheet_dashboard_groups WHERE company_name = 'Global' OR company_name = :company_name)", status: 409, code: SPREADSHEET_DASHBOARD_GROUP_ORDER_STALE, message: The group list changed. Reload before reordering. }
+      steps:
+        - query: "WITH ranked AS (SELECT id, ROW_NUMBER() OVER (ORDER BY sequence, name, id) AS position FROM spreadsheet_dashboard_groups WHERE company_name = 'Global' OR company_name = :company_name), bounds AS (SELECT (SELECT position FROM ranked WHERE id = :id) AS origin, (SELECT position FROM ranked WHERE id = :target_id) AS destination), ordered AS (SELECT r.id, CASE WHEN r.id = :id THEN b.destination WHEN b.origin < b.destination AND r.position > b.origin AND r.position <= b.destination THEN r.position - 1 WHEN b.origin > b.destination AND r.position >= b.destination AND r.position < b.origin THEN r.position + 1 ELSE r.position END * 10 AS sequence FROM ranked r CROSS JOIN bounds b) UPDATE spreadsheet_dashboard_groups SET sequence = ordered.sequence, row_version = row_version + 1 FROM ordered WHERE spreadsheet_dashboard_groups.id = ordered.id"
+          expect_changed: true
+          status: 409
+          code: SPREADSHEET_DASHBOARD_GROUP_ORDER_STALE
+          message: The group list changed. Reload before reordering.
+      result: { query: "SELECT id, sequence, row_version FROM spreadsheet_dashboard_groups WHERE id = :id" }
+  - id: create_dashboard_group
+    type: server_form
+    permission: spreadsheet.dashboard.manage
+    title: New dashboard group
+    action: spreadsheet.dashboard.groups.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [spreadsheet_dashboard_groups_configuration]
+    mutation:
+      generated: [id]
+      guards:
+        - { query: "SELECT 1 WHERE LENGTH(TRIM(:name)) > 0", status: 422, code: SPREADSHEET_DASHBOARD_GROUP_NAME_REQUIRED, message: Dashboard group name is required. }
+        - { query: "SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM spreadsheet_dashboard_groups WHERE name = :name AND company_name = :company_name)", status: 409, code: SPREADSHEET_DASHBOARD_GROUP_NAME_CONFLICT, message: A dashboard group with this name already exists in this company. }
+      before_steps:
+        - { query: "INSERT INTO spreadsheet_dashboard_groups (id, name, company_name, official, row_version) VALUES (:id, :name, :company_name, FALSE, 1) ON CONFLICT (name, company_name) DO NOTHING", expect_changed: true, status: 409, code: SPREADSHEET_DASHBOARD_GROUP_NAME_CONFLICT, message: A dashboard group with this name already exists in this company. }
+      result: { query: "SELECT id, name, company_name, official, row_version FROM spreadsheet_dashboard_groups WHERE id = :id" }
+    fields:
+      - { field: name, label: Group name, type: text, required: true }

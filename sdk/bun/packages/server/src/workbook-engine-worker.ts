@@ -109,19 +109,26 @@ async function execute(task: any) {
     return { revision_id: task.message.nextRevisionId };
   }
   if (task.operation === 'snapshot') return { snapshot: model.exportData() };
-  if (!task.authorized && (task.operation === 'freeze' || task.operation === 'export')) {
+  if (!task.authorized && (task.operation === 'freeze' || task.operation === 'export' || task.operation === 'prepare_export')) {
     for (const sheetId of model.getters.getSheetIds()) {
       if (Object.values(model.getters.getCells(sheetId)).some((cell: any) => cell.isFormula && /CORE3\.VALUE\s*\(/i.test(cell.content))) throw new Error('Live Core3 formulas require authorized server evaluation before export or publishing');
     }
   }
-  if (task.operation === 'freeze') {
+  if (task.operation === 'freeze' || task.operation === 'prepare_export') {
     const snapshot = model.exportData();
     for (const sheet of snapshot.sheets) {
       for (const figure of sheet.figures || []) {
         if (figure.tag === 'image' && !String(figure.data?.path || '').startsWith('data:image/')) throw new Error('Embed workbook images before publishing a fixed snapshot');
       }
-      const cells: Record<string, string> = {};
+      const cells: Record<string, string> = task.operation === 'prepare_export' ? { ...sheet.cells } : {};
       for (const position of model.getters.getEvaluatedCellsPositions(sheet.id)) {
+        if (task.operation === 'prepare_export') {
+          const origin = model.getters.getArrayFormulaSpreadingOn(position) || position;
+          const original = model.getters.getCell(origin);
+          // Resolve authenticated data before persisting a job, while keeping
+          // ordinary formulas editable in the independently converted XLSX.
+          if (!original?.isFormula || !/CORE3\.VALUE\s*\(/i.test(original.content)) continue;
+        }
         const cell = model.getters.getEvaluatedCell(position);
         let column = position.col + 1;
         let address = '';

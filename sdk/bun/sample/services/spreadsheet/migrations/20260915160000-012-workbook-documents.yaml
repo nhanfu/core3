@@ -1,0 +1,14 @@
+version: 0.0.12
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE spreadsheet_workbook_documents (
+        workbook_id VARCHAR NOT NULL, document_id VARCHAR NOT NULL,
+        created_by VARCHAR NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (workbook_id, document_id)
+      );
+      CREATE INDEX spreadsheet_workbook_documents_document ON spreadsheet_workbook_documents (document_id);
+    down: |
+      DROP TABLE spreadsheet_workbook_documents;
+  duckdb: postgres

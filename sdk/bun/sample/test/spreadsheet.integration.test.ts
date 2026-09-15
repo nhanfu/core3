@@ -186,7 +186,7 @@ describe('Spreadsheet dashboard configuration parity', () => {
     database.close();
   });
 
-  test('publishes and archives a dashboard through YAML workflow actions', async () => {
+  test('publishes, unpublishes and archives dashboards with company, permission and concurrency checks', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'spreadsheet_dashboard_lifecycle_test', ['schema', 'data']);
@@ -205,9 +205,9 @@ describe('Spreadsheet dashboard configuration parity', () => {
       permissions: discovered.permissions.get('spreadsheet')?.config || {},
       uploadRoot: '/tmp/core3-spreadsheet-test-uploads', eventStore: {}, topics: {},
     });
-    const transition = (name: string, expected: number) => api(new Request(`http://spreadsheet.test/api/actions/spreadsheet.dashboard.${name}`, {
+    const transition = (name: string, expected: number, id = 'sdb-draft') => api(new Request(`http://spreadsheet.test/api/actions/spreadsheet.dashboard.${name}`, {
       method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: 'sdb-draft', expected_row_version: expected, values: {} }),
+      body: JSON.stringify({ id, expected_row_version: expected, company_name: 'Acme Corporation', values: { published: true, state: 'Published', company_name: 'Acme Corporation' } }),
     }), new URL(`http://spreadsheet.test/api/actions/spreadsheet.dashboard.${name}`));
 
     expect((await (await transition('publish', 1)).json())).toMatchObject({ id: 'sdb-draft', state: 'Published', published: true, row_version: 2 });
@@ -215,8 +215,130 @@ describe('Spreadsheet dashboard configuration parity', () => {
     await expect(transition('publish', 1)).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_PUBLISH_STALE' });
     expect((await (await transition('archive', 2)).json())).toMatchObject({ id: 'sdb-draft', state: 'Archived', published: false, row_version: 3 });
     expect((await repository.query('SELECT state, published, row_version FROM spreadsheet_dashboards WHERE id = ?', ['sdb-draft']))[0]).toEqual({ state: 'Archived', published: false, row_version: 3 });
+    await expect(transition('toggle-publication', 3)).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_PUBLICATION_ARCHIVED' });
+    await expect(transition('restore', 2)).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_RESTORE_STALE' });
+    expect(await (await transition('restore', 3)).json()).toMatchObject({ state: 'Draft', published: false, row_version: 4 });
+    const restored = (await repository.query('SELECT group_id, state, published, row_version FROM spreadsheet_dashboards WHERE id = ?', ['sdb-draft']))[0];
+    expect(restored).toMatchObject({ state: 'Draft', published: false, row_version: 4 });
+    const groupRows = (await repository.querySource(apiSource('dashboard-group.yaml', 'spreadsheet_group_dashboards'), { id: restored.group_id }, 0, 50)).data;
+    expect(groupRows.find((row: any) => row.id === 'sdb-draft')).toMatchObject({ state: 'Draft', row_version: 4 });
+    const landingIds = async () => (await repository.querySource(apiSource('dashboards.yaml', 'spreadsheet_dashboards_landing'), {}, 0, 50)).data.map((row: any) => row.id);
+    expect(await landingIds()).not.toContain('sdb-draft');
+    await expect(transition('restore', 4)).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_RESTORE_STALE' });
+    expect(await (await transition('publish', 4)).json()).toMatchObject({ state: 'Published', published: true, row_version: 5 });
+    expect(await landingIds()).toContain('sdb-draft');
+
+    // Request-supplied company fields cannot grant access through either entry point.
+    for (const action of ['toggle-publication', 'publish', 'archive', 'restore']) {
+      await expect(transition(action, 1, 'sdb-acme')).rejects.toMatchObject({ status: 403, code: 'SPREADSHEET_DASHBOARD_PUBLICATION_FORBIDDEN' });
+    }
+    user = { ...user, company_name: 'Acme Corporation' };
+    const landing = apiSource('dashboards.yaml', 'spreadsheet_dashboards_landing');
+    const visible = async () => (await repository.querySource(landing, { company_name: user.company_name }, 0, 50)).data.map((row: any) => row.id);
+    expect(await visible()).toContain('sdb-acme');
+    expect(await (await transition('toggle-publication', 1, 'sdb-acme')).json()).toMatchObject({ state: 'Draft', published: false, row_version: 2 });
+    expect(await visible()).not.toContain('sdb-acme');
+    await expect(transition('toggle-publication', 1, 'sdb-acme')).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_STALE' });
+    expect(await (await transition('toggle-publication', 2, 'sdb-acme')).json()).toMatchObject({ state: 'Published', published: true, row_version: 3 });
+    expect(await visible()).toContain('sdb-acme');
+    // A matching dashboard company does not override its group's company boundary.
+    await repository.query("UPDATE spreadsheet_dashboard_groups SET company_name = 'Other Corporation' WHERE id = 'sdg-acme'", []);
+    await expect(transition('toggle-publication', 3, 'sdb-acme')).rejects.toMatchObject({ status: 403 });
+    await expect(transition('restore', 3, 'sdb-acme')).rejects.toMatchObject({ status: 403 });
+    await repository.query("UPDATE spreadsheet_dashboard_groups SET company_name = 'Acme Corporation' WHERE id = 'sdg-acme'", []);
     user = { ...user, permissions: ['spreadsheet.read'] };
     await expect(transition('archive', 3)).rejects.toMatchObject({ status: 403 });
+    await expect(transition('restore', 5)).rejects.toMatchObject({ status: 403 });
+    await expect(transition('toggle-publication', 3, 'sdb-acme')).rejects.toMatchObject({ status: 403 });
+    expect((await repository.query('SELECT published, row_version FROM spreadsheet_dashboards WHERE id = ?', ['sdb-acme']))[0]).toEqual({ published: true, row_version: 3 });
+    const configure = (action: string, params: any) => api(new Request(`http://spreadsheet.test/api/actions/spreadsheet.dashboard.${action}`, {
+      method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' }, body: JSON.stringify(params),
+    }), new URL(`http://spreadsheet.test/api/actions/spreadsheet.dashboard.${action}`));
+    user = { ...user, company_name: 'Acme Corporation', permissions: ['spreadsheet.manage'] };
+    const created = await (await configure('create', { group_id: 'sdg-sales', company_name: 'Global', values: { name: 'Acme budget', company_name: 'Global' } })).json();
+    expect(created).toMatchObject({ name: 'Acme budget', company_name: 'Acme Corporation', published: false, row_version: 1 });
+    const groupCount = async (company: string) => (await repository.querySource(apiSource('dashboard-groups.yaml', 'spreadsheet_dashboard_groups_configuration'), { company_name: company, q: 'Sales' }, 0, 50)).data.find((row: any) => row.id === 'sdg-sales').dashboard_count;
+    expect(await groupCount('Acme Corporation')).toBe(2);
+    expect(await groupCount('Other Corporation')).toBe(1);
+    expect(await (await configure('update', { id: created.id, expected_row_version: 1, values: { name: 'Acme forecast' } })).json()).toMatchObject({ name: 'Acme forecast', row_version: 2 });
+    await expect(configure('update', { id: created.id, expected_row_version: 1, values: { name: 'Stale' } })).rejects.toMatchObject({ status: 409 });
+    await expect(configure('create', { group_id: 'sdg-sales', values: { name: '   ' } })).rejects.toMatchObject({ status: 422 });
+    user = { ...user, company_name: 'Other Corporation' };
+    await expect(configure('create', { group_id: 'sdg-acme', company_name: 'Acme Corporation', values: { name: 'Injected', company_name: 'Acme Corporation' } })).rejects.toMatchObject({ status: 403 });
+    await expect(configure('update', { id: created.id, expected_row_version: 2, company_name: 'Acme Corporation', values: { name: 'Injected', company_name: 'Acme Corporation' } })).rejects.toMatchObject({ status: 403 });
+    const scoped = { company_name: user.company_name, fixture_state: 'all' };
+    expect((await repository.querySource(apiSource('dashboard-groups.yaml', 'spreadsheet_dashboard_groups_configuration'), scoped, 0, 50)).data.map((row: any) => row.id)).not.toContain('sdg-acme');
+    expect((await repository.querySource(apiSource('dashboard-group.yaml', 'spreadsheet_dashboard_group'), { ...scoped, id: 'sdg-acme' }, 0, 1)).data).toEqual({});
+    expect((await repository.querySource(apiSource('dashboard.yaml', 'spreadsheet_dashboard'), { ...scoped, id: created.id }, 0, 1)).data).toEqual({});
+    expect((await repository.querySource(apiSource('dashboard-group.yaml', 'spreadsheet_group_dashboards'), { ...scoped, id: 'sdg-sales' }, 0, 50)).data.map((row: any) => row.id)).not.toContain(created.id);
+    await repository.query("UPDATE spreadsheet_dashboard_groups SET company_name = 'Other Corporation' WHERE id = 'sdg-acme'", []);
+    user = { ...user, company_name: 'Acme Corporation' };
+    await expect(configure('update', { id: 'sdb-acme', expected_row_version: 3, values: { name: 'Hidden group' } })).rejects.toMatchObject({ status: 403 });
+    expect((await repository.querySource(apiSource('dashboard.yaml', 'spreadsheet_dashboard'), { id: 'sdb-acme', company_name: user.company_name }, 0, 1)).data).toEqual({});
+    user = { ...user, permissions: ['spreadsheet.read'] };
+    await expect(configure('create', { group_id: 'sdg-sales', values: { name: 'Denied' } })).rejects.toMatchObject({ status: 403 });
+    await expect(configure('groups.create', { values: { name: 'Denied group' } })).rejects.toMatchObject({ status: 403 });
+    user = { ...user, permissions: ['spreadsheet.manage', 'spreadsheet.dashboard.manage'] };
+    const newGroup = await (await configure('groups.create', { company_name: 'Global', values: { name: 'Acme planning', company_name: 'Global', official: true } })).json();
+    expect(newGroup).toMatchObject({ name: 'Acme planning', company_name: 'Acme Corporation', official: false, row_version: 1 });
+    await expect(configure('groups.create', { values: { name: 'Acme planning' } })).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_NAME_CONFLICT' });
+    // Exercise the SQL conflict fence separately from the optimistic existence guard.
+    const groupMutation = yaml('api/dashboard-groups.yaml').actions.find((action: any) => action.id === 'create_dashboard_group').mutation;
+    await expect(repository.executeMutation({ ...groupMutation, guards: [] }, { company_name: 'Acme Corporation', values: { name: 'Acme planning' } })).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_NAME_CONFLICT' });
+    expect((await repository.query("SELECT COUNT(*) AS count FROM spreadsheet_dashboard_groups WHERE name = 'Acme planning' AND company_name = 'Acme Corporation'"))[0].count).toBe(1);
+    await expect(configure('groups.create', { values: { name: '   ' } })).rejects.toMatchObject({ status: 422 });
+    const groupsSource = apiSource('dashboard-groups.yaml', 'spreadsheet_dashboard_groups_configuration');
+    expect((await repository.querySource(groupsSource, { company_name: 'Acme Corporation' }, 0, 50)).data.map((row: any) => row.id)).toContain(newGroup.id);
+    expect((await repository.querySource(groupsSource, { company_name: 'Other Corporation' }, 0, 50)).data.map((row: any) => row.id)).not.toContain(newGroup.id);
+    expect(await (await configure('create', { group_id: newGroup.id, values: { name: 'New group dashboard' } })).json()).toMatchObject({ group_id: newGroup.id, company_name: 'Acme Corporation' });
+    expect(await (await configure('groups.update', { id: newGroup.id, expected_row_version: 1, values: { name: 'Acme forecast group', company_name: 'Global' } })).json()).toMatchObject({ name: 'Acme forecast group', company_name: 'Acme Corporation', row_version: 2 });
+    await expect(configure('groups.update', { id: newGroup.id, expected_row_version: 1, values: { name: 'Stale name' } })).rejects.toMatchObject({ status: 409 });
+    await expect(configure('groups.update', { id: newGroup.id, expected_row_version: 2, values: { name: '   ' } })).rejects.toMatchObject({ status: 422 });
+    const conflict = await (await configure('groups.create', { values: { name: 'Existing group' } })).json();
+    await expect(configure('groups.update', { id: newGroup.id, expected_row_version: 2, values: { name: conflict.name } })).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_NAME_CONFLICT' });
+    user = { ...user, company_name: 'Other Corporation' };
+    await expect(configure('groups.update', { id: newGroup.id, expected_row_version: 2, company_name: 'Acme Corporation', values: { name: 'Foreign rename' } })).rejects.toMatchObject({ status: 403 });
+    user = { ...user, company_name: 'Acme Corporation', permissions: ['spreadsheet.manage'] };
+    await expect(configure('groups.update', { id: newGroup.id, expected_row_version: 2, values: { name: 'Denied rename' } })).rejects.toMatchObject({ status: 403 });
+    expect((await repository.query('SELECT name, row_version FROM spreadsheet_dashboard_groups WHERE id = ?', [newGroup.id]))[0]).toEqual({ name: 'Acme forecast group', row_version: 2 });
+    await expect(configure('groups.order', { id: newGroup.id, expected_row_version: 2, values: { sequence: 0 } })).rejects.toMatchObject({ status: 403 });
+    user = { ...user, permissions: ['spreadsheet.manage', 'spreadsheet.dashboard.manage'] };
+    for (const sequence of [-1, 0.5, 1000001, 'invalid']) await expect(configure('groups.order', { id: newGroup.id, expected_row_version: 2, values: { sequence } })).rejects.toMatchObject({ status: 422 });
+    expect(await (await configure('groups.order', { id: newGroup.id, expected_row_version: 2, values: { sequence: 0 } })).json()).toMatchObject({ sequence: 0, row_version: 3 });
+    await expect(configure('groups.order', { id: newGroup.id, expected_row_version: 2, values: { sequence: 20 } })).rejects.toMatchObject({ status: 409 });
+    expect((await repository.querySource(apiSource('dashboards.yaml', 'spreadsheet_dashboard_groups_landing'), { company_name: 'Acme Corporation' }, 0, 50)).data[0].id).toBe(newGroup.id);
+    user = { ...user, company_name: 'Other Corporation' };
+    await expect(configure('groups.order', { id: newGroup.id, expected_row_version: 3, values: { sequence: 20 } })).rejects.toMatchObject({ status: 403 });
+    user = { ...user, company_name: 'Acme Corporation' };
+    const orderedGroups = async () => (await repository.querySource(groupsSource, { company_name: user.company_name }, 0, 100)).data;
+    const beforeReorder = await orderedGroups();
+    const orderSignature = beforeReorder.map((row: any) => `${row.id}:${row.row_version}`).join('|');
+    const targetId = beforeReorder.at(-1).id;
+    expect(await (await configure('groups.reorder', { id: newGroup.id, target_id: targetId, order_signature: orderSignature })).json()).toMatchObject({ id: newGroup.id, sequence: beforeReorder.length * 10 });
+    expect((await orderedGroups()).map((row: any) => row.id)).toEqual([...beforeReorder.slice(1).map((row: any) => row.id), newGroup.id]);
+    await expect(configure('groups.reorder', { id: newGroup.id, target_id: targetId, order_signature: orderSignature })).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_GROUP_ORDER_STALE' });
+    const currentOrder = await orderedGroups();
+    const currentSignature = currentOrder.map((row: any) => `${row.id}:${row.row_version}`).join('|');
+    user = { ...user, permissions: ['spreadsheet.manage'] };
+    await expect(configure('groups.reorder', { id: newGroup.id, target_id: targetId, order_signature: currentSignature })).rejects.toMatchObject({ status: 403 });
+    user = { ...user, permissions: ['spreadsheet.dashboard.manage'], company_name: 'Other Corporation' };
+    await expect(configure('groups.reorder', { id: newGroup.id, target_id: targetId, order_signature: currentSignature })).rejects.toMatchObject({ status: 403 });
+    expect((await repository.query('SELECT name, row_version FROM spreadsheet_dashboards WHERE id = ?', [created.id]))[0]).toEqual({ name: 'Acme forecast', row_version: 2 });
+    user = { ...user, permissions: ['spreadsheet.manage', 'spreadsheet.dashboard.manage'], company_name: 'Acme Corporation' };
+    await configure('create', { group_id: newGroup.id, values: { name: 'A nested dashboard' } });
+    await configure('create', { group_id: newGroup.id, values: { name: 'Z nested dashboard' } });
+    const nestedOrder = async () => (await repository.querySource(apiSource('dashboard-group.yaml', 'spreadsheet_group_dashboards'), { id: newGroup.id, company_name: user.company_name }, 0, 100)).data;
+    const nestedBefore = await nestedOrder();
+    const nestedParams = { id: nestedBefore[0].id, target_id: nestedBefore.at(-1).id, order_signature: nestedBefore.map((row: any) => `${row.id}:${row.row_version}`).join('|') };
+    await expect(configure('reorder', { ...nestedParams, target_id: 'sdb-sales', reorder_group_id: 'sdg-sales' })).rejects.toMatchObject({ status: 403 });
+    expect(await (await configure('reorder', { ...nestedParams, reorder_group_id: 'sdg-sales' })).json()).toMatchObject({ group_id: newGroup.id, sequence: 30 });
+    expect((await nestedOrder()).map((row: any) => row.id)).toEqual([...nestedBefore.slice(1).map((row: any) => row.id), nestedBefore[0].id]);
+    await expect(configure('reorder', nestedParams)).rejects.toMatchObject({ status: 409, code: 'SPREADSHEET_DASHBOARD_ORDER_STALE' });
+    expect((await repository.query('SELECT name, row_version FROM spreadsheet_dashboards WHERE id = ?', [created.id]))[0]).toEqual({ name: 'Acme forecast', row_version: 2 });
+    user = { ...user, company_name: 'Other Corporation' };
+    await expect(configure('reorder', nestedParams)).rejects.toMatchObject({ status: 403 });
+    user = { ...user, company_name: 'Acme Corporation', permissions: ['spreadsheet.manage'] };
+    await expect(configure('reorder', nestedParams)).rejects.toMatchObject({ status: 403 });
     database.close();
   });
 
@@ -269,16 +391,16 @@ describe('Spreadsheet dashboard configuration parity', () => {
       mount_in: 'previous-panel',
       create_action: 'add_spreadsheet_dashboard',
       create_label: 'Add Dashboard',
-      create_mobile_only: true,
       search: false,
       show_pager: false,
       breadcrumbs: [],
     });
+    expect(nested.create_mobile_only).not.toBe(true);
     expect(nested.columns.map((column: any) => column.field)).toEqual([
       'sequence', 'name', 'group_name', 'company_name', 'published', 'actions',
     ]);
     expect(nested.columns.find((column: any) => column.field === 'published')).toMatchObject({ type: 'BooleanToggle', label: 'Is Published', mobile: false });
-    expect(nested.columns.at(-1).actions.map((action: any) => action.id)).toEqual(['publish_spreadsheet_dashboard', 'archive_spreadsheet_dashboard']);
+    expect(nested.columns.at(-1).actions.map((action: any) => action.id)).toEqual(['publish_spreadsheet_dashboard', 'archive_spreadsheet_dashboard', 'restore_spreadsheet_dashboard']);
     expect(nested.row_open_action).toBe('view_spreadsheet_dashboard');
     const addAction = yaml('api/dashboard-group.yaml').actions.find((action: any) => action.id === 'add_spreadsheet_dashboard');
     expect(addAction).toMatchObject({
@@ -328,8 +450,9 @@ describe('Spreadsheet dashboard configuration parity', () => {
     const defaultRows = await repository.querySource(groups, { q: null, fixture_state: null }, 0, 50);
     expect(defaultRows.data.map((row: any) => row.name)).toEqual([
       'Sales', 'Finance', 'Logistics', 'Services', 'Marketing', 'Website', 'Human Resources',
+      'Unpopulated', 'Custom dashboards',
     ]);
-    expect((await repository.querySource(groups, { q: null, fixture_state: 'all' }, 0, 50)).data.map((row: any) => row.name)).toEqual([
+    expect((await repository.querySource(groups, { q: null, fixture_state: 'all', company_name: 'Acme Corporation' }, 0, 50)).data.map((row: any) => row.name)).toEqual([
       'Sales', 'Finance', 'Logistics', 'Services', 'Marketing', 'Website', 'Human Resources', 'Unpopulated', 'Custom dashboards', 'Acme Company dashboards',
     ]);
     expect((await repository.querySource(groups, { q: 'Finance', fixture_state: null }, 0, 50)).data.map((row: any) => row.name)).toEqual(['Finance']);
@@ -344,6 +467,7 @@ describe('Spreadsheet dashboard configuration parity', () => {
     const addAction = yaml('api/dashboard-group.yaml').actions.find((action: any) => action.id === 'add_spreadsheet_dashboard');
     const created = await repository.executeMutation(addAction.mutation, {
       group_id: 'sdg-sales',
+      company_name: 'Acme Corporation',
       values: { name: 'Quarterly Sales' },
     });
     expect(created).toMatchObject({ name: 'Quarterly Sales', group_id: 'sdg-sales', published: false });

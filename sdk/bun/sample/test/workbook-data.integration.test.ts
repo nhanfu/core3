@@ -44,6 +44,7 @@ test('reads the real Orders YAML datasource under each viewer identity without p
     });
     const reader = createYamlSourceReader(api);
     const definition = validateWorkbookRuntime(Bun.YAML.parse(readFileSync(join(root, 'workbooks.yaml'), 'utf8')));
+    definition.export_jobs!.poll_ms = 600000;
     runtime = new WorkbookRuntime(definition, repository, auth, service => {
       expect(service).toBe('order'); return reader;
     });
@@ -80,6 +81,7 @@ test('reads the real Orders YAML datasource under each viewer identity without p
       A1: formula('total_amount', filterLiteral), B1: '=A1+1',
       C1: formula('order_number', filterLiteral),
       E1: formula('customer_name', filterLiteral),
+      H1: `=SEQUENCE(2,1,CORE3.VALUE("sales_orders","total_amount",1,${filterLiteral}))`,
       D1: formula('total_amount', `LEFT(${filterLiteral},LEN(${filterLiteral})-1)&${workbookStringLiteral(', "q":"')}&C1&${workbookStringLiteral('"}')}`),
     } }] } });
     expect(linked.status).toBe(201);
@@ -102,6 +104,20 @@ test('reads the real Orders YAML datasource under each viewer identity without p
     expect(editorExport).toContain('<v>99</v>');
     expect(editorExport).toContain('<v>100</v>');
     expect(editorExport).not.toContain('<v>73</v>');
+    for (const [actor, amount] of [['owner', '73'], ['editor', '99']]) {
+      const queued = await request(`${linkedPath}/export`, 'POST', undefined, actor);
+      expect(queued.status).toBe(202);
+      const [job] = await repository.query('SELECT workbook_snapshot, required_permissions FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
+      expect(JSON.parse(job.workbook_snapshot).sheets[0].cells).toMatchObject({ A1: amount, B1: '=A1+1', D1: amount, H1: amount, H2: String(Number(amount) + 1) });
+      expect(JSON.parse(job.required_permissions)).toEqual(['orders.read']);
+      expect(job.workbook_snapshot).not.toContain('CORE3.VALUE');
+    }
+    const ownerPrint = await request(`${linkedPath}/print`);
+    expect(ownerPrint.status).toBe(200);
+    expect(ownerPrint.body).toMatchObject({ name: 'Authorized export', revision_id: 'START_REVISION', max_cells: 100000 });
+    expect(ownerPrint.body.page_setup).toEqual(definition.print_page_setup);
+    expect(ownerPrint.body.snapshot.sheets[0].cells.A1).toBe('73');
+    expect((await request(`${linkedPath}/print`, 'GET', undefined, 'editor')).body.snapshot.sheets[0].cells.A1).toBe('99');
     const share = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION' });
     expect(share.status).toBe(201);
     const published = (await request(`/public/${share.body.token}`)).body;
@@ -112,7 +128,9 @@ test('reads the real Orders YAML datasource under each viewer identity without p
     expect(copyShare.status).toBe(201);
     expect((await request(`/public/${copyShare.body.token}`)).body.snapshot.sheets[0].cells.E1).toBe(published.snapshot.sheets[0].cells.E1);
     sourceDenied = true;
+    expect((await request(`${linkedPath}/print`)).status).toBe(403);
     expect((await request(`${linkedPath}/export`)).status).toBe(403);
+    expect((await request(`${linkedPath}/export`, 'POST')).status).toBe(403);
     expect((await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION' })).status).toBe(403);
     expect((await request(`/public/${share.body.token}`)).body).toEqual(published);
     sourceDenied = false;
@@ -161,5 +179,30 @@ test('reads the real Orders YAML datasource under each viewer identity without p
     expect(frozenChart.sheets[0].cells.A1).toBe('142');
     expect(frozenChart.sheets[0].figures).toHaveLength(1);
     expect(JSON.stringify(frozenChart)).toContain('amount-chart');
+    const pivotCommands = [
+      { type: 'UPDATE_CELL', sheetId: 's', col: 6, row: 0, content: 'Customer' },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 7, row: 0, content: 'Amount' },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 6, row: 1, content: '=E1' },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 7, row: 1, content: '=A1' },
+      { type: 'ADD_PIVOT', pivotId: 'orders-pivot', pivot: { type: 'SPREADSHEET', name: 'Orders pivot', dataSet: { sheetId: 's', zone: { left: 6, right: 7, top: 0, bottom: 1 } }, rows: [{ fieldName: 'Customer' }], columns: [], measures: [{ id: 'Amount:sum', fieldName: 'Amount', aggregator: 'sum' }] } },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 9, row: 0, content: '=PIVOT.VALUE(1,"Amount:sum")' },
+      { type: 'UPDATE_CELL', sheetId: 's', col: 11, row: 0, content: '=PIVOT(1)' },
+    ];
+    expect(await request(`${linkedPath}/revisions`, 'POST', { type: 'REMOTE_REVISION', version: 1, clientId: client.id, serverRevisionId: 'chart-created', nextRevisionId: 'pivot-created', commands: pivotCommands })).toMatchObject({ status: 200 });
+    expect((await exported('owner')).match(/<c\b[^>]*r="J1"[^>]*>(.*?)<\/c>/s)?.[1]).toContain('<v>142</v>');
+    expect(JSON.stringify(lastExportParts)).not.toContain('Second customer');
+    expect((await exported('editor')).match(/<c\b[^>]*r="J1"[^>]*>(.*?)<\/c>/s)?.[1]).toContain('<v>99</v>');
+    expect(JSON.stringify(lastExportParts)).not.toContain('SO-THREE');
+    const pivotShare = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'pivot-created' });
+    expect(pivotShare.status).toBe(201);
+    const frozenPivot = (await request(`/public/${pivotShare.body.token}`)).body.snapshot;
+    expect(frozenPivot.sheets[0].cells.J1).toBe('142');
+    expect(JSON.stringify(frozenPivot.sheets[0].cells)).not.toContain('PIVOT(');
+    const pivotDurable = (await request(linkedPath)).body;
+    expect(pivotDurable.head_sequence).toBe(2);
+    expect(JSON.stringify(pivotDurable)).not.toContain('quoted');
+    sourceDenied = true;
+    expect((await request(`${linkedPath}/export`)).status).toBe(403);
+    expect((await request(`/public/${pivotShare.body.token}`)).body.snapshot).toEqual(frozenPivot);
   } finally { runtime?.dispose(); sourceDb.close(); db.close(); }
 }, 30000);

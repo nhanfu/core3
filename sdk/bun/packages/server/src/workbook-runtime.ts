@@ -4,6 +4,8 @@ import { bindNamedParams } from './database/sql';
 import type { YamlRepository } from './database/yaml-repository';
 import type { ModuleApiHandler } from './module';
 import { WorkbookEngine } from './workbook-engine';
+import { WorkbookImportJobs, type WorkbookImportJobPolicy } from './workbook-import-jobs';
+import { WorkbookFileJobs, type WorkbookFileJobPolicy } from './workbook-file-jobs';
 import type { YamlSourceReader } from './yaml-source-reader';
 
 type WorkbookSource = {
@@ -23,8 +25,18 @@ export type WorkbookRuntimeDefinition = {
   max_import_files: number;
   max_share_days: number;
   max_data_queries: number;
+  print_max_cells?: number;
+  print_max_figure_pixels?: number;
+  print_page_setup?: {
+    paper_sizes: Array<{ id: string; label: string; width_mm: number; height_mm: number }>;
+    default_paper: string; margin_mm: number; max_margin_mm: number; max_repeat_rows: number;
+  };
+  import_jobs?: WorkbookImportJobPolicy;
+  export_jobs?: WorkbookFileJobPolicy & { max_artifact_bytes: number };
   allowed_commands: string[];
   sources?: Record<string, WorkbookSource>;
+  templates?: Record<string, { name: string; description: string; permission: string; snapshot: any }>;
+  documents?: { route: string; service: string; source: string; read_permission: string; link_permission: string; max_links: number };
   operations: Record<string, { query?: string; mutation?: any }>;
 };
 type AuthProvider = { getCurrentUser(request: Request): Promise<any>; hasPermission(user: any, permission: string): boolean };
@@ -37,6 +49,33 @@ const json = (value: unknown, status = 200) => new Response(JSON.stringify(value
 
 export function validateWorkbookRuntime(value: any): WorkbookRuntimeDefinition {
   const globalTypes = new Map<string, string>();
+  if (value?.export_jobs) {
+    for (const key of ['poll_ms', 'lease_ms', 'max_attempts', 'max_pending_per_user', 'retention_ms', 'max_artifact_bytes']) if (!Number.isSafeInteger(value.export_jobs[key]) || value.export_jobs[key] < 1) throw new Error('Invalid workbook export job policy');
+    if (value.export_jobs.lease_ms < 150000) throw new Error('Export job lease must exceed the engine timeout');
+    for (const operation of ['export_job_create', 'export_jobs', 'export_job', 'export_job_artifact', 'export_job_cancel', 'export_job_cleanup', 'export_job_next', 'export_job_claim', 'export_job_owned', 'export_job_finish', 'export_job_fail']) if (!value.operations?.[operation]?.query && !value.operations?.[operation]?.mutation) throw new Error(`Missing workbook operation: ${operation}`);
+  }
+  if (value?.import_jobs) {
+    for (const key of ['poll_ms', 'lease_ms', 'max_attempts', 'max_pending_per_user', 'retention_ms']) if (!Number.isSafeInteger(value.import_jobs[key]) || value.import_jobs[key] < 1) throw new Error('Invalid workbook import job policy');
+    if (value.import_jobs.lease_ms < 150000) throw new Error('Import job lease must exceed the engine timeout');
+    for (const operation of ['import_job_create', 'import_jobs', 'import_job', 'import_job_cancel', 'import_job_cleanup', 'import_job_next', 'import_job_claim', 'import_job_owned', 'import_job_finish', 'import_job_fail']) if (!value.operations?.[operation]?.query && !value.operations?.[operation]?.mutation) throw new Error(`Missing workbook operation: ${operation}`);
+  }
+  if (value?.print_max_cells !== undefined && (!Number.isSafeInteger(value.print_max_cells) || value.print_max_cells < 1)) throw new Error('Invalid workbook print limit');
+  if (value?.print_max_cells && (!Number.isSafeInteger(value.print_max_figure_pixels) || value.print_max_figure_pixels < 1)) throw new Error('Invalid workbook print figure limit');
+  if (value?.print_max_cells) {
+    const setup = value.print_page_setup;
+    if (!setup || !Number.isSafeInteger(setup.max_repeat_rows) || setup.max_repeat_rows < 0 || setup.max_repeat_rows > 1000) throw new Error('Invalid workbook repeated header limit');
+    if (!setup || !Array.isArray(setup.paper_sizes) || !setup.paper_sizes.length || setup.paper_sizes.length > 20) throw new Error('Invalid workbook print paper sizes');
+    const ids = new Set<string>();
+    for (const paper of setup.paper_sizes) {
+      if (!paper || typeof paper.id !== 'string' || !IDENTIFIER.test(paper.id) || ids.has(paper.id) || typeof paper.label !== 'string' || !paper.label.trim() || paper.label.length > 80 || ![paper.width_mm, paper.height_mm].every(value => typeof value === 'number' && Number.isFinite(value) && value >= 50 && value <= 2000)) throw new Error('Invalid workbook print paper size');
+      ids.add(paper.id);
+    }
+    if (!ids.has(setup.default_paper) || !Number.isFinite(setup.margin_mm) || !Number.isFinite(setup.max_margin_mm) || setup.margin_mm < 0 || setup.margin_mm > setup.max_margin_mm || setup.paper_sizes.some((paper: any) => setup.max_margin_mm * 2 >= Math.min(paper.width_mm, paper.height_mm))) throw new Error('Invalid workbook print margins or default paper');
+  }
+  for (const [key, template] of Object.entries(value?.templates || {}) as Array<[string, any]>) {
+    if (!IDENTIFIER.test(key) || key.startsWith('saved_') || !template || typeof template.name !== 'string' || !template.name.trim() || template.name.length > 255 || typeof template.description !== 'string' || typeof template.permission !== 'string' || !template.permission || !Array.isArray(template.snapshot?.sheets) || !template.snapshot.sheets.length) throw new Error('Invalid workbook template');
+    if (Buffer.byteLength(JSON.stringify(template.snapshot)) > value.max_snapshot_bytes) throw new Error('Workbook template exceeds snapshot limit');
+  }
   if (!value || !/^\/api\/[a-z0-9/-]+$/.test(value.endpoint || '') || value.endpoint.endsWith('/')) throw new Error('Invalid workbook endpoint');
   for (const permission of ['read', 'write', 'manage', 'export']) if (typeof value.permissions?.[permission] !== 'string' || !value.permissions[permission]) throw new Error(`Missing workbook ${permission} permission`);
   for (const limit of ['max_snapshot_bytes', 'max_revision_bytes', 'max_commands', 'max_import_bytes', 'max_import_expanded_bytes', 'max_import_files', 'max_share_days', 'max_data_queries']) if (!Number.isSafeInteger(value[limit]) || value[limit] < 1) throw new Error(`Invalid workbook ${limit}`);
@@ -57,6 +96,14 @@ export function validateWorkbookRuntime(value: any): WorkbookRuntimeDefinition {
     if (!definition || (typeof definition.query !== 'string' && !definition.mutation)) throw new Error(`Missing workbook operation: ${operation}`);
   }
   if (globalTypes.size && (!value.operations?.viewer_filters?.query || !value.operations?.save_viewer_filters?.mutation)) throw new Error('Missing workbook viewer filter operations');
+  const templateOperations = ['templates', 'template', 'create_template', 'delete_template'];
+  if (templateOperations.some(name => value.operations?.[name]) && templateOperations.some(name => !value.operations?.[name]?.query && !value.operations?.[name]?.mutation)) throw new Error('Missing workbook template operations');
+  if (value.documents) {
+    const documents = value.documents;
+    if (typeof documents.route !== 'string' || !/^\/[a-z0-9/-]+$/.test(documents.route) || documents.route.startsWith('//')) throw new Error('Invalid workbook document route');
+    if (!IDENTIFIER.test(documents.service) || !IDENTIFIER.test(documents.source) || typeof documents.read_permission !== 'string' || !documents.read_permission || typeof documents.link_permission !== 'string' || !documents.link_permission || !Number.isSafeInteger(documents.max_links) || documents.max_links < 1) throw new Error('Invalid workbook document configuration');
+    for (const operation of ['document_links', 'document_workbooks', 'link_document', 'unlink_document']) if (!value.operations?.[operation]?.query && !value.operations?.[operation]?.mutation) throw new Error(`Missing workbook operation: ${operation}`);
+  }
   return value;
 }
 
@@ -64,8 +111,30 @@ export function validateWorkbookRuntime(value: any): WorkbookRuntimeDefinition {
 export class WorkbookRuntime {
   private readonly queues = new Map<string, Promise<unknown>>();
   private readonly engine = new WorkbookEngine();
-  dispose() { this.engine.stop(); }
-  constructor(readonly definition: WorkbookRuntimeDefinition, private readonly repository: YamlRepository, private readonly auth: AuthProvider, private readonly resolveSource?: (service: string) => YamlSourceReader) {}
+  private readonly importEngine = new WorkbookEngine();
+  private readonly importJobs?: WorkbookImportJobs;
+  private readonly exportEngine = new WorkbookEngine();
+  private readonly exportJobs?: WorkbookFileJobs;
+  dispose() { this.exportJobs?.stop(); this.exportEngine.stop(); this.importJobs?.stop(); this.importEngine.stop(); this.engine.stop(); }
+  constructor(readonly definition: WorkbookRuntimeDefinition, private readonly repository: YamlRepository, private readonly auth: AuthProvider, private readonly resolveSource?: (service: string) => YamlSourceReader) {
+    if (definition.import_jobs) {
+      this.importJobs = new WorkbookImportJobs(definition.import_jobs, (operation, params) => this.execute(operation, params), async bytes => {
+        const imported = await this.importEngine.import(bytes, definition.max_import_expanded_bytes, definition.max_import_files);
+        const workbook_snapshot = this.snapshot(imported.snapshot, 'START_REVISION');
+        if (Buffer.byteLength(workbook_snapshot) > definition.max_snapshot_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Normalized workbook exceeds the configured limit');
+        return { workbook_snapshot, warnings: imported.warnings };
+      }, () => this.importEngine.stop());
+      this.importJobs.start();
+    }
+    if (definition.export_jobs) {
+      this.exportJobs = new WorkbookFileJobs(definition.export_jobs, (operation, params) => this.execute(operation, params), 'export_job', async job => {
+        const bytes = await this.exportEngine.exportSnapshot(JSON.parse(job.workbook_snapshot));
+        if (bytes.byteLength > definition.export_jobs!.max_artifact_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Export exceeds the configured file limit');
+        return { artifact_base64: Buffer.from(bytes).toString('base64') };
+      }, () => this.exportEngine.stop());
+      this.exportJobs.start();
+    }
+  }
 
   private async execute(name: string, params: Record<string, any>): Promise<any> {
     const operation = this.definition.operations[name];
@@ -180,7 +249,18 @@ export class WorkbookRuntime {
     const [workbook] = await this.execute('load', params);
     if (!workbook) return fail(404, 'WORKBOOK_NOT_FOUND', 'Workbook unavailable');
     const revisions = await this.execute('revisions', { ...params, after_sequence: workbook.snapshot_sequence, through_sequence: workbook.head_sequence });
-    return { ...workbook, snapshot: JSON.parse(workbook.workbook_snapshot), workbook_snapshot: undefined, revisions: revisions.map((row: any) => JSON.parse(row.body)) };
+    return { ...workbook, snapshot: JSON.parse(workbook.workbook_snapshot), workbook_snapshot: undefined, revisions: revisions.map((row: any) => JSON.parse(row.body)), print_max_cells: this.definition.print_max_cells };
+  }
+
+  private async readDocuments(request: Request, user: any, documentId?: string, q = '') {
+    const definition = this.definition.documents;
+    if (!definition || !this.auth.hasPermission(user, definition.read_permission)) fail(403, 'WORKBOOK_DOCUMENT_FORBIDDEN', 'Document access is required');
+    if (!this.resolveSource) fail(503, 'WORKBOOK_SOURCE_UNAVAILABLE', 'Documents service unavailable');
+    const result = await this.resolveSource(definition.service).readSource(request, definition.source, { document_id: documentId || null, q: q || null }, 0, documentId ? 1 : 50);
+    if (!Array.isArray(result.data)) fail(502, 'WORKBOOK_SOURCE_FAILED', 'Documents service returned invalid rows');
+    const data = result.data.map((row: any) => ({ id: String(row.id), name: String(row.name || row.id), state: row.state }));
+    if (documentId && !data.some((row: any) => row.id === documentId)) fail(404, 'WORKBOOK_DOCUMENT_NOT_FOUND', 'Document unavailable');
+    return data;
   }
 
   handle: ModuleApiHandler = async (request, url) => {
@@ -202,8 +282,86 @@ export class WorkbookRuntime {
       const parts = url.pathname.slice(prefix.length).split('/').filter(Boolean);
       const [id, operation] = parts;
       if (parts.length > 2 || (id && !IDENTIFIER.test(id))) return json({ code: 'WORKBOOK_NOT_FOUND', error: 'Workbook unavailable' }, 404);
+      if (id === 'exports' && this.definition.export_jobs) {
+        this.requirePermission(user, 'export');
+        const params = { ...identity, job_id: operation, now: Date.now() };
+        if (!operation && request.method === 'GET') return json({ data: await this.execute('export_jobs', params) });
+        if (!operation || !IDENTIFIER.test(operation)) fail(404, 'WORKBOOK_EXPORT_NOT_FOUND', 'Export unavailable');
+        if (request.method === 'DELETE') { await this.execute('export_job_cancel', params); this.exportJobs?.cancel(operation); return json({ cancelled: true }); }
+        if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+        const [job] = await this.execute('export_job', params);
+        if (!job) fail(404, 'WORKBOOK_EXPORT_NOT_FOUND', 'Export unavailable');
+        await this.access({ ...identity, id: job.workbook_id });
+        if (url.searchParams.get('download') === 'true') {
+          for (const permission of JSON.parse(job.required_permissions)) if (!this.auth.hasPermission(user, permission)) fail(403, 'WORKBOOK_SOURCE_FORBIDDEN', 'Datasource access has been revoked');
+          if (job.state !== 'completed') fail(409, 'WORKBOOK_EXPORT_NOT_READY', 'Export is not ready');
+          const [artifact] = await this.execute('export_job_artifact', { ...params, now: Date.now() });
+          if (!artifact?.artifact_base64) fail(404, 'WORKBOOK_EXPORT_NOT_FOUND', 'Export unavailable');
+          return new Response(Buffer.from(artifact.artifact_base64, 'base64'), { headers: {
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': `attachment; filename="${String(job.name).replace(/[^A-Za-z0-9_-]/g, '_')}.xlsx"`,
+            'Cache-Control': 'no-store', 'X-Workbook-Revision': job.revision_id,
+          } });
+        }
+        delete job.required_permissions;
+        return json(job);
+      }
+      if (id === 'imports' && this.definition.import_jobs) {
+        this.requirePermission(user, 'write');
+        const params = { ...identity, job_id: operation, now: Date.now() };
+        if (operation) {
+          if (!IDENTIFIER.test(operation)) fail(404, 'WORKBOOK_IMPORT_NOT_FOUND', 'Import unavailable');
+          if (request.method === 'DELETE') {
+            await this.execute('import_job_cancel', params);
+            this.importJobs?.cancel(operation);
+            return json({ cancelled: true });
+          }
+          if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+          const [job] = await this.execute('import_job', params);
+          if (!job) fail(404, 'WORKBOOK_IMPORT_NOT_FOUND', 'Import unavailable');
+          return json({ ...job, warnings: JSON.parse(job.warnings) });
+        }
+        if (request.method === 'GET') return json({ data: (await this.execute('import_jobs', identity)).map((job: any) => ({ ...job, warnings: JSON.parse(job.warnings) })) });
+        if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+        if (!identity.current_company_name) fail(422, 'WORKBOOK_COMPANY_REQUIRED', 'Select a company before importing');
+        const name = (url.searchParams.get('name') || '').trim();
+        if (!name || name.length > 255) fail(422, 'WORKBOOK_NAME_REQUIRED', 'Enter a workbook name of at most 255 characters');
+        if (request.headers.get('content-type')?.split(';')[0] !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') fail(415, 'WORKBOOK_IMPORT_TYPE', 'Upload an XLSX workbook');
+        const bytes = await this.bytes(request, this.definition.max_import_bytes);
+        const created = await this.execute('import_job_create', { ...identity, job_id: randomUUID(), workbook_id: randomUUID(), name, input_base64: bytes.toString('base64'), now: Date.now(), max_pending: this.definition.import_jobs.max_pending_per_user });
+        return json(created, 202);
+      }
+      if (id === 'templates') {
+        this.requirePermission(user, 'write');
+        if (operation && IDENTIFIER.test(operation) && request.method === 'POST' && this.definition.operations.publish_template) {
+          const body = await this.body(request, 4096);
+          if (typeof body.published !== 'boolean' || !Number.isSafeInteger(body.row_version) || body.row_version < 1) fail(422, 'WORKBOOK_TEMPLATE_INVALID', 'Provide publication status and the current template version');
+          return json(await this.execute('publish_template', { ...identity, template_id: operation, published: body.published, row_version: body.row_version }));
+        }
+        if (operation && IDENTIFIER.test(operation) && request.method === 'PATCH' && this.definition.operations.update_template) {
+          const body = await this.body(request, 8192);
+          const name = typeof body.name === 'string' ? body.name.trim() : '';
+          if (!name || name.length > 255 || typeof body.description !== 'string' || body.description.length > 2000 || !Number.isSafeInteger(body.row_version) || body.row_version < 1) fail(422, 'WORKBOOK_TEMPLATE_INVALID', 'Enter a template name, description of at most 2000 characters and current version');
+          return json(await this.execute('update_template', { ...identity, template_id: operation, name, description: body.description, row_version: body.row_version }));
+        }
+        if (operation && IDENTIFIER.test(operation) && request.method === 'DELETE' && this.definition.operations.delete_template) {
+          await this.execute('delete_template', { ...identity, template_id: operation });
+          return json({ deleted: true });
+        }
+        if (operation || request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+        const saved = this.definition.operations.templates ? await this.execute('templates', identity) : [];
+        return json({ data: [...Object.entries(this.definition.templates || {}).filter(([, template]) => this.auth.hasPermission(user, template.permission)).map(([key, template]) => ({ id: key, name: template.name, description: template.description })), ...saved.map((template: any) => ({ ...template, can_delete: template.can_manage === true, can_edit: template.can_manage === true && !!this.definition.operations.update_template, can_publish: template.can_manage === true && !!this.definition.operations.publish_template }))] });
+      }
       if (!id) {
-        if (request.method === 'GET') return json({ data: await this.execute('list', { ...identity, q: url.searchParams.get('q') || '', include_archived: url.searchParams.get('archived') === 'true' }), can_create: this.auth.hasPermission(user, this.definition.permissions.write) });
+        if (request.method === 'GET') {
+          const documentId = url.searchParams.get('document_id');
+          if (documentId !== null) {
+            if (!IDENTIFIER.test(documentId)) fail(422, 'WORKBOOK_DOCUMENT_INVALID', 'Invalid document reference');
+            const [document] = await this.readDocuments(request, user, documentId);
+            return json({ data: await this.execute('document_workbooks', { ...identity, document_id: documentId, q: url.searchParams.get('q') || '' }), document, can_create: false });
+          }
+          return json({ data: await this.execute('list', { ...identity, q: url.searchParams.get('q') || '', include_archived: url.searchParams.get('archived') === 'true' }), can_create: this.auth.hasPermission(user, this.definition.permissions.write), import_jobs_enabled: !!this.definition.import_jobs, export_jobs_enabled: !!this.definition.export_jobs && this.auth.hasPermission(user, this.definition.permissions.export) });
+        }
         if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
         this.requirePermission(user, 'write');
         if (!identity.current_company_name) fail(422, 'WORKBOOK_COMPANY_REQUIRED', 'Select a company before creating a workbook');
@@ -214,7 +372,20 @@ export class WorkbookRuntime {
           : await this.body(request, this.definition.max_snapshot_bytes);
         const name = String(body.name || '').trim();
         if (!name || name.length > 255) fail(422, 'WORKBOOK_NAME_REQUIRED', 'Enter a workbook name of at most 255 characters');
-        const initial = body.snapshot || { sheets: [{ id: 'sheet-1', name: 'Sheet1', colNumber: 26, rowNumber: 100, cells: {} }] };
+        let template;
+        if (body.template_id !== undefined) {
+          if (typeof body.template_id !== 'string' || !IDENTIFIER.test(body.template_id)) fail(404, 'WORKBOOK_TEMPLATE_NOT_FOUND', 'Template unavailable');
+          if (Object.hasOwn(this.definition.templates || {}, body.template_id)) {
+            template = this.definition.templates![body.template_id];
+            if (!this.auth.hasPermission(user, template.permission)) fail(404, 'WORKBOOK_TEMPLATE_NOT_FOUND', 'Template unavailable');
+          } else if (this.definition.operations.template) {
+            const [saved] = await this.execute('template', { ...identity, template_id: body.template_id });
+            if (saved) template = { snapshot: JSON.parse(saved.workbook_snapshot) };
+          }
+          if (!template) fail(404, 'WORKBOOK_TEMPLATE_NOT_FOUND', 'Template unavailable');
+          if (body.snapshot !== undefined) fail(422, 'WORKBOOK_TEMPLATE_CONFLICT', 'Choose a template or provide a workbook snapshot');
+        }
+        const initial = template?.snapshot || body.snapshot || { sheets: [{ id: 'sheet-1', name: 'Sheet1', colNumber: 26, rowNumber: 100, cells: {} }] };
         const documentId = randomUUID();
         const params = { ...identity, id: documentId, name, workbook_snapshot: this.snapshot(initial, 'START_REVISION') };
         try {
@@ -230,6 +401,53 @@ export class WorkbookRuntime {
       // revision suffix describe one committed state. SQL CAS also protects writers.
       return await this.serial(id, async () => {
         const access = await this.access(params);
+        if (operation === 'documents' && this.definition.documents) {
+          if (request.method === 'GET') {
+            if (!this.auth.hasPermission(user, this.definition.documents.read_permission)) fail(403, 'WORKBOOK_DOCUMENT_FORBIDDEN', 'Document access is required');
+            if (url.searchParams.get('candidates') === 'true') {
+              await this.access(params, 'manage');
+              const q = url.searchParams.get('q') || '';
+              if (q.length > 256) fail(422, 'WORKBOOK_DOCUMENT_INVALID', 'Search is too long');
+              return json({ data: await this.readDocuments(request, user, undefined, q) });
+            }
+            const links = await this.execute('document_links', params);
+            const data: any[] = [];
+            for (let index = 0; index < links.length; index += 8) {
+              const rows = await Promise.all(links.slice(index, index + 8).map(async (link: any) => {
+                try { return { ...(await this.readDocuments(request, user, link.document_id))[0], available: true }; }
+                catch (error: any) { if (error.status !== 404) throw error; return access.can_manage ? { id: link.document_id, name: 'Unavailable document', available: false } : null; }
+              }));
+              data.push(...rows.filter(Boolean));
+            }
+            return json({ data });
+          }
+          if (!['POST', 'DELETE'].includes(request.method)) return json({ error: 'Method not allowed' }, 405);
+          this.requirePermission(user, 'write'); this.requirePermission(user, 'manage');
+          await this.access(params, 'manage');
+          const body = await this.body(request, 4096);
+          if (typeof body.document_id !== 'string' || !IDENTIFIER.test(body.document_id)) fail(422, 'WORKBOOK_DOCUMENT_INVALID', 'Invalid document reference');
+          if (request.method === 'POST') {
+            if (!access.can_edit || !this.auth.hasPermission(user, this.definition.documents.link_permission)) fail(403, 'WORKBOOK_DOCUMENT_FORBIDDEN', 'Document linking is unavailable');
+            await this.readDocuments(request, user, body.document_id);
+          }
+          await this.execute(request.method === 'POST' ? 'link_document' : 'unlink_document', { ...params, document_id: body.document_id, max_links: this.definition.documents.max_links });
+          return json({ document_id: body.document_id, linked: request.method === 'POST' });
+        }
+        if (operation === 'template' && request.method === 'POST' && this.definition.operations.create_template) {
+          this.requirePermission(user, 'write');
+          this.requirePermission(user, 'manage');
+          await this.access(params, 'manage');
+          if (!access.can_edit) fail(403, 'WORKBOOK_FORBIDDEN', 'Archived workbooks cannot be saved as templates');
+          const body = await this.body(request, 8192);
+          const name = typeof body.name === 'string' ? body.name.trim() : '';
+          const description = body.description === undefined ? '' : body.description;
+          if (!name || name.length > 255 || typeof description !== 'string' || description.length > 2000) fail(422, 'WORKBOOK_TEMPLATE_INVALID', 'Enter a template name and a description of at most 2000 characters');
+          if (body.base_revision !== access.head_revision_id) fail(409, 'WORKBOOK_TEMPLATE_STALE', 'Wait for saved edits and reload before saving a template');
+          const current = await this.engine.execute('snapshot', id, access.head_revision_id, () => this.load(params));
+          const snapshot = this.snapshot(current.snapshot, 'START_REVISION');
+          if (Buffer.byteLength(snapshot) > this.definition.max_snapshot_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Template exceeds the configured limit');
+          return json(await this.execute('create_template', { ...params, template_id: `saved_${randomUUID()}`, name, description, base_revision: access.head_revision_id, workbook_snapshot: snapshot }), 201);
+        }
         if (operation === 'sources' && request.method === 'GET') return json({ data: this.catalog(user) });
         if (operation === 'filters') {
           const fields = this.globalFilters(user);
@@ -272,6 +490,26 @@ export class WorkbookRuntime {
           const result = await this.execute('create_share', { ...params, share_id: randomUUID(), token_hash: createHash('sha256').update(token).digest('hex'), base_revision: access.head_revision_id, workbook_snapshot: this.snapshot(frozen.snapshot, access.head_revision_id), expires_at: new Date(Date.now() + days * 86400000).toISOString() });
           return json({ ...result, token }, 201);
         }
+        if (operation === 'print' && request.method === 'GET' && this.definition.print_max_cells) {
+          this.requirePermission(user, 'export');
+          const filterValues = await this.filterValues(params);
+          const result = await this.engine.render('freeze', access.head_revision_id, await this.load(params), this.catalog(user), query => this.queryData(user, request, query, filterValues), this.definition.max_data_queries);
+          return json({ name: access.name, snapshot: result.snapshot, revision_id: access.head_revision_id, max_cells: this.definition.print_max_cells, max_figure_pixels: this.definition.print_max_figure_pixels, page_setup: this.definition.print_page_setup });
+        }
+        if (operation === 'export' && request.method === 'POST' && this.definition.export_jobs) {
+          this.requirePermission(user, 'export');
+          const filterValues = await this.filterValues(params);
+          const requiredPermissions = new Set<string>();
+          const prepared = await this.engine.render('prepare_export', access.head_revision_id, await this.load(params), this.catalog(user), query => {
+            const source = this.definition.sources?.[query.source];
+            if (source) requiredPermissions.add(source.permission);
+            return this.queryData(user, request, query, filterValues);
+          }, this.definition.max_data_queries);
+          const workbook_snapshot = this.snapshot(prepared.snapshot, access.head_revision_id);
+          if (Buffer.byteLength(workbook_snapshot) > this.definition.max_snapshot_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Prepared export exceeds the snapshot limit');
+          const now = Date.now();
+          return json(await this.execute('export_job_create', { ...params, job_id: randomUUID(), revision_id: access.head_revision_id, name: access.name, workbook_snapshot, required_permissions: JSON.stringify([...requiredPermissions]), now, expires_at_ms: now + this.definition.export_jobs.retention_ms, max_pending: this.definition.export_jobs.max_pending_per_user }), 202);
+        }
         if (operation === 'export' && request.method === 'GET') {
           this.requirePermission(user, 'export');
           const filterValues = await this.filterValues(params);
@@ -283,7 +521,22 @@ export class WorkbookRuntime {
             'Cache-Control': 'no-store', 'X-Workbook-Revision': access.head_revision_id,
           } });
         }
-        if (!operation && request.method === 'GET') return json({ ...(await this.load(params)), client: { id: `${this.clientPrefix(params.current_user_id)}${randomUUID()}`, name: params.current_user_name }, can_edit: !!access.can_edit && this.auth.hasPermission(user, this.definition.permissions.write), can_manage: !!access.can_manage && this.auth.hasPermission(user, this.definition.permissions.manage), can_create: this.auth.hasPermission(user, this.definition.permissions.write), can_export: this.auth.hasPermission(user, this.definition.permissions.export) });
+        if (!operation && request.method === 'GET') {
+          const canEdit = !!access.can_edit && this.auth.hasPermission(user, this.definition.permissions.write);
+          const canManage = !!access.can_manage && this.auth.hasPermission(user, this.definition.permissions.manage);
+          const documents = this.definition.documents;
+          const canReadDocuments = !!documents && this.auth.hasPermission(user, documents.read_permission);
+          return json({ ...(await this.load(params)),
+            client: { id: `${this.clientPrefix(params.current_user_id)}${randomUUID()}`, name: params.current_user_name },
+            can_edit: canEdit, can_manage: canManage,
+            can_create: this.auth.hasPermission(user, this.definition.permissions.write),
+            can_export: this.auth.hasPermission(user, this.definition.permissions.export),
+            export_jobs_enabled: !!this.definition.export_jobs,
+            can_save_template: !!this.definition.operations.create_template && canManage && canEdit,
+            documents_route: canReadDocuments ? documents!.route : undefined,
+            can_link_documents: canReadDocuments && canEdit && canManage && this.auth.hasPermission(user, documents!.link_permission),
+          });
+        }
         if (operation === 'revisions' && request.method === 'GET') {
           const sequence = Number(url.searchParams.get('after') || 0);
           if (!Number.isSafeInteger(sequence) || sequence < 0) fail(422, 'WORKBOOK_INVALID_CURSOR', 'Invalid revision cursor');

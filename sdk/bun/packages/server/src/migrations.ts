@@ -337,6 +337,7 @@ export async function migrateDatabase(
   versionParts(desired);
   const driver = repository.driver;
   if (!driver) throw new Error('Migration repository must declare its database driver');
+  let changed = false;
 
   for (const migration of migrations) {
     if (compareVersions(migration.version, desired) <= 0 && (!applied.has(migration.version) || migration.rerun)) {
@@ -370,6 +371,7 @@ export async function migrateDatabase(
         await repository.run(`INSERT INTO ${migrationTable}(version) VALUES(?)`, [migration.version]);
       }
       applied.add(migration.version);
+      changed = true;
     }
   }
   for (const migration of [...migrations].reverse()) {
@@ -381,8 +383,14 @@ export async function migrateDatabase(
       const sql = migrationSqlForDriver(migration, driver);
       await repository.runStatements(sql.down);
       await repository.run(`DELETE FROM ${migrationTable} WHERE version = ?`, [migration.version]);
+      changed = true;
     }
   }
+  // DuckDB can fail WAL replay of catalog changes (notably DROP INDEX) after
+  // an abrupt exit. Finish the migration checkpoint before serving requests.
+  // This protects subsequent acknowledged writes, not a crash mid-migration.
+  // https://github.com/duckdb/duckdb/issues/22044
+  if (changed && driver === 'duckdb') await repository.run('CHECKPOINT');
 }
 
 export function discoverMigrations(root: string): Migration[] {

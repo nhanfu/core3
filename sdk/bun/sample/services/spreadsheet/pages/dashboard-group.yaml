@@ -5,6 +5,12 @@ components:
     source: spreadsheet_dashboard_group
     title_field: name
     editable: true
+    header_actions:
+      - { id: edit_dashboard_group, label: Edit, variant: primary }
+      - { id: order_dashboard_group, label: Display order, variant: secondary }
+    groups:
+      - fields:
+          - { field: name, label: Name }
     notebook:
       tabs:
         - id: spreadsheets
@@ -14,19 +20,19 @@ components:
     mount_in: previous-panel
     variant: odoo
     source: spreadsheet_group_dashboards
+    reorder_action: reorder_group_dashboards
     breadcrumbs: []
     create_action: add_spreadsheet_dashboard
     create_label: Add Dashboard
-    create_mobile_only: true
     search: false
     show_pager: false
     columns:
-      - { field: sequence, label: '', type: HandleCell, sortable: false, mobile: false }
+      - { field: sequence, label: '', type: HandleCell, sortable: false }
       - { field: name, label: Name, type: PrimaryEntityCell }
       - { field: group_name, label: Group, mobile: false }
       - { field: company_name, label: Companies, mobile: false }
       - { field: published, label: Is Published, type: BooleanToggle, sortable: false, mobile: false }
-      - { field: actions, label: '', sortable: false, align: right, actions: [{ id: publish_spreadsheet_dashboard, label: Publish, show_if: 'row.state === "Draft"' }, { id: archive_spreadsheet_dashboard, label: Archive, variant: danger, show_if: 'row.state === "Draft" || row.state === "Published"' }] }
+      - { field: actions, label: '', sortable: false, align: right, actions: [{ id: publish_spreadsheet_dashboard, label: Publish, show_if: 'row.state === "Draft"' }, { id: archive_spreadsheet_dashboard, label: Archive, variant: danger, show_if: 'row.state === "Draft" || row.state === "Published"' }, { id: restore_spreadsheet_dashboard, label: Restore, show_if: 'row.state === "Archived"' }] }
     row_key: id
     row_open_action: view_spreadsheet_dashboard
     row_double_click_action: view_spreadsheet_dashboard

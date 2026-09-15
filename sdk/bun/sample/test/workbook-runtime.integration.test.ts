@@ -29,11 +29,11 @@ const auth = {
   },
   hasPermission: (user: any, permission: string) => user.permissions.includes(permission),
 };
-async function setup(path = ':memory:') {
+async function setup(path = ':memory:', definition = config()) {
   const db = await DuckDbDatabase.open(path);
   const repository = new YamlRepository(db);
   await migrateDatabase(repository, join(root, 'migrations'), undefined, 'workbook_test_migrations', ['schema', 'data']);
-  const runtime = new WorkbookRuntime(config(), repository, auth);
+  const runtime = new WorkbookRuntime(definition, repository, auth);
   runtimes.add(runtime);
   const request = async (path = '', method = 'GET', body?: any, user = 'owner') => {
     const url = new URL(`http://workbook.test${config().endpoint}${path}`);
@@ -48,6 +48,143 @@ const revision = (id = 'revision-1', base = 'START_REVISION', content = '42', ac
 });
 
 describe('YAML-owned workbook persistence and revision protocol', () => {
+  test('validates YAML paper dimensions, defaults and margin limits', () => {
+    for (const change of [
+      { default_paper: 'missing' }, { margin_mm: -1 }, { max_margin_mm: 110 }, { max_repeat_rows: -1 },
+      { paper_sizes: [{ id: 'tiny', label: 'Tiny', width_mm: 0, height_mm: 297 }] },
+      { paper_sizes: [config().print_page_setup!.paper_sizes[0], config().print_page_setup!.paper_sizes[0]] },
+    ]) {
+      const definition = config(); definition.print_page_setup = { ...definition.print_page_setup!, ...change };
+      expect(() => validateWorkbookRuntime(definition)).toThrow();
+    }
+    const custom = config();
+    custom.print_page_setup = { paper_sizes: [{ id: 'custom', label: 'Custom report', width_mm: 250, height_mm: 350 }], default_paper: 'custom', margin_mm: 0, max_margin_mm: 60, max_repeat_rows: 10 };
+    expect(validateWorkbookRuntime(custom).print_page_setup).toEqual(custom.print_page_setup);
+  });
+  test('upgrades existing saved templates and rolls back without losing snapshots', async () => {
+    const db = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(db);
+    try {
+      const base = Bun.YAML.parse(readFileSync(join(root, 'migrations/20260915150000-011-workbook-templates.yaml'), 'utf8')) as any;
+      const migration = Bun.YAML.parse(readFileSync(join(root, 'migrations/20260915170000-013-template-version.yaml'), 'utf8')) as any;
+      const shared = Bun.YAML.parse(readFileSync(join(root, 'migrations/20260915180000-014-shared-templates.yaml'), 'utf8')) as any;
+      await repository.query(base.type.postgres.up, []);
+      await repository.query("INSERT INTO spreadsheet_workbook_templates (id, owner_id, company_name, name, description, workbook_snapshot) VALUES ('saved_old', 'owner', 'Acme', 'Old template', '', '{}')", []);
+      await repository.query(migration.type.postgres.up, []);
+      expect(await repository.query('SELECT row_version, workbook_snapshot FROM spreadsheet_workbook_templates', [])).toEqual([{ row_version: 1, workbook_snapshot: '{}' }]);
+      await repository.query(shared.type.postgres.up, []);
+      expect(await repository.query('SELECT published, row_version, workbook_snapshot FROM spreadsheet_workbook_templates', [])).toEqual([{ published: false, row_version: 1, workbook_snapshot: '{}' }]);
+      await repository.query(shared.type.postgres.down, []);
+      await repository.query(migration.type.postgres.down, []);
+      expect(await repository.query('SELECT name, workbook_snapshot FROM spreadsheet_workbook_templates', [])).toEqual([{ name: 'Old template', workbook_snapshot: '{}' }]);
+    } finally { db.close(); }
+  });
+  test('saves committed templates privately and deletes them without changing created workbooks', async () => {
+    const { db, request } = await setup();
+    try {
+      const book = (await request('', 'POST', { name: 'Source', snapshot: { sheets: [{ id: 'sheet-1', name: 'Sheet1', colNumber: 26, rowNumber: 100, cells: { A1: '10', B1: '=A1*2', C1: '=CORE3.VALUE("sales_orders","total_amount",1,"{}")' } }] } })).body;
+      const route = `/${book.id}`;
+      await request(`${route}/members`, 'POST', { user_id: 'editor', role: 'editor' });
+      expect((await request(`${route}/template`, 'POST', { name: 'Denied', base_revision: 'START_REVISION' }, 'editor')).status).toBe(403);
+      expect((await request(`${route}/template`, 'POST', { name: 'Denied', base_revision: 'START_REVISION' }, 'wrong')).status).toBe(404);
+      expect((await request(`${route}/revisions`, 'POST', revision('saved-edit', 'START_REVISION', '21'))).status).toBe(200);
+      expect((await request(`${route}/template`, 'POST', { name: 'Stale', base_revision: 'START_REVISION' })).status).toBe(409);
+      const saved = await request(`${route}/template`, 'POST', { name: 'Saved report', description: 'Reusable formulas', base_revision: 'saved-edit', owner_id: 'editor', snapshot: {} });
+      expect(saved.status).toBe(201);
+      const templateId = saved.body.id;
+      expect(templateId).toMatch(/^saved_/);
+      expect((await request('/templates')).body.data).toContainEqual({ id: templateId, name: 'Saved report', description: 'Reusable formulas', row_version: 1, published: false, can_manage: true, can_delete: true, can_edit: true, can_publish: true });
+      const edit = { name: ' Revised report ', description: '', row_version: 1, owner_id: 'editor', workbook_snapshot: '{}' };
+      for (const actor of ['editor', 'wrong']) expect((await request(`/templates/${templateId}`, 'PATCH', edit, actor)).status).toBe(404);
+      expect((await request(`/templates/${templateId}`, 'PATCH', edit, 'reader')).status).toBe(403);
+      expect((await request('/templates/budget', 'PATCH', edit)).status).toBe(404);
+      for (const invalid of [{ ...edit, name: '' }, { ...edit, description: 'x'.repeat(2001) }, { ...edit, row_version: 0 }]) expect((await request(`/templates/${templateId}`, 'PATCH', invalid)).status).toBe(422);
+      const updated = await request(`/templates/${templateId}`, 'PATCH', edit);
+      expect(updated.status).toBe(200);
+      expect(updated.body).toMatchObject({ id: templateId, name: 'Revised report', description: '', row_version: 2 });
+      expect((await request(`/templates/${templateId}`, 'PATCH', edit)).status).toBe(409);
+      expect((await request('/templates')).body.data.find((template: any) => template.id === templateId)).toMatchObject({ name: 'Revised report', description: '', row_version: 2 });
+      for (const actor of ['editor', 'wrong']) {
+        expect((await request('/templates', 'GET', undefined, actor)).body.data.map((template: any) => template.id)).not.toContain(templateId);
+        expect((await request('', 'POST', { name: 'Denied copy', template_id: templateId }, actor)).status).toBe(404);
+        expect((await request(`/templates/${templateId}`, 'DELETE', undefined, actor)).status).toBe(404);
+      }
+      await request(`${route}/revisions`, 'POST', revision('later-edit', 'saved-edit', '999'));
+      const copy = await request('', 'POST', { name: 'Template copy', template_id: templateId });
+      expect(copy.status).toBe(201);
+      expect(copy.body.snapshot.sheets[0].cells).toMatchObject({ A1: '21', B1: '=A1*2', C1: '=CORE3.VALUE("sales_orders","total_amount",1,"{}")' });
+      expect(copy.body.head_sequence).toBe(0);
+      expect((await request(`${route}/template`, 'POST', { name: '', base_revision: 'later-edit' })).status).toBe(422);
+      await request(route, 'PATCH', { archived: true, row_version: (await request(route)).body.row_version });
+      expect((await request(`${route}/template`, 'POST', { name: 'Archived', base_revision: 'later-edit' })).status).toBe(403);
+      expect((await request(`/templates/${templateId}`, 'DELETE')).status).toBe(200);
+      expect((await request('', 'POST', { name: 'Deleted', template_id: templateId })).status).toBe(404);
+      expect((await request(`/${copy.body.id}`)).body.snapshot.sheets[0].cells.A1).toBe('21');
+      expect((await request(`/templates/budget`, 'DELETE')).status).toBe(404);
+    } finally { db.close(); }
+  }, 15000);
+  test('publishes templates within a company and withdraws future reuse without changing existing copies', async () => {
+    const { db, request } = await setup();
+    try {
+      const source = (await request('', 'POST', { name: 'Private source', snapshot: { sheets: [{ id: 's', name: 'Sheet1', colNumber: 26, rowNumber: 100, cells: { A1: '21', B1: '=A1*2' } }] } })).body;
+      const saved = (await request(`/${source.id}/template`, 'POST', { name: 'Company budget', description: 'Reusable', base_revision: 'START_REVISION', published: true })).body;
+      const route = `/templates/${saved.id}`;
+      const list = async (actor: string) => (await request('/templates', 'GET', undefined, actor)).body.data.find((item: any) => item.id === saved.id);
+      expect(await list('editor')).toBeUndefined();
+      const publish = { published: true, row_version: 1, company_name: 'Other company', owner_id: 'editor' };
+      for (const actor of ['editor', 'wrong']) expect((await request(route, 'POST', publish, actor)).status).toBe(404);
+      expect((await request(route, 'POST', publish, 'reader')).status).toBe(403);
+      expect((await request('/templates/budget', 'POST', publish)).status).toBe(404);
+      expect((await request(route, 'POST', { ...publish, published: 'true' })).status).toBe(422);
+      expect((await request(route, 'POST', publish)).body).toMatchObject({ published: true, row_version: 2 });
+      expect((await request(route, 'POST', publish)).status).toBe(409);
+      expect(await list('wrong')).toBeUndefined();
+      expect(await list('editor')).toMatchObject({ published: true, can_manage: false, can_edit: false, can_delete: false, can_publish: false });
+      expect(JSON.stringify(await list('editor'))).not.toContain('snapshot');
+      expect((await request(`/${source.id}`, 'GET', undefined, 'editor')).status).toBe(404);
+      expect((await request('', 'POST', { name: 'Denied', template_id: saved.id }, 'wrong')).status).toBe(404);
+      expect((await request(route, 'PATCH', { name: 'Forged', description: '', row_version: 2 }, 'editor')).status).toBe(404);
+      expect((await request(route, 'DELETE', undefined, 'editor')).status).toBe(404);
+      const copy = await request('', 'POST', { name: 'My copy', template_id: saved.id, owner_id: 'owner', visibility: 'internal' }, 'editor');
+      expect(copy.status).toBe(201);
+      expect(copy.body.owner_id).toBe('editor');
+      expect(copy.body.snapshot.sheets[0].cells).toMatchObject({ A1: '21', B1: '=A1*2' });
+      expect((await request(`/${copy.body.id}`, 'GET')).status).toBe(404);
+      expect((await request(route, 'POST', { published: false, row_version: 2 })).body).toMatchObject({ published: false, row_version: 3 });
+      expect(await list('editor')).toBeUndefined();
+      expect((await request('', 'POST', { name: 'Withdrawn', template_id: saved.id }, 'editor')).status).toBe(404);
+      expect((await request(`/${copy.body.id}`, 'GET', undefined, 'editor')).body.snapshot.sheets[0].cells.B1).toBe('=A1*2');
+      expect((await request('', 'POST', { name: 'Owner reuse', template_id: saved.id })).status).toBe(201);
+    } finally { db.close(); }
+  }, 15000);
+  test('creates private independent workbooks from authorized YAML templates', async () => {
+    const definition = config();
+    definition.templates!.restricted = { ...definition.templates!.budget, permission: 'restricted.template' };
+    const { db, request } = await setup(':memory:', definition);
+    try {
+      const listed = await request('/templates');
+      expect(listed.body.data).toContainEqual({ id: 'budget', name: 'Budget planner', description: expect.any(String) });
+      expect(JSON.stringify(listed.body)).not.toContain('snapshot');
+      expect(listed.body.data.map((template: any) => template.id)).not.toContain('restricted');
+      expect((await request('', 'POST', { name: 'Restricted', template_id: 'restricted' })).status).toBe(404);
+      expect((await request('/templates', 'GET', undefined, 'reader')).status).toBe(403);
+      expect((await request('', 'POST', { name: 'Denied', template_id: 'budget' }, 'reader')).status).toBe(403);
+      expect((await request('', 'POST', { name: 'Missing', template_id: 'missing' })).status).toBe(404);
+      expect((await request('', 'POST', { name: 'Conflict', template_id: 'budget', snapshot: {} })).status).toBe(422);
+      const first = await request('', 'POST', { name: 'First budget', template_id: 'budget', owner_id: 'editor', company_name: 'Other' });
+      expect(first.status).toBe(201);
+      expect(first.body.snapshot.sheets[0].cells.D2).toBe('=B2-C2');
+      expect((await request(`/${first.body.id}`, 'GET', undefined, 'editor')).status).toBe(404);
+      await request(`/${first.body.id}/members`, 'POST', { user_id: 'editor', role: 'reader' });
+      expect((await request(`/${first.body.id}/print`, 'GET', undefined, 'editor')).status).toBe(403);
+      await request(`/${first.body.id}/revisions`, 'POST', revision('budget-edit', 'START_REVISION', 'Changed'));
+      const second = await request('', 'POST', { name: 'Second budget', template_id: 'budget' });
+      expect(second.status).toBe(201);
+      expect(second.body.id).not.toBe(first.body.id);
+      expect(second.body.snapshot.sheets[0].cells.A1).toBe('Category');
+      expect(second.body.head_sequence).toBe(0);
+    } finally { db.close(); }
+  }, 15000);
   test('links company dashboards only to an owned active workbook without granting viewer access', async () => {
     const { db, request, repository } = await setup();
     try {
@@ -303,6 +440,10 @@ describe('YAML-owned workbook persistence and revision protocol', () => {
       const created = await state.request('', 'POST', { name: 'Durable workbook' });
       const route = `/${created.body.id}`;
       expect((await state.request(`${route}/revisions`, 'POST', revision())).status).toBe(200);
+      const template = await state.request(`${route}/template`, 'POST', { name: 'Persistent template', base_revision: 'revision-1' });
+      expect(template.status).toBe(201);
+      state.runtime.dispose();
+      runtimes.delete(state.runtime);
       state.db.close();
       state = await setup(path);
       const restored = await state.request(route);
@@ -310,11 +451,12 @@ describe('YAML-owned workbook persistence and revision protocol', () => {
       expect(restored.body.revisions).toHaveLength(1);
       expect(restored.body.revisions[0].commands[0].content).toBe('42');
       expect((await state.request(`${route}/revisions`, 'POST', revision())).body.replayed).toBe(true);
+      expect((await state.request('/templates')).body.data.map((entry: any) => entry.id)).toContain(template.body.id);
     } finally {
       state.db.close();
       rmSync(dir, { recursive: true, force: true });
     }
-  });
+  }, 15000); // Includes disk migration/reopen and engine worker startup; not a performance gate.
 
   test('routes declared workbook prefixes through the aggregate API without losing 404 or 401', async () => {
     const { db, runtime } = await setup();

@@ -11,16 +11,24 @@ export class SpreadsheetWorkspace extends BaseComponent {
   private transport?: WorkbookTransport;
   private editor?: SpreadsheetWorkbook;
   private liveData?: WorkbookLiveData;
+  private printPreview?: () => void;
+  private documentDialog?: () => void;
+  private importDialog?: () => void;
+  private exportDialog?: () => void;
   private generation = 0;
   private unloading = (event: BeforeUnloadEvent) => {
     if (this.hasPendingEdits()) { event.preventDefault(); event.returnValue = ''; }
   };
 
-  static resolveState(definition: any, context: any) { return { ...definition, workbook_id: context.state?.workbook_id || null }; }
+  static resolveState(definition: any, context: any) { return { ...definition, workbook_id: context.state?.workbook_id || null, document_id: context.state?.document_id || null }; }
 
   private hasPendingEdits() { return this.editor?.model && !this.editor.model.session.isFullySynchronized(); }
 
   override dispose() {
+    this.printPreview?.();
+    this.documentDialog?.();
+    this.importDialog?.();
+    this.exportDialog?.();
     this.liveData?.dispose();
     this.generation++;
     this.transport?.leave();
@@ -29,6 +37,10 @@ export class SpreadsheetWorkspace extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
+    this.printPreview?.(); this.printPreview = undefined;
+    this.documentDialog?.(); this.documentDialog = undefined;
+    this.importDialog?.(); this.importDialog = undefined;
+    this.exportDialog?.(); this.exportDialog = undefined;
     this.liveData?.dispose(); this.liveData = undefined;
     const generation = ++this.generation;
     this.transport?.leave();
@@ -49,6 +61,12 @@ export class SpreadsheetWorkspace extends BaseComponent {
     header.append(title);
     container.append(header, status, content);
     const request = workbookRequest(this.state.endpoint);
+    const showExports = async () => {
+      const { openWorkbookExports } = await import('../spreadsheet/export-jobs');
+      if (generation !== this.generation) return;
+      this.exportDialog?.();
+      this.exportDialog = openWorkbookExports(container, request, workbookRequest(this.state.endpoint, 'bytes'));
+    };
     const error = (failure: unknown) => { if (generation === this.generation) status.textContent = failure instanceof Error ? failure.message : 'Workbook request failed'; };
     const button = (label: string, action: () => Promise<unknown> | void, target = header) => {
       const node = document.createElement('button');
@@ -57,7 +75,7 @@ export class SpreadsheetWorkspace extends BaseComponent {
       target.append(node);
       return node;
     };
-    const form = (name: string, fields: Array<{ key: string; label: string; value?: string; choices?: string[] }>, submit: (values: Record<string, string>) => Promise<void>) => {
+    const form = (name: string, fields: Array<{ key: string; label: string; value?: string; choices?: string[]; optional?: boolean }>, submit: (values: Record<string, string>) => Promise<void>) => {
       const dialog = document.createElement('dialog');
       const heading = document.createElement('h2'); heading.textContent = name;
       const node = document.createElement('form');
@@ -69,7 +87,7 @@ export class SpreadsheetWorkspace extends BaseComponent {
         input.name = field.key;
         input.setAttribute('aria-label', field.label);
         if (input instanceof HTMLSelectElement) for (const choice of field.choices!) { const option = document.createElement('option'); option.value = option.textContent = choice; input.append(option); }
-        input.value = field.value || field.choices?.[0] || ''; input.required = true;
+        input.value = field.value || field.choices?.[0] || ''; input.required = !field.optional;
         label.append(input); node.append(label);
       }
       const save = document.createElement('button'); save.type = 'submit'; save.textContent = 'Save';
@@ -107,15 +125,40 @@ export class SpreadsheetWorkspace extends BaseComponent {
       const archive = document.createElement('label');
       const checkbox = document.createElement('input'); checkbox.type = 'checkbox';
       archive.append(checkbox, ' Show archived'); header.append(archive);
+      if (this.state.document_id) {
+        archive.hidden = true;
+        button('All spreadsheets', () => {
+          this.state.document_id = null;
+          const url = new URL(window.location.href); url.searchParams.delete('document_id'); window.history.replaceState({}, '', url);
+          this.redraw();
+        });
+      }
       let lookup = 0;
+      let durableImports = false;
+      const showImports = async () => {
+        const { openWorkbookImports } = await import('../spreadsheet/import-jobs');
+        if (generation !== this.generation) return;
+        this.importDialog?.();
+        this.importDialog = openWorkbookImports(container, request, (id, warnings) => { this.state.import_warnings = warnings; select(id); });
+      };
+      const activity = button('Import activity', showImports);
+      activity.hidden = true;
+      const exportActivity = button('Export activity', showExports);
+      exportActivity.hidden = true;
       const refresh = async () => {
         const sequence = ++lookup;
-        const result = await request(`?q=${encodeURIComponent(search.value)}&archived=${checkbox.checked}`);
+        if (this.state.document_id) { content.replaceChildren(); title.textContent = this.state.title || 'Spreadsheets'; status.textContent = 'Loading…'; }
+        const result = await request(`?q=${encodeURIComponent(search.value)}&archived=${checkbox.checked}${this.state.document_id ? `&document_id=${encodeURIComponent(this.state.document_id)}` : ''}`);
         if (generation !== this.generation || sequence !== lookup) return;
         content.replaceChildren();
+        if (result.document) title.textContent = `Spreadsheets · ${result.document.name}`;
         status.textContent = result.data.length ? `${result.data.length} spreadsheets` : 'No spreadsheets yet.';
         create.disabled = !result.can_create;
         importButton.disabled = !result.can_create;
+        templates.disabled = !result.can_create;
+        durableImports = !!result.import_jobs_enabled;
+        activity.hidden = !durableImports || !result.can_create;
+        exportActivity.hidden = !result.export_jobs_enabled;
         for (const workbook of result.data) {
           const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:12px;padding:12px;border-bottom:1px solid #ddd';
           button(workbook.name + (workbook.archived ? ' (Archived)' : ''), () => select(workbook.id), row);
@@ -126,6 +169,52 @@ export class SpreadsheetWorkspace extends BaseComponent {
         const created = await request('', { method: 'POST', body: JSON.stringify(values) }); select(created.id);
       }));
       create.disabled = true;
+      const templates = button('Templates', async () => {
+        const result = await request('/templates');
+        if (generation !== this.generation) return;
+        const dialog = document.createElement('dialog');
+        const heading = document.createElement('h2'); heading.textContent = 'Spreadsheet templates'; dialog.append(heading);
+        for (const template of result.data) {
+          const row = document.createElement('section');
+          button(template.name, () => {
+            dialog.close();
+            form('Create from template', [{ key: 'name', label: 'Name', value: template.name }], async values => {
+              const created = await request('', { method: 'POST', body: JSON.stringify({ ...values, template_id: template.id }) });
+              select(created.id);
+            });
+          }, row);
+          const description = document.createElement('p'); description.textContent = template.description; row.append(description); dialog.append(row);
+          if (typeof template.published === 'boolean') {
+            const visibility = document.createElement('p');
+            visibility.textContent = template.published ? 'Shared with your company. Copies include the saved workbook contents.' : 'Private template. Publishing lets people in your company copy the saved workbook contents.';
+            row.append(visibility);
+          }
+          if (template.can_publish) button(`${template.published ? 'Withdraw' : 'Publish to company:'} ${template.name}`, async () => {
+            try {
+              await request(`/templates/${encodeURIComponent(template.id)}`, { method: 'POST', body: JSON.stringify({ published: !template.published, row_version: template.row_version }) });
+              dialog.close(); templates.click();
+            } catch (failure: any) { description.setAttribute('role', 'alert'); description.textContent = failure.message; }
+          }, row);
+          if (template.can_edit) button(`Edit ${template.name}`, () => {
+            dialog.close();
+            form('Edit template', [{ key: 'name', label: 'Name', value: template.name }, { key: 'description', label: 'Description', value: template.description, optional: true }], async values => {
+              await request(`/templates/${encodeURIComponent(template.id)}`, { method: 'PATCH', body: JSON.stringify({ ...values, row_version: template.row_version }) });
+              status.textContent = 'Template updated.';
+            });
+          }, row);
+          if (template.can_delete) button(`Delete ${template.name}`, async () => {
+            try {
+              await request(`/templates/${encodeURIComponent(template.id)}`, { method: 'DELETE' });
+              row.remove();
+            } catch (failure: any) { description.setAttribute('role', 'alert'); description.textContent = failure.message; }
+          }, row);
+        }
+        if (!result.data.length) { const empty = document.createElement('p'); empty.textContent = 'No templates are available for your account.'; dialog.append(empty); }
+        button('Close', () => dialog.close(), dialog);
+        dialog.addEventListener('close', () => dialog.remove(), { once: true });
+        container.append(dialog); dialog.showModal();
+      });
+      templates.disabled = true;
       const file = document.createElement('input');
       file.type = 'file'; file.accept = '.xlsx'; file.hidden = true;
       file.setAttribute('aria-label', 'Import XLSX file');
@@ -136,16 +225,20 @@ export class SpreadsheetWorkspace extends BaseComponent {
         const selected = file.files?.[0];
         if (!selected) return;
         importButton.disabled = true; status.textContent = 'Importing workbook…';
-        void request(`?name=${encodeURIComponent(selected.name.replace(/\.xlsx$/i, ''))}`, {
+        void request(`${durableImports ? '/imports' : ''}?name=${encodeURIComponent(selected.name.replace(/\.xlsx$/i, ''))}`, {
           method: 'POST', body: selected, headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
-        }).then(created => { this.state.import_warnings = created.import_warnings; select(created.id); }).catch(error).finally(() => { importButton.disabled = false; file.value = ''; });
+        }).then(async created => {
+          if (generation !== this.generation) return;
+          if (durableImports) { status.textContent = 'Import queued.'; await showImports(); }
+          else { this.state.import_warnings = created.import_warnings; select(created.id); }
+        }).catch(error).finally(() => { importButton.disabled = false; file.value = ''; });
       });
       search.addEventListener('change', () => { void refresh().catch(error); });
       checkbox.addEventListener('change', () => { void refresh().catch(error); });
       void refresh().catch(error);
       return;
     }
-    button('All spreadsheets', () => select(null));
+    button(this.state.document_id ? 'Document spreadsheets' : 'All spreadsheets', () => select(null));
     const id = String(this.state.workbook_id);
     const bookRequest = workbookRequest(`${this.state.endpoint}/${encodeURIComponent(id)}`);
     void Promise.all([bookRequest(''), loadSpreadsheetEngine()]).then(([book, engine]) => {
@@ -186,7 +279,32 @@ export class SpreadsheetWorkspace extends BaseComponent {
       }), content);
       status.textContent = book.can_edit ? 'All changes saved' : 'View only';
       button('Refresh linked data', () => this.liveData?.refresh());
+      if (book.can_export && book.export_jobs_enabled) {
+        button('Prepare XLSX', async () => {
+          if (this.hasPendingEdits()) throw new Error('Wait for your edits to save before preparing an export.');
+          await bookRequest('/export', { method: 'POST' });
+          await showExports();
+        });
+        button('Export activity', showExports);
+      }
       button('Global filters', () => openWorkbookFilters(container, bookRequest, () => this.liveData?.refresh()));
+      if (book.documents_route) button('Linked documents', async () => {
+        const { openWorkbookDocuments } = await import('../spreadsheet/documents');
+        if (generation !== this.generation) return;
+        this.documentDialog?.();
+        this.documentDialog = openWorkbookDocuments(container, bookRequest, { route: book.documents_route, canLink: book.can_link_documents, canManage: book.can_manage && book.can_create });
+      });
+      if (book.can_export && book.print_max_cells) button('Print', async () => {
+        if (this.hasPendingEdits()) throw new Error('Wait for your edits to save before printing.');
+        const payload = await bookRequest('/print');
+        const { openWorkbookPrint } = await import('../spreadsheet/print');
+        if (generation === this.generation) {
+          this.printPreview?.();
+          const dispose = await openWorkbookPrint(container, payload);
+          if (generation === this.generation) this.printPreview = dispose;
+          else dispose?.();
+        }
+      });
       button('Browse Core3 data', async () => {
         const { openWorkbookDataBrowser } = await import('../spreadsheet/data-browser');
         if (generation === this.generation) await openWorkbookDataBrowser(container, bookRequest, book.can_edit ? formula => {
@@ -240,6 +358,11 @@ export class SpreadsheetWorkspace extends BaseComponent {
         } finally { if (!restoredWithPendingEdits && this.editor?.model === model) model.updateMode(book.can_edit ? 'normal' : 'readonly'); }
       });
       if (book.can_manage) {
+        if (book.can_save_template) button('Save as template', () => form('Save private template', [{ key: 'name', label: 'Name', value: book.name }], async values => {
+          if (!this.editor?.model || this.hasPendingEdits()) throw new Error('Wait for your edits to save before creating a template.');
+          await bookRequest('/template', { method: 'POST', body: JSON.stringify({ ...values, base_revision: this.editor.model.session.getRevisionId() }) });
+          status.textContent = 'Private template saved. Find it under Templates in the spreadsheet library.';
+        }));
         if (book.can_edit) button('Publish read-only link', async () => {
           if (!this.editor?.model || this.hasPendingEdits()) throw new Error('Wait for your edits to save before publishing.');
           const share = await bookRequest('/shares', { method: 'POST', body: JSON.stringify({ base_revision: this.editor.model.session.getRevisionId() }) });

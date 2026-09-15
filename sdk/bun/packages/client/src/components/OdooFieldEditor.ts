@@ -11,6 +11,7 @@ export type OdooFieldEditorState = {
 export type OdooFieldEditorDefinition = {
   type?: string;
   field?: string;
+  label?: string;
   placeholder?: string;
   wide?: boolean;
   options?: any[];
@@ -31,6 +32,7 @@ export abstract class OdooFieldEditor extends BaseComponent {
   protected prepare(element: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement) {
     element.dataset.formField = String(this.def.field || '');
     html.take(element).className('o-form-inline-editor');
+    if (this.def.label) element.setAttribute('aria-label', this.def.label);
     return element;
   }
 }

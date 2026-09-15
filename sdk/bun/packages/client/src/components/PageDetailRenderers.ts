@@ -285,7 +285,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
   bind(def.follower_source, 'followers');
   bind(def.follower_candidates_source, 'followerCandidates');
   bind(def.attachment_source, 'attachments');
-  return def.content_slot ? comp.getEmbeddedContent() : undefined;
+  return def.content_slot || def.notebook?.tabs?.some((tab: any) => tab.content_slot) ? comp.getEmbeddedContent() : undefined;
 }
 
 async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
