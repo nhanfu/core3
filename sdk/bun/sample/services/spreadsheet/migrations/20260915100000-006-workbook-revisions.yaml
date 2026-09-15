@@ -1,0 +1,59 @@
+version: 0.0.6
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS spreadsheet_workbooks (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        owner_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        visibility VARCHAR NOT NULL DEFAULT 'private',
+        archived BOOLEAN NOT NULL DEFAULT FALSE,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        head_revision_id VARCHAR NOT NULL DEFAULT 'START_REVISION',
+        head_sequence BIGINT NOT NULL DEFAULT 0,
+        snapshot_revision_id VARCHAR NOT NULL DEFAULT 'START_REVISION',
+        snapshot_sequence BIGINT NOT NULL DEFAULT 0,
+        workbook_snapshot VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS spreadsheet_workbook_members (
+        workbook_id VARCHAR NOT NULL,
+        user_id VARCHAR NOT NULL,
+        role VARCHAR NOT NULL CHECK (role IN ('reader', 'editor')),
+        PRIMARY KEY (workbook_id, user_id)
+      );
+      CREATE TABLE IF NOT EXISTS spreadsheet_workbook_revisions (
+        workbook_id VARCHAR NOT NULL,
+        revision_id VARCHAR NOT NULL,
+        sequence BIGINT NOT NULL,
+        base_revision_id VARCHAR NOT NULL,
+        actor_id VARCHAR NOT NULL,
+        kind VARCHAR NOT NULL,
+        fingerprint VARCHAR NOT NULL,
+        body VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (workbook_id, revision_id),
+        UNIQUE (workbook_id, sequence)
+      );
+      CREATE TABLE IF NOT EXISTS spreadsheet_workbook_checkpoints (
+        workbook_id VARCHAR NOT NULL,
+        revision_id VARCHAR NOT NULL,
+        sequence BIGINT NOT NULL,
+        actor_id VARCHAR NOT NULL,
+        label VARCHAR NOT NULL,
+        workbook_snapshot VARCHAR NOT NULL,
+        verified BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (workbook_id, revision_id)
+      );
+      CREATE INDEX IF NOT EXISTS spreadsheet_workbooks_company_owner ON spreadsheet_workbooks(company_name, owner_id);
+      CREATE INDEX IF NOT EXISTS spreadsheet_workbook_member_user ON spreadsheet_workbook_members(user_id);
+    down: |
+      DROP TABLE IF EXISTS spreadsheet_workbook_checkpoints;
+      DROP TABLE IF EXISTS spreadsheet_workbook_revisions;
+      DROP TABLE IF EXISTS spreadsheet_workbook_members;
+      DROP TABLE IF EXISTS spreadsheet_workbooks;
+  duckdb: postgres

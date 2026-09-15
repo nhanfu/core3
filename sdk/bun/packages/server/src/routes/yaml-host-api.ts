@@ -52,6 +52,8 @@ export function createYamlHostApi(services: YamlRuntimeContext[]) {
     }
 
     let candidates: YamlRuntimeContext[] | null = null;
+    const declaredRoute = services.find(service => service.routePrefixes?.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`)));
+    if (declaredRoute) return call(declaredRoute, request, url, server);
     const pageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);
     const actionMatch = pathname.match(/^\/api\/actions\/([A-Za-z0-9_.-]+)$/);
     const datasourceMatch = pathname.match(/^\/api\/datasources\/([A-Za-z0-9_-]+)\/workflow$/);

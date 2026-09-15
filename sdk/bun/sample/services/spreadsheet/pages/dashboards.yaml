@@ -6,11 +6,8 @@ components:
     groups_source: spreadsheet_dashboard_groups_landing
     dashboards_source: spreadsheet_dashboards_landing
     workbooks_source: spreadsheet_dashboard_workbooks
-    summaries_source: spreadsheet_dashboard_summaries_landing
-    chart_source: spreadsheet_dashboard_chart_landing
-    rows_source: spreadsheet_dashboard_rows_landing
-    filter_source: spreadsheet_dashboard_filter_state
+    workbook_endpoint: /api/spreadsheet/workbooks
+    workbook_route: /spreadsheet/workbooks
     default_dashboard_id: sdb-sales
     read_only: true
     favorite_action: toggle_dashboard_favorite
-    filter_action: save_dashboard_filter

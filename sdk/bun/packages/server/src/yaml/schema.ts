@@ -244,7 +244,9 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['Form', new Set(['type', 'id', 'title', 'class', 'section_class', 'title_class', 'action', 'submit_variant', 'submit_label', 'loading_label', 'success_label', 'fields', 'validation'])],
   ['ScannerView', new Set(['type', 'id', 'source', 'fullscreen', 'client_action', 'scan_action', 'scan_permission', 'title', 'description', 'placeholder', 'scan_label', 'helper_text', 'labels', 'manual_form'])],
   ['Button', new Set(['type', 'id', 'action', 'label', 'icon', 'variant', 'full_width'])],
-  ['SpreadsheetDashboardClientAction', new Set(['type', 'id', 'groups_source', 'dashboards_source', 'workbooks_source', 'summaries_source', 'chart_source', 'rows_source', 'filter_source', 'default_dashboard_id', 'read_only', 'favorite_action', 'filter_action'])],
+  ['SpreadsheetDashboardClientAction', new Set(['type', 'id', 'groups_source', 'dashboards_source', 'workbooks_source', 'workbook_endpoint', 'workbook_route', 'summaries_source', 'chart_source', 'rows_source', 'filter_source', 'default_dashboard_id', 'read_only', 'favorite_action', 'filter_action'])],
+  ['SpreadsheetWorkbook', new Set(['type', 'id', 'source', 'title', 'mode', 'save_action', 'allow_export'])],
+  ['SpreadsheetWorkspace', new Set(['type', 'id', 'endpoint', 'title', 'public_route'])],
   // POS cashier components (Phase 1)
   ['PosShell', new Set(['type', 'id', 'session_source', 'bootstrap_source', 'orders_source', 'actions'])],
   ['ProductScreen', new Set(['type', 'id', 'source', 'session_source', 'cart_source', 'search', 'actions', 'labels'])],
@@ -577,6 +579,25 @@ function validateComponents(
     rejectUnknownKeys(component, allowedKeys, path, issues);
     if (component.source !== undefined) {
       requireSource(component.source, `${path}.source`, datasourceIds, options, issues);
+    }
+    if (component.type === 'SpreadsheetWorkbook') {
+      requireSource(component.source, `${path}.source`, datasourceIds, options, issues);
+      if (component.mode !== undefined && !['normal', 'readonly', 'dashboard'].includes(String(component.mode))) {
+        issues.push(`${path}.mode must be normal, readonly, or dashboard`);
+      }
+      if (component.allow_export !== undefined && typeof component.allow_export !== 'boolean') {
+        issues.push(`${path}.allow_export must be a boolean`);
+      }
+      if (component.save_action !== undefined) {
+        requireString(component.save_action, `${path}.save_action`, issues);
+        if (!actionIds.has(String(component.save_action))) issues.push(`${path}.save_action references an unknown action`);
+      }
+    }
+    if (component.type === 'SpreadsheetDashboardClientAction' && component.workbook_endpoint !== undefined && (typeof component.workbook_endpoint !== 'string' || !/^\/api\/[a-z0-9/-]+$/.test(component.workbook_endpoint))) issues.push(`${path}.workbook_endpoint must be a local API route`);
+    if (component.type === 'SpreadsheetDashboardClientAction' && component.workbook_route !== undefined && (typeof component.workbook_route !== 'string' || !/^\/[a-z0-9/-]+$/.test(component.workbook_route) || component.workbook_route.startsWith('//'))) issues.push(`${path}.workbook_route must be a local route`);
+    if (component.type === 'SpreadsheetWorkspace') {
+      if (typeof component.endpoint !== 'string' || !/^\/api\/[a-z0-9/-]+$/.test(component.endpoint)) issues.push(`${path}.endpoint must be a local API route`);
+      if (component.public_route !== undefined && (typeof component.public_route !== 'string' || !/^\/[a-z0-9/-]+$/.test(component.public_route))) issues.push(`${path}.public_route must be a local route`);
     }
     if (component.type === 'ChatWorkspace' && component.sidebar_source !== undefined) {
       requireSource(component.sidebar_source, `${path}.sidebar_source`, datasourceIds, options, issues);

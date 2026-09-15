@@ -5,6 +5,7 @@ migrations: migrations
 permissions: permissions.yaml
 storage: storage.yaml
 operations: operations.yaml
+workbooks: workbooks.yaml
 menu:
   dashboards:
     path: /dashboards
@@ -15,6 +16,10 @@ menu:
     - id: dashboards
       label: Dashboards
       items:
+        - path: /spreadsheet/workbooks
+          label: Spreadsheets
+          icon: table
+          permission: spreadsheet.read
         - path: /dashboards
           label: Dashboards
           icon: dashboard

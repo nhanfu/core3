@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
@@ -8,12 +8,33 @@ import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { createYamlApi } from '@core3/server/routes/yaml-api';
 import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
 import SpreadsheetModule from '../services/spreadsheet/module';
+import { readWorkbookXlsx } from '@core3/client/spreadsheet/files';
+import { bindNamedParams } from '@core3/server/database/sql';
+
+const exportModules = new Set<SpreadsheetModule>();
+afterEach(async () => { for (const module of exportModules) await module.unload({} as any); exportModules.clear(); });
 
 const serviceRoot = join(import.meta.dir, '../services/spreadsheet');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
 const apiSource = (file: string, id: string) => yaml(`api/${file}`).datasources.find((source: any) => source.id === id);
 
 describe('Spreadsheet dashboard configuration parity', () => {
+  test('keeps migrated dashboard share content fixed after dashboard edits', async () => {
+    const db = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(db);
+    try {
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'share_snapshot_migrations', ['schema', 'data']);
+      const bound = bindNamedParams(yaml('operations.yaml').operations['spreadsheet.public.share'].query, { share_id: 'share-sales-2026', token: 'sales-dashboard-share-2026' });
+      const [before] = await repository.query(bound.statement, bound.values);
+      expect(before.workbook_snapshot).toContain('Sheet1');
+      await repository.query("UPDATE spreadsheet_dashboards SET name = 'Changed', workbook_snapshot = '{}' WHERE id = 'sdb-sales'", []);
+      const [after] = await repository.query(bound.statement, bound.values);
+      expect(after.dashboard_name).toBe(before.dashboard_name);
+      expect(after.workbook_snapshot).toBe(before.workbook_snapshot);
+      const dashboardLink = bindNamedParams(yaml('operations.yaml').operations['spreadsheet.public.share'].query, { share_id: 'sdb-sales', token: 'sales-dashboard-share-2026' });
+      expect((await repository.query(dashboardLink.statement, dashboardLink.values))[0].workbook_snapshot).toBe(before.workbook_snapshot);
+    } finally { db.close(); }
+  });
   test('defines the authenticated Dashboards client action with page-id API ownership', () => {
     const page = yaml('pages/dashboards.yaml');
     const api = yaml('api/dashboards.yaml');
@@ -391,6 +412,14 @@ describe('Spreadsheet dashboard configuration parity', () => {
 
   test('matches Odoo public share/data/download routes and access boundaries', async () => {
     const module = new SpreadsheetModule();
+    exportModules.add(module);
+    (module as any).authAdapter = {
+      getCurrentUser: async (request: Request) => {
+        if (request.headers.get('Authorization') !== 'Bearer export-user') throw new Error('Unauthorized');
+        return { sub: 'export-user' };
+      },
+      hasPermission: (_user: any, permission: string) => permission === 'spreadsheet.export',
+    };
     const calls: any[] = [];
     const service = { call: async (operation: string, params: any) => {
       calls.push({ operation, params });
@@ -407,6 +436,8 @@ describe('Spreadsheet dashboard configuration parity', () => {
     const download = await valid('/dashboard/download/share-sales-2026/sales-dashboard-share-2026', { headers: { Authorization: 'Bearer export-user' } });
     expect(download).toMatchObject({ status: 200 });
     expect(download!.headers.get('content-disposition')).toContain('Sales.xlsx');
+    const parts = readWorkbookXlsx(new Uint8Array(await download!.arrayBuffer()), 10000000, 1000);
+    expect(parts['xl/workbook.xml']).toContain('Sheet1');
     const restrictedModule = new SpreadsheetModule() as any;
     restrictedModule.authAdapter = {
       getCurrentUser: async () => ({ id: 'viewer' }),
