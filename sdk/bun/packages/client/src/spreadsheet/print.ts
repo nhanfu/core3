@@ -31,7 +31,7 @@ export async function openWorkbookPrint(container: HTMLElement, payload: any) {
   const close = document.createElement('button'); close.type = 'button'; close.textContent = 'Close'; close.onclick = () => dialog.close();
   controls.append(sheets, range, paperSize, orientation, marginLabel, repeatLabel, update, print, close);
   const feedback = document.createElement('p'); feedback.setAttribute('role', 'alert');
-  const note = document.createElement('p'); note.textContent = 'Fitted to paper width and margins. Repeated headers use the first visible rows of each selected range. This preview uses saved values from when it was opened.';
+  const note = document.createElement('p'); note.textContent = 'Fitted to paper width and margins. Repeated headers use the first visible rows of each selected range. This preview uses saved values from when it was prepared.';
   const frame = document.createElement('iframe'); frame.title = 'Workbook print preview'; frame.style.cssText = 'width:100%;height:70%;border:1px solid #ccc;background:white';
   dialog.append(title, controls, note, feedback, frame); container.append(dialog); dialog.showModal();
   let disposed = false;

@@ -1,5 +1,24 @@
 import { expect, test } from '@playwright/test';
 
+test('renders export preparation and conversion progress reported by the API', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('core3_token', 'owner'));
+  let stage = 'preparing', state = 'running', pages = 3;
+  await page.route('**/api/spreadsheet/workbooks/exports', route => route.fulfill({ json: { data: [{ id: 'progress-job', name: 'Quarterly forecast', state, stage, data_pages_read: pages }] } }));
+  await page.goto('/?workspace=true');
+  await page.getByRole('button', { name: 'Export activity', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('status')).toHaveText('Preparing workbook and linked data · 3 data pages read');
+  await expect(dialog.getByRole('button', { name: 'Cancel Quarterly forecast', exact: true })).toBeVisible();
+  stage = 'converting'; pages = 7;
+  await expect(dialog.getByRole('status')).toHaveText('Creating XLSX file · 7 data pages read');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/spreadsheet-export-progress-mobile.png', fullPage: true });
+  state = 'completed';
+  await expect(dialog.getByRole('status')).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Download Quarterly forecast', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Cancel Quarterly forecast', exact: true })).toHaveCount(0);
+});
+
 test('reorders dashboard groups with touch and ignores cancelled gestures', async ({ browser }) => {
   const context = await browser.newContext({ hasTouch: true, viewport: { width: 390, height: 900 } });
   try {
@@ -289,7 +308,7 @@ test('prints charts and embedded images at workbook positions and clips selected
   await expect(preview.getByAltText('Workbook chart')).toHaveCSS('top', '4px');
   await expect(preview.locator('section')).toHaveCSS('overflow', 'clip');
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
-  await page.route(`**/workbooks/${book.id}/print`, async route => {
+  await page.route(url => url.pathname.startsWith('/api/spreadsheet/workbooks/exports/') && url.searchParams.get('download') === 'true', async route => {
     const response = await route.fetch();
     await route.fulfill({ json: { ...await response.json(), max_figure_pixels: 1 } });
   });
@@ -877,6 +896,23 @@ test('prepares a durable XLSX export and downloads its saved revision after relo
   expect(sheet).not.toContain('<v>101</v>');
 });
 
+test('reopens a saved print preview from export activity after reloading the workspace', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('core3_token', 'owner'));
+  const auth = { Authorization: 'Bearer owner' };
+  const book = await (await page.request.post('/api/spreadsheet/workbooks', { headers: auth, data: { name: 'Durable print forecast', snapshot: { sheets: [{ id: 's', name: 'Forecast', rowNumber: 100, colNumber: 26, cells: { A1: '40', B1: '=A1+2' } }] } } })).json();
+  await page.goto(`/?workspace=true&workbook_id=${book.id}`);
+  await expect(page.getByRole('status').filter({ hasText: /^Ready$/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Print', exact: true }).click();
+  await expect.poll(async () => (await (await page.request.get('/api/spreadsheet/workbooks/exports', { headers: auth })).json()).data.some((job: any) => job.workbook_id === book.id && job.kind === 'print')).toBe(true);
+  await page.goto('/?workspace=true');
+  await page.getByRole('button', { name: 'Export activity', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Preview Durable print forecast', exact: true }).click();
+  const preview = page.frameLocator('iframe[title="Workbook print preview"]');
+  await expect(preview.locator('body')).toContainText('42');
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Print / Save PDF', exact: true })).toBeEnabled();
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
+});
+
 test('downloads committed XLSX and imports it through the library', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('core3_token', 'owner'));
   const created = await page.request.post('/api/spreadsheet/workbooks', { headers: { Authorization: 'Bearer owner' }, data: { name: 'Roundtrip workbook', snapshot: { sheets: [{ id: 's', name: 'Forecast', rowNumber: 100, colNumber: 26, cells: { A1: '40', B1: '=A1+2' } }] } } });
@@ -906,6 +942,27 @@ test('downloads committed XLSX and imports it through the library', async ({ pag
     const model = (window as any).spreadsheetTest.component.children[0].model;
     return model.getters.getEvaluatedCell({ sheetId: model.getters.getActiveSheetId(), col: 1, row: 0 }).value;
   })).toBe(42);
+});
+
+test('recovers a published link from export activity after the workspace reloads', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('core3_token', 'owner'));
+  const auth = { Authorization: 'Bearer owner' };
+  const book = await (await page.request.post('/api/spreadsheet/workbooks', { headers: auth, data: { name: 'Recoverable public forecast', snapshot: { sheets: [{ id: 's', name: 'Sheet1', rowNumber: 100, colNumber: 26, cells: { A1: '=40+2' } }] } } })).json();
+  await page.goto(`/?workspace=true&workbook_id=${book.id}`);
+  await expect(page.getByRole('status').filter({ hasText: /^Ready$/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Publish read-only link', exact: true }).click();
+  await expect.poll(async () => (await (await page.request.get('/api/spreadsheet/workbooks/exports', { headers: auth })).json()).data.some((job: any) => job.workbook_id === book.id && job.kind === 'share')).toBe(true);
+  await page.goto('/?workspace=true');
+  await page.getByRole('button', { name: 'Export activity', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Show link for Recoverable public forecast', exact: true }).click();
+  const link = await page.getByLabel('Public workbook link', { exact: true }).inputValue();
+  const token = new URLSearchParams(new URL(link).hash.slice(1)).get('workbook-share');
+  const published = await (await page.request.get(`/api/spreadsheet/workbooks/public/${token}`)).json();
+  expect(published.snapshot.sheets[0].cells.A1).toBe('42');
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('button', { name: 'Export activity', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Show link for Recoverable public forecast', exact: true }).click();
+  expect(await page.getByLabel('Public workbook link', { exact: true }).inputValue()).toBe(link);
 });
 
 test('publishes a frozen workbook for an anonymous viewer and revokes the link', async ({ browser, page }) => {

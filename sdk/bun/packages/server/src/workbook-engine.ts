@@ -51,12 +51,12 @@ export class WorkbookEngine {
   }
 
   async invalidate(id: string) { if (this.worker) await this.request({ operation: 'invalidate', id }); }
-  async render(mode: 'freeze' | 'export' | 'prepare_export', head: string, state: WorkbookState, catalog: any[], read: (query: any) => Promise<{ data: any[] }>, maxQueries: number) {
+  async render(mode: 'freeze' | 'export' | 'prepare_export', head: string, state: WorkbookState, catalog: any[], read: (query: any) => Promise<{ data: any[] }>, maxQueries: number, progress?: (pagesRead: number) => Promise<void>) {
     const id = randomUUID();
     const generation = this.generation;
     try {
       let result = await this.request({ operation: 'render', mode, id, head, state, catalog });
-      let count = 0;
+      let count = 0, pagesRead = 0;
       while (result.queries) {
         count += result.queries.length;
         if (count > maxQueries) throw Object.assign(new Error('Workbook exceeds the configured render query limit'), { status: 422, code: 'WORKBOOK_RENDER_QUERY_LIMIT' });
@@ -66,6 +66,9 @@ export class WorkbookEngine {
           const failure = batch.find(item => item.status === 'rejected');
           if (failure?.status === 'rejected') throw failure.reason;
           for (const item of batch) if (item.status === 'fulfilled') pages.push(item.value);
+          pagesRead += batch.length;
+          if (generation !== this.generation) throw Object.assign(new Error('Workbook render stopped'), { status: 503, code: 'WORKBOOK_ENGINE_UNAVAILABLE' });
+          await progress?.(pagesRead);
         }
         if (generation !== this.generation) throw Object.assign(new Error('Workbook render stopped'), { status: 503, code: 'WORKBOOK_ENGINE_UNAVAILABLE' });
         result = await this.request({ operation: 'render', mode, id, head, pages });

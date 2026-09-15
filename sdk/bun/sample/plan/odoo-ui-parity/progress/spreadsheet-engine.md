@@ -15,6 +15,77 @@ bindings. No target has been lowered.
 
 ## Delivered
 
+- Print preparation now uses the durable export queue. The Print action captures
+  the saved revision, viewer filters and YAML page settings, then opens its preview
+  when the worker finishes. Export activity distinguishes print previews from XLSX
+  and can reopen saved previews after reload. Both kinds share authorization,
+  quotas, cancellation, lease fencing, retries and retention. Prepared print data
+  freezes formulas and linked values; retrieval rechecks workbook/source access.
+  Migration 019 keeps existing jobs as XLSX; rollback removes incompatible print
+  artifacts while preserving XLSX and restoring indexes, verified on DuckDB and
+  PostgreSQL. Backend tests verify restart recovery, original revision/settings,
+  later viewer-filter changes, actor-specific values, revoked source permissions
+  and cancellation. All six separate-process scenarios pass for print and XLSX
+  (151 assertions). Four export/print tests pass on PostgreSQL, six final
+  data/crash/admission tests pass (260 assertions), and both migration cases pass.
+  All 37 functional browser tests pass with the opt-in benchmark skipped, including
+  chart/image placement, range clipping, PDF headers/layout and preview recovery.
+  The prepared figure preview was visually checked. Build, targeted lint and diff
+  checks pass. PDF creation still uses the browser; durable public-share preparation
+  and the full enterprise scale/soak gates remain unfinished.
+- Concurrent queue admission now respects the configured pending-job limit.
+  A controlled race reproduced two imports/exports being accepted with a limit
+  of one. Migration 018 adds separate import/export admission gates and indexes
+  for owner/company/state counts. YAML mutations hold the gate only for the short
+  enqueue transaction, then conditionally insert under the current quota; file
+  preparation and conversion never hold it. Contention returns a declared 409
+  retry response or the existing 429 limit response. Tests on DuckDB and PostgreSQL
+  verify one accepted request, independent user/company quotas and reuse after
+  cancellation. A third separate-process export test forces both workers to select
+  the same job before either claims it: exactly one claims, reads a datasource
+  page and produces the matching XLSX. All three process scenarios pass after the
+  admission change. Validation: four admission tests / 36 assertions, three process
+  tests / 74 assertions, nine import/export/crash regressions / 158 assertions,
+  two real browser import/export flows, production build, targeted lint and diff
+  checks pass. The disposable PostgreSQL instance was removed. Enqueue throughput
+  and sustained multi-process load remain unmeasured; these checks do not satisfy
+  the enterprise performance gate or one-hour soak.
+- Two separate Bun worker processes now exercise PostgreSQL 17 export lease
+  takeover. One holds a real live-data preparation before commit; the other
+  reclaims its expired lease and produces XLSX with different source values.
+  The tests verify that obsolete preparation cannot replace the winning artifact
+  and that an obsolete failure before takeover preserves the queued input.
+  The latter reproduced a bug: failure mutations checked the lease token but not
+  expiry. Export and import failure updates now enforce lease expiry (and export
+  artifact expiry), allowing the current worker to recover the original input.
+  The PostgreSQL run also exposed text-bound revision counters. The workbook
+  runtime now converts only declared numeric protocol fields to safe integers,
+  preserving IDs and serialized workbook content. Live evidence covers twelve
+  committed edits, numeric cursor results 10/11/12 and a text-valued formula.
+  Both process tests pass with 60 assertions; six import/export regressions pass
+  with 85 assertions. The disposable database and child processes were stopped.
+  The final isolated backend run passes 53 tests / 831 assertions, and the full
+  functional browser suite passes 36 tests with the opt-in benchmark skipped.
+  An earlier concurrent run hit two default five-second test timeouts; both
+  passed separately and in the final complete backend run, without changing
+  timeouts. Production build, targeted lint and diff checks pass.
+  These are controlled failure scenarios, not sustained load or the one-hour soak.
+- Export activity now shows persisted preparation/conversion stages and the count
+  of datasource pages read. The engine reports completed read batches; the owning
+  YAML mutation validates progress and fences every update by lease and expiry.
+  Committing preparation atomically advances to conversion. Conversion retries
+  retain the page count; replaying unprepared input starts a fresh count. Existing
+  job state remains authoritative for completion, failure and cancellation.
+  Migration 017 preserves existing artifacts and rebuilds the pending index;
+  upgrade and rollback pass on DuckDB and a disposable PostgreSQL 17 instance.
+  Affected export/data/cancellation tests pass, including exact comparison with
+  observed source reads and rejection of expired/cancelled progress updates.
+  Crash/import/spreadsheet regressions also pass: 27 backend tests across these
+  checks. Two browser tests pass for progress display and real durable export;
+  the mobile progress dialog was visually checked. Build, targeted lint and diff
+  checks pass. Import and conversion work-unit counts, multi-process preparation
+  stress and durable print/public-share preparation remain open; no percentage or
+  enterprise-scale success is inferred from these stage indicators.
 - XLSX preparation now runs in the durable export worker. The POST captures the
   saved revision, replay input and viewer filters without evaluating live data or
   storing a bearer token. The worker reloads the actor's current permissions,
@@ -672,7 +743,7 @@ it was skipped in the normal functional run, not relabeled as passing.
 | Immutable public sharing | Stored legacy snapshots and expiring/revocable owner-published workbook snapshots implemented; anonymous bootstrap, formula/spill/text freezing and revocation verified; complete figure/filter/asset fidelity and legacy token lifecycle still pending |
 | Import/export/print | Client/server XLSX, library import, formula round trip, authorized cell/figure printing and all-visible-sheets printing verified; complete file-feature matrix, remaining figure fidelity and advanced page setup pending |
 | Documents | References, access intersection when browsing links, and workflow transitions verified; document-file storage, folder ACL inheritance and complete Documents workflows pending |
-| Durable background jobs | Imports and XLSX preparation/conversion have persistent queues, retries, lease recovery and cancellation; durable print/public-share preparation, detailed progress and multi-process stress pending |
+| Durable background jobs | Imports, XLSX preparation/conversion and print preparation have persistent queues, retries, lease recovery and cancellation; durable public-share preparation, detailed conversion progress and sustained multi-process stress pending |
 | Enterprise scale | Million-cell load/input gate failed; optimization and reference-machine measurements pending |
 | Complete parity/rollout | Feature inventory, complete actor matrix, monitoring, rollout flag and rollback audit pending |
 
@@ -716,9 +787,10 @@ it was skipped in the normal functional run, not relabeled as passing.
   dependent formulas update, and source denial produces #N/A without a revision.
   Real source authorization/row scope is separately covered by the Orders API test.
 - Library imports use the durable import queue; the legacy synchronous import API
-  remains available. Queued XLSX preparation and conversion are durable; synchronous
-  downloads, printing and public-share snapshot actions still use the request worker.
-  Durable print/public-share preparation remains required for the full plan. Embedded
+  remains available. Queued XLSX preparation/conversion and print preparation are
+  durable; legacy synchronous downloads/print and public-share snapshot actions
+  still use the request worker. Durable public-share preparation remains required
+  for the full plan. Embedded
   PNG/JPEG/GIF/WebP image parts are supported; external image URLs fail export
   explicitly until an authorized asset resolver is implemented. Full XLSX feature
   fidelity and large-file resource measurements remain unproven.

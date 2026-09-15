@@ -1,0 +1,17 @@
+version: 0.0.18
+kind: schema
+
+type:
+  postgres:
+    up: |
+      CREATE TABLE spreadsheet_job_admission (
+        kind VARCHAR PRIMARY KEY, revision BIGINT NOT NULL DEFAULT 0
+      );
+      INSERT INTO spreadsheet_job_admission(kind) VALUES ('import'), ('export');
+      CREATE INDEX spreadsheet_import_jobs_owner_pending ON spreadsheet_import_jobs (owner_id, company_name, state);
+      CREATE INDEX spreadsheet_export_jobs_owner_pending ON spreadsheet_export_jobs (owner_id, company_name, state);
+    down: |
+      DROP INDEX spreadsheet_export_jobs_owner_pending;
+      DROP INDEX spreadsheet_import_jobs_owner_pending;
+      DROP TABLE spreadsheet_job_admission;
+  duckdb: postgres

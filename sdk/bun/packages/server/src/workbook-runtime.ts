@@ -33,6 +33,7 @@ export type WorkbookRuntimeDefinition = {
   };
   import_jobs?: WorkbookImportJobPolicy;
   export_jobs?: WorkbookFileJobPolicy & { max_artifact_bytes: number };
+  share_jobs?: boolean;
   allowed_commands: string[];
   sources?: Record<string, WorkbookSource>;
   templates?: Record<string, { name: string; description: string; permission: string; snapshot: any }>;
@@ -42,6 +43,7 @@ export type WorkbookRuntimeDefinition = {
 type AuthProvider = { getCurrentUser(request: Request): Promise<any>; hasPermission(user: any, permission: string): boolean; resolveBackgroundUser?(userId: string, companyName: string): Promise<any> };
 const REVISION_TYPES = new Set(['REMOTE_REVISION', 'REVISION_UNDONE', 'REVISION_REDONE']);
 const IDENTIFIER = /^[A-Za-z0-9_-]{1,128}$/;
+const NUMERIC_PROTOCOL_FIELDS = new Set(['sequence', 'head_sequence', 'snapshot_sequence', 'row_version', 'attempts', 'data_pages_read', 'expires_at_ms']);
 const fail = (status: number, code: string, message: string): never => { throw Object.assign(new Error(message), { status, code }); };
 const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), {
   status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
@@ -49,10 +51,12 @@ const json = (value: unknown, status = 200) => new Response(JSON.stringify(value
 
 export function validateWorkbookRuntime(value: any): WorkbookRuntimeDefinition {
   const globalTypes = new Map<string, string>();
+  if (value?.share_jobs !== undefined && typeof value.share_jobs !== 'boolean') throw new Error('Invalid workbook share job policy');
+  if (value?.share_jobs && (!value.export_jobs || !value.operations?.share_job_finish?.mutation)) throw new Error('Share jobs require the export queue and share_job_finish mutation');
   if (value?.export_jobs) {
     for (const key of ['poll_ms', 'lease_ms', 'max_attempts', 'max_pending_per_user', 'retention_ms', 'max_artifact_bytes']) if (!Number.isSafeInteger(value.export_jobs[key]) || value.export_jobs[key] < 1) throw new Error('Invalid workbook export job policy');
     if (value.export_jobs.lease_ms < 150000) throw new Error('Export job lease must exceed the engine timeout');
-    for (const operation of ['export_job_create', 'export_jobs', 'export_job', 'export_job_artifact', 'export_job_cancel', 'export_job_cleanup', 'export_job_next', 'export_job_claim', 'export_job_owned', 'export_job_prepare', 'export_job_finish', 'export_job_fail']) if (!value.operations?.[operation]?.query && !value.operations?.[operation]?.mutation) throw new Error(`Missing workbook operation: ${operation}`);
+    for (const operation of ['export_job_create', 'export_jobs', 'export_job', 'export_job_artifact', 'export_job_cancel', 'export_job_cleanup', 'export_job_next', 'export_job_claim', 'export_job_owned', 'export_job_progress', 'export_job_prepare', 'export_job_finish', 'export_job_fail']) if (!value.operations?.[operation]?.query && !value.operations?.[operation]?.mutation) throw new Error(`Missing workbook operation: ${operation}`);
   }
   if (value?.import_jobs) {
     for (const key of ['poll_ms', 'lease_ms', 'max_attempts', 'max_pending_per_user', 'retention_ms']) if (!Number.isSafeInteger(value.import_jobs[key]) || value.import_jobs[key] < 1) throw new Error('Invalid workbook import job policy');
@@ -127,29 +131,59 @@ export class WorkbookRuntime {
       this.importJobs.start();
     }
     if (definition.export_jobs) {
-      this.exportJobs = new WorkbookFileJobs(definition.export_jobs, (operation, params) => this.execute(operation, params), 'export_job', async (job, signal) => {
+      this.exportJobs = new WorkbookFileJobs(definition.export_jobs, (operation, params) => this.execute(operation === 'export_job_finish' && params.share_token_hash ? 'share_job_finish' : operation, params), 'export_job', async (job, signal) => {
         let snapshot = JSON.parse(job.workbook_snapshot);
-        if (snapshot.format === 'core3-export-input-v1') {
+        const authorizeShare = async (permissions: string[] = []) => {
           if (!this.auth.resolveBackgroundUser) fail(503, 'BACKGROUND_AUTH_UNAVAILABLE', 'Background authorization unavailable');
           const user = await this.auth.resolveBackgroundUser(job.owner_id, job.company_name);
+          if (String(user?.sub) !== job.owner_id || authenticatedCompanyName(user) !== job.company_name) fail(403, 'WORKBOOK_FORBIDDEN', 'Share actor unavailable');
+          this.requirePermission(user, 'read'); this.requirePermission(user, 'manage');
+          const params = { id: job.workbook_id, current_user_id: job.owner_id, current_company_name: job.company_name };
+          await this.access(params, 'manage'); await this.access(params, 'edit');
+          for (const permission of permissions) if (!this.auth.hasPermission(user, permission)) fail(403, 'WORKBOOK_SOURCE_FORBIDDEN', 'Datasource access has been revoked');
+          return user;
+        };
+        const progress = async (stage: string, pagesRead: number) => {
+          signal.throwIfAborted();
+          await this.execute('export_job_progress', { job_id: job.id, lease_token: job.lease_token, now: Date.now(), stage, data_pages_read: pagesRead });
+        };
+        if (snapshot.format === 'core3-export-input-v1') {
+          await progress('preparing', 0);
+          if (!this.auth.resolveBackgroundUser) fail(503, 'BACKGROUND_AUTH_UNAVAILABLE', 'Background authorization unavailable');
+          const user = job.kind === 'share' ? await authorizeShare() : await this.auth.resolveBackgroundUser(job.owner_id, job.company_name);
           if (String(user?.sub) !== job.owner_id || authenticatedCompanyName(user) !== job.company_name) fail(403, 'WORKBOOK_FORBIDDEN', 'Export actor unavailable');
-          this.requirePermission(user, 'read'); this.requirePermission(user, 'export');
+          this.requirePermission(user, 'read');
+          if (job.kind !== 'share') this.requirePermission(user, 'export');
           await this.access({ id: job.workbook_id, current_user_id: job.owner_id, current_company_name: job.company_name });
           signal.throwIfAborted();
           const requiredPermissions = new Set<string>();
-          const prepared = await this.exportEngine.render('prepare_export', job.revision_id, snapshot.state, this.catalog(user), query => {
+          const prepared = await this.exportEngine.render(job.kind === 'print' || job.kind === 'share' ? 'freeze' : 'prepare_export', job.revision_id, snapshot.state, this.catalog(user), query => {
             const source = this.definition.sources?.[query.source];
             if (source) requiredPermissions.add(source.permission);
             return this.queryData(user, undefined, query, snapshot.filters);
-          }, this.definition.max_data_queries);
-          const workbook_snapshot = this.snapshot(prepared.snapshot, job.revision_id);
+          }, this.definition.max_data_queries, pagesRead => progress('preparing', pagesRead));
+          const normalized = this.snapshot(prepared.snapshot, job.revision_id);
+          const workbook_snapshot = job.kind === 'share' ? JSON.stringify({ format: 'core3-share-input-v1', snapshot: JSON.parse(normalized), expires_at: snapshot.share.expires_at, required_permissions: [...requiredPermissions] }) : job.kind === 'print' ? JSON.stringify({ format: 'core3-print-preview-v1', name: job.name, snapshot: JSON.parse(normalized), revision_id: job.revision_id, ...snapshot.print }) : normalized;
           signal.throwIfAborted();
           if (Buffer.byteLength(workbook_snapshot) > definition.max_snapshot_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Prepared export exceeds the snapshot limit');
           await this.execute('export_job_prepare', { job_id: job.id, lease_token: job.lease_token, now: Date.now(), workbook_snapshot, required_permissions: JSON.stringify([...requiredPermissions]) });
           snapshot = JSON.parse(workbook_snapshot);
-        }
+        } else await progress('converting', Number(job.data_pages_read || 0));
         signal.throwIfAborted();
-        const bytes = await this.exportEngine.exportSnapshot(snapshot);
+        if (job.kind === 'share') {
+          if (snapshot.format !== 'core3-share-input-v1' || !Number.isFinite(Date.parse(snapshot.expires_at)) || Date.parse(snapshot.expires_at) <= Date.now()) fail(422, 'WORKBOOK_INVALID_SHARE', 'Share preparation has expired');
+          // Prepared retries must reauthorize too: completion publishes data publicly.
+          await authorizeShare(snapshot.required_permissions);
+          signal.throwIfAborted();
+          const token = randomBytes(32).toString('base64url');
+          const artifact = Buffer.from(JSON.stringify({ id: job.id, token, revision_id: job.revision_id, expires_at: snapshot.expires_at }));
+          if (artifact.byteLength > definition.export_jobs!.max_artifact_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Share result exceeds the configured file limit');
+          return { id: job.workbook_id, current_user_id: job.owner_id, current_company_name: job.company_name,
+            share_token_hash: createHash('sha256').update(token).digest('hex'), share_snapshot: JSON.stringify(snapshot.snapshot), share_expires_at: snapshot.expires_at,
+            artifact_base64: artifact.toString('base64') };
+        }
+        if (job.kind === 'print' && snapshot.format !== 'core3-print-preview-v1') fail(422, 'WORKBOOK_INVALID_SNAPSHOT', 'Print preparation is invalid');
+        const bytes = job.kind === 'print' ? Buffer.from(JSON.stringify(snapshot)) : await this.exportEngine.exportSnapshot(snapshot);
         if (bytes.byteLength > definition.export_jobs!.max_artifact_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Export exceeds the configured file limit');
         return { artifact_base64: Buffer.from(bytes).toString('base64') };
       }, () => this.exportEngine.stop());
@@ -160,9 +194,26 @@ export class WorkbookRuntime {
   private async execute(name: string, params: Record<string, any>): Promise<any> {
     const operation = this.definition.operations[name];
     if (!operation) return fail(500, 'WORKBOOK_CONFIGURATION', `Operation ${name} is not configured`);
-    if (operation.mutation) return this.repository.executeMutation(operation.mutation, params);
-    const bound = bindNamedParams(operation.query!, params);
-    return this.repository.query(bound.statement, bound.values);
+    const read = async () => {
+      if (operation.mutation) return this.repository.executeMutation(operation.mutation, params);
+      const bound = bindNamedParams(operation.query!, params);
+      return this.repository.query(bound.statement, bound.values);
+    };
+    // Some drivers return BIGINT counters as strings. Only protocol counters
+    // become numbers; IDs, cell contents and serialized snapshots remain intact.
+    const normalize = (row: any) => {
+      if (!row || typeof row !== 'object') return row;
+      for (const field of NUMERIC_PROTOCOL_FIELDS) if (row[field] !== undefined && row[field] !== null) {
+        const value = row[field];
+        if (typeof value !== 'number' && (typeof value !== 'string' || !/^\d+$/.test(value))) fail(500, 'WORKBOOK_INVALID_STATE', 'Invalid stored workbook counter');
+        const number = Number(value);
+        if (!Number.isSafeInteger(number) || number < 0) fail(500, 'WORKBOOK_INVALID_STATE', 'Stored workbook counter exceeds the supported range');
+        row[field] = number;
+      }
+      return row;
+    };
+    const result = await read();
+    return Array.isArray(result) ? result.map(normalize) : normalize(result);
   }
 
   private async serial<T>(id: string, work: () => Promise<T>): Promise<T> {
@@ -307,20 +358,34 @@ export class WorkbookRuntime {
       const [id, operation] = parts;
       if (parts.length > 2 || (id && !IDENTIFIER.test(id))) return json({ code: 'WORKBOOK_NOT_FOUND', error: 'Workbook unavailable' }, 404);
       if (id === 'exports' && this.definition.export_jobs) {
-        this.requirePermission(user, 'export');
         const params = { ...identity, job_id: operation, now: Date.now() };
-        if (!operation && request.method === 'GET') return json({ data: await this.execute('export_jobs', params) });
+        const allowedKind = (kind: string) => this.auth.hasPermission(user, this.definition.permissions[kind === 'share' ? 'manage' : 'export']);
+        if (!allowedKind('xlsx') && !allowedKind('share')) fail(403, 'WORKBOOK_FORBIDDEN', 'Job access denied');
+        if (!operation && request.method === 'GET') {
+          return json({ data: (await this.execute('export_jobs', params)).filter((job: any) => allowedKind(job.kind)) });
+        }
         if (!operation || !IDENTIFIER.test(operation)) fail(404, 'WORKBOOK_EXPORT_NOT_FOUND', 'Export unavailable');
-        if (request.method === 'DELETE') { await this.execute('export_job_cancel', params); this.exportJobs?.cancel(operation); return json({ cancelled: true }); }
-        if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
         const [job] = await this.execute('export_job', params);
         if (!job) fail(404, 'WORKBOOK_EXPORT_NOT_FOUND', 'Export unavailable');
+        if (!allowedKind(job.kind)) fail(403, 'WORKBOOK_FORBIDDEN', 'Job access denied');
+        if (request.method === 'DELETE') { await this.execute('export_job_cancel', params); this.exportJobs?.cancel(operation); return json({ cancelled: true }); }
+        if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
         await this.access({ ...identity, id: job.workbook_id });
         if (url.searchParams.get('download') === 'true') {
+          if (job.kind === 'share') {
+            await this.access({ ...identity, id: job.workbook_id }, 'manage');
+            await this.access({ ...identity, id: job.workbook_id }, 'edit');
+          }
           for (const permission of JSON.parse(job.required_permissions)) if (!this.auth.hasPermission(user, permission)) fail(403, 'WORKBOOK_SOURCE_FORBIDDEN', 'Datasource access has been revoked');
           if (job.state !== 'completed') fail(409, 'WORKBOOK_EXPORT_NOT_READY', 'Export is not ready');
           const [artifact] = await this.execute('export_job_artifact', { ...params, now: Date.now() });
           if (!artifact?.artifact_base64) fail(404, 'WORKBOOK_EXPORT_NOT_FOUND', 'Export unavailable');
+          if (job.kind === 'share') {
+            const link = JSON.parse(Buffer.from(artifact.artifact_base64, 'base64').toString('utf8'));
+            const [active] = await this.execute('public_share', { token_hash: createHash('sha256').update(link.token).digest('hex') });
+            if (!active) fail(404, 'WORKBOOK_SHARE_NOT_FOUND', 'Share unavailable');
+          }
+          if (job.kind === 'print' || job.kind === 'share') return new Response(Buffer.from(artifact.artifact_base64, 'base64'), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Workbook-Revision': job.revision_id } });
           return new Response(Buffer.from(artifact.artifact_base64, 'base64'), { headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition': `attachment; filename="${String(job.name).replace(/[^A-Za-z0-9_-]/g, '_')}.xlsx"`,
@@ -384,7 +449,7 @@ export class WorkbookRuntime {
             const [document] = await this.readDocuments(request, user, documentId);
             return json({ data: await this.execute('document_workbooks', { ...identity, document_id: documentId, q: url.searchParams.get('q') || '' }), document, can_create: false });
           }
-          return json({ data: await this.execute('list', { ...identity, q: url.searchParams.get('q') || '', include_archived: url.searchParams.get('archived') === 'true' }), can_create: this.auth.hasPermission(user, this.definition.permissions.write), import_jobs_enabled: !!this.definition.import_jobs, export_jobs_enabled: !!this.definition.export_jobs && this.auth.hasPermission(user, this.definition.permissions.export) });
+          return json({ data: await this.execute('list', { ...identity, q: url.searchParams.get('q') || '', include_archived: url.searchParams.get('archived') === 'true' }), can_create: this.auth.hasPermission(user, this.definition.permissions.write), import_jobs_enabled: !!this.definition.import_jobs, export_jobs_enabled: !!this.definition.export_jobs && this.auth.hasPermission(user, this.definition.permissions.export), share_jobs_enabled: !!this.definition.share_jobs && this.auth.hasPermission(user, this.definition.permissions.manage) });
         }
         if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
         this.requirePermission(user, 'write');
@@ -509,6 +574,15 @@ export class WorkbookRuntime {
           if (!Number.isSafeInteger(days) || days < 1 || days > this.definition.max_share_days) fail(422, 'WORKBOOK_INVALID_EXPIRY', 'Invalid share duration');
           if (body.base_revision !== access.head_revision_id) fail(409, 'WORKBOOK_REVISION_CONFLICT', 'Workbook changed before sharing');
           const filterValues = await this.filterValues(params);
+          if (body.background === true) {
+            if (!this.definition.share_jobs || !this.definition.export_jobs || !this.auth.resolveBackgroundUser) fail(503, 'BACKGROUND_AUTH_UNAVAILABLE', 'Background sharing unavailable');
+            const state = await this.load(params);
+            if (state.head_revision_id !== access.head_revision_id) fail(409, 'WORKBOOK_REVISION_CONFLICT', 'Workbook changed before sharing');
+            const now = Date.now();
+            const workbook_snapshot = JSON.stringify({ format: 'core3-export-input-v1', state: { snapshot: state.snapshot, revisions: state.revisions }, filters: filterValues, share: { expires_at: new Date(now + days * 86400000).toISOString() } });
+            if (Buffer.byteLength(workbook_snapshot) > this.definition.max_snapshot_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Share input exceeds the snapshot limit');
+            return json(await this.execute('export_job_create', { ...params, job_id: randomUUID(), kind: 'share', revision_id: access.head_revision_id, name: access.name, workbook_snapshot, required_permissions: '[]', now, expires_at_ms: now + this.definition.export_jobs.retention_ms, max_pending: this.definition.export_jobs.max_pending_per_user }), 202);
+          }
           const frozen = await this.engine.render('freeze', access.head_revision_id, await this.load(params), this.catalog(user), query => this.queryData(user, request, query, filterValues), this.definition.max_data_queries);
           const token = randomBytes(32).toString('base64url');
           const result = await this.execute('create_share', { ...params, share_id: randomUUID(), token_hash: createHash('sha256').update(token).digest('hex'), base_revision: access.head_revision_id, workbook_snapshot: this.snapshot(frozen.snapshot, access.head_revision_id), expires_at: new Date(Date.now() + days * 86400000).toISOString() });
@@ -520,16 +594,17 @@ export class WorkbookRuntime {
           const result = await this.engine.render('freeze', access.head_revision_id, await this.load(params), this.catalog(user), query => this.queryData(user, request, query, filterValues), this.definition.max_data_queries);
           return json({ name: access.name, snapshot: result.snapshot, revision_id: access.head_revision_id, max_cells: this.definition.print_max_cells, max_figure_pixels: this.definition.print_max_figure_pixels, page_setup: this.definition.print_page_setup });
         }
-        if (operation === 'export' && request.method === 'POST' && this.definition.export_jobs) {
+        if ((operation === 'export' || operation === 'print' && this.definition.print_max_cells) && request.method === 'POST' && this.definition.export_jobs) {
           this.requirePermission(user, 'export');
           if (!this.auth.resolveBackgroundUser) fail(503, 'BACKGROUND_AUTH_UNAVAILABLE', 'Background authorization unavailable');
           const filterValues = await this.filterValues(params);
           const state = await this.load(params);
           if (state.head_revision_id !== access.head_revision_id) fail(409, 'WORKBOOK_REVISION_CONFLICT', 'Workbook changed before export');
-          const workbook_snapshot = JSON.stringify({ format: 'core3-export-input-v1', state: { snapshot: state.snapshot, revisions: state.revisions }, filters: filterValues });
+          const kind = operation === 'print' ? 'print' : 'xlsx';
+          const workbook_snapshot = JSON.stringify({ format: 'core3-export-input-v1', state: { snapshot: state.snapshot, revisions: state.revisions }, filters: filterValues, ...(kind === 'print' ? { print: { max_cells: this.definition.print_max_cells, max_figure_pixels: this.definition.print_max_figure_pixels, page_setup: this.definition.print_page_setup } } : {}) });
           if (Buffer.byteLength(workbook_snapshot) > this.definition.max_snapshot_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Export input exceeds the snapshot limit');
           const now = Date.now();
-          return json(await this.execute('export_job_create', { ...params, job_id: randomUUID(), revision_id: access.head_revision_id, name: access.name, workbook_snapshot, required_permissions: '[]', now, expires_at_ms: now + this.definition.export_jobs.retention_ms, max_pending: this.definition.export_jobs.max_pending_per_user }), 202);
+          return json(await this.execute('export_job_create', { ...params, job_id: randomUUID(), kind, revision_id: access.head_revision_id, name: access.name, workbook_snapshot, required_permissions: '[]', now, expires_at_ms: now + this.definition.export_jobs.retention_ms, max_pending: this.definition.export_jobs.max_pending_per_user }), 202);
         }
         if (operation === 'export' && request.method === 'GET') {
           this.requirePermission(user, 'export');
@@ -553,6 +628,7 @@ export class WorkbookRuntime {
             can_create: this.auth.hasPermission(user, this.definition.permissions.write),
             can_export: this.auth.hasPermission(user, this.definition.permissions.export),
             export_jobs_enabled: !!this.definition.export_jobs,
+            share_jobs_enabled: !!this.definition.share_jobs,
             can_save_template: !!this.definition.operations.create_template && canManage && canEdit,
             documents_route: canReadDocuments ? documents!.route : undefined,
             can_link_documents: canReadDocuments && canEdit && canManage && this.auth.hasPermission(user, documents!.link_permission),

@@ -61,11 +61,19 @@ export class SpreadsheetWorkspace extends BaseComponent {
     header.append(title);
     container.append(header, status, content);
     const request = workbookRequest(this.state.endpoint);
-    const showExports = async () => {
+    const showPrintPreview = async (payload: any) => {
+      const { openWorkbookPrint } = await import('../spreadsheet/print');
+      if (generation !== this.generation) return;
+      this.printPreview?.();
+      const dispose = await openWorkbookPrint(container, payload);
+      if (generation === this.generation) this.printPreview = dispose;
+      else dispose?.();
+    };
+    const showExports = async (autoPreviewId?: string) => {
       const { openWorkbookExports } = await import('../spreadsheet/export-jobs');
       if (generation !== this.generation) return;
       this.exportDialog?.();
-      this.exportDialog = openWorkbookExports(container, request, workbookRequest(this.state.endpoint, 'bytes'));
+      this.exportDialog = openWorkbookExports(container, request, workbookRequest(this.state.endpoint, 'bytes'), { preview: showPrintPreview, share: showShare, autoPreviewId });
     };
     const error = (failure: unknown) => { if (generation === this.generation) status.textContent = failure instanceof Error ? failure.message : 'Workbook request failed'; };
     const button = (label: string, action: () => Promise<unknown> | void, target = header) => {
@@ -74,6 +82,21 @@ export class SpreadsheetWorkspace extends BaseComponent {
       node.addEventListener('click', () => { void Promise.resolve().then(action).catch(error); });
       target.append(node);
       return node;
+    };
+    const showShare = async (share: any) => {
+      if (generation !== this.generation) return;
+      const url = new URL(window.location.href);
+      if (this.state.public_route) { url.pathname = this.state.public_route; url.search = ''; }
+      url.searchParams.delete('workbook_id'); url.hash = `workbook-share=${share.token}`;
+      const dialog = document.createElement('dialog');
+      const heading = document.createElement('h2'); heading.textContent = 'Read-only link';
+      const note = document.createElement('p'); note.textContent = `Anyone with this link can view this snapshot until ${new Date(share.expires_at).toLocaleDateString()}. Later edits do not change it.`;
+      const link = document.createElement('input'); link.readOnly = true; link.value = url.href; link.setAttribute('aria-label', 'Public workbook link'); link.style.width = '100%';
+      dialog.append(heading, note, link);
+      button('Copy link', async () => { await navigator.clipboard.writeText(link.value); }, dialog);
+      button('Close', () => dialog.close(), dialog);
+      dialog.addEventListener('close', () => dialog.remove(), { once: true });
+      container.append(dialog); dialog.showModal(); link.select();
     };
     const form = (name: string, fields: Array<{ key: string; label: string; value?: string; choices?: string[]; optional?: boolean }>, submit: (values: Record<string, string>) => Promise<void>) => {
       const dialog = document.createElement('dialog');
@@ -158,7 +181,7 @@ export class SpreadsheetWorkspace extends BaseComponent {
         templates.disabled = !result.can_create;
         durableImports = !!result.import_jobs_enabled;
         activity.hidden = !durableImports || !result.can_create;
-        exportActivity.hidden = !result.export_jobs_enabled;
+        exportActivity.hidden = !result.export_jobs_enabled && !result.share_jobs_enabled;
         for (const workbook of result.data) {
           const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:12px;padding:12px;border-bottom:1px solid #ddd';
           button(workbook.name + (workbook.archived ? ' (Archived)' : ''), () => select(workbook.id), row);
@@ -287,6 +310,7 @@ export class SpreadsheetWorkspace extends BaseComponent {
         });
         button('Export activity', showExports);
       }
+      else if (book.share_jobs_enabled && book.can_manage && book.can_edit) button('Export activity', showExports);
       button('Global filters', () => openWorkbookFilters(container, bookRequest, () => this.liveData?.refresh()));
       if (book.documents_route) button('Linked documents', async () => {
         const { openWorkbookDocuments } = await import('../spreadsheet/documents');
@@ -296,14 +320,10 @@ export class SpreadsheetWorkspace extends BaseComponent {
       });
       if (book.can_export && book.print_max_cells) button('Print', async () => {
         if (this.hasPendingEdits()) throw new Error('Wait for your edits to save before printing.');
-        const payload = await bookRequest('/print');
-        const { openWorkbookPrint } = await import('../spreadsheet/print');
-        if (generation === this.generation) {
-          this.printPreview?.();
-          const dispose = await openWorkbookPrint(container, payload);
-          if (generation === this.generation) this.printPreview = dispose;
-          else dispose?.();
-        }
+        if (book.export_jobs_enabled) {
+          const job = await bookRequest('/print', { method: 'POST' });
+          await showExports(job.id);
+        } else await showPrintPreview(await bookRequest('/print'));
       });
       button('Browse Core3 data', async () => {
         const { openWorkbookDataBrowser } = await import('../spreadsheet/data-browser');
@@ -365,19 +385,9 @@ export class SpreadsheetWorkspace extends BaseComponent {
         }));
         if (book.can_edit) button('Publish read-only link', async () => {
           if (!this.editor?.model || this.hasPendingEdits()) throw new Error('Wait for your edits to save before publishing.');
-          const share = await bookRequest('/shares', { method: 'POST', body: JSON.stringify({ base_revision: this.editor.model.session.getRevisionId() }) });
-          const url = new URL(window.location.href);
-          if (this.state.public_route) { url.pathname = this.state.public_route; url.search = ''; }
-          url.searchParams.delete('workbook_id'); url.hash = `workbook-share=${share.token}`;
-          const dialog = document.createElement('dialog');
-          const heading = document.createElement('h2'); heading.textContent = 'Read-only link';
-          const note = document.createElement('p'); note.textContent = `Anyone with this link can view this snapshot until ${new Date(share.expires_at).toLocaleDateString()}. Later edits do not change it.`;
-          const link = document.createElement('input'); link.readOnly = true; link.value = url.href; link.setAttribute('aria-label', 'Public workbook link'); link.style.width = '100%';
-          dialog.append(heading, note, link);
-          button('Copy link', async () => { await navigator.clipboard.writeText(link.value); }, dialog);
-          button('Close', () => dialog.close(), dialog);
-          dialog.addEventListener('close', () => dialog.remove(), { once: true });
-          container.append(dialog); dialog.showModal(); link.select();
+          const share = await bookRequest('/shares', { method: 'POST', body: JSON.stringify({ base_revision: this.editor.model.session.getRevisionId(), background: !!book.share_jobs_enabled }) });
+          if (book.share_jobs_enabled) await showExports(share.id);
+          else await showShare(share);
         });
         button('Manage public links', async () => {
           const shares = await bookRequest('/shares');

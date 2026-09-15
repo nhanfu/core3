@@ -1,0 +1,20 @@
+version: 0.0.19
+kind: schema
+
+type:
+  postgres:
+    up: |
+      DROP INDEX spreadsheet_export_jobs_pending;
+      DROP INDEX spreadsheet_export_jobs_owner_pending;
+      ALTER TABLE spreadsheet_export_jobs ADD COLUMN kind VARCHAR DEFAULT 'xlsx';
+      ALTER TABLE spreadsheet_export_jobs ALTER COLUMN kind SET NOT NULL;
+      CREATE INDEX spreadsheet_export_jobs_pending ON spreadsheet_export_jobs (state, created_at_ms);
+      CREATE INDEX spreadsheet_export_jobs_owner_pending ON spreadsheet_export_jobs (owner_id, company_name, state);
+    down: |
+      DELETE FROM spreadsheet_export_jobs WHERE kind <> 'xlsx';
+      DROP INDEX spreadsheet_export_jobs_pending;
+      DROP INDEX spreadsheet_export_jobs_owner_pending;
+      ALTER TABLE spreadsheet_export_jobs DROP COLUMN kind;
+      CREATE INDEX spreadsheet_export_jobs_pending ON spreadsheet_export_jobs (state, created_at_ms);
+      CREATE INDEX spreadsheet_export_jobs_owner_pending ON spreadsheet_export_jobs (owner_id, company_name, state);
+  duckdb: postgres

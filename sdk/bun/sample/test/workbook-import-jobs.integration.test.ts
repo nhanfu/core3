@@ -99,6 +99,8 @@ test('recovers an expired import lease after database reopen and rejects the obs
     const queued = await context.request('/imports?name=Recovered', 'POST', 'owner', xlsx);
     const params = { job_id: queued.body.id, lease_token: 'obsolete', now: 1, lease_until: 2, max_attempts: 3 };
     expect((await context.execute('import_job_claim', params)).id).toBe(queued.body.id);
+    await context.execute('import_job_fail', { ...params, now: Date.now(), state: 'failed', error: 'Obsolete failure' });
+    expect((await context.request(`/imports/${queued.body.id}`)).body).toMatchObject({ state: 'running', attempts: 1 });
     context.close();
     context = await setup(join(folder, 'imports.duckdb'));
     await context.worker.runOnce();

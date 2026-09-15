@@ -8,6 +8,7 @@ max_import_bytes: 67108864
 max_import_expanded_bytes: 268435456
 max_import_files: 10000
 max_share_days: 30
+share_jobs: true
 max_data_queries: 10000
 print_max_cells: 100000
 print_max_figure_pixels: 16777216
@@ -165,21 +166,32 @@ allowed_commands:
 operations:
   export_job_create:
     mutation:
+      transaction_conflict: { code: WORKBOOK_EXPORT_ADMISSION_BUSY, message: Another export was queued at the same time. Please retry. }
       guards:
-        - { query: "SELECT 1 WHERE (SELECT COUNT(*) FROM spreadsheet_export_jobs WHERE owner_id = :current_user_id AND company_name = :current_company_name AND state IN ('queued', 'running') AND expires_at_ms > :now) < :max_pending", status: 429, code: WORKBOOK_EXPORT_LIMIT, message: Wait for an existing export or cancel it before creating another. }
+        - { query: "SELECT 1 WHERE COALESCE(:kind, 'xlsx') IN ('xlsx', 'print', 'share')", status: 422, code: WORKBOOK_EXPORT_KIND_INVALID, message: Unknown export format. }
       steps:
-        - query: "INSERT INTO spreadsheet_export_jobs (id, workbook_id, revision_id, owner_id, company_name, name, workbook_snapshot, required_permissions, created_at_ms, updated_at_ms, expires_at_ms) VALUES (:job_id, :id, :revision_id, :current_user_id, :current_company_name, :name, :workbook_snapshot, :required_permissions, :now, :now, :expires_at_ms)"
-      result: { query: "SELECT id, name, state, revision_id FROM spreadsheet_export_jobs WHERE id = :job_id" }
+        # The gate covers only enqueueing; workers never hold it while preparing files.
+        - query: "UPDATE spreadsheet_job_admission SET revision = revision + 1 WHERE kind = 'export'"
+          expect_changed: true
+          status: 500
+          code: WORKBOOK_CONFIGURATION
+          message: Export admission is not initialized.
+        - query: "INSERT INTO spreadsheet_export_jobs (id, workbook_id, revision_id, owner_id, company_name, name, kind, workbook_snapshot, required_permissions, created_at_ms, updated_at_ms, expires_at_ms) SELECT :job_id, :id, :revision_id, :current_user_id, :current_company_name, :name, COALESCE(:kind, 'xlsx'), :workbook_snapshot, :required_permissions, :now, :now, :expires_at_ms WHERE (SELECT COUNT(*) FROM spreadsheet_export_jobs WHERE owner_id = :current_user_id AND company_name = :current_company_name AND state IN ('queued', 'running') AND expires_at_ms > :now) < :max_pending"
+          expect_changed: true
+          status: 429
+          code: WORKBOOK_EXPORT_LIMIT
+          message: Wait for an existing export or cancel it before creating another.
+      result: { query: "SELECT id, name, kind, state, revision_id FROM spreadsheet_export_jobs WHERE id = :job_id" }
   export_jobs:
     query: >-
-      SELECT j.id, j.workbook_id, j.name, j.state, j.attempts, j.error, j.revision_id, j.expires_at_ms
+      SELECT j.id, j.workbook_id, j.name, j.kind, j.state, j.stage, j.data_pages_read, j.attempts, j.error, j.revision_id, j.expires_at_ms
       FROM spreadsheet_export_jobs j JOIN spreadsheet_workbooks w ON w.id = j.workbook_id
       WHERE j.owner_id = :current_user_id AND j.company_name = :current_company_name AND j.expires_at_ms > :now
         AND w.company_name = :current_company_name
         AND (w.owner_id = :current_user_id OR w.visibility = 'internal' OR EXISTS (SELECT 1 FROM spreadsheet_workbook_members m WHERE m.workbook_id = w.id AND m.user_id = :current_user_id))
       ORDER BY j.created_at_ms DESC LIMIT 100
   export_job:
-    query: "SELECT id, workbook_id, name, state, attempts, error, revision_id, expires_at_ms, required_permissions FROM spreadsheet_export_jobs WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name AND expires_at_ms > :now"
+    query: "SELECT id, workbook_id, name, kind, state, stage, data_pages_read, attempts, error, revision_id, expires_at_ms, required_permissions FROM spreadsheet_export_jobs WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name AND expires_at_ms > :now"
   export_job_artifact:
     query: "SELECT artifact_base64 FROM spreadsheet_export_jobs WHERE id = :job_id AND owner_id = :current_user_id AND company_name = :current_company_name AND state = 'completed' AND expires_at_ms > :now"
   export_job_cancel:
@@ -203,11 +215,21 @@ operations:
     mutation:
       steps:
         - query: "UPDATE spreadsheet_export_jobs SET state = 'running', attempts = attempts + 1, lease_token = :lease_token, lease_until = :lease_until, updated_at_ms = :now WHERE id = :job_id AND (state = 'queued' OR (state = 'running' AND lease_until < :now)) AND attempts < :max_attempts AND expires_at_ms > :now"
-      result: { query: "SELECT id, workbook_id, owner_id, company_name, revision_id, lease_token, workbook_snapshot, attempts FROM spreadsheet_export_jobs WHERE id = :job_id AND lease_token = :lease_token AND state = 'running'" }
+      result: { query: "SELECT id, workbook_id, owner_id, company_name, name, kind, revision_id, lease_token, workbook_snapshot, data_pages_read, attempts FROM spreadsheet_export_jobs WHERE id = :job_id AND lease_token = :lease_token AND state = 'running'" }
+  export_job_progress:
+    mutation:
+      guards:
+        - { query: "SELECT 1 WHERE :stage IN ('preparing', 'converting') AND :data_pages_read >= 0 AND :data_pages_read <= 2147483647 AND FLOOR(:data_pages_read) = :data_pages_read", status: 422, code: WORKBOOK_EXPORT_PROGRESS_INVALID, message: Invalid export progress. }
+      steps:
+        - query: "UPDATE spreadsheet_export_jobs SET stage = :stage, data_pages_read = :data_pages_read, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token AND lease_until >= :now AND expires_at_ms > :now"
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_EXPORT_LEASE_LOST
+          message: Export was cancelled, expired or taken over by another worker.
   export_job_prepare:
     mutation:
       steps:
-        - query: "UPDATE spreadsheet_export_jobs SET workbook_snapshot = :workbook_snapshot, required_permissions = :required_permissions, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token AND lease_until >= :now AND expires_at_ms > :now"
+        - query: "UPDATE spreadsheet_export_jobs SET stage = 'converting', workbook_snapshot = :workbook_snapshot, required_permissions = :required_permissions, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token AND lease_until >= :now AND expires_at_ms > :now"
           expect_changed: true
           status: 409
           code: WORKBOOK_EXPORT_LEASE_LOST
@@ -225,13 +247,21 @@ operations:
   export_job_fail:
     mutation:
       steps:
-        - query: "UPDATE spreadsheet_export_jobs SET state = :state, error = :error, workbook_snapshot = CASE WHEN :state = 'queued' THEN workbook_snapshot ELSE NULL END, lease_token = NULL, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token"
+        - query: "UPDATE spreadsheet_export_jobs SET state = :state, error = :error, workbook_snapshot = CASE WHEN :state = 'queued' THEN workbook_snapshot ELSE NULL END, lease_token = NULL, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token AND lease_until >= :now AND expires_at_ms > :now"
   import_job_create:
     mutation:
-      guards:
-        - { query: "SELECT 1 WHERE (SELECT COUNT(*) FROM spreadsheet_import_jobs WHERE owner_id = :current_user_id AND company_name = :current_company_name AND state IN ('queued', 'running')) < :max_pending", status: 429, code: WORKBOOK_IMPORT_LIMIT, message: Wait for an existing import or cancel it before uploading another. }
+      transaction_conflict: { code: WORKBOOK_IMPORT_ADMISSION_BUSY, message: Another import was queued at the same time. Please retry. }
       steps:
-        - query: "INSERT INTO spreadsheet_import_jobs (id, workbook_id, owner_id, company_name, name, input_base64, created_at_ms, updated_at_ms) VALUES (:job_id, :workbook_id, :current_user_id, :current_company_name, :name, :input_base64, :now, :now)"
+        - query: "UPDATE spreadsheet_job_admission SET revision = revision + 1 WHERE kind = 'import'"
+          expect_changed: true
+          status: 500
+          code: WORKBOOK_CONFIGURATION
+          message: Import admission is not initialized.
+        - query: "INSERT INTO spreadsheet_import_jobs (id, workbook_id, owner_id, company_name, name, input_base64, created_at_ms, updated_at_ms) SELECT :job_id, :workbook_id, :current_user_id, :current_company_name, :name, :input_base64, :now, :now WHERE (SELECT COUNT(*) FROM spreadsheet_import_jobs WHERE owner_id = :current_user_id AND company_name = :current_company_name AND state IN ('queued', 'running')) < :max_pending"
+          expect_changed: true
+          status: 429
+          code: WORKBOOK_IMPORT_LIMIT
+          message: Wait for an existing import or cancel it before uploading another.
       result: { query: "SELECT id, name, state FROM spreadsheet_import_jobs WHERE id = :job_id" }
   import_jobs:
     query: "SELECT id, name, state, attempts, error, warnings, CASE WHEN state = 'completed' THEN workbook_id ELSE NULL END AS workbook_id FROM spreadsheet_import_jobs WHERE owner_id = :current_user_id AND company_name = :current_company_name ORDER BY created_at_ms DESC LIMIT 100"
@@ -274,7 +304,7 @@ operations:
   import_job_fail:
     mutation:
       steps:
-        - query: "UPDATE spreadsheet_import_jobs SET state = :state, error = :error, input_base64 = CASE WHEN :state = 'queued' THEN input_base64 ELSE NULL END, lease_token = NULL, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token"
+        - query: "UPDATE spreadsheet_import_jobs SET state = :state, error = :error, input_base64 = CASE WHEN :state = 'queued' THEN input_base64 ELSE NULL END, lease_token = NULL, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token AND lease_until >= :now"
   document_links:
     query: "SELECT document_id FROM spreadsheet_workbook_documents WHERE workbook_id = :id ORDER BY document_id"
   document_workbooks:
@@ -519,6 +549,29 @@ operations:
       steps:
         - query: 'UPDATE spreadsheet_workbook_shares SET revoked = TRUE WHERE id = :share_id AND workbook_id = :id'
       result: { query: 'SELECT id, revoked FROM spreadsheet_workbook_shares WHERE id = :share_id AND workbook_id = :id' }
+  share_job_finish:
+    mutation:
+      guards: [*owner, *editor]
+      steps:
+        - query: >-
+            UPDATE spreadsheet_export_jobs SET state = 'completed', workbook_snapshot = NULL,
+              artifact_base64 = :artifact_base64, error = NULL, updated_at_ms = :now
+            WHERE id = :job_id AND kind = 'share' AND workbook_id = :id
+              AND owner_id = :current_user_id AND company_name = :current_company_name
+              AND state = 'running' AND lease_token = :lease_token AND lease_until >= :now AND expires_at_ms > :now
+              AND CAST(:share_expires_at AS TIMESTAMP) > CURRENT_TIMESTAMP
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_EXPORT_LEASE_LOST
+          message: Share preparation was cancelled, expired or taken over by another worker.
+        - query: >-
+            INSERT INTO spreadsheet_workbook_shares(id, workbook_id, token_hash, name, revision_id, workbook_snapshot, created_by, expires_at)
+            SELECT id, workbook_id, :share_token_hash, name, revision_id, :share_snapshot, owner_id, CAST(:share_expires_at AS TIMESTAMP)
+            FROM spreadsheet_export_jobs WHERE id = :job_id AND lease_token = :lease_token AND kind = 'share' AND state = 'completed'
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_EXPORT_LEASE_LOST
+          message: Share preparation is unavailable.
   restore:
     mutation:
       guards:

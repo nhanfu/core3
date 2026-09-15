@@ -47,6 +47,13 @@ test('reads the real Orders YAML datasource under each viewer identity without p
       sources: new Map([['orders', source]]), pageSources: new Map(), pages: new Map(), catalogs: new Map(), menus: new Map(), workflows: new Map([['orders', { permission: 'orders.read', states: [] }]]), workflowFiles: new Map(), permissions: { permissions: ['orders.read'] }, uploadRoot: '', eventStore: {}, topics: {},
     });
     const reader = createYamlSourceReader(api);
+    let backgroundPagesRead = 0;
+    const readSourceAs = reader.readSourceAs!;
+    reader.readSourceAs = async (...args) => {
+      const result = await readSourceAs(...args);
+      backgroundPagesRead++;
+      return result;
+    };
     const definition = validateWorkbookRuntime(Bun.YAML.parse(readFileSync(join(root, 'workbooks.yaml'), 'utf8')));
     definition.export_jobs!.poll_ms = 600000;
     runtime = new WorkbookRuntime(definition, repository, auth, service => {
@@ -109,6 +116,7 @@ test('reads the real Orders YAML datasource under each viewer identity without p
     expect(editorExport).toContain('<v>100</v>');
     expect(editorExport).not.toContain('<v>73</v>');
     for (const [actor, amount] of [['owner', '73'], ['editor', '99']]) {
+      backgroundPagesRead = 0;
       const queued = await request(`${linkedPath}/export`, 'POST', undefined, actor);
       expect(queued.status).toBe(202);
       const [input] = await repository.query('SELECT workbook_snapshot FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
@@ -120,8 +128,11 @@ test('reads the real Orders YAML datasource under each viewer identity without p
         exportEngine.exportSnapshot = async () => { throw Object.assign(new Error('Simulated conversion worker failure'), { code: 'WORKBOOK_ENGINE_UNAVAILABLE' }); };
         try { await (runtime as any).exportJobs.runOnce(); }
         finally { exportEngine.exportSnapshot = convert; }
-        const [prepared] = await repository.query('SELECT state, workbook_snapshot FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
+        const [prepared] = await repository.query('SELECT state, stage, data_pages_read, workbook_snapshot FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
         expect(prepared.state).toBe('queued');
+        expect(prepared.stage).toBe('converting');
+        expect(prepared.data_pages_read).toBeGreaterThan(0);
+        expect(prepared.data_pages_read).toBe(backgroundPagesRead);
         expect(JSON.parse(prepared.workbook_snapshot).sheets[0].cells).toMatchObject({ A1: amount, B1: '=A1+1', D1: amount, H1: amount, H2: String(Number(amount) + 1) });
         // Retrying conversion reuses the committed preparation, even if the
         // datasource is now unavailable. Download still checks actor permissions.
@@ -129,8 +140,11 @@ test('reads the real Orders YAML datasource under each viewer identity without p
       }
       await (runtime as any).exportJobs.runOnce();
       sourceDenied = false;
-      const [job] = await repository.query('SELECT state, workbook_snapshot, required_permissions, artifact_base64 FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
+      const [job] = await repository.query('SELECT state, stage, data_pages_read, workbook_snapshot, required_permissions, artifact_base64 FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
       expect(job.state).toBe('completed');
+      expect(job.stage).toBe('converting');
+      expect(job.data_pages_read).toBeGreaterThan(0);
+      expect(job.data_pages_read).toBe(backgroundPagesRead);
       expect(JSON.parse(job.required_permissions)).toEqual(['orders.read']);
       expect(job.workbook_snapshot).toBeNull();
       const xml = readWorkbookXlsx(Buffer.from(job.artifact_base64, 'base64'), 10000000, 1000)['xl/worksheets/sheet0.xml'];
@@ -143,6 +157,42 @@ test('reads the real Orders YAML datasource under each viewer identity without p
     expect(ownerPrint.body.page_setup).toEqual(definition.print_page_setup);
     expect(ownerPrint.body.snapshot.sheets[0].cells.A1).toBe('73');
     expect((await request(`${linkedPath}/print`, 'GET', undefined, 'editor')).body.snapshot.sheets[0].cells.A1).toBe('99');
+    for (const [actor, amount] of [['owner', '73'], ['editor', '99']]) {
+      const queued = await request(`${linkedPath}/print`, 'POST', undefined, actor);
+      expect(queued).toMatchObject({ status: 202, body: { kind: 'print' } });
+      await (runtime as any).exportJobs.runOnce();
+      const result = await request(`/exports/${queued.body.id}?download=true`, 'GET', undefined, actor);
+      expect(result.status).toBe(200);
+      expect(result.body.snapshot.sheets[0].cells).toMatchObject({ A1: amount, B1: String(Number(amount) + 1), H1: amount, H2: String(Number(amount) + 1) });
+      expect(JSON.stringify(result.body.snapshot.sheets[0].cells)).not.toContain('CORE3.VALUE');
+      const index = permissions.indexOf('orders.read');
+      permissions.splice(index, 1);
+      try { expect((await request(`/exports/${queued.body.id}?download=true`, 'GET', undefined, actor)).status).toBe(403); }
+      finally { permissions.push('orders.read'); }
+    }
+    const queuedShare = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION', background: true });
+    expect(queuedShare).toMatchObject({ status: 202, body: { kind: 'share' } });
+    await (runtime as any).exportJobs.runOnce();
+    const queuedLink = await request(`/exports/${queuedShare.body.id}?download=true`);
+    expect(queuedLink.status).toBe(200);
+    const queuedPublic = await request(`/public/${queuedLink.body.token}`);
+    expect(queuedPublic.body.snapshot.sheets[0].cells).toMatchObject({ A1: '73', B1: '74', H1: '73', H2: '74' });
+    expect(JSON.stringify(queuedPublic.body.snapshot.sheets[0].cells)).not.toContain('CORE3.VALUE');
+    // Revocation during preparation must prevent publication, even after freezing succeeded.
+    const deniedShare = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION', background: true });
+    const originalMutation = repository.executeMutation.bind(repository);
+    repository.executeMutation = async (mutation, params) => {
+      const result = await originalMutation(mutation, params);
+      if (mutation === definition.operations.export_job_prepare.mutation && params.job_id === deniedShare.body.id) permissions.splice(permissions.indexOf('orders.read'), 1);
+      return result;
+    };
+    try {
+      await (runtime as any).exportJobs.runOnce();
+      expect((await request(`/exports/${deniedShare.body.id}`)).body.state).toBe('failed');
+      expect(await repository.query('SELECT id FROM spreadsheet_workbook_shares WHERE id = ?', [deniedShare.body.id])).toEqual([]);
+      expect((await request(`/exports/${queuedShare.body.id}?download=true`)).status).toBe(403);
+      expect((await request(`/public/${queuedLink.body.token}`)).body).toEqual(queuedPublic.body);
+    } finally { repository.executeMutation = originalMutation; permissions.push('orders.read'); }
     const share = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION' });
     expect(share.status).toBe(201);
     const published = (await request(`/public/${share.body.token}`)).body;
@@ -182,6 +232,20 @@ test('reads the real Orders YAML datasource under each viewer identity without p
     expect((await request(`${linkedPath}/data`, 'POST', query)).body.data.map((row: any) => row.order_number)).toEqual(['SO-THREE']);
     expect(await exported('owner')).toContain('<v>142</v>');
     expect(await exported('editor')).toContain('<v>99</v>');
+    const filteredPrint = await request(`${linkedPath}/print`, 'POST');
+    expect(filteredPrint.status).toBe(202);
+    await request(`${linkedPath}/filters`, 'POST', { values: {} });
+    await (runtime as any).exportJobs.runOnce();
+    expect((await request(`/exports/${filteredPrint.body.id}?download=true`)).body.snapshot.sheets[0].cells.A1).toBe('142');
+    await request(`${linkedPath}/filters`, 'POST', { values: { search: 'SO-THREE' } });
+    const filteredShareJob = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION', background: true });
+    expect(filteredShareJob.status).toBe(202);
+    await request(`${linkedPath}/filters`, 'POST', { values: {} });
+    await (runtime as any).exportJobs.runOnce();
+    const filteredLink = await request(`/exports/${filteredShareJob.body.id}?download=true`);
+    expect(filteredLink.status).toBe(200);
+    expect((await request(`/public/${filteredLink.body.token}`)).body.snapshot.sheets[0].cells.A1).toBe('142');
+    await request(`${linkedPath}/filters`, 'POST', { values: { search: 'SO-THREE' } });
     const filteredShare = await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION' });
     expect(filteredShare.status).toBe(201);
     expect((await request(`/public/${filteredShare.body.token}`)).body.snapshot.sheets[0].cells.A1).toBe('142');

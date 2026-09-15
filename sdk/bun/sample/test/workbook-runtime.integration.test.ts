@@ -48,6 +48,19 @@ const revision = (id = 'revision-1', base = 'START_REVISION', content = '42', ac
 });
 
 describe('YAML-owned workbook persistence and revision protocol', () => {
+  test('validates the durable sharing policy and its atomic completion operation', () => {
+    const disabled = config(); disabled.share_jobs = false;
+    expect(validateWorkbookRuntime(disabled).share_jobs).toBe(false);
+    for (const change of [
+      (definition: any) => { definition.share_jobs = 'true'; },
+      (definition: any) => { delete definition.export_jobs; },
+      (definition: any) => { delete definition.operations.share_job_finish; },
+    ]) {
+      const definition = config(); change(definition);
+      expect(() => validateWorkbookRuntime(definition)).toThrow();
+    }
+  });
+
   test('validates YAML paper dimensions, defaults and margin limits', () => {
     for (const change of [
       { default_paper: 'missing' }, { margin_mm: -1 }, { max_margin_mm: 110 }, { max_repeat_rows: -1 },
