@@ -29,6 +29,10 @@ test('reads the real Orders YAML datasource under each viewer identity without p
       ('two', 1, 'SO-TWO', 'Second customer', 'Second', CURRENT_DATE - 1, 'Draft', 'Local', 'Route', 'Road', 1, 99, 'editor', CURRENT_TIMESTAMP, 'editor')`, []);
     const permissions = ['spreadsheet.read', 'spreadsheet.write', 'spreadsheet.export', 'orders.read'];
     const auth = {
+      async resolveBackgroundUser(id: string, company: string) {
+        if (company !== 'Acme') throw Object.assign(new Error('Unauthorized'), { status: 403 });
+        return this.getCurrentUser(new Request('http://fixture', { headers: { Authorization: `Bearer ${id}` } }));
+      },
       async getCurrentUser(request: Request) {
         const id = request.headers.get('authorization')?.replace('Bearer ', '');
         if (!['owner', 'editor'].includes(id || '')) throw Object.assign(new Error('Unauthorized'), { status: 401 });
@@ -107,10 +111,31 @@ test('reads the real Orders YAML datasource under each viewer identity without p
     for (const [actor, amount] of [['owner', '73'], ['editor', '99']]) {
       const queued = await request(`${linkedPath}/export`, 'POST', undefined, actor);
       expect(queued.status).toBe(202);
-      const [job] = await repository.query('SELECT workbook_snapshot, required_permissions FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
-      expect(JSON.parse(job.workbook_snapshot).sheets[0].cells).toMatchObject({ A1: amount, B1: '=A1+1', D1: amount, H1: amount, H2: String(Number(amount) + 1) });
+      const [input] = await repository.query('SELECT workbook_snapshot FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
+      expect(JSON.parse(input.workbook_snapshot).format).toBe('core3-export-input-v1');
+      expect(input.workbook_snapshot).toContain('CORE3.VALUE');
+      if (actor === 'owner') {
+        const exportEngine = (runtime as any).exportEngine;
+        const convert = exportEngine.exportSnapshot.bind(exportEngine);
+        exportEngine.exportSnapshot = async () => { throw Object.assign(new Error('Simulated conversion worker failure'), { code: 'WORKBOOK_ENGINE_UNAVAILABLE' }); };
+        try { await (runtime as any).exportJobs.runOnce(); }
+        finally { exportEngine.exportSnapshot = convert; }
+        const [prepared] = await repository.query('SELECT state, workbook_snapshot FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
+        expect(prepared.state).toBe('queued');
+        expect(JSON.parse(prepared.workbook_snapshot).sheets[0].cells).toMatchObject({ A1: amount, B1: '=A1+1', D1: amount, H1: amount, H2: String(Number(amount) + 1) });
+        // Retrying conversion reuses the committed preparation, even if the
+        // datasource is now unavailable. Download still checks actor permissions.
+        sourceDenied = true;
+      }
+      await (runtime as any).exportJobs.runOnce();
+      sourceDenied = false;
+      const [job] = await repository.query('SELECT state, workbook_snapshot, required_permissions, artifact_base64 FROM spreadsheet_export_jobs WHERE id = ?', [queued.body.id]);
+      expect(job.state).toBe('completed');
       expect(JSON.parse(job.required_permissions)).toEqual(['orders.read']);
-      expect(job.workbook_snapshot).not.toContain('CORE3.VALUE');
+      expect(job.workbook_snapshot).toBeNull();
+      const xml = readWorkbookXlsx(Buffer.from(job.artifact_base64, 'base64'), 10000000, 1000)['xl/worksheets/sheet0.xml'];
+      expect(xml).toContain(`<v>${amount}</v>`);
+      expect(xml).not.toContain('CORE3.VALUE');
     }
     const ownerPrint = await request(`${linkedPath}/print`);
     expect(ownerPrint.status).toBe(200);
@@ -130,7 +155,10 @@ test('reads the real Orders YAML datasource under each viewer identity without p
     sourceDenied = true;
     expect((await request(`${linkedPath}/print`)).status).toBe(403);
     expect((await request(`${linkedPath}/export`)).status).toBe(403);
-    expect((await request(`${linkedPath}/export`, 'POST')).status).toBe(403);
+    const deniedJob = await request(`${linkedPath}/export`, 'POST');
+    expect(deniedJob.status).toBe(202);
+    await (runtime as any).exportJobs.runOnce();
+    expect((await request(`/exports/${deniedJob.body.id}`)).body.state).toBe('failed');
     expect((await request(`${linkedPath}/shares`, 'POST', { base_revision: 'START_REVISION' })).status).toBe(403);
     expect((await request(`/public/${share.body.token}`)).body).toEqual(published);
     sourceDenied = false;

@@ -80,3 +80,11 @@ test('maps only declared transaction conflicts after rollback', async () => {
     expect(await runtime.execute(connection, { steps: definition.steps }).catch(error => error)).toBe(original);
   }
 });
+
+test('rejects malformed isolation settings before beginning a mutation', async () => {
+  let calls = 0;
+  const connection = { run() { calls++; }, all() { calls++; } };
+  const runtime = new YamlMutationRuntime(undefined, 'postgres');
+  await expect(runtime.execute(connection, { transaction_isolation: { postgresql: 'serializable' } } as any)).rejects.toMatchObject({ status: 500 });
+  expect(calls).toBe(0);
+});

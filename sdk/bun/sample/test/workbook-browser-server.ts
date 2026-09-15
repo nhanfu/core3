@@ -15,6 +15,10 @@ const db = await DuckDbDatabase.open(join(databaseRoot, 'test.duckdb'));
 const repository = new YamlRepository(db);
 await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'browser_workbook_migrations', ['schema', 'data']);
 const auth = {
+  async resolveBackgroundUser(id: string, company: string) {
+    if (company !== 'Acme') throw new Error('Unauthorized');
+    return this.getCurrentUser(new Request('http://fixture', { headers: { Authorization: `Bearer ${id}` } }));
+  },
   async getCurrentUser(request: Request) {
     const name = request.headers.get('Authorization')?.replace('Bearer ', '');
     if (!['owner', 'editor', 'reader'].includes(name || '')) throw new Error('Unauthorized');

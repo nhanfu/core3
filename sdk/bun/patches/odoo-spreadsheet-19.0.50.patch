@@ -1,0 +1,26 @@
+diff --git a/dist/o_spreadsheet.esm.js b/dist/o_spreadsheet.esm.js
+index 327ff3d8..59c61ac1 100644
+--- a/dist/o_spreadsheet.esm.js
++++ b/dist/o_spreadsheet.esm.js
+@@ -61869,9 +61869,11 @@ var Evaluator = class {
+ 			locale: this.getters.getLocale()
+ 		};
+ 		try {
++			// Literal evaluation cannot recurse into formula dependencies.
++			if (!cell.isFormula) return evaluateLiteral(cell, localeFormat, position);
+ 			if (this.cellsBeingComputed.has(cellId)) return ERROR_CYCLE_CELL;
+ 			this.cellsBeingComputed.add(cellId);
+-			return cell.isFormula ? this.computeFormulaCell(position, cell) : evaluateLiteral(cell, localeFormat, position);
++			return this.computeFormulaCell(position, cell);
+ 		} catch (e) {
+ 			e.value = e?.value || CellErrorType.GenericError;
+ 			e.message = e?.message || implementationErrorMessage;
+@@ -61879,7 +61881,7 @@ var Evaluator = class {
+ 			e.errorOriginPosition = e?.errorOriginPosition;
+ 			return createEvaluatedCell(e);
+ 		} finally {
+-			this.cellsBeingComputed.delete(cellId);
++			if (cell.isFormula) this.cellsBeingComputed.delete(cellId);
+ 		}
+ 	}
+ 	computeAndSave(position) {

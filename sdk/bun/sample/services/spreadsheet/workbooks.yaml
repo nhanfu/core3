@@ -203,7 +203,15 @@ operations:
     mutation:
       steps:
         - query: "UPDATE spreadsheet_export_jobs SET state = 'running', attempts = attempts + 1, lease_token = :lease_token, lease_until = :lease_until, updated_at_ms = :now WHERE id = :job_id AND (state = 'queued' OR (state = 'running' AND lease_until < :now)) AND attempts < :max_attempts AND expires_at_ms > :now"
-      result: { query: "SELECT id, workbook_snapshot, attempts FROM spreadsheet_export_jobs WHERE id = :job_id AND lease_token = :lease_token AND state = 'running'" }
+      result: { query: "SELECT id, workbook_id, owner_id, company_name, revision_id, lease_token, workbook_snapshot, attempts FROM spreadsheet_export_jobs WHERE id = :job_id AND lease_token = :lease_token AND state = 'running'" }
+  export_job_prepare:
+    mutation:
+      steps:
+        - query: "UPDATE spreadsheet_export_jobs SET workbook_snapshot = :workbook_snapshot, required_permissions = :required_permissions, updated_at_ms = :now WHERE id = :job_id AND state = 'running' AND lease_token = :lease_token AND lease_until >= :now AND expires_at_ms > :now"
+          expect_changed: true
+          status: 409
+          code: WORKBOOK_EXPORT_LEASE_LOST
+          message: Export was cancelled, expired or taken over by another worker.
   export_job_owned:
     query: "SELECT id FROM spreadsheet_export_jobs WHERE id = :job_id AND lease_token = :lease_token AND state = 'running' AND lease_until >= :now AND expires_at_ms > :now"
   export_job_finish:

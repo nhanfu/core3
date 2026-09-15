@@ -61,6 +61,19 @@ function validPage() {
 }
 
 describe('YAML page schema', () => {
+  it('validates declared mutation transaction settings before page loading', () => {
+    const page: any = validPage();
+    page.actions[0].mutation = { transaction_isolation: { postgres: 'serializable' }, transaction_conflict: { code: 'ORDER_STALE', message: 'Reload the list.' } };
+    expect(() => validatePageDefinition(page)).not.toThrow();
+    for (const isolation of ['serializable', {}, { postgresql: 'serializable' }, { postgres: 'serialisable' }, { duckdb: 'serializable' }]) {
+      page.actions[0].mutation = { transaction_isolation: isolation };
+      expect(() => validatePageDefinition(page)).toThrow(/transaction_isolation/);
+    }
+    for (const conflict of [[], null, { code: '', message: 'Reload' }, { code: 'STALE' }, { code: 'STALE', message: 'Reload', status: 200 }]) {
+      page.actions[0].mutation = { transaction_conflict: conflict };
+      expect(() => validatePageDefinition(page)).toThrow(/transaction_conflict/);
+    }
+  });
   it('accepts a complete resource-list definition', () => {
     expect(() => validatePageDefinition(validPage())).not.toThrow();
   });

@@ -29,6 +29,25 @@ queries:
     GROUP BY u.id, u.email, u.name, u.password_hash, u.avatar_url,
       u.preferred_lang, u.enabled, u.branch_id, u.department_id,
       u.last_login, u.created_at, u.updated_at, u.row_version, u.current_company_id
+  find_background_user: |
+    SELECT u.id, COALESCE(uo.email, u.email) AS email,
+      COALESCE(uo.name, u.name) AS name, COALESCE(uo.enabled, u.enabled) AS enabled,
+      u.branch_id, u.department_id, string_agg(COALESCE(ro.name, r.name), ',') AS roles_csv,
+      COALESCE((SELECT CASE
+        WHEN bool_or(COALESCE(sro.view_scope, sr.view_scope) = 'all') THEN 'all'
+        WHEN bool_or(COALESCE(sro.view_scope, sr.view_scope) = 'branch') THEN 'branch'
+        ELSE 'own' END
+        FROM user_roles sur JOIN roles sr ON sr.id = sur.role_id
+        LEFT JOIN auth_role_management_overrides sro ON sro.role_id = sr.id
+        WHERE sur.user_id = u.id), 'own') AS view_scope
+    FROM users u
+    LEFT JOIN auth_user_management_overrides uo ON uo.user_id = u.id
+    LEFT JOIN user_roles ur ON ur.user_id = u.id
+    LEFT JOIN roles r ON r.id = ur.role_id
+    LEFT JOIN auth_role_management_overrides ro ON ro.role_id = r.id
+    WHERE u.id = :user_id
+    GROUP BY u.id, u.email, u.name, u.enabled, u.branch_id, u.department_id,
+      uo.email, uo.name, uo.enabled
   permissions: |
     SELECT DISTINCT p.permission_key
     FROM permissions p

@@ -1,4 +1,5 @@
 import { validateWorkflowDefinition, WorkflowSchemaError, type WorkflowDefinition } from './workflow-schema.ts';
+import { validateMutationTransactionOptions } from '../yaml-mutation-runtime.ts';
 
 export type PageAuthDefinition = {
   require?: string[];
@@ -454,6 +455,7 @@ function validateActions(
       requireString(action.permission, `${path}.permission`, issues);
     }
     rejectUnknownKeys(action, allowedKeys, path, issues);
+    if (isRecord(action.mutation)) issues.push(...validateMutationTransactionOptions(action.mutation).map(issue => `${path}.mutation.${issue}`));
     if (typeof action.id === 'string') addUnique(ids, action.id, `${path}.id`, 'action', issues);
 
     if (type === 'form') {

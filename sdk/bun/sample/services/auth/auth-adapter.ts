@@ -17,6 +17,11 @@ export class DirectAuthAdapter implements AuthServiceProtocol {
     return this.service.introspect(token);
   }
 
+  async resolveBackgroundUser(userId: string, companyName: string): Promise<AuthClaims> {
+    if (!this.service.resolveBackgroundUser) throw Object.assign(new Error('Background authorization unavailable'), { status: 503, code: 'BACKGROUND_AUTH_UNAVAILABLE' });
+    return this.service.resolveBackgroundUser(userId, companyName);
+  }
+
   hasPermission(user: AuthClaims | User, permission: string): boolean {
     return this.service.hasPermission(user, permission);
   }

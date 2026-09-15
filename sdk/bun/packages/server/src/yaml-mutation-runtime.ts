@@ -49,6 +49,26 @@ export type MutationStep = {
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
+export function validateMutationTransactionOptions(definition: Record<string, any>): string[] {
+  const issues: string[] = [];
+  const isolation = definition.transaction_isolation;
+  if (isolation !== undefined) {
+    if (!isolation || typeof isolation !== 'object' || Array.isArray(isolation) || !Object.keys(isolation).length) issues.push('transaction_isolation must be a non-empty driver map');
+    else for (const [driver, level] of Object.entries(isolation)) {
+      if (driver !== 'postgres' || level !== 'serializable') issues.push(`transaction_isolation.${driver} must declare supported postgres serializable isolation`);
+    }
+  }
+  const conflict = definition.transaction_conflict;
+  if (conflict !== undefined) {
+    if (!conflict || typeof conflict !== 'object' || Array.isArray(conflict)) issues.push('transaction_conflict must be an object');
+    else {
+      for (const field of ['code', 'message']) if (typeof conflict[field] !== 'string' || !conflict[field].trim()) issues.push(`transaction_conflict.${field} must be a non-empty string`);
+      for (const field of Object.keys(conflict)) if (!['code', 'message'].includes(field)) issues.push(`transaction_conflict.${field} is not allowed`);
+    }
+  }
+  return issues;
+}
+
 function sameMutationValue(left: unknown, right: unknown): boolean {
   if (left === right) return true;
   if ((left === null || left === undefined || left === '') && (right === null || right === undefined || right === '')) return true;
@@ -68,6 +88,8 @@ export class YamlMutationRuntime {
   constructor(private readonly resolveService?: (name: string) => any, private readonly driver?: DatabaseDriver) {}
 
   async execute(connection: MutationConnection, definition: MutationDefinition, input: Record<string, any> = {}): Promise<any> {
+    const transactionIssues = validateMutationTransactionOptions(definition);
+    if (transactionIssues.length) throw { status: 500, message: `Invalid mutation transaction settings: ${transactionIssues.join('; ')}` };
     const params = { ...input };
     const compensations: Array<{ definition: NonNullable<MutationDefinition['guards']>[number]['compensation']; response: any }> = [];
     if (params.values && typeof params.values === 'object') {

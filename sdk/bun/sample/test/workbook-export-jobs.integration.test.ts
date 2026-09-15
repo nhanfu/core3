@@ -1,4 +1,4 @@
-import { afterAll, expect, test } from 'bun:test';
+import { expect, test } from 'bun:test';
 import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -7,14 +7,12 @@ import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { bindNamedParams } from '@core3/server/database/sql';
 import { migrateDatabase } from '@core3/server/migrations';
 import { WorkbookRuntime, validateWorkbookRuntime } from '@core3/server/workbook-runtime';
-import { WorkbookEngine } from '@core3/server/workbook-engine';
 import { WorkbookFileJobs } from '@core3/server/workbook-file-jobs';
 import { readWorkbookXlsx } from '@core3/client/spreadsheet/files';
 
 const root = join(import.meta.dir, '../services/spreadsheet');
-const engine = new WorkbookEngine();
-afterAll(() => engine.stop());
 const auth = {
+  resolveBackgroundUser: async (id: string, company: string) => ({ sub: id, company_name: company, permissions: ['spreadsheet.read', 'spreadsheet.export'] }),
   getCurrentUser: async (request: Request) => {
     const actor = request.headers.get('Authorization') || 'owner';
     return { sub: actor === 'wrong' ? 'owner' : actor, company_name: actor === 'wrong' ? 'Other' : 'Acme', permissions: actor === 'denied' ? ['spreadsheet.read'] : ['spreadsheet.read', 'spreadsheet.write', 'spreadsheet.export'] };
@@ -33,17 +31,13 @@ async function setup(path = ':memory:') {
     const bound = bindNamedParams(operation.query!, params);
     return repository.query(bound.statement, bound.values);
   };
-  const worker = new WorkbookFileJobs(definition.export_jobs!, execute, 'export_job', async job => {
-    const bytes = await engine.exportSnapshot(JSON.parse(job.workbook_snapshot));
-    if (bytes.byteLength > definition.export_jobs!.max_artifact_bytes) throw new Error('Too large');
-    return { artifact_base64: Buffer.from(bytes).toString('base64') };
-  });
+  const worker = (runtime as any).exportJobs as WorkbookFileJobs;
   const request = async (path: string, method = 'GET', body?: any, actor = 'owner') => {
     const url = new URL(`http://test${definition.endpoint}${path}`);
     return (await runtime.handle(new Request(url, { method, headers: { Authorization: actor }, ...(body ? { body: JSON.stringify(body) } : {}) }), url))!;
   };
   const create = async () => (await request('', 'POST', { name: 'Export budget', snapshot: { sheets: [{ id: 's', name: 'Budget', colNumber: 26, rowNumber: 100, cells: { A1: '21', B1: '=A1*2' } }] } })).json();
-  return { db, repository, request, worker, execute, definition, create, close: () => { worker.stop(); runtime.dispose(); db.close(); } };
+  return { db, repository, runtime, request, worker, execute, definition, create, close: () => { worker.stop(); runtime.dispose(); db.close(); } };
 }
 
 test('queues private formula-preserving exports and rechecks access when downloading', async () => {
@@ -86,24 +80,54 @@ test('queues private formula-preserving exports and rechecks access when downloa
   } finally { context.close(); }
 }, 15000);
 
-test('resumes prepared exports after database reopen and fences cancelled or obsolete work', async () => {
+test('cancelling while actor authorization is pending prevents preparation from starting', async () => {
+  const context = await setup();
+  const resolveUser = auth.resolveBackgroundUser;
+  let entered!: () => void, release!: () => void;
+  const started = new Promise<void>(resolve => { entered = resolve; });
+  const held = new Promise<void>(resolve => { release = resolve; });
+  let rendering = 0;
+  let running: Promise<void> | undefined;
+  try {
+    const book = await context.create();
+    const queued = await context.request(`/${book.id}/export`, 'POST');
+    expect(queued.status).toBe(202);
+    const job = await queued.json();
+    auth.resolveBackgroundUser = async (id, company) => { entered(); await held; return resolveUser(id, company); };
+    (context.runtime as any).exportEngine.render = async () => { rendering++; throw new Error('Cancelled preparation must not start'); };
+    running = context.worker.runOnce();
+    await started;
+    expect((await context.request(`/exports/${job.id}`, 'DELETE')).status).toBe(200);
+    release(); await running;
+    expect(rendering).toBe(0);
+    expect(await (await context.request(`/exports/${job.id}`)).json()).toMatchObject({ state: 'cancelled' });
+  } finally {
+    auth.resolveBackgroundUser = resolveUser; release(); await running; context.close();
+  }
+}, 15000);
+
+test('resumes unprepared exports after database reopen and fences cancelled or obsolete preparation and conversion', async () => {
   const folder = mkdtempSync(join(tmpdir(), 'core3-export-jobs-'));
   let context = await setup(join(folder, 'exports.duckdb'));
   try {
     const book = await context.create();
     const job = await (await context.request(`/${book.id}/export`, 'POST')).json();
+    const [stored] = await context.repository.query('SELECT workbook_snapshot FROM spreadsheet_export_jobs WHERE id = ?', [job.id]);
+    expect(JSON.parse(stored.workbook_snapshot).format).toBe('core3-export-input-v1');
     const claim = { job_id: job.id, lease_token: 'old', now: 1, lease_until: 2, max_attempts: 3 };
     expect((await context.execute('export_job_claim', claim)).id).toBe(job.id);
     context.close(); context = await setup(join(folder, 'exports.duckdb'));
     await context.worker.runOnce();
     expect(await (await context.request(`/exports/${job.id}`)).json()).toMatchObject({ state: 'completed', attempts: 2 });
     await expect(context.execute('export_job_finish', { ...claim, now: Date.now(), artifact_base64: 'bad' })).rejects.toMatchObject({ code: 'WORKBOOK_EXPORT_LEASE_LOST' });
+    await expect(context.execute('export_job_prepare', { ...claim, now: Date.now(), workbook_snapshot: '{}', required_permissions: '[]' })).rejects.toMatchObject({ code: 'WORKBOOK_EXPORT_LEASE_LOST' });
     const file = await context.request(`/exports/${job.id}?download=true`);
     expect(readWorkbookXlsx(new Uint8Array(await file.arrayBuffer()), 10000000, 1000)['xl/worksheets/sheet0.xml']).toContain('A1*2');
     const cancel = await (await context.request(`/${book.id}/export`, 'POST')).json();
     const currentClaim = { ...claim, job_id: cancel.id, now: Date.now(), lease_until: Date.now() + 180000 };
     await context.execute('export_job_claim', currentClaim);
     expect((await context.request(`/exports/${cancel.id}`, 'DELETE')).status).toBe(200);
+    await expect(context.execute('export_job_prepare', { ...currentClaim, now: Date.now(), workbook_snapshot: '{}', required_permissions: '[]' })).rejects.toMatchObject({ code: 'WORKBOOK_EXPORT_LEASE_LOST' });
     await expect(context.execute('export_job_finish', { ...currentClaim, now: Date.now(), artifact_base64: 'bad' })).rejects.toMatchObject({ code: 'WORKBOOK_EXPORT_LEASE_LOST' });
     expect((await context.request(`/exports/${cancel.id}?download=true`)).status).toBe(409);
     context.definition.export_jobs!.max_artifact_bytes = 1;

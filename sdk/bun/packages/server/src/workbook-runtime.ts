@@ -39,7 +39,7 @@ export type WorkbookRuntimeDefinition = {
   documents?: { route: string; service: string; source: string; read_permission: string; link_permission: string; max_links: number };
   operations: Record<string, { query?: string; mutation?: any }>;
 };
-type AuthProvider = { getCurrentUser(request: Request): Promise<any>; hasPermission(user: any, permission: string): boolean };
+type AuthProvider = { getCurrentUser(request: Request): Promise<any>; hasPermission(user: any, permission: string): boolean; resolveBackgroundUser?(userId: string, companyName: string): Promise<any> };
 const REVISION_TYPES = new Set(['REMOTE_REVISION', 'REVISION_UNDONE', 'REVISION_REDONE']);
 const IDENTIFIER = /^[A-Za-z0-9_-]{1,128}$/;
 const fail = (status: number, code: string, message: string): never => { throw Object.assign(new Error(message), { status, code }); };
@@ -52,7 +52,7 @@ export function validateWorkbookRuntime(value: any): WorkbookRuntimeDefinition {
   if (value?.export_jobs) {
     for (const key of ['poll_ms', 'lease_ms', 'max_attempts', 'max_pending_per_user', 'retention_ms', 'max_artifact_bytes']) if (!Number.isSafeInteger(value.export_jobs[key]) || value.export_jobs[key] < 1) throw new Error('Invalid workbook export job policy');
     if (value.export_jobs.lease_ms < 150000) throw new Error('Export job lease must exceed the engine timeout');
-    for (const operation of ['export_job_create', 'export_jobs', 'export_job', 'export_job_artifact', 'export_job_cancel', 'export_job_cleanup', 'export_job_next', 'export_job_claim', 'export_job_owned', 'export_job_finish', 'export_job_fail']) if (!value.operations?.[operation]?.query && !value.operations?.[operation]?.mutation) throw new Error(`Missing workbook operation: ${operation}`);
+    for (const operation of ['export_job_create', 'export_jobs', 'export_job', 'export_job_artifact', 'export_job_cancel', 'export_job_cleanup', 'export_job_next', 'export_job_claim', 'export_job_owned', 'export_job_prepare', 'export_job_finish', 'export_job_fail']) if (!value.operations?.[operation]?.query && !value.operations?.[operation]?.mutation) throw new Error(`Missing workbook operation: ${operation}`);
   }
   if (value?.import_jobs) {
     for (const key of ['poll_ms', 'lease_ms', 'max_attempts', 'max_pending_per_user', 'retention_ms']) if (!Number.isSafeInteger(value.import_jobs[key]) || value.import_jobs[key] < 1) throw new Error('Invalid workbook import job policy');
@@ -127,8 +127,29 @@ export class WorkbookRuntime {
       this.importJobs.start();
     }
     if (definition.export_jobs) {
-      this.exportJobs = new WorkbookFileJobs(definition.export_jobs, (operation, params) => this.execute(operation, params), 'export_job', async job => {
-        const bytes = await this.exportEngine.exportSnapshot(JSON.parse(job.workbook_snapshot));
+      this.exportJobs = new WorkbookFileJobs(definition.export_jobs, (operation, params) => this.execute(operation, params), 'export_job', async (job, signal) => {
+        let snapshot = JSON.parse(job.workbook_snapshot);
+        if (snapshot.format === 'core3-export-input-v1') {
+          if (!this.auth.resolveBackgroundUser) fail(503, 'BACKGROUND_AUTH_UNAVAILABLE', 'Background authorization unavailable');
+          const user = await this.auth.resolveBackgroundUser(job.owner_id, job.company_name);
+          if (String(user?.sub) !== job.owner_id || authenticatedCompanyName(user) !== job.company_name) fail(403, 'WORKBOOK_FORBIDDEN', 'Export actor unavailable');
+          this.requirePermission(user, 'read'); this.requirePermission(user, 'export');
+          await this.access({ id: job.workbook_id, current_user_id: job.owner_id, current_company_name: job.company_name });
+          signal.throwIfAborted();
+          const requiredPermissions = new Set<string>();
+          const prepared = await this.exportEngine.render('prepare_export', job.revision_id, snapshot.state, this.catalog(user), query => {
+            const source = this.definition.sources?.[query.source];
+            if (source) requiredPermissions.add(source.permission);
+            return this.queryData(user, undefined, query, snapshot.filters);
+          }, this.definition.max_data_queries);
+          const workbook_snapshot = this.snapshot(prepared.snapshot, job.revision_id);
+          signal.throwIfAborted();
+          if (Buffer.byteLength(workbook_snapshot) > definition.max_snapshot_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Prepared export exceeds the snapshot limit');
+          await this.execute('export_job_prepare', { job_id: job.id, lease_token: job.lease_token, now: Date.now(), workbook_snapshot, required_permissions: JSON.stringify([...requiredPermissions]) });
+          snapshot = JSON.parse(workbook_snapshot);
+        }
+        signal.throwIfAborted();
+        const bytes = await this.exportEngine.exportSnapshot(snapshot);
         if (bytes.byteLength > definition.export_jobs!.max_artifact_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Export exceeds the configured file limit');
         return { artifact_base64: Buffer.from(bytes).toString('base64') };
       }, () => this.exportEngine.stop());
@@ -225,7 +246,7 @@ export class WorkbookRuntime {
     return row ? JSON.parse(row.filter_values) : {};
   }
 
-  private async queryData(user: any, request: Request, body: any, values: Record<string, any> = {}) {
+  private async queryData(user: any, request: Request | undefined, body: any, values: Record<string, any> = {}) {
     const source = typeof body.source === 'string' && Object.hasOwn(this.definition.sources || {}, body.source) ? this.definition.sources![body.source] : undefined;
     if (!source || !this.auth.hasPermission(user, source.permission)) fail(403, 'WORKBOOK_SOURCE_FORBIDDEN', 'Datasource unavailable');
     const filters = body.filters || {};
@@ -240,7 +261,10 @@ export class WorkbookRuntime {
     const skip = body.skip ?? 0, top = body.top ?? Math.min(50, source.max_rows);
     if (!Number.isSafeInteger(skip) || skip < 0 || !Number.isSafeInteger(top) || top < 1 || top > source.max_rows) fail(422, 'WORKBOOK_SOURCE_RANGE', 'Invalid datasource page');
     if (!this.resolveSource) fail(503, 'WORKBOOK_SOURCE_UNAVAILABLE', 'Datasource service unavailable');
-    const result = await this.resolveSource(source.service).readSource(request, source.source, filters, skip, top);
+    const reader = this.resolveSource(source.service);
+    if (!request && !reader.readSourceAs) fail(503, 'BACKGROUND_AUTH_UNAVAILABLE', 'Background datasource authorization unavailable');
+    const result = request ? await reader.readSource(request, source.source, filters, skip, top)
+      : await reader.readSourceAs!({ user_id: String(user.sub), company_name: authenticatedCompanyName(user) }, source.source, filters, skip, top);
     if (!Array.isArray(result.data)) fail(502, 'WORKBOOK_SOURCE_FAILED', 'Datasource returned invalid rows');
     return { source: body.source, columns: source.columns, data: result.data.map((row: any) => Object.fromEntries(source.columns.map(column => [column.field, row[column.field] ?? null]))), meta: result.meta || {}, skip, top, refreshed_at: new Date().toISOString() };
   }
@@ -498,17 +522,14 @@ export class WorkbookRuntime {
         }
         if (operation === 'export' && request.method === 'POST' && this.definition.export_jobs) {
           this.requirePermission(user, 'export');
+          if (!this.auth.resolveBackgroundUser) fail(503, 'BACKGROUND_AUTH_UNAVAILABLE', 'Background authorization unavailable');
           const filterValues = await this.filterValues(params);
-          const requiredPermissions = new Set<string>();
-          const prepared = await this.engine.render('prepare_export', access.head_revision_id, await this.load(params), this.catalog(user), query => {
-            const source = this.definition.sources?.[query.source];
-            if (source) requiredPermissions.add(source.permission);
-            return this.queryData(user, request, query, filterValues);
-          }, this.definition.max_data_queries);
-          const workbook_snapshot = this.snapshot(prepared.snapshot, access.head_revision_id);
-          if (Buffer.byteLength(workbook_snapshot) > this.definition.max_snapshot_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Prepared export exceeds the snapshot limit');
+          const state = await this.load(params);
+          if (state.head_revision_id !== access.head_revision_id) fail(409, 'WORKBOOK_REVISION_CONFLICT', 'Workbook changed before export');
+          const workbook_snapshot = JSON.stringify({ format: 'core3-export-input-v1', state: { snapshot: state.snapshot, revisions: state.revisions }, filters: filterValues });
+          if (Buffer.byteLength(workbook_snapshot) > this.definition.max_snapshot_bytes) fail(413, 'WORKBOOK_TOO_LARGE', 'Export input exceeds the snapshot limit');
           const now = Date.now();
-          return json(await this.execute('export_job_create', { ...params, job_id: randomUUID(), revision_id: access.head_revision_id, name: access.name, workbook_snapshot, required_permissions: JSON.stringify([...requiredPermissions]), now, expires_at_ms: now + this.definition.export_jobs.retention_ms, max_pending: this.definition.export_jobs.max_pending_per_user }), 202);
+          return json(await this.execute('export_job_create', { ...params, job_id: randomUUID(), revision_id: access.head_revision_id, name: access.name, workbook_snapshot, required_permissions: '[]', now, expires_at_ms: now + this.definition.export_jobs.retention_ms, max_pending: this.definition.export_jobs.max_pending_per_user }), 202);
         }
         if (operation === 'export' && request.method === 'GET') {
           this.requirePermission(user, 'export');

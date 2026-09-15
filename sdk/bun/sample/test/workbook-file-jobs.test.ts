@@ -14,6 +14,7 @@ test('local cancellation interrupts only the active conversion and the next job 
   const started = deferred<void>(), conversion = deferred<Record<string, any>>();
   const finished: string[] = [], failed: string[] = [];
   let interruptions = 0;
+  let activeSignal: AbortSignal | undefined;
   const worker = new WorkbookFileJobs({ ...policy, poll_ms: 600000 }, async (operation, params) => {
     if (operation.endsWith('_next')) return [{ id }];
     if (operation.endsWith('_claim')) return { id, attempts: 1 };
@@ -21,19 +22,23 @@ test('local cancellation interrupts only the active conversion and the next job 
     if (operation.endsWith('_finish')) finished.push(params.job_id);
     if (operation.endsWith('_fail')) failed.push(params.job_id);
     return {};
-  }, 'export_job', async job => {
+  }, 'export_job', async (job, signal) => {
+    activeSignal = signal;
     if (job.id === 'first') { started.resolve(); return conversion.promise; }
     return { artifact_base64: 'next file' };
   }, () => { interruptions++; conversion.reject(new Error('Worker terminated')); });
   try {
     const running = worker.runOnce(); await started.promise;
     worker.cancel('other'); expect(interruptions).toBe(0);
+    expect(activeSignal?.aborted).toBe(false);
     worker.cancel('first'); worker.cancel('first');
+    expect(activeSignal?.aborted).toBe(true);
     await running;
     expect(interruptions).toBe(1);
     expect(finished).toEqual([]); expect(failed).toEqual([]);
     id = 'second'; await worker.runOnce();
     expect(finished).toEqual(['second']);
+    expect(activeSignal?.aborted).toBe(false);
     expect(interruptions).toBe(1);
   } finally { worker.stop(); }
 });

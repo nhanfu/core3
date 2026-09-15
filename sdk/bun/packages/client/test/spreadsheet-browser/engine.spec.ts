@@ -1,5 +1,26 @@
 import { expect, test } from '@playwright/test';
 import { strFromU8, unzipSync } from 'fflate';
+import { writeFile } from 'node:fs/promises';
+
+test('preserves cycles, literals and array results with the evaluator patch', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('status')).toHaveText('Ready');
+  const result = await page.evaluate(async () => {
+    const { Model } = (window as any).spreadsheetTest;
+    const model = new Model({ sheets: [{ id: 's', name: 'Evaluation', colNumber: 10, rowNumber: 10, cells: { A1: '=B1', B1: '=A1', C1: '7', D1: 'TRUE', E1: 'text', F1: '=C1+1', G1: '=SEQUENCE(2)' } }] });
+    const get = (col: number, row = 0) => model.getters.getEvaluatedCell({ sheetId: 's', col, row });
+    const initial = { cycle: get(0).value, numeric: get(2).value, boolean: get(3).value, text: get(4).value, dependent: get(5).value, array: [get(6).value, get(6, 1).value] };
+    model.dispatch('UPDATE_CELL', { sheetId: 's', col: 0, row: 0, content: '5' });
+    const recovered = get(1).value;
+    model.dispatch('UPDATE_CELL', { sheetId: 's', col: 2, row: 0, content: '42' });
+    const updated = get(5).value;
+    model.dispatch('UPDATE_CELL', { sheetId: 's', col: 0, row: 0, content: '=B1' });
+    const cycleAgain = get(0).value;
+    await model.leaveSession();
+    return { initial, recovered, updated, cycleAgain };
+  });
+  expect(result).toEqual({ initial: { cycle: '#CYCLE', numeric: 7, boolean: true, text: 'text', dependent: 8, array: [1, 2] }, recovered: 5, updated: 43, cycleAgain: '#CYCLE' });
+});
 
 test('renders stored dashboards with the real engine and disposes it when switching', async ({ page }) => {
   const errors: string[] = [];
@@ -162,13 +183,17 @@ test('enterprise million-cell feasibility gate', async ({ page }, testInfo) => {
   });
   if (profiler) {
     const { profile } = await profiler.send('Profiler.stop');
-    await testInfo.attach('engine.cpuprofile', { body: JSON.stringify(profile), contentType: 'application/json' });
+    const profilePath = testInfo.outputPath('engine.cpuprofile');
+    await writeFile(profilePath, JSON.stringify(profile));
+    await testInfo.attach('engine.cpuprofile', { path: profilePath, contentType: 'application/json' });
     const hottest = [...profile.nodes].sort((a, b) => (b.hitCount || 0) - (a.hitCount || 0)).slice(0, 12)
       .map(node => ({ function: node.callFrame.functionName, samples: node.hitCount, line: node.callFrame.lineNumber }));
     console.log('CPU profile', JSON.stringify(hottest));
     await profiler.detach();
   }
-  await testInfo.attach('million-cell-benchmark.json', { body: JSON.stringify(result, null, 2), contentType: 'application/json' });
+  const benchmarkPath = testInfo.outputPath('million-cell-benchmark.json');
+  await writeFile(benchmarkPath, JSON.stringify(result, null, 2));
+  await testInfo.attach('million-cell-benchmark.json', { path: benchmarkPath, contentType: 'application/json' });
   console.log(JSON.stringify(result));
   expect(result.last).toBe(200001);
   expect.soft(result.loadMs, 'One-million-cell model load and calculation').toBeLessThan(10_000);

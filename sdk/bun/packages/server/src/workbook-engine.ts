@@ -5,6 +5,7 @@ type WorkbookState = { snapshot: any; revisions: any[] };
 export class WorkbookEngine {
   private worker?: Worker;
   private serial = 0;
+  private generation = 0;
   private readonly pending = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
 
   private start() {
@@ -25,6 +26,7 @@ export class WorkbookEngine {
   }
 
   stop(error = new Error('Workbook engine stopped')) {
+    this.generation++;
     this.worker?.terminate(); this.worker = undefined;
     for (const pending of this.pending.values()) { clearTimeout(pending.timer); pending.reject(Object.assign(error, { status: 503, code: 'WORKBOOK_ENGINE_UNAVAILABLE' })); }
     this.pending.clear();
@@ -51,6 +53,7 @@ export class WorkbookEngine {
   async invalidate(id: string) { if (this.worker) await this.request({ operation: 'invalidate', id }); }
   async render(mode: 'freeze' | 'export' | 'prepare_export', head: string, state: WorkbookState, catalog: any[], read: (query: any) => Promise<{ data: any[] }>, maxQueries: number) {
     const id = randomUUID();
+    const generation = this.generation;
     try {
       let result = await this.request({ operation: 'render', mode, id, head, state, catalog });
       let count = 0;
@@ -64,10 +67,11 @@ export class WorkbookEngine {
           if (failure?.status === 'rejected') throw failure.reason;
           for (const item of batch) if (item.status === 'fulfilled') pages.push(item.value);
         }
+        if (generation !== this.generation) throw Object.assign(new Error('Workbook render stopped'), { status: 503, code: 'WORKBOOK_ENGINE_UNAVAILABLE' });
         result = await this.request({ operation: 'render', mode, id, head, pages });
       }
       return result;
-    } finally { await this.invalidate(id); }
+    } finally { if (generation === this.generation) await this.invalidate(id); }
   }
   async import(bytes: Uint8Array, maxExpandedBytes: number, maxFiles: number) {
     return this.request({ operation: 'import', bytes, maxExpandedBytes, maxFiles });

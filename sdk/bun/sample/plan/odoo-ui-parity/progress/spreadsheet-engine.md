@@ -15,6 +15,62 @@ bindings. No target has been lowered.
 
 ## Delivered
 
+- XLSX preparation now runs in the durable export worker. The POST captures the
+  saved revision, replay input and viewer filters without evaluating live data or
+  storing a bearer token. The worker reloads the actor's current permissions,
+  effective enabled status, branch scope and original company membership through
+  a YAML-owned auth query. A server-only source-reader capability uses the normal
+  YAML query permission and row-scope path; HTTP actor fields cannot acquire it.
+  Preparation commits its frozen snapshot and required permissions under the job
+  lease before conversion, so a conversion retry reuses that snapshot. Cancellation
+  fences both preparation and completion; an abort signal prevents starting an
+  engine after a delayed authorization response, and a render generation prevents
+  restarting it after a delayed datasource response. Real auth-table tests cover
+  revocation, role-scope changes, simultaneous company reads and HTTP forgery.
+  The broad regression passes 50 backend tests / 800 assertions and 35 browser
+  tests (one opt-in benchmark skipped). After the final cancellation changes,
+  five affected suites pass nine tests / 207 assertions. Build, targeted lint and
+  diff checks pass. Restart recovery covers an unprepared persisted export; a
+  simulated conversion failure verifies reuse of committed live-data preparation.
+  Durable print/public-share preparation, detailed progress and multi-process
+  preparation stress remain open. The enterprise performance gate is unchanged.
+- Installed a version-pinned ESM evaluator patch through Bun's lockfile. Literal
+  cells skip circular-dependency set operations; formula cycle detection and
+  error conversion retain their existing paths. Frozen-lockfile installation,
+  production build, targeted lint and diff checks pass. The browser regression
+  verifies exact #CYCLE results, recovery after replacing a formula with a
+  literal, dependent recalculation, boolean/text/number literals and array spill.
+  The complete functional browser suite passes 35 tests (one opt-in benchmark
+  skipped); the strengthened exact-cycle assertion also passes separately.
+  Nine backend suites pass 49 tests and 776 assertions. The separate unprofiled
+  million-cell/100K-formula run still fails: construction 13.65s, total load and
+  calculation 15.54s, edit p95 146.3ms, serialization 4.73s. Prior timing variation
+  prevents a speedup claim. This patch is an optimization candidate; the original
+  performance thresholds and remaining full-module requirements are unchanged.
+- Refreshed the unchanged million-cell/100K-formula workload and kept the original
+  load <10s / edit p95 <100ms limits. All three runs failed: profiled 12.31s/53.4ms,
+  unprofiled 31.70s/155.2ms, and profiled 10.64s/478.3ms. Timing variation prevents
+  a speedup claim. Benchmark JSON and CPU profiles now write to test output paths
+  as well as reporter attachments, so the current reporter retains usable files.
+  The retained profile identifies computeCell cycle-set lookup (compiled line
+  60282), bounding-box grouping and export assignment as major sample locations.
+  This establishes the next optimization experiment; it does not advance the
+  performance gate. Artifact generation, targeted lint and diff checks passed.
+- Broad regression after the dashboard, reorder, transaction and renderer changes:
+  the complete spreadsheet browser suite passes 34 tests, with the opt-in
+  million-cell feasibility benchmark skipped. The nine principal backend suites
+  pass 49 tests and 784 assertions, covering crashes, durable file jobs, Documents,
+  authorized data, persistence, dashboard configuration and DuckDB reorder races.
+  Production build and diff checks pass. PostgreSQL race evidence comes from the
+  earlier explicit live run, not this default backend run. Functional success
+  does not change the failed enterprise performance gate or complete-parity gaps.
+- YAML mutation transaction options now share load-time and pre-execution
+  validation. Unknown driver names, unsupported isolation levels, empty maps and
+  malformed conflict messages/codes are rejected instead of silently weakening
+  the declared policy. Direct runtime tests verify rejection before any database
+  call. All 17 page-schema tests and 18 spreadsheet/concurrency tests (239 backend
+  assertions), targeted lint and diff checks pass. PostgreSQL was not rerun for
+  this validation-only change; live race evidence remains in the earlier batch.
 - Reorder concurrency acceptance now covers both groups and dashboards within
   a group on real PostgreSQL 17 and DuckDB. Both connections reach the update
   barrier with the same list version; exactly one commits and the other returns
@@ -616,7 +672,7 @@ it was skipped in the normal functional run, not relabeled as passing.
 | Immutable public sharing | Stored legacy snapshots and expiring/revocable owner-published workbook snapshots implemented; anonymous bootstrap, formula/spill/text freezing and revocation verified; complete figure/filter/asset fidelity and legacy token lifecycle still pending |
 | Import/export/print | Client/server XLSX, library import, formula round trip, authorized cell/figure printing and all-visible-sheets printing verified; complete file-feature matrix, remaining figure fidelity and advanced page setup pending |
 | Documents | References, access intersection when browsing links, and workflow transitions verified; document-file storage, folder ACL inheritance and complete Documents workflows pending |
-| Durable background jobs | Imports and prepared XLSX exports have persistent queues, retries, lease recovery, state progress and cancellation; durable snapshot preparation, detailed progress and multi-process stress pending |
+| Durable background jobs | Imports and XLSX preparation/conversion have persistent queues, retries, lease recovery and cancellation; durable print/public-share preparation, detailed progress and multi-process stress pending |
 | Enterprise scale | Million-cell load/input gate failed; optimization and reference-machine measurements pending |
 | Complete parity/rollout | Feature inventory, complete actor matrix, monitoring, rollout flag and rollback audit pending |
 
@@ -660,9 +716,9 @@ it was skipped in the normal functional run, not relabeled as passing.
   dependent formulas update, and source denial produces #N/A without a revision.
   Real source authorization/row scope is separately covered by the Orders API test.
 - Library imports use the durable import queue; the legacy synchronous import API
-  remains available. Prepared XLSX conversion is durable; authorization and live-data
-  preparation, synchronous downloads and snapshot actions still use the request
-  worker. Durable snapshot preparation remains required for the full plan. Embedded
+  remains available. Queued XLSX preparation and conversion are durable; synchronous
+  downloads, printing and public-share snapshot actions still use the request worker.
+  Durable print/public-share preparation remains required for the full plan. Embedded
   PNG/JPEG/GIF/WebP image parts are supported; external image URLs fail export
   explicitly until an authorized asset resolver is implemented. Full XLSX feature
   fidelity and large-file resource measurements remain unproven.

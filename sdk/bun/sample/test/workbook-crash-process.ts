@@ -28,6 +28,10 @@ db.connect = () => {
 const definition = validateWorkbookRuntime(Bun.YAML.parse(readFileSync(join(root, 'workbooks.yaml'), 'utf8')));
 definition.import_jobs!.poll_ms = definition.export_jobs!.poll_ms = Bun.argv[3] === 'resume-jobs' ? 50 : 600000;
 const runtime = new WorkbookRuntime(definition, repository, {
+  async resolveBackgroundUser(id, company) {
+    if (id !== 'owner' || company !== 'Crash test company') throw new Error('Unauthorized');
+    return { sub: id, name: 'Owner', company_name: company, permissions: ['spreadsheet.read', 'spreadsheet.export'] };
+  },
   async getCurrentUser(request) {
     if (request.headers.get('Authorization') !== 'Bearer crash-test-owner') throw new Error('Unauthorized');
     return { sub: 'owner', name: 'Owner', company_name: 'Crash test company', permissions: ['spreadsheet.read', 'spreadsheet.write', 'spreadsheet.export'] };

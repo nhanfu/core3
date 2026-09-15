@@ -8,8 +8,8 @@ export class WorkbookFileJobs {
   private timer?: ReturnType<typeof setInterval>;
   private active?: Promise<void>;
   private stopped = false;
-  private current?: { id: string; cancelled: boolean };
-  constructor(private readonly policy: WorkbookFileJobPolicy, private readonly execute: ExecuteWorkbookJob, private readonly prefix: string, private readonly convert: (job: any) => Promise<Record<string, any>>, private readonly interrupt?: () => void) {}
+  private current?: { id: string; cancelled: boolean; controller: AbortController };
+  constructor(private readonly policy: WorkbookFileJobPolicy, private readonly execute: ExecuteWorkbookJob, private readonly prefix: string, private readonly convert: (job: any, signal: AbortSignal) => Promise<Record<string, any>>, private readonly interrupt?: () => void) {}
   start() {
     if (this.timer || this.stopped) return;
     this.timer = setInterval(() => { void this.runOnce().catch(() => {}); }, this.policy.poll_ms);
@@ -22,6 +22,7 @@ export class WorkbookFileJobs {
   cancel(id: string) {
     if (this.current?.id !== id || this.current.cancelled) return;
     this.current.cancelled = true;
+    this.current.controller.abort();
     this.interrupt?.();
   }
   runOnce(): Promise<void> {
@@ -38,7 +39,7 @@ export class WorkbookFileJobs {
     const params = { job_id: candidate.id, lease_token: randomUUID(), now: Date.now(), lease_until: Date.now() + this.policy.lease_ms, max_attempts: this.policy.max_attempts };
     const job = await this.execute(`${this.prefix}_claim`, params);
     if (!job.id || this.stopped) return;
-    const current = { id: job.id as string, cancelled: false };
+    const current = { id: job.id as string, cancelled: false, controller: new AbortController() };
     this.current = current;
     let checking = false;
     const checkOwnership = async () => {
@@ -57,7 +58,7 @@ export class WorkbookFileJobs {
       // cancellation; the final YAML mutation still verifies the lease token.
       await checkOwnership().catch(() => {});
       if (current.cancelled || this.stopped) return;
-      const result = await this.convert(job);
+      const result = await this.convert(job, current.controller.signal);
       if (this.stopped || current.cancelled) return;
       await this.execute(`${this.prefix}_finish`, { ...result, ...params, now: Date.now() });
     } catch (error: any) {
