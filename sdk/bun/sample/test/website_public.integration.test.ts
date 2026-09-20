@@ -28,9 +28,12 @@ describe('Website public visibility', () => {
 
     const list = await route('/api/public/website/pages');
     expect(list?.status).toBe(200);
-    expect((await list?.json()).pages.map((page: any) => page.id)).toEqual(['website-page-demo-001', 'website-page-demo-003']);
+    if (!list) throw new Error('Published page list response was not returned');
+    expect((await list.json()).pages.map((page: any) => page.id)).toEqual(['website-page-demo-001', 'website-page-demo-003']);
     expect((await (await route('/api/public/website/pages?website_id=website-demo-002'))?.json())).toMatchObject({ pages: [expect.objectContaining({ id: 'website-page-demo-003', website_id: 'website-demo-002' })] });
-    expect((await (await route('/api/public/website/page?path=/'))?.json()).page).toMatchObject({ id: 'website-page-demo-001', url: '/', content_html: '<p>Welcome to the Core3 Storefront.</p>', asset_id: 'website-asset-demo-001', asset_url: '/api/public/website/assets/website-asset-demo-001' });
+    const home = await route('/api/public/website/page?path=/');
+    if (!home) throw new Error('Published homepage response was not returned');
+    expect((await home.json()).page).toMatchObject({ id: 'website-page-demo-001', url: '/', content_html: '<p>Welcome to the Core3 Storefront.</p>', asset_id: 'website-asset-demo-001', asset_url: '/api/public/website/assets/website-asset-demo-001' });
     const asset = await route('/api/public/website/assets/website-asset-demo-001');
     expect(asset?.status).toBe(200);
     expect(asset?.headers.get('content-type')).toBe('image/svg+xml');
