@@ -1,0 +1,79 @@
+{
+  "feature": "INV-PRODUCT-VARIANTS-001",
+  "capturedAt": "2026-09-20T21:29:37.741Z",
+  "core3": [
+    {
+      "device": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:4330/inventory/product-variants",
+      "title": "Product Variants",
+      "listText": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nNew\nSupply Chain / Inventory / Products / Product Variants\n1-5 / 5\n‹\n›\nInternal Reference\n\tProduct Variant\n\tVariant Values\n\tSales Price\n\tOn Hand\n\tForecasted\n\nDESK0005\t\nCustomizable Desk (White, Custom)\n\tWhite, Custom\t750\t65\t65\nE-COM06\t\nCorner Desk Right Sit\n\tRight Sit\t900\t0\t-10\nE-COM07\t\nLarge Cabinet\n\tOak, 2 Door\t1200\t500\t270\nE-COM08\t\nStorage Box\n\tBlue, Large\t24\t18\t18\nSHARED-0001\t\nShared Consumable\n\tStandard\t5\t0\t0",
+      "detailText": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nProducts\n›\nProduct Variants\n›\nProduct Variant\nBack to Product Variants\nEdit\nArchive\nCustomizable Desk (White, Custom)\nACTIVE\nProduct Variant\nVariant Name\nCustomizable Desk (White, Custom)\nProduct Template\nCustomizable Desk\nVariant Values\nWhite, Custom\nInternal Reference\nDESK0005\nBarcode\n100000000005\nCategory\nFurniture\nUnit\nUnits\nCompany\nCore3 Demo Company\nInventory\nProduct Type\nGoods\nTracking\nnone\nStorable\ntrue\nOn Hand\n65\nReserved\n0\nAvailable\n65\nIncoming\n0\nOutgoing\n0\nForecasted\n65\nValuation\nSales Price\n750\nCost\n500\nWeight\n12.5\nVolume\n0.42",
+      "createText": "",
+      "widths": {
+        "document": 1440,
+        "viewport": 1440,
+        "body": 1440
+      },
+      "errors": [],
+      "failed": [
+        {
+          "url": "http://127.0.0.1:4330/api/v1/notifications",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "bad": []
+    },
+    {
+      "device": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:4330/inventory/product-variants",
+      "title": "Product Variants",
+      "listText": "AU\nNew\nProduct Variants\n1-5 / 5\n‹\n›\nFurniture\n3\nCustomizable Desk (White, Custom)\n\nDESK0005\n\nVariant Values\nWhite, Custom\nOn Hand\n65\nForecasted\n65\nTracking\nnone\nCorner Desk Right Sit\n\nE-COM06\n\nVariant Values\nRight Sit\nOn Hand\n0\nForecasted\n-10\nTracking\nserial\nLarge Cabinet\n\nE-COM07\n\nVariant Values\nOak, 2 Door\nOn Hand\n500\nForecasted\n270\nTracking\nlot\nOffice Supplies\n2\nStorage Box\n\nE-COM08\n\nVariant Values\nBlue, Large\nOn Hand\n18\nForecasted\n18\nTracking\nnone\nShared Consumable\n\nSHARED-0001\n\nVariant Values\nStandard\nOn Hand\n0\nForecasted\n0\nTracking\nnone",
+      "detailText": "AU\nBack to Product Variants\nEdit\nArchive\nCustomizable Desk (White, Custom)\nACTIVE\nProduct Variant\nVariant Name\nCustomizable Desk (White, Custom)\nProduct Template\nCustomizable Desk\nVariant Values\nWhite, Custom\nInternal Reference\nDESK0005\nBarcode\n100000000005\nCategory\nFurniture\nUnit\nUnits\nCompany\nCore3 Demo Company\nInventory\nProduct Type\nGoods\nTracking\nnone\nStorable\ntrue\nOn Hand\n65\nReserved\n0\nAvailable\n65\nIncoming\n0\nOutgoing\n0\nForecasted\n65\nValuation\nSales Price\n750\nCost\n500\nWeight\n12.5\nVolume\n0.42",
+      "createText": "AU\nNew\nProduct Variants\n1-5 / 5\n‹\n›\nFurniture\n3\nCustomizable Desk (White, Custom)\n\nDESK0005\n\nVariant Values\nWhite, Custom\nOn Hand\n65\nForecasted\n65\nTracking\nnone\nCorner Desk Right Sit\n\nE-COM06\n\nVariant Values\nRight Sit\nOn Hand\n0\nForecasted\n-10\nTracking\nserial\nLarge Cabinet\n\nE-COM07\n\nVariant Values\nOak, 2 Door\nOn Hand\n500\nForecasted\n270\nTracking\nlot\nOffice Supplies\n2\nStorage Box\n\nE-COM08\n\nVariant Values\nBlue, Large\nOn Hand\n18\nForecasted\n18\nTracking\nnone\nShared Consumable\n\nSHARED-0001\n\nVariant Values\nStandard\nOn Hand\n0\nForecasted\n0\nTracking\nnone\nNew product variant\nInternal Reference *\nBarcode\nVariant Name *\nProduct Template *\nVariant Values\nCompany *\nCategory\nUnit\nProduct Type\nChọn…\nGoods\nConsumable\nService\nTracking\nChọn…\nNo Tracking\nBy Lots\nBy Unique Serial Number\nStorable\nSales Price\nCost\nCancel\nSave",
+      "widths": {
+        "document": 390,
+        "viewport": 390,
+        "body": 390
+      },
+      "errors": [],
+      "failed": [
+        {
+          "url": "http://127.0.0.1:4330/api/v1/notifications",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "bad": []
+    }
+  ],
+  "odoo": [
+    {
+      "device": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:8069/odoo/discuss",
+      "body": "Discuss\nDiscuss\nChannels\nConfiguration\n7\n40\nMy Company (San Francisco)\nStarred messages\nChannels\nAdministrators\ngeneral\nIdeas & Suggestions\nPublic Community\nDirect messages\nOdooBot\nNo conversation selected.",
+      "error": null
+    },
+    {
+      "device": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:8069/odoo/discuss",
+      "body": "7\n40\nTurn on notifications\nStay tuned! Enable push notifications to never miss a message.\nSMS Failure: Contact\nSep 9\nAn error occurred when sending an SMS\n2\nEmail Failure: Contact\nSep 6\nAn error occurred when sending an email on “Azure Interior, Colleen Diaz”\nNotifications\nChats\nChannels\nStarred",
+      "error": null
+    }
+  ],
+  "blockers": []
+}

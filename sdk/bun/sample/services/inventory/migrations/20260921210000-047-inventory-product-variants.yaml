@@ -1,0 +1,54 @@
+version: 0.0.47
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_product_variants (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        default_code VARCHAR NOT NULL,
+        barcode VARCHAR,
+        name VARCHAR NOT NULL,
+        template_name VARCHAR NOT NULL,
+        variant_values VARCHAR NOT NULL DEFAULT '',
+        company_name VARCHAR NOT NULL DEFAULT 'Core3 Demo Company',
+        category_name VARCHAR NOT NULL DEFAULT '',
+        unit_name VARCHAR NOT NULL DEFAULT 'Units',
+        product_type VARCHAR NOT NULL DEFAULT 'Goods',
+        tracking VARCHAR NOT NULL DEFAULT 'none',
+        is_storable BOOLEAN NOT NULL DEFAULT TRUE,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
+        sales_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        standard_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        on_hand DECIMAL(18,3) NOT NULL DEFAULT 0,
+        reserved_quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+        incoming_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        outgoing_qty DECIMAL(18,3) NOT NULL DEFAULT 0,
+        forecasted DECIMAL(18,3) NOT NULL DEFAULT 0,
+        weight DECIMAL(18,3) NOT NULL DEFAULT 0,
+        volume DECIMAL(18,3) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(default_code, company_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_product_variants_name
+        ON inventory_product_variants(active, template_name, default_code, id);
+      INSERT INTO inventory_product_variants
+        (id, default_code, barcode, name, template_name, variant_values, company_name,
+         category_name, unit_name, product_type, tracking, is_storable, active,
+         is_favorite, sales_price, standard_price, on_hand, reserved_quantity,
+         incoming_qty, outgoing_qty, forecasted, weight, volume)
+      VALUES
+        ('inventory-variant-desk-white', 'DESK0005', '100000000005', 'Customizable Desk (White, Custom)', 'Customizable Desk', 'White, Custom', 'Core3 Demo Company', 'Furniture', 'Units', 'Goods', 'none', TRUE, TRUE, TRUE, 750, 500, 65, 0, 0, 0, 65, 12.5, 0.42),
+        ('inventory-variant-cabinet', 'E-COM07', '100000000007', 'Large Cabinet', 'Large Cabinet', 'Oak, 2 Door', 'Core3 Demo Company', 'Furniture', 'Units', 'Goods', 'lot', TRUE, TRUE, FALSE, 1200, 800, 500, 230, 0, 230, 270, 80, 1.80),
+        ('inventory-variant-storage-box', 'E-COM08', '100000000008', 'Storage Box', 'Storage Box', 'Blue, Large', 'Core3 Demo Company', 'Office Supplies', 'Units', 'Goods', 'none', TRUE, TRUE, FALSE, 24, 14, 18, 0, 0, 0, 18, 0.8, 0.03),
+        ('inventory-variant-corner-desk', 'E-COM06', '100000000006', 'Corner Desk Right Sit', 'Corner Desk', 'Right Sit', 'Core3 Demo Company', 'Furniture', 'Units', 'Goods', 'serial', TRUE, TRUE, FALSE, 900, 600, 0, 0, 0, 10, -10, 22, 0.70),
+        ('inventory-variant-archived', 'ARCH-0001', NULL, 'Legacy Demo Variant', 'Legacy Demo Product', 'Retired', 'Core3 Demo Company', 'Furniture', 'Units', 'Goods', 'none', TRUE, FALSE, FALSE, 10, 5, 0, 0, 0, 0, 0, 1, 0.01),
+        ('inventory-variant-shared', 'SHARED-0001', NULL, 'Shared Consumable', 'Shared Consumable', 'Standard', 'Shared', 'Office Supplies', 'Units', 'Consumable', 'none', FALSE, TRUE, FALSE, 5, 2, 0, 0, 0, 0, 0, 0, 0)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_product_variants;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

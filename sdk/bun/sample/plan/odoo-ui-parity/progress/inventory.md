@@ -768,3 +768,22 @@ Inventory sign-off remains open.
   Core3 deterministic fixtures and one unrelated mobile avatar request abort
   is recorded. Source New/configuration/report card actions remain open, and
   full Inventory sign-off remains open.
+
+## `INV-PRODUCT-VARIANTS-001` — Inventory Product Variants (2026-09-21)
+
+- Selected the next uncovered source-backed Inventory Products action after
+  Overview: `stock.product_product_menu` / `stock_product_normal_action`, the
+  `product.product` Product Variants list/form/kanban with stock columns.
+- Added durable migration `20260921210000-047-inventory-product-variants.yaml`,
+  deterministic stock-facing variants, and separate list/detail page/API YAML
+  contracts joined by `page.id`. The lifecycle includes manager create/edit,
+  archive/restore/delete, current-company/shared read scope, duplicate and
+  stock-in-use guards, and row-version checks.
+- Focused verification: 4 tests / 29 assertions pass. `bun run audit` passes
+  at 708 pages, 717 routes, and 1,349 datasources; scoped ESLint and
+  `git diff --check` pass.
+- Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-PRODUCT-VARIANTS-001/`. Odoo credentials
+  authenticate, but `/odoo/action-434` redirects to Discuss at desktop and
+  mobile; source comparison and exact blocker are recorded. Full Inventory
+  sign-off remains open.

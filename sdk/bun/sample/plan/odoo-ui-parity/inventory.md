@@ -1620,3 +1620,35 @@ and mobile `/odoo/inventory` captures render the source operation cards; the
 fixture count differences and one unrelated mobile Discuss-avatar abort are
 recorded in paired evidence. New/configuration/report card-menu behavior
 remains explicitly deferred; full Inventory sign-off remains open.
+
+## Products > Product Variants — `INV-PRODUCT-VARIANTS-001` (2026-09-21)
+
+This bounded tenth-wave slice closes the next uncovered Inventory product
+workflow. Odoo's `addons/stock/views/product_views.xml:652-664` binds
+`product_product_menu` to `stock_product_normal_action` for `product.product`,
+with `list,form,kanban` views and the `product.group_product_variant` gate;
+`addons/product/views/product_views.xml:421-455` supplies the variant identity,
+template, barcode, company, pricing, category, type, unit, and active fields.
+Stock extends that list with On Hand and Forecasted at
+`addons/stock/views/product_views.xml:90-117`.
+
+Core3 adds `pages/product-variants.yaml` and
+`pages/product-variant-detail.yaml` as presentation-only contracts paired with
+`api/product-variants.yaml` and `api/product-variant-detail.yaml` by matching
+`page.id`. Migration `20260921210000-047-inventory-product-variants.yaml`
+provides durable variant identity, template/value context, stock quantities,
+company, type/tracking, pricing, deterministic active/archived/shared fixtures,
+and row versions. The list exposes Odoo-aligned list/mobile-kanban/search/filter
+context; the detail form exposes stock, valuation, and manager lifecycle
+actions.
+
+`inventory.read` protects reads and `inventory.manage` protects create/edit,
+archive/restore, and delete. The YAML mutations enforce current-company scope,
+duplicate reference/barcode, valid type/tracking, stock-in-use deletion, and
+optimistic row-version concurrency. Focused verification is 4 tests / 29
+assertions, including restart persistence. Core3 authenticated desktop/mobile
+evidence is under
+`evidence/inventory/2026-09-21/INV-PRODUCT-VARIANTS-001/`; Odoo action-434
+redirected to Discuss at both viewports, so the exact blocker is recorded and
+no Odoo Product Variants state is claimed. Full Inventory sign-off remains
+open.

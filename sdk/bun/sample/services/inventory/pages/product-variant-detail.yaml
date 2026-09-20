@@ -1,0 +1,45 @@
+title: Product Variant
+page: { id: product-variant-detail, route: /product-variants/detail, breadcrumb: [Supply Chain, Inventory, Products, Product Variants, Product Variant], auth: { require: [inventory.read] } }
+components:
+  - type: OdooFormView
+    source: inventory_product_variant_detail
+    title_field: name
+    status_field: active
+    status_badges: [{ value: true, label: Active, tone: green }, { value: false, label: Archived, tone: neutral }]
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_inventory_product_variants, label: Back to Product Variants, icon: arrow-left, permission: inventory.read }
+      - { id: edit_inventory_product_variant, label: Edit, variant: primary, permission: inventory.manage }
+      - { id: archive_inventory_product_variant, label: Archive, variant: secondary, permission: inventory.manage, show_if: "record.active === true" }
+      - { id: restore_inventory_product_variant, label: Restore, variant: secondary, permission: inventory.manage, show_if: "record.active === false" }
+      - { id: delete_inventory_product_variant, label: Delete, variant: danger, permission: inventory.manage, show_if: "record.on_hand === 0 && record.reserved_quantity === 0" }
+    group_columns: 2
+    groups:
+      - title: Product Variant
+        fields:
+          - { field: name, label: Variant Name }
+          - { field: template_name, label: Product Template }
+          - { field: variant_values, label: Variant Values }
+          - { field: default_code, label: Internal Reference }
+          - { field: barcode, label: Barcode }
+          - { field: category_name, label: Category }
+          - { field: unit_name, label: Unit }
+          - { field: company_name, label: Company }
+      - title: Inventory
+        fields:
+          - { field: product_type, label: Product Type }
+          - { field: tracking, label: Tracking }
+          - { field: is_storable, label: Storable, type: BooleanToggle }
+          - { field: on_hand, label: On Hand, type: Number }
+          - { field: reserved_quantity, label: Reserved, type: Number }
+          - { field: available_quantity, label: Available, type: Number }
+          - { field: incoming_qty, label: Incoming, type: Number }
+          - { field: outgoing_qty, label: Outgoing, type: Number }
+          - { field: forecasted, label: Forecasted, type: Number }
+      - title: Valuation
+        fields:
+          - { field: sales_price, label: Sales Price, type: Number }
+          - { field: standard_price, label: Cost, type: Number }
+          - { field: weight, label: Weight, type: Number }
+          - { field: volume, label: Volume, type: Number }

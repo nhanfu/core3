@@ -149,6 +149,10 @@ transfer workflows must preserve row versions and move quantities.
 | INV-PERM-028 | Replenishment Information boundary | inventory.manage, current company, actor, row version | read-only, wrong company, anonymous, stale, invalid range, and invalid route requests create no mutation | pass: `INV-REPLENISH-INFO-001` focused runtime test |
 | INV-UI-027 | Replenishment Information responsive wizard | 1440x900, 390x844 | Authenticated Core3 orderpoint action opens forecast/demand/history page, Save Rule succeeds without overflow; paired Odoo action/wizard or exact blocker is recorded | pass Core3 desktop/mobile; Odoo list renders but source information action is hidden for supplied account |
 
+| INV-FUNC-034 | Product Variants lifecycle | Products > Product Variants list/detail | Durable variant identity, stock quantities, pricing, archive/restore/delete, deterministic fixtures, migration replay, and restart persistence work with stock-in-use deletion guards | pass: `INV-PRODUCT-VARIANTS-001` focused suite |
+| INV-PERM-033 | Product Variants permission/company/concurrency boundary | inventory.read vs inventory.manage, current company, row version | readers can inspect current/shared variants; managers enforce duplicate reference/barcode, company scope, valid type/tracking, stock delete guard, and stale writes | pass: `INV-PRODUCT-VARIANTS-001` focused runtime test |
+| INV-UI-032 | Product Variants responsive list/detail/create | 1440x900, 390x844 | Authenticated Core3 list/detail and New form render Odoo-aligned reference, template/value, price, stock, and tracking fields without overflow; paired Odoo action or exact blocker is recorded | pass Core3 desktop/mobile; Odoo action-434 redirected to Discuss, exact blocker in paired evidence |
+
 ## Exit criteria
 
 Full Inventory sign-off requires the focused suite, authenticated CRUD and

@@ -1,0 +1,76 @@
+page: { id: product-variant-detail }
+datasources:
+  - id: inventory_product_variant_detail
+    single: true
+    permission: inventory.read
+    error_states: { missing_record: { status: 404, code: INVENTORY_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found in the current company. }, transport_error: { status: 503, code: INVENTORY_PRODUCT_VARIANT_DETAIL_UNAVAILABLE, message: Product variant details are temporarily unavailable. } }
+    query: |
+      SELECT id, row_version, default_code, barcode, name, template_name, variant_values,
+        company_name, category_name, unit_name, product_type, tracking, is_storable,
+        active, is_favorite, CAST(sales_price AS DOUBLE) AS sales_price,
+        CAST(standard_price AS DOUBLE) AS standard_price, CAST(on_hand AS DOUBLE) AS on_hand,
+        CAST(reserved_quantity AS DOUBLE) AS reserved_quantity,
+        CAST(on_hand - reserved_quantity AS DOUBLE) AS available_quantity,
+        CAST(incoming_qty AS DOUBLE) AS incoming_qty, CAST(outgoing_qty AS DOUBLE) AS outgoing_qty,
+        CAST(forecasted AS DOUBLE) AS forecasted, CAST(weight AS DOUBLE) AS weight,
+        CAST(volume AS DOUBLE) AS volume
+      FROM inventory_product_variants
+      WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+        OR company_name = 'Shared'
+        OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))
+  - id: inventory_product_variant_stock
+    single: true
+    permission: inventory.read
+    query: "SELECT id, row_version, on_hand, reserved_quantity, on_hand - reserved_quantity AS available_quantity, incoming_qty, outgoing_qty, forecasted FROM inventory_product_variants WHERE id = :id"
+actions:
+  - id: back_to_inventory_product_variants
+    type: navigate
+    permission: inventory.read
+    navigate_to: /product-variants
+  - id: edit_inventory_product_variant
+    type: server_form
+    permission: inventory.manage
+    title: Edit product variant
+    action: inventory.product_variants.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_product_variant_detail
+    refresh: [inventory_product_variants, inventory_product_variant_detail, inventory_product_variant_stock]
+    mutation:
+      operation: update
+      table: inventory_product_variants
+      fields: [default_code, barcode, name, template_name, variant_values, company_name, category_name, unit_name, product_type, tracking, is_storable, is_favorite, sales_price, standard_price, weight, volume]
+      required: [default_code, name, template_name, company_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_variants WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found in the current company. }
+        - { query: "SELECT 1 AS ok WHERE :company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (:company_name = 'My Company (San Francisco)' AND COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 403, code: INVENTORY_PRODUCT_VARIANT_COMPANY_FORBIDDEN, message: The product variant company is outside the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_variants WHERE LOWER(default_code) = LOWER(TRIM(CAST(:default_code AS VARCHAR))) AND company_name = :company_name AND id <> :id)", status: 409, code: INVENTORY_PRODUCT_VARIANT_CODE_EXISTS, message: A product variant with this internal reference already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:barcode AS VARCHAR)), '') IS NULL OR NOT EXISTS (SELECT 1 FROM inventory_product_variants WHERE barcode = TRIM(CAST(:barcode AS VARCHAR)) AND company_name = :company_name AND id <> :id)", status: 409, code: INVENTORY_PRODUCT_VARIANT_BARCODE_EXISTS, message: A product variant with this barcode already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE :product_type IN ('Goods', 'Consumable', 'Service') AND :tracking IN ('none', 'lot', 'serial')", status: 422, code: INVENTORY_PRODUCT_VARIANT_OPTIONS_INVALID, message: Select a valid product type and tracking policy. }
+      result: { query: "SELECT * FROM inventory_product_variants WHERE id = :id" }
+    fields: [{ field: default_code, label: Internal Reference, type: text, required: true }, { field: barcode, label: Barcode, type: text }, { field: name, label: Variant Name, type: text, required: true }, { field: template_name, label: Product Template, type: text, required: true }, { field: variant_values, label: Variant Values, type: text }, { field: company_name, label: Company, type: text, required: true }, { field: category_name, label: Category, type: text }, { field: unit_name, label: Unit, type: text }, { field: product_type, label: Product Type, type: select, options: [{ value: Goods, label: Goods }, { value: Consumable, label: Consumable }, { value: Service, label: Service }] }, { field: tracking, label: Tracking, type: select, options: [{ value: none, label: No Tracking }, { value: lot, label: By Lots }, { value: serial, label: By Unique Serial Number }] }, { field: is_storable, label: Storable, type: checkbox }, { field: is_favorite, label: Favorite, type: checkbox }, { field: sales_price, label: Sales Price, type: number }, { field: standard_price, label: Cost, type: number }, { field: weight, label: Weight, type: number }, { field: volume, label: Volume, type: number }]
+  - id: archive_inventory_product_variant
+    type: server
+    permission: inventory.manage
+    action: inventory.product_variants.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [inventory_product_variants, inventory_product_variant_detail]
+    mutation: { operation: update, table: inventory_product_variants, fields: [active], defaults: { active: false }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM inventory_product_variants WHERE id = :id AND active = TRUE AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PRODUCT_VARIANT_NOT_FOUND, message: Active product variant not found in the current company. }], result: { query: "SELECT * FROM inventory_product_variants WHERE id = :id" } }
+  - id: restore_inventory_product_variant
+    type: server
+    permission: inventory.manage
+    action: inventory.product_variants.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [inventory_product_variants, inventory_product_variant_detail]
+    mutation: { operation: update, table: inventory_product_variants, fields: [active], defaults: { active: true }, concurrency: { required: true }, guards: [{ query: "SELECT id FROM inventory_product_variants WHERE id = :id AND active = FALSE AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PRODUCT_VARIANT_NOT_FOUND, message: Archived product variant not found in the current company. }], result: { query: "SELECT * FROM inventory_product_variants WHERE id = :id" } }
+  - id: delete_inventory_product_variant
+    type: server
+    permission: inventory.manage
+    action: inventory.product_variants.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_product_variants]
+    mutation: { operation: delete, table: inventory_product_variants, concurrency: { required: true }, guards: [{ query: "SELECT id FROM inventory_product_variants WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found in the current company. }, { query: "SELECT 1 AS ok FROM inventory_product_variants WHERE id = :id AND on_hand = 0 AND reserved_quantity = 0", status: 409, code: INVENTORY_PRODUCT_VARIANT_IN_USE, message: A product variant with stock cannot be deleted. Archive it instead. }] }

@@ -1,0 +1,71 @@
+page: { id: product-variants }
+datasources:
+  - id: inventory_product_variants
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_PRODUCT_VARIANTS_UNAVAILABLE, message: Product variants are temporarily unavailable. } }
+    query: |
+      SELECT id, row_version, default_code, barcode, name, template_name, variant_values,
+        company_name, category_name, unit_name, product_type, tracking, is_storable,
+        active, is_favorite, CAST(sales_price AS DOUBLE) AS sales_price,
+        CAST(standard_price AS DOUBLE) AS standard_price, CAST(on_hand AS DOUBLE) AS on_hand,
+        CAST(reserved_quantity AS DOUBLE) AS reserved_quantity,
+        CAST(on_hand - reserved_quantity AS DOUBLE) AS available_quantity,
+        CAST(incoming_qty AS DOUBLE) AS incoming_qty, CAST(outgoing_qty AS DOUBLE) AS outgoing_qty,
+        CAST(forecasted AS DOUBLE) AS forecasted, CAST(weight AS DOUBLE) AS weight,
+        CAST(volume AS DOUBLE) AS volume
+      FROM inventory_product_variants
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (COALESCE(:active, 'active') = 'all'
+          OR (COALESCE(:active, 'active') = 'active' AND active = TRUE)
+          OR (COALESCE(:active, 'active') = 'archived' AND active = FALSE))
+        AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+          OR company_name = 'Shared'
+          OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))
+        AND (:q IS NULL OR default_code ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%'
+          OR name ILIKE '%' || :q || '%' OR template_name ILIKE '%' || :q || '%'
+          OR variant_values ILIKE '%' || :q || '%' OR category_name ILIKE '%' || :q || '%')
+        AND (:product_type IS NULL OR :product_type = '' OR product_type = :product_type)
+        AND (:tracking IS NULL OR :tracking = '' OR tracking = :tracking)
+      ORDER BY is_favorite DESC, default_code, name, id
+  - id: inventory_product_variant_categories
+    single: false
+    permission: inventory.read
+    query: "SELECT DISTINCT category_name AS value, category_name AS label FROM inventory_product_variants WHERE active = TRUE AND category_name <> '' ORDER BY category_name"
+  - id: inventory_product_variant_types
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('Goods', 'Goods'), ('Consumable', 'Consumable'), ('Service', 'Service')) AS options(value, label) ORDER BY value"
+  - id: inventory_product_variant_tracking
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('none', 'No Tracking'), ('lot', 'By Lots'), ('serial', 'By Unique Serial Number')) AS options(value, label) ORDER BY value"
+actions:
+  - id: view_inventory_product_variant
+    type: navigate
+    permission: inventory.read
+    navigate_to: /product-variants/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_product_variant
+    type: server_form
+    permission: inventory.manage
+    title: New product variant
+    action: inventory.product_variants.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_product_variants]
+    mutation:
+      operation: insert
+      table: inventory_product_variants
+      generated: [id]
+      fields: [default_code, barcode, name, template_name, variant_values, company_name, category_name, unit_name, product_type, tracking, is_storable, active, is_favorite, sales_price, standard_price, on_hand, reserved_quantity, incoming_qty, outgoing_qty, forecasted, weight, volume, row_version]
+      required: [default_code, name, template_name, company_name]
+      defaults: { barcode: '', variant_values: '', category_name: '', unit_name: Units, product_type: Goods, tracking: none, is_storable: true, active: true, is_favorite: false, sales_price: 0, standard_price: 0, on_hand: 0, reserved_quantity: 0, incoming_qty: 0, outgoing_qty: 0, forecasted: 0, weight: 0, volume: 0, row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:default_code AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:template_name AS VARCHAR))) > 0", status: 422, code: INVENTORY_PRODUCT_VARIANT_FIELDS_REQUIRED, message: Internal reference, name, and product template are required. }
+        - { query: "SELECT 1 AS ok WHERE :company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (:company_name = 'My Company (San Francisco)' AND COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 403, code: INVENTORY_PRODUCT_VARIANT_COMPANY_FORBIDDEN, message: The product variant company is outside the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_variants WHERE LOWER(default_code) = LOWER(TRIM(CAST(:default_code AS VARCHAR))) AND company_name = :company_name)", status: 409, code: INVENTORY_PRODUCT_VARIANT_CODE_EXISTS, message: A product variant with this internal reference already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:barcode AS VARCHAR)), '') IS NULL OR NOT EXISTS (SELECT 1 FROM inventory_product_variants WHERE barcode = TRIM(CAST(:barcode AS VARCHAR)) AND company_name = :company_name)", status: 409, code: INVENTORY_PRODUCT_VARIANT_BARCODE_EXISTS, message: A product variant with this barcode already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE :product_type IN ('Goods', 'Consumable', 'Service') AND :tracking IN ('none', 'lot', 'serial')", status: 422, code: INVENTORY_PRODUCT_VARIANT_OPTIONS_INVALID, message: Select a valid product type and tracking policy. }
+      result: { query: "SELECT * FROM inventory_product_variants WHERE id = :id" }
+    fields: [{ field: default_code, label: Internal Reference, type: text, required: true }, { field: barcode, label: Barcode, type: text }, { field: name, label: Variant Name, type: text, required: true }, { field: template_name, label: Product Template, type: text, required: true }, { field: variant_values, label: Variant Values, type: text }, { field: company_name, label: Company, type: text, required: true }, { field: category_name, label: Category, type: text }, { field: unit_name, label: Unit, type: text }, { field: product_type, label: Product Type, type: select, options: [{ value: Goods, label: Goods }, { value: Consumable, label: Consumable }, { value: Service, label: Service }] }, { field: tracking, label: Tracking, type: select, options: [{ value: none, label: No Tracking }, { value: lot, label: By Lots }, { value: serial, label: By Unique Serial Number }] }, { field: is_storable, label: Storable, type: checkbox }, { field: sales_price, label: Sales Price, type: number }, { field: standard_price, label: Cost, type: number }]

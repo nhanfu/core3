@@ -394,6 +394,38 @@ QA disposition: PASS for the bounded Core3 date-context lifecycle and
 permission/restart contract; PARTIAL for responsive Odoo wizard comparison.
 Full Inventory sign-off remains open.
 
+## Inventory Product Variants QA — `INV-PRODUCT-VARIANTS-001` (2026-09-21)
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/product_views.xml:90-117,652-664` and
+  `addons/product/views/product_views.xml:421-455`. Product Variants is the
+  `product.product` `list,form,kanban` action under Inventory Products,
+  restricted by `product.group_product_variant`; stock adds On Hand and
+  Forecasted list fields.
+- Core3 contract: PASS. List/detail presentation YAML is separate from list/
+  detail API YAML and joined by `page.id`. Migration 0.0.47 adds durable
+  variant and stock context with deterministic active, archived, and shared
+  fixtures. Read and manager mutation permissions, current-company scope,
+  duplicate reference/barcode, stock delete guard, and row versions are
+  contract-tested.
+- Focused test: `bun test test/inventory_product_variants.integration.test.ts
+  --timeout 20000` — PASS, 4 tests / 29 assertions. `bun run audit` — PASS,
+  708 pages, 717 routes, 1,349 datasources. Scoped ESLint and diff-check pass.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844 list/detail states; mobile also renders the New Product Variant
+  form. Widths equal their viewports, with no console errors or bad HTTP
+  responses. The unrelated aborted notifications poll is recorded in paired
+  JSON evidence.
+- Odoo comparison: BLOCKED for the requested Product Variants state. The
+  supplied account authenticated but `/odoo/action-434` redirected to
+  `/odoo/discuss` at both viewports. No Product Variants state or mutation is
+  claimed; exact screenshots and result JSON are under
+  `evidence/inventory/2026-09-21/INV-PRODUCT-VARIANTS-001/`.
+
+QA disposition: PASS for the bounded Core3 Product Variants lifecycle and
+guards; BLOCKED for the paired Odoo action capture. Full Inventory sign-off
+remains open.
+
 ## Operations Types QA — `INV-OP-TYPES-001` (2026-09-20)
 
 - Odoo source/menu/action: `stock.menu_pickingtype` →
