@@ -43,6 +43,26 @@ Candidate commit: current working tree
 - Verification trigger: feature-complete pending Employees-only staging and
   commit.
 
+## EMP-PRINT-BADGE-001 (2026-09-20)
+
+- Selected the smallest remaining source-backed behavior after Badge ID
+  generation: Odoo's `hr_employee_print_badge` employee QWeb-PDF report.
+- Implemented page/API-separated employee detail Print Badge action, dedicated
+  `/employees/badge` page, durable `employee_badge_print_runs` migration and
+  index, permission/company/actor/barcode/row-version guards, and print-history
+  restart coverage.
+- Focused verification passes **4 tests / 30 assertions**; `bun run audit`
+  passes **675 pages / 684 routes / 1,225 datasources**.
+- Authenticated Odoo desktop/mobile comparison passes; desktop produced the
+  real `Badge - Abigail Peterson.pdf` download. Core3 desktop/mobile is an
+  exact pre-auth blocker: shared Auth discovery rejects `action` and `refresh`
+  keys in `services/auth/auth-module.ts`. Evidence:
+  `evidence/employees/2026-09-20/EMP-PRINT-BADGE-001/`.
+- Full Employees rerun records **57 pass / 12 fail across 69 tests**; all 12
+  failures are the same unrelated shared Surveys duplicate
+  `print_survey_results` discovery error. Employees-scoped ESLint and diff-check
+  pass. No other module files are being changed or staged.
+
 ## EMP-ROUTE-CRUD-GATE-001 (2026-09-20)
 
 - Completed authenticated parameterized matrix: 28/28 routes at desktop and

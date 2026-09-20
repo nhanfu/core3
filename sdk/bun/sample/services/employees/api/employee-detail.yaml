@@ -159,6 +159,20 @@ actions:
       - { field: name, label: Name, type: text, required: true }
       - { field: login, label: Login, type: text, required: true }
       - { field: phone, label: Phone, type: text }
+  - id: print_employee_badge
+    type: client
+    permission: employees.read
+    script: |
+      // js
+      async ({ state, request }) => {
+        const employee = state.employee_detail;
+        if (!employee?.id) throw new Error('Employee badge context is unavailable');
+        await request('/api/actions/employees.records.print_badge', {
+          method: 'POST',
+          body: { employee_id: employee.id, expected_row_version: employee.row_version },
+        });
+        window.location.assign(`/employees/badge?id=${encodeURIComponent(String(employee.id))}`);
+      }
   - id: launch_employee_plan
     type: server_form
     permission: employees.write

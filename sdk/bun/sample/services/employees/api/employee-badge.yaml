@@ -1,0 +1,79 @@
+page: { id: employee-badge }
+datasources:
+  - id: employee_badge
+    single: true
+    permission: employees.read
+    error_states:
+      missing_record: { status: 404, code: EMPLOYEES_BADGE_REPORT_NOT_FOUND, message: Employee badge is not available. }
+      transport_error: { status: 503, code: EMPLOYEES_BADGE_REPORT_UNAVAILABLE, message: Employee badge report is temporarily unavailable. }
+    query: |
+      SELECT e.id, e.row_version, e.name, COALESCE(e.job_title, '') AS job_title,
+        COALESCE(e.company_name, '') AS company_name, e.barcode,
+        'Badge - ' || REPLACE(e.name, '/', '') AS report_name,
+        'Ready' AS print_status,
+        CAST((SELECT MAX(generated_at) FROM employee_badge_print_runs r WHERE r.employee_id = e.id) AS VARCHAR) AS last_printed_at
+      FROM employees e
+      WHERE e.id = :id
+        AND NULLIF(TRIM(COALESCE(e.barcode, '')), '') IS NOT NULL
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+  - id: employee_badge_print_runs
+    single: false
+    permission: employees.read
+    error_states:
+      transport_error: { status: 503, code: EMPLOYEES_BADGE_REPORT_HISTORY_UNAVAILABLE, message: Employee badge report history is temporarily unavailable. }
+    query: |
+      SELECT id, employee_id, employee_name, job_title, company_name, barcode,
+        report_name, requested_by, CAST(generated_at AS VARCHAR) AS generated_at, row_version
+      FROM employee_badge_print_runs
+      WHERE employee_id = :id
+        AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)
+      ORDER BY generated_at DESC, id DESC
+actions:
+  - id: print_employee_badge
+    type: client
+    permission: employees.read
+    script: |
+      // js
+      async ({ state, request }) => {
+        const employee = state.employee_detail;
+        if (!employee?.id) throw new Error('Employee badge context is unavailable');
+        await request('/api/actions/employees.records.print_badge', {
+          method: 'POST',
+          body: { employee_id: employee.id, expected_row_version: employee.row_version },
+        });
+        window.location.assign(`/employees/badge?id=${encodeURIComponent(String(employee.id))}`);
+      }
+  - id: print_employee_badge_document
+    type: client
+    permission: employees.read
+    script: |
+      // js
+      async () => {
+        window.print()
+      }
+  - id: back_to_employee_badge
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/detail
+    params: { id: '{row.id}' }
+  - id: record_employee_badge_print_run
+    type: server
+    permission: employees.read
+    action: employees.records.print_badge
+    handler: yaml_mutation
+    operation: report
+    refresh: [employee_badge, employee_badge_print_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'employee-badge-print-' || CAST(:employee_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM employee_badge_print_runs WHERE employee_id = :employee_id) AS VARCHAR) AS id, e.name AS employee_name, COALESCE(e.job_title, '') AS job_title, COALESCE(e.company_name, '') AS company_name, e.barcode, 'Badge - ' || REPLACE(e.name, '/', '') AS report_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by FROM employees e WHERE e.id = :employee_id GROUP BY e.id, e.name, e.job_title, e.company_name, e.barcode"
+          assign: true
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL", status: 403, code: EMPLOYEES_BADGE_REPORT_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :employee_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_BADGE_REPORT_NOT_FOUND, message: Employee badge is not available in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :employee_id AND NULLIF(TRIM(COALESCE(barcode, '')), '') IS NOT NULL AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: EMPLOYEES_BADGE_REPORT_BARCODE_REQUIRED, message: Generate a Badge ID before printing the employee badge. }
+        - { query: "SELECT id FROM employees WHERE id = :employee_id AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the badge was printed. Reload the employee and try again. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:requested_by, COALESCE(NULLIF(:current_user_name, ''), 'Admin User')) = COALESCE(NULLIF(:current_user_name, ''), 'Admin User')", status: 403, code: EMPLOYEES_BADGE_REPORT_ACTOR_MISMATCH, message: The report actor must match the signed-in user. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: EMPLOYEES_BADGE_REPORT_COMPANY_MISMATCH, message: The report company must match the signed-in company. }
+      steps:
+        - query: "INSERT INTO employee_badge_print_runs(id, employee_id, employee_name, job_title, company_name, barcode, report_name, requested_by, generated_at, row_version) VALUES(:id, :employee_id, :employee_name, :job_title, :company_name, :barcode, :report_name, :requested_by, TIMESTAMP '2026-01-15 00:00:00', 1)"
+      result: { query: "SELECT id, employee_id, employee_name, job_title, company_name, barcode, report_name, requested_by, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM employee_badge_print_runs WHERE id = :id" }

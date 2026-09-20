@@ -19,6 +19,7 @@ components:
       - { id: launch_employee_plan, label: Launch Plan, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: generate_employee_barcode, label: Generate Badge ID, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true && !state.employee_detail.barcode" }
+      - { id: print_employee_badge, label: Print Badge, variant: secondary, permission: employees.read, show_if: "state.employee_detail.active === true && !!state.employee_detail.barcode" }
       - { id: register_employee_departure, label: Register Departure, variant: danger, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: archive_employee_detail, label: Archive, variant: danger, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: restore_employee_detail, label: Restore, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === false" }

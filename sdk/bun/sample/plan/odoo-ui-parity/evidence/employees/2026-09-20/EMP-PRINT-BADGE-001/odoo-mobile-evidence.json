@@ -1,0 +1,13 @@
+{
+  "feature_id": "EMP-PRINT-BADGE-001",
+  "actor": "codex@core3.local",
+  "authenticated": true,
+  "viewport": { "width": 390, "height": 844 },
+  "route": "/odoo/employees/6",
+  "employee": "Abigail Peterson",
+  "tab": "Settings",
+  "observed_controls": ["Badge ID?", "Print Badge"],
+  "screenshot": "odoo-mobile-settings-print-badge.png",
+  "page_errors": ["Odoo avatar/image requests returned 404; unrelated to the Print Badge control"],
+  "failed_requests": ["Odoo discuss.channel avatar image requests only"]
+}

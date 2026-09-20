@@ -1,0 +1,29 @@
+title: Employee Badge
+page: { id: employee-badge, route: /employees/badge, breadcrumb: [Human Resources, Employees, Employee Badge], auth: { require: [employees.read] } }
+components:
+  - type: OdooFormView
+    source: employee_badge
+    title_field: name
+    subtitle_field: job_title
+    status_field: print_status
+    editable: false
+    labels: { workflowStatus: Status }
+    header_actions:
+      - { id: print_employee_badge_document, label: Print, permission: employees.read, variant: primary, show_if: "record.print_status === 'Ready'" }
+      - { id: back_to_employee_badge, label: Back to employee, permission: employees.read, variant: secondary }
+    status_colors: { Ready: green }
+    group_columns: 2
+    groups:
+      - title: Badge
+        fields: [{ field: name, label: Employee }, { field: job_title, label: Job Position }, { field: barcode, label: Badge ID }, { field: company_name, label: Company }]
+      - title: Report
+        fields: [{ field: report_name, label: Report }, { field: last_printed_at, label: Last Printed }, { field: print_status, label: Status }]
+  - type: ContactGrid
+    source: employee_badge_print_runs
+    row_key: id
+    columns:
+      - { field: generated_at, label: Printed at, type: PrimaryEntityCell }
+      - { field: requested_by, label: Requested by }
+      - { field: barcode, label: Badge ID }
+      - { field: report_name, label: Report }
+    empty_state: { title: No badge print history, description: Print history appears after the employee badge is printed. }

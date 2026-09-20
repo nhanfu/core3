@@ -547,3 +547,18 @@ is **65 tests / 658 assertions** across 21 files; audit is **673 pages / 682
 routes / 1,219 datasources**; focused ESLint and diff-check pass.
 The bounded feature is not module sign-off; the Core3 company-context blocker,
 separate Print Badge report, and broader Employees parity review remain open.
+
+## EMP-PRINT-BADGE-001 evidence ledger (2026-09-20)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-012 | Employee Settings Print Badge report and durable print-run history | pass; 4 focused tests / 30 assertions |
+| EMP-PERM-012 | employees.read, actor/company identity, barcode-required and stale boundaries | pass; rejected requests create no report history |
+| EMP-DATA-012 | Report history migration replay and file-backed restart | pass |
+| EMP-UI-008 | Authenticated Core3/Odoo desktop/mobile Print Badge comparison | Odoo pass and PDF download observed; Core3 exact pre-auth Auth schema blocker captured at both viewports |
+
+Evidence is under `evidence/employees/2026-09-20/EMP-PRINT-BADGE-001/`.
+The full Employees rerun records **57 pass / 12 fail across 69 tests** because
+the unrelated concurrent Surveys change duplicates `print_survey_results`
+during global discovery. Employees-scoped ESLint and diff-check pass; no
+aggregate module sign-off is claimed.

@@ -1171,3 +1171,29 @@ so the company-scoped detail is empty and no Core3 action pass is claimed.
 
 This slice completes Generate; the separate Odoo Print Badge report remains a
 future bounded gap.
+
+## EMP-PRINT-BADGE-001: employee Settings Print Badge report (2026-09-20)
+
+The next smallest source-backed gap was Odoo's separate
+`hr_employee_print_badge` report (`addons/hr/report/hr_employee_badge.xml:3-59`).
+It is a `qweb-pdf` report bound to `hr.employee`, conditionally exposed beside
+Badge ID in `hr_employee_views.xml:406`, and prints employee/company imagery,
+name, job, and barcode.
+
+Core3 implements the workflow with separate page/API YAML contracts. The
+employee detail action is visible only when an active employee has a barcode;
+it validates the authenticated actor, current company, barcode, row version,
+actor identity, and company identity, durably records a deterministic
+`employee_badge_print_runs` row, and navigates to the printable
+`/employees/badge` page. Migration
+`20260920210000-032-employee-badge-report.yaml` creates the report history table
+and lookup index; replay/restart tests preserve the history.
+
+Focused coverage is in `test/employees_print_badge.integration.test.ts`:
+4 tests / 30 assertions. Odoo authenticated desktop/mobile Settings captures
+show Print Badge; the desktop action produced `Badge - Abigail Peterson.pdf`.
+Core3 desktop/mobile capture is an exact pre-auth blocker because the shared
+runtime rejects an Auth page action with `actions[0].action` and
+`actions[0].refresh` not allowed. No Core3 UI pass or module sign-off is
+claimed. Evidence is under
+`evidence/employees/2026-09-20/EMP-PRINT-BADGE-001/`.

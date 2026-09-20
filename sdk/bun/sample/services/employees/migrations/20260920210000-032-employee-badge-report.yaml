@@ -1,0 +1,25 @@
+version: 0.0.32
+kind: schema
+description: Persist employee badge report runs for the Odoo Print Badge workflow
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_badge_print_runs (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        employee_id VARCHAR NOT NULL,
+        employee_name VARCHAR NOT NULL,
+        job_title VARCHAR,
+        company_name VARCHAR,
+        barcode VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL,
+        generated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS employee_badge_print_runs_employee_idx ON employee_badge_print_runs(employee_id, generated_at);
+    down: |
+      DROP TABLE IF EXISTS employee_badge_print_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

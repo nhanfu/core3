@@ -1,0 +1,14 @@
+{
+  "feature_id": "EMP-PRINT-BADGE-001",
+  "actor": "codex@core3.local",
+  "authenticated": true,
+  "viewport": { "width": 1440, "height": 900 },
+  "route": "/odoo/employees/6",
+  "employee": "Abigail Peterson",
+  "tab": "Settings",
+  "observed_controls": ["Badge ID?", "Print Badge"],
+  "screenshot": "odoo-desktop-settings-print-badge.png",
+  "page_errors": [],
+  "failed_requests": [],
+  "report_download": { "suggested_filename": "Badge - Abigail Peterson.pdf", "observed": true }
+}

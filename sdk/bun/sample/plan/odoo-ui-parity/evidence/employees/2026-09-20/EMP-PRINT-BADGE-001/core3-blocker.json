@@ -1,0 +1,19 @@
+{
+  "feature_id": "EMP-PRINT-BADGE-001",
+  "requested_actor": "admin@tms.local",
+  "authenticated": false,
+  "viewports": {
+    "desktop": { "width": 1440, "height": 900, "screenshot": "core3-desktop-blocker.png" },
+    "mobile": { "width": 390, "height": 844, "screenshot": "core3-mobile-blocker.png" }
+  },
+  "route": "/auth/login?redirect=%2Femployees%2Fdetail%3Fid%3Demployee-demo-003",
+  "runtime": "http://127.0.0.1:3344",
+  "observed_body": "Failed to load page\nInternal server error",
+  "browser_errors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Route load error: Error: Internal server error"
+  ],
+  "server_error": "PageSchemaError: Invalid page definition: actions[0].action is not allowed; actions[0].refresh is not allowed",
+  "owner": "services/auth/auth-module.ts shared runtime discovery",
+  "claim": "exact pre-auth runtime blocker; no Core3 UI pass claimed"
+}

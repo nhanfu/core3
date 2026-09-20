@@ -124,3 +124,17 @@ feature was missing after the settled route/data/permission pass.
 Evidence: `evidence/employees/2026-09-20/EMP-BARCODE-GENERATE-001/`.
 Verification: full Employees **65 tests / 658 assertions**, audit **673 pages /
 682 routes / 1,219 datasources**, focused ESLint, and diff-check pass.
+
+## EMP-PRINT-BADGE-001 execution (2026-09-20)
+
+| Case | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-012 | Employee detail Print Badge action, printable badge page, durable history | pass; 4 focused tests / 30 assertions |
+| EMP-PERM-012 | `employees.read`, actor/company identity, barcode and stale guards | pass |
+| EMP-DATA-012 | Report history migration replay and DuckDB restart | pass |
+| EMP-UI-008 | Authenticated Core3/Odoo desktop/mobile comparison | Odoo pass with PDF download; Core3 exact pre-auth Auth schema blocker |
+
+Evidence: `evidence/employees/2026-09-20/EMP-PRINT-BADGE-001/`.
+Full Employees rerun records 57 pass / 12 fail across 69 tests because of the
+concurrent Surveys duplicate action `print_survey_results`; audit remains
+green at 675 / 684 / 1,225 and Employees-scoped lint/diff-check pass.
