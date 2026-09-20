@@ -3,7 +3,7 @@ datasources:
   - id: survey_test
     single: true
     permission: surveys.read
-    query: "SELECT s.id, s.name, s.title, s.description, s.owner, s.state, s.access_token, COUNT(q.id) AS question_count, CASE WHEN EXISTS (SELECT 1 FROM survey_responses r WHERE r.id = 'test-response-' || s.id AND r.test_entry = true) THEN 'Ready' ELSE 'Unavailable' END AS test_entry_state FROM surveys s LEFT JOIN survey_questions q ON q.survey_id = s.id WHERE s.id = :survey_id GROUP BY s.id, s.name, s.title, s.description, s.owner, s.state, s.access_token"
+    query: "SELECT s.id, s.row_version, s.name, s.title, s.description, s.owner, s.state, s.access_token, COUNT(q.id) AS question_count, COALESCE((SELECT r.state FROM survey_responses r WHERE r.id = 'test-response-' || s.id AND r.survey_id = s.id AND r.test_entry = true LIMIT 1), 'Unavailable') AS test_entry_state, (SELECT r.access_token FROM survey_responses r WHERE r.id = 'test-response-' || s.id AND r.survey_id = s.id AND r.test_entry = true LIMIT 1) AS test_entry_token, (SELECT r.idempotency_key FROM survey_responses r WHERE r.id = 'test-response-' || s.id AND r.survey_id = s.id AND r.test_entry = true LIMIT 1) AS test_entry_key FROM surveys s LEFT JOIN survey_questions q ON q.survey_id = s.id WHERE s.id = :survey_id GROUP BY s.id, s.row_version, s.name, s.title, s.description, s.owner, s.state, s.access_token"
   - id: survey_test_questions
     permission: surveys.read
     query: "SELECT id, sequence, question_text, question_type, required, answer_options FROM survey_questions WHERE survey_id = :survey_id ORDER BY sequence, id"
@@ -17,24 +17,27 @@ actions:
     mutation:
       operation: update
       table: survey_responses
-      fields: [state, test_entry, answer_data]
+      fields: [state, test_entry, answer_data, idempotency_key]
       concurrency: false
       guards:
         - { query: "SELECT s.id FROM surveys s WHERE s.id = :survey_id AND s.state <> 'Archived' AND EXISTS (SELECT 1 FROM survey_questions q WHERE q.survey_id = s.id) AND s.access_token IS NOT NULL", status: 409, message: Only an active survey with questions can be tested. }
-        - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND test_entry = true", status: 409, message: This survey does not have a deterministic test entry. }
-      result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.test_entry FROM survey_responses r WHERE r.id = :id" }
+        - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND test_entry = true", status: 409, code: SURVEY_TEST_ENTRY_NOT_FOUND, message: This survey does not have a deterministic test entry. }
+        - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND test_entry = true AND (idempotency_key IS NULL OR idempotency_key = :idempotency_key)", status: 409, code: SURVEY_TEST_ENTRY_KEY_CHANGED, message: This test entry belongs to a different launch key. Reload the survey before testing it. }
+      result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.test_entry, r.idempotency_key FROM survey_responses r WHERE r.id = :id" }
   - id: start_survey_test
     type: client
     permission: surveys.write
     script: |
       // js
       async ({ row, request }) => {
+        const testKey = `survey-test:${String(row.id)}`;
         const result = await request('/api/actions/surveys.test.start', {
           method: 'POST',
           body: {
             id: `test-response-${String(row.id)}`,
             survey_id: row.id,
-            values: { state: 'New', test_entry: true, answer_data: '{}' },
+            idempotency_key: testKey,
+            values: { state: 'New', test_entry: true, answer_data: '{}', idempotency_key: testKey },
           },
         });
         const token = String(result.access_token || '');

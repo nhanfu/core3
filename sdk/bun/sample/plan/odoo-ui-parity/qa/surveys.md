@@ -491,3 +491,35 @@ restart/replay coverage, and authenticated responsive evidence pass for this
 bounded slice. Odoo comparison remains conditional on the installed reference
 route accepting the completed answer token; Surveys remains
 **qa-in-progress / conditional** with no module sign-off.
+
+## Bounded QA run: `SURVEYS-TEST-ENTRY-001` — 2026-09-20
+
+- Source comparison: Odoo's authenticated `/survey/test/<survey_token>`
+  creates a test answer and redirects to public start; Core3 keeps the
+  `survey-test` page/API YAML split and hardens the deterministic test-entry
+  action with `surveys.write`, token/state/question, and launch-key guards.
+- Persistence/workflow: repeated launches reset one deterministic test row,
+  preserve its stable token and key, and remain durable across file-backed
+  DuckDB reopen. Archived/no-question/missing-entry/wrong-key requests fail
+  atomically.
+- Focused verification: **3 passed, 0 failed, 27 assertions** in
+  `surveys_test_entry.integration.test.ts`.
+- Full Surveys verification: **66 passed, 0 failed, 535 assertions** across
+  15 integration files.
+- Scoped ESLint for the changed TypeScript test passed; `git diff --check`
+  passed. `bun run audit` passed with **682 pages, 691 routes, and 1,259
+  datasources**.
+- Authenticated Core3 evidence: desktop 1440x900 and mobile 390x844 loaded
+  Feedback Form, showed `Entry state: New`, launched the test action, and
+  rendered `This is a Test Survey Entry` without horizontal overflow. A
+  navigation-aborted shell `/api/v1/companies` request is recorded in the
+  evidence JSON; no HTTP response failure occurred.
+- Authenticated Odoo evidence: desktop/mobile HTTP 200 test launch rendered
+  `This is a Test Survey Entry` and `Pay attention to the host screen until
+  the next question.` with matching viewport widths and no request failures.
+  No Odoo blocker applies to this route.
+
+Disposition: bounded Core3 workflow, permission/token guards, durable replay,
+restart coverage, and paired authenticated desktop/mobile evidence pass.
+Surveys remains **qa-in-progress / conditional** because module-wide exit
+criteria remain open; no full-module sign-off is claimed.

@@ -227,3 +227,20 @@ body text and screenshots are recorded under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-RETRY-001/`.
 This is a Core3 bounded pass with a conditional Odoo comparison; no module
 sign-off is claimed.
+
+## 2026-09-20 — `SURVEYS-TEST-ENTRY-001`
+
+Selected the smallest remaining source-backed action after public retry:
+Odoo's authenticated Test Survey launch. Core3's separate `survey-test` page
+and API now expose explicit token/state/question guards, `surveys.write`
+permission, and a stable per-survey launch key. The deterministic test-entry
+row resets idempotently instead of creating duplicate browser fixtures and
+survives file-backed DuckDB reopen.
+
+Focused coverage is 3 tests with 27 assertions; the full Surveys glob is 66
+tests with 535 assertions. Authenticated Core3 and Odoo desktop/mobile probes
+both reached the Test Survey Entry landing state at 1440x900 and 390x844 with
+matching viewport widths. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-TEST-ENTRY-001/`.
+Status remains **qa-in-progress / conditional**; no module sign-off is
+claimed.

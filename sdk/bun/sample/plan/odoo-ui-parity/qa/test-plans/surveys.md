@@ -183,3 +183,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-RETRY-001/`.
+
+## 2026-09-20 authenticated test-entry additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-019 | authenticated action | Test Survey → Start Test | Launch the token-scoped deterministic test entry with the source question graph and stable answer token | pass |
+| SURVEYS-WF-016 | recovery/idempotency | Start Test → replay → restart | Repeated launch resets one durable test row; file-backed reopen retains its state, token, and launch key | pass |
+| SURVEYS-PERM-018 | permission/guards | Test launch boundary | `surveys.write`, non-archived survey/token/question, deterministic entry, and matching launch key are required | pass |
+| SURVEYS-UI-017 | visual/responsive | Test entry desktop/mobile + Odoo comparison | Core3 and Odoo authenticated 1440x900 and 390x844 probes render the test-entry landing state without overflow | pass for Core3 and Odoo |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-TEST-ENTRY-001/`.

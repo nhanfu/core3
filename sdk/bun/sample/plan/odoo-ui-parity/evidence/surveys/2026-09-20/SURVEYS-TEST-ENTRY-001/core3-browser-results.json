@@ -1,0 +1,28 @@
+{
+  "feature_id": "SURVEYS-TEST-ENTRY-001",
+  "runtime": "isolated Core3 Surveys runtime",
+  "authenticated_actor": "Admin User",
+  "results": [
+    {
+      "viewport": "1440x900",
+      "status": 200,
+      "start_visible": true,
+      "final_url": "/survey/start/b135640d-14d4-4748-9ef6-344ca256531e?answer_token=test-token-feedback-2026&test=1",
+      "final_state": "This is a Test Survey Entry",
+      "body_width": 1440,
+      "document_width": 1440,
+      "http_response_failures": []
+    },
+    {
+      "viewport": "390x844",
+      "status": 200,
+      "start_visible": true,
+      "final_url": "/survey/start/b135640d-14d4-4748-9ef6-344ca256531e?answer_token=test-token-feedback-2026&test=1",
+      "final_state": "This is a Test Survey Entry",
+      "body_width": 390,
+      "document_width": 390,
+      "http_response_failures": []
+    }
+  ],
+  "navigation_aborted_request": "/api/v1/companies"
+}

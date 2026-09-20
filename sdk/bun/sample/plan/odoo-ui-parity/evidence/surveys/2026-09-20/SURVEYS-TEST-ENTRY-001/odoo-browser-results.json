@@ -1,0 +1,26 @@
+{
+  "feature_id": "SURVEYS-TEST-ENTRY-001",
+  "reference": "authenticated Odoo 127.0.0.1:8069",
+  "survey_token": "b135640d-14d4-4748-9ef6-344ca256531e",
+  "results": [
+    {
+      "viewport": "1440x900",
+      "status": 200,
+      "final_url": "/survey/b135640d-14d4-4748-9ef6-344ca256531e",
+      "final_state": "This is a Test Survey Entry",
+      "body_width": 1440,
+      "document_width": 1440,
+      "request_failures": []
+    },
+    {
+      "viewport": "390x844",
+      "status": 200,
+      "final_url": "/survey/b135640d-14d4-4748-9ef6-344ca256531e",
+      "final_state": "This is a Test Survey Entry",
+      "body_width": 390,
+      "document_width": 390,
+      "request_failures": []
+    }
+  ],
+  "blocker": null
+}

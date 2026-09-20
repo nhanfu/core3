@@ -1269,3 +1269,27 @@ attempt, but the retry route returned HTTP 200 `Survey Access Error` with the
 exact “Oopsie! We could not let you open this survey...” message. No paired
 Odoo retry creation or redirect is claimed. Surveys remains
 **qa-in-progress / conditional**.
+
+## Bounded slice: Authenticated test-entry launch (2026-09-20)
+
+Feature ID: `SURVEYS-TEST-ENTRY-001`.
+
+The next shallow source-backed action after public retry is Odoo's
+authenticated `/survey/test/<survey_token>` route in
+`addons/survey/controllers/main.py:156-165`. Odoo creates a test answer and
+redirects to the public survey start route with its answer token. Core3 now
+hardens the existing `survey-test` page/API pair: `surveys.write` protects the
+launch, the survey must be non-archived with a token and question graph, the
+deterministic test-entry row and stable per-survey idempotency key are guarded,
+and repeated launches reset the same durable row without duplicate entries.
+
+The file-backed DuckDB test proves the test state and token survive reopen;
+wrong launch keys, archived/no-question surveys, and missing test entries fail
+atomically. Authenticated Core3 and Odoo desktop/mobile captures show the
+corresponding Test Survey Entry landing state with no horizontal overflow.
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-TEST-ENTRY-001/`.
+
+This slice has a paired Odoo comparison. Surveys remains
+**qa-in-progress / conditional** because broader module exit criteria remain
+open; no full-module sign-off is claimed.
