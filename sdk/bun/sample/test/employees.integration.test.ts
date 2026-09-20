@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
@@ -160,6 +160,86 @@ describe('Employees Odoo action-mode parity batch', () => {
     const restored = await repository.executeMutation(restore.mutation, { id: created.id, expected_row_version: 3, values: { active: true } });
     expect(restored).toMatchObject({ id: created.id, active: true, row_version: 4 });
     await database.close();
+  });
+
+  test('preserves employee CRUD state across a file-backed database restart and migration replay', async () => {
+    const databasePath = `/tmp/core3-employees-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `employees_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const listApi = yaml('api/employees.yaml');
+    const detailApi = yaml('api/employee-detail.yaml');
+    const listSource = listApi.datasources.find((source: any) => source.id === 'employees');
+    const detailSource = detailApi.datasources.find((source: any) => source.id === 'employee_detail');
+    const create = listApi.actions.find((action: any) => action.id === 'create_employee');
+    const edit = detailApi.actions.find((action: any) => action.id === 'edit_employee');
+    const archive = detailApi.actions.find((action: any) => action.id === 'archive_employee_detail');
+    const restore = detailApi.actions.find((action: any) => action.id === 'restore_employee_detail');
+    const values = {
+      employee_number: 'EMP-RESTART-01',
+      name: 'Restart Durable Employee',
+      work_email: 'restart.employee@core3.local',
+      company_name: 'Core3 Vietnam',
+      hire_date: '2026-09-20',
+      employment_type: 'Employee',
+    };
+
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const created = await firstRepository.executeMutation(create.mutation, { values });
+    expect(created).toMatchObject({ id: 'employee-emp-restart-01', row_version: 1, active: true, state: 'Draft' });
+    const edited = await firstRepository.executeMutation(edit.mutation, {
+      id: created.id,
+      expected_row_version: 1,
+      values: { ...values, name: 'Restart Durable Employee Updated', work_phone: '+84 901 000 001' },
+    });
+    expect(edited).toMatchObject({ id: created.id, row_version: 2, name: 'Restart Durable Employee Updated' });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const afterRestart = await secondRepository.querySource(detailSource, { id: created.id, current_company_name: 'Core3 Vietnam' }, 0, 1);
+    expect(afterRestart.data).toMatchObject({
+      id: created.id,
+      name: 'Restart Durable Employee Updated',
+      work_phone: '+84 901 000 001',
+      row_version: 2,
+      active: true,
+    });
+    const archived = await secondRepository.executeMutation(archive.mutation, {
+      id: created.id,
+      expected_row_version: 2,
+      current_company_name: 'Core3 Vietnam',
+      values: { active: false },
+    });
+    expect(archived).toMatchObject({ id: created.id, active: false, row_version: 3 });
+    second.close();
+
+    const third = await DuckDbDatabase.open(databasePath);
+    const thirdRepository = new YamlRepository(third);
+    await migrateDatabase(thirdRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const archivedAfterRestart = await thirdRepository.querySource(listSource, {
+      q: null,
+      active: 'false',
+      state: null,
+      department_name: null,
+      current_company_name: 'Core3 Vietnam',
+    }, 0, 50);
+    expect(archivedAfterRestart.data).toContainEqual(expect.objectContaining({
+      id: created.id,
+      name: 'Restart Durable Employee Updated',
+      row_version: 3,
+      active: false,
+    }));
+    const restored = await thirdRepository.executeMutation(restore.mutation, {
+      id: created.id,
+      expected_row_version: 3,
+      current_company_name: 'Core3 Vietnam',
+      values: { active: true },
+    });
+    expect(restored).toMatchObject({ id: created.id, active: true, row_version: 4 });
+    third.close();
+    rmSync(databasePath, { force: true });
   });
 
   test('enforces actor company scope across employee reads and lifecycle persistence', async () => {
