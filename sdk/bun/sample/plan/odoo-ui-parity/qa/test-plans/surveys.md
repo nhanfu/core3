@@ -135,3 +135,15 @@ visual/workflow evidence.
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-RESULTS-PRINT-001/`.
+
+## 2026-09-20 live-session leaderboard additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-015 | live-session/report | In-progress host → Leaderboard | Rank durable attendee score rows by score then ID and expose nickname, score, position, and state through the permissioned datasource | pass |
+| SURVEYS-WF-012 | workflow/recovery | Leaderboard → close/reopen | Closed and empty sessions return no rows; an in-progress file-backed session preserves ranked rows after reopen and migration replay | pass |
+| SURVEYS-PERM-014 | permission/guards | Host action and datasource boundary | `surveys.manage` gates the host navigation, `surveys.read` gates the datasource, and `session_id` plus in-progress state prevent cross-session/closed leakage | pass |
+| SURVEYS-UI-013 | visual/responsive | Leaderboard desktop/mobile and Odoo comparison | Authenticated Core3 desktop/mobile show the action and ranked rows without overflow; reachable Odoo is captured with its exact empty-leaderboard blocker | pass for Core3; Odoo conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-LEADERBOARD-001/`.

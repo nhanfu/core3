@@ -1146,3 +1146,33 @@ The disposable Odoo demo proxy at `127.0.0.1:8072` was connection-refused;
 the reachable `127.0.0.1:8069` reference provided paired results/Print
 captures. This is bounded evidence only: Surveys remains
 **qa-in-progress / conditional**, with no full-module sign-off claimed.
+
+## Bounded slice: Live-session attendee leaderboard (2026-09-20)
+
+Feature ID: `SURVEYS-LIVE-LEADERBOARD-001`.
+
+Odoo source comparison: `addons/survey/controllers/survey_session_manage.py`
+defines the authenticated JSON-RPC
+`/survey/session/leaderboard/<survey_token>` host endpoint, and
+`addons/survey/models/survey_survey.py:967-1018` prepares a deterministic
+score-descending leaderboard capped at 15 attendees. Core3 adds the
+permissioned `survey_live_session_leaderboard` datasource to the existing
+`survey-live-session-results` API/page pair and adds the host's
+`show_live_session_leaderboard` action from the in-progress session manager.
+
+The projection is scoped to the selected survey/session and only returns rows
+while the session is `In Progress`; empty, transport, and closed-session
+states are explicit. It reuses durable `survey_live_attendees` score/state
+rows, so a file-backed DuckDB close, migration replay, and reopen retain the
+same ordered positions. `surveys.read` protects the datasource and
+`surveys.manage` protects host navigation.
+
+Focused coverage is in `test/surveys_live_results.integration.test.ts` and
+now includes the leaderboard contract, empty/closed states, and restart
+durability. Authenticated Core3 desktop/mobile captures and the precise Odoo
+empty-leaderboard fixture blocker are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-LEADERBOARD-001/`.
+The Core3 shared runtime also exposed a concurrent non-Surveys schema error in
+project/employees empty-state keys; the browser evidence used an isolated
+Surveys runtime without editing those owners' files. Surveys remains
+**qa-in-progress / conditional**; no full-module sign-off is claimed.

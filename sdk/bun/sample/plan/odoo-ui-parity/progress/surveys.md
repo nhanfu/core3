@@ -30,6 +30,25 @@ The current Odoo reference database has Surveys uninstalled, so this feature is
 not visually signed off against Odoo. Overall module status remains
 **qa-in-progress / conditional**.
 
+## 2026-09-20 — `SURVEYS-LIVE-LEADERBOARD-001`
+
+Selected the smallest remaining source-backed live-session behavior after the
+Results Print slice: the authenticated host leaderboard while a session is in
+progress. Core3 now exposes a durable, permissioned leaderboard datasource
+with deterministic score ordering and an authenticated host action from the
+live-session page. Empty, closed, and missing fixture states return no rows;
+the file-backed restart test confirms attendee names, scores, and positions
+survive migration replay.
+
+The focused feature test passes 3/3 with 25 assertions, and the full Surveys
+glob passes 55/55 with 436 assertions. Core3 desktop/mobile probes show the
+leaderboard action and Nora/Omar ranked rows without horizontal overflow. The
+authenticated Odoo reference session is reachable on desktop/mobile, but its
+leaderboard JSON-RPC result is empty because the active session has no attendee
+attempts and `session_show_leaderboard=false`; exact blocker evidence is in
+the feature evidence directory. Status remains **qa-in-progress /
+conditional**; this slice does not sign off the full module.
+
 ## 2026-09-20 — `SURVEYS-RESULTS-PRINT-001`
 
 Selected the smallest remaining source-backed results behavior: Odoo's

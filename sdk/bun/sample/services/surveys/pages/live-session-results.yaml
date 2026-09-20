@@ -9,6 +9,18 @@ components:
       - { label: Question, field: question_text }
       - { label: Attendees answered, field: attendee_count }
       - { label: Answers, field: answer_count }
+  - type: ListView
+    variant: odoo
+    scroll: body
+    source: survey_live_session_leaderboard
+    columns:
+      - { field: leaderboard_position, label: '#', align: right }
+      - { field: nickname, label: Attendee, type: PrimaryEntityCell }
+      - { field: scoring_total, label: Score, align: right }
+      - { field: state, label: State, type: StatusChip }
+    page_size: 15
+    row_key: id
+    empty_state: { title: No leaderboard entries, description: Attendees will appear here after joining the live session. }
   - type: Chart
     source: survey_live_session_choice_results
     title: Responses by answer

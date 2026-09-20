@@ -26,10 +26,16 @@ describe('Surveys live-session current-question results', () => {
       params: { survey_id: '{row.survey_id}', session_id: '{row.id}' },
     });
     expect(resultsApi.datasources.map((source: any) => source.id)).toEqual([
-      'survey_live_session_results_header', 'survey_live_session_choice_results', 'survey_live_session_text_results',
+      'survey_live_session_results_header', 'survey_live_session_choice_results', 'survey_live_session_text_results', 'survey_live_session_leaderboard',
     ]);
     expect(resultsApi.datasources.every((source: any) => source.permission === 'surveys.read')).toBe(true);
     expect(resultsApi.datasources.every((source: any) => String(source.query).includes(':session_id'))).toBe(true);
+    expect(resultsApi.datasources.find((source: any) => source.id === 'survey_live_session_leaderboard').error_states.transport_error).toMatchObject({ status: 503, code: 'SURVEY_LIVE_SESSION_LEADERBOARD_UNAVAILABLE' });
+    expect(form.header_actions).toContainEqual(expect.objectContaining({ id: 'show_live_session_leaderboard', label: 'Leaderboard', permission: 'surveys.manage' }));
+    expect(page.actions.find((action: any) => action.id === 'show_live_session_leaderboard')).toMatchObject({
+      type: 'navigate', permission: 'surveys.manage', navigate_to: '/surveys/live-session-results',
+      params: { survey_id: '{row.survey_id}', session_id: '{row.id}', view: 'leaderboard' },
+    });
   });
 
   test('persists deterministic attendee answers and returns current-question statistics only while in progress', async () => {
@@ -54,6 +60,7 @@ describe('Surveys live-session current-question results', () => {
     const header = resultsApi.datasources[0];
     const choices = resultsApi.datasources[1];
     const text = resultsApi.datasources[2];
+    const leaderboard = resultsApi.datasources[3];
     const params = { survey_id: 'survey-demo-feedback', session_id: 'live-session-feedback', fixture_state: null };
     expect(await repository.querySource(header, params, 0, 1)).toMatchObject({ data: { question_text: 'How satisfied are you?', attendee_count: 2, answer_count: 2 } });
     expect((await repository.querySource(choices, params, 0, 50)).data).toEqual([
@@ -61,11 +68,36 @@ describe('Surveys live-session current-question results', () => {
       { category: '5', responses: 1, points: 100 },
     ]);
     expect((await repository.querySource(text, params, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(leaderboard, params, 0, 15)).data).toEqual([
+      { id: 'live-attendee-nora', nickname: 'Nora Parker', scoring_total: 100, leaderboard_position: 1, state: 'In Progress' },
+      { id: 'live-attendee-omar', nickname: 'Omar Vega', scoring_total: 60, leaderboard_position: 2, state: 'In Progress' },
+    ]);
     expect((await repository.querySource(choices, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
+    expect((await repository.querySource(leaderboard, { ...params, fixture_state: 'empty' }, 0, 15)).data).toEqual([]);
     await expect(repository.querySource(header, { ...params, fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'SURVEY_LIVE_SESSION_RESULTS_UNAVAILABLE' });
 
     await repository.run("UPDATE survey_live_sessions SET state = 'Closed' WHERE id = 'live-session-feedback'");
     expect((await repository.querySource(header, params, 0, 1)).data).toEqual({});
+    expect((await repository.querySource(leaderboard, params, 0, 15)).data).toEqual([]);
     database.close();
+  });
+
+  test('retains the leaderboard across a file-backed restart and replay', async () => {
+    const path = `/tmp/surveys-live-leaderboard-${process.pid}-${Date.now()}.duckdb`;
+    const first = await DuckDbDatabase.open(path);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, 'surveys_live_leaderboard_restart', ['schema', 'data']);
+    const source = yaml('api/live-session-results.yaml').datasources.find((candidate: any) => candidate.id === 'survey_live_session_leaderboard');
+    const params = { survey_id: 'survey-demo-feedback', session_id: 'live-session-feedback', fixture_state: null };
+    expect((await firstRepository.querySource(source, params, 0, 15)).data).toHaveLength(0);
+    await firstRepository.run("UPDATE survey_live_sessions SET state = 'In Progress', current_question_id = 'question-feedback-rating', row_version = row_version + 1 WHERE id = 'live-session-feedback'");
+    expect((await firstRepository.querySource(source, params, 0, 15)).data).toHaveLength(2);
+    first.close();
+
+    const second = await DuckDbDatabase.open(path);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(root, 'migrations'), undefined, 'surveys_live_leaderboard_restart', ['schema', 'data']);
+    expect((await secondRepository.querySource(source, params, 0, 15)).data.map((row: any) => row.nickname)).toEqual(['Nora Parker', 'Omar Vega']);
+    second.close();
   });
 });

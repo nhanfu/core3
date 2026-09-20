@@ -1,0 +1,31 @@
+{
+  "desktop": {
+    "details": {
+      "url": "http://127.0.0.1:8069/survey/session/manage/b135640d-14d4-4748-9ef6-344ca256531e",
+      "title": "Odoo",
+      "overflow": false,
+      "body": "To join: http://127.0.0.1:8069/s/9471\nNext \nAbout you\n\nThis section is about general information about you. Answering them helps qualifying your answers.",
+      "buttons": []
+    },
+    "leaderboard_rpc": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": ""
+    }
+  },
+  "mobile": {
+    "details": {
+      "url": "http://127.0.0.1:8069/survey/session/manage/b135640d-14d4-4748-9ef6-344ca256531e",
+      "title": "Odoo",
+      "overflow": false,
+      "body": "To join: http://127.0.0.1:8069/s/9471\nAbout you\n\nThis section is about general information about you. Answering them helps qualifying your answers.",
+      "buttons": []
+    },
+    "leaderboard_rpc": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": ""
+    }
+  },
+  "blocker": "Odoo leaderboard response is empty because the active reference session has no attendee attempts and session_show_leaderboard=false."
+}

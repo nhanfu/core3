@@ -340,3 +340,40 @@ Disposition: Core3 persistence, permissions, filtered workflow, restart,
 responsive evidence, and paired reachable-Odoo Print comparison pass for this
 bounded slice. The Surveys module remains **qa-in-progress / conditional**;
 this does not sign off the full module or the unavailable disposable proxy.
+
+## Bounded QA run: `SURVEYS-LIVE-LEADERBOARD-001` — 2026-09-20
+
+- Source comparison: Odoo's authenticated session manager exposes the
+  in-progress session context and computes leaderboard data from attendee
+  attempts; Core3 adds the equivalent `surveys.read` datasource and keeps the
+  page action in `pages/live-session.yaml` separate from
+  `api/live-session-results.yaml`.
+- Persistence/workflow: the host action is visible only while the session is
+  `In Progress`; score rows are ordered deterministically by score and ID,
+  empty/closed sessions produce no rows, and file-backed migration replay
+  preserves the ranked attendee rows.
+- Focused feature verification: **3 passed, 25 assertions** in
+  `surveys_live_results.integration.test.ts`. The full Surveys glob is
+  **55 passed, 0 failed, 436 assertions** across 11 files. Scoped ESLint and
+  `git diff --check` pass.
+- Repository audit: **passed**, reporting 676 pages, 685 routes, and 1,239
+  datasources. The shared worktree contains concurrent non-Surveys edits, but
+  none were staged or changed by this slice.
+- Full repository regression: **1,453 passed, 10 failed, 13,104 assertions**
+  across 1,463 tests. Two failures are concurrent CRM fixture-order
+  expectations; eight are concurrent non-Surveys discovery failures from
+  unsupported `components[1].title` keys. No Surveys test failed.
+- Authenticated Core3 evidence: isolated runtime desktop 1440x1000 and mobile
+  390x844 show the live-session Leaderboard action and ranked Nora Parker / Omar
+  Vega rows, with no horizontal overflow. JSON and PNG evidence are under the
+  feature directory.
+- Authenticated Odoo evidence: `codex@core3.local` reaches the reference
+  session manager on desktop/mobile. The exact leaderboard JSON-RPC response is
+  empty because the active session has no attendee attempts and
+  `session_show_leaderboard=false`; this is a precise fixture blocker, not a
+  Core3 test failure.
+
+Disposition: Core3 durable workflow, permission declaration, restart coverage,
+and responsive evidence pass for this bounded slice. Odoo comparison remains
+conditional on an attendee-populated reference session; the Surveys module
+remains **qa-in-progress / conditional**.
