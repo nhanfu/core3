@@ -4,7 +4,7 @@ Module owner: sale-subscription module owner
 QA assignment: module-owner verification in the current five-worker wave
 Status: Core3 slice verified; Odoo parity blocked
 Verification trigger: authenticated actor and responsive route QA; Odoo addon availability remains a separate gate
-Candidate commit: current focused QA increment (hash recorded in git handoff)
+Candidate commit: 56f07523
 
 ## Current state
 

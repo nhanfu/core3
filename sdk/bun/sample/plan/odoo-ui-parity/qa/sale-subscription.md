@@ -12,7 +12,7 @@ QA state: Core3 slice verified; paired Odoo parity blocked
 QA slot: current five-worker wave, module-owner execution
 Module owner: sale-subscription module owner
 Verification trigger: authenticated actor and responsive route evidence
-Candidate commit: current focused QA increment (hash recorded in git handoff)
+Candidate commit: 56f07523
 
 ## Test-case inventory
 
