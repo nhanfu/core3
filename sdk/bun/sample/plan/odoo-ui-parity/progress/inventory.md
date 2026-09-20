@@ -694,3 +694,20 @@ Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-REPLENISH-INFO-001/`; Odoo's reachable
   account did not expose the source information action. Full module sign-off
   remains open.
+
+## `INV-ROUTES-001` — Warehouse Management Routes (2026-09-21)
+
+- Selected the next uncovered configuration behavior: Odoo Inventory >
+  Configuration > Warehouse Management > Routes, backed by `stock.route` and
+  its `stock.rule` relation.
+- Added separate Routes list/detail page and API YAML contracts joined by
+  `page.id`, migration `20260921170000-043-inventory-routes.yaml`, deterministic
+  route/rule fixtures, and manager-gated create/edit/archive/restore/delete
+  lifecycle with company, actor, and row-version guards.
+- Focused route tests pass 4 tests / 36 assertions, including migration replay,
+  company filtering, permission boundaries, CRUD, and restart reads. Core3
+  authenticated desktop/mobile evidence is in
+  `evidence/inventory/2026-09-21/INV-ROUTES-001/`.
+- Odoo source/menu comparison is complete, but the supplied account lacks
+  `stock.group_adv_location`; Routes is absent from the reachable Configuration
+  menu. The blocker is recorded and full Inventory sign-off remains open.

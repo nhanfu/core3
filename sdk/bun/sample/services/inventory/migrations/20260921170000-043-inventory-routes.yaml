@@ -1,0 +1,51 @@
+version: 0.0.43
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_routes (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, active BOOLEAN NOT NULL DEFAULT TRUE,
+        sequence_number INTEGER NOT NULL DEFAULT 0,
+        company_name VARCHAR,
+        product_selectable BOOLEAN NOT NULL DEFAULT TRUE,
+        product_categ_selectable BOOLEAN NOT NULL DEFAULT FALSE,
+        warehouse_selectable BOOLEAN NOT NULL DEFAULT FALSE,
+        package_type_selectable BOOLEAN NOT NULL DEFAULT FALSE,
+        warehouse_id VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(name, company_name)
+      );
+      CREATE TABLE IF NOT EXISTS inventory_route_rules (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        route_id VARCHAR NOT NULL, sequence_number INTEGER NOT NULL DEFAULT 0,
+        action VARCHAR NOT NULL, source_location_id VARCHAR,
+        destination_location_id VARCHAR, source_location_name VARCHAR NOT NULL,
+        destination_location_name VARCHAR NOT NULL, company_name VARCHAR,
+        UNIQUE(route_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_routes_active_idx ON inventory_routes(active, sequence_number, id);
+      CREATE INDEX IF NOT EXISTS inventory_route_rules_route_idx ON inventory_route_rules(route_id, sequence_number, id);
+      INSERT INTO inventory_routes
+        (id, name, active, sequence_number, company_name, product_selectable, product_categ_selectable, warehouse_selectable, package_type_selectable, warehouse_id)
+      VALUES
+        ('route-buy', 'Buy', TRUE, 10, 'My Company (San Francisco)', TRUE, TRUE, FALSE, FALSE, NULL),
+        ('route-replenish-mto', 'Replenish on Order (MTO)', TRUE, 20, NULL, TRUE, FALSE, FALSE, FALSE, NULL),
+        ('route-two-step-receipt', 'Two-step receipt', FALSE, 30, 'My Company (San Francisco)', FALSE, FALSE, TRUE, FALSE, 'warehouse-main')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_route_rules
+        (id, route_id, sequence_number, action, source_location_id, destination_location_id, source_location_name, destination_location_name, company_name)
+      VALUES
+        ('route-buy-rule', 'route-buy', 10, 'buy', 'location-supplier', 'location-stock', 'Vendors', 'WH/Stock', 'My Company (San Francisco)'),
+        ('route-mto-rule', 'route-replenish-mto', 10, 'pull', 'location-supplier', 'location-stock', 'Vendors', 'WH/Stock', NULL),
+        ('route-two-step-rule', 'route-two-step-receipt', 10, 'pull', 'location-stock', 'location-stock-shelf-1', 'WH/Stock', 'WH/Stock/Shelf 1', 'My Company (San Francisco)')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_route_rules WHERE route_id IN ('route-buy', 'route-replenish-mto', 'route-two-step-receipt');
+      DELETE FROM inventory_routes WHERE id IN ('route-buy', 'route-replenish-mto', 'route-two-step-receipt');
+      DROP TABLE IF EXISTS inventory_route_rules;
+      DROP TABLE IF EXISTS inventory_routes;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

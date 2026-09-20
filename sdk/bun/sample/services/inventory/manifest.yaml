@@ -85,6 +85,10 @@ menu:
           label: Locations
           icon: location
           permission: inventory.read
+        - path: /routes
+          label: Routes
+          icon: route
+          permission: inventory.manage
         - path: /operation-types
           label: Operations Types
           icon: settings

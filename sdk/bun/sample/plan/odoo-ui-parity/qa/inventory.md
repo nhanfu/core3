@@ -909,3 +909,33 @@ generation. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 information/report and Save Rule
 lifecycle; PARTIAL for direct Odoo wizard interaction and downstream
 procurement generation. Full Inventory sign-off remains open.
+
+## Warehouse Management Routes QA — `INV-ROUTES-001` (2026-09-21)
+
+- Odoo source/menu/action: PASS from `addons/stock/views/stock_location_views.xml:174-268`
+  and `addons/stock/models/stock_location.py:518-580`. `menu_routes_config`
+  opens `action_routes_form` for `stock.route`; the source form includes
+  company, warehouse, applicability flags, and related rules. The menu is
+  restricted by `stock.group_adv_location`.
+- Core3 contract: PASS. `pages/routes.yaml` and `pages/route-detail.yaml`
+  are separate from `api/routes.yaml` and `api/route-detail.yaml`, joined by
+  `page.id`. Migration 0.0.43 supplies deterministic routes/rules and the API
+  owns durable list/create/edit/archive/restore/delete actions.
+- Focused test: `bun test test/inventory_routes.integration.test.ts` — PASS,
+  4 tests / 36 assertions. Coverage includes discovery, deterministic active /
+  archived / shared rows, detail rules, manager CRUD, duplicate/company/
+  row-version guards, archive/restore/delete-with-rules, migration replay,
+  and restart reads.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844 list/detail/create/archive states. The archived detail visibly
+  exposes Restore; there were no console errors, failed requests, bad
+  responses, or horizontal overflow.
+- Odoo comparison: PARTIAL. Authenticated desktop Inventory Configuration
+  rendered, but the supplied account's menu omitted Routes because
+  `stock.group_adv_location` was not granted. The bounded mobile probe did not
+  reach Configuration before timeout. No Odoo mutation was attempted; the
+  desktop capture and exact blockers are in the paired evidence.
+
+QA disposition: PASS for the bounded Core3 Routes lifecycle and guards;
+PARTIAL for direct Odoo Routes interaction. Full Inventory sign-off remains
+open.

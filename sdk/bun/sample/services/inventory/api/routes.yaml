@@ -1,0 +1,47 @@
+page: { id: routes }
+datasources:
+  - id: inventory_routes
+    single: false
+    permission: inventory.manage
+    error_states: { transport_error: { status: 503, code: INVENTORY_ROUTES_UNAVAILABLE, message: Routes are temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.name, r.active, r.sequence_number, COALESCE(r.company_name, 'Shared') AS company_name, r.product_selectable, r.product_categ_selectable, r.warehouse_selectable, r.package_type_selectable, r.warehouse_id, COALESCE(w.name, '') AS warehouse_name, COUNT(rr.id) AS rule_count FROM inventory_routes r LEFT JOIN inventory_warehouses w ON w.id = r.warehouse_id LEFT JOIN inventory_route_rules rr ON rr.route_id = r.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (r.company_name IS NULL OR r.company_name = COALESCE(:current_company_name, r.company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND r.company_name = 'My Company (San Francisco)')) AND (COALESCE(:active, 'active') = 'all' OR (COALESCE(:active, 'active') = 'active' AND r.active = TRUE) OR (COALESCE(:active, 'active') = 'archived' AND r.active = FALSE)) AND (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR COALESCE(w.name, '') ILIKE '%' || :q || '%') GROUP BY r.id, r.row_version, r.name, r.active, r.sequence_number, r.company_name, r.product_selectable, r.product_categ_selectable, r.warehouse_selectable, r.package_type_selectable, r.warehouse_id, w.name ORDER BY r.sequence_number, r.name, r.id"
+  - id: inventory_route_create_warehouses
+    single: false
+    permission: inventory.manage
+    query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM inventory_warehouses WHERE state = 'Active' ORDER BY name, id"
+actions:
+  - id: view_inventory_route
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /routes/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_route
+    type: server_form
+    permission: inventory.manage
+    title: New route
+    action: inventory.routes.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_routes]
+    mutation:
+      operation: insert
+      table: inventory_routes
+      generated: [id]
+      fields: [name, active, sequence_number, company_name, product_selectable, product_categ_selectable, warehouse_selectable, package_type_selectable, warehouse_id]
+      required: [name]
+      defaults: { active: true, sequence_number: 50, company_name: 'My Company (San Francisco)', product_selectable: true, product_categ_selectable: false, warehouse_selectable: false, package_type_selectable: false }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_ROUTE_NAME_REQUIRED, message: A route name is required. }
+        - { query: "SELECT 1 AS ok WHERE :company_name IS NULL OR :company_name = COALESCE(:current_company_name, :company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND :company_name = 'My Company (San Francisco)')", status: 403, code: INVENTORY_ROUTE_COMPANY_FORBIDDEN, message: The route company is outside your current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_routes WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(company_name, '') = COALESCE(:company_name, ''))", status: 409, code: INVENTORY_ROUTE_NAME_EXISTS, message: A route with this name already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:warehouse_id, '') = '' OR EXISTS (SELECT 1 FROM inventory_warehouses WHERE id = :warehouse_id AND state = 'Active')", status: 422, code: INVENTORY_ROUTE_WAREHOUSE_INVALID, message: Select an active warehouse. }
+      result: { query: "SELECT * FROM inventory_routes WHERE id = :id" }
+    fields:
+      - { field: name, label: Route, type: text, required: true, placeholder: 'e.g. Two-steps reception' }
+      - { field: sequence_number, label: Sequence, type: number, default: 50 }
+      - { field: company_name, label: Company, type: text, default: 'My Company (San Francisco)' }
+      - { field: product_selectable, label: Products, type: checkbox, default: true }
+      - { field: product_categ_selectable, label: Product Categories, type: checkbox }
+      - { field: warehouse_selectable, label: Warehouses, type: checkbox }
+      - { field: package_type_selectable, label: Package Type, type: checkbox }
+      - { field: warehouse_id, label: Warehouse, type: select, options_source: inventory_route_create_warehouses }

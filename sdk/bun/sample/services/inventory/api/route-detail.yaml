@@ -1,0 +1,102 @@
+page: { id: route-detail }
+datasources:
+  - id: inventory_route_detail
+    single: true
+    permission: inventory.manage
+    error_states: { transport_error: { status: 503, code: INVENTORY_ROUTE_DETAIL_UNAVAILABLE, message: Route details are temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.name, r.active, r.sequence_number, r.company_name, r.product_selectable, r.product_categ_selectable, r.warehouse_selectable, r.package_type_selectable, r.warehouse_id, COALESCE(w.name, '') AS warehouse_name, COUNT(rr.id) AS rule_count FROM inventory_routes r LEFT JOIN inventory_warehouses w ON w.id = r.warehouse_id LEFT JOIN inventory_route_rules rr ON rr.route_id = r.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.id = :id AND (r.company_name IS NULL OR r.company_name = COALESCE(:current_company_name, r.company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND r.company_name = 'My Company (San Francisco)')) GROUP BY r.id, r.row_version, r.name, r.active, r.sequence_number, r.company_name, r.product_selectable, r.product_categ_selectable, r.warehouse_selectable, r.package_type_selectable, r.warehouse_id, w.name"
+  - id: inventory_route_rules
+    single: false
+    permission: inventory.manage
+    query: "SELECT rr.id, rr.row_version, rr.route_id, rr.sequence_number, rr.action, rr.source_location_id, rr.destination_location_id, rr.source_location_name, rr.destination_location_name, COALESCE(rr.company_name, 'Shared') AS company_name FROM inventory_route_rules rr JOIN inventory_routes r ON r.id = rr.route_id WHERE rr.route_id = :id AND (r.company_name IS NULL OR r.company_name = COALESCE(:current_company_name, r.company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND r.company_name = 'My Company (San Francisco)')) ORDER BY rr.sequence_number, rr.id"
+  - id: inventory_route_edit_warehouses
+    single: false
+    permission: inventory.manage
+    query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM inventory_warehouses WHERE state = 'Active' ORDER BY name, id"
+actions:
+  - id: back_to_inventory_routes
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /routes
+  - id: view_inventory_route_rules
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /routes/detail
+    params: { id: '{state.inventory_route_detail.id}' }
+  - id: edit_inventory_route
+    type: server_form
+    permission: inventory.manage
+    title: Edit route
+    action: inventory.routes.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_route_detail
+    refresh: [inventory_route_detail, inventory_routes, inventory_route_rules]
+    mutation:
+      operation: update
+      table: inventory_routes
+      fields: [name, sequence_number, company_name, product_selectable, product_categ_selectable, warehouse_selectable, package_type_selectable, warehouse_id]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_routes WHERE id = :id AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_ROUTE_NOT_FOUND, message: Route not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_ROUTE_NAME_REQUIRED, message: A route name is required. }
+        - { query: "SELECT 1 AS ok WHERE :company_name IS NULL OR :company_name = COALESCE(:current_company_name, :company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND :company_name = 'My Company (San Francisco)')", status: 403, code: INVENTORY_ROUTE_COMPANY_FORBIDDEN, message: The route company is outside your current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_routes WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(company_name, '') = COALESCE(:company_name, '') AND id <> :id)", status: 409, code: INVENTORY_ROUTE_NAME_EXISTS, message: A route with this name already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:warehouse_id, '') = '' OR EXISTS (SELECT 1 FROM inventory_warehouses WHERE id = :warehouse_id AND state = 'Active')", status: 422, code: INVENTORY_ROUTE_WAREHOUSE_INVALID, message: Select an active warehouse. }
+      result: { query: "SELECT * FROM inventory_routes WHERE id = :id" }
+    fields:
+      - { field: name, label: Route, type: text, required: true }
+      - { field: sequence_number, label: Sequence, type: number }
+      - { field: company_name, label: Company, type: text }
+      - { field: product_selectable, label: Products, type: checkbox }
+      - { field: product_categ_selectable, label: Product Categories, type: checkbox }
+      - { field: warehouse_selectable, label: Warehouses, type: checkbox }
+      - { field: package_type_selectable, label: Package Type, type: checkbox }
+      - { field: warehouse_id, label: Warehouse, type: select, options_source: inventory_route_edit_warehouses }
+  - id: archive_inventory_route
+    type: server
+    permission: inventory.manage
+    action: inventory.routes.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    refresh: [inventory_route_detail, inventory_routes]
+    mutation:
+      operation: update
+      table: inventory_routes
+      fields: [active]
+      defaults: { active: false }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_routes WHERE id = :id AND active = TRUE AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_ROUTE_NOT_FOUND, message: Active route not found. }]
+      result: { query: "SELECT * FROM inventory_routes WHERE id = :id" }
+  - id: restore_inventory_route
+    type: server
+    permission: inventory.manage
+    action: inventory.routes.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: true } }
+    refresh: [inventory_route_detail, inventory_routes]
+    mutation:
+      operation: update
+      table: inventory_routes
+      fields: [active]
+      defaults: { active: true }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_routes WHERE id = :id AND active = FALSE AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_ROUTE_NOT_FOUND, message: Archived route not found. }]
+      result: { query: "SELECT * FROM inventory_routes WHERE id = :id" }
+  - id: delete_inventory_route
+    type: server
+    permission: inventory.manage
+    action: inventory.routes.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_routes]
+    mutation:
+      operation: delete
+      table: inventory_routes
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_routes WHERE id = :id AND (company_name IS NULL OR company_name = COALESCE(:current_company_name, company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_ROUTE_NOT_FOUND, message: Route not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_route_rules WHERE route_id = :id)", status: 409, code: INVENTORY_ROUTE_HAS_RULES, message: A route with rules cannot be deleted. }

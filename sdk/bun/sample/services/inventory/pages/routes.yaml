@@ -1,0 +1,27 @@
+title: Routes
+page: { id: routes, route: /routes, breadcrumb: [Supply Chain, Inventory, Configuration, Warehouse Management, Routes], auth: { require: [inventory.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_routes
+    create_action: create_inventory_route
+    create_label: New
+    search: { label: Routes, placeholder: Search routes... }
+    filters:
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }, { id: all, label: All }] }
+    views:
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: sequence_number, label: Sequence, optional: hide, sortable: true }
+      - { field: name, label: Route, type: PrimaryEntityCell, sortable: true }
+      - { field: company_name, label: Company }
+      - { field: warehouse_name, label: Warehouse }
+      - { field: rule_count, label: Rules, align: right }
+      - { field: active, label: Active, type: BooleanToggle, optional: hide }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_inventory_route
+    row_double_click_action: view_inventory_route
+    form_view: { page: apps/services/inventory/pages/route-detail.yaml, side_panel: false }
+    empty_state: { title: No routes found, description: Define a route or adjust your search and status filter. }

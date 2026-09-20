@@ -1,0 +1,22 @@
+{
+  "feature_id": "INV-ROUTES-001",
+  "authenticated_as": "admin@tms.local",
+  "desktop": {
+    "viewport": "1440x900",
+    "screenshots": ["core3-desktop-list.png", "core3-desktop-detail.png", "core3-desktop-create-form.png", "core3-desktop-created.png", "core3-desktop-created-detail.png", "core3-desktop-archived.png"],
+    "states": ["list", "detail_with_rule", "create", "created", "archived"],
+    "detail_rule_rows": 1,
+    "archive_result": "Restore button visible on archived detail",
+    "horizontal_overflow": false
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "screenshot": "core3-mobile-archived.png",
+    "state": "archived_detail",
+    "restore_button_visible": true,
+    "horizontal_overflow": false
+  },
+  "console_errors": [],
+  "failed_requests": [],
+  "bad_responses": []
+}

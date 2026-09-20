@@ -1,0 +1,19 @@
+{
+  "feature_id": "INV-ROUTES-001",
+  "authenticated_as": "codex@core3.local",
+  "desktop": {
+    "screenshot": "odoo-desktop-configuration.png",
+    "route": "/odoo/inventory",
+    "configuration_menu_rendered": true,
+    "routes_visible": false,
+    "visible_configuration_items": ["Settings", "Warehouse Management", "Warehouses", "Operations Types", "Products", "Categories", "Attributes", "Units & Packagings"]
+  },
+  "mobile": {
+    "screenshot": null,
+    "configuration_menu_rendered": false,
+    "routes_visible": false,
+    "blocker": "bounded mobile probe could not reach the Configuration control; no Odoo mutation was attempted"
+  },
+  "blocker": "menu_routes_config is restricted by stock.group_adv_location, which is not granted to the supplied authenticated account",
+  "mutation_attempted": false
+}

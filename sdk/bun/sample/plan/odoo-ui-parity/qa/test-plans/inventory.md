@@ -155,3 +155,6 @@ Full Inventory sign-off requires the focused suite, authenticated CRUD and
 transfer/operation workflows, all actor boundaries, reload/restart persistence,
 complete paired Odoo desktop/mobile comparisons, and a migration-contract
 decision. Current route, Settings, and transfer evidence is conditional only.
+| INV-FUNC-030 | Warehouse Management Routes lifecycle | Routes list/detail | Deterministic routes and rules support manager create/edit/archive/restore/delete, detail relation rows, migration replay, and restart persistence | pass: `INV-ROUTES-001` focused suite |
+| INV-PERM-029 | Routes permission/company/concurrency boundary | inventory.manage, current company, actor, row version | readers cannot mutate; duplicate names, wrong company, stale rows, invalid warehouses, and delete-with-rules leave route state unchanged | pass: `INV-ROUTES-001` focused runtime test |
+| INV-UI-028 | Routes responsive configuration workflow | 1440x900, 390x844 | Authenticated Core3 list/detail/create/archive states render without errors or overflow; paired Odoo Configuration menu and exact group blocker are recorded | pass Core3; Odoo Routes hidden for supplied account |

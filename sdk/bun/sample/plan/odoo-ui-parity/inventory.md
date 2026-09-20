@@ -1512,3 +1512,28 @@ and paired Odoo captures are under
 reachable Replenishment screens but does not expose the source information
 action to the supplied account; the exact blocker is recorded. Downstream
 procurement generation and full Inventory sign-off remain open.
+
+## Configuration > Warehouse Management > Routes — `INV-ROUTES-001` (2026-09-21)
+
+This bounded slice covers Odoo's Routes configuration workflow. The source
+menu/action and model are in
+`addons/stock/views/stock_location_views.xml:174-268` and
+`addons/stock/models/stock_location.py:518-580`: `action_routes_form` opens
+`stock.route`, with company, warehouse, product/category/package applicability,
+and rule relations. The menu is `menu_routes_config` under Warehouse
+Management and is restricted by `stock.group_adv_location`.
+
+Core3 keeps `pages/routes.yaml` and `pages/route-detail.yaml` presentation-only
+and joins them to `api/routes.yaml` and `api/route-detail.yaml` by `page.id`.
+Migration `20260921170000-043-inventory-routes.yaml` adds deterministic route
+and rule data. The manager-gated lifecycle supports list filters, create,
+detail/rules, edit, archive/restore, and delete-without-rules, with durable
+company, actor, and row-version guards. Focused tests cover discovery,
+permissions, company scope, CRUD, migration replay, and restart reads.
+
+Authenticated Core3 desktop/mobile evidence is under
+`evidence/inventory/2026-09-21/INV-ROUTES-001/`. The supplied authenticated
+Odoo account reaches Inventory Configuration but does not receive
+`stock.group_adv_location`, so Routes is absent from the menu at both the
+reachable desktop/mobile comparison boundary. The exact blocker is recorded;
+no Odoo mutation or full Inventory sign-off is claimed.
