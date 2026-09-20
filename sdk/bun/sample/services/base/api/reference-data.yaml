@@ -1,0 +1,33 @@
+page: { id: base-reference-data }
+
+datasources:
+  - id: reference_countries
+    permission: base.reference.read
+    error_states:
+      forbidden: { status: 403, code: BASE_REFERENCE_DATA_FORBIDDEN, message: You do not have permission to view reference data. }
+      transport_error: { status: 503, code: BASE_REFERENCE_DATA_UNAVAILABLE, message: Reference data is temporarily unavailable. }
+    query: "SELECT code, name, currency_code FROM base_countries WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END ORDER BY name"
+  - id: currencies
+    permission: base.reference.read
+    error_states:
+      forbidden: { status: 403, code: BASE_REFERENCE_DATA_FORBIDDEN, message: You do not have permission to view reference data. }
+      transport_error: { status: 503, code: BASE_REFERENCE_DATA_UNAVAILABLE, message: Reference data is temporarily unavailable. }
+    query: "SELECT code, name, symbol, decimal_places FROM base_currencies WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END ORDER BY code"
+  - id: languages
+    permission: base.reference.read
+    error_states:
+      forbidden: { status: 403, code: BASE_REFERENCE_DATA_FORBIDDEN, message: You do not have permission to view reference data. }
+      transport_error: { status: 503, code: BASE_REFERENCE_DATA_UNAVAILABLE, message: Reference data is temporarily unavailable. }
+    query: "SELECT code, name, direction FROM base_languages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END ORDER BY name"
+  - id: categories
+    permission: base.reference.read
+    error_states:
+      forbidden: { status: 403, code: BASE_REFERENCE_DATA_FORBIDDEN, message: You do not have permission to view reference data. }
+      transport_error: { status: 503, code: BASE_REFERENCE_DATA_UNAVAILABLE, message: Reference data is temporarily unavailable. }
+    query: "SELECT id, name, color FROM base_contact_categories WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END ORDER BY name"
+
+actions:
+  - { id: view_country, type: navigate, permission: base.reference.read, navigate_to: /country-detail, params: { id: '{row.code}' } }
+  - { id: view_currency, type: navigate, permission: base.reference.read, navigate_to: /currency-detail, params: { id: '{row.code}' } }
+  - { id: view_language, type: navigate, permission: base.reference.read, navigate_to: /language-detail, params: { id: '{row.code}' } }
+  - { id: view_category, type: navigate, permission: base.reference.read, navigate_to: /category-detail, params: { id: '{row.id}' } }

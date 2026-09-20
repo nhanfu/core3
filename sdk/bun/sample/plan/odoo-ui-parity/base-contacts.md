@@ -2,6 +2,15 @@
 
 Status: `in-progress`
 
+## 2026-09-20 Reference data contract repair
+
+- Converted the Base Configuration/Localization landing page to the standard
+  page-only/API-owned contract, added its explicit route, and preserved the
+  four navigation actions through the API fragment.
+- Added declared read permission, empty, forbidden, and transport boundaries
+  with focused discovery and migration-backed tests. Authenticated desktop and
+  mobile comparison for the full Base module remains an open gate.
+
 ### Current batch evidence: Country Groups localization
 
 - Source reviewed in the authenticated Odoo 19 demo database: Contacts /

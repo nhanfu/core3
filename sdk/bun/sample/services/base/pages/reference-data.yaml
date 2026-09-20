@@ -1,10 +1,5 @@
 title: Base Configuration
-page: { id: base-reference-data, breadcrumb: [Contacts, Configuration], auth: { require: [base.reference.read] } }
-datasources:
-  - { id: reference_countries, permission: base.reference.read, query: "SELECT code, name, currency_code FROM base_countries ORDER BY name" }
-  - { id: currencies, permission: base.reference.read, query: "SELECT code, name, symbol, decimal_places FROM base_currencies ORDER BY code" }
-  - { id: languages, permission: base.reference.read, query: "SELECT code, name, direction FROM base_languages ORDER BY name" }
-  - { id: categories, permission: base.reference.read, query: "SELECT id, name, color FROM base_contact_categories ORDER BY name" }
+page: { id: base-reference-data, route: /base-reference-data, breadcrumb: [Contacts, Configuration], auth: { require: [base.reference.read] } }
 components:
   - type: ListView
     variant: odoo
@@ -62,8 +57,3 @@ components:
     row_open_action: view_category
     row_double_click_action: view_category
     form_view: { page: apps/services/base/pages/category-detail.yaml, side_panel: true }
-actions:
-  - { id: view_country, type: navigate, permission: base.reference.read, navigate_to: /country-detail, params: { id: '{row.code}' } }
-  - { id: view_currency, type: navigate, permission: base.reference.read, navigate_to: /currency-detail, params: { id: '{row.code}' } }
-  - { id: view_language, type: navigate, permission: base.reference.read, navigate_to: /language-detail, params: { id: '{row.code}' } }
-  - { id: view_category, type: navigate, permission: base.reference.read, navigate_to: /category-detail, params: { id: '{row.id}' } }
