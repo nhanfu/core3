@@ -1,0 +1,3 @@
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit=124; /api/modules was HTTP 000 on 3001 and 3002 before timeout.
+Startup printed the backend/frontend addresses and Vite ready on 3002, but backend 3001 never accepted the bounded readiness request; the process ended by SIGTERM. No authenticated Core3 browser capture or sign-off is claimed.

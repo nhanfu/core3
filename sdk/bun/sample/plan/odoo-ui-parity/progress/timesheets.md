@@ -732,3 +732,11 @@ sign-off is claimed.
 - Focused verification: `test/timesheets_all_calendar_multi_create.integration.test.ts` passed 4/4 with 25 expectations, including selected employee/company/relation/range guards, no-partial-write behavior, migration replay, and file-backed restart.
 - Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-calendar-multi-create/`; desktop rendered calendar and mobile rendered responsive Kanban without page errors. The desktop runtime did not expose a standard multi-create toolbar button, so that dialog is not claimed.
 - Core3 browser capture is blocked before authentication by the shared `discoverPages` `components[1].title is not allowed` schema failure; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
+
+## 2026-09-21 — `TIMESHEET-ALL-EMPLOYEE-FILTER-001`
+
+- Selected the structured Employee filter from Odoo's `hr_timesheet_line_search` for the All Timesheets action, distinct from Employee grouping.
+- Added the separate page/API contract through `page.id: all-timesheets`; the page declares the Employee options filter and the API enforces the persisted `employee_id` predicate with current-company and empty-fixture guards.
+- Focused feature coverage passed 3/3 tests with 18 expectations. The bounded All Timesheets regression passed 18/18 tests with 104 expectations, including existing company, report, grouping, and calendar slices.
+- Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-employee-filter/`; desktop filters Mitchell to `1-42 / 42`, and mobile renders responsive Kanban without browser errors.
+- Core3 browser capture is blocked before authentication because backend `3001/api/modules` did not become available during the bounded 18-second startup probe; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.

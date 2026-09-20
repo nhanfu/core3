@@ -1560,3 +1560,13 @@ Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml
 Focused coverage is `test/timesheets_all_calendar_multi_create.integration.test.ts`: 4 tests / 25 expectations. It covers source comparison, paired contracts, selected-employee/company/relation/range guards, no-partial-write behavior, deterministic migration replay, and file-backed restart persistence.
 
 Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-calendar-multi-create/`. Desktop renders the authenticated All Timesheets calendar and mobile renders responsive Kanban, both without page errors; the desktop runtime did not expose a standard New/Create toolbar button, so the multi-create dialog is not claimed. Core3 desktop/mobile capture is blocked before authentication by the shared `discoverPages` error `components[1].title is not allowed`, recorded in `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain open; no module sign-off is claimed.
+
+## Wave 15 All Timesheets Employee filter — `TIMESHEET-ALL-EMPLOYEE-FILTER-001` (2026-09-21)
+
+The next uncovered source-backed behavior is the structured Employee filter in Odoo's `hr_timesheet_line_search`, used by the `timesheet_action_all` All Timesheets action. This is a record filter, not the already-covered Employee group-by.
+
+Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml` data/action-only, joined by `page.id: all-timesheets`. The page adds the manager-scoped Employee filter backed by active employees in the current company; the API adds the durable `employee_id` predicate while preserving company and empty-fixture guards. Existing persisted `timesheet_entries.employee_id` supplies the relation, so no duplicate migration was added.
+
+Focused coverage is `test/timesheets_all_employee_filter.integration.test.ts`: 3 tests / 18 expectations for source mapping, paired contracts, employee/company/empty guards, manager permission, and file-backed restart. The bounded regression across the new filter and existing All Timesheets slices passed 18 tests / 104 expectations.
+
+Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-employee-filter/`: desktop applies Employee = Mitchell and renders `1-42 / 42`; mobile renders responsive Kanban; both report no browser errors. Core3 desktop/mobile capture is blocked before authentication because the bounded 18-second startup probe never exposed backend `3001/api/modules`; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain open; no module sign-off is claimed.
