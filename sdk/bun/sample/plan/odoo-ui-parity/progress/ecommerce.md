@@ -4,8 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `099112b089627f3e008e3f30d70aae6f1a8cd9ae`
-(`ECOM-CATALOG-PRODUCT-REVIEWS-001`, committed locally; not pushed).
+Latest committed bounded slice: `2e117416fe241bd612356a2c8c472042f96f7e68`
+(`ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001`, committed locally; not pushed).
 
 ## Current bounded task — `ECOM-CATALOG-CATEGORY-WEBSITE-DESCRIPTION-001`
 
@@ -25,7 +25,7 @@ scoped ESLint and `git diff --check` pass. Core3 desktop/mobile capture is
 blocked by missing `js_repl` and unavailable ports 3000/4312/4313; Odoo
 `/shop` is exact HTTP 404 on 8069/8073. Evidence is under
 `evidence/ecommerce/2026-09-21/ecom-catalog-category-website-description-001/`.
-Ready for an Ecommerce-only local commit; not pushed.
+Committed locally as `2e117416fe241bd612356a2c8c472042f96f7e68`; not pushed.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-REVIEWS-001`
 
