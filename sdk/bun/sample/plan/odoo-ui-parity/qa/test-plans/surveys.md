@@ -219,3 +219,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-NEXT-QUESTION-002/`.
+
+## 2026-09-20 public previous-question additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-022 | public workflow | Question 2 → Back | Persist and render the previous ordered question through the token-scoped API/page binding | pass |
+| SURVEYS-WF-019 | restart/idempotency | Back → reopen → replay | File-backed reopen preserves the cursor and the same navigation key replays one response row | pass |
+| SURVEYS-PERM-021 | token/actor guard | Previous navigation boundary | Permission, token, stale, closed, invalid-order, non-POST, and first-question guards reject invalid mutations | pass |
+| SURVEYS-UI-020 | authenticated responsive/reference | Desktop/mobile previous-question probe | Core3 restores Question 1 after Back/reload at 1440x900 and 390x844; exact Odoo fixture blocker is recorded | pass for Core3; Odoo conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-PREVIOUS-QUESTION-001/`.

@@ -1324,6 +1324,27 @@ answer-token fixture for this mutation route. Evidence is under
 Surveys remains **qa-in-progress / conditional** and this slice does not sign
 off the module.
 
+## Bounded slice: Public previous-question navigation (2026-09-20)
+
+Feature ID: `SURVEYS-PUBLIC-PREVIOUS-QUESTION-001`.
+
+Odoo's `survey/submit` controller handles `previous_page_id` and returns the
+prior ordered question/page (`addons/survey/controllers/main.py:583-587`).
+Core3 now exposes the same bounded public transition through the separate
+`surveys.public.previous_question` operation/API action and the Surveys-owned
+`PublicSurvey` renderer binding. The transition is token-scoped,
+`surveys.public` permissioned, stale-cursor and ordered-question guarded,
+durable in `survey_responses.current_question_id`, restart-safe, and
+idempotent by deterministic navigation key.
+
+Focused integration coverage proves q2 → q1 navigation, replay, file-backed
+DuckDB reopen, wrong-token, stale, closed, non-POST, and first-question
+exhaustion boundaries. Authenticated Core3 desktop/mobile evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-PREVIOUS-QUESTION-001/`.
+The installed Odoo reference has no stable active answer-token fixture for a
+fresh mutation probe, so paired Odoo mutation/visual sign-off remains blocked;
+Surveys remains **qa-in-progress / conditional**.
+
 ## Bounded slice: Public next-question renderer binding (2026-09-20)
 
 Feature ID: `SURVEYS-PUBLIC-NEXT-QUESTION-002`.

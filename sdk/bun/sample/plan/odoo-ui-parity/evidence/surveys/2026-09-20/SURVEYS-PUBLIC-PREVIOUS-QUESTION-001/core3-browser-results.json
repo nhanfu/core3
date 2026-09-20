@@ -1,0 +1,59 @@
+{
+  "featureId": "SURVEYS-PUBLIC-PREVIOUS-QUESTION-001",
+  "base": "http://127.0.0.1:4017",
+  "survey": "b135640d-14d4-4748-9ef6-344ca256531e",
+  "checks": [
+    {
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "authenticated": {
+        "status": 200,
+        "actor": "admin@tms.local",
+        "token": true
+      },
+      "answerTokenPresent": true,
+      "backRendered": true,
+      "snapshot": {
+        "status": 200,
+        "currentQuestionId": "question-feedback-rating",
+        "navigationKey": "public-previous:768ab0be-63db-4ff5-aa90-28a1f873eeb6:question-feedback-comment"
+      },
+      "replay": {
+        "status": 200,
+        "replayed": true,
+        "currentQuestionId": "question-feedback-rating"
+      },
+      "consoleOrPageFailures": [],
+      "bodyText": "Feedback Form\nHow satisfied are you?*\n1\n2\n3\n4\n5\nQuestion 1 of 7\nNext"
+    },
+    {
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "authenticated": {
+        "status": 200,
+        "actor": "admin@tms.local",
+        "token": true
+      },
+      "answerTokenPresent": true,
+      "backRendered": true,
+      "snapshot": {
+        "status": 200,
+        "currentQuestionId": "question-feedback-rating",
+        "navigationKey": "public-previous:7b7b6ca1-31cb-4c1f-bb96-0db790abb050:question-feedback-comment"
+      },
+      "replay": {
+        "status": 200,
+        "replayed": true,
+        "currentQuestionId": "question-feedback-rating"
+      },
+      "consoleOrPageFailures": [],
+      "bodyText": "Feedback Form\nHow satisfied are you?*\n1\n2\n3\n4\n5\nQuestion 1 of 7\nNext"
+    }
+  ]
+}

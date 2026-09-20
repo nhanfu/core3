@@ -20,6 +20,9 @@ operations:
   survey.public.next_question:
     result_key: question
     query: "SELECT next_question.id, next_question.question_text, next_question.question_type, next_question.sequence, next_question.required, next_question.answer_options FROM survey_questions current_question JOIN survey_questions next_question ON next_question.survey_id = current_question.survey_id AND (next_question.sequence > current_question.sequence OR (next_question.sequence = current_question.sequence AND next_question.id > current_question.id)) WHERE current_question.id = :current_question_id AND current_question.survey_id = :survey_id ORDER BY next_question.sequence, next_question.id LIMIT 1"
+  survey.public.previous_question:
+    result_key: question
+    query: "SELECT previous_question.id, previous_question.question_text, previous_question.question_type, previous_question.sequence, previous_question.required, previous_question.answer_options FROM survey_questions current_question JOIN survey_questions previous_question ON previous_question.survey_id = current_question.survey_id AND (previous_question.sequence < current_question.sequence OR (previous_question.sequence = current_question.sequence AND previous_question.id < current_question.id)) WHERE current_question.id = :current_question_id AND current_question.survey_id = :survey_id ORDER BY previous_question.sequence DESC, previous_question.id DESC LIMIT 1"
   survey.public.navigation_idempotency:
     result_key: response
     query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, navigation_key, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id AND navigation_key = :navigation_key LIMIT 1"

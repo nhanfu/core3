@@ -128,6 +128,26 @@ actions:
       - { field: expected_question_id, label: Current question, type: text, required: true }
       - { field: current_question_id, label: Next question, type: text, required: true }
       - { field: navigation_key, label: Navigation key, type: text, required: true }
+  - id: public_survey_previous_question
+    type: server_form
+    permission: surveys.public
+    title: Return to previous public survey question
+    action: surveys.public.previous_question
+    handler: yaml_mutation
+    mutation:
+      operation: update
+      table: survey_responses
+      fields: [current_question_id, navigation_key]
+      required: [current_question_id, navigation_key]
+      concurrency: false
+      guards:
+        - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress' AND current_question_id = :expected_question_id", status: 409, code: SURVEY_PUBLIC_PREVIOUS_STALE, message: This survey question changed before going back. Reload before continuing. }
+        - { query: "SELECT previous_question.id FROM survey_questions current_question JOIN survey_questions previous_question ON previous_question.survey_id = current_question.survey_id AND (previous_question.sequence < current_question.sequence OR (previous_question.sequence = current_question.sequence AND previous_question.id < current_question.id)) WHERE current_question.id = :expected_question_id AND previous_question.id = :current_question_id AND current_question.survey_id = :survey_id", status: 422, code: SURVEY_PUBLIC_PREVIOUS_INVALID, message: The requested previous question is not part of this survey. }
+      result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.answer_data, r.current_question_id, r.navigation_key, q.question_text, q.question_type, q.sequence AS current_question_sequence FROM survey_responses r JOIN survey_questions q ON q.id = r.current_question_id WHERE r.id = :id" }
+    fields:
+      - { field: expected_question_id, label: Current question, type: text, required: true }
+      - { field: current_question_id, label: Previous question, type: text, required: true }
+      - { field: navigation_key, label: Navigation key, type: text, required: true }
   - id: public_survey_retry
     type: server_form
     permission: surveys.public

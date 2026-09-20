@@ -40,7 +40,7 @@ export default class SurveysModule implements ModuleLifecycle {
   private async handlePublicRoute(request: Request, url: URL, service: PublicService): Promise<Response | null> {
     const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)(\/answer)?$/);
     if (sessionMatch) return this.handlePublicSessionRoute(request, sessionMatch[1], service, Boolean(sessionMatch[2]));
-    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|retry|next_question|print))?$/);
+    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|retry|next_question|previous_question|print))?$/);
     if (!match) return null;
     const token = match[1];
     const operation = match[2];
@@ -162,6 +162,44 @@ export default class SurveysModule implements ModuleLifecycle {
           values: { current_question_id: next.id, navigation_key: navigationKey || `next:${response.id}:${next.id}` },
         });
         return this.json({ survey: detail, answer: result, question: next, replayed: false });
+      } catch (error: any) {
+        return this.publicMutationError(error);
+      }
+    }
+
+    if (operation === 'previous_question') {
+      const answerToken = String(body.answer_token || '');
+      if (!this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
+      const response = await readResponse(answerToken);
+      if (!response) return this.json({ error: 'Survey response is unavailable' }, 404);
+      if (response.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for navigation', code: 'SURVEY_PUBLIC_PREVIOUS_NOT_IN_PROGRESS' }, 409);
+      const expectedQuestionId = String(body.expected_question_id || response.current_question_id || '');
+      if (!expectedQuestionId) return this.json({ error: 'The current survey question is unavailable', code: 'SURVEY_PUBLIC_PREVIOUS_STALE' }, 409);
+      const navigationKey = this.idempotencyKey(body.navigation_key || body.idempotency_key);
+      if (navigationKey) {
+        const replay = (await service.call('survey.public.navigation_idempotency', {
+          access_token: answerToken,
+          survey_id: detail.id,
+          navigation_key: navigationKey,
+        }))?.response?.[0];
+        if (replay) return this.json({ survey: detail, answer: replay, question: replay.current_question_id ? (await service.call('survey.public.current_question', { survey_id: detail.id, question_id: replay.current_question_id }))?.question?.[0] || null : null, replayed: true });
+      }
+      const previous = (await service.call('survey.public.previous_question', {
+        survey_id: detail.id,
+        current_question_id: expectedQuestionId,
+      }))?.question?.[0];
+      if (!previous) return this.json({ error: 'The survey is already at its first question', code: 'SURVEY_PUBLIC_PREVIOUS_EXHAUSTED' }, 409);
+      try {
+        const result = await service.call('surveys.public.previous_question', {
+          id: response.id,
+          survey_id: detail.id,
+          access_token: answerToken,
+          expected_question_id: expectedQuestionId,
+          current_question_id: previous.id,
+          navigation_key: navigationKey || `previous:${response.id}:${previous.id}`,
+          values: { current_question_id: previous.id, navigation_key: navigationKey || `previous:${response.id}:${previous.id}` },
+        });
+        return this.json({ survey: detail, answer: result, question: previous, replayed: false });
       } catch (error: any) {
         return this.publicMutationError(error);
       }
