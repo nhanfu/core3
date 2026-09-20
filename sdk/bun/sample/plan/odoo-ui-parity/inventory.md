@@ -2,6 +2,16 @@
 
 Status: in-progress
 
+## 2026-09-20 Inventory Analysis contract repair
+
+- Moved the Inventory Analysis datasource definitions out of the page YAML
+  into `api/analysis.yaml`, joined by `page.id`, so the route now follows the
+  YAML-first page/API ownership contract used by the rest of the module.
+- Added declared read permission, forbidden/transport boundaries, and explicit
+  empty-state handling for the totals and units-by-location queries. Focused
+  coverage verifies discovery, deterministic data, and those failure states;
+  the full Inventory browser comparison gate remains open.
+
 ## Reference gate
 
 - Odoo addon: `stock` (Inventory), Odoo 19 Community source tree at
