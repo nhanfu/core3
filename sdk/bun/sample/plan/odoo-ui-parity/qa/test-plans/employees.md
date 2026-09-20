@@ -45,6 +45,7 @@ versions.
 | EMP-WF-001 | workflow | Employee archive/restore | Explicit action values override submitted form state; active/action visibility changes and survives reload | stale/missing row returns 409/404 | pass |
 | EMP-WF-002 | workflow | Activity plans | Launch/onboarding/offboarding plans preserve ordered steps and responsible role | duplicate/retry does not duplicate steps | planned |
 | EMP-WF-006 | workflow | Register Departure wizard | Active employee departure records reason/details/date, archives atomically, optionally closes contract and removes an unshared related user | invalid contract date, stale, missing, reason, company, and retry leave the employee unchanged | pass |
+| EMP-WF-007 | workflow | Create User modal | ERP-manager creates one durable invited auth user from employee defaults and links it back to the employee | duplicate login, existing link, stale/missing employee, invalid login, and failed link roll back the user insert | pass |
 | EMP-WF-003 | integration | Department/category links | Counts and linked forms stay consistent when records change | in-use delete returns 409 without dangling rows | pass |
 | EMP-WF-004 | integration | Employee records/contract | Version/contract state and validity reports remain deterministic | invalid dates and stale update are rejected | pass at contract level |
 | EMP-WF-005 | integration | Durable/external boundary | Mail, timers, payroll/resource integrations use Temporal when long-running or cross-module | replay/restart/retry/timeout/compensation before activation | planned |
@@ -60,6 +61,7 @@ versions.
 | EMP-PERM-005 | Wrong company | list/detail/update | No cross-company leakage or update | planned |
 | EMP-PERM-006 | Unauthenticated/expired | all routes/APIs | Redirect/401/403 without data leakage | planned |
 | EMP-PERM-007 | Stale/missing | mutations | 409/404/422 and unchanged database state | pass |
+| EMP-PERM-008 | ERP manager | Employee Create User | `auth.users.manage` can create the linked invited user; an ordinary Employees writer cannot invoke it | pass |
 
 ## Visual, responsive, and regression cases
 

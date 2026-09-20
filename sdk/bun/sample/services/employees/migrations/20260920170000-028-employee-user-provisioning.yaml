@@ -1,0 +1,13 @@
+version: 0.0.28
+kind: schema
+description: Add a lookup index for employee records linked to shared auth users
+type:
+  postgres:
+    up: |
+      CREATE INDEX IF NOT EXISTS employees_auth_user_idx ON employees(auth_user_id);
+    down: |
+      DROP INDEX IF EXISTS employees_auth_user_idx;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

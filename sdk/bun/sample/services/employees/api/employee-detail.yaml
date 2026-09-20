@@ -24,6 +24,18 @@ datasources:
     single: false
     permission: employees.read
     query: "SELECT r.id AS value, r.name AS label FROM employee_departure_reasons r WHERE r.active = true AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name OR r.id IN ('departure-reason-fired', 'departure-reason-resigned', 'departure-reason-retired')) ORDER BY r.sequence, r.id"
+  - id: employee_user_wizard
+    single: true
+    permission: employees.read
+    error_states:
+      missing_record: { status: 404, code: EMPLOYEES_USER_EMPLOYEE_NOT_FOUND, message: Employee not found for user creation. }
+      transport_error: { status: 503, code: EMPLOYEES_USER_WIZARD_UNAVAILABLE, message: User creation is temporarily unavailable. }
+    query: |
+      SELECT e.id, e.row_version, e.name, e.work_email AS login, e.work_phone AS phone,
+        e.auth_user_id, e.user_name, e.company_name
+      FROM employees e
+      WHERE e.id = :id
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
 actions:
   - id: open_employee_timesheets
     type: navigate
@@ -35,6 +47,43 @@ actions:
     permission: employees.read
     navigate_to: /employees/versions
     params: { employee_id: '{state.id}' }
+  - id: create_employee_user
+    type: server_form
+    permission: auth.users.manage
+    title: Create User
+    description: Create an invited user linked to this employee, using the employee's work contact defaults.
+    action: employees.records.create_user
+    handler: yaml_mutation
+    operation: create
+    prefill: state.employee_user_wizard
+    refresh: [employee_detail, employee_user_wizard]
+    mutation:
+      boolean_fields: [enabled]
+      guards:
+        - { query: "SELECT id FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_USER_EMPLOYEE_NOT_FOUND, message: Employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND auth_user_id IS NULL AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: EMPLOYEES_USER_ALREADY_LINKED, message: This employee already has a user. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :expected_row_version AND auth_user_id IS NULL AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: This employee changed before the user was created. Refresh and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND regexp_matches(TRIM(CAST(:login AS VARCHAR)), '^[^@ ]+@[^@ ]+\\.[^@ ]+$')", status: 422, code: EMPLOYEES_USER_VALUES_INVALID, message: User name and a valid login email are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM users WHERE LOWER(email) = LOWER(TRIM(CAST(:login AS VARCHAR))))", status: 409, code: EMPLOYEES_USER_LOGIN_EXISTS, message: A user already exists with this login. }
+      before_steps:
+        - query: "SELECT 'employee-user-' || CAST(:id AS VARCHAR) AS new_user_id"
+          assign: true
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = :new_user_id)"
+          status: 409
+          code: EMPLOYEES_USER_ID_EXISTS
+          message: A linked user already exists for this employee.
+      steps:
+        - query: "INSERT INTO users(id, email, name, password_hash, preferred_lang, enabled) VALUES(:new_user_id, LOWER(TRIM(CAST(:login AS VARCHAR))), TRIM(CAST(:name AS VARCHAR)), 'invite-pending', 'en', false)"
+        - query: "UPDATE employees SET auth_user_id = :new_user_id, user_name = TRIM(CAST(:name AS VARCHAR)), work_email = LOWER(TRIM(CAST(:login AS VARCHAR))), work_phone = NULLIF(TRIM(CAST(:phone AS VARCHAR)), ''), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND auth_user_id IS NULL AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before user creation. Reload the employee and try again.
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: login, label: Login, type: text, required: true }
+      - { field: phone, label: Phone, type: text }
   - id: edit_employee
     type: server_form
     permission: employees.write

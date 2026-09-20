@@ -3,3 +3,4 @@ permissions:
   - employees.write
   - employees.manage
   - employees.settings
+  - auth.users.manage

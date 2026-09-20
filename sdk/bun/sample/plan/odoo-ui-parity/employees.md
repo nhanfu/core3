@@ -1041,3 +1041,30 @@ guards, and atomic failure behavior.
 Authenticated browser/Odoo visual comparison for the modal remains open; this
 bounded implementation claim is limited to YAML contracts, durable mutation,
 and integration evidence.
+
+## EMP-CREATE-USER-001: Create User bounded workflow (2026-09-20)
+
+The next smallest unfinished Employee form action is Odoo's
+`hr.employee.action_create_user`, exposed by the ERP-manager-only `Create User`
+button in `views/hr_employee_views.xml` (the action has no standalone menu; it
+lives on the employee form). Odoo opens a simplified `res.users` form with
+defaults for employee name, work phone, and work email as login; the created
+user is linked back to the employee. Core3 previously displayed only a plain
+Related User field and had no create-user action or durable provisioning path.
+
+Core3 now adds the page/API-bound `Create User` modal on
+`/employees/detail`, gated by `auth.users.manage`, with deterministic defaults
+from `employee_user_wizard`. The Employees migration adds an employee-link
+lookup index; the shared auth schema remains the owner of user identity fields,
+while the employee record retains the submitted work phone. The atomic API
+workflow validates employee/company scope, existing links, login uniqueness,
+deterministic user IDs, and employee row concurrency; it persists an invited
+disabled auth user (`invite-pending`) and updates the employee's linked user,
+work email, and work phone. Existing user-account editing remains owned by the
+Base/Auth user surface.
+
+The bounded test covers Odoo source/menu/button mapping, modal fields,
+permission boundaries, deterministic persistence, duplicate/stale/missing and
+invalid-login guards, rollback, migration replay, and file-backed restart.
+Authenticated Core3/Odoo desktop and mobile captures remain a required QA gate
+and must be recorded in the module evidence ledger before full-module sign-off.
