@@ -55,13 +55,18 @@ describe('Accounting Payment Transactions Odoo action parity', () => {
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'accounting_payment_transactions_parity_schema_migrations', ['schema', 'data']);
     const list = yaml('api/payment-transactions.yaml').datasources[0];
     const detail = yaml('api/payment-transaction-detail.yaml').datasources[0];
-    const params = { q: null, fixture_state: null };
+    const params = { q: null, fixture_state: null, company_name: null };
+
+    expect(list.query).toContain(':company_name');
+    expect(detail.query).toContain(':company_name');
 
     expect((await repository.querySource(list, params, 0, 50)).data.map((row: any) => row.id)).toEqual([
       'payment-tx-confirmed-001', 'payment-tx-authorized-002', 'payment-tx-pending-003', 'payment-tx-canceled-004',
       'payment-tx-error-005', 'payment-tx-draft-006',
     ]);
     expect((await repository.querySource(list, { ...params, q: 'Azure' }, 0, 50)).data.map((row: any) => row.reference)).toEqual(['TX-DEMO-2026-0001']);
+    expect((await repository.querySource(list, { ...params, company_name: 'My Company (San Francisco)' }, 0, 50)).data).toHaveLength(6);
+    expect((await repository.querySource(list, { ...params, company_name: 'Other Company' }, 0, 50)).data).toEqual([]);
     expect((await repository.querySource(list, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);
     expect(await repository.querySource(detail, { id: 'payment-tx-confirmed-001', fixture_state: null }, 0, 1)).toMatchObject({
       data: { reference: 'TX-DEMO-2026-0001', state: 'done', state_label: 'Confirmed', partner: 'Azure Interior', amount: 1250, payment_reference: 'BNK1/2026/0001', payment_state: 'paid', payment_state_label: 'Paid', payment_date: '2026-09-01' },
@@ -69,6 +74,10 @@ describe('Accounting Payment Transactions Odoo action parity', () => {
     expect(await repository.querySource(detail, { id: 'payment-tx-authorized-002', fixture_state: null }, 0, 1)).toMatchObject({
       data: { reference: 'TX-DEMO-2026-0002', payment_reference: null, payment_state: null, payment_state_label: null, payment_date: null },
     });
+    expect(await repository.querySource(detail, { id: 'payment-tx-confirmed-001', fixture_state: null, company_name: 'My Company (San Francisco)' }, 0, 1)).toMatchObject({
+      data: { reference: 'TX-DEMO-2026-0001', company: 'My Company (San Francisco)' },
+    });
+    expect((await repository.querySource(detail, { id: 'payment-tx-confirmed-001', fixture_state: null, company_name: 'Other Company' }, 0, 1)).data).toEqual({});
     expect((await repository.querySource(detail, { id: 'missing-payment-transaction', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     await expect(repository.querySource(list, { ...params, fixture_state: 'forbidden' }, 0, 50)).rejects.toMatchObject({ status: 403, code: 'ACCOUNTING_PAYMENT_TRANSACTIONS_FORBIDDEN' });
     await expect(repository.querySource(detail, { id: 'payment-tx-confirmed-001', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'ACCOUNTING_PAYMENT_TRANSACTION_DETAIL_UNAVAILABLE' });
