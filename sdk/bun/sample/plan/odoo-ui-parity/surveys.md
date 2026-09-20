@@ -1238,3 +1238,34 @@ form, while `/survey/check_session_code/5822` returns HTTP 200 JSON-RPC
 `{"error":"survey_wrong"}`; the reference has no matching live session, so
 the Odoo attendee-answer comparison remains conditional. Surveys remains
 **qa-in-progress / conditional** and this slice does not sign off the module.
+
+## Bounded slice: Public retry lifecycle (2026-09-20)
+
+Feature ID: `SURVEYS-PUBLIC-RETRY-001`.
+
+The next smallest source-backed public behavior after attendee answers is
+Odoo's `survey_retry` route in `addons/survey/controllers/main.py:167-191`.
+After a valid completed attempt, Odoo creates a fresh answer while preserving
+respondent/invite/test context and redirects to the survey start route with
+the new answer token. Core3 adds the page-id-bound `public_survey_retry`
+server action to `api/surveys.yaml` and handles
+`POST /api/public/surveys/<survey_token>/retry` in `services/surveys/module.ts`.
+
+The mutation requires a published target survey and a submitted source
+response, resets answer data to `{}`, preserves respondent name/email and
+test-entry state, and derives deterministic retry IDs/tokens from the source
+attempt. An optional idempotency key returns the same retry row on replay.
+The existing public progress/submit flow accepts the new token, and a
+file-backed DuckDB reopen preserves it. The public submit handler also now
+omits absent optional fields instead of binding `undefined` values, fixing a
+retry continuation failure when a respondent submits without a name/email.
+
+Focused CRUD/permission/guard/restart coverage is in
+`test/surveys_public_retry.integration.test.ts`. Authenticated Core3
+desktop/mobile evidence and exact authenticated Odoo evidence are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-RETRY-001/`.
+The reachable Odoo `core3_reference` database has a valid completed Feedback
+attempt, but the retry route returned HTTP 200 `Survey Access Error` with the
+exact “Oopsie! We could not let you open this survey...” message. No paired
+Odoo retry creation or redirect is claimed. Surveys remains
+**qa-in-progress / conditional**.

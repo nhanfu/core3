@@ -1,0 +1,41 @@
+{
+  "feature": "SURVEYS-PUBLIC-RETRY-001",
+  "base": "http://127.0.0.1:4017",
+  "failures": [],
+  "desktop": {
+    "viewport": { "width": 1440, "height": 900 },
+    "retry": {
+      "status": 200,
+      "retryOf": "print-response-survey-demo-feedback",
+      "attemptNo": 1,
+      "replayed": false,
+      "token": "retry-answer-print-feedback-answer-2026-1",
+      "startUrl": "/survey/start/b135640d-14d4-4748-9ef6-344ca256531e?answer_token=retry-answer-print-feedback-answer-2026-1"
+    },
+    "resumed": { "status": 200, "state": "In Progress" },
+    "rendered": {
+      "printContains": "Feedback Form\nTake Again",
+      "retryStartContains": "Feedback Form\nHow satisfied are you?\nQuestion 1 of 7\nNext",
+      "metrics": { "bodyWidth": 1440, "documentWidth": 1440, "viewportWidth": 1440 }
+    },
+    "failures": []
+  },
+  "mobile": {
+    "viewport": { "width": 390, "height": 844 },
+    "retry": {
+      "status": 200,
+      "retryOf": "print-response-survey-demo-feedback",
+      "attemptNo": 2,
+      "replayed": false,
+      "token": "retry-answer-print-feedback-answer-2026-2",
+      "startUrl": "/survey/start/b135640d-14d4-4748-9ef6-344ca256531e?answer_token=retry-answer-print-feedback-answer-2026-2"
+    },
+    "resumed": { "status": 200, "state": "In Progress" },
+    "rendered": {
+      "printContains": "Feedback Form\nTake Again",
+      "retryStartContains": "Feedback Form\nHow satisfied are you?\nQuestion 1 of 7\nNext",
+      "metrics": { "bodyWidth": 390, "documentWidth": 390, "viewportWidth": 390 }
+    },
+    "failures": []
+  }
+}

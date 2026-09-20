@@ -449,3 +449,45 @@ completed with **1,497 passed, 2 failed, 13,419 assertions** across 1,499
 tests. The only failures were concurrent CRM fixture-order expectations in
 `test/crm_leads_analysis.integration.test.ts` and
 `test/crm_forecast.integration.test.ts`; no Surveys test failed.
+
+## Bounded QA run: `SURVEYS-PUBLIC-RETRY-001` — 2026-09-20
+
+- Source comparison: Odoo's `/survey/retry/<survey_token>/<answer_token>`
+  validates a completed answer, creates a fresh attempt preserving the
+  respondent/invitation context, and redirects to the survey start route.
+  Core3 exposes the same public retry lifecycle through the YAML-backed
+  `surveys.public.retry` mutation and keeps the page/API contracts separate.
+- Persistence/workflow: retry is limited to a submitted source answer and a
+  published survey, allocates deterministic fresh response/answer tokens,
+  preserves respondent context, rejects closed/in-progress/wrong-token
+  requests, and replays safely by idempotency key. File-backed restart
+  preserves both the source and fresh attempt rows. Existing public submit
+  continuation was verified against the fresh retry attempt.
+- Focused feature verification: **3 passed, 0 failed, 24 assertions** in
+  `surveys_public_retry.integration.test.ts`.
+- Full Surveys verification: **63 passed, 0 failed, 508 assertions** across
+  14 integration files.
+- Scoped verification: ESLint passed for the changed service/test files,
+  `git diff --check` passed, and `bun run audit` passed with 681 pages, 690
+  routes, and 1,256 datasources.
+- Authenticated Core3 evidence: isolated desktop 1440x900 and mobile 390x844
+  probes authenticated first, submitted the public retry action, and resumed
+  the fresh `Feedback Form` attempt with HTTP 200, `In Progress`, and no
+  horizontal overflow. Evidence is under the feature directory.
+- Authenticated Odoo evidence: the reference completed `Feedback Form`
+  answer was identified by JSON-RPC, but the exact authenticated desktop and
+  mobile retry route returned HTTP 200 `Survey Access Error` and did not create
+  or redirect to a new attempt. This is the precise installed/reference
+  blocker for paired retry comparison; no Odoo sign-off is claimed.
+- Full repository regression: **1,514 passed, 3 failed, 13,533 assertions**
+  across 1,517 tests. No Surveys test failed. The failures were the unrelated
+  eCommerce checkout/restart timeout and CRM Leads Analysis/CRM Forecast
+  fixture expectations in `test/ecommerce_actor_matrix.integration.test.ts`,
+  `test/crm_leads_analysis.integration.test.ts`, and
+  `test/crm_forecast.integration.test.ts`.
+
+Disposition: Core3 durable public retry workflow, permission declaration,
+restart/replay coverage, and authenticated responsive evidence pass for this
+bounded slice. Odoo comparison remains conditional on the installed reference
+route accepting the completed answer token; Surveys remains
+**qa-in-progress / conditional** with no module sign-off.

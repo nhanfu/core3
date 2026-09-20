@@ -171,3 +171,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-SESSION-ANSWER-001/`.
+
+## 2026-09-20 public retry execution
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-018 | public workflow | Submitted response → Retry | Create one new in-progress response with a deterministic token and preserved respondent/test context | pass |
+| SURVEYS-WF-015 | recovery/idempotency | Retry → reopen → replay → submit | Retry row survives file-backed restart; same idempotency key returns the same row; new token submits through the existing public flow | pass |
+| SURVEYS-PERM-017 | permission/guards | Public retry boundary | `surveys.public` is declared; wrong token, in-progress source, closed survey, and non-POST requests do not create rows | pass |
+| SURVEYS-UI-016 | visual/responsive | Retry start desktop/mobile + Odoo comparison | Core3 authenticated browser renders the new start state at 1440x900 and 390x844; exact Odoo access-error blocker is retained | pass for Core3; Odoo conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-RETRY-001/`.

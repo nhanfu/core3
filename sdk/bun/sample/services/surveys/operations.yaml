@@ -11,6 +11,15 @@ operations:
   survey.public.response_by_idempotency_key:
     result_key: response
     query: "SELECT id, access_token, survey_id, state, answer_data, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"
+  survey.public.retry.source:
+    result_key: response
+    query: "SELECT id, access_token, survey_id, survey_name, state, respondent_name, respondent_email, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"
+  survey.public.retry.count:
+    result_key: attempts
+    query: "SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = :survey_id AND id LIKE 'retry-response-' || :source_id || '-%'"
+  survey.public.retry.idempotency:
+    result_key: response
+    query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"
   survey.public.print.detail:
     result_key: survey
     query: "SELECT id, access_token, name, title, description, state FROM surveys WHERE access_token = :access_token AND state IN ('Published', 'Closed') LIMIT 1"

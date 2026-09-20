@@ -40,7 +40,7 @@ export default class SurveysModule implements ModuleLifecycle {
   private async handlePublicRoute(request: Request, url: URL, service: PublicService): Promise<Response | null> {
     const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)(\/answer)?$/);
     if (sessionMatch) return this.handlePublicSessionRoute(request, sessionMatch[1], service, Boolean(sessionMatch[2]));
-    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|print))?$/);
+    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|retry|print))?$/);
     if (!match) return null;
     const token = match[1];
     const operation = match[2];
@@ -124,6 +124,67 @@ export default class SurveysModule implements ModuleLifecycle {
       return this.json({ survey: detail, answer: result });
     }
 
+    if (operation === 'retry') {
+      const sourceToken = String(body.answer_token || '');
+      if (!this.isToken(sourceToken)) return this.json({ error: 'A valid answer token is required' }, 400);
+      const source = (await service.call('survey.public.retry.source', {
+        access_token: sourceToken,
+        survey_id: detail.id,
+      }))?.response?.[0];
+      if (!source) return this.json({ error: 'Survey response is unavailable' }, 404);
+      if (source.state !== 'Submitted') return this.json({ error: 'Only a submitted survey response can be retried', code: 'SURVEY_PUBLIC_RETRY_SOURCE_STATE' }, 409);
+      const idempotencyKey = this.idempotencyKey(body.idempotency_key);
+      if (idempotencyKey) {
+        const existing = (await service.call('survey.public.retry.idempotency', {
+          idempotency_key: idempotencyKey,
+          survey_id: detail.id,
+        }))?.response?.[0];
+        if (existing) return this.json({ survey: detail, answer: existing, retry_of: source.id, replayed: true });
+      }
+      const count = Number((await service.call('survey.public.retry.count', {
+        survey_id: detail.id,
+        source_id: source.id,
+      }))?.attempts?.[0]?.count || 0);
+      const attempt = count + 1;
+      const retryId = `retry-response-${source.id}-${attempt}`;
+      const retryToken = `retry-answer-${source.access_token}-${attempt}`;
+      try {
+        const answer = await service.call('surveys.public.retry', {
+          values: {
+            source_id: source.id,
+            source_access_token: sourceToken,
+            survey_token: token,
+            id: retryId,
+            survey_id: detail.id,
+            survey_name: detail.name,
+            respondent_name: source.respondent_name || null,
+            respondent_email: source.respondent_email || null,
+            answer_data: '{}',
+            access_token: retryToken,
+            test_entry: source.test_entry || false,
+            idempotency_key: idempotencyKey || null,
+          },
+        });
+        return this.json({
+          survey: detail,
+          answer,
+          retry_of: source.id,
+          attempt_no: attempt,
+          start_url: `/survey/start/${encodeURIComponent(token)}?answer_token=${encodeURIComponent(retryToken)}`,
+          replayed: false,
+        });
+      } catch (error: any) {
+        if (idempotencyKey) {
+          const existing = (await service.call('survey.public.retry.idempotency', {
+            idempotency_key: idempotencyKey,
+            survey_id: detail.id,
+          }))?.response?.[0];
+          if (existing) return this.json({ survey: detail, answer: existing, retry_of: source.id, replayed: true });
+        }
+        return this.publicMutationError(error);
+      }
+    }
+
     const answerToken = String(body.answer_token || '');
     if (!this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
     const response = await readResponse(answerToken);
@@ -162,9 +223,9 @@ export default class SurveysModule implements ModuleLifecycle {
         access_token: answerToken,
         values: {
           answer_data: JSON.stringify(answers),
-          respondent_name: typeof body.respondent_name === 'string' ? body.respondent_name.trim() : undefined,
-          respondent_email: typeof body.respondent_email === 'string' ? body.respondent_email.trim() : undefined,
-          idempotency_key: idempotencyKey || undefined,
+          ...(typeof body.respondent_name === 'string' ? { respondent_name: body.respondent_name.trim() } : {}),
+          ...(typeof body.respondent_email === 'string' ? { respondent_email: body.respondent_email.trim() } : {}),
+          ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
         },
       });
       return this.json({ survey: detail, answer: result });

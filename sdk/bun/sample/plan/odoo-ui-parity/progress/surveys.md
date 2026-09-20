@@ -207,3 +207,23 @@ evidence directory. Full Surveys verification is 50/50 with 410 assertions;
 the repository audit passes and the full repository run is 1,430 pass / 4
 unrelated concurrent eCommerce/CRM failures. Status remains
 **qa-in-progress / conditional**.
+
+## 2026-09-20 — `SURVEYS-PUBLIC-RETRY-001`
+
+Selected the smallest unfinished source-backed public behavior after Live
+Session Answers: Odoo's completed-response `survey_retry` route. Core3 now
+creates a deterministic durable in-progress retry response, preserves
+respondent/test context, returns a new public start URL, and replays an
+idempotency key without creating a second row. Existing progress/submit APIs
+continue the new token, and a file-backed DuckDB reopen preserves it. The
+public submit path was repaired to omit absent optional fields so retry
+submissions without respondent metadata do not bind undefined DuckDB values.
+
+Focused retry coverage is 3 tests and 24 assertions. Authenticated Core3
+desktop/mobile browser checks passed with zero failed requests and no
+horizontal overflow. The authenticated Odoo reference retry route returned
+HTTP 200 `Survey Access Error` for the valid completed Feedback attempt; exact
+body text and screenshots are recorded under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-RETRY-001/`.
+This is a Core3 bounded pass with a conditional Odoo comparison; no module
+sign-off is claimed.

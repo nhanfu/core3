@@ -108,3 +108,32 @@ actions:
       result: { query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE id = :id" }
     fields:
       - { field: answer_data, label: Answers, type: text, required: true }
+  - id: public_survey_retry
+    type: server_form
+    permission: surveys.public
+    title: Retry public survey response
+    action: surveys.public.retry
+    handler: yaml_mutation
+    mutation:
+      operation: insert
+      table: survey_responses
+      fields: [survey_id, survey_name, respondent_name, respondent_email, answer_data, access_token, test_entry, idempotency_key]
+      required: [id, survey_id, survey_name, answer_data, access_token]
+      defaults: { state: In Progress, submitted_at: '2026-01-15 09:30:00', test_entry: false }
+      guards:
+        - { query: "SELECT id FROM surveys WHERE id = :survey_id AND access_token = :survey_token AND state = 'Published'", status: 404, code: SURVEY_PUBLIC_RETRY_UNAVAILABLE, message: This survey is no longer available for another attempt. }
+        - { query: "SELECT id FROM survey_responses WHERE id = :source_id AND survey_id = :survey_id AND access_token = :source_access_token AND state = 'Submitted'", status: 409, code: SURVEY_PUBLIC_RETRY_SOURCE_STATE, message: Only a submitted survey response can be retried. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM survey_responses WHERE access_token = :access_token)", status: 409, code: SURVEY_PUBLIC_RETRY_TOKEN_EXISTS, message: This retry attempt already exists. }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, COALESCE(test_entry, false) AS test_entry, idempotency_key FROM survey_responses WHERE id = :id" }
+    fields:
+      - { field: source_id, label: Submitted response, type: text, required: true }
+      - { field: source_access_token, label: Response token, type: text, required: true }
+      - { field: survey_token, label: Survey token, type: text, required: true }
+      - { field: id, label: Retry response ID, type: text, required: true }
+      - { field: survey_id, label: Survey ID, type: text, required: true }
+      - { field: survey_name, label: Survey, type: text, required: true }
+      - { field: answer_data, label: Answers, type: text, required: true }
+      - { field: access_token, label: Retry token, type: text, required: true }
+      - { field: respondent_name, label: Respondent, type: text }
+      - { field: respondent_email, label: Email, type: text }
+      - { field: idempotency_key, label: Idempotency key, type: text }

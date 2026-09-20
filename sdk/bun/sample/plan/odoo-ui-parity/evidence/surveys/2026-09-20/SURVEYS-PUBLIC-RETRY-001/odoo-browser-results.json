@@ -1,0 +1,28 @@
+{
+  "feature": "SURVEYS-PUBLIC-RETRY-001",
+  "base": "http://127.0.0.1:8069",
+  "database": "core3_reference",
+  "authenticated": true,
+  "route": "/survey/retry/b135640d-14d4-4748-9ef6-344ca256531e/eb2f6a3b-99e4-40fb-bf64-966d0aed7f52",
+  "source": {
+    "survey": "Feedback Form",
+    "surveyToken": "b135640d-14d4-4748-9ef6-344ca256531e",
+    "answerToken": "eb2f6a3b-99e4-40fb-bf64-966d0aed7f52",
+    "answerState": "done"
+  },
+  "desktop": {
+    "viewport": { "width": 1440, "height": 900 },
+    "status": 200,
+    "bodyContains": "Survey Access Error\nOopsie! We could not let you open this survey. Make sure you are using the correct link and are allowed to participate or get in touch with its organizer.",
+    "metrics": { "bodyWidth": 1440, "documentWidth": 1440, "viewportWidth": 1440 },
+    "failures": []
+  },
+  "mobile": {
+    "viewport": { "width": 390, "height": 844 },
+    "status": 200,
+    "bodyContains": "Survey Access Error\nOopsie! We could not let you open this survey. Make sure you are using the correct link and are allowed to participate or get in touch with its organizer.",
+    "metrics": { "bodyWidth": 390, "documentWidth": 390, "viewportWidth": 390 },
+    "failures": []
+  },
+  "blocker": "The authenticated Odoo reference returned its generic Survey Access Error instead of creating a retry attempt or redirecting to a new answer token; paired Odoo retry evidence is unavailable."
+}
