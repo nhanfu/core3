@@ -285,6 +285,51 @@ describe('Base Contacts list/card/detail parity batch', () => {
     database.close();
   });
 
+  test('persists uploaded attachment metadata across restart and keeps reads company-scoped', async () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), 'core3-base-contact-attachments-'));
+    const databasePath = join(tempRoot, 'contacts.duckdb');
+    let database: DuckDbDatabase | undefined;
+    try {
+      database = await DuckDbDatabase.open(databasePath);
+      let repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'base_contacts_attachment_restart_migrations', ['schema', 'data']);
+
+      const upload = yaml('api/contact-detail.yaml').actions.find((candidate: any) => candidate.id === 'upload_contact_attachment');
+      const uploaded = await repository.executeMutation(upload.mutation, {
+        contact_id: 'contact-demo',
+        current_company_id: 'company-demo',
+        current_user_id: 'user-admin',
+        fileName: 'restart-proof.txt',
+        mimeType: 'text/plain',
+        sizeBytes: 17,
+        storageKey: 'restart-proof-key',
+      });
+      expect(uploaded).toMatchObject({
+        contact_id: 'contact-demo',
+        file_name: 'restart-proof.txt',
+        mime_type: 'text/plain',
+        size_bytes: 17,
+        uploaded_by: 'user-admin',
+      });
+
+      database.close();
+      database = await DuckDbDatabase.open(databasePath);
+      repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'base_contacts_attachment_restart_migrations', ['schema', 'data']);
+
+      const attachments = source('contact-detail.yaml', 'contact_attachments');
+      const visible = await repository.querySource(attachments, { id: 'contact-demo', current_company_id: 'company-demo', fixture_state: null }, 0, 50);
+      expect(visible.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: uploaded.id, file_name: 'restart-proof.txt', size_bytes: 17 }),
+      ]));
+      const hidden = await repository.querySource(attachments, { id: 'contact-demo', current_company_id: 'company-vietnam', fixture_state: null }, 0, 50);
+      expect(hidden.data).toEqual([]);
+    } finally {
+      database?.close();
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
   test('keeps contact action role and HTTP authentication boundaries explicit', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
