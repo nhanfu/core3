@@ -1,0 +1,15 @@
+version: 0.0.28
+type:
+  postgres:
+    up: |
+      INSERT INTO crm_leads(id, name, type, partner_name, email, source, expected_revenue, stage, probability, salesperson, team, expected_closing, created_at)
+      VALUES
+        ('crm-team-opportunity-enterprise-001', 'Enterprise security renewal', 'opportunity', 'Umbrella Health', 'procurement@umbrella.test', 'Referral', 86000, 'Qualified', 25, 'Dispatcher User', 'Enterprise', DATE '2026-09-22', TIMESTAMP '2026-05-06 09:00:00'),
+        ('crm-team-opportunity-north-001', 'North America rollout', 'opportunity', 'Stark Industries', 'salesops@stark.test', 'Website', 152000, 'Proposition', 60, 'Admin User', 'North America', DATE '2026-09-28', TIMESTAMP '2026-05-18 09:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_leads WHERE id IN ('crm-team-opportunity-enterprise-001', 'crm-team-opportunity-north-001');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

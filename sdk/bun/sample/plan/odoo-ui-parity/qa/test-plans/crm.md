@@ -17,7 +17,7 @@ Executed results and runtime topology notes are in [`../crm.md`](../crm.md).
 | Pipeline | `/crm/leads`, `/crm/my-pipeline`, `/crm/unassigned-leads`, `/crm/unattended-leads`, `/crm/quality-leads`, `/crm/lead-detail` | List/Cards/Kanban/Calendar/Pivot/Graph/Map, filters, assignment and detail workflow |
 | Reporting | `/crm/analysis`, `/crm/leads-analysis`, `/crm/activity-analysis`, `/crm/forecast`, `/crm/expected-revenue`, `/crm/lost-opportunities` | Graph/Pivot/List/report filters, archived/lost/forecast states |
 | Activities | `/crm/crm-activities`, `/crm/crm-activity-detail`, `/crm/activity-types`, `/crm/activity-types/detail` | Queue, detail, scheduling/completion, type administration |
-| Configuration | `/crm/configuration`, `/crm/settings`, `/crm/teams`, `/crm/team-detail`, `/crm/stages`, `/crm/stages/detail`, `/crm/tags`, `/crm/tags/detail`, `/crm/lost-reasons`, `/crm/lost/reason/detail`, `/crm/recurring-plans` | List/form, manager CRUD, archive, relation and configuration guards |
+| Configuration | `/crm/configuration`, `/crm/settings`, `/crm/teams`, `/crm/team-detail`, `/crm/team-opportunities`, `/crm/team-members`, `/crm/stages`, `/crm/stages/detail`, `/crm/tags`, `/crm/tags/detail`, `/crm/lost-reasons`, `/crm/lost/reason/detail`, `/crm/recurring-plans` | List/form, team-scoped opportunity CRUD/assignment, technical member CRUD/toggle, manager archive, relation and configuration guards |
 
 The dependency-aware browser topology is `crm,base,order`: CRM contact
 lookups use `yaml.service.base`, and quotation handoff uses
@@ -36,6 +36,7 @@ unauthenticated actors are required.
 | CRM-FUNC-004 | functional | Activities | Schedule, complete, chain next activity, filter queue and preserve chatter completion | CRM integration/activity tests | pass |
 | CRM-FUNC-005 | functional | Tags/stages/lost reasons | Manager CRUD, archive/restore, validation, in-use and propagation guards persist | focused action tests | pass |
 | CRM-FUNC-006 | functional | Teams/recurring plans | Team and plan CRUD/settings and active-member routing are deterministic | focused tests | pass |
+| CRM-FUNC-010 | functional | Team opportunities/members | Team stat opens scoped opportunities; create/edit/assign and technical member add/toggle persist with duplicate and closed guards | `crm_team_opportunities`, `crm_team_members` suites | pass |
 | CRM-FUNC-007 | functional | Reports/forecast | Pipeline, leads, activities and forecast reports return real scoped graph/pivot/list rows | reporting tests | pass |
 | CRM-FUNC-008 | data | Empty/error/not-found | Every list/detail/report handles empty, no-result, missing and transport failure without fabricated rows | contract tests | pass |
 | CRM-FUNC-009 | data | Migration/seed | Reapply deterministic schema/demo data on clean/existing dev DB | Fixed IDs/dates, no duplicate records | focused suites | pass |

@@ -26,6 +26,8 @@ context_paths:
   - services/crm/pages/my-pipeline.yaml
   - services/crm/pages/unassigned-leads.yaml
   - services/crm/pages/teams.yaml
+  - services/crm/pages/team-detail.yaml
+  - services/crm/pages/team-opportunities.yaml
   - services/crm/pages/configuration.yaml
   - services/crm/pages/recurring-plans.yaml
   - services/crm/pages/lead-workflow.yaml
@@ -258,6 +260,21 @@ operations:
     route: /api/actions/crm.team_members.toggle
     method: POST
     permission: crm.manage
+    preview: false
+  - id: crm.team_opportunities.create
+    route: /api/actions/crm.team_opportunities.create
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.team_opportunities.update
+    route: /api/actions/crm.team_opportunities.update
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.team_opportunities.assign_to_me
+    route: /api/actions/crm.team_opportunities.assign_to_me
+    method: POST
+    permission: crm.write
     preview: false
   - id: crm.my_pipeline.bulk_delete
     route: /api/actions/crm.my_pipeline.bulk_delete

@@ -10,6 +10,8 @@ components:
       - { id: edit_crm_team_detail, label: Edit, variant: secondary, permission: crm.manage, show_if: "state.crm_team_detail.active === true" }
       - { id: archive_crm_team_detail, label: Archive, variant: danger, permission: crm.manage, show_if: "state.crm_team_detail.active === true" }
     group_columns: 2
+    stat_buttons:
+      - { id: view_crm_team_opportunities, label: Opportunities, value_field: opportunity_count, permission: crm.read }
     groups:
       - title: Team Information
         fields:

@@ -1,0 +1,128 @@
+page: { id: crm-team-opportunities }
+
+datasources:
+  - id: crm_team_opportunities_context
+    single: true
+    permission: crm.read
+    error_states:
+      forbidden: { status: 403, code: CRM_TEAM_OPPORTUNITIES_FORBIDDEN, message: You do not have permission to view team opportunities. }
+      transport_error: { status: 503, code: CRM_TEAM_OPPORTUNITIES_UNAVAILABLE, message: Team opportunities are temporarily unavailable. }
+    query: "SELECT id AS team_id, name AS team_name, active FROM crm_teams WHERE id = :team_id"
+  - id: crm_team_opportunities
+    single: false
+    permission: crm.read
+    error_states:
+      forbidden: { status: 403, code: CRM_TEAM_OPPORTUNITIES_FORBIDDEN, message: You do not have permission to view team opportunities. }
+      transport_error: { status: 503, code: CRM_TEAM_OPPORTUNITIES_UNAVAILABLE, message: Team opportunity data is temporarily unavailable. }
+    query: "SELECT l.id, l.row_version, l.name, l.type, COALESCE(l.partner_name, '') AS partner_name, COALESCE(l.email, '') AS email, COALESCE(l.phone, '') AS phone, l.stage, l.probability, l.expected_revenue, COALESCE(l.salesperson, '') AS salesperson, t.id AS team_id, t.name AS team, COALESCE(l.tags, '') AS tags, CAST(l.expected_closing AS VARCHAR) AS expected_closing, CAST(l.created_at AS VARCHAR) AS created_at FROM crm_leads l JOIN crm_teams t ON t.name = l.team WHERE t.id = :team_id AND l.type = 'opportunity' AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR COALESCE(l.partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(l.salesperson, '') ILIKE '%' || :q || '%') AND (:stage IS NULL OR l.stage = :stage) AND (:salesperson IS NULL OR l.salesperson = :salesperson) ORDER BY l.created_at DESC, l.id"
+  - id: crm_team_opportunity_stages
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_stages WHERE active = true ORDER BY sequence, name"
+  - id: crm_team_opportunity_salespeople
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT l.salesperson AS value, l.salesperson AS label FROM crm_leads l JOIN crm_teams t ON t.name = l.team WHERE t.id = :team_id AND NULLIF(TRIM(l.salesperson), '') IS NOT NULL ORDER BY l.salesperson"
+  - id: crm_team_opportunity_sources
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_sources WHERE active = true ORDER BY name"
+  - id: crm_team_opportunity_team_lookup
+    single: false
+    permission: crm.write
+    query: "SELECT id AS value, name AS label FROM crm_teams WHERE id = :team_id AND active = true"
+
+actions:
+  - id: view_crm_team_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }
+  - id: back_to_crm_team
+    type: navigate
+    permission: crm.read
+    navigate_to: /team-detail
+    params: { id: '{query.team_id}' }
+  - id: create_crm_team_opportunity
+    type: server_form
+    permission: crm.write
+    title: New opportunity
+    action: crm.team_opportunities.create
+    handler: yaml_mutation
+    operation: create
+    params: { team_id: '{query.team_id}' }
+    refresh: [crm_team_opportunities, crm_team_opportunities_context]
+    mutation:
+      operation: insert
+      table: crm_leads
+      fields: [name, type, partner_name, email, phone, source, tags, priority, expected_revenue, stage, probability, salesperson, team, expected_closing]
+      required: [name]
+      normalize_empty: [expected_revenue, probability, expected_closing]
+      defaults: { type: opportunity, stage: New, probability: 10, expected_revenue: 0 }
+      guards:
+        - { query: "SELECT id, name AS team FROM crm_teams WHERE id = :team_id AND active = true", status: 404, code: CRM_TEAM_OPPORTUNITIES_TEAM_NOT_FOUND, message: Sales team was not found or is archived., assign: true }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: CRM_TEAM_OPPORTUNITY_NAME_REQUIRED, message: Opportunity name is required. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)", status: 422, code: CRM_TEAM_OPPORTUNITY_SOURCE_INVALID, message: Select an active lead source. }
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: name, label: Opportunity, type: text, required: true }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: source, label: Source, type: select, options_source: crm_team_opportunity_sources }
+      - { field: tags, label: Tags, type: text }
+      - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3], default: 0 }
+      - { field: expected_revenue, label: Expected revenue, type: number, default: 0 }
+      - { field: probability, label: Probability, type: number, default: 10 }
+      - { field: salesperson, label: Salesperson, type: text }
+      - { field: expected_closing, label: Expected closing, type: date }
+  - id: edit_crm_team_opportunity
+    type: server_form
+    permission: crm.write
+    title: Edit opportunity
+    action: crm.team_opportunities.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { team_id: '{query.team_id}' }
+    refresh: [crm_team_opportunities]
+    mutation:
+      operation: update
+      table: crm_leads
+      fields: [name, partner_name, email, phone, source, tags, priority, expected_revenue, probability, salesperson, expected_closing]
+      required: [name]
+      normalize_empty: [expected_revenue, probability, expected_closing]
+      timestamps: true
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM crm_leads WHERE id = :id AND type = 'opportunity' AND team = (SELECT name FROM crm_teams WHERE id = :team_id)", status: 404, code: CRM_TEAM_OPPORTUNITY_NOT_FOUND, message: Opportunity is not part of this sales team. }
+        - { query: "SELECT 1 AS ok FROM crm_leads WHERE id = :id AND stage NOT IN ('Won', 'Lost')", status: 409, code: CRM_TEAM_OPPORTUNITY_CLOSED, message: Closed opportunities cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: CRM_TEAM_OPPORTUNITY_NAME_REQUIRED, message: Opportunity name is required. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)", status: 422, code: CRM_TEAM_OPPORTUNITY_SOURCE_INVALID, message: Select an active lead source. }
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: name, label: Opportunity, type: text, required: true }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: source, label: Source, type: select, options_source: crm_team_opportunity_sources }
+      - { field: tags, label: Tags, type: text }
+      - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3] }
+      - { field: expected_revenue, label: Expected revenue, type: number }
+      - { field: probability, label: Probability, type: number }
+      - { field: salesperson, label: Salesperson, type: text }
+      - { field: expected_closing, label: Expected closing, type: date }
+  - id: assign_crm_team_opportunity_to_me
+    type: server
+    permission: crm.write
+    action: crm.team_opportunities.assign_to_me
+    handler: yaml_mutation
+    operation: assign_to_me
+    params: { id: '{row.id}', team_id: '{query.team_id}' }
+    refresh: [crm_team_opportunities]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM crm_leads WHERE id = :id AND type = 'opportunity' AND team = (SELECT name FROM crm_teams WHERE id = :team_id) AND stage NOT IN ('Won', 'Lost')", status: 409, code: CRM_TEAM_OPPORTUNITY_ASSIGN_INVALID, message: Only an open opportunity in this sales team can be assigned. }
+      steps:
+        - { query: "UPDATE crm_leads SET salesperson = :current_user_name, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }

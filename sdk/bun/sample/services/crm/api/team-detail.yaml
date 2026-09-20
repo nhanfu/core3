@@ -3,7 +3,7 @@ datasources:
   - id: crm_team_detail
     single: true
     permission: crm.read
-    query: "SELECT id, name, leader, email_alias, target_revenue, use_leads, active FROM crm_teams WHERE id = :id"
+    query: "SELECT id, name, leader, email_alias, target_revenue, use_leads, active, (SELECT COUNT(*) FROM crm_leads l WHERE l.team = crm_teams.name AND l.type = 'opportunity') AS opportunity_count FROM crm_teams WHERE id = :id"
   - id: crm_team_members_detail
     single: false
     permission: crm.read
@@ -13,6 +13,11 @@ datasources:
     permission: crm.read
     query: "SELECT id AS value, name AS label FROM crm_activity_types WHERE active = true ORDER BY name"
 actions:
+  - id: view_crm_team_opportunities
+    type: navigate
+    permission: crm.read
+    navigate_to: /crm/team-opportunities
+    params: { team_id: '{state.crm_team_detail.id}' }
   - id: edit_crm_team_detail
     type: server_form
     permission: crm.manage

@@ -18,7 +18,7 @@ actions:
     type: server_form
     permission: crm.manage
     title: Add team member
-    action: crm.team_members.create_configuration
+    action: crm.team_members.create
     handler: yaml_mutation
     operation: create
     refresh: [crm_team_members]
@@ -40,7 +40,7 @@ actions:
   - id: toggle_crm_team_member_configuration
     type: server
     permission: crm.manage
-    action: crm.team_members.toggle_configuration
+    action: crm.team_members.toggle
     handler: yaml_mutation
     operation: update
     refresh: [crm_team_members]

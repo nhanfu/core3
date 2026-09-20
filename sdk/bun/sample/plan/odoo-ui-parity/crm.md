@@ -2,6 +2,17 @@
 
 Status: `ready`
 
+## 2026-09-20 Sales Team opportunities and technical members continuation
+
+- Added the team form's Odoo-style Opportunities stat action with a dedicated
+  `/crm/team-opportunities` page/API contract. The slice scopes opportunities
+  by team, supports list/kanban/graph/pivot/calendar views, create/edit/assign
+  workflows, closed-record guards, and deterministic migration fixtures.
+- Added the standalone technical Teams Members route at
+  `/crm/team-members`, including manager-bound add/toggle behavior, active and
+  archived filters, and page/API discovery coverage. Authenticated desktop and
+  mobile comparison for these CRM surfaces remains an open gate.
+
 This is a plan gate only. Do not add product pages, components, migrations, or
 runtime code as part of this artifact. Implementation is approved only after
 the reference preconditions and acceptance checks below are satisfied.

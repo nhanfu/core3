@@ -1,0 +1,51 @@
+title: Opportunities
+page: { id: crm-team-opportunities, route: /crm/team-opportunities, breadcrumb: [CRM, Sales Teams, Team, Opportunities], auth: { require: [crm.read] } }
+
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_team_opportunities
+    create_action: create_crm_team_opportunity
+    create_label: New opportunity
+    search: { label: Search opportunities, placeholder: Search opportunities and customers... }
+    filters:
+      - { field: stage, label: Stage, options_source: crm_team_opportunity_stages }
+      - { field: salesperson, label: Salesperson, options_source: crm_team_opportunity_salespeople }
+    default_filters: { type: opportunity }
+    view_navigation: tabs
+    views:
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: stage, groups_source: crm_team_opportunity_stages, card: { title: name, subtitle: partner_name, fields: [{ field: expected_revenue, label: Expected revenue }, { field: probability, label: Probability }] } }
+      - { id: list, label: List, icon: table }
+      - { id: graph, label: Graph, icon: graph, category_field: stage, measure_field: expected_revenue, type: bar }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: stage, column: Stage }
+            - { field: salesperson, column: Salesperson }
+            - { field: expected_closing, column: Expected closing, type: date }
+            - { field: expected_revenue, column: Expected revenue }
+            - { field: probability, column: Probability }
+          default: { rows: [stage], columns: [salesperson], measures: [{ field: expected_revenue, aggregate: sum, column: Expected revenue }] }
+          date_ranges: { expected_closing: month }
+      - { id: calendar, label: Calendar, icon: calendar, date_field: expected_closing, card: { title: name, subtitle: partner_name } }
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
+      - { field: partner_name, label: Customer }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: probability, label: Probability, align: right }
+      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: salesperson, label: Salesperson }
+      - { field: expected_closing, label: Expected closing }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_open_action: view_crm_team_opportunity
+    row_double_click_action: view_crm_team_opportunity
+    form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
+    row_actions: menu
+    actions:
+      - { id: edit_crm_team_opportunity, label: Edit, permission: crm.write, variant: ghost, show_if: "row.stage !== 'Won' && row.stage !== 'Lost'" }
+      - { id: assign_crm_team_opportunity_to_me, label: Assign to me, permission: crm.write, variant: secondary, show_if: "row.stage !== 'Won' && row.stage !== 'Lost'" }
+    empty_state: { title: Create an opportunity, description: Odoo helps you keep track of your sales pipeline to follow up potential sales and better forecast your future revenues. }
