@@ -1,9 +1,11 @@
 # Odoo 19 UI parity — Marketing Automation source gate
 
-Status: blocked — the exact Odoo 19 `marketing_automation` addon is unavailable;
-no Odoo-parity UI implementation is authorized.
+Status: source-limited — the live Odoo 19 reference has no installed
+Marketing Automation surface; Core3 implementation is proceeding as an
+explicitly synthetic, YAML-first equivalent and must not be described as
+source-backed Odoo parity.
 
-Audit date: 2026-09-12
+Audit date: 2026-09-20
 
 ## Parent-plan scope
 
@@ -42,6 +44,29 @@ application menu tree, action identifiers, visibility groups, route/action
 contexts, view modes, responsive states, or reference record IDs are asserted
 by this plan.
 
+## Live Odoo inventory — 2026-09-20
+
+The authenticated `core3_reference` database at `http://localhost:8069` was
+queried before implementation. The module registry contains
+`marketing_automation` with state `uninstallable`; `mass_mailing` is
+`uninstalled`. No Marketing Automation root or child menu is installed.
+
+The exact matching menu/action inventory is:
+
+| Odoo object | Result |
+| --- | --- |
+| Marketing Automation application/root | absent |
+| Marketing Automation campaigns/journeys/activities menus | absent |
+| `marketing_automation` window actions | absent |
+| `marketing_automation` models/views | absent from the installed registry |
+| Settings → Technical → Automation → Scheduled Actions | present, unrelated (`ir.cron`, action 16) |
+| Settings → Technical → Automation → Scheduled Actions Triggers | present, unrelated (`ir.cron.trigger`, action 17) |
+| Link Tracker → UTMs → Campaigns | present, unrelated (`utm.campaign`, action 101) |
+| Marketing Automation menu tree screenshots | unavailable because the app is not installed |
+
+This is a stronger runtime confirmation of the source gate, not evidence that
+the unrelated UTM Campaigns screen is Marketing Automation.
+
 ## Current Core3 boundary
 
 Core3 already contains a product-owned, synthetic service at
@@ -62,7 +87,27 @@ current boundary is:
 
 This existing service is not evidence of Odoo parity. Its labels, route,
 fields, workflow, fixture, layout, and actions must not be described as copied
-or verified from Odoo. No files in that service are changed by this audit.
+or verified from Odoo.
+
+## Current-wave gap matrix and bounded slice
+
+| Capability | Current Core3 state | Current-wave action | Evidence target |
+| --- | --- | --- | --- |
+| Menu and live reference | Synthetic `/automations`; Odoo surface absent | Keep the explicit source-limited disclosure and Core3 menu | menu contract plus live RPC inventory above |
+| Page/API contract boundary | Datasources/actions are embedded in page YAML | Move backend queries/mutations to `api/*.yaml`, joined by `page.id` | discovery contract test |
+| Automation definition CRUD | Create exists; update/delete/archive and stale guards do not | Add create/update/archive/restore/delete with validation and row-version concurrency | focused integration test |
+| Audience enrollment | Insert exists but trusts caller-supplied automation name and has no stale enrollment guard | Bind enrollment to the selected automation and prevent duplicate contacts per journey | migration/API test |
+| Campaign workflow | Publish/run/complete/pause exists | Preserve the workflow, add archive/delete guards and detail/list parity | workflow test |
+| Deterministic persistence | One draft fixture, no active/archive or repeatable enrollment fixtures | Add deterministic active, paused, and completed journeys plus enrollments | idempotent migration test |
+| Permissions | read/write/manage are declared globally | Keep read-only list/detail, write CRUD/workflow, manage destructive actions | permission/action contract assertions |
+| Odoo visual parity | Cannot be truthfully captured while module is unavailable | Capture Core3 desktop/mobile only as product evidence; no paired Odoo claim | authenticated browser QA, if runtime available |
+
+The first implementation slice is **automation definition maintenance and
+audience enrollment**. It is meaningful end to end: list/detail data,
+validated create/update/delete/archive/restore, deterministic enrollment
+records, workflow-safe enrollment, and permission/concurrency boundaries.
+Later slices may add activity nodes, scheduling, retries, and reporting only
+after an authoritative Odoo source or installed reference becomes available.
 
 ## Capture/runtime audit
 
@@ -102,9 +147,10 @@ Then, in order:
 6. start the authenticated Core3 runtime and capture matching desktop/mobile
    evidence before making any visual-parity claim.
 
-Until that dependency is present, the honest conclusion is **source
-unavailable; UI cloning blocked**. No Odoo labels, routes, fixtures, tests, or
-visual evidence are added by this audit.
+Until that dependency is present, the honest conclusion remains **source
+unavailable; paired Odoo UI cloning is blocked**. The bounded Core3 slice
+above is product-owned functionality and its labels/routes/fixtures must not
+be presented as copied Odoo behavior.
 
 ## Validation evidence
 
@@ -113,8 +159,8 @@ visual evidence are added by this audit.
   installed in this fresh worktree (`eslint: command not found`).
 - `cd sdk/bun/sample && bun run audit` — blocked before discovery because the
   workspace dependency `@core3/server/discovery` is unavailable.
-- Focused Marketing Automation parity test — not added; there is no
-  source-backed Odoo slice that could be tested truthfully.
+- Focused Marketing Automation implementation test — pending the current-wave
+  API/page split and CRUD/enrollment slice.
 
 ## Revalidation — wave 2 (2026-09-12)
 
