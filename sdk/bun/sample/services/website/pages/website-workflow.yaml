@@ -15,14 +15,18 @@ workflow:
       to: Published
       permission: website.write
       mutation:
-        guards: [{ query: "SELECT id FROM website_pages WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft pages can be published }]
-        steps: [{ query: "UPDATE website_pages SET state = 'Published', date_publish = COALESCE(date_publish, CURRENT_TIMESTAMP), row_version = row_version + 1 WHERE id = :id" }]
+        guards:
+          - { query: "SELECT 1 AS ok WHERE :expected_row_version IS NOT NULL", status: 400, code: WEBSITE_PAGE_VERSION_REQUIRED, message: Reload the page before publishing it. }
+          - { query: "SELECT id FROM website_pages WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: WEBSITE_PAGE_PUBLISH_STALE, message: The page changed before it could be published. Reload it before trying again. }
+        steps: [{ query: "UPDATE website_pages SET state = 'Published', date_publish = COALESCE(date_publish, CURRENT_TIMESTAMP), row_version = row_version + 1 WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: WEBSITE_PAGE_PUBLISH_STALE, message: The page changed before it could be published. Reload it before trying again. }]
         result: { query: "SELECT * FROM website_pages WHERE id = :id" }
     - id: unpublish
       from: [Published]
       to: Draft
       permission: website.manage
       mutation:
-        guards: [{ query: "SELECT id FROM website_pages WHERE id = :id AND state = 'Published'", status: 409, message: Only published pages can be unpublished }]
-        steps: [{ query: "UPDATE website_pages SET state = 'Draft', row_version = row_version + 1 WHERE id = :id" }]
+        guards:
+          - { query: "SELECT 1 AS ok WHERE :expected_row_version IS NOT NULL", status: 400, code: WEBSITE_PAGE_VERSION_REQUIRED, message: Reload the page before unpublishing it. }
+          - { query: "SELECT id FROM website_pages WHERE id = :id AND state = 'Published' AND row_version = :expected_row_version", status: 409, code: WEBSITE_PAGE_UNPUBLISH_STALE, message: The page changed before it could be unpublished. Reload it before trying again. }
+        steps: [{ query: "UPDATE website_pages SET state = 'Draft', row_version = row_version + 1 WHERE id = :id AND state = 'Published' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: WEBSITE_PAGE_UNPUBLISH_STALE, message: The page changed before it could be unpublished. Reload it before trying again. }]
         result: { query: "SELECT * FROM website_pages WHERE id = :id" }

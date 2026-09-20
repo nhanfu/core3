@@ -64,21 +64,43 @@ describe('Website Page Manager parity', () => {
       uploadRoot: '/tmp/core3-website-test-uploads', eventStore: {}, topics: {},
     });
     const pageId = 'website-page-demo-002';
-    const transition = (name: string) => api(new Request(`http://website.test/api/actions/website.pages.${name}`, {
+    const transition = (name: string, expected_row_version?: number) => api(new Request(`http://website.test/api/actions/website.pages.${name}`, {
       method: 'POST',
       headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: pageId, values: {} }),
+      body: JSON.stringify({ id: pageId, ...(expected_row_version === undefined ? {} : { expected_row_version }), values: {} }),
     }), new URL(`http://website.test/api/actions/website.pages.${name}`));
 
-    expect((await (await transition('publish')).json())).toMatchObject({ id: pageId, state: 'Published' });
+    await expect(transition('publish')).rejects.toMatchObject({ status: 400, code: 'WEBSITE_PAGE_VERSION_REQUIRED' });
+    expect((await (await transition('publish', 1)).json())).toMatchObject({ id: pageId, state: 'Published' });
     expect((await repository.query('SELECT state, row_version, date_publish FROM website_pages WHERE id = ?', [pageId]))[0]).toMatchObject({ state: 'Published', row_version: 2 });
-    await expect(transition('publish')).rejects.toMatchObject({ status: 409 });
-    await expect(transition('unpublish')).rejects.toMatchObject({ status: 403 });
+    await expect(transition('publish', 1)).rejects.toMatchObject({ status: 409, code: 'WEBSITE_PAGE_PUBLISH_STALE' });
+    await expect(transition('unpublish', 1)).rejects.toMatchObject({ status: 403 });
 
     currentUser = { ...currentUser, permissions: ['website.read', 'website.write', 'website.manage'] };
-    expect((await (await transition('unpublish')).json())).toMatchObject({ id: pageId, state: 'Draft' });
+    await expect(transition('unpublish')).rejects.toMatchObject({ status: 400, code: 'WEBSITE_PAGE_VERSION_REQUIRED' });
+    expect((await (await transition('unpublish', 2)).json())).toMatchObject({ id: pageId, state: 'Draft' });
     expect((await repository.query('SELECT state, row_version FROM website_pages WHERE id = ?', [pageId]))[0]).toEqual({ state: 'Draft', row_version: 3 });
+    await expect(transition('unpublish', 2)).rejects.toMatchObject({ status: 409, code: 'WEBSITE_PAGE_UNPUBLISH_STALE' });
     database.close();
+  });
+
+  test('preserves publication state and version across a file-backed restart', async () => {
+    const databasePath = `/tmp/core3-website-publish-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `website_publish_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const workflow = yaml('pages/website-workflow.yaml').workflow;
+    const publish = workflow.transitions.find((transition: any) => transition.id === 'publish');
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    await firstRepository.executeMutation(publish.mutation, { id: 'website-page-demo-002', expected_row_version: 1 });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await secondRepository.query('SELECT state, row_version, date_publish FROM website_pages WHERE id = ?', ['website-page-demo-002']))[0]).toMatchObject({ state: 'Published', row_version: 2 });
+    second.close();
+    rmSync(databasePath, { force: true });
   });
 
   test('edits page metadata with row-version and site guards', async () => {
@@ -133,6 +155,10 @@ describe('Website Page Manager parity', () => {
     expect(api.actions.find((action: any) => action.id === 'create_website_page')).toMatchObject({ permission: 'website.write' });
     expect(api.actions.find((action: any) => action.id === 'edit_website_page')).toMatchObject({ action: 'website.pages.update', permission: 'website.write' });
     expect(api.actions.find((action: any) => action.id === 'unpublish_website_page')).toMatchObject({ permission: 'website.manage' });
+    expect(yaml('pages/website-workflow.yaml').workflow.transitions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'publish', mutation: expect.objectContaining({ guards: expect.arrayContaining([expect.objectContaining({ code: 'WEBSITE_PAGE_VERSION_REQUIRED' }), expect.objectContaining({ code: 'WEBSITE_PAGE_PUBLISH_STALE' })]) }) }),
+      expect.objectContaining({ id: 'unpublish', mutation: expect.objectContaining({ guards: expect.arrayContaining([expect.objectContaining({ code: 'WEBSITE_PAGE_VERSION_REQUIRED' }), expect.objectContaining({ code: 'WEBSITE_PAGE_UNPUBLISH_STALE' })]) }) }),
+    ]));
     expect(yaml('permissions.yaml').permissions).toEqual(expect.arrayContaining(['website.read', 'website.write', 'website.manage']));
   });
 
