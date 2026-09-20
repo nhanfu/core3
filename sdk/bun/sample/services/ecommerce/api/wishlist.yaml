@@ -92,8 +92,9 @@ actions:
         - { query: "UPDATE ecommerce_wishlists SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :wishlist_id" }
       result: { query: "SELECT TRUE AS removed, :id AS id" }
   - id: merge_ecommerce_wishlist_session
-    type: server
+    type: server_form
     permission: ecommerce.write
+    title: Merge Wishlist Session
     action: ecommerce.wishlist.merge_session
     handler: yaml_mutation
     operation: update
