@@ -1,0 +1,19 @@
+{
+  "feature": "SURVEYS-PUBLIC-SCALE-QUESTION-001",
+  "runtime": "Core3",
+  "surveyToken": "4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+  "startup": "blocked",
+  "blocker": "PageSchemaError: Invalid page definition: components[0].search.categories is not allowed; components[0].search.or locations... is not allowed",
+  "viewports": [
+    {
+      "viewport": "1440x900",
+      "navigation": "not reached",
+      "error": "Error: goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "viewport": "390x844",
+      "navigation": "not reached",
+      "error": "Error: goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:4341/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    }
+  ]
+}

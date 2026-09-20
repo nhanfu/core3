@@ -486,7 +486,7 @@ export default class SurveysModule implements ModuleLifecycle {
       if (!values.some(Boolean)) continue;
       const options = String(question.answer_options || '').split(',').map((entry) => entry.trim()).filter(Boolean);
       const questionType = String(question.question_type || '');
-      if (['Choice', 'Rating'].includes(questionType) && (values.length !== 1 || !options.includes(values[0]))) {
+      if (['Choice', 'Rating', 'Scale'].includes(questionType) && (values.length !== 1 || !options.includes(values[0]))) {
         invalid.push(String(question.question_text || question.id));
         continue;
       }

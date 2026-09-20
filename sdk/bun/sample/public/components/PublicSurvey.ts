@@ -101,7 +101,7 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
   const currentValues = Array.isArray(answer) ? answer : [answer];
   const input = question.question_type === 'Text'
     ? `<textarea class="core3-public-survey__input" rows="3" data-answer>${escapeHtml(currentValues[0])}</textarea>`
-    : ['Choice', 'Multiple Choice', 'Rating'].includes(question.question_type) && options.length
+    : ['Choice', 'Multiple Choice', 'Rating', 'Scale'].includes(question.question_type) && options.length
       ? `<div class="core3-public-survey__options" data-answer>${options.map((option) => {
         const type = question.question_type === 'Multiple Choice' ? 'checkbox' : 'radio';
         const checked = currentValues.includes(option) ? ' checked' : '';

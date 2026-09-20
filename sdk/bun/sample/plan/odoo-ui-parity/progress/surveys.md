@@ -141,6 +141,25 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-SCALE-QUESTION-001`
+
+Selected the smallest uncovered source-backed public question behavior after
+the completed Date and Datetime slices: Odoo's Scale question. Core3 adds
+deterministic optional fixture `question-certification-scale`, renders its
+durable 0–10 option range as radio choices, and rejects out-of-range values
+before public progress or submit mutates answer JSON. The paired page/API
+contract remains joined by `page.id: surveys`, and both mutations retain
+`surveys.public`.
+
+Focused verification passes 2/2 tests with 20 assertions, covering invalid
+scale no-mutation, valid persistence, file-backed DuckDB restart, concurrent
+idempotent submit, response-count durability, and wrong-token rejection. The
+adjacent public regression passes 40/40 tests with 331 assertions. The fresh
+Core3 process could not start because the shared runtime rejected
+`components[0].search.categories` and `components[0].search.or locations...`;
+Odoo 8069 redirected both viewports to its login page. Status remains
+**qa-in-progress / conditional**; no module sign-off is claimed.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-DATETIME-QUESTION-001`
 
 Selected the smallest uncovered source-backed public question behavior after

@@ -901,3 +901,30 @@ remains conditional and Surveys is not signed off.
   fixture exists, so no paired Odoo mutation or visual sign-off is claimed.
 - Surveys remains **qa-in-progress / conditional**; no module sign-off is
   claimed.
+
+## Bounded QA run: Public Scale question — `SURVEYS-PUBLIC-SCALE-QUESTION-001`
+
+- Source comparison: Odoo `survey_question._validate_scale` handles Scale
+  answers with configured minimum/maximum values; this slice implements the
+  source default 0–10 range and does not claim Odoo's editable range labels or
+  matrix parity.
+- YAML/UI contract: `pages/surveys.yaml` remains layout-only and paired with
+  `api/surveys.yaml` through `page.id: surveys`; public progress and submit
+  retain `surveys.public`. The renderer presents the durable Scale options as
+  selectable radio controls, and the server validates the option range before
+  writing answer JSON.
+- Focused verification: **2 passed / 20 assertions** in
+  `test/surveys_public_scale_question.integration.test.ts`.
+- Persistence/guards: invalid `11` returns HTTP 422 with
+  `SURVEY_PUBLIC_ANSWER_INVALID` and leaves `{}` unchanged; valid `8` survives
+  reopen; same-key submits converge on one row; a wrong answer token returns
+  HTTP 404.
+- Core3 evidence: startup is blocked before readiness by
+  `components[0].search.categories is not allowed` and
+  `components[0].search.or locations... is not allowed`; both viewport probes
+  record connection refusal and no visual sign-off.
+- Odoo evidence: both viewports return HTTP 200 only at
+  `/web/login?redirect=%2Fodoo%3F`; no authenticated installed Survey Scale
+  fixture exists, so no paired Odoo mutation or visual sign-off is claimed.
+- Surveys remains **qa-in-progress / conditional**; no module sign-off is
+  claimed.

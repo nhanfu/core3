@@ -363,3 +363,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-DATETIME-QUESTION-001/`.
+
+## 2026-09-21 public Scale question additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-034 | public question | Valid Scale answer | Persist a value in the deterministic 0–10 Scale range through the public API | `core3-browser-results.json`, focused test | pass |
+| SURVEYS-WF-031 | restart/idempotency | Scale progress → reopen → concurrent submit/replay | Preserve the value across DuckDB reopen and create one submitted response row | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-033 | token/input guard | Out-of-range Scale and wrong token | Return 422/404 before mutation while retaining `surveys.public` action boundaries | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-032 | authenticated responsive/reference | Scale question desktop/mobile + Odoo comparison | Capture both viewports and exact startup/login-fixture blockers | `core3-{desktop,mobile}.png`, `odoo-{desktop,mobile}.png` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SCALE-QUESTION-001/`.

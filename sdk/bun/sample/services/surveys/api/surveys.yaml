@@ -52,7 +52,8 @@ actions:
   # token carried by the Odoo-compatible survey_<survey_token> cookie; the
   # page renderer remains bound to this API fragment through page.id: surveys.
   # Date and Datetime questions use Odoo-compatible ISO values inside
-  # answer_data; module validation runs before progress or submit mutates rows.
+  # answer_data; Scale values use the deterministic question option range.
+  # Module validation runs before progress or submit mutates rows.
   - id: public_survey_start
     type: server_form
     permission: surveys.public

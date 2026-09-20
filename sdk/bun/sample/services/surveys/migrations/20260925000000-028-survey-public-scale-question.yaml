@@ -1,0 +1,15 @@
+version: 0.0.28
+description: Deterministic public scale question fixture for the certification survey
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES ('question-certification-scale', 'survey-demo-certification', 'How likely are you to recommend our training?', 'Scale', 17, false, '0,1,2,3,4,5,6,7,8,9,10')
+      ON CONFLICT (id) DO UPDATE SET question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options;
+    down: |
+      DELETE FROM survey_questions WHERE id = 'question-certification-scale';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1603,6 +1603,30 @@ Odoo 8069 redirected the public token to
 Survey Date fixture was available. No browser or paired Odoo sign-off is
 claimed; Surveys remains **qa-in-progress / conditional**.
 
+## Bounded slice: Public Scale question (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-SCALE-QUESTION-001`.
+
+Odoo's `survey.question._validate_scale` handles Scale answers against the
+question's configured range; the Odoo form exposes minimum/maximum values and
+labels for the control. Core3 implements the smallest public equivalent: the
+deterministic certification fixture adds an optional Scale question with the
+source default 0–10 range encoded in durable `answer_options`, the public
+renderer presents radio choices, and token-scoped progress/submit rejects
+out-of-range values before mutating `survey_responses.answer_data`. The page
+and API YAML remain separate and joined through `page.id: surveys`, with
+`surveys.public` on both mutations.
+
+Focused permission, invalid-input, concurrency/idempotency, and file-backed
+restart coverage is recorded in
+`test/surveys_public_scale_question.integration.test.ts`; evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SCALE-QUESTION-001/`.
+The fresh Core3 process was blocked by the shared page-schema error
+`components[0].search.categories is not allowed` / `components[0].search.or locations... is not allowed`;
+both viewport navigations were refused. Odoo 8069 redirected the public token
+to `/web/login?redirect=%2Fodoo%3F` at both viewports. No browser or paired
+Odoo sign-off is claimed; Surveys remains **qa-in-progress / conditional**.
+
 ## Bounded slice: Public Datetime question (2026-09-21)
 
 Feature ID: `SURVEYS-PUBLIC-DATETIME-QUESTION-001`.
