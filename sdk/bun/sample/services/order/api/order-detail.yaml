@@ -6,7 +6,7 @@ datasources:
     single: true
     permission: orders.read
     query: |
-      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_legal_name,
+      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_id, c.row_version AS customer_row_version, o.customer_legal_name,
         CAST(o.order_date AS VARCHAR) AS order_date,
         COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
         CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) WHEN 'Draft' THEN 'Draft'
@@ -16,7 +16,7 @@ datasources:
         o.shipment_type, o.route, o.transport_method, o.trip_count, o.payment_term_name,
         printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
         o.created_by, o.notes
-      FROM orders o
+      FROM orders o LEFT JOIN customers c ON c.id = o.customer_id OR (o.customer_id IS NULL AND c.name = o.customer_name)
       WHERE o.id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
   - id: order_detail_statuses
     single: false
@@ -139,7 +139,7 @@ datasources:
   - id: order_customer_lookup_detail
     single: false
     permission: orders.read
-    query: "SELECT name AS value, legal_name, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) UNION SELECT DISTINCT customer_name AS value, NULL AS legal_name, customer_name AS label FROM orders WHERE customer_name IS NOT NULL AND customer_name <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+    query: "SELECT name AS value, legal_name, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name) AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) UNION SELECT DISTINCT customer_name AS value, NULL AS legal_name, customer_name AS label FROM orders WHERE customer_name IS NOT NULL AND customer_name <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
   - id: order_shipment_type_lookup_detail
     single: false
     permission: orders.read
@@ -337,6 +337,22 @@ actions:
           status: 409
           message: Order can only be edited while Draft
           message_key: errors.order_draft_only
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active'"
+          status: 404
+          code: SALES_CUSTOMER_NOT_FOUND
+          message: Customer reference not found or inactive.
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name)"
+          status: 403
+          code: SALES_CUSTOMER_COMPANY_FORBIDDEN
+          message: Customer belongs to another company.
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:view_scope = 'all' OR visibility = 'Public' OR owner_name = :current_user_name)"
+          status: 403
+          code: SALES_CUSTOMER_FORBIDDEN
+          message: You are not allowed to use this customer.
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:customer_expected_row_version IS NULL OR row_version = :customer_expected_row_version)"
+          status: 409
+          code: STALE_CUSTOMER_REFERENCE
+          message: Customer changed before the order was saved. Reload and try again.
         - query: "SELECT order_number AS old_order_number, customer_name AS old_customer_name, customer_legal_name AS old_customer_legal_name, CAST(order_date AS VARCHAR) AS old_order_date, shipment_type AS old_shipment_type, route AS old_route, transport_method AS old_transport_method, trip_count AS old_trip_count, payment_term_name AS old_payment_term_name, notes AS old_notes FROM orders WHERE id = :id"
           assign: true
       before_steps:
@@ -364,10 +380,13 @@ actions:
               OR :old_trip_count IS DISTINCT FROM :trip_count
               OR :old_payment_term_name IS DISTINCT FROM :payment_term_name
               OR :old_notes IS DISTINCT FROM :notes
+      steps:
+        - query: "UPDATE orders SET customer_id = (SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1), customer_row_version = (SELECT row_version FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1) WHERE id = :id"
       result: { query: "SELECT * FROM orders WHERE id = :id" }
     fields:
       - { field: order_number, label: Order number, type: text, required: true }
       - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup_detail, search_placeholder: 'Search customers...', required: true }
+      - { field: customer_expected_row_version, label: Customer version, type: hidden }
       - { field: customer_legal_name, label: Legal name, type: text }
       - { field: order_date, label: Order date, type: date, required: true }
       - { field: shipment_type, label: Shipment type, type: select, options_source: order_shipment_type_lookup_detail }

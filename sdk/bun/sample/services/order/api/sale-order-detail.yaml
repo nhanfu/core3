@@ -7,11 +7,11 @@ datasources:
     permission: orders.read
     query: |
       SELECT o.id, o.row_version, o.order_number,
-        o.customer_name, o.customer_legal_name, o.customer_legal_name AS shipping_address,
+        o.customer_name, o.customer_id, c.row_version AS customer_row_version, o.customer_legal_name, o.customer_legal_name AS shipping_address,
         o.customer_reference, CAST(o.order_date AS VARCHAR) AS order_date,
         CAST(o.validity_date AS VARCHAR) AS validity_date, CAST(o.commitment_date AS VARCHAR) AS commitment_date,
         o.pricelist_name, o.payment_term_name, COALESCE(o.salesperson_name, o.created_by) AS salesperson_name,
-        'My Company' AS company_name, o.require_signature, o.require_payment,
+        COALESCE(c.company_name, 'My Company') AS company_name, o.require_signature, o.require_payment,
         o.notes, COALESCE(o.total_amount, 0) AS total_amount, printf('$%,.2f', COALESCE(o.total_amount, 0)) AS total_amount_display,
         CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
           WHEN 'Draft' THEN 'Quotation' WHEN 'Pending Approval' THEN 'Sent'
@@ -23,7 +23,7 @@ datasources:
           ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) END AS status_label,
         CASE WHEN EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id AND i.state = 'Posted') THEN 'Invoiced' ELSE COALESCE(o.invoice_status, 'To invoice') END AS invoice_status,
         (SELECT COUNT(*) FROM sale_invoices i WHERE i.order_id = o.id) AS invoice_count
-      FROM orders o
+      FROM orders o LEFT JOIN customers c ON c.id = o.customer_id OR (o.customer_id IS NULL AND c.name = o.customer_name)
       WHERE o.id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
   - id: sale_order_statuses
     single: false
@@ -51,7 +51,7 @@ datasources:
   - id: sale_order_customer_lookup
     single: false
     permission: orders.read
-    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR visibility = 'Public' OR owner_name = :current_user_name) ORDER BY name"
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name) AND (:view_scope = 'all' OR visibility = 'Public' OR owner_name = :current_user_name) ORDER BY name"
   - id: sale_order_pricelist_lookup
     single: false
     permission: orders.read
@@ -97,14 +97,33 @@ actions:
           status: 409
           code: DUPLICATE_ORDER
           message: Sales order number already exists
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active'"
+          status: 404
+          code: SALES_CUSTOMER_NOT_FOUND
+          message: Customer reference not found or inactive.
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name)"
+          status: 403
+          code: SALES_CUSTOMER_COMPANY_FORBIDDEN
+          message: Customer belongs to another company.
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:view_scope = 'all' OR visibility = 'Public' OR owner_name = :current_user_name)"
+          status: 403
+          code: SALES_CUSTOMER_FORBIDDEN
+          message: You are not allowed to use this customer.
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:customer_expected_row_version IS NULL OR row_version = :customer_expected_row_version)"
+          status: 409
+          code: STALE_CUSTOMER_REFERENCE
+          message: Customer changed before the order was saved. Reload and try again.
         - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval')"
           status: 409
           code: SALE_ORDER_LOCKED
           message: Only quotations can be edited
       result: { query: "SELECT * FROM orders WHERE id = :id" }
+      steps:
+        - query: "UPDATE orders SET customer_id = (SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1), customer_row_version = (SELECT row_version FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1) WHERE id = :id"
     fields:
       - { field: order_number, label: Order Number, type: text, required: true }
       - { field: customer_name, label: Customer, type: async-select, options_source: sale_order_customer_lookup, search_placeholder: 'Type to find a customer...', required: true }
+      - { field: customer_expected_row_version, label: Customer version, type: hidden }
       - { field: customer_legal_name, label: Invoice Address, type: text }
       - { field: customer_reference, label: Customer Reference, type: text }
       - { field: order_date, label: Quotation Date, type: date, required: true }

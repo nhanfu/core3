@@ -12,7 +12,7 @@ datasources:
   - id: template_order_customer_lookup
     single: false
     permission: orders.read
-    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' ORDER BY name"
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name) AND (:view_scope = 'all' OR visibility = 'Public' OR owner_name = :current_user_name) ORDER BY name"
   - id: template_order_pricelist_lookup
     single: false
     permission: orders.read
@@ -74,12 +74,16 @@ actions:
         - { query: "SELECT t.row_version, t.name AS template_name, t.company_name AS template_company_name, COALESCE(t.note, '') AS template_note FROM sale_quotation_templates t WHERE t.id = :template_id", status: 404, code: SALES_QUOTATION_TEMPLATE_NOT_FOUND, message: Quotation template not found. }
         - { query: "SELECT t.row_version, t.name AS template_name, t.company_name AS template_company_name, COALESCE(t.note, '') AS template_note FROM sale_quotation_templates t WHERE t.id = :template_id AND t.active = true AND t.row_version = :template_expected_row_version", status: 409, code: STALE_RECORD, message: Quotation template changed or is archived; reload it before creating an order. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number)", status: 409, code: DUPLICATE_ORDER, message: Sales order number already exists. }
-        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM customers WHERE name = :customer_name AND status = 'Active')", status: 422, code: SALES_ORDER_CUSTOMER_INVALID, message: Select an active customer before creating the quotation. }
+        - { query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active'", status: 422, code: SALES_ORDER_CUSTOMER_INVALID, message: Select an active customer before creating the quotation. }
+        - { query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name)", status: 403, code: SALES_CUSTOMER_COMPANY_FORBIDDEN, message: Customer belongs to another company. }
+        - { query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:view_scope = 'all' OR visibility = 'Public' OR owner_name = :current_user_name)", status: 403, code: SALES_CUSTOMER_FORBIDDEN, message: You are not allowed to use this customer. }
+        - { query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:customer_expected_row_version IS NULL OR row_version = :customer_expected_row_version)", status: 409, code: STALE_CUSTOMER_REFERENCE, message: Customer changed before the quotation was saved. Reload and try again. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sale_quotation_template_lines l WHERE COALESCE(l.quantity, 0) <= 0 OR NOT EXISTS (SELECT 1 FROM sale_products p WHERE p.active = true AND p.sale_ok = true AND (LOWER(p.name) = LOWER(l.product_name) OR LOWER(regexp_replace(p.name, 's$', '')) = LOWER(regexp_replace(l.product_name, 's$', '')))))", status: 422, code: SALES_QUOTATION_TEMPLATE_LINE_INVALID, message: Every template line must use an active product with a positive quantity. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE id = 'sale-order-' || regexp_replace(lower(trim(CAST(:order_number AS VARCHAR))), '[^a-z0-9]+', '-', 'g'))", status: 409, code: SALES_ORDER_ID_EXISTS, message: The generated sales order identifier already exists. }
       before_steps:
         - { query: "SELECT 'sale-order-' || regexp_replace(lower(trim(CAST(:order_number AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS id, COALESCE(NULLIF(CAST(:current_user_name AS VARCHAR), ''), 'Admin User') AS created_by", assign: true }
       steps:
+        - query: "UPDATE orders SET customer_id = (SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1), customer_row_version = (SELECT row_version FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1) WHERE id = :id"
         - query: "INSERT INTO order_lines(id, order_id, sequence, description, product_id, quantity, unit, unit_price, tax_rate, discount, qty_delivered, qty_invoiced, qty_to_invoice, price_subtotal, price_tax, price_total, line_total) SELECT :id || '-line-' || CAST(l.sequence AS VARCHAR), :id, l.sequence, COALESCE(NULLIF(l.description, ''), l.product_name), p.id, l.quantity, COALESCE(l.uom, p.uom), p.list_price, 0, 0, 0, 0, l.quantity, ROUND(CAST(l.quantity AS DECIMAL(18, 4)) * p.list_price, 2), 0, ROUND(CAST(l.quantity AS DECIMAL(18, 4)) * p.list_price, 2), ROUND(CAST(l.quantity AS DECIMAL(18, 4)) * p.list_price, 2) FROM sale_quotation_template_lines l JOIN sale_products p ON p.active = true AND p.sale_ok = true AND (LOWER(p.name) = LOWER(l.product_name) OR LOWER(regexp_replace(p.name, 's$', '')) = LOWER(regexp_replace(l.product_name, 's$', ''))) WHERE l.template_id = :template_id ORDER BY l.sequence, l.id"
         - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP WHERE id = :id"
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'sales.quotation_templates.create_order', 'orders', :id, :order_number || ' from template ' || :template_name)"
@@ -87,6 +91,7 @@ actions:
     fields:
       - { field: order_number, label: Order Number, type: text, required: true }
       - { field: customer_name, label: Customer, type: async-select, options_source: template_order_customer_lookup, required: true }
+      - { field: customer_expected_row_version, label: Customer version, type: hidden }
       - { field: customer_legal_name, label: Invoice Address, type: text }
       - { field: order_date, label: Quotation Date, type: date, required: true }
       - { field: validity_date, label: Expiration, type: date }

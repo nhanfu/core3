@@ -23,7 +23,7 @@ datasources:
   - id: sale_quotation_customers
     single: false
     permission: orders.read
-    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) ORDER BY name"
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name) AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) ORDER BY name"
   - id: sale_quotation_payment_terms
     single: false
     permission: orders.read
@@ -48,6 +48,24 @@ actions:
         - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number)"
           status: 409
           message: Quotation number already exists
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active'"
+          status: 404
+          code: SALES_CUSTOMER_NOT_FOUND
+          message: Customer reference not found or inactive.
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:company_name IS NULL OR company_name IS NULL OR company_name = :company_name)"
+          status: 403
+          code: SALES_CUSTOMER_COMPANY_FORBIDDEN
+          message: Customer belongs to another company.
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:view_scope = 'all' OR visibility = 'Public' OR owner_name = :current_user_name)"
+          status: 403
+          code: SALES_CUSTOMER_FORBIDDEN
+          message: You are not allowed to use this customer.
+        - query: "SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' AND (:customer_expected_row_version IS NULL OR row_version = :customer_expected_row_version)"
+          status: 409
+          code: STALE_CUSTOMER_REFERENCE
+          message: Customer changed before the quotation was saved. Reload and try again.
+      steps:
+        - query: "UPDATE orders SET customer_id = (SELECT id FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1), customer_row_version = (SELECT row_version FROM customers WHERE name = :customer_name AND status = 'Active' LIMIT 1) WHERE id = :id"
       result: { query: "SELECT * FROM orders WHERE id = :id" }
     fields:
       - { field: order_number, label: Quotation, type: text, required: true }

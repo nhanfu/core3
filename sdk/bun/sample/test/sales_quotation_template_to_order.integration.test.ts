@@ -29,9 +29,11 @@ describe('Sales quotation template to order workflow', () => {
     expect(action.mutation).toMatchObject({ table: 'orders', operation: 'insert', scope: { table: 'orders', field: 'branch_id' } });
     expect(action.mutation.guards.map((guard: any) => guard.code)).toEqual([
       'SALES_QUOTATION_TEMPLATE_NOT_FOUND', 'STALE_RECORD', 'DUPLICATE_ORDER',
-      'SALES_ORDER_CUSTOMER_INVALID', 'SALES_QUOTATION_TEMPLATE_LINE_INVALID', 'SALES_ORDER_ID_EXISTS',
+      'SALES_ORDER_CUSTOMER_INVALID', 'SALES_CUSTOMER_COMPANY_FORBIDDEN',
+      'SALES_CUSTOMER_FORBIDDEN', 'STALE_CUSTOMER_REFERENCE',
+      'SALES_QUOTATION_TEMPLATE_LINE_INVALID', 'SALES_ORDER_ID_EXISTS',
     ]);
-    expect(action.mutation.steps).toHaveLength(3);
+    expect(action.mutation.steps).toHaveLength(4);
     expect(page.components[0].header_actions).toContainEqual(expect.objectContaining({ id: 'create_sale_order_from_template', permission: 'orders.write' }));
   });
 

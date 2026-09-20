@@ -1,0 +1,23 @@
+version: 0.0.17
+kind: schema
+description: Persist company-scoped customer references and versions on sales orders
+type:
+  postgres:
+    up: |
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id VARCHAR;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_row_version BIGINT;
+      UPDATE customers SET row_version = COALESCE(row_version, 1);
+      UPDATE orders o SET customer_id = c.id, customer_row_version = c.row_version
+      FROM customers c
+      WHERE o.customer_id IS NULL AND c.name = o.customer_name;
+    down: |
+      ALTER TABLE orders DROP COLUMN IF EXISTS customer_row_version;
+      ALTER TABLE orders DROP COLUMN IF EXISTS customer_id;
+      ALTER TABLE customers DROP COLUMN IF EXISTS company_name;
+      ALTER TABLE customers DROP COLUMN IF EXISTS row_version;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

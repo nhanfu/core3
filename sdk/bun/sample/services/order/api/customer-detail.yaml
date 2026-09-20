@@ -17,7 +17,7 @@ actions:
       operation: update
       table: customers
       key: id
-      concurrency: false
+      concurrency: { required: true }
       fields: [code, name, legal_name, owner_name, visibility, status, email, phone, street, city, country, vat, company_type]
       required: [code, name]
       guards:
@@ -27,6 +27,7 @@ actions:
       result: { query: "SELECT * FROM customers WHERE id = :id" }
     fields:
       - { field: code, label: Customer code, type: text, required: true }
+      - { field: expected_row_version, label: Customer version, type: hidden }
       - { field: name, label: Customer name, type: text, required: true }
       - { field: legal_name, label: Legal name, type: text }
       - { field: owner_name, label: Account owner, type: text }

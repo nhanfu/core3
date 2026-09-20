@@ -4,7 +4,7 @@ datasources:
     single: false
     permission: orders.read
     query: |
-      SELECT id, code, name, legal_name, owner_name, visibility, status, email, phone, street, city, country, vat, company_type
+      SELECT id, row_version, code, name, legal_name, owner_name, visibility, status, email, phone, street, city, country, vat, company_type
       FROM customers
       WHERE (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%')
         AND (:status IS NULL OR status = :status)
@@ -33,7 +33,7 @@ actions:
       table: customers
       fields: [code, name, legal_name, owner_name, visibility, status, email, phone, street, city, country, vat, company_type]
       required: [code, name]
-      defaults: { visibility: Public, status: Active, company_type: Company }
+      defaults: { visibility: Public, status: Active, company_type: Company, row_version: 1 }
       guards:
         - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = :code OR name = :name)"
           status: 409
@@ -58,13 +58,18 @@ actions:
     action: sales.customers.archive
     handler: customer_status
     operation: archive
-    params: { id: '{row.id}' }
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
     refresh: [sales_customers]
     mutation:
+      concurrency: { required: true }
       guards:
         - query: "SELECT id FROM customers WHERE id = :id AND status = 'Active'"
           status: 409
           message: Customer is already archived
       steps:
-        - query: "UPDATE customers SET status = 'Archived' WHERE id = :id"
+        - query: "UPDATE customers SET status = 'Archived', row_version = row_version + 1 WHERE id = :id AND status = 'Active' AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: Customer changed before archiving. Reload and try again.
       result: { query: "SELECT * FROM customers WHERE id = :id" }

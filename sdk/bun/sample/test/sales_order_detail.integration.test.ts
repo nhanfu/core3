@@ -50,7 +50,7 @@ describe('Sales order form parity slice', () => {
     expect(action('send_sale_quotation').permission).toBe('orders.write');
     expect(action('confirm_sale_order').permission).toBe('orders.approve');
     expect(action('cancel_sale_order').permission).toBe('orders.write');
-    expect(action('edit_sale_order').mutation.guards.map((guard: any) => guard.status)).toEqual([409, 409]);
+    expect(action('edit_sale_order').mutation.guards.map((guard: any) => guard.status)).toEqual([409, 404, 403, 403, 409, 409]);
     expect(action('edit_sale_order').mutation.concurrency).toEqual({ required: true });
     expect(action('cancel_sale_order').mutation.guards[0]).toMatchObject({ status: 409, code: 'STALE_RECORD' });
     expect(action('cancel_sale_order').mutation.guards[1]).toMatchObject({ status: 409, code: 'INVALID_TRANSITION' });
