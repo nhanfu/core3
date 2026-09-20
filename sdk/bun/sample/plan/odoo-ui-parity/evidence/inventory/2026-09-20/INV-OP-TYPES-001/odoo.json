@@ -1,0 +1,46 @@
+{
+  "feature": "INV-OP-TYPES-001",
+  "runtime": "http://127.0.0.1:8069",
+  "sourceAction": "stock.action_picking_type_list",
+  "sourceMenu": "stock.menu_pickingtype",
+  "user": "codex@core3.local",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "url": "http://127.0.0.1:8069/odoo/action-426",
+    "title": "Odoo",
+    "loginFound": true,
+    "body": "7\n40\nMy Company (San Francisco)\nOops!\n\n Something went wrong... If you really are stuck, share the report with your friendly support service \n\nSee technical details\nClose",
+    "buttons": [
+      "",
+      "7",
+      "40",
+      "My Company (San Francisco)",
+      "Mitchell Admincore3_reference",
+      "",
+      "See technical details",
+      "Close"
+    ]
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "url": "http://127.0.0.1:8069/odoo/action-426",
+    "title": "Odoo",
+    "loginFound": true,
+    "body": "7\n40\nOops!\n\n Something went wrong... If you really are stuck, share the report with your friendly support service \n\nSee technical details\nClose",
+    "buttons": [
+      "7",
+      "40",
+      "",
+      "",
+      "See technical details",
+      "Close"
+    ]
+  },
+  "failures": []
+}

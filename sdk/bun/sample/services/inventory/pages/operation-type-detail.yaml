@@ -26,6 +26,8 @@ components:
           - { field: move_type, label: Move Type }
           - { field: default_location_src_name, label: Default Source Location }
           - { field: default_location_dest_name, label: Default Destination Location }
+          - { field: source_location_id, label: Source Location ID }
+          - { field: destination_location_id, label: Destination Location ID }
           - { field: use_create_lots, label: Create New }
           - { field: use_existing_lots, label: Use Existing ones }
           - { field: set_package_type, label: Package Type }

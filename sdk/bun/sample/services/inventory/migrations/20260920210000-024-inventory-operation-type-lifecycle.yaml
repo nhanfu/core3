@@ -1,0 +1,14 @@
+version: 0.0.24
+kind: schema
+description: Durable Inventory operation type lifecycle defaults
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_operation_types ALTER COLUMN row_version SET DEFAULT 1;
+      UPDATE inventory_operation_types SET row_version = 1 WHERE row_version IS NULL;
+    down: |
+      ALTER TABLE inventory_operation_types ALTER COLUMN row_version DROP DEFAULT;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

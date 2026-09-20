@@ -6,6 +6,7 @@ components:
     source: inventory_operation_types
     view_navigation: tabs
     create_label: New
+    create_action: create_inventory_operation_type
     search: { label: Operation Type, placeholder: Search operation types... }
     filters:
       - { field: is_favorite, label: Favorites, options: [{ id: favorite, label: Favorites }] }

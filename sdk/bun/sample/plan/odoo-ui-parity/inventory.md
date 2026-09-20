@@ -956,3 +956,34 @@ Core3 desktop/mobile evidence and paired Odoo report/wizard evidence are under
 `evidence/inventory/2026-09-20/INV-STOCK-AT-DATE-001/`. Odoo's mobile 390px
 report does not expose the date control in its responsive action surface; this
 is recorded as an exact comparison boundary, not claimed as parity.
+
+## Configuration > Operations Types lifecycle slice (2026-09-20)
+
+Feature `INV-OP-TYPES-001` closes the remaining lifecycle gap in the existing
+Operations Types contract. Odoo source
+`addons/stock/views/stock_picking_type_views.xml` defines
+`stock.action_picking_type_list` and `stock.menu_pickingtype` under Inventory >
+Configuration, with `list,form` views, active/archive filtering,
+warehouse/company context, sequence/code, reservation, lot/package, location,
+and print settings. The source form is titled `Operation Types`; the list
+displays Sequence, Operation Type, Warehouse, and Company.
+
+Core3 keeps `pages/operation-types.yaml` and
+`pages/operation-type-detail.yaml` presentation-only and binds API fragments
+by matching `page.id`. The list now binds its New control to the create action,
+and the create/edit contracts expose operation kind plus durable source and
+destination locations. Migration `0.0.24` backfills null row versions and sets
+the durable default to 1. The API persists create, edit, archive, and restore
+state with duplicate-code, required-field, invalid-kind, open-transfer, stale,
+not-found, and manager-permission guards.
+
+Focused evidence: `bun test test/inventory_operation_types.integration.test.ts
+--timeout 20000` passes 3 tests and 41 assertions, including idempotent
+fixtures, runtime page/action 403 boundaries, CRUD, archive protection, stale
+writes, and file-backed restart. Authenticated Core3 desktop/mobile evidence
+is under `evidence/inventory/2026-09-20/INV-OP-TYPES-001/`; the list, create
+modal, detail, edit, reload, and responsive detail states have no browser
+request/page failures. The authenticated Odoo user reaches `/odoo/action-426`
+but the source action renders Odoo's generic `Oops!` error at both 1440x900 and
+390x844; screenshots and JSON are retained as the exact blocker, so no Odoo
+visual or mutation sign-off is claimed.

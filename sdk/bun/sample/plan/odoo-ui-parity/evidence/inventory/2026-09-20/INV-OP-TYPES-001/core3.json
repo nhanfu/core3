@@ -1,0 +1,27 @@
+{
+  "feature": "INV-OP-TYPES-001",
+  "runtime": "http://127.0.0.1:4541",
+  "user": "admin@tms.local",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "url": "http://127.0.0.1:4541/inventory/operation-types/detail?id=4d8b6d14-6a31-4eb7-9bf8-8d2d645fe5e9",
+    "initial": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nNew\nSupply Chain / Inventory / Configuration / Operations Types\n1-5 / 5\n‹\n›\nOperation Type\n\tWarehouse\n\tCompany\n\n\nReceipts\n\tMain Warehouse\tMy Company (San Francisco)\n\nDeliveries\n\tMain Warehouse\tMy Company (San Francisco)\n\nInternal Transfers\n\tMain Warehouse\tMy Company (San Francisco)\n\nQuality Control\n\tMain Warehouse\tMy Company (San Francisco)\n\nQA Browser Type\n\tMain Warehouse\tMy Company (San Francisco)\nHello, Admin User",
+    "modal": "New operation type\nOperation Type *\nType of Operation *\nOperation Kind *\nSequence Prefix *\nDefault Source Location *\nDefault Destination Location *\nWarehouse\nCompany\nCancel\nSave",
+    "detailBefore": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\n›\nOperations Types\n›\nOperation Types\nBack to Operations Types\nEdit\nArchive\nQA Browser Type\nACTIVE\nGeneral\nType of Operation\nWH-BROWSER-EDIT\nSequence Prefix\nBRW\nWarehouse\nMain Warehouse\nCompany\nMy Company (San Francisco)\nReservation Method\nat_confirmation\nCreate Backorder\nask\nMove Type\ndirect\nDefault Source Location\nStock\nDefault Destination Location\nTransit\nSource Location ID\nlocation-stock\nDestination Location ID\nlocation-transit\nCreate New\nfalse\nUse Existing ones\nfalse\nPackage Type\nfalse\nHardware\nDelivery Slip\n—\nReturn Slip\n—\nHello, Admin User",
+    "detailEdited": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\n›\nOperations Types\n›\nOperation Types\nBack to Operations Types\nEdit\nArchive\nQA Browser Type\nACTIVE\nGeneral\nType of Operation\nWH-BROWSER-FINAL\nSequence Prefix\nBRW\nWarehouse\nMain Warehouse\nCompany\nMy Company (San Francisco)\nReservation Method\nat_confirmation\nCreate Backorder\nask\nMove Type\ndirect\nDefault Source Location\nStock\nDefault Destination Location\nTransit\nSource Location ID\nlocation-stock\nDestination Location ID\nlocation-transit\nCreate New\nfalse\nUse Existing ones\nfalse\nPackage Type\nfalse\nHardware\nDelivery Slip\n—\nReturn Slip\n—\nHello, Admin User",
+    "reload": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\n›\nOperations Types\n›\nOperation Types\nBack to Operations Types\nEdit\nArchive\nQA Browser Type\nACTIVE\nGeneral\nType of Operation\nWH-BROWSER-FINAL\nSequence Prefix\nBRW\nWarehouse\nMain Warehouse\nCompany\nMy Company (San Francisco)\nReservation Method\nat_confirmation\nCreate Backorder\nask\nMove Type\ndirect\nDefault Source Location\nStock\nDefault Destination Location\nTransit\nSource Location ID\nlocation-stock\nDestination Location ID\nlocation-transit\nCreate New\nfalse\nUse Existing ones\nfalse\nPackage Type\nfalse\nHardware\nDelivery Slip\n—\nReturn Slip\n—"
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "url": "http://127.0.0.1:4541/inventory/operation-types/detail?id=4d8b6d14-6a31-4eb7-9bf8-8d2d645fe5e9",
+    "list": "AU\nNew\nOperations Types\n1-5 / 5\n‹\n›\nOperation Type\n\tWarehouse\n\tCompany\n\n\nReceipts\n\tMain Warehouse\tMy Company (San Francisco)\n\nDeliveries\n\tMain Warehouse\tMy Company (San Francisco)\n\nInternal Transfers\n\tMain Warehouse\tMy Company (San Francisco)\n\nQuality Control\n\tMain Warehouse\tMy Company (San Francisco)\n\nQA Browser Type\n\tMain Warehouse\tMy Company (San Francisco)\nHello, Admin User",
+    "detail": "AU\nBack to Operations Types\nEdit\nArchive\nQA Browser Type\nACTIVE\nGeneral\nType of Operation\nWH-BROWSER-FINAL\nSequence Prefix\nBRW\nWarehouse\nMain Warehouse\nCompany\nMy Company (San Francisco)\nReservation Method\nat_confirmation\nCreate Backorder\nask\nMove Type\ndirect\nDefault Source Location\nStock\nDefault Destination Location\nTransit\nSource Location ID\nlocation-stock\nDestination Location ID\nlocation-transit\nCreate New\nfalse\nUse Existing ones\nfalse\nPackage Type\nfalse\nHardware\nDelivery Slip\n—\nReturn Slip\n—\nHello, Admin User"
+  },
+  "failures": []
+}

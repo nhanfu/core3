@@ -289,3 +289,22 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
   `odoo.json`; no Odoo write was made.
 - Status: bounded report-context slice complete for review; full Inventory
   sign-off remains open.
+
+## `INV-OP-TYPES-001` — Operations Types lifecycle (2026-09-20)
+
+- Selected the smallest remaining source-backed configuration gap after the
+  completed Settings, Put in Pack, Package Transfers, and Stock at Date slices.
+- Reconciled Odoo `stock.action_picking_type_list` / `stock.menu_pickingtype`
+  against the installed stock view XML. Repaired Core3's missing list create
+  binding and missing create/edit location fields while preserving page/API
+  YAML separation.
+- Added migration `20260920210000-024-inventory-operation-type-lifecycle.yaml`
+  for row-version backfill/default durability. Focused test passes 3 tests / 41
+  assertions, including runtime permission denial, CRUD/lifecycle guards, and
+  file-backed restart.
+- Authenticated Core3 desktop/mobile evidence is complete in
+  `evidence/inventory/2026-09-20/INV-OP-TYPES-001/`. Odoo authentication
+  succeeds, but `/odoo/action-426` returns the exact generic Odoo `Oops!`
+  blocker at both viewports; no paired visual sign-off is claimed.
+- Status: bounded Core3 lifecycle complete for review; Odoo action blocker and
+  broader Inventory module sign-off remain open.

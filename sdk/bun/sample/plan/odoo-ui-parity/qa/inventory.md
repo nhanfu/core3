@@ -393,3 +393,33 @@ reference action is server-blocked. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 date-context lifecycle and
 permission/restart contract; PARTIAL for responsive Odoo wizard comparison.
 Full Inventory sign-off remains open.
+
+## Operations Types QA — `INV-OP-TYPES-001` (2026-09-20)
+
+- Odoo source/menu/action: `stock.menu_pickingtype` →
+  `stock.action_picking_type_list` in `stock_picking_type_views.xml`, with
+  `list,form` modes and the Operation Types search/form fields recorded in the
+  feature evidence.
+- Core3 repaired the missing `ListView.create_action`, added operation kind and
+  source/destination fields to the server form, joined detail location labels
+  to durable operation-type locations, and added migration `0.0.24` for
+  row-version backfill/default durability. Page/API YAML remains separate.
+- Focused test: `bun test test/inventory_operation_types.integration.test.ts
+  --timeout 20000` — PASS, 3 tests / 41 assertions. Coverage includes
+  deterministic active/archived fixtures, runtime page/action 403 checks,
+  create/edit/archive/restore, duplicate/invalid/required/open-transfer/stale
+  guards, idempotent migration, and file-backed restart.
+- Authenticated Core3 evidence is in
+  `evidence/inventory/2026-09-20/INV-OP-TYPES-001/`: desktop 1440x900 and
+  mobile 390x844 list/detail, create modal, edit, and reload captures. The
+  evidence JSON records an empty browser failure list; the detail reload keeps
+  the edited code and Stock/Transit location labels.
+- Authenticated Odoo evidence uses `codex@core3.local` at
+  `http://127.0.0.1:8069/odoo/action-426`. Login succeeds, but the action
+  renders Odoo's generic `Oops!` error at desktop and mobile before the list or
+  form loads. `odoo.json` and both screenshots retain this exact blocker; no
+  Odoo mutation or visual parity sign-off is claimed.
+
+QA disposition: PASS for the bounded Core3 lifecycle and permission/restart
+contract; PARTIAL for Odoo comparison because the supplied source action is
+runtime-blocked. Full Inventory sign-off remains open.
