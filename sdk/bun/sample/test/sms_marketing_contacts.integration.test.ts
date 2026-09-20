@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPages } from '@core3/server/discovery';
@@ -50,5 +50,78 @@ describe('SMS Marketing Mailing List Contacts action parity', () => {
     expect(await repository.executeMutation(subscribe.mutation, { id: created.id, expected_row_version: 2 })).toMatchObject({ opt_out: false, row_version: 3 });
     expect(api.datasources[0].error_states.transport_error).toMatchObject({ status: 503, code: 'SMS_MAILING_CONTACTS_UNAVAILABLE' });
     expect(action('edit_sms_subscription').mutation.concurrency).toEqual({ required: true });
+  });
+
+  test('survives file-backed recipient lifecycle restarts and replay retries', async () => {
+    const databasePath = `/tmp/core3-sms-recipient-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `sms_recipient_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    let database = await DuckDbDatabase.open(databasePath);
+    let repository = new YamlRepository(database);
+    const create = action('create_sms_subscription');
+    const unsubscribe = action('unsubscribe_sms_subscription');
+    const subscribe = action('subscribe_sms_subscription');
+    const restart = async () => {
+      database.close();
+      database = await DuckDbDatabase.open(databasePath);
+      repository = new YamlRepository(database);
+      await migrateDatabase(repository, root + '/migrations', undefined, migrationName, ['schema', 'data']);
+    };
+    const row = async () => (await repository.query(
+      'SELECT id, contact_id, list_id, opt_out, opt_out_datetime, row_version FROM sms_subscriptions WHERE id = ?',
+      ['sms-subscription-sms-contact-franz-001-sms-list-demo-001'],
+    ))[0];
+    const listCount = async () => (await repository.query(
+      'SELECT contact_count_sms FROM sms_lists WHERE id = ?',
+      ['sms-list-demo-001'],
+    ))[0].contact_count_sms;
+
+    try {
+      await migrateDatabase(repository, root + '/migrations', undefined, migrationName, ['schema', 'data']);
+      expect(await listCount()).toBe(0);
+
+      const created = await repository.executeMutation(create.mutation, {
+        values: { contact_id: 'sms-contact-franz-001', list_id: 'sms-list-demo-001' },
+      });
+      expect(created).toMatchObject({
+        id: 'sms-subscription-sms-contact-franz-001-sms-list-demo-001',
+        contact_id: 'sms-contact-franz-001',
+        list_id: 'sms-list-demo-001',
+        opt_out: false,
+        row_version: 1,
+      });
+      expect(await listCount()).toBe(1);
+      await restart();
+
+      expect(await row()).toMatchObject({ opt_out: false, row_version: 1 });
+      expect(await listCount()).toBe(1);
+      await expect(repository.executeMutation(create.mutation, {
+        values: { contact_id: 'sms-contact-franz-001', list_id: 'sms-list-demo-001' },
+      })).rejects.toMatchObject({ status: 409, code: 'SMS_SUBSCRIPTION_EXISTS' });
+
+      expect(await repository.executeMutation(unsubscribe.mutation, {
+        id: 'sms-subscription-sms-contact-franz-001-sms-list-demo-001', expected_row_version: 1,
+      })).toMatchObject({ opt_out: true, row_version: 2 });
+      await restart();
+
+      const optedOut = await row();
+      expect(optedOut).toMatchObject({ opt_out: true, row_version: 2 });
+      await expect(repository.executeMutation(unsubscribe.mutation, {
+        id: 'sms-subscription-sms-contact-franz-001-sms-list-demo-001', expected_row_version: 1,
+      })).rejects.toMatchObject({ status: 409, code: 'SMS_SUBSCRIPTION_STATE_CHANGED' });
+
+      expect(await repository.executeMutation(subscribe.mutation, {
+        id: 'sms-subscription-sms-contact-franz-001-sms-list-demo-001', expected_row_version: 2,
+      })).toMatchObject({ opt_out: false, opt_out_datetime: null, row_version: 3 });
+      await restart();
+
+      expect(await row()).toMatchObject({ opt_out: false, opt_out_datetime: null, row_version: 3 });
+      expect(await listCount()).toBe(1);
+      await expect(repository.executeMutation(subscribe.mutation, {
+        id: 'sms-subscription-sms-contact-franz-001-sms-list-demo-001', expected_row_version: 2,
+      })).rejects.toMatchObject({ status: 409, code: 'SMS_SUBSCRIPTION_STATE_CHANGED' });
+    } finally {
+      database.close();
+      rmSync(databasePath, { force: true });
+    }
   });
 });
