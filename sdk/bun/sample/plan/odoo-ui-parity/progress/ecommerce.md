@@ -27,6 +27,12 @@ Core3 desktop/mobile capture is blocked by unavailable browser runtime; Odoo
 `/shop` is exact HTTP 404 on 8069/8073. Committed locally as
 `eefbbb87c88dc22cafbdf7be720902b56b55b66d`; not pushed.
 
+Commit boundary note: `eefbbb874a254bd5b1d235c39d29feed5b49ea41` is the
+Ecommerce-only implementation/evidence commit for this wave. A concurrent
+Inventory owner committed immediately afterward while this ledger hash was
+being finalized; no Inventory paths are part of the Ecommerce implementation
+commit.
+
 ## Current bounded task — `ECOM-CATALOG-CATEGORY-COVER-IMAGE-001`
 
 The tenth-wave source-backed gap is Website Sale's
