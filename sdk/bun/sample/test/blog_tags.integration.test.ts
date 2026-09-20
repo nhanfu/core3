@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
@@ -47,5 +47,39 @@ describe('Blog Tags parity slice', () => {
     await expect(repository.executeMutation(action('delete_blog_tag').mutation, { id: 'blog-tag-demo-001', expected_row_version: 1 }))
       .rejects.toMatchObject({ status: 409, code: 'BLOG_TAG_IN_USE' });
     database.close();
+  });
+
+  test('preserves tag edits across restart and rejects a retried duplicate', async () => {
+    const databasePath = `/tmp/core3-blog-tag-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `blog_tag_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const api = yaml('api/tags.yaml');
+    const create = api.actions.find((candidate: any) => candidate.id === 'create_blog_tag');
+    const edit = api.actions.find((candidate: any) => candidate.id === 'edit_blog_tag');
+
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const created = await firstRepository.executeMutation(create.mutation, {
+      values: { name: 'Restart Release', category: 'Technology', color: 3 },
+    });
+    const updated = await firstRepository.executeMutation(edit.mutation, {
+      id: created.id,
+      expected_row_version: created.row_version,
+      values: { name: 'Restart Release Notes', category: 'Technology', color: 8 },
+    });
+    expect(updated).toMatchObject({ id: created.id, name: 'Restart Release Notes', color: 8, row_version: 2 });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect((await secondRepository.query('SELECT name, category, color, row_version FROM blog_tags WHERE id = ?', [created.id]))[0])
+      .toEqual({ name: 'Restart Release Notes', category: 'Technology', color: 8, row_version: 2 });
+    await expect(secondRepository.executeMutation(create.mutation, {
+      values: { name: 'Restart Release Notes', category: 'Technology', color: 8 },
+    })).rejects.toMatchObject({ status: 409, code: 'BLOG_TAG_EXISTS' });
+    expect((await secondRepository.query("SELECT COUNT(*) AS count FROM blog_tags WHERE name = 'Restart Release Notes'", []))[0].count).toBe(1);
+    second.close();
+    rmSync(databasePath, { force: true });
   });
 });
