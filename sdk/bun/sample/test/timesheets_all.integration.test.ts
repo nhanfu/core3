@@ -86,7 +86,7 @@ describe('Timesheets All Timesheets parity slice', () => {
     await expect(repository.executeMutation(allEdit.mutation, invalidInput)).rejects.toMatchObject({ status: 422, code: 'TIMESHEETS_ENTRY_INVALID' });
     await expect(repository.executeMutation(allEdit.mutation, { id: 'missing-timesheet', expected_row_version: 1, values: { work_date: '2026-01-13', project_name: 'Core3 Implementation', description: 'Missing', hours: 1 } })).rejects.toMatchObject({ status: 403, code: 'TIMESHEETS_ALL_ENTRY_SCOPE' });
     const cancel = yaml('pages/timesheet-workflow.yaml').workflow.transitions.find((transition: any) => transition.id === 'cancel').mutation;
-    await repository.executeMutation(cancel, { id: 'timesheet-report-003' });
+    await repository.executeMutation(cancel, { id: 'timesheet-report-003', current_user_name: 'Morgan Taylor', current_company_name: 'Core3 Demo Company' });
     await expect(repository.executeMutation(allEdit.mutation, { id: 'timesheet-report-003', expected_row_version: 3, values: { work_date: '2026-01-13', project_name: 'Core3 Implementation', description: 'Cancelled', hours: 1 } })).rejects.toMatchObject({ status: 403, code: 'TIMESHEETS_ALL_ENTRY_SCOPE' });
     expect(personalEdit.mutation.guards[0].query).toContain('employee_name');
     database.close();

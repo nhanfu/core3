@@ -48,6 +48,8 @@ workflow:
       to: Cancelled
       permission: timesheets.write
       mutation:
-        guards: [{ query: "SELECT id FROM timesheet_entries WHERE id = :id AND state IN ('Draft', 'Submitted', 'Rejected')", status: 409, message: Only open timesheets can be cancelled }]
+        guards:
+          - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND state IN ('Draft', 'Submitted', 'Rejected')", status: 409, message: Only open timesheets can be cancelled }
+          - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND employee_name = COALESCE(NULLIF(:current_user_name, ''), 'Admin User')", status: 403, code: TIMESHEETS_ENTRY_SCOPE, message: Only your open timesheets can be cancelled }
         steps: [{ query: "UPDATE timesheet_entries SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
