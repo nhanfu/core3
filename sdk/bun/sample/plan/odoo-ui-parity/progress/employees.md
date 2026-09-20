@@ -485,3 +485,22 @@ Candidate commit: current working tree
   Authenticated Odoo desktop/mobile show the source group. Core3 cannot start
   until the shared Inventory page removes unsupported `search.lots` and
   `search.or packages...` keys. Conditional evidence only; no sign-off.
+
+## EMP-PRIVATE-CONTACT-001 (2026-09-21)
+
+- Selected the next uncovered source-backed Employee Personal behavior: Odoo's
+  Private Contact group, specifically the source-named `private_phone` beside
+  `private_email`.
+- Added page/API-separated private-contact fields and migration
+  `20260921150000-045` with idempotent deterministic fixtures. The existing
+  generic `phone` projection remains available outside the Private Contact
+  group.
+- Employee create/edit is guarded by `employees.write`, current-company scope,
+  and row-version concurrency; migration replay and file-backed restart pass.
+- Focused verification: **4 tests / 18 assertions**; UI audit **694 pages / 703
+  routes / 1,306 datasources**; scoped ESLint and `git diff --check` pass.
+- Evidence: `evidence/employees/2026-09-21/EMP-PRIVATE-CONTACT-001/`.
+  Authenticated Core3 desktop/mobile render the fields but are company-blocked;
+  authenticated Odoo desktop/mobile show Abigail Peterson's source group. Seven
+  Odoo shell icon 404s are unrelated. Conditional evidence only; no aggregate
+  sign-off.

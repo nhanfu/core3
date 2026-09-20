@@ -1,0 +1,23 @@
+version: 0.0.45
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS private_phone VARCHAR;
+      UPDATE employees
+      SET private_email = COALESCE(private_email, CASE id
+        WHEN 'employee-demo-001' THEN 'admin.private@core3.local'
+        WHEN 'employee-demo-002' THEN 'anh.private@core3.local'
+        WHEN 'employee-demo-003' THEN 'long.private@core3.local'
+        ELSE NULL END),
+          private_phone = COALESCE(private_phone, CASE id
+        WHEN 'employee-demo-001' THEN '+84 901 200 001'
+        WHEN 'employee-demo-002' THEN '+84 901 200 002'
+        WHEN 'employee-demo-003' THEN '+84 901 200 003'
+        ELSE NULL END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS private_phone;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

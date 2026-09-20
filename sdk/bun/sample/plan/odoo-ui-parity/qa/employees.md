@@ -715,6 +715,21 @@ shared audit fail on `components[1].search.lots` and
 Inventory remains untouched. Odoo has seven unrelated app-icon 404s. No
 aggregate Employees sign-off is claimed.
 
+## EMP-PRIVATE-CONTACT-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-028 | Personal Private Contact create/edit/read | pass; private email and source-named private phone persist through employee CRUD |
+| EMP-PERM-028 | `employees.write`, current company, row version | pass; stale and out-of-company changes reject atomically |
+| EMP-DATA-028 | Migration replay and file-backed restart | pass; deterministic private-contact fixtures survive restart without duplicates |
+| EMP-UI-024 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 labels/page 200 are company-blocked, Odoo source group is visible |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-PRIVATE-CONTACT-001/`. Core3's authenticated
+session is `Core3 Demo Company` while deterministic employee fixtures are
+`Core3 Vietnam`; Odoo has seven unrelated app-icon 404s. No aggregate Employees
+sign-off is claimed.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

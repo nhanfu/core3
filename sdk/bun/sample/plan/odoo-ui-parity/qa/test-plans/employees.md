@@ -318,3 +318,17 @@ Focused test: `test/employees_citizenship.integration.test.ts` (4 tests,
 Focused test: `test/employees_private_location.integration.test.ts` (4 tests,
 23 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-PRIVATE-LOCATION-001/`.
+
+## EMP-PRIVATE-CONTACT-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo Private Contact email/phone fields map to separate page/API contracts | pass |
+| Employee CRUD | Create, read, and edit private email and private phone durably | pass |
+| Permission and scope | Write permission, current company, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic fixtures | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Personal desktop/mobile captures | conditional; Core3 fixture-company mismatch recorded |
+
+Focused test: `test/employees_private_contact.integration.test.ts` (4 tests,
+18 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-PRIVATE-CONTACT-001/`.

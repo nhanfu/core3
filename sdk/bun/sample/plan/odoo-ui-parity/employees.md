@@ -1551,3 +1551,26 @@ unrelated shared Inventory page schema error (`components[1].search.lots` and
 `components[1].search.or packages...` are not allowed); no Core3 UI sign-off is
 claimed. Evidence is under
 `evidence/employees/2026-09-21/EMP-PRIVATE-LOCATION-001/`.
+
+## EMP-PRIVATE-CONTACT-001: Employee private contact details (2026-09-21)
+
+Odoo's Personal-tab `Private Contact` group exposes the HR-private email and
+`private_phone` fields. Core3 previously rendered a generic `phone` value beside
+`private_email`; this slice adds the source-named durable `private_phone` field,
+uses the paired page/API employee-detail contracts, and preserves the existing
+legacy phone projection outside the Private Contact group.
+
+Migration `20260921150000-045-employee-private-contact.yaml` adds the durable
+column and replay-safe private-contact fixtures. Employee create/edit uses
+`employees.write`, current-company, and optimistic row-version guards.
+Focused coverage is **4 tests / 18 assertions**, including source mapping,
+create/edit/read, stale/company guards, migration replay, and file-backed
+restart.
+
+Authenticated Core3 desktop/mobile page loads return HTTP 200 and render the
+private-contact labels, but the deterministic employee is `Core3 Vietnam` and
+the authenticated session is `Core3 Demo Company`. Authenticated Odoo
+desktop/mobile reaches Abigail Peterson's Personal tab and shows the source
+Private Contact group; seven unrelated app-icon 404s are recorded. Evidence is
+under `evidence/employees/2026-09-21/EMP-PRIVATE-CONTACT-001/`. This is
+conditional feature evidence, not aggregate Employees sign-off.

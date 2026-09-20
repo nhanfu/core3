@@ -91,8 +91,9 @@ components:
         - id: personal
           label: Personal
           groups:
-            - title: Contact Information
-              fields: [{ field: private_email, label: Private Email }, { field: phone, label: Phone }, { field: street, label: Private Address }, { field: birthday, label: Birthday }]
+            - title: Private Contact
+              permission: employees.read
+              fields: [{ field: private_email, label: Email }, { field: private_phone, label: Phone }, { field: street, label: Private Address }, { field: birthday, label: Birthday }]
             - title: Personal Information
               permission: employees.read
               fields: [{ field: place_of_birth, label: Place of Birth }, { field: country_of_birth, label: Country of Birth }, { field: sex, label: Gender }]
