@@ -58,6 +58,7 @@ unauthenticated user, and wrong-company scope. Stable fixtures include
 | MAINT-WF-005 | integration | Activities/chatter/attachments | Schedule, complete, message, note, instruction | Author, content, state and audit history persist and render | blank, unauthorized, retry and missing-record paths are explicit | planned |
 | MAINT-WF-006 | integration | Recurrence/scheduled maintenance | Run scheduled event | Next date and generated request are deterministic and idempotent | retry/duplicate event does not duplicate work | planned |
 | MAINT-WF-007 | integration | Durable/third-party boundary | Review future external side effects | Any cross-module, timer, external API or long-running workflow is declared for Temporal | retry, timeout, compensation, replay/restart and shutdown tests precede activation | planned |
+| MAINT-WF-008 | integration | Recurring request occurrence API boundary | Generate next occurrence | Preventive repaired requests copy to the next deterministic date with stable lineage and a one-generation marker | stale, duplicate, invalid, missing, ineligible, and restart paths return stable errors without partial writes | pass |
 
 ## Permission and security cases
 

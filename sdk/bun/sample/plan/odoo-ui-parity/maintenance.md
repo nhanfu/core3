@@ -592,3 +592,45 @@ pass for the Maintenance integration and client ListView suites. Core3
 dashboard captures are under
 `/tmp/core3-odoo-parity/maintenance-visual3-20260912/`; no authenticated Odoo
 comparison is claimed while the reference login is throttled.
+
+## Bounded batch: Recurring maintenance request occurrence generation (2026-09-20)
+
+The Odoo source creates the next maintenance request when a recurring
+preventive request reaches a done stage (`addons/maintenance/models/maintenance.py`:
+331-349). The copied request keeps the equipment, team, category, responsible
+user, instructions, priority, and recurrence configuration, advances the
+scheduled date by the configured day/week/month/year interval, and returns to
+the first stage. Core3 previously stored only a recurrence label and had no
+durable occurrence lineage or replay guard.
+
+This bounded slice adds the page-id-owned
+`generate_maintenance_request_recurrence` API action on the request detail.
+It is an atomic scheduled-event boundary: it accepts only an active repaired
+preventive request with a canonical `Every N days|weeks|months|years` value,
+creates one stable occurrence ID, stores parent/sequence lineage, marks the
+source with `recurrence_generated_id`, and uses the source row version plus a
+unique lineage index to prevent duplicate work. The detail page exposes the
+permissioned action only when the source is an eligible unarchived repaired
+request. The general scheduler/Temporal trigger remains a separate planned
+integration; this batch does not claim that external runner.
+
+Implementation files:
+
+- `services/maintenance/migrations/20260920110000-008-maintenance-request-recurrence.yaml`
+  adds idempotent lineage columns, backfills existing rows with stable roots,
+  and creates the occurrence uniqueness index.
+- `services/maintenance/api/request-detail.yaml` owns the detail fields and
+  atomic recurrence mutation; `pages/request-detail.yaml` owns only the
+  presentation action and occurrence field.
+- `test/maintenance_request_recurrence.integration.test.ts` covers the
+  page/API join, deterministic next dates and IDs, migration replay,
+  stale/duplicate/invalid/ineligible/missing guards, and file-backed restart
+  durability. Existing request contract tests were updated for the new action.
+
+Focused verification:
+
+- `bun test ./test/maintenance*.integration.test.ts` — **40 passed, 0 failed,
+  381 assertions**.
+- The new recurrence suite alone — **3 passed, 0 failed, 22 assertions**.
+- Audit, lint, and diff checks are run before commit; no authenticated browser
+  or paired Odoo screenshot is claimed for this API-bound slice.

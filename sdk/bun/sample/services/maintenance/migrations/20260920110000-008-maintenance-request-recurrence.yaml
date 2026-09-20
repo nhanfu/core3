@@ -1,0 +1,23 @@
+version: 0.0.8
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS recurrence_parent_id VARCHAR;
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS recurrence_sequence INTEGER;
+      ALTER TABLE maintenance_requests ADD COLUMN IF NOT EXISTS recurrence_generated_id VARCHAR;
+      UPDATE maintenance_requests
+      SET recurrence_parent_id = COALESCE(NULLIF(recurrence_parent_id, ''), id),
+          recurrence_sequence = COALESCE(recurrence_sequence, 0)
+      WHERE recurrence_parent_id IS NULL OR recurrence_parent_id = '' OR recurrence_sequence IS NULL;
+      CREATE UNIQUE INDEX IF NOT EXISTS maintenance_requests_recurrence_occurrence_idx
+        ON maintenance_requests(recurrence_parent_id, recurrence_sequence);
+    down: |
+      DROP INDEX IF EXISTS maintenance_requests_recurrence_occurrence_idx;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS recurrence_generated_id;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS recurrence_sequence;
+      ALTER TABLE maintenance_requests DROP COLUMN IF EXISTS recurrence_parent_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

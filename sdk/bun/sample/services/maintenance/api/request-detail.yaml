@@ -1,6 +1,6 @@
 page: { id: maintenance-request-detail }
 datasources:
-  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, state, stage, kanban_state, archived, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(completed_date AS VARCHAR) AS completed_date, recurrence FROM maintenance_requests WHERE id = :id" }
+  - { id: maintenance_request_detail, single: true, permission: maintenance.read, query: "SELECT id, row_version, name, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, state, stage, kanban_state, archived, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(completed_date AS VARCHAR) AS completed_date, recurrence, recurrence_parent_id, recurrence_sequence, recurrence_generated_id FROM maintenance_requests WHERE id = :id" }
   - id: maintenance_request_activity
     single: false
     permission: maintenance.read
@@ -101,6 +101,32 @@ actions:
       - { field: assigned_to, label: Assigned to, type: text }
       - { field: scheduled_date, label: Scheduled date, type: text }
       - { field: recurrence, label: Recurrence, type: text }
+  - id: generate_maintenance_request_recurrence
+    type: server
+    permission: maintenance.write
+    action: maintenance.requests.recurrence.generate
+    handler: yaml_mutation
+    operation: create
+    params: { id: '{state.id}' }
+    refresh: [maintenance_request_detail, maintenance_request_activity]
+    mutation:
+      before_steps:
+        - query: "SELECT COALESCE(NULLIF(recurrence_parent_id, ''), id) AS recurrence_root_id, COALESCE(recurrence_sequence, 0) + 1 AS next_recurrence_sequence, COALESCE(NULLIF(recurrence_parent_id, ''), id) || '-recurrence-' || CAST(COALESCE(recurrence_sequence, 0) + 1 AS VARCHAR) AS occurrence_id, name || ' / Recurrence ' || CAST(COALESCE(recurrence_sequence, 0) + 1 AS VARCHAR) AS occurrence_name, equipment_id, equipment_name, category, category_id, team, team_id, request_type, description, instructions, priority, assigned_to, owner, recurrence, company_name, CAST(CASE lower(split_part(trim(recurrence), ' ', 3)) WHEN 'day' THEN CAST(scheduled_date AS DATE) + CAST(split_part(trim(recurrence), ' ', 2) AS INTEGER) * INTERVAL '1 day' WHEN 'days' THEN CAST(scheduled_date AS DATE) + CAST(split_part(trim(recurrence), ' ', 2) AS INTEGER) * INTERVAL '1 day' WHEN 'week' THEN CAST(scheduled_date AS DATE) + CAST(split_part(trim(recurrence), ' ', 2) AS INTEGER) * INTERVAL '1 week' WHEN 'weeks' THEN CAST(scheduled_date AS DATE) + CAST(split_part(trim(recurrence), ' ', 2) AS INTEGER) * INTERVAL '1 week' WHEN 'month' THEN CAST(scheduled_date AS DATE) + CAST(split_part(trim(recurrence), ' ', 2) AS INTEGER) * INTERVAL '1 month' WHEN 'months' THEN CAST(scheduled_date AS DATE) + CAST(split_part(trim(recurrence), ' ', 2) AS INTEGER) * INTERVAL '1 month' WHEN 'year' THEN CAST(scheduled_date AS DATE) + CAST(split_part(trim(recurrence), ' ', 2) AS INTEGER) * INTERVAL '1 year' WHEN 'years' THEN CAST(scheduled_date AS DATE) + CAST(split_part(trim(recurrence), ' ', 2) AS INTEGER) * INTERVAL '1 year' END AS DATE) AS next_scheduled_date FROM maintenance_requests WHERE id = :id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id", status: 404, code: MAINTENANCE_REQUEST_NOT_FOUND, message: Maintenance request was not found. }
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND row_version = :expected_row_version", status: 409, code: STALE_RECORD, message: Maintenance request was changed before recurrence generation. }
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND archived = FALSE AND state = 'Repaired' AND request_type = 'Preventive'", status: 409, code: MAINTENANCE_RECURRENCE_NOT_ELIGIBLE, message: Only an active repaired preventive request can generate its next occurrence. }
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND recurrence_generated_id IS NULL", status: 409, code: MAINTENANCE_RECURRENCE_ALREADY_GENERATED, message: The next recurring occurrence has already been generated. }
+        - { query: "SELECT id FROM maintenance_requests WHERE id = :id AND scheduled_date IS NOT NULL AND regexp_matches(trim(COALESCE(recurrence, '')), '^Every [1-9][0-9]* (day|days|week|weeks|month|months|year|years)$')", status: 422, code: MAINTENANCE_RECURRENCE_INVALID, message: Recurrence must use Every N days, weeks, months, or years. }
+      steps:
+        - query: "INSERT INTO maintenance_requests(id, name, equipment_id, equipment_name, category, category_id, team, team_id, request_type, description, instructions, priority, assigned_to, owner, request_date, scheduled_date, completed_date, stage, state, kanban_state, recurrence, company_name, archived, row_version, recurrence_parent_id, recurrence_sequence, recurrence_generated_id, created_at, updated_at) VALUES(:occurrence_id, :occurrence_name, :equipment_id, :equipment_name, :category, :category_id, :team, :team_id, :request_type, :description, :instructions, :priority, :assigned_to, :owner, DATE '2026-01-15', :next_scheduled_date, NULL, 'New Request', 'New Request', 'ready', :recurrence, :company_name, FALSE, 1, :recurrence_root_id, :next_recurrence_sequence, NULL, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')"
+        - query: "UPDATE maintenance_requests SET recurrence_generated_id = :occurrence_id, updated_at = TIMESTAMP '2026-01-15 09:00:00', row_version = row_version + 1 WHERE id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: Maintenance request was changed before recurrence generation.
+      result: { query: "SELECT * FROM maintenance_requests WHERE id = :occurrence_id" }
   - { id: assign_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.assign, handler: order_transition, workflow: maintenance_requests, operation: assign, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
   - { id: start_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.start, handler: order_transition, workflow: maintenance_requests, operation: start, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
   - { id: repair_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.repair, handler: order_transition, workflow: maintenance_requests, operation: repair, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
