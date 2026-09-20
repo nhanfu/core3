@@ -870,3 +870,27 @@ Focused evidence: `test/inventory_transfer_workflow.integration.test.ts`
 passes the layout/action contract and the Ready-to-Waiting mutation,
 timeline, stale-row, and invalid-state assertions. Browser evidence for this
 new form action remains a QA follow-up; no visual sign-off is claimed here.
+
+## Products > Package Transfers bounded slice (2026-09-20)
+
+The next source-backed package gap is the `stock.package` form stat button
+`action_view_picking` from `addons/stock/models/stock_package.py`. Odoo builds
+its `stock.action_picking_tree_all` result from pickings whose move lines have
+the package as either `package_id` or `result_package_id`; the source action is
+read-only and exposes `list,kanban,form,calendar` transfer views.
+
+Core3 now adds the package-scoped `/packages/transfers` page. The package form
+declares a permissioned `Package Transfers` stat button, and the matching
+`api/package-transfers.yaml` fragment exposes the package context and distinct
+transfer rows with source/result relation labels. The transfer rows open the
+existing shared transfer detail, preserving one transfer workflow contract.
+Migration `0.0.20` adds the durable `inventory_package_move_lines` relation
+with deterministic source/result fixtures for main, nested, and customer
+packages. The relation is idempotent and survives a file-backed close/reopen.
+
+Focused evidence: `bun test test/inventory_package_transfers.integration.test.ts`
+passes 3 tests and 22 assertions, covering page/API separation, stat routing,
+deterministic source/result filtering, empty and transport states, tracking
+permission denial, missing-package isolation, and restart persistence. This
+bounded contract has no new authenticated browser or paired Odoo screenshot
+claim; the visual/mobile gate remains open.

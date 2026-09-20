@@ -1,0 +1,39 @@
+title: Package Transfers
+page: { id: package-transfers, route: /packages/transfers, breadcrumb: [Supply Chain, Inventory, Products, Packages, Package Transfers], auth: { require: [inventory.tracking] } }
+components:
+  - type: StatRow
+    source: inventory_package_transfer_context
+    title: Package
+    stats:
+      - { label: Package, field: name }
+      - { label: Transfers, field: transfer_count }
+  - type: ListView
+    variant: odoo
+    source: inventory_package_transfers
+    view_navigation: tabs
+    search: { label: Search transfers, placeholder: Search package transfers... }
+    filters:
+      - { field: state, label: Status, options_source: inventory_package_transfer_states }
+    group_by: [state, scheduled_date, operation_kind]
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: operation_kind
+        card: { title: name, subtitle: operation_type_name, fields: [{ field: scheduled_date, label: Scheduled Date }, { field: state, label: Status }, { field: package_relation, label: Package relation }] }
+      - { id: form, label: Form, icon: form }
+      - { id: calendar, label: Calendar, icon: calendar, date_field: scheduled_date, mobile: false }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, sortable: true }
+      - { field: operation_type_name, label: Operation Type }
+      - { field: scheduled_date, label: Scheduled Date, sortable: true }
+      - { field: package_relation, label: Package Relation }
+      - { field: company_name, label: Company }
+      - { field: state, label: Status, type: StatusChip, colors: { Ready: teal, Draft: neutral, Waiting: amber, Done: green, Cancelled: red } }
+    page_size: 50
+    row_key: id
+    row_open_action: view_inventory_package_transfer
+    row_double_click_action: view_inventory_package_transfer
+    form_view: { page: apps/services/inventory/pages/transfer-detail.yaml, side_panel: true }
+    empty_state: { title: No transfers for this package, description: Transfers that contain or produce this package will appear here. }

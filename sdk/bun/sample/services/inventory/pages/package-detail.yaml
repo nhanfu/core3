@@ -12,6 +12,8 @@ components:
       - { id: back_to_inventory_packages, label: Back to Packages, icon: arrow-left, permission: inventory.tracking }
       - { id: edit_inventory_package, label: Edit, variant: primary, permission: inventory.tracking }
       - { id: unpack_inventory_package, label: Unpack, variant: secondary, permission: inventory.tracking, show_if: "record.state !== 'Empty'" }
+    stat_buttons:
+      - { id: view_inventory_package_transfers, label: Package Transfers, value_field: transfer_count, icon: transfer, permission: inventory.tracking, show_if: "record.transfer_count > 0" }
     groups:
       - title: Package Information
         fields:

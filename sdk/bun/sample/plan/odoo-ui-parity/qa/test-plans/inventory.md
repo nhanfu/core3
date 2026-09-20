@@ -15,7 +15,7 @@ recorded in [`../inventory.md`](../inventory.md).
 | Menu/action family | Core3 route families | Scope |
 | --- | --- | --- |
 | Transfers | receipts/deliveries, internal transfers and detail routes | Picking CRUD, edit persistence, confirm/check/validate workflow and move completion |
-| Products/locations | locations, lots/serials, packages, warehouses and operation types | Hierarchy, lot/package/warehouse CRUD, archive and relation guards |
+| Products/locations | locations, lots/serials, packages, package transfers, warehouses and operation types | Hierarchy, lot/package/warehouse CRUD, package-to-transfer drill-down, archive and relation guards |
 | Operations | replenishment, physical inventory and scrap routes | Counts, replenishment actions, scrap lifecycle and stale guards |
 | Reporting/settings | moves history, stock report and settings routes | Graph/pivot/list filters, manager settings and read-only report boundaries |
 
@@ -31,7 +31,7 @@ transfer workflows must preserve row versions and move quantities.
 | --- | --- | --- | --- |
 | INV-FUNC-001 | Transfers | Search/filter/detail, edit fields, confirm/check/validate and reload persistence work | pass: focused suite and authenticated workflow |
 | INV-FUNC-002 | Locations/warehouses | Hierarchy, CRUD, archive/restore, validation, duplicate, in-use and stale guards work | pass: focused suite |
-| INV-FUNC-003 | Lots/packages | Scoped list/detail, quantity/location validation, CRUD and safe delete preserve relations | pass: focused suite |
+| INV-FUNC-003 | Lots/packages | Scoped list/detail, quantity/location validation, CRUD and safe delete preserve relations | pass: focused suite; package transfer drill-down contract added |
 | INV-FUNC-004 | Operations | Replenishment, physical counts and scrap actions validate quantities/state and persist | pass: focused suite |
 | INV-FUNC-005 | Reporting/settings | Move history, stock report and settings expose declared read-only/filter/save contracts | pass: focused suite |
 | INV-FUNC-006 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit for every datasource | pass: focused suite |
@@ -46,6 +46,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-WF-002 | Transfer edit | Details edit posts through mutation transport and survives reload | pass: authenticated browser probe |
 | INV-WF-003 | Inventory count/replenishment | Count and replenishment actions update quantities with validation and row-version guards | pass at contract level |
 | INV-WF-004 | Scrap/packages/lots | Scrap, lot and package relations remain consistent and scoped to the operation | pass at contract level; browser workflow planned |
+| INV-WF-006 | Package transfers | Package stat resolves only pickings linked through source/result package move-line relations and opens shared transfer detail | pass: focused package-transfer suite; browser workflow planned |
 | INV-WF-005 | Durable/external boundary | Carrier, barcode, accounting and cross-module callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 
 ## Permission and security cases

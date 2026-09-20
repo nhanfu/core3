@@ -1,0 +1,33 @@
+page: { id: package-transfers }
+
+datasources:
+  - id: inventory_package_transfer_context
+    single: true
+    permission: inventory.tracking
+    error_states:
+      not_found: { status: 404, code: INVENTORY_PACKAGE_NOT_FOUND, message: Package not found. }
+      transport_error: { status: 503, code: INVENTORY_PACKAGE_TRANSFERS_UNAVAILABLE, message: Package transfer data is temporarily unavailable. }
+    query: "SELECT p.id, p.name, COALESCE(p.package_type_name, '') AS package_type_name, COALESCE(p.location_name, '') AS location_name, COUNT(DISTINCT l.move_id) AS transfer_count FROM inventory_packages p LEFT JOIN inventory_package_move_lines l ON l.package_id = p.id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND p.id = :package_id GROUP BY p.id, p.name, p.package_type_name, p.location_name"
+  - id: inventory_package_transfers
+    single: false
+    permission: inventory.tracking
+    error_states:
+      not_found: { status: 404, code: INVENTORY_PACKAGE_NOT_FOUND, message: Package not found. }
+      transport_error: { status: 503, code: INVENTORY_PACKAGE_TRANSFERS_UNAVAILABLE, message: Package transfer data is temporarily unavailable. }
+    query: "SELECT p.id, p.row_version, p.name, p.contact_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, p.company_name, p.state, t.name AS operation_type_name, t.operation_kind, STRING_AGG(DISTINCT l.relation_type, ', ' ORDER BY l.relation_type) AS package_relation FROM inventory_package_move_lines l JOIN inventory_picking_moves m ON m.id = l.move_id JOIN inventory_pickings p ON p.id = m.picking_id JOIN inventory_operation_types t ON t.id = p.operation_type_id JOIN inventory_packages pkg ON pkg.id = l.package_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1 AND l.package_id = :package_id AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.contact_name, '') ILIKE '%' || :q || '%' OR COALESCE(p.source_document, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) GROUP BY p.id, p.row_version, p.name, p.contact_name, p.scheduled_date, p.source_document, p.company_name, p.state, t.name, t.operation_kind ORDER BY p.scheduled_date, p.name"
+  - id: inventory_package_transfer_states
+    single: false
+    permission: inventory.tracking
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Waiting','Waiting'), ('Ready','Ready'), ('Done','Done'), ('Cancelled','Cancelled')) states(value, label)"
+
+actions:
+  - id: back_to_inventory_package
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /packages/detail
+    params: { id: '{query.package_id}' }
+  - id: view_inventory_package_transfer
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /inventory/transfer/detail
+    params: { id: '{row.id}' }

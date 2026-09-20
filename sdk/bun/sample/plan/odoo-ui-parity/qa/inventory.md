@@ -262,3 +262,17 @@ no Inventory module sign-off or aggregate progress claim.
   defect is resolved for this bounded slice.
 - Conditional status remains because authenticated Odoo comparison and
   unrelated Website full-lint errors remain open.
+
+## Package Transfers QA — bounded contract (2026-09-20)
+
+- Source mapping: Odoo `stock.package.action_view_picking` resolves all
+  pickings whose move lines reference the package as source or result.
+- Core3 contract: `/packages/transfers` with `inventory.tracking`, a package
+  context/stat, source/result relation labels, and row navigation to shared
+  transfer detail.
+- Focused test: `test/inventory_package_transfers.integration.test.ts` — 3
+  tests / 22 assertions passed, including idempotent migration, deterministic
+  filters, empty/503 states, permission denial, missing-package isolation, and
+  file-backed restart persistence.
+- Browser and paired Odoo visual evidence remain open for this slice; no visual
+  sign-off is claimed.

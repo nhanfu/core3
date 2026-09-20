@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: inventory.tracking
     error_states: { transport_error: { status: 503, code: INVENTORY_PACKAGE_DETAIL_UNAVAILABLE, message: Package details are temporarily unavailable. } }
-    query: "SELECT id,row_version,name,COALESCE(parent_package_name,'') AS parent_package_name,COALESCE(package_type_name,'') AS package_type_name,COALESCE(location_name,'') AS location_name,COALESCE(owner_name,'') AS owner_name,COALESCE(company_name,'Visible to all companies') AS company_name,CAST(pack_date AS VARCHAR) AS pack_date,state,content_count FROM inventory_packages WHERE CASE WHEN COALESCE(:fixture_state,'') IN ('empty','not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+    query: "SELECT id,row_version,name,COALESCE(parent_package_name,'') AS parent_package_name,COALESCE(package_type_name,'') AS package_type_name,COALESCE(location_name,'') AS location_name,COALESCE(owner_name,'') AS owner_name,COALESCE(company_name,'Visible to all companies') AS company_name,CAST(pack_date AS VARCHAR) AS pack_date,state,content_count,(SELECT COUNT(DISTINCT l.move_id) FROM inventory_package_move_lines l WHERE l.package_id = inventory_packages.id) AS transfer_count FROM inventory_packages WHERE CASE WHEN COALESCE(:fixture_state,'') IN ('empty','not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
   - id: inventory_package_contents
     single: false
     permission: inventory.tracking
@@ -14,6 +14,11 @@ actions:
     type: navigate
     permission: inventory.tracking
     navigate_to: /packages
+  - id: view_inventory_package_transfers
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /packages/transfers
+    params: { package_id: '{state.inventory_package_detail.id}' }
   - id: edit_inventory_package
     type: server_form
     permission: inventory.tracking
