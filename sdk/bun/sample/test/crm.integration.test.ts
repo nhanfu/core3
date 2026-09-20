@@ -1,5 +1,6 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'bun:test';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
@@ -159,6 +160,55 @@ describe('CRM YAML lifecycle integration', () => {
     await expect(repository.executeMutation(conversion.mutation, { id: 'lead-stale', expected_row_version: 1, contact_name: 'Stale' })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
     expect(calls).toBe(0);
     database.close();
+  });
+
+  it('persists CRM-to-Base conversion across a file-backed restart', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'core3-crm-conversion-restart-'));
+    const crmPath = join(root, 'crm.duckdb');
+    const basePath = join(root, 'base.duckdb');
+    const openRepositories = async () => {
+      const database = await DuckDbDatabase.open(crmPath);
+      const baseDatabase = await DuckDbDatabase.open(basePath);
+      const baseRepository = new YamlRepository(baseDatabase);
+      const repository = new YamlRepository(database, (serviceName: string) => serviceName === 'yaml.service.base' ? {
+        call: (operation: string, request: Record<string, unknown>) => {
+          const baseAction = action(yaml('../base/api/contacts.yaml'), operation === 'base.contacts.delete_from_crm' ? 'delete_contact_from_crm' : 'create_contact_from_crm');
+          return baseRepository.executeMutation(baseAction.mutation, request);
+        },
+      } : undefined);
+      return { database, baseDatabase, baseRepository, repository };
+    };
+
+    try {
+      const first = await openRepositories();
+      await first.repository.run(`
+        CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, type VARCHAR, partner_id VARCHAR, partner_name VARCHAR, email VARCHAR, phone VARCHAR, stage VARCHAR, row_version BIGINT DEFAULT 1, updated_at TIMESTAMP);
+        CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, completed_at TIMESTAMP);
+        INSERT INTO crm_leads(id, type, email, phone, stage) VALUES ('lead-restart', 'lead', 'restart@example.test', '+1 555 0188', 'New');
+      `);
+      await first.baseRepository.run('CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, name VARCHAR, email VARCHAR, phone VARCHAR, active BOOLEAN DEFAULT true, row_version BIGINT DEFAULT 1)');
+      const conversion = action(yaml('pages/lead-detail.yaml'), 'convert_lead_create_contact_detail');
+      await first.repository.executeMutation(conversion.mutation, {
+        id: 'lead-restart', expected_row_version: 1, contact_name: 'Restart Customer', contact_email: 'restart@example.test', contact_phone: '+1 555 0188',
+      });
+      first.database.close();
+      first.baseDatabase.close();
+
+      const restarted = await openRepositories();
+      expect((await restarted.repository.query("SELECT type, partner_id, partner_name, row_version FROM crm_leads WHERE id = 'lead-restart'"))[0]).toMatchObject({
+        type: 'opportunity', partner_id: 'crm-lead-contact-lead-restart', partner_name: 'Restart Customer', row_version: 2,
+      });
+      expect((await restarted.baseRepository.query("SELECT id, name, email, phone, row_version FROM base_contacts WHERE id = 'crm-lead-contact-lead-restart'"))[0]).toMatchObject({
+        id: 'crm-lead-contact-lead-restart', name: 'Restart Customer', email: 'restart@example.test', phone: '+1 555 0188', row_version: 1,
+      });
+      expect((await restarted.repository.query("SELECT summary, state FROM crm_activities WHERE lead_id = 'lead-restart'"))[0]).toMatchObject({ summary: 'Lead converted and customer created', state: 'done' });
+      await expect(restarted.repository.executeMutation(conversion.mutation, { id: 'lead-restart', expected_row_version: 1, contact_name: 'Replay Customer', contact_email: 'replay@example.test' })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+      expect((await restarted.baseRepository.query('SELECT COUNT(*) AS count FROM base_contacts'))[0].count).toBe(1);
+      restarted.database.close();
+      restarted.baseDatabase.close();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('declares customer creation as a Base service contract with both permissions', () => {
