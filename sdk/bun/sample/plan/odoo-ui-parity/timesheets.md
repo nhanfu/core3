@@ -1087,6 +1087,38 @@ both viewports but no loaded row-to-project-timesheet action/form; that exact
 paired interaction blocker remains open. This bounded slice does not claim
 Timesheets module sign-off.
 
+## 2026-09-21 `TIMESHEET-ALL-COMPANY-SCOPE`
+
+Selected the next uncovered All Timesheets security behavior after the portal,
+analysis, and report interaction slices. Odoo's global analytic-line rule in
+`addons/analytic/security/analytic_security.xml` restricts analytic lines to
+`company_ids`; the Timesheets approver rules in
+`addons/hr_timesheet/security/hr_timesheet_security.xml` layer the Timesheets
+project/domain boundary on top.
+
+Core3's separate `pages/all-timesheets.yaml` and
+`api/all-timesheets.yaml` contracts now bind the durable All Timesheets read to
+the active company. The detail datasource and approver edit mutation use the
+same company guard, while the existing row-version concurrency guard remains
+the stale-write boundary. No migration was needed because the persisted
+`timesheet_entries.company_name` projection already exists.
+
+Focused coverage is
+`test/timesheets_all_company_scope.integration.test.ts` plus the existing All
+Timesheets suite: 7 tests / 65 expectations. It covers Odoo source/security
+comparison, page/API separation, permission, foreign-company exclusion and
+explicit company switching, file-backed restart persistence, foreign edit
+denial, stale owned writes, and deterministic query values.
+
+Authenticated Core3 and Odoo desktop/mobile captures are under
+`evidence/timesheets/2026-09-21/timesheet-all-company-scope/`. Both routes
+rendered without page errors; Odoo's only failed requests were aborted shared
+`/mail/data` prefetches. Core3 mobile visibly clips the wide existing list at
+390px despite document width metrics reporting 390px. A single browser company
+was available, so visual company switching is not claimed; repository tests
+prove the boundary. Existing Print/PDF/action and broader route comparison
+blockers remain open.
+
 ## 2026-09-21 `TIMESHEET-PORTAL-SORTING`
 
 The next uncovered portal behavior after the date filters is Odoo's

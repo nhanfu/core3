@@ -565,3 +565,24 @@ bounded feature does not claim Timesheets sign-off.
   boundary (focused scan previously names `search.lots`/`search.or packages...`).
   Odoo mobile visibly clips its dense table; Sales Order Item/Invoice sort
   projection and broader Print/PDF/action parity remain open.
+
+## 2026-09-21 `TIMESHEET-ALL-COMPANY-SCOPE`
+
+- Source gate: Odoo's `analytic_line_comp_rule` restricts analytic lines to
+  `company_ids`; the Timesheets approver rule remains project/domain scoped.
+- Core3 gate: `all-timesheets` page/API contracts are separate and the durable
+  list, detail read, and approver edit guard use the active
+  `current_company_name`. The API exposes `company_name` for auditable scope.
+- Focused gate: `test/timesheets_all_company_scope.integration.test.ts` plus
+  `test/timesheets_all.integration.test.ts` pass 7 tests / 65 expectations.
+  Coverage includes permission, source comparison, foreign-company exclusion,
+  explicit company switching, file restart, foreign mutation denial, and
+  `409 STALE_RECORD` concurrency.
+- Browser gate: authenticated Core3 and Odoo desktop/mobile captures are in
+  `evidence/timesheets/2026-09-21/timesheet-all-company-scope/`. Both routes
+  rendered without page errors; Odoo aborted shared `/mail/data` prefetches are
+  recorded in `results.json`.
+- Blockers: the single browser company prevents visual company-switch proof;
+  Core3 mobile visibly clips the wide list at 390px; existing Timesheets
+  Print/PDF/action and broader route comparison gaps remain open. No module
+  sign-off is claimed.

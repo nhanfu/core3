@@ -517,3 +517,23 @@ Authenticated Odoo `/odoo/timesheets-by-task` renders the aggregate report at
 both viewports but exposes no loaded row-to-task-timesheet action/form. This is
 the exact paired interaction blocker; remaining route/action comparison and
 Timesheets module sign-off remain open.
+
+## 2026-09-21 `TIMESHEET-ALL-COMPANY-SCOPE`
+
+The next distinct gap was All Timesheets multi-company visibility. Odoo's
+analytic-line global rule restricts rows to `company_ids`, while Core3's All
+Timesheets list/detail queries previously omitted `company_name` scope.
+
+The page/API pair now reads durable rows only for the active company, exposes
+the company field in the API pivot contract, and rejects approver edits from a
+foreign company before the existing row-version stale guard. Focused coverage
+passes 7 tests / 65 expectations, including source comparison, permission,
+explicit company switching, restart persistence, foreign edit denial, and
+stale owned writes.
+
+Authenticated Core3 and Odoo desktop/mobile evidence is under
+`evidence/timesheets/2026-09-21/timesheet-all-company-scope/`. Core3 and Odoo
+routes rendered; Odoo's aborted `/mail/data` prefetch is recorded. Core3 mobile
+still visibly clips the wide list, and visual company switching was unavailable
+in the single-company browser session. Print/PDF/action and broader route
+comparison blockers remain open.

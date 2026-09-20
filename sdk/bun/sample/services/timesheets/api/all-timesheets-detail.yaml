@@ -4,7 +4,7 @@ datasources:
     single: true
     permission: timesheets.manage
     error_states: { transport_error: { status: 503, code: TIMESHEETS_ALL_DETAIL_UNAVAILABLE, message: This timesheet entry is temporarily unavailable. } }
-    query: "SELECT id, row_version, name, company_name, employee_id, employee_name, project_id, project_name, task_id, task_name, CAST(work_date AS VARCHAR) AS work_date, description, hours, printf('%02d:%02d', CAST(FLOOR(hours) AS INTEGER), CAST(ROUND((hours - FLOOR(hours)) * 60) AS INTEGER)) AS time_spent_display, sales_order_item, billable, unit_amount, state, approver, CAST(approved_at AS VARCHAR) AS approved_at FROM timesheet_entries WHERE :id IS NOT NULL AND id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+    query: "SELECT id, row_version, name, company_name, employee_id, employee_name, project_id, project_name, task_id, task_name, CAST(work_date AS VARCHAR) AS work_date, description, hours, printf('%02d:%02d', CAST(FLOOR(hours) AS INTEGER), CAST(ROUND((hours - FLOOR(hours)) * 60) AS INTEGER)) AS time_spent_display, sales_order_item, billable, unit_amount, state, approver, CAST(approved_at AS VARCHAR) AS approved_at FROM timesheet_entries WHERE :id IS NOT NULL AND id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
   - id: all_timesheet_report_runs
     permission: timesheets.manage
     error_states: { transport_error: { status: 503, code: TIMESHEET_ALL_REPORT_RUNS_UNAVAILABLE, message: All Timesheets report history is temporarily unavailable. } }
@@ -71,7 +71,7 @@ actions:
       fields: [work_date, project_id, project_name, task_id, task_name, description, hours, billable, unit_amount, sales_order_item]
       required: [work_date, project_name, description, hours]
       guards:
-        - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND state <> 'Cancelled'", status: 403, code: TIMESHEETS_ALL_ENTRY_SCOPE, message: Cancelled timesheets cannot be edited. }
+        - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND state <> 'Cancelled'", status: 403, code: TIMESHEETS_ALL_ENTRY_SCOPE, message: Only timesheets in the active company can be edited. }
         - { query: "SELECT 1 AS ok WHERE TRY_CAST(:hours AS DECIMAL(18,3)) > 0 AND TRY_CAST(:hours AS DECIMAL(18,3)) <= 24 AND TRY_CAST(:work_date AS DATE) IS NOT NULL AND NULLIF(TRIM(CAST(:project_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: TIMESHEETS_ENTRY_INVALID, message: Enter a valid date, project, and time between 0 and 24 hours. }
       result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
     fields:

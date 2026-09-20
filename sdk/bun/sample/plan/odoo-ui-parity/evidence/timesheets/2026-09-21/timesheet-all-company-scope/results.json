@@ -1,0 +1,95 @@
+{
+  "feature_id": "TIMESHEET-ALL-COMPANY-SCOPE",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x900",
+      "login_inputs": 2,
+      "login_buttons": [
+        "Sign in",
+        "SSO login",
+        "Continue with Google",
+        "Continue with Microsoft"
+      ],
+      "login_body_excerpt": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "route": "http://127.0.0.1:3001/timesheets/all-timesheets",
+      "title": "All Timesheets",
+      "route_rendered": true,
+      "body_excerpt": "Work\nPortal\nReporting\nConfiguration\n⌘ K\nAU\nList\nKanban\nCalendar\nActivity\nPivot\nGraph\nServices / Timesheets / All Timesheets\n1-15 / 15\n‹\n›\nDate\n\tEmployee\n\tProject\n\tTask\n\tEntry\n\tDescription\n\tTime Spent\n\n2026-01-15\tAdmin User\tCore3 Implementation\tComplete module migration\t\nTS/2026/0001\n\tMigration work\t08:00\n2026-01-14\tAdmin User\tCore3 Implementation\tStakeholder review\t\nTS/2026/0009\n\tStakeholder review\t02:30\n2026-01-14\tMorgan Taylor\tCore3 Implementation\tRequirements analysis\t\nTS/2026/0002\n\tRequirements analysis\t06:30\n2026-01-13\tAdmin User\tCore3 Implementation\tDesign QA\t\nTS/2026/0010\n\tDesign QA\t03:15\n2026-01-13\tMorgan Taylor\tCore3 Implementation\tDesign\t\nTS/2026/0003\n\tDesign\t04:15\n2026-01-12\tAdmin User\tDelivery Enablement\tCustomer workshop\t\nTS/2026/0011\n\tCustomer workshop\t04:00\n2026-01-12\tPriya Shah\tCore3 Implementation\tQuality analysis\t\nTS/2026/0004\n\tQuality analysis\t03:30\n2026-01-11\tAdmin User\tDelivery Enablement\tDocumentation\t\nTS/2026/0012\n\tDocumentation\t05:00\n2026-01-10\tAdmin User\tCore3 Implementation\tRelease planning\t\nTS/2026/0013\n\tRelease planning\t02:00\n2026-01-09\tAdmin User\tDelivery Enablement\tDelivery\t\nTS/2026/0005\n\tDelivery\t07:30\n2026-01-08\tAdmin User\tDelivery Enablement\tSprint retrospective\t\nTS/2026/0014\n\tSprint retrospective\t01:30\n2026-01-08\tPriya Shah\tDelivery Enablement\tTraining\t\nTS/2026/0006\n\tTraining\t05:00\n2026-01-07\tAdmin User\tCore3 Implementation\tAcceptance review\t\nTS/2026/0015\n\tAcceptance review\t03:00\n2026-01-07\tMorgan Taylor\tDelivery Enablement\tPresentation\t\nTS/2026/0007\n\tPresentation\t02:45\n2026-01-06\tAdmin User\tDelivery Enablement\tSprint\t\nTS/2026/0008\n\tSprint\t",
+      "metrics": {
+        "innerWidth": 1440,
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      },
+      "page_errors": [],
+      "failed_requests": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "login_inputs": 2,
+      "login_buttons": [
+        "Sign in",
+        "SSO login",
+        "Continue with Google",
+        "Continue with Microsoft"
+      ],
+      "login_body_excerpt": "MovedX\nFleet & Transport Management\nSign in to your account\nEmail\nPassword\nSign in\nDemo credentials:\nadmin@tms.local / admin123\nfleet@tms.local / fleet123\nOr continue with\nSSO login\nContinue with Google\nContinue with Microsoft",
+      "route": "http://127.0.0.1:3001/timesheets/all-timesheets",
+      "title": "All Timesheets",
+      "route_rendered": true,
+      "body_excerpt": "AU\nAll Timesheets\n1-15 / 15\n‹\n›\nDate\n\tEmployee\n\tProject\n\tTask\n\tEntry\n\tDescription\n\tTime Spent\n\n2026-01-15\tAdmin User\tCore3 Implementation\tComplete module migration\t\nTS/2026/0001\n\tMigration work\t08:00\n2026-01-14\tAdmin User\tCore3 Implementation\tStakeholder review\t\nTS/2026/0009\n\tStakeholder review\t02:30\n2026-01-14\tMorgan Taylor\tCore3 Implementation\tRequirements analysis\t\nTS/2026/0002\n\tRequirements analysis\t06:30\n2026-01-13\tAdmin User\tCore3 Implementation\tDesign QA\t\nTS/2026/0010\n\tDesign QA\t03:15\n2026-01-13\tMorgan Taylor\tCore3 Implementation\tDesign\t\nTS/2026/0003\n\tDesign\t04:15\n2026-01-12\tAdmin User\tDelivery Enablement\tCustomer workshop\t\nTS/2026/0011\n\tCustomer workshop\t04:00\n2026-01-12\tPriya Shah\tCore3 Implementation\tQuality analysis\t\nTS/2026/0004\n\tQuality analysis\t03:30\n2026-01-11\tAdmin User\tDelivery Enablement\tDocumentation\t\nTS/2026/0012\n\tDocumentation\t05:00\n2026-01-10\tAdmin User\tCore3 Implementation\tRelease planning\t\nTS/2026/0013\n\tRelease planning\t02:00\n2026-01-09\tAdmin User\tDelivery Enablement\tDelivery\t\nTS/2026/0005\n\tDelivery\t07:30\n2026-01-08\tAdmin User\tDelivery Enablement\tSprint retrospective\t\nTS/2026/0014\n\tSprint retrospective\t01:30\n2026-01-08\tPriya Shah\tDelivery Enablement\tTraining\t\nTS/2026/0006\n\tTraining\t05:00\n2026-01-07\tAdmin User\tCore3 Implementation\tAcceptance review\t\nTS/2026/0015\n\tAcceptance review\t03:00\n2026-01-07\tMorgan Taylor\tDelivery Enablement\tPresentation\t\nTS/2026/0007\n\tPresentation\t02:45\n2026-01-06\tAdmin User\tDelivery Enablement\tSprint\t\nTS/2026/0008\n\tSprint\t06:00",
+      "metrics": {
+        "innerWidth": 390,
+        "bodyWidth": 390,
+        "documentWidth": 390
+      },
+      "page_errors": [],
+      "failed_requests": []
+    }
+  },
+  "odoo": {
+    "desktop": {
+      "url": "http://127.0.0.1:8069/odoo/all-timesheets",
+      "viewport": "1440x900",
+      "title": "All Timesheets",
+      "route_rendered": true,
+      "body_excerpt": "Timesheets\nTimesheets\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nAll Timesheets\n1-80 / 528\n\t\nDate\n\t\nEmployee\n\t\nProject\n\t\nTask\n\t\nDescription\n\t\nSales Order Item\n\t\nTime Spent\n\t\n\n\n\tSep 20\t\nMarc Demo\n\tResearch & Development\t\n\t/\t\t00:00\t\n\n\tSep 12\t\nBeth Evans\n\tResearch & Development\t\nCreate new components\n\tTraining\t\t02:00\t\n\n\tSep 12\t\nBeth Evans\n\tResearch & Development\t\nCreate new components\n\tOn Site Visit\t\t01:00\t\n\n\tSep 12\t\nWalter Horton\n\tResearch & Development\t\nSocial network integration\n\tDelivery\t\t01:00\t\n\n\tSep 12\t\nEli Lambert\n\tResearch & Development\t\nSocial network integration\n\tPresentation\t\t01:00\t\n\n\tSep 12\t\nAbigail Peterson\n\tResearch & Development\t\nSocial network integration\n\tDelivery\t\t03:00\t\n\n\tSep 11\t\nMarc Demo\n\tResearch & Development\t\nCreate new components\n\tDesign\t\t01:00\t\n\n\tSep 11\t\nBeth Evans\n\tResearch & Development\t\nCreate new components\n\tDelivery\t\t01:00\t\n\n\tSep 11\t\nAbigail Peterson\n\tResearch & Development\t\nCreate new components\n\tDelivery\t\t01:00\t\n\n\tSep 11\t\nPaul Williams\n\tResearch & Development\t\nCreate new components\n\tRequirements analysis\t\t03:00\t\n\n\tSep 11\t\nKeith Byrd\n\tResearch & Development\t\nSocial network integration\n\tOn Site Visit\t\t01:00\t\n\n\tSep 11\t\nBeth Evans\n\tResearch & Development\t\nSocial network integration\n\tOn Site Visit\t\t01:00\t\n\n\tSep 11\t\nKeith Byrd\n\tResearch & Development\t\nSocial network integration\n\tTraining\t\t01:00\t\n\n\tSep 10\t\nMarc Demo\n\tACME - S00037 - Sales Order\t\n\tImprove\t\nS00036 - Kitchen Assembly (Milestones) (Ready Mat)\n\t01:00\t\n\n\tSep 10\t\nMarc Demo\n\tDPC - S00036 - Sales Order\t\nKitchen Assembly (Milestones)\n\tImprove\t\nS00036 - Kitchen Assembly (Milesto",
+      "metrics": {
+        "innerWidth": 1440,
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      },
+      "page_errors": [],
+      "failed_requests": [
+        {
+          "url": "http://127.0.0.1:8069/mail/data",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "http://127.0.0.1:8069/mail/data",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:8069/odoo/all-timesheets",
+      "viewport": "390x844",
+      "title": "All Timesheets",
+      "route_rendered": true,
+      "body_excerpt": "All Timesheets\n7\n40\nNew\nResearch & Development\nSep 20 - Marc Demo\n/\n0h\nResearch & Development\nCreate new components\nSep 12 - Beth Evans\nTraining\n2h\nResearch & Development\nCreate new components\nSep 12 - Beth Evans\nOn Site Visit\n1h\nResearch & Development\nSocial network integration\nSep 12 - Walter Horton\nDelivery\n1h\nResearch & Development\nSocial network integration\nSep 12 - Eli Lambert\nPresentation\n1h\nResearch & Development\nSocial network integration\nSep 12 - Abigail Peterson\nDelivery\n3h\nResearch & Development\nCreate new components\nSep 11 - Marc Demo\nDesign\n1h\nResearch & Development\nCreate new components\nSep 11 - Beth Evans\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 11 - Abigail Peterson\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 11 - Paul Williams\nRequirements analysis\n3h\nResearch & Development\nSocial network integration\nSep 11 - Keith Byrd\nOn Site Visit\n1h\nResearch & Development\nSocial network integration\nSep 11 - Beth Evans\nOn Site Visit\n1h\nResearch & Development\nSocial network integration\nSep 11 - Keith Byrd\nTraining\n1h\nACME - S00037 - Sales Order\nSep 10 - Marc Demo\nImprove\n1h\nDPC - S00036 - Sales Order\nKitchen Assembly (Milestones)\nSep 10 - Marc Demo\nImprove\n1h\nDPC - S00036 - Sales Order\nJunior Architect (Invoice on Timesheets)\nSep 10 - Marc Demo\nRepair\n1h\nAGR - S00035 - Sales Order\nFurniture Delivery (Manual)\nSep 10 - Mitchell Admin\nShifting\n10h\nAGR - S00035 - Sales Order\nSenior Architect (Invoice on Timesheets)\nSep 10 - Toni Jimenez\nAssembling\n5h\nAGR - S00035 - Sales Order\nKitchen Assembly\nSep 10 - Mitchell Admin\nImprove\n10h\nInternal\n",
+      "metrics": {
+        "innerWidth": 390,
+        "bodyWidth": 390,
+        "documentWidth": 390
+      },
+      "page_errors": [],
+      "failed_requests": [
+        {
+          "url": "http://127.0.0.1:8069/mail/data",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    }
+  },
+  "blockers": []
+}
