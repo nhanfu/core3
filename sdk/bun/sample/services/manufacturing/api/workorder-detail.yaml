@@ -20,6 +20,35 @@ actions:
     permission: manufacturing.read
     navigate_to: /workorders
     params: {}
+  - id: edit_mrp_workorder
+    type: server_form
+    permission: manufacturing.write
+    title: Edit Work Order
+    action: manufacturing.workorders.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}' }
+    prefill: state.mrp_workorder_detail
+    refresh: [mrp_workorder_detail, mrp_workorders]
+    mutation:
+      operation: update
+      table: mrp_workorders
+      fields: [operation_name, workcenter, expected_duration, planned_date, date_start, date_finished]
+      required: [operation_name, workcenter, expected_duration]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM mrp_workorders WHERE id = :id", status: 404, code: MRP_WORKORDER_NOT_FOUND, message: Work Order not found. }
+        - { query: "SELECT id FROM mrp_workorders WHERE id = :id AND state NOT IN ('Finished', 'Cancelled')", status: 409, code: MRP_WORKORDER_TERMINAL_EDIT, message: Finished or cancelled work orders cannot be edited. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:expected_duration AS DECIMAL(18,2)) > 0", status: 422, code: MRP_WORKORDER_DURATION_INVALID, message: Expected duration must be greater than zero. }
+        - { query: "SELECT 1 AS ok WHERE :date_start IS NULL OR :date_finished IS NULL OR CAST(:date_finished AS TIMESTAMP) >= CAST(:date_start AS TIMESTAMP)", status: 422, code: MRP_WORKORDER_DATE_RANGE_INVALID, message: End must be on or after the start date. }
+      result: { query: "SELECT * FROM mrp_workorders WHERE id = :id" }
+    fields:
+      - { field: operation_name, label: Operation, type: text, required: true }
+      - { field: workcenter, label: Work Center, type: text, required: true }
+      - { field: expected_duration, label: Expected minutes, type: number, required: true, min: 0.01 }
+      - { field: planned_date, label: Planned date, type: text }
+      - { field: date_start, label: Start, type: text }
+      - { field: date_finished, label: End, type: text }
   - { id: plan_mrp_workorder_detail, type: server, permission: manufacturing.write, action: manufacturing.workorders.plan, handler: order_transition, workflow: mrp_workorders, operation: plan, params: { id: '{state.id}' }, refresh: [mrp_workorder_detail, mrp_workorders] }
   - { id: start_mrp_workorder_detail, type: server, permission: manufacturing.write, action: manufacturing.workorders.start, handler: order_transition, workflow: mrp_workorders, operation: start, params: { id: '{state.id}' }, refresh: [mrp_workorder_detail, mrp_workorders] }
   - { id: pause_mrp_workorder_detail, type: server, permission: manufacturing.write, action: manufacturing.workorders.pause, handler: order_transition, workflow: mrp_workorders, operation: pause, params: { id: '{state.id}' }, refresh: [mrp_workorder_detail, mrp_workorders] }

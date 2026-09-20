@@ -5,10 +5,11 @@ components:
     source: mrp_workorder_detail
     title_field: operation_name
     subtitle_field: production_name
-    editable: false
+    editable: true
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
     header_actions:
       - { id: back_to_mrp_workorders, label: Back to Work Orders, icon: arrow-left, permission: manufacturing.read }
+      - { id: edit_mrp_workorder, label: Edit, variant: primary, permission: manufacturing.write, show_if: "record.state !== 'Finished' && record.state !== 'Cancelled'" }
       - { id: plan_mrp_workorder_detail, label: Plan, variant: secondary, permission: manufacturing.write, show_if: "record.state === 'Waiting' || record.state === 'Blocked'" }
       - { id: start_mrp_workorder_detail, label: Start, variant: primary, permission: manufacturing.write, show_if: "record.state === 'Ready'" }
       - { id: pause_mrp_workorder_detail, label: Pause, variant: secondary, permission: manufacturing.write, show_if: "record.state === 'Progress' && record.paused === false" }
@@ -23,8 +24,8 @@ components:
           - { field: workcenter, label: Work Center }
           - { field: production_name, label: Manufacturing Order }
           - { field: product_name, label: Product }
-          - { field: production_state, label: Manufacturing Order Status }
-          - { field: state, label: Status }
+          - { field: production_state, label: Manufacturing Order Status, readonly: true }
+          - { field: state, label: Status, readonly: true }
       - title: Planning and time
         fields:
           - { field: planned_date, label: Planned date }
@@ -32,9 +33,9 @@ components:
           - { field: date_finished, label: End }
           - { field: expected_duration, label: Expected minutes }
           - { field: actual_duration, label: Actual minutes }
-          - { field: planned, label: Planned, type: checkbox }
-          - { field: late, label: Late, type: checkbox }
-          - { field: blocked_reason, label: Block reason }
+          - { field: planned, label: Planned, type: checkbox, readonly: true }
+          - { field: late, label: Late, type: checkbox, readonly: true }
+          - { field: blocked_reason, label: Block reason, readonly: true }
     status_field: state
     statusbar:
       - { value: Waiting, label: Waiting }

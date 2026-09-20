@@ -37,7 +37,11 @@ describe('Manufacturing Work Orders parity slice', () => {
     expect(listPage.components[0]).toMatchObject({ source: 'mrp_workorders', row_open_action: 'view_mrp_workorder', default_group_by: 'workcenter' });
     expect(listPage.components[0].default_filters).toEqual({ search_default_ready: true, search_default_progress: true, search_default_blocked: true });
     expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'form', 'calendar', 'pivot', 'graph']);
-    expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'mrp_workorder_detail' });
+    expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'mrp_workorder_detail', editable: true });
+    expect(action('edit_mrp_workorder')).toMatchObject({ type: 'server_form', permission: 'manufacturing.write', operation: 'update' });
+    expect(action('edit_mrp_workorder').mutation).toMatchObject({ table: 'mrp_workorders', concurrency: { required: true } });
+    expect(action('edit_mrp_workorder').mutation.fields).toEqual(['operation_name', 'workcenter', 'expected_duration', 'planned_date', 'date_start', 'date_finished']);
+    expect(detailApi().actions.some((candidate: any) => candidate.operation === 'create' || candidate.operation === 'delete')).toBe(false);
     expect(discovered.pageDatasources.get('manufacturing-workorders')).toEqual(['mrp_workorder_states', 'mrp_workorders']);
     expect(discovered.pageDatasources.get('manufacturing-workorder-detail')).toEqual(['mrp_workorder_detail']);
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([
@@ -101,6 +105,37 @@ describe('Manufacturing Work Orders parity slice', () => {
     expect(cancelled).toMatchObject({ state: 'Cancelled', row_version: 8 });
     await expect(repository.executeMutation(cancel.mutation, { id: 'wo-blocked-001', expected_row_version: 8 })).rejects.toMatchObject({ status: 409, code: 'MRP_WORKORDER_INVALID_STATE' });
     await expect(repository.executeMutation(plan.mutation, { id: 'wo-progress-001', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'MRP_WORKORDER_INVALID_STATE' });
+    database.close();
+  });
+
+  test('edits a persisted non-terminal work order and rejects invalid, terminal, missing, stale, and unauthorized writes', async () => {
+    const { database, repository } = await repositoryForTest();
+    const edit = action('edit_mrp_workorder');
+    const values = {
+      operation_name: 'Cut panels - revised',
+      workcenter: 'Assembly 1',
+      expected_duration: 50,
+      planned_date: '2026-01-16',
+      date_start: '2026-01-15 08:10:00',
+      date_finished: '2026-01-15 09:00:00',
+    };
+
+    const updated = await repository.executeMutation(edit.mutation, { id: 'wo-progress-001', expected_row_version: 1, values });
+    expect(updated).toMatchObject({ id: 'wo-progress-001', operation_name: 'Cut panels - revised', expected_duration: 50, row_version: 2 });
+    expect((await repository.querySource(detailApi().datasources[0], { id: 'wo-progress-001', fixture_state: null }, 0, 1)).data)
+      .toMatchObject({ operation_name: 'Cut panels - revised', planned_date: '2026-01-16', date_start: '2026-01-15 08:10:00', date_finished: '2026-01-15 09:00:00' });
+
+    await expect(repository.executeMutation(edit.mutation, { id: 'wo-progress-001', expected_row_version: 1, values }))
+      .rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    await expect(repository.executeMutation(edit.mutation, { id: 'wo-progress-001', expected_row_version: 2, values: { ...values, expected_duration: 0 } }))
+      .rejects.toMatchObject({ status: 422, code: 'MRP_WORKORDER_DURATION_INVALID' });
+    await expect(repository.executeMutation(edit.mutation, { id: 'wo-progress-001', expected_row_version: 2, values: { ...values, date_start: '2026-01-15 10:00:00', date_finished: '2026-01-15 09:00:00' } }))
+      .rejects.toMatchObject({ status: 422, code: 'MRP_WORKORDER_DATE_RANGE_INVALID' });
+    await expect(repository.executeMutation(edit.mutation, { id: 'wo-done-001', expected_row_version: 1, values }))
+      .rejects.toMatchObject({ status: 409, code: 'MRP_WORKORDER_TERMINAL_EDIT' });
+    await expect(repository.executeMutation(edit.mutation, { id: 'missing-workorder', expected_row_version: 1, values }))
+      .rejects.toMatchObject({ status: 404, code: 'MRP_WORKORDER_NOT_FOUND' });
+    expect(edit.permission).toBe('manufacturing.write');
     database.close();
   });
 });
