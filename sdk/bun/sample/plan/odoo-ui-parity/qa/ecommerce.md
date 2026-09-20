@@ -1,5 +1,34 @@
 # ecommerce QA ledger
 
+## Payment Transaction Lifecycle (`ECOM-CHECKOUT-PAYMENT-TRANSACTIONS-001`, 2026-09-20)
+
+- Odoo source comparison: `menu_ecommerce_payment_transactions` opens
+  `payment.action_payment_transaction`, model `payment.transaction`; the
+  supplied model and views define unique reference, provider/payment method,
+  company, amount/currency, customer, provider reference, status, and
+  technical list/form actions.
+- Core3 lifecycle: migrations 055/056 add durable transaction schema and a
+  deterministic confirmed fixture. Authenticated and guest checkout create a
+  single pending transaction with a unique order/idempotency key. The
+  separate `payment-transactions` page/API provides company-scoped reads and
+  `ecommerce.write` state transitions with allowed-state, provider-reference,
+  and optimistic row-version guards.
+- Focused verification: `bun test
+  ./test/ecommerce_payment_transactions.integration.test.ts
+  ./test/ecommerce_checkout.integration.test.ts
+  ./test/ecommerce_payment_methods.integration.test.ts --timeout 20000` —
+  **19 passed, 114 assertions, 0 failures**.
+- UI audit: **686 pages, 695 routes, 1272 datasources**, passed. Scoped
+  ESLint and `git diff --check` are recorded with the commit handoff.
+- Core3 authenticated desktop/mobile capture was attempted but blocked by
+  backend startup: frontend `/api/modules` and route loads returned HTTP 502
+  because backend port 4312 refused connections. No browser sign-off is
+  claimed.
+- Authenticated Odoo comparison is blocked: `/shop` returned exact HTTP 404
+  on ports 8069 and 8073. QA disposition: **bounded implementation verified,
+  not signed off**; live provider/token/capture/refund and paired Odoo gates
+  remain open.
+
 ## Variant Configurator Cart Resolution (`ECOM-CATALOG-VARIANT-CONFIGURATOR-001`, 2026-09-20)
 
 - Odoo source comparison: `website_sale/controllers/variant.py` exposes the

@@ -1,0 +1,28 @@
+title: Payment Transactions
+page: { id: ecommerce-payment-transactions, route: /ecommerce/payment-transactions, breadcrumb: [eCommerce, Configuration, Payment Transactions], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_payment_transactions
+    search: { label: Search transactions, placeholder: 'Search reference, order, or customer...' }
+    filters: [{ field: state, label: Status, options_source: ecommerce_payment_transaction_states }]
+    responsive_card: true
+    columns:
+      - { field: reference, label: Reference, type: PrimaryEntityCell }
+      - { field: order_number, label: Order }
+      - { field: payment_method, label: Payment Method }
+      - { field: provider_name, label: Provider }
+      - { field: customer_name, label: Customer }
+      - { field: amount, label: Amount, align: right }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: company_name, label: Company }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 160
+        actions:
+          - { id: set_ecommerce_payment_transaction_state, label: Update Status, permission: ecommerce.write }
+    row_actions: menu
+    page_size: 50
+    row_key: id
+    empty_state: { title: No payment transactions, description: Checkout payment attempts will appear here. }

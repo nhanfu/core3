@@ -1,6 +1,37 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded catalog product-variants slice; module sign-off remains open)
+Status: qa-in-progress (bounded payment-transaction lifecycle slice; module sign-off remains open)
+
+## Bounded feature — Payment Transaction Lifecycle (`ECOM-CHECKOUT-PAYMENT-TRANSACTIONS-001`)
+
+Odoo source comparison: `website_sale/views/website_sale_menus.xml` exposes
+Website > Configuration > eCommerce > Payment Transactions through
+`payment.action_payment_transaction` (restricted to the technical payment
+group). The supplied `payment/models/payment_transaction.py` defines unique
+references, provider/payment method, amount/currency, company, customer,
+provider reference, and the draft/pending/authorized/done/cancel/error state
+model. `payment/views/payment_transaction_views.xml` supplies list, kanban,
+form, search, graph, and pivot views with capture/void/post-process actions.
+
+Core3 comparison: configured payment methods previously validated checkout but
+checkout did not persist a transaction boundary. This slice adds migrations
+055/056 for durable transaction rows and a deterministic confirmed fixture;
+authenticated and guest checkout each create one pending transaction keyed by
+the checkout cart/order; the separate Payment Transactions page/API exposes
+company-scoped reads and an `ecommerce.write` optimistic state-transition
+action. Allowed state transitions, provider-reference requirements, company
+scope, idempotent checkout insert, and restart persistence are tested. This
+does not claim a live provider adapter, tokenization, capture/refund wizard,
+or external callback boundary.
+
+Focused tests cover page/API/menu contracts, checkout transaction creation and
+idempotency, guarded transitions, company/stale/invalid validation, migration
+replay, and DuckDB restart persistence in
+`test/ecommerce_payment_transactions.integration.test.ts`. Core3 browser
+capture was attempted at desktop/mobile but the backend did not become ready;
+the frontend returned 502 for `/api/modules` and route loads. Both supplied
+Odoo references return exact HTTP 404 for `/shop`; paired comparison is
+blocked. This bounded feature is verified but Ecommerce remains unsigned off.
 
 ## Bounded feature — Variant Configurator Cart Resolution (`ECOM-CATALOG-VARIANT-CONFIGURATOR-001`)
 

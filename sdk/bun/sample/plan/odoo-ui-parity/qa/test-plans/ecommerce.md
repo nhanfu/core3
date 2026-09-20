@@ -57,6 +57,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-021 | Pricelist Rules | Durable target/pricing metadata, deterministic fixtures, permissioned CRUD, target/date/value/duplicate validation, stale writes, migration rerun, restart persistence, and cart fixed/percentage application work | pass: `ecommerce_pricelist_rules.integration.test.ts` — 4 tests, 34 assertions |
 | ECOM-FUNC-022 | Product Variants | Durable variant records, deterministic fixtures, variant-specific pricelist/cart resolution, permissioned CRUD, combination/reference/price validation, stale writes, migration rerun, and restart persistence work | pass: `ecommerce_product_variants.integration.test.ts` — 4 tests, 27 assertions |
 | ECOM-FUNC-023 | Product Tag Variant Assignments | Durable variant tag relations, deterministic assignments, permissioned assign/remove, active/company/duplicate validation, stale writes, migration rerun, and restart persistence work | pass: `ecommerce_product_tag_variants.integration.test.ts` — 4 tests, 20 assertions |
+| ECOM-FUNC-024 | Payment Transactions | Durable checkout transactions expose unique references, amount/provider/payment state, company scope, guarded transitions, migration replay, and restart persistence | pass: `ecommerce_payment_transactions.integration.test.ts`; external provider execution remains open |
 
 ## Workflow and integration cases
 
@@ -81,6 +82,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-WF-032 | Product Tag image | Authorized catalog editor uploads/replaces an image for a product tag; invalid media, stale uploads, and missing tags leave the current image unchanged; bytes survive restart | pass: `ecommerce_product_tag_image.integration.test.ts`; authenticated Core3 detail evidence captured |
 | ECOM-WF-033 | Product export | Authorized Ecommerce reader exports current company-scoped product rows with stable escaped CSV columns; replay and restart preserve the source snapshot and edits are reflected by row version | pass: `ecommerce_product_export.integration.test.ts`; Core3 browser blocked by shared Inventory discovery |
 | ECOM-WF-034 | Variant configurator cart resolution | Authorized product-detail variant add validates the selected active/published/current-company combination, persists the variant-priced line, increments the same line idempotently, and survives restart for authenticated and anonymous carts | pass: `ecommerce_variant_configurator.integration.test.ts`; Core3 browser blocked by shared Inventory discovery and paired Odoo `/shop` 404 |
+| ECOM-WF-035 | Payment transaction lifecycle | Checkout creates one pending transaction per order; authorized/confirmed/canceled/error transitions require valid state, provider reference where applicable, company scope, and current row version; replay/restart preserve one durable transaction | pass: `ecommerce_payment_transactions.integration.test.ts`; live provider callback/capture/refund remains open |
 
 ## Permission and security cases
 
@@ -111,6 +113,7 @@ the all-customer scope.
 | ECOM-PERM-028 | Product Tag image read/write boundary | `ecommerce.read` protects tag detail/image reads and download; `ecommerce.write` protects upload/replacement; non-image, oversized, missing-tag, and stale requests preserve the current image | pass: `ecommerce_product_tag_image.integration.test.ts` |
 | ECOM-PERM-029 | Product export read/company boundary | `ecommerce.read` protects the Products page/query/export; company context excludes other-company rows and export performs no mutation or cross-company widening | pass: `ecommerce_product_export.integration.test.ts` |
 | ECOM-PERM-030 | Variant configurator cart boundary | `ecommerce.write` protects authenticated variant mutation; inactive, unpublished, cross-company, missing, and non-matching variants are rejected without changing the cart; anonymous YAML mutation requires a valid public cart and published current-company variant | pass: `ecommerce_variant_configurator.integration.test.ts` |
+| ECOM-PERM-031 | Payment transaction company/state boundary | `ecommerce.read` protects transaction list/state sources and `ecommerce.write` protects transitions; wrong-company, stale, invalid-state, and missing-provider-reference writes are rejected without changing the transaction | pass: `ecommerce_payment_transactions.integration.test.ts` |
 
 ## Visual, responsive, and regression cases
 
@@ -132,6 +135,7 @@ the all-customer scope.
 | ECOM-UI-014 | Product Tag image detail/form | 1440x900, 390x844 | Authenticated Core3 Product Tags list opens an image-capable detail form and remains readable at mobile; paired Odoo comparison is blocked by exact `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-tag-image-001/` |
 | ECOM-UI-015 | Product export | 1440x900, 390x844 | Authenticated Core3 Products list exposes Export and downloads deterministic CSV; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture is additionally blocked by shared Inventory discovery | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-export-001/` |
 | ECOM-UI-016 | Variant configurator cart resolution | 1440x900, 390x844 | Authenticated Core3 Product Detail variant rows expose Add to Cart and preserve the selected variant in Cart; paired Odoo comparison requires combination resolution but is blocked by exact `/shop` 404; Core3 capture is blocked by shared Inventory discovery | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-variant-configurator-001/` |
+| ECOM-UI-017 | Payment Transactions list/state lifecycle | 1440x900, 390x844 | Authenticated Core3 Payment Transactions list renders deterministic references/statuses and status transition form at responsive widths; paired Odoo comparison is blocked by exact `/shop` 404 and Core3 capture by backend 502 | Core3 browser blocked; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-checkout-payment-transactions-001/` |
 
 ## Reference blocker
 

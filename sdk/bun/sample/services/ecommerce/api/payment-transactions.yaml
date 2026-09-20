@@ -1,0 +1,37 @@
+page: { id: ecommerce-payment-transactions }
+datasources:
+  - id: ecommerce_payment_transactions
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PAYMENT_TRANSACTIONS_UNAUTHENTICATED, message: Sign in to view payment transactions. }
+      forbidden: { status: 403, code: ECOMMERCE_PAYMENT_TRANSACTIONS_FORBIDDEN, message: You do not have permission to view payment transactions. }
+      transport_error: { status: 503, code: ECOMMERCE_PAYMENT_TRANSACTIONS_UNAVAILABLE, message: Payment transactions are temporarily unavailable. }
+    query: "SELECT t.id, t.row_version, t.order_id, o.order_number, t.reference, t.idempotency_key, t.payment_method, t.provider_name, t.provider_reference, t.amount, t.currency, t.state, t.state_message, t.operation, t.is_live, t.customer_id, t.customer_name, t.customer_email, t.company_name, CAST(t.created_at AS VARCHAR) AS created_at, CAST(t.last_state_change AS VARCHAR) AS last_state_change FROM ecommerce_payment_transactions t LEFT JOIN ecommerce_orders o ON o.id = t.order_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR t.reference ILIKE '%' || :q || '%' OR COALESCE(o.order_number, '') ILIKE '%' || :q || '%' OR t.customer_name ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (:company_name IS NULL OR t.company_name = :company_name) ORDER BY t.created_at DESC, t.id DESC"
+  - id: ecommerce_payment_transaction_states
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('draft', 'Draft'), ('pending', 'Pending'), ('authorized', 'Authorized'), ('done', 'Confirmed'), ('cancel', 'Canceled'), ('error', 'Error')) AS states(value, label) ORDER BY CASE value WHEN 'pending' THEN 1 WHEN 'authorized' THEN 2 WHEN 'done' THEN 3 WHEN 'cancel' THEN 4 WHEN 'error' THEN 5 ELSE 0 END"
+actions:
+  - id: set_ecommerce_payment_transaction_state
+    type: server_form
+    permission: ecommerce.write
+    title: Update payment transaction
+    action: ecommerce.payment_transactions.transition
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_payment_transactions]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_payment_transactions WHERE id = :id AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: ECOMMERCE_PAYMENT_TRANSACTION_STALE, message: This payment transaction changed or was deleted. Reload before updating. }
+        - { query: "SELECT 1 AS ok WHERE :state IN ('pending', 'authorized', 'done', 'cancel', 'error')", status: 422, code: ECOMMERCE_PAYMENT_TRANSACTION_STATE_INVALID, message: Choose a valid payment transaction state. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_payment_transactions WHERE id = :id AND ((state = 'draft' AND :state IN ('pending', 'cancel', 'error')) OR (state = 'pending' AND :state IN ('authorized', 'done', 'cancel', 'error')) OR (state = 'authorized' AND :state IN ('done', 'cancel', 'error')))", status: 409, code: ECOMMERCE_PAYMENT_TRANSACTION_TRANSITION_INVALID, message: This payment transaction cannot move to the requested state. }
+        - { query: "SELECT 1 AS ok WHERE :state NOT IN ('authorized', 'done') OR LENGTH(TRIM(COALESCE(CAST(:provider_reference AS VARCHAR), ''))) > 0", status: 422, code: ECOMMERCE_PAYMENT_TRANSACTION_REFERENCE_REQUIRED, message: Authorized or confirmed transactions require a provider reference. }
+      steps:
+        - { query: "UPDATE ecommerce_payment_transactions SET row_version = row_version + 1, state = :state, provider_reference = NULLIF(:provider_reference, ''), state_message = NULLIF(:state_message, ''), last_state_change = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PAYMENT_TRANSACTION_STALE, message: This payment transaction changed before the update. }
+      result: { query: "SELECT * FROM ecommerce_payment_transactions WHERE id = :id" }
+    fields:
+      - { field: state, label: Status, type: select, options_source: ecommerce_payment_transaction_states, required: true }
+      - { field: provider_reference, label: Provider Reference, type: text }
+      - { field: state_message, label: Message, type: textarea }

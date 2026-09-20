@@ -1,0 +1,17 @@
+version: 0.0.56
+kind: data
+description: deterministic eCommerce payment transaction fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_payment_transactions
+        (id, order_id, reference, idempotency_key, payment_method, provider_name, provider_reference, amount, currency, state, state_message, operation, is_live, customer_id, customer_name, customer_email, company_name)
+      SELECT 'ecommerce-payment-tx-001', o.id, 'ECOM-TX-WEB-2026-0001', 'fixture:WEB/2026/0001', 'Wire Transfer', 'Core3 Offline', 'fixture-wire-0001', o.amount_total, o.currency, 'done', 'Fixture payment confirmed', 'offline', FALSE, o.customer_id, o.customer_name, o.customer_email, o.company_name
+      FROM ecommerce_orders o
+      WHERE o.id = 'ecommerce-order-001'
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_payment_transactions WHERE id = 'ecommerce-payment-tx-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

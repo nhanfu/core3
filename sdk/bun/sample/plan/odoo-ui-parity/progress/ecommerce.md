@@ -4,7 +4,29 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `c7cfd29a8d4540d18d95d1b7a4ac29a5490a7a86` (Product Tag Images); previous bounded slice: `fb8312242ee51535d35e2582dd906232e8e10cb4` (Product Tag Variant Assignments).
+Latest committed bounded slice before this wave: `e754da1af3ef3731dfabf89592c232323b40f5d8` (Variant Configurator Cart Resolution).
+
+## Current bounded task — `ECOM-CHECKOUT-PAYMENT-TRANSACTIONS-001`
+
+The smallest remaining source-backed checkout gap is Odoo's durable
+`payment.transaction` lifecycle behind the already-completed payment-method
+catalog. Core3 now persists one pending transaction per authenticated or guest
+checkout using a unique order/idempotency key, exposes a separate
+company-scoped Payment Transactions page/API, and guards state transitions
+with `ecommerce.write`, allowed-state validation, provider-reference
+validation, and row-version concurrency. Migrations 055/056 provide the
+schema and deterministic confirmed fixture.
+
+Focused verification: `bun test
+./test/ecommerce_payment_transactions.integration.test.ts
+./test/ecommerce_checkout.integration.test.ts
+./test/ecommerce_payment_methods.integration.test.ts --timeout 20000` —
+**19 passed, 114 assertions, 0 failures**. The UI audit passes at 686 pages,
+695 routes, and 1272 datasources. Core3 desktop/mobile capture is blocked by
+the dev backend refusing `/api/modules` while the frontend returns 502;
+Odoo `/shop` returns exact HTTP 404 on ports 8069 and 8073. Evidence is under
+`evidence/ecommerce/2026-09-20/ecom-checkout-payment-transactions-001/`.
+Module sign-off remains open.
 
 ## Current bounded task — `ECOM-CATALOG-VARIANT-CONFIGURATOR-001`
 
