@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
@@ -35,6 +35,64 @@ describe('eCommerce Checkout parity', () => {
     const missingCart = await module.handlePublicRoute(new Request('http://core3.test/api/public/ecommerce/checkout', { method: 'POST', body: '{}' }), new URL('http://core3.test/api/public/ecommerce/checkout'), service);
     expect(missingCart.status).toBe(422);
     database.close();
+  });
+
+  test('persists guest checkout and rejects a replay after file-backed restart', async () => {
+    const databasePath = `/tmp/core3-ecommerce-guest-checkout-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `ecommerce_guest_checkout_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const cartId = `ecommerce-cart-anon-${crypto.randomUUID()}`;
+    const lineId = `${cartId}-ecommerce-product-mug`;
+    const migrationRoot = join(root, 'migrations');
+    let database: DuckDbDatabase | undefined;
+
+    try {
+      const checkoutApi = yaml('api/checkout.yaml');
+      const shopApi = yaml('api/shop.yaml');
+      const add = shopApi.actions.find((action: any) => action.id === 'anonymous_shop_add_to_cart');
+      const guestCheckout = checkoutApi.actions.find((action: any) => action.id === 'anonymous_confirm_ecommerce_checkout');
+
+      database = await DuckDbDatabase.open(databasePath);
+      let repository = new YamlRepository(database);
+      await migrateDatabase(repository, migrationRoot, undefined, migrationName, ['schema', 'data']);
+      await repository.executeMutation(add.mutation, { values: { cart_id: cartId, line_id: lineId, product_id: 'ecommerce-product-mug' } });
+      const order = await repository.executeMutation(guestCheckout.mutation, {
+        values: {
+          cart_id: cartId,
+          customer_name: 'Restart Guest',
+          customer_email: 'restart-guest@example.com',
+          shipping_address: '1 Restart Street',
+          delivery_method: 'Standard Delivery',
+          payment_method: 'Wire Transfer',
+        },
+      }) as any;
+      expect(order).toMatchObject({ customer_id: null, cart_id: cartId, amount_total: 18, state: 'Quotation' });
+      expect((await repository.query('SELECT state, row_version FROM ecommerce_carts WHERE id = ?', [cartId]))[0]).toMatchObject({ state: 'Converted', row_version: 3 });
+      database.close();
+      database = undefined;
+
+      database = await DuckDbDatabase.open(databasePath);
+      repository = new YamlRepository(database);
+      await migrateDatabase(repository, migrationRoot, undefined, migrationName, ['schema', 'data']);
+      expect(await repository.query('SELECT id, customer_id, cart_id, amount_total FROM ecommerce_orders WHERE id = ?', [order.id])).toHaveLength(1);
+      expect(await repository.query('SELECT id, quantity, line_total FROM ecommerce_order_lines WHERE order_id = ?', [order.id])).toEqual([
+        { id: `ecommerce-order-line-${lineId}`, quantity: 1, line_total: 18 },
+      ]);
+      expect((await repository.query('SELECT state, attempt_count, row_version FROM ecommerce_sales_handoffs WHERE ecommerce_order_id = ?', [order.id]))[0]).toMatchObject({ state: 'Pending', attempt_count: 0, row_version: 1 });
+      await expect(repository.executeMutation(guestCheckout.mutation, {
+        values: {
+          cart_id: cartId,
+          customer_name: 'Restart Guest',
+          customer_email: 'restart-guest@example.com',
+          shipping_address: '1 Restart Street',
+          delivery_method: 'Standard Delivery',
+          payment_method: 'Wire Transfer',
+        },
+      })).rejects.toMatchObject({ status: 403, code: 'ECOMMERCE_PUBLIC_CHECKOUT_CART_INVALID' });
+      expect((await repository.query('SELECT COUNT(*) AS count FROM ecommerce_orders WHERE cart_id = ?', [cartId]))[0].count).toBe(1);
+    } finally {
+      database?.close();
+      rmSync(databasePath, { force: true });
+    }
   });
 
   test('enforces authenticated customer ownership at the HTTP query boundary', async () => {
