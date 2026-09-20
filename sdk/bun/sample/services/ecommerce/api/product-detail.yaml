@@ -52,6 +52,11 @@ datasources:
 actions:
   - { id: back_to_ecommerce_products, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
   - { id: add_ecommerce_product_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }
+  - id: view_ecommerce_product_variant_detail
+    type: navigate
+    permission: ecommerce.read
+    navigate_to: /ecommerce/products/variants/detail
+    params: { id: '{row.id}' }
   - id: create_ecommerce_product_alternative
     type: server_form
     permission: ecommerce.write

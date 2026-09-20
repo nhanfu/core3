@@ -834,8 +834,8 @@ reference evidence remain conditional. Surveys remains
 - YAML/API/UI: the `surveys` page and public detail operation remain joined by
   `page.id`; the public submit action remains `surveys.public`, and the
   Surveys-owned renderer consumes the returned completion copy.
-- Focused verification: **3 passed / 12 assertions** for the new test;
-  adjacent public regression set: **17 passed / 146 assertions**.
+- Focused verification: **3 passed / 13 assertions** for the new test;
+  adjacent public regression set: **17 passed / 147 assertions**.
 - Persistence/concurrency: the configured message survives file-backed reopen;
   two same-key submissions converge on one response, and a wrong token is
   rejected without mutation.

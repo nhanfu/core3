@@ -1,0 +1,17 @@
+version: 0.0.75
+kind: data
+description: deterministic Website Sale variant extra-media fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_variant_images
+        (id, row_version, variant_id, product_id, name, file_name, mime_type, size_bytes, storage_key, sequence, uploaded_by)
+      VALUES
+        ('ecommerce-variant-image-mug-blue', 1, 'ecommerce-variant-mug-blue', 'ecommerce-product-mug', 'Blue mug variant media', 'mug-blue-variant.png', 'image/png', 128, 'ecommerce/variant-images/mug-blue-variant.png', 10, 'fixture')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_product_variant_images WHERE id = 'ecommerce-variant-image-mug-blue';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -42,6 +42,7 @@ components:
         sortable: false
         width: 120
         actions:
+          - { id: view_ecommerce_product_variant_detail, label: View Media, icon: image, variant: secondary, permission: ecommerce.read }
           - { id: edit_ecommerce_product_variant, label: Edit, icon: edit, variant: secondary, permission: ecommerce.write }
           - { id: add_ecommerce_product_variant_to_cart, label: Add to Cart, icon: cart, variant: primary, permission: ecommerce.write }
           - { id: delete_ecommerce_product_variant, label: Delete, icon: trash, variant: danger, permission: ecommerce.write }
