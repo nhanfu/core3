@@ -144,23 +144,24 @@ The exact authenticated inventory is:
 | Module state | `ir.module.module`: `sale_subscription`, `uninstallable`, installed version `19.0.1.0` | Full Odoo visual parity remains blocked by the reference fixture, not by Core3 YAML discovery |
 
 The current Core3 service was then compared against the source gate. The
-existing service already has deterministic subscription, invoice, and plan
-tables plus list/detail/workflow declarations, but its subscription, detail,
-and invoice datasource/action contracts still live inside page YAML. That
-violates the required page/API separation and prevents a stable `page.id`
-join for the next implementation slice.
+existing service has deterministic subscription, invoice, and plan tables plus
+list/detail/workflow declarations. Commit `762d127d` normalized the remaining
+subscription, detail, and invoice datasource/action contracts into separate
+API fragments joined by `page.id`, and added direct state/version guards for
+the lifecycle mutations.
 
 | Gap ID | Odoo/reference evidence | Current Core3 source | Classification | Next change/evidence |
 | --- | --- | --- | --- | --- |
 | SS-REF-001 | `sale_subscription` is uninstallable and absent from the live menu tree | `subscriptions.md` source gate | blocked external dependency | Preserve the limitation; do not invent Odoo labels or screenshots |
-| SS-CONTRACT-001 | No live action contract available | `pages/subscriptions.yaml` owns datasources and actions | incompatible with project contract | Move datasource/action definitions to `api/subscriptions.yaml`, joined by `page.id` |
-| SS-CONTRACT-002 | No live view XML available | `pages/subscription-detail.yaml` owns detail queries and mutations | incompatible with project contract | Move detail datasource/action definitions to `api/subscription-detail.yaml` |
-| SS-CONTRACT-003 | No live view XML available | `pages/subscription-invoices.yaml` owns invoice query/mutation | incompatible with project contract | Move invoice datasource/action definitions to `api/subscription-invoices.yaml` |
-| SS-DATA-001 | Odoo data cannot be seeded from the missing addon | migrations `001`–`003` provide deterministic Core3 rows | partial | Keep stable demo rows and add end-to-end mutation assertions before sign-off |
-| SS-LIFECYCLE-001 | Odoo lifecycle cannot be observed | `subscription-workflow.yaml` declares quotation, progress, pause, close, churn | partial | Exercise every allowed/forbidden transition and invoice side effect against the real repository |
+| SS-CONTRACT-001 | No live action contract available | `pages/subscriptions.yaml` is layout-only; `api/subscriptions.yaml` joins by `page.id` | implemented in `762d127d` | Isolated schema validation passed |
+| SS-CONTRACT-002 | No live view XML available | `pages/subscription-detail.yaml` is layout-only; `api/subscription-detail.yaml` owns backend behavior | implemented in `762d127d` | Isolated schema validation passed |
+| SS-CONTRACT-003 | No live view XML available | `pages/subscription-invoices.yaml` is layout-only; `api/subscription-invoices.yaml` owns backend behavior | implemented in `762d127d` | Isolated schema validation passed |
+| SS-DATA-001 | Odoo data cannot be seeded from the missing addon | migrations `001`–`003` provide deterministic Core3 rows | verified Core3 slice | Idempotent migration and row-count assertions passed |
+| SS-LIFECYCLE-001 | Odoo lifecycle cannot be observed | workflow transitions now guard state and `row_version`; activation creates one invoice | verified Core3 slice | Create/edit/confirm/pause/close, forbidden churn, generate, and post assertions passed |
 | SS-PERM-001 | Odoo groups are unavailable | `subscriptions.read/write/manage` are declared | partial | Verify direct action enforcement for read, write, and manager-only plan operations |
 | SS-VISUAL-001 | No paired Odoo desktop/mobile screen exists | Core3 route smoke only | blocked external dependency | Keep visual parity pending; capture Core3 desktop/mobile artifacts only as implementation evidence |
 
-This inventory is the boundary for the current wave: the next meaningful
-slice is contract normalization plus real persistence/lifecycle QA, not a
-claim that Core3 matches an unavailable Odoo screen.
+This inventory is the boundary for the current wave: the contract and
+repository-backed lifecycle slice is implemented, but this is not a claim that
+Core3 matches an unavailable Odoo screen. The next gate is authenticated Core3
+desktop/mobile route evidence and a supplied/installable Odoo addon.

@@ -12,18 +12,18 @@ QA state: in progress
 QA slot: current five-worker wave, module-owner execution
 Module owner: sale-subscription module owner
 Verification trigger: contract-normalization candidate
-Candidate commit: pending
+Candidate commit: 762d127d
 
 ## Test-case inventory
 
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
-| SALE_SUBSCRIPTION-CONTRACT-001 | Every page joins a separate API/action contract by `page.id` and retains page-only layout | Focused discovery output and diff | pending |
-| SALE_SUBSCRIPTION-DATA-001 | Deterministic subscriptions, invoices, and plans survive idempotent migration | Repository migration/query assertions | pending |
-| SALE_SUBSCRIPTION-CRUD-001 | Create and edit quotation/paused subscriptions; reject invalid dates/revenue and edits in progress | Mutation responses plus persisted rows | pending |
-| SALE_SUBSCRIPTION-WORKFLOW-001 | Confirm, pause, close, churn; reject forbidden transitions and create only one activation invoice | Workflow mutation responses plus invoice rows | pending |
-| SALE_SUBSCRIPTION-BILLING-001 | Generate and post recurring invoices; advance the next invoice date and reject non-draft/non-active operations | Mutation responses plus persisted invoice/subscription rows | pending |
-| SALE_SUBSCRIPTION-PERM-001 | Enforce read/write/manage boundaries, including direct plan mutations | Authenticated action responses | pending |
+| SALE_SUBSCRIPTION-CONTRACT-001 | Every page joins a separate API/action contract by `page.id` and retains page-only layout | Isolated schema validation plus `762d127d` | pass |
+| SALE_SUBSCRIPTION-DATA-001 | Deterministic subscriptions, invoices, and plans survive idempotent migration | Bun repository assertions: 2/1/2 rows after rerun | pass |
+| SALE_SUBSCRIPTION-CRUD-001 | Create and edit quotation/paused subscriptions; reject invalid dates/revenue and edits in progress | Create/edit repository mutations and invalid-date rejection | pass |
+| SALE_SUBSCRIPTION-WORKFLOW-001 | Confirm, pause, close, churn; reject forbidden transitions and create only one activation invoice | Lifecycle mutation assertions and activation invoice count | pass |
+| SALE_SUBSCRIPTION-BILLING-001 | Generate and post recurring invoices; advance the next invoice date and reject non-draft/non-active operations | Generate/post mutation persistence assertions | pass |
+| SALE_SUBSCRIPTION-PERM-001 | Enforce read/write/manage boundaries, including direct plan mutations | Action permission declaration audit; HTTP actor QA pending | partial |
 | SALE_SUBSCRIPTION-RESPONSIVE-001 | Core3 authenticated subscription routes render at 1440x900 and 390x844 without blank/redirect/error/overflow | `/tmp/core3-odoo-parity` captures and browser logs | pending |
 | SALE_SUBSCRIPTION-ODOO-REF-001 | Compare menu/action/view/layout states against the live Odoo reference | Reference inventory proves addon unavailable | blocked |
 
@@ -35,9 +35,9 @@ Candidate commit: pending
 
 ## Sign-off
 
-- Functional: pending
-- Permissions: pending
-- Persistence/data integrity: pending
+- Functional: pass for the committed repository slice
+- Permissions: partial; YAML declarations pass, authenticated actor boundary pending
+- Persistence/data integrity: pass for the committed repository slice
 - Desktop/mobile Core3 route evidence: pending
 - Odoo menu/action/view and paired visual parity: blocked by unavailable `sale_subscription` addon
 - Tester decision: not signed off

@@ -2,9 +2,9 @@
 
 Module owner: sale-subscription module owner
 QA assignment: module-owner verification in the current five-worker wave
-Status: in-progress
-Verification trigger: contract-normalization candidate
-Candidate commit: pending
+Status: implementation candidate
+Verification trigger: authenticated route QA and Odoo addon availability
+Candidate commit: 762d127d
 
 ## Current state
 
@@ -14,8 +14,9 @@ and has no authenticated Subscriptions menu, action, or model-backed view.
 The source gate therefore remains active and no Odoo visual-parity claim is
 made. Core3 does have a working YAML-first service with deterministic
 subscription, invoice, and plan storage; the current implementation gap is
-that three page files still own backend contracts instead of joining separate
-API files by `page.id`.
+that three page files owned backend contracts instead of joining separate API
+files by `page.id`. Commit `762d127d` fixes that contract boundary and adds
+state plus optimistic-version guards to lifecycle actions.
 
 Completed analysis for this wave:
 
@@ -26,9 +27,19 @@ Completed analysis for this wave:
 - selected contract normalization plus repository-backed lifecycle QA as the
   next bounded implementation slice.
 
+Focused implementation evidence for `762d127d`:
+
+- isolated page/API schema validation passed for all four pages and the
+  workflow schema;
+- idempotent migrations produced 2 subscriptions, 1 invoice, and 2 plans;
+- create/edit validation rejected invalid dates, lifecycle transitions moved
+  quotation → in progress → paused → closed, and closed → churn was rejected;
+- activation generated one invoice, recurring invoice generation advanced the
+  next date, posting persisted the invoice state, and all action permissions
+  were declared.
+
 ## Next bounded task
 
-Normalize the three remaining page/API contracts, then run focused discovery,
-mutation, lifecycle, permission, persistence, and Core3 desktop/mobile route
-checks. Keep the reference-dependent menu/view parity items explicitly
-blocked until the addon is installed in the live database.
+Run authenticated Core3 desktop/mobile route checks and keep the
+reference-dependent menu/view parity items explicitly blocked until the addon
+is installed in the live database.
