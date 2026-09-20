@@ -1,0 +1,19 @@
+{
+  "feature": "INV-PHYSICAL-REQUEST-COUNT-001",
+  "authenticated_user": "admin@tms.local",
+  "desktop": {
+    "viewport": "1440x900",
+    "route": "/inventory/physical-inventory",
+    "modal": true,
+    "completed": true
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "route": "/inventory/physical-inventory",
+    "widths": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    }
+  },
+  "failures": []
+}

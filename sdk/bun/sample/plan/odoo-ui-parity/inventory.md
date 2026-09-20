@@ -1053,6 +1053,41 @@ horizontal overflow; no Odoo mutation was made. Full Inventory sign-off
 remains open for the broader actor matrix and residual report/relocation
 semantics.
 
+## Operations > Physical Inventory Request a Count — `INV-PHYSICAL-REQUEST-COUNT-001` (2026-09-20)
+
+This bounded slice closes the next smallest residual Physical Inventory wizard.
+Odoo's `stock.menu_action_inventory_tree` / `stock.action_view_inventory_tree`
+(`stock_quant_views.xml:278-321`) exposes manager-only `Request a Count`, which
+opens `stock.action_stock_request_count` and the `stock.request.count` wizard
+(`wizard/stock_request_count.xml:3-32`). The wizard accepts Scheduled at,
+optional Assign to, and Show expected quantity; its `action_request_count`
+updates the selected quants' inventory date and assignee
+(`wizard/stock_request_count.py:31-54`) without applying counted quantities.
+
+Core3 keeps `pages/physical-inventory.yaml` layout-only and adds a selectable
+list bulk action joined to `api/physical-inventory.yaml` by `page.id`. The API
+owns the manager-only form, assignee catalog, request history datasource, and a
+transactional mutation. Migration
+`20260920260000-029-inventory-count-requests.yaml` adds durable request headers
+and selected-quant lines with an idempotent opening fixture. The mutation
+updates selected internal/transit quants, records scheduled date/assignee/
+visibility/requester metadata, rolls back invalid selections, and requires
+`inventory.manage`.
+
+Focused coverage passes 4 tests / 21 assertions, including page/API and source
+contract, selected-quant scheduling and rollback, permission denial, and
+file-backed restart persistence. Authenticated Core3 desktop selection/modal/
+completion and mobile evidence is under
+`evidence/inventory/2026-09-20/INV-PHYSICAL-REQUEST-COUNT-001/`. Authenticated
+Odoo desktop/mobile Physical Inventory evidence is also recorded there. The
+reference user renders the source list but does not expose the manager-only
+Request a Count button; that exact group-gated boundary is retained as the Odoo
+comparison blocker, and no Odoo mutation was made.
+
+Status: bounded Core3 lifecycle and evidence complete for review. Full Inventory
+sign-off remains open for the broader actor/company matrix and report/export
+semantics.
+
 ## Reporting > Moves Analysis bounded slice — `INV-MOVES-ANALYSIS-001` (2026-09-20)
 
 This slice closes the smallest remaining source-backed reporting gap after

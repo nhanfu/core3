@@ -43,6 +43,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-012 | Operations Types lifecycle | Create/edit/archive/restore operation types with durable row versions, source/destination locations, validation, and restart persistence | pass: `INV-OP-TYPES-001` focused suite |
 | INV-FUNC-013 | Scrap validation Product Move | Draft Scrap validation sets Done/date, persists one Product Move relation, and exposes it on the detail page | pass: `INV-SCRAP-001` bounded suite; shared discovery boundary recorded |
 | INV-FUNC-014 | On Hand quant relocation | Manager relocates a positive quant to an active internal location, preserves lot/quantity metadata, and records a durable relocation audit and move line | pass: `INV-PHYSICAL-RELOCATE-001` focused suite |
+| INV-FUNC-016 | Physical Inventory Request a Count | Manager schedules selected quants with date/assignee/visibility metadata without applying counted quantities, and persists request header/lines | pass: `INV-PHYSICAL-REQUEST-COUNT-001` focused suite |
 
 ## Workflow and integration cases
 
@@ -80,6 +81,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-WF-011 | Moves Analysis read-only report | pivot aggregation, detail navigation, empty/404/503 states, no CRUD mutation, and restart-stable fixtures | pass: `INV-MOVES-ANALYSIS-001` focused lifecycle test |
 | INV-PERM-013 | Moves Analysis report boundary | `inventory.read` is required for list/detail and direct API access; no write/manage action is exposed | pass: `INV-MOVES-ANALYSIS-001` focused runtime test |
 | INV-PERM-014 | On Hand relocation manager boundary | `inventory.read` permits the On Hand list; `inventory.manage` is required for Relocate and ordinary readers receive 403 without mutation | pass: `INV-PHYSICAL-RELOCATE-001` focused runtime test |
+| INV-PERM-015 | Request a Count manager boundary | `inventory.read` permits Physical Inventory; `inventory.manage` is required for selected-quant scheduling and ordinary readers receive 403 without mutation | pass: `INV-PHYSICAL-REQUEST-COUNT-001` focused runtime test |
 
 ## Visual, responsive, and regression cases
 
@@ -98,6 +100,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-UI-011 | Physical Inventory list/Apply All wizard | 1440x1000, 390x844 | Physical Inventory list, Apply All reason/date modal, counted-only result, responsive route, and paired Odoo list comparison are captured | pass Core3/Odoo evidence; residual conflict/reset/relocation semantics remain |
 | INV-UI-012 | Moves Analysis report modes | 1440x1000, 390x844 | Core3 list/pivot/detail/mobile report and Odoo pivot/list/mobile kanban show source-backed report modes with no request errors or horizontal overflow | pass Core3/Odoo evidence; broader actor/company matrix remains |
 | INV-UI-013 | On Hand relocation wizard | 1440x900, 390x844 | Authenticated manager sees On Hand Relocate modal and completed location move on desktop; mobile On Hand remains usable without overflow; paired Odoo Locations/On Hand source surface is captured | pass Core3/Odoo evidence; no Odoo mutation |
+| INV-UI-014 | Physical Inventory Request a Count wizard | 1440x900, 390x844 | Authenticated Core3 manager selects a row, opens Request a Count, saves date/assignee, and sees the scheduled result on desktop/mobile; paired Odoo source list and group-gated blocker are recorded | pass Core3; Odoo wizard blocked by supplied user's manager group |
 
 ## Exit criteria
 

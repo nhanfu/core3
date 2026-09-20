@@ -1,0 +1,42 @@
+{
+  "source": {
+    "menu": "stock.menu_action_inventory_tree",
+    "menu_res_id": 314,
+    "action": "stock.action_view_inventory_tree",
+    "action_res_id": 505,
+    "request_count_action": "stock.action_stock_request_count",
+    "request_count_res_id": 492,
+    "source_files": [
+      "addons/stock/views/stock_quant_views.xml:278-321",
+      "addons/stock/wizard/stock_request_count.xml:3-32",
+      "addons/stock/wizard/stock_request_count.py:8-54"
+    ]
+  },
+  "results": [
+    {
+      "viewport": "1440x900",
+      "url": "http://127.0.0.1:8069/odoo/physical-inventory",
+      "title": "Physical Inventory",
+      "initial": "Inventory\nOverview\nOperations\nProducts\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nApply All\nPhysical Inventory\n1-18 / 18\n\t\nProduct\n\t\nLot/Serial Number\n\t\nScheduled\n\t\nUser\n\t\nOn Hand\n\t\nCounted\n\t\nDifference\n\t\nUnit\n\t\t\n\n\n\t[DESK0005] Customizable Desk (White, Custom)\t\tDec 31\t\t65.00\t\t\tUnits\t\nHistory\n\t\n\n\t[DESK0006] Customizable Desk (Black, Custom)\t\tDec 31\t\t70.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM07] Large Cabinet\t\tDec 31\t\t500.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM08] Storage Box\t\tDec 31\t\t18.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM11] Cabinet with Doors\t\tDec 31\t\t33.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM12] Conference Chair (Steel)\t\tDec 31\t\t26.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM13] Conference Chair (Aluminium)\t\tDec 31\t\t30.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0096] Customizable Desk (White, Steel)\t\tDec 31\t\t45.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0097] Customizable Desk (Black, Steel)\t\tDec 31\t\t50.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0098] Customizable Desk (White, Aluminium)\t\tDec 31\t\t55.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0269] Office Chair Black\t\tDec 31\t\t10.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0789] Individual Workplace\t\tDec 31\t\t16.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_1118] Corner Desk Left Sit\t\tDec 31\t\t2.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_6667] Acoustic Bloc Screens (Black)\t\tDec 31\t\t16.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_7800] Desk Combination\t\tDec 31\t\t235.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_8855] Drawer\t0000000000029\tDec 31\t\t80.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_5555] Cable Management Box\tCM-BOX-00001\tDec 31\t\t50.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_5555] Cable Management Box\tCM-BOX-00002\tDec 31\t\t40.00\t\t\tUnits\t\nHistory\n\t\n\t",
+      "after": ", Custom)\t\tDec 31\t\t70.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM07] Large Cabinet\t\tDec 31\t\t500.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM08] Storage Box\t\tDec 31\t\t18.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM11] Cabinet with Doors\t\tDec 31\t\t33.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM12] Conference Chair (Steel)\t\tDec 31\t\t26.00\t\t\tUnits\t\nHistory\n\t\n\n\t[E-COM13] Conference Chair (Aluminium)\t\tDec 31\t\t30.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0096] Customizable Desk (White, Steel)\t\tDec 31\t\t45.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0097] Customizable Desk (Black, Steel)\t\tDec 31\t\t50.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0098] Customizable Desk (White, Aluminium)\t\tDec 31\t\t55.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0269] Office Chair Black\t\tDec 31\t\t10.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_0789] Individual Workplace\t\tDec 31\t\t16.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_1118] Corner Desk Left Sit\t\tDec 31\t\t2.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_6667] Acoustic Bloc Screens (Black)\t\tDec 31\t\t16.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_7800] Desk Combination\t\tDec 31\t\t235.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_8855] Drawer\t0000000000029\tDec 31\t\t80.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_5555] Cable Management Box\tCM-BOX-00001\tDec 31\t\t50.00\t\t\tUnits\t\nHistory\n\t\n\n\t[FURN_5555] Cable Management Box\tCM-BOX-00002\tDec 31\t\t40.00\t\t\tUnits\t\nHistory\n\t\n\t",
+      "failures": [],
+      "widths": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "viewport": "390x844",
+      "url": "http://127.0.0.1:8069/odoo/physical-inventory",
+      "title": "Physical Inventory",
+      "initial": "Physical Inventory\n7\n40\nNew\nProduct\n\t\nLot/Serial Number\n\t\nScheduled\n\t\nUser\n\t\nOn Hand\n\t\nCounted\n\t\nDifference\n\t\nUnit\n\t\t\n\n[DESK0005] Customizable Desk (White, Custom)\t\tDec 31\t\t65.00\t\t\tUnits\t\nHistory\n\t\n[DESK0006] Customizable Desk (Black, Custom)\t\tDec 31\t\t70.00\t\t\tUnits\t\nHistory\n\t\n[E-COM07] Large Cabinet\t\tDec 31\t\t500.00\t\t\tUnits\t\nHistory\n\t\n[E-COM08] Storage Box\t\tDec 31\t\t18.00\t\t\tUnits\t\nHistory\n\t\n[E-COM11] Cabinet with Doors\t\tDec 31\t\t33.00\t\t\tUnits\t\nHistory\n\t\n[E-COM12] Conference Chair (Steel)\t\tDec 31\t\t26.00\t\t\tUnits\t\nHistory\n\t\n[E-COM13] Conference Chair (Aluminium)\t\tDec 31\t\t30.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0096] Customizable Desk (White, Steel)\t\tDec 31\t\t45.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0097] Customizable Desk (Black, Steel)\t\tDec 31\t\t50.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0098] Customizable Desk (White, Aluminium)\t\tDec 31\t\t55.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0269] Office Chair Black\t\tDec 31\t\t10.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0789] Individual Workplace\t\tDec 31\t\t16.00\t\t\tUnits\t\nHistory\n\t\n[FURN_1118] Corner Desk Left Sit\t\tDec 31\t\t2.00\t\t\tUnits\t\nHistory\n\t\n[FURN_6667] Acoustic Bloc Screens (Black)\t\tDec 31\t\t16.00\t\t\tUnits\t\nHistory\n\t\n[FURN_7800] Desk Combination\t\tDec 31\t\t235.00\t\t\tUnits\t\nHistory\n\t\n[FURN_8855] Drawer\t0000000000029\tDec 31\t\t80.00\t\t\tUnits\t\nHistory\n\t\n[FURN_5555] Cable Management Box\tCM-BOX-00001\tDec 31\t\t50.00\t\t\tUnits\t\nHistory\n\t\n[FURN_5555] Cable Management Box\tCM-BOX-00002\tDec 31\t\t40.00\t\t\tUnits\t\nHistory\n\t\n\t",
+      "after": "SK0006] Customizable Desk (Black, Custom)\t\tDec 31\t\t70.00\t\t\tUnits\t\nHistory\n\t\n[E-COM07] Large Cabinet\t\tDec 31\t\t500.00\t\t\tUnits\t\nHistory\n\t\n[E-COM08] Storage Box\t\tDec 31\t\t18.00\t\t\tUnits\t\nHistory\n\t\n[E-COM11] Cabinet with Doors\t\tDec 31\t\t33.00\t\t\tUnits\t\nHistory\n\t\n[E-COM12] Conference Chair (Steel)\t\tDec 31\t\t26.00\t\t\tUnits\t\nHistory\n\t\n[E-COM13] Conference Chair (Aluminium)\t\tDec 31\t\t30.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0096] Customizable Desk (White, Steel)\t\tDec 31\t\t45.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0097] Customizable Desk (Black, Steel)\t\tDec 31\t\t50.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0098] Customizable Desk (White, Aluminium)\t\tDec 31\t\t55.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0269] Office Chair Black\t\tDec 31\t\t10.00\t\t\tUnits\t\nHistory\n\t\n[FURN_0789] Individual Workplace\t\tDec 31\t\t16.00\t\t\tUnits\t\nHistory\n\t\n[FURN_1118] Corner Desk Left Sit\t\tDec 31\t\t2.00\t\t\tUnits\t\nHistory\n\t\n[FURN_6667] Acoustic Bloc Screens (Black)\t\tDec 31\t\t16.00\t\t\tUnits\t\nHistory\n\t\n[FURN_7800] Desk Combination\t\tDec 31\t\t235.00\t\t\tUnits\t\nHistory\n\t\n[FURN_8855] Drawer\t0000000000029\tDec 31\t\t80.00\t\t\tUnits\t\nHistory\n\t\n[FURN_5555] Cable Management Box\tCM-BOX-00001\tDec 31\t\t50.00\t\t\tUnits\t\nHistory\n\t\n[FURN_5555] Cable Management Box\tCM-BOX-00002\tDec 31\t\t40.00\t\t\tUnits\t\nHistory\n\t\n\t",
+      "failures": [],
+      "widths": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    }
+  ],
+  "comparison": "Authenticated Odoo Physical Inventory source surface captured at desktop and mobile; no count request was confirmed."
+}

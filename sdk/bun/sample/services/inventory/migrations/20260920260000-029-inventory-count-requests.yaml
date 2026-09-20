@@ -1,0 +1,30 @@
+version: 0.0.29
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_count_requests (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        inventory_date DATE NOT NULL, assigned_user VARCHAR,
+        show_expected_quantity BOOLEAN NOT NULL DEFAULT FALSE,
+        requested_by VARCHAR NOT NULL, quant_count BIGINT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS inventory_count_request_lines (
+        request_id VARCHAR NOT NULL, quant_id VARCHAR NOT NULL,
+        PRIMARY KEY(request_id, quant_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_count_requests_date ON inventory_count_requests(inventory_date, id);
+      INSERT INTO inventory_count_requests(id, inventory_date, assigned_user, show_expected_quantity, requested_by, quant_count, created_at)
+      VALUES ('inventory-count-request-0001', DATE '2026-01-15', NULL, FALSE, 'Mitchell Admin', 1, TIMESTAMP '2026-01-15 08:00:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_count_request_lines(request_id, quant_id)
+      VALUES ('inventory-count-request-0001', 'quant-desk-main')
+      ON CONFLICT(request_id, quant_id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_count_request_lines;
+      DROP TABLE IF EXISTS inventory_count_requests;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

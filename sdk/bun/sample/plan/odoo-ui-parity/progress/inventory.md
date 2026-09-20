@@ -396,3 +396,25 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
+
+## `INV-PHYSICAL-REQUEST-COUNT-001` — Physical Inventory Request a Count (2026-09-20)
+
+- Selected the smallest remaining source-backed Physical Inventory wizard after
+  quant relocation and Moves Analysis: Odoo's manager-only Request a Count.
+- Compared `stock.menu_action_inventory_tree` / `stock.action_view_inventory_tree`,
+  `stock.action_stock_request_count`, and `stock.request.count`. The source
+  writes a scheduled inventory date and optional stock-user assignee to the
+  selected quants and leaves counted quantities unapplied.
+- Added a selectable Core3 Physical Inventory list bulk action, API-owned form
+  fields/catalog/history, and migration `0.0.29` request header/line tables with
+  deterministic seed data. The transaction enforces internal/transit selection,
+  valid date/user, rollback, durable audit, and `inventory.manage`.
+- Focused test passes 4 tests / 21 assertions. Authenticated Core3 desktop/
+  mobile and Odoo desktop/mobile evidence is under
+  `evidence/inventory/2026-09-20/INV-PHYSICAL-REQUEST-COUNT-001/`.
+- The supplied authenticated Odoo user can open Physical Inventory but is not in
+  the manager group, so Request a Count is not visible; the exact blocker is
+  recorded rather than treated as parity sign-off. No Odoo mutation was made.
+
+Status: bounded Core3 lifecycle and evidence complete for review; broader
+Inventory sign-off remains open.

@@ -9,6 +9,9 @@ components:
     create_label: New
     header_actions:
       - { id: apply_all_inventory_quantities, label: Apply All, variant: primary, permission: inventory.write }
+    selectable: true
+    bulk_actions:
+      - { id: request_inventory_count, label: Request a Count, permission: inventory.manage }
     search: { label: Search physical inventory, placeholder: 'Search products, lots, or locations...' }
     filters:
       - field: count_filter
@@ -46,6 +49,6 @@ components:
     page_size: 50
     row_key: id
     row_actions: menu
-    selectable: false
+    selectable: true
     column_chooser: true
     empty_state: { title: Your stock is currently empty, description: Press New to define the quantity for a product in your stock or use the Apply All action to confirm counted quantities. }

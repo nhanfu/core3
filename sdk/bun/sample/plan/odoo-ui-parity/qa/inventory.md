@@ -529,3 +529,37 @@ prevents global discovery; no other module files were changed.
 QA disposition: PASS for the bounded relocation lifecycle, durable data,
 permissions, and authenticated desktop/mobile evidence. Full Inventory sign-off
 remains open for the broader actor/company matrix and report/export semantics.
+
+## Physical Inventory Request a Count QA — `INV-PHYSICAL-REQUEST-COUNT-001` (2026-09-20)
+
+- Odoo source/menu/action: `stock.menu_action_inventory_tree` invokes
+  `stock.action_view_inventory_tree`; its manager-only Request a Count action
+  invokes `stock.action_stock_request_count` and the
+  `stock.request.count` wizard. Source fields are Scheduled at, Assign to,
+  and Show expected quantity. Confirm writes the selected quants' inventory
+  date and optional user without applying quantities.
+- Core3 implementation: `pages/physical-inventory.yaml` remains layout-only;
+  the matching API owns selectable bulk-action metadata, the manager form,
+  assignee catalog, request history, and transactional mutation. Migration
+  `0.0.29` persists request headers and selected-quant lines.
+- Focused test: `bun test test/inventory_request_count.integration.test.ts`
+  — PASS, 4 tests / 21 assertions. Coverage includes page/API separation,
+  source action fields, selected-quant CRUD/workflow, invalid-selection
+  rollback, permission denial, and restart persistence.
+- Authenticated Core3 evidence is in
+  `evidence/inventory/2026-09-20/INV-PHYSICAL-REQUEST-COUNT-001/`: desktop
+  selected-row state, Request a Count modal, successful scheduled result, and
+  mobile route. Final Core3 browser failures were empty and widths were
+  1440/1440 and 390/390.
+- Authenticated Odoo evidence is in the same directory. XML IDs resolve to
+  `stock.action_view_inventory_tree` res_id 505,
+  `stock.action_stock_request_count` res_id 492, and
+  `stock.menu_action_inventory_tree` res_id 314. Odoo renders
+  `/odoo/physical-inventory` at both viewports with no failed requests or
+  overflow, but the supplied authenticated user does not expose the
+  manager-only Request a Count control. No Odoo mutation was made.
+
+QA disposition: PASS for the bounded Core3 request-count lifecycle, durable
+data, permission boundary, and browser evidence; PARTIAL for direct Odoo
+wizard comparison because of the exact source group gate. Full Inventory
+sign-off remains open.
