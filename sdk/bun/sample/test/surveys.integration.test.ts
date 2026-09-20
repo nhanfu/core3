@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { discoverPages } from '@core3/server/discovery';
@@ -229,6 +230,37 @@ describe('Surveys parity catalog and workflow', () => {
     expect(action.mutation.guards[0].query).toContain("state = 'In Progress'");
     expect(action.mutation.guards[0].query).toContain('EXISTS (SELECT 1 FROM survey_detailed_answers');
     expect(yaml('migrations/20260910210000-006-survey-participant-workflow-answers.yaml').version).toBe('0.0.6');
+  });
+
+  test('persists participant completion across a file-backed restart and rejects replay', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'core3-surveys-participant-'));
+    const databasePath = join(directory, 'surveys.duckdb');
+
+    try {
+      const firstDatabase = await DuckDbDatabase.open(databasePath);
+      const firstRepository = new YamlRepository(firstDatabase);
+      await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, 'surveys_participant_restart_migrations', ['schema', 'data']);
+      const action = yaml('pages/participant-detail.yaml').actions.find((candidate: any) => candidate.id === 'complete_survey_participant');
+      const participant = (await firstRepository.query("SELECT id, row_version, state, score, quiz_passed FROM survey_participants WHERE id = 'participant-feedback-in-progress'"))[0];
+
+      expect(participant).toMatchObject({ id: 'participant-feedback-in-progress', row_version: 1, state: 'In Progress' });
+      const completed = await firstRepository.executeMutation(action.mutation, { id: participant.id, expected_row_version: participant.row_version });
+      expect(completed).toMatchObject({ id: participant.id, state: 'Completed', row_version: 2, score: 0, quiz_passed: false });
+      firstDatabase.close();
+
+      const reopenedDatabase = await DuckDbDatabase.open(databasePath);
+      const reopenedRepository = new YamlRepository(reopenedDatabase);
+      await migrateDatabase(reopenedRepository, join(root, 'migrations'), undefined, 'surveys_participant_restart_migrations', ['schema', 'data']);
+      expect(await reopenedRepository.query("SELECT id, row_version, state, score, quiz_passed FROM survey_participants WHERE id = 'participant-feedback-in-progress'"))
+        .toEqual([{ id: participant.id, row_version: 2, state: 'Completed', score: 0, quiz_passed: false }]);
+      expect(await reopenedRepository.query("SELECT id, answer_value, skipped FROM survey_detailed_answers WHERE participant_id = 'participant-feedback-in-progress'"))
+        .toEqual([{ id: 'detail-feedback-in-progress-rating', answer_value: '4', skipped: false }]);
+      await expect(reopenedRepository.executeMutation(action.mutation, { id: participant.id, expected_row_version: 2 }))
+        .rejects.toMatchObject({ status: 409 });
+      reopenedDatabase.close();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   test('exposes permissioned invitation, resend, and completed-answer print contracts', () => {
