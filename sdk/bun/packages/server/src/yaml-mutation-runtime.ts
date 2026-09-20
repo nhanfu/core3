@@ -94,6 +94,13 @@ export class YamlMutationRuntime {
         if (!Object.prototype.hasOwnProperty.call(params, field)) params[field] = value;
       }
     }
+    if (definition.operation === 'insert' && definition.defaults) {
+      const values = params.values && typeof params.values === 'object' ? params.values as Record<string, unknown> : undefined;
+      for (const [field, value] of Object.entries(definition.defaults)) {
+        if (!Object.prototype.hasOwnProperty.call(params, field)) params[field] = value;
+        if (values && !Object.prototype.hasOwnProperty.call(values, field)) values[field] = value;
+      }
+    }
     for (const field of definition.generated || []) {
       if (!IDENTIFIER.test(field)) throw { status: 500, message: 'Generated mutation field is invalid' };
       if (!params[field]) params[field] = crypto.randomUUID();

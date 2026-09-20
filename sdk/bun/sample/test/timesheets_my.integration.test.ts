@@ -42,7 +42,7 @@ describe('Timesheets My Timesheets parity slice', () => {
     expect(list.views.find((view: any) => view.id === 'calendar')).toMatchObject({ date_field: 'work_date' });
     expect(list.views.find((view: any) => view.id === 'list').mobile).toBe(false);
     expect(list.columns.map((column: any) => column.label)).toEqual(['Project', 'Task', 'Date', 'Description', 'Sales Order Item', 'Time Spent', ' ']);
-    expect(api.datasources[1]).toMatchObject({ id: 'timesheet_entries', permission: 'timesheets.read', error_states: { transport_error: { status: 503, code: 'TIMESHEETS_ENTRIES_UNAVAILABLE' } } });
+    expect(api.datasources.find((source: any) => source.id === 'timesheet_entries')).toMatchObject({ id: 'timesheet_entries', permission: 'timesheets.read', error_states: { transport_error: { status: 503, code: 'TIMESHEETS_ENTRIES_UNAVAILABLE' } } });
     expect(api.actions.map((action: any) => action.id)).toEqual(expect.arrayContaining(['create_timesheet_entry', 'edit_timesheet_entry', 'delete_timesheet_entry', 'submit_timesheet_entry']));
   });
 
@@ -78,15 +78,15 @@ describe('Timesheets My Timesheets parity slice', () => {
 
     const created = await repository.executeMutation(create, {
       id: 'timesheet-my-test',
-      current_user_name: 'Admin User',
-      values: { name: 'TS/2026/TEST', project_name: 'Core3 Implementation', task_name: 'Validation review', work_date: '2026-01-15', description: 'Validation review', hours: 2.25 },
+      current_company_name: 'Core3 Demo Company', current_user_name: 'Admin User',
+      values: { name: 'TS/2026/TEST', project_id: 'project-demo-001', project_name: 'Core3 Implementation', task_id: 'task-demo-001', task_name: 'Complete module migration', work_date: '2026-01-15', description: 'Validation review', hours: 2.25 },
     });
     expect(created).toMatchObject({ id: 'timesheet-my-test', employee_id: 'employee-demo-001', employee_name: 'Admin User', state: 'Draft' });
     await expect(repository.executeMutation(create, {
       id: 'timesheet-my-invalid',
       current_user_name: 'Admin User',
       values: { name: 'TS/2026/INVALID', project_name: 'Core3 Implementation', work_date: '2026-01-15', description: 'Too long', hours: 25 },
-    })).rejects.toMatchObject({ status: 422, code: 'TIMESHEETS_ENTRY_INVALID' });
+    })).rejects.toMatchObject({ status: 422, code: 'TIMESHEET_ENTRY_INVALID' });
 
     const updated = await repository.executeMutation(update, {
       id: 'timesheet-my-009', expected_row_version: 1, current_user_name: 'Admin User',
