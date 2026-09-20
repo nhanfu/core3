@@ -80,6 +80,7 @@ actions:
     action: marketing_automation.records.archive
     handler: yaml_mutation
     operation: update
+    params: { id: '{row.id}', values: { active: false } }
     refresh: [marketing_automations]
     mutation:
       operation: update
@@ -94,6 +95,7 @@ actions:
     action: marketing_automation.records.restore
     handler: yaml_mutation
     operation: update
+    params: { id: '{row.id}', values: { active: true } }
     refresh: [marketing_automations]
     mutation:
       operation: update
