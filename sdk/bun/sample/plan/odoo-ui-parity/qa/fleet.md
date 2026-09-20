@@ -255,3 +255,23 @@ or duplicate QA was created.
   restart durability remains unverified, and fresh paired authenticated Odoo
   comparison remains unavailable. Fleet is not fully signed off; broader Fleet
   parity gates remain open.
+
+## 2026-09-20 — Odometer Logs CRUD bounded slice
+
+- Source trace: Odoo `fleet.vehicle.odometer` requires `vehicle_id`, exposes
+  `value` and `date` in the form, derives the related `unit`, and registers the
+  `list,form,graph` action with an editable list.
+- Implementation: Core3 page YAML is presentation-only; `api/odometers.yaml`
+  owns create, and `api/fleet-odometer-detail.yaml` owns edit/delete. Writes
+  require `fleet.write`, use the existing durable odometer table/fixtures,
+  require row versions for edit/delete, and reject archived/missing vehicles
+  and invalid date/value input before insert/update.
+- Evidence: `bun test test/fleet_odometers.integration.test.ts --timeout
+  20000` passed **7 tests / 59 assertions**. The CRUD test closed and reopened
+  a file-backed DuckDB database, replayed migrations, verified the created log,
+  edited it, rejected a stale write, and deleted it. `bun test
+  test/fleet*.integration.test.ts --timeout 20000` passed **73 tests / 764
+  assertions** across 22 Fleet files. `bun run audit` passed at **665 pages /
+  674 routes / 1,177 datasources**; `git diff --check` passed.
+- Browser/Odoo paired captures were not run for this candidate; Fleet remains
+  conditionally accepted rather than fully signed off.

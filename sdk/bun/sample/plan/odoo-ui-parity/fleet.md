@@ -947,3 +947,29 @@ Focused coverage is `test/fleet_vehicle_services_action.integration.test.ts`
 `/tmp/core3-odoo-parity/fleet-services-action-20260912/`; no visual claim is
 made unless authenticated 1440x900 and 390x844 captures succeed. Full batch
 notes are in `fleet-batch-12.md`.
+
+## Odometer Logs CRUD checkpoint (2026-09-20)
+
+The Odoo `fleet.vehicle.odometer` model is a real editable `list,form,graph`
+action. Its required relation is `vehicle_id`; the writable log values are
+`value` and `date`, while `unit` is a related vehicle field. The source form
+and editable list are defined in `fleet_vehicle_views.xml`, and the model
+behavior is defined in `fleet_vehicle_odometer.py`.
+
+Core3 now completes this bounded Odometer Logs CRUD slice. The list and detail
+pages remain presentation-only and are joined to API fragments by `page.id`.
+The API owns create, optimistic-concurrency edit, and delete actions with
+`fleet.write`; archived or missing vehicle relations, invalid dates/values,
+missing rows, and stale row versions have explicit error contracts. The
+existing idempotent odometer migration remains the durable fixture/schema
+source; no duplicate migration or moving fixture data was added. The related
+unit is no longer accepted as a client-editable mutation field.
+
+Focused coverage in `test/fleet_odometers.integration.test.ts` passes 7 tests
+and 59 assertions, including Odoo source mapping, page/API separation,
+deterministic fixtures, file-backed reload, create/edit/delete, stale replay,
+archived/missing vehicle guards, and atomic invalid-input rejection. The full
+Fleet corpus passes 73 tests and 764 assertions; `bun run audit` passes with
+665 pages, 674 routes, and 1,177 datasources. Authenticated desktop/mobile
+visual comparison for this slice remains part of the broader Fleet QA gate and
+is not claimed here.

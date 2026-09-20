@@ -37,6 +37,7 @@ deterministic.
 | FLEET-FUNC-006 | Empty/error/not-found | Missing, empty, forbidden and transport-error states are explicit on every datasource | pass at contract level |
 | FLEET-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate fleet records or moving timestamps | planned restart/migration gate |
 | FLEET-FUNC-008 | Attachments/import/export/print | Exercise exposed vehicle documents, import/export and report/print actions | planned browser interaction gate |
+| FLEET-FUNC-009 | Odometer Logs CRUD | Create, edit, delete, vehicle relation, related unit, invalid input, stale replay, and file-backed reload preserve the log contract | pass: `fleet_odometers.integration.test.ts` |
 
 ## Workflow and integration cases
 
@@ -47,6 +48,7 @@ deterministic.
 | FLEET-WF-003 | Service lifecycle | Service activity states, costs and vehicle relations remain consistent through transitions | pass at contract level; browser workflow planned |
 | FLEET-WF-004 | Contract/odometer stats | Vehicle stat actions return only linked records and counts update after mutation | pass at contract level |
 | FLEET-WF-005 | Durable/external boundary | Reminders, service callbacks and cross-module integrations use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| FLEET-WF-006 | Odometer log lifecycle | New → edit → stale rejection → delete preserves vehicle relation and rejects archived vehicles | pass: focused integration test; authenticated browser workflow planned |
 
 ## Permission and security cases
 

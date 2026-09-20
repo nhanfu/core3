@@ -1,9 +1,16 @@
 page: { id: fleet-odometer-detail }
 datasources:
+  - id: fleet_odometer_detail_vehicles
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM fleet_vehicles WHERE COALESCE(archived, FALSE) = FALSE ORDER BY name, id"
   - id: fleet_odometer_detail
     single: true
     permission: fleet.read
-    query: "SELECT o.id, o.row_version, o.vehicle_id, v.name AS vehicle_name, COALESCE(o.driver_name, v.driver_name) AS driver_name, o.value, o.unit, CAST(o.date AS VARCHAR) AS date FROM fleet_vehicle_odometers o JOIN fleet_vehicles v ON v.id = o.vehicle_id WHERE o.id = :id"
+    error_states:
+      unauthorized: { status: 401, code: FLEET_ODOMETER_DETAIL_UNAUTHORIZED, message: Sign in to view this odometer log. }
+      forbidden: { status: 403, code: FLEET_ODOMETER_DETAIL_FORBIDDEN, message: You do not have permission to view this odometer log. }
+      transport_error: { status: 503, code: FLEET_ODOMETER_DETAIL_UNAVAILABLE, message: Odometer detail is temporarily unavailable. }
+    query: "SELECT o.id, o.row_version, o.vehicle_id, v.name AS vehicle_name, COALESCE(o.driver_name, v.driver_name) AS driver_name, o.value, o.unit, CAST(o.date AS VARCHAR) AS date FROM fleet_vehicle_odometers o JOIN fleet_vehicles v ON v.id = o.vehicle_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND o.id = :id"
 actions:
   - id: edit_fleet_odometer
     type: server_form
@@ -18,16 +25,28 @@ actions:
       operation: update
       table: fleet_vehicle_odometers
       key: id
-      concurrency: false
-      fields: [vehicle_id, date, value, unit]
+      concurrency: { required: true }
+      fields: [vehicle_id, driver_name, date, value]
       required: [vehicle_id, date, value]
+      normalize_empty: [driver_name]
       guards:
-        - { query: "SELECT id FROM fleet_vehicle_odometers WHERE id = :id", status: 404, message: Odometer log was not found }
-        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id", status: 404, message: Vehicle was not found }
-        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2100-12-31' AND CAST(:value AS DECIMAL(18,2)) >= 0", status: 422, message: Date must be YYYY-MM-DD and odometer value must be zero or greater }
+        - { query: "SELECT id FROM fleet_vehicle_odometers WHERE id = :id", status: 404, code: FLEET_ODOMETER_NOT_FOUND, message: Odometer log was not found. }
+        - { query: "SELECT id FROM fleet_vehicles WHERE id = :vehicle_id AND COALESCE(archived, FALSE) = FALSE", status: 404, code: FLEET_ODOMETER_VEHICLE_NOT_FOUND, message: Vehicle was not found or is archived. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$') AND CAST(:date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2100-12-31' AND CAST(:value AS DECIMAL(18,2)) >= 0", status: 422, code: FLEET_ODOMETER_VALUE_INVALID, message: Date must be YYYY-MM-DD and odometer value must be zero or greater. }
       result: { query: "SELECT * FROM fleet_vehicle_odometers WHERE id = :id" }
     fields:
-      - { field: vehicle_id, label: Vehicle, type: select, options_source: fleet_odometer_vehicles, required: true }
+      - { field: vehicle_id, label: Vehicle, type: select, options_source: fleet_odometer_detail_vehicles, required: true }
       - { field: date, label: Date, type: text, required: true }
       - { field: value, label: Odometer Value, type: number, required: true }
-      - { field: unit, label: Unit, type: text }
+      - { field: driver_name, label: Driver, type: text }
+  - id: delete_fleet_odometer
+    type: delete
+    permission: fleet.write
+    table: fleet_vehicle_odometers
+    refresh: [fleet_odometer_detail, fleet_odometers]
+    mutation:
+      operation: delete
+      table: fleet_vehicle_odometers
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM fleet_vehicle_odometers WHERE id = :id", status: 404, code: FLEET_ODOMETER_NOT_FOUND, message: Odometer log was not found. }

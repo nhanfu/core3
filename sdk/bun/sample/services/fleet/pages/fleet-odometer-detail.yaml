@@ -8,7 +8,8 @@ components:
     editable: true
     header_actions:
       - { id: edit_fleet_odometer, label: Edit, variant: secondary, permission: fleet.write }
+      - { id: delete_fleet_odometer, label: Delete, variant: danger, permission: fleet.write, confirm: Delete this odometer log? }
     group_columns: 1
     groups:
       - title: Odometer Logs
-        fields: [{ field: vehicle_name, label: Vehicle }, { field: driver_name, label: Driver }, { field: value, label: Odometer Value }, { field: unit, label: Unit }, { field: date, label: Date }]
+        fields: [{ field: vehicle_name, label: Vehicle, readonly: true }, { field: value, label: Odometer Value }, { field: unit, label: Unit, readonly: true }, { field: date, label: Date }]
