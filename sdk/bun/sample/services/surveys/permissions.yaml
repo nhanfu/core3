@@ -2,3 +2,4 @@ permissions:
   - surveys.read
   - surveys.write
   - surveys.manage
+  - surveys.public

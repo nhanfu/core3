@@ -270,3 +270,36 @@ participant acceptance coverage.
 Disposition: Core3 participant invitation persistence, permissions, workflow,
 restart behavior, and responsive evidence pass for this bounded slice. Surveys
 remains **qa-in-progress / conditional**.
+
+## Bounded QA run: Public response restart lifecycle — `SURVEYS-PUBLIC-RESPONSE-RESTART-001`
+
+- Focused public-response suite: **4 passed, 0 failed, 50 assertions** across
+  `surveys_public_response*.integration.test.ts`. Coverage includes API/page
+  YAML separation, `surveys.public`, start/progress/submit guards, durable
+  file-backed restart, deterministic submitted-at, response-count increment,
+  invalid survey-token rejection, and idempotent submit replay.
+- Scoped lint passed for both public-response integration tests; scoped
+  `git diff --check` is clean.
+- The full Surveys glob is **50 passed, 0 failed, 410 assertions** across 10
+  files. The repository UI audit passed with **673 pages, 682 routes, and
+  1,219 datasources**.
+- Fresh authenticated Core3 browser evidence covers desktop and mobile start,
+  question progression, and final submitted state. CDP probes recorded zero
+  horizontal overflow (`1440` desktop / `390` mobile) and the final body text
+  `Thank you for your response / Your answers have been submitted`.
+- Paired authenticated Odoo evidence reaches the same published Feedback Form
+  token, but the live reference response is host-controlled and displays
+  `The session will begin automatically when the host starts.` with no question
+  controls. This exact fixture/session limitation is captured in
+  `source-comparison.md`; no Odoo response-flow sign-off is claimed.
+- The full repository regression completed at **1,430 passed, 4 failed,
+  12,961 assertions** across 1,434 tests. The four failures are unrelated
+  concurrent eCommerce menu/fixture expectations and CRM deterministic-order
+  expectations; no Surveys failure reproduced. Other-owner files were not
+  edited or staged.
+
+Disposition: Core3 public response persistence, permission contract, workflow,
+restart, replay, and responsive browser evidence pass for this bounded slice.
+The module remains **qa-in-progress / conditional** pending the wider public
+retry/print/report matrix, cleanup of the unrelated shared regression reds,
+and a host-started Odoo response comparison.

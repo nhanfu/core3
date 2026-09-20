@@ -41,6 +41,7 @@ and the published public survey token.
 | SURVEYS-FUNC-010 | functional | Survey detail > Questions > Add a question | Append a normal ordered question from the inline control and refresh the detail graph | `surveys_question_create.integration.test.ts` | pass |
 | SURVEYS-FUNC-011 | data/recovery | DuckDB migration rollback/replay | Preserve an access-token response row and its dependent indexes across `0.0.17` rollback and replay | `surveys_migrations.integration.test.ts` | pass |
 | SURVEYS-FUNC-012 | participant lifecycle | Send/resend invitation | Persist invitation state, count, deterministic sent-at, and reject invalid/stale replay requests | `surveys_participant_invitation.integration.test.ts` | pass |
+| SURVEYS-FUNC-013 | public response recovery | Token start/progress/submit across restart | Resume a durable in-progress response after DuckDB reopen and submit/replay exactly once | `surveys_public_response_restart.integration.test.ts` | pass |
 
 ## Workflow and integration cases
 
@@ -55,6 +56,7 @@ and the published public survey token.
 | SURVEYS-WF-007 | workflow | Inline question create | Create a question in the parent survey and advance its row version | Blank/type/stale/archive guards leave durable rows unchanged | pass at contract level |
 | SURVEYS-WF-008 | recovery | Migration replay | Roll back the idempotency migration and replay the full chain without losing response data | Dependent-index teardown/recreation is explicit and repeatable | pass |
 | SURVEYS-WF-009 | participant invitation | New/In Progress to Sent | Send a new invitation and resend an in-progress invitation; completed/stale requests do not mutate | `surveys_participant_invitation.integration.test.ts` plus restart probe | pass |
+| SURVEYS-WF-010 | public response | Start → In Progress → Submitted | Public token starts and saves progress, restart resumes it, and submit increments the survey count once | `surveys_public_response_restart.integration.test.ts` | pass |
 
 ## Permission and security cases
 
@@ -71,6 +73,7 @@ and the published public survey token.
 | SURVEYS-PERM-009 | Administrator/Fleet | Authenticated regression surface | Admin can read the seeded detail; Fleet receives 403 with no survey disclosure | browser actor matrix | pass |
 | SURVEYS-PERM-010 | Administrator/Fleet/anonymous | Question mutation and protected catalog | Admin mutation persists; Fleet is denied with 403; anonymous navigation redirects to login | `SURVEYS-ACTOR-MATRIX-001` evidence | pass for Core3; Odoo paired comparison blocked |
 | SURVEYS-PERM-011 | Administrator/Fleet/anonymous | Participant invitation actions | Admin can send/resend; invalid state/email/replay are rejected; protected page/API boundaries remain enforced | invitation integration tests and browser evidence | pass for Core3; Odoo action fixture unavailable |
+| SURVEYS-PERM-012 | Public token / invalid token | Public response API | Valid survey/answer tokens may read or mutate only the matching in-progress response; wrong survey, stale, and completed tokens disclose no data | public response integration and restart tests | pass for Core3; Odoo host-started flow unavailable |
 
 ## Visual, responsive, and regression cases
 
@@ -86,6 +89,7 @@ and the published public survey token.
 | SURVEYS-UI-008 | Migration repair smoke | 1440x1000, 390x844 | Existing authenticated Survey detail remains populated and responsive after migration replay | Core3 Admin captures; Odoo installed-reference blocker recorded | partial |
 | SURVEYS-UI-009 | Authenticated actor matrix | 1440x1000, 390x844 | Admin question mutation and Fleet/anonymous boundaries are visible without request errors or overflow | `SURVEYS-ACTOR-MATRIX-001` evidence; Odoo fallback | partial |
 | SURVEYS-UI-010 | Participant invitation/resend | 1440x1000, 390x844 | Admin send/resend state, count, timestamp, and responsive participant detail are visible without overflow | `SURVEYS-PARTICIPANT-INVITE-001` evidence; Odoo completed-only fixture blocker | partial |
+| SURVEYS-UI-011 | Public response start/progress/submitted | 1440x1000, 390x844 | Public respondent can progress and reach the submitted state without overflow | `SURVEYS-PUBLIC-RESPONSE-RESTART-001` evidence; Odoo host-start blocker | partial |
 
 ## Exit criteria
 
@@ -109,3 +113,13 @@ also covers permissions, invalid transitions, stale replay, and file-backed
 restart persistence. The current authenticated Odoo Participants action has
 only Completed fixtures, so its non-completed resend control cannot be paired
 live; this remains a conditional evidence limitation rather than a sign-off.
+
+## 2026-09-20 public response execution
+
+`SURVEYS-PUBLIC-RESPONSE-RESTART-001` covers the authenticated-browser-visible
+Core3 public response lifecycle and the unauthenticated API boundary: start,
+progress, restart, submit, and idempotent replay. Odoo is authenticated and
+the published token is valid, but the reference answer remains host-controlled
+before question rendering; the captured host-start message is the exact paired
+comparison blocker. This case is pass for Core3 and partial for paired Odoo
+visual/workflow evidence.

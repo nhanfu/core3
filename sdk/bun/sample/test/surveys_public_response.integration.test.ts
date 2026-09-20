@@ -16,7 +16,7 @@ describe('Surveys public response workflow', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_public_response_test', ['schema', 'data']);
     const operations = yaml('operations.yaml').operations;
-    const surveyApi = yaml('pages/surveys.yaml');
+    const surveyApi = yaml('api/surveys.yaml');
     const start = surveyApi.actions.find((candidate: any) => candidate.id === 'public_survey_start');
     const progress = surveyApi.actions.find((candidate: any) => candidate.id === 'public_survey_progress');
     const submit = surveyApi.actions.find((candidate: any) => candidate.id === 'public_survey_submit');
@@ -77,7 +77,7 @@ describe('Surveys public response workflow', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_public_idempotency_test', ['schema', 'data']);
     const operations = yaml('operations.yaml').operations;
-    const surveyApi = yaml('pages/surveys.yaml');
+    const surveyApi = yaml('api/surveys.yaml');
     const actions = Object.fromEntries(['public_survey_start', 'public_survey_submit'].map((id) => [id, surveyApi.actions.find((candidate: any) => candidate.id === id)]));
     const service = {
       async call(operation: string, request: any = {}) {
@@ -117,7 +117,7 @@ describe('Surveys public response workflow', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_public_boundary_test', ['schema', 'data']);
     const operations = yaml('operations.yaml').operations;
-    const surveyApi = yaml('pages/surveys.yaml');
+    const surveyApi = yaml('api/surveys.yaml');
     const actions = Object.fromEntries(['public_survey_start', 'public_survey_progress', 'public_survey_submit'].map((id) => [id, surveyApi.actions.find((candidate: any) => candidate.id === id)]));
     const service = {
       async call(operation: string, request: any = {}) {

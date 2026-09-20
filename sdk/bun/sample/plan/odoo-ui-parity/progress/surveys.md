@@ -103,3 +103,25 @@ Inventory DuckDB migration failures outside Surveys. Odoo was authenticated
 but Surveys is uninstalled in `core3_reference`, so desktop/mobile fallback
 captures are recorded and no paired Odoo sign-off is claimed. Status remains
 **qa-in-progress / conditional**.
+
+## 2026-09-20 — `SURVEYS-PUBLIC-RESPONSE-RESTART-001`
+
+Selected the smallest remaining source-backed public behavior after participant
+invitation coverage: start a published token, save an answer, restart the
+file-backed database, resume, submit, and replay the same submission safely.
+Public actions were moved from the page fragment into `api/surveys.yaml`,
+declared with `surveys.public`, and guarded by survey/answer-token and
+in-progress-state checks. Submit uses a deterministic timestamp so restart and
+replay assertions are stable.
+
+`surveys_public_response.integration.test.ts` and the new restart integration
+test cover public permission declarations, required-answer and stale-token
+boundaries, durable resume, response-count persistence, and idempotent submit.
+Fresh authenticated Core3 desktop/mobile captures reach “Thank you / Your
+answers have been submitted” with no horizontal overflow. Authenticated Odoo
+comparison reaches the valid Feedback Form but is blocked before questions by
+the host-controlled session state; exact captures and text are in the feature
+evidence directory. Full Surveys verification is 50/50 with 410 assertions;
+the repository audit passes and the full repository run is 1,430 pass / 4
+unrelated concurrent eCommerce/CRM failures. Status remains
+**qa-in-progress / conditional**.

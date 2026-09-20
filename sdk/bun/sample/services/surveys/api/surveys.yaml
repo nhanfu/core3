@@ -45,3 +45,66 @@ actions:
       - { field: attachment_names, label: Attachments, type: text }
       - { field: deadline, label: Answer deadline, type: text, placeholder: 'YYYY-MM-DD' }
       - { field: mail_template, label: Mail Template, type: select, default: 'Survey: Invite', options: [{ value: 'Survey: Invite', label: 'Survey: Invite' }] }
+
+  # Public-token actions are kept in the API fragment rather than the page
+  # layout. The Surveys module controller authenticates the survey and answer
+  # tokens before dispatching them.
+  - id: public_survey_start
+    type: server_form
+    permission: surveys.public
+    title: Start public survey response
+    action: surveys.public.start
+    handler: yaml_mutation
+    mutation:
+      operation: insert
+      table: survey_responses
+      fields: [survey_id, survey_name, answer_data, access_token, idempotency_key]
+      required: [survey_id, survey_name, answer_data]
+      defaults: { state: In Progress }
+      generated: [access_token]
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE id = :id" }
+    fields:
+      - { field: survey_id, label: Survey ID, type: text, required: true }
+      - { field: survey_name, label: Survey, type: text, required: true }
+      - { field: answer_data, label: Answers, type: text, required: true }
+      - { field: idempotency_key, label: Idempotency key, type: text }
+  - id: public_survey_submit
+    type: server_form
+    permission: surveys.public
+    title: Submit public survey response
+    action: surveys.public.submit
+    handler: yaml_mutation
+    mutation:
+      operation: update
+      table: survey_responses
+      fields: [answer_data, respondent_name, respondent_email, idempotency_key]
+      required: [answer_data]
+      concurrency: false
+      guards:
+        - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, code: SURVEY_PUBLIC_RESPONSE_NOT_IN_PROGRESS, message: This survey response is no longer available for editing }
+      steps:
+        - { query: "UPDATE survey_responses SET state = 'Submitted', submitted_at = TIMESTAMP '2026-01-15 09:30:00' WHERE id = :id" }
+        - { query: "UPDATE surveys SET response_count = response_count + 1, row_version = row_version + 1 WHERE id = :survey_id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE id = :id" }
+    fields:
+      - { field: answer_data, label: Answers, type: text, required: true }
+      - { field: respondent_name, label: Respondent, type: text }
+      - { field: respondent_email, label: Email, type: text }
+      - { field: idempotency_key, label: Idempotency key, type: text }
+  - id: public_survey_progress
+    type: server_form
+    permission: surveys.public
+    title: Save public survey progress
+    action: surveys.public.progress
+    handler: yaml_mutation
+    mutation:
+      operation: update
+      table: survey_responses
+      fields: [answer_data]
+      required: [answer_data]
+      concurrency: false
+      guards:
+        - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, code: SURVEY_PUBLIC_RESPONSE_NOT_IN_PROGRESS, message: This survey response is no longer available for editing }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE id = :id" }
+    fields:
+      - { field: answer_data, label: Answers, type: text, required: true }

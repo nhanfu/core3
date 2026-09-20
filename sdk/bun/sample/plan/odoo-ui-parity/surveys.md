@@ -1086,3 +1086,30 @@ older uninstall note in historical entries. Its participant action currently
 contains only Completed fixtures, so no New/In Progress row exposes Odoo's
 resend control for a live mutation comparison. This slice therefore remains
 **qa-in-progress / conditional**; no parity sign-off is claimed.
+
+## Bounded slice: Public response restart lifecycle (2026-09-20)
+
+`SURVEYS-PUBLIC-RESPONSE-RESTART-001` closes the next smallest source-backed
+public workflow: an unauthenticated respondent starts a published survey,
+saves progress, resumes after a file-backed DuckDB restart, submits once, and
+replays the same submit idempotency key. The Core3 controller keeps token
+validation and public route handling in `services/surveys/module.ts`, while
+the page layout and backend API/action contracts are separate YAML fragments.
+The public actions now declare `surveys.public`; submit guards require an
+in-progress response and persist the deterministic fixture timestamp
+`2026-01-15 09:30:00`.
+
+The source comparison follows Odoo's public `/survey/start`, `/survey/retry`,
+`/survey/begin`, `/survey/next_question`, `/survey/submit`, and `/survey/print`
+routes in `addons/survey/controllers/main.py`. Core3 evidence covers
+authenticated desktop/mobile browser interaction through the submitted
+response screen, while the paired authenticated Odoo survey reaches its
+host-controlled landing page and reports: “The session will begin
+automatically when the host starts.” This is recorded as a precise reference
+fixture blocker, not as a parity sign-off. Focused service/restart tests and
+all evidence are recorded under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-RESPONSE-RESTART-001/`.
+
+Surveys remains **qa-in-progress / conditional** pending the broader public
+retry/print/report matrix, complete repository regression, and an Odoo
+host-started response comparison.

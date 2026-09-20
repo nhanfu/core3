@@ -310,14 +310,14 @@ describe('Surveys parity catalog and workflow', () => {
   test('declares the token-scoped public survey contract', () => {
     const manifest = yaml('manifest.yaml');
     const operations = yaml('operations.yaml').operations;
-    const page = yaml('pages/surveys.yaml');
+    const page = yaml('api/surveys.yaml');
     expect(manifest.operations).toBe('operations.yaml');
     expect(operations['survey.public.detail'].query).toContain("state = 'Published'");
     expect(operations['survey.public.response'].query).toContain('access_token = :access_token');
     expect(page.actions.find((action: any) => action.action === 'surveys.public.start')).toMatchObject({ title: 'Start public survey response' });
     expect(page.actions.find((action: any) => action.action === 'surveys.public.submit').mutation.steps[0].query).toContain("state = 'Submitted'");
     const progress = page.actions.find((action: any) => action.action === 'surveys.public.progress');
-    expect(progress).toMatchObject({ permission: 'surveys.write', handler: 'yaml_mutation' });
+    expect(progress).toMatchObject({ permission: 'surveys.public', handler: 'yaml_mutation' });
     expect(progress.mutation.guards[0].query).toContain('access_token = :access_token');
     expect(progress.mutation.guards[0].query).toContain("state = 'In Progress'");
     expect(readFileSync(join(import.meta.dir, '../public/app.ts'), 'utf8')).toContain('answerToken?: string');
