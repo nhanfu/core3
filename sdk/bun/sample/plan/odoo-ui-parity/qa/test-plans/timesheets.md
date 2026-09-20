@@ -102,3 +102,9 @@ not the desktop search panel. Core3 desktop/mobile evidence is blocked by an
 unrelated `discoverPages` `max_length is not allowed` schema failure, with the
 exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces
 remain a known blocker and no module sign-off is claimed.
+
+## Wave 13 execution — `TIMESHEET-ALL-EMPLOYEE-GROUP-001`
+
+The All Timesheets Employee group-by source comparison and durable contract are covered by `test/timesheets_all_employee_group.integration.test.ts` (4 tests / 23 expectations). The test exercises page/API separation, durable employee relation reads, actor/company/empty guards, required optimistic concurrency, and file-backed restart.
+
+Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-all-employee-group/`: desktop exposes and applies Employee grouping; mobile exposes responsive Kanban but not the desktop search panel. Core3 desktop/mobile evidence is blocked by the shared `discoverPages` `actions[2].fields must be a non-empty array` schema failure, with exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces remain a known blocker and no module sign-off is claimed.

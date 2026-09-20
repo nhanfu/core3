@@ -49,6 +49,7 @@ components:
         pivot:
           fields:
             - { field: employee_name, column: Employee }
+            - { field: employee_id, column: Employee ID }
             - { field: project_name, column: Project }
             - { field: task_name, column: Task }
             - { field: work_date, column: Date, type: date }
@@ -69,6 +70,7 @@ components:
     row_actions: menu
     columns:
       - { field: work_date, label: Date }
+      - { field: employee_id, label: Employee ID, optional: hide }
       - { field: employee_name, label: Employee }
       - { field: project_name, label: Project }
       - { field: task_name, label: Task }

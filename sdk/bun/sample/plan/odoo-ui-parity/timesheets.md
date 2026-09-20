@@ -1540,3 +1540,13 @@ Core3 keeps `pages/entries.yaml` layout-only and joins it to the API contract th
 Focused coverage is `test/timesheets_my_manager_group.integration.test.ts`: 4 tests / 28 expectations, covering Odoo source comparison, page/API separation, deterministic manager relations, actor/company/empty guards, stale concurrency, migration replay, and file-backed restart.
 
 Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-my-manager-group/`. Desktop applies Manager grouping and captures the grouped result; mobile captures responsive Kanban where the desktop group-by control is unavailable. Core3 browser capture is blocked by an unrelated `discoverPages` schema error on `actions[2].fields[*].max_length`; the exact output is preserved in the evidence directory. Odoo Print/PDF/action surfaces remain open and this bounded slice is not module sign-off.
+
+## Wave 13 All Timesheets Employee grouping — `TIMESHEET-ALL-EMPLOYEE-GROUP-001` (2026-09-21)
+
+The next uncovered source-backed behavior is the authenticated All Timesheets Employee group-by. Odoo's `timesheet_action_all` action targets the All Timesheets route, and `hr_timesheet_line_search` exposes `groupby_employee` with `context={'group_by': 'employee_id'}`.
+
+Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml` action/data-only, joined by `page.id: all-timesheets`. The API now projects the durable `employee_id` relation into list and pivot data; the page exposes the relation in the pivot and as an optional hidden list column. No migration was needed because the existing durable `timesheet_entries.employee_id` relation is covered through file-backed restart.
+
+Focused coverage is `test/timesheets_all_employee_group.integration.test.ts`: 4 tests / 23 expectations. It covers source comparison, page/API separation, deterministic employee relation data, actor/company/empty guards, stale row-version protection, and restart persistence.
+
+Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-employee-group/`. Desktop applies Employee grouping and renders 23 employee groups; mobile captures the responsive Kanban where the desktop search/group-by control is unavailable. Core3 desktop/mobile capture is blocked before authentication by the shared `discoverPages` error `actions[2].fields must be a non-empty array`, recorded in `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain open; no module sign-off is claimed.

@@ -770,3 +770,11 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
 - Core3 browser blocker: `discoverPages` rejects an unrelated page's
   `actions[2].fields[*].max_length`; exact output is in `core3-readiness.txt`.
   Odoo Print/PDF/action blockers remain open and this slice is not sign-off.
+
+## `TIMESHEET-ALL-EMPLOYEE-GROUP-001` — All Timesheets Employee grouping (2026-09-21)
+
+- Source gate: Odoo's All Timesheets action is `timesheet_action_all`; its authenticated search view exposes `groupby_employee` over `employee_id`.
+- Core3 gate: `all-timesheets` keeps page/API YAML separate, adds durable `employee_id` to list/pivot data, and exposes the relation in the page metadata.
+- Focused gate: `test/timesheets_all_employee_group.integration.test.ts` passes 4/4 tests / 23 expectations, including relation reads, actor/company/empty guards, stale concurrency, and file restart.
+- Odoo browser gate: authenticated desktop applies Employee grouping and renders the grouped result; authenticated mobile captures responsive Kanban without the desktop search panel. Captures and results are under `evidence/timesheets/2026-09-21/timesheet-all-employee-group/`.
+- Core3 browser blocker: shared startup fails before authentication because `discoverPages` rejects `actions[2].fields` without a non-empty array; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open and this slice is not sign-off.

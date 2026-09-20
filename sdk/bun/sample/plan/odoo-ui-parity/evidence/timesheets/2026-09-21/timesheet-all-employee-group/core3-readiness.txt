@@ -1,0 +1,9 @@
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit=1; backend 127.0.0.1:3001 and frontend 127.0.0.1:3002 did not remain available for /api/modules (HTTP 000).
+
+The startup reached Vite readiness, then failed during shared page discovery with:
+PageSchemaError: Invalid page definition:
+- actions[2].fields must be a non-empty array
+The stack identifies services/ecommerce/module.ts loading discoverPages. This is outside
+the Timesheets-owned files, so authenticated Core3 desktop/mobile capture is blocked before
+authentication. No Core3 sign-off is claimed.

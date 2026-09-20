@@ -1,0 +1,14 @@
+{
+  "feature_id": "TIMESHEET-ALL-EMPLOYEE-GROUP-001",
+  "source": "hr_timesheet timesheet_action_all and groupby_employee",
+  "odoo": {
+    "desktop": "authenticated All Timesheets Employee grouping applied; 23 grouped employee results rendered",
+    "mobile": "authenticated responsive All Timesheets Kanban rendered; desktop group-by control is not exposed",
+    "errors": []
+  },
+  "core3": {
+    "desktop": "blocked before authentication by shared discoverPages actions[2].fields must be a non-empty array",
+    "mobile": "blocked by the same shared startup schema failure"
+  },
+  "signoff": false
+}

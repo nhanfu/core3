@@ -716,3 +716,11 @@ sign-off is claimed.
 - Focused verification: `test/timesheets_my_manager_group.integration.test.ts` passed 4/4 with 28 expectations, including durable reads, actor/company/empty guards, stale concurrency, migration replay, and file-backed restart.
 - Odoo authenticated desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-my-manager-group/`. Desktop applies Manager and renders `Mitchell Admin (42)`; mobile is responsive Kanban without the desktop search control.
 - Core3 browser evidence is blocked by an unrelated `discoverPages` `max_length is not allowed` schema failure; see `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
+
+## 2026-09-21 — `TIMESHEET-ALL-EMPLOYEE-GROUP-001`
+
+- Selected the next uncovered source-backed behavior: authenticated All Timesheets Employee group-by from Odoo's `timesheet_action_all` and `groupby_employee` filter.
+- Added durable `employee_id` to the All Timesheets API list/pivot projection and exposed it in the page pivot/optional list metadata; page/API remain separated and joined by `page.id: all-timesheets`.
+- Focused verification: `test/timesheets_all_employee_group.integration.test.ts` passed 4/4 with 23 expectations, including actor/company/empty guards, stale concurrency, and file-backed restart.
+- Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-employee-group/`; desktop applied Employee grouping and mobile rendered responsive Kanban.
+- Core3 browser capture is blocked before authentication by the shared `discoverPages` `actions[2].fields must be a non-empty array` schema failure; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
