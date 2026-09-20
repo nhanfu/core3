@@ -2,17 +2,21 @@
 
 Module owner: referrals module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
-Status: source-limited implementation in progress
+Status: source-limited CRUD/workflow/browser slice verified
 Verification trigger: feature-complete after `hr_referral` is installed in the live reference
-Candidate commit: pending current-wave commit
+Candidate commit: pending current-wave QA evidence commit
 
 ## Current state
 
 This module is registered in odoo-parity-plan.md but the live Odoo reference
 does not install `hr_referral`; no exact menu/action/view parity claim is made.
 The current provisional slice separates page contracts from service-owned API
-fragments and exercises real DuckDB persistence, CRUD guards, workflow-linked
-actions, and fixture HTTP states.
+fragments and has now passed live authenticated Core3 create/edit/delete,
+workflow, actor-permission, and desktop/mobile route checks. Evidence is under
+`/tmp/core3-odoo-parity/referrals-20260920-rerun/`. The previous aborted
+`/api/auth/me` observation was isolated to the browser harness; fresh
+independent contexts returned 200 with no failed requests. No Odoo visual
+parity claim is made because `hr_referral` is absent from the live reference.
 
 ## Next bounded task
 

@@ -78,8 +78,10 @@ current wave moved the datasource/action contracts into page-matched
 `services/referrals/api/*.yaml` fragments and added HTTP-state metadata plus
 real create/update/delete guards. The module remains source-limited: fixtures
 are not yet complete for every required state, migrations/workflows still use
-process-time date/timestamp defaults and a generated UUID schema default, and
-no authenticated desktop/mobile comparison evidence is present.
+process-time date/timestamp defaults and a generated UUID schema default. Fresh
+authenticated Core3 desktop/mobile route evidence is now recorded under
+`/tmp/core3-odoo-parity/referrals-20260920-rerun/`, but paired Odoo visual
+comparison remains unavailable.
 
 ## Blocking dependency and next gate
 
