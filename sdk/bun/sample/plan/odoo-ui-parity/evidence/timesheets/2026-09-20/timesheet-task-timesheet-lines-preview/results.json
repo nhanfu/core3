@@ -1,0 +1,63 @@
+{
+  "feature_id": "TIMESHEET-TASK-TIMESHEET-LINES-PREVIEW",
+  "captured_at": "2026-09-20",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "printLinesVisible": true,
+      "reportRendered": true,
+      "durableRun": true,
+      "linesRendered": true,
+      "url": "http://127.0.0.1:4041/timesheets/task-lines-report-preview?id=task-demo-001",
+      "bodyWidth": 1424,
+      "documentWidth": 1440,
+      "errors": [],
+      "failed": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "printLinesVisible": true,
+      "reportRendered": true,
+      "durableRun": true,
+      "linesRendered": true,
+      "url": "http://127.0.0.1:4041/timesheets/task-lines-report-preview?id=task-demo-001",
+      "bodyWidth": 374,
+      "documentWidth": 390,
+      "errors": [],
+      "failed": []
+    }
+  },
+  "odoo": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "taskVisible": true,
+      "printVisible": false,
+      "reportRendered": false,
+      "exactBlocker": true,
+      "url": "http://127.0.0.1:8069/odoo/all-tasks/100",
+      "bodyWidth": 1440,
+      "documentWidth": 1440,
+      "errors": [],
+      "failed": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "taskVisible": true,
+      "printVisible": false,
+      "reportRendered": false,
+      "exactBlocker": true,
+      "url": "http://127.0.0.1:8069/odoo/all-tasks/100",
+      "bodyWidth": 390,
+      "documentWidth": 390,
+      "errors": [],
+      "failed": []
+    }
+  },
+  "blockers": [
+    "Authenticated Odoo task route exposes no visible Print/report action, so the source QWeb-PDF execution cannot be paired; Core3 preview evidence is recorded separately."
+  ]
+}

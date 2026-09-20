@@ -292,3 +292,35 @@ Project dashboard overflow, which remains a Project-owned blocker. Authenticated
 Odoo `/odoo/project/5` renders the project at both viewports but exposes no
 visible Timesheets embedded action; this is the exact paired-reference blocker.
 Module sign-off remains pending.
+
+## 2026-09-20 `TIMESHEET-TASK-TIMESHEET-LINES-PREVIEW`
+
+The next smallest source-backed gap was the rendered task analytic-line report
+action. Odoo declares `timesheet_report_task_timesheets` as a `qweb-pdf` report
+for `account.analytic.line` in
+`addons/hr_timesheet/report/report_timesheet_templates.xml:215-222`.
+
+Core3 now separates the task-line preview page and API by
+`page.id: task-timesheet-lines-report-preview`. The existing guarded
+`timesheets.task_entries.print_lines_report` mutation remains the durable write
+boundary and the task `Print lines` action navigates to
+`/timesheets/task-lines-report-preview?id=...` after its HTTP 200 response. The
+preview reads the latest company/task-scoped run and persisted entries from
+`timesheet_task_lines_report_runs` and `timesheet_entries`; read failures fail
+closed for missing, unavailable, wrong-company, wrong-task, and deterministic
+empty fixtures. Actor, company, stale, empty, and missing-task mutation guards
+remain in the existing binding.
+
+Focused coverage is
+`test/timesheets_task_lines_report_preview.integration.test.ts` (4 tests, 23
+expectations): source/action contract, migration replay, file-backed restart,
+persisted report line, company/task scope, and deterministic empty state.
+Authenticated Core3 desktop/mobile evidence is under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-task-timesheet-lines-preview/`;
+both viewports render the report after the concrete `Print lines` click with no
+browser errors or viewport overflow.
+
+Authenticated Odoo `/odoo/all-tasks/100` renders at both viewports but exposes
+no visible Print/report action. That is the exact QWeb/PDF comparison blocker;
+missing Odoo Print/PDF/action surfaces, broader route/action comparison, and
+Timesheets module sign-off remain open.

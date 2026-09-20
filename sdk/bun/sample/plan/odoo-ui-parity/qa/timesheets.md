@@ -331,3 +331,33 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Disposition: **bounded Core3 employee report preview verified; Odoo report
   comparison, remaining route/action comparison, and module sign-off remain
   pending**.
+
+## `TIMESHEET-TASK-TIMESHEET-LINES-PREVIEW` — 2026-09-20
+
+Source comparison: Odoo's `timesheet_report_task_timesheets` report is the
+`account.analytic.line` QWeb-PDF action in
+`addons/hr_timesheet/report/report_timesheet_templates.xml:215-222`.
+
+Core3 implementation: the task Timesheets page remains separate from the API;
+its `Print lines` action calls the guarded report mutation and then routes to
+`/timesheets/task-lines-report-preview`. The new read-only page/API pair loads
+the durable latest task-line run and company/task-scoped persisted entries.
+The existing durable mutation enforces actor, company, stale, empty, and
+missing-task guards. Preview reads return deterministic empty/not-found states
+and transport errors without widening scope.
+
+Verification: `bun test
+test/timesheets_task_lines_report_preview.integration.test.ts --timeout 20000`
+passes 4 tests / 23 expectations. It covers YAML page/API separation, source
+contract, migration replay, file-backed restart, persisted line rendering,
+company/task scope, and deterministic empty fixtures. Authenticated Core3
+desktop/mobile evidence is in
+`evidence/timesheets/2026-09-20/timesheet-task-timesheet-lines-preview/`;
+both viewports click the rendered action, show the durable run and Migration
+work line, and have no browser errors or non-favicon request failures.
+
+Paired authenticated Odoo desktop/mobile evidence reaches
+`/odoo/all-tasks/100` but exposes no visible Print/report action. The source
+QWeb/PDF execution therefore cannot be paired; this is an exact blocker, not a
+parity pass. Missing Odoo Print/PDF/action surfaces, full route/action
+comparison, and module sign-off remain pending.
