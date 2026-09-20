@@ -1,26 +1,24 @@
-title: Customer Payment
-page: { id: accounting-customer-payment-detail, route: /accounting/customer-payment-detail, breadcrumb: [Invoicing, Customers, Payments, Payment], auth: { require: [accounting.read] } }
+title: New Customer Payment
+page: { id: accounting-customer-payment-new, route: /accounting/customer-payments/new, breadcrumb: [Invoicing, Customers, Payments, New], auth: { require: [accounting.read] } }
 components:
   - type: OdooFormView
-    source: accounting_customer_payment_detail
+    source: accounting_customer_payment_new
     title_field: name
     status_field: state
-    statusbar: [{ value: Draft, label: Draft }, { value: In Process, label: In Process }, { value: Paid, label: Paid }, { value: Canceled, label: Canceled }, { value: Rejected, label: Rejected }]
-    status_colors: { Draft: neutral, In Process: blue, Paid: green, Canceled: red, Rejected: red }
-    editable: false
+    statusbar: [{ value: Draft, label: Draft }, { value: In Process, label: In Process }, { value: Paid, label: Paid }]
+    status_colors: { Draft: neutral, In Process: blue, Paid: green }
+    editable: true
+    initial_editing: true
     labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Payment status }
     header_actions:
-      - { id: back_to_accounting_customer_payments, label: Customer Payments, variant: secondary, permission: accounting.read }
-      - { id: edit_accounting_customer_payment, label: Edit, variant: secondary, permission: accounting.write, show_if: "state.accounting_customer_payment_detail.state === 'Draft'" }
-      - { id: confirm_accounting_customer_payment, label: Confirm, variant: primary, permission: accounting.write, show_if: "state.accounting_customer_payment_detail.state === 'Draft'" }
-      - { id: mark_accounting_customer_payment_paid, label: Paid, variant: primary, permission: accounting.write, show_if: "state.accounting_customer_payment_detail.state === 'In Process'" }
-      - { id: cancel_accounting_customer_payment, label: Cancel, variant: danger, permission: accounting.write, show_if: "state.accounting_customer_payment_detail.state === 'Draft' || state.accounting_customer_payment_detail.state === 'In Process'" }
+      - { id: back_to_accounting_customer_payments_new, label: Customer Payments, variant: secondary, permission: accounting.read }
+      - { id: create_accounting_customer_payment, label: Save, variant: primary, permission: accounting.write }
     group_columns: 2
     groups:
       - title: Payment
         fields:
           - { field: payment_type, label: Payment Type, type: radio, options: [{ value: Inbound, label: Receive }, { value: Outbound, label: Send }] }
-          - { field: partner_name, label: Customer, type: select, options_source: accounting_customer_payment_customers }
+          - { field: partner_name, label: Customer, type: select, options_source: accounting_customer_payment_new_customers }
           - { field: amount, label: Amount, type: money }
           - { field: payment_date, label: Date, type: date }
           - { field: reference, label: Memo, type: text }
@@ -40,9 +38,9 @@ components:
             - { field: reference, label: Memo }
             - { field: customer_bank_account, label: Customer Bank Account }
             - { field: currency, label: Currency }
-    message_source: accounting_customer_payment_messages
+    message_source: accounting_customer_payment_new_messages
     chatter_label: Messages and activities
-    chatter_empty: No messages or activities yet.
+    chatter_empty: Save the payment to start the conversation.
     message_label: Send message
     note_label: Log note
     activity_label: Activity

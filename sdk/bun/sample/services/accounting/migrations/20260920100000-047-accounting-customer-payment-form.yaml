@@ -1,0 +1,26 @@
+version: 0.0.47
+kind: data
+description: Add the customer payment form, workflow, and chatter boundary
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_payments ADD COLUMN IF NOT EXISTS customer_bank_account VARCHAR DEFAULT '';
+      CREATE TABLE IF NOT EXISTS accounting_customer_payment_messages (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), payment_id VARCHAR NOT NULL,
+        actor_name VARCHAR NOT NULL, action VARCHAR NOT NULL, action_label VARCHAR NOT NULL,
+        detail VARCHAR NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_accounting_customer_payment_messages_payment ON accounting_customer_payment_messages(payment_id, created_at);
+      UPDATE accounting_payments SET customer_bank_account = CASE id
+        WHEN 'accounting-customer-payment-001' THEN 'US001-CUST-0001'
+        WHEN 'accounting-customer-payment-002' THEN 'US001-CUST-0002'
+        WHEN 'accounting-customer-payment-003' THEN 'US001-CUST-0003'
+        ELSE COALESCE(customer_bank_account, '') END
+      WHERE payment_type = 'Inbound';
+    down: |
+      DROP TABLE IF EXISTS accounting_customer_payment_messages;
+      ALTER TABLE accounting_payments DROP COLUMN IF EXISTS customer_bank_account;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

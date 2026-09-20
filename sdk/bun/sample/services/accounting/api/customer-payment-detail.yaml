@@ -3,4 +3,146 @@ datasources:
   - id: accounting_customer_payment_detail
     single: true
     permission: accounting.read
-    query: "SELECT id, row_version, name, partner_name, payment_type, amount, payment_method, journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, state, reference FROM accounting_payments WHERE id = :id AND payment_type = 'Inbound'"
+    error_states: { forbidden: { status: 403, code: ACCOUNTING_CUSTOMER_PAYMENT_FORBIDDEN, message: You do not have access to customer payments. }, transport_error: { status: 503, code: ACCOUNTING_CUSTOMER_PAYMENT_DETAIL_UNAVAILABLE, message: Customer payment details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, partner_name, payment_type, amount, payment_method, journal, currency, CAST(payment_date AS VARCHAR) AS payment_date, state, reference, customer_bank_account FROM accounting_payments WHERE payment_type = 'Inbound' AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE AND id = :id"
+  - id: accounting_customer_payment_customers
+    single: false
+    permission: accounting.read
+    query: "SELECT value, label FROM (VALUES ('Acme Corporation','Acme Corporation'), ('Azure Interior','Azure Interior'), ('Gemini Furniture','Gemini Furniture'), ('Lumber Inc','Lumber Inc'), ('Ready Mat','Ready Mat'), ('Wood Corner','Wood Corner')) customers(value, label) ORDER BY label"
+  - id: accounting_customer_payment_messages
+    single: false
+    permission: accounting.read
+    query: "SELECT id, actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at FROM accounting_customer_payment_messages WHERE payment_id = :id UNION ALL SELECT 'customer-payment-created-' || CAST(:id AS VARCHAR), 'Administrator', 'created', 'Creating a new record...', 'Draft payment form opened', CAST(CURRENT_TIMESTAMP AS VARCHAR) WHERE :id IS NULL ORDER BY created_at DESC"
+actions:
+  - id: back_to_accounting_customer_payments
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/customer-payments
+  - id: edit_accounting_customer_payment
+    type: server_form
+    permission: accounting.write
+    title: Edit Customer Payment
+    action: accounting.customer_payments.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_customer_payment_detail
+    refresh: [accounting_customer_payment_detail, accounting_customer_payment_messages]
+    mutation:
+      operation: update
+      table: accounting_payments
+      fields: [partner_name, payment_type, amount, payment_method, journal, currency, payment_date, reference, customer_bank_account]
+      required: [partner_name, amount, payment_date, journal, payment_method]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Inbound'", status: 404, code: ACCOUNTING_CUSTOMER_PAYMENT_NOT_FOUND, message: Customer payment was not found. }
+        - { query: "SELECT 1 AS ok WHERE :payment_type = 'Inbound'", status: 422, code: ACCOUNTING_CUSTOMER_PAYMENT_TYPE_INVALID, message: Customer payments must use Receive. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0", status: 422, code: ACCOUNTING_CUSTOMER_PAYMENT_AMOUNT_INVALID, message: Payment amount must be positive. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:payment_date AS DATE) IS NOT NULL", status: 422, code: ACCOUNTING_CUSTOMER_PAYMENT_DATE_INVALID, message: Payment date must be valid. }
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_CUSTOMER_PAYMENT_STALE, message: This payment changed elsewhere. Reload before saving. }
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+    fields:
+      - { field: partner_name, label: Customer, type: select, options_source: accounting_customer_payment_customers, required: true }
+      - { field: payment_type, label: Payment Type, type: radio, options: [{ value: Inbound, label: Receive }, { value: Outbound, label: Send }] }
+      - { field: amount, label: Amount, type: money, required: true }
+      - { field: payment_date, label: Date, type: date, required: true }
+      - { field: reference, label: Memo, type: text }
+      - { field: journal, label: Journal, type: select, options: [Bank, Cash, Miscellaneous], required: true }
+      - { field: payment_method, label: Payment Method?, type: select, options: [Manual Payment, Check, Card, Other], required: true }
+      - { field: customer_bank_account, label: Customer Bank Account, type: text }
+      - { field: currency, label: Currency, type: text }
+  - id: confirm_accounting_customer_payment
+    type: server
+    permission: accounting.write
+    action: accounting.customer_payments.confirm
+    handler: yaml_mutation
+    operation: confirm
+    params: { id: '{state.id}', values: { state: In Process } }
+    refresh: [accounting_customer_payment_detail, accounting_customer_payment_messages]
+    mutation:
+      operation: update
+      table: accounting_payments
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Inbound' AND state = 'Draft' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_CUSTOMER_PAYMENT_STALE, message: Only an unchanged draft customer payment can be confirmed. }
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+  - id: mark_accounting_customer_payment_paid
+    type: server
+    permission: accounting.write
+    action: accounting.customer_payments.paid
+    handler: yaml_mutation
+    operation: paid
+    params: { id: '{state.id}', values: { state: Paid } }
+    refresh: [accounting_customer_payment_detail, accounting_customer_payment_messages]
+    mutation:
+      operation: update
+      table: accounting_payments
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Inbound' AND state = 'In Process' AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_CUSTOMER_PAYMENT_STALE, message: Only an unchanged in-process customer payment can be marked paid. }
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+  - id: cancel_accounting_customer_payment
+    type: server
+    permission: accounting.write
+    action: accounting.customer_payments.cancel
+    handler: yaml_mutation
+    operation: cancel
+    params: { id: '{state.id}', values: { state: Canceled } }
+    refresh: [accounting_customer_payment_detail, accounting_customer_payment_messages]
+    mutation:
+      operation: update
+      table: accounting_payments
+      fields: [state]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Inbound' AND state IN ('Draft', 'In Process') AND row_version = :expected_row_version", status: 409, code: ACCOUNTING_CUSTOMER_PAYMENT_STALE, message: This customer payment is no longer cancellable. }
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+  - id: send_accounting_customer_payment_message
+    type: server_form
+    permission: accounting.write
+    title: Send message
+    action: accounting.customer_payments.message
+    handler: yaml_mutation
+    operation: message
+    params: { id: '{state.id}' }
+    refresh: [accounting_customer_payment_messages]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_CUSTOMER_PAYMENT_MESSAGE_INVALID, message: Message content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Inbound'", status: 404, code: ACCOUNTING_CUSTOMER_PAYMENT_NOT_FOUND, message: Customer payment was not found. }
+      steps:
+        - { query: "INSERT INTO accounting_customer_payment_messages(id, payment_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'accounting.customer_payment.message', 'Message', :content)" }
+  - id: log_accounting_customer_payment_note
+    type: server_form
+    permission: accounting.write
+    title: Log note
+    action: accounting.customer_payments.note
+    handler: yaml_mutation
+    operation: note
+    params: { id: '{state.id}' }
+    refresh: [accounting_customer_payment_messages]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_CUSTOMER_PAYMENT_NOTE_INVALID, message: Note content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Inbound'", status: 404, code: ACCOUNTING_CUSTOMER_PAYMENT_NOT_FOUND, message: Customer payment was not found. }
+      steps:
+        - { query: "INSERT INTO accounting_customer_payment_messages(id, payment_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'accounting.customer_payment.note', 'Note', :content)" }
+  - id: schedule_accounting_customer_payment_activity
+    type: server_form
+    permission: accounting.write
+    title: Schedule activity
+    action: accounting.customer_payments.activity
+    handler: yaml_mutation
+    operation: activity
+    params: { id: '{state.id}' }
+    refresh: [accounting_customer_payment_messages]
+    fields: [{ field: content, label: Activity, type: textarea, required: true }]
+    mutation:
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(:content)) BETWEEN 1 AND 4000", status: 422, code: ACCOUNTING_CUSTOMER_PAYMENT_ACTIVITY_INVALID, message: Activity content must be between 1 and 4000 characters. }
+        - { query: "SELECT id FROM accounting_payments WHERE id = :id AND payment_type = 'Inbound'", status: 404, code: ACCOUNTING_CUSTOMER_PAYMENT_NOT_FOUND, message: Customer payment was not found. }
+      steps:
+        - { query: "INSERT INTO accounting_customer_payment_messages(id, payment_id, actor_name, action, action_label, detail) VALUES(gen_random_uuid(), :id, :current_user_name, 'accounting.customer_payment.activity', 'Activity', :content)" }
