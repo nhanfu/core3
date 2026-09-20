@@ -1,0 +1,26 @@
+id: employees_bank_allocation_wizard
+version: 0.0.41
+kind: data
+description: Persist employee bank-account allocation wizard saves
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_bank_allocation_runs (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        employee_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        total_percentage DOUBLE NOT NULL DEFAULT 0,
+        percentage_line_count INTEGER NOT NULL DEFAULT 0,
+        actor_id VARCHAR,
+        actor_name VARCHAR,
+        saved_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS employee_bank_allocation_runs_employee_idx
+        ON employee_bank_allocation_runs(employee_id, saved_at, id);
+    down: |
+      DROP INDEX IF EXISTS employee_bank_allocation_runs_employee_idx;
+      DROP TABLE IF EXISTS employee_bank_allocation_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,101 @@
+page: { id: employee-bank-allocation }
+datasources:
+  - id: employee_bank_allocation
+    single: true
+    permission: employees.read
+    error_states:
+      missing_record: { status: 404, code: EMPLOYEES_BANK_ALLOCATION_EMPLOYEE_NOT_FOUND, message: Active employee not found for bank allocation. }
+      transport_error: { status: 503, code: EMPLOYEES_BANK_ALLOCATION_UNAVAILABLE, message: Bank allocation is temporarily unavailable. }
+    query: |
+      SELECT e.id, e.row_version, e.name AS employee_name, e.company_name,
+        COUNT(b.id) AS bank_account_count,
+        COUNT(b.id) FILTER (WHERE b.amount_type = 'percentage') AS percentage_line_count,
+        COALESCE(SUM(b.amount) FILTER (WHERE b.amount_type = 'percentage'), 0) AS total_percentage,
+        CASE WHEN COUNT(b.id) FILTER (WHERE b.amount_type = 'percentage') = 0
+          OR ABS(COALESCE(SUM(b.amount) FILTER (WHERE b.amount_type = 'percentage'), 0) - 100) < 0.0001
+          THEN 'Ready' ELSE 'Needs 100%' END AS allocation_status
+      FROM employees e
+      LEFT JOIN employee_bank_accounts b ON b.employee_id = e.id AND b.active = true
+      WHERE e.id = :id AND e.active = true
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+      GROUP BY e.id, e.row_version, e.name, e.company_name
+  - id: employee_bank_allocation_lines
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_BANK_ALLOCATION_LINES_UNAVAILABLE, message: Bank allocation lines are temporarily unavailable. } }
+    query: |
+      SELECT b.id, b.row_version, b.employee_id, b.company_name, b.acc_number,
+        b.bank_name, b.acc_holder_name, b.currency_code, b.amount, b.amount_type,
+        b.trusted, b.sequence, b.active,
+        CASE WHEN b.amount_type = 'percentage' THEN CAST(b.amount AS VARCHAR) || '%' ELSE printf('%.2f %s', b.amount, b.currency_code) END AS allocation_display,
+        CASE WHEN b.trusted THEN 'Trusted' ELSE 'Untrusted' END AS trust_status
+      FROM employee_bank_accounts b
+      JOIN employees e ON e.id = b.employee_id
+      WHERE b.employee_id = :id AND b.active = true AND e.active = true
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+      ORDER BY b.sequence, b.id
+actions:
+  - id: open_employee_from_bank_allocation
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/detail
+    params: { id: '{state.id}' }
+  - id: edit_employee_bank_allocation_line
+    type: server_form
+    permission: employees.write
+    title: Edit Salary Allocation
+    description: Update the account allocation and trust state before saving the employee distribution.
+    action: employees.records.bank_allocation.line.update
+    handler: line_item
+    operation: update
+    domain: employee_bank_allocation
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [employee_bank_allocation, employee_bank_allocation_lines]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_BANK_ALLOCATION_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before this allocation was edited. Reload and try again. }
+        - { query: "SELECT id FROM employee_bank_accounts WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_BANK_ALLOCATION_LINE_STALE, message: This bank account changed before its allocation was edited. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:amount AS DOUBLE) >= 0 AND CAST(:amount AS DOUBLE) <= 100 AND CAST(:amount_type AS VARCHAR) IN ('percentage', 'fixed')", status: 422, code: EMPLOYEES_BANK_ALLOCATION_VALUES_INVALID, message: Allocation must be non-negative and use Percentage or Fixed. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:amount_type AS VARCHAR) <> 'percentage' OR COALESCE((SELECT SUM(amount) FROM employee_bank_accounts WHERE employee_id = :id AND active = true AND amount_type = 'percentage' AND id <> :line_id), 0) + CAST(:amount AS DOUBLE) <= 100", status: 422, code: EMPLOYEES_BANK_ALLOCATION_OVER_100, message: Percentage allocations cannot exceed 100%. }
+      steps:
+        - query: "UPDATE employee_bank_accounts SET amount = CAST(:amount AS DOUBLE), amount_type = CAST(:amount_type AS VARCHAR), trusted = COALESCE(CAST(:trusted AS BOOLEAN), false), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_BANK_ALLOCATION_LINE_STALE
+          message: This bank account changed before its allocation was edited. Reload and try again.
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before this allocation was saved. Reload and try again.
+      result: { query: "SELECT * FROM employee_bank_accounts WHERE id = :line_id" }
+    fields:
+      - { field: amount, label: Allocation, type: number, required: true, min: 0, max: 100 }
+      - { field: amount_type, label: Type, type: select, options: [{ value: percentage, label: Percentage }, { value: fixed, label: Fixed }], required: true }
+      - { field: trusted, label: Trusted, type: checkbox }
+  - id: save_employee_bank_allocation
+    type: server
+    permission: employees.write
+    action: employees.records.bank_allocation.save
+    handler: yaml_mutation
+    operation: save_allocation
+    params: { id: '{state.id}' }
+    refresh: [employee_bank_allocation, employee_bank_allocation_lines, employee_detail]
+    mutation:
+      generated: [allocation_run_id]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before allocation was saved. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_bank_accounts WHERE employee_id = :id AND active = true AND amount_type = 'percentage') OR ABS(COALESCE((SELECT SUM(amount) FROM employee_bank_accounts WHERE employee_id = :id AND active = true AND amount_type = 'percentage'), 0) - 100) < 0.0001", status: 422, code: EMPLOYEES_BANK_ALLOCATION_TOTAL_INVALID, message: Total percentage allocation must equal 100%. }
+      steps:
+        - query: "INSERT INTO employee_bank_allocation_runs(id, employee_id, company_name, total_percentage, percentage_line_count, actor_id, actor_name, saved_at) SELECT :allocation_run_id, e.id, e.company_name, COALESCE(SUM(b.amount) FILTER (WHERE b.amount_type = 'percentage'), 0), COUNT(b.id) FILTER (WHERE b.amount_type = 'percentage'), :current_user_id, :current_user_name, CURRENT_TIMESTAMP FROM employees e LEFT JOIN employee_bank_accounts b ON b.employee_id = e.id AND b.active = true WHERE e.id = :id AND e.row_version = :expected_row_version GROUP BY e.id, e.company_name"
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before allocation was saved. Reload and try again.
+      result: { query: "SELECT id, employee_id, company_name, total_percentage, percentage_line_count, actor_id, actor_name, saved_at FROM employee_bank_allocation_runs WHERE id = :allocation_run_id" }

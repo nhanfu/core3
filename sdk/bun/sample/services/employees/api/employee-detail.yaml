@@ -175,6 +175,11 @@ actions:
     permission: employees.read
     navigate_to: /employees/versions
     params: { employee_id: '{state.id}' }
+  - id: open_employee_bank_allocation
+    type: navigate
+    permission: employees.write
+    navigate_to: /employees/bank-allocations
+    params: { id: '{state.id}' }
   - id: generate_employee_barcode
     type: server
     permission: employees.write

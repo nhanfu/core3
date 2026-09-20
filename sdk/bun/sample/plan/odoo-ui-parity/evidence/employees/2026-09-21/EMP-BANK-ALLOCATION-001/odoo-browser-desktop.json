@@ -1,0 +1,15 @@
+{
+  "feature_id": "EMP-BANK-ALLOCATION-001",
+  "surface": "Odoo",
+  "viewport": "desktop",
+  "viewport_size": "1440x900",
+  "authenticated": true,
+  "database": "core3_reference",
+  "url": "http://127.0.0.1:8069/odoo/employees/6",
+  "employee": "Abigail Peterson",
+  "personal_tab": true,
+  "bank_accounts_visible": true,
+  "bank_accounts_populated": false,
+  "labels": ["Bank Accounts"],
+  "known_request_noise": ["aborted /mail/data requests"]
+}

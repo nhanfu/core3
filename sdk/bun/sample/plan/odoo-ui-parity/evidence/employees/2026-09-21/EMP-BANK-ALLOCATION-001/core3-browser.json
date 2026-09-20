@@ -1,0 +1,14 @@
+{
+  "feature_id": "EMP-BANK-ALLOCATION-001",
+  "surface": "Core3",
+  "authenticated": true,
+  "actor": "admin@tms.local",
+  "route": "/employees/bank-allocations?id=employee-demo-001",
+  "viewports": ["desktop 1440x900", "mobile 390x844"],
+  "current_company": "Core3 Demo Company",
+  "fixture_company": "Core3 Vietnam",
+  "page_loaded": true,
+  "allocation_rows_populated": false,
+  "blocker": "Current-company guard correctly hides deterministic employee and bank rows because fixture company differs from authenticated company",
+  "claim": "Authenticated route/title and guarded empty state only; no populated mutation sign-off"
+}

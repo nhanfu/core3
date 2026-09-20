@@ -411,3 +411,20 @@ Candidate commit: current working tree
   same discovery error. Evidence:
   `evidence/employees/2026-09-21/EMP-BANK-TRUST-001/`.
 - Conditional feature evidence only; no aggregate Employees sign-off.
+
+## EMP-BANK-ALLOCATION-001 (2026-09-21)
+
+- Selected the smallest remaining source-backed employee action after bank
+  trust: Odoo `action_open_allocation_wizard` / `hr.bank.account.allocation.wizard`.
+- Added page/API-separated `/employees/bank-allocations`, employee-detail
+  navigation, durable line editing, exact-100% save validation, and a durable
+  `employee_bank_allocation_runs` save audit migration.
+- Guards cover `employees.read`/`employees.write`, actor identity, active and
+  current-company employee scope, parent and line row versions, allocation
+  values, percentage overflow, and exact-total save.
+- Focused verification: 4 tests / 26 assertions; scoped ESLint and
+  `git diff --check` pass. Browser captures show authenticated Core3
+  desktop/mobile route and guarded empty state; Odoo authenticated desktop/mobile
+  has no reference bank-account rows. Evidence:
+  `evidence/employees/2026-09-21/EMP-BANK-ALLOCATION-001/`.
+- Conditional feature evidence only; no aggregate Employees sign-off.

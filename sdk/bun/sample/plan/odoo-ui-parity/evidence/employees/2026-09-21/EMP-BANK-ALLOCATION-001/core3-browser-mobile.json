@@ -1,0 +1,16 @@
+{
+  "feature_id": "EMP-BANK-ALLOCATION-001",
+  "surface": "Core3",
+  "viewport": "mobile",
+  "viewport_size": "390x844",
+  "authenticated": true,
+  "actor": "admin@tms.local",
+  "url": "http://127.0.0.1:3310/employees/bank-allocations?id=employee-demo-001",
+  "title": "Bank Account Allocation",
+  "allocation_summary_rendered": true,
+  "allocation_rows_populated": false,
+  "current_company": "Core3 Demo Company",
+  "fixture_company": "Core3 Vietnam",
+  "errors": [],
+  "blocker": "Responsive mobile shell hides the title text but renders the allocation summary and guarded empty rows; fixture company differs from authenticated company"
+}

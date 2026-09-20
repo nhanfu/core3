@@ -241,6 +241,20 @@ Focused test: `test/employees_bank_account_trust.integration.test.ts` (3
 tests, 20 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-BANK-TRUST-001/`.
 
+## EMP-BANK-ALLOCATION-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo allocation wizard method/view maps to Core3 navigation and separate page/API contracts | pass |
+| Allocation CRUD | Bank lines edit amount/type/trust with parent and line optimistic concurrency | pass |
+| Save validation | Percentage total rejects non-100% and records successful save history at exactly 100% | pass |
+| Persistence/security | Actor/company/value guards, migration replay, and file-backed restart | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Personal desktop/mobile | conditional; Core3 fixture mismatch and empty Odoo reference rows recorded |
+
+Focused test: `test/employees_bank_allocation.integration.test.ts` (4 tests,
+26 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-BANK-ALLOCATION-001/`.
+
 ## EMP-CREATE-USER-001 execution (2026-09-20)
 
 | Case | Scope | Result |

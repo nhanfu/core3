@@ -114,7 +114,9 @@ components:
             variant: odoo_x2many
             page_size: 20
             row_key: id
-            actions: [{ id: add_employee_bank_account, label: Add a bank account, variant: primary, permission: employees.write }]
+            actions:
+              - { id: add_employee_bank_account, label: Add a bank account, variant: primary, permission: employees.write }
+              - { id: open_employee_bank_allocation, label: Salary Allocation, variant: secondary, permission: employees.write }
             empty_state: { title: No bank accounts, description: Add an employee bank account before configuring salary allocation. }
             children:
               - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }

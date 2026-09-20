@@ -1,0 +1,44 @@
+title: Bank Account Allocation
+page: { id: employee-bank-allocation, route: /employees/bank-allocations, breadcrumb: [Human Resources, Employees, Personal, Bank Account Allocation], auth: { require: [employees.read] } }
+components:
+  - type: OdooFormView
+    source: employee_bank_allocation
+    title_field: employee_name
+    subtitle_field: company_name
+    status_field: allocation_status
+    status_colors: { Ready: green, 'Needs 100%': amber }
+    editable: false
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: open_employee_from_bank_allocation, label: Back to employee, variant: secondary, permission: employees.read }
+      - { id: save_employee_bank_allocation, label: Save Allocation, variant: primary, permission: employees.write }
+    groups:
+      - title: Allocation Summary
+        fields:
+          - { field: employee_name, label: Employee }
+          - { field: company_name, label: Company }
+          - { field: bank_account_count, label: Bank Accounts, type: number }
+          - { field: total_percentage, label: Percentage Total, type: number, suffix: '%' }
+          - { field: percentage_line_count, label: Percentage Lines, type: number }
+          - { field: allocation_status, label: Status, type: StatusChip }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: employee_bank_allocation_lines
+    parent_source: employee_bank_allocation
+    title: Salary Allocations
+    description: Adjust account allocations and trust state, then save the employee distribution.
+    variant: odoo_x2many
+    page_size: 20
+    row_key: id
+    empty_state: { title: No bank accounts, description: Add a bank account on the employee Personal tab first. }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: acc_number, field: acc_number, label: Account Number, readonly: true }
+      - { type: LineItemField, id: bank_name, field: bank_name, label: Bank, readonly: true }
+      - { type: LineItemField, id: amount, field: amount, label: Allocation, input_type: number, required: true }
+      - { type: LineItemField, id: amount_type, field: amount_type, label: Type, readonly: true }
+      - { type: LineItemField, id: trusted, field: trusted, label: Trusted, input_type: checkbox }
+      - type: LineItemActions
+        id: employee_bank_allocation_line_actions
+        actions:
+          - { id: edit_employee_bank_allocation_line, label: Edit, icon: edit, variant: ghost, permission: employees.write }

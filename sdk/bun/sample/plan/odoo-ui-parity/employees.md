@@ -1453,3 +1453,29 @@ Personal tab, but the reference employee has no bank-account rows. Exact
 blockers and captures are under
 `evidence/employees/2026-09-21/EMP-BANK-TRUST-001/`. No aggregate Employees
 sign-off is claimed.
+
+## EMP-BANK-ALLOCATION-001: Employee salary allocation wizard (2026-09-21)
+
+Odoo's `hr.employee.action_open_allocation_wizard` creates the transient
+`hr.bank.account.allocation.wizard` from the Personal bank-account group. Its
+editable allocation lines copy each account's amount, percentage/fixed type,
+sequence, and trust state; `action_save` writes the distribution and rejects a
+percentage total other than 100%.
+
+Core3 adds `/employees/bank-allocations` with separate page/API contracts. The
+employee Personal bank grid opens the page; its durable line editor updates
+amount/type/trust under `employees.write`, actor, current-company, and parent /
+line row-version guards. `Save Allocation` requires an exact 100% percentage
+total, records `employee_bank_allocation_runs`, and increments the employee
+row version atomically. Migration `20260921110000-041` is idempotent and reuses
+the existing deterministic bank rows rather than duplicating fixtures.
+
+Focused coverage is `test/employees_bank_allocation.integration.test.ts`:
+4 tests / 26 assertions for source mapping, navigation, line CRUD, exact-total
+validation, permissions, concurrency, migration replay, and restart. Core3
+authenticated desktop/mobile route captures render the guarded empty state
+because the session is `Core3 Demo Company` while fixtures are `Core3 Vietnam`.
+Authenticated Odoo desktop/mobile reaches Abigail Peterson's Personal tab, but
+the reference employee has no bank-account rows. Evidence is under
+`evidence/employees/2026-09-21/EMP-BANK-ALLOCATION-001/`; no aggregate
+Employees sign-off is claimed.

@@ -656,6 +656,19 @@ Evidence is under
 `evidence/employees/2026-09-21/EMP-BANK-TRUST-001/`. This is a bounded
 conditional slice, not aggregate Employees sign-off.
 
+## EMP-BANK-ALLOCATION-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-024 | Personal bank-account allocation wizard | pass; line edits and exact-100% save audit persist durably |
+| EMP-PERM-024 | `employees.write`, actor, company, parent/line concurrency, allocation validation | pass; rejected changes are atomic |
+| EMP-DATA-024 | Migration replay and file-backed restart | pass; line values and save history survive restart |
+| EMP-UI-020 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 fixture company differs from session; Odoo reference employee has no bank-account rows |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-BANK-ALLOCATION-001/`. No aggregate
+Employees sign-off is claimed.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |
