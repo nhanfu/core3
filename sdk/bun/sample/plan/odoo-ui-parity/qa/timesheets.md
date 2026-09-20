@@ -134,6 +134,17 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Evidence: [`evidence/timesheets/2026-09-20/timesheet-all-report-action/`](../evidence/timesheets/2026-09-20/timesheet-all-report-action/).
 - Disposition: **bounded Core3 manager report action verified; Odoo action visibility/QWeb-PDF parity, remaining route/action comparison, and module sign-off remain pending**.
 
+## 2026-09-20 `TIMESHEET-EMPLOYEE-REPORT-ACTION`
+
+- Source gate: Odoo `timesheet_action_from_employee` (`hr_timesheet/views/hr_timesheet_views.xml:547-565`) filters `account.analytic.line` by `active_id`; `hr.employee.action_timesheet_from_employee` opens that action from the employee form.
+- Core3 contract: `/employee-timesheets` remains page/API-separated; its Print action records `timesheets.employee_entries.print_report` in durable `timesheet_employee_report_runs` migration `0.0.14`.
+- Focused gate: `bun test test/timesheets_employee_report.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 23 expectations. Full module gate: `bun test ./test/timesheets*.integration.test.ts --timeout 20000` — 64 passed, 0 failed, 475 expectations.
+- Persistence/security gate: migration replay, file-backed restart, employee/company scope, empty, actor, stale, missing, and no-partial-write guards pass in the focused suite. The normal `bun dev --db=ddb --memory` browser bootstrap hit the pre-existing DuckDB `ALTER TABLE ... ADD COLUMN ...` constraint error; the module runner served the authenticated evidence. No product fix was made for that unrelated startup limitation.
+- Core3 browser gate: authenticated `admin@tms.local` desktop 1440x900 and mobile 390x844 load employee `employee-demo-002`, show three scoped rows and Print, post `/api/actions/timesheets.employee_entries.print_report` with HTTP 200, and remain width-safe with no Core3 page/request errors.
+- Odoo browser gate: authenticated `codex@core3.local` reaches `/odoo/employees/3` for Marc Demo. Desktop shows `Timesheets 0`; clicking the stat opens `/odoo/employees/3/action-748/new` (new-entry form) rather than a populated employee report. Mobile hides the stat and records two aborted `/mail/data` requests. This is an exact reference-data/action blocker, not a parity pass.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-employee-report-action/`](../evidence/timesheets/2026-09-20/timesheet-employee-report-action/).
+- Disposition: **bounded Core3 employee-context report action verified; Odoo populated employee report comparison, remaining route/action comparison, and module sign-off remain pending**.
+
 ### 2026-09-20 bounded report-binding slice
 
 - Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml`,

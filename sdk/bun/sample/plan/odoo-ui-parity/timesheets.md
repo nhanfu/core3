@@ -763,6 +763,41 @@ visible Print/report-preview action. That is recorded as an exact paired
 reference blocker, not a parity pass. Full route/action comparison, actual
 QWeb/PDF equivalence, and module sign-off remain open.
 
+## Employee-context report action slice — `TIMESHEET-EMPLOYEE-REPORT-ACTION` (2026-09-20)
+
+Odoo's `timesheet_action_from_employee` in
+`addons/hr_timesheet/views/hr_timesheet_views.xml:547-565` opens the
+`account.analytic.line` list filtered by the active employee. The employee
+form invokes it through `hr.employee.action_timesheet_from_employee`, so this
+is a record-context route/action rather than a global Timesheets menu.
+
+Core3 keeps `/employee-timesheets` as a page/API pair and adds its Print
+header action to `services/timesheets/pages/employee-timesheets.yaml`. The
+matching API derives employee/company/count/total from persisted
+`timesheet_entries`, records report history in the new
+`timesheet_employee_report_runs` table, and exposes history through a
+permissioned datasource. Migration `20260920170000-014-timesheets-employee-
+report-runs.yaml` seeds fixed data at `2026-01-15 00:00:00` and is idempotent.
+Employee/company, empty, actor, stale, missing, and no-partial-write guards
+are covered by restart-aware tests.
+
+`test/timesheets_employee_report.integration.test.ts` covers source binding,
+page/API separation, create/read, migration replay, file-backed restart,
+guards, and deterministic fixtures (4 tests / 23 expectations). Authenticated
+Core3 evidence is under
+`evidence/timesheets/2026-09-20/timesheet-employee-report-action/` for desktop
+and mobile. The module runner produced HTTP 200 report actions with no page or
+request errors and no horizontal overflow; the normal fresh-DuckDB dev command
+hit the pre-existing Timesheets migration `ALTER TABLE ... ADD COLUMN ...`
+constraint limitation.
+
+Authenticated Odoo `/odoo/employees/3` shows Marc Demo's Timesheets stat as
+zero. Desktop clicking it opens a new-entry action instead of a populated
+employee report; mobile hides the stat and records two aborted `/mail/data`
+requests. This exact reference-data/action mismatch is recorded as a blocker,
+not a parity pass. Full route/action comparison, QWeb/PDF equivalence, and
+module sign-off remain open.
+
 ## Task analytic-line report renderer slice — `TIMESHEET-TASK-TIMESHEETS-REPORT` (2026-09-20)
 
 The remaining task-context report action is Odoo's

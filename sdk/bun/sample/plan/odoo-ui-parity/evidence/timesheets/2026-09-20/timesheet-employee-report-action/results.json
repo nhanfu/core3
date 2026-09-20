@@ -1,0 +1,89 @@
+[
+  {
+    "product": "core3",
+    "name": "desktop",
+    "url": "http://127.0.0.1:4000/timesheets/employee-timesheets?employee_id=employee-demo-002",
+    "printVisible": true,
+    "reportRequests": [
+      {
+        "url": "http://127.0.0.1:4000/api/actions/timesheets.employee_entries.print_report",
+        "method": "POST",
+        "postData": "{\"employee_id\":\"employee-demo-002\",\"expected_entry_count\":3,\"requested_by\":\"Admin User\",\"company_name\":\"Core3 Demo Company\",\"current_user_name\":\"Admin User\",\"current_company_name\":\"Core3 Demo Company\"}"
+      }
+    ],
+    "reportResponses": [
+      {
+        "url": "http://127.0.0.1:4000/api/actions/timesheets.employee_entries.print_report",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "before": "Work\nReporting\nConfiguration\n⌘ K\nAU\nNew\nPrint\nHuman Resources / Employees / Timesheets\n1-3 / 3\n‹\n›\nDate\n\tProject\n\tTask\n\tDescription\n\tTime Spent\n\tStatus\n\n2026-01-14\tCore3 Implementation\tRequirements analysis\tRequirements analysis\t06:30\tApproved\n2026-01-13\tCore3 Implementation\tDesign\tDesign\t04:15\tSubmitted\n2026-01-07\tDelivery Enablement\tPresentation\tPresentation\t02:45\tApproved",
+    "after": "Work\nReporting\nConfiguration\n⌘ K\nAU\nNew\nPrint\nHuman Resources / Employees / Timesheets\n1-3 / 3\n‹\n›\nDate\n\tProject\n\tTask\n\tDescription\n\tTime Spent\n\tStatus\n\n2026-01-14\tCore3 Implementation\tRequirements analysis\tRequirements analysis\t06:30\tApproved\n2026-01-13\tCore3 Implementation\tDesign\tDesign\t04:15\tSubmitted\n2026-01-07\tDelivery Enablement\tPresentation\tPresentation\t02:45\tApproved",
+    "scrollWidth": {
+      "body": 1440,
+      "document": 1440
+    }
+  },
+  {
+    "product": "core3",
+    "name": "mobile",
+    "url": "http://127.0.0.1:4000/timesheets/employee-timesheets?employee_id=employee-demo-002",
+    "printVisible": true,
+    "reportRequests": [
+      {
+        "url": "http://127.0.0.1:4000/api/actions/timesheets.employee_entries.print_report",
+        "method": "POST",
+        "postData": "{\"employee_id\":\"employee-demo-002\",\"expected_entry_count\":3,\"requested_by\":\"Admin User\",\"company_name\":\"Core3 Demo Company\",\"current_user_name\":\"Admin User\",\"current_company_name\":\"Core3 Demo Company\"}"
+      }
+    ],
+    "reportResponses": [
+      {
+        "url": "http://127.0.0.1:4000/api/actions/timesheets.employee_entries.print_report",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "before": "AU\nNew\nPrint\nTimesheets\n1-3 / 3\n‹\n›\nDate\n\tProject\n\tTask\n\tDescription\n\tTime Spent\n\tStatus\n\n2026-01-14\tCore3 Implementation\tRequirements analysis\tRequirements analysis\t06:30\tApproved\n2026-01-13\tCore3 Implementation\tDesign\tDesign\t04:15\tSubmitted\n2026-01-07\tDelivery Enablement\tPresentation\tPresentation\t02:45\tApproved",
+    "after": "AU\nNew\nPrint\nTimesheets\n1-3 / 3\n‹\n›\nDate\n\tProject\n\tTask\n\tDescription\n\tTime Spent\n\tStatus\n\n2026-01-14\tCore3 Implementation\tRequirements analysis\tRequirements analysis\t06:30\tApproved\n2026-01-13\tCore3 Implementation\tDesign\tDesign\t04:15\tSubmitted\n2026-01-07\tDelivery Enablement\tPresentation\tPresentation\t02:45\tApproved",
+    "scrollWidth": {
+      "body": 390,
+      "document": 390
+    }
+  },
+  {
+    "product": "odoo",
+    "name": "desktop",
+    "url": "http://127.0.0.1:8069/odoo/employees/3",
+    "timesheetLabels": 1,
+    "timesheetButtons": [
+      "Timesheets"
+    ],
+    "actionUrl": "http://127.0.0.1:8069/odoo/employees/3/action-748/new",
+    "actionBody": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\nMarc Demo\nResearch & Development\nProject\nTask\nDate\nSep 20\nTime Spent",
+    "errors": [],
+    "before": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\nMarc Demo\nTimesheets\n0\nEquipment\nHistory\n1\n1 / 1\nLaunch Plan\nJan 1, 2025\nEmployee\nOff-Hours\nWork\nResume\nCertifications\nPersonal\nPayroll\nBadges\nSettings\nWORK\nCompany\nDepartment\nJob Position\nJob Title\nManager\nLOCATION\nWork Address\n8000 Marina Blvd, Suite 300\nBrisbane CA 94005\nUnited States\nWork Location\nUSUAL WORK LOCATION\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday\nNOTE\nORGANIZATION CHART\n FULL CHART\nMitchell Admin\nChief Technical Officer\n22\nMarc Demo\nExperienced Developer\n12\nPaul Williams\nExperienced Developer\n2\nRandall Lewis\nExperienced Developer\nRonnie Hart\nChief Technical Officer\n6\nSharlene Rhodes\nExperienced Developer\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 75.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+    "scrollWidth": {
+      "body": 1440,
+      "document": 1440
+    }
+  },
+  {
+    "product": "odoo",
+    "name": "mobile",
+    "url": "http://127.0.0.1:8069/odoo/employees/3",
+    "timesheetLabels": 0,
+    "timesheetButtons": [],
+    "actionUrl": null,
+    "actionBody": "",
+    "errors": [
+      "requestfailed:http://127.0.0.1:8069/mail/data:net::ERR_ABORTED",
+      "requestfailed:http://127.0.0.1:8069/mail/data:net::ERR_ABORTED"
+    ],
+    "before": "Marc Demo\n7\n40\nNew\nLaunch Plan\nJan 1, 2025\nEmployee\nOff-Hours\nWork\nResume\nCertifications\nPersonal\nPayroll\nBadges\nSettings\nWORK\nCompany\nDepartment\nJob Position\nJob Title\nManager\nLOCATION\nWork Address\n8000 Marina Blvd, Suite 300\nBrisbane CA 94005\nUnited States\nWork Location\nUSUAL WORK LOCATION\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday\nNOTE\nORGANIZATION CHART\n FULL CHART\nMitchell Admin\nChief Technical Officer\n22\nMarc Demo\nExperienced Developer\n12\nPaul Williams\nExperienced Developer\n2\nRandall Lewis\nExperienced Developer\nRonnie Hart\nChief Technical Officer\n6\nSharlene Rhodes\nExperienced Developer\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 75.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+    "scrollWidth": {
+      "body": 390,
+      "document": 390
+    }
+  }
+]

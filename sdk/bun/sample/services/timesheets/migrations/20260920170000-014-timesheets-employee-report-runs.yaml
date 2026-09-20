@@ -1,0 +1,32 @@
+version: 0.0.14
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS timesheet_employee_report_runs (
+        id VARCHAR PRIMARY KEY,
+        employee_id VARCHAR NOT NULL,
+        employee_name VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL DEFAULT 'Timesheets',
+        requested_by VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        entry_count INTEGER NOT NULL DEFAULT 0,
+        total_hours DECIMAL(18,3) NOT NULL DEFAULT 0,
+        generated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS timesheet_employee_report_runs_scope_idx ON timesheet_employee_report_runs(company_name, employee_id, generated_at);
+      INSERT OR IGNORE INTO timesheet_employee_report_runs(
+        id, employee_id, employee_name, report_name, requested_by, company_name,
+        entry_count, total_hours, generated_at, row_version
+      ) VALUES (
+        'timesheet-employee-report-run-demo-002', 'employee-demo-002', 'Morgan Taylor',
+        'Timesheets', 'Admin User', 'Core3 Demo Company', 3, 13.5,
+        TIMESTAMP '2026-01-15 00:00:00', 1
+      );
+    down: |
+      DROP TABLE IF EXISTS timesheet_employee_report_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

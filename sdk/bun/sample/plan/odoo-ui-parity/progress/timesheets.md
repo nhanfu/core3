@@ -121,3 +121,36 @@ desktop list and responsive mobile kanban, but neither viewport exposes a
 visible Print/report-preview action. The source-bound Odoo report execution is
 therefore an exact reference blocker, not a parity pass. QWeb/PDF equivalence,
 the remaining route/action comparison, and module sign-off remain open.
+
+## 2026-09-20 `TIMESHEET-EMPLOYEE-REPORT-ACTION`
+
+The smallest remaining source-backed context action was Odoo's
+`timesheet_action_from_employee` from
+`addons/hr_timesheet/views/hr_timesheet_views.xml:547-565`, opened by
+`hr.employee.action_timesheet_from_employee` and filtered to the active
+employee. Core3's `/employee-timesheets` route already supplied the scoped
+CRUD list but had no report action.
+
+Core3 now adds a page-owned `Print` action and matching API action. The API
+uses `page.id: employee-timesheets`, derives employee name/company/count/total
+from persisted rows, and inserts a durable
+`timesheet_employee_report_runs` record through
+`timesheets.employee_entries.print_report`. Migration `0.0.14` seeds a fixed
+employee report and is replay-safe. Employee, empty, company, actor, stale,
+and missing guards execute before insertion; file-backed restart coverage
+keeps the report history available.
+
+Focused coverage is `test/timesheets_employee_report.integration.test.ts`
+(4 tests, 23 expectations). Authenticated Core3 desktop/mobile evidence is
+under `plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-employee-report-action/`;
+both viewports show three scoped employee rows, Print, HTTP 200, and no
+horizontal overflow. The normal full dev command hit an existing fresh-DuckDB
+`ALTER TABLE ... ADD COLUMN ...` migration limitation, so evidence used the
+Timesheets module runner; the feature migration tests pass independently.
+The complete Timesheets suite passes 64 tests / 475 expectations, and the UI
+audit passes with 676 pages, 685 routes, and 1239 datasources.
+Authenticated Odoo desktop `/odoo/employees/3` shows Marc Demo's Timesheets
+stat as `0`, and clicking it opens a new-entry action rather than a populated
+employee report. Mobile hides the stat and records two aborted `/mail/data`
+requests. This is an exact reference-data/action blocker, not a parity pass;
+full route/action comparison and module sign-off remain open.
