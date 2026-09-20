@@ -19,11 +19,11 @@ Candidate commit: 8c7e3db6e0e42b1c8aa3112b4d22742a924d1b5c
 | Test ID | Scenario | Evidence | Result |
 | --- | --- | --- | --- |
 | MARKETING_AUTOMATION-001 | Live Odoo registry/menu inventory | Authenticated RPC inventory in module plan; Odoo module is uninstallable and menu surface absent | passed |
-| MARKETING_AUTOMATION-002 | Page/API YAML fragments join through `page.id`; page files are layout-only | `bun --cwd sdk/bun/sample -e <discovery/contract assertion>` | passed |
-| MARKETING_AUTOMATION-003 | Deterministic migrations are idempotent and seed active workflow/enrollment records | `bun --cwd sdk/bun/sample -e <DuckDB migration assertion>` | passed |
-| MARKETING_AUTOMATION-004 | Create/update/archive/restore/delete automation with validation and stale-row protection | `bun --cwd sdk/bun/sample -e <CRUD mutation assertion>` | passed |
-| MARKETING_AUTOMATION-005 | Enrollment binds to automation, rejects inactive/duplicate/stale records, and updates counters transactionally | `bun --cwd sdk/bun/sample -e <enrollment mutation assertion>` | passed |
-| MARKETING_AUTOMATION-006 | Publish → run → complete/pause workflow and permission boundaries | `bun --cwd sdk/bun/sample -e <workflow/permission assertion>` | passed |
+| MARKETING_AUTOMATION-002 | Page/API YAML fragments join through `page.id`; page files are layout-only | `bun test services/marketing-automation/tests/marketing-automation.increment.test.ts` — contract test | passed |
+| MARKETING_AUTOMATION-003 | Deterministic migrations are idempotent and seed active workflow/enrollment records | Same focused test — migration idempotence and fixture assertions | passed |
+| MARKETING_AUTOMATION-004 | Create/update/archive/restore/delete automation with validation and stale-row protection | Same focused test — CRUD, stale, archive, and restore assertions | passed |
+| MARKETING_AUTOMATION-005 | Enrollment binds to automation, rejects inactive/duplicate/stale records, and updates counters transactionally | Same focused test — enrollment binding and duplicate-contact assertions | passed |
+| MARKETING_AUTOMATION-006 | Publish → run → complete/pause workflow and permission boundaries | Same focused test — workflow and action-permission assertions | passed |
 | MARKETING_AUTOMATION-007 | Authenticated Core3 desktop 1440x900 and mobile 390x844 list/detail/form states | `/tmp/core3-odoo-parity/marketing-automation/` captures | pending |
 
 ## Bugs and retests

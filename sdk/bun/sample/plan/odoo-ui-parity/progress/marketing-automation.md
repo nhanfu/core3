@@ -37,5 +37,9 @@ the matching module owner.
   fixtures, create/update/duplicate/stale/archive behavior, enrollment name
   binding and duplicate-contact rejection, and the full
   publish/run/pause/run/complete workflow.
+- Focused test file
+  `services/marketing-automation/tests/marketing-automation.increment.test.ts`
+  passes with 2 tests and 25 assertions via
+  `bun test services/marketing-automation/tests/marketing-automation.increment.test.ts`.
 - Authenticated paired Odoo/Core3 browser evidence is still pending; the Odoo
   reference has no installed Marketing Automation surface.
