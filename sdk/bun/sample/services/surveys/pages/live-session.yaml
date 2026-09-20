@@ -11,6 +11,7 @@ components:
     header_actions:
       - { id: start_live_session_question, label: Start, variant: primary, permission: surveys.manage, show_if: "record.session_state === 'Ready'" }
       - { id: advance_live_session_question, label: Next, variant: primary, permission: surveys.manage, show_if: "record.session_state === 'In Progress' && record.current_question_sequence < record.question_count" }
+      - { id: show_live_session_results, label: Show results, variant: secondary, permission: surveys.manage, show_if: "record.session_state === 'In Progress'" }
       - { id: end_live_session, label: Close Live Session, variant: danger, permission: surveys.manage, show_if: "record.session_state === 'Ready' || record.session_state === 'In Progress'" }
     statusbar: [{ value: Closed, label: Closed }, { value: Ready, label: Ready }, { value: In Progress, label: In Progress }]
     status_colors: { Closed: neutral, Ready: blue, 'In Progress': green }
@@ -33,6 +34,11 @@ components:
       - { field: question_state, label: State, type: StatusChip }
     empty_state: { title: No questions in this session, description: Add a question to the survey before starting the live session. }
 actions:
+  - id: show_live_session_results
+    type: navigate
+    permission: surveys.manage
+    navigate_to: /surveys/live-session-results
+    params: { survey_id: '{row.survey_id}', session_id: '{row.id}' }
   - id: back_to_survey_detail
     type: navigate
     permission: surveys.read

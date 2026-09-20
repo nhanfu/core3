@@ -1,0 +1,15 @@
+page: { id: survey-live-session-results }
+datasources:
+  - id: survey_live_session_results_header
+    single: true
+    permission: surveys.read
+    error_states: { transport_error: { status: 503, code: SURVEY_LIVE_SESSION_RESULTS_UNAVAILABLE, message: Live session results are temporarily unavailable. } }
+    query: "SELECT ls.id AS session_id, ls.survey_id, s.title AS survey_name, q.id AS question_id, q.question_text, q.question_type, ls.state AS session_state, COUNT(DISTINCT a.attendee_id) AS attendee_count, COUNT(a.id) AS answer_count FROM survey_live_sessions ls JOIN surveys s ON s.id = ls.survey_id LEFT JOIN survey_questions q ON q.id = ls.current_question_id LEFT JOIN survey_live_session_answers a ON a.session_id = ls.id AND a.question_id = ls.current_question_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND ls.survey_id = :survey_id AND (:session_id IS NULL OR ls.id = :session_id) AND ls.state = 'In Progress' GROUP BY ls.id, ls.survey_id, s.title, q.id, q.question_text, q.question_type, ls.state"
+  - id: survey_live_session_choice_results
+    permission: surveys.read
+    error_states: { transport_error: { status: 503, code: SURVEY_LIVE_SESSION_CHOICE_RESULTS_UNAVAILABLE, message: Live session answer statistics are temporarily unavailable. } }
+    query: "SELECT a.answer_value AS category, COUNT(*) AS responses, COALESCE(SUM(a.score), 0) AS points FROM survey_live_session_answers a JOIN survey_live_sessions ls ON ls.id = a.session_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND a.question_id = ls.current_question_id AND ls.survey_id = :survey_id AND (:session_id IS NULL OR ls.id = :session_id) AND ls.state = 'In Progress' AND a.answer_type IN ('choice', 'number') AND a.answer_value IS NOT NULL AND a.answer_value <> '' GROUP BY a.answer_value ORDER BY responses DESC, category"
+  - id: survey_live_session_text_results
+    permission: surveys.read
+    error_states: { transport_error: { status: 503, code: SURVEY_LIVE_SESSION_TEXT_RESULTS_UNAVAILABLE, message: Live session text responses are temporarily unavailable. } }
+    query: "SELECT a.id, attendee.attendee_name AS attendee, a.answer_value, CAST(a.submitted_at AS VARCHAR) AS submitted_at FROM survey_live_session_answers a JOIN survey_live_attendees attendee ON attendee.id = a.attendee_id JOIN survey_live_sessions ls ON ls.id = a.session_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND a.question_id = ls.current_question_id AND ls.survey_id = :survey_id AND (:session_id IS NULL OR ls.id = :session_id) AND ls.state = 'In Progress' AND a.answer_type IN ('text', 'char_box', 'date', 'datetime') AND a.answer_value IS NOT NULL AND a.answer_value <> '' ORDER BY a.submitted_at, a.id"

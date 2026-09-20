@@ -1,0 +1,41 @@
+version: 0.0.18
+description: Durable deterministic live-session attendees and current-question answers
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS survey_live_attendees (
+        id VARCHAR PRIMARY KEY,
+        session_id VARCHAR NOT NULL,
+        attendee_name VARCHAR NOT NULL,
+        joined_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 10:01:00',
+        score DECIMAL(8,2) NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL DEFAULT 'In Progress'
+      );
+      CREATE TABLE IF NOT EXISTS survey_live_session_answers (
+        id VARCHAR PRIMARY KEY,
+        session_id VARCHAR NOT NULL,
+        attendee_id VARCHAR NOT NULL,
+        question_id VARCHAR NOT NULL,
+        answer_type VARCHAR NOT NULL,
+        answer_value VARCHAR,
+        score DECIMAL(8,2) NOT NULL DEFAULT 0,
+        submitted_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 10:02:00'
+      );
+      CREATE INDEX IF NOT EXISTS survey_live_attendees_session_idx ON survey_live_attendees(session_id);
+      CREATE INDEX IF NOT EXISTS survey_live_answers_session_question_idx ON survey_live_session_answers(session_id, question_id);
+      INSERT INTO survey_live_attendees(id, session_id, attendee_name, joined_at, score, state) VALUES
+        ('live-attendee-nora', 'live-session-feedback', 'Nora Parker', TIMESTAMP '2026-01-15 10:01:00', 100, 'In Progress'),
+        ('live-attendee-omar', 'live-session-feedback', 'Omar Vega', TIMESTAMP '2026-01-15 10:01:30', 60, 'In Progress')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO survey_live_session_answers(id, session_id, attendee_id, question_id, answer_type, answer_value, score, submitted_at) VALUES
+        ('live-answer-nora-rating', 'live-session-feedback', 'live-attendee-nora', 'question-feedback-rating', 'number', '5', 100, TIMESTAMP '2026-01-15 10:06:00'),
+        ('live-answer-omar-rating', 'live-session-feedback', 'live-attendee-omar', 'question-feedback-rating', 'number', '4', 60, TIMESTAMP '2026-01-15 10:06:30')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS survey_live_session_answers;
+      DROP TABLE IF EXISTS survey_live_attendees;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

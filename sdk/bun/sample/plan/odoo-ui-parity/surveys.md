@@ -941,3 +941,35 @@ was terminated after the bounded attempt. Because no authenticated isolated
 Core3 browser surface was available, no Odoo or Core3 screenshot or visual
 parity claim is made for this slice; the runtime log and response probe remain
 outside Git.
+
+## Bounded slice: Live-session current-question results (2026-09-20)
+
+The next source-backed host workflow after the existing live-session
+Create/Start/Next/Close coverage is Odoo's
+`/survey/session/results/<survey_token>` controller in
+`addons/survey/controllers/survey_session_manage.py`. Odoo exposes these
+statistics only while a session is `in_progress`, scopes them to the current
+question, and returns answer counts, choice statistics, and text/date
+responses for the host view.
+
+Core3 adds the page/API pair `survey-live-session-results` at
+`/surveys/live-session-results`. The existing live-session manager exposes a
+permissioned `Show results` action while the session is in progress. Three
+read-only service-owned datasources provide the current-question header,
+choice response breakdown, and text response rows. All result sources require
+`surveys.read`; navigating from the host requires `surveys.manage`.
+
+Migration `20260920140000-018-survey-live-results.yaml` adds durable,
+idempotent `survey_live_attendees` and `survey_live_session_answers` tables,
+with fixed Feedback Form attendees and answers for the first question. The
+focused contract verifies migration replay, current-question scoping, choice
+aggregation, empty and transport-error states, and the closed-session guard.
+Leaderboard, public `/s/<session_code>` joining, attendee answer submission,
+and question-by-question live polling remain separate open gaps.
+
+Focused validation passes 2 tests with 16 assertions in
+`test/surveys_live_results.integration.test.ts`; the Surveys migration subset
+passes 5 tests with 27 assertions. `bunx eslint` and `git diff --check` pass.
+The repository audit remains blocked by an unrelated pre-existing Inventory
+schema error (`back_to_inventory_package` duplicate action and illegal label);
+that module's uncommitted files were preserved and are outside this slice.

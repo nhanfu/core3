@@ -120,3 +120,30 @@ Decision: **blocked / not signed off**. The migration repair itself passes the r
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-SURVEYS-WAVE-20260913-R2` → `QA-SURVEYS-WAVE-20260913-R2` | existing `agent/odoo-ui-surveys-next-wave-current` in `/home/nhanjs/projects/core3-worktrees/surveys-next-wave` | Published/token-scoped participant start/progress/submit/print boundaries, invalid/expired and duplicate/stale refusal, and focused no-disclosure/no-mutation tests | dispatched in `3951d9ea`; awaiting self-contained product commit before QA |
+
+## Bounded QA run: live-session current-question results (2026-09-20)
+
+- Source trace: Odoo 19 `addons/survey/controllers/survey_session_manage.py`
+  `survey_session_results` scopes statistics to the in-progress session's
+  current question. Core3 implements that host-results contract in the
+  page/API pair `survey-live-session-results` and links it from the existing
+  live-session manager with `surveys.manage`.
+- Focused implementation test: **2 passed, 16 assertions** in
+  `test/surveys_live_results.integration.test.ts`. It verifies the page/API
+  join, permission declarations, deterministic attendee/answer persistence,
+  choice aggregation, empty/transport-error states, and closed-session guard.
+- Migration regression subset: **5 passed, 27 assertions**, including replay
+  of the new `0.0.18` migration and the existing rollback/full-chain checks.
+- Lint and scoped diff check: **pass** (`bunx eslint
+  test/surveys_live_results.integration.test.ts`; `git diff --check`).
+- Full Surveys glob: **36 passed, 5 failed, 330 assertions**. The five
+  failures are the unchanged repository-wide Inventory discovery error
+  (`back_to_inventory_package` duplicate action and illegal `label`), not
+  Surveys files.
+- UI audit: **not passed** for the same unrelated Inventory schema error;
+  no browser visual claim is made for this backend/page-contract slice.
+
+Disposition: bounded live-results contract passes; broader Surveys sign-off
+remains conditional. Public session joining, leaderboard, attendee answer
+submission, actor mutation matrix, and paired Odoo desktop/mobile evidence
+remain open.

@@ -1,0 +1,46 @@
+title: Live Session Results
+page: { id: survey-live-session-results, route: /surveys/live-session-results, breadcrumb: [Marketing, Surveys, Live Session, Results], auth: { require: [surveys.read] } }
+components:
+  - type: StatRow
+    source: survey_live_session_results_header
+    title: Current question results
+    stats:
+      - { label: Survey, field: survey_name }
+      - { label: Question, field: question_text }
+      - { label: Attendees answered, field: attendee_count }
+      - { label: Answers, field: answer_count }
+  - type: Chart
+    source: survey_live_session_choice_results
+    title: Responses by answer
+    label_field: category
+    value_field: responses
+    variant: bar
+    color: blue
+  - type: ListView
+    variant: odoo
+    scroll: body
+    source: survey_live_session_choice_results
+    columns:
+      - { field: category, label: Answer, type: PrimaryEntityCell }
+      - { field: responses, label: Responses, align: right }
+      - { field: points, label: Points, align: right }
+    page_size: 50
+    row_key: category
+    empty_state: { title: No choice responses, description: Choice responses will appear after attendees answer the current question. }
+  - type: ListView
+    variant: odoo
+    scroll: body
+    source: survey_live_session_text_results
+    columns:
+      - { field: attendee, label: Attendee, type: PrimaryEntityCell }
+      - { field: answer_value, label: Response }
+      - { field: submitted_at, label: Submitted at }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No text responses, description: Text responses will appear after attendees answer the current question. }
+actions:
+  - id: back_to_live_session
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/live-session
+    params: { survey_id: '{row.survey_id}' }

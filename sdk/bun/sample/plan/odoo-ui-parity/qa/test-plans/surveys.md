@@ -17,7 +17,7 @@ This plan follows [`surveys.md`](../../surveys.md); executed results are in
 | Surveys | `/surveys`, `/surveys/detail`, `/surveys/test`, `/surveys/live-session` | Cards/list, detail form, test/live session, Draft/Published/Closed/Cancelled/Archived |
 | Participants | `/surveys/participants`, `/surveys/participant-detail`, `/surveys/participant-print` | List, readonly detail, print, status and event-scoped stats |
 | Questions | `/surveys/questions`, `/surveys/question-detail`, `/surveys/suggested-values` | List/form, ordered questions, answer values, CRUD and guards |
-| Reporting | `/surveys/analysis`, `/surveys/results`, `/surveys/detailed-answers`, `/surveys/detailed-answer-detail` | Graph/pivot/list, result cohorts, readonly answers, empty/error |
+| Reporting | `/surveys/analysis`, `/surveys/results`, `/surveys/detailed-answers`, `/surveys/detailed-answer-detail`, `/surveys/live-session-results` | Graph/pivot/list, result cohorts, readonly answers, current live-question results, empty/error |
 
 Actors: Administrator/Survey Manager, Survey User, Fleet ordinary user,
 unauthenticated public participant, and expired/invalid survey-token user.
@@ -37,6 +37,7 @@ and the published public survey token.
 | SURVEYS-FUNC-006 | functional | Print/badge | Token-scoped printable output and badge/participant routes render deterministic content | print/badge tests | pass |
 | SURVEYS-FUNC-007 | functional | Empty/error/not-found | Every catalog/detail/report returns explicit empty, missing and transport-error state | focused suite; matrix | planned |
 | SURVEYS-FUNC-008 | data | Schema/demo | Reapply migrations and verify fixed IDs/counts, no duplicates, stable seed dates | focused suite | pass |
+| SURVEYS-FUNC-009 | functional | Live-session results | Current in-progress question exposes scoped choice and text response statistics | `surveys_live_results.integration.test.ts` | pass |
 
 ## Workflow and integration cases
 
@@ -47,6 +48,7 @@ and the published public survey token.
 | SURVEYS-WF-003 | workflow | Live session | Create/start/advance/end session and preserve participant/session state | Restart/retry does not duplicate session or answers | pass at contract level |
 | SURVEYS-WF-004 | integration | Participant invite | Send/resend invite records deterministic audit result | invalid/cancelled recipient and transport failure are explicit | pass at contract level |
 | SURVEYS-WF-005 | integration | Durable/external boundary | Timers, mail delivery, callbacks and long-running sessions use Temporal contract when activated | retry, timeout, compensation, replay/restart and shutdown are required | planned |
+| SURVEYS-WF-006 | workflow | Live-session current-question results | Host opens results for the current question and sees durable attendee answers | Closed, empty, stale session, and transport-error states do not disclose results | pass at contract level |
 
 ## Permission and security cases
 
@@ -58,6 +60,7 @@ and the published public survey token.
 | SURVEYS-PERM-004 | Public participant | token start/submit/print | Only published token-scoped operations allowed; no admin data leakage | planned |
 | SURVEYS-PERM-005 | Invalid/expired token | public endpoints | Stable 401/403/404; no answer or survey disclosure | planned |
 | SURVEYS-PERM-006 | Stale/missing record | any mutation | 409/404/422 and unchanged database state | pass at contract level |
+| SURVEYS-PERM-007 | Survey Manager/Survey User | Live-session results | Manager may open the host results action; result datasources remain `surveys.read` scoped | direct API permission probe and browser actor matrix | partial |
 
 ## Visual, responsive, and regression cases
 
@@ -68,6 +71,7 @@ and the published public survey token.
 | SURVEYS-UI-003 | Public survey | both | Start/question/done screens, required validation, progression and responsive footer match | partial |
 | SURVEYS-UI-004 | Analysis/results/print | both | Graph/pivot/report/print controls and empty/error states match | partial |
 | SURVEYS-UI-005 | Current route regression | all 14 routes | 28 authenticated checks with no page/request errors, HTTP errors, blank states or overflow | pass |
+| SURVEYS-UI-006 | Live-session current-question results | 1440x900, 390x844 | Host results page shows current-question cards/chart/lists without overflow | authenticated paired Odoo/Core3 capture | planned |
 
 ## Exit criteria
 
