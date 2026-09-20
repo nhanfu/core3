@@ -1,0 +1,38 @@
+version: 0.0.57
+kind: data
+description: Persist the Odoo employee-specific Working Hours assignment
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS working_schedule_id VARCHAR;
+      ALTER TABLE employee_versions ADD COLUMN IF NOT EXISTS working_schedule_id VARCHAR;
+      UPDATE employee_versions v
+      SET working_schedule_id = (
+        SELECT s.id FROM employee_working_schedules s
+        WHERE s.name = v.schedule_name
+        ORDER BY CASE WHEN s.company_name IS NULL THEN 0 ELSE 1 END, s.id
+        LIMIT 1
+      )
+      WHERE v.working_schedule_id IS NULL;
+      UPDATE employees e
+      SET working_schedule_id = (
+        SELECT v.working_schedule_id FROM employee_versions v
+        WHERE v.employee_id = e.id AND v.active = true
+          AND v.contract_date_start <= DATE '2026-01-15'
+        ORDER BY v.date_version DESC, v.id DESC LIMIT 1
+      ),
+      working_schedule = COALESCE(
+        e.working_schedule,
+        (SELECT v.schedule_name FROM employee_versions v
+         WHERE v.employee_id = e.id AND v.active = true
+           AND v.contract_date_start <= DATE '2026-01-15'
+         ORDER BY v.date_version DESC, v.id DESC LIMIT 1)
+      )
+      WHERE e.working_schedule_id IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS working_schedule_id;
+      ALTER TABLE employee_versions DROP COLUMN IF EXISTS working_schedule_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

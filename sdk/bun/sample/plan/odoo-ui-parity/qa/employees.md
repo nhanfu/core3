@@ -711,6 +711,22 @@ session is `Core3 Demo Company` while deterministic employee fixtures are
 `Core3 Vietnam`; Odoo has seven unrelated app-icon 404s. No aggregate Employees
 sign-off is claimed.
 
+## EMP-WORKING-HOURS-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-038 | Employee Payroll Working Hours assignment | pass; selected schedule persists on employee and active Payroll record |
+| EMP-PERM-038 | `employees.manage`, actor, current company, active schedule/version, row version | pass; actor, invalid schedule, stale, and wrong-company requests reject atomically |
+| EMP-DATA-038 | Migration replay and file-backed restart | pass; deterministic schedule relations and display names survive restart without duplicates |
+| EMP-UI-034 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo label appears at both viewports, while Core3 backend port 3001 did not bind during bounded startup |
+
+Focused test: `test/employees_working_hours.integration.test.ts` (4 tests,
+20 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-WORKING-HOURS-001/`. Odoo reference data
+does not populate the selected employee's Working Hours value; this is recorded
+as a comparison limitation, not a sign-off. No aggregate Employees sign-off is
+claimed.
+
 ## EMP-CITIZENSHIP-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |

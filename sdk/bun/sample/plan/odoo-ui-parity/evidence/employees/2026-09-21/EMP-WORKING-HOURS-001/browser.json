@@ -1,0 +1,9 @@
+{
+  "surface": "Odoo",
+  "authenticated": true,
+  "route": "/odoo/employees/6",
+  "desktop": { "viewport": "1440x900", "state": "Payroll tab", "working_hours_label": true, "page_errors": 0 },
+  "mobile": { "viewport": "390x844", "state": "Payroll tab", "working_hours_label": true, "page_errors": 0 },
+  "captures": ["odoo-desktop.png", "odoo-mobile.png"],
+  "notes": ["The selected reference employee renders the Working Hours field, but the value is not populated in the reference database."]
+}

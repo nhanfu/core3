@@ -710,3 +710,25 @@ Candidate commit: current working tree
   desktop/mobile captures succeeded; the optional field is hidden by default.
   Core3 backend port 3001 did not bind during the bounded memory-mode attempt.
   No aggregate Employees sign-off is claimed.
+
+## EMP-WORKING-HOURS-001 (2026-09-21)
+
+- Selected the next uncovered source-visible employee behavior: Odoo's
+  employee-specific `resource_calendar_id`, rendered as Working Hours in the
+  Payroll form. This is distinct from the completed working-schedule catalog
+  CRUD and from excluded Pay Category/private-car slices.
+- Added migration `20260922030000-057` with durable `working_schedule_id`
+  columns on employees and employee versions, deterministic backfill from
+  existing schedule names, and synchronized legacy display values.
+- Added a page-only Payroll Working Hours group and matching API datasource,
+  options catalog, and manager-gated Edit Working Hours action. The action
+  updates the employee and active Payroll record with actor, active/current
+  company, eligible schedule, active version, and stale row-version guards.
+- Focused verification is **4 tests / 20 assertions**; audit is **718 pages /
+  727 routes / 1,379 datasources**. Scoped lint and diff-check are recorded
+  with the commit.
+- Authenticated Odoo desktop/mobile evidence is under
+  `evidence/employees/2026-09-21/EMP-WORKING-HOURS-001/`. Both show the Working
+  Hours label in Payroll. Core3 backend port 3001 did not bind during the
+  bounded memory-mode attempt; the exact blocker is in `verification.md`.
+  No aggregate Employees sign-off is claimed.

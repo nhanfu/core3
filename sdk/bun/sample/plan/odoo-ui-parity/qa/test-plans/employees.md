@@ -486,3 +486,17 @@ Focused test: `test/employees_private_car_plate.integration.test.ts` (4 tests,
 Focused test: `test/employees_pay_category.integration.test.ts` (4 tests, 21
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-PAY-CATEGORY-001/`.
+
+## EMP-WORKING-HOURS-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo employee/version `resource_calendar_id` and Payroll Working Hours view map to paired employee-detail page/API contracts | pass |
+| Payroll update | Dedicated action updates employee relation/display and active Payroll version durably | pass |
+| Permission and scope | `employees.manage`, actor, active/current company schedule, active version, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic schedule relations | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile attempt plus Odoo Payroll desktop/mobile captures | conditional; Odoo labels visible at both viewports, Core3 backend port 3001 did not bind |
+
+Focused test: `test/employees_working_hours.integration.test.ts` (4 tests, 20
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-WORKING-HOURS-001/`.

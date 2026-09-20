@@ -20,6 +20,7 @@ components:
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_contract_type, label: Edit Contract Type, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_pay_category, label: Edit Pay Category, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_working_hours, label: Edit Working Hours, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_hr_responsible, label: Edit HR Responsible, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_coach, label: Edit Coach, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: edit_employee_properties, label: Edit Properties, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
@@ -163,8 +164,11 @@ components:
             - title: Pay Category
               permission: employees.manage
               fields: [{ field: pay_category_name, label: Pay Category, readonly: true }]
+            - title: Working Hours
+              permission: employees.manage
+              fields: [{ field: working_schedule, label: Working Hours, readonly: true }]
             - title: Contract
-              fields: [{ field: employment_type, label: Employment Type }, { field: contract_start, label: Contract Start }, { field: contract_end, label: Contract End }, { field: wage, label: Wage }, { field: working_schedule, label: Working Schedule }, { field: contract_template_name, label: Contract Template }]
+              fields: [{ field: employment_type, label: Employment Type }, { field: contract_start, label: Contract Start }, { field: contract_end, label: Contract End }, { field: wage, label: Wage }, { field: contract_template_name, label: Contract Template }]
         - id: settings
           label: Settings
           groups:

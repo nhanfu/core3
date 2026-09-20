@@ -1824,3 +1824,28 @@ Authenticated Odoo desktop/mobile captures are under
 Pay Category while desktop remained on Work during the bounded interaction.
 Core3 backend port 3001 did not bind during the bounded memory-mode attempt.
 This is conditional feature evidence, not aggregate Employees sign-off.
+
+## EMP-WORKING-HOURS-001: Employee-specific Working Hours assignment (2026-09-21)
+
+Odoo's Payroll form exposes `hr.employee.resource_calendar_id` as Working
+Hours; the relation is backed by the current `hr.version.resource_calendar_id`
+and is company-scoped. Core3 previously exposed only the employee's free-text
+schedule projection and the separate working-schedule catalog. This slice adds
+the missing employee-to-schedule assignment lifecycle.
+
+Migration `20260922030000-057` adds durable `working_schedule_id` columns to
+employees and employee versions, backfills deterministic relations from the
+existing schedule names, and synchronizes the legacy display name. The paired
+employee-detail page/API contracts add a manager-gated Working Hours group,
+schedule options datasource, and guarded Edit Working Hours action. The action
+updates the employee and active Payroll record together and enforces actor,
+current-company schedule eligibility, active-record, and optimistic row-version
+guards.
+
+Focused coverage is **4 tests / 20 assertions**, including source mapping,
+durable update, actor/value/stale/company guards, migration replay, and
+file-backed restart. Authenticated Odoo desktop/mobile captures are under
+`evidence/employees/2026-09-21/EMP-WORKING-HOURS-001/`; the reference label is
+visible at both viewports. The bounded Core3 runtime printed its backend URL
+but never bound port 3001, so Core3 browser comparison remains a precise
+conditional blocker. No aggregate Employees sign-off is claimed.
