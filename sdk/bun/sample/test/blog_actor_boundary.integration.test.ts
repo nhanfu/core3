@@ -66,19 +66,35 @@ describe('Blog site/company actor boundary', () => {
 
     const postsPage = yaml('pages/posts.yaml');
     const detailPage = yaml('pages/post-detail.yaml');
+    const analysisPage = yaml('pages/analysis.yaml');
     const workflow = yaml('pages/blog-workflow.yaml').workflow;
     const sources = [
       ...yaml('api/blogs.yaml').datasources,
       ...postsPage.datasources,
       ...detailPage.datasources,
+      ...analysisPage.datasources,
     ];
-    const authUser: any = { sub: 'user-admin', email: 'admin@workspace.example', name: 'Admin', roles: ['admin'], company: { name: 'Core3 Vietnam Branch' }, permissions: ['blog.read', 'blog.write', 'blog.manage'] };
+    const authUser: any = {
+      sub: 'user-admin',
+      email: 'admin@workspace.example',
+      name: 'Admin',
+      roles: ['admin'],
+      company_id: 'company-vietnam',
+      companies: [
+        { id: 'company-demo', name: 'Core3 Demo Company' },
+        { id: 'company-vietnam', name: 'Core3 Vietnam Branch' },
+      ],
+      permissions: ['blog.read', 'blog.write', 'blog.manage'],
+    };
     const api = createYamlApi({
       repository,
       authProvider: { async getCurrentUser() { return authUser; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
       sources: new Map(sources.map((source: any) => [source.id, source])),
-      pageSources: new Map([['blog-post-detail', ['blog_post_detail', 'blog_post_attachments']]]),
-      pages: new Map([['blog-post-detail', detailPage]]), catalogs: new Map(), menus: new Map(), workflows: new Map([['blog_posts', workflow]]), workflowFiles: new Map(),
+      pageSources: new Map([
+        ['blog-post-detail', ['blog_post_detail', 'blog_post_attachments']],
+        ['blog-analysis', ['blog_analysis_totals', 'blog_analysis_states']],
+      ]),
+      pages: new Map([['blog-post-detail', detailPage], ['blog-analysis', analysisPage]]), catalogs: new Map(), menus: new Map(), workflows: new Map([['blog_posts', workflow]]), workflowFiles: new Map(),
       permissions: { permissions: ['blog.read', 'blog.write', 'blog.manage'], tables: {}, endpoints: {} }, uploadRoot, eventStore: {}, topics: {}, storage: yaml('storage.yaml'),
     });
     const query = (sourceId: string, params: Record<string, unknown> = {}) => api(new Request('http://blog.test/api/query', {
@@ -87,10 +103,16 @@ describe('Blog site/company actor boundary', () => {
 
     const blogs = await (await query('blog_blogs')).json() as any;
     expect(blogs.data.map((row: any) => row.id)).toEqual(['blog-vietnam-001']);
+    const spoofedBlogs = await (await query('blog_blogs', { company_name: 'Core3 Demo Company' })).json() as any;
+    expect(spoofedBlogs.data.map((row: any) => row.id)).toEqual(['blog-vietnam-001']);
     const posts = await (await query('blog_posts')).json() as any;
     expect(posts.data.map((row: any) => row.id)).toEqual(['blog-post-vietnam-001']);
     const lookup = await (await query('blog_lookup')).json() as any;
     expect(lookup.data).toEqual([{ value: 'blog-vietnam-001', label: 'Vietnam Engineering' }]);
+    const analysis = await (await query('blog_analysis_totals')).json() as any;
+    expect(analysis.data).toEqual({ blog_count: 1, post_count: 1, published_count: 0, total_visits: 0 });
+    const states = await (await query('blog_analysis_states')).json() as any;
+    expect(states.data).toEqual([{ category: 'Draft', post_count: 1 }]);
 
     const pageResponse = await api(new Request('http://blog.test/api/pages/blog-post-detail?id=blog-post-demo-001', { headers: { Authorization: 'Bearer test-token' } }), new URL('http://blog.test/api/pages/blog-post-detail?id=blog-post-demo-001'));
     expect(pageResponse?.status).toBe(200);

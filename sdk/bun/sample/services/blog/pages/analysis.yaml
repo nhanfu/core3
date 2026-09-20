@@ -4,10 +4,10 @@ datasources:
   - id: blog_analysis_totals
     single: true
     permission: blog.read
-    query: "SELECT (SELECT COUNT(*) FROM blog_blogs WHERE active) AS blog_count, COUNT(*) AS post_count, COUNT(*) FILTER (WHERE state = 'Published') AS published_count, COALESCE(SUM(visits), 0) AS total_visits FROM blog_posts"
+    query: "SELECT (SELECT COUNT(*) FROM blog_blogs WHERE active AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))) AS blog_count, COUNT(*) AS post_count, COUNT(*) FILTER (WHERE state = 'Published') AS published_count, COALESCE(SUM(visits), 0) AS total_visits FROM blog_posts WHERE (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))"
   - id: blog_analysis_states
     permission: blog.read
-    query: "SELECT state AS category, COUNT(*) AS post_count FROM blog_posts GROUP BY state ORDER BY post_count DESC"
+    query: "SELECT state AS category, COUNT(*) AS post_count FROM blog_posts WHERE (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name)) GROUP BY state ORDER BY post_count DESC"
 components:
   - type: StatRow
     source: blog_analysis_totals
