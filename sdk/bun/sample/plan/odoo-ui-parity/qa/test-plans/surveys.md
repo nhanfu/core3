@@ -231,3 +231,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-PREVIOUS-QUESTION-001/`.
+
+## 2026-09-21 public live-session renderer additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-023 | public session/UI | `/s/<session_code>` join and answer | Bind the public route to the durable join/answer APIs and render the current question | pass |
+| SURVEYS-WF-020 | restart/idempotency | Join → answer → reload → replay | Preserve attendee token and answer across restart; replay does not add an answer row | pass |
+| SURVEYS-PERM-022 | token/state guard | Public session boundary | Existing YAML guards reject closed, invalid, missing-attendee, invalid-answer, and duplicate-answer mutations | pass |
+| SURVEYS-UI-021 | authenticated responsive/reference | Core3 desktop/mobile plus Odoo `/s/5822` | Show joined/answered/reloaded state at 1440x900 and 390x844; record exact Odoo connection blocker | pass for Core3; Odoo blocked |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-SESSION-001/`.

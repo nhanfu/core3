@@ -253,6 +253,11 @@ function publicSurveyPrintRoute(path: string): { surveyToken: string } | null {
   return match ? { surveyToken: match[1] } : null;
 }
 
+function publicLiveSessionRoute(path: string): { sessionCode?: string } | null {
+  const match = path.match(/^\/s(?:\/([A-Za-z0-9_-]+))?$/);
+  return match ? { ...(match[1] ? { sessionCode: match[1] } : {}) } : null;
+}
+
 function publicSurveyToken(path: string): string | null {
   return publicSurveyRoute(path)?.surveyToken || publicSurveyPrintRoute(path)?.surveyToken || null;
 }
@@ -323,6 +328,16 @@ async function renderPublicSurvey(path: string) {
   const mod = await import('./components/PublicSurvey.ts');
   const queryAnswerToken = new URLSearchParams(window.location.search).get('answer_token') || '';
   await mod.mount(outlet, route.surveyToken, route.answerToken || queryAnswerToken);
+}
+
+async function renderPublicLiveSession(path: string) {
+  const route = publicLiveSessionRoute(path);
+  const outlet = document.getElementById('outlet');
+  if (!route || !outlet) return;
+  const mod = await import('./components/PublicLiveSession.ts');
+  const queryCode = new URLSearchParams(window.location.search).get('session_code') || '';
+  const attendeeToken = new URLSearchParams(window.location.search).get('attendee_token') || '';
+  await mod.mount(outlet, route.sessionCode || queryCode, attendeeToken);
 }
 
 async function renderRoute(path: string, langCode?: string) {
@@ -434,6 +449,11 @@ async function bootstrap() {
   if (publicToken) {
     app.innerHTML = '<div id="outlet"></div>';
     await renderPublicSurvey(window.location.pathname);
+    return;
+  }
+  if (publicLiveSessionRoute(window.location.pathname)) {
+    app.innerHTML = '<div id="outlet"></div>';
+    await renderPublicLiveSession(window.location.pathname);
     return;
   }
   if (publicSpreadsheetRoute(window.location.pathname)) {
@@ -553,6 +573,10 @@ async function bootstrap() {
 window.addEventListener('popstate', () => {
   if (publicSurveyToken(window.location.pathname)) {
     void renderPublicSurvey(window.location.pathname);
+    return;
+  }
+  if (publicLiveSessionRoute(window.location.pathname)) {
+    void renderPublicLiveSession(window.location.pathname);
     return;
   }
   if (publicSpreadsheetRoute(window.location.pathname)) {

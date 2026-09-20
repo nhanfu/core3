@@ -70,6 +70,25 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-LIVE-SESSION-001`
+
+Selected the smallest unfinished source-backed session behavior after public
+question navigation: Odoo's public `/s/<session_code>` participant surface.
+The existing `pages/live-session-join.yaml` and
+`api/live-session-join.yaml` remain the page/API source of truth; Core3 now
+binds them to `public/components/PublicLiveSession.ts` through `public/app.ts`.
+The renderer owns code entry, token-scoped join, Ready/waiting state, current
+question answer submission, refresh, and durable answered state after reload.
+
+Focused join/answer/renderer verification is **7 passed / 64 assertions**;
+scoped ESLint and `git diff --check` pass. Authenticated Admin Core3 desktop
+and mobile probes at 1440x900 and 390x844 joined session `5822`, submitted
+rating `5`, reloaded, and showed the persisted answer with no failed browser
+requests or horizontal overflow. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-SESSION-001/`.
+The Odoo disposable reference at `127.0.0.1:8072` refused both `/s/5822`
+probes; no Odoo sign-off is claimed. Full repository regression was not run.
+
 ## 2026-09-20 — `SURVEYS-PUBLIC-PREVIOUS-QUESTION-001`
 
 Selected the smallest remaining source-backed public navigation behavior after

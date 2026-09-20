@@ -609,3 +609,28 @@ still **qa-in-progress / conditional**.
 
 Disposition: the bounded Core3 previous-question workflow passes; Surveys
 remains **qa-in-progress / conditional**.
+
+## Bounded QA run: `SURVEYS-PUBLIC-LIVE-SESSION-001` — 2026-09-21
+
+- Source/ownership: Odoo's public `/s/<session_code>` route is bound to the
+  existing Surveys `survey-live-session-join` page/API contract through the
+  new `PublicLiveSession` renderer and `public/app.ts` route dispatch.
+- Workflow: code entry → token-scoped join → Ready/waiting or In Progress
+  current question → one answer → refresh/reload. Existing YAML guards remain
+  authoritative for invalid code, blank name, closed/certification session,
+  missing attendee, invalid answer, duplicate answer, and stale state.
+- Focused verification: **7 passed, 0 failed, 64 assertions** across the new
+  renderer test and existing join/answer suites.
+- Scoped ESLint and `git diff --check`: pass. Full repository regression was
+  not run for this bounded finalization.
+- `bun run audit`: pass — **688 pages, 697 routes, 1,282 datasources**.
+- Authenticated Core3 evidence: Admin desktop/mobile at 1440x900 and 390x844
+  joined session `5822`, submitted `5`, reloaded the same attendee token, and
+  showed `Answer submitted: 5`; body/document widths matched the viewport and
+  browser failure lists were empty.
+- Odoo blocker: `http://127.0.0.1:8072/s/5822` returned
+  `net::ERR_CONNECTION_REFUSED` at both viewports. No paired Odoo visual or
+  mutation sign-off is claimed.
+
+Disposition: Core3 public participant rendering and durable API workflow pass;
+Odoo comparison remains blocked and Surveys remains **qa-in-progress / conditional**.

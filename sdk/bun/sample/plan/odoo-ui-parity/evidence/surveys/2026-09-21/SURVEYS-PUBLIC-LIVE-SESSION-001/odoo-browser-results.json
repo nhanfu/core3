@@ -1,0 +1,17 @@
+{
+  "featureId": "SURVEYS-PUBLIC-LIVE-SESSION-001",
+  "reference": "http://127.0.0.1:8072",
+  "sessionCode": "5822",
+  "checks": [
+    {
+      "viewport": "desktop",
+      "url": "http://127.0.0.1:8072/s/5822",
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8072/s/5822\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:8072/s/5822\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "viewport": "mobile",
+      "url": "http://127.0.0.1:8072/s/5822",
+      "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8072/s/5822\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:8072/s/5822\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    }
+  ]
+}

@@ -1345,6 +1345,26 @@ The installed Odoo reference has no stable active answer-token fixture for a
 fresh mutation probe, so paired Odoo mutation/visual sign-off remains blocked;
 Surveys remains **qa-in-progress / conditional**.
 
+## Bounded slice: Public live-session participant renderer (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-LIVE-SESSION-001`.
+
+Odoo exposes the public live-session entry at `/s` and `/s/<session_code>`;
+the source-side session helpers are listed in
+`addons/survey/controllers/main.py` and the live-session join/answer APIs are
+already represented by the Surveys page/API pair `survey-live-session-join`.
+Core3 now binds that durable token-scoped contract to a public `/s` renderer:
+participants can enter a code, join once, wait for the host, submit the
+current question answer, refresh, and see the persisted answer after reload.
+The renderer serializes join/answer submits and delegates permission, token,
+state, answer-option, and duplicate guards to the YAML API mutations.
+
+Focused coverage and authenticated Core3 desktop/mobile evidence are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-SESSION-001/`.
+The disposable Odoo session reference at `127.0.0.1:8072` was unavailable
+(`ERR_CONNECTION_REFUSED`) for both requested viewports, so no paired Odoo
+visual sign-off is claimed. Surveys remains **qa-in-progress / conditional**.
+
 ## Bounded slice: Public next-question renderer binding (2026-09-20)
 
 Feature ID: `SURVEYS-PUBLIC-NEXT-QUESTION-002`.

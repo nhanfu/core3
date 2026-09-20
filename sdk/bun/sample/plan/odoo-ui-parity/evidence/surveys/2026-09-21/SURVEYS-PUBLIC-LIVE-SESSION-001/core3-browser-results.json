@@ -1,0 +1,47 @@
+{
+  "featureId": "SURVEYS-PUBLIC-LIVE-SESSION-001",
+  "base": "http://127.0.0.1:4017",
+  "sessionCode": "5822",
+  "checks": [
+    {
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "authenticated": {
+        "status": 200,
+        "actor": "admin@tms.local",
+        "token": true
+      },
+      "joined": true,
+      "answered": true,
+      "reloadedAnswerVisible": true,
+      "url": "http://127.0.0.1:4017/s/5822?attendee_token=live-token-desktop-guest-5822",
+      "consoleOrPageFailures": [],
+      "bodyText": "LIVE SURVEY · 5822\n\nFeedback Form\nLive now\n\nHi Desktop Guest.\n\nHow satisfied are you?\nAnswer submitted: 5\nRefresh",
+      "bodyWidth": 1440,
+      "documentWidth": 1440
+    },
+    {
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "authenticated": {
+        "status": 200,
+        "actor": "admin@tms.local",
+        "token": true
+      },
+      "joined": true,
+      "answered": true,
+      "reloadedAnswerVisible": true,
+      "url": "http://127.0.0.1:4017/s/5822?attendee_token=live-token-mobile-guest-5822",
+      "consoleOrPageFailures": [],
+      "bodyText": "LIVE SURVEY · 5822\n\nFeedback Form\nLive now\n\nHi Mobile Guest.\n\nHow satisfied are you?\nAnswer submitted: 5\nRefresh",
+      "bodyWidth": 390,
+      "documentWidth": 390
+    }
+  ]
+}
