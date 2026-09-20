@@ -1,0 +1,6 @@
+page: { id: rental-events }
+datasources:
+  - id: rental_events
+    single: false
+    permission: rental.read
+    query: "SELECT e.id, e.rental_id, r.name AS rental_name, r.partner_name, e.event_type, CAST(e.event_date AS VARCHAR) AS event_date, e.notes, e.actor_name FROM sale_rental_events e JOIN sale_rentals r ON r.id = e.rental_id ORDER BY e.event_date DESC"

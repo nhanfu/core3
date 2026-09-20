@@ -1,14 +1,5 @@
 title: Rental Availability
-page: { id: rental-availability, breadcrumb: [Sales, Rental, Availability], auth: { require: [rental.read] } }
-datasources:
-  - id: rental_availability
-    single: false
-    permission: rental.read
-    query: |
-      SELECT product_name, SUM(quantity) AS rented_quantity,
-        SUM(CASE WHEN state IN ('Returned', 'Cancelled') THEN 0 ELSE quantity END) AS reserved_quantity,
-        MIN(start_date) AS next_start, MAX(return_date) AS last_return
-      FROM sale_rentals GROUP BY product_name ORDER BY product_name
+page: { id: rental-availability, route: /availability, breadcrumb: [Sales, Rental, Availability], auth: { require: [rental.read] } }
 components:
   - type: ListView
     variant: odoo

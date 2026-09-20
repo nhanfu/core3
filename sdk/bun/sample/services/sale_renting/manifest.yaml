@@ -14,7 +14,7 @@ menu:
     - id: operations
       label: Operations
       items:
-        - path: /events
+        - path: /rental-events
           label: Rental Events
           icon: history
           permission: rental.read
