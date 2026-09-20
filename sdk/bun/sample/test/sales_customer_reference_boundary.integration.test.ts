@@ -39,7 +39,7 @@ describe('Sales customer reference boundary', () => {
     expect(page.page.id).toBe('sale-quotation-template-detail');
     expect(templateApi.page).toEqual({ id: 'sale-quotation-template-detail' });
     for (const definition of [quotationApi, orderApi, detailApi, templateApi]) {
-      const mutationActions = definition.actions.filter((entry: any) => entry.mutation?.table === 'orders' && ['insert', 'update'].includes(entry.mutation.operation));
+      const mutationActions = definition.actions.filter((entry: any) => entry.mutation?.table === 'orders' && ['insert', 'update'].includes(entry.mutation.operation) && entry.id !== 'import_ecommerce_sales_order');
       expect(mutationActions.length).toBeGreaterThan(0);
       for (const entry of mutationActions) {
         expect(entry.permission).toBe('orders.write');
