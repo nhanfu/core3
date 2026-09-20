@@ -590,3 +590,14 @@ No aggregate Employees sign-off is claimed.
 
 Evidence: evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/. No aggregate
 Employees sign-off is claimed.
+
+## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-015 | Personal emergency contact create/edit/read | Contact and phone persist through employee CRUD | pass; 3 focused tests / 21 assertions |
+| EMP-PERM-015 | Employees read/write, current company, stale and missing employee | Read is authenticated; invalid edits reject without mutation | pass |
+| EMP-DATA-015 | Migration replay and file-backed restart | Deterministic emergency fields survive restart | pass |
+| EMP-UI-011 | Authenticated Core3/Odoo desktop and mobile | Personal tab exposes Emergency Contact responsively | conditional; Odoo pass, Core3 blocked by unrelated shared page-discovery schema error |
+
+Evidence: `evidence/employees/2026-09-20/EMP-EMERGENCY-CONTACT-001/`.

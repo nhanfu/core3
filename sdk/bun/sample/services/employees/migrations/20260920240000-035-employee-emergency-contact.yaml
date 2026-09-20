@@ -1,0 +1,26 @@
+version: 0.0.35
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR;
+      UPDATE employees
+      SET emergency_contact = COALESCE(emergency_contact, CASE id
+        WHEN 'employee-demo-001' THEN 'Linh Nguyen'
+        WHEN 'employee-demo-002' THEN 'Minh Tran'
+        WHEN 'employee-demo-003' THEN 'Bao Tran'
+        ELSE NULL END),
+          emergency_phone = COALESCE(emergency_phone, CASE id
+        WHEN 'employee-demo-001' THEN '+84 901 100 001'
+        WHEN 'employee-demo-002' THEN '+84 901 100 002'
+        WHEN 'employee-demo-003' THEN '+84 901 100 003'
+        ELSE NULL END)
+      WHERE id IN ('employee-demo-001', 'employee-demo-002', 'employee-demo-003');
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS emergency_contact;
+      ALTER TABLE employees DROP COLUMN IF EXISTS emergency_phone;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

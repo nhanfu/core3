@@ -52,7 +52,7 @@ actions:
     mutation:
       operation: insert
       table: employees
-      fields: [employee_number, name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date]
+      fields: [employee_number, name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone]
       required: [employee_number, name, hire_date]
       defaults: { active: true, state: Draft }
       generated: [id]
@@ -72,6 +72,8 @@ actions:
       - { field: job_title, label: Job Position, type: text }
       - { field: employment_type, label: Employment Type, type: select, options: [{ value: Employee, label: Employee }, { value: Contractor, label: Contractor }, { value: Intern, label: Intern }] }
       - { field: hire_date, label: Start Date, type: date, required: true }
+      - { field: emergency_contact, label: Emergency Contact, type: text }
+      - { field: emergency_phone, label: Emergency Phone, type: text }
   - id: archive_employee
     type: server
     permission: employees.write

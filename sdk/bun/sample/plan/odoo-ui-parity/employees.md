@@ -1248,3 +1248,28 @@ authentication passes, but all 24 reference employees have empty
 bank_account_ids, so a populated allocation comparison is unavailable. These
 are exact fixture/reference-data blockers; no aggregate Employees sign-off is
 claimed.
+
+## EMP-EMERGENCY-CONTACT-001: Employee Personal emergency contact (2026-09-20)
+
+The smallest remaining source-backed employee behavior is Odoo's HR-user-only
+Personal-tab `Emergency Contact` group from
+`addons/hr/views/hr_employee_views.xml`, backed by the scalar
+`emergency_contact` and `emergency_phone` fields declared in
+`addons/hr/models/hr_employee.py`.
+
+Core3 adds migration `20260920240000-035` with idempotent columns and stable
+fixtures, extends the page/API-separated employee detail contract and employee
+create/edit CRUD, and keeps the group behind the existing authenticated
+Employees read/write permissions. Optimistic row versions, current-company
+scope, missing-record and stale-write guards apply to edits. Focused coverage
+is **3 tests / 21 assertions**; full Employees is **79 tests / 762 assertions**;
+the audit is **679 pages / 688 routes / 1,250 datasources**.
+
+Authenticated Odoo desktop/mobile evidence is under
+`evidence/employees/2026-09-20/EMP-EMERGENCY-CONTACT-001/` and shows the
+Personal tab and Emergency Contact group at both viewports with no page errors
+or overflow. Core3 authentication and viewport rendering were attempted, but
+the shared checkout's page discovery returned HTTP 500 because an unrelated
+concurrent page contains `components[0].row_action`; no other owner's file was
+altered. The exact blocker and screenshots are recorded in the evidence
+directory. No aggregate Employees sign-off is claimed.

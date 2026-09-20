@@ -160,3 +160,14 @@ Evidence: `evidence/employees/2026-09-20/EMP-LOAD-SAMPLE-DATA-001/`.
 | EMP-UI-010 | Authenticated Core3/Odoo desktop and mobile | Populated comparison | conditional; exact fixture/reference-data blockers recorded |
 
 Evidence: `evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/`.
+
+## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
+
+| Case ID | Class | Route/action | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| EMP-WF-015 | workflow | Employee detail Personal / Emergency Contact | Create and edit contact and phone durably | pass |
+| EMP-PERM-015 | permission/security | Employee detail API edit | Employees write, company, missing and stale guards enforce scope | pass |
+| EMP-DATA-015 | data/regression | Migration replay and restart | Seeded fields persist without duplicate migration effects | pass |
+| EMP-UI-011 | visual/responsive | Authenticated Core3/Odoo Personal tab | Emergency Contact group visible at desktop/mobile | conditional; Odoo pass, Core3 exact shared-discovery blocker |
+
+Evidence: `evidence/employees/2026-09-20/EMP-EMERGENCY-CONTACT-001/`.

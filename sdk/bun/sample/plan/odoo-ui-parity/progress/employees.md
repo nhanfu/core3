@@ -20,6 +20,21 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-EMERGENCY-CONTACT-001 (2026-09-20)
+
+- Selected the smallest remaining source-backed Personal-tab scalar behavior:
+  Odoo Emergency Contact and Phone.
+- Added migration 035, deterministic contact fixtures, page/API-separated
+  fields, employee create/edit CRUD, permission/company/stale guards, and
+  restart coverage.
+- Verification: focused 3 tests / 21 assertions; full Employees 79 tests /
+  762 assertions; audit 679 pages / 688 routes / 1,250 datasources; scoped
+  ESLint and diff-check pass.
+- Odoo authenticated desktop/mobile evidence passes for the Personal tab and
+  Emergency Contact group. Core3 browser evidence is conditional because the
+  shared runtime fails page discovery on unrelated `components[0].row_action`;
+  the exact blocker is recorded without changing other module files.
+
 ## EMP-BANK-ACCOUNT-001 (2026-09-20)
 
 - Selected the smallest remaining source-backed Personal-tab gap: employee

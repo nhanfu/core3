@@ -1,0 +1,52 @@
+[
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "url": "http://127.0.0.1:3310/employees/detail?id=employee-emp-emergency-browser",
+    "actor": "admin@tms.local",
+    "loginCompany": "Core3 Demo Company",
+    "createStatus": 409,
+    "created": {
+      "error": "An employee with this number already exists.",
+      "code": "EMPLOYEES_RECORD_NUMBER_EXISTS",
+      "message_key": "errors.employees_record_number_exists"
+    },
+    "emergencyVisible": false,
+    "contactVisible": false,
+    "phoneVisible": false,
+    "body": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\n⚠️\nFailed to load page\nInternal server error",
+    "pageErrors": [],
+    "httpErrors": [
+      "500 http://127.0.0.1:3310/api/pages/employee-detail?lc=en&id=employee-emp-emergency-browser"
+    ],
+    "scrollWidth": 1440,
+    "bodyWidth": 1440
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "url": "http://127.0.0.1:3310/employees/detail?id=employee-emp-emergency-browser",
+    "actor": "admin@tms.local",
+    "loginCompany": "Core3 Demo Company",
+    "createStatus": 409,
+    "created": {
+      "error": "An employee with this number already exists.",
+      "code": "EMPLOYEES_RECORD_NUMBER_EXISTS",
+      "message_key": "errors.employees_record_number_exists"
+    },
+    "emergencyVisible": false,
+    "contactVisible": false,
+    "phoneVisible": false,
+    "body": "AU\n⚠️\nFailed to load page\nInternal server error",
+    "pageErrors": [],
+    "httpErrors": [
+      "500 http://127.0.0.1:3310/api/pages/employee-detail?lc=en&id=employee-emp-emergency-browser"
+    ],
+    "scrollWidth": 390,
+    "bodyWidth": 390
+  }
+]

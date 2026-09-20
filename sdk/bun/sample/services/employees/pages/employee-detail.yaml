@@ -50,6 +50,9 @@ components:
           groups:
             - title: Contact Information
               fields: [{ field: private_email, label: Private Email }, { field: phone, label: Phone }, { field: street, label: Private Address }, { field: birthday, label: Birthday }]
+            - title: Emergency Contact
+              permission: employees.read
+              fields: [{ field: emergency_contact, label: Contact }, { field: emergency_phone, label: Phone }]
           component:
             type: LineItemGrid
             source: employee_bank_accounts
