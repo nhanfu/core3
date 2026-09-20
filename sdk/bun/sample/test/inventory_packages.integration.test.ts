@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
@@ -66,5 +66,88 @@ describe('Inventory Packages Odoo action parity', () => {
     expect(api.actions.find((action: any) => action.id === 'unpack_inventory_package').mutation.guards).toEqual(expect.arrayContaining([
       expect.objectContaining({ status: 404, code: 'INVENTORY_PACKAGE_NOT_FOUND' }),
     ]));
+  });
+
+  test('preserves package create, edit, and unpack lifecycle across a database restart', async () => {
+    const databasePath = `/tmp/core3-inventory-package-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `inventory_package_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const actions = parsed('api/packages.yaml').actions.concat(parsed('api/package-detail.yaml').actions);
+    const action = (id: string) => actions.find((entry: any) => entry.id === id);
+    const create = action('create_inventory_package');
+    const edit = action('edit_inventory_package');
+    const unpack = action('unpack_inventory_package');
+
+    try {
+      const first = await DuckDbDatabase.open(databasePath);
+      const firstRepository = new YamlRepository(first);
+      await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+      const created = await firstRepository.executeMutation(create.mutation, {
+        values: {
+          name: 'PACK-RESTART-0001',
+          package_type_name: 'Box',
+          location_name: 'WH/Stock/Shelf 1',
+          company_name: 'My Company (San Francisco)',
+          pack_date: '2026-01-15',
+        },
+      }) as any;
+      expect(created).toMatchObject({ name: 'PACK-RESTART-0001', state: 'Empty', content_count: 0, row_version: 1 });
+      const edited = await firstRepository.executeMutation(edit.mutation, {
+        id: created.id,
+        expected_row_version: created.row_version,
+        values: { name: 'PACK-RESTART-0001-EDITED', package_type_name: 'Pallet', location_name: 'WH/Stock' },
+      }) as any;
+      expect(edited).toMatchObject({ id: created.id, name: 'PACK-RESTART-0001-EDITED', package_type_name: 'Pallet', row_version: 2 });
+      first.close();
+
+      const second = await DuckDbDatabase.open(databasePath);
+      const secondRepository = new YamlRepository(second);
+      await migrateDatabase(secondRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+      const detail = parsed('api/package-detail.yaml').datasources[0];
+      expect((await secondRepository.querySource(detail, { id: created.id, fixture_state: null }, 0, 1)).data).toMatchObject({
+        id: created.id,
+        name: 'PACK-RESTART-0001-EDITED',
+        package_type_name: 'Pallet',
+        location_name: 'WH/Stock',
+        state: 'Empty',
+        row_version: 2,
+      });
+      await expect(secondRepository.executeMutation(edit.mutation, {
+        id: created.id,
+        expected_row_version: 1,
+        values: { name: 'PACK-STALE', package_type_name: 'Box', location_name: 'WH/Stock' },
+      })).rejects.toMatchObject({ status: 409 });
+      await expect(secondRepository.executeMutation(unpack.mutation, {
+        id: created.id,
+        expected_row_version: 2,
+        values: unpack.params.values,
+      })).rejects.toMatchObject({ status: 404, code: 'INVENTORY_PACKAGE_NOT_FOUND' });
+      const unpacked = await secondRepository.executeMutation(unpack.mutation, {
+        id: 'package-main-0001',
+        expected_row_version: 1,
+        values: unpack.params.values,
+      }) as any;
+      expect(unpacked).toMatchObject({ id: 'package-main-0001', state: 'Empty', content_count: 0 });
+      second.close();
+
+      const third = await DuckDbDatabase.open(databasePath);
+      const thirdRepository = new YamlRepository(third);
+      await migrateDatabase(thirdRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+      expect((await thirdRepository.querySource(detail, { id: created.id, fixture_state: null }, 0, 1)).data).toMatchObject({
+        id: created.id,
+        name: 'PACK-RESTART-0001-EDITED',
+        state: 'Empty',
+        content_count: 0,
+        row_version: 2,
+      });
+      expect((await thirdRepository.querySource(detail, { id: 'package-main-0001', fixture_state: null }, 0, 1)).data).toMatchObject({
+        id: 'package-main-0001',
+        state: 'Empty',
+        content_count: 0,
+        row_version: 2,
+      });
+      third.close();
+    } finally {
+      rmSync(databasePath, { force: true });
+    }
   });
 });
