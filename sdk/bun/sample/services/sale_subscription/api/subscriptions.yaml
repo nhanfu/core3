@@ -1,0 +1,93 @@
+page: { id: subscriptions }
+datasources:
+  - id: subscription_states
+    single: false
+    permission: subscriptions.read
+    query: "SELECT value, label FROM (VALUES ('Quotation','Quotation'), ('In Progress','In Progress'), ('Paused','Paused'), ('Closed','Closed'), ('Churned','Churned')) states(value, label)"
+  - id: sale_subscriptions
+    single: false
+    permission: subscriptions.read
+    workflow: subscriptions
+    query: "SELECT id, row_version, name, partner_name, recurring_revenue, plan, recurring_period, state, salesperson, CAST(start_date AS VARCHAR) AS start_date, CAST(next_invoice_date AS VARCHAR) AS next_invoice_date FROM sale_subscriptions WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%') ORDER BY created_at DESC"
+  - id: subscription_plan_lookup
+    single: false
+    permission: subscriptions.read
+    query: "SELECT name AS value, name AS label FROM sale_subscription_plans WHERE active = true ORDER BY name"
+actions:
+  - id: view_subscription
+    type: navigate
+    permission: subscriptions.read
+    navigate_to: /subscription-detail
+    params: { id: '{row.id}' }
+  - id: create_subscription
+    type: server_form
+    permission: subscriptions.write
+    title: New subscription
+    action: subscriptions.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: sale_subscriptions
+      fields: [name, partner_name, recurring_revenue, plan, recurring_period, state, start_date, next_invoice_date, salesperson]
+      required: [name]
+      defaults: { state: Quotation, recurring_period: Monthly, recurring_revenue: 0 }
+      guards:
+        - query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0"
+          status: 422
+          code: SUBSCRIPTION_NAME_REQUIRED
+          message: Subscription name is required
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sale_subscriptions WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))"
+          status: 409
+          code: SUBSCRIPTION_NAME_EXISTS
+          message: A subscription with this name already exists
+        - query: "SELECT 1 AS ok WHERE :recurring_revenue IS NULL OR CAST(:recurring_revenue AS DECIMAL(18,2)) >= 0"
+          status: 400
+          message: Recurring revenue cannot be negative
+        - query: "SELECT 1 AS ok WHERE :start_date IS NULL OR :next_invoice_date IS NULL OR CAST(:next_invoice_date AS DATE) >= CAST(:start_date AS DATE)"
+          status: 400
+          message: Next invoice date must be on or after the start date
+      result: { query: "SELECT * FROM sale_subscriptions WHERE id = :id" }
+    fields:
+      - { field: name, label: Subscription, type: text, required: true }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: plan, label: Plan, type: select, options_source: subscription_plan_lookup }
+      - { field: recurring_revenue, label: Recurring revenue, type: number }
+      - { field: start_date, label: Start date, type: date }
+      - { field: next_invoice_date, label: Next invoice, type: date }
+  - id: activate_subscription
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.activate
+    handler: order_transition
+    workflow: subscriptions
+    operation: activate
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [sale_subscriptions]
+  - id: pause_subscription
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.pause
+    handler: order_transition
+    workflow: subscriptions
+    operation: pause
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [sale_subscriptions]
+  - id: close_subscription
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.close
+    handler: order_transition
+    workflow: subscriptions
+    operation: close
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [sale_subscriptions]
+  - id: churn_subscription
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.churn
+    handler: order_transition
+    workflow: subscriptions
+    operation: churn
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [sale_subscriptions]
