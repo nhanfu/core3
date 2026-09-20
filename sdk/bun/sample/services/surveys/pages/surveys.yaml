@@ -21,6 +21,8 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # authenticated admin layout.
 # Numerical questions consume the paired API validation_required/min/max fields
 # in the same token-scoped renderer; the page remains layout-only.
+# Char questions consume validation_email and validation_length_min/max from
+# the paired API contract; no validation state is owned by this page fragment.
 components:
   - type: ListView
     variant: odoo

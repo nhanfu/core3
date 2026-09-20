@@ -1,0 +1,24 @@
+{
+  "feature": "SURVEYS-PUBLIC-CHAR-QUESTION-001",
+  "target": "http://127.0.0.1:8069/odoo/surveys",
+  "viewports": [
+    {
+      "name": "desktop",
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "bodyText": "Skip to Content\nManage Databases Powered by Odoo",
+      "error": null
+    },
+    {
+      "name": "mobile",
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "bodyText": "Skip to Content\nManage Databases Powered by Odoo",
+      "error": null
+    }
+  ],
+  "proxy8072": {
+    "status": "connection-refused-or-unavailable",
+    "error": "TypeError: Unable to connect. Is the computer able to access the url?"
+  }
+}

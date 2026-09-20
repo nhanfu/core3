@@ -1,0 +1,25 @@
+version: 0.0.37
+description: Odoo-compatible public char-box email and length validation fixture
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS validation_email BOOLEAN DEFAULT FALSE;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS validation_length_min INTEGER DEFAULT 0;
+      ALTER TABLE survey_questions ADD COLUMN IF NOT EXISTS validation_length_max INTEGER DEFAULT 0;
+      INSERT INTO surveys(id, name, title, description, owner, response_count, state, access_token, published_at, created_at, updated_at)
+      VALUES ('survey-demo-char', 'SURVEY/CHAR', 'Contact Email Survey', 'Provide a validated contact address.', 'Mitchell Admin', 0, 'Published', 'char-public-token-2026', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET title = excluded.title, description = excluded.description, state = excluded.state, access_token = excluded.access_token, published_at = excluded.published_at;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options, validation_email, validation_required, validation_length_min, validation_length_max, validation_error_msg)
+      VALUES ('question-char-email', 'survey-demo-char', 'What email address should receive the confirmation?', 'Char', 1, true, '', true, true, 6, 80, 'Enter a valid confirmation email address between 6 and 80 characters.')
+      ON CONFLICT (id) DO UPDATE SET survey_id = excluded.survey_id, question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options, validation_email = excluded.validation_email, validation_required = excluded.validation_required, validation_length_min = excluded.validation_length_min, validation_length_max = excluded.validation_length_max, validation_error_msg = excluded.validation_error_msg;
+    down: |
+      DELETE FROM survey_questions WHERE id = 'question-char-email';
+      DELETE FROM surveys WHERE id = 'survey-demo-char';
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS validation_email;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS validation_length_max;
+      ALTER TABLE survey_questions DROP COLUMN IF EXISTS validation_length_min;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

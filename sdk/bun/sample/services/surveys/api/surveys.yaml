@@ -67,6 +67,8 @@ actions:
   # asset handler below; the page renderer consumes the paired survey field.
   # Odoo numerical_box validation metadata is projected by the public question
   # operation and enforced before progress/submit mutates answer_data.
+  # Odoo char_box email and length validation uses the same durable public
+  # question metadata and remains enforced before progress/submit mutation.
   # Module validation runs before progress or submit mutates rows.
   - id: public_survey_start
     type: server_form

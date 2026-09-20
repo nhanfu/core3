@@ -718,3 +718,22 @@ overflow. Audit passes with 718 pages, 727 routes, and 1375 datasources. Odoo
 redirects both viewports to login and proxy 8072 is unavailable; no paired Odoo
 fixture or module sign-off is claimed. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-NUMERICAL-QUESTION-001/`.
+
+## 2026-09-21 public Char question additions
+
+Feature ID: `SURVEYS-PUBLIC-CHAR-QUESTION-001`.
+
+Odoo `survey.question._validate_char_box` email and inclusive length rules are
+implemented as durable `validation_email`, `validation_length_min`, and
+`validation_length_max` metadata on a separate published Char fixture. The
+paired `page.id: surveys` page/API contract exposes those fields; public
+progress/submit preserve `surveys.public` and reject invalid answers before
+mutation. Valid email persistence, restart, concurrent idempotent submit, count
+integrity, and wrong-token denial are covered.
+
+Focused coverage is **2 passed / 26 assertions** and the public/core Surveys
+regression is **79 passed / 733 assertions**. Authenticated Core3 desktop/mobile
+admin and public probes pass with no browser failures or overflow. Odoo remains
+conditional: both viewports redirect to the login shell and port 8072 refuses
+connections. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CHAR-QUESTION-001/`.

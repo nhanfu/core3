@@ -5,9 +5,12 @@ type SurveyQuestion = {
   sequence: number;
   required: boolean;
   answer_options?: string;
+  validation_email?: boolean;
   validation_required?: boolean;
   validation_min_float_value?: number;
   validation_max_float_value?: number;
+  validation_length_min?: number;
+  validation_length_max?: number;
   validation_error_msg?: string | null;
   image_answers?: string | null;
   matrix_rows?: string;
@@ -148,10 +151,17 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
     : '';
   const identityInput = question.save_as_email || question.save_as_nickname;
   const numericalInput = question.question_type === 'Numerical';
+  const charInput = ['Char', 'Char Box'].includes(question.question_type);
+  const numericalTypeAttribute = `type="${numericalInput ? 'number' : 'text'}"`;
   const numericalRange = numericalInput && question.validation_required
     && Number.isFinite(Number(question.validation_min_float_value))
     && Number.isFinite(Number(question.validation_max_float_value))
     ? ` min="${escapeHtml(question.validation_min_float_value)}" max="${escapeHtml(question.validation_max_float_value)}" step="any"`
+    : '';
+  const charLength = charInput && question.validation_required
+    && Number.isFinite(Number(question.validation_length_min))
+    && Number.isFinite(Number(question.validation_length_max))
+    ? ` minlength="${escapeHtml(question.validation_length_min)}" maxlength="${escapeHtml(question.validation_length_max)}"`
     : '';
   const input = identityInput
     ? `<input class="core3-public-survey__input" data-answer type="${question.save_as_email ? 'email' : 'text'}" autocomplete="${question.save_as_email ? 'email' : 'nickname'}" value="${escapeHtml(currentValues[0])}" placeholder="${question.save_as_email ? 'you@example.com' : 'Your name'}">`
@@ -167,7 +177,7 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
         const image = imageId && answerToken ? `<img class="core3-public-survey__option-image" src="${escapeHtml(questionImageUrl(surveyToken, answerToken, question.id, imageId))}" alt="">` : '';
         return `<label class="core3-public-survey__option"><input type="${type}" name="question-${escapeHtml(question.id)}" value="${escapeHtml(option)}"${checked}>${image}<span>${escapeHtml(option)}</span></label>`;
       }).join('')}</div>`
-      : `<input class="core3-public-survey__input" data-answer type="${numericalInput ? 'number' : 'text'}" inputmode="${numericalInput ? 'decimal' : 'numeric'}"${numericalRange}${['Date', 'date'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" autocomplete="bday"' : ''}${['Datetime', 'datetime'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"' : ''} value="${escapeHtml(currentValues[0])}" placeholder="${['Date', 'date'].includes(question.question_type) ? 'YYYY-MM-DD' : ['Datetime', 'datetime'].includes(question.question_type) ? 'YYYY-MM-DD HH:MM:SS' : numericalInput && question.validation_required ? `${escapeHtml(question.validation_min_float_value)}–${escapeHtml(question.validation_max_float_value)}` : 'Your answer'}">`;
+      : `<input class="core3-public-survey__input" data-answer ${numericalInput ? numericalTypeAttribute : `type="${charInput && question.validation_email ? 'email' : 'text'}"`} inputmode="${numericalInput ? 'decimal' : charInput && question.validation_email ? 'email' : 'numeric'}"${numericalRange}${charLength}${charInput && question.validation_email ? ' autocomplete="email"' : ''}${['Date', 'date'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" autocomplete="bday"' : ''}${['Datetime', 'datetime'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"' : ''} value="${escapeHtml(currentValues[0])}" placeholder="${['Date', 'date'].includes(question.question_type) ? 'YYYY-MM-DD' : ['Datetime', 'datetime'].includes(question.question_type) ? 'YYYY-MM-DD HH:MM:SS' : numericalInput && question.validation_required ? `${escapeHtml(question.validation_min_float_value)}–${escapeHtml(question.validation_max_float_value)}` : charInput && question.validation_email ? 'you@example.com' : 'Your answer'}">`;
   const commentInput = question.comments_allowed
     ? `<label class="core3-public-survey__comment"><span>${escapeHtml(question.comments_message || 'Comment')}</span><textarea class="core3-public-survey__input" rows="2" data-comment>${escapeHtml(comment)}</textarea></label>`
     : '';
@@ -355,6 +365,24 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
           const error = document.createElement('div');
           error.className = 'core3-public-survey__error';
           error.textContent = question.validation_error_msg || 'Enter a valid number within the allowed range.';
+          body.prepend(error);
+          return;
+        }
+      }
+      if (!empty && ['Char', 'Char Box'].includes(question.question_type)) {
+        const textValue = String(value);
+        const minimum = Number(question.validation_length_min);
+        const maximum = Number(question.validation_length_max);
+        const invalidEmail = question.validation_email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(textValue);
+        const invalidLength = question.validation_required
+          && Number.isFinite(minimum)
+          && Number.isFinite(maximum)
+          && (textValue.length < minimum || textValue.length > maximum);
+        if (invalidEmail || invalidLength) {
+          actionButton.disabled = false;
+          const error = document.createElement('div');
+          error.className = 'core3-public-survey__error';
+          error.textContent = question.validation_error_msg || 'Enter a valid text answer.';
           body.prepend(error);
           return;
         }

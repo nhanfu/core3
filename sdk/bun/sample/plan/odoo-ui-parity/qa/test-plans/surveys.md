@@ -459,3 +459,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-NUMERICAL-QUESTION-001/`.
+
+## 2026-09-21 public Char question additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-042 | public question | Char email/length metadata | Return durable email flag, inclusive bounds, and validation message through the paired page/API contract | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-039 | restart/idempotency | Invalid → valid email → reopen → concurrent submit | Reject invalid values without mutation and converge on one durable submitted response after restart | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-041 | token/input guard | Wrong token and invalid Char input | Retain `surveys.public`, reject malformed/short values with no mutation, and return 404 for a wrong answer token | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-040 | responsive/reference | Char email desktop/mobile + Odoo comparison | Capture Core3 email control and exact current Odoo login/proxy blockers; no sign-off until reference is available | `core3-{admin,public}-{desktop,mobile}.png`, `odoo-{desktop,mobile}.png` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CHAR-QUESTION-001/`.

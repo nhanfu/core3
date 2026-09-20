@@ -627,6 +627,19 @@ export default class SurveysModule implements ModuleLifecycle {
         invalid.push(String(question.question_text || question.id));
         continue;
       }
+      if (['Char', 'Char Box'].includes(questionType)) {
+        const textValue = values[0] || '';
+        const minimum = Number(question.validation_length_min);
+        const maximum = Number(question.validation_length_max);
+        const invalidEmail = question.validation_email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(textValue);
+        const invalidLength = question.validation_required
+          && Number.isFinite(minimum)
+          && Number.isFinite(maximum)
+          && (textValue.length < minimum || textValue.length > maximum);
+        if (values.length !== 1 || invalidEmail || invalidLength) {
+          invalid.push(String(question.question_text || question.id));
+        }
+      }
       if (['Numerical', 'Number'].includes(questionType)) {
         const numericValue = Number(values[0]);
         const minimum = Number(question.validation_min_float_value);

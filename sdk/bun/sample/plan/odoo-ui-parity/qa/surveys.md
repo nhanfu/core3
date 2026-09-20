@@ -1085,3 +1085,26 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-QUESTI
   authenticated Numerical fixture or paired Odoo sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-NUMERICAL-QUESTION-001/`.
+
+## Bounded QA run: Public Char question — `SURVEYS-PUBLIC-CHAR-QUESTION-001`
+
+- Source comparison: Odoo `survey_question._validate_char_box` defines email
+  syntax and inclusive configured length validation; Core3 migration `0.0.37`
+  persists the matching flags, bounds, and message.
+- YAML/UI contract: `pages/surveys.yaml` and `api/surveys.yaml` remain separate
+  through `page.id: surveys`; public question metadata carries the Char rules
+  and public mutations retain `surveys.public`.
+- Focused verification: **2 passed / 26 assertions**; public/core Surveys
+  regression: **79 passed / 733 assertions**; audit **718 pages, 727 routes,
+  1379 datasources**; scoped ESLint and diff-check pass.
+- Persistence/guards: malformed email and too-short values return 422 without
+  mutation; a valid address survives file-backed reopen; concurrent same-key
+  submit produces one response/count; a wrong token returns 404.
+- Core3 authenticated admin/public desktop/mobile probes pass at 1440x900 and
+  390x844 with email and length attributes, client validation evidence, no
+  request/page failures, and no horizontal overflow.
+- Odoo desktop/mobile redirect to
+  `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; port 8072 is unavailable. No
+  authenticated Char fixture or paired Odoo sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CHAR-QUESTION-001/`.

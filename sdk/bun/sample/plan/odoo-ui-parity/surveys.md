@@ -1839,3 +1839,28 @@ diff-check pass. Odoo desktop/mobile redirect to
 `/web/login?redirect=%2Fodoo%2Fsurveys%3F`, while port 8072 is unavailable, so
 no paired Odoo fixture or parity sign-off is claimed. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-NUMERICAL-QUESTION-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-CHAR-QUESTION-001`
+
+Selected the next uncovered source-backed public question behavior after the
+completed numerical validation slice: Odoo Char/Char Box email and inclusive
+length validation. Odoo `survey.question._validate_char_box` uses durable
+`validation_email`, `validation_length_min`, and `validation_length_max` flags
+plus the persisted validation message. Migration `0.0.37` adds those fields and
+seeds a separate published `Contact Email Survey` fixture.
+
+The existing paired `page.id: surveys` API/page contract projects the metadata
+through `survey.public.questions`; token-scoped `surveys.public` progress and
+submit reject malformed email and out-of-range length before mutation. The
+renderer presents an email input with `minlength`/`maxlength` attributes and
+the same validation copy. Focused coverage passes **2/2 with 26 assertions**;
+the public/core Surveys regression passes **79/79 with 733 assertions**. Audit
+passes with **718 pages, 727 routes, and 1379 datasources**; scoped ESLint and
+diff-check pass.
+
+Authenticated Core3 admin/public desktop/mobile probes pass at 1440x900 and
+390x844 with no request/page failures or horizontal overflow. Odoo desktop and
+mobile both redirect to
+`/web/login?redirect=%2Fodoo%2Fsurveys%3F`; port 8072 is unavailable, so no
+authenticated Odoo fixture or parity sign-off is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CHAR-QUESTION-001/`.
