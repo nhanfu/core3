@@ -115,6 +115,10 @@ transfer workflows must preserve row versions and move quantities.
 | INV-WF-013 | Return workflow | Done transfer with one completed move | company/actor/quantity/stale guards leave no partial reverse transfer; restart preserves source revision and return data | pass: `INV-TRANSFER-RETURN-001` focused suite; multi-line/exchange remains open |
 | INV-PERM-019 | Transfer Return permission boundary | inventory.read vs inventory.write | read-only users cannot create a return; current-company scope is enforced | pass: `INV-TRANSFER-RETURN-001` focused runtime test |
 | INV-UI-018 | Transfer Return form and responsive result | 1440x1000, 390x844 | Authenticated Core3 Done transfer exposes Return form, submits quantity/reason, and reloads the actor timeline without overflow; paired Odoo result or exact blocker is recorded | pass Core3; Odoo Return action absent on reachable authenticated deliveries |
+| INV-FUNC-021 | Partial transfer backorder confirmation | Ready partial transfer | Create Backorder splits remaining quantity into a durable linked picking/move; No Backorder closes the processed transfer without a backorder | pass: `INV-TRANSFER-BACKORDER-001` focused suite |
+| INV-WF-014 | Backorder workflow | Ready transfer with one partial move | decision, company, actor, stale, and line-shape guards leave no partial state; restart preserves source/backorder relation and decision | pass: `INV-TRANSFER-BACKORDER-001` focused suite; multi-transfer wizard remains open |
+| INV-PERM-020 | Transfer backorder permission boundary | inventory.read vs inventory.write | read-only users cannot process Create/No Backorder; company scope and current row are required | pass: `INV-TRANSFER-BACKORDER-001` focused runtime test |
+| INV-UI-019 | Transfer backorder form and responsive result | 1440x1000, 390x844 | Authenticated Core3 partial transfer exposes decision form, persists the selected lifecycle, and reloads the actor timeline without overflow; paired Odoo wizard result or exact blocker is recorded | pass Core3; Odoo partial wizard unavailable on reachable authenticated routes |
 
 ## Exit criteria
 

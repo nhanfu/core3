@@ -397,6 +397,32 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
 
+## `INV-TRANSFER-BACKORDER-001` — partial transfer backorder lifecycle (2026-09-20)
+
+- Selected the smallest remaining non-duplicated transfer workflow: Odoo's
+  partial-validation `stock.backorder.confirmation` wizard.
+- Compared `stock_picking.py:1413-1492,1568-1603` and
+  `stock_backorder_confirmation_views.xml` / `.py`. Core3 keeps the page/API
+  split, exposes Create Backorder only for a partial Ready transfer, supports
+  Create Backorder and No Backorder, and records actor/company/decision in a
+  durable ledger and timeline. The bounded contract accepts exactly one
+  partial move line; multi-transfer wizard selection remains open.
+- Migration `20260920310000-034-inventory-transfer-backorders.yaml` adds the
+  durable backorder relation, decision ledger, linked reverse picking/move,
+  and deterministic partial fixture. Company, actor, decision, state,
+  row-version, permission, and file-backed restart guards are covered by the
+  focused backorder suite.
+- Focused coverage passes 8 tests / 75 assertions across the backorder and
+  transfer workflow suites. Authenticated Core3 desktop/mobile evidence and
+  paired authenticated Odoo comparison/blocker evidence are under
+  `evidence/inventory/2026-09-20/INV-TRANSFER-BACKORDER-001/`.
+- Odoo deliveries 1-3 expose no partial backorder wizard for
+  `codex@core3.local`, and `/odoo/backorders` redirects to Discuss. The exact
+  blocker is recorded and no Odoo mutation was attempted.
+
+Status: bounded Core3 lifecycle and evidence complete for review; broader
+Inventory sign-off remains open.
+
 ## `INV-TRANSFER-RETURN-001` — completed transfer Return lifecycle (2026-09-20)
 
 - Selected the smallest remaining non-duplicated transfer behavior: Odoo's

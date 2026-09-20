@@ -1268,3 +1268,34 @@ Odoo mutation was made.
 
 Status: bounded Core3 lifecycle complete for review. Full Inventory sign-off
 remains open.
+
+## Operations > Partial transfer Backorder confirmation — `INV-TRANSFER-BACKORDER-001` (2026-09-20)
+
+This bounded slice closes the smallest remaining non-duplicated transfer
+workflow after Return: Odoo's partial-validation backorder confirmation. The
+source invokes `stock.backorder.confirmation` from
+`addons/stock/models/stock_picking.py:1413-1492`; its wizard view and process
+methods are in `addons/stock/wizard/stock_backorder_confirmation_views.xml`
+and `.py`. The source offers Create Backorder and No Backorder, and creates a
+linked picking containing only remaining move quantities.
+
+Core3 keeps `pages/transfer-detail.yaml` presentation-only and joins it to
+`api/transfer-detail.yaml` by `page.id`. The API owns the partial Ready-only
+Create Backorder form, decision options, permission/company/actor/current-row
+guards, durable backorder history, source move split, linked backorder
+picking/move, and timeline event. Migration
+`20260920310000-034-inventory-transfer-backorders.yaml` adds deterministic data
+and durable relation/decision rows. This bounded implementation supports one
+partial completed move line; multi-transfer selection remains open.
+
+Focused tests pass 8 tests / 75 assertions across the backorder and transfer
+workflow suites, including Create/No decisions, permission, company, actor,
+decision, stale, no-partial-state, and restart checks. Authenticated Core3
+desktop/mobile and paired Odoo comparison/blocker evidence is under
+`evidence/inventory/2026-09-20/INV-TRANSFER-BACKORDER-001/`. The supplied
+Odoo account exposes no partial fixture or backorder wizard on deliveries 1-3,
+and `/odoo/backorders` redirects to Discuss; the exact blocker is recorded and
+no Odoo mutation was made.
+
+Status: bounded Core3 lifecycle complete for review. Full Inventory sign-off
+remains open.

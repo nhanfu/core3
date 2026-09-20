@@ -679,3 +679,37 @@ QA disposition: PASS for the bounded Core3 return lifecycle, durable data,
 permissions, and responsive evidence; PARTIAL for direct Odoo wizard parity
 because the supplied authenticated account exposes no Return action. Full
 Inventory sign-off remains open.
+
+## Transfer Backorder lifecycle QA — `INV-TRANSFER-BACKORDER-001` (2026-09-20)
+
+- Odoo source/menu/action: partial `button_validate` processing invokes
+  `stock.backorder.confirmation`; its wizard exposes per-transfer decision
+  state with Create Backorder, No Backorder, and Discard. The source creates a
+  linked backorder picking and moves only remaining quantities into it.
+- Core3 implementation: `pages/transfer-detail.yaml` is layout-only;
+  `api/transfer-detail.yaml` owns the partial-transfer Create Backorder form,
+  Create/No decision, company/actor/current-row guards, history datasource,
+  source move split, linked backorder picking/move, and timeline refresh.
+  Migration `20260920310000-034-inventory-transfer-backorders.yaml` persists
+  the relation, ledger, and deterministic partial fixture. The bounded
+  contract supports one partial move line and leaves multi-transfer selection
+  open.
+- Focused test:
+  `bun test test/inventory_transfer_backorders.integration.test.ts test/inventory_transfer_workflow.integration.test.ts`
+  — PASS, 8 tests / 75 assertions. Coverage includes page/API separation,
+  Create/No decisions, durable source/backorder rows, actor/company/decision/
+  stale guards, `inventory.write` permission denial, timeline/detail refresh,
+  no-partial-state behavior, and restart.
+- Authenticated Core3 evidence is in
+  `evidence/inventory/2026-09-20/INV-TRANSFER-BACKORDER-001/`: desktop
+  partial transfer/form/submission, mobile persisted result, and JSON browser
+  records.
+- Authenticated Odoo evidence is in the same directory. Desktop and mobile
+  delivery captures show no backorder wizard, while `/odoo/backorders`
+  redirects to Discuss. This is an exact blocker for direct wizard comparison;
+  no Odoo mutation was made.
+
+QA disposition: PASS for the bounded Core3 backorder lifecycle, durable data,
+permissions, and responsive evidence; PARTIAL for direct Odoo wizard parity
+because the supplied authenticated account exposes no partial fixture or
+wizard. Full Inventory sign-off remains open.

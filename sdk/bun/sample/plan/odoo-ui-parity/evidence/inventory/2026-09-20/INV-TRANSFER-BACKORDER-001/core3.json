@@ -1,0 +1,10 @@
+{
+  "feature_id": "INV-TRANSFER-BACKORDER-001",
+  "runtime": "http://127.0.0.1:3002",
+  "user": "admin@tms.local",
+  "route": "/inventory/transfer/detail?id=delivery-backorder-0001",
+  "desktop": { "viewport": "1440x1000", "before": "core3-desktop-before.png", "after": "core3-desktop-after.png", "result": "Backorder confirmation submitted; source shows reduced processed demand and Backorder created timeline event" },
+  "mobile": { "viewport": "390x844", "after": "core3-mobile-after.png", "result": "persisted backorder result and actor timeline rendered" },
+  "checks": { "authenticated": true, "page_errors": [], "request_errors": [], "horizontal_overflow": false },
+  "mutation": { "decision": "create", "actor": "Admin User", "backorder_id": "backorder-delivery-backorder-0001-1", "remaining_quantity": 4 }
+}

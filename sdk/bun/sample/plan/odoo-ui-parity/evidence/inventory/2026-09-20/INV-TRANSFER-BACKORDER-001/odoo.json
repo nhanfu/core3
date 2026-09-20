@@ -1,0 +1,11 @@
+{
+  "feature_id": "INV-TRANSFER-BACKORDER-001",
+  "runtime": "http://127.0.0.1:8069",
+  "user": "codex@core3.local",
+  "routes_checked": ["/odoo/backorders", "/odoo/deliveries/1", "/odoo/deliveries/2", "/odoo/deliveries/3"],
+  "desktop": { "viewport": "1440x1000", "delivery_capture": "odoo-desktop-delivery.png", "backorders_capture": "odoo-desktop-backorders.png", "result": "reachable deliveries expose no Create Backorder/No Backorder wizard; /odoo/backorders redirects to Discuss" },
+  "mobile": { "viewport": "390x844", "capture": "odoo-mobile-delivery.png", "result": "reachable completed delivery exposes Validate but no backorder wizard" },
+  "blocker": "The supplied authenticated Odoo account does not expose a partial-validation fixture or the stock.backorder.confirmation wizard on reachable delivery routes; the backorders route redirects to Discuss. No Odoo mutation was attempted.",
+  "page_errors": [],
+  "request_errors": []
+}
