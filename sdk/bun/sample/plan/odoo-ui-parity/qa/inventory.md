@@ -620,3 +620,30 @@ QA disposition: PASS for the bounded Core3 traceability lifecycle, durable
 report run, permissions, and evidence contract; PARTIAL for direct Odoo
 Traceability comparison because of the exact navigation/asset blocker. Full
 Inventory sign-off remains open.
+
+## Transfer Check Availability reservations QA — `INV-TRANSFER-CHECK-AVAILABILITY-001` (2026-09-20)
+
+- Odoo source/menu/action: `stock.picking.action_assign` from the transfer
+  form's `Check Availability` button (`stock_picking_views.xml:117-120`),
+  with reservation semantics in `stock_picking.py:1196-1210` and
+  `stock_move.py:2041-2050`; paired `do_unreserve` releases reservations.
+- Core3 implementation: `pages/transfer-detail.yaml` is layout-only;
+  `api/transfer-detail.yaml` owns the reservation action, line fields,
+  company/row-version guards, actor event, and reversible Unreserve mutation.
+  Migration `0.0.32` persists reservation rows and deterministic fixture data.
+- Focused verification: `bun test
+  test/inventory_transfer_reservations.integration.test.ts
+  test/inventory_transfer_workflow.integration.test.ts --timeout 20000` — PASS,
+  8 tests / 73 assertions. Coverage includes reserve/unreserve state and
+  quantity persistence, actor/company/stale/unavailable guards, permission
+  denial, migration idempotence, and file-backed restart.
+- Authenticated Core3 evidence is under
+  `evidence/inventory/2026-09-20/INV-TRANSFER-CHECK-AVAILABILITY-001/`; desktop
+  action and persisted mobile state report no request/page errors and no
+  horizontal overflow. Paired authenticated Odoo desktop/mobile evidence is
+  also present and reports no request/page errors or overflow.
+
+QA disposition: PASS for the bounded Core3 reservation lifecycle and
+permissions; PARTIAL for direct Odoo action execution because the reachable
+reference transfer was already Ready/Available and hid Check Availability. No
+Odoo mutation was made. Full Inventory sign-off remains open.

@@ -91,12 +91,11 @@ describe('Inventory receipts and deliveries transfer workflow parity', () => {
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'inventory_transfer_workflow_test_schema_migrations', ['schema', 'data']);
 
-    await repository.executeMutation(action('mark_inventory_transfer_todo').mutation, { id: 'receipt-00003', expected_row_version: 1, current_user_name: 'Admin User' });
-    await repository.executeMutation(action('check_inventory_transfer_availability').mutation, { id: 'receipt-00003', expected_row_version: 2, current_user_name: 'Admin User' });
-    await expect(repository.executeMutation(action('validate_inventory_transfer').mutation, { id: 'receipt-00003', expected_row_version: 2, current_user_name: 'Admin User' })).rejects.toMatchObject({ status: 409 });
-    const validated = await repository.executeMutation(action('validate_inventory_transfer').mutation, { id: 'receipt-00003', expected_row_version: 3, current_user_name: 'Admin User' }) as any;
-    expect(validated).toMatchObject({ state: 'Done', row_version: 4 });
-    expect((await repository.querySource(source('transfer-detail.yaml', 'inventory_transfer_lines'), { id: 'receipt-00003', fixture_state: null }, 0, 50)).data[0].quantity).toBe(18);
+    await repository.executeMutation(action('check_inventory_transfer_availability').mutation, { id: 'delivery-reserve-0001', expected_row_version: 1, current_company_name: 'Core3 Demo Company', current_user_name: 'Admin User' });
+    await expect(repository.executeMutation(action('validate_inventory_transfer').mutation, { id: 'delivery-reserve-0001', expected_row_version: 1, current_user_name: 'Admin User' })).rejects.toMatchObject({ status: 409 });
+    const validated = await repository.executeMutation(action('validate_inventory_transfer').mutation, { id: 'delivery-reserve-0001', expected_row_version: 2, current_user_name: 'Admin User' }) as any;
+    expect(validated).toMatchObject({ state: 'Done', row_version: 3 });
+    expect((await repository.querySource(source('transfer-detail.yaml', 'inventory_transfer_lines'), { id: 'delivery-reserve-0001', fixture_state: null }, 0, 50)).data[0].quantity).toBe(4);
 
     await expect(repository.executeMutation(action('cancel_inventory_transfer').mutation, { id: 'receipt-00004', expected_row_version: 99 })).rejects.toMatchObject({ status: 409 });
     const cancelled = await repository.executeMutation(action('cancel_inventory_transfer').mutation, { id: 'receipt-00004', expected_row_version: 1 }) as any;

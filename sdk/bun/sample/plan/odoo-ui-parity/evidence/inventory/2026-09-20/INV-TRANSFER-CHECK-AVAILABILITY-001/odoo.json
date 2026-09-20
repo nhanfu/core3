@@ -1,0 +1,35 @@
+{
+  "feature": "INV-TRANSFER-CHECK-AVAILABILITY-001",
+  "runtime": "http://127.0.0.1:8069",
+  "source_menu": "stock.menu_picking_type",
+  "source_action": "stock.picking.action_assign",
+  "user": "codex@core3.local",
+  "desktop": {
+    "url": "http://127.0.0.1:8069/odoo/deliveries/2",
+    "authenticated": true,
+    "title": "WH/OUT/00002",
+    "has_check_availability": false,
+    "body_excerpt": "7\n40\nMy Company (San Francisco)\nNew\nDeliveries\nWH/OUT/00002\nMoves\n1 / 1\nValidate\nPrint\nCancel\nDone\nReady\nWaiting\nDraft\nWH/OUT/00002\nDelivery Address\nOperation Type\nScheduled Date?\nAug 26, 12:13 PM\nProduct Availability?\nAvailable\nSource Document?\nOperations\nAdditional Info\nNote\nProduct\n\t\n\t\nDemand\n\t\nQuantity\n\t\nUnit\n\t\t\n\n\n[E-COM07] Large Cabinet\n\tAvailable\t180.00\t180.00\t\nUnits\n\t\n\t\nAdd a Product\n​\n​\n\t\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:13 PM\n\nTransfer created",
+    "body_width": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440
+    },
+    "failed_requests": [],
+    "page_errors": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:8069/odoo/deliveries/2",
+    "authenticated": true,
+    "title": "WH/OUT/00002",
+    "has_check_availability": false,
+    "body_excerpt": "WH/OUT/00002\n7\n40\nNew\nValidate\nReady\nWH/OUT/00002\nDelivery Address\nOperation Type\nScheduled Date?\nAug 26, 12:13 PM\nProduct Availability?\nAvailable\nSource Document?\nOperations\nAdditional Info\nNote\n[E-COM07] Large Cabinet\nQuantity 180.00 / 180.00Units\nAdd a Product\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:13 PM\n\nTransfer created",
+    "body_width": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "failed_requests": [],
+    "page_errors": []
+  },
+  "write_performed": false,
+  "blocker": "The supplied reference user renders the transfer detail but does not expose the selected source transfer action context needed to execute action_assign; no Odoo mutation was made."
+}

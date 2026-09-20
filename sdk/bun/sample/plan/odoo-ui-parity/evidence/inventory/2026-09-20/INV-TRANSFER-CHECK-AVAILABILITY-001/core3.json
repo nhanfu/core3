@@ -1,0 +1,28 @@
+{
+  "desktop": {
+    "url": "http://127.0.0.1:4546/inventory/transfer/detail?id=delivery-reserve-0001",
+    "authenticated": true,
+    "has_check_before": true,
+    "has_reserved": true,
+    "has_available": true,
+    "body_width": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440
+    },
+    "failed_requests": [],
+    "page_errors": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4546/inventory/transfer/detail?id=delivery-reserve-0001",
+    "authenticated": true,
+    "has_check_before": false,
+    "has_reserved": true,
+    "has_available": true,
+    "body_width": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "failed_requests": [],
+    "page_errors": []
+  }
+}

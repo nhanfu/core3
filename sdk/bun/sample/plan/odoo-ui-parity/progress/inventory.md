@@ -397,6 +397,25 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
 
+## INV-TRANSFER-CHECK-AVAILABILITY-001 — transfer reservation lifecycle (2026-09-20)
+
+- Selected the smallest remaining source-backed transfer gap: Odoo
+  `stock.picking.action_assign` / `Check Availability`, explicitly left as a
+  reservation follow-up by the prior transfer workflow slice.
+- Added migration `0.0.32` with durable reservation rows and a deterministic
+  company-matched waiting delivery fixture. API/page contracts remain separate;
+  line availability now exposes reserved quantity and actor timeline events.
+- Check Availability and Unreserve enforce `inventory.write`, company scope,
+  current picking row version, valid move lines, available quantity and
+  duplicate-reservation guards. Quant reservations, picking revisions, actor,
+  and restart state are durable; no cross-module caller was required.
+- Focused tests: 8 passed / 73 assertions across reservation and transfer
+  workflow suites. Core3 authenticated desktop/mobile evidence is complete with
+  no failed requests, page errors, or overflow. Odoo desktop/mobile reached a
+  Ready/Available transfer and hid Check Availability; exact blocker evidence
+  is recorded, with no Odoo mutation. This slice is complete for review;
+  module sign-off remains open.
+
 ## `INV-PHYSICAL-RESET-001` — Physical Inventory Clear/reset (2026-09-20)
 
 - Selected the smallest remaining source-backed Physical Inventory behavior

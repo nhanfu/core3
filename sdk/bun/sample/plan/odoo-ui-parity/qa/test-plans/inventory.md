@@ -107,6 +107,10 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-018 | Lot Traceability report | Lot detail opens company-scoped completed move lines with source columns, records a fixed Print/report run, and survives restart | pass: `INV-LOT-TRACEABILITY-001` focused lifecycle test |
 | INV-PERM-017 | Lot Traceability report boundary | `inventory.tracking`, current-company lot scope, authenticated actor, and row version are required; stale/empty requests do not create runs | pass: `INV-LOT-TRACEABILITY-001` focused runtime test |
 | INV-UI-016 | Lot Traceability report | 1440x900, 390x844 | Authenticated Core3 desktop/mobile report list and Print control render without overflow; paired Odoo lot list and exact selected-form/asset blocker are recorded | pass Core3; Odoo Traceability stat/PDF blocked by supplied route/account/asset boundary |
+| INV-FUNC-019 | Transfer Check Availability reservations | Waiting transfer reserves matching company stock, records actor/quant quantity, exposes Reserved/Available lines, reverses through Unreserve, and survives restart | pass: `INV-TRANSFER-CHECK-AVAILABILITY-001` focused suite |
+| INV-WF-012 | Transfer reservation workflow | current-company, move-line, available-stock, duplicate, stale-row, and unreserve guards leave no partial state | pass: `INV-TRANSFER-CHECK-AVAILABILITY-001` focused suite |
+| INV-PERM-018 | Transfer reservation permission boundary | `inventory.write` is required for Check Availability and Unreserve; read-only users receive 403 without changing picking or quant rows | pass: `INV-TRANSFER-CHECK-AVAILABILITY-001` focused runtime test |
+| INV-UI-017 | Transfer Check Availability responsive action | 1440x900, 390x844 | Authenticated Core3 manager sees Check Availability, Reserved quantity, Available state, and persisted actor timeline without overflow; paired Odoo transfer action result or exact blocker is recorded | pass Core3; Odoo action hidden on reachable Ready/Available transfer |
 
 ## Exit criteria
 

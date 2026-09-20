@@ -1053,6 +1053,34 @@ horizontal overflow; no Odoo mutation was made. Full Inventory sign-off
 remains open for the broader actor matrix and residual report/relocation
 semantics.
 
+## Operations > Check Availability reservations — `INV-TRANSFER-CHECK-AVAILABILITY-001` (2026-09-20)
+
+This bounded slice closes the explicit transfer reservation follow-up after
+lot traceability. Odoo's `stock.picking.action_assign` is exposed by the
+transfer form's `Check Availability` button in
+`addons/stock/views/stock_picking_views.xml:117-120`; its implementation in
+`stock_picking.py:1196-1210` confirms eligible moves and delegates to
+`stock.move._action_assign`, which reserves available quants. The paired
+`do_unreserve` operation releases those reservations.
+
+Core3 keeps `pages/transfer-detail.yaml` presentation-only and extends the
+separate `api/transfer-detail.yaml` contract with reservation-aware detail and
+move-line fields. Migration `20260920290000-032-inventory-transfer-reservations.yaml`
+adds the durable actor/company reservation ledger and deterministic waiting
+delivery fixture. Check Availability requires `inventory.write`, current
+company, move lines, available stock, and the picking row version; it persists
+the actor, reserved quant quantity, row revisions, and a timeline event.
+Unreserve reverses the quant quantity and removes active reservation rows.
+
+Focused coverage passes 8 tests / 73 assertions across the reservation and
+transfer workflow suites. Authenticated Core3 desktop/mobile evidence is under
+`evidence/inventory/2026-09-20/INV-TRANSFER-CHECK-AVAILABILITY-001/`.
+The supplied authenticated Odoo user reached `/odoo/deliveries/2` at both
+viewports, but that transfer was already Ready/Available, so Odoo hid Check
+Availability and the action could not be executed. The exact blocker and
+paired screenshots are recorded in the evidence folder; no Odoo mutation was
+made. Full Inventory sign-off remains open.
+
 ## Operations > Physical Inventory Request a Count — `INV-PHYSICAL-REQUEST-COUNT-001` (2026-09-20)
 
 This bounded slice closes the next smallest residual Physical Inventory wizard.

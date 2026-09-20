@@ -41,6 +41,8 @@ components:
       inventory.transfer.validated: Validated
       inventory.transfer.message: Message
       inventory.transfer.note: Note
+      inventory.transfer.availability_checked: Availability checked
+      inventory.transfer.unreserved: Unreserved
     content_slot: true
     group_columns: 2
     groups:
@@ -74,5 +76,6 @@ components:
       - { field: product_name, label: Product, width: 260 }
       - { field: demand, label: Demand, align: right, width: 120 }
       - { field: quantity, label: Quantity, align: right, width: 120 }
+      - { field: reserved_quantity, label: Reserved, align: right, width: 120 }
       - { field: uom, label: Unit of Measure, width: 140 }
       - { field: availability, label: Availability, width: 150 }
