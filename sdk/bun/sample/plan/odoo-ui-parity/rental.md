@@ -123,3 +123,20 @@ of those entries is a Rental substitute.
 This matrix deliberately distinguishes an internal Core3 implementation slice
 from Odoo parity. It must be revised if a later wave installs a matching
 `sale_renting` addon and exposes a real reference surface.
+
+## Current-wave Core3 verification (2026-09-20)
+
+The focused implementation commit is
+`2ddc1e28e3c57c5f80a7f664d258c15d00a89b60`. In a clean temporary worktree,
+page discovery passed with 661 pages, 670 routes, and 1,162 datasources. An
+authenticated admin query returned the two deterministic rental fixtures and
+one rental event; a new quotation was created, reserved, picked up, returned,
+and reloaded as `Returned` with three persisted lifecycle events. An
+unauthenticated caller received 401 for read and mutation, while the
+dispatcher received 403 for both. Authenticated browser smoke rendered
+`/rental-events` at 1440x900 and 390x844; the runtime resolved it to
+`/sale-renting/rental-events` and reported no page/5xx errors or horizontal
+overflow. Captures are under `/tmp/core3-odoo-parity/` and are not committed.
+
+This evidence verifies the Core3 API/page boundary and route/lifecycle slice
+only. It does not remove the Odoo source gate or claim Rental visual parity.
