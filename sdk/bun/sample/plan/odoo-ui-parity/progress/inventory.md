@@ -350,3 +350,24 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 - Status: bounded Core3 lifecycle, permissions, restart persistence, and
   evidence complete for review. Broader Inventory sign-off remains open for
   the full actor matrix and residual report/relocation semantics.
+
+## `INV-MOVES-ANALYSIS-001` — Moves Analysis report (2026-09-20)
+
+- Selected the smallest remaining source-backed report gap: Odoo
+  `stock.stock_move_menu` → `stock_move_action`, distinct from the existing
+  `stock.move.line` Moves History report.
+- Compared `addons/stock/views/stock_move_views.xml:4-25,27-63,320-407,437`.
+  Added the Reporting menu, layout-only `pages/moves-analysis.yaml`, matching
+  API fragment, and read-only `move-analysis-detail` page/API contract.
+- Migration `20260920240000-027-inventory-moves-analysis.yaml` persists eight
+  deterministic stock moves across Done, Assigned/Waiting, Incoming,
+  Outgoing, Internal, and Inventory states. Focused coverage passes 4 tests /
+  41 assertions, including filters, pivot, empty/404/503, permission, and
+  restart checks.
+- Authenticated Core3 desktop list/pivot/detail and mobile evidence plus
+  authenticated Odoo desktop pivot/list and mobile kanban evidence are under
+  `evidence/inventory/2026-09-20/INV-MOVES-ANALYSIS-001/`; both runs had no
+  browser failures or horizontal overflow.
+- Status: bounded report lifecycle complete for review. Full shared runner
+  verification is blocked by the unrelated committed Surveys schema boundary;
+  no Surveys/Employees/Ecommerce paths were changed or staged.

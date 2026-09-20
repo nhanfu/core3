@@ -75,6 +75,9 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-014 | Physical Inventory Apply All | Apply All accepts reason/date, applies only counted quants, persists an audit run, and records non-zero move history | pass: `INV-PHYSICAL-001` focused lifecycle test |
 | INV-WF-010 | Physical Inventory Apply All workflow | counted-only adjustment, empty-set/invalid-input guards, deterministic audit identifier, and file-backed restart persistence | pass: `INV-PHYSICAL-001` focused lifecycle test |
 | INV-PERM-012 | Physical Inventory adjustment boundary | `inventory.read` permits the page; `inventory.write` is required for Apply All and read-only users receive 403 without mutation | pass: `INV-PHYSICAL-001` focused runtime test |
+| INV-FUNC-015 | Moves Analysis report | `stock.move` report exposes source columns, default Done state, state/type/date/search filters, list/pivot/graph/kanban/form states, and traceable detail | pass: `INV-MOVES-ANALYSIS-001` focused lifecycle test |
+| INV-WF-011 | Moves Analysis read-only report | pivot aggregation, detail navigation, empty/404/503 states, no CRUD mutation, and restart-stable fixtures | pass: `INV-MOVES-ANALYSIS-001` focused lifecycle test |
+| INV-PERM-013 | Moves Analysis report boundary | `inventory.read` is required for list/detail and direct API access; no write/manage action is exposed | pass: `INV-MOVES-ANALYSIS-001` focused runtime test |
 
 ## Visual, responsive, and regression cases
 
@@ -91,6 +94,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-UI-009 | Operations Types list/detail | 1440x900, 390x844 | New modal, list/detail fields, edit/reload, source location labels, and responsive states render; paired Odoo result or exact blocker is recorded | pass Core3; Odoo action blocker captured |
 | INV-UI-010 | Scrap Orders list/detail/Product Moves | 1440x1000, 390x844 | Draft/Done form, Validate action, Product Moves relation, desktop/mobile list/detail, and paired Odoo list/kanban comparison are captured | pass Core3/Odoo evidence; repository discovery boundary remains partial |
 | INV-UI-011 | Physical Inventory list/Apply All wizard | 1440x1000, 390x844 | Physical Inventory list, Apply All reason/date modal, counted-only result, responsive route, and paired Odoo list comparison are captured | pass Core3/Odoo evidence; residual conflict/reset/relocation semantics remain |
+| INV-UI-012 | Moves Analysis report modes | 1440x1000, 390x844 | Core3 list/pivot/detail/mobile report and Odoo pivot/list/mobile kanban show source-backed report modes with no request errors or horizontal overflow | pass Core3/Odoo evidence; broader actor/company matrix remains |
 
 ## Exit criteria
 

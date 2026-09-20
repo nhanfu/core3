@@ -1,0 +1,32 @@
+title: Stock Move
+page: { id: move-analysis-detail, route: /moves-analysis/detail, breadcrumb: [Supply Chain, Inventory, Reporting, Moves Analysis, Stock Move], auth: { require: [inventory.read] } }
+components:
+  - type: OdooFormView
+    source: inventory_stock_move_detail
+    title_field: reference
+    subtitle_field: product_name
+    editable: false
+    status_field: state
+    labels: { workflowStatus: Status }
+    header_actions:
+      - { id: back_to_inventory_moves_analysis, label: Back to Moves Analysis, variant: secondary, permission: inventory.read }
+    statusbar: [{ value: Draft, label: Draft }, { value: Waiting, label: Waiting }, { value: Confirmed, label: Confirmed }, { value: Assigned, label: Assigned }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Waiting: amber, Confirmed: amber, Assigned: blue, Done: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Stock Move
+        fields:
+          - { field: product_name, label: Product }
+          - { field: reference, label: Reference }
+          - { field: operation_type_name, label: Operation Type }
+          - { field: picking_name, label: Picking }
+          - { field: date, label: Scheduled Date }
+          - { field: source_location, label: From }
+          - { field: destination_location, label: To }
+          - { field: product_uom_qty, label: Demand }
+          - { field: quantity, label: Quantity }
+          - { field: unit_name, label: Unit }
+      - title: Traceability
+        fields:
+          - { field: origin, label: Source Document }
+          - { field: partner_name, label: Contact }

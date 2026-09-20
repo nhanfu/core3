@@ -1,0 +1,34 @@
+version: 0.0.27
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_stock_moves (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        date TIMESTAMP NOT NULL, reference VARCHAR NOT NULL, product_id VARCHAR,
+        product_name VARCHAR NOT NULL, operation_type_name VARCHAR NOT NULL,
+        picking_id VARCHAR, picking_name VARCHAR, source_location_id VARCHAR NOT NULL,
+        destination_location_id VARCHAR NOT NULL, partner_name VARCHAR,
+        company_name VARCHAR NOT NULL, product_uom_qty DECIMAL(18,3) NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL, unit_name VARCHAR NOT NULL,
+        state VARCHAR NOT NULL, origin VARCHAR, movement_type VARCHAR NOT NULL,
+        is_inventory BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_stock_moves_date ON inventory_stock_moves(date, id);
+      CREATE INDEX IF NOT EXISTS idx_inventory_stock_moves_state ON inventory_stock_moves(state);
+      INSERT INTO inventory_stock_moves(id, date, reference, product_id, product_name, operation_type_name, picking_id, picking_name, source_location_id, destination_location_id, partner_name, company_name, product_uom_qty, quantity, unit_name, state, origin, movement_type, is_inventory, created_at) VALUES
+        ('stock-move-0001', TIMESTAMP '2026-01-15 08:05:00', 'WH/IN/00005', 'product-desk-white', 'Customizable Desk (White)', 'Receipts', 'picking-in-0005', 'WH/IN/00005', 'location-supplier', 'location-stock', 'Wood Corner', 'My Company (San Francisco)', 65, 65, 'Units', 'Done', 'PO/00005', 'incoming', FALSE, TIMESTAMP '2026-01-15 08:05:00'),
+        ('stock-move-0002', TIMESTAMP '2026-01-14 10:00:00', 'WH/IN/00006', 'product-desk-combination', 'Desk Combination', 'Receipts', 'picking-in-0006', 'WH/IN/00006', 'location-supplier', 'location-stock', 'Wood Corner', 'My Company (San Francisco)', 20, 20, 'Units', 'Done', 'PO/00006', 'incoming', FALSE, TIMESTAMP '2026-01-14 10:00:00'),
+        ('stock-move-0003', TIMESTAMP '2026-01-13 14:30:00', 'WH/OUT/00001', 'product-desk-combination', 'Desk Combination', 'Delivery Orders', 'picking-out-0001', 'WH/OUT/00001', 'location-stock', 'location-customer', 'Gemini Furniture', 'My Company (San Francisco)', 12, 12, 'Units', 'Done', 'SO/00021', 'outgoing', FALSE, TIMESTAMP '2026-01-13 14:30:00'),
+        ('stock-move-0004', TIMESTAMP '2026-01-12 09:15:00', 'WH/OUT/00002', 'product-storage-box', 'Storage Box', 'Delivery Orders', 'picking-out-0002', 'WH/OUT/00002', 'location-stock', 'location-customer', 'Wood Corner', 'My Company (San Francisco)', 8, 8, 'Units', 'Done', 'SO/00022', 'outgoing', FALSE, TIMESTAMP '2026-01-12 09:15:00'),
+        ('stock-move-0005', TIMESTAMP '2026-01-11 11:00:00', 'WH/INT/00001', 'product-office-chair', 'Office Chair', 'Internal Transfers', 'picking-int-0001', 'WH/INT/00001', 'location-stock', 'location-stock-shelf-1', NULL, 'My Company (San Francisco)', 18, 18, 'Units', 'Done', 'Replenish stock shelf', 'internal', FALSE, TIMESTAMP '2026-01-11 11:00:00'),
+        ('stock-move-0006', TIMESTAMP '2026-01-15 12:00:00', 'WH/IN/00008', 'product-conference-table', 'Conference Table', 'Receipts', 'picking-in-0008', 'WH/IN/00008', 'location-supplier', 'location-stock', 'Wood Corner', 'My Company (San Francisco)', 4, 0, 'Units', 'Waiting', 'PO/00008', 'incoming', FALSE, TIMESTAMP '2026-01-15 12:00:00'),
+        ('stock-move-0007', TIMESTAMP '2026-01-15 12:30:00', 'WH/OUT/00005', 'product-desk-combination', 'Desk Combination', 'Delivery Orders', 'picking-out-0005', 'WH/OUT/00005', 'location-stock', 'location-customer', 'Gemini Furniture', 'My Company (San Francisco)', 10, 0, 'Units', 'Assigned', 'SO/00025', 'outgoing', FALSE, TIMESTAMP '2026-01-15 12:30:00'),
+        ('stock-move-0008', TIMESTAMP '2026-01-15 13:00:00', 'INV/00001', 'product-storage-box', 'Storage Box', 'Inventory Adjustments', NULL, NULL, 'location-stock', 'location-loss', NULL, 'My Company (San Francisco)', 15, 15, 'Units', 'Done', 'Inventory adjustment', 'inventory', TRUE, TIMESTAMP '2026-01-15 13:00:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_stock_moves;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

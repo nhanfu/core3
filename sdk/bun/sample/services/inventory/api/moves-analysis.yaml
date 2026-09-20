@@ -1,0 +1,46 @@
+page: { id: moves-analysis }
+datasources:
+  - id: inventory_stock_move_states
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('ready', 'Ready'), ('todo', 'To Do'), ('done', 'Done')) states(value, label)"
+  - id: inventory_stock_move_types
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('incoming', 'Incoming'), ('outgoing', 'Outgoing'), ('inventory', 'Inventory')) types(value, label)"
+  - id: inventory_stock_moves_analysis
+    single: false
+    permission: inventory.read
+    pivot: { fields: [id, date, reference, product_name, operation_type_name, picking_name, source_location, destination_location, product_uom_qty, quantity, unit_name, state, movement_type, origin] }
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_MOVES_ANALYSIS_FORBIDDEN, message: You do not have permission to view Moves Analysis. }
+      transport_error: { status: 503, code: INVENTORY_MOVES_ANALYSIS_UNAVAILABLE, message: Moves Analysis data is temporarily unavailable. }
+    query: |
+      SELECT m.id, m.row_version, CAST(m.date AS VARCHAR) AS date, m.reference,
+        m.product_id, m.product_name, m.operation_type_name, m.picking_id,
+        m.picking_name, sl.name AS source_location, dl.name AS destination_location,
+        m.source_location_id, m.destination_location_id, m.partner_name,
+        m.company_name, CAST(m.product_uom_qty AS DOUBLE) AS product_uom_qty,
+        CAST(m.quantity AS DOUBLE) AS quantity, m.unit_name, m.state,
+        m.origin, m.movement_type, m.is_inventory
+      FROM inventory_stock_moves m
+      LEFT JOIN inventory_locations sl ON sl.id = m.source_location_id
+      LEFT JOIN inventory_locations dl ON dl.id = m.destination_location_id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (:q IS NULL OR m.reference ILIKE '%' || :q || '%' OR m.product_name ILIKE '%' || :q || '%'
+          OR COALESCE(m.picking_name, '') ILIKE '%' || :q || '%'
+          OR COALESCE(sl.name, '') ILIKE '%' || :q || '%' OR COALESCE(dl.name, '') ILIKE '%' || :q || '%'
+          OR COALESCE(m.partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(m.origin, '') ILIKE '%' || :q || '%')
+        AND (:state IS NULL OR :state = '' OR (:state = 'done' AND m.state = 'Done')
+          OR (:state = 'ready' AND m.state = 'Assigned')
+          OR (:state = 'todo' AND m.state IN ('Assigned', 'Confirmed', 'Waiting')))
+        AND (:movement_type IS NULL OR :movement_type = '' OR m.movement_type = :movement_type)
+        AND (:from_date IS NULL OR :from_date = '' OR CAST(m.date AS DATE) >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR :to_date = '' OR CAST(m.date AS DATE) <= CAST(:to_date AS DATE))
+      ORDER BY m.date DESC, m.id DESC
+actions:
+  - id: view_inventory_stock_move
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves-analysis/detail
+    params: { id: '{row.id}' }

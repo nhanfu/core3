@@ -55,6 +55,10 @@ menu:
           label: Moves History
           icon: transfer
           permission: inventory.read
+        - path: /moves-analysis
+          label: Moves Analysis
+          icon: chart
+          permission: inventory.read
     - id: products
       label: Products
       items:

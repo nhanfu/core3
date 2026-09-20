@@ -1,0 +1,15 @@
+page: { id: move-analysis-detail }
+datasources:
+  - id: inventory_stock_move_detail
+    single: true
+    permission: inventory.read
+    error_states:
+      forbidden: { status: 403, code: INVENTORY_MOVES_ANALYSIS_FORBIDDEN, message: You do not have permission to view this stock move. }
+      not_found: { status: 404, code: INVENTORY_STOCK_MOVE_NOT_FOUND, message: Stock move not found. }
+      transport_error: { status: 503, code: INVENTORY_MOVES_ANALYSIS_UNAVAILABLE, message: Stock move data is temporarily unavailable. }
+    query: "SELECT m.id, m.row_version, CAST(m.date AS VARCHAR) AS date, m.reference, m.product_name, m.operation_type_name, m.picking_name, sl.name AS source_location, dl.name AS destination_location, CAST(m.product_uom_qty AS DOUBLE) AS product_uom_qty, CAST(m.quantity AS DOUBLE) AS quantity, m.unit_name, m.state, m.origin, m.partner_name, m.company_name FROM inventory_stock_moves m LEFT JOIN inventory_locations sl ON sl.id = m.source_location_id LEFT JOIN inventory_locations dl ON dl.id = m.destination_location_id WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN 0 ELSE 1 END = 1 AND m.id = :id"
+actions:
+  - id: back_to_inventory_moves_analysis
+    type: navigate
+    permission: inventory.read
+    navigate_to: /moves-analysis

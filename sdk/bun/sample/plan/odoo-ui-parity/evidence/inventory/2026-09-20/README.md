@@ -9,6 +9,7 @@ This date index contains bounded Inventory owner evidence:
 - [`INV-OP-TYPES-001`](INV-OP-TYPES-001/): Operations Types lifecycle and parity gate.
 - [`INV-SCRAP-001`](INV-SCRAP-001/): Scrap Orders validation and Product Moves lifecycle.
 - [`INV-PHYSICAL-001`](INV-PHYSICAL-001/): Physical Inventory Apply All adjustment lifecycle.
+- [`INV-MOVES-ANALYSIS-001`](INV-MOVES-ANALYSIS-001/): Moves Analysis stock-move report lifecycle.
 
 Each feature directory owns its source comparison, test result, browser captures,
 and QA disposition. This index is evidence navigation only; it is not full

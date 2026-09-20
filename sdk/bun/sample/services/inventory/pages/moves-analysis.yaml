@@ -1,0 +1,66 @@
+title: Moves Analysis
+page: { id: moves-analysis, route: /moves-analysis, breadcrumb: [Supply Chain, Inventory, Reporting, Moves Analysis], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_stock_moves_analysis
+    default_filters: { state: done }
+    search: { label: Stock Moves, placeholder: 'Search products, references, locations, or partners...' }
+    filters:
+      - { field: state, label: Status, options_source: inventory_stock_move_states }
+      - { field: movement_type, label: Operation, options_source: inventory_stock_move_types }
+    group_by:
+      - { field: product_name, label: Product }
+      - { field: operation_type_name, label: Operation Type }
+      - { field: picking_name, label: Picking }
+      - { field: source_location, label: Source Location }
+      - { field: destination_location, label: Destination Location }
+      - { field: state, label: Status }
+      - { field: date, label: Scheduled Date }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        mobile: false
+        pivot:
+          fields:
+            - { field: date, column: Scheduled Date, type: date }
+            - { field: operation_type_name, column: Operation Type }
+            - { field: product_name, column: Product }
+            - { field: source_location, column: Source Location }
+            - { field: destination_location, column: Destination Location }
+            - { field: product_uom_qty, column: Demand }
+            - { field: quantity, column: Quantity }
+          default:
+            rows: [date]
+            columns: [operation_type_name]
+            measures:
+              - { field: quantity, aggregate: sum, column: Quantity }
+              - { field: quantity, aggregate: count, column: Moves }
+      - { id: graph, label: Graph, icon: graph, category_field: product_name, series_field: operation_type_name, measure_field: quantity, type: bar, mobile: false }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        mobile: true
+        group_by: operation_type_name
+        card: { title: product_name, subtitle: reference, fields: [{ field: date, label: Date }, { field: quantity, label: Quantity }, { field: state, label: Status }] }
+      - { id: form, label: Form, icon: form, mobile: false }
+    columns:
+      - { field: date, label: Scheduled Date, mobile: true, sortable: true }
+      - { field: reference, label: Reference, type: PrimaryEntityCell, mobile: true, mobile_secondary: product_name, sortable: true }
+      - { field: product_name, label: Product, mobile: false }
+      - { field: source_location, label: From, mobile: false }
+      - { field: destination_location, label: To, mobile: false }
+      - { field: product_uom_qty, label: Demand, align: right, mobile: false }
+      - { field: quantity, label: Quantity, align: right, mobile: true }
+      - { field: unit_name, label: Unit, mobile: false }
+      - { field: state, label: Status, type: StatusChip, mobile: true }
+    page_size: 50
+    row_key: id
+    row_open_action: view_inventory_stock_move
+    row_double_click_action: view_inventory_stock_move
+    row_actions: menu
+    form_view: { page: apps/services/inventory/pages/move-analysis-detail.yaml, side_panel: false }
+    empty_state: { title: No stock moves found, description: This report gives you the full traceability of inventory operations on a specific product. Filter on the product to see past or future movements. }

@@ -1,0 +1,1 @@
+{"baseUrl":"http://127.0.0.1:4543","authenticatedAs":"Admin User","desktop":{"viewport":"1440x1000","captures":["core3/desktop-list.png","core3/desktop-pivot.png","core3/desktop-detail.png"],"defaultRows":6,"detail":"stock-move-0001"},"mobile":{"viewport":"390x844","capture":"core3/mobile-list.png"},"browserErrors":[],"horizontalOverflow":false,"writePerformed":false}

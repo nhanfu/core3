@@ -1052,3 +1052,38 @@ capture used a direct authenticated route with no HTTP/page errors or
 horizontal overflow; no Odoo mutation was made. Full Inventory sign-off
 remains open for the broader actor matrix and residual report/relocation
 semantics.
+
+## Reporting > Moves Analysis bounded slice — `INV-MOVES-ANALYSIS-001` (2026-09-20)
+
+This slice closes the smallest remaining source-backed reporting gap after
+Physical Inventory. Odoo's `stock.stock_move_menu` invokes
+`stock_move_action` from `addons/stock/views/stock_move_views.xml:355-407`,
+with menu placement at line 437. The action is the read-only `stock.move`
+report at `/odoo/moves-analysis`; its source list defines the date, reference,
+product, From/To, demand, quantity, unit, company, and state columns, default
+Done context, and the Ready, To Do, Done, Incoming, Outgoing, Inventory, Date,
+product, operation type, picking, source/destination, status, and scheduled
+date search/group states (`stock_move_views.xml:27-63,320-363`). Odoo exposes
+list, pivot, graph, kanban, and read-only form views (`stock_move_views.xml:4-25,
+375-407`).
+
+Core3 adds the Reporting > Moves Analysis menu and keeps
+`pages/moves-analysis.yaml` and `api/moves-analysis.yaml` separate by
+`page.id`. Migration `0.0.27` adds durable `inventory_stock_moves` fixtures
+covering completed, ready/to-do, incoming, outgoing, internal, and inventory
+adjustment moves. The report is read-only, exposes the source state/type/date
+filters, pivot/graph/kanban/list modes, and opens the separate read-only
+`move-analysis-detail` form page/API contract.
+
+Focused coverage passes 4 tests / 41 assertions, including deterministic
+filters/pivot/detail/error states, explicit no-CRUD/read permission boundaries,
+and file-backed restart persistence. Authenticated Core3 desktop list/pivot/
+detail and mobile evidence, plus authenticated Odoo desktop pivot/list and
+mobile kanban evidence, is under
+`evidence/inventory/2026-09-20/INV-MOVES-ANALYSIS-001/`. Both browser runs
+reported no failed requests, page errors, or horizontal overflow. The normal
+shared runner remains blocked by an unrelated committed Surveys page schema
+boundary (`surveys/live-session-join.yaml`); the evidence runtime isolated
+Auth/Chat/Inventory to avoid changing another owner's files. Full Inventory
+sign-off remains open for the broader actor/company matrix, relocation, and
+remaining report/export semantics.

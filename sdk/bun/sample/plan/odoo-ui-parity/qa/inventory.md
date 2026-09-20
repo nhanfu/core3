@@ -472,3 +472,28 @@ QA disposition: PASS for the bounded Physical Inventory Apply All lifecycle,
 durability, permissions, evidence contract, and final scoped verification.
 Full Inventory sign-off remains open for the broader actor matrix and residual
 conflict/reset/relocation/report semantics.
+
+## Moves Analysis QA — `INV-MOVES-ANALYSIS-001` (2026-09-20)
+
+- Odoo source/menu/action: `stock.stock_move_menu` → `stock_move_action`,
+  model `stock.move`, source `stock_move_views.xml:4-25,27-63,320-407,437`.
+  The action is read-only with default Done context and list/pivot/graph/
+  kanban/form states.
+- Core3 implementation: Reporting > Moves Analysis is manifest-owned;
+  `pages/moves-analysis.yaml` is presentation-only and binds to
+  `api/moves-analysis.yaml`. Migration `0.0.27` persists the deterministic
+  stock-move projection. The detail route has its own page/API fragment and
+  no edit or CRUD actions.
+- Focused test: 4 tests / 41 assertions pass, covering source/menu contract,
+  page/API separation, deterministic state/type/date/search filters, pivot
+  aggregation, empty/404/503 behavior, read-only permission boundaries, and
+  file-backed restart.
+- Authenticated evidence: Core3 desktop list/pivot/detail and mobile list;
+  Odoo desktop pivot/list and mobile kanban. All final browser captures have
+  empty failed-request/page-error lists and viewport/body widths of 1440/1440
+  and 390/390. Odoo was inspected only; no mutation was performed.
+
+QA disposition: PASS for the bounded Moves Analysis report lifecycle,
+read-only contract, persistence, permissions, and evidence. Full shared-runner
+verification is PARTIAL because an unrelated committed Surveys YAML boundary
+prevents global discovery; no other module files were changed.
