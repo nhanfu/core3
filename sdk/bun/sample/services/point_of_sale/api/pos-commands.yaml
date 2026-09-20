@@ -264,6 +264,21 @@ actions:
     mutation:
       generated: [payment_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before recording a cashier payment
+        - query: "SELECT id FROM pos_orders WHERE id = :order_id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found
+        - query: "SELECT o.id FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :order_id AND o.company = :current_company_name AND s.company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company
+        - query: "SELECT o.id FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :order_id AND s.state = 'In Progress'"
+          status: 409
+          message: Cashier payments require an open POS session
         - query: "SELECT id FROM pos_orders WHERE id = :order_id AND state = 'New'"
           status: 409
           message: Cannot record payment on an order that is not in New state
@@ -282,13 +297,18 @@ actions:
           status: 400
           message: Payment exceeds remaining balance
       steps:
-        - query: "INSERT INTO pos_payments(id, order_id, method, amount) VALUES(:payment_id, :order_id, :method, CAST(:amount AS DECIMAL(18,2)))"
+        - query: "INSERT INTO pos_payments(id, order_id, method, amount, company, actor_id) SELECT :payment_id, :order_id, :method, CAST(:amount AS DECIMAL(18,2)), company, :current_user_id FROM pos_orders WHERE id = :order_id AND company = :current_company_name"
         - query: |
             UPDATE pos_orders SET
               amount_paid    = amount_paid + CAST(:amount AS DECIMAL(18,2)),
               payment_method = :method,
+              actor_id       = :current_user_id,
               row_version    = row_version + 1
-            WHERE id = :order_id
+            WHERE id = :order_id AND company = :current_company_name AND row_version = CAST(:expected_row_version AS BIGINT)
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: Order version changed; reload and retry payment
         - query: |
             INSERT INTO pos_operations(id, session_id, order_id, operation_id, operation_type, expected_row_version, actor_id)
             SELECT :payment_id, o.session_id, :order_id, :operation_id, 'payment',
