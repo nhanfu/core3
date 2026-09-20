@@ -764,3 +764,25 @@ open.
 - Open follow-up: Lot/SN label layout, product label layout options/ZPL, and
   authenticated desktop/mobile captures once the shared discovery boundary is
   repaired.
+
+## INV-TRANSFER-EMAIL-001 — Transfer email queue (2026-09-21)
+
+- Source/menu/action: PASS for Odoo's `stock.picking` list/kanban-bound
+  `action_lead_mass_mail` action and `mail.compose.message` composer; exact
+  references and the Core3 mapping are in the paired source comparison.
+- Core3 contract: PASS. Receipts/Deliveries page YAML remains presentation
+  only; transfer APIs own the Send email form, durable queued outbox, actor,
+  company, row-version, state, and content guards. The deterministic email
+  fixture and transfer-detail history survive migration replay and restart.
+- Focused verification: PASS — 8 tests / 73 assertions across
+  `inventory_transfer_email` and `inventory_transfer_workflow`, including
+  CRUD-like queue creation, permission denial, restart, stale/company/actor/
+  cancelled/content guards, and no partial state.
+- Browser evidence: PASS for authenticated Core3 desktop/mobile list and form
+  capture at 1440x900 and 390x844, with no page errors, failed requests, or
+  horizontal overflow. Odoo live paired screenshots/action execution were not
+  captured in this bounded wave; no Odoo mutation or parity sign-off is
+  claimed.
+- Blockers/open scope: Core3 persists `Queued` outbox rows but does not send
+  external SMTP mail. Odoo's bulk/multi-record mass-mail wizard and live
+  authenticated visual comparison remain open.

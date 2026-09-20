@@ -52,6 +52,7 @@ components:
       inventory.transfer.backorder_skipped: No backorder
       inventory.transfer.lock_toggled: Lock state changed
       inventory.transfer.labels_printed: Labels prepared
+      inventory.transfer.email_queued: Email queued
     content_slot: true
     group_columns: 2
     groups:
@@ -101,3 +102,16 @@ components:
     row_key: id
     selectable: false
     empty_state: { title: No labels prepared, description: Use Labels to prepare Product Labels for this transfer. }
+  - type: ListView
+    source: inventory_transfer_email_runs
+    variant: odoo
+    columns:
+      - { field: recipient_email, label: To }
+      - { field: subject, label: Subject }
+      - { field: state, label: Status }
+      - { field: queued_by, label: Queued by }
+      - { field: queued_at, label: Queued at }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No email history, description: Messages queued from this transfer will appear here. }

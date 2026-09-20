@@ -35,3 +35,35 @@ actions:
       - { field: contact_name, label: Contact, type: text }
       - { field: scheduled_date, label: Scheduled Date, type: text, required: true }
       - { field: source_document, label: Source Document, type: text }
+  - id: send_inventory_receipt_email
+    type: server_form
+    permission: inventory.write
+    title: Send email
+    action: stock.picking.action_lead_mass_mail
+    handler: yaml_mutation
+    operation: queue_email
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [inventory_receipts]
+    success_message: Email queued for delivery.
+    mutation:
+      generated: [email_run_id, message_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'transfer-email-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS email_run_id, 'email-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM inventory_transfer_email_runs WHERE picking_id = :id"
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND company_name = :current_company_name", status: 403, code: INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state <> 'Cancelled' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_EMAIL_NOT_ALLOWED, message: Only a current non-cancelled transfer can receive an email. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_TRANSFER_ACTOR_REQUIRED, message: A signed-in inventory operator is required to send email. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(trim(CAST(:recipient_email AS VARCHAR)), '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')", status: 422, code: INVENTORY_TRANSFER_EMAIL_INVALID, message: Enter a valid recipient email address. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:subject AS VARCHAR))) BETWEEN 1 AND 160 AND LENGTH(TRIM(CAST(:body AS VARCHAR))) BETWEEN 1 AND 10000", status: 422, code: INVENTORY_TRANSFER_EMAIL_CONTENT_INVALID, message: Subject and message are required. }
+      steps:
+        - { query: "INSERT INTO inventory_transfer_email_runs(id, picking_id, company_name, recipient_email, subject, body, queued_by, state, queued_at, row_version) SELECT :email_run_id, p.id, p.company_name, TRIM(CAST(:recipient_email AS VARCHAR)), TRIM(CAST(:subject AS VARCHAR)), CAST(:body AS VARCHAR), :current_user_name, 'Queued', TIMESTAMP '2026-01-15 08:00:00', 1 FROM inventory_pickings p WHERE p.id = :id AND p.row_version = :expected_row_version", expect_changed: true, status: 409, code: INVENTORY_TRANSFER_EMAIL_FAILED, message: The email could not be queued. }
+        - { query: "UPDATE inventory_pickings SET row_version = row_version + 1 WHERE id = :id AND company_name = :current_company_name AND state <> 'Cancelled' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before the email could be queued. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.email_queued', 'Email queued', 'Email queued for ' || CAST(:recipient_email AS VARCHAR))" }
+      result: { query: "SELECT id, picking_id, company_name, recipient_email, subject, body, queued_by, state, row_version FROM inventory_transfer_email_runs WHERE id = :email_run_id" }
+    fields:
+      - { field: recipient_email, label: To, type: text, required: true, placeholder: customer@example.com }
+      - { field: subject, label: Subject, type: text, required: true, default: Inventory transfer update }
+      - { field: body, label: Message, type: textarea, required: true, default: 'Please review the latest transfer update.' }

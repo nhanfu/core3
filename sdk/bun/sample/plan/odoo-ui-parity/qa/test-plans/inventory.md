@@ -19,6 +19,14 @@ recorded in [`../inventory.md`](../inventory.md).
 | Operations | replenishment, physical inventory and scrap routes | Counts, replenishment actions, scrap lifecycle and stale guards |
 | Reporting/settings | moves history, stock report and settings routes | Graph/pivot/list filters, manager settings and read-only report boundaries |
 
+## Executed bounded slices
+
+| Case ID | Behavior | Required assertion | Status |
+| --- | --- | --- | --- |
+| INV-FUNC-024 | Transfer email queue | A permissioned Receipts/Deliveries Send email form validates recipient/content, queues a durable outbox row, increments the transfer revision, and records timeline/detail history | pass: `INV-TRANSFER-EMAIL-001` focused suite |
+| INV-PERM-023 | Transfer email actor/company boundary | `inventory.write`, current company, actor, non-cancelled state, and expected row version are required; rejected requests create no outbox row | pass: `INV-TRANSFER-EMAIL-001` focused suite |
+| INV-UI-022 | Transfer email form responsive action | 1440x900, 390x844 | Authenticated Core3 transfer list and Send email form render without page/request errors or horizontal overflow; Odoo live paired action remains blocked/open | pass Core3; Odoo source-only comparison |
+
 Actors are Inventory Manager, Inventory User, warehouse operator, Fleet
 ordinary user, wrong-company user and unauthenticated user. Fixtures use stable
 warehouses, locations, products, lots, packages, pickings, moves, scrap rows

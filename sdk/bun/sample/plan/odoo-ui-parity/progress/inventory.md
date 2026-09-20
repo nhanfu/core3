@@ -397,6 +397,34 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
 
+## `INV-TRANSFER-EMAIL-001` — Transfer email queue (2026-09-21)
+
+- Selected the smallest remaining non-duplicated transfer action after labels:
+  Odoo's transfer-bound `action_lead_mass_mail` Send email action. Source
+  comparison covers `stock_picking_views.xml:513-523`, the mail composer view
+  (`mail_compose_message_views.xml:4-18,55,67-90`), and mass-mail dispatch in
+  `mail_compose_message.py:804-807`.
+- Core3 keeps page/API YAML separate. Receipts and Deliveries expose a
+  permissioned Send email list action; the API owns recipient/subject/body
+  validation, current-company/actor/row-version guards, and a durable queued
+  email outbox. Migration `20260921110000-037-inventory-transfer-emails.yaml`
+  adds the outbox and deterministic `WH/OUT/EMAIL/0001` fixture. Transfer
+  detail exposes queued history and timeline attribution.
+- Focused verification passes 8 tests / 73 assertions across the email and
+  transfer workflow suites, including migration replay, restart persistence,
+  permission, actor/company, stale/cancelled, content, and no-partial-state
+  guards.
+- Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-TRANSFER-EMAIL-001/`; both widths render
+  the transfer list and Send email form with no page/request errors or
+  horizontal overflow. Odoo live paired execution was not reachable in this
+  bounded wave; the exact source comparison is recorded and no Odoo mutation
+  is claimed. External SMTP dispatch and Odoo multi-record mass-mail remain
+  open follow-ups.
+
+Status: bounded Core3 lifecycle and source comparison complete for review;
+full Inventory sign-off remains open.
+
 ## `INV-TRANSFER-LABELS-001` — transfer Product Labels report run (2026-09-21)
 
 - Selected the smallest remaining source-backed transfer action after locks,

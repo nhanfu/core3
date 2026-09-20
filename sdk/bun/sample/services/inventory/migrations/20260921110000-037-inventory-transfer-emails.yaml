@@ -1,0 +1,36 @@
+version: 0.0.37
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_transfer_email_runs (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        picking_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body VARCHAR NOT NULL,
+        queued_by VARCHAR NOT NULL,
+        state VARCHAR NOT NULL,
+        queued_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(picking_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_transfer_email_runs_picking_idx
+        ON inventory_transfer_email_runs(picking_id, queued_at, id);
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state, is_locked)
+      VALUES ('delivery-email-0001', 'operation-deliveries', 'WH/OUT/EMAIL/0001', 'Core3 Demo Customer', DATE '2026-01-15', 'SO/EMAIL/0001', 'Core3 Demo Company', 'location-stock', 'location-customer', 'Ready', TRUE)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_picking_moves(id, picking_id, product_name, quantity, done_quantity)
+      VALUES ('delivery-email-0001-move-001', 'delivery-email-0001', '[E-COM08] Storage Box', 2, 0)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_transfer_email_runs WHERE picking_id = 'delivery-email-0001';
+      DELETE FROM inventory_transfer_messages WHERE picking_id = 'delivery-email-0001';
+      DELETE FROM inventory_picking_moves WHERE picking_id = 'delivery-email-0001';
+      DELETE FROM inventory_pickings WHERE id = 'delivery-email-0001';
+      DROP TABLE IF EXISTS inventory_transfer_email_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

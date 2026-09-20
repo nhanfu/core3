@@ -35,6 +35,11 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_LABELS_UNAVAILABLE, message: Transfer label history is temporarily unavailable. } }
     query: "SELECT r.id, r.picking_id, r.company_name, r.label_type, r.output_format, CAST(r.label_count AS DOUBLE) AS label_count, r.requested_by, CAST(r.created_at AS VARCHAR) AS created_at, r.row_version FROM inventory_transfer_label_runs r JOIN inventory_pickings p ON p.id = r.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.created_at DESC, r.id DESC"
+  - id: inventory_transfer_email_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_EMAILS_UNAVAILABLE, message: Transfer email history is temporarily unavailable. } }
+    query: "SELECT r.id, r.picking_id, r.company_name, r.recipient_email, r.subject, r.queued_by, r.state, CAST(r.queued_at AS VARCHAR) AS queued_at, r.row_version FROM inventory_transfer_email_runs r JOIN inventory_pickings p ON p.id = r.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.queued_at DESC, r.id DESC"
 
 actions:
   - id: upload_inventory_transfer_attachment

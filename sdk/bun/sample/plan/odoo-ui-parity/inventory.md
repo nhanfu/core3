@@ -1269,6 +1269,35 @@ Odoo mutation was made.
 Status: bounded Core3 lifecycle complete for review. Full Inventory sign-off
 remains open.
 
+## Operations > Transfer email queue — `INV-TRANSFER-EMAIL-001` (2026-09-21)
+
+This bounded slice covers Odoo's transfer-bound `Send email` action, declared
+as `action_lead_mass_mail` on the stock picking list/kanban in
+`addons/stock/views/stock_picking_views.xml:513-523`. The target is the
+`mail.compose.message` wizard (`addons/mail/wizard/mail_compose_message_views.xml:4-18,55,67-90`),
+whose mass-mail dispatch is selected in
+`addons/mail/wizard/mail_compose_message.py:804-807`.
+
+Core3 keeps `pages/receipts.yaml` and `pages/deliveries.yaml` presentation-only
+and owns the Send email forms in `api/transfers.yaml` and
+`api/deliveries.yaml`. The action validates recipient, subject, and body,
+requires `inventory.write`, current company, actor, a non-cancelled transfer,
+and the expected row version, then queues a durable outbox row and records
+the actor/timeline event. `transfer-detail.yaml` exposes queued history.
+Migration `20260921110000-037-inventory-transfer-emails.yaml` adds the
+outbox, idempotent schema, and deterministic `WH/OUT/EMAIL/0001` fixture.
+This bounded Core3 mapping intentionally supports one selected transfer;
+Odoo's multi-record mass-mail behavior and external SMTP dispatch remain
+open.
+
+Focused verification passes 8 tests / 73 assertions across the email and
+transfer workflow suites, with restart, permission, company, actor,
+row-version, state, content, migration replay, and no-partial-state coverage.
+Authenticated Core3 desktop/mobile evidence is under
+`evidence/inventory/2026-09-21/INV-TRANSFER-EMAIL-001/`. The exact Odoo
+source comparison and live-route blocker are recorded there; no Odoo mutation
+or full Inventory sign-off is claimed.
+
 ## Operations > Transfer Product Labels — `INV-TRANSFER-LABELS-001` (2026-09-21)
 
 This bounded slice covers Odoo's transfer-bound `Labels` action from

@@ -42,6 +42,7 @@ components:
     row_open_action: view_inventory_transfer
     row_double_click_action: view_inventory_transfer
     row_actions: menu
+    actions: [{ id: send_inventory_receipt_email, label: Send email, permission: inventory.write }]
     form_view: { page: apps/services/inventory/pages/transfer-detail.yaml, side_panel: true }
     empty_state: { title: 'No receipt yet! Create a new one.', description: 'Reduce stockouts with alerts, barcode app, replenishment propositions, locations management traceability, quality control, and more.' }
 actions:
