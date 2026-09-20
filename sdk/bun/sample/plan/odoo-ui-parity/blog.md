@@ -88,3 +88,28 @@ the current Core3 ListView contract. The shared responsive ListView owns the
   390x844 captures could not be attempted to completion. No visual-parity
   claim is made; the runtime probe is recorded at
   `/tmp/core3-odoo-parity/blog/runtime-attempt-20260912.txt`.
+
+## Post tag_ids workflow slice — 2026-09-20
+
+The next source-backed gap is Odoo's `blog.post.tag_ids` Many2many workflow.
+`models/website_blog.py` declares `BlogPost.tag_ids` and `BlogTag.post_ids`,
+and the Odoo tag form exposes `post_ids`; the existing Core3 Blog implementation
+only kept a free-text `blog_posts.tags` value. This bounded slice adds the
+durable `blog_post_tags` relation and exposes add/remove controls on the post
+detail form.
+
+- Presentation: `services/blog/pages/post-detail.yaml` is layout-only and
+  renders the relation through an Odoo-style `LineItemGrid`.
+- Backend: `services/blog/api/post-detail.yaml` owns the relation datasource,
+  tag lookup, scoped add/remove mutations, permissions, parent/line
+  optimistic-concurrency guards, and refresh contracts.
+- Fixture: migration `20260920120000-008-blog-post-tags.yaml` creates the
+  idempotent relation and seeds deterministic mappings for the demo posts.
+- Compatibility: post lists, public operations, and tag post counts read the
+  normalized relation and fall back to legacy free-text tags for imported rows.
+
+Verification for this slice: `bun test ./test/blog*.integration.test.ts
+--timeout 20000` passed 25 tests / 142 assertions; `bun run audit` passed with
+665 pages, 674 routes, and 1,182 datasources; targeted Blog ESLint and
+`git diff --check` passed. Authenticated paired Odoo desktop/mobile comparison
+remains open; no visual-parity claim is made for this backend/relation slice.

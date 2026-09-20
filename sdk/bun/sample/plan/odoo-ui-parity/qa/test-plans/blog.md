@@ -15,7 +15,7 @@ This plan follows [`blog.md`](../../blog.md); executed evidence is recorded in
 | Menu/action family | Core3 route families | Scope |
 | --- | --- | --- |
 | Blogs/posts | blog and post list/detail routes | Blog CRUD, post content, publication state, author/blog links and search |
-| Tags/categories | tag and category list/detail routes | Tag/category CRUD, duplicate validation and relation scope |
+| Tags/categories | tag and category list/detail routes plus post detail x2many | Tag/category CRUD, duplicate validation, relation scope, and durable post tag assignment |
 | Reporting/public views | analysis and published routes when enabled | Read-only aggregates, public published content and empty states |
 | YAML-driven presentation | page/API fragments and shared HTML components | `page.id` joins, Fluent `html.js` rendering, content/assets and responsive layout |
 
@@ -29,7 +29,7 @@ content; mutations use isolated databases and deterministic IDs.
 | Case ID | Surface | Expected result and persistence assertion | Status |
 | --- | --- | --- | --- |
 | BLOG-FUNC-001 | Blogs/posts | Search/filter/detail, create/edit, author/blog links and publication fields use persisted data | pass: focused suite |
-| BLOG-FUNC-002 | Tags/categories | CRUD, duplicate/blank validation, search and relation-safe deletion work | pass: focused suite |
+| BLOG-FUNC-002 | Tags/categories | CRUD, duplicate/blank validation, search, relation-safe deletion, and post tag assignment work | pass: focused suite; post `tag_ids` add/remove relation is persisted and exposed through the post detail grid |
 | BLOG-FUNC-003 | Publication | Draft/published filtering and post state persist after reload and control visibility | pass: declared publish/unpublish action transport and persisted state/version assertions; browser visibility remains planned |
 | BLOG-FUNC-004 | Analysis/public | Read-only analysis and published views use scoped real data and exclude drafts | pass: public list/detail operations use persisted SQL with Published-only filtering; authenticated-free desktop/mobile browser probes returned published list/detail 200 and draft detail 404 |
 | BLOG-FUNC-005 | Empty/error/not-found | Empty, missing, forbidden and transport-error states are explicit | pass at contract level |
@@ -41,7 +41,7 @@ content; mutations use isolated databases and deterministic IDs.
 | Case ID | Workflow/integration | Expected result | Status |
 | --- | --- | --- | --- |
 | BLOG-WF-001 | Post lifecycle | Draft → Published → Unpublished updates route visibility, version and indexes atomically | pass: workflow API publishes/unpublishes persisted draft, increments versions 1 → 2 → 3, records publication date, and rejects duplicate publish; public/browser visibility remains planned |
-| BLOG-WF-002 | Taxonomy | Tags/categories attach and detach without leaking or deleting referenced posts | pass at contract level |
+| BLOG-WF-002 | Taxonomy | Tags/categories attach and detach without leaking or deleting referenced posts | pass: `blog_post_tags` add/remove uses parent and relation row concurrency, updates denormalized names, and survives restart |
 | BLOG-WF-003 | Content rendering | Stored content and assets render through declared YAML/shared HTML components without unsafe interpolation | pass for persisted attachment storage/download contract; rendered content and public asset policy remain planned |
 | BLOG-WF-004 | Website integration | Published posts resolve through Website routes and preserve site/company scope | planned integration gate |
 | BLOG-WF-005 | Durable/external boundary | Publishing, asset processing, notifications and third-party callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
@@ -54,7 +54,7 @@ content; mutations use isolated databases and deterministic IDs.
 | BLOG-PERM-002 | Public visitor | Only published public posts/assets are visible | pass: public list/search/detail operations expose published post and 404 draft detail; desktop/mobile browser captures completed; asset boundary remains planned |
 | BLOG-PERM-003 | Wrong company/site | Other-site blogs, drafts and assets are not leaked or mutable | planned |
 | BLOG-PERM-004 | Unauthenticated/expired | Private routes redirect/401/403 without draft content | planned |
-| BLOG-PERM-005 | Stale/missing/invalid | 409/404/422 leaves current blog/post/taxonomy unchanged | pass at contract level |
+| BLOG-PERM-005 | Stale/missing/invalid | 409/404/422 leaves current blog/post/taxonomy unchanged | pass at contract level, including post tag duplicate, invalid, parent-stale, and line-stale guards |
 
 ## Visual, responsive, and regression cases
 

@@ -13,7 +13,7 @@ const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'ut
 function createBlogActorApi(repository: YamlRepository, authUser: any, uploadRoot = `/tmp/core3-blog-actor-${crypto.randomUUID()}`) {
   const blogsApi = yaml('api/blogs.yaml');
   const postsPage = yaml('pages/posts.yaml');
-  const detailPage = yaml('pages/post-detail.yaml');
+  const detailPage = yaml('api/post-detail.yaml');
   const workflow = yaml('pages/blog-workflow.yaml').workflow;
   const sources = [
     ...blogsApi.datasources,
@@ -30,7 +30,7 @@ function createBlogActorApi(repository: YamlRepository, authUser: any, uploadRoo
     pageSources: new Map([
       ['blog', ['blog_blogs', 'blog_detail']],
       ['blog-posts', ['blog_post_states', 'blog_lookup', 'blog_posts']],
-      ['blog-post-detail', ['blog_post_detail', 'blog_post_attachments']],
+      ['blog-post-detail', ['blog_post_detail', 'blog_post_attachments', 'blog_post_tags', 'blog_post_tag_lookup']],
     ]),
     pages: new Map([
       ['blog', blogsApi],
@@ -65,7 +65,7 @@ describe('Blog site/company actor boundary', () => {
     await repository.run("INSERT INTO blog_post_attachments (id, post_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, company_name) VALUES ('blog-attachment-demo-001', 'blog-post-demo-001', 'private.txt', 'text/plain', 18, 'blog-actor-boundary.txt', 'user-admin', 'Core3 Demo Company')");
 
     const postsPage = yaml('pages/posts.yaml');
-    const detailPage = yaml('pages/post-detail.yaml');
+    const detailPage = yaml('api/post-detail.yaml');
     const analysisPage = yaml('pages/analysis.yaml');
     const workflow = yaml('pages/blog-workflow.yaml').workflow;
     const sources = [
@@ -91,7 +91,7 @@ describe('Blog site/company actor boundary', () => {
       authProvider: { async getCurrentUser() { return authUser; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
       sources: new Map(sources.map((source: any) => [source.id, source])),
       pageSources: new Map([
-        ['blog-post-detail', ['blog_post_detail', 'blog_post_attachments']],
+        ['blog-post-detail', ['blog_post_detail', 'blog_post_attachments', 'blog_post_tags', 'blog_post_tag_lookup']],
         ['blog-analysis', ['blog_analysis_totals', 'blog_analysis_states']],
       ]),
       pages: new Map([['blog-post-detail', detailPage], ['blog-analysis', analysisPage]]), catalogs: new Map(), menus: new Map(), workflows: new Map([['blog_posts', workflow]]), workflowFiles: new Map(),
@@ -205,7 +205,7 @@ describe('Blog site/company actor boundary', () => {
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'blog_actor_writes', ['schema', 'data']);
     await repository.run("UPDATE blog_blogs SET company_name = 'Core3 Vietnam Branch' WHERE id = 'blog-demo-001'");
     await repository.run("UPDATE blog_posts SET company_name = 'Core3 Vietnam Branch' WHERE blog_id = 'blog-demo-001'");
-    const detail = yaml('pages/post-detail.yaml');
+    const detail = yaml('api/post-detail.yaml');
     const edit = detail.actions.find((action: any) => action.id === 'edit_blog_post_detail').mutation;
     const before = (await repository.query('SELECT name, company_name, row_version FROM blog_posts WHERE id = ?', ['blog-post-demo-001']))[0];
     const values = { blog_id: 'blog-demo-001', blog_name: 'Core3 Engineering', company_name: 'Core3 Demo Company', name: 'Cross-company overwrite' };

@@ -65,7 +65,7 @@ describe('Blog Blogs parity slice', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'blog_post_content_test', ['schema', 'data']);
-    const detail = yaml('pages/post-detail.yaml');
+    const detail = yaml('api/post-detail.yaml');
     const edit = detail.actions.find((action: any) => action.id === 'edit_blog_post_detail');
     const updated = await repository.executeMutation(edit.mutation, {
       id: 'blog-post-demo-001', expected_row_version: 1,

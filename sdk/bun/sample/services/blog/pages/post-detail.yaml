@@ -1,13 +1,5 @@
 title: Blog Post
 page: { id: blog-post-detail, breadcrumb: [Website, Blog, Post], auth: { require: [blog.read] } }
-datasources:
-  - id: blog_post_detail
-    permission: blog.read
-    single: true
-    query: "SELECT * FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))"
-  - id: blog_post_attachments
-    permission: blog.read
-    query: "SELECT a.id, a.post_id, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM blog_post_attachments a JOIN blog_posts p ON p.id = a.post_id WHERE a.post_id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name)) ORDER BY a.created_at DESC, a.id"
 components:
   - type: OdooFormView
     source: blog_post_detail
@@ -29,57 +21,31 @@ components:
       - { field: visits, label: Views }
       - { field: published_date, label: Published on }
       - { field: state, label: Status, type: StatusChip }
-actions:
-  - id: upload_blog_post_attachment
-    type: upload
-    action: blog.posts.attachments.upload
-    handler: attachment_metadata
-    permission: blog.write
-    kind: blog_post_attachment
-    params: { post_id: '{state.blog_post_detail.id}' }
-    refresh: [blog_post_attachments]
-    mutation:
-      generated: [attachment_id]
-      guards:
-        - { query: "SELECT id FROM blog_posts WHERE id = :post_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
-      steps:
-        - { query: "INSERT INTO blog_post_attachments(id, post_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, company_name) SELECT :attachment_id, :post_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id, company_name FROM blog_posts WHERE id = :post_id" }
-      result: { query: "SELECT id, post_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM blog_post_attachments WHERE id = :attachment_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)" }
-  - id: download_blog_post_attachment
-    type: download
-    permission: blog.read
-    kind: blog_post_attachment
-  - { id: back_to_blog_posts, type: navigate, permission: blog.read, navigate_to: /blog-posts, params: {} }
-  - id: print_blog_post
-    type: client
-    permission: blog.read
-    script: "async () => { window.print(); }"
-  - id: edit_blog_post_detail
-    type: server_form
-    permission: blog.write
-    title: Edit blog post
-    action: blog.posts.update
-    handler: yaml_mutation
-    operation: update
-    prefill: row
-    refresh: [blog_post_detail, blog_post_attachments]
-    mutation:
-      operation: update
-      table: blog_posts
-      fields: [blog_id, blog_name, company_name, name, subtitle, author_name, teaser, content_html, tags]
-      required: [blog_id, blog_name, name]
-      concurrency: { required: true }
-      guards:
-        - { query: "SELECT id FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
-        - { query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: The blog belongs to another company. }
-        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: A post must belong to the current company. }
-      result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
-    fields:
-      - { field: blog_id, label: Blog, type: select, options_source: blog_lookup, required: true }
-      - { field: blog_name, label: Blog name, type: text, required: true }
-      - { field: name, label: Title, type: text, required: true }
-      - { field: subtitle, label: Subtitle, type: text }
-      - { field: author_name, label: Author, type: text }
-      - { field: teaser, label: Teaser, type: textarea }
-      - { field: content_html, label: Content, type: textarea }
-      - { field: tags, label: Tags, type: text }
+  - type: LineItemGrid
+    mount_in: previous-panel
+    source: blog_post_tags
+    parent_source: blog_post_detail
+    title: Tags
+    description: Assign the taxonomy tags used by this blog post.
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_blog_post_tag, label: Add a tag, variant: primary, permission: blog.write }
+    empty_state: { title: No tags, description: Add a tag to classify this blog post. }
+    children:
+      - { type: LineItemField, id: name, field: name, label: Tag, readonly: true }
+      - { type: LineItemField, id: category, field: category, label: Category, readonly: true }
+      - type: LineItemActions
+        id: blog_post_tag_actions
+        actions:
+          - { id: remove_blog_post_tag, label: Remove, icon: trash, variant: danger, permission: blog.write }
+    columns:
+      - { field: name, label: Tag, type: PrimaryEntityCell }
+      - { field: category, label: Category }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: remove_blog_post_tag, label: Remove, icon: trash, variant: danger, permission: blog.write }

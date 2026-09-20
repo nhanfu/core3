@@ -1,0 +1,42 @@
+version: 0.0.8
+kind: schema
+description: Durable Odoo blog.post tag_ids relation
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS blog_post_tags (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        post_id VARCHAR NOT NULL,
+        tag_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (post_id, tag_id)
+      );
+      CREATE INDEX IF NOT EXISTS blog_post_tags_post_idx ON blog_post_tags(post_id, tag_id);
+      CREATE INDEX IF NOT EXISTS blog_post_tags_tag_idx ON blog_post_tags(tag_id, post_id);
+      INSERT INTO blog_tags(id, name, category)
+      SELECT 'blog-tag-demo-003', 'migrations', 'Technology'
+      WHERE NOT EXISTS (SELECT 1 FROM blog_tags WHERE id = 'blog-tag-demo-003');
+      INSERT INTO blog_post_tags(id, post_id, tag_id)
+      SELECT 'blog-post-tag-demo-001-yaml', 'blog-post-demo-001', 'blog-tag-demo-001'
+      WHERE EXISTS (SELECT 1 FROM blog_posts WHERE id = 'blog-post-demo-001')
+        AND EXISTS (SELECT 1 FROM blog_tags WHERE id = 'blog-tag-demo-001')
+        AND NOT EXISTS (SELECT 1 FROM blog_post_tags WHERE post_id = 'blog-post-demo-001' AND tag_id = 'blog-tag-demo-001');
+      INSERT INTO blog_post_tags(id, post_id, tag_id)
+      SELECT 'blog-post-tag-demo-001-services', 'blog-post-demo-001', 'blog-tag-demo-002'
+      WHERE EXISTS (SELECT 1 FROM blog_posts WHERE id = 'blog-post-demo-001')
+        AND EXISTS (SELECT 1 FROM blog_tags WHERE id = 'blog-tag-demo-002')
+        AND NOT EXISTS (SELECT 1 FROM blog_post_tags WHERE post_id = 'blog-post-demo-001' AND tag_id = 'blog-tag-demo-002');
+      INSERT INTO blog_post_tags(id, post_id, tag_id)
+      SELECT 'blog-post-tag-demo-002-migrations', 'blog-post-demo-002', 'blog-tag-demo-003'
+      WHERE EXISTS (SELECT 1 FROM blog_posts WHERE id = 'blog-post-demo-002')
+        AND EXISTS (SELECT 1 FROM blog_tags WHERE id = 'blog-tag-demo-003')
+        AND NOT EXISTS (SELECT 1 FROM blog_post_tags WHERE post_id = 'blog-post-demo-002' AND tag_id = 'blog-tag-demo-003');
+    down: |
+      DELETE FROM blog_tags WHERE id = 'blog-tag-demo-003';
+      DROP TABLE IF EXISTS blog_post_tags;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

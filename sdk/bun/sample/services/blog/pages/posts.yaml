@@ -12,7 +12,7 @@ datasources:
   - id: blog_posts
     permission: blog.read
     workflow: blog_posts
-    query: "SELECT id, row_version, blog_id, blog_name, company_name, name, subtitle, author_name, tags, visits, CAST(published_date AS VARCHAR) AS published_date, state FROM blog_posts WHERE (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name)) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR subtitle ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY published_date NULLS LAST, created_at DESC"
+    query: "SELECT p.id, p.row_version, p.blog_id, p.blog_name, p.company_name, p.name, p.subtitle, p.author_name, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = p.id), p.tags) AS tags, p.visits, CAST(p.published_date AS VARCHAR) AS published_date, p.state FROM blog_posts p WHERE (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name)) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.subtitle ILIKE '%' || :q || '%' OR COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = p.id), p.tags) ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) ORDER BY p.published_date NULLS LAST, p.created_at DESC"
 components:
   - type: ListView
     variant: odoo

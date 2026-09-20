@@ -1,7 +1,7 @@
 operations:
   blog.public.posts:
     result_key: posts
-    query: "SELECT id, blog_id, blog_name, name, subtitle, author_name, tags, content_html, CAST(published_date AS VARCHAR) AS published_date, visits FROM blog_posts WHERE state = 'Published' AND (:blog_id IS NULL OR blog_id = :blog_id) AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(subtitle, '') ILIKE '%' || :q || '%' OR COALESCE(tags, '') ILIKE '%' || :q || '%') ORDER BY published_date DESC, id"
+    query: "SELECT p.id, p.blog_id, p.blog_name, p.name, p.subtitle, p.author_name, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = p.id), p.tags) AS tags, p.content_html, CAST(p.published_date AS VARCHAR) AS published_date, p.visits FROM blog_posts p WHERE p.state = 'Published' AND (:blog_id IS NULL OR p.blog_id = :blog_id) AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.subtitle, '') ILIKE '%' || :q || '%' OR COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = p.id), COALESCE(p.tags, '')) ILIKE '%' || :q || '%') ORDER BY p.published_date DESC, p.id"
   blog.public.post:
     result_key: posts
-    query: "SELECT id, blog_id, blog_name, name, subtitle, author_name, teaser, content_html, tags, CAST(published_date AS VARCHAR) AS published_date, visits FROM blog_posts WHERE id = :id AND state = 'Published' AND (:blog_id IS NULL OR blog_id = :blog_id)"
+    query: "SELECT p.id, p.blog_id, p.blog_name, p.name, p.subtitle, p.author_name, p.teaser, p.content_html, COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = p.id), p.tags) AS tags, CAST(p.published_date AS VARCHAR) AS published_date, p.visits FROM blog_posts p WHERE p.id = :id AND p.state = 'Published' AND (:blog_id IS NULL OR p.blog_id = :blog_id)"

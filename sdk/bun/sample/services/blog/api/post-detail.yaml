@@ -1,0 +1,119 @@
+page: { id: blog-post-detail }
+datasources:
+  - id: blog_post_detail
+    permission: blog.read
+    single: true
+    error_states:
+      unauthorized: { status: 401, code: BLOG_POST_DETAIL_UNAUTHORIZED, message: Sign in to view this blog post. }
+      forbidden: { status: 403, code: BLOG_POST_DETAIL_FORBIDDEN, message: You do not have permission to view this blog post. }
+      missing_record: { status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
+      transport_error: { status: 503, code: BLOG_POST_DETAIL_UNAVAILABLE, message: This blog post is temporarily unavailable. }
+    query: "SELECT * FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))"
+  - id: blog_post_attachments
+    permission: blog.read
+    query: "SELECT a.id, a.post_id, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at FROM blog_post_attachments a JOIN blog_posts p ON p.id = a.post_id WHERE a.post_id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name)) ORDER BY a.created_at DESC, a.id"
+  - id: blog_post_tags
+    permission: blog.read
+    error_states:
+      unauthorized: { status: 401, code: BLOG_POST_TAGS_UNAUTHORIZED, message: Sign in to view post tags. }
+      forbidden: { status: 403, code: BLOG_POST_TAGS_FORBIDDEN, message: You do not have permission to view post tags. }
+      transport_error: { status: 503, code: BLOG_POST_TAGS_UNAVAILABLE, message: Post tags are temporarily unavailable. }
+    query: "SELECT r.id, r.row_version, r.post_id, t.id AS tag_id, t.name, t.category, t.color FROM blog_post_tags r JOIN blog_posts p ON p.id = r.post_id JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = :id AND (COALESCE(:current_company_name, :company_name, '') = '' OR p.company_name = COALESCE(:current_company_name, :company_name)) ORDER BY t.name, t.id"
+  - id: blog_post_tag_lookup
+    permission: blog.read
+    query: "SELECT t.id AS value, t.name AS label FROM blog_tags t WHERE NOT EXISTS (SELECT 1 FROM blog_post_tags r WHERE r.post_id = :id AND r.tag_id = t.id) ORDER BY t.name, t.id"
+actions:
+  - id: upload_blog_post_attachment
+    type: upload
+    action: blog.posts.attachments.upload
+    handler: attachment_metadata
+    permission: blog.write
+    kind: blog_post_attachment
+    params: { post_id: '{state.blog_post_detail.id}' }
+    refresh: [blog_post_attachments]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - { query: "SELECT id FROM blog_posts WHERE id = :post_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
+      steps:
+        - { query: "INSERT INTO blog_post_attachments(id, post_id, file_name, mime_type, size_bytes, storage_key, uploaded_by, company_name) SELECT :attachment_id, :post_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id, company_name FROM blog_posts WHERE id = :post_id" }
+      result: { query: "SELECT id, post_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM blog_post_attachments WHERE id = :attachment_id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)" }
+  - id: download_blog_post_attachment
+    type: download
+    permission: blog.read
+    kind: blog_post_attachment
+  - { id: back_to_blog_posts, type: navigate, permission: blog.read, navigate_to: /blog-posts, params: {} }
+  - id: print_blog_post
+    type: client
+    permission: blog.read
+    script: "async () => { window.print(); }"
+  - id: edit_blog_post_detail
+    type: server_form
+    permission: blog.write
+    title: Edit blog post
+    action: blog.posts.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [blog_post_detail, blog_post_attachments, blog_post_tags, blog_post_tag_lookup]
+    mutation:
+      operation: update
+      table: blog_posts
+      fields: [blog_id, blog_name, company_name, name, subtitle, author_name, teaser, content_html, tags]
+      required: [blog_id, blog_name, name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM blog_posts WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 404, code: BLOG_POST_NOT_FOUND, message: Blog post not found. }
+        - { query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: The blog belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: BLOG_COMPANY_SCOPE_REQUIRED, message: A post must belong to the current company. }
+      result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
+    fields:
+      - { field: blog_id, label: Blog, type: select, options_source: blog_lookup, required: true }
+      - { field: blog_name, label: Blog name, type: text, required: true }
+      - { field: name, label: Title, type: text, required: true }
+      - { field: subtitle, label: Subtitle, type: text }
+      - { field: author_name, label: Author, type: text }
+      - { field: teaser, label: Teaser, type: textarea }
+      - { field: content_html, label: Content, type: textarea }
+      - { field: tags, label: Tags, type: text }
+  - id: add_blog_post_tag
+    type: server_form
+    permission: blog.write
+    title: Add tag to blog post
+    action: blog.posts.tags.add
+    handler: line_item
+    operation: create
+    domain: blog_post
+    params: { id: '{state.blog_post_detail.id}' }
+    refresh: [blog_post_detail, blog_post_tags, blog_post_tag_lookup]
+    fields:
+      - { field: tag_id, label: Tag, type: select, options_source: blog_post_tag_lookup, required: true }
+    mutation:
+      generated: [relation_id]
+      before_steps:
+        - { query: "SELECT 'blog-post-tag-' || CAST(:id AS VARCHAR) || '-' || CAST(:tag_id AS VARCHAR) AS relation_id", assign: true }
+      guards:
+        - { query: "SELECT id FROM blog_posts WHERE id = :id AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 409, code: STALE_RECORD, message: The blog post changed; reload before adding a tag. }
+        - { query: "SELECT id FROM blog_tags WHERE id = :tag_id", status: 422, code: BLOG_POST_TAG_INVALID, message: Select a valid blog tag. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM blog_post_tags WHERE post_id = :id AND tag_id = :tag_id)", status: 409, code: BLOG_POST_TAG_EXISTS, message: This tag is already assigned to the blog post. }
+      steps:
+        - { query: "INSERT INTO blog_post_tags(id, post_id, tag_id, row_version) VALUES(:relation_id, :id, :tag_id, 1)" }
+        - { query: "UPDATE blog_posts SET tags = COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = :id), ''), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The blog post changed; reload before adding a tag. }
+      result: { query: "SELECT r.id, r.row_version, r.post_id, t.id AS tag_id, t.name, t.category, t.color FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.id = :relation_id" }
+  - id: remove_blog_post_tag
+    type: server
+    permission: blog.write
+    action: blog.posts.tags.remove
+    handler: line_item
+    operation: delete
+    domain: blog_post
+    params: { id: '{state.blog_post_detail.id}', line_id: '{row.id}' }
+    refresh: [blog_post_detail, blog_post_tags, blog_post_tag_lookup]
+    mutation:
+      guards:
+        - { query: "SELECT id FROM blog_posts WHERE id = :id AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = COALESCE(:current_company_name, :company_name))", status: 409, code: STALE_RECORD, message: The blog post changed; reload before removing a tag. }
+        - { query: "SELECT id FROM blog_post_tags WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version", status: 409, code: BLOG_POST_TAG_STALE, message: The post tag changed or was removed; reload before deleting. }
+      steps:
+        - { query: "DELETE FROM blog_post_tags WHERE id = :line_id AND post_id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: BLOG_POST_TAG_STALE, message: The post tag changed or was removed; reload before deleting. }
+        - { query: "UPDATE blog_posts SET tags = COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name, t.id) FROM blog_post_tags r JOIN blog_tags t ON t.id = r.tag_id WHERE r.post_id = :id), ''), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The blog post changed; reload before removing a tag. }
+      result: { query: "SELECT true AS deleted, :line_id AS id" }

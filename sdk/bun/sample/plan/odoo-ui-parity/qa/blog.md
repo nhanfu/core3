@@ -39,6 +39,15 @@ Detailed execution matrix: [`test-plans/blog.md`](test-plans/blog.md). It is the
 
 ## R2 dispatch
 
+## Post tag_ids relation slice — 2026-09-20
+
+| Test ID | Scenario | Evidence | Result |
+| --- | --- | --- | --- |
+| BLOG-FUNC-011 | Odoo `blog.post.tag_ids` add/remove | `bun test ./test/blog_post_tags.integration.test.ts` — 4 tests, 20 assertions; page/API separation, deterministic relation fixtures, add/remove persistence, duplicate/invalid/parent-stale/line-stale guards, and denormalized post tag names pass | pass for bounded service/API slice; browser/Odoo comparison remains open |
+| BLOG-PERM-007 | Post tag relation permission boundary | The focused slice uses `blog.read` for relation/lookup reads and `blog.write` for add/remove; read-only action API receives 403 | pass for contract/API boundary; full actor/browser gate remains open |
+| BLOG-FUNC-012 | Post tag restart durability | The focused slice closes and reopens DuckDB, reapplies migrations, and finds both relation rows and synchronized post tag names/version | pass for file-backed restart contract |
+| BLOG-QA-008 | Blog regression/tooling gates | Full Blog suite: 25 tests / 142 assertions; UI audit: 665 pages / 674 routes / 1,182 datasources; targeted Blog ESLint and `git diff --check` passed | pass; no full Blog sign-off implied |
+
 | Event | Owner/worktree | Bounded scope | Status |
 | --- | --- | --- | --- |
 | `DEV-BLOG-WAVE-20260913-R2` → `QA-BLOG-WAVE-20260913-R2` | existing `agent/blog-wave-dev3` in `/home/nhanjs/projects/core3-worktrees/blog-wave-dev3` | Blog site/company actor boundaries for blogs, posts, and assets, private 401/403 behavior, published/draft visibility, and focused stale/missing/atomicity tests | owner handle unavailable (no running owner process; HEAD `15814f8f` remains dispatch-only). Approved same-module takeover requested in this exact worktree; agent dispatch is unavailable here, so QA cannot yet be triggered |

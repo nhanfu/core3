@@ -14,14 +14,14 @@ describe('Blog post assets parity', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'blog_post_asset_test', ['schema', 'data']);
-    const page = yaml('pages/post-detail.yaml');
-    const upload = page.actions.find((action: any) => action.id === 'upload_blog_post_attachment');
+    const apiContract = yaml('api/post-detail.yaml');
+    const upload = apiContract.actions.find((action: any) => action.id === 'upload_blog_post_attachment');
     const authUser = { sub: 'blog-editor', email: 'editor@workspace.example', name: 'Blog Editor', roles: ['editor'], permissions: ['blog.read', 'blog.write'] };
     const uploadRoot = `/tmp/core3-blog-upload-${crypto.randomUUID()}`;
     const api = createYamlApi({
       repository,
       authProvider: { async getCurrentUser() { return authUser; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
-      sources: new Map(page.datasources.map((source: any) => [source.id, source])), pageSources: new Map(), pages: new Map([['blog-post-detail', { actions: [upload] }]]),
+      sources: new Map(apiContract.datasources.map((source: any) => [source.id, source])), pageSources: new Map(), pages: new Map([['blog-post-detail', { actions: [upload] }]]),
       catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
       permissions: { permissions: ['blog.read', 'blog.write'], tables: {}, endpoints: {} }, uploadRoot, eventStore: {}, topics: {},
       storage: { attachments: { blog_post_attachment: { download: { route: '/api/blog/post-attachments', permission: 'blog.read', query: 'SELECT * FROM blog_post_attachments WHERE id = :attachment_id' } } } },
@@ -49,13 +49,13 @@ describe('Blog post assets parity', () => {
     const migrationName = `blog_asset_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
     const uploadRoot = `/tmp/core3-blog-asset-restart-uploads-${crypto.randomUUID()}`;
     const authUser = { sub: 'blog-editor', email: 'editor@workspace.example', name: 'Blog Editor', roles: ['editor'], permissions: ['blog.read', 'blog.write'] };
-    const page = yaml('pages/post-detail.yaml');
-    const upload = page.actions.find((action: any) => action.id === 'upload_blog_post_attachment');
-    const download = page.actions.find((action: any) => action.id === 'download_blog_post_attachment');
+    const apiContract = yaml('api/post-detail.yaml');
+    const upload = apiContract.actions.find((action: any) => action.id === 'upload_blog_post_attachment');
+    const download = apiContract.actions.find((action: any) => action.id === 'download_blog_post_attachment');
     const createApi = (repository: YamlRepository) => createYamlApi({
       repository,
       authProvider: { async getCurrentUser() { return authUser; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
-      sources: new Map(page.datasources.map((source: any) => [source.id, source])), pageSources: new Map(), pages: new Map([['blog-post-detail', { actions: [upload, download] }]]),
+      sources: new Map(apiContract.datasources.map((source: any) => [source.id, source])), pageSources: new Map(), pages: new Map([['blog-post-detail', { actions: [upload, download] }]]),
       catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
       permissions: { permissions: ['blog.read', 'blog.write'], tables: {}, endpoints: {} }, uploadRoot, eventStore: {}, topics: {},
       storage: yaml('storage.yaml'),
