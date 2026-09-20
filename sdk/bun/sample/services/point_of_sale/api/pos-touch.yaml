@@ -11,7 +11,8 @@ datasources:
         CAST(COALESCE(s.opening_counted, s.balance_start, 0) AS DOUBLE) AS opening_counted,
         COALESCE(s.opening_note, '') AS opening_note
       FROM pos_sessions s
-      WHERE (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
+      WHERE s.company = :current_company_name
+        AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
         AND ((:id IS NOT NULL AND s.id = :id)
          OR (:id IS NULL AND s.state IN ('In Progress', 'Opening Control'))
         )
@@ -41,7 +42,7 @@ datasources:
         CAST(balance_start AS DOUBLE) AS balance_start,
         CAST(COALESCE(opening_counted, 0) AS DOUBLE) AS opening_counted
       FROM pos_sessions
-      WHERE state = 'In Progress'
+      WHERE state = 'In Progress' AND company = :current_company_name
         AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
       ORDER BY opened_at DESC
 
@@ -61,7 +62,7 @@ datasources:
         (SELECT CAST(COALESCE(l.price_total, l.price_subtotal) AS DOUBLE) FROM pos_order_lines l WHERE l.order_id = o.id ORDER BY l.id LIMIT 1) AS line_total
       FROM pos_orders o
       JOIN pos_sessions s ON s.id = o.session_id
-      WHERE o.state = 'New' AND s.state = 'In Progress'
+      WHERE o.state = 'New' AND s.state = 'In Progress' AND o.company = :current_company_name AND s.company = :current_company_name
         AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found'))
       ORDER BY o.date_order DESC
 

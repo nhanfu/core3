@@ -55,6 +55,7 @@ actions:
             ticket_id: row.ticket_id,
             product_id: row.product_id,
             quantity: row.quantity || 1,
+            expected_row_version: row.expected_row_version,
           },
         })
       }
@@ -71,6 +72,7 @@ actions:
             ticket_id: row.ticket_id,
             amount: row.amount,
             method: row.method,
+            expected_row_version: row.expected_row_version,
           },
         })
       }
@@ -84,6 +86,22 @@ actions:
     mutation:
       generated: [line_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before adding a POS product.
+        - query: "SELECT o.id FROM pos_orders o WHERE o.id = :ticket_id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT o.id FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :ticket_id AND o.company = :current_company_name AND s.company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
+        - query: "SELECT o.id FROM pos_orders o WHERE o.id = :ticket_id AND o.row_version = :expected_row_version"
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before adding a product.
         - query: "SELECT o.id FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :ticket_id AND o.state = 'New' AND s.state = 'In Progress'"
           status: 409
           message: Select an open ticket before adding products
@@ -107,7 +125,11 @@ actions:
               amount_tax = (SELECT COALESCE(SUM(price_tax), 0) FROM pos_order_lines WHERE order_id = :ticket_id),
               amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :ticket_id),
               row_version = row_version + 1
-            WHERE id = :ticket_id
+            WHERE id = :ticket_id AND company = :current_company_name AND row_version = :expected_row_version
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before adding a product.
       result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
 
   - id: touch_submit_payment_backend
@@ -119,6 +141,22 @@ actions:
     mutation:
       generated: [payment_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before registering a POS payment.
+        - query: "SELECT id FROM pos_orders WHERE id = :ticket_id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT o.id FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :ticket_id AND o.company = :current_company_name AND s.company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
+        - query: "SELECT id FROM pos_orders WHERE id = :ticket_id AND row_version = :expected_row_version"
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before registering a payment.
         - query: "SELECT o.id FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :ticket_id AND o.state = 'New' AND s.state = 'In Progress'"
           status: 409
           message: This ticket is no longer available for payment
@@ -134,14 +172,19 @@ actions:
           status: 422
           message: Payment method is not available in this register
       steps:
-        - query: "INSERT INTO pos_payments(id, order_id, method, amount) VALUES(:payment_id, :ticket_id, :method, CAST(:amount AS DECIMAL(18,2)))"
+        - query: "INSERT INTO pos_payments(id, order_id, method, amount, company, actor_id) SELECT :payment_id, :ticket_id, :method, CAST(:amount AS DECIMAL(18,2)), company, :current_user_id FROM pos_orders WHERE id = :ticket_id AND company = :current_company_name"
         - query: |
             UPDATE pos_orders SET
               amount_paid = amount_paid + CAST(:amount AS DECIMAL(18,2)),
               payment_method = :method,
               state = CASE WHEN amount_paid + CAST(:amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END,
+              actor_id = :current_user_id,
               row_version = row_version + 1
-            WHERE id = :ticket_id
+            WHERE id = :ticket_id AND company = :current_company_name AND row_version = :expected_row_version
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before registering a payment.
       result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
 
   - id: touch_open_session_backend
@@ -152,6 +195,22 @@ actions:
     operation: open_session
     mutation:
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_SESSION_UNAUTHENTICATED
+          message: Sign in before opening a POS session.
+        - query: "SELECT id FROM pos_sessions WHERE id = :session_id"
+          status: 404
+          code: POS_SESSION_NOT_FOUND
+          message: POS session not found.
+        - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND company = :current_company_name"
+          status: 403
+          code: POS_SESSION_COMPANY_FORBIDDEN
+          message: POS session belongs to another company.
+        - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND row_version = :expected_row_version"
+          status: 409
+          code: POS_SESSION_STALE
+          message: POS session changed; reload before opening.
         - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND state = 'Opening Control'"
           status: 409
           message: This register is no longer waiting for opening control
@@ -165,6 +224,11 @@ actions:
               opening_note = COALESCE(:opening_note, ''),
               state = 'In Progress',
               opened_at = COALESCE(opened_at, CURRENT_TIMESTAMP),
+              actor_id = :current_user_id,
               row_version = row_version + 1
-            WHERE id = :session_id
+            WHERE id = :session_id AND company = :current_company_name AND row_version = :expected_row_version
+          expect_changed: true
+          status: 409
+          code: POS_SESSION_STALE
+          message: POS session changed; reload before opening.
       result: { query: "SELECT * FROM pos_sessions WHERE id = :session_id" }

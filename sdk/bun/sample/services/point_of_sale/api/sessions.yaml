@@ -13,11 +13,11 @@ datasources:
       forbidden: { status: 403, code: POS_SESSIONS_FORBIDDEN, message: You do not have access to POS sessions. }
       transport_error: { status: 503, code: POS_SESSIONS_UNAVAILABLE, message: POS sessions are temporarily unavailable. }
     query: |
-      SELECT s.id, s.row_version, s.name, s.config, s.user_name, s.state, s.balance_start,
+      SELECT s.id, s.row_version, s.name, s.config, s.user_name, s.state, s.company, s.actor_id, s.balance_start,
         s.balance_end, s.opening_counted, s.expected_cash, s.closing_counted, s.cash_difference,
         s.discrepancy_reason, CAST(s.opened_at AS VARCHAR) AS opened_at,
         CAST(s.closed_at AS VARCHAR) AS closed_at,
-        (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id) AS order_count
+        (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id AND o.company = s.company) AS order_count
       FROM pos_sessions s WHERE s.company = :current_company_name ORDER BY s.opened_at DESC
   - id: pos_session_config_lookup
     single: false
@@ -39,12 +39,22 @@ actions:
       required: [name]
       defaults: { config: Main Shop, state: Opening Control, balance_start: 0 }
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_SESSION_UNAUTHENTICATED
+          message: Sign in before creating a POS session.
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_company_name AS VARCHAR), '') IS NOT NULL"
+          status: 403
+          code: POS_SESSION_COMPANY_REQUIRED
+          message: A current company is required to create a POS session.
         - query: "SELECT 1 AS ok WHERE (:balance_start IS NULL OR CAST(:balance_start AS DECIMAL(18,2)) >= 0)"
           status: 400
           message: Opening balance cannot be negative
-        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_sessions WHERE config = :config AND state IN ('Opening Control', 'In Progress', 'Closing Control'))"
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_sessions WHERE config = :config AND company = :current_company_name AND state IN ('Opening Control', 'In Progress', 'Closing Control'))"
           status: 409
           message: This POS configuration already has an active session
+      steps:
+        - query: "UPDATE pos_sessions SET company = :current_company_name, actor_id = :current_user_id WHERE id = :id"
       result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }
     fields:
       - { field: name, label: Session, type: text, required: true }
@@ -81,5 +91,6 @@ actions:
     workflow: pos_sessions
     operation: close
     refresh: [pos_sessions]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
     fields:
       - { field: balance_end, label: Closing balance, type: money, required: true }

@@ -141,6 +141,7 @@ export function createYamlApi(ctx: YamlApiContext) {
       // The selected company is session state, including for admins. Keep it
       // separate from the optional UI filter so datasource SQL cannot widen a
       // request beyond the authenticated company boundary.
+      current_company_name: String(user.company?.name || user.company_name || ''),
       customer_scope: user.roles?.includes('admin') || !user.roles?.includes('customer') ? 'all' : 'own',
       // Non-admin company scope is identity-derived; never trust a caller's
       // company_name query parameter to widen the visible company boundary.

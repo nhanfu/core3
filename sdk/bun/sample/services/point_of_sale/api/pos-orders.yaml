@@ -16,7 +16,7 @@ datasources:
       SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name,
         o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid,
         COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method,
-        o.cashier_id, o.receipt_number, o.original_order_id, CAST(o.date_order AS VARCHAR) AS date_order
+        o.cashier_id, o.actor_id, o.company, o.receipt_number, o.original_order_id, CAST(o.date_order AS VARCHAR) AS date_order
       FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id
       WHERE (:q IS NULL OR o.name ILIKE '%' || :q || '%' OR o.partner_name ILIKE '%' || :q || '%')
         AND (:state IS NULL OR o.state = :state)
@@ -43,12 +43,26 @@ actions:
       required: [name, session_id]
       defaults: { state: New, amount_total: 0, amount_tax: 0, amount_paid: 0, to_invoice: false }
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before creating a POS order.
+        - query: "SELECT id FROM pos_sessions WHERE id = :session_id"
+          status: 404
+          code: POS_SESSION_NOT_FOUND
+          message: POS session not found.
+        - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS session belongs to another company.
         - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND state = 'In Progress'"
           status: 409
           message: POS orders require an open session
         - query: "SELECT 1 AS ok WHERE :client_operation_id IS NULL OR NOT EXISTS (SELECT 1 FROM pos_orders WHERE client_operation_id = :client_operation_id)"
           status: 409
           message: This cashier operation was already submitted
+      steps:
+        - query: "UPDATE pos_orders SET company = :current_company_name, actor_id = :current_user_id WHERE id = :id"
       result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
     fields:
       - { field: name, label: Order, type: text, required: true }
@@ -64,10 +78,27 @@ actions:
     action: pos.orders.pay
     handler: yaml_mutation
     operation: pay
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
     refresh: [pos_orders]
     mutation:
       generated: [payment_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before registering a POS payment.
+        - query: "SELECT id FROM pos_orders WHERE id = :id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before registering a payment.
         - query: "SELECT id FROM pos_orders WHERE id = :id AND state IN ('New', 'Paid')"
           status: 409
           message: This POS order cannot receive a payment
@@ -75,8 +106,12 @@ actions:
           status: 400
           message: Payment must be positive and cannot exceed the remaining balance
       steps:
-        - query: "INSERT INTO pos_payments(id, order_id, method, amount) VALUES(:payment_id, :id, COALESCE(:payment_method, 'Cash'), :payment_amount)"
-        - query: "UPDATE pos_orders SET amount_paid = amount_paid + CAST(:payment_amount AS DECIMAL(18,2)), payment_method = :payment_method, state = CASE WHEN amount_paid + CAST(:payment_amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END, row_version = row_version + 1 WHERE id = :id"
+        - query: "INSERT INTO pos_payments(id, order_id, method, amount, company, actor_id) SELECT :payment_id, :id, COALESCE(:payment_method, 'Cash'), CAST(:payment_amount AS DECIMAL(18,2)), company, :current_user_id FROM pos_orders WHERE id = :id AND company = :current_company_name"
+        - query: "UPDATE pos_orders SET amount_paid = amount_paid + CAST(:payment_amount AS DECIMAL(18,2)), payment_method = :payment_method, actor_id = :current_user_id, state = CASE WHEN amount_paid + CAST(:payment_amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before registering a payment.
       result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
     fields:
       - { field: payment_amount, label: Payment amount, type: money, decimals: 2, required: true }
@@ -87,17 +122,37 @@ actions:
     action: pos.orders.invoice
     handler: pos_invoice
     operation: invoice
-    params: { id: '{row.id}' }
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
     refresh: [pos_orders]
     mutation:
       generated: [invoice_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before invoicing a POS order.
+        - query: "SELECT id FROM pos_orders WHERE id = :id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before invoicing.
         - query: "SELECT id FROM pos_orders WHERE id = :id AND state = 'Paid' AND to_invoice = true AND invoice_id IS NULL"
           status: 409
           message: Only paid POS orders marked for invoicing can be invoiced
       steps:
         - query: "INSERT INTO pos_invoices(id, order_id, invoice_number, amount) VALUES(:invoice_id, :id, 'POS-' || :id, (SELECT amount_total FROM pos_orders WHERE id = :id))"
-        - query: "UPDATE pos_orders SET state = 'Invoiced', invoice_id = :invoice_id, row_version = row_version + 1 WHERE id = :id"
+        - query: "UPDATE pos_orders SET state = 'Invoiced', invoice_id = :invoice_id, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before invoicing.
       result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
   - id: cancel_pos_order
     type: server

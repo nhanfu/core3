@@ -40,4 +40,8 @@ workflow:
             message: Only open POS orders can be cancelled
         steps:
           - query: "UPDATE pos_orders SET state = 'Cancelled', actor_id = :current_user_id, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
+            expect_changed: true
+            status: 409
+            code: POS_ORDER_STALE
+            message: POS order changed; reload before changing status.
         result: { query: "SELECT * FROM pos_orders WHERE id = :id" }

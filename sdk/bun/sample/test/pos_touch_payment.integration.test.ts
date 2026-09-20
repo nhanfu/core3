@@ -74,18 +74,19 @@ describe('POS touch payment contract', () => {
     const page = yaml('pages/pos-touch.yaml');
     const source = api.datasources.find((candidate: any) => candidate.id === 'pos_touch_session');
     const open = page.actions.find((candidate: any) => candidate.id === 'touch_open_session_backend');
+    const actor = { current_user_id: 'user-admin', current_user_name: 'Admin User', current_company_name: 'Core3 Demo Company' };
 
-    expect((await repository.querySource(source, { id: 'pos-session-demo-opening' }, 0, 1)).data)
+    expect((await repository.querySource(source, { ...actor, id: 'pos-session-demo-opening' }, 0, 1)).data)
       .toMatchObject({ id: 'pos-session-demo-opening', state: 'Opening Control', opening_note: '' });
     await expect(repository.executeMutation(open.mutation, {
-      session_id: 'pos-session-demo-opening', opening_cash: '-1', opening_note: '',
+      ...actor, session_id: 'pos-session-demo-opening', opening_cash: '-1', opening_note: '', expected_row_version: 1,
     })).rejects.toMatchObject({ status: 422 });
     const opened = await repository.executeMutation(open.mutation, {
-      session_id: 'pos-session-demo-opening', opening_cash: '312.50', opening_note: 'Counted by Maya',
+      ...actor, session_id: 'pos-session-demo-opening', opening_cash: '312.50', opening_note: 'Counted by Maya', expected_row_version: 1,
     });
     expect(opened).toMatchObject({ id: 'pos-session-demo-opening', state: 'In Progress', opening_counted: 312.5, opening_note: 'Counted by Maya' });
     await expect(repository.executeMutation(open.mutation, {
-      session_id: 'pos-session-demo-opening', opening_cash: '1', opening_note: '',
+      ...actor, session_id: 'pos-session-demo-opening', opening_cash: '1', opening_note: '', expected_row_version: 1,
     })).rejects.toMatchObject({ status: 409 });
   });
 });

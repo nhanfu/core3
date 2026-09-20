@@ -64,17 +64,37 @@ actions:
     action: pos.orders.invoice
     handler: pos_invoice
     operation: invoice
-    params: { id: '{state.id}' }
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
     refresh: [pos_order_detail, pos_order_detail_payments]
     mutation:
       generated: [invoice_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before invoicing a POS order.
+        - query: "SELECT id FROM pos_orders WHERE id = :id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before invoicing.
         - query: "SELECT id FROM pos_orders WHERE id = :id AND state = 'Paid' AND to_invoice = true AND invoice_id IS NULL"
           status: 409
           message: Only paid POS orders marked for invoicing can be invoiced
       steps:
         - query: "INSERT INTO pos_invoices(id, order_id, invoice_number, amount) VALUES(:invoice_id, :id, 'POS-' || :id, (SELECT amount_total FROM pos_orders WHERE id = :id))"
-        - query: "UPDATE pos_orders SET state = 'Invoiced', invoice_id = :invoice_id, row_version = row_version + 1 WHERE id = :id"
+        - query: "UPDATE pos_orders SET state = 'Invoiced', invoice_id = :invoice_id, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before invoicing.
       result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
   - id: add_pos_order_line
     type: server_form
@@ -95,6 +115,22 @@ actions:
     mutation:
       generated: [line_id]
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(CAST(:current_user_id AS VARCHAR), '') IS NOT NULL"
+          status: 401
+          code: POS_ORDER_UNAUTHENTICATED
+          message: Sign in before adding a POS order line.
+        - query: "SELECT id FROM pos_orders WHERE id = :id"
+          status: 404
+          code: POS_ORDER_NOT_FOUND
+          message: POS order not found.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND company = :current_company_name"
+          status: 403
+          code: POS_ORDER_COMPANY_FORBIDDEN
+          message: POS order belongs to another company.
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before adding a line.
         - query: "SELECT id FROM pos_orders WHERE id = :id AND state = 'New'"
           status: 409
           message: Only new POS orders can receive lines
@@ -106,7 +142,11 @@ actions:
           message: Tax and discount must be between 0 and 100 percent
       steps:
         - query: "INSERT INTO pos_order_lines(id, order_id, product_name, quantity, price_unit, tax_rate, discount, price_subtotal, price_tax, price_total) VALUES(:line_id, :id, :product_name, :quantity, :price_unit, :tax_rate, :discount, ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:price_unit AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100), 2), ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:price_unit AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * CAST(:tax_rate AS DECIMAL(9,4)) / 100, 2), ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:price_unit AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9,4)) / 100), 2))"
-        - query: "UPDATE pos_orders SET amount_tax = (SELECT COALESCE(SUM(price_tax), 0) FROM pos_order_lines WHERE order_id = :id), amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :id), row_version = row_version + 1 WHERE id = :id"
+        - query: "UPDATE pos_orders SET amount_tax = (SELECT COALESCE(SUM(price_tax), 0) FROM pos_order_lines WHERE order_id = :id), amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :id), row_version = row_version + 1 WHERE id = :id AND company = :current_company_name AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before adding a line.
       result: { query: "SELECT l.*, (SELECT amount_total FROM pos_orders WHERE id = :id) AS amount_total FROM pos_order_lines l WHERE l.id = :line_id" }
   - id: pay_pos_order_detail
     type: server_form
@@ -144,6 +184,10 @@ actions:
       steps:
         - query: "INSERT INTO pos_payments(id, order_id, method, amount, company, actor_id) SELECT :payment_id, :id, COALESCE(:payment_method, 'Cash'), CAST(:payment_amount AS DECIMAL(18,2)), company, :current_user_id FROM pos_orders WHERE id = :id AND company = :current_company_name"
         - query: "UPDATE pos_orders SET amount_paid = amount_paid + CAST(:payment_amount AS DECIMAL(18,2)), payment_method = :payment_method, actor_id = :current_user_id, state = CASE WHEN amount_paid + CAST(:payment_amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END, row_version = row_version + 1 WHERE id = :id AND company = :current_company_name"
+          expect_changed: true
+          status: 409
+          code: POS_ORDER_STALE
+          message: POS order changed; reload before registering a payment.
       result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
     fields:
       - { field: payment_amount, label: Payment amount, type: money, decimals: 2, required: true }

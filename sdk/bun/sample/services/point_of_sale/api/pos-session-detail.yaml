@@ -20,9 +20,9 @@ datasources:
         s.discrepancy_reason, s.balance_end,
         CAST(s.opened_at AS VARCHAR) AS opened_at,
         CAST(s.closed_at AS VARCHAR) AS closed_at,
-        (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id) AS order_count,
-        CAST((SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders o WHERE o.session_id = s.id AND o.state = 'Paid') AS DOUBLE) AS total_paid,
-        CAST((SELECT COALESCE(SUM(CASE WHEN m.movement_type = 'Cash In' THEN m.amount ELSE -m.amount END), 0) FROM pos_cash_movements m WHERE m.session_id = s.id) AS DOUBLE) AS net_cash_movements
+        (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id AND o.company = s.company) AS order_count,
+        CAST((SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders o WHERE o.session_id = s.id AND o.company = s.company AND o.state = 'Paid') AS DOUBLE) AS total_paid,
+        CAST((SELECT COALESCE(SUM(CASE WHEN m.movement_type = 'Cash In' THEN m.amount ELSE -m.amount END), 0) FROM pos_cash_movements m WHERE m.session_id = s.id AND EXISTS (SELECT 1 FROM pos_sessions ms WHERE ms.id = m.session_id AND ms.company = s.company)) AS DOUBLE) AS net_cash_movements
       FROM pos_sessions s WHERE s.id = :id AND s.company = :current_company_name
 
   - id: pos_session_orders
@@ -102,6 +102,7 @@ actions:
     workflow: pos_sessions
     operation: close
     refresh: [pos_session_detail]
+    params: { id: '{state.id}', expected_row_version: '{state.row_version}' }
     fields:
       - { field: balance_end, label: Closing balance, type: money, required: true }
       - { field: closing_counted, label: Counted cash, type: money }
