@@ -1,0 +1,34 @@
+{
+  "featureId": "ECOM-CHECKOUT-PAYMENT-METHODS-001",
+  "capturedAt": "2026-09-20",
+  "core3": {
+    "runtime": "http://127.0.0.1:4312",
+    "authentication": "admin@tms.local",
+    "desktop": {
+      "viewport": "1440x900",
+      "url": "http://127.0.0.1:4312/ecommerce/payment-methods",
+      "created": "Browser Wallet",
+      "resultText": "1-4 / 4 Browser Wallet browser_wallet Demo Gateway true; Wire Transfer wire_transfer Wire Transfer true; Cash on Delivery cash_on_delivery Wire Transfer true; Card card Demo Gateway true",
+      "errors": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "url": "http://127.0.0.1:4312/ecommerce/payment-methods",
+      "resultText": "1-4 / 4 Browser Wallet; Wire Transfer; Cash on Delivery; Card",
+      "errors": []
+    }
+  },
+  "odoo": {
+    "database": "core3_codex_demo",
+    "user": "codex@core3.local",
+    "blocker": "Authenticated /shop returned exact Odoo Error 404 on both supplied instances.",
+    "odoo-8069": {
+      "desktop": { "url": "http://127.0.0.1:8069/shop", "authenticated": true, "text": "Mitchell Admin Error 404" },
+      "mobile": { "url": "http://127.0.0.1:8069/shop", "authenticated": true, "text": "Mitchell Admin Error 404" }
+    },
+    "odoo-8073": {
+      "desktop": { "url": "http://127.0.0.1:8073/shop", "authenticated": true, "text": "Mitchell Admin Error 404" },
+      "mobile": { "url": "http://127.0.0.1:8073/shop", "authenticated": true, "text": "Mitchell Admin Error 404" }
+    }
+  }
+}

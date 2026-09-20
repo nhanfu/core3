@@ -1,5 +1,36 @@
 # ecommerce QA ledger
 
+## Payment Methods (`ECOM-CHECKOUT-PAYMENT-METHODS-001`, 2026-09-20)
+
+- Odoo menu/action/source comparison: `menu_ecommerce_payment_methods` /
+  `payment.action_payment_method`, model `payment.method`, primary-method
+  domain, active/sequence/name ordering, list/kanban/form fields, provider and
+  feature support were verified against the supplied `payment` source.
+- Core3 lifecycle: migrations 042/043 add durable payment methods and
+  deterministic fixtures; page/API YAML is separated by `page.id`; the
+  Configuration menu, search/active filter, checkout option source, permissioned
+  CRUD, archive/restore/delete, code/feature validation, and stale row-version
+  guards are implemented. Checkout now validates against active primary rows.
+- Focused verification: `bun test
+  test/ecommerce_payment_methods.integration.test.ts
+  test/ecommerce_checkout.integration.test.ts
+  test/ecommerce_actor_matrix.integration.test.ts --timeout 20000` — **19
+  passed, 120 assertions, 0 failures**. Audit, targeted ESLint, and
+  `git diff --check` are recorded with the bounded commit verification.
+- Browser verification: authenticated Core3 desktop 1440x900 list/form/post-
+  create and mobile 390x844 list captures are in
+  `../evidence/ecommerce/2026-09-20/ecom-checkout-payment-methods-001/`;
+  desktop created active `Browser Wallet` and the checkout option source is
+  durable. Core3 browser page/request errors were empty.
+- Odoo authentication succeeded as `codex@core3.local` against
+  `core3_codex_demo` on ports 8069 and 8073 at both viewports. Authenticated
+  `/shop` returned exact 404 on both, so paired Payment Methods comparison is
+  blocked.
+- QA disposition: **bounded implementation verified, not signed off**. Full
+  Ecommerce sign-off remains open for the paired Odoo surface, broader actor/
+  company browser matrix, and external provider/token/transaction gates. The
+  bounded implementation commit is reported in the handoff and is local only.
+
 ## Product Attributes (`ECOM-CATALOG-PRODUCT-ATTRIBUTES-001`, 2026-09-20)
 
 - Odoo menu/action/source comparison: `menu_product_attribute_action` /

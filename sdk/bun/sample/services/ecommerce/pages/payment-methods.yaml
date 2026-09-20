@@ -1,0 +1,26 @@
+page: { id: ecommerce-payment-methods, route: /ecommerce/payment-methods, breadcrumb: [eCommerce, Configuration, Payment Methods], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_payment_methods_catalog
+    responsive_card: true
+    create_action: create_ecommerce_payment_method
+    create_label: New
+    search: { label: Search payment methods, placeholder: 'Search name, code, or provider...' }
+    filters: [{ field: active, label: Status, options_source: ecommerce_payment_method_active }]
+    columns:
+      - { field: name, label: Payment Method, type: PrimaryEntityCell }
+      - { field: code, label: Code }
+      - { field: provider_names, label: Providers }
+      - { field: support_manual_capture, label: Manual Capture }
+      - { field: support_refund, label: Refund }
+      - { field: active, label: Active, type: StatusChip }
+    row_actions: menu
+    actions:
+      - { id: edit_ecommerce_payment_method, label: Edit, permission: ecommerce.write }
+      - { id: archive_ecommerce_payment_method, label: Archive, permission: ecommerce.write, show_if: "row.active === true" }
+      - { id: restore_ecommerce_payment_method, label: Restore, permission: ecommerce.write, show_if: "row.active === false" }
+      - { id: delete_ecommerce_payment_method, label: Delete, permission: ecommerce.write }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No payment methods found, description: Configure a payment method for the eCommerce checkout. }

@@ -1,6 +1,6 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded catalog combo-choices slice; module sign-off remains open)
+Status: qa-in-progress (bounded checkout payment-methods slice; module sign-off remains open)
 
 ## Bounded feature — Product Attributes (`ECOM-CATALOG-PRODUCT-ATTRIBUTES-001`)
 
@@ -129,6 +129,37 @@ The Core3 desktop create interaction persists a new combo and options; the
 Odoo reference continues to return authenticated 404 on ports 8069 and 8073,
 so paired visual comparison is blocked and Ecommerce remains unsigned.
 
+## Bounded feature — Payment Methods (`ECOM-CHECKOUT-PAYMENT-METHODS-001`)
+
+Odoo source comparison: `website_sale/views/website_sale_menus.xml` adds
+`menu_ecommerce_payment_methods` under Website > Global Configuration >
+eCommerce and opens `payment.action_payment_method`. The supplied
+`payment/models/payment_method.py` defines the ordered `payment.method` model
+with required name/code, sequence, primary/brand relationship, supported
+providers and availability, active state, and payment feature capabilities.
+`payment/views/payment_method_views.xml` exposes list, kanban, and form views;
+the action filters to primary methods and defaults to available methods.
+
+Core3 comparison: `services/ecommerce/pages/payment-methods.yaml` owns
+`/ecommerce/payment-methods` and joins the separate
+`services/ecommerce/api/payment-methods.yaml` contract by
+`page.id: ecommerce-payment-methods`. Migrations 042/043 create durable
+payment-method rows and deterministic Wire Transfer, Cash on Delivery, and
+Card fixtures. The manifest adds the Configuration > Payment Methods menu.
+Primary active methods now drive the checkout payment select and both
+authenticated and guest checkout guards. Create/edit/archive/restore/delete
+require `ecommerce.write`, reads require `ecommerce.read`, technical codes and
+feature values are validated server-side, and row versions protect edits and
+deletes.
+
+Focused CRUD, permission declaration, validation, migration-rerun, checkout
+selection, stale-write, and DuckDB restart tests pass. Authenticated Core3
+desktop/mobile evidence and the exact authenticated Odoo `/shop` blocker are
+recorded under
+`evidence/ecommerce/2026-09-20/ecom-checkout-payment-methods-001/`. The paired
+Odoo comparison is blocked because both supplied reference instances return
+authenticated 404 for `/shop`; full Ecommerce sign-off remains open.
+
 ## Source trace
 
 Reference: Odoo 19 `website_sale` addon in `/home/nhanjs/projects/odoo/addons/website_sale`.
@@ -157,6 +188,12 @@ Categories, and Is Published. Core3 renders these alongside Product, Internal
 Reference, Product Type, and Sales Price. The page is presentation-only and
 joins `api/products.yaml` by `page.id`; permissions, queries, mutations, and
 fixtures stay in the backend API/migration seam.
+
+The settings section of the same source file also registers
+`menu_ecommerce_payment_methods` → `payment.action_payment_method`. Core3 now
+maps that action to the Ecommerce-owned Payment Methods configuration route and
+uses its active primary rows as the checkout payment options; provider gateway
+execution and token/transaction menus remain separate follow-up boundaries.
 
 ## Bounded order workflow — reorder
 

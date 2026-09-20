@@ -1,0 +1,17 @@
+version: 0.0.43
+kind: data
+description: deterministic eCommerce payment method fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_payment_methods (id, row_version, name, code, sequence, provider_names, supported_countries, supported_currencies, support_manual_capture, support_refund) VALUES
+        ('ecommerce-payment-method-wire', 1, 'Wire Transfer', 'wire_transfer', 10, 'Wire Transfer', 'All countries', 'USD, EUR', 'none', 'none'),
+        ('ecommerce-payment-method-cash', 1, 'Cash on Delivery', 'cash_on_delivery', 20, 'Wire Transfer', 'All countries', 'USD', 'none', 'none'),
+        ('ecommerce-payment-method-card', 1, 'Card', 'card', 30, 'Demo Gateway', 'All countries', 'USD, EUR', 'full_only', 'full_only')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_payment_methods WHERE id IN ('ecommerce-payment-method-wire', 'ecommerce-payment-method-cash', 'ecommerce-payment-method-card');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

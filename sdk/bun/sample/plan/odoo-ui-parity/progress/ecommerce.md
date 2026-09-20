@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `3e9a938bfc28` (Combo Choices); previous bounded slice: `d6485833` (Product Attributes).
+Latest committed bounded slice: `e32c84f95a9e` (Combo Choices); previous bounded slice: `d6485833` (Product Attributes).
 
 ## Current state
 
@@ -57,4 +57,23 @@ assertions), and the repository UI audit passes at 671 pages, 680 routes, and
 1216 datasources. The paired Odoo comparison is blocked because both supplied
 authenticated reference instances return 404 for `/shop`; this feature and the
 full Ecommerce module remain unsigned off despite the bounded verification.
-Bounded commit: `3e9a938bfc28` (local only, not pushed).
+Bounded commit: `e32c84f95a9e` (local only, not pushed).
+
+## Completed bounded task — `ECOM-CHECKOUT-PAYMENT-METHODS-001`
+
+The next smallest source-backed gap was Odoo's global Configuration >
+eCommerce > Payment Methods action: `menu_ecommerce_payment_methods` →
+`payment.action_payment_method`, model `payment.method`. Core3 now has durable
+payment-method schema/fixtures (migrations 042/043), a separate page/API YAML
+contract, permissioned CRUD with code/feature validation, active/archive
+workflow, optimistic concurrency, and checkout selection backed by active
+primary rows.
+
+Focused payment-method, checkout, and actor/restart coverage passes with 19
+tests and 120 assertions. Authenticated Core3 desktop/mobile evidence, the
+desktop create flow for `Browser Wallet`, and the authenticated Odoo `/shop`
+404 blocker are recorded at
+`plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-checkout-payment-methods-001/`.
+The full Ecommerce module remains unsigned off because paired Odoo, broader
+actor/company browser, and external provider gates remain open. The bounded
+implementation commit is reported in the handoff and is local only.

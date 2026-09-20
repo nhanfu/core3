@@ -1,0 +1,99 @@
+page: { id: ecommerce-payment-methods }
+datasources:
+  - id: ecommerce_payment_methods_catalog
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PAYMENT_METHODS_UNAUTHENTICATED, message: Sign in to view payment methods. }
+      forbidden: { status: 403, code: ECOMMERCE_PAYMENT_METHODS_FORBIDDEN, message: You do not have permission to view payment methods. }
+      transport_error: { status: 503, code: ECOMMERCE_PAYMENT_METHODS_UNAVAILABLE, message: Payment methods are temporarily unavailable. }
+    query: "SELECT id, row_version, name, code, sequence, primary_payment_method_id, COALESCE(provider_names, '') AS provider_names, COALESCE(supported_countries, '') AS supported_countries, COALESCE(supported_currencies, '') AS supported_currencies, support_tokenization, support_express_checkout, support_manual_capture, support_refund, active, CASE WHEN primary_payment_method_id IS NULL THEN TRUE ELSE FALSE END AS is_primary FROM ecommerce_payment_methods WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR code ILIKE '%' || :q || '%' OR provider_names ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) AND (:primary_only IS NULL OR (primary_payment_method_id IS NULL) = :primary_only) ORDER BY active DESC, sequence, name, id"
+  - id: ecommerce_payment_method_active
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"
+actions:
+  - id: create_ecommerce_payment_method
+    type: server_form
+    permission: ecommerce.write
+    title: New Payment Method
+    action: ecommerce.payment_methods.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_payment_methods_catalog, ecommerce_payment_methods]
+    mutation:
+      operation: insert
+      table: ecommerce_payment_methods
+      generated: [id]
+      fields: [name, code, sequence, primary_payment_method_id, provider_names, supported_countries, supported_currencies, support_tokenization, support_express_checkout, support_manual_capture, support_refund, active]
+      required: [name, code]
+      defaults: { sequence: 100, primary_payment_method_id: null, provider_names: '', supported_countries: 'All countries', supported_currencies: 'All currencies', support_tokenization: false, support_express_checkout: false, support_manual_capture: none, support_refund: none, active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ECOMMERCE_PAYMENT_METHOD_NAME_REQUIRED, message: Payment method name is required. }
+        - { query: "SELECT 1 AS ok WHERE REGEXP_MATCHES(TRIM(CAST(:code AS VARCHAR)), '^[a-z][a-z0-9_]{1,63}$')", status: 422, code: ECOMMERCE_PAYMENT_METHOD_CODE_INVALID, message: Use a lowercase technical code with letters, numbers, and underscores. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_payment_methods WHERE LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))))", status: 409, code: ECOMMERCE_PAYMENT_METHOD_CODE_EXISTS, message: A payment method with this code already exists. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:support_manual_capture, 'none') IN ('none', 'full_only', 'partial') AND COALESCE(:support_refund, 'none') IN ('none', 'full_only', 'partial')", status: 422, code: ECOMMERCE_PAYMENT_METHOD_FEATURE_INVALID, message: Choose a supported payment feature value. }
+      result: { query: "SELECT * FROM ecommerce_payment_methods WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: code, label: Technical Code, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 100 }
+      - { field: provider_names, label: Providers, type: text }
+      - { field: supported_countries, label: Countries, type: text, default: 'All countries' }
+      - { field: supported_currencies, label: Currencies, type: text, default: 'All currencies' }
+      - { field: support_manual_capture, label: Manual Capture, type: select, options: [{ value: none, label: Unsupported }, { value: full_only, label: Full Only }, { value: partial, label: Full & Partial }], default: none }
+      - { field: support_refund, label: Refund, type: select, options: [{ value: none, label: Unsupported }, { value: full_only, label: Full Only }, { value: partial, label: Full & Partial }], default: none }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_ecommerce_payment_method
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Payment Method
+    action: ecommerce.payment_methods.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_payment_methods_catalog, ecommerce_payment_methods]
+    mutation:
+      operation: update
+      table: ecommerce_payment_methods
+      fields: [name, code, sequence, provider_names, supported_countries, supported_currencies, support_tokenization, support_express_checkout, support_manual_capture, support_refund, active]
+      required: [name, code]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ECOMMERCE_PAYMENT_METHOD_NAME_REQUIRED, message: Payment method name is required. }
+        - { query: "SELECT 1 AS ok WHERE REGEXP_MATCHES(TRIM(CAST(:code AS VARCHAR)), '^[a-z][a-z0-9_]{1,63}$')", status: 422, code: ECOMMERCE_PAYMENT_METHOD_CODE_INVALID, message: Use a lowercase technical code with letters, numbers, and underscores. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_payment_methods WHERE LOWER(code) = LOWER(TRIM(CAST(:code AS VARCHAR))) AND id <> :id)", status: 409, code: ECOMMERCE_PAYMENT_METHOD_CODE_EXISTS, message: A payment method with this code already exists. }
+      result: { query: "SELECT * FROM ecommerce_payment_methods WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: code, label: Technical Code, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number }
+      - { field: provider_names, label: Providers, type: text }
+      - { field: supported_countries, label: Countries, type: text }
+      - { field: supported_currencies, label: Currencies, type: text }
+      - { field: support_manual_capture, label: Manual Capture, type: select, options: [{ value: none, label: Unsupported }, { value: full_only, label: Full Only }, { value: partial, label: Full & Partial }] }
+      - { field: support_refund, label: Refund, type: select, options: [{ value: none, label: Unsupported }, { value: full_only, label: Full Only }, { value: partial, label: Full & Partial }] }
+      - { field: active, label: Active, type: checkbox }
+  - id: archive_ecommerce_payment_method
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.payment_methods.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_payment_methods_catalog, ecommerce_payment_methods]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: ecommerce_payment_methods, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM ecommerce_payment_methods WHERE id = :id" } }
+  - id: restore_ecommerce_payment_method
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.payment_methods.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_payment_methods_catalog, ecommerce_payment_methods]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: ecommerce_payment_methods, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM ecommerce_payment_methods WHERE id = :id" } }
+  - id: delete_ecommerce_payment_method
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.payment_methods.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [ecommerce_payment_methods_catalog, ecommerce_payment_methods]
+    mutation: { operation: delete, table: ecommerce_payment_methods, concurrency: { required: true }, result: { query: "SELECT * FROM ecommerce_payment_methods WHERE id = :id" } }

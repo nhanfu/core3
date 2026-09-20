@@ -70,3 +70,10 @@ menu:
           label: Product Ribbons
           icon: tag
           permission: ecommerce.read
+    - id: configuration
+      label: Configuration
+      items:
+        - path: /ecommerce/payment-methods
+          label: Payment Methods
+          icon: bank
+          permission: ecommerce.read

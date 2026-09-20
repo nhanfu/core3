@@ -1,0 +1,34 @@
+version: 0.0.42
+kind: schema
+description: eCommerce payment method catalog and checkout selection
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_payment_methods (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        code VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 1,
+        primary_payment_method_id VARCHAR,
+        provider_names VARCHAR NOT NULL DEFAULT '',
+        supported_countries VARCHAR NOT NULL DEFAULT '',
+        supported_currencies VARCHAR NOT NULL DEFAULT '',
+        support_tokenization BOOLEAN NOT NULL DEFAULT FALSE,
+        support_express_checkout BOOLEAN NOT NULL DEFAULT FALSE,
+        support_manual_capture VARCHAR NOT NULL DEFAULT 'none',
+        support_refund VARCHAR NOT NULL DEFAULT 'none',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_payment_methods_code_idx ON ecommerce_payment_methods(code);
+      CREATE INDEX IF NOT EXISTS ecommerce_payment_methods_order_idx ON ecommerce_payment_methods(active DESC, sequence, name, id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_payment_methods_order_idx;
+      DROP INDEX IF EXISTS ecommerce_payment_methods_code_idx;
+      DROP TABLE IF EXISTS ecommerce_payment_methods;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
