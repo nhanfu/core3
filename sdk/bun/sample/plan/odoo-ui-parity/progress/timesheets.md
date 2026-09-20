@@ -324,3 +324,34 @@ Authenticated Odoo `/odoo/all-tasks/100` renders at both viewports but exposes
 no visible Print/report action. That is the exact QWeb/PDF comparison blocker;
 missing Odoo Print/PDF/action surfaces, broader route/action comparison, and
 Timesheets module sign-off remain open.
+
+## 2026-09-20 `TIMESHEET-REPORT-PROJECT-DRILLDOWN`
+
+The smallest remaining distinct report interaction was the By Project row
+context. Odoo's shared `timesheets.analysis.report` form in
+`addons/hr_timesheet/report/hr_timesheet_report_view.xml:23-46` exposes
+`project_id`, `task_id`, `employee_id`, date, cost, time, and description; the
+By Project action is `timesheet_action_report_by_project` at lines 178-214.
+
+Core3's By Project page/API now carries durable `project_id` and `task_id`
+relation context, filters the persisted report rows to the active company, and
+declares the manager-only `view_project_report_entry` row/double-click action.
+The action navigates to the existing durable `/project-timesheets` context with
+`project_id`, so it does not duplicate the completed project report preview.
+The target route renders the persisted project timesheet line after restart;
+empty and wrong-company report reads fail closed.
+
+Focused coverage is
+`test/timesheets_project_report_drilldown.integration.test.ts` (4 tests, 16
+expectations), including Odoo source/form comparison, page/API separation,
+migration replay, file-backed restart, relation context, company scope,
+manager permission, deterministic empty state, and fixed query values.
+Authenticated Core3 desktop/mobile evidence is under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-project-report-drilldown/`;
+both viewports click the rendered project row and load the project context with
+the persisted `Migration work` entry and no browser failures.
+
+Authenticated Odoo `/odoo/timesheets-by-project` renders the aggregate report
+at both viewports but exposes no loaded row-to-project-timesheet action/form.
+This is the exact paired interaction blocker; remaining route/action comparison
+and Timesheets module sign-off remain open.

@@ -361,3 +361,33 @@ Paired authenticated Odoo desktop/mobile evidence reaches
 QWeb/PDF execution therefore cannot be paired; this is an exact blocker, not a
 parity pass. Missing Odoo Print/PDF/action surfaces, full route/action
 comparison, and module sign-off remain pending.
+
+## `TIMESHEET-REPORT-PROJECT-DRILLDOWN` — 2026-09-20
+
+Source gate: Odoo's `timesheets_analysis_report_form` defines the project/task
+relation fields at `addons/hr_timesheet/report/hr_timesheet_report_view.xml:23-46`;
+the By Project action `timesheet_action_report_by_project` is defined at
+`:178-214`.
+
+Core3 gate: `timesheets-by-project` remains page/API-separated. Its report
+datasource now returns `project_id` and `task_id`, scopes rows to the active
+company, and owns the manager-only `view_project_report_entry` navigation
+action. The rendered row action opens the existing durable
+`/project-timesheets?project_id=...` context, where the persisted project line
+is visible. No duplicate report preview or new fixture table was introduced.
+
+Focused gate: `bun test
+test/timesheets_project_report_drilldown.integration.test.ts --timeout 20000`
+passes 4 tests / 16 expectations. Migration replay/file-backed restart,
+relation context, company/permission guards, deterministic empty state, source
+contract, and no-moving-value checks pass. Authenticated Core3 desktop/mobile
+evidence is in
+`evidence/timesheets/2026-09-20/timesheet-project-report-drilldown/`; both
+viewports navigate from the rendered row to the project context without page
+errors, failed requests, or overflow.
+
+Paired authenticated Odoo desktop/mobile evidence reaches
+`/odoo/timesheets-by-project` and renders the aggregate report, but no loaded
+row-to-project-timesheet action/form is exposed. The source form contract is
+therefore recorded without claiming paired interaction parity. Remaining
+route/action comparison and module sign-off remain pending.

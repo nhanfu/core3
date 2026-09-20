@@ -3,7 +3,13 @@ datasources:
   - id: timesheet_report_by_project
     permission: timesheets.manage
     single: false
-    pivot: { fields: [id, date, month, project_name, employee_name, task_name, amount, unit_amount, billable, state] }
+    pivot: { fields: [id, date, month, project_id, project_name, employee_name, task_id, task_name, amount, unit_amount, billable, state] }
     error_states:
       transport_error: { status: 503, code: TIMESHEETS_REPORT_BY_PROJECT_UNAVAILABLE, message: Timesheets by project report is unavailable. }
-    query: "SELECT t.id, CAST(t.work_date AS DATE) AS date, CAST(strftime(t.work_date, '%Y_%m') AS VARCHAR) AS month, t.project_name, t.employee_name, t.task_name, CAST(-t.hours * t.unit_amount AS DECIMAL(18,2)) AS amount, CAST(t.hours AS DECIMAL(18,3)) AS unit_amount, t.billable, t.state FROM timesheet_entries t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.project_name IS NOT NULL AND (:q IS NULL OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') ORDER BY t.work_date DESC, t.project_name, t.id"
+    query: "SELECT t.id, CAST(t.work_date AS DATE) AS date, CAST(strftime(t.work_date, '%Y_%m') AS VARCHAR) AS month, t.project_id, t.project_name, t.employee_name, t.task_id, t.task_name, CAST(-t.hours * t.unit_amount AS DECIMAL(18,2)) AS amount, CAST(t.hours AS DECIMAL(18,3)) AS unit_amount, t.billable, t.state FROM timesheet_entries t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AND t.project_name IS NOT NULL AND (:q IS NULL OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') ORDER BY t.work_date DESC, t.project_name, t.id"
+actions:
+  - id: view_project_report_entry
+    type: navigate
+    permission: timesheets.manage
+    navigate_to: /project-timesheets
+    params: { project_id: '{row.project_id}' }
