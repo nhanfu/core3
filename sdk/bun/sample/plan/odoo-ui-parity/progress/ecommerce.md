@@ -4,7 +4,30 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `26822314e63a6690e50e2f6df567e3e3e1b8c342` (Product Variant Base-Unit Pricing).
+Latest committed bounded slice before this wave: `73111dfc0b8e80305e9d3dfd043e1e45fc0d0741` (Product Compare-at Pricing).
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-WEBSITE-DESCRIPTION-001`
+
+The next uncovered source-backed catalog behavior is Odoo Website Sale's
+product `website_description`. Odoo stores HTML content on the product
+template, includes it in description search, and renders it after the product
+detail content.
+
+Core3 migrations 080/081 add durable product website-description content with
+a deterministic Mug fixture. Products, Shop, and Product Detail remain paired
+through separate page/API YAML; the APIs expose the description and search it
+with name/category, while Product Detail exposes a rich-text edit field.
+Product writes enforce `ecommerce.write`, company scope, optimistic row
+versions, a 10,000-character limit, and a script-tag rejection boundary.
+
+Focused verification: `bun test
+./test/ecommerce_product_website_description.integration.test.ts --timeout
+20000` — **3 passed, 24 assertions, 0 failures**. The adjacent Product
+Detail, Shop, Product Variants, Cart, and Compare-Price regression set passed
+**17 tests, 129 assertions**; combined **20 tests, 153 assertions, 0
+failures**. Paired Ecommerce page/API schema validation passed. The full UI
+audit is blocked by an unrelated Timesheets schema error; scoped ESLint and
+`git diff --check` passed. Runtime probes and Odoo `/shop` remain blocked.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-COMPARE-PRICE-001`
 

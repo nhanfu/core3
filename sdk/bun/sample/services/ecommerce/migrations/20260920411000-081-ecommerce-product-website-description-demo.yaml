@@ -1,0 +1,17 @@
+version: 0.0.81
+kind: data
+description: deterministic Website Sale product website description fixture
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_products
+      SET website_description = '<p>Hand-finished ceramic mug for the Core3 workspace.</p>'
+      WHERE id = 'ecommerce-product-mug';
+    down: |
+      UPDATE ecommerce_products
+      SET website_description = ''
+      WHERE id = 'ecommerce-product-mug';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

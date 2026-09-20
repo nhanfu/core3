@@ -21,6 +21,7 @@ components:
     groups:
       - { title: Product, columns: 2, fields: [{ field: name, label: Product Name }, { field: internal_reference, label: Internal Reference }, { field: product_type, label: Product Type }, { field: category, label: Category }] }
       - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: compare_at_price, label: Compare to Price }, { field: website_sequence, label: Website Sequence }, { field: is_published, label: Published, type: StatusChip }, { field: active, label: Active, type: StatusChip }] }
+      - { title: Website Description, columns: 1, fields: [{ field: website_description, label: Description, type: richtext, wide: true }] }
   - type: ListView
     variant: odoo
     source: ecommerce_product_variants

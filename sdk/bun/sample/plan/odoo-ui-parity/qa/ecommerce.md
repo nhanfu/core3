@@ -1,5 +1,34 @@
 # ecommerce QA ledger
 
+## Product Website Description (`ECOM-CATALOG-PRODUCT-WEBSITE-DESCRIPTION-001`, 2026-09-21)
+
+- Odoo source/page: pass. `website_sale/models/product_template.py` defines
+  HTML `website_description`; `controllers/main.py` includes it in description
+  search; and `views/templates.xml` renders it after product detail content.
+- Core3 lifecycle: pass for this bounded contract. Migrations 080/081 add
+  durable website-description content and a deterministic Mug fixture.
+  Products, Shop, and Product Detail use separate page/API YAML contracts;
+  search includes the description and Product Detail exposes a rich-text edit
+  field. Writes carry `ecommerce.write`, company, 10,000-character, script-tag,
+  and optimistic concurrency guards.
+- Focused verification: `bun test
+  ./test/ecommerce_product_website_description.integration.test.ts --timeout
+  20000` — **3 passed, 24 assertions, 0 failures**. Adjacent Product Detail,
+  Shop, Product Variants, Cart, and Compare-Price tests passed **17 tests, 129
+  assertions, 0 failures**; combined **20 passed, 153 assertions, 0 failures**.
+  Paired Ecommerce page/API schema validation passed.
+- UI audit: **blocked** by an unrelated Timesheets page schema error:
+  `components[0].search.categories` and `components[0].search.or locations...`
+  are rejected by the shared validator. No Timesheets files were changed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Rich HTML rendering/sanitization parity, broader actor/browser coverage, and
+  paired Odoo rendering remain open. Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-product-website-description-001/`.
+
 ## Product Compare-at Pricing (`ECOM-CATALOG-PRODUCT-COMPARE-PRICE-001`, 2026-09-21)
 
 - Odoo source/page: pass. `website_sale/models/product_template.py` defines

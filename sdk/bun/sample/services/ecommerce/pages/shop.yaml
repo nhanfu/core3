@@ -6,13 +6,14 @@ components:
     responsive_card: true
     search: { label: Search products, placeholder: Search products or categories... }
     views:
-      - { id: kanban, label: Products, icon: grid, mobile: true, group_by: '', card: { title: name, subtitle: category, fields: [{ field: sales_price, label: Price }, { field: compare_at_price, label: Compare to Price }, { field: product_type, label: Type }] } }
+      - { id: kanban, label: Products, icon: grid, mobile: true, group_by: '', card: { title: name, subtitle: category, fields: [{ field: sales_price, label: Price }, { field: compare_at_price, label: Compare to Price }, { field: website_description, label: Description }, { field: product_type, label: Type }] } }
       - { id: list, label: List, icon: table, mobile: false }
     columns:
       - { field: name, label: Product, type: PrimaryEntityCell }
       - { field: category, label: Category }
       - { field: sales_price, label: Price, align: right }
       - { field: compare_at_price, label: Compare to Price, align: right }
+      - { field: website_description, label: Description }
       - { field: product_type, label: Type }
     row_actions: menu
     header_actions: [{ id: shop_view_cart, label: View Cart, permission: ecommerce.read, variant: secondary }]

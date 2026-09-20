@@ -4,7 +4,7 @@ datasources:
     single: false
     permission: ecommerce.read
     error_states: { unauthorized: { status: 401, code: ECOMMERCE_PRODUCTS_UNAUTHENTICATED, message: Sign in to view eCommerce products. }, forbidden: { status: 403, code: ECOMMERCE_PRODUCTS_FORBIDDEN, message: You do not have access to eCommerce products. }, transport_error: { status: 503, code: ECOMMERCE_PRODUCTS_UNAVAILABLE, message: eCommerce products are temporarily unavailable. } }
-    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, compare_list_price, CASE WHEN compare_list_price > sales_price THEN compare_list_price ELSE NULL END AS compare_at_price, website_sequence, is_published, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(internal_reference, '') ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') AND (:published IS NULL OR is_published = :published) AND (:company_name IS NULL OR company_name = :company_name) ORDER BY website_sequence, name"
+    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, compare_list_price, CASE WHEN compare_list_price > sales_price THEN compare_list_price ELSE NULL END AS compare_at_price, website_description, website_sequence, is_published, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(internal_reference, '') ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%' OR COALESCE(website_description, '') ILIKE '%' || :q || '%') AND (:published IS NULL OR is_published = :published) AND (:company_name IS NULL OR company_name = :company_name) ORDER BY website_sequence, name"
   - id: ecommerce_product_published
     single: false
     permission: ecommerce.read
@@ -52,9 +52,9 @@ actions:
     mutation:
       operation: insert
       table: ecommerce_products
-      fields: [name, internal_reference, product_type, category, sales_price, compare_list_price, website_sequence, is_published, company_name]
+      fields: [name, internal_reference, product_type, category, sales_price, compare_list_price, website_description, website_sequence, is_published, company_name]
       required: [name]
-      defaults: { product_type: Goods, sales_price: 0, compare_list_price: 0, website_sequence: 10, is_published: false, company_name: My Company }
+      defaults: { product_type: Goods, sales_price: 0, compare_list_price: 0, website_description: '', website_sequence: 10, is_published: false, company_name: My Company }
       guards:
         - query: "SELECT 1 AS ok WHERE :internal_reference IS NULL OR NOT EXISTS (SELECT 1 FROM ecommerce_products WHERE internal_reference = :internal_reference)"
           status: 409
@@ -68,6 +68,10 @@ actions:
           status: 422
           code: ECOMMERCE_PRODUCT_COMPARE_PRICE_INVALID
           message: Compare to Price must be zero or greater.
+        - query: "SELECT 1 AS ok WHERE LENGTH(CAST(COALESCE(:website_description, '') AS VARCHAR)) <= 10000 AND LOWER(CAST(COALESCE(:website_description, '') AS VARCHAR)) NOT LIKE '%<script%'"
+          status: 422
+          code: ECOMMERCE_PRODUCT_WEBSITE_DESCRIPTION_INVALID
+          message: Website description must be safe text up to 10000 characters.
       result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
     fields:
       - { field: name, label: Product Name, type: text, required: true }
@@ -76,6 +80,7 @@ actions:
       - { field: category, label: eCommerce Category, type: text }
       - { field: sales_price, label: Sales Price, type: number }
       - { field: compare_list_price, label: Compare to Price, type: number, min: 0 }
+      - { field: website_description, label: Website Description, type: richtext }
       - { field: website_sequence, label: Website Sequence, type: number }
       - { field: is_published, label: Published, type: checkbox }
       - { field: company_name, label: Company, type: text, default: My Company }

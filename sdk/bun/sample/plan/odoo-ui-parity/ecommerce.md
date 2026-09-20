@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product compare-at pricing slice; module sign-off remains open)
+Status: qa-in-progress (bounded product website-description slice; module sign-off remains open)
+
+## Bounded feature — Product Website Description (`ECOM-CATALOG-PRODUCT-WEBSITE-DESCRIPTION-001`)
+
+Odoo source comparison: `website_sale/models/product_template.py` defines the
+HTML `website_description` field; `controllers/main.py` includes it in
+description search; and `views/templates.xml` renders it after the product
+detail content through `t-field="product.website_description"`.
+
+Core3 comparison: products had no durable website description or description
+search projection. Migrations 080/081 add durable product website-description
+content and a deterministic Mug fixture. Separate Products, Shop, and Product
+Detail page/API contracts expose the description, search it alongside product
+name/category, and provide a rich-text product edit field. Writes require
+`ecommerce.write`, current-company scope, optimistic row versions, a 10,000
+character boundary, and a script-tag rejection guard.
+
+Focused tests cover Odoo source tracing, page/API separation, deterministic
+fixture replay, searchable catalog/detail projections, permission/company and
+validation boundaries, stale writes, and DuckDB restart persistence in
+`test/ecommerce_product_website_description.integration.test.ts`.
+Authenticated Core3 desktop/mobile capture is blocked by the shared runtime;
+the repository audit is additionally blocked by an unrelated Timesheets page
+schema error. Supplied Odoo references return exact HTTP 404 for `/shop`.
+Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-website-description-001/`.
+This bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Product Compare-at Pricing (`ECOM-CATALOG-PRODUCT-COMPARE-PRICE-001`)
 

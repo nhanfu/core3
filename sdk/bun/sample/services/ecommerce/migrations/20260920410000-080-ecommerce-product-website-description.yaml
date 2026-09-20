@@ -1,0 +1,13 @@
+version: 0.0.80
+kind: schema
+description: durable Website Sale product website descriptions
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_products ADD COLUMN website_description VARCHAR;
+      UPDATE ecommerce_products SET website_description = '' WHERE website_description IS NULL;
+    down: ALTER TABLE ecommerce_products DROP COLUMN IF EXISTS website_description;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
