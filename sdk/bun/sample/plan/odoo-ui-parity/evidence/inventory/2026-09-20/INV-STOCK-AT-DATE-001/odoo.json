@@ -1,0 +1,2851 @@
+{
+  "feature": "INV-STOCK-AT-DATE-001",
+  "runtime": "http://127.0.0.1:8069",
+  "sourceAction": "stock.action_product_stock_view",
+  "wizardAction": "stock.action_inventory_at_date",
+  "route": "/odoo/stock-report",
+  "user": "codex@core3.local",
+  "desktop": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "url": "http://127.0.0.1:8069/odoo/stock-report",
+    "title": "Stock",
+    "loginFound": true,
+    "initial": "Inventory\nOverview\nOperations\nProducts\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nInventory at Date\nStock\n1-44 / 44\nCATEGORY\nAll\nFurniture\n37\nGoods\n7\n\t\nProduct\n\t\nUnit Cost\n\t\nTotal Value\n\t\nOn Hand\n\t\nFree to Use\n\t\nIncoming\n\t\nOutgoing\n\t\nUnit\n\t\t\n\n\n\t[DESK0005] Customizable Desk (White, Custom)\t$ 0.00\t$ 0.00\t65.00\t65.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[DESK0006] Customizable Desk (Black, Custom)\t$ 0.00\t$ 0.00\t70.00\t70.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM06] Corner Desk Right Sit\t$ 600.00\t$ 0.00\t0.00\t0.00\t0.00\t10.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[E-COM07] Large Cabinet\t$ 800.00\t$ 400,000.00\t500.00\t270.00\t0.00\t230.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[E-COM08] Storage Box\t$ 14.00\t$ 252.00\t18.00\t18.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM10] Pedal Bin\t$ 10.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM11] Cabinet with Doors\t$ 120.50\t$ 3,976.50\t33.00\t18.00\t120.00\t15.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[E-COM12] Conference Chair (Steel)\t$ 0.00\t$ 0.00\t26.00\t26.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM13] Conference Chair (Aluminium)\t$ 0.00\t$ 0.00\t30.00\t30.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0001] Desk Organizer\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0002] Desk Pad\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0003] LED Lamp\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0004] Letter Tray\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0005] Magnetic Board\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0006] Monitor Stand\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0007] Newspaper Rack\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0008] Small Shelf\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0009] Wall Shelf Unit\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0096] Customizable Desk (White, Steel)\t$ 500.00\t$ 22,500.00\t45.00\t45.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0097] Customizable Desk (Black, Steel)\t$ 500.00\t$ 25,000.00\t50.00\t50.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0098] Customizable Desk (White, Aluminium)\t$ 500.00\t$ 27,500.00\t55.00\t55.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0269] Office Chair Black\t$ 180.00\t$ 1,800.00\t10.00\t10.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0789] Individual Workplace\t$ 876.00\t$ 14,016.00\t16.00\t16.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_1118] Corner Desk Left Sit\t$ 78.00\t$ 156.00\t2.00\t2.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_5555] Cable Management Box\t$ 70.00\t$ 6,300.00\t90.00\t90.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_6666] Acoustic Bloc Screens (White)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_6667] Acoustic Bloc Screens (Black)\t$ 0.00\t$ 0.00\t16.00\t0.00\t20.00\t20.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_6741] Large Meeting Table\t$ 4,500.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_7777] Office Chair\t$ 55.00\t$ 0.00\t0.00\t0.00\t35.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_7800] Desk Combination\t$ 300.00\t$ 70,500.00\t235.00\t0.00\t0.00\t235.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_7888] Desk Stand with Screen\t$ 2,010.00\t$ 0.00\t0.00\t0.00\t125.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_8220] Four Person Desk\t$ 2,500.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_8855] Drawer\t$ 100.00\t$ 8,000.00\t80.00\t65.00\t0.00\t15.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_8888] Office Lamp\t$ 35.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_8900] Drawer Black\t$ 20.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_9001] Flipover\t$ 1,700.00\t$ 0.00\t0.00\t0.00\t10.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_9999] Office Design Software\t$ 235.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tLarge Desk (Wood)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tLarge Desk (Glass)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tLarge Desk (Metal)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tTwo-Seat Sofa (Linen)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tTwo-Seat Sofa (Velvet)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tTwo-Seat Sofa (Leather)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tWhiteboard\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\t$ 580,000.50\t1,341.00\t830.00\t310.00\t525.00\t",
+    "initialControls": [
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "Operations"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "Products"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "Reporting"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "Configuration"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "7"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "40"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "My Company (San Francisco)"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": "Toggle menu",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "New"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "545",
+        "value": "",
+        "aria": null,
+        "text": "Inventory at Date"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": "Actions menu",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": "Search...",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "name": "",
+        "value": "",
+        "aria": "Previous",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "name": "",
+        "value": "",
+        "aria": "Next",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      }
+    ],
+    "modal": "Inventory\nOverview\nOperations\nProducts\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nInventory at Date\nStock\n1-44 / 44\nCATEGORY\nAll\nFurniture\n37\nGoods\n7\n\t\nProduct\n\t\nUnit Cost\n\t\nTotal Value\n\t\nOn Hand\n\t\nFree to Use\n\t\nIncoming\n\t\nOutgoing\n\t\nUnit\n\t\t\n\n\n\t[DESK0005] Customizable Desk (White, Custom)\t$ 0.00\t$ 0.00\t65.00\t65.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[DESK0006] Customizable Desk (Black, Custom)\t$ 0.00\t$ 0.00\t70.00\t70.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM06] Corner Desk Right Sit\t$ 600.00\t$ 0.00\t0.00\t0.00\t0.00\t10.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[E-COM07] Large Cabinet\t$ 800.00\t$ 400,000.00\t500.00\t270.00\t0.00\t230.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[E-COM08] Storage Box\t$ 14.00\t$ 252.00\t18.00\t18.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM10] Pedal Bin\t$ 10.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM11] Cabinet with Doors\t$ 120.50\t$ 3,976.50\t33.00\t18.00\t120.00\t15.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[E-COM12] Conference Chair (Steel)\t$ 0.00\t$ 0.00\t26.00\t26.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[E-COM13] Conference Chair (Aluminium)\t$ 0.00\t$ 0.00\t30.00\t30.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0001] Desk Organizer\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0002] Desk Pad\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0003] LED Lamp\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0004] Letter Tray\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0005] Magnetic Board\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0006] Monitor Stand\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0007] Newspaper Rack\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0008] Small Shelf\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0009] Wall Shelf Unit\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0096] Customizable Desk (White, Steel)\t$ 500.00\t$ 22,500.00\t45.00\t45.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0097] Customizable Desk (Black, Steel)\t$ 500.00\t$ 25,000.00\t50.00\t50.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0098] Customizable Desk (White, Aluminium)\t$ 500.00\t$ 27,500.00\t55.00\t55.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0269] Office Chair Black\t$ 180.00\t$ 1,800.00\t10.00\t10.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_0789] Individual Workplace\t$ 876.00\t$ 14,016.00\t16.00\t16.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_1118] Corner Desk Left Sit\t$ 78.00\t$ 156.00\t2.00\t2.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_5555] Cable Management Box\t$ 70.00\t$ 6,300.00\t90.00\t90.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_6666] Acoustic Bloc Screens (White)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_6667] Acoustic Bloc Screens (Black)\t$ 0.00\t$ 0.00\t16.00\t0.00\t20.00\t20.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_6741] Large Meeting Table\t$ 4,500.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_7777] Office Chair\t$ 55.00\t$ 0.00\t0.00\t0.00\t35.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_7800] Desk Combination\t$ 300.00\t$ 70,500.00\t235.00\t0.00\t0.00\t235.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_7888] Desk Stand with Screen\t$ 2,010.00\t$ 0.00\t0.00\t0.00\t125.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_8220] Four Person Desk\t$ 2,500.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_8855] Drawer\t$ 100.00\t$ 8,000.00\t80.00\t65.00\t0.00\t15.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_8888] Office Lamp\t$ 35.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_8900] Drawer Black\t$ 20.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\t[FURN_9001] Flipover\t$ 1,700.00\t$ 0.00\t0.00\t0.00\t10.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n\n\t[FURN_9999] Office Design Software\t$ 235.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tLarge Desk (Wood)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tLarge Desk (Glass)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tLarge Desk (Metal)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tTwo-Seat Sofa (Linen)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tTwo-Seat Sofa (Velvet)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tTwo-Seat Sofa (Leather)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\n\tWhiteboard\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\t$ 580,000.50\t1,341.00\t830.00\t310.00\t525.00\t\nInventory at Date\nInventory at Date?\nConfirm\nCancel\nSeptember 2026\nS\nM\nT\nW\nT\nF\nS\n36\n30\n31\n1\n2\n3\n4\n5\n37\n6\n7\n8\n9\n10\n11\n12\n38\n13\n14\n15\n16\n17\n18\n19\n39\n20\n21\n22\n23\n24\n25\n26\n40\n27\n28\n29\n30\n1\n2\n3\n41\n4\n5\n6\n7\n8\n9\n10\nApply",
+    "modalControls": [
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "Operations"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "Products"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "Reporting"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "Configuration"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "7"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "40"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "My Company (San Francisco)"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": "Toggle menu",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "New"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "545",
+        "value": "",
+        "aria": null,
+        "text": "Inventory at Date"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": "Actions menu",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": "Search...",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "name": "",
+        "value": "",
+        "aria": "Previous",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "name": "",
+        "value": "",
+        "aria": "Next",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "name": "",
+        "value": "on",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      }
+    ],
+    "hasWizard": true,
+    "failed": [],
+    "width": {
+      "doc": 1440,
+      "client": 1440,
+      "inner": 1440
+    }
+  },
+  "mobile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "url": "http://127.0.0.1:8069/odoo/stock-report",
+    "title": "Stock",
+    "loginFound": true,
+    "initial": "Stock\n7\n40\nNew\nCategory\nProduct\n\t\nUnit Cost\n\t\nTotal Value\n\t\nOn Hand\n\t\nFree to Use\n\t\nIncoming\n\t\nOutgoing\n\t\nUnit\n\t\t\n\n[DESK0005] Customizable Desk (White, Custom)\t$ 0.00\t$ 0.00\t65.00\t65.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[DESK0006] Customizable Desk (Black, Custom)\t$ 0.00\t$ 0.00\t70.00\t70.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[E-COM06] Corner Desk Right Sit\t$ 600.00\t$ 0.00\t0.00\t0.00\t0.00\t10.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[E-COM07] Large Cabinet\t$ 800.00\t$ 400,000.00\t500.00\t270.00\t0.00\t230.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[E-COM08] Storage Box\t$ 14.00\t$ 252.00\t18.00\t18.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[E-COM10] Pedal Bin\t$ 10.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[E-COM11] Cabinet with Doors\t$ 120.50\t$ 3,976.50\t33.00\t18.00\t120.00\t15.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[E-COM12] Conference Chair (Steel)\t$ 0.00\t$ 0.00\t26.00\t26.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[E-COM13] Conference Chair (Aluminium)\t$ 0.00\t$ 0.00\t30.00\t30.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0001] Desk Organizer\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0002] Desk Pad\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0003] LED Lamp\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0004] Letter Tray\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0005] Magnetic Board\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0006] Monitor Stand\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0007] Newspaper Rack\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0008] Small Shelf\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0009] Wall Shelf Unit\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0096] Customizable Desk (White, Steel)\t$ 500.00\t$ 22,500.00\t45.00\t45.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0097] Customizable Desk (Black, Steel)\t$ 500.00\t$ 25,000.00\t50.00\t50.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0098] Customizable Desk (White, Aluminium)\t$ 500.00\t$ 27,500.00\t55.00\t55.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0269] Office Chair Black\t$ 180.00\t$ 1,800.00\t10.00\t10.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_0789] Individual Workplace\t$ 876.00\t$ 14,016.00\t16.00\t16.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_1118] Corner Desk Left Sit\t$ 78.00\t$ 156.00\t2.00\t2.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_5555] Cable Management Box\t$ 70.00\t$ 6,300.00\t90.00\t90.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_6666] Acoustic Bloc Screens (White)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_6667] Acoustic Bloc Screens (Black)\t$ 0.00\t$ 0.00\t16.00\t0.00\t20.00\t20.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[FURN_6741] Large Meeting Table\t$ 4,500.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_7777] Office Chair\t$ 55.00\t$ 0.00\t0.00\t0.00\t35.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[FURN_7800] Desk Combination\t$ 300.00\t$ 70,500.00\t235.00\t0.00\t0.00\t235.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[FURN_7888] Desk Stand with Screen\t$ 2,010.00\t$ 0.00\t0.00\t0.00\t125.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[FURN_8220] Four Person Desk\t$ 2,500.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_8855] Drawer\t$ 100.00\t$ 8,000.00\t80.00\t65.00\t0.00\t15.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[FURN_8888] Office Lamp\t$ 35.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_8900] Drawer Black\t$ 20.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n[FURN_9001] Flipover\t$ 1,700.00\t$ 0.00\t0.00\t0.00\t10.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\nForecast\n\t\n[FURN_9999] Office Design Software\t$ 235.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\nLarge Desk (Wood)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\nLarge Desk (Glass)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\nLarge Desk (Metal)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\nTwo-Seat Sofa (Linen)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\nTwo-Seat Sofa (Velvet)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\nTwo-Seat Sofa (Leather)\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\nWhiteboard\t$ 0.00\t$ 0.00\t0.00\t0.00\t0.00\t0.00\t\nUnits\n\t\nHistory\nReplenishment\n\t\n\t$ 580,000.50\t1,341.00\t830.00\t310.00\t525.00\t",
+    "initialControls": [
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "7"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "40"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "My Company (San Francisco)"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": "Toggle menu",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "Mitchell Admincore3_reference"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": "New"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "545",
+        "value": "",
+        "aria": null,
+        "text": "Inventory at Date"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": "Actions menu",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "name": "",
+        "value": "",
+        "aria": "Previous",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "name": "",
+        "value": "",
+        "aria": "Next",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_product_forecast_report",
+        "value": "",
+        "aria": null,
+        "text": "Forecast"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "513",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "name": "action_view_orderpoints",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      }
+    ],
+    "modal": "",
+    "modalControls": [],
+    "hasWizard": false,
+    "failed": [],
+    "width": {
+      "doc": 390,
+      "client": 390,
+      "inner": 390
+    }
+  }
+}

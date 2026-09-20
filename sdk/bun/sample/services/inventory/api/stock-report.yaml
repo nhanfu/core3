@@ -1,5 +1,11 @@
 page: { id: stock-report }
 datasources:
+  - id: inventory_stock_report_context
+    single: true
+    permission: inventory.read
+    error_states:
+      transport_error: { status: 503, code: INVENTORY_STOCK_REPORT_CONTEXT_UNAVAILABLE, message: Inventory report context is temporarily unavailable. }
+    query: "SELECT id, report_name, CAST(inventory_date AS VARCHAR) AS selected_date, requested_by, company_name, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM inventory_stock_report_runs WHERE company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') ORDER BY generated_at DESC, id DESC LIMIT 1"
   - id: inventory_stock_report_categories
     single: false
     permission: inventory.read
@@ -19,6 +25,7 @@ datasources:
       FROM inventory_stock_report
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'no_results', 'not_found') THEN 0 ELSE 1 END = 1
         AND active = TRUE
+        AND stock_date <= COALESCE((SELECT inventory_date FROM inventory_stock_report_runs WHERE company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') ORDER BY generated_at DESC, id DESC LIMIT 1), DATE '2026-01-15')
         AND (:q IS NULL OR default_code ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%' OR category_name ILIKE '%' || :q || '%')
         AND (:category_name IS NULL OR :category_name = '' OR category_name = :category_name)
       ORDER BY default_code, product_name, id
@@ -31,11 +38,20 @@ actions:
     handler: yaml_mutation
     operation: report
     fields:
-      - { field: inventory_date, label: Inventory Date, type: date, required: true, default: '2026-01-15' }
+      - { field: inventory_date, label: Inventory at Date, type: text, required: true, default: '2026-01-15', placeholder: 'YYYY-MM-DD' }
+    refresh: [inventory_stock_report_context, inventory_stock_report]
     mutation:
+      operation: insert
+      table: inventory_stock_report_runs
+      fields: [inventory_date]
+      defaults: { report_name: Inventory at Date, requested_by: Admin User, company_name: Core3 Demo Company, generated_at: '2026-01-15 00:00:00', row_version: 1 }
+      before_steps:
+        - query: "SELECT 'inventory-stock-report-run-' || LPAD(CAST(COUNT(*) + 1 AS VARCHAR), 6, '0') AS id FROM inventory_stock_report_runs WHERE company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')"
+          assign: true
       guards:
-        - { query: "SELECT 1 AS ok WHERE CAST(:inventory_date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2100-12-31'", status: 422, code: INVENTORY_STOCK_REPORT_DATE_INVALID, message: Enter an inventory date between 2000 and 2100. }
-      result: { query: "SELECT 'Stock report date selected: ' || CAST(:inventory_date AS VARCHAR) AS message" }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:inventory_date AS DATE) IS NOT NULL AND TRY_CAST(:inventory_date AS DATE) BETWEEN DATE '2000-01-01' AND DATE '2100-12-31'", status: 422, code: INVENTORY_STOCK_REPORT_DATE_INVALID, message: Enter an inventory date between 2000 and 2100. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: INVENTORY_STOCK_REPORT_COMPANY, message: The report context must belong to the current company. }
+      result: { query: "SELECT id, 'Inventory report context set to ' || CAST(inventory_date AS VARCHAR) AS message, CAST(inventory_date AS VARCHAR) AS selected_date, row_version FROM inventory_stock_report_runs WHERE id = :id" }
   - id: view_inventory_stock_history
     type: navigate
     permission: inventory.read

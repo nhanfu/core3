@@ -932,3 +932,27 @@ Odoo view gates it with `stock.group_tracking_lot`; no Odoo mutation or visual
 sign-off is claimed. The remaining parity gap is the full Odoo wizard behavior
 for selecting an existing result package/package type and line-level package
 semantics beyond this deterministic transfer path.
+
+## Reporting > Stock Inventory at Date bounded slice (2026-09-20)
+
+Feature `INV-STOCK-AT-DATE-001` closes the smallest remaining report/context
+gap. Odoo's `stock.menu_product_stock` opens `stock.action_product_stock_view`,
+whose list header invokes `stock.action_inventory_at_date` on the transient
+`stock.quantity.history` wizard. The wizard accepts `inventory_datetime` and
+reopens the stock report with `to_date` in context.
+
+Core3 keeps `pages/stock-report.yaml` layout-only and extends the separate
+`api/stock-report.yaml` with `inventory_stock_report_context` and a durable
+`inventory_stock_at_date` server-form action. Migration `0.0.23` seeds a
+deterministic 2026-01-15 context, records ISO date selections in
+`inventory_stock_report_runs`, and filters the real stock datasource by the
+latest company-scoped context. The page's `StatRow` shows the selected date and
+request actor; the action refreshes the context and report sources.
+
+Focused coverage proves idempotent migration, seeded context, 2026-01-14 empty
+and 2026-01-16 restored report rows, invalid-date 422, wrong-company 403,
+unauthorized page 403, and file-backed restart persistence. Fresh authenticated
+Core3 desktop/mobile evidence and paired Odoo report/wizard evidence are under
+`evidence/inventory/2026-09-20/INV-STOCK-AT-DATE-001/`. Odoo's mobile 390px
+report does not expose the date control in its responsive action surface; this
+is recorded as an exact comparison boundary, not claimed as parity.

@@ -1,6 +1,12 @@
 title: Stock
 page: { id: stock-report, route: /stock-report, breadcrumb: [Supply Chain, Inventory, Reporting, Stock], auth: { require: [inventory.read] } }
 components:
+  - type: StatRow
+    source: inventory_stock_report_context
+    title: Inventory at Date
+    stats:
+      - { label: Selected Date, field: selected_date }
+      - { label: Requested by, field: requested_by }
   - type: ListView
     variant: odoo
     source: inventory_stock_report

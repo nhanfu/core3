@@ -265,3 +265,27 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
   the source group gate; no Odoo execution or false parity sign-off is claimed.
 - Status: bounded Package Transfers evidence gate complete; broader Inventory
   module sign-off remains open.
+
+## `INV-STOCK-AT-DATE-001` — Stock report Inventory at Date (2026-09-20)
+
+- Compared Odoo `stock.menu_product_stock` / `stock.action_product_stock_view`
+  and the `stock.action_inventory_at_date` transient wizard. Odoo's Confirm
+  path reopens the product stock list with `to_date` context.
+- Replaced the Core3 Stock report's message-only date action with a durable
+  `inventory_stock_report_runs` context migration `0.0.23`, an API-owned
+  `inventory_stock_report_context` datasource, and a page-owned `StatRow`.
+  The page/API split remains joined by `page.id: stock-report`.
+- The selected company context now filters the real stock datasource. The
+  focused test proves 2026-01-14 empty, 2026-01-16 restored rows, invalid-date
+  422, wrong-company 403, unauthorized page 403, idempotent migration, and
+  file-backed restart persistence: 4 tests / 50 assertions.
+- Fresh authenticated Core3 browser evidence is under
+  `evidence/inventory/2026-09-20/INV-STOCK-AT-DATE-001/`; desktop/mobile
+  Save/reload retained 2026-01-16 and 10 rows with no failed requests or
+  overflow.
+- Fresh authenticated Odoo Stock report evidence renders at desktop/mobile;
+  desktop opens the wizard, while the 390px responsive surface does not expose
+  the date control. This exact responsive comparison boundary is recorded in
+  `odoo.json`; no Odoo write was made.
+- Status: bounded report-context slice complete for review; full Inventory
+  sign-off remains open.

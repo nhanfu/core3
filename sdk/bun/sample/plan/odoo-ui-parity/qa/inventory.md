@@ -367,3 +367,29 @@ reference user's source permission. Inventory module sign-off remains open.
 QA disposition: PASS for the bounded Core3 annual-settings lifecycle and
 permission/restart contract; PARTIAL for Odoo visual parity because the supplied
 reference action is server-blocked. Full Inventory sign-off remains open.
+
+## Stock report Inventory at Date QA — `INV-STOCK-AT-DATE-001` (2026-09-20)
+
+- Odoo source/menu/action comparison: `stock.menu_product_stock` →
+  `stock.action_product_stock_view`; the header wizard is
+  `stock.action_inventory_at_date` on `stock.quantity.history` and passes
+  `to_date` when reopening the stock list.
+- Core3 implementation: `pages/stock-report.yaml` remains layout-only; API
+  `stock-report.yaml` owns the context datasource and date server form. Migration
+  `0.0.23` seeds a deterministic 2026-01-15 run and persists later date choices
+  in `inventory_stock_report_runs`.
+- Focused test: `bun test test/inventory_stock_report.integration.test.ts
+  --timeout 20000` — 4 passed, 50 assertions. It covers filtering, invalid
+  dates, company and unauthorized boundaries, idempotence, and restart.
+- Core3 evidence: `evidence/inventory/2026-09-20/INV-STOCK-AT-DATE-001/`.
+  Authenticated desktop/mobile Save/reload retained 2026-01-16 and 10 rows;
+  API responses were 200, failed requests empty, and widths were 1440/1440 and
+  390/390.
+- Odoo evidence: authenticated Stock report rendered at both viewports with no
+  failed requests. Desktop opened the date wizard. At 390px the responsive
+  action surface did not expose the date control; `odoo.json` and the mobile
+  capture preserve that exact boundary. No Odoo write was made.
+
+QA disposition: PASS for the bounded Core3 date-context lifecycle and
+permission/restart contract; PARTIAL for responsive Odoo wizard comparison.
+Full Inventory sign-off remains open.

@@ -1,0 +1,29 @@
+version: 0.0.23
+kind: schema
+description: Durable Inventory at Date report context
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_stock_report_runs (
+        id VARCHAR PRIMARY KEY,
+        report_name VARCHAR NOT NULL DEFAULT 'Inventory at Date',
+        inventory_date DATE NOT NULL,
+        requested_by VARCHAR NOT NULL DEFAULT 'Admin User',
+        company_name VARCHAR NOT NULL DEFAULT 'Core3 Demo Company',
+        generated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        row_version BIGINT NOT NULL DEFAULT 1
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_stock_report_runs_context
+        ON inventory_stock_report_runs(company_name, generated_at, id);
+      INSERT OR IGNORE INTO inventory_stock_report_runs(
+        id, report_name, inventory_date, requested_by, company_name, generated_at, row_version
+      ) VALUES (
+        'inventory-stock-report-run-000001', 'Inventory at Date', DATE '2026-01-15',
+        'Admin User', 'Core3 Demo Company', TIMESTAMP '2026-01-15 00:00:00', 1
+      );
+    down: |
+      DROP TABLE IF EXISTS inventory_stock_report_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

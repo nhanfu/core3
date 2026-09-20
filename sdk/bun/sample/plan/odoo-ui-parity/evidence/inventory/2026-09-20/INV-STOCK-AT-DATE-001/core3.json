@@ -1,0 +1,2891 @@
+{
+  "feature": "INV-STOCK-AT-DATE-001",
+  "desktop": {
+    "runtime": "http://127.0.0.1:4541",
+    "user": "admin@tms.local",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "initial": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nInventory at Date\n\nSelected Date\n\n2026-01-15\n\nRequested by\n\nAdmin User\n\nInventory at Date\nSupply Chain / Inventory / Reporting / Stock\n1-10 / 10\n‹\n›\nProduct\n\tUnit Cost\n\tTotal Value\n\tOn Hand\n\tFree to Use\n\tIncoming\n\tOutgoing\n\tForecasted\n\tUnit\n\t\n\n[DESK0005] Customizable Desk (White, Custom)\n\t0\t0\t65\t65\t0\t0\t65\tUnits\tHistoryReplenishment\n\n[DESK0006] Customizable Desk (Black, Custom)\n\t0\t0\t70\t70\t0\t0\t70\tUnits\tHistoryReplenishment\n\n[E-COM06] Corner Desk Right Sit\n\t600\t0\t0\t0\t0\t10\t-10\tUnits\tHistoryReplenishment\n\n[E-COM07] Large Cabinet\n\t800\t400000\t500\t270\t0\t230\t270\tUnits\tHistoryReplenishment\n\n[E-COM08] Storage Box\n\t14\t252\t18\t18\t0\t0\t18\tUnits\tHistoryReplenishment\n\n[E-COM10] Pedal Bin\n\t10\t0\t0\t0\t0\t0\t0\tUnits\tHistoryReplenishment\n\n[E-COM11] Cabinet with Doors\n\t120.5\t3976.5\t33\t18\t120\t15\t138\tUnits\tHistoryReplenishment\n\n[FURN_1118] Corner Desk Left Sit\n\t78\t156\t2\t0\t0\t3\t-1\tUnits\tHistoryReplenishment\n\n[FURN_2100] Drawer Black\n\t20\t900\t45\t40\t0\t5\t40\tUnits\tHistoryReplenishment\n\n[FURN_6667] Acoustic Bloc Screens (Black)\n\t0\t0\t16\t0\t20\t20\t16\tUnits\tHistoryReplenishment",
+    "initialControls": [
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Switch application",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close application launcher",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close application launcher",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Search applications",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ContactsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "OrdersSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ChatSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3 AgentSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "CRMSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Point of SaleSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SubscriptionsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "RentalSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "AccountingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ExpensesSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "DocumentsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ApprovalsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Spreadsheet / DashboardsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Inventory"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ManufacturingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "PurchaseSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "MaintenanceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Field ServiceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "HelpdeskSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "QualitySoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "PLMSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "EmployeesSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "RecruitmentSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Time OffSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "AppraisalsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ReferralsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "FleetSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Email MarketingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SMS MarketingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "EventsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SurveysSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Marketing AutomationSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ProjectSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "TimesheetsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "WebsiteSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "eCommerceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "BlogSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ForumSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Live ChatSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Transfers"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Receipts"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Deliveries"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Internal"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Physical Inventory"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Adjustments"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Scrap Orders"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Procurement"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Reporting"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Stock"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Moves History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Products"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Lots / Serial Numbers"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Packages"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Configuration"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Settings"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Warehouses"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Locations"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Operations Types"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Inventory Analysis"
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Ask Core3 anything or search pages",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Messages",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Notifications",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Use dark theme",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Admin User",
+        "text": "AU"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3 VN"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "My profile"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Preferences"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Change password"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Sign out"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Inventory at Date"
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Search stock",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Previous page",
+        "text": "‹"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Next page",
+        "text": "›"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Product"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Unit Cost"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Total Value"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "On Hand"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Free to Use"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Incoming"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Outgoing"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Forecasted"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Unit"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Mark all read"
+      }
+    ],
+    "modal": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nInventory at Date\n\nSelected Date\n\n2026-01-15\n\nRequested by\n\nAdmin User\n\nInventory at Date\nSupply Chain / Inventory / Reporting / Stock\n1-10 / 10\n‹\n›\nProduct\n\tUnit Cost\n\tTotal Value\n\tOn Hand\n\tFree to Use\n\tIncoming\n\tOutgoing\n\tForecasted\n\tUnit\n\t\n\n[DESK0005] Customizable Desk (White, Custom)\n\t0\t0\t65\t65\t0\t0\t65\tUnits\tHistoryReplenishment\n\n[DESK0006] Customizable Desk (Black, Custom)\n\t0\t0\t70\t70\t0\t0\t70\tUnits\tHistoryReplenishment\n\n[E-COM06] Corner Desk Right Sit\n\t600\t0\t0\t0\t0\t10\t-10\tUnits\tHistoryReplenishment\n\n[E-COM07] Large Cabinet\n\t800\t400000\t500\t270\t0\t230\t270\tUnits\tHistoryReplenishment\n\n[E-COM08] Storage Box\n\t14\t252\t18\t18\t0\t0\t18\tUnits\tHistoryReplenishment\n\n[E-COM10] Pedal Bin\n\t10\t0\t0\t0\t0\t0\t0\tUnits\tHistoryReplenishment\n\n[E-COM11] Cabinet with Doors\n\t120.5\t3976.5\t33\t18\t120\t15\t138\tUnits\tHistoryReplenishment\n\n[FURN_1118] Corner Desk Left Sit\n\t78\t156\t2\t0\t0\t3\t-1\tUnits\tHistoryReplenishment\n\n[FURN_2100] Drawer Black\n\t20\t900\t45\t40\t0\t5\t40\tUnits\tHistoryReplenishment\n\n[FURN_6667] Acoustic Bloc Screens (Black)\n\t0\t0\t16\t0\t20\t20\t16\tUnits\tHistoryReplenishment\nInventory at Date\nInventory at Date *\nCancel\nSave",
+    "modalControls": [
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Switch application",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close application launcher",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close application launcher",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Search applications",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ContactsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "OrdersSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ChatSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3 AgentSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "CRMSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Point of SaleSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SubscriptionsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "RentalSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "AccountingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ExpensesSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "DocumentsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ApprovalsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Spreadsheet / DashboardsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Inventory"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ManufacturingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "PurchaseSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "MaintenanceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Field ServiceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "HelpdeskSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "QualitySoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "PLMSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "EmployeesSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "RecruitmentSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Time OffSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "AppraisalsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ReferralsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "FleetSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Email MarketingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SMS MarketingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "EventsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SurveysSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Marketing AutomationSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ProjectSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "TimesheetsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "WebsiteSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "eCommerceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "BlogSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ForumSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Live ChatSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Transfers"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Receipts"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Deliveries"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Internal"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Physical Inventory"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Adjustments"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Scrap Orders"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Procurement"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Reporting"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Stock"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Moves History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Products"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Lots / Serial Numbers"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Packages"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Configuration"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Settings"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Warehouses"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Locations"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Operations Types"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Inventory Analysis"
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Ask Core3 anything or search pages",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Messages",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Notifications",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Use dark theme",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Admin User",
+        "text": "AU"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3 VN"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "My profile"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Preferences"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Change password"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Sign out"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Inventory at Date"
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Search stock",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Previous page",
+        "text": "‹"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Next page",
+        "text": "›"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Product"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Unit Cost"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Total Value"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "On Hand"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Free to Use"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Incoming"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Outgoing"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Forecasted"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Unit"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Mark all read"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "value": "2026-01-15",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Cancel"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Save"
+      }
+    ],
+    "after": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nInventory at Date\n\nSelected Date\n\n2026-01-14\n\nRequested by\n\nAdmin User\n\nInventory at Date\nSupply Chain / Inventory / Reporting / Stock\n0-0 / 0\n‹\n›\nProduct\n\tUnit Cost\n\tTotal Value\n\tOn Hand\n\tFree to Use\n\tIncoming\n\tOutgoing\n\tForecasted\n\tUnit\n\t\n\nNo stock to show\n\nCreate storable products or adjust your filters to see stock information.",
+    "emptyAfter": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nInventory at Date\n\nSelected Date\n\n2026-01-16\n\nRequested by\n\nAdmin User\n\nInventory at Date\nSupply Chain / Inventory / Reporting / Stock\n1-10 / 10\n‹\n›\nProduct\n\tUnit Cost\n\tTotal Value\n\tOn Hand\n\tFree to Use\n\tIncoming\n\tOutgoing\n\tForecasted\n\tUnit\n\t\n\n[DESK0005] Customizable Desk (White, Custom)\n\t0\t0\t65\t65\t0\t0\t65\tUnits\tHistoryReplenishment\n\n[DESK0006] Customizable Desk (Black, Custom)\n\t0\t0\t70\t70\t0\t0\t70\tUnits\tHistoryReplenishment\n\n[E-COM06] Corner Desk Right Sit\n\t600\t0\t0\t0\t0\t10\t-10\tUnits\tHistoryReplenishment\n\n[E-COM07] Large Cabinet\n\t800\t400000\t500\t270\t0\t230\t270\tUnits\tHistoryReplenishment\n\n[E-COM08] Storage Box\n\t14\t252\t18\t18\t0\t0\t18\tUnits\tHistoryReplenishment\n\n[E-COM10] Pedal Bin\n\t10\t0\t0\t0\t0\t0\t0\tUnits\tHistoryReplenishment\n\n[E-COM11] Cabinet with Doors\n\t120.5\t3976.5\t33\t18\t120\t15\t138\tUnits\tHistoryReplenishment\n\n[FURN_1118] Corner Desk Left Sit\n\t78\t156\t2\t0\t0\t3\t-1\tUnits\tHistoryReplenishment\n\n[FURN_2100] Drawer Black\n\t20\t900\t45\t40\t0\t5\t40\tUnits\tHistoryReplenishment\n\n[FURN_6667] Acoustic Bloc Screens (Black)\n\t0\t0\t16\t0\t20\t20\t16\tUnits\tHistoryReplenishment",
+    "reload": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nInventory at Date\n\nSelected Date\n\n2026-01-16\n\nRequested by\n\nAdmin User\n\nInventory at Date\nSupply Chain / Inventory / Reporting / Stock\n1-10 / 10\n‹\n›\nProduct\n\tUnit Cost\n\tTotal Value\n\tOn Hand\n\tFree to Use\n\tIncoming\n\tOutgoing\n\tForecasted\n\tUnit\n\t\n\n[DESK0005] Customizable Desk (White, Custom)\n\t0\t0\t65\t65\t0\t0\t65\tUnits\tHistoryReplenishment\n\n[DESK0006] Customizable Desk (Black, Custom)\n\t0\t0\t70\t70\t0\t0\t70\tUnits\tHistoryReplenishment\n\n[E-COM06] Corner Desk Right Sit\n\t600\t0\t0\t0\t0\t10\t-10\tUnits\tHistoryReplenishment\n\n[E-COM07] Large Cabinet\n\t800\t400000\t500\t270\t0\t230\t270\tUnits\tHistoryReplenishment\n\n[E-COM08] Storage Box\n\t14\t252\t18\t18\t0\t0\t18\tUnits\tHistoryReplenishment\n\n[E-COM10] Pedal Bin\n\t10\t0\t0\t0\t0\t0\t0\tUnits\tHistoryReplenishment\n\n[E-COM11] Cabinet with Doors\n\t120.5\t3976.5\t33\t18\t120\t15\t138\tUnits\tHistoryReplenishment\n\n[FURN_1118] Corner Desk Left Sit\n\t78\t156\t2\t0\t0\t3\t-1\tUnits\tHistoryReplenishment\n\n[FURN_2100] Drawer Black\n\t20\t900\t45\t40\t0\t5\t40\tUnits\tHistoryReplenishment\n\n[FURN_6667] Acoustic Bloc Screens (Black)\n\t0\t0\t16\t0\t20\t20\t16\tUnits\tHistoryReplenishment",
+    "persisted": {
+      "selectedDate": "2026-01-16",
+      "rows": true,
+      "empty": false
+    },
+    "api": [
+      {
+        "url": "http://127.0.0.1:4541/api/pages/stock-report?lc=en",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:4541/api/mutate",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:4541/api/mutate",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:4541/api/pages/stock-report?lc=en",
+        "status": 200
+      }
+    ],
+    "failed": [],
+    "width": {
+      "doc": 1440,
+      "client": 1440,
+      "inner": 1440
+    }
+  },
+  "mobile": {
+    "runtime": "http://127.0.0.1:4541",
+    "user": "admin@tms.local",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "initial": "AU\nInventory at Date\n\nSelected Date\n\n2026-01-16\n\nRequested by\n\nAdmin User\n\nInventory at Date\nStock\n1-10 / 10\n‹\n›\n[DESK0005] Customizable Desk (White, Custom)\n\nDESK0005\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n65\nFree to Use\n65\nIncoming\n0\nOutgoing\n0\nForecasted\n65\n[DESK0006] Customizable Desk (Black, Custom)\n\nDESK0006\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n70\nFree to Use\n70\nIncoming\n0\nOutgoing\n0\nForecasted\n70\n[E-COM06] Corner Desk Right Sit\n\nE-COM06\n\nUnit Cost\n600\nTotal Value\n0\nOn Hand\n0\nFree to Use\n0\nIncoming\n0\nOutgoing\n10\nForecasted\n-10\n[E-COM07] Large Cabinet\n\nE-COM07\n\nUnit Cost\n800\nTotal Value\n400000\nOn Hand\n500\nFree to Use\n270\nIncoming\n0\nOutgoing\n230\nForecasted\n270\n[E-COM08] Storage Box\n\nE-COM08\n\nUnit Cost\n14\nTotal Value\n252\nOn Hand\n18\nFree to Use\n18\nIncoming\n0\nOutgoing\n0\nForecasted\n18\n[E-COM10] Pedal Bin\n\nE-COM10\n\nUnit Cost\n10\nTotal Value\n0\nOn Hand\n0\nFree to Use\n0\nIncoming\n0\nOutgoing\n0\nForecasted\n0\n[E-COM11] Cabinet with Doors\n\nE-COM11\n\nUnit Cost\n120.5\nTotal Value\n3976.5\nOn Hand\n33\nFree to Use\n18\nIncoming\n120\nOutgoing\n15\nForecasted\n138\n[FURN_1118] Corner Desk Left Sit\n\nFURN_1118\n\nUnit Cost\n78\nTotal Value\n156\nOn Hand\n2\nFree to Use\n0\nIncoming\n0\nOutgoing\n3\nForecasted\n-1\n[FURN_2100] Drawer Black\n\nFURN_2100\n\nUnit Cost\n20\nTotal Value\n900\nOn Hand\n45\nFree to Use\n40\nIncoming\n0\nOutgoing\n5\nForecasted\n40\n[FURN_6667] Acoustic Bloc Screens (Black)\n\nFURN_6667\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n16\nFree to Use\n0\nIncoming\n20\nOutgoing\n20\nForecasted\n16",
+    "initialControls": [
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Switch application",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close application launcher",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close application launcher",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Search applications",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ContactsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "OrdersSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ChatSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3 AgentSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "CRMSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Point of SaleSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SubscriptionsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "RentalSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "AccountingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ExpensesSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "DocumentsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ApprovalsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Spreadsheet / DashboardsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Inventory"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ManufacturingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "PurchaseSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "MaintenanceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Field ServiceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "HelpdeskSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "QualitySoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "PLMSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "EmployeesSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "RecruitmentSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Time OffSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "AppraisalsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ReferralsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "FleetSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Email MarketingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SMS MarketingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "EventsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SurveysSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Marketing AutomationSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ProjectSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "TimesheetsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "WebsiteSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "eCommerceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "BlogSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ForumSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Live ChatSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Transfers"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Receipts"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Deliveries"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Internal"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Physical Inventory"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Adjustments"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Scrap Orders"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Procurement"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Reporting"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Stock"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Moves History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Products"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Lots / Serial Numbers"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Packages"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Configuration"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Settings"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Warehouses"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Locations"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Operations Types"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Inventory Analysis"
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Ask Core3 anything or search pages",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Messages",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Notifications",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Use dark theme",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Admin User",
+        "text": "AU"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3 VN"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "My profile"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Preferences"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Change password"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Sign out"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Inventory at Date"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Search stock",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Search stock",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Previous page",
+        "text": "‹"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Next page",
+        "text": "›"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Mark all read"
+      }
+    ],
+    "modal": "AU\nInventory at Date\n\nSelected Date\n\n2026-01-16\n\nRequested by\n\nAdmin User\n\nInventory at Date\nStock\n1-10 / 10\n‹\n›\n[DESK0005] Customizable Desk (White, Custom)\n\nDESK0005\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n65\nFree to Use\n65\nIncoming\n0\nOutgoing\n0\nForecasted\n65\n[DESK0006] Customizable Desk (Black, Custom)\n\nDESK0006\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n70\nFree to Use\n70\nIncoming\n0\nOutgoing\n0\nForecasted\n70\n[E-COM06] Corner Desk Right Sit\n\nE-COM06\n\nUnit Cost\n600\nTotal Value\n0\nOn Hand\n0\nFree to Use\n0\nIncoming\n0\nOutgoing\n10\nForecasted\n-10\n[E-COM07] Large Cabinet\n\nE-COM07\n\nUnit Cost\n800\nTotal Value\n400000\nOn Hand\n500\nFree to Use\n270\nIncoming\n0\nOutgoing\n230\nForecasted\n270\n[E-COM08] Storage Box\n\nE-COM08\n\nUnit Cost\n14\nTotal Value\n252\nOn Hand\n18\nFree to Use\n18\nIncoming\n0\nOutgoing\n0\nForecasted\n18\n[E-COM10] Pedal Bin\n\nE-COM10\n\nUnit Cost\n10\nTotal Value\n0\nOn Hand\n0\nFree to Use\n0\nIncoming\n0\nOutgoing\n0\nForecasted\n0\n[E-COM11] Cabinet with Doors\n\nE-COM11\n\nUnit Cost\n120.5\nTotal Value\n3976.5\nOn Hand\n33\nFree to Use\n18\nIncoming\n120\nOutgoing\n15\nForecasted\n138\n[FURN_1118] Corner Desk Left Sit\n\nFURN_1118\n\nUnit Cost\n78\nTotal Value\n156\nOn Hand\n2\nFree to Use\n0\nIncoming\n0\nOutgoing\n3\nForecasted\n-1\n[FURN_2100] Drawer Black\n\nFURN_2100\n\nUnit Cost\n20\nTotal Value\n900\nOn Hand\n45\nFree to Use\n40\nIncoming\n0\nOutgoing\n5\nForecasted\n40\n[FURN_6667] Acoustic Bloc Screens (Black)\n\nFURN_6667\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n16\nFree to Use\n0\nIncoming\n20\nOutgoing\n20\nForecasted\n16\nInventory at Date\nInventory at Date *\nCancel\nSave",
+    "modalControls": [
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Switch application",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close application launcher",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close application launcher",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Search applications",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ContactsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "OrdersSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ChatSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3 AgentSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "CRMSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Point of SaleSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SubscriptionsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "RentalSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "AccountingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ExpensesSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "DocumentsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ApprovalsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Spreadsheet / DashboardsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Inventory"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ManufacturingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "PurchaseSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "MaintenanceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Field ServiceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "HelpdeskSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "QualitySoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "PLMSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "EmployeesSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "RecruitmentSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Time OffSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "AppraisalsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ReferralsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "FleetSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Email MarketingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SMS MarketingSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "EventsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "SurveysSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Marketing AutomationSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ProjectSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "TimesheetsSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "WebsiteSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "eCommerceSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "BlogSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "ForumSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Live ChatSoon"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Transfers"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Receipts"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Deliveries"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Internal"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Physical Inventory"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Adjustments"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Scrap Orders"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Procurement"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Replenishment"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Reporting"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Stock"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Moves History"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Products"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Lots / Serial Numbers"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Packages"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Configuration"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Settings"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Warehouses"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Locations"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Operations Types"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Inventory Analysis"
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Ask Core3 anything or search pages",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Messages",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Notifications",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Use dark theme",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Admin User",
+        "text": "AU"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Core3 VN"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "My profile"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Preferences"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Change password"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Sign out"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Inventory at Date"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Search stock",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "value": "",
+        "aria": "Search stock",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Previous page",
+        "text": "‹"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": "Next page",
+        "text": "›"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "submit",
+        "value": "",
+        "aria": null,
+        "text": "Mark all read"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": "Close",
+        "text": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "value": "2026-01-15",
+        "aria": null,
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Cancel"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "value": "",
+        "aria": null,
+        "text": "Save"
+      }
+    ],
+    "after": "AU\nInventory at Date\n\nSelected Date\n\n2026-01-16\n\nRequested by\n\nAdmin User\n\nInventory at Date\nStock\n1-10 / 10\n‹\n›\n[DESK0005] Customizable Desk (White, Custom)\n\nDESK0005\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n65\nFree to Use\n65\nIncoming\n0\nOutgoing\n0\nForecasted\n65\n[DESK0006] Customizable Desk (Black, Custom)\n\nDESK0006\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n70\nFree to Use\n70\nIncoming\n0\nOutgoing\n0\nForecasted\n70\n[E-COM06] Corner Desk Right Sit\n\nE-COM06\n\nUnit Cost\n600\nTotal Value\n0\nOn Hand\n0\nFree to Use\n0\nIncoming\n0\nOutgoing\n10\nForecasted\n-10\n[E-COM07] Large Cabinet\n\nE-COM07\n\nUnit Cost\n800\nTotal Value\n400000\nOn Hand\n500\nFree to Use\n270\nIncoming\n0\nOutgoing\n230\nForecasted\n270\n[E-COM08] Storage Box\n\nE-COM08\n\nUnit Cost\n14\nTotal Value\n252\nOn Hand\n18\nFree to Use\n18\nIncoming\n0\nOutgoing\n0\nForecasted\n18\n[E-COM10] Pedal Bin\n\nE-COM10\n\nUnit Cost\n10\nTotal Value\n0\nOn Hand\n0\nFree to Use\n0\nIncoming\n0\nOutgoing\n0\nForecasted\n0\n[E-COM11] Cabinet with Doors\n\nE-COM11\n\nUnit Cost\n120.5\nTotal Value\n3976.5\nOn Hand\n33\nFree to Use\n18\nIncoming\n120\nOutgoing\n15\nForecasted\n138\n[FURN_1118] Corner Desk Left Sit\n\nFURN_1118\n\nUnit Cost\n78\nTotal Value\n156\nOn Hand\n2\nFree to Use\n0\nIncoming\n0\nOutgoing\n3\nForecasted\n-1\n[FURN_2100] Drawer Black\n\nFURN_2100\n\nUnit Cost\n20\nTotal Value\n900\nOn Hand\n45\nFree to Use\n40\nIncoming\n0\nOutgoing\n5\nForecasted\n40\n[FURN_6667] Acoustic Bloc Screens (Black)\n\nFURN_6667\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n16\nFree to Use\n0\nIncoming\n20\nOutgoing\n20\nForecasted\n16",
+    "emptyAfter": null,
+    "reload": "AU\nInventory at Date\n\nSelected Date\n\n2026-01-16\n\nRequested by\n\nAdmin User\n\nInventory at Date\nStock\n1-10 / 10\n‹\n›\n[DESK0005] Customizable Desk (White, Custom)\n\nDESK0005\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n65\nFree to Use\n65\nIncoming\n0\nOutgoing\n0\nForecasted\n65\n[DESK0006] Customizable Desk (Black, Custom)\n\nDESK0006\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n70\nFree to Use\n70\nIncoming\n0\nOutgoing\n0\nForecasted\n70\n[E-COM06] Corner Desk Right Sit\n\nE-COM06\n\nUnit Cost\n600\nTotal Value\n0\nOn Hand\n0\nFree to Use\n0\nIncoming\n0\nOutgoing\n10\nForecasted\n-10\n[E-COM07] Large Cabinet\n\nE-COM07\n\nUnit Cost\n800\nTotal Value\n400000\nOn Hand\n500\nFree to Use\n270\nIncoming\n0\nOutgoing\n230\nForecasted\n270\n[E-COM08] Storage Box\n\nE-COM08\n\nUnit Cost\n14\nTotal Value\n252\nOn Hand\n18\nFree to Use\n18\nIncoming\n0\nOutgoing\n0\nForecasted\n18\n[E-COM10] Pedal Bin\n\nE-COM10\n\nUnit Cost\n10\nTotal Value\n0\nOn Hand\n0\nFree to Use\n0\nIncoming\n0\nOutgoing\n0\nForecasted\n0\n[E-COM11] Cabinet with Doors\n\nE-COM11\n\nUnit Cost\n120.5\nTotal Value\n3976.5\nOn Hand\n33\nFree to Use\n18\nIncoming\n120\nOutgoing\n15\nForecasted\n138\n[FURN_1118] Corner Desk Left Sit\n\nFURN_1118\n\nUnit Cost\n78\nTotal Value\n156\nOn Hand\n2\nFree to Use\n0\nIncoming\n0\nOutgoing\n3\nForecasted\n-1\n[FURN_2100] Drawer Black\n\nFURN_2100\n\nUnit Cost\n20\nTotal Value\n900\nOn Hand\n45\nFree to Use\n40\nIncoming\n0\nOutgoing\n5\nForecasted\n40\n[FURN_6667] Acoustic Bloc Screens (Black)\n\nFURN_6667\n\nUnit Cost\n0\nTotal Value\n0\nOn Hand\n16\nFree to Use\n0\nIncoming\n20\nOutgoing\n20\nForecasted\n16",
+    "persisted": {
+      "selectedDate": "2026-01-16",
+      "rows": true,
+      "empty": false
+    },
+    "api": [
+      {
+        "url": "http://127.0.0.1:4541/api/pages/stock-report?lc=en",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:4541/api/mutate",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:4541/api/pages/stock-report?lc=en",
+        "status": 200
+      }
+    ],
+    "failed": [],
+    "width": {
+      "doc": 390,
+      "client": 390,
+      "inner": 390
+    }
+  }
+}

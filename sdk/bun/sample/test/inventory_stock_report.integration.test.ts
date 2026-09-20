@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const serviceRoot = join(import.meta.dir, '../services/inventory');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
@@ -17,7 +18,8 @@ describe('Inventory Reporting Stock Odoo parity', () => {
     const discovered = discoverPages(join(import.meta.dir, '..'));
     const manifest = yaml('manifest.yaml');
     const reporting = manifest.menu.groups.find((group: any) => group.id === 'reporting');
-    const list = page.components[0];
+    const context = page.components[0];
+    const list = page.components[1];
 
     expect(reporting.items).toContainEqual({ path: '/stock-report', label: 'Stock', icon: 'boxes', permission: 'inventory.read' });
     expect(page.datasources).toBeUndefined();
@@ -26,6 +28,7 @@ describe('Inventory Reporting Stock Odoo parity', () => {
     expect(api.page).toEqual({ id: 'stock-report' });
     expect(discovered.pageDatasources.get('stock-report')).toContain('inventory_stock_report');
     expect(discoverPageRoutes(discovered)).toContainEqual({ path: '/stock-report', page: 'stock-report', module: 'inventory' });
+    expect(context).toMatchObject({ type: 'StatRow', source: 'inventory_stock_report_context', title: 'Inventory at Date' });
     expect(list).toMatchObject({ type: 'ListView', variant: 'odoo', source: 'inventory_stock_report', selectable: false, row_actions: 'buttons' });
     expect(list.views.map((view: any) => view.id)).toEqual(['list', 'card']);
     expect(list.views.find((view: any) => view.id === 'card')).toMatchObject({ mobile: true, card: { title: 'product_name', subtitle: 'default_code' } });
@@ -51,7 +54,7 @@ describe('Inventory Reporting Stock Odoo parity', () => {
     await migrateDatabase(repository, migrations, undefined, 'inventory_stock_report_fixture_test', ['schema', 'data']);
     await migrateDatabase(repository, migrations, undefined, 'inventory_stock_report_fixture_test', ['schema', 'data']);
 
-    const params = { q: null, category_name: null, fixture_state: null };
+    const params = { q: null, category_name: null, fixture_state: null, current_company_name: 'Core3 Demo Company' };
     const initial = await repository.querySource(source, params, 0, 50);
     expect(initial.data).toHaveLength(10);
     expect(initial.data.map((row: any) => row.default_code)).toEqual([
@@ -60,7 +63,7 @@ describe('Inventory Reporting Stock Odoo parity', () => {
     expect(initial.data.find((row: any) => row.default_code === 'E-COM07')).toMatchObject({ on_hand: 500, free_to_use: 270, outgoing_qty: 230, forecasted: 270 });
     expect(initial.data.find((row: any) => row.default_code === 'FURN_1118')).toMatchObject({ on_hand: 2, free_to_use: 0, outgoing_qty: 3, forecasted: -1 });
 
-    const categories = await repository.querySource(api.datasources[0], {}, 0, 50);
+    const categories = await repository.querySource(api.datasources[1], { current_company_name: 'Core3 Demo Company' }, 0, 50);
     expect(categories.data).toEqual([{ value: 'Furniture', label: 'Furniture' }, { value: 'Office Supplies', label: 'Office Supplies' }]);
     expect((await repository.querySource(source, { ...params, category_name: 'Office Supplies' }, 0, 50)).data.map((row: any) => row.default_code)).toEqual(['E-COM08', 'E-COM10']);
     expect((await repository.querySource(source, { ...params, q: 'FURN_1118' }, 0, 50)).data).toMatchObject([{ product_name: '[FURN_1118] Corner Desk Left Sit' }]);
@@ -81,11 +84,60 @@ describe('Inventory Reporting Stock Odoo parity', () => {
     expect(migration.type.postgres.up).toContain("DATE '2026-01-15'");
     expect(migration.type.postgres.up).not.toMatch(/CURRENT_(DATE|TIMESTAMP)|gen_random_uuid\(\)/);
     expect(atDate).toMatchObject({ type: 'server_form', handler: 'yaml_mutation', operation: 'report' });
-    expect(atDate.fields).toEqual([{ field: 'inventory_date', label: 'Inventory Date', type: 'date', required: true, default: '2026-01-15' }]);
+    expect(atDate.fields).toEqual([{ field: 'inventory_date', label: 'Inventory at Date', type: 'text', required: true, default: '2026-01-15', placeholder: 'YYYY-MM-DD' }]);
     expect(atDate.mutation.guards[0]).toMatchObject({ status: 422, code: 'INVENTORY_STOCK_REPORT_DATE_INVALID' });
+    expect(atDate).toMatchObject({ refresh: ['inventory_stock_report_context', 'inventory_stock_report'] });
+    expect(atDate.mutation).toMatchObject({ operation: 'insert', table: 'inventory_stock_report_runs' });
     expect(source.error_states).toMatchObject({
       forbidden: { status: 403, code: 'INVENTORY_STOCK_REPORT_FORBIDDEN' },
       transport_error: { status: 503, code: 'INVENTORY_STOCK_REPORT_UNAVAILABLE' },
     });
+  });
+
+  test('applies the selected date, enforces company permission, and survives restart', async () => {
+    const databasePath = `/tmp/core3-inventory-stock-at-date-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `inventory_stock_at_date_${crypto.randomUUID().replaceAll('-', '_')}`;
+    try {
+      const first = await DuckDbDatabase.open(databasePath);
+      const firstRepository = new YamlRepository(first);
+      const migrations = join(serviceRoot, 'migrations');
+      await migrateDatabase(firstRepository, migrations, undefined, migrationName, ['schema', 'data']);
+      await migrateDatabase(firstRepository, migrations, undefined, migrationName, ['schema', 'data']);
+      const contextSource = api.datasources.find((candidate: any) => candidate.id === 'inventory_stock_report_context');
+      const atDate = api.actions.find((action: any) => action.id === 'inventory_stock_at_date');
+      expect(await firstRepository.querySource(contextSource, { current_company_name: 'Core3 Demo Company' }, 0, 1)).toMatchObject({ data: { selected_date: '2026-01-15', requested_by: 'Admin User' } });
+      expect((await firstRepository.querySource(source, { q: null, category_name: null, fixture_state: null, current_company_name: 'Core3 Demo Company' }, 0, 50)).data).toHaveLength(10);
+      const selected = await firstRepository.executeMutation(atDate.mutation, { inventory_date: '2026-01-14', current_company_name: 'Core3 Demo Company' }) as any;
+      expect(selected).toMatchObject({ selected_date: '2026-01-14', message: 'Inventory report context set to 2026-01-14' });
+      expect(await firstRepository.querySource(contextSource, { current_company_name: 'Core3 Demo Company' }, 0, 1)).toMatchObject({ data: { selected_date: '2026-01-14' } });
+      expect((await firstRepository.querySource(source, { q: null, category_name: null, fixture_state: null, current_company_name: 'Core3 Demo Company' }, 0, 50)).data).toEqual([]);
+      const later = await firstRepository.executeMutation(atDate.mutation, { inventory_date: '2026-01-16', current_company_name: 'Core3 Demo Company' }) as any;
+      expect(later).toMatchObject({ selected_date: '2026-01-16', row_version: 1 });
+      expect((await firstRepository.querySource(source, { q: null, category_name: null, fixture_state: null, current_company_name: 'Core3 Demo Company' }, 0, 50)).data).toHaveLength(10);
+      await expect(firstRepository.executeMutation(atDate.mutation, { inventory_date: 'not-a-date', current_company_name: 'Core3 Demo Company' })).rejects.toMatchObject({ status: 422, code: 'INVENTORY_STOCK_REPORT_DATE_INVALID' });
+      await expect(firstRepository.executeMutation(atDate.mutation, { inventory_date: '2026-01-16', company_name: 'Other Company', current_company_name: 'Core3 Demo Company' })).rejects.toMatchObject({ status: 403, code: 'INVENTORY_STOCK_REPORT_COMPANY' });
+
+      const sources = new Map(api.datasources.map((candidate: any) => [candidate.id, candidate]));
+      const pageSources = new Map([['stock-report', api.datasources.map((candidate: any) => candidate.id)]]);
+      const pages = new Map([['stock-report', page]]);
+      const user: any = { sub: 'inventory-report-user', permissions: [] };
+      const handler = createYamlApi({
+        repository: firstRepository,
+        authProvider: { async getCurrentUser() { return user; }, hasPermission(candidate: any, permission: string) { return candidate.permissions.includes(permission); } },
+        sources, pageSources, pages, catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
+        permissions: { permissions: ['inventory.read'], tables: {}, endpoints: {} }, eventStore: {}, topics: {}, storage: yaml('storage.yaml'),
+      });
+      await expect(handler(new Request('http://inventory.test/api/pages/stock-report'), new URL('http://inventory.test/api/pages/stock-report'))).rejects.toMatchObject({ status: 403 });
+      first.close();
+
+      const second = await DuckDbDatabase.open(databasePath);
+      const secondRepository = new YamlRepository(second);
+      await migrateDatabase(secondRepository, migrations, undefined, migrationName, ['schema', 'data']);
+      expect(await secondRepository.querySource(contextSource, { current_company_name: 'Core3 Demo Company' }, 0, 1)).toMatchObject({ data: { selected_date: '2026-01-16' } });
+      expect((await secondRepository.querySource(source, { q: null, category_name: null, fixture_state: null, current_company_name: 'Core3 Demo Company' }, 0, 50)).data).toHaveLength(10);
+      second.close();
+    } finally {
+      rmSync(databasePath, { force: true });
+    }
   });
 });

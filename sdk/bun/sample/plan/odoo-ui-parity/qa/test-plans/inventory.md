@@ -39,6 +39,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-008 | Attachments/import/export/print | Exercise transfer documents, product/lot import/export and exposed report/print actions | planned browser interaction gate |
 | INV-FUNC-009 | Put in Pack | Create package, contents, result relation, timeline and picking row-version update; reject stale/duplicate/invalid requests and survive restart | pass: `INV-PACK-001` focused suite and Core3 browser |
 | INV-FUNC-010 | Annual inventory settings | Day/month defaults 31/12, manager save, stale/missing guards, idempotent migration and restart persistence | pass: `INV-SETTINGS-001` focused suite |
+| INV-FUNC-011 | Stock report Inventory at Date | Date wizard persists company context, filters report rows, handles invalid dates, and survives restart | pass: `INV-STOCK-AT-DATE-001` focused suite |
 
 ## Workflow and integration cases
 
@@ -64,6 +65,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current inventory rows and moves unchanged | pass: focused suite |
 | INV-PERM-007 | Put in Pack action | `inventory.write` required; stale row, already-packed, blank/duplicate reference, no-lines and invalid-state requests are rejected without partial package state | pass: `INV-PACK-001` focused suite |
 | INV-PERM-008 | Annual settings manager boundary | `inventory.manage` is required for the Settings page and mutation; read-only users receive 403 and rows remain unchanged | pass: `INV-SETTINGS-001` focused runtime test |
+| INV-PERM-009 | Stock report date context | `inventory.read` is required for the report/context; wrong-company date requests return 403 without a run | pass: `INV-STOCK-AT-DATE-001` focused runtime test |
 
 ## Visual, responsive, and regression cases
 
@@ -76,6 +78,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-UI-005 | Put in Pack transfer dialog | 1440x900, 390x844 | Permissioned transfer action, package reference/type form, timeline/package result and responsive no-overflow state are rendered | pass Core3; Odoo reference control gated |
 | INV-UI-006 | Package Transfers stat/list | 1440x900, 390x844 | Package stat opens the scoped transfer list, source/result relation labels render, row navigation works, and no horizontal overflow occurs | pass Core3; Odoo reference package menu group-gated |
 | INV-UI-007 | Annual Inventory Day and Month | 1440x900, 390x844 | Number/select controls, Save/reload persistence, no request errors or horizontal overflow; paired Odoo result is recorded | pass Core3; Odoo action RPC blocker captured |
+| INV-UI-008 | Stock report Inventory at Date | 1440x900, 390x844 | Date form opens, selected context is visible, report refreshes/reloads without overflow; paired Odoo wizard result is recorded | pass Core3; Odoo mobile control boundary captured |
 
 ## Exit criteria
 
