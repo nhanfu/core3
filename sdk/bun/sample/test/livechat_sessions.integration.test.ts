@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
@@ -11,6 +11,41 @@ const sampleRoot = join(import.meta.dir, '..');
 const serviceRoot = join(sampleRoot, 'services/livechat');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
 const action = (id: string) => yaml('api/sessions.yaml').actions.find((candidate: any) => candidate.id === id);
+
+const createLivechatApi = (repository: YamlRepository, discovered: any, getUser: () => any) => createYamlApi({
+  repository,
+  authProvider: {
+    async getCurrentUser() { return getUser(); },
+    hasPermission(actor: any, permission: string) { return actor.permissions.includes(permission); },
+  },
+  sources: new Map([...discovered.datasources].filter(([id]) => id.startsWith('livechat_'))),
+  pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === 'livechat')),
+  pages: new Map([...discovered.pages].filter(([, page]) => page.module === 'livechat').map(([id, page]) => [id, page.config])),
+  catalogs: discovered.catalogs,
+  menus: discovered.menus,
+  workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'livechat').map(([id, workflow]) => [id, workflow.config])),
+  workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'livechat').map(([id, workflow]) => [id, workflow.file])),
+  permissions: discovered.permissions.get('livechat')?.config || {},
+  uploadRoot: '/tmp/core3-livechat-test-uploads', eventStore: {}, topics: {},
+});
+
+const postAction = (api: any, actionName: string, body: Record<string, unknown>) => api(
+  new Request(`http://livechat.test/api/actions/${actionName}`, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }),
+  new URL(`http://livechat.test/api/actions/${actionName}`),
+);
+
+const querySource = (api: any, sourceId: string, params: Record<string, unknown>) => api(
+  new Request('http://livechat.test/api/query', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sourceId, params, top: 50 }),
+  }),
+  new URL('http://livechat.test/api/query'),
+);
 
 describe('Live Chat Conversations — Sessions parity', () => {
   test('keeps session list/detail layout separate and joins API fragments by page.id', () => {
@@ -136,5 +171,127 @@ describe('Live Chat Conversations — Sessions parity', () => {
     await expect(api(new Request('http://livechat.test/api/actions/livechat.sessions.close', { method: 'POST', headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'livechat-session-demo-002', expected_row_version: 1, values: {} }) }), new URL('http://livechat.test/api/actions/livechat.sessions.close'))).rejects.toMatchObject({ status: 403, code: 'LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE' });
     expect(await repository.query('SELECT status, row_version FROM livechat_sessions WHERE id = ?', ['livechat-session-demo-002'])).toEqual([{ status: 'In Progress', row_version: 1 }]);
     database.close();
+  });
+
+  test('binds the assigned-operator detail action matrix to the shared workflow', () => {
+    const detailPage = yaml('pages/session-detail.yaml');
+    const form = detailPage.components.find((component: any) => component.type === 'OdooFormView');
+    const headerIds = form.header_actions.map((candidate: any) => candidate.id);
+    expect(headerIds).toEqual([
+      'wait_livechat_session_detail',
+      'resume_livechat_session_detail',
+      'help_livechat_session_detail',
+      'join_livechat_session_detail',
+      'close_livechat_session_detail',
+    ]);
+    const detailActions = new Map(detailPage.actions.map((candidate: any) => [candidate.id, candidate]));
+    for (const [id, operation, actionName] of [
+      ['wait_livechat_session_detail', 'wait', 'livechat.sessions.wait'],
+      ['resume_livechat_session_detail', 'resume', 'livechat.sessions.resume'],
+      ['help_livechat_session_detail', 'help', 'livechat.sessions.help'],
+      ['join_livechat_session_detail', 'join', 'livechat.help_sessions.join'],
+      ['close_livechat_session_detail', 'close', 'livechat.sessions.close'],
+    ]) {
+      expect(detailActions.get(id), id).toMatchObject({
+        type: 'server', permission: 'livechat.write', action: actionName,
+        handler: 'order_transition', workflow: 'livechat_sessions', operation,
+        params: { id: '{state.id}' },
+      });
+    }
+    expect(form.header_actions.find((candidate: any) => candidate.id === 'close_livechat_session_detail').show_if).not.toContain("record.status === 'Closed'");
+  });
+
+  test('covers assigned detail access and every operator action denial atomically', async () => {
+    const discovered = discoverPages(sampleRoot);
+    const actionCases = [
+      { action: 'livechat.sessions.wait', id: 'livechat-session-demo-002', status: 'In Progress', message: 'wait' },
+      { action: 'livechat.sessions.resume', id: 'livechat-session-demo-002', status: 'Waiting for Customer', message: 'resume' },
+      { action: 'livechat.sessions.help', id: 'livechat-session-demo-002', status: 'In Progress', message: 'help' },
+      { action: 'livechat.help_sessions.join', id: 'livechat-session-demo-005', status: 'Looking for Help', message: 'join' },
+      { action: 'livechat.sessions.close', id: 'livechat-session-demo-002', status: 'In Progress', message: 'close' },
+    ];
+
+    for (const candidate of actionCases) {
+      const database = await DuckDbDatabase.open(':memory:');
+      const repository = new YamlRepository(database);
+      await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, `livechat_operator_matrix_${candidate.message}`, ['schema', 'data']);
+      if (candidate.status !== 'In Progress') {
+        await repository.run('UPDATE livechat_sessions SET status = ? WHERE id = ?', [candidate.status, candidate.id]);
+      }
+      const currentUser = { sub: 'other-livechat-agent', email: 'other@workspace.example', name: 'Other Operator', permissions: ['livechat.read', 'livechat.write'], view_scope: 'assigned' };
+      const api = createLivechatApi(repository, discovered, () => currentUser);
+      const before = (await repository.query('SELECT status, row_version FROM livechat_sessions WHERE id = ?', [candidate.id]))[0];
+      const detailResponse = await querySource(api, 'livechat_session_detail', { id: candidate.id });
+      expect((await detailResponse.json()).data).toEqual({});
+      await expect(postAction(api, candidate.action, { id: candidate.id, expected_row_version: before.row_version, values: {} }), candidate.message).rejects.toMatchObject({
+        status: 403,
+        code: 'LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE',
+      });
+      expect(await repository.query('SELECT status, row_version FROM livechat_sessions WHERE id = ?', [candidate.id])).toEqual([before]);
+      database.close();
+    }
+  });
+
+  test('returns 401, 409 stale, and 404 missing without changing the session', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'livechat_session_error_matrix', ['schema', 'data']);
+    const discovered = discoverPages(sampleRoot);
+    const user = { sub: 'livechat-agent', email: 'agent@workspace.example', name: 'Live Chat Agent', permissions: ['livechat.read', 'livechat.write'], view_scope: 'assigned' };
+    const api = createLivechatApi(repository, discovered, () => user);
+    const before = (await repository.query('SELECT status, row_version FROM livechat_sessions WHERE id = ?', ['livechat-session-demo-002']))[0];
+    await expect(postAction(api, 'livechat.sessions.wait', { id: 'livechat-session-demo-002', expected_row_version: 0, values: {} })).rejects.toMatchObject({ status: 409, code: 'LIVECHAT_SESSION_INVALID_STATE' });
+    await expect(postAction(api, 'livechat.sessions.wait', { id: 'missing-livechat-session', expected_row_version: 1, values: {} })).rejects.toMatchObject({ status: 404, code: 'LIVECHAT_SESSION_NOT_FOUND' });
+    expect(await repository.query('SELECT status, row_version FROM livechat_sessions WHERE id = ?', ['livechat-session-demo-002'])).toEqual([before]);
+
+    const unauthorizedApi = createYamlApi({
+      repository,
+      authProvider: {
+        async getCurrentUser() { throw { status: 401, code: 'UNAUTHENTICATED', message: 'Authentication required' }; },
+        hasPermission() { return false; },
+      },
+      sources: new Map([...discovered.datasources].filter(([id]) => id.startsWith('livechat_'))),
+      pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === 'livechat')),
+      pages: new Map([...discovered.pages].filter(([, page]) => page.module === 'livechat').map(([id, page]) => [id, page.config])),
+      catalogs: discovered.catalogs, menus: discovered.menus,
+      workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'livechat').map(([id, workflow]) => [id, workflow.config])),
+      workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === 'livechat').map(([id, workflow]) => [id, workflow.file])),
+      permissions: discovered.permissions.get('livechat')?.config || {},
+      uploadRoot: '/tmp/core3-livechat-test-uploads', eventStore: {}, topics: {},
+    });
+    await expect(querySource(unauthorizedApi, 'livechat_session_detail', { id: 'livechat-session-demo-002' })).rejects.toMatchObject({ status: 401, code: 'UNAUTHENTICATED' });
+    database.close();
+  });
+
+  test('persists an assigned operator transition across a file-backed restart and migration replay', async () => {
+    const databasePath = `/tmp/core3-livechat-operator-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `livechat_operator_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const discovered = discoverPages(sampleRoot);
+    const user = { sub: 'livechat-agent', email: 'agent@workspace.example', name: 'Live Chat Agent', permissions: ['livechat.read', 'livechat.write'], view_scope: 'assigned' };
+    let first: DuckDbDatabase | undefined;
+    let second: DuckDbDatabase | undefined;
+    try {
+      first = await DuckDbDatabase.open(databasePath);
+      const firstRepository = new YamlRepository(first);
+      await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+      const firstApi = createLivechatApi(firstRepository, discovered, () => user);
+      const changed = await postAction(firstApi, 'livechat.sessions.wait', { id: 'livechat-session-demo-002', expected_row_version: 1, values: {} });
+      expect(await changed.json()).toMatchObject({ id: 'livechat-session-demo-002', status: 'Waiting for Customer', row_version: 2 });
+      first.close();
+      first = undefined;
+
+      second = await DuckDbDatabase.open(databasePath);
+      const secondRepository = new YamlRepository(second);
+      await migrateDatabase(secondRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+      expect(await secondRepository.query('SELECT status, row_version, operator_id FROM livechat_sessions WHERE id = ?', ['livechat-session-demo-002'])).toEqual([
+        { status: 'Waiting for Customer', row_version: 2, operator_id: 'livechat-agent' },
+      ]);
+      const detail = await querySource(createLivechatApi(secondRepository, discovered, () => user), 'livechat_session_detail', { id: 'livechat-session-demo-002' });
+      expect((await detail.json()).data).toMatchObject({ id: 'livechat-session-demo-002', status: 'Waiting for Customer', row_version: 2, operator_name: 'Support Agent' });
+    } finally {
+      second?.close();
+      first?.close();
+      rmSync(databasePath, { force: true });
+    }
   });
 });

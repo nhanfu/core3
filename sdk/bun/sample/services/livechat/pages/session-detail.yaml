@@ -5,6 +5,12 @@ components:
   - type: OdooFormView
     source: livechat_session_detail
     title_field: visitor_display
+    header_actions:
+      - { id: wait_livechat_session_detail, label: Wait, variant: secondary, show_if: "record.status === 'In Progress'" }
+      - { id: resume_livechat_session_detail, label: Resume, variant: secondary, show_if: "record.status === 'Waiting for Customer'" }
+      - { id: help_livechat_session_detail, label: Need Help, variant: secondary, show_if: "record.status === 'In Progress' || record.status === 'Waiting for Customer'" }
+      - { id: join_livechat_session_detail, label: Join, variant: primary, show_if: "record.status === 'Looking for Help'" }
+      - { id: close_livechat_session_detail, label: Close, variant: danger, show_if: "record.status === 'In Progress' || record.status === 'Waiting for Customer' || record.status === 'Looking for Help'" }
     fields:
       - { field: visitor_display, label: Visitor }
       - { field: channel_name, label: Channel }
@@ -25,3 +31,10 @@ components:
     message_action_field: action_label
     message_detail_field: detail
     message_timestamp_field: created_at
+
+actions:
+  - { id: wait_livechat_session_detail, type: server, permission: livechat.write, action: livechat.sessions.wait, handler: order_transition, workflow: livechat_sessions, operation: wait, params: { id: '{state.id}' }, refresh: [livechat_session_detail, livechat_session_messages] }
+  - { id: resume_livechat_session_detail, type: server, permission: livechat.write, action: livechat.sessions.resume, handler: order_transition, workflow: livechat_sessions, operation: resume, params: { id: '{state.id}' }, refresh: [livechat_session_detail, livechat_session_messages] }
+  - { id: help_livechat_session_detail, type: server, permission: livechat.write, action: livechat.sessions.help, handler: order_transition, workflow: livechat_sessions, operation: help, params: { id: '{state.id}' }, refresh: [livechat_session_detail, livechat_session_messages] }
+  - { id: join_livechat_session_detail, type: server, permission: livechat.write, action: livechat.help_sessions.join, handler: order_transition, workflow: livechat_sessions, operation: join, params: { id: '{state.id}' }, refresh: [livechat_session_detail, livechat_session_messages] }
+  - { id: close_livechat_session_detail, type: server, permission: livechat.write, action: livechat.sessions.close, handler: order_transition, workflow: livechat_sessions, operation: close, params: { id: '{state.id}' }, refresh: [livechat_session_detail, livechat_session_messages] }
