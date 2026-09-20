@@ -1537,3 +1537,29 @@ Odoo account reaches Inventory Configuration but does not receive
 `stock.group_adv_location`, so Routes is absent from the menu at both the
 reachable desktop/mobile comparison boundary. The exact blocker is recorded;
 no Odoo mutation or full Inventory sign-off is claimed.
+
+## Configuration > Warehouse Management > Storage Categories — `INV-STORAGE-CATEGORIES-001` (2026-09-21)
+
+This bounded slice covers Odoo's `stock.storage.category` configuration
+workflow. `addons/stock/views/stock_storage_category_views.xml:3-100`
+defines the list/form action, Locations stat action, product/package capacity
+one-to-many grids, and `menu_storage_categoty_config`; the menu is restricted
+to `stock.group_stock_multi_locations`. The model and constraints are in
+`addons/stock/models/stock_storage_category.py:7-74`: name, non-negative
+maximum weight, empty/same/mixed product policy, company, product/package
+capacity rules, and location assignments.
+
+Core3 keeps `pages/storage-categories.yaml` and
+`pages/storage-category-detail.yaml` presentation-only and joins them to
+`api/storage-categories.yaml` and `api/storage-category-detail.yaml` by
+`page.id`. Migration `20260921180000-044-inventory-storage-categories.yaml`
+adds durable categories, product/package capacities, and location assignments.
+The lifecycle supports list/detail, category create/edit/delete, capacity-line
+create/edit/delete, location drilldown, current-company filtering, duplicate
+and in-use guards, and parent/line row-version concurrency.
+
+Authenticated Core3 desktop/mobile evidence is under
+`evidence/inventory/2026-09-21/INV-STORAGE-CATEGORIES-001/`. The bounded Odoo
+probe reached the Odoo login route but its POST failed for the supplied account;
+the source/menu/group blocker and untrusted comparison state are recorded in
+the paired evidence. No Odoo mutation or full Inventory sign-off is claimed.

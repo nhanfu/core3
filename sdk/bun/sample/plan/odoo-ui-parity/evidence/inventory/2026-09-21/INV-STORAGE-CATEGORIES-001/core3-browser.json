@@ -1,0 +1,23 @@
+{
+  "feature_id": "INV-STORAGE-CATEGORIES-001",
+  "authenticated_as": "admin@tms.local",
+  "desktop": {
+    "viewport": "1440x900",
+    "screenshots": ["core3-desktop-list.png", "core3-desktop-detail.png", "core3-desktop-create-form.png"],
+    "states": ["list", "detail_with_capacity_and_location", "create_form"],
+    "seeded_capacity_visible": true,
+    "seeded_location_visible": true,
+    "horizontal_overflow": false
+  },
+  "mobile": {
+    "viewport": "390x844",
+    "screenshot": "core3-mobile-detail.png",
+    "state": "detail_with_capacity_and_location",
+    "seeded_capacity_visible": true,
+    "seeded_location_visible": true,
+    "horizontal_overflow": false
+  },
+  "console_errors": [],
+  "failed_requests": [],
+  "bad_responses": []
+}

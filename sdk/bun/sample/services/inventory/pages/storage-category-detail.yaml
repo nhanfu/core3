@@ -1,0 +1,66 @@
+title: Storage Category
+page: { id: storage-category-detail, route: /storage-categories/detail, breadcrumb: [Supply Chain, Inventory, Configuration, Warehouse Management, Storage Categories, Storage Category], auth: { require: [inventory.multi_location] } }
+components:
+  - type: OdooFormView
+    source: inventory_storage_category_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_inventory_storage_categories, label: Back to Storage Categories, icon: arrow-left, permission: inventory.multi_location }
+      - { id: edit_inventory_storage_category, label: Edit, variant: primary, permission: inventory.manage }
+      - { id: delete_inventory_storage_category, label: Delete, variant: danger, permission: inventory.manage }
+    group_columns: 2
+    groups:
+      - title: Storage Category
+        wide: true
+        fields:
+          - { field: name, label: Storage Category }
+          - { field: max_weight, label: Max Weight, type: number }
+          - { field: allow_new_product, label: Allow New Products }
+          - { field: company_name, label: Company }
+    stat_buttons: [{ id: view_inventory_storage_category_locations, label: Locations, icon: location, value_field: location_count, permission: inventory.multi_location }]
+  - type: LineItemGrid
+    source: inventory_storage_category_capacities
+    parent_source: inventory_storage_category_detail
+    title: Capacity Rules
+    variant: odoo_x2many
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_inventory_storage_capacity, label: Add a line, variant: primary, permission: inventory.manage }
+    children:
+      - { type: LineItemField, id: target, field: product_name, label: Product, readonly: true }
+      - { type: LineItemField, id: package, field: package_type_name, label: Package Type, readonly: true }
+      - { type: LineItemField, id: quantity, field: quantity, label: Quantity, input_type: number }
+      - { type: LineItemField, id: unit, field: unit_name, label: Unit, readonly: true }
+      - type: LineItemActions
+        id: storage_capacity_actions
+        actions:
+          - { id: edit_inventory_storage_capacity, label: Edit, icon: edit, variant: ghost, permission: inventory.manage }
+          - { id: delete_inventory_storage_capacity, label: Delete, icon: trash, variant: danger, permission: inventory.manage }
+    columns:
+      - { field: kind, label: Capacity For }
+      - { field: product_name, label: Product }
+      - { field: package_type_name, label: Package Type }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_name, label: Unit }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 84
+        actions:
+          - { id: edit_inventory_storage_capacity, label: Edit, icon: edit, variant: ghost, permission: inventory.manage }
+          - { id: delete_inventory_storage_capacity, label: Delete, icon: trash, variant: danger, permission: inventory.manage }
+    empty_state: { title: No capacity rules, description: Add product or package capacity rules for this category. }
+  - type: ListView
+    variant: odoo
+    source: inventory_storage_category_locations
+    columns:
+      - { field: name, label: Location, type: PrimaryEntityCell }
+      - { field: code, label: Short Name }
+      - { field: usage, label: Location Type }
+      - { field: company_name, label: Company }
+    row_key: id
+    page_size: 20
+    empty_state: { title: No locations assigned, description: Assign an internal location to this storage category. }

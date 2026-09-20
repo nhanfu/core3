@@ -1,0 +1,20 @@
+{
+  "feature_id": "INV-STORAGE-CATEGORIES-001",
+  "authenticated_as": "codex@core3.local",
+  "source_menu": "Inventory > Configuration > Warehouse Management > Storage Categories",
+  "source_menu_xml_id": "menu_storage_categoty_config",
+  "source_group": "stock.group_stock_multi_locations",
+  "desktop": {
+    "screenshot": "odoo-desktop-inventory.png",
+    "configuration_screenshot": "odoo-desktop-configuration.png",
+    "authenticated": false,
+    "routes_visible": false
+  },
+  "mobile": {
+    "screenshot": "odoo-mobile-inventory.png",
+    "authenticated": false,
+    "routes_visible": false
+  },
+  "blocker": "bounded probe observed failed POST /web/login for the supplied account; no authenticated Odoo menu or record state is claimed",
+  "mutation_attempted": false
+}

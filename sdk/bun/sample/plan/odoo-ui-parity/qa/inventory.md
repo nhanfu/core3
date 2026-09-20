@@ -939,3 +939,34 @@ procurement generation. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 Routes lifecycle and guards;
 PARTIAL for direct Odoo Routes interaction. Full Inventory sign-off remains
 open.
+
+## Warehouse Management Storage Categories QA — `INV-STORAGE-CATEGORIES-001` (2026-09-21)
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_storage_category_views.xml:3-100` and
+  `addons/stock/models/stock_storage_category.py:7-74`. The list/form action
+  exposes name, max weight, product policy, company, product/package capacity
+  grids, and Locations; `menu_storage_categoty_config` requires
+  `stock.group_stock_multi_locations`.
+- Core3 contract: PASS. `pages/storage-categories.yaml` and
+  `pages/storage-category-detail.yaml` are separate from
+  `api/storage-categories.yaml` and `api/storage-category-detail.yaml`, joined
+  by `page.id`. Migration 0.0.44 persists categories, capacity rules, and
+  location assignments.
+- Focused test: `bun test test/inventory_storage_categories.integration.test.ts`
+  — PASS, 4 tests / 35 assertions. Coverage includes deterministic active
+  fixtures, shared-company scope, reader access versus manager mutations,
+  duplicate/invalid/in-use guards, parent and line row versions, migration
+  replay, and restart reads.
+- Core3 browser evidence: PASS for authenticated desktop 1440x900 and mobile
+  390x844 list/detail states showing seeded capacities and Shelf 1 assignment;
+  create form capture is also present. Both viewports had equal document and
+  viewport widths and no console/request/HTTP errors.
+- Odoo comparison: BLOCKED. The bounded authenticated probe recorded a failed
+  `POST /web/login` for `codex@core3.local`; therefore no authenticated Odoo
+  screenshot or mutation is treated as evidence. Source/menu/group facts and
+  the exact blocker are recorded in the paired evidence.
+
+QA disposition: PASS for the bounded Core3 Storage Categories lifecycle and
+guards; BLOCKED for live Odoo comparison. Full Inventory sign-off remains
+open.

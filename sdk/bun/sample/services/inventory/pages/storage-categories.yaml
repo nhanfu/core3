@@ -1,0 +1,25 @@
+title: Storage Categories
+page: { id: storage-categories, route: /storage-categories, breadcrumb: [Supply Chain, Inventory, Configuration, Warehouse Management, Storage Categories], auth: { require: [inventory.multi_location] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_storage_categories
+    create_action: create_inventory_storage_category
+    create_label: New
+    search: { label: Storage Categories, placeholder: Search storage categories... }
+    views:
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: name, label: Storage Category, type: PrimaryEntityCell, sortable: true }
+      - { field: max_weight, label: Max Weight, align: right }
+      - { field: allow_new_product, label: Allow New Products }
+      - { field: company_name, label: Company }
+      - { field: capacity_count, label: Capacities, align: right }
+      - { field: location_count, label: Locations, align: right }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_inventory_storage_category
+    row_double_click_action: view_inventory_storage_category
+    form_view: { page: apps/services/inventory/pages/storage-category-detail.yaml, side_panel: false }
+    empty_state: { title: No storage categories found, description: Define a storage category or adjust your search. }

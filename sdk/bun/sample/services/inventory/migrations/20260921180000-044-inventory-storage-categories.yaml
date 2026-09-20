@@ -1,0 +1,47 @@
+version: 0.0.44
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE inventory_locations ADD COLUMN IF NOT EXISTS storage_category_id VARCHAR;
+      CREATE TABLE IF NOT EXISTS inventory_storage_categories (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, max_weight DECIMAL(18,3) NOT NULL DEFAULT 0,
+        allow_new_product VARCHAR NOT NULL DEFAULT 'mixed', company_name VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(name, company_name)
+      );
+      CREATE TABLE IF NOT EXISTS inventory_storage_category_capacities (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        storage_category_id VARCHAR NOT NULL, kind VARCHAR NOT NULL,
+        product_id VARCHAR, product_name VARCHAR, package_type_name VARCHAR,
+        quantity DECIMAL(18,3) NOT NULL, unit_name VARCHAR NOT NULL DEFAULT 'Units',
+        company_name VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS inventory_storage_categories_name_idx ON inventory_storage_categories(name, id);
+      CREATE INDEX IF NOT EXISTS inventory_storage_category_capacities_category_idx ON inventory_storage_category_capacities(storage_category_id, id);
+      INSERT INTO inventory_storage_categories(id, name, max_weight, allow_new_product, company_name)
+      VALUES
+        ('storage-bin', 'Small Bin', 100, 'same', 'My Company (San Francisco)'),
+        ('storage-bulk', 'Bulk Storage', 1000, 'mixed', NULL),
+        ('storage-archived', 'Archived Storage', 500, 'empty', 'My Company (San Francisco)')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_storage_category_capacities(id, storage_category_id, kind, product_id, product_name, package_type_name, quantity, unit_name, company_name)
+      VALUES
+        ('storage-bin-product-box', 'storage-bin', 'product', 'stock-report-storage-box', '[E-COM08] Storage Box', NULL, 24, 'Units', 'My Company (San Francisco)'),
+        ('storage-bulk-product-cabinet', 'storage-bulk', 'product', 'stock-report-cabinet', '[E-COM07] Large Cabinet', NULL, 500, 'Units', NULL),
+        ('storage-bulk-package-pallet', 'storage-bulk', 'package', NULL, NULL, 'Pallet', 12, 'Units', NULL)
+      ON CONFLICT(id) DO NOTHING;
+      UPDATE inventory_locations SET storage_category_id = 'storage-bin' WHERE id = 'location-stock-shelf-1';
+      UPDATE inventory_locations SET storage_category_id = 'storage-bulk' WHERE id = 'location-stock-shelf-2';
+    down: |
+      UPDATE inventory_locations SET storage_category_id = NULL WHERE storage_category_id IN ('storage-bin', 'storage-bulk', 'storage-archived');
+      DELETE FROM inventory_storage_category_capacities WHERE storage_category_id IN ('storage-bin', 'storage-bulk', 'storage-archived');
+      DELETE FROM inventory_storage_categories WHERE id IN ('storage-bin', 'storage-bulk', 'storage-archived');
+      DROP TABLE IF EXISTS inventory_storage_category_capacities;
+      DROP TABLE IF EXISTS inventory_storage_categories;
+      ALTER TABLE inventory_locations DROP COLUMN IF EXISTS storage_category_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

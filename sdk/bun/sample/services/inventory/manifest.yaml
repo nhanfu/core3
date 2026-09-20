@@ -89,6 +89,10 @@ menu:
           label: Routes
           icon: route
           permission: inventory.manage
+        - path: /storage-categories
+          label: Storage Categories
+          icon: boxes
+          permission: inventory.multi_location
         - path: /operation-types
           label: Operations Types
           icon: settings

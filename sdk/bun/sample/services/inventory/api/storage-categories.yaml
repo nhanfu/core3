@@ -1,0 +1,40 @@
+page: { id: storage-categories }
+datasources:
+  - id: inventory_storage_categories
+    single: false
+    permission: inventory.multi_location
+    error_states: { transport_error: { status: 503, code: INVENTORY_STORAGE_CATEGORIES_UNAVAILABLE, message: Storage categories are temporarily unavailable. } }
+    query: "SELECT c.id, c.row_version, c.name, c.max_weight, c.allow_new_product, COALESCE(c.company_name, 'Visible to all companies') AS company_name, COUNT(DISTINCT cp.id) AS capacity_count, COUNT(DISTINCT l.id) AS location_count FROM inventory_storage_categories c LEFT JOIN inventory_storage_category_capacities cp ON cp.storage_category_id = c.id LEFT JOIN inventory_locations l ON l.storage_category_id = c.id AND l.active = TRUE WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (c.company_name IS NULL OR c.company_name = COALESCE(:current_company_name, c.company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND c.company_name = 'My Company (San Francisco)')) AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR COALESCE(c.company_name, '') ILIKE '%' || :q || '%') GROUP BY c.id, c.row_version, c.name, c.max_weight, c.allow_new_product, c.company_name ORDER BY c.name, c.id"
+actions:
+  - id: view_inventory_storage_category
+    type: navigate
+    permission: inventory.multi_location
+    navigate_to: /storage-categories/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_storage_category
+    type: server_form
+    permission: inventory.manage
+    title: New storage category
+    action: inventory.storage_categories.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_storage_categories]
+    mutation:
+      operation: insert
+      table: inventory_storage_categories
+      generated: [id]
+      fields: [name, max_weight, allow_new_product, company_name]
+      required: [name]
+      defaults: { max_weight: 0, allow_new_product: mixed, company_name: 'My Company (San Francisco)' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_STORAGE_CATEGORY_NAME_REQUIRED, message: A storage category name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:max_weight AS DECIMAL(18,3)) >= 0", status: 422, code: INVENTORY_STORAGE_CATEGORY_WEIGHT_INVALID, message: Maximum weight must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:allow_new_product AS VARCHAR) IN ('empty', 'same', 'mixed')", status: 422, code: INVENTORY_STORAGE_CATEGORY_POLICY_INVALID, message: Choose a valid product policy. }
+        - { query: "SELECT 1 AS ok WHERE :company_name IS NULL OR :company_name = '' OR :company_name = COALESCE(:current_company_name, :company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND :company_name = 'My Company (San Francisco)')", status: 403, code: INVENTORY_STORAGE_CATEGORY_COMPANY_FORBIDDEN, message: The storage category company is outside your current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_storage_categories WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(company_name, '') = COALESCE(:company_name, ''))", status: 409, code: INVENTORY_STORAGE_CATEGORY_NAME_EXISTS, message: A storage category with this name already exists for the company. }
+      result: { query: "SELECT * FROM inventory_storage_categories WHERE id = :id" }
+    fields:
+      - { field: name, label: Storage Category, type: text, required: true, placeholder: 'e.g. Cold Storage' }
+      - { field: max_weight, label: Max Weight, type: number, min: 0, default: 0 }
+      - { field: allow_new_product, label: Allow New Products, type: select, options: [{ value: empty, label: If the location is empty }, { value: same, label: If all products are the same }, { value: mixed, label: Allow mixed products }], default: mixed }
+      - { field: company_name, label: Company, type: text, default: 'My Company (San Francisco)' }

@@ -711,3 +711,22 @@ Inventory sign-off remains open.
 - Odoo source/menu comparison is complete, but the supplied account lacks
   `stock.group_adv_location`; Routes is absent from the reachable Configuration
   menu. The blocker is recorded and full Inventory sign-off remains open.
+
+## `INV-STORAGE-CATEGORIES-001` — Warehouse Management Storage Categories (2026-09-21)
+
+- Selected the next uncovered source-backed configuration workflow after
+  Routes: Odoo `stock.storage.category`, including its product/package capacity
+  rules and Locations stat action.
+- Added separate Storage Categories list/detail page and API YAML contracts
+  joined by `page.id`, migration `20260921180000-044-inventory-storage-categories.yaml`,
+  deterministic category/capacity/location fixtures, and the
+  `inventory.multi_location` menu/read boundary with `inventory.manage`
+  mutations.
+- Focused verification passes 4 tests / 35 assertions, covering discovery,
+  deterministic fixtures, current-company scope, category and capacity CRUD,
+  in-use/duplicate/invalid guards, permissions, migration replay, and restart
+  persistence. Core3 authenticated desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-STORAGE-CATEGORIES-001/`.
+- Odoo source comparison is complete, but the bounded live probe failed at
+  `POST /web/login` for the supplied account; no authenticated Odoo state or
+  mutation is claimed. Full Inventory sign-off remains open.
