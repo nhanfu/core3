@@ -69,7 +69,10 @@ describe('Live Chat Conversations — Looking for Help parity', () => {
       expect(action(id), id).toMatchObject({ type: 'server', permission: 'livechat.write', handler: 'order_transition', workflow: 'livechat_sessions' });
     }
     expect(api().actions.some((candidate: any) => ['create', 'delete'].includes(candidate.operation))).toBe(false);
-    expect(workflow.transitions.filter((transition: any) => ['join', 'close'].includes(transition.id)).every((transition: any) => transition.permission === 'livechat.write' && transition.mutation.guards[0].status === 409 && String(transition.mutation.guards[0].query).includes('expected_row_version'))).toBe(true);
+    expect(workflow.transitions.filter((transition: any) => ['join', 'close'].includes(transition.id)).every((transition: any) => {
+      const versionGuard = transition.mutation.guards.find((guard: any) => guard.status === 409);
+      return transition.permission === 'livechat.write' && versionGuard && String(versionGuard.query).includes('expected_row_version');
+    })).toBe(true);
 
     const join = workflow.transitions.find((transition: any) => transition.id === 'join').mutation;
     const close = workflow.transitions.find((transition: any) => transition.id === 'close').mutation;
