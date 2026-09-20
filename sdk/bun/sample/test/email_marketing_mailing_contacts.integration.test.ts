@@ -113,6 +113,35 @@ describe('Email Marketing mailing contacts and subscriptions slice', () => {
       .rejects.toMatchObject({ status: 404, code: 'EMAIL_MAILING_SUBSCRIPTION_NOT_FOUND' });
   });
 
+  test('keeps recipient reads and mutations inside the authenticated company scope', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'email_mailing_contacts_company_scope_test', ['schema', 'data']);
+    await repository.run(`INSERT INTO mailing_lists (id, name, description, subscriber_count, state, row_version, active, favorite, is_public, company_name, contact_count, mailing_count, bounce_count, optout_count, blacklist_count, created_at, updated_at)
+      VALUES ('mailing-list-other-001', 'Other Company List', 'Foreign audience', 1, 'Active', 1, true, false, true, 'Other Company', 1, 0, 0, 0, 0, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')`);
+    await repository.run(`INSERT INTO mailing_contacts (id, row_version, name, email, company_name, message_bounce, is_blacklisted, active, created_at, updated_at)
+      VALUES ('mailing-contact-other-001', 1, 'Other Contact', 'other@example.com', 'Other Company', 0, false, true, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')`);
+    await repository.run(`INSERT INTO mailing_subscriptions (id, row_version, contact_id, list_id, opt_out, subscription_date, created_at, updated_at)
+      VALUES ('mailing-subscription-other-001', 1, 'mailing-contact-other-001', 'mailing-list-other-001', false, TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')`);
+
+    const source = api.datasources.find((candidate: any) => candidate.id === 'mailing_subscriptions');
+    const demoRows = await repository.querySource(source, { q: null, list_id: null, status: null, fixture_state: null, current_company_name: 'Core3 Vietnam' }, 0, 50);
+    expect(demoRows.data.some((row: any) => row.id === 'mailing-subscription-other-001')).toBe(false);
+    const foreignRows = await repository.querySource(source, { q: null, list_id: null, status: null, fixture_state: null, current_company_name: 'Other Company' }, 0, 50);
+    expect(foreignRows.data).toEqual([expect.objectContaining({ id: 'mailing-subscription-other-001', company_name: 'Other Company' })]);
+
+    const create = action('create_mailing_subscription');
+    await expect(repository.executeMutation(create.mutation, {
+      current_company_name: 'Core3 Vietnam',
+      values: { contact_id: 'mailing-contact-other-001', list_id: 'mailing-list-other-001' },
+    })).rejects.toMatchObject({ status: 403, code: 'EMAIL_MAILING_CONTACT_SCOPE_REQUIRED' });
+    await expect(repository.executeMutation(action('unsubscribe_mailing_subscription').mutation, {
+      id: 'mailing-subscription-other-001', expected_row_version: 1, current_company_name: 'Core3 Vietnam', opt_out_reason_id: 'email-optout-other',
+    })).rejects.toMatchObject({ status: 403, code: 'EMAIL_MAILING_SUBSCRIPTION_SCOPE_REQUIRED' });
+    expect(await repository.query('SELECT row_version, opt_out FROM mailing_subscriptions WHERE id = ?', ['mailing-subscription-other-001']))
+      .toEqual([{ row_version: 1, opt_out: false }]);
+  });
+
   test('keeps transport-error, CRUD, workflow, and concurrency contracts explicit', () => {
     expect(api.datasources[0].error_states.transport_error).toMatchObject({ status: 503, code: 'EMAIL_MAILING_CONTACTS_UNAVAILABLE' });
     for (const id of ['create_mailing_subscription', 'edit_mailing_subscription', 'unsubscribe_mailing_subscription', 'subscribe_mailing_subscription', 'delete_mailing_subscription']) {

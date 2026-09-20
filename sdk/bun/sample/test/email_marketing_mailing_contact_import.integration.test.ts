@@ -51,7 +51,7 @@ describe('Email Marketing mailing contact import wizard', () => {
 
   test('enforces list, email, permission, transport, and deferred upload boundaries', () => {
     expect(action.permission).toBe('email_marketing.manage');
-    expect(action.mutation.guards.map((guard: any) => guard.code)).toEqual(['EMAIL_MAILING_IMPORT_LIST_INVALID', 'EMAIL_MAILING_IMPORT_CONTACTS_REQUIRED', 'EMAIL_MAILING_IMPORT_EMAIL_INVALID']);
+    expect(action.mutation.guards.map((guard: any) => guard.code)).toEqual(['EMAIL_MAILING_IMPORT_LIST_INVALID', 'EMAIL_MAILING_IMPORT_LIST_SCOPE_REQUIRED', 'EMAIL_MAILING_IMPORT_CONTACTS_REQUIRED', 'EMAIL_MAILING_IMPORT_EMAIL_INVALID']);
     expect(api.datasources[0].error_states.transport_error.status).toBe(503);
     expect(action.fields[1].type).toBe('textarea');
     expect(action.fields.some((field: any) => field.field === 'upload_file')).toBe(false);
