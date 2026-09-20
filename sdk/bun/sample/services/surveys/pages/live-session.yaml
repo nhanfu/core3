@@ -13,6 +13,7 @@ components:
       - { id: advance_live_session_question, label: Next, variant: primary, permission: surveys.manage, show_if: "record.session_state === 'In Progress' && record.current_question_sequence < record.question_count" }
       - { id: show_live_session_results, label: Show results, variant: secondary, permission: surveys.manage, show_if: "record.session_state === 'In Progress'" }
       - { id: show_live_session_leaderboard, label: Leaderboard, variant: secondary, permission: surveys.manage, show_if: "record.session_state === 'In Progress'" }
+      - { id: open_live_session_join, label: Join preview, variant: secondary, permission: surveys.manage, show_if: "record.session_state === 'Ready' || record.session_state === 'In Progress'" }
       - { id: end_live_session, label: Close Live Session, variant: danger, permission: surveys.manage, show_if: "record.session_state === 'Ready' || record.session_state === 'In Progress'" }
     statusbar: [{ value: Closed, label: Closed }, { value: Ready, label: Ready }, { value: In Progress, label: In Progress }]
     status_colors: { Closed: neutral, Ready: blue, 'In Progress': green }
@@ -45,6 +46,11 @@ actions:
     permission: surveys.manage
     navigate_to: /surveys/live-session-results
     params: { survey_id: '{row.survey_id}', session_id: '{row.id}', view: leaderboard }
+  - id: open_live_session_join
+    type: navigate
+    permission: surveys.manage
+    navigate_to: /surveys/live-session-join
+    params: { id: '{row.session_code}' }
   - id: back_to_survey_detail
     type: navigate
     permission: surveys.read

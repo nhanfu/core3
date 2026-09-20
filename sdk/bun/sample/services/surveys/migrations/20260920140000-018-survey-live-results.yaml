@@ -33,6 +33,8 @@ type:
         ('live-answer-omar-rating', 'live-session-feedback', 'live-attendee-omar', 'question-feedback-rating', 'number', '4', 60, TIMESTAMP '2026-01-15 10:06:30')
       ON CONFLICT (id) DO NOTHING;
     down: |
+      DROP INDEX IF EXISTS survey_live_answers_session_question_idx;
+      DROP INDEX IF EXISTS survey_live_attendees_session_idx;
       DROP TABLE IF EXISTS survey_live_session_answers;
       DROP TABLE IF EXISTS survey_live_attendees;
   duckdb: postgres

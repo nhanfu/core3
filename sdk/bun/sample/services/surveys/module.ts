@@ -38,6 +38,8 @@ export default class SurveysModule implements ModuleLifecycle {
   }
 
   private async handlePublicRoute(request: Request, url: URL, service: PublicService): Promise<Response | null> {
+    const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)$/);
+    if (sessionMatch) return this.handlePublicSessionRoute(request, sessionMatch[1], service);
     const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|print))?$/);
     if (!match) return null;
     const token = match[1];
@@ -166,6 +168,30 @@ export default class SurveysModule implements ModuleLifecycle {
         },
       });
       return this.json({ survey: detail, answer: result });
+    } catch (error: any) {
+      return this.publicMutationError(error);
+    }
+  }
+
+  private async handlePublicSessionRoute(request: Request, sessionCode: string, service: PublicService): Promise<Response> {
+    const session = (await service.call('survey.public.session', { session_code: sessionCode }))?.session?.[0];
+    if (!session) return this.json({ error: 'The live session is unavailable', code: 'SURVEY_SESSION_NOT_FOUND' }, 404);
+    if (session.session_state === 'Closed') return this.json({ error: 'The live session is no longer open', code: 'SURVEY_SESSION_CLOSED' }, 409);
+    const question = session.session_state === 'In Progress'
+      ? (await service.call('survey.public.session.question', { session_code: sessionCode }))?.question?.[0] || null
+      : null;
+    if (request.method === 'GET') return this.json({ session, question });
+    if (request.method !== 'POST') return this.json({ error: 'Method not allowed' }, 405);
+    const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+    const attendeeName = typeof body.attendee_name === 'string' ? body.attendee_name.trim() : '';
+    if (!attendeeName || attendeeName.length > 120) return this.json({ error: 'Enter a name to join the live session', code: 'SURVEY_SESSION_ATTENDEE_NAME_REQUIRED' }, 422);
+    const normalized = attendeeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const joinKey = `session:${session.id}:name:${normalized}`;
+    const existing = (await service.call('survey.public.session.attendee', { join_key: joinKey }))?.attendee?.[0];
+    if (existing) return this.json({ ...existing, survey_name: session.survey_name, session_code: session.session_code, session_state: session.session_state, question });
+    try {
+      const attendee = await service.call('surveys.sessions.join', { session_code: sessionCode, attendee_name: attendeeName });
+      return this.json({ ...(attendee || {}), survey_name: session.survey_name, session_code: session.session_code, session_state: session.session_state, question });
     } catch (error: any) {
       return this.publicMutationError(error);
     }

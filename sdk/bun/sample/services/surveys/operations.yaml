@@ -20,3 +20,12 @@ operations:
   survey.public.print.response:
     result_key: response
     query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, CAST(submitted_at AS VARCHAR) AS submitted_at, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id AND state = 'Submitted' LIMIT 1"
+  survey.public.session:
+    result_key: session
+    query: "SELECT ls.id, ls.survey_id, ls.survey_name, ls.state AS session_state, ls.session_code, ls.session_link, ls.current_question_id, COALESCE(ls.current_question_text, 'Waiting for the host to start the first question') AS current_question_text, q.question_type AS current_question_type, q.required AS current_question_required FROM survey_live_sessions ls JOIN surveys s ON s.id = ls.survey_id LEFT JOIN survey_questions q ON q.id = ls.current_question_id WHERE ls.session_code = :session_code AND COALESCE(s.title, '') NOT ILIKE '%certification%' LIMIT 1"
+  survey.public.session.question:
+    result_key: question
+    query: "SELECT q.id, q.question_text, q.question_type, q.required, q.answer_options, q.sequence FROM survey_live_sessions ls JOIN survey_questions q ON q.id = ls.current_question_id WHERE ls.session_code = :session_code AND ls.state = 'In Progress' LIMIT 1"
+  survey.public.session.attendee:
+    result_key: attendee
+    query: "SELECT id, session_id, attendee_name, attendee_token, state, row_version, CAST(joined_at AS VARCHAR) AS joined_at FROM survey_live_attendees WHERE join_key = :join_key LIMIT 1"

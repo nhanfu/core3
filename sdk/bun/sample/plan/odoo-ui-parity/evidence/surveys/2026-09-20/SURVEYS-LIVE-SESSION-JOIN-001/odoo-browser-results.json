@@ -1,0 +1,19 @@
+{
+  "route": "http://127.0.0.1:8069/s/5822",
+  "check_session_code": {"status": 200, "jsonrpc": "2.0", "id": 1, "result": {"error": "survey_wrong"}},
+  "authenticated": true,
+  "session_cookie": "session_id from /tmp/odoo8069.cookies",
+  "desktop": {
+    "url": "http://127.0.0.1:8069/s/5822",
+    "title": "Odoo",
+    "body": "Enter Session Code\nJoin Session\nPowered by  ",
+    "overflow": false
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:8069/s/5822",
+    "title": "Odoo",
+    "body": "Enter Session Code\nJoin Session\nPowered by  ",
+    "overflow": false
+  },
+  "blocker": "Odoo returned HTTP 200 with the authenticated access-code form, but code 5822 produced the exact invalid-code message; no matching live session exists in the reference database."
+}

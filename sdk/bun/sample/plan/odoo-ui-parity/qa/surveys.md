@@ -377,3 +377,37 @@ Disposition: Core3 durable workflow, permission declaration, restart coverage,
 and responsive evidence pass for this bounded slice. Odoo comparison remains
 conditional on an attendee-populated reference session; the Surveys module
 remains **qa-in-progress / conditional**.
+
+## Bounded QA run: `SURVEYS-LIVE-SESSION-JOIN-001` — 2026-09-20
+
+- Source comparison: Odoo's public session-code routes and
+  `_fetch_from_session_code` are recorded in the feature source comparison.
+  Core3 keeps `pages/live-session-join.yaml` separate from
+  `api/live-session-join.yaml` and joins them by `page.id`.
+- Persistence/workflow: deterministic attendee ID/token/join key, Ready to
+  Waiting, In Progress current-question access, idempotent rejoin, closed and
+  certification rejection, and file-backed restart all pass. Migration
+  rollback explicitly handles DuckDB dependent indexes.
+- Focused feature verification: **3 passed, 25 assertions** in
+  `surveys_live_session_join.integration.test.ts`.
+- Full Surveys verification: **58 passed, 0 failed, 461 assertions** across
+  12 integration files, including the migration rollback/replay suite.
+- Authenticated Core3 evidence: isolated runtime desktop 1440x1000 and mobile
+  390x844 joined code `5822`; both returned HTTP 200, durable attendee tokens,
+  the current Rating question, and no horizontal overflow.
+- Authenticated Odoo evidence: desktop/mobile `/s/5822` rendered the access
+  code form; `/survey/check_session_code/5822` returned HTTP 200 JSON-RPC
+  `{\"error\":\"survey_wrong\"}`. This exact missing-reference-session
+  result is a blocker for paired live-session comparison, not a Core3 failure.
+
+Disposition: Core3 bounded access-code lifecycle passes. Surveys remains
+**qa-in-progress / conditional**; attendee answer submission, broader route
+coverage, and a matching Odoo live session remain open. No module sign-off is
+claimed.
+
+Final repository regression: **1,480 passed, 2 failed, 13,308 assertions**
+across 1,482 tests. The only failures were concurrent CRM fixture-order
+expectations in `crm_leads_analysis.integration.test.ts` and
+`crm_forecast.integration.test.ts`; no Surveys test failed. Scoped ESLint,
+`git diff --check`, and `bun run audit` all passed. The audit reported 679
+pages, 688 routes, and 1,247 datasources.

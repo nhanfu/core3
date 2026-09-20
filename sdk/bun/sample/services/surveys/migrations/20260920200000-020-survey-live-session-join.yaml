@@ -1,0 +1,27 @@
+version: 0.0.20
+description: Durable attendee tokens and idempotent public live-session joins
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_live_attendees ADD COLUMN IF NOT EXISTS attendee_token VARCHAR;
+      ALTER TABLE survey_live_attendees ADD COLUMN IF NOT EXISTS join_key VARCHAR;
+      ALTER TABLE survey_live_attendees ADD COLUMN IF NOT EXISTS row_version BIGINT DEFAULT 1;
+      UPDATE survey_live_attendees
+      SET join_key = 'session:' || session_id || ':name:' || regexp_replace(lower(trim(attendee_name)), '[^a-z0-9]+', '-', 'g'),
+          attendee_token = 'live-token-' || regexp_replace(lower(trim(attendee_name)), '[^a-z0-9]+', '-', 'g') || '-' || regexp_replace(lower(trim(session_id)), '[^a-z0-9]+', '-', 'g')
+      WHERE join_key IS NULL OR attendee_token IS NULL;
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_live_attendees_join_key_idx ON survey_live_attendees(join_key);
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_live_attendees_token_idx ON survey_live_attendees(attendee_token);
+    down: |
+      DROP INDEX IF EXISTS survey_live_attendees_token_idx;
+      DROP INDEX IF EXISTS survey_live_attendees_join_key_idx;
+      DROP INDEX IF EXISTS survey_live_attendees_session_idx;
+      ALTER TABLE survey_live_attendees DROP COLUMN IF EXISTS row_version;
+      ALTER TABLE survey_live_attendees DROP COLUMN IF EXISTS join_key;
+      ALTER TABLE survey_live_attendees DROP COLUMN IF EXISTS attendee_token;
+      CREATE INDEX IF NOT EXISTS survey_live_attendees_session_idx ON survey_live_attendees(session_id);
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

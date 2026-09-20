@@ -1,0 +1,42 @@
+title: Join Live Session
+page: { id: survey-live-session-join, route: /surveys/live-session-join, breadcrumb: [Marketing, Surveys, Live Session, Join], auth: { require: [surveys.read] } }
+components:
+  - type: OdooFormView
+    source: survey_live_session_join
+    title_field: survey_name
+    subtitle_field: session_code
+    status_field: join_state
+    editable: true
+    initial_editing: true
+    labels: { save: Join, discard: Back, editDetails: Join, workflowStatus: Access status }
+    status_colors: { 'Join now': green, 'Waiting for host': blue, Unavailable: neutral }
+    header_actions:
+      - { id: join_live_session_preview, label: Join Session, variant: primary, permission: surveys.public, show_if: "record.join_state !== 'Unavailable'" }
+      - { id: back_to_live_session, label: Live Session, variant: secondary, permission: surveys.read }
+    group_columns: 2
+    groups:
+      - title: Session
+        fields: [{ field: survey_name, label: Survey }, { field: session_code, label: Session code }, { field: session_state, label: Session state }, { field: join_state, label: Access status }, { field: current_question_text, label: Current question, wide: true }]
+      - title: Attendee
+        fields: [{ field: attendee_name, label: Your name, type: text, required: true, placeholder: 'e.g. Alex Morgan' }]
+actions:
+  - id: join_live_session_preview
+    type: client
+    permission: surveys.public
+    script: |
+      // js
+      async ({ row, request }) => {
+        const name = String(row.attendee_name || '').trim();
+        if (!name) throw new Error('Enter a name to join the live session.');
+        const result = await request(`/api/public/surveys/session/${encodeURIComponent(String(row.session_code || ''))}`, {
+          method: 'POST',
+          body: { attendee_name: name },
+        });
+        window.alert(`${result.attendee_name} joined ${result.survey_name}.`);
+        window.location.reload();
+      }
+  - id: back_to_live_session
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/live-session
+    params: { survey_id: '{row.survey_id}' }

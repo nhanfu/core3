@@ -147,3 +147,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-LEADERBOARD-001/`.
+
+## 2026-09-20 live-session access-code join additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-016 | live-session/public | Valid access code → join/rejoin | In Progress returns current question and the same durable attendee token on normalized-name retry; Ready returns Waiting | pass |
+| SURVEYS-WF-013 | workflow/recovery | Join → close/reopen → restart | Closed access is rejected; a file-backed reopen returns the same attendee row/token without duplication; rollback/replay is stable | pass |
+| SURVEYS-PERM-015 | permission/guards | Public session-code boundary | `surveys.public` owns the join action; invalid, closed, certification, blank-name, and cross-state requests do not disclose or mutate data | pass |
+| SURVEYS-UI-014 | visual/responsive | Session join desktop/mobile + Odoo comparison | Authenticated Core3 1440x1000 and 390x844 show the join flow without overflow; Odoo captures and exact `survey_wrong` blocker are recorded | pass for Core3; Odoo conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-SESSION-JOIN-001/`.

@@ -1,0 +1,29 @@
+page: { id: survey-live-session-join }
+datasources:
+  - id: survey_live_session_join
+    single: true
+    permission: surveys.read
+    error_states: { transport_error: { status: 503, code: SURVEY_LIVE_SESSION_JOIN_UNAVAILABLE, message: Live session access is temporarily unavailable. } }
+    query: "SELECT ls.session_code AS id, ls.id AS session_id, ls.survey_id, ls.survey_name, ls.state AS session_state, ls.session_link, COALESCE(ls.current_question_text, 'Waiting for the host to start the first question') AS current_question_text, CASE WHEN ls.state = 'In Progress' THEN 'Join now' WHEN ls.state = 'Ready' THEN 'Waiting for host' ELSE 'Unavailable' END AS join_state, '' AS attendee_name FROM survey_live_sessions ls JOIN surveys s ON s.id = ls.survey_id WHERE ls.session_code = :id AND COALESCE(s.title, '') NOT ILIKE '%certification%'"
+actions:
+  - id: join_live_session_public
+    type: server
+    permission: surveys.public
+    action: surveys.sessions.join
+    handler: yaml_mutation
+    operation: insert
+    mutation:
+      operation: insert
+      table: survey_live_attendees
+      fields: [session_id, attendee_name, attendee_token, join_key, state, row_version, joined_at]
+      required: [session_id, attendee_name, attendee_token]
+      generated: [id]
+      defaults: { row_version: 1, joined_at: '2026-01-15 10:01:00' }
+      before_steps:
+        - query: "SELECT ls.id AS session_id, 'live-attendee-' || regexp_replace(lower(trim(CAST(:attendee_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') || '-' || ls.session_code AS id, 'live-token-' || regexp_replace(lower(trim(CAST(:attendee_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') || '-' || ls.session_code AS attendee_token, 'session' || chr(58) || ls.id || chr(58) || 'name' || chr(58) || regexp_replace(lower(trim(CAST(:attendee_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g') AS join_key, CASE WHEN ls.state = 'Ready' THEN 'Waiting' ELSE 'In Progress' END AS state FROM survey_live_sessions ls JOIN surveys s ON s.id = ls.survey_id WHERE ls.session_code = :session_code AND COALESCE(s.title, '') NOT ILIKE '%certification%' LIMIT 1"
+          assign: true
+      guards:
+        - { query: "SELECT ls.id FROM survey_live_sessions ls JOIN surveys s ON s.id = ls.survey_id WHERE ls.session_code = :session_code AND ls.state IN ('Ready', 'In Progress') AND COALESCE(s.title, '') NOT ILIKE '%certification%'", status: 404, code: SURVEY_SESSION_NOT_FOUND, message: The live session is unavailable. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:attendee_name AS VARCHAR))) BETWEEN 1 AND 120", status: 422, code: SURVEY_SESSION_ATTENDEE_NAME_REQUIRED, message: Enter a name to join the live session. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM survey_live_attendees WHERE join_key = 'session' || chr(58) || (SELECT id FROM survey_live_sessions WHERE session_code = :session_code LIMIT 1) || chr(58) || 'name' || chr(58) || regexp_replace(lower(trim(CAST(:attendee_name AS VARCHAR))), '[^a-z0-9]+', '-', 'g'))", status: 409, code: SURVEY_SESSION_ATTENDEE_ALREADY_JOINED, message: This attendee has already joined the live session. }
+      result: { query: "SELECT id, session_id, attendee_name, attendee_token, join_key, state, row_version, CAST(joined_at AS VARCHAR) AS joined_at FROM survey_live_attendees WHERE id = :id" }

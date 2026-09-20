@@ -30,6 +30,27 @@ The current Odoo reference database has Surveys uninstalled, so this feature is
 not visually signed off against Odoo. Overall module status remains
 **qa-in-progress / conditional**.
 
+## 2026-09-20 — `SURVEYS-LIVE-SESSION-JOIN-001`
+
+Selected the smallest remaining source-backed live behavior: public access
+code join/rejoin before attendee answer submission. Core3 now persists a
+deterministic attendee token and join key, distinguishes Ready/Waiting from
+In Progress/current-question state, rejects closed/certification/invalid
+codes, and exposes the page/API contracts with `surveys.read` and
+`surveys.public` boundaries. The file-backed restart test returns the same
+token after reopen; DuckDB migration rollback now removes dependent indexes
+before dropping the new columns.
+
+The full Surveys suite is green at 58 tests and 461 assertions. Fresh
+authenticated Core3 desktop/mobile probes joined the Feedback session at
+1440x1000 and 390x844 with no overflow. Authenticated Odoo desktop/mobile
+probes reached `/s/5822`; its exact JSON-RPC validator returned
+`{\"error\":\"survey_wrong\"}` because no matching reference live session
+exists. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-SESSION-JOIN-001/`.
+Status remains **qa-in-progress / conditional**; no full-module sign-off is
+claimed.
+
 ## 2026-09-20 — `SURVEYS-LIVE-LEADERBOARD-001`
 
 Selected the smallest remaining source-backed live-session behavior after the

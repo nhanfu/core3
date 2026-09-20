@@ -1176,3 +1176,32 @@ The Core3 shared runtime also exposed a concurrent non-Surveys schema error in
 project/employees empty-state keys; the browser evidence used an isolated
 Surveys runtime without editing those owners' files. Surveys remains
 **qa-in-progress / conditional**; no full-module sign-off is claimed.
+
+## Bounded slice: Public live-session access-code join (2026-09-20)
+
+Feature ID: `SURVEYS-LIVE-SESSION-JOIN-001`.
+
+Odoo source comparison: `addons/survey/controllers/survey_session_manage.py`
+owns `/s`, `/s/<session_code>`, and
+`/survey/check_session_code/<session_code>`. `_fetch_from_session_code`
+rejects missing/certification surveys, admits only ready or in-progress
+sessions, and returns the survey start URL for a valid code. Core3 mirrors the
+public access-code seam with the separate `survey-live-session-join` page/API
+pair and `handlePublicSessionRoute` in `services/surveys/module.ts`.
+
+The durable mutation adds attendee token, join key, and row version columns in
+`20260920200000-020-survey-live-session-join.yaml`. Ready sessions return a
+Waiting attendee; In Progress sessions return the current question and an
+In Progress attendee. Rejoining the same normalized name is idempotent and
+returns the same durable token. Invalid, closed, and certification session
+codes are rejected without disclosure. The DuckDB rollback path explicitly
+tears down/recreates dependent indexes before removing the new columns.
+
+Focused coverage is in `test/surveys_live_session_join.integration.test.ts`
+and the migration rollback suite. Authenticated Core3 desktop/mobile and
+authenticated Odoo desktop/mobile evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-LIVE-SESSION-JOIN-001/`.
+Odoo returned `{\"error\":\"survey_wrong\"}` for code `5822`, so the paired
+comparison is conditional on an installed/reference live session; attendee
+answer submission remains a separate open gap. Surveys remains
+**qa-in-progress / conditional** and this slice is not module sign-off.

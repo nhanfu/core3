@@ -1,0 +1,125 @@
+{
+  "runtime": "http://127.0.0.1:4016",
+  "detailBody": "AU\nSee results\nTest\nShare\nOpen Session Manager\nClose Live Session\nClose\nCancel\nArchive\nActions\nDraft\nPublished\nClosed\nCancelled\nArchived\nFeedback Form\n\nSURVEY/FEEDBACK\n\n1\nCertified\n6\nRegistered\n4\nParticipants\nSurvey\nSurvey\nSURVEY/FEEDBACK\nStatus\nPublished\nTitle\nFeedback Form\nOwner\nMitchell Admin\nResponses\n4\nDescription\nDescription\nThis survey allows you to give a feedback about your experience with our products. Filling it helps us improving your experience.\nPublished at\n2026-09-01 09:00:00\nClosed at\n—\nAdd a question\nAdd a section\n#\n\tQuestion or section\n\tType\n\tSection\n\t\n1\tHow satisfied are you?\tRating\tfalse\t\n\n2\tWhat can we improve?\tText\tfalse\t\n\n3\tHow would you rate our service?\tChoice\tfalse\t\n\n4\tWould you recommend us?\tChoice\tfalse\t\n\n5\tWhich support channel did you use?\tChoice\tfalse\t\n\n6\tMay we contact you for follow-up?\tChoice\tfalse\t\n\n7\tAdditional comments\tText\tfalse\t\nRespondent\n\tEmail\n\tAnswers\n\tSubmitted at\n\tStatus\n\n\nAzure Interior\n\tazure@example.com\t{\"question-feedback-rating\":\"5\",\"question-feedback-comment\":\"Clearer onboarding\",\"question-feedback-service\":\"Excellent\",\"question-feedback-recommend\":\"Yes\",\"question-feedback-support\":\"Chat\",\"question-feedback-followup\":\"Yes\",\"question-feedback-notes\":\"Thanks for the good quality of your products\"}\t2026-01-15 11:30:00\tSubmitted\n\nTest Survey Entry\n\t—\t{}\t2026-01-15 10:00:00\tNew\n1–2 of 2",
+  "desktop": {
+    "before": "AU\nJoin Session\nLive Session\nJoin\nBack\nFeedback Form\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name",
+    "host": "AU\nNext\nShow results\nLeaderboard\nJoin preview\nClose Live Session\nClosed\nReady\nIn Progress\nFeedback Form\n\n5822\n\nSession\nSession code\n5822\nJoin link\n/s/5822\nStarted at\n2026-01-15 10:00:00\nLeaderboard\nDisabled\nAttendees\nAnswers\n0\nCurrent question answers\n0\nCurrent question\nHow satisfied are you?\nSurvey description\nThis survey allows you to give a feedback about your experience with our products. Filling it helps us improving your experience.\nSession questions\n\nThe host starts the first question from Ready state; attendees answer through the public session link.\n\n#\n\tQuestion\n\tType\n\tRequirement\n\tState\n\n1\t\nHow satisfied are you?\n\tRating\tRequired\tCurrent\n2\t\nWhat can we improve?\n\tText\tOptional\tUpcoming\n3\t\nHow would you rate our service?\n\tChoice\tRequired\tUpcoming\n4\t\nWould you recommend us?\n\tChoice\tRequired\tUpcoming\n5\t\nWhich support channel did you use?\n\tChoice\tOptional\tUpcoming\n6\t\nMay we contact you for follow-up?\n\tChoice\tOptional\tUpcoming\n7\t\nAdditional comments\n\tText\tOptional\tUpcoming\n1–7 of 7",
+    "after": {
+      "url": "http://127.0.0.1:4016/surveys/live-session-join?id=5822",
+      "body": "AU\nJoin Session\nLive Session\nJoin\nBack\nFeedback Form\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name\nUnable to complete\nFailed to fetch dynamically imported module: http://127.0.0.1:4016/app.ts",
+      "alert": "",
+      "input": true,
+      "clicked": true,
+      "overflow": false
+    },
+    "api": {
+      "status": 200,
+      "body": {
+        "session": {
+          "id": "live-session-feedback",
+          "survey_id": "survey-demo-feedback",
+          "survey_name": "Feedback Form",
+          "session_state": "In Progress",
+          "session_code": "5822",
+          "session_link": "/s/5822",
+          "current_question_id": "question-feedback-rating",
+          "current_question_text": "How satisfied are you?",
+          "current_question_type": "Rating",
+          "current_question_required": true
+        },
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        }
+      }
+    },
+    "joinApi": {
+      "status": 200,
+      "body": {
+        "id": "live-attendee-browser-desktop-5822",
+        "session_id": "live-session-feedback",
+        "attendee_name": "Browser Desktop",
+        "attendee_token": "live-token-browser-desktop-5822",
+        "join_key": "session:live-session-feedback:name:browser-desktop",
+        "state": "In Progress",
+        "row_version": 1,
+        "joined_at": "2026-01-15 10:01:00",
+        "survey_name": "Feedback Form",
+        "session_code": "5822",
+        "session_state": "In Progress",
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        }
+      }
+    }
+  },
+  "mobile": {
+    "before": "AU\nJoin Session\nLive Session\nJoin\nBack\nFeedback Form\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name",
+    "after": {
+      "url": "http://127.0.0.1:4016/surveys/live-session-join?id=5822",
+      "body": "AU\nJoin Session\nLive Session\nJoin\nBack\nFeedback Form\nJoin now\nSession\nSurvey\nSession code\nSession state\nAccess status\nCurrent question\nAttendee\nYour name\nUnable to complete\nFailed to fetch dynamically imported module: http://127.0.0.1:4016/app.ts",
+      "alert": "",
+      "input": true,
+      "clicked": true,
+      "overflow": false
+    },
+    "api": {
+      "status": 200,
+      "body": {
+        "session": {
+          "id": "live-session-feedback",
+          "survey_id": "survey-demo-feedback",
+          "survey_name": "Feedback Form",
+          "session_state": "In Progress",
+          "session_code": "5822",
+          "session_link": "/s/5822",
+          "current_question_id": "question-feedback-rating",
+          "current_question_text": "How satisfied are you?",
+          "current_question_type": "Rating",
+          "current_question_required": true
+        },
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        }
+      }
+    },
+    "joinApi": {
+      "status": 200,
+      "body": {
+        "id": "live-attendee-browser-mobile-5822",
+        "session_id": "live-session-feedback",
+        "attendee_name": "Browser Mobile",
+        "attendee_token": "live-token-browser-mobile-5822",
+        "join_key": "session:live-session-feedback:name:browser-mobile",
+        "state": "In Progress",
+        "row_version": 1,
+        "joined_at": "2026-01-15 10:01:00",
+        "survey_name": "Feedback Form",
+        "session_code": "5822",
+        "session_state": "In Progress",
+        "question": {
+          "id": "question-feedback-rating",
+          "question_text": "How satisfied are you?",
+          "question_type": "Rating",
+          "required": true,
+          "answer_options": "1,2,3,4,5",
+          "sequence": 1
+        }
+      }
+    }
+  }
+}
