@@ -8,7 +8,7 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_PRODUCT_VARIANT_FORBIDDEN, message: You do not have access to this product variant. }
       missing_record: { status: 404, code: ECOMMERCE_PRODUCT_VARIANT_NOT_FOUND, message: Product variant not found. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_VARIANT_UNAVAILABLE, message: Product variant details are temporarily unavailable. }
-    query: "SELECT v.id, v.row_version, v.product_id, v.name, v.internal_reference, v.combination_key, v.attribute_values, v.sales_price, v.base_unit_count, v.base_unit_name, CASE WHEN v.base_unit_count > 0 THEN CAST(v.sales_price / v.base_unit_count AS DECIMAL(20,8)) ELSE NULL END AS base_unit_price, v.active, v.company_name, p.name AS product_name, p.is_published AS product_is_published, p.active AS product_active FROM ecommerce_product_variants v JOIN ecommerce_products p ON p.id = v.product_id WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND v.id = :id AND (:company_name IS NULL OR v.company_name = :company_name OR v.company_name IS NULL)"
+    query: "SELECT v.id, v.row_version, v.product_id, v.name, v.internal_reference, v.combination_key, v.attribute_values, v.sales_price, v.compare_list_price, CASE WHEN v.compare_list_price > v.sales_price THEN v.compare_list_price ELSE NULL END AS compare_at_price, v.base_unit_count, v.base_unit_name, CASE WHEN v.base_unit_count > 0 THEN CAST(v.sales_price / v.base_unit_count AS DECIMAL(20,8)) ELSE NULL END AS base_unit_price, v.active, v.company_name, p.name AS product_name, p.is_published AS product_is_published, p.active AS product_active FROM ecommerce_product_variants v JOIN ecommerce_products p ON p.id = v.product_id WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND v.id = :id AND (:company_name IS NULL OR v.company_name = :company_name OR v.company_name IS NULL)"
   - id: ecommerce_product_variant_images
     permission: ecommerce.read
     error_states:
@@ -44,6 +44,26 @@ actions:
     fields:
       - { field: base_unit_count, label: Base Unit Count, type: number, min: 0, default: 0 }
       - { field: base_unit_name, label: Base Unit Name, type: text, placeholder: 'piece' }
+  - id: update_ecommerce_product_variant_compare_price
+    type: server_form
+    permission: ecommerce.write
+    title: Configure Compare to Price
+    action: ecommerce.product_variants.compare_price.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.ecommerce_product_variant_detail.id}', expected_row_version: '{state.ecommerce_product_variant_detail.row_version}' }
+    refresh: [ecommerce_product_variant_detail, ecommerce_product_variant_images]
+    mutation:
+      required: [id, expected_row_version]
+      guards:
+        - { query: "SELECT v.id FROM ecommerce_product_variants v WHERE v.id = :id AND (COALESCE(:current_company_name, '') = '' OR v.company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_VARIANT_COMPANY_SCOPE_REQUIRED, message: This product variant belongs to another company. }
+        - { query: "SELECT v.id FROM ecommerce_product_variants v JOIN ecommerce_products p ON p.id = v.product_id WHERE v.id = :id AND v.row_version = :expected_row_version AND v.active = TRUE AND p.active = TRUE", status: 409, code: ECOMMERCE_PRODUCT_VARIANT_COMPARE_PRICE_STALE, message: This product variant changed before Compare to Price could be saved. Reload before retrying. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:compare_list_price, 0) AS DECIMAL(12,2)) >= 0", status: 422, code: ECOMMERCE_PRODUCT_VARIANT_COMPARE_PRICE_INVALID, message: Compare to Price must be zero or greater. }
+      steps:
+        - { query: "UPDATE ecommerce_product_variants SET row_version = row_version + 1, compare_list_price = CAST(COALESCE(:compare_list_price, 0) AS DECIMAL(12,2)), updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_VARIANT_COMPARE_PRICE_STALE, message: This product variant changed before Compare to Price could be saved. }
+      result: { query: "SELECT v.*, CASE WHEN v.compare_list_price > v.sales_price THEN v.compare_list_price ELSE NULL END AS compare_at_price FROM ecommerce_product_variants v WHERE v.id = :id" }
+    fields:
+      - { field: compare_list_price, label: Compare to Price, type: number, min: 0, default: 0 }
   - id: upload_ecommerce_product_variant_image
     type: upload
     action: ecommerce.product_variants.images.upload

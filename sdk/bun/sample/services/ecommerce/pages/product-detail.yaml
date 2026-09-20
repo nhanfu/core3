@@ -20,7 +20,7 @@ components:
       - { id: add_ecommerce_product_to_cart, label: Add to Cart, variant: primary, permission: ecommerce.write }
     groups:
       - { title: Product, columns: 2, fields: [{ field: name, label: Product Name }, { field: internal_reference, label: Internal Reference }, { field: product_type, label: Product Type }, { field: category, label: Category }] }
-      - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: website_sequence, label: Website Sequence }, { field: is_published, label: Published, type: StatusChip }, { field: active, label: Active, type: StatusChip }] }
+      - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: compare_at_price, label: Compare to Price }, { field: website_sequence, label: Website Sequence }, { field: is_published, label: Published, type: StatusChip }, { field: active, label: Active, type: StatusChip }] }
   - type: ListView
     variant: odoo
     source: ecommerce_product_variants
@@ -36,6 +36,7 @@ components:
       - { field: internal_reference, label: Internal Reference }
       - { field: attribute_values, label: Attributes }
       - { field: sales_price, label: Sales Price, align: right }
+      - { field: compare_at_price, label: Compare to Price, align: right }
       - { field: base_unit_name, label: Unit }
       - { field: base_unit_price, label: Price Per Unit, align: right }
       - { field: active, label: Active, type: StatusChip }

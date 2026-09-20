@@ -21,9 +21,10 @@ components:
     header_actions:
       - { id: back_to_ecommerce_product_detail_from_variant, label: Back to Product, variant: secondary }
       - { id: update_ecommerce_product_variant_base_unit, label: Configure Unit Price, variant: secondary, permission: ecommerce.write }
+      - { id: update_ecommerce_product_variant_compare_price, label: Configure Compare to Price, variant: secondary, permission: ecommerce.write }
     groups:
       - { title: Product Variant, columns: 2, fields: [{ field: name, label: Variant }, { field: product_name, label: Product }, { field: internal_reference, label: Internal Reference }, { field: attribute_values, label: Attributes }] }
-      - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: base_unit_count, label: Base Unit Count }, { field: base_unit_name, label: Base Unit }, { field: base_unit_price, label: Price Per Unit }, { field: active, label: Active, type: StatusChip }, { field: product_is_published, label: Product Published, type: StatusChip }, { field: company_name, label: Company }] }
+      - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: compare_at_price, label: Compare to Price }, { field: base_unit_count, label: Base Unit Count }, { field: base_unit_name, label: Base Unit }, { field: base_unit_price, label: Price Per Unit }, { field: active, label: Active, type: StatusChip }, { field: product_is_published, label: Product Published, type: StatusChip }, { field: company_name, label: Company }] }
   - type: ListView
     variant: odoo
     source: ecommerce_product_variant_images

@@ -1,0 +1,17 @@
+version: 0.0.78
+kind: schema
+description: durable Website Sale compare-at prices for products and variants
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_products ADD COLUMN compare_list_price DECIMAL(12,2);
+      UPDATE ecommerce_products SET compare_list_price = 0 WHERE compare_list_price IS NULL;
+      ALTER TABLE ecommerce_product_variants ADD COLUMN compare_list_price DECIMAL(12,2);
+      UPDATE ecommerce_product_variants SET compare_list_price = 0 WHERE compare_list_price IS NULL;
+    down: |
+      ALTER TABLE ecommerce_product_variants DROP COLUMN IF EXISTS compare_list_price;
+      ALTER TABLE ecommerce_products DROP COLUMN IF EXISTS compare_list_price;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

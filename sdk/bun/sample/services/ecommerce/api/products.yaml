@@ -4,7 +4,7 @@ datasources:
     single: false
     permission: ecommerce.read
     error_states: { unauthorized: { status: 401, code: ECOMMERCE_PRODUCTS_UNAUTHENTICATED, message: Sign in to view eCommerce products. }, forbidden: { status: 403, code: ECOMMERCE_PRODUCTS_FORBIDDEN, message: You do not have access to eCommerce products. }, transport_error: { status: 503, code: ECOMMERCE_PRODUCTS_UNAVAILABLE, message: eCommerce products are temporarily unavailable. } }
-    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(internal_reference, '') ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') AND (:published IS NULL OR is_published = :published) AND (:company_name IS NULL OR company_name = :company_name) ORDER BY website_sequence, name"
+    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, compare_list_price, CASE WHEN compare_list_price > sales_price THEN compare_list_price ELSE NULL END AS compare_at_price, website_sequence, is_published, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(internal_reference, '') ILIKE '%' || :q || '%' OR COALESCE(category, '') ILIKE '%' || :q || '%') AND (:published IS NULL OR is_published = :published) AND (:company_name IS NULL OR company_name = :company_name) ORDER BY website_sequence, name"
   - id: ecommerce_product_published
     single: false
     permission: ecommerce.read
@@ -17,7 +17,7 @@ actions:
       // js
       ({ state }) => {
         const rows = Array.isArray(state.ecommerce_products) ? state.ecommerce_products : [];
-        const columns = ['name', 'internal_reference', 'product_type', 'category', 'sales_price', 'website_sequence', 'is_published', 'active', 'company_name'];
+        const columns = ['name', 'internal_reference', 'product_type', 'category', 'sales_price', 'compare_list_price', 'compare_at_price', 'website_sequence', 'is_published', 'active', 'company_name'];
         const escape = (value) => JSON.stringify(String(value ?? ''));
         const csv = [columns.join(','), ...rows.map((row) => columns.map((column) => escape(row[column])).join(','))].join('\\n');
         const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -38,7 +38,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM (SELECT trim(unnest(string_split(CAST(:product_list AS VARCHAR), chr(10)))) AS line) lines WHERE line <> '' AND NOT regexp_matches(line, '^[^|]+\\|[^|]+\\|[0-9]+(\\.[0-9]+)?$'))", status: 422, code: ECOMMERCE_PRODUCT_IMPORT_INVALID, message: Each row must use Name|Internal Reference|Sales Price format. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: ECOMMERCE_COMPANY_SCOPE_REQUIRED, message: Products must belong to the current company. }
       steps:
-        - { query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:product_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS name, trim(split_part(line, '|', 2)) AS internal_reference, CAST(trim(split_part(line, '|', 3)) AS DECIMAL(12,2)) AS sales_price FROM lines WHERE line <> '') INSERT INTO ecommerce_products(id, row_version, name, internal_reference, product_type, category, sales_price, website_sequence, is_published, active, company_name) SELECT 'ecommerce-product-import-' || regexp_replace(lower(internal_reference), '[^a-z0-9]+', '-', 'g'), 1, name, internal_reference, 'Goods', 'All Products', sales_price, 10, false, true, COALESCE(:company_name, :current_company_name, 'My Company') FROM parsed ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sales_price = EXCLUDED.sales_price, company_name = EXCLUDED.company_name, updated_at = TIMESTAMP '2026-09-13 10:00:00'" }
+        - { query: "WITH lines AS (SELECT trim(unnest(string_split(CAST(:product_list AS VARCHAR), chr(10)))) AS line), parsed AS (SELECT trim(split_part(line, '|', 1)) AS name, trim(split_part(line, '|', 2)) AS internal_reference, CAST(trim(split_part(line, '|', 3)) AS DECIMAL(12,2)) AS sales_price FROM lines WHERE line <> '') INSERT INTO ecommerce_products(id, row_version, name, internal_reference, product_type, category, sales_price, compare_list_price, website_sequence, is_published, active, company_name) SELECT 'ecommerce-product-import-' || regexp_replace(lower(internal_reference), '[^a-z0-9]+', '-', 'g'), 1, name, internal_reference, 'Goods', 'All Products', sales_price, 0, 10, false, true, COALESCE(:company_name, :current_company_name, 'My Company') FROM parsed ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, sales_price = EXCLUDED.sales_price, compare_list_price = 0, company_name = EXCLUDED.company_name, updated_at = TIMESTAMP '2026-09-13 10:00:00'" }
       result: { query: "SELECT COUNT(*) AS imported FROM ecommerce_products WHERE id LIKE 'ecommerce-product-import-%'" }
     fields: [{ field: product_list, label: Product List, type: textarea, required: true, placeholder: 'Travel Mug|ECOM-IMP-001|25.50\nDesk Lamp|ECOM-IMP-002|44.00' }]
   - id: create_ecommerce_product
@@ -52,9 +52,9 @@ actions:
     mutation:
       operation: insert
       table: ecommerce_products
-      fields: [name, internal_reference, product_type, category, sales_price, website_sequence, is_published, company_name]
+      fields: [name, internal_reference, product_type, category, sales_price, compare_list_price, website_sequence, is_published, company_name]
       required: [name]
-      defaults: { product_type: Goods, sales_price: 0, website_sequence: 10, is_published: false, company_name: My Company }
+      defaults: { product_type: Goods, sales_price: 0, compare_list_price: 0, website_sequence: 10, is_published: false, company_name: My Company }
       guards:
         - query: "SELECT 1 AS ok WHERE :internal_reference IS NULL OR NOT EXISTS (SELECT 1 FROM ecommerce_products WHERE internal_reference = :internal_reference)"
           status: 409
@@ -64,6 +64,10 @@ actions:
           status: 403
           code: ECOMMERCE_COMPANY_SCOPE_REQUIRED
           message: Products must belong to the current company.
+        - query: "SELECT 1 AS ok WHERE CAST(COALESCE(:compare_list_price, 0) AS DECIMAL(12,2)) >= 0"
+          status: 422
+          code: ECOMMERCE_PRODUCT_COMPARE_PRICE_INVALID
+          message: Compare to Price must be zero or greater.
       result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
     fields:
       - { field: name, label: Product Name, type: text, required: true }
@@ -71,6 +75,7 @@ actions:
       - { field: product_type, label: Product Type, type: select, options: [Goods, Service] }
       - { field: category, label: eCommerce Category, type: text }
       - { field: sales_price, label: Sales Price, type: number }
+      - { field: compare_list_price, label: Compare to Price, type: number, min: 0 }
       - { field: website_sequence, label: Website Sequence, type: number }
       - { field: is_published, label: Published, type: checkbox }
       - { field: company_name, label: Company, type: text, default: My Company }

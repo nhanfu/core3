@@ -17,6 +17,7 @@ components:
       - { field: category, label: Categories }
       - { field: product_type, label: Product Type }
       - { field: sales_price, label: Sales Price, align: right }
+      - { field: compare_at_price, label: Compare to Price, align: right }
       - { field: is_published, label: Is Published, type: StatusChip }
     page_size: 40
     row_key: id

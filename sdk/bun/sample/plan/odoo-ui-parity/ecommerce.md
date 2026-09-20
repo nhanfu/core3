@@ -1,6 +1,33 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded variant base-unit pricing slice; module sign-off remains open)
+Status: qa-in-progress (bounded product compare-at pricing slice; module sign-off remains open)
+
+## Bounded feature — Product Compare-at Pricing (`ECOM-CATALOG-PRODUCT-COMPARE-PRICE-001`)
+
+Odoo source comparison: `website_sale/models/product_template.py` defines
+`compare_list_price` as the monetary “Compare to Price” field;
+`controllers/product_configurator.py` returns it as a strikethrough candidate
+only when it is greater than the actual price; and
+`views/product_views.xml` renders the field behind the Website Sale price
+comparison group. The same inherited field is available for product variants.
+
+Core3 comparison: product and variant sales prices existed, but no durable
+compare-at value or derived display boundary existed. Migrations 078/079 add
+durable product/variant compare prices and a deterministic Mug/Mug Blue
+fixture. Separate Products, Shop, Product Detail, and Product Variant page/API
+contracts expose raw `compare_list_price` plus `compare_at_price` only when it
+exceeds the current sales price. Product and variant write actions require
+`ecommerce.write`, validate non-negative prices and company scope, and use
+optimistic row versions.
+
+Focused tests cover Odoo source tracing, page/API separation, deterministic
+fixture replay, product and variant CRUD, visibility/zero boundary,
+permission declarations, company isolation, stale writes, and DuckDB restart
+persistence in `test/ecommerce_product_compare_price.integration.test.ts`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable runtime
+ports; supplied Odoo references return exact HTTP 404 for `/shop`. Evidence is
+under `evidence/ecommerce/2026-09-21/ecom-catalog-product-compare-price-001/`.
+This bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Product Variant Base-Unit Pricing (`ECOM-CATALOG-VARIANT-BASE-UNIT-PRICING-001`)
 

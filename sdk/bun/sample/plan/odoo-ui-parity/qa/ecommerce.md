@@ -1,5 +1,35 @@
 # ecommerce QA ledger
 
+## Product Compare-at Pricing (`ECOM-CATALOG-PRODUCT-COMPARE-PRICE-001`, 2026-09-21)
+
+- Odoo source/page: pass. `website_sale/models/product_template.py` defines
+  `compare_list_price`; `product_configurator.py` returns it only when it is
+  above the actual price; and `product_views.xml` renders the Compare to Price
+  field behind the Website Sale comparison group.
+- Core3 lifecycle: pass for this bounded contract. Migrations 078/079 add
+  durable product/variant compare prices and deterministic Mug/Mug Blue
+  fixtures. Products, Shop, Product Detail, and Product Variant use separate
+  page/API YAML contracts; raw values and the greater-than-only
+  `compare_at_price` projection are exposed. Product and variant writes carry
+  `ecommerce.write`, company, non-negative-value, and optimistic concurrency
+  guards.
+- Focused verification: `bun test
+  ./test/ecommerce_product_compare_price.integration.test.ts --timeout 20000` —
+  **3 passed, 33 assertions, 0 failures**. UI audit: **pass** — 701 pages,
+  710 routes, 1328 datasources.
+- Adjacent Products, Product Detail, Product Variants, Shop, and Cart
+  regression: **16 passed, 118 assertions, 0 failures**; combined bounded
+  set: **19 passed, 151 assertions, 0 failures**. Scoped ESLint and
+  `git diff --check`: **pass**.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Currency/pricelist display integration, broader actor/browser coverage, and
+  paired Odoo rendering remain open. Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-product-compare-price-001/`.
+
 ## Product Variant Base-Unit Pricing (`ECOM-CATALOG-VARIANT-BASE-UNIT-PRICING-001`, 2026-09-21)
 
 - Odoo source/page: pass. `website_sale/models/product_product.py` and

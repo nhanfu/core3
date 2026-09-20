@@ -4,7 +4,31 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `bfe57a4a5f68bb630a6e68d7a491ee5fda976a9d` (Product Variant Extra Media).
+Latest committed bounded slice before this wave: `26822314e63a6690e50e2f6df567e3e3e1b8c342` (Product Variant Base-Unit Pricing).
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-COMPARE-PRICE-001`
+
+The next uncovered source-backed catalog behavior is Website Sale's
+compare-at/list price. Odoo's `compare_list_price` is rendered as a
+strikethrough candidate only when it exceeds the actual price, and the product
+form exposes it through the Website Sale price-comparison group.
+
+Core3 migrations 078/079 add durable product and variant compare prices with
+deterministic Mug and Mug Blue values. Products, Shop, Product Detail, and
+Product Variant remain paired through separate page/API YAML; each exposes the
+raw value and a derived `compare_at_price` display boundary. Product editing
+and the dedicated variant compare-price action enforce `ecommerce.write`,
+company scope, non-negative values, and optimistic row versions.
+
+Focused verification: `bun test
+./test/ecommerce_product_compare_price.integration.test.ts --timeout 20000` —
+**3 passed, 33 assertions, 0 failures**. The adjacent Products, Product
+Detail, Product Variants, Shop, and Cart regression set passed **16 tests, 118
+assertions**; combined **19 tests, 151 assertions, 0 failures**. UI audit
+passed at 701 pages, 710 routes, and 1328 datasources. Scoped ESLint and
+`git diff --check` passed. Runtime probes show Core3 ports
+3000/4312/4313 unavailable and Odoo `/shop` returns exact HTTP 404 on 8069
+and 8073; no browser sign-off is claimed.
 
 ## Current bounded task — `ECOM-CATALOG-VARIANT-BASE-UNIT-PRICING-001`
 
