@@ -1,7 +1,7 @@
 # referrals parity progress
 
 Module owner: referrals module owner
-QA assignment: dispatchable QA slot (wave assignment pending)
+QA assignment: current-wave module owner
 Status: source-limited CRUD/workflow/browser slice verified
 Verification trigger: feature-complete after `hr_referral` is installed in the live reference
 Candidate commit: a071e43250f8334b0bb215b7e2e6eab3860f11a5
@@ -20,7 +20,7 @@ parity claim is made because `hr_referral` is absent from the live reference.
 
 ## Next bounded task
 
-Complete the source-limited API/page slice review, then obtain/install the
-matching Odoo addon and record the exact menu/action/view inventory before
+Keep the source-limited slice unsignoffed for Odoo parity, then obtain/install
+the matching Odoo addon and record the exact menu/action/view inventory before
 claiming parity. Update this file only with evidence from the matching module
 owner.

@@ -33,8 +33,9 @@ parity facts are unknown and intentionally unclaimed: the Odoo 19 menu and
 submenu order, action/context bindings, visibility groups, models and fields,
 list/form/kanban/graph/pivot states, exact visible labels, empty/error states,
 responsive layout, and official demo-data coverage. No Odoo or Core3 browser
-captures were attempted for this blocked audit; there is no truthful Odoo
-screen to compare against.
+captures were attempted during this initial 2026-09-12 blocked audit; there is
+still no truthful Odoo screen to compare against. Later authenticated Core3
+route captures are recorded separately in the QA ledger.
 
 The live reference was checked on 2026-09-20 at `http://localhost:8069`,
 database `core3_reference`, using the configured local QA account without
