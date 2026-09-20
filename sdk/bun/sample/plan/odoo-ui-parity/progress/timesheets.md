@@ -456,6 +456,31 @@ at both viewports but does not expose a loaded row-to-analysis-form action.
 That exact paired interaction blocker remains open; no parity or module
 sign-off is claimed.
 
+## 2026-09-21 `TIMESHEET-MY-TOTAL-FOOTER-001`
+
+Selected Odoo's remaining authenticated My Timesheets list aggregate: the
+`unit_amount` field declares `sum="Total"` in the source list view. This is
+distinct from the completed portal filters, analysis/report slices, UoM
+encoding, inline editing, and Parent Task grouping.
+
+Core3 adds a page/API-separated `timesheet_entries_summary` source joined by
+`page.id: timesheets`. It calculates the durable actor/company/date/search/
+state-scoped total and formats it with the persisted company time encoding;
+the page exposes it as the `Total` ListView footer. Existing read permission,
+empty/transport boundaries, and stale detail concurrency remain covered.
+
+Focused verification: `test/timesheets_my_total_footer.integration.test.ts`
+passes 4/4 tests with 23 expectations, including deterministic filters,
+permission/company guards, replay, and file-backed restart.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-my-total-footer/`. Authenticated
+Odoo desktop shows the rendered `127:00` aggregate and mobile shows the
+responsive Kanban without a footer. Core3 browser capture is blocked before
+login because the bounded dev startup exposed Vite on 3002 but not backend
+3001; `core3-blocker.json` records the blocker. Existing Print/PDF/action
+gaps remain open and no sign-off is claimed.
+
 ## 2026-09-21 `TIMESHEET-PARENT-TASK-GROUP-001`
 
 Selected the next genuinely uncovered authenticated My Timesheets behavior:

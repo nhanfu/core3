@@ -710,3 +710,25 @@ recorded. Existing Timesheets Print/PDF/action blockers remain.
   page schema (`PageSchemaError: components[0].views[0].group_by is required
   for kanban`); no other module was repaired or staged. Existing Odoo
   Print/PDF/action blockers remain open and this slice is not sign-off.
+
+## `TIMESHEET-MY-TOTAL-FOOTER-001` — My Timesheets Time Spent total (2026-09-21)
+
+- Source gate: Odoo's `hr_timesheet_line_tree` declares the Time Spent
+  `unit_amount` field with `sum="Total"` and the `timesheet_uom` widget.
+- Core3 gate: `pages/entries.yaml` remains layout-only and binds a `Total`
+  footer through `page.id: timesheets` to API-owned
+  `timesheet_entries_summary`; the summary uses the same durable actor,
+  company, search, state, and date scope as the list.
+- Focused gate: `test/timesheets_my_total_footer.integration.test.ts`
+  passes 4/4 tests / 23 expectations, including page/API separation,
+  permission, company/empty/transport guards, stale concurrency, replay, and
+  file-backed restart.
+- Odoo browser gate: authenticated `codex@core3.local` renders
+  `/odoo/timesheets` at desktop with the visible `127:00` total; the mobile
+  Kanban renders authenticated cards but does not expose the list footer.
+  Captures and results are under
+  `evidence/timesheets/2026-09-21/timesheet-my-total-footer/`.
+- Core3 browser blocker: the bounded `bun dev --db=ddb --memory` startup
+  exposed Vite on 3002 but did not expose backend 3001 before the process was
+  stopped; no other module was repaired or staged. Existing Odoo Print/PDF/
+  action blockers remain open and this slice is not sign-off.

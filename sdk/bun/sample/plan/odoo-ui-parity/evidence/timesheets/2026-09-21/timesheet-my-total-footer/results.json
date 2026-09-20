@@ -1,0 +1,35 @@
+[
+  {
+    "name": "odoo-desktop",
+    "viewport": "1440x900",
+    "url": "http://127.0.0.1:8069/odoo/timesheets",
+    "authenticated": true,
+    "totalVisible": true,
+    "bodyTail": "n-billable\t02:00\t\n\n\tAug 12\tOffice Design\t\nRoom 1: Decoration\n\tDesign\t\nNon-billable\t01:00\t\n\n\tJul 24\tOffice Design\t\nRoom 1: Decoration\n\tOn Site Visit\t\nNon-billable\t01:00\t\n\n\tJul 22\tOffice Design\t\nEnergy Certificate\n\tDelivery\t\nNon-billable\t01:00\t\n\n\tJun 30\tOffice Design\t\nInternal training\n\tTechnical training\t\nNon-billable\t08:00\t\n\n\tJun 28\tOffice Design\t\nInternal training\n\tInternal training\t\nNon-billable\t08:00\t\n\n\tJun 27\tOffice Design\t\nInternal training\n\tInternal discussion\t\nNon-billable\t08:00\t\n\t127:00\t",
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  {
+    "name": "odoo-mobile",
+    "viewport": "390x844",
+    "url": "http://127.0.0.1:8069/odoo/timesheets?view_type=kanban",
+    "authenticated": true,
+    "totalVisible": false,
+    "bodyTail": "7\nShifting\n4h\nAfter-Sales Services\nS00036 - Customer Care (Prepaid Hours)\nAug 17\nDocument analysis\n4h\nOffice Design\nOffice planning\nAug 13\nQuality analysis\n2h\nOffice Design\nRoom 1: Decoration\nAug 12\nDesign\n1h\nOffice Design\nRoom 1: Decoration\nJul 24\nOn Site Visit\n1h\nOffice Design\nEnergy Certificate\nJul 22\nDelivery\n1h\nOffice Design\nInternal training\nJun 30\nTechnical training\n8h\nOffice Design\nInternal training\nJun 28\nInternal training\n8h\nOffice Design\nInternal training\nJun 27\nInternal discussion\n8h",
+    "pageErrors": [],
+    "failedRequests": [
+      {
+        "url": "http://127.0.0.1:8069/web/action/load",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:8069/web/image/res.partner/3/avatar_128?unique=1788992892000",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:8069/web/image?model=res.users&field=avatar_128&id=2",
+        "error": "net::ERR_ABORTED"
+      }
+    ]
+  }
+]

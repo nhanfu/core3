@@ -18,6 +18,10 @@ components:
         - { field: name, type: text, required: true, placeholder: Describe your activity }
         - { field: hours, type: number, required: true, default: 1, placeholder: '0.00' }
     default_filters: { work_date: this_week }
+    footer:
+      source: timesheet_entries_summary
+      stats:
+        - { label: Total, field: total_time_spent_display }
     header_actions:
       - { id: create_timesheet_calendar_batch, label: Log multiple days, permission: timesheets.write, variant: secondary }
     search: { label: Search, placeholder: 'Search...' }

@@ -1491,3 +1491,33 @@ failure (`PageSchemaError: components[0].views[0].group_by is required for
 kanban`); the blocker is preserved in the evidence directory and no other
 module was changed. Odoo Print/PDF/action surfaces and full route/action
 comparison remain open; this bounded slice does not claim Timesheets sign-off.
+
+## Tenth-wave My Timesheets total footer — `TIMESHEET-MY-TOTAL-FOOTER-001` (2026-09-21)
+
+The next uncovered source-backed behavior is Odoo's aggregate Time Spent
+footer. `addons/hr_timesheet/views/hr_timesheet_views.xml:18` declares the
+`unit_amount` field with `sum="Total"` and the `timesheet_uom` widget.
+
+Core3 keeps `pages/entries.yaml` layout-only and adds a `Total` footer bound
+through `page.id: timesheets` to the API-owned `timesheet_entries_summary`
+datasource. The summary recomputes from durable `timesheet_entries` using the
+same actor, company, search, state, and date filters as the list, and formats
+the total through the persisted company Hours/Minutes versus Days setting.
+The existing read permission and detail-write optimistic concurrency guard
+remain in force; no separate mutable total state is introduced.
+
+Focused coverage is
+`test/timesheets_my_total_footer.integration.test.ts`: 4 tests / 23
+expectations. It covers the Odoo source comparison, page/API separation,
+filter-aware totals, actor/company/empty/transport guards, stale concurrency,
+migration replay, and file-backed restart persistence.
+
+Authenticated Odoo evidence is under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-21/timesheet-my-total-footer/`.
+Desktop visibly renders the source total `127:00`; the responsive mobile
+Kanban renders cards but does not expose the list footer. Core3 capture is
+blocked before authentication because the shared dev startup launched Vite
+on 3002 but did not expose backend 3001 during the bounded readiness check;
+the exact blocker is recorded in the evidence directory. Odoo Print/PDF/action
+surfaces and full route/action comparison remain open; no Timesheets sign-off
+is claimed.

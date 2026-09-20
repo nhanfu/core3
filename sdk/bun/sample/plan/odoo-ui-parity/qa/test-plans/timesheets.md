@@ -63,6 +63,7 @@ isolated databases and deterministic dates.
 | TIMESHEET-UI-001 | All 13 routes render at 1440x900 and 390x844 without errors or overflow | route 26/26 pass |
 | TIMESHEET-UI-002 | My/All/By Employee, task tab, forms and reports match paired Odoo states | 12 representative captures pass; remaining states planned |
 | TIMESHEET-PARENT-TASK-GROUP-001 | Authenticated My Timesheets exposes durable Odoo Parent Task group-by context with page/API separation, actor/company/empty/stale guards, and restart persistence | pass: focused 4 tests / 24 expectations; authenticated Odoo desktop/mobile evidence; Core3 capture blocked by unrelated page discovery schema error; Print/PDF/action parity remains open |
+| TIMESHEET-MY-TOTAL-FOOTER-001 | My Timesheets exposes Odoo's durable, filter-aware Time Spent Total footer through separate page/API YAML with permission, company, stale, and restart coverage | pass: focused 4 tests / 23 expectations; authenticated Odoo desktop/mobile evidence; Core3 backend readiness blocker recorded; Print/PDF/action parity remains open |
 | TIMESHEET-INT-001 | Project, payroll, calendar, notification and other durable integrations use Temporal with retry/replay/restart/compensation coverage | planned |
 
 ## Exit criteria

@@ -1,0 +1,12 @@
+{
+  "feature_id": "TIMESHEET-MY-TOTAL-FOOTER-001",
+  "actor": "admin@tms.local",
+  "authenticated": false,
+  "route": "/auth/login?redirect=%2Ftimesheets",
+  "viewport_sizes": ["1440x900", "390x844"],
+  "command": "bun dev --db=ddb --memory",
+  "backend": "http://127.0.0.1:3001",
+  "frontend": "http://127.0.0.1:3002",
+  "blocker": "Core3 dev startup launched Vite on 3002 but did not expose backend 3001 during the bounded readiness check; the process was stopped before browser authentication.",
+  "ownership": "runtime boundary outside services/timesheets; no other module was changed or staged"
+}
