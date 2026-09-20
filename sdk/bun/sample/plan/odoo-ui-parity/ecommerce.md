@@ -1,4 +1,4 @@
-# eCommerce parity — Products slice
+# eCommerce parity — Products and order workflows
 
 Status: ready for review (bounded wave 2 slice)
 
@@ -24,6 +24,23 @@ Reference, Product Type, and Sales Price. The page is presentation-only and
 joins `api/products.yaml` by `page.id`; permissions, queries, mutations, and
 fixtures stay in the backend API/migration seam.
 
+## Bounded order workflow — reorder
+
+The next source-backed order slice follows
+`/home/nhanjs/projects/odoo/addons/website_sale/controllers/reorder.py` and its
+`CustomerPortal.my_orders_reorder` route. Odoo reads an accessible prior order,
+skips lines that are not reorderable, adds eligible products and quantities to
+the active cart, and raises a validation error when no line can be added.
+
+Core3 implements this contract through the order-detail API/page join:
+`ecommerce_order_lines` displays persisted source lines and
+`reorder_ecommerce_order` selects the customer's existing open cart (or creates
+the deterministic customer cart), merges quantities by product, and returns
+the durable cart. The mutation enforces `ecommerce.write`, customer/company
+scope, source row-version concurrency, missing-order, unavailable-product, and
+empty-line guards. Migration `20260920130000-033-ecommerce-reorder-demo.yaml`
+provides repeatable source-order lines, including an unavailable-product case.
+
 ## Acceptance and evidence
 
 - Deterministic products: three published/one unpublished fixtures, ordered by
@@ -34,6 +51,10 @@ fixtures stay in the backend API/migration seam.
 - Visible Kanban/List tabs are used; mobile defaults to Kanban to match the
   Odoo action's product-first catalog surface. New, Archive, search, filter,
   row navigation, empty, and error states are covered by the page/API contract.
+- Reorder coverage: active source lines merge into the owned open cart,
+  repeated requests preserve Odoo's additive behavior, unavailable-only orders
+  are rejected, wrong customer/company and stale/missing orders are denied,
+  and selected cart lines survive a DuckDB restart.
 - Required comparison captures were attempted under
   `/tmp/core3-odoo-parity/ecommerce-products-wave2/` for Odoo and Core3 at
   1440x900 and 390x844. On 2026-09-12 Odoo responded at `http://localhost:8073`

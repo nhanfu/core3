@@ -1,0 +1,17 @@
+version: 0.0.33
+kind: data
+description: eCommerce reorder source-order line fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_order_lines (id, order_id, product_id, product_name, unit_price, quantity, line_total) VALUES
+        ('ecommerce-order-line-001', 'ecommerce-order-001', 'ecommerce-product-mug', 'Core3 Ceramic Mug', 18.00, 1, 18.00),
+        ('ecommerce-order-line-002', 'ecommerce-order-001', 'ecommerce-product-chair', 'Ergonomic Office Chair', 249.00, 1, 249.00),
+        ('ecommerce-order-line-003', 'ecommerce-order-002', 'ecommerce-product-lamp', 'Desk Lamp', 46.50, 1, 46.50),
+        ('ecommerce-order-line-004', 'ecommerce-order-003', 'ecommerce-product-discontinued', 'Discontinued Product', 120.00, 1, 120.00)
+      ON CONFLICT (id) DO NOTHING;
+    down: DELETE FROM ecommerce_order_lines WHERE id IN ('ecommerce-order-line-001', 'ecommerce-order-line-002', 'ecommerce-order-line-003', 'ecommerce-order-line-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

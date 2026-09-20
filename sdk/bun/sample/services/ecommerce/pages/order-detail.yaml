@@ -6,8 +6,19 @@ components:
     title_field: order_number
     header_actions:
       - { id: back_to_ecommerce_orders, label: Back, variant: secondary }
+      - { id: reorder_ecommerce_order, label: Reorder, variant: primary, permission: ecommerce.write }
       - { id: print_ecommerce_order, label: Print, variant: secondary }
     groups:
       - { title: Order, columns: 2, fields: [{ field: order_number, label: Order }, { field: state, label: Status, type: StatusChip }, { field: date_order, label: Order Date }, { field: company_name, label: Company }] }
       - { title: Customer, columns: 2, fields: [{ field: customer_name, label: Customer }, { field: customer_email, label: Email }] }
       - { title: Total, columns: 2, fields: [{ field: amount_total, label: Total }, { field: currency, label: Currency }] }
+    notebook:
+      active: order_lines
+      tabs:
+        - id: order_lines
+          label: Order Lines
+          component:
+            type: ListView
+            source: ecommerce_order_lines
+            columns: [{ field: product_name, label: Product, type: PrimaryEntityCell }, { field: unit_price, label: Unit Price }, { field: quantity, label: Quantity }, { field: line_total, label: Total }]
+            empty_state: { title: No reorderable lines, description: This order has no active products available for reorder. }

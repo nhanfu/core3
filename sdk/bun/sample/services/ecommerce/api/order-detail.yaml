@@ -8,9 +8,39 @@ datasources:
       missing_record: { status: 404, code: ECOMMERCE_ORDER_NOT_FOUND, message: eCommerce order not found. }
       forbidden: { status: 403, code: ECOMMERCE_ORDER_DETAIL_FORBIDDEN, message: You do not have permission to view this order. }
       transport_error: { status: 503, code: ECOMMERCE_ORDER_DETAIL_UNAVAILABLE, message: eCommerce order details are temporarily unavailable. }
-    query: "SELECT id, row_version, order_number, customer_name, customer_email, amount_total, currency, state, CAST(date_order AS VARCHAR) AS date_order, company_name FROM ecommerce_orders WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(customer_email, '')) = lower(:current_user_email))"
+    query: "SELECT id, row_version, order_number, customer_name, customer_email, amount_total, currency, state, CAST(date_order AS VARCHAR) AS date_order, company_name FROM ecommerce_orders WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(customer_email, '')) = lower(:current_user_email))"
+  - id: ecommerce_order_lines
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_ORDER_LINES_UNAUTHENTICATED, message: Sign in to view order lines. }
+      forbidden: { status: 403, code: ECOMMERCE_ORDER_LINES_FORBIDDEN, message: You do not have permission to view these order lines. }
+      transport_error: { status: 503, code: ECOMMERCE_ORDER_LINES_UNAVAILABLE, message: Order lines are temporarily unavailable. }
+    query: "SELECT l.id, l.order_id, l.product_id, l.product_name, l.unit_price, l.quantity, l.line_total FROM ecommerce_order_lines l JOIN ecommerce_orders o ON o.id = l.order_id WHERE l.order_id = :id AND (COALESCE(:current_company_name, '') = '' OR o.company_name = :current_company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(o.customer_email, '')) = lower(:current_user_email)) ORDER BY l.id"
 actions:
   - { id: back_to_ecommerce_orders, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/orders, params: {} }
+  - id: reorder_ecommerce_order
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.orders.reorder
+    handler: yaml_mutation
+    operation: create
+    params: { id: '{state.ecommerce_order_detail.id}', expected_row_version: '{state.ecommerce_order_detail.row_version}' }
+    refresh: [ecommerce_order_detail, ecommerce_order_lines, ecommerce_cart, ecommerce_cart_lines]
+    mutation:
+      required: [id, expected_row_version]
+      before_steps:
+        - query: "SELECT o.customer_id, o.customer_name, o.currency, o.company_name, COALESCE((SELECT c.id FROM ecommerce_carts c WHERE c.customer_id = o.customer_id AND COALESCE(c.company_name, 'My Company') = o.company_name AND c.state = 'Open' ORDER BY c.updated_at DESC, c.id LIMIT 1), 'ecommerce-cart-reorder-' || o.customer_id) AS cart_id FROM ecommerce_orders o WHERE o.id = :id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM ecommerce_orders WHERE id = :id", status: 404, code: ECOMMERCE_ORDER_NOT_FOUND, message: eCommerce order not found. }
+        - { query: "SELECT id FROM ecommerce_orders WHERE id = :id AND customer_id IS NOT NULL AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(customer_email, '')) = lower(:current_user_email)) AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_ORDER_REORDER_FORBIDDEN, message: You do not have permission to reorder this order. }
+        - { query: "SELECT id FROM ecommerce_orders WHERE id = :id AND row_version = :expected_row_version", status: 409, code: ECOMMERCE_ORDER_REORDER_STALE, message: This order changed; reload before reordering. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_order_lines l JOIN ecommerce_products p ON p.id = l.product_id AND p.active = TRUE WHERE l.order_id = :id AND l.quantity > 0 LIMIT 1", status: 422, code: ECOMMERCE_ORDER_NOT_REORDERABLE, message: Nothing can be reordered from this order. }
+      steps:
+        - { query: "INSERT INTO ecommerce_carts (id, customer_id, customer_name, currency, state, company_name) VALUES (:cart_id, :customer_id, :customer_name, :currency, 'Open', :company_name) ON CONFLICT (id) DO NOTHING" }
+        - { query: "INSERT INTO ecommerce_cart_lines (id, cart_id, product_id, product_name, unit_price, quantity) SELECT 'ecommerce-cart-line-reorder-' || :id || '-' || l.product_id, :cart_id, l.product_id, l.product_name, l.unit_price, l.quantity FROM ecommerce_order_lines l JOIN ecommerce_products p ON p.id = l.product_id AND p.active = TRUE WHERE l.order_id = :id AND l.quantity > 0 ON CONFLICT (cart_id, product_id) DO UPDATE SET quantity = ecommerce_cart_lines.quantity + EXCLUDED.quantity, row_version = ecommerce_cart_lines.row_version + 1" }
+        - { query: "UPDATE ecommerce_carts SET row_version = row_version + 1, updated_at = TIMESTAMP '2026-09-20 13:00:00' WHERE id = :cart_id" }
+      result: { query: "SELECT * FROM ecommerce_carts WHERE id = :cart_id" }
   - id: print_ecommerce_order
     type: client
     permission: ecommerce.read

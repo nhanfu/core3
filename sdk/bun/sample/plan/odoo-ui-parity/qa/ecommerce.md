@@ -1,5 +1,24 @@
 # ecommerce QA ledger
 
+## Bounded reorder workflow (2026-09-20)
+
+- Source trace: Odoo 19 `website_sale/controllers/reorder.py`,
+  `CustomerPortal.my_orders_reorder`; it copies eligible prior-order lines into
+  the active cart and rejects an order with nothing reorderable.
+- Core3 implementation: order-detail `ecommerce_order_lines` datasource and
+  `reorder_ecommerce_order` API/page action, with durable line fixtures and
+  customer/company ownership, stale, missing, and unavailable-product guards.
+- Focused evidence: `bun test test/ecommerce_reorder.integration.test.ts
+  test/ecommerce_orders.integration.test.ts test/ecommerce_cart.integration.test.ts
+  --timeout 20000` — **8 passed, 48 assertions, 0 failures**.
+- Targeted lint (`bunx eslint test/ecommerce_reorder.integration.test.ts`) and
+  `git diff --check` passed.
+- Repository audit was attempted but remains blocked by an unrelated existing
+  Inventory page definition: duplicate `back_to_inventory_package` action and
+  disallowed `label` at `services/inventory/pages/package-detail.yaml`.
+- Paired Odoo visual/authenticated comparison remains outside this bounded
+  source/API slice; no visual-parity claim is made.
+
 ## Conditional review handoff — exact candidate `39ab71f` (2026-09-13)
 
 - Private product/pricelist/order/pricelist-rule permission contracts: **PASS**,

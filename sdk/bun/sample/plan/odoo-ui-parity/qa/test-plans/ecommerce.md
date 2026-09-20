@@ -54,6 +54,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-WF-003 | Checkout | Cart → customer/address → delivery/payment → order confirms without partial writes | pass: authenticated and guest service mutations plus unauthenticated browser guest checkout conversion; third-party payment integration remains planned |
 | ECOM-WF-004 | Sales integration | Created web order resolves customer/product references through owning services | bounded handoff outbox now persists the eCommerce order envelope and exposes order/line reads for the owning Sales consumer; Sales-side consumer remains a separate gate |
 | ECOM-WF-005 | Durable/external boundary | Payment, delivery, email, callbacks and cross-module commerce workflows use Temporal when durable; retry, replay, restart and compensation are tested | Temporal SDK 1.23.0 and Bun worker startup/workflow/timer-recovery/callback/retry-exhaustion/compensation/shutdown smoke pass; production provider adapter and paired Odoo comparison remain open |
+| ECOM-WF-022 | Reorder prior order | An accessible prior order merges active product lines and quantities into the customer's open cart; unavailable-only orders are rejected | pass: `test/ecommerce_reorder.integration.test.ts` — ownership/company, stale/missing, additive repeat, and restart persistence coverage |
 
 ## Permission and security cases
 
@@ -71,6 +72,7 @@ the all-customer scope.
 | ECOM-PERM-004 | Wrong company | Products, prices, carts and orders are not leaked or mutable | pass at service-query level and HTTP query context for authenticated customer company scope; authenticated browser actor test remains open |
 | ECOM-PERM-005 | Unauthenticated/expired | Private routes redirect/401/403 without protected data | planned |
 | ECOM-PERM-006 | Stale/missing/invalid | 409/404/422 leaves current product/pricelist/cart/order unchanged | pass at contract level |
+| ECOM-PERM-018 | Reorder ownership/company | A customer cannot reorder another customer's or company's order | pass: reorder integration guard matrix |
 
 ## Visual, responsive, and regression cases
 
