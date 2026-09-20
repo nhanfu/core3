@@ -59,8 +59,12 @@ describe('Time Off draft request deletion', () => {
       .rejects.toMatchObject({ status: 404, code: 'TIME_OFF_LEAVE_NOT_FOUND' });
     await expect(repository.executeMutation(action.mutation, { id: 'leave-request-demo-002', expected_row_version: 1 }))
       .rejects.toMatchObject({ status: 409, code: 'TIME_OFF_LEAVE_DELETE_INVALID' });
+    expect(await repository.query("SELECT state, row_version FROM leave_requests WHERE id = 'leave-request-demo-002'"))
+      .toEqual([{ state: 'Submitted', row_version: 1 }]);
     await expect(repository.executeMutation(action.mutation, { id: 'leave-request-demo-004', expected_row_version: 2 }))
       .rejects.toMatchObject({ status: 409, code: 'TIME_OFF_LEAVE_DELETE_INVALID' });
+    expect(await repository.query("SELECT state, row_version FROM leave_requests WHERE id = 'leave-request-demo-004'"))
+      .toEqual([{ state: 'Draft', row_version: 1 }]);
 
     const deleted = await repository.executeMutation(action.mutation, { id: 'leave-request-demo-004', expected_row_version: 1 });
     expect(deleted).toMatchObject({ id: 'leave-request-demo-004' });

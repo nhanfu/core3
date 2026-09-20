@@ -32,11 +32,11 @@ actions:
     mutation:
       guards:
         - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids)", status: 400, code: TIME_OFF_ALLOCATION_SELECTION_REQUIRED, message: Select at least one allocation. }
-        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids AND state != 'Submitted')", status: 409, code: TIME_OFF_ALLOCATION_BULK_STATE_INVALID, message: Only submitted allocations can be approved. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids AND (state != 'Submitted' OR COALESCE(balance_applied, FALSE) = TRUE))", status: 409, code: TIME_OFF_ALLOCATION_BULK_STATE_INVALID, message: Only submitted allocations without an applied balance can be approved. }
       steps:
         - query: "INSERT INTO leave_balances(id, employee_id, employee_name, leave_type_id, leave_type_name, year, allocated_days, used_days) SELECT 'leave-balance-' || employee_id || '-' || leave_type_id || '-' || CAST(EXTRACT(YEAR FROM date_from) AS INTEGER), employee_id, employee_name, leave_type_id, leave_type_name, CAST(EXTRACT(YEAR FROM date_from) AS INTEGER), 0, 0 FROM leave_allocations WHERE id IN :ids AND state = 'Submitted' GROUP BY employee_id, employee_name, leave_type_id, leave_type_name, CAST(EXTRACT(YEAR FROM date_from) AS INTEGER) ON CONFLICT(employee_id, leave_type_id, year) DO NOTHING"
         - query: "UPDATE leave_balances SET allocated_days = allocated_days + (SELECT COALESCE(SUM(a.days), 0) FROM leave_allocations a WHERE a.id IN :ids AND a.state = 'Submitted' AND COALESCE(a.balance_applied, FALSE) = FALSE AND a.employee_id = leave_balances.employee_id AND a.leave_type_id = leave_balances.leave_type_id AND EXTRACT(YEAR FROM a.date_from) = leave_balances.year) WHERE EXISTS (SELECT 1 FROM leave_allocations a WHERE a.id IN :ids AND a.state = 'Submitted' AND COALESCE(a.balance_applied, FALSE) = FALSE AND a.employee_id = leave_balances.employee_id AND a.leave_type_id = leave_balances.leave_type_id AND EXTRACT(YEAR FROM a.date_from) = leave_balances.year)"
-        - query: "UPDATE leave_allocations SET state = 'Approved', balance_applied = TRUE, row_version = row_version + 1 WHERE id IN :ids AND state = 'Submitted' AND COALESCE(balance_applied, FALSE) = FALSE"
+        - { query: "UPDATE leave_allocations SET state = 'Approved', balance_applied = TRUE, row_version = row_version + 1 WHERE id IN :ids AND state = 'Submitted' AND COALESCE(balance_applied, FALSE) = FALSE", expect_changed: true, status: 409, code: TIME_OFF_ALLOCATION_BULK_STATE_INVALID, message: Only submitted allocations without an applied balance can be approved. }
       result: { query: "SELECT TRUE AS approved" }
   - id: refuse_selected_allocations
     type: server
@@ -49,7 +49,7 @@ actions:
     mutation:
       guards:
         - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids)", status: 400, code: TIME_OFF_ALLOCATION_SELECTION_REQUIRED, message: Select at least one allocation. }
-        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids AND state != 'Submitted')", status: 409, code: TIME_OFF_ALLOCATION_BULK_STATE_INVALID, message: Only submitted allocations can be refused. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM leave_allocations WHERE id IN :ids AND (state != 'Submitted' OR COALESCE(balance_applied, FALSE) = TRUE))", status: 409, code: TIME_OFF_ALLOCATION_BULK_STATE_INVALID, message: Only submitted allocations without an applied balance can be refused. }
       steps:
         - query: "UPDATE leave_allocations SET state = 'Refused', row_version = row_version + 1 WHERE id IN :ids AND state = 'Submitted'"
       result: { query: "SELECT TRUE AS refused" }

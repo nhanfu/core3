@@ -53,6 +53,24 @@ describe('Time Off allocation and balance persistence', () => {
       const submit = allocationWorkflow.transitions.find((transition: any) => transition.id === 'submit').mutation;
       const approve = allocationWorkflow.transitions.find((transition: any) => transition.id === 'approve').mutation;
       await firstRepository.executeMutation(submit, { id: allocation.id, expected_row_version: 2 });
+      const rollbackApproval = {
+        ...approve,
+        steps: [
+          ...approve.steps.slice(0, -1),
+          {
+            query: "UPDATE leave_allocations SET state = 'Approved', balance_applied = TRUE, row_version = row_version + 1 WHERE id = :id AND row_version = 999",
+            expect_changed: true,
+            status: 409,
+            code: 'TIME_OFF_ALLOCATION_APPROVAL_STALE',
+            message: 'Allocation approval was changed by another user. Reload it before approving.',
+          },
+        ],
+      };
+      await expect(firstRepository.executeMutation(rollbackApproval, { id: allocation.id, expected_row_version: 3 }))
+        .rejects.toMatchObject({ status: 409, code: 'TIME_OFF_ALLOCATION_APPROVAL_STALE' });
+      expect(await firstRepository.query("SELECT state, row_version, balance_applied FROM leave_allocations WHERE id = 'allocation-persistence-test'"))
+        .toEqual([{ state: 'Submitted', row_version: 3, balance_applied: false }]);
+      expect((await firstRepository.query("SELECT allocated_days FROM leave_balances WHERE employee_id = 'employee-demo-001' AND leave_type_id = 'leave-type-annual' AND year = 2026")).at(0)?.allocated_days).toBe(20);
       await firstRepository.executeMutation(approve, { id: allocation.id, expected_row_version: 3 });
       expect((await firstRepository.query("SELECT allocated_days FROM leave_balances WHERE employee_id = 'employee-demo-001' AND leave_type_id = 'leave-type-annual' AND year = 2026")).at(0)?.allocated_days).toBe(23);
       await expect(firstRepository.executeMutation(approve, { id: allocation.id, expected_row_version: 3 })).rejects.toMatchObject({ status: 409 });
