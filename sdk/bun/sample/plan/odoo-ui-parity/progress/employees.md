@@ -391,3 +391,23 @@ Candidate commit: current working tree
   mobile reaches the authenticated resolved detail route. Evidence:
   `evidence/employees/2026-09-21/EMP-EMPLOYEE-VERSION-DETAIL-001/`.
 - Evidence is conditional; no aggregate Employees sign-off is claimed.
+
+## EMP-BANK-TRUST-001 (2026-09-21)
+
+- Selected the smallest remaining source-backed employee action after version
+  detail: Odoo `action_toggle_primary_bank_account_trust` beside the Personal
+  bank-account row.
+- Added the API mutation and page-only row action. It flips the durable
+  `employee_bank_accounts.trusted` flag and increments both the bank row and
+  employee row versions under `employees.write`, actor, active/current-company,
+  parent-version, and line-version guards.
+- Reused migration `20260920230000-034` for deterministic trusted fixtures;
+  migration replay and file-backed restart are covered without duplicate data.
+- Focused verification: 3 tests / 20 assertions; scoped ESLint and diff-check
+  pass. UI audit is blocked before discovery completes by the pre-existing
+  shared Employees error `PageSchemaError: actions[4].fields is not allowed`.
+- Odoo authenticated desktop/mobile reaches the Personal tab, but Abigail
+  Peterson has no bank-account rows. Core3 authentication is blocked by the
+  same discovery error. Evidence:
+  `evidence/employees/2026-09-21/EMP-BANK-TRUST-001/`.
+- Conditional feature evidence only; no aggregate Employees sign-off.

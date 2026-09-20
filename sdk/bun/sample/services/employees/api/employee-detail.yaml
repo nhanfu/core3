@@ -442,6 +442,34 @@ actions:
           status: 409
           code: STALE_RECORD
           message: The employee changed before the bank account was deleted. Reload and try again.
+  - id: toggle_employee_bank_account_trust
+    type: server
+    permission: employees.write
+    action: employees.records.bank_account.toggle_trust
+    handler: yaml_mutation
+    operation: toggle_primary_bank_account_trust
+    domain: employee_bank_account
+    params: { id: '{state.id}', line_id: '{row.id}', expected_row_version: '{row.row_version}', parent_expected_row_version: '{state.employee_detail.row_version}' }
+    refresh: [employee_detail, employee_bank_accounts]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_BANK_ACCOUNT_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the bank-account trust state was updated. Reload and try again. }
+        - { query: "SELECT id FROM employee_bank_accounts WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_BANK_ACCOUNT_STALE, message: This bank account changed before its trust state was updated. Reload and try again. }
+      steps:
+        - query: "UPDATE employee_bank_accounts SET trusted = NOT trusted, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_BANK_ACCOUNT_STALE
+          message: This bank account changed before its trust state was updated. Reload and try again.
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the bank-account trust state was updated. Reload and try again.
+      result: { query: "SELECT * FROM employee_bank_accounts WHERE id = :line_id" }
   - id: add_employee_skill
     type: server_form
     permission: employees.write

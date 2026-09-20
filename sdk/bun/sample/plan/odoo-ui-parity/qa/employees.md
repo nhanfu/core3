@@ -643,6 +643,19 @@ fixture `Core3 Vietnam` does not match the authenticated `Core3 Demo Company`;
 Odoo has seven unrelated app-icon 404s. No aggregate Employees sign-off is
 claimed.
 
+## EMP-BANK-TRUST-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-023 | Personal bank-account trust toggle | pass; durable trusted flag toggles and returns the updated row |
+| EMP-PERM-023 | `employees.write`, actor, company, parent row, and bank row versions | pass; unauthorized, out-of-scope, and stale writes are rejected atomically |
+| EMP-DATA-023 | Existing bank-account migration replay and file-backed restart | pass; trusted state and both row versions survive restart |
+| EMP-UI-019 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 blocked before authentication by `PageSchemaError: actions[4].fields is not allowed`; Odoo reference employee has no bank-account rows |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-BANK-TRUST-001/`. This is a bounded
+conditional slice, not aggregate Employees sign-off.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

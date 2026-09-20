@@ -1,0 +1,15 @@
+{
+  "feature_id": "EMP-BANK-TRUST-001",
+  "surface": "Odoo",
+  "viewport": "mobile",
+  "viewport_size": "390x844",
+  "authenticated": true,
+  "database": "core3_reference",
+  "url": "http://127.0.0.1:8069/odoo/employees/6",
+  "employee": "Abigail Peterson",
+  "personal_tab": true,
+  "bank_accounts_visible": true,
+  "bank_accounts_populated": false,
+  "labels": ["Bank Accounts"],
+  "blocker": "The authenticated reference employee has no bank-account rows, so the trust action has no populated row to exercise"
+}

@@ -1,0 +1,10 @@
+{
+  "feature_id": "EMP-BANK-TRUST-001",
+  "surface": "Core3",
+  "viewport": "desktop",
+  "viewport_size": "1440x900",
+  "authenticated": false,
+  "url": "http://127.0.0.1:3310/auth/login?redirect=%2Femployees%2Fdetail%3Fid%3Demployee-demo-001",
+  "body": "Failed to load page\nInternal server error",
+  "blocker": "Authentication was blocked by existing shared Employees page discovery error: PageSchemaError: actions[4].fields is not allowed"
+}

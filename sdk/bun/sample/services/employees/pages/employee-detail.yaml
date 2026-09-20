@@ -127,6 +127,7 @@ components:
                 id: employee_bank_account_actions
                 actions:
                   - { id: edit_employee_bank_account, label: Edit, icon: edit, variant: ghost, permission: employees.write }
+                  - { id: toggle_employee_bank_account_trust, label: Toggle trust, icon: shield, variant: secondary, permission: employees.write }
                   - { id: delete_employee_bank_account, label: Delete, icon: trash, variant: danger, permission: employees.write }
         - id: payroll
           label: Payroll

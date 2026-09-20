@@ -1425,3 +1425,31 @@ shows 28 Employee Records and opens Abigail Peterson's employee form from a
 version row; the mobile detail route also loads authenticated. Evidence is
 under `evidence/employees/2026-09-21/EMP-EMPLOYEE-VERSION-DETAIL-001/`.
 This remains bounded conditional evidence, not module sign-off.
+
+## EMP-BANK-TRUST-001: Employee primary bank-account trust toggle (2026-09-21)
+
+Odoo's `action_toggle_primary_bank_account_trust` is the Personal-tab action
+beside the primary bank account. It flips the selected account's
+`allow_out_payment` flag, with Trust/Untrust presentation in the employee
+form. Core3 previously persisted bank rows and exposed the trusted field for
+line CRUD, but had no explicit source-action binding.
+
+Core3 adds the page/API-separated `toggle_employee_bank_account_trust` row
+action. It requires `employees.write`, a non-empty actor, an active employee in
+the current company, and matching parent employee and bank-account row
+versions. The mutation atomically flips `employee_bank_accounts.trusted`,
+increments both row versions, and returns the updated durable row. Existing
+migration `20260920230000-034-employee-bank-accounts.yaml` supplies the
+replay-safe trusted column and deterministic primary/secondary fixtures; no
+duplicate migration was introduced.
+
+Focused coverage is `test/employees_bank_account_trust.integration.test.ts`:
+3 tests / 20 assertions for source mapping, page/API separation, actor,
+company, parent/line concurrency guards, durable toggle, migration replay, and
+file-backed restart. Core3 browser capture is blocked before authentication by
+the existing shared Employees discovery error `PageSchemaError: actions[4].fields
+is not allowed`. Authenticated Odoo desktop/mobile reaches Abigail Peterson's
+Personal tab, but the reference employee has no bank-account rows. Exact
+blockers and captures are under
+`evidence/employees/2026-09-21/EMP-BANK-TRUST-001/`. No aggregate Employees
+sign-off is claimed.

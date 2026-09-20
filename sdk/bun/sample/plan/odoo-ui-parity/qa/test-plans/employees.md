@@ -227,6 +227,20 @@ Evidence: `evidence/employees/2026-09-20/EMP-EMPLOYEE-SKILLS-001/`.
 
 Evidence: `evidence/employees/2026-09-20/EMP-RESUME-LINES-001/`.
 
+## EMP-BANK-TRUST-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo method/view button map to page/API-separated Core3 row action | pass |
+| Toggle lifecycle | Deterministic bank rows flip `trusted`, increment line and parent versions, and return the updated row | pass |
+| Permission and scope | Empty actor, wrong company, stale employee, and stale bank row reject without partial writes | pass |
+| Persistence | Existing bank-account migration replays idempotently and trusted state survives a file-backed restart | pass |
+| Browser comparison | Core3 desktop/mobile plus authenticated Odoo desktop/mobile Personal bank-account surface | conditional; exact Core3 discovery and Odoo fixture blockers recorded |
+
+Focused test: `test/employees_bank_account_trust.integration.test.ts` (3
+tests, 20 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-BANK-TRUST-001/`.
+
 ## EMP-CREATE-USER-001 execution (2026-09-20)
 
 | Case | Scope | Result |

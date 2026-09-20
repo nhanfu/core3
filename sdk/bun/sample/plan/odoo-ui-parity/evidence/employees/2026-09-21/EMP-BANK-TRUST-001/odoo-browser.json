@@ -1,0 +1,11 @@
+{
+  "feature_id": "EMP-BANK-TRUST-001",
+  "surface": "Odoo",
+  "authenticated": true,
+  "database": "core3_reference",
+  "employee": "Abigail Peterson",
+  "viewports": ["desktop 1440x900", "mobile 390x844"],
+  "personal_tab": true,
+  "bank_accounts_populated": false,
+  "blocker": "The authenticated reference employee has no bank-account rows, so no trust toggle row is available"
+}

@@ -1,0 +1,9 @@
+{
+  "feature_id": "EMP-BANK-TRUST-001",
+  "surface": "Core3",
+  "authenticated": false,
+  "viewports": ["desktop 1440x900", "mobile 390x844"],
+  "attempted_route": "/employees/detail?id=employee-demo-001",
+  "blocker": "HTTP 500 before authentication: PageSchemaError: Invalid page definition: actions[4].fields is not allowed",
+  "claim": "No Core3 browser pass or populated bank-account trust mutation claim"
+}
