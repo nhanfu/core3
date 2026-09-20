@@ -1,0 +1,10 @@
+{
+  "feature_id": "TIMESHEET-PARENT-TASK-GROUP-001",
+  "actor": "admin@tms.local",
+  "authenticated": false,
+  "route": "/auth/login?redirect=%2Ftimesheets",
+  "viewport_sizes": ["1440x900", "390x844"],
+  "blocker": "Core3 startup stops before authentication during shared page discovery.",
+  "error": "PageSchemaError: components[0].views[0].group_by is required for kanban",
+  "ownership": "unrelated page outside services/timesheets; no other module was changed or staged"
+}

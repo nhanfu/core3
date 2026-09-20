@@ -62,6 +62,7 @@ isolated databases and deterministic dates.
 | TIMESHEET-MY-INLINE-EDIT-001 | Odoo editable-top My Timesheets rows create/update durable activity entries with actor/company/relation/stale guards and separate page/API contracts | pass: focused 4 tests / 19 expectations; full Timesheets glob 140/140 (905 expectations); authenticated Core3/Odoo desktop+mobile evidence; mobile inline editing and broader Print/PDF/action parity remain blocked |
 | TIMESHEET-UI-001 | All 13 routes render at 1440x900 and 390x844 without errors or overflow | route 26/26 pass |
 | TIMESHEET-UI-002 | My/All/By Employee, task tab, forms and reports match paired Odoo states | 12 representative captures pass; remaining states planned |
+| TIMESHEET-PARENT-TASK-GROUP-001 | Authenticated My Timesheets exposes durable Odoo Parent Task group-by context with page/API separation, actor/company/empty/stale guards, and restart persistence | pass: focused 4 tests / 24 expectations; authenticated Odoo desktop/mobile evidence; Core3 capture blocked by unrelated page discovery schema error; Print/PDF/action parity remains open |
 | TIMESHEET-INT-001 | Project, payroll, calendar, notification and other durable integrations use Temporal with retry/replay/restart/compensation coverage | planned |
 
 ## Exit criteria

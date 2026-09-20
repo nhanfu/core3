@@ -1457,3 +1457,37 @@ Core3 desktop clicks a real list row and visibly renders Save/Discard inline
 controls; Core3 mobile renders Calendar, and Odoo mobile renders Kanban, so
 mobile inline-edit parity is not claimed. Odoo Print/PDF/report-action gaps
 remain broader blockers; this bounded feature is not module sign-off.
+
+## Ninth-wave My Timesheets Parent Task grouping — `TIMESHEET-PARENT-TASK-GROUP-001` (2026-09-21)
+
+The next uncovered source-backed search behavior is Odoo's `Parent Task`
+group-by filter. `addons/hr_timesheet/models/hr_timesheet.py:66` stores
+`parent_task_id` from the analytic line's task relation, and
+`addons/hr_timesheet/views/hr_timesheet_views.xml:226-240` exposes that field
+in the authenticated Timesheets search group-by menu alongside Project and
+Task.
+
+Core3 keeps `pages/entries.yaml` layout-only and `api/entries.yaml` bound by
+`page.id: timesheets`. A durable forward migration adds deterministic
+`parent_task_id`/`parent_task_name` context to `timesheet_entries`, backfills
+the two seeded parent contexts, and adds the API pivot/search projection. The
+My Timesheets ListView now exposes `Parent Task` in `group_by`; reads retain
+the existing `timesheets.read` actor/company and empty-fixture guards. Detail
+writes retain the existing write permission and required optimistic
+row-version guard.
+
+Focused coverage is
+`test/timesheets_parent_task_group.integration.test.ts`: 4 tests / 24
+expectations. It covers Odoo source comparison, page/API separation,
+deterministic parent relation data, actor/company/empty guards, stale CRUD
+concurrency, migration replay, and file-backed restart persistence.
+
+Authenticated Odoo evidence is under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-21/timesheet-parent-task-group/`.
+The desktop search panel visibly includes `Parent Task` under `Group By`; the
+390px responsive Kanban hides the desktop search panel. Core3 capture is
+blocked before authentication by a concurrent non-Timesheets page-schema
+failure (`PageSchemaError: components[0].views[0].group_by is required for
+kanban`); the blocker is preserved in the evidence directory and no other
+module was changed. Odoo Print/PDF/action surfaces and full route/action
+comparison remain open; this bounded slice does not claim Timesheets sign-off.

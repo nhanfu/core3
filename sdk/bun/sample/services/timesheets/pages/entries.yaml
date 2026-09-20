@@ -28,6 +28,7 @@ components:
       - { field: employee_name, label: Employee }
       - { field: project_name, label: Project }
       - { field: task_name, label: Task }
+      - { field: parent_task_name, label: Parent Task }
       - { field: state, label: Status }
     view_navigation: tabs
     views:

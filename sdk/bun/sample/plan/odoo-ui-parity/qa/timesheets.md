@@ -687,4 +687,26 @@ bounded feature does not claim Timesheets sign-off.
 - Browser result: authenticated Core3 desktop/mobile render `Date: This Week`
   at 1440x900 and 390x844 with no page errors or horizontal overflow. Only
   aborted background prefetches for unrelated All Timesheets surfaces are
-  recorded. Existing Timesheets Print/PDF/action blockers remain.
+recorded. Existing Timesheets Print/PDF/action blockers remain.
+
+## `TIMESHEET-PARENT-TASK-GROUP-001` — authenticated My Timesheets Parent Task group-by (2026-09-21)
+
+- Source gate: Odoo stores `parent_task_id` on the analytic line and adds a
+  `Parent Task` group-by filter to the authenticated Timesheets search view.
+- Core3 gate: the layout-only `pages/entries.yaml` and API-owned
+  `api/entries.yaml` remain joined by `page.id: timesheets`; migration
+  `0.0.17` durably backfills deterministic parent IDs/names and the ListView
+  exposes `Parent Task` grouping.
+- Focused gate: `test/timesheets_parent_task_group.integration.test.ts`
+  passes 4/4 tests / 24 expectations, including page/API separation,
+  permission, actor/company/empty scope, stale concurrency, replay, and
+  file-backed restart.
+- Odoo browser gate: authenticated `codex@core3.local` renders
+  `/odoo/timesheets` at 1440x900; opening the search panel visibly exposes
+  `Group By` → `Parent Task`. The authenticated 390x844 Kanban state hides
+  the desktop search panel. Captures and machine-readable results are under
+  `evidence/timesheets/2026-09-21/timesheet-parent-task-group/`.
+- Core3 browser blocker: shared discovery fails before login on an unrelated
+  page schema (`PageSchemaError: components[0].views[0].group_by is required
+  for kanban`); no other module was repaired or staged. Existing Odoo
+  Print/PDF/action blockers remain open and this slice is not sign-off.

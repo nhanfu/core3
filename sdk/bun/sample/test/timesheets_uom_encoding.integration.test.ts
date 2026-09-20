@@ -24,7 +24,7 @@ describe('Timesheets UoM encoding parity', () => {
     expect(page.datasources).toBeUndefined();
     expect(api.page).toEqual({ id: 'timesheets' });
     expect(source).toMatchObject({ permission: 'timesheets.read', workflow: 'timesheet_entries' });
-    expect(list.columns).toContainEqual({ field: 'time_spent_display', label: 'Time Spent', align: 'right' });
+    expect(list.columns).toContainEqual({ field: 'hours', label: 'Time Spent', align: 'right' });
     expect(String(source.query)).toContain('timesheet_settings');
     expect(String(source.query)).toContain("s.timesheet_encode_method");
     expect(String(source.query)).toContain("printf('%g d'");

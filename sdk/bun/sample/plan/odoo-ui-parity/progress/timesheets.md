@@ -456,6 +456,33 @@ at both viewports but does not expose a loaded row-to-analysis-form action.
 That exact paired interaction blocker remains open; no parity or module
 sign-off is claimed.
 
+## 2026-09-21 `TIMESHEET-PARENT-TASK-GROUP-001`
+
+Selected the next genuinely uncovered authenticated My Timesheets behavior:
+Odoo's `Parent Task` search group-by (`hr_timesheet_views.xml:226-240`) backed
+by the stored `parent_task_id` analytic-line relation.
+
+Core3 adds deterministic `parent_task_id`/`parent_task_name` columns and
+backfills them through migration `0.0.17`; the separate `timesheets` page/API
+pair now exposes `Parent Task` grouping and pivot/search fields. Existing
+active actor/company scope, read permission, empty fixture, and stale detail
+write guards remain in force.
+
+Focused verification: `test/timesheets_parent_task_group.integration.test.ts`
+passes 4/4 tests with 24 expectations. The adjacent My Timesheets, analysis,
+and UoM/settings regression selection passes after repairing its stale
+Time Spent column assertion; global audit and diff-check are run before
+commit.
+
+Evidence is under
+`evidence/timesheets/2026-09-21/timesheet-parent-task-group/`. Authenticated
+Odoo desktop shows the opened Group By menu with Parent Task; Odoo mobile
+renders the responsive Kanban and hides that desktop search control. Core3
+browser capture is blocked by an unrelated page-discovery schema error before
+login (`components[0].views[0].group_by is required for kanban`), recorded in
+`core3-blocker.json`. Existing Odoo Print/PDF/action blockers remain open and
+no sign-off is claimed.
+
 ## 2026-09-20 `TIMESHEET-REPORT-PROJECT-DRILLDOWN`
 
 The smallest remaining distinct report interaction was the By Project row
