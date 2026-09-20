@@ -243,3 +243,30 @@ Disposition: Core3 actor mutation/read boundaries and responsive evidence pass
 for this bounded slice. Surveys remains **qa-in-progress / conditional** and
 unsigned-off pending an installed Odoo Survey reference plus broader public and
 participant acceptance coverage.
+
+## Bounded QA run: Participant invitation/resend — `SURVEYS-PARTICIPANT-INVITE-001`
+
+- Source comparison: Odoo's participant form exposes `Resend Invitation` for
+  non-completed participants, and `survey_user_input.action_resend` invokes the
+  invitation composer in resend mode. Core3 separates the participants page
+  from its API actions and protects send/resend with `surveys.write`.
+- Focused verification: **49 passed, 0 failed, 395 assertions** across the
+  Surveys integration glob; scoped ESLint passed; `bun run audit` passed with
+  **671 pages, 680 routes, and 1,216 datasources**; `git diff --check` is clean.
+- Persistence/workflow: New → Sent and In Progress → Sent transitions persist
+  invitation counts and deterministic timestamps. Missing email, completed
+  state, stale replay, Fleet permission denial, and anonymous login boundary
+  cases are covered; file-backed DuckDB reopen proves restart durability.
+- Browser evidence: authenticated Admin desktop and mobile mutation captures,
+  Fleet denial, and anonymous redirect are in the feature evidence directory.
+  Both Core3 viewports report no horizontal overflow or request/page errors.
+- Odoo comparison: the current authenticated `core3_reference` probe found the
+  Surveys addon installed (not uninstalled), but `/odoo/action-241` contains
+  only Completed participant fixtures. No New/In Progress row is available to
+  expose or mutate the resend action. Desktop/mobile participant-list captures
+  and the exact blocker are recorded in the feature evidence directory; no
+  paired mutation sign-off is claimed.
+
+Disposition: Core3 participant invitation persistence, permissions, workflow,
+restart behavior, and responsive evidence pass for this bounded slice. Surveys
+remains **qa-in-progress / conditional**.

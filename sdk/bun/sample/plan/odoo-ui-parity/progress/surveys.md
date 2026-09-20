@@ -30,6 +30,21 @@ The current Odoo reference database has Surveys uninstalled, so this feature is
 not visually signed off against Odoo. Overall module status remains
 **qa-in-progress / conditional**.
 
+## 2026-09-20 — `SURVEYS-PARTICIPANT-INVITE-001`
+
+Completed the next bounded source-backed participant workflow after the
+rollback and actor-matrix gates: Admin send for a New participant and resend
+for an In Progress participant. The API now has explicit state, email, and
+stale-replay guards, deterministic invitation timestamps, durable invitation
+counts/state, and `surveys.write` protection. Focused CRUD/permission/restart
+coverage is green, and fresh authenticated Core3 desktop/mobile evidence is
+captured.
+
+The live authenticated Odoo reference is installed but has only Completed
+participant fixtures in the Participants action; consequently its New/In
+Progress resend action cannot be exercised. This is recorded as the precise
+paired-comparison blocker. Status remains **qa-in-progress / conditional**.
+
 ## Current state
 
 The focused Surveys suite passes 34 tests with 305 assertions across five files,

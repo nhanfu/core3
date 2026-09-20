@@ -1061,3 +1061,28 @@ Odoo desktop/mobile probes reached the server but `/odoo/surveys` redirected
 to Discuss because Surveys is uninstalled in `core3_reference`; the fallback
 captures are blocker evidence, not paired visual sign-off. Surveys remains
 conditional and unsigned-off.
+
+## Bounded slice: Participant invitation/resend lifecycle (2026-09-20)
+
+`SURVEYS-PARTICIPANT-INVITE-001` implements the smallest remaining source-backed
+participant workflow: an administrator can send an invitation for a New
+participant and resend it for an In Progress participant. The Core3 API keeps
+the page and action contracts separate, persists the invitation count/state and
+deterministic sent-at value, protects the actions with `surveys.write`, and
+rejects invalid state, missing-email, and stale replay requests without
+mutation. File-backed DuckDB restart coverage proves the state survives reopen.
+
+The Odoo source comparison is grounded in
+`addons/survey/views/survey_user_views.xml` (the resend action is shown for
+non-completed participants) and
+`addons/survey/models/survey_user_input.py` (the resend action opens the invite
+composer with resend mode). Fresh authenticated Core3 desktop/mobile captures,
+Fleet denial, anonymous login boundary, and paired Odoo participant-list
+captures are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PARTICIPANT-INVITE-001/`.
+
+The live `core3_reference` Odoo probe found Surveys installed, correcting the
+older uninstall note in historical entries. Its participant action currently
+contains only Completed fixtures, so no New/In Progress row exposes Odoo's
+resend control for a live mutation comparison. This slice therefore remains
+**qa-in-progress / conditional**; no parity sign-off is claimed.

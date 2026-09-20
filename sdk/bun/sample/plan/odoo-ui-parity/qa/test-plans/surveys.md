@@ -40,6 +40,7 @@ and the published public survey token.
 | SURVEYS-FUNC-009 | functional | Live-session results | Current in-progress question exposes scoped choice and text response statistics | `surveys_live_results.integration.test.ts` | pass |
 | SURVEYS-FUNC-010 | functional | Survey detail > Questions > Add a question | Append a normal ordered question from the inline control and refresh the detail graph | `surveys_question_create.integration.test.ts` | pass |
 | SURVEYS-FUNC-011 | data/recovery | DuckDB migration rollback/replay | Preserve an access-token response row and its dependent indexes across `0.0.17` rollback and replay | `surveys_migrations.integration.test.ts` | pass |
+| SURVEYS-FUNC-012 | participant lifecycle | Send/resend invitation | Persist invitation state, count, deterministic sent-at, and reject invalid/stale replay requests | `surveys_participant_invitation.integration.test.ts` | pass |
 
 ## Workflow and integration cases
 
@@ -53,6 +54,7 @@ and the published public survey token.
 | SURVEYS-WF-006 | workflow | Live-session current-question results | Host opens results for the current question and sees durable attendee answers | Closed, empty, stale session, and transport-error states do not disclose results | pass at contract level |
 | SURVEYS-WF-007 | workflow | Inline question create | Create a question in the parent survey and advance its row version | Blank/type/stale/archive guards leave durable rows unchanged | pass at contract level |
 | SURVEYS-WF-008 | recovery | Migration replay | Roll back the idempotency migration and replay the full chain without losing response data | Dependent-index teardown/recreation is explicit and repeatable | pass |
+| SURVEYS-WF-009 | participant invitation | New/In Progress to Sent | Send a new invitation and resend an in-progress invitation; completed/stale requests do not mutate | `surveys_participant_invitation.integration.test.ts` plus restart probe | pass |
 
 ## Permission and security cases
 
@@ -68,6 +70,7 @@ and the published public survey token.
 | SURVEYS-PERM-008 | Survey User | Inline question create | `surveys.write` permits the server-form insert; read-only or absent permission is denied | action contract and mutation guard | pass at contract level |
 | SURVEYS-PERM-009 | Administrator/Fleet | Authenticated regression surface | Admin can read the seeded detail; Fleet receives 403 with no survey disclosure | browser actor matrix | pass |
 | SURVEYS-PERM-010 | Administrator/Fleet/anonymous | Question mutation and protected catalog | Admin mutation persists; Fleet is denied with 403; anonymous navigation redirects to login | `SURVEYS-ACTOR-MATRIX-001` evidence | pass for Core3; Odoo paired comparison blocked |
+| SURVEYS-PERM-011 | Administrator/Fleet/anonymous | Participant invitation actions | Admin can send/resend; invalid state/email/replay are rejected; protected page/API boundaries remain enforced | invitation integration tests and browser evidence | pass for Core3; Odoo action fixture unavailable |
 
 ## Visual, responsive, and regression cases
 
@@ -82,6 +85,7 @@ and the published public survey token.
 | SURVEYS-UI-007 | Survey detail Questions grid | 1440x1000, 390x844 | Add-a-question control, inline row, appended question, and no overflow are visible | authenticated Core3 captures; Odoo fallback limitation recorded | partial |
 | SURVEYS-UI-008 | Migration repair smoke | 1440x1000, 390x844 | Existing authenticated Survey detail remains populated and responsive after migration replay | Core3 Admin captures; Odoo installed-reference blocker recorded | partial |
 | SURVEYS-UI-009 | Authenticated actor matrix | 1440x1000, 390x844 | Admin question mutation and Fleet/anonymous boundaries are visible without request errors or overflow | `SURVEYS-ACTOR-MATRIX-001` evidence; Odoo fallback | partial |
+| SURVEYS-UI-010 | Participant invitation/resend | 1440x1000, 390x844 | Admin send/resend state, count, timestamp, and responsive participant detail are visible without overflow | `SURVEYS-PARTICIPANT-INVITE-001` evidence; Odoo completed-only fixture blocker | partial |
 
 ## Exit criteria
 
@@ -95,3 +99,13 @@ and the published public survey token.
 and fresh desktop/mobile probe for the current question workflow. It does not
 close the Odoo visual gate: the authenticated reference database redirects
 `/odoo/surveys` to Discuss because the Surveys addon is uninstalled.
+
+## 2026-09-20 participant invitation execution
+
+`SURVEYS-PARTICIPANT-INVITE-001` covers the source-backed participant send and
+resend lifecycle. Core3 Admin desktop/mobile probes show durable Sent state,
+invitation counts, and deterministic timestamps; the focused integration test
+also covers permissions, invalid transitions, stale replay, and file-backed
+restart persistence. The current authenticated Odoo Participants action has
+only Completed fixtures, so its non-completed resend control cannot be paired
+live; this remains a conditional evidence limitation rather than a sign-off.
