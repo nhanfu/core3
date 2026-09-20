@@ -1,0 +1,11 @@
+page: { id: referral-analysis }
+datasources:
+  - id: referral_analysis_totals
+    single: true
+    permission: referrals.read
+    error_states: { unauthorized: { status: 401, code: REFERRAL_ANALYSIS_UNAUTHORIZED, message: Sign in to view referral analysis. }, forbidden: { status: 403, code: REFERRAL_ANALYSIS_FORBIDDEN, message: You do not have permission to view referral analysis. }, transport_error: { status: 503, code: REFERRAL_ANALYSIS_UNAVAILABLE, message: Referral analysis is temporarily unavailable. } }
+    query: "SELECT COUNT(*) AS referral_count, COUNT(*) FILTER (WHERE state = 'Hired') AS hired_count, COUNT(*) FILTER (WHERE state = 'Rewarded') AS rewarded_count, COALESCE(SUM(reward_amount) FILTER (WHERE state = 'Rewarded'), 0) AS rewards_paid FROM referrals WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1"
+  - id: referral_analysis_states
+    permission: referrals.read
+    error_states: { unauthorized: { status: 401, code: REFERRAL_ANALYSIS_UNAUTHORIZED, message: Sign in to view referral analysis. }, forbidden: { status: 403, code: REFERRAL_ANALYSIS_FORBIDDEN, message: You do not have permission to view referral analysis. }, transport_error: { status: 503, code: REFERRAL_ANALYSIS_UNAVAILABLE, message: Referral analysis is temporarily unavailable. } }
+    query: "SELECT state AS category, COUNT(*) AS referral_count FROM referrals WHERE CASE WHEN COALESCE(:fixture_state, '') = 'empty' THEN 0 ELSE 1 END = 1 GROUP BY state ORDER BY referral_count DESC, state"

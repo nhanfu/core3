@@ -1,0 +1,62 @@
+page: { id: referral-detail }
+datasources:
+  - id: referral_detail
+    single: true
+    permission: referrals.read
+    error_states: { unauthorized: { status: 401, code: REFERRAL_DETAIL_UNAUTHORIZED, message: Sign in to view this referral. }, forbidden: { status: 403, code: REFERRAL_DETAIL_FORBIDDEN, message: You do not have permission to view this referral. }, not_found: { status: 404, code: REFERRAL_NOT_FOUND, message: Referral not found. }, transport_error: { status: 503, code: REFERRAL_DETAIL_UNAVAILABLE, message: Referral details are temporarily unavailable. } }
+    query: "SELECT id, row_version, name, referrer_employee_id, referrer_name, candidate_name, candidate_email, candidate_phone, opening_id, opening_name, relationship, source, reward_amount, reward_currency, state, CAST(submitted_date AS VARCHAR) AS submitted_date, CAST(hired_date AS VARCHAR) AS hired_date, CAST(rewarded_date AS VARCHAR) AS rewarded_date, notes FROM referrals WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = :id"
+actions:
+  - id: back_to_referrals
+    type: navigate
+    permission: referrals.read
+    navigate_to: /referrals
+  - id: edit_referral_detail
+    type: server_form
+    permission: referrals.write
+    title: Edit referral
+    action: referrals.records.update
+    handler: yaml_mutation
+    operation: update
+    params: { id: '{state.id}', expected_row_version: '{state.referral_detail.row_version}' }
+    prefill: referral_detail
+    refresh: [referral_detail, referrals]
+    mutation:
+      operation: update
+      table: referrals
+      fields: [referrer_name, candidate_name, candidate_email, candidate_phone, opening_id, opening_name, relationship, source, reward_amount, reward_currency, notes]
+      required: [referrer_name, candidate_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM referrals WHERE id = :id", status: 404, code: REFERRAL_NOT_FOUND, message: Referral not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:candidate_name, ''))) > 0 AND LENGTH(TRIM(COALESCE(:referrer_name, ''))) > 0", status: 422, code: REFERRAL_NAMES_REQUIRED, message: Referrer and candidate are required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:reward_amount, 0) AS DECIMAL(18,2)) >= 0", status: 422, code: REFERRAL_REWARD_INVALID, message: Reward amount must be zero or greater. }
+      result: { query: "SELECT * FROM referrals WHERE id = :id" }
+    fields:
+      - { field: referrer_name, label: Referrer, type: text, required: true }
+      - { field: candidate_name, label: Candidate, type: text, required: true }
+      - { field: candidate_email, label: Email, type: text }
+      - { field: candidate_phone, label: Phone, type: text }
+      - { field: opening_name, label: Opening, type: text }
+      - { field: relationship, label: Relationship, type: text }
+      - { field: source, label: Source, type: text }
+      - { field: reward_amount, label: Reward amount, type: number }
+      - { field: reward_currency, label: Currency, type: text }
+      - { field: notes, label: Notes, type: text }
+  - id: delete_referral_detail
+    type: server
+    permission: referrals.manage
+    action: referrals.records.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.id}', expected_row_version: '{state.referral_detail.row_version}' }
+    mutation:
+      operation: delete
+      table: referrals
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM referrals WHERE id = :id", status: 404, code: REFERRAL_NOT_FOUND, message: Referral not found. }
+        - { query: "SELECT id FROM referrals WHERE id = :id AND state IN ('Draft', 'Rejected') AND row_version = :expected_row_version", status: 409, code: REFERRAL_DELETE_FORBIDDEN, message: Only draft or rejected referrals can be deleted. }
+  - { id: submit_referral_detail, type: server, permission: referrals.write, action: referrals.records.submit, handler: order_transition, workflow: referrals, operation: submit, params: { id: '{state.id}' }, refresh: [referral_detail] }
+  - { id: hire_referral_detail, type: server, permission: referrals.manage, action: referrals.records.hire, handler: order_transition, workflow: referrals, operation: hire, params: { id: '{state.id}' }, refresh: [referral_detail] }
+  - { id: reward_referral_detail, type: server, permission: referrals.manage, action: referrals.records.reward, handler: order_transition, workflow: referrals, operation: reward, params: { id: '{state.id}' }, refresh: [referral_detail] }
+  - { id: reject_referral_detail, type: server, permission: referrals.manage, action: referrals.records.reject, handler: order_transition, workflow: referrals, operation: reject, params: { id: '{state.id}' }, refresh: [referral_detail] }

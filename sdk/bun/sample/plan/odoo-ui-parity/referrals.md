@@ -60,10 +60,11 @@ Core3 currently owns a separate, synthetic referrals foundation under
 `sdk/bun/sample/services/referrals/`:
 
 - `manifest.yaml` exposes `/referrals` and `/referral-analysis` under People.
-- `pages/referrals.yaml` owns a list and create form; `pages/referral-detail.yaml`
-  owns a detail form; `pages/analysis.yaml` owns summary/chart components; and
-  `pages/referral-workflow.yaml` owns Draft → Submitted → Hired → Rewarded or
-  Rejected transitions.
+- `pages/referrals.yaml` owns the list layout and visible List/Kanban/Pivot/Graph
+  tabs; `pages/referral-detail.yaml` owns the detail form; `pages/analysis.yaml`
+  owns summary/chart components; `api/*.yaml` owns the matching datasources and
+  actions; and `pages/referral-workflow.yaml` owns Draft → Submitted → Hired →
+  Rewarded or Rejected transitions.
 - `permissions.yaml` declares `referrals.read`, `referrals.write`, and
   `referrals.manage`.
 - `migrations/20260819000000-001-referrals-foundation.yaml` owns the DuckDB/
@@ -72,15 +73,13 @@ Core3 currently owns a separate, synthetic referrals foundation under
 - `storage.yaml` and `styles/index.scss` are the remaining service-owned
   boundary files.
 
-This is an existing Core3 ownership boundary, not evidence of Odoo parity. It
-currently fails the shared screen-mock contract in
-`odoo-ui-parity/screen-mock-data.md`: page files contain SQL datasource
-definitions instead of page-matched service API fragments; no
-`services/referrals/api/` directory exists; fixtures are not declared for
-default, filtered, empty, error, forbidden, not-found, stale-write, and invalid
-input states; migrations/workflows use `CURRENT_DATE`, `CURRENT_TIMESTAMP`, and
-a generated UUID default; and no focused referrals test or authenticated
-desktop/mobile comparison evidence is present.
+This is an existing Core3 ownership boundary, not evidence of Odoo parity. The
+current wave moved the datasource/action contracts into page-matched
+`services/referrals/api/*.yaml` fragments and added HTTP-state metadata plus
+real create/update/delete guards. The module remains source-limited: fixtures
+are not yet complete for every required state, migrations/workflows still use
+process-time date/timestamp defaults and a generated UUID schema default, and
+no authenticated desktop/mobile comparison evidence is present.
 
 ## Blocking dependency and next gate
 

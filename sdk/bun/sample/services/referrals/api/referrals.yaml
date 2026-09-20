@@ -1,0 +1,55 @@
+page: { id: referrals }
+datasources:
+  - id: referral_states
+    permission: referrals.read
+    error_states: { unauthorized: { status: 401, code: REFERRAL_STATES_UNAUTHORIZED, message: Sign in to view referral statuses. }, forbidden: { status: 403, code: REFERRAL_STATES_FORBIDDEN, message: You do not have permission to view referral statuses. }, transport_error: { status: 503, code: REFERRAL_STATES_UNAVAILABLE, message: Referral statuses are temporarily unavailable. } }
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Hired','Hired'), ('Rewarded','Rewarded'), ('Rejected','Rejected')) states(value, label) ORDER BY value"
+  - id: referrals
+    permission: referrals.read
+    workflow: referrals
+    error_states: { unauthorized: { status: 401, code: REFERRALS_UNAUTHORIZED, message: Sign in to view referrals. }, forbidden: { status: 403, code: REFERRALS_FORBIDDEN, message: You do not have permission to view referrals. }, transport_error: { status: 503, code: REFERRALS_UNAVAILABLE, message: Referrals are temporarily unavailable. } }
+    query: "SELECT r.id, r.row_version, r.name, r.referrer_name, r.candidate_name, r.candidate_email, r.opening_name, r.relationship, r.reward_amount, r.reward_currency, r.state, CAST(r.submitted_date AS VARCHAR) AS submitted_date, CAST(r.hired_date AS VARCHAR) AS hired_date, CAST(r.rewarded_date AS VARCHAR) AS rewarded_date FROM referrals r WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.referrer_name ILIKE '%' || :q || '%' OR r.candidate_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.created_at DESC, r.id"
+actions:
+  - id: view_referral_detail
+    type: navigate
+    permission: referrals.read
+    navigate_to: /referral-detail
+    params: { id: '{row.id}' }
+  - id: create_referral
+    type: server_form
+    permission: referrals.write
+    title: New referral
+    action: referrals.records.create
+    handler: yaml_mutation
+    operation: insert
+    refresh: [referrals]
+    mutation:
+      operation: insert
+      table: referrals
+      generated: [id]
+      fields: [name, referrer_employee_id, referrer_name, candidate_name, candidate_email, candidate_phone, opening_id, opening_name, relationship, source, reward_amount, reward_currency, notes]
+      required: [name, referrer_employee_id, referrer_name, candidate_name]
+      defaults: { candidate_email: '', candidate_phone: '', opening_id: '', opening_name: '', relationship: '', source: 'Employee referral', reward_amount: 0, reward_currency: USD, notes: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(COALESCE(:name, ''))) > 0 AND LENGTH(TRIM(COALESCE(:referrer_name, ''))) > 0 AND LENGTH(TRIM(COALESCE(:candidate_name, ''))) > 0", status: 422, code: REFERRAL_REQUIRED_FIELDS, message: 'Referral, referrer, and candidate are required.' }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:reward_amount, 0) AS DECIMAL(18,2)) >= 0", status: 422, code: REFERRAL_REWARD_INVALID, message: Reward amount must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM referrals WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))", status: 409, code: REFERRAL_NAME_EXISTS, message: A referral with this name already exists. }
+      result: { query: "SELECT * FROM referrals WHERE id = :id" }
+    fields:
+      - { field: name, label: Referral, type: text, required: true }
+      - { field: referrer_employee_id, label: Referrer employee ID, type: text, required: true }
+      - { field: referrer_name, label: Referrer, type: text, required: true }
+      - { field: candidate_name, label: Candidate, type: text, required: true }
+      - { field: candidate_email, label: Candidate email, type: text }
+      - { field: candidate_phone, label: Candidate phone, type: text }
+      - { field: opening_id, label: Opening ID, type: text }
+      - { field: opening_name, label: Opening, type: text }
+      - { field: relationship, label: Relationship, type: text }
+      - { field: source, label: Source, type: text }
+      - { field: reward_amount, label: Reward amount, type: number }
+      - { field: reward_currency, label: Currency, type: text }
+      - { field: notes, label: Notes, type: text }
+  - { id: submit_referral, type: server, permission: referrals.write, action: referrals.records.submit, handler: order_transition, workflow: referrals, operation: submit, refresh: [referrals] }
+  - { id: hire_referral, type: server, permission: referrals.manage, action: referrals.records.hire, handler: order_transition, workflow: referrals, operation: hire, refresh: [referrals] }
+  - { id: reward_referral, type: server, permission: referrals.manage, action: referrals.records.reward, handler: order_transition, workflow: referrals, operation: reward, refresh: [referrals] }
+  - { id: reject_referral, type: server, permission: referrals.manage, action: referrals.records.reject, handler: order_transition, workflow: referrals, operation: reject, refresh: [referrals] }
