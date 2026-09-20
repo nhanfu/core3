@@ -1345,6 +1345,26 @@ The installed Odoo reference has no stable active answer-token fixture for a
 fresh mutation probe, so paired Odoo mutation/visual sign-off remains blocked;
 Surveys remains **qa-in-progress / conditional**.
 
+## Bounded slice: Public answer validation (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-ANSWER-VALIDATION-001`.
+
+Odoo's `/survey/submit/<survey_token>/<answer_token>` delegates submitted
+values to each question's `validate_question` implementation. Core3 now keeps
+the existing YAML page/API separation and validates token-scoped Choice,
+Rating, Multiple Choice, and Numerical answers before either progress or
+submit mutations. Invalid options return explicit
+`SURVEY_PUBLIC_ANSWER_INVALID` 422 responses without changing the durable
+response; valid answers continue through the existing idempotent submit and
+file-backed restart workflow.
+
+Focused tests, authenticated Core3 desktop/mobile evidence, and paired Odoo
+route captures are under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ANSWER-VALIDATION-001/`.
+Odoo's authenticated route was reachable at both viewports, but remained on
+the host-session waiting state, so no Odoo invalid-answer mutation comparison
+is claimed. Surveys remains **qa-in-progress / conditional**.
+
 ## Bounded slice: Public live-session participant renderer (2026-09-21)
 
 Feature ID: `SURVEYS-PUBLIC-LIVE-SESSION-001`.

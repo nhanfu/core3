@@ -243,3 +243,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-LIVE-SESSION-001/`.
+
+## 2026-09-21 public answer-validation additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-024 | public question | Invalid Choice/Rating/Numerical value | Return explicit 422 validation without accepting unsupported values | pass |
+| SURVEYS-WF-021 | restart/idempotency | Reject → valid progress → restart → submit/replay | Invalid input leaves one unchanged response; valid data survives reopen and replay creates no duplicate row | pass |
+| SURVEYS-PERM-023 | token/API guard | Public submit/progress boundary | Validation remains behind the `surveys.public` YAML actions and survey/answer-token scope | pass |
+| SURVEYS-UI-022 | authenticated responsive/reference | Desktop/mobile invalid boundary plus valid advance | Core3 observes 422/no mutation and renders Question 2 at 1440x900 and 390x844; Odoo waiting-state limitation is recorded | pass for Core3; Odoo conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ANSWER-VALIDATION-001/`.

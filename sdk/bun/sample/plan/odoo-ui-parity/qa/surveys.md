@@ -634,3 +634,28 @@ remains **qa-in-progress / conditional**.
 
 Disposition: Core3 public participant rendering and durable API workflow pass;
 Odoo comparison remains blocked and Surveys remains **qa-in-progress / conditional**.
+
+## Bounded QA run: `SURVEYS-PUBLIC-ANSWER-VALIDATION-001` — 2026-09-21
+
+- Source comparison: Odoo's `/survey/submit/<survey_token>/<answer_token>`
+  delegates values to question-level `validate_question`; Core3 validates
+  token-scoped Choice, Rating, Multiple Choice, and Numerical values before
+  public progress or submit mutations.
+- Persistence/guards: invalid values return HTTP 422
+  `SURVEY_PUBLIC_ANSWER_INVALID` without changing `survey_responses`; valid
+  values survive file-backed reopen and submit/replay remains idempotent.
+- Focused verification: **11 passed, 0 failed, 98 assertions** across public
+  validation, response, and next/previous navigation tests.
+- Scoped ESLint and `git diff --check`: pass. Full repository regression was
+  not run.
+- Authenticated Core3 evidence: Admin desktop/mobile at 1440x900 and 390x844
+  observed the invalid 422/no-mutation boundary, then rendered valid Question 1
+  → Question 2 progression without viewport overflow. The expected 422 is
+  present in the browser console because the probe intentionally exercised the
+  rejected request; it is recorded as an expected validation response.
+- Odoo comparison: authenticated `/survey/start/<token>` returned HTTP 200 at
+  both viewports but remained on the host-session waiting state, so no paired
+  invalid-answer mutation evidence or sign-off is claimed.
+
+Disposition: Core3 question validation passes; Surveys remains
+**qa-in-progress / conditional**.

@@ -281,6 +281,11 @@ export default class SurveysModule implements ModuleLifecycle {
     }
     if (response.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
     const answers = body.answers && typeof body.answers === 'object' ? body.answers : {};
+    const questions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
+    const invalidAnswers = this.invalidPublicAnswers(questions, answers);
+    if (invalidAnswers.length) {
+      return this.json({ error: `Invalid answers: ${invalidAnswers.join(', ')}`, code: 'SURVEY_PUBLIC_ANSWER_INVALID' }, 422);
+    }
     if (operation === 'progress') {
       try {
         const result = await service.call('surveys.public.progress', {
@@ -294,7 +299,6 @@ export default class SurveysModule implements ModuleLifecycle {
         return this.publicMutationError(error);
       }
     }
-    const questions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
     const missingRequired = questions
       .filter((question: any) => question.required && (answers[question.id] === undefined || answers[question.id] === null || String(answers[question.id]).trim() === ''))
       .map((question: any) => question.question_text || question.id);
@@ -378,6 +382,29 @@ export default class SurveysModule implements ModuleLifecycle {
       return this.json({ error: String(error?.message || 'This survey response is no longer available for editing'), ...(error?.code ? { code: error.code } : {}) }, status);
     }
     throw error;
+  }
+
+  private invalidPublicAnswers(questions: any[], answers: Record<string, unknown>): string[] {
+    const invalid: string[] = [];
+    for (const question of questions) {
+      const value = answers[question.id];
+      const values = Array.isArray(value) ? value.map((entry) => String(entry).trim()) : [String(value ?? '').trim()];
+      if (!values.some(Boolean)) continue;
+      const options = String(question.answer_options || '').split(',').map((entry) => entry.trim()).filter(Boolean);
+      const questionType = String(question.question_type || '');
+      if (['Choice', 'Rating'].includes(questionType) && (values.length !== 1 || !options.includes(values[0]))) {
+        invalid.push(String(question.question_text || question.id));
+        continue;
+      }
+      if (questionType === 'Multiple Choice' && (!values.every((entry) => options.includes(entry)) || new Set(values).size !== values.length)) {
+        invalid.push(String(question.question_text || question.id));
+        continue;
+      }
+      if (['Numerical', 'Number'].includes(questionType) && (values.length !== 1 || !Number.isFinite(Number(values[0])))) {
+        invalid.push(String(question.question_text || question.id));
+      }
+    }
+    return invalid;
   }
 
   private isToken(value: string): boolean {

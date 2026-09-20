@@ -1,0 +1,21 @@
+{
+  "featureId": "SURVEYS-PUBLIC-ANSWER-VALIDATION-001",
+  "reference": "http://127.0.0.1:8069",
+  "survey": "b135640d-14d4-4748-9ef6-344ca256531e",
+  "checks": [
+    {
+      "viewport": "desktop",
+      "url": "http://127.0.0.1:8069/survey/start/b135640d-14d4-4748-9ef6-344ca256531e",
+      "status": 200,
+      "finalUrl": "http://127.0.0.1:8069/survey/b135640d-14d4-4748-9ef6-344ca256531e",
+      "bodyText": "Skip to Content\nFeedback Form\nPay attention to the host screen until the next question.\nPowered by   "
+    },
+    {
+      "viewport": "mobile",
+      "url": "http://127.0.0.1:8069/survey/start/b135640d-14d4-4748-9ef6-344ca256531e",
+      "status": 200,
+      "finalUrl": "http://127.0.0.1:8069/survey/b135640d-14d4-4748-9ef6-344ca256531e",
+      "bodyText": "Skip to Content\nFeedback Form\nPay attention to the host screen until the next question.\nPowered by   "
+    }
+  ]
+}

@@ -51,6 +51,27 @@ exists. Evidence is under
 Status remains **qa-in-progress / conditional**; no full-module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-ANSWER-VALIDATION-001`
+
+Selected the smallest remaining source-backed public question behavior after
+live-session rendering: Odoo's `survey_submit` question validation. Core3 now
+validates Choice, Rating, Multiple Choice, and Numerical values before public
+progress or submit mutations while retaining the existing YAML page/API
+contracts, token scope, and permission boundary. Invalid values return
+`SURVEY_PUBLIC_ANSWER_INVALID` with HTTP 422 and leave the durable response
+unchanged; valid values persist, survive file-backed reopen, and submit/replay
+through the existing idempotency flow.
+
+Focused coverage is **11 passed / 98 assertions** across public validation,
+response, and next/previous navigation tests. Authenticated Core3 desktop/mobile
+probes observed the invalid 422 without mutation and then rendered a valid
+Question 1 → Question 2 transition. Odoo's route was reachable at both
+viewports but remained on the host-session waiting state, so no invalid-answer
+mutation parity is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-ANSWER-VALIDATION-001/`.
+Status remains **qa-in-progress / conditional**; full repository regression was
+not run.
+
 ## 2026-09-20 — `SURVEYS-LIVE-SESSION-ANSWER-001`
 
 Selected the smallest remaining source-backed behavior after Live Session Join:

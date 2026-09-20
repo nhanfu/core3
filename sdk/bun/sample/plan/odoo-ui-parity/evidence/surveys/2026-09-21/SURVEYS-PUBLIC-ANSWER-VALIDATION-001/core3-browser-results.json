@@ -1,0 +1,69 @@
+{
+  "featureId": "SURVEYS-PUBLIC-ANSWER-VALIDATION-001",
+  "base": "http://127.0.0.1:4017",
+  "survey": "b135640d-14d4-4748-9ef6-344ca256531e",
+  "checks": [
+    {
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "authenticated": {
+        "status": 200,
+        "actor": "admin@tms.local",
+        "token": true
+      },
+      "invalid": {
+        "status": 422,
+        "body": {
+          "error": "Invalid answers: How satisfied are you?",
+          "code": "SURVEY_PUBLIC_ANSWER_INVALID"
+        }
+      },
+      "afterInvalid": {
+        "status": 200,
+        "answerData": "{}"
+      },
+      "validRenderedAdvance": true,
+      "url": "http://127.0.0.1:4017/survey/b135640d-14d4-4748-9ef6-344ca256531e/054a1dd2-c094-4bc8-b588-2f4173bae997",
+      "consoleOrPageFailures": [
+        "console:Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)"
+      ],
+      "bodyWidth": 1440,
+      "documentWidth": 1440,
+      "bodyText": "Feedback Form\nWhat can we improve?\nQuestion 2 of 7\nBack\nNext"
+    },
+    {
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "authenticated": {
+        "status": 200,
+        "actor": "admin@tms.local",
+        "token": true
+      },
+      "invalid": {
+        "status": 422,
+        "body": {
+          "error": "Invalid answers: How satisfied are you?",
+          "code": "SURVEY_PUBLIC_ANSWER_INVALID"
+        }
+      },
+      "afterInvalid": {
+        "status": 200,
+        "answerData": "{}"
+      },
+      "validRenderedAdvance": true,
+      "url": "http://127.0.0.1:4017/survey/b135640d-14d4-4748-9ef6-344ca256531e/d09364d1-9ff0-44da-a082-7e9bc902c097",
+      "consoleOrPageFailures": [
+        "console:Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)"
+      ],
+      "bodyWidth": 390,
+      "documentWidth": 390,
+      "bodyText": "Feedback Form\nWhat can we improve?\nQuestion 2 of 7\nBack\nNext"
+    }
+  ]
+}
