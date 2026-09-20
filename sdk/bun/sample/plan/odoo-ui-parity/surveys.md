@@ -1293,3 +1293,33 @@ Evidence is under
 This slice has a paired Odoo comparison. Surveys remains
 **qa-in-progress / conditional** because broader module exit criteria remain
 open; no full-module sign-off is claimed.
+
+## Bounded slice: Public next-question navigation (2026-09-20)
+
+Feature ID: `SURVEYS-PUBLIC-NEXT-QUESTION-001`.
+
+The next source-backed public lifecycle is Odoo's
+`/survey/next_question/<survey_token>/<answer_token>` controller in
+`addons/survey/controllers/main.py:537-611`. It validates the active answer,
+saves the current page, advances to the next ordered question, and renders the
+next question or completion state. Core3 adds a durable public cursor and
+navigation key through migration `20260920230000-022-survey-public-navigation.yaml`,
+the `surveys.public.next_question` API action, and the corresponding
+`POST /api/public/surveys/<survey_token>/next_question` route. The route is
+token-scoped, `surveys.public` permissioned, stale-cursor guarded, ordered
+question guarded, idempotent, and restart-safe.
+
+Focused and full Surveys tests cover the YAML API/page ownership, wrong-token,
+stale, closed, final-question, replay, migration rollback, and file-backed
+restart boundaries. Core3 desktop/mobile API/page probes show HTTP 200
+advancement to `question-feedback-comment`, zero failed requests, and no
+horizontal overflow. The existing public page component still renders its
+client-side question index after a reload because its source is outside the
+Surveys-owned write boundary; this is recorded as a UI integration blocker,
+not claimed as complete visual navigation. The Odoo live route comparison is
+also conditional because the installed reference has no stable in-progress
+answer-token fixture for this mutation route. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-NEXT-QUESTION-001/`.
+
+Surveys remains **qa-in-progress / conditional** and this slice does not sign
+off the module.

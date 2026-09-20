@@ -70,6 +70,29 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-20 — `SURVEYS-PUBLIC-NEXT-QUESTION-001`
+
+Selected the smallest unfinished source-backed public lifecycle after the
+authenticated test-entry slice: Odoo's next-question navigation route. Core3
+now persists `survey_responses.current_question_id` and `navigation_key`,
+advances one ordered question through a separate YAML API action, and replays
+the same navigation key without creating another response or cursor write.
+Wrong token, stale cursor, invalid ordering, final question, closed response,
+and non-POST requests are guarded. Migration replay/rollback and file-backed
+restart coverage are included.
+
+Focused next-question coverage is 3 tests / 19 assertions; migration repair
+coverage is 7 tests / 34 assertions; the full Surveys glob is 69 tests / 554
+assertions. Scoped ESLint, `git diff --check`, and the UI audit pass at 684
+pages, 693 routes, and 1,264 datasources. Core3 desktop/mobile probes reached
+the public page and returned API advancement to
+`question-feedback-comment` with zero failed requests and no overflow. The
+existing public page component does not consume the new cursor on reload and
+is outside this owner's permitted paths; that UI integration gap is recorded
+precisely in the evidence. Odoo's installed reference lacks a stable active
+answer-token fixture for a live paired mutation probe, so no Odoo sign-off is
+claimed. Status remains **qa-in-progress / conditional**.
+
 ## 2026-09-20 — `SURVEYS-LIVE-LEADERBOARD-001`
 
 Selected the smallest remaining source-backed live-session behavior after the

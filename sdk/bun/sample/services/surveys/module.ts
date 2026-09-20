@@ -40,7 +40,7 @@ export default class SurveysModule implements ModuleLifecycle {
   private async handlePublicRoute(request: Request, url: URL, service: PublicService): Promise<Response | null> {
     const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)(\/answer)?$/);
     if (sessionMatch) return this.handlePublicSessionRoute(request, sessionMatch[1], service, Boolean(sessionMatch[2]));
-    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|retry|print))?$/);
+    const match = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)(?:\/(start|progress|submit|retry|next_question|print))?$/);
     if (!match) return null;
     const token = match[1];
     const operation = match[2];
@@ -68,6 +68,9 @@ export default class SurveysModule implements ModuleLifecycle {
       access_token: answerToken,
       survey_id: detail.id,
     }))?.response?.[0];
+    const firstQuestion = async () => (await service.call('survey.public.first_question', {
+      survey_id: detail.id,
+    }))?.question?.[0] || null;
 
     if (request.method === 'GET' && !operation) {
       const questions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
@@ -100,11 +103,13 @@ export default class SurveysModule implements ModuleLifecycle {
       }
       let result;
       try {
+        const question = await firstQuestion();
         result = await service.call('surveys.public.start', {
           values: {
             survey_id: detail.id,
             survey_name: detail.name,
             answer_data: '{}',
+            current_question_id: question?.id || null,
             access_token: crypto.randomUUID(),
             idempotency_key: idempotencyKey || null,
           },
@@ -122,6 +127,44 @@ export default class SurveysModule implements ModuleLifecycle {
         result = existing;
       }
       return this.json({ survey: detail, answer: result });
+    }
+
+    if (operation === 'next_question') {
+      const answerToken = String(body.answer_token || '');
+      if (!this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
+      const response = await readResponse(answerToken);
+      if (!response) return this.json({ error: 'Survey response is unavailable' }, 404);
+      if (response.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for navigation', code: 'SURVEY_PUBLIC_NEXT_NOT_IN_PROGRESS' }, 409);
+      const expectedQuestionId = String(body.expected_question_id || response.current_question_id || '');
+      if (!expectedQuestionId) return this.json({ error: 'The current survey question is unavailable', code: 'SURVEY_PUBLIC_NEXT_STALE' }, 409);
+      const navigationKey = this.idempotencyKey(body.navigation_key || body.idempotency_key);
+      if (navigationKey) {
+        const replay = (await service.call('survey.public.navigation_idempotency', {
+          access_token: answerToken,
+          survey_id: detail.id,
+          navigation_key: navigationKey,
+        }))?.response?.[0];
+        if (replay) return this.json({ survey: detail, answer: replay, question: replay.current_question_id ? (await service.call('survey.public.current_question', { survey_id: detail.id, question_id: replay.current_question_id }))?.question?.[0] || null : null, replayed: true });
+      }
+      const next = (await service.call('survey.public.next_question', {
+        survey_id: detail.id,
+        current_question_id: expectedQuestionId,
+      }))?.question?.[0];
+      if (!next) return this.json({ error: 'The survey has reached the final question', code: 'SURVEY_PUBLIC_NEXT_EXHAUSTED' }, 409);
+      try {
+        const result = await service.call('surveys.public.next_question', {
+          id: response.id,
+          survey_id: detail.id,
+          access_token: answerToken,
+          expected_question_id: expectedQuestionId,
+          current_question_id: next.id,
+          navigation_key: navigationKey || `next:${response.id}:${next.id}`,
+          values: { current_question_id: next.id, navigation_key: navigationKey || `next:${response.id}:${next.id}` },
+        });
+        return this.json({ survey: detail, answer: result, question: next, replayed: false });
+      } catch (error: any) {
+        return this.publicMutationError(error);
+      }
     }
 
     if (operation === 'retry') {
@@ -149,6 +192,7 @@ export default class SurveysModule implements ModuleLifecycle {
       const retryId = `retry-response-${source.id}-${attempt}`;
       const retryToken = `retry-answer-${source.access_token}-${attempt}`;
       try {
+        const question = await firstQuestion();
         const answer = await service.call('surveys.public.retry', {
           values: {
             source_id: source.id,
@@ -160,6 +204,7 @@ export default class SurveysModule implements ModuleLifecycle {
             respondent_name: source.respondent_name || null,
             respondent_email: source.respondent_email || null,
             answer_data: '{}',
+            current_question_id: question?.id || null,
             access_token: retryToken,
             test_entry: source.test_entry || false,
             idempotency_key: idempotencyKey || null,

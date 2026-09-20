@@ -58,11 +58,11 @@ actions:
     mutation:
       operation: insert
       table: survey_responses
-      fields: [survey_id, survey_name, answer_data, access_token, idempotency_key]
+      fields: [survey_id, survey_name, answer_data, access_token, current_question_id, idempotency_key]
       required: [survey_id, survey_name, answer_data]
       defaults: { state: In Progress }
       generated: [access_token]
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id FROM survey_responses WHERE id = :id" }
     fields:
       - { field: survey_id, label: Survey ID, type: text, required: true }
       - { field: survey_name, label: Survey, type: text, required: true }
@@ -105,9 +105,29 @@ actions:
       concurrency: false
       guards:
         - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, code: SURVEY_PUBLIC_RESPONSE_NOT_IN_PROGRESS, message: This survey response is no longer available for editing }
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id FROM survey_responses WHERE id = :id" }
     fields:
       - { field: answer_data, label: Answers, type: text, required: true }
+  - id: public_survey_next_question
+    type: server_form
+    permission: surveys.public
+    title: Advance public survey question
+    action: surveys.public.next_question
+    handler: yaml_mutation
+    mutation:
+      operation: update
+      table: survey_responses
+      fields: [current_question_id, navigation_key]
+      required: [current_question_id, navigation_key]
+      concurrency: false
+      guards:
+        - { query: "SELECT id FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress' AND current_question_id = :expected_question_id", status: 409, code: SURVEY_PUBLIC_NEXT_STALE, message: This survey question changed before navigation. Reload before continuing. }
+        - { query: "SELECT next_question.id FROM survey_questions current_question JOIN survey_questions next_question ON next_question.survey_id = current_question.survey_id AND (next_question.sequence > current_question.sequence OR (next_question.sequence = current_question.sequence AND next_question.id > current_question.id)) WHERE current_question.id = :expected_question_id AND next_question.id = :current_question_id AND current_question.survey_id = :survey_id", status: 422, code: SURVEY_PUBLIC_NEXT_INVALID, message: The requested next question is not part of this survey. }
+      result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.answer_data, r.current_question_id, r.navigation_key, q.question_text, q.question_type, q.sequence AS current_question_sequence FROM survey_responses r JOIN survey_questions q ON q.id = r.current_question_id WHERE r.id = :id" }
+    fields:
+      - { field: expected_question_id, label: Current question, type: text, required: true }
+      - { field: current_question_id, label: Next question, type: text, required: true }
+      - { field: navigation_key, label: Navigation key, type: text, required: true }
   - id: public_survey_retry
     type: server_form
     permission: surveys.public
@@ -117,14 +137,14 @@ actions:
     mutation:
       operation: insert
       table: survey_responses
-      fields: [survey_id, survey_name, respondent_name, respondent_email, answer_data, access_token, test_entry, idempotency_key]
+      fields: [survey_id, survey_name, respondent_name, respondent_email, answer_data, access_token, current_question_id, test_entry, idempotency_key]
       required: [id, survey_id, survey_name, answer_data, access_token]
       defaults: { state: In Progress, submitted_at: '2026-01-15 09:30:00', test_entry: false }
       guards:
         - { query: "SELECT id FROM surveys WHERE id = :survey_id AND access_token = :survey_token AND state = 'Published'", status: 404, code: SURVEY_PUBLIC_RETRY_UNAVAILABLE, message: This survey is no longer available for another attempt. }
         - { query: "SELECT id FROM survey_responses WHERE id = :source_id AND survey_id = :survey_id AND access_token = :source_access_token AND state = 'Submitted'", status: 409, code: SURVEY_PUBLIC_RETRY_SOURCE_STATE, message: Only a submitted survey response can be retried. }
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM survey_responses WHERE access_token = :access_token)", status: 409, code: SURVEY_PUBLIC_RETRY_TOKEN_EXISTS, message: This retry attempt already exists. }
-      result: { query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, COALESCE(test_entry, false) AS test_entry, idempotency_key FROM survey_responses WHERE id = :id" }
+      result: { query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, respondent_name, respondent_email, COALESCE(test_entry, false) AS test_entry, idempotency_key FROM survey_responses WHERE id = :id" }
     fields:
       - { field: source_id, label: Submitted response, type: text, required: true }
       - { field: source_access_token, label: Response token, type: text, required: true }

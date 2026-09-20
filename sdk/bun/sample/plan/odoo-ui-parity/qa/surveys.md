@@ -523,3 +523,40 @@ Disposition: bounded Core3 workflow, permission/token guards, durable replay,
 restart coverage, and paired authenticated desktop/mobile evidence pass.
 Surveys remains **qa-in-progress / conditional** because module-wide exit
 criteria remain open; no full-module sign-off is claimed.
+
+## Bounded QA run: `SURVEYS-PUBLIC-NEXT-QUESTION-001` — 2026-09-20
+
+- Source comparison: Odoo's `survey_next_question` controller validates the
+  answer token/state, saves submitted page data, computes the next ordered
+  page/question, and returns the next question HTML. Core3 exposes the bounded
+  cursor transition through `surveys.public.next_question` in the API YAML and
+  keeps the public controller separate from the page contract.
+- Persistence/workflow: migration `20260920230000-022` adds the current
+  question cursor and navigation key; start seeds the first question; next
+  advances one ordered question; replay returns the same response/cursor;
+  restart preserves it; final, closed, stale, invalid-order, wrong-token,
+  and non-POST requests do not mutate state.
+- Focused feature verification: **3 passed, 0 failed, 19 assertions** in
+  `surveys_public_next_question.integration.test.ts`.
+- Migration repair verification: **7 passed, 0 failed, 34 assertions** across
+  the next-question and migration integration files.
+- Full Surveys verification: **69 passed, 0 failed, 554 assertions** across
+  16 integration files.
+- Scoped verification: ESLint passed for changed Surveys tests,
+  `git diff --check` passed, and `bun run audit` passed with **684 pages, 693
+  routes, and 1,264 datasources**.
+- Core3 desktop/mobile evidence: the token-scoped public API returned HTTP 200
+  and `question-feedback-comment` at 1440x900 and 390x844, with zero failed
+  requests and body/document widths equal to the viewport. The existing
+  `public/components/PublicSurvey.ts` reload renderer still shows its
+  client-side Question 1 after the API mutation; that file is outside the
+  permitted Surveys-owned paths and is an explicit UI integration blocker.
+- Odoo evidence/blocker: the source route is recorded in
+  `source-comparison.md`; the installed reference at `127.0.0.1:8069` has no
+  stable in-progress answer-token fixture accepted for this mutation route,
+  so no fresh paired Odoo next-question request or visual sign-off is claimed.
+
+Disposition: Core3 durable API workflow, permission/token guards,
+restart/idempotency, and responsive endpoint evidence pass. UI renderer
+integration and paired Odoo mutation evidence remain conditional. Surveys is
+still **qa-in-progress / conditional**.

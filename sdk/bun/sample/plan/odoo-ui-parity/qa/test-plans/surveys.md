@@ -195,3 +195,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-TEST-ENTRY-001/`.
+
+## 2026-09-20 public next-question additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-020 | public workflow | Start → next question | Seed and advance one ordered durable response cursor through the `surveys.public` API action | pass |
+| SURVEYS-WF-017 | recovery/idempotency | Next → restart → replay | File-backed reopen retains the cursor; the same navigation key returns the same question/row without duplication | pass |
+| SURVEYS-PERM-019 | permission/guards | Public navigation boundary | Token, in-progress state, expected cursor, ordered-next, final-question, and POST guards reject invalid mutations | pass |
+| SURVEYS-UI-018 | responsive/reference | Desktop/mobile next-question probe | Core3 API advancement has zero failed requests and no overflow at 1440x900 and 390x844; renderer and Odoo route blockers are recorded exactly | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-NEXT-QUESTION-001/`.

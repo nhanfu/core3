@@ -1,0 +1,62 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-NEXT-QUESTION-001",
+  "base": "http://127.0.0.1:4017",
+  "actor": "public survey respondent (Core3 runtime; authenticated shell available)",
+  "failures": [],
+  "viewports": [
+    {
+      "viewport": "1440x900",
+      "started": {
+        "status": 200,
+        "answerToken": "9e181f25-96c0-49d4-8582-23cfb0333137"
+      },
+      "before": {
+        "status": 200,
+        "url": "http://127.0.0.1:4017/survey/start/b135640d-14d4-4748-9ef6-344ca256531e?answer_token=9e181f25-96c0-49d4-8582-23cfb0333137",
+        "contains": "Feedback Form\nHow satisfied are you?*\n1\n2\n3\n4\n5\nQuestion 1 of 7\nNext"
+      },
+      "after": {
+        "status": 200,
+        "url": "http://127.0.0.1:4017/survey/start/b135640d-14d4-4748-9ef6-344ca256531e?answer_token=9e181f25-96c0-49d4-8582-23cfb0333137",
+        "apiStatus": 200,
+        "apiReplayed": false,
+        "currentQuestionId": "question-feedback-comment",
+        "questionId": "question-feedback-comment",
+        "contains": "Feedback Form\nHow satisfied are you?*\n1\n2\n3\n4\n5\nQuestion 1 of 7\nNext"
+      },
+      "metrics": {
+        "bodyWidth": 1440,
+        "documentWidth": 1440,
+        "viewportWidth": 1440
+      },
+      "failures": []
+    },
+    {
+      "viewport": "390x844",
+      "started": {
+        "status": 200,
+        "answerToken": "73a1f87c-dcb0-4db5-a3d0-b376387957ea"
+      },
+      "before": {
+        "status": 200,
+        "url": "http://127.0.0.1:4017/survey/start/b135640d-14d4-4748-9ef6-344ca256531e?answer_token=73a1f87c-dcb0-4db5-a3d0-b376387957ea",
+        "contains": "Feedback Form\nHow satisfied are you?*\n1\n2\n3\n4\n5\nQuestion 1 of 7\nNext"
+      },
+      "after": {
+        "status": 200,
+        "url": "http://127.0.0.1:4017/survey/start/b135640d-14d4-4748-9ef6-344ca256531e?answer_token=73a1f87c-dcb0-4db5-a3d0-b376387957ea",
+        "apiStatus": 200,
+        "apiReplayed": false,
+        "currentQuestionId": "question-feedback-comment",
+        "questionId": "question-feedback-comment",
+        "contains": "Feedback Form\nHow satisfied are you?*\n1\n2\n3\n4\n5\nQuestion 1 of 7\nNext"
+      },
+      "metrics": {
+        "bodyWidth": 390,
+        "documentWidth": 390,
+        "viewportWidth": 390
+      },
+      "failures": []
+    }
+  ]
+}

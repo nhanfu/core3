@@ -7,10 +7,22 @@ operations:
     query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :survey_id ORDER BY sequence, id"
   survey.public.response:
     result_key: response
-    query: "SELECT id, access_token, survey_id, state, answer_data, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"
+    query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, navigation_key, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"
   survey.public.response_by_idempotency_key:
     result_key: response
-    query: "SELECT id, access_token, survey_id, state, answer_data, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"
+    query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, navigation_key, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"
+  survey.public.first_question:
+    result_key: question
+    query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :survey_id ORDER BY sequence, id LIMIT 1"
+  survey.public.current_question:
+    result_key: question
+    query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE id = :question_id AND survey_id = :survey_id LIMIT 1"
+  survey.public.next_question:
+    result_key: question
+    query: "SELECT next_question.id, next_question.question_text, next_question.question_type, next_question.sequence, next_question.required, next_question.answer_options FROM survey_questions current_question JOIN survey_questions next_question ON next_question.survey_id = current_question.survey_id AND (next_question.sequence > current_question.sequence OR (next_question.sequence = current_question.sequence AND next_question.id > current_question.id)) WHERE current_question.id = :current_question_id AND current_question.survey_id = :survey_id ORDER BY next_question.sequence, next_question.id LIMIT 1"
+  survey.public.navigation_idempotency:
+    result_key: response
+    query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, navigation_key, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id AND navigation_key = :navigation_key LIMIT 1"
   survey.public.retry.source:
     result_key: response
     query: "SELECT id, access_token, survey_id, survey_name, state, respondent_name, respondent_email, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE access_token = :access_token AND survey_id = :survey_id LIMIT 1"
@@ -19,7 +31,7 @@ operations:
     query: "SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = :survey_id AND id LIKE 'retry-response-' || :source_id || '-%'"
   survey.public.retry.idempotency:
     result_key: response
-    query: "SELECT id, access_token, survey_id, state, answer_data, respondent_name, respondent_email, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"
+    query: "SELECT id, access_token, survey_id, state, answer_data, current_question_id, respondent_name, respondent_email, idempotency_key, COALESCE(test_entry, false) AS test_entry FROM survey_responses WHERE idempotency_key = :idempotency_key AND survey_id = :survey_id LIMIT 1"
   survey.public.print.detail:
     result_key: survey
     query: "SELECT id, access_token, name, title, description, state FROM surveys WHERE access_token = :access_token AND state IN ('Published', 'Closed') LIMIT 1"

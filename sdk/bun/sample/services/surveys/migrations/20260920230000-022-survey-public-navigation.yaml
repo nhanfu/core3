@@ -1,0 +1,33 @@
+version: 0.0.22
+description: Durable public survey question navigation cursor and replay key
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS current_question_id VARCHAR;
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS navigation_key VARCHAR;
+      UPDATE survey_responses r SET current_question_id = (
+        SELECT q.id FROM survey_questions q WHERE q.survey_id = r.survey_id ORDER BY q.sequence, q.id LIMIT 1
+      ) WHERE current_question_id IS NULL AND state = 'In Progress';
+    down: |
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS navigation_key;
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS current_question_id;
+  duckdb:
+    up: |
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS current_question_id VARCHAR;
+      ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS navigation_key VARCHAR;
+      UPDATE survey_responses r SET current_question_id = (
+        SELECT q.id FROM survey_questions q WHERE q.survey_id = r.survey_id ORDER BY q.sequence, q.id LIMIT 1
+      ) WHERE current_question_id IS NULL AND state = 'In Progress';
+    down: |
+      DROP INDEX IF EXISTS survey_responses_access_token_idx;
+      DROP INDEX IF EXISTS survey_responses_survey_idx;
+      DROP INDEX IF EXISTS survey_responses_idempotency_key_idx;
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS navigation_key;
+      ALTER TABLE survey_responses DROP COLUMN IF EXISTS current_question_id;
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_responses_access_token_idx ON survey_responses(access_token);
+      CREATE INDEX IF NOT EXISTS survey_responses_survey_idx ON survey_responses(survey_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS survey_responses_idempotency_key_idx ON survey_responses(survey_id, idempotency_key);
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

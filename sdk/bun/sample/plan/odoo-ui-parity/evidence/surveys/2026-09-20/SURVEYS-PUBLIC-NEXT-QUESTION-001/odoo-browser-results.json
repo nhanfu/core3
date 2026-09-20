@@ -1,0 +1,8 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-NEXT-QUESTION-001",
+  "host": "http://127.0.0.1:8069",
+  "status": "blocked",
+  "route": "/survey/next_question/<survey_token>/<answer_token>",
+  "blocker": "The installed reference has no stable in-progress answer-token fixture accepted for this mutation route; no paired Odoo next-question request or screenshot is claimed.",
+  "source_reference": "/home/nhanjs/projects/odoo/addons/survey/controllers/main.py:537-611"
+}
