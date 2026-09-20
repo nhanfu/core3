@@ -12,7 +12,7 @@ QA state: source-limited CRUD/workflow/actor/browser slice verified; parity sign
 QA slot: current-wave module owner
 Module owner: referrals module owner
 Verification trigger: feature-complete
-Candidate commit: pending current-wave QA evidence commit
+Candidate commit: a071e43250f8334b0bb215b7e2e6eab3860f11a5
 
 ## Test-case inventory
 

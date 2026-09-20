@@ -4,7 +4,7 @@ Module owner: referrals module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: source-limited CRUD/workflow/browser slice verified
 Verification trigger: feature-complete after `hr_referral` is installed in the live reference
-Candidate commit: pending current-wave QA evidence commit
+Candidate commit: a071e43250f8334b0bb215b7e2e6eab3860f11a5
 
 ## Current state
 
