@@ -4,7 +4,7 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `e32c84f95a9e` (Combo Choices); previous bounded slice: `d6485833` (Product Attributes).
+Latest committed bounded slice: `62b822ae812df234c6da981173b58248003edd7d` (Payment Methods); previous bounded slice: `e32c84f95a9e` (Combo Choices).
 
 ## Current state
 
@@ -77,3 +77,22 @@ desktop create flow for `Browser Wallet`, and the authenticated Odoo `/shop`
 The full Ecommerce module remains unsigned off because paired Odoo, broader
 actor/company browser, and external provider gates remain open. The bounded
 implementation commit is reported in the handoff and is local only.
+
+## Completed bounded task — `ECOM-CHECKOUT-DELIVERY-METHODS-001`
+
+The next smallest source-backed checkout/company gap was Odoo's Website >
+Global Configuration > eCommerce > Delivery action:
+`menu_ecommerce_delivery` → `delivery.action_delivery_carrier_form`, model
+`delivery.carrier`. Core3 now has durable delivery-method schema and fixtures
+(migrations 044/045), a separate page/API YAML contract, company-scoped active
+checkout options, Cash on Delivery compatibility validation, permissioned CRUD,
+archive/restore/delete workflow, and optimistic row-version concurrency.
+
+Focused delivery-method, checkout, and actor/restart coverage passes with 19
+tests and 122 assertions. The full Ecommerce integration set passes with 71
+tests and 485 assertions across 21 files. Authenticated Core3 desktop/mobile evidence and the
+authenticated Odoo `/shop` 404 blocker are recorded at
+`plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-checkout-delivery-methods-001/`.
+The paired Odoo surface, broader actor/company browser matrix, and external
+carrier-rate/shipment gates remain open; this is a bounded implementation, not
+full Ecommerce sign-off. The bounded commit is recorded in the handoff.

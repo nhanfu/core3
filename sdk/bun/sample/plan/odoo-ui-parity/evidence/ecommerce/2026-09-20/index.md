@@ -5,3 +5,4 @@
 - [Product Attributes](ecom-catalog-product-attributes-001/README.md)
 - [Combo Choices](ecom-catalog-product-combo-choices-001/README.md)
 - [Payment Methods](ecom-checkout-payment-methods-001/README.md)
+- [Delivery Methods](ecom-checkout-delivery-methods-001/README.md)

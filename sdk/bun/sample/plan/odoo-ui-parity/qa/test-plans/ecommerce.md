@@ -52,6 +52,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-FUNC-017 | Product Attributes | Attribute fixtures, search/active filter/empty/error states, durable values, permissioned CRUD, option validation, migration rerun, and restart persistence work | pass: `ecommerce_product_attributes.integration.test.ts` — 4 tests, 31 assertions |
 | ECOM-FUNC-018 | Combo Choices | Combo fixtures, product search, computed minimum price, empty/error states, permissioned CRUD, option validation, migration rerun, company scope, and restart persistence work | pass: `ecommerce_combo_choices.integration.test.ts` — 4 tests, 30 assertions |
 | ECOM-FUNC-019 | Payment Methods | Durable primary payment-method fixtures, checkout option filtering, search/active states, permissioned CRUD, code/feature validation, archive workflow, migration rerun, and restart persistence work | pass: `ecommerce_payment_methods.integration.test.ts` — 4 tests, 32 assertions |
+| ECOM-FUNC-020 | Delivery Methods | Durable global/company-scoped carrier fixtures, checkout option filtering, search/active/type states, permissioned CRUD, validation, Cash on Delivery compatibility, migration rerun, and restart persistence work | pass: `ecommerce_delivery_methods.integration.test.ts` — 4 tests, 34 assertions |
 
 ## Workflow and integration cases
 
@@ -69,6 +70,7 @@ mutations use isolated databases and deterministic IDs.
 | ECOM-WF-025 | Product Attribute configuration | Authorized catalog editor creates an attribute with values, replaces its values, and deletes it without orphaned value rows; Odoo variant/display constraints are enforced | pass: `ecommerce_product_attributes.integration.test.ts`; authenticated Core3 desktop create interaction persisted Metal and Wood values |
 | ECOM-WF-026 | Combo Choice configuration | Authorized catalog editor creates a combo, replaces its product options, and deletes it without orphaned option rows; Odoo non-empty, unique, non-combo, and extra-price constraints are enforced | pass: `ecommerce_combo_choices.integration.test.ts`; authenticated Core3 desktop create interaction persisted two product options |
 | ECOM-WF-027 | Payment Method configuration | Authorized Ecommerce editor creates, edits, archives/restores, and deletes a payment method; active primary rows drive authenticated and guest checkout options | pass: `ecommerce_payment_methods.integration.test.ts`; authenticated Core3 desktop create interaction persisted `Browser Wallet` |
+| ECOM-WF-028 | Delivery Method configuration | Authorized Ecommerce editor creates, edits, archives/restores, and deletes a carrier; active global/current-company rows drive authenticated and guest checkout delivery options and Cash on Delivery compatibility | pass: `ecommerce_delivery_methods.integration.test.ts`; authenticated Core3 desktop create interaction persisted `Browser Same Day` |
 
 ## Permission and security cases
 
@@ -92,6 +94,7 @@ the all-customer scope.
 | ECOM-PERM-021 | Product Attribute read/write boundary | `ecommerce.read` protects the page/query and `ecommerce.write` protects create/edit/delete; duplicate, invalid, incompatible-mode, and stale requests preserve the current attribute and values | pass: `ecommerce_product_attributes.integration.test.ts` contract and mutation coverage |
 | ECOM-PERM-022 | Combo Choice read/write/company boundary | `ecommerce.read` protects the page/query and `ecommerce.write` protects create/edit/delete; cross-company, invalid, duplicate-option, non-combo, and stale requests preserve the current combo and options | pass: `ecommerce_combo_choices.integration.test.ts` contract and mutation coverage |
 | ECOM-PERM-023 | Payment Method read/write boundary | `ecommerce.read` protects the page/query and checkout option source; `ecommerce.write` protects create/edit/archive/restore/delete; invalid, duplicate-code, and stale requests preserve the catalog | pass: `ecommerce_payment_methods.integration.test.ts` contract and mutation coverage |
+| ECOM-PERM-024 | Delivery Method read/write/company boundary | `ecommerce.read` protects the page/query and checkout option source; `ecommerce.write` protects create/edit/archive/restore/delete; invalid, duplicate-scope, cross-company, Cash on Delivery, and stale requests preserve the catalog | pass: `ecommerce_delivery_methods.integration.test.ts` contract and mutation coverage |
 
 ## Visual, responsive, and regression cases
 
@@ -106,6 +109,7 @@ the all-customer scope.
 | ECOM-UI-007 | Product Attributes list/form | 1440x900, 390x844 | Authenticated Core3 list, desktop create form/post-create values, and mobile list render with deterministic fixtures; paired Odoo comparison is required but blocked by authenticated `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-attributes-001/` |
 | ECOM-UI-008 | Combo Choices list/form | 1440x900, 390x844 | Authenticated Core3 list, desktop create form/post-create options, and mobile list render with deterministic fixtures; paired Odoo comparison is required but blocked by authenticated `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-catalog-product-combo-choices-001/` |
 | ECOM-UI-009 | Payment Methods list/form/checkout source | 1440x900, 390x844 | Authenticated Core3 list, desktop create form/post-create active method, mobile list, and checkout option source render with deterministic fixtures; paired Odoo comparison is required but blocked by authenticated `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-checkout-payment-methods-001/` |
+| ECOM-UI-010 | Delivery Methods list/form/checkout source | 1440x900, 390x844 | Authenticated Core3 list, desktop create form/post-create carrier, mobile list, and checkout delivery/Cash on Delivery source render with deterministic fixtures; paired Odoo comparison is required but blocked by authenticated `/shop` 404 on both reference instances | Core3 pass; Odoo pair blocked; artifacts at `../evidence/ecommerce/2026-09-20/ecom-checkout-delivery-methods-001/` |
 
 ## Reference blocker
 

@@ -1,0 +1,34 @@
+{
+  "featureId": "ECOM-CHECKOUT-DELIVERY-METHODS-001",
+  "capturedAt": "2026-09-20",
+  "core3": {
+    "runtime": "http://127.0.0.1:4312",
+    "authentication": "admin@tms.local",
+    "desktop": {
+      "viewport": "1440x900",
+      "url": "http://127.0.0.1:4312/ecommerce/delivery-methods",
+      "created": "Browser Same Day",
+      "resultText": "1-4 / 4 Browser Same Day fixed global 25 true; Standard Delivery fixed global 5 true; Express Delivery fixed global 18 true; Local Pickup fixed My Company 0 false",
+      "errors": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "url": "http://127.0.0.1:4312/ecommerce/delivery-methods",
+      "resultText": "1-4 / 4 Browser Same Day; Standard Delivery; Express Delivery; Local Pickup",
+      "errors": []
+    }
+  },
+  "odoo": {
+    "database": "core3_codex_demo",
+    "user": "codex@core3.local",
+    "blocker": "Authenticated /shop returned exact Odoo Error 404 on both supplied instances.",
+    "odoo-8069": {
+      "desktop": { "url": "http://127.0.0.1:8069/shop", "authenticated": true, "text": "Mitchell Admin Error 404" },
+      "mobile": { "url": "http://127.0.0.1:8069/shop", "authenticated": true, "text": "Mitchell Admin Error 404" }
+    },
+    "odoo-8073": {
+      "desktop": { "url": "http://127.0.0.1:8073/shop", "authenticated": true, "text": "Mitchell Admin Error 404" },
+      "mobile": { "url": "http://127.0.0.1:8073/shop", "authenticated": true, "text": "Mitchell Admin Error 404" }
+    }
+  }
+}

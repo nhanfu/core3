@@ -1,0 +1,113 @@
+page: { id: ecommerce-delivery-methods }
+datasources:
+  - id: ecommerce_delivery_methods_catalog
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_DELIVERY_METHODS_UNAUTHENTICATED, message: Sign in to view delivery methods. }
+      forbidden: { status: 403, code: ECOMMERCE_DELIVERY_METHODS_FORBIDDEN, message: You do not have permission to view delivery methods. }
+      transport_error: { status: 503, code: ECOMMERCE_DELIVERY_METHODS_UNAVAILABLE, message: Delivery methods are temporarily unavailable. }
+    query: "SELECT id, row_version, name, sequence, company_name, delivery_type, allow_cash_on_delivery, fixed_price, margin, fixed_margin, free_over, free_over_amount, tracking_url, carrier_description, active FROM ecommerce_delivery_methods WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR delivery_type ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) AND (:delivery_type IS NULL OR delivery_type = :delivery_type) AND (:company_name IS NULL OR NULLIF(company_name, '') IS NULL OR company_name = :company_name) ORDER BY sequence, name, id"
+  - id: ecommerce_delivery_method_active
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"
+  - id: ecommerce_delivery_method_type
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES ('fixed', 'Fixed Price'), ('base_on_rule', 'Based on Rules')) types(value, label)"
+actions:
+  - id: create_ecommerce_delivery_method
+    type: server_form
+    permission: ecommerce.write
+    title: New Delivery Method
+    action: ecommerce.delivery_methods.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_delivery_methods_catalog, ecommerce_delivery_methods]
+    mutation:
+      operation: insert
+      table: ecommerce_delivery_methods
+      generated: [id]
+      fields: [name, sequence, company_name, delivery_type, allow_cash_on_delivery, fixed_price, margin, fixed_margin, free_over, free_over_amount, tracking_url, carrier_description, active]
+      required: [name]
+      defaults: { sequence: 100, company_name: null, delivery_type: fixed, allow_cash_on_delivery: false, fixed_price: 0, margin: 0, fixed_margin: 0, free_over: false, free_over_amount: 1000, tracking_url: '', carrier_description: '', active: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ECOMMERCE_DELIVERY_METHOD_NAME_REQUIRED, message: Delivery method name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:delivery_type, 'fixed') IN ('fixed', 'base_on_rule')", status: 422, code: ECOMMERCE_DELIVERY_METHOD_TYPE_INVALID, message: Choose a supported delivery provider type. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:fixed_price, 0) >= 0 AND COALESCE(:fixed_margin, 0) >= 0 AND COALESCE(:free_over_amount, 0) >= 0 AND COALESCE(:margin, 0) >= -1", status: 422, code: ECOMMERCE_DELIVERY_METHOD_PRICE_INVALID, message: Delivery prices and margin must be valid non-negative values. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:company_name AS VARCHAR)), '') IS NULL OR :company_name = :current_company_name", status: 403, code: ECOMMERCE_COMPANY_SCOPE_REQUIRED, message: Delivery methods can only be configured for the current company or all companies. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_delivery_methods WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(NULLIF(company_name, ''), '') = COALESCE(NULLIF(:company_name, ''), ''))", status: 409, code: ECOMMERCE_DELIVERY_METHOD_EXISTS, message: A delivery method with this name already exists for this company. }
+      result: { query: "SELECT * FROM ecommerce_delivery_methods WHERE id = :id" }
+    fields:
+      - { field: name, label: Delivery Method, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 100 }
+      - { field: company_name, label: Company, type: text, placeholder: 'Leave blank for all companies' }
+      - { field: delivery_type, label: Provider, type: select, options_source: ecommerce_delivery_method_type, default: fixed }
+      - { field: allow_cash_on_delivery, label: Cash on Delivery, type: checkbox }
+      - { field: fixed_price, label: Fixed Price, type: number, default: 0, min: 0, step: 0.01 }
+      - { field: margin, label: Margin, type: number, default: 0, min: -1, step: 0.01 }
+      - { field: fixed_margin, label: Additional Margin, type: number, default: 0, min: 0, step: 0.01 }
+      - { field: free_over, label: Free Above Threshold, type: checkbox }
+      - { field: free_over_amount, label: Free Above Amount, type: number, default: 1000, min: 0, step: 0.01 }
+      - { field: tracking_url, label: Tracking URL, type: text }
+      - { field: carrier_description, label: Description, type: textarea }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_ecommerce_delivery_method
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Delivery Method
+    action: ecommerce.delivery_methods.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_delivery_methods_catalog, ecommerce_delivery_methods]
+    mutation:
+      operation: update
+      table: ecommerce_delivery_methods
+      fields: [name, sequence, company_name, delivery_type, allow_cash_on_delivery, fixed_price, margin, fixed_margin, free_over, free_over_amount, tracking_url, carrier_description, active]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: ECOMMERCE_DELIVERY_METHOD_NAME_REQUIRED, message: Delivery method name is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:delivery_type, 'fixed') IN ('fixed', 'base_on_rule')", status: 422, code: ECOMMERCE_DELIVERY_METHOD_TYPE_INVALID, message: Choose a supported delivery provider type. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:fixed_price, 0) >= 0 AND COALESCE(:fixed_margin, 0) >= 0 AND COALESCE(:free_over_amount, 0) >= 0 AND COALESCE(:margin, 0) >= -1", status: 422, code: ECOMMERCE_DELIVERY_METHOD_PRICE_INVALID, message: Delivery prices and margin must be valid non-negative values. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:company_name AS VARCHAR)), '') IS NULL OR :company_name = :current_company_name", status: 403, code: ECOMMERCE_COMPANY_SCOPE_REQUIRED, message: Delivery methods can only be configured for the current company or all companies. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_delivery_methods WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND COALESCE(NULLIF(company_name, ''), '') = COALESCE(NULLIF(:company_name, ''), '') AND id <> :id)", status: 409, code: ECOMMERCE_DELIVERY_METHOD_EXISTS, message: A delivery method with this name already exists for this company. }
+      result: { query: "SELECT * FROM ecommerce_delivery_methods WHERE id = :id" }
+    fields:
+      - { field: name, label: Delivery Method, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number }
+      - { field: company_name, label: Company, type: text }
+      - { field: delivery_type, label: Provider, type: select, options_source: ecommerce_delivery_method_type }
+      - { field: allow_cash_on_delivery, label: Cash on Delivery, type: checkbox }
+      - { field: fixed_price, label: Fixed Price, type: number, min: 0, step: 0.01 }
+      - { field: margin, label: Margin, type: number, min: -1, step: 0.01 }
+      - { field: fixed_margin, label: Additional Margin, type: number, min: 0, step: 0.01 }
+      - { field: free_over, label: Free Above Threshold, type: checkbox }
+      - { field: free_over_amount, label: Free Above Amount, type: number, min: 0, step: 0.01 }
+      - { field: tracking_url, label: Tracking URL, type: text }
+      - { field: carrier_description, label: Description, type: textarea }
+      - { field: active, label: Active, type: checkbox }
+  - id: archive_ecommerce_delivery_method
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.delivery_methods.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_delivery_methods_catalog, ecommerce_delivery_methods]
+    params: { values: { active: false } }
+    mutation: { operation: update, table: ecommerce_delivery_methods, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM ecommerce_delivery_methods WHERE id = :id" } }
+  - id: restore_ecommerce_delivery_method
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.delivery_methods.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_delivery_methods_catalog, ecommerce_delivery_methods]
+    params: { values: { active: true } }
+    mutation: { operation: update, table: ecommerce_delivery_methods, fields: [active], concurrency: { required: true }, result: { query: "SELECT * FROM ecommerce_delivery_methods WHERE id = :id" } }
+  - id: delete_ecommerce_delivery_method
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.delivery_methods.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [ecommerce_delivery_methods_catalog, ecommerce_delivery_methods]
+    mutation: { operation: delete, table: ecommerce_delivery_methods, concurrency: { required: true }, result: { query: "SELECT * FROM ecommerce_delivery_methods WHERE id = :id" } }

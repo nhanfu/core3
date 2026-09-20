@@ -1,0 +1,33 @@
+version: 0.0.44
+kind: schema
+description: eCommerce delivery carrier catalog and checkout selection
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_delivery_methods (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        company_name VARCHAR,
+        delivery_type VARCHAR NOT NULL DEFAULT 'fixed',
+        allow_cash_on_delivery BOOLEAN NOT NULL DEFAULT FALSE,
+        fixed_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+        margin DECIMAL(8,4) NOT NULL DEFAULT 0,
+        fixed_margin DECIMAL(12,2) NOT NULL DEFAULT 0,
+        free_over BOOLEAN NOT NULL DEFAULT FALSE,
+        free_over_amount DECIMAL(12,2) NOT NULL DEFAULT 1000,
+        tracking_url VARCHAR NOT NULL DEFAULT '',
+        carrier_description VARCHAR NOT NULL DEFAULT '',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_delivery_methods_scope_idx ON ecommerce_delivery_methods(company_name, active, sequence, name, id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_delivery_methods_scope_idx;
+      DROP TABLE IF EXISTS ecommerce_delivery_methods;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

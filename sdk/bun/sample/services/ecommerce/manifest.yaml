@@ -77,3 +77,7 @@ menu:
           label: Payment Methods
           icon: bank
           permission: ecommerce.read
+        - path: /ecommerce/delivery-methods
+          label: Delivery Methods
+          icon: truck
+          permission: ecommerce.read

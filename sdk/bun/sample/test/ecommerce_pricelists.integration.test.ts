@@ -20,7 +20,7 @@ describe('eCommerce Pricelists parity', () => {
     expect(detail.page).toMatchObject({ id: 'ecommerce-pricelist-detail', route: '/ecommerce/pricelists/detail' });
     expect(discovered.pageDatasources.get('ecommerce-pricelists')).toEqual(expect.arrayContaining(['ecommerce_pricelists', 'ecommerce_pricelist_active']));
     expect(discoverPageRoutes(discovered)).toEqual(expect.arrayContaining([expect.objectContaining({ path: '/ecommerce/pricelists', page: 'ecommerce-pricelists', module: 'ecommerce' })]));
-    expect(manifest.menu.groups[1].items.map((item: any) => item.label)).toEqual(['Products', 'Pricelists', 'Categories', 'Product Ribbons']);
+    expect(manifest.menu.groups[1].items.map((item: any) => item.label)).toEqual(['Products', 'Pricelists', 'Categories', 'Attributes', 'Combo Choices', 'Product Tags', 'Product Ribbons']);
     expect(page.components[0].views.map((view: any) => view.label)).toEqual(['List', 'Kanban']);
     expect(page.components[0].views[1].mobile).toBe(true);
     expect(page.components[0].columns.map((column: any) => column.label)).toEqual(['Sequence', 'Name', 'Country Groups', 'Currency', 'Company']);

@@ -1,5 +1,38 @@
 # ecommerce QA ledger
 
+## Delivery Methods (`ECOM-CHECKOUT-DELIVERY-METHODS-001`, 2026-09-20)
+
+- Odoo menu/action/source comparison: `menu_ecommerce_delivery` /
+  `delivery.action_delivery_carrier_form`, model `delivery.carrier`, ordered
+  carrier list/form fields, company scope, active state, delivery type,
+  pricing, tracking, description, and Cash on Delivery capability were
+  verified against the supplied `website_sale` and `delivery` source.
+- Core3 lifecycle: migrations 044/045 add durable global/company-scoped
+  delivery methods and deterministic Standard Delivery, Express Delivery, and
+  Local Pickup fixtures; page/API YAML is separated by `page.id`; the
+  Configuration menu, search/active/type filters, checkout option source,
+  permissioned CRUD, archive/restore/delete, validation, Cash on Delivery
+  compatibility, and stale row-version guards are implemented.
+- Focused verification: `bun test
+  test/ecommerce_delivery_methods.integration.test.ts
+  test/ecommerce_checkout.integration.test.ts
+  test/ecommerce_actor_matrix.integration.test.ts --timeout 20000` — **19
+  passed, 122 assertions, 0 failures**. The full Ecommerce integration set
+  (`test/ecommerce*.integration.test.ts`, 21 files) also passes with **71
+  tests, 485 assertions, 0 failures**.
+- Browser verification: authenticated Core3 desktop 1440x900 list/form/post-
+  create and mobile 390x844 list captures are in
+  `../evidence/ecommerce/2026-09-20/ecom-checkout-delivery-methods-001/`;
+  desktop created durable `Browser Same Day`, and Core3 page/request errors
+  were empty.
+- Odoo authentication succeeded as `codex@core3.local` against
+  `core3_codex_demo` on ports 8069 and 8073 at both viewports. Authenticated
+  `/shop` returned the exact 404 on both, so paired Delivery Methods comparison
+  is blocked.
+- QA disposition: **bounded implementation verified, not signed off**. Full
+  Ecommerce sign-off remains open for paired Odoo, broader actor/company
+  browser coverage, and external carrier-rate/shipment integration.
+
 ## Payment Methods (`ECOM-CHECKOUT-PAYMENT-METHODS-001`, 2026-09-20)
 
 - Odoo menu/action/source comparison: `menu_ecommerce_payment_methods` /

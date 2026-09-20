@@ -1,0 +1,17 @@
+version: 0.0.45
+kind: data
+description: deterministic eCommerce delivery carrier fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_delivery_methods (id, row_version, name, sequence, company_name, delivery_type, allow_cash_on_delivery, fixed_price, tracking_url, carrier_description) VALUES
+        ('ecommerce-delivery-standard', 1, 'Standard Delivery', 10, NULL, 'fixed', TRUE, 5.00, 'https://tracking.example/standard/<shipmenttrackingnumber>', 'Reliable standard delivery for the full catalog.'),
+        ('ecommerce-delivery-express', 1, 'Express Delivery', 20, NULL, 'fixed', TRUE, 18.00, 'https://tracking.example/express/<shipmenttrackingnumber>', 'Priority delivery for urgent orders.'),
+        ('ecommerce-delivery-pickup', 1, 'Local Pickup', 30, 'My Company', 'fixed', FALSE, 0.00, '', 'Collect from the My Company showroom.')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_delivery_methods WHERE id IN ('ecommerce-delivery-standard', 'ecommerce-delivery-express', 'ecommerce-delivery-pickup');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

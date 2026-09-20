@@ -1,6 +1,6 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded checkout payment-methods slice; module sign-off remains open)
+Status: qa-in-progress (bounded checkout delivery-methods slice; module sign-off remains open)
 
 ## Bounded feature — Product Attributes (`ECOM-CATALOG-PRODUCT-ATTRIBUTES-001`)
 
@@ -194,6 +194,33 @@ The settings section of the same source file also registers
 maps that action to the Ecommerce-owned Payment Methods configuration route and
 uses its active primary rows as the checkout payment options; provider gateway
 execution and token/transaction menus remain separate follow-up boundaries.
+
+The same Website menu registers `menu_ecommerce_delivery` →
+`delivery.action_delivery_carrier_form`, model `delivery.carrier`, with the
+carrier list/form surface in `delivery/views/delivery_carrier_views.xml`.
+Core3 maps this action to `/ecommerce/delivery-methods` through the separate
+`services/ecommerce/pages/delivery-methods.yaml` and
+`services/ecommerce/api/delivery-methods.yaml` contracts. Migrations 044/045
+persist global and company-scoped carriers, active/archive state, delivery
+type, pricing, Cash on Delivery capability, tracking, and description. The
+checkout delivery option datasource and authenticated/guest guards now read
+active carriers in the current company scope, including the Cash on Delivery
+compatibility rule. External carrier-rate/shipment execution and destination
+rule tables remain explicitly outside this bounded catalog slice.
+
+## Bounded feature — Delivery Methods (`ECOM-CHECKOUT-DELIVERY-METHODS-001`)
+
+The delivery carrier menu/action/model/list-form comparison above is captured
+in `evidence/ecommerce/2026-09-20/ecom-checkout-delivery-methods-001/`.
+Focused CRUD, permission, company-scope, validation, optimistic concurrency,
+migration-rerun, checkout compatibility, and DuckDB restart tests pass (19
+tests, 122 assertions); the full Ecommerce integration set passes (71 tests,
+485 assertions across 21 files). The
+authenticated Core3 desktop create/list and mobile list evidence shows the
+durable `Browser Same Day` carrier with deterministic Standard Delivery,
+Express Delivery, and Local Pickup fixtures. Authenticated Odoo desktop and
+mobile captures on ports 8069 and 8073 show the exact `/shop` 404 blocker, so
+the paired comparison and full Ecommerce sign-off remain open.
 
 ## Bounded order workflow — reorder
 

@@ -1,0 +1,28 @@
+page: { id: ecommerce-delivery-methods, route: /ecommerce/delivery-methods, breadcrumb: [eCommerce, Configuration, Delivery Methods], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_delivery_methods_catalog
+    responsive_card: true
+    create_action: create_ecommerce_delivery_method
+    create_label: New
+    search: { label: Search delivery methods, placeholder: 'Search delivery method or provider...' }
+    filters:
+      - { field: active, label: Status, options_source: ecommerce_delivery_method_active }
+      - { field: delivery_type, label: Provider, options_source: ecommerce_delivery_method_type }
+    columns:
+      - { field: name, label: Delivery Method, type: PrimaryEntityCell }
+      - { field: delivery_type, label: Provider }
+      - { field: company_name, label: Company }
+      - { field: fixed_price, label: Fixed Price, type: Money }
+      - { field: allow_cash_on_delivery, label: Cash on Delivery }
+      - { field: active, label: Active, type: StatusChip }
+    row_actions: menu
+    actions:
+      - { id: edit_ecommerce_delivery_method, label: Edit, permission: ecommerce.write }
+      - { id: archive_ecommerce_delivery_method, label: Archive, permission: ecommerce.write, show_if: "row.active === true" }
+      - { id: restore_ecommerce_delivery_method, label: Restore, permission: ecommerce.write, show_if: "row.active === false" }
+      - { id: delete_ecommerce_delivery_method, label: Delete, permission: ecommerce.write }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No delivery methods found, description: Configure a delivery method for the eCommerce checkout. }
