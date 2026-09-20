@@ -143,3 +143,22 @@ visual comparison, correction, or parity claim is recorded; screenshots remain
 outside Git. Re-run this audit when a browser-capable Core3 frontend can bind,
 then compare labels, graph/pivot toolbar ordering, spacing, and horizontal
 overflow at both requested viewports.
+
+## Quotation email composer bounded slice (2026-09-20)
+
+The next uncovered order-form workflow is Odoo `sale.action_quotation_send` /
+`sale.order.action_quotation_send`. Odoo opens a mail composition wizard for
+draft or sent quotations with a recipient, subject, message body, and the
+quotation report attachment; sending from a draft also moves it to the sent
+quotation state. Core3 now maps the existing Sales order `Send` header action
+to a separate YAML `mail_composer` form/API mutation. It persists
+`sale_order_quotation_mails`, records the actor in the order timeline, carries
+the deterministic customer-email fixtures and PDF attachment name, and
+retains branch, state/row-version, recipient, and content guards.
+
+Verification: `bun test test/sales_quotation_email.integration.test.ts` passes
+(3 tests, 19 assertions), including migration replay, atomic invalid/scope
+boundaries, draft-to-sent transition, and file-backed reopen persistence.
+Authenticated desktop/mobile browser interaction and paired Odoo captures
+remain open for the next browser-capable QA run; no visual parity claim is
+made for this backend/form contract slice. Image artifacts remain outside Git.

@@ -37,6 +37,7 @@ databases and generated IDs.
 | ORDER-FUNC-007 | Migrations/seeds | Reapply schema/demo fixtures idempotently without duplicate orders, lines, templates or teams | planned restart/migration gate |
 | ORDER-FUNC-008 | Attachments/import/export/print | Exercise exposed order attachments, import/export and print actions, including failure recovery | planned browser interaction gate |
 | ORDER-FUNC-009 | Orders to Invoice bulk action | Select eligible approved orders, create draft invoices atomically, refresh queue state, reject empty/duplicate/mixed-scope/already-invoiced selections, and preserve rows on failure | pass: focused suite |
+| ORDER-FUNC-010 | Quotation email composer | Compose and send a quotation email with recipient, subject, body, attachment, durable mail history, draft-to-sent transition, and stale/scope/content guards | pass: focused suite |
 
 ## Workflow and integration cases
 
@@ -47,6 +48,7 @@ databases and generated IDs.
 | ORDER-WF-003 | Template to order | Template and lines can seed an order without bypassing Order-owned mutation validation | planned browser integration gate |
 | ORDER-WF-004 | CRM/customer boundary | Customer references resolve through the owning Base/CRM service and never write foreign tables directly | planned integration gate |
 | ORDER-WF-005 | Durable/external boundary | Mail, payment, delivery callbacks and cross-module workflows use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| ORDER-WF-006 | Quotation email send | Odoo `action_quotation_send` inputs persist atomically, record the actor/timeline event, and survive file-backed reopen and migration replay | pass: focused suite; browser delivery gate planned |
 
 ## Permission and security cases
 

@@ -12,6 +12,10 @@ datasources:
         CAST(o.validity_date AS VARCHAR) AS validity_date, CAST(o.commitment_date AS VARCHAR) AS commitment_date,
         o.pricelist_name, o.payment_term_name, COALESCE(o.salesperson_name, o.created_by) AS salesperson_name,
         COALESCE(c.company_name, 'My Company') AS company_name, o.require_signature, o.require_payment,
+        COALESCE(c.name, o.customer_name) AS recipient_name, COALESCE(c.email, '') AS recipient_email,
+        'Quotation ' || o.order_number AS subject,
+        '<p>Hello ' || COALESCE(c.name, o.customer_name) || ',</p><p>Please find quotation ' || o.order_number || ' attached.</p>' AS body_html,
+        'Quotation - ' || o.order_number || '.pdf' AS attachment_name,
         o.notes, COALESCE(o.total_amount, 0) AS total_amount, printf('$%,.2f', COALESCE(o.total_amount, 0)) AS total_amount_display,
         CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
           WHEN 'Draft' THEN 'Quotation' WHEN 'Pending Approval' THEN 'Sent'
@@ -72,6 +76,11 @@ datasources:
     single: false
     permission: orders.read
     query: "SELECT user_id, CAST(created_at AS VARCHAR) AS followed_at FROM order_followers WHERE order_id = :id ORDER BY created_at"
+  - id: sale_order_quotation_mails
+    single: false
+    permission: orders.read
+    error_states: { transport_error: { status: 503, code: SALE_ORDER_QUOTATION_MAILS_UNAVAILABLE, message: Quotation email history is temporarily unavailable. } }
+    query: "SELECT id, order_id, row_version, recipient_name, recipient_email, subject, body_html, attachment_name, state, sent_by, CAST(sent_at AS VARCHAR) AS sent_at FROM sale_order_quotation_mails WHERE order_id = :id ORDER BY sent_at DESC, id"
 
 actions:
   - id: edit_sale_order
@@ -135,14 +144,48 @@ actions:
       - { field: require_payment, label: Online Payment, type: checkbox }
       - { field: notes, label: Terms and Conditions, type: textarea }
   - id: send_sale_quotation
-    type: server
+    type: server_form
+    modal_style: mail_composer
     permission: orders.write
-    action: orders.submit_for_approval
-    handler: order_transition
-    workflow: orders
-    operation: submit_for_approval
-    confirm: 'Send quotation {{row.order_number}}?'
-    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline]
+    title: Compose quotation email
+    submit_label: Send
+    cancel_label: Discard
+    success_message: Quotation email sent.
+    action: orders.quotation.send
+    handler: yaml_mutation
+    operation: create
+    params: { order_id: '{state.id}' }
+    prefill: source
+    prefill_source: sale_order_detail
+    refresh: [sale_order_detail, sale_order_lines, sale_order_timeline, sale_order_quotation_mails]
+    mutation:
+      operation: insert
+      table: sale_order_quotation_mails
+      generated: [id]
+      fields: [order_id, recipient_name, recipient_email, subject, body_html, attachment_name, state]
+      required: [order_id, recipient_name, recipient_email, subject, body_html, attachment_name]
+      defaults: { state: Sent }
+      before_steps:
+        - { query: "SELECT 'sale-quotation-mail-' || CAST(:order_id AS VARCHAR) || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS id FROM sale_order_quotation_mails WHERE order_id = :order_id", assign: true }
+      guards:
+        - { query: "SELECT id FROM orders WHERE id = :order_id", status: 404, code: SALE_ORDER_NOT_FOUND, message: Sales order not found. }
+        - { query: "SELECT id FROM orders WHERE id = :order_id AND (:view_scope = 'all' OR branch_id = :current_branch_id)", status: 403, code: SALE_ORDER_SCOPE_FORBIDDEN, message: Sales order is outside the current view scope. }
+        - { query: "SELECT id FROM orders WHERE id = :order_id AND row_version = :expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) IN ('Draft', 'Pending Approval')", status: 409, code: SALE_ORDER_SEND_STALE_OR_INVALID, message: Only a current quotation can be sent. Reload the order and try again. }
+        - { query: "SELECT 1 AS ok WHERE POSITION('@' IN TRIM(CAST(:recipient_email AS VARCHAR))) > 1 AND POSITION('.' IN split_part(TRIM(CAST(:recipient_email AS VARCHAR)), '@', 2)) > 1", status: 422, code: SALE_ORDER_RECIPIENT_INVALID, message: Enter a valid recipient email address. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:subject AS VARCHAR))) BETWEEN 1 AND 200 AND LENGTH(TRIM(CAST(:body_html AS VARCHAR))) > 0", status: 422, code: SALE_ORDER_EMAIL_CONTENT_INVALID, message: A subject and message are required. }
+      steps:
+        - { query: "UPDATE sale_order_quotation_mails SET sent_by = :current_user_name WHERE id = :id" }
+        - { query: "INSERT INTO order_workflow_states(order_id, status, updated_at) SELECT :order_id, CASE WHEN COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft' THEN 'Pending Approval' ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) END, CURRENT_TIMESTAMP FROM orders WHERE id = :order_id ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at" }
+        - { query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.quotation.send', 'orders', :order_id, 'Sent quotation email to ' || :recipient_email)" }
+        - { query: "UPDATE orders SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :order_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: SALE_ORDER_SEND_STALE_OR_INVALID, message: Sales order changed while sending. Reload and try again. }
+      result: { query: "SELECT * FROM sale_order_quotation_mails WHERE id = :id" }
+    fields:
+      - { field: order_id, label: Sales order, type: hidden, required: true }
+      - { field: recipient_name, label: To, type: mail_recipient, required: true }
+      - { field: recipient_email, label: Recipient email, type: hidden, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body_html, label: Message, type: mail_body, required: true }
+      - { field: attachment_name, label: Attachments, type: mail_attachment, required: true }
   - id: confirm_sale_order
     type: server
     permission: orders.approve

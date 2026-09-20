@@ -1,0 +1,45 @@
+version: 0.0.20
+kind: schema
+description: Persist quotation email composer sends and deterministic Sales fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sale_order_quotation_mails (
+        id VARCHAR PRIMARY KEY,
+        order_id VARCHAR NOT NULL REFERENCES orders(id),
+        row_version BIGINT NOT NULL DEFAULT 1,
+        recipient_name VARCHAR NOT NULL,
+        recipient_email VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body_html VARCHAR NOT NULL,
+        attachment_name VARCHAR NOT NULL,
+        state VARCHAR NOT NULL DEFAULT 'Sent',
+        sent_by VARCHAR,
+        sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_sale_order_quotation_mails_order ON sale_order_quotation_mails(order_id, sent_at DESC);
+      UPDATE customers SET email = CASE id
+        WHEN 'customer-minh-long' THEN 'sales@minhlong.example'
+        WHEN 'customer-dai-phat' THEN 'sales@daiphat.example'
+        ELSE email END
+      WHERE id IN ('customer-minh-long', 'customer-dai-phat') AND COALESCE(email, '') = '';
+      INSERT INTO sale_order_quotation_mails(
+        id, order_id, row_version, recipient_name, recipient_email, subject, body_html,
+        attachment_name, state, sent_by, sent_at
+      ) VALUES (
+        'sale-quotation-mail-demo-02-01', 'order-demo-02', 1, 'Công ty CP Đại Phát',
+        'sales@daiphat.example', 'Quotation DH-2026-0102',
+        '<p>Hello Công ty CP Đại Phát,</p><p>Please find quotation DH-2026-0102 attached.</p>',
+        'Quotation - DH-2026-0102.pdf', 'Sent', 'Admin User', TIMESTAMP '2026-08-11 09:30:00'
+      ) ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM sale_order_quotation_mails WHERE id = 'sale-quotation-mail-demo-02-01';
+      DROP INDEX IF EXISTS idx_sale_order_quotation_mails_order;
+      DROP TABLE IF EXISTS sale_order_quotation_mails;
+      UPDATE customers SET email = NULL WHERE id = 'customer-minh-long' AND email = 'sales@minhlong.example';
+      UPDATE customers SET email = NULL WHERE id = 'customer-dai-phat' AND email = 'sales@daiphat.example';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

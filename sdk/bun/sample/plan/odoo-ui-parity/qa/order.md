@@ -85,6 +85,24 @@ discovery of datasource contracts outside Order ownership.
 - Desktop/mobile visual parity: pending
 - Tester decision: not signed off; repository-wide discovery and browser evidence remain open
 
+## 2026-09-20 quotation email composer slice
+
+- Source contract: Odoo `sale.action_quotation_send` /
+  `sale.order.action_quotation_send` opens a composer for draft/sent orders;
+  the form carries the recipient, subject, message, and quotation attachment.
+- Core3 implementation: the dedicated Sales order API fragment now exposes a
+  `mail_composer` `send_sale_quotation` form, durable
+  `sale_order_quotation_mails` history, deterministic customer email and
+  attachment fixtures, actor timeline logging, and guarded draft-to-sent
+  transition. Page/API ownership remains separate at `sale-order-detail`.
+- Exact focused evidence: `bun test
+  test/sales_quotation_email.integration.test.ts --timeout 30000` — **3
+  passed, 19 assertions, 0 failures**. This covers migration replay, send,
+  stale/invalid/scope/missing boundaries, and reopening a file-backed DuckDB.
+- Browser/Odoo visual delivery evidence was not claimed for this bounded
+  contract slice; authenticated desktop/mobile composer interaction remains a
+  planned gate. No screenshots were added to Git.
+
 ## 2026-09-13 coordinator review: candidate `ecc15927`
 
 - Integrated only the bounded Order restart-persistence/idempotent-migration

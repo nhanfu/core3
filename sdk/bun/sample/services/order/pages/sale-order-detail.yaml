@@ -18,7 +18,7 @@ components:
       workflowStatus: Status
     header_actions:
       - { id: edit_sale_order, label: Edit, variant: secondary, show_if: "state.sale_order_detail.status !== 'Sales Order' && state.sale_order_detail.status !== 'Cancelled'" }
-      - { id: send_sale_quotation, label: Send, variant: primary, show_if: "state.sale_order_detail.status === 'Quotation'" }
+      - { id: send_sale_quotation, label: Send, variant: primary, show_if: "state.sale_order_detail.status === 'Quotation' || state.sale_order_detail.status === 'Sent'" }
       - { id: confirm_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Sent'" }
       - { id: confirm_draft_sale_order, label: Confirm, variant: primary, show_if: "state.sale_order_detail.status === 'Quotation'" }
       - { id: create_sale_invoice, label: Create Invoice, variant: primary, show_if: "state.sale_order_detail.status === 'Sales Order' && state.sale_order_detail.invoice_status !== 'Invoiced'" }
