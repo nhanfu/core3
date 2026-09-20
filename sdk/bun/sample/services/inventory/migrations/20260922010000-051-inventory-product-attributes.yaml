@@ -1,0 +1,63 @@
+version: 0.0.51
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_product_attributes (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 20,
+        name VARCHAR NOT NULL,
+        display_type VARCHAR NOT NULL DEFAULT 'radio',
+        create_variant VARCHAR NOT NULL DEFAULT 'always',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        company_name VARCHAR NOT NULL DEFAULT 'Shared',
+        related_product_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(name)
+      );
+      CREATE TABLE IF NOT EXISTS inventory_product_attribute_values (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        attribute_id VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        name VARCHAR NOT NULL,
+        is_custom BOOLEAN NOT NULL DEFAULT FALSE,
+        html_color VARCHAR NOT NULL DEFAULT '',
+        default_extra_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        image_ref VARCHAR NOT NULL DEFAULT '',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        used_on_products BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(attribute_id, name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_product_attributes_order
+        ON inventory_product_attributes(sequence, name, id);
+      CREATE INDEX IF NOT EXISTS idx_inventory_product_attribute_values_attribute
+        ON inventory_product_attribute_values(attribute_id, sequence, name, id);
+      INSERT INTO inventory_product_attributes (id, sequence, name, display_type, create_variant, active, company_name, related_product_count)
+      VALUES
+        ('inventory-attribute-color', 10, 'Color', 'color', 'always', TRUE, 'Shared', 3),
+        ('inventory-attribute-size', 20, 'Size', 'radio', 'dynamic', TRUE, 'Shared', 4),
+        ('inventory-attribute-material', 30, 'Material', 'pills', 'no_variant', TRUE, 'Shared', 0),
+        ('inventory-attribute-archived', 90, 'Legacy Finish', 'select', 'always', FALSE, 'Shared', 0)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_product_attribute_values (id, attribute_id, sequence, name, is_custom, html_color, default_extra_price, used_on_products)
+      VALUES
+        ('inventory-attribute-color-red', 'inventory-attribute-color', 10, 'Red', FALSE, '#ef4444', 0, TRUE),
+        ('inventory-attribute-color-blue', 'inventory-attribute-color', 20, 'Blue', FALSE, '#2563eb', 1.50, TRUE),
+        ('inventory-attribute-size-small', 'inventory-attribute-size', 10, 'Small', FALSE, '', 0, TRUE),
+        ('inventory-attribute-size-large', 'inventory-attribute-size', 20, 'Large', FALSE, '', 2.00, TRUE),
+        ('inventory-attribute-material-oak', 'inventory-attribute-material', 10, 'Oak', FALSE, '', 5.00, FALSE),
+        ('inventory-attribute-material-custom', 'inventory-attribute-material', 20, 'Custom', TRUE, '', 0, FALSE)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_product_attribute_values WHERE id IN ('inventory-attribute-color-red', 'inventory-attribute-color-blue', 'inventory-attribute-size-small', 'inventory-attribute-size-large', 'inventory-attribute-material-oak', 'inventory-attribute-material-custom');
+      DELETE FROM inventory_product_attributes WHERE id IN ('inventory-attribute-color', 'inventory-attribute-size', 'inventory-attribute-material', 'inventory-attribute-archived');
+      DROP TABLE IF EXISTS inventory_product_attribute_values;
+      DROP TABLE IF EXISTS inventory_product_attributes;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

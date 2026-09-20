@@ -1740,3 +1740,37 @@ without an authenticated session; no paired Odoo visual or CRUD result is
 claimed. The repository-wide audit is blocked by an existing Employees page
 schema error; the Inventory direct contract audit passes. Full Inventory
 sign-off remains open.
+## Configuration > Products > Attributes — `INV-PRODUCT-ATTRIBUTES-001` (2026-09-21)
+
+This bounded Wave 14 slice covers Odoo's Configuration > Products > Attributes
+menu. `addons/stock/views/stock_menu_views.xml:22-27` binds
+`menu_attribute_action` to `product.attribute_action`, gated by
+`product.group_product_variant`. The action and list/form contracts are in
+`addons/product/views/product_attribute_views.xml:3-102`: the list exposes
+sequence, attribute name, display type, and variant creation policy; the form
+exposes archive state, the Products stat action, the same policies, and an
+inline Attribute Values grid. The source model fields and guards are in
+`addons/product/models/product_attribute.py:19-92`; value fields and used-on-
+products/delete protections are in
+`addons/product/models/product_attribute_value.py:19-137`.
+
+Core3 adds durable `inventory_product_attributes` and
+`inventory_product_attribute_values` tables in migration
+`20260922010000-051-inventory-product-attributes.yaml`, with deterministic
+Color, Size, Material, and archived Legacy Finish fixtures. Separate
+`pages/product-attributes.yaml` and `pages/product-attribute-detail.yaml`
+contracts pair with `api/product-attributes.yaml` and
+`api/product-attribute-detail.yaml` by `page.id`. The lifecycle includes
+manager create/edit/archive/restore/delete, inline value CRUD, duplicate and
+multi-checkbox/no-variant guards, used-on-products protections, authenticated
+read/manage permissions, optimistic row versions, migration replay, and
+file-backed restart persistence. The Products stat navigates to the existing
+Product Variants list with the attribute context.
+
+Focused verification passes 4 tests / 43 assertions in
+`inventory_product_attributes.integration.test.ts`. Authenticated Core3
+desktop/mobile list/detail evidence is under
+`evidence/inventory/2026-09-21/INV-PRODUCT-ATTRIBUTES-001/`. Odoo source/menu
+comparison is recorded; the live Odoo route is separately probed and any
+login or group blocker is recorded without claiming a paired mutation.
+Full Inventory sign-off remains open.

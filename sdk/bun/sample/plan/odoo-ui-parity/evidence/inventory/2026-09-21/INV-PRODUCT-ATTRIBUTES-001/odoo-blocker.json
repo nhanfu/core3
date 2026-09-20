@@ -1,0 +1,7 @@
+{
+  "probe_url": "http://127.0.0.1:8069/web",
+  "headers": "HTTP/1.1 303 SEE OTHER\r\nServer: Werkzeug/3.0.1 Python/3.12.3\r\nDate: Sun, 20 Sep 2026 22:49:15 GMT\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: 245\r\nLocation: /web/login?redirect=%2Fweb%3F\r\nSet-Cookie: session_id=HBwyb5-6CwExNFwCTA-chQSU3xfLK_hSAPnQoI7SNcP-Mj0-kGQnMGoETkhtecTJnXD9w1f5IZbaRFN33tCh; Expires=Mon, 20 Sep 2027 22:49:15 GMT; Max-Age=604800; HttpOnly; Path=/\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n",
+  "body_prefix": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/web/login?redirect=%2Fweb%3F\">/web/login?redirect=%2Fweb%3F</a>. If not, click the link.\n",
+  "authenticated": false,
+  "blocker": "Bounded HTTP probe reached the Odoo web route without an authenticated session; no Product Attributes menu, form, or mutation is claimed."
+}

@@ -1,0 +1,28 @@
+title: Product Attributes
+page: { id: product-attributes, route: /attributes, breadcrumb: [Supply Chain, Inventory, Configuration, Products, Attributes], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_product_attributes
+    create_action: create_inventory_product_attribute
+    create_label: New
+    search: { label: Search attributes, placeholder: 'Search attribute or display type...' }
+    filters:
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }, { id: all, label: All }] }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - { id: card, label: Cards, icon: grid, mobile: true, card: { title: name, subtitle: display_type, fields: [{ field: value_count, label: Values }, { field: related_product_count, label: Products }] } }
+    columns:
+      - { field: sequence, label: Sequence, type: Number, sortable: true, optional: hide }
+      - { field: name, label: Attribute, type: PrimaryEntityCell, sortable: true }
+      - { field: display_type, label: Display Type }
+      - { field: create_variant, label: Create Variants }
+      - { field: value_count, label: Values, align: right }
+      - { field: related_product_count, label: Products, align: right }
+      - { field: active, label: Active, type: BooleanToggle, optional: hide }
+    page_size: 50
+    row_key: id
+    row_open_action: view_inventory_product_attribute
+    row_double_click_action: view_inventory_product_attribute
+    form_view: { page: apps/services/inventory/pages/product-attribute-detail.yaml, side_panel: false }
+    empty_state: { title: No product attributes, description: Create an attribute to define product values and variants. }

@@ -1,0 +1,78 @@
+{
+  "feature": "INV-PRODUCT-ATTRIBUTES-001",
+  "authenticated_as": "admin@tms.local",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "captures": [
+    {
+      "label": "desktop",
+      "state": "list",
+      "url": "http://127.0.0.1:4332/inventory/attributes",
+      "title": "Product Attributes",
+      "bodyText": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nNew\nSupply Chain / Inventory / Configuration / Products / Attributes\n1-3 / 3\n‹\n›\nAttribute\n\tDisplay Type\n\tCreate Variants\n\tValues\n\tProducts\n\n\nColor\n\tcolor\talways\t2\t3\n\nSize\n\tradio\tdynamic\t2\t4\n\nMaterial\n\tpills\tno_variant\t2\t0",
+      "overflow": {
+        "documentWidth": 1440,
+        "viewportWidth": 1440
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "badResponses": []
+    },
+    {
+      "label": "desktop",
+      "state": "detail",
+      "url": "http://127.0.0.1:4332/inventory/attributes/detail?id=inventory-attribute-color",
+      "title": "Product Attribute",
+      "bodyText": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nConfiguration\nConfiguration\n›\nProducts\n›\nAttributes\n›\nProduct Attribute\nBack to Attributes\nEdit\nArchive\nColor\nACTIVE\n3\nProducts\nAttribute\nAttribute Name\nColor\nDisplay Type\ncolor\nCreate Variants\nalways\nCompany\nShared\nUsage\nValues\n2\nProducts\n3\nAdd Value\nSupply Chain / Inventory / Configuration / Products / Attributes / Product Attribute\n1-2 / 2\n‹\n›\nValue\n\tFree Text\n\tColor\n\tExtra Price\n\n\nRed\n\t\t#ef4444\t0\n\nBlue\n\t\t#2563eb\t1.5",
+      "overflow": {
+        "documentWidth": 1440,
+        "viewportWidth": 1440
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "badResponses": []
+    },
+    {
+      "label": "mobile",
+      "state": "list",
+      "url": "http://127.0.0.1:4332/inventory/attributes",
+      "title": "Product Attributes",
+      "bodyText": "AU\nNew\nAttributes\n1-3 / 3\n‹\n›\nColor\n\ncolor\n\nValues\n2\nProducts\n3\nSize\n\nradio\n\nValues\n2\nProducts\n4\nMaterial\n\npills\n\nValues\n2\nProducts\n0",
+      "overflow": {
+        "documentWidth": 390,
+        "viewportWidth": 390
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "badResponses": []
+    },
+    {
+      "label": "mobile",
+      "state": "detail",
+      "url": "http://127.0.0.1:4332/inventory/attributes/detail?id=inventory-attribute-color",
+      "title": "Product Attribute",
+      "bodyText": "AU\nBack to Attributes\nEdit\nArchive\nColor\nACTIVE\n3\nProducts\nAttribute\nAttribute Name\nColor\nDisplay Type\ncolor\nCreate Variants\nalways\nCompany\nShared\nUsage\nValues\n2\nProducts\n3\nAdd Value\nProduct Attribute\n1-2 / 2\n‹\n›\nValue\n\tFree Text\n\tColor\n\tExtra Price\n\n\nRed\n\t\t#ef4444\t0\n\nBlue\n\t\t#2563eb\t1.5",
+      "overflow": {
+        "documentWidth": 390,
+        "viewportWidth": 390
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "badResponses": []
+    }
+  ]
+}

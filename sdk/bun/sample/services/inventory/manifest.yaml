@@ -124,6 +124,10 @@ menu:
           label: Categories
           icon: folder
           permission: inventory.read
+        - path: /attributes
+          label: Attributes
+          icon: sliders
+          permission: inventory.read
         - path: /inventory-analysis
           label: Inventory Analysis
           icon: chart

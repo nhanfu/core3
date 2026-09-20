@@ -1,0 +1,28 @@
+{
+  "feature": "INV-PRODUCT-ATTRIBUTES-001",
+  "odoo": {
+    "menu_source": "addons/stock/views/stock_menu_views.xml:22-27",
+    "menu_id": "menu_attribute_action",
+    "action_source": "addons/product/views/product_attribute_views.xml:97-102",
+    "action_id": "attribute_action",
+    "model": "product.attribute",
+    "group": "product.group_product_variant",
+    "list_form_source": "addons/product/views/product_attribute_views.xml:3-95",
+    "value_model_source": "addons/product/models/product_attribute_value.py:19-137",
+    "source_behaviors": [
+      "list sequence, name, display_type, create_variant",
+      "form archive state, Products stat, display_type and create_variant",
+      "inline value_ids with sequence, name, is_custom, html_color, image, and default_extra_price",
+      "multi display type requires no_variant and used values are protected"
+    ]
+  },
+  "core3": {
+    "page_ids": ["product-attributes", "product-attribute-detail"],
+    "api_files": ["services/inventory/api/product-attributes.yaml", "services/inventory/api/product-attribute-detail.yaml"],
+    "page_files": ["services/inventory/pages/product-attributes.yaml", "services/inventory/pages/product-attribute-detail.yaml"],
+    "migration": "services/inventory/migrations/20260922010000-051-inventory-product-attributes.yaml",
+    "contract_join": "page.id",
+    "implemented": ["durable attributes and values", "manager CRUD/archive/restore/delete", "permissions", "company-safe shared fixtures", "row-version guards", "restart persistence"]
+  },
+  "comparison": "Source/menu comparison is complete. The paired live Odoo HTTP probe is recorded separately; no Odoo mutation or visual parity is claimed when the supplied session is unavailable."
+}

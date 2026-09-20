@@ -1123,3 +1123,34 @@ QA disposition: PASS for the bounded Core3 Overview card/queue lifecycle and
 guards; PARTIAL for exact Odoo fixture/menu-card parity because New,
 configuration, reporting links, and source-specific card counts remain open.
 Full Inventory sign-off remains open.
+## Inventory Product Attributes QA — `INV-PRODUCT-ATTRIBUTES-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_menu_views.xml:22-27`,
+  `addons/product/views/product_attribute_views.xml:3-102`, and
+  `addons/product/models/product_attribute.py:19-92` plus
+  `product_attribute_value.py:19-137`. The source action is
+  Configuration > Products > Attributes, with list/form and inline values,
+  gated by `product.group_product_variant`.
+- Core3 contract: PASS. Separate `pages/product-attributes.yaml` and
+  `pages/product-attribute-detail.yaml` pair with
+  `api/product-attributes.yaml` and `api/product-attribute-detail.yaml` by
+  `page.id`; migration 0.0.51 persists source-shaped attributes and values.
+- Focused test: `bun test test/inventory_product_attributes.integration.test.ts`
+  — PASS, 4 tests / 43 assertions. Coverage includes contract separation,
+  deterministic fixtures, manager CRUD, duplicate and source constraint
+  guards, global/shared company boundary, used-on-products protection, reader/manage permissions, migration
+  replay, row versions, and restart persistence.
+- Core3 browser evidence: authenticated desktop 1440x900 and mobile 390x844
+  list/detail captures, response checks, page-error checks, and overflow
+  checks are under `evidence/inventory/2026-09-21/INV-PRODUCT-ATTRIBUTES-001/`
+  (`core3-desktop-{list,detail}.png`, `core3-mobile-{list,detail}.png`, and
+  `core3-browser.json`).
+- Odoo comparison: source/menu comparison is PASS. The live Odoo probe is
+  recorded as authenticated only if the route renders; otherwise the exact
+  login or group blocker is recorded in paired evidence. No Odoo mutation is
+  claimed.
+
+QA disposition: PASS for the bounded Core3 Product Attributes lifecycle and
+guards; PARTIAL/BLOCKED for any unavailable live Odoo visual or mutation
+comparison. Full Inventory sign-off remains open.

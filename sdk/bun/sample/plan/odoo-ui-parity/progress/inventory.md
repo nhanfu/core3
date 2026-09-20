@@ -853,3 +853,24 @@ Inventory sign-off remains open.
   Odoo source/menu comparison is complete, but live Odoo returned HTTP 303 to
   `/web/login`; paired Odoo visual/CRUD evidence is blocked and not claimed.
   Full Inventory sign-off remains open.
+## `INV-PRODUCT-ATTRIBUTES-001` — Inventory Product Attributes (2026-09-21)
+
+- Selected the next uncovered source-backed Inventory configuration workflow
+  after Categories: Odoo `menu_attribute_action` → `product.attribute_action`
+  for the product attribute list/form and inline `product.attribute.value`
+  values. The source is gated by `product.group_product_variant` and exposes
+  display type, variant creation policy, Products stat, and value editing.
+- Added migration `20260922010000-051-inventory-product-attributes.yaml`,
+  deterministic active/archived attributes and values, and separate list/
+  detail page/API YAML contracts joined by `page.id`. Manager CRUD enforces
+  duplicate names, supported source choices, the multi-checkbox/no-variant
+  constraint, used-on-products archive/delete guards, value uniqueness and
+  price validation, and optimistic row versions.
+- Focused verification passes 4 tests / 43 assertions, including direct
+  contract validation, source-shaped fixtures, permissions, CRUD/guards,
+  migration replay, and file-backed restart persistence. Core3 desktop/mobile
+  evidence is under
+  `evidence/inventory/2026-09-21/INV-PRODUCT-ATTRIBUTES-001/`.
+- Odoo source/menu comparison is complete. The bounded live probe result and
+  any exact login/group blocker are recorded in paired evidence; no Odoo
+  mutation or full Inventory sign-off is claimed.

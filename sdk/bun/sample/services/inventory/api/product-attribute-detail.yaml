@@ -1,0 +1,168 @@
+page: { id: product-attribute-detail }
+datasources:
+  - id: inventory_product_attribute_detail
+    single: true
+    permission: inventory.read
+    error_states: { missing_record: { status: 404, code: INVENTORY_ATTRIBUTE_NOT_FOUND, message: Product attribute not found. }, transport_error: { status: 503, code: INVENTORY_ATTRIBUTE_DETAIL_UNAVAILABLE, message: Product attribute details are temporarily unavailable. } }
+    query: "SELECT a.id, a.row_version, a.sequence, a.name, a.display_type, a.create_variant, a.active, a.company_name, a.related_product_count, COUNT(v.id) AS value_count FROM inventory_product_attributes a LEFT JOIN inventory_product_attribute_values v ON v.attribute_id = a.id AND v.active = TRUE WHERE a.id = :id GROUP BY a.id, a.row_version, a.sequence, a.name, a.display_type, a.create_variant, a.active, a.company_name, a.related_product_count"
+  - id: inventory_product_attribute_values
+    single: false
+    permission: inventory.read
+    query: "SELECT v.id, v.row_version, v.attribute_id, v.sequence, v.name, v.is_custom, v.html_color, CAST(v.default_extra_price AS DOUBLE) AS default_extra_price, v.image_ref, v.active, v.used_on_products, a.display_type FROM inventory_product_attribute_values v JOIN inventory_product_attributes a ON a.id = v.attribute_id WHERE v.attribute_id = :id AND (COALESCE(:active, 'active') = 'all' OR (COALESCE(:active, 'active') = 'active' AND v.active = TRUE) OR (COALESCE(:active, 'active') = 'archived' AND v.active = FALSE)) ORDER BY v.sequence, v.name, v.id"
+actions:
+  - id: back_to_inventory_product_attributes
+    type: navigate
+    permission: inventory.read
+    navigate_to: /attributes
+  - id: view_inventory_product_attribute_products
+    type: navigate
+    permission: inventory.read
+    navigate_to: /product-variants
+    params: { q: '{state.inventory_product_attribute_detail.name}' }
+  - id: edit_inventory_product_attribute
+    type: server_form
+    permission: inventory.manage
+    title: Edit Product Attribute
+    action: inventory.product_attributes.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_product_attribute_detail
+    refresh: [inventory_product_attributes, inventory_product_attribute_detail]
+    mutation:
+      operation: update
+      table: inventory_product_attributes
+      fields: [sequence, name, display_type, create_variant]
+      required: [name, display_type, create_variant]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_attributes WHERE id = :id", status: 404, code: INVENTORY_ATTRIBUTE_NOT_FOUND, message: Product attribute not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_ATTRIBUTE_NAME_REQUIRED, message: An attribute name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:display_type AS VARCHAR) IN ('radio', 'pills', 'select', 'color', 'multi', 'image')", status: 422, code: INVENTORY_ATTRIBUTE_DISPLAY_INVALID, message: Choose a supported display type. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:create_variant AS VARCHAR) IN ('always', 'dynamic', 'no_variant')", status: 422, code: INVENTORY_ATTRIBUTE_VARIANT_INVALID, message: Choose a supported variant creation policy. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:display_type AS VARCHAR) <> 'multi' OR CAST(:create_variant AS VARCHAR) = 'no_variant'", status: 422, code: INVENTORY_ATTRIBUTE_MULTI_VARIANT_INVALID, message: Multi-checkbox attributes cannot create variants. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_attributes WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: INVENTORY_ATTRIBUTE_EXISTS, message: An attribute with this name already exists. }
+        - { query: "SELECT 1 AS ok FROM inventory_product_attributes WHERE id = :id AND (related_product_count = 0 OR create_variant = :create_variant)", status: 409, code: INVENTORY_ATTRIBUTE_VARIANT_LOCKED, message: Variant creation policy cannot change after products use the attribute. }
+      result: { query: "SELECT * FROM inventory_product_attributes WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Attribute Name, type: text, required: true }
+      - { field: display_type, label: Display Type, type: select, options: [{ value: radio, label: Radio }, { value: pills, label: Pills }, { value: select, label: Select }, { value: color, label: Color }, { value: multi, label: Multi Checkbox }, { value: image, label: Image }], required: true }
+      - { field: create_variant, label: Create Variants, type: select, options: [{ value: always, label: Always }, { value: dynamic, label: Dynamically }, { value: no_variant, label: Never }], required: true }
+  - id: archive_inventory_product_attribute
+    type: server
+    permission: inventory.manage
+    action: inventory.product_attributes.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [inventory_product_attributes, inventory_product_attribute_detail]
+    mutation:
+      operation: update
+      table: inventory_product_attributes
+      fields: [active]
+      defaults: { active: false }
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_attributes WHERE id = :id AND active = TRUE", status: 404, code: INVENTORY_ATTRIBUTE_NOT_FOUND, message: Active product attribute not found. }
+        - { query: "SELECT 1 AS ok FROM inventory_product_attributes WHERE id = :id AND related_product_count = 0", status: 409, code: INVENTORY_ATTRIBUTE_IN_USE, message: An attribute used on products cannot be archived. }
+      result: { query: "SELECT * FROM inventory_product_attributes WHERE id = :id" }
+  - id: restore_inventory_product_attribute
+    type: server
+    permission: inventory.manage
+    action: inventory.product_attributes.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [inventory_product_attributes, inventory_product_attribute_detail]
+    mutation:
+      operation: update
+      table: inventory_product_attributes
+      fields: [active]
+      defaults: { active: true }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_product_attributes WHERE id = :id AND active = FALSE", status: 404, code: INVENTORY_ATTRIBUTE_NOT_FOUND, message: Archived product attribute not found. }]
+      result: { query: "SELECT * FROM inventory_product_attributes WHERE id = :id" }
+  - id: delete_inventory_product_attribute
+    type: server
+    permission: inventory.manage
+    action: inventory.product_attributes.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_product_attributes]
+    mutation:
+      operation: delete
+      table: inventory_product_attributes
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_attributes WHERE id = :id", status: 404, code: INVENTORY_ATTRIBUTE_NOT_FOUND, message: Product attribute not found. }
+        - { query: "SELECT 1 AS ok FROM inventory_product_attributes WHERE id = :id AND related_product_count = 0", status: 409, code: INVENTORY_ATTRIBUTE_IN_USE, message: An attribute used on products cannot be deleted. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_attribute_values WHERE attribute_id = :id)", status: 409, code: INVENTORY_ATTRIBUTE_HAS_VALUES, message: Remove attribute values before deleting the attribute. }
+  - id: create_inventory_product_attribute_value
+    type: server_form
+    permission: inventory.manage
+    title: New Attribute Value
+    action: inventory.product_attribute_values.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_product_attribute_values, inventory_product_attribute_detail]
+    mutation:
+      operation: insert
+      table: inventory_product_attribute_values
+      generated: [id]
+      fields: [attribute_id, sequence, name, is_custom, html_color, default_extra_price, image_ref, active, used_on_products, row_version]
+      required: [attribute_id, name]
+      defaults: { sequence: 100, is_custom: false, html_color: '', default_extra_price: 0, image_ref: '', active: true, used_on_products: false, row_version: 1 }
+      guards:
+        - { query: "SELECT id FROM inventory_product_attributes WHERE id = :attribute_id AND active = TRUE", status: 404, code: INVENTORY_ATTRIBUTE_NOT_FOUND, message: Active product attribute not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_ATTRIBUTE_VALUE_REQUIRED, message: An attribute value name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:default_extra_price AS DECIMAL(18,2)) >= 0", status: 422, code: INVENTORY_ATTRIBUTE_VALUE_PRICE_INVALID, message: Extra price cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_attribute_values WHERE attribute_id = :attribute_id AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: INVENTORY_ATTRIBUTE_VALUE_EXISTS, message: This value already exists for the attribute. }
+      result: { query: "SELECT * FROM inventory_product_attribute_values WHERE id = :id" }
+    fields:
+      - { field: attribute_id, label: Attribute ID, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 100 }
+      - { field: name, label: Value, type: text, required: true }
+      - { field: is_custom, label: Free Text, type: checkbox }
+      - { field: html_color, label: Color, type: text }
+      - { field: default_extra_price, label: Extra Price, type: number, min: 0 }
+      - { field: image_ref, label: Image Reference, type: text }
+  - id: edit_inventory_product_attribute_value
+    type: server_form
+    permission: inventory.manage
+    title: Edit Attribute Value
+    action: inventory.product_attribute_values.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [inventory_product_attribute_values, inventory_product_attribute_detail]
+    mutation:
+      operation: update
+      table: inventory_product_attribute_values
+      fields: [sequence, name, is_custom, html_color, default_extra_price, image_ref]
+      required: [name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_attribute_values WHERE id = :id", status: 404, code: INVENTORY_ATTRIBUTE_VALUE_NOT_FOUND, message: Attribute value not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_ATTRIBUTE_VALUE_REQUIRED, message: An attribute value name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:default_extra_price AS DECIMAL(18,2)) >= 0", status: 422, code: INVENTORY_ATTRIBUTE_VALUE_PRICE_INVALID, message: Extra price cannot be negative. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_attribute_values WHERE attribute_id = (SELECT attribute_id FROM inventory_product_attribute_values WHERE id = :id) AND LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: INVENTORY_ATTRIBUTE_VALUE_EXISTS, message: This value already exists for the attribute. }
+      result: { query: "SELECT * FROM inventory_product_attribute_values WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Value, type: text, required: true }
+      - { field: is_custom, label: Free Text, type: checkbox }
+      - { field: html_color, label: Color, type: text }
+      - { field: default_extra_price, label: Extra Price, type: number, min: 0 }
+      - { field: image_ref, label: Image Reference, type: text }
+  - id: delete_inventory_product_attribute_value
+    type: server
+    permission: inventory.manage
+    action: inventory.product_attribute_values.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_product_attribute_values, inventory_product_attribute_detail]
+    mutation:
+      operation: delete
+      table: inventory_product_attribute_values
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_attribute_values WHERE id = :id", status: 404, code: INVENTORY_ATTRIBUTE_VALUE_NOT_FOUND, message: Attribute value not found. }
+        - { query: "SELECT 1 AS ok FROM inventory_product_attribute_values WHERE id = :id AND used_on_products = FALSE", status: 409, code: INVENTORY_ATTRIBUTE_VALUE_IN_USE, message: A value used on products cannot be deleted. }

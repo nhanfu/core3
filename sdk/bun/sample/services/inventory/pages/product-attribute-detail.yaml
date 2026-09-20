@@ -1,0 +1,46 @@
+title: Product Attribute
+page: { id: product-attribute-detail, route: /attributes/detail, breadcrumb: [Supply Chain, Inventory, Configuration, Products, Attributes, Product Attribute], auth: { require: [inventory.read] } }
+components:
+  - type: OdooFormView
+    source: inventory_product_attribute_detail
+    title_field: name
+    status_field: active
+    status_badges: [{ value: true, label: Active, tone: green }, { value: false, label: Archived, tone: neutral }]
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_inventory_product_attributes, label: Back to Attributes, icon: arrow-left, permission: inventory.read }
+      - { id: edit_inventory_product_attribute, label: Edit, variant: primary, permission: inventory.manage }
+      - { id: archive_inventory_product_attribute, label: Archive, variant: secondary, permission: inventory.manage, show_if: "record.active === true" }
+      - { id: restore_inventory_product_attribute, label: Restore, variant: secondary, permission: inventory.manage, show_if: "record.active === false" }
+    group_columns: 2
+    groups:
+      - title: Attribute
+        wide: true
+        fields:
+          - { field: name, label: Attribute Name }
+          - { field: display_type, label: Display Type }
+          - { field: create_variant, label: Create Variants }
+          - { field: company_name, label: Company, readonly: true }
+      - title: Usage
+        fields:
+          - { field: value_count, label: Values, type: number, readonly: true }
+          - { field: related_product_count, label: Products, type: number, readonly: true }
+    stat_buttons: [{ id: view_inventory_product_attribute_products, label: Products, icon: boxes, value_field: related_product_count, permission: inventory.read }]
+  - type: ListView
+    variant: odoo
+    source: inventory_product_attribute_values
+    create_action: create_inventory_product_attribute_value
+    create_label: Add Value
+    row_actions: menu
+    row_open_action: edit_inventory_product_attribute_value
+    columns:
+      - { field: sequence, label: Sequence, type: Number, optional: hide }
+      - { field: name, label: Value, type: PrimaryEntityCell }
+      - { field: is_custom, label: Free Text, type: BooleanToggle }
+      - { field: html_color, label: Color }
+      - { field: default_extra_price, label: Extra Price, align: right }
+      - { field: active, label: Active, type: BooleanToggle, optional: hide }
+    row_key: id
+    page_size: 20
+    empty_state: { title: No attribute values, description: Add values to define the choices shown on products. }
