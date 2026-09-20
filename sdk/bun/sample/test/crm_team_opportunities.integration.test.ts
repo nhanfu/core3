@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
@@ -30,7 +30,8 @@ describe('CRM Sales Team opportunities parity', () => {
   });
 
   test('scopes opportunities to a team and persists create, edit, assignment, empty, and failure states', async () => {
-    const database = await DuckDbDatabase.open(':memory:');
+    const databasePath = `/tmp/core3-crm-team-opportunities-${crypto.randomUUID()}.duckdb`;
+    const database = await DuckDbDatabase.open(databasePath);
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'crm_team_opportunities_test_migrations', ['schema', 'data']);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'crm_team_opportunities_test_migrations', ['schema', 'data']);
@@ -54,5 +55,13 @@ describe('CRM Sales Team opportunities parity', () => {
     expect(assigned).toMatchObject({ salesperson: 'QA Owner', row_version: 3 });
     await expect(repository.executeMutation(edit.mutation, { id: 'missing-team-opportunity', team_id: 'crm-team-enterprise', expected_row_version: 1, values: { name: 'Missing' } })).rejects.toMatchObject({ status: 404, code: 'CRM_TEAM_OPPORTUNITY_NOT_FOUND' });
     database.close();
+
+    const restartedDatabase = await DuckDbDatabase.open(databasePath);
+    const restartedRepository = new YamlRepository(restartedDatabase);
+    await migrateDatabase(restartedRepository, join(root, 'migrations'), undefined, 'crm_team_opportunities_test_migrations', ['schema', 'data']);
+    const restartedRows = await restartedRepository.querySource(source, { team_id: 'crm-team-enterprise', q: 'Renewal expansion revised', stage: null, salesperson: null, fixture_state: null }, 0, 50);
+    expect(restartedRows.data).toEqual(expect.arrayContaining([expect.objectContaining({ id: created.id, name: 'Renewal expansion revised', salesperson: 'QA Owner', row_version: 3, team_id: 'crm-team-enterprise' })]));
+    restartedDatabase.close();
+    rmSync(databasePath, { force: true });
   });
 });

@@ -10,8 +10,16 @@ Status: `ready`
   workflows, closed-record guards, and deterministic migration fixtures.
 - Added the standalone technical Teams Members route at
   `/crm/team-members`, including manager-bound add/toggle behavior, active and
-  archived filters, and page/API discovery coverage. Authenticated desktop and
-  mobile comparison for these CRM surfaces remains an open gate.
+  archived filters, and page/API discovery coverage.
+- The source-backed gap selected for this continuation was the Odoo team stat
+  action `crm_case_form_view_salesteams_opportunity` from
+  `addons/crm/views/crm_team_views.xml`: it is a team-scoped opportunity
+  action, not a second global Leads page or a manifest menu entry. The Core3
+  team form now opens `/crm/team-opportunities` from its Opportunities stat,
+  with the action's opportunity domain and team defaults preserved.
+- Authenticated Core3 desktop/mobile evidence for the new opportunity route is
+  recorded in the CRM QA ledger; paired authenticated Odoo comparison remains
+  an open gate.
 
 This is a plan gate only. Do not add product pages, components, migrations, or
 runtime code as part of this artifact. Implementation is approved only after
@@ -121,6 +129,7 @@ contracts are:
 | `activities` | `/crm-activities` | `api/activities.yaml` |
 | `lead-detail` | `/lead-detail` | `api/lead-detail.yaml` |
 | `teams` / `team-detail` | `/teams` / `/team-detail` | `api/teams.yaml` / `api/team-detail.yaml` |
+| `team-opportunities` | `/crm/team-opportunities` | `api/team-opportunities.yaml` |
 | `analysis` | `/analysis` | `api/analysis.yaml` |
 | `expected-revenue` | `/expected-revenue` | `api/expected-revenue.yaml` |
 | `lost-opportunities` | `/lost-opportunities` | `api/lost-opportunities.yaml` |

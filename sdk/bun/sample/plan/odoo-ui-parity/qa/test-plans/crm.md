@@ -37,6 +37,7 @@ unauthenticated actors are required.
 | CRM-FUNC-005 | functional | Tags/stages/lost reasons | Manager CRUD, archive/restore, validation, in-use and propagation guards persist | focused action tests | pass |
 | CRM-FUNC-006 | functional | Teams/recurring plans | Team and plan CRUD/settings and active-member routing are deterministic | focused tests | pass |
 | CRM-FUNC-010 | functional | Team opportunities/members | Team stat opens scoped opportunities; create/edit/assign and technical member add/toggle persist with duplicate and closed guards | `crm_team_opportunities`, `crm_team_members` suites | pass |
+| CRM-FUNC-011 | functional | Team opportunity restart | A created, edited, and assigned team opportunity remains visible after closing and reopening the file-backed CRM database | `crm_team_opportunities.integration.test.ts` restart assertion | pass |
 | CRM-FUNC-007 | functional | Reports/forecast | Pipeline, leads, activities and forecast reports return real scoped graph/pivot/list rows | reporting tests | pass |
 | CRM-FUNC-008 | data | Empty/error/not-found | Every list/detail/report handles empty, no-result, missing and transport failure without fabricated rows | contract tests | pass |
 | CRM-FUNC-009 | data | Migration/seed | Reapply deterministic schema/demo data on clean/existing dev DB | Fixed IDs/dates, no duplicate records | focused suites | pass |
@@ -51,6 +52,7 @@ unauthenticated actors are required.
 | CRM-WF-004 | integration | Quotation handoff | CRM calls allowlisted Orders service with selected lead/order context | Missing Orders dependency or downstream failure is explicit and source remains consistent | pass at contract level |
 | CRM-WF-005 | integration | Chatter/followers/attachments | Message/note/follower/attachment actions persist in activity/history surfaces | Blank content, unauthorized and retry paths are guarded | planned |
 | CRM-WF-006 | integration | Durable boundary | Long-running external campaign/mail or cross-module workflow is declared for Temporal | Replay/restart, retry, timeout and compensation required before activation | planned |
+| CRM-WF-007 | workflow | Team opportunity drill-down | Team stat → scoped opportunity board → create/edit/assign → reload preserves team and row-version state | Cross-team, closed-stage, stale-row and missing-record guards return bounded errors | pass |
 
 ## Permission and security cases
 
@@ -64,6 +66,7 @@ unauthenticated actors are required.
 | CRM-PERM-006 | Wrong company/branch | Lead/detail/activity | No cross-scope leakage or update | planned |
 | CRM-PERM-007 | Unauthenticated/expired | all CRM routes/APIs | Redirect/401/403 with no data leakage | planned |
 | CRM-PERM-008 | Stale/missing | all mutations | 409/404/422 and unchanged current row | pass |
+| CRM-PERM-009 | Team-scoped opportunity | `/crm/team-opportunities` and `crm.team_opportunities.*` | `crm.read` gates the route; `crm.write` gates create/edit/assign; team mismatch and forbidden datasource access do not mutate data | pass at contract level |
 
 ## Visual, responsive, and regression cases
 
@@ -74,6 +77,7 @@ unauthenticated actors are required.
 | CRM-UI-003 | Activity/configuration forms | both | Lists/forms, filters, chatter, status/actions and permission visibility | partial |
 | CRM-UI-004 | Reporting | both | Graph/pivot/list measures, creation-month grouping, empty/loading/error states | partial |
 | CRM-UI-005 | Current route regression | all 28 manifest route entries | 56 authenticated checks on `crm,base,order`; no page/request errors, HTTP errors, blank states or overflow | pass |
+| CRM-UI-006 | Team opportunity drill-down | 1440x900, 390x844 | Authenticated team stat navigation and opportunity route render populated deterministic rows with zero page/request errors and no document overflow | pass; Odoo visual comparison open |
 
 ## Exit criteria
 
