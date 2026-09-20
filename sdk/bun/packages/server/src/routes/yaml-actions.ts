@@ -83,7 +83,7 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
         current_user_id: String(authUser.sub || ''),
         current_user_name: activityActor.name,
         current_user_email: String(authUser.email || ''),
-        customer_scope: authUser.roles?.includes('admin') ? 'all' : 'own',
+        customer_scope: authUser.roles?.includes('admin') || !authUser.roles?.includes('customer') ? 'all' : 'own',
         current_company_name: String(authUser.company?.name || authUser.company_name || ''),
         company_name: authUser.roles?.includes('admin') ? undefined : String(authUser.company?.name || authUser.company_name || ''),
         current_branch_id: String(authUser.branch_id || ''),

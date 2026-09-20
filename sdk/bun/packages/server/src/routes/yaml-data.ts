@@ -57,7 +57,7 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
         current_user_email: String(authUser.email || ''),
         // Company switching is represented by authenticated session state, not
         // by a caller-controlled query parameter. This also applies to admins.
-        customer_scope: authUser.roles?.includes('admin') ? 'all' : 'own',
+        customer_scope: authUser.roles?.includes('admin') || !authUser.roles?.includes('customer') ? 'all' : 'own',
         company_name: authUser.roles?.includes('admin')
           ? (vm.params || {}).company_name
           : currentCompanyName,
