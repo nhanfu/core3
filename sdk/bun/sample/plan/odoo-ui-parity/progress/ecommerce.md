@@ -4,8 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: pending local commit
-(`ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`, not pushed).
+Latest committed bounded slice: `7b1eb6d2c9e48d204e41cd4c0506006c0fe74f15`
+(`ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`, committed locally; not pushed).
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`
 
@@ -19,7 +19,7 @@ concurrency, and restart persistence.
 Focused verification passed **3 tests, 31 assertions, 0 failures**, including
 source tracing, paired schema validation, CRUD, invalid/company/stale guards,
 migration replay, and restart persistence. Scoped audit, ESLint, and
-`git diff --check` are being finalized with evidence. Core3 authenticated
+`git diff --check` passed and are recorded with evidence. Core3 authenticated
 desktop/mobile capture is blocked by missing `js_repl` and unavailable local
 ports; Odoo `/shop` is exact HTTP 404 on 8069/8073. Ecommerce module sign-off
 remains open.
