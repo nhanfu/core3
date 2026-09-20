@@ -1792,3 +1792,26 @@ captures show HTTP 200 SVG delivery and computed background at 1440x900 and
 to login, credentials were rejected, and port 8072 refused; no paired Odoo
 sign-off is claimed. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACKGROUND-001/`.
+
+## Bounded slice: Public suggested-answer image delivery (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-QUESTION-IMAGE-001`.
+
+Odoo's `survey_get_question_image` route validates the public answer context,
+question ownership, and suggested-answer ownership before streaming
+`value_image`. Core3 migration `20261002000000-035-survey-public-question-images.yaml`
+adds durable image content and a separate published `Image Choice Survey`.
+The `survey.public.question_image` operation and `surveys.public` API action
+serve the token-scoped SVG; the public Choice renderer displays the image using
+the returned image-answer metadata. The authenticated page/API remain separate
+through `page.id: surveys`.
+
+Focused image/background checks are **4 passed / 44 assertions**; the focused
+integration trio is **27 passed / 264 assertions**; the public/core Surveys
+regression is **75 passed / 682 assertions**. Scoped lint, diff-check, and the
+repository UI audit pass (716 pages, 725 routes, 1370 datasources).
+Authenticated Core3 desktop/mobile probes render the image at 1440x900 and
+390x844 with HTTP 200 SVG delivery, no request/page failures, and no horizontal
+overflow. Odoo desktop and mobile redirect to login and port 8072 refuses; no
+paired Odoo fixture or parity sign-off is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-QUESTION-IMAGE-001/`.

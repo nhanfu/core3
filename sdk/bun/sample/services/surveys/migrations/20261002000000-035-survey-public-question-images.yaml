@@ -1,0 +1,25 @@
+version: 0.0.35
+description: Odoo-compatible public suggested-answer question images
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE survey_suggested_values ADD COLUMN IF NOT EXISTS value_image_content VARCHAR;
+      INSERT INTO surveys(id, name, title, description, owner, response_count, state, access_token, published_at, created_at, updated_at)
+      VALUES ('survey-demo-question-image', 'SURVEY/QUESTION-IMAGE', 'Image Choice Survey', 'Choose the answer with a visual cue.', 'Mitchell Admin', 0, 'Published', 'image-public-token-2026', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00', TIMESTAMP '2026-01-15 09:00:00')
+      ON CONFLICT (id) DO UPDATE SET title = excluded.title, description = excluded.description, state = excluded.state, access_token = excluded.access_token, published_at = excluded.published_at;
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES ('question-image-service', 'survey-demo-question-image', 'Which service experience matches your visit?', 'Choice', 1, true, 'Excellent,Good')
+      ON CONFLICT (id) DO UPDATE SET survey_id = excluded.survey_id, question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required, answer_options = excluded.answer_options;
+      INSERT INTO survey_suggested_values(id, question_id, question_text, value, sequence, score, value_image_content)
+      VALUES ('answer-question-image-excellent', 'question-image-service', 'Which service experience matches your visit?', 'Excellent', 1, 100, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="Excellent service"><rect width="320" height="180" rx="18" fill="#e5f3e9"/><circle cx="160" cy="78" r="34" fill="#55956d"/><path d="M142 78l12 12 26-30" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><text x="160" y="145" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#28573b">Excellent</text></svg>')
+      ON CONFLICT (id) DO UPDATE SET question_id = excluded.question_id, question_text = excluded.question_text, value = excluded.value, sequence = excluded.sequence, score = excluded.score, value_image_content = excluded.value_image_content;
+    down: |
+      DELETE FROM survey_suggested_values WHERE id = 'answer-question-image-excellent';
+      DELETE FROM survey_questions WHERE id = 'question-image-service';
+      DELETE FROM surveys WHERE id = 'survey-demo-question-image';
+      ALTER TABLE survey_suggested_values DROP COLUMN IF EXISTS value_image_content;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

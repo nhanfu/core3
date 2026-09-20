@@ -141,6 +141,28 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-QUESTION-IMAGE-001`
+
+Selected Odoo's next uncovered public helper after the completed background and
+question-type slices: suggested-answer image delivery. Migration `0.0.35`
+adds durable image content and a separate published `Image Choice Survey`;
+`survey.public.question_image` enforces published survey, answer-token,
+question, suggested-answer, and response-state ownership before returning the
+SVG. The paired `surveys.public` API action is bound to the existing
+`page.id: surveys` contract, and `PublicSurvey.ts` renders image-backed Choice
+options after a normal Start flow.
+
+Focused image/background checks pass 4/4 with 44 assertions; the focused
+integration trio passes 27/27 with 264 assertions; the public/core Surveys
+regression passes 75/75 with 682 assertions. Scoped lint and diff-check pass.
+After the shared Inventory page boundary was repaired, Core3 authenticated
+desktop/mobile evidence passed at 1440x900 and 390x844; the image returned
+HTTP 200 `image/svg+xml` with no request/page failures or horizontal overflow.
+The repository audit passes with 716 pages, 725 routes, and 1370 datasources.
+Odoo desktop/mobile redirect to login and proxy 8072 refuses; no paired Odoo
+fixture or module sign-off is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-QUESTION-IMAGE-001/`.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-BACKGROUND-001`
 
 Selected the next uncovered Odoo public helper behavior after the excluded

@@ -40,6 +40,8 @@ export default class SurveysModule implements ModuleLifecycle {
   }
 
   private async handlePublicRoute(request: Request, url: URL, service: PublicService): Promise<Response | null> {
+    const questionImageMatch = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)\/question-image\/([A-Za-z0-9-]+)\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+)$/);
+    if (questionImageMatch) return this.handlePublicQuestionImageRoute(request, questionImageMatch[1], questionImageMatch[2], questionImageMatch[3], questionImageMatch[4], service);
     const backgroundMatch = url.pathname.match(/^\/api\/public\/surveys\/([A-Za-z0-9_-]+)\/background$/);
     if (backgroundMatch) return this.handlePublicBackgroundRoute(request, backgroundMatch[1], service);
     const sessionMatch = url.pathname.match(/^\/api\/public\/surveys\/session\/([A-Za-z0-9-]+)(\/answer)?$/);
@@ -446,6 +448,22 @@ export default class SurveysModule implements ModuleLifecycle {
         'Cache-Control': 'public, max-age=300',
         'X-Content-Type-Options': 'nosniff',
       },
+    });
+  }
+
+  private async handlePublicQuestionImageRoute(request: Request, surveyToken: string, answerToken: string, questionId: string, suggestedAnswerId: string, service: PublicService): Promise<Response> {
+    if (request.method !== 'GET') return this.json({ error: 'Method not allowed' }, 405);
+    if (!this.isToken(surveyToken) || !this.isToken(answerToken)) return this.json({ error: 'Valid survey and answer tokens are required' }, 400);
+    const image = (await service.call('survey.public.question_image', {
+      survey_token: surveyToken,
+      answer_token: answerToken,
+      question_id: questionId,
+      suggested_answer_id: suggestedAnswerId,
+    }))?.question_image?.[0];
+    if (!image) return this.json({ error: 'Suggested answer image is unavailable' }, 404);
+    return new Response(String(image.value_image_content), {
+      status: 200,
+      headers: { 'Content-Type': 'image/svg+xml; charset=utf-8', 'Cache-Control': 'public, max-age=300', 'X-Content-Type-Options': 'nosniff' },
     });
   }
 

@@ -95,6 +95,17 @@ actions:
     params: { access_token: '{token}' }
     fields:
       - { field: access_token, label: Survey token, type: text, required: true }
+  - id: public_survey_question_image
+    type: server_form
+    permission: surveys.public
+    title: Load public suggested-answer image
+    action: surveys.public.question_image
+    handler: public_asset
+    fields:
+      - { field: survey_token, label: Survey token, type: text, required: true }
+      - { field: answer_token, label: Answer token, type: text, required: true }
+      - { field: question_id, label: Question, type: text, required: true }
+      - { field: suggested_answer_id, label: Suggested answer, type: text, required: true }
   - id: public_survey_begin
     type: server_form
     permission: surveys.public

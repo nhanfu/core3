@@ -1,0 +1,10 @@
+{
+  "feature": "SURVEYS-PUBLIC-QUESTION-IMAGE-001",
+  "runtime": "CORE3 source-served backend on port 3390 with Vite frontend on port 3391",
+  "status": "resolved-after-shared-boundary-repair",
+  "initial_error": "PageSchemaError: Invalid page definition: components[1].title is not allowed",
+  "audit_command": "bun run audit",
+  "scope": "The initial error was from concurrent Inventory page changes visible in the shared checkout; Surveys files were not modified to bypass it.",
+  "resolution": "After the shared page boundary was repaired, a fresh source-served process reached readiness and completed both authenticated viewport probes.",
+  "final_result": "Core3 authenticated desktop/mobile evidence passed; no request or page failures and no horizontal overflow were observed."
+}

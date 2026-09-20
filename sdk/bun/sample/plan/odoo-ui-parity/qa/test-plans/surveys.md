@@ -435,3 +435,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACKGROUND-001/`.
+
+## 2026-09-21 public suggested-answer image additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-040 | public asset | Choice metadata and image delivery | Return the durable image-answer ID and token-scoped SVG through paired page/API YAML | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-037 | restart/replay | Start → image fetch → reopen → image replay | Preserve the image content across file-backed DuckDB restart and return identical SVG bytes | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-039 | token/ownership guard | Wrong answer token, foreign choice/question, and POST | Reject unauthorized or invalid image access with 404/405 while retaining `surveys.public` metadata | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-038 | responsive/reference | Choice image desktop/mobile + Odoo comparison | Capture renderer states and record exact current Odoo blockers | `core3-{admin,public}-{desktop,mobile}.png`, `core3-browser-results.json`, `odoo-{desktop,mobile}.png` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-QUESTION-IMAGE-001/`.

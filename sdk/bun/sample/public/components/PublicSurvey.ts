@@ -5,6 +5,7 @@ type SurveyQuestion = {
   sequence: number;
   required: boolean;
   answer_options?: string;
+  image_answers?: string | null;
   matrix_rows?: string;
   matrix_columns?: string;
   matrix_subtype?: string;
@@ -45,6 +46,10 @@ function backgroundStyle(value: unknown): string {
     : '';
 }
 
+function questionImageUrl(surveyToken: string, answerToken: string, questionId: string, suggestedAnswerId: string): string {
+  return `/api/public/surveys/${encodeURIComponent(surveyToken)}/question-image/${encodeURIComponent(answerToken)}/${encodeURIComponent(questionId)}/${encodeURIComponent(suggestedAnswerId)}`;
+}
+
 function installStyles() {
   if (document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');
@@ -65,6 +70,7 @@ function installStyles() {
     .core3-public-survey__option { display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid #d9d1d7; border-radius:5px; cursor:pointer; transition:border-color .15s,background .15s; }
     .core3-public-survey__option:hover { border-color:#714b67; background:#faf7f9; }
     .core3-public-survey__option input { accent-color:#714b67; width:17px; height:17px; }
+    .core3-public-survey__option-image { width:56px; height:40px; object-fit:cover; border-radius:5px; border:1px solid #d9d1d7; }
     .core3-public-survey__matrix-wrap { overflow-x:auto; border:1px solid #d9d1d7; }
     .core3-public-survey__matrix { width:100%; min-width:620px; border-collapse:collapse; font-size:14px; }
     .core3-public-survey__matrix th, .core3-public-survey__matrix td { padding:12px 10px; border-bottom:1px solid #eee7eb; text-align:center; vertical-align:middle; }
@@ -126,10 +132,11 @@ function isIsoDatetime(value: string): boolean {
     && parsed.getUTCSeconds() === Number(value.slice(17, 19));
 }
 
-function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] | Record<string, string[]> = '', comment = '') {
+function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] | Record<string, string[]> = '', comment = '', surveyToken = '', answerToken = '') {
   const options = String(question.answer_options || '').split(',').map((value) => value.trim()).filter(Boolean);
   const matrixRows = String(question.matrix_rows || '').split('||').map((value) => value.trim()).filter(Boolean);
   const matrixColumns = String(question.matrix_columns || '').split('||').map((value) => value.trim()).filter(Boolean);
+  const imageAnswers = new Map(String(question.image_answers || '').split('||').map((entry) => entry.split('::')).filter((entry) => entry.length >= 2 && entry[0] && entry[1]).map(([id, value]) => [value, id]));
   const currentValues = Array.isArray(answer) ? answer : [answer];
   const matrixAnswer = answer && typeof answer === 'object' && !Array.isArray(answer) ? answer as Record<string, string[]> : {};
   const matrixInput = question.question_type === 'Matrix' && matrixRows.length > 0 && matrixColumns.length > 0
@@ -146,7 +153,9 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
       ? `<div class="core3-public-survey__options" data-answer>${options.map((option) => {
         const type = question.question_type === 'Multiple Choice' ? 'checkbox' : 'radio';
         const checked = currentValues.includes(option) ? ' checked' : '';
-        return `<label class="core3-public-survey__option"><input type="${type}" name="question-${escapeHtml(question.id)}" value="${escapeHtml(option)}"${checked}><span>${escapeHtml(option)}</span></label>`;
+        const imageId = imageAnswers.get(option);
+        const image = imageId && answerToken ? `<img class="core3-public-survey__option-image" src="${escapeHtml(questionImageUrl(surveyToken, answerToken, question.id, imageId))}" alt="">` : '';
+        return `<label class="core3-public-survey__option"><input type="${type}" name="question-${escapeHtml(question.id)}" value="${escapeHtml(option)}"${checked}>${image}<span>${escapeHtml(option)}</span></label>`;
       }).join('')}</div>`
       : `<input class="core3-public-survey__input" data-answer type="text" inputmode="${question.question_type === 'Numerical' ? 'decimal' : 'numeric'}"${['Date', 'date'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" autocomplete="bday"' : ''}${['Datetime', 'datetime'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"' : ''} value="${escapeHtml(currentValues[0])}" placeholder="${['Date', 'date'].includes(question.question_type) ? 'YYYY-MM-DD' : ['Datetime', 'datetime'].includes(question.question_type) ? 'YYYY-MM-DD HH:MM:SS' : 'Your answer'}">`;
   const commentInput = question.comments_allowed
@@ -248,7 +257,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       return;
     }
     const currentQuestion = questions[questionIndex];
-    renderQuestion(body, currentQuestion, questionIndex, questions.length, answers[currentQuestion.id], String(answers[`${currentQuestion.id}__comment`] || ''));
+    renderQuestion(body, currentQuestion, questionIndex, questions.length, answers[currentQuestion.id], String(answers[`${currentQuestion.id}__comment`] || ''), token, answerToken);
     body.querySelector<HTMLButtonElement>('[data-back]')?.addEventListener('click', async (event) => {
       const backButton = event.currentTarget as HTMLButtonElement;
       backButton.disabled = true;

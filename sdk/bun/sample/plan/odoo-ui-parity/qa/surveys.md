@@ -1051,3 +1051,14 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-IDENTI
 - Odoo desktop/mobile both redirect to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; supplied credentials were rejected and port 8072 was connection-refused. No paired Odoo sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-BACKGROUND-001/`.
+
+## Bounded QA run: Public suggested-answer images — `SURVEYS-PUBLIC-QUESTION-IMAGE-001`
+
+- Source comparison: Odoo validates public answer context and question/choice ownership before streaming `value_image`; Core3 mirrors this through a token-scoped SVG API and durable `value_image_content` fixture.
+- YAML/UI contract: the authenticated `surveys` page remains separate from the `surveys.public.question_image` API action through `page.id: surveys`; public question metadata carries image-answer IDs and the renderer consumes them.
+- Verification: focused image/background checks **4 passed / 44 assertions**; full public/core Surveys regression **75 passed / 682 assertions**; scoped ESLint and diff-check pass.
+- Persistence/guards: the deterministic image survives file-backed reopen; replay is stable; wrong answer token, foreign suggested-answer/question pairing, and POST are rejected before content return.
+- Core3 authenticated desktop/mobile evidence passed after the shared page-schema boundary was repaired: the public image returned HTTP 200 `image/svg+xml`, with no request/page failures or horizontal overflow. Audit passed at 716 pages, 725 routes, and 1370 datasources.
+- Odoo desktop/mobile redirect to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; port 8072 is connection-refused. No paired Odoo sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-QUESTION-IMAGE-001/`.

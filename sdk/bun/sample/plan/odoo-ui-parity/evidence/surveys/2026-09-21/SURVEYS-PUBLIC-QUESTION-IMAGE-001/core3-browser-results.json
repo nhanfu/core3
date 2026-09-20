@@ -1,0 +1,43 @@
+{
+  "feature": "SURVEYS-PUBLIC-QUESTION-IMAGE-001",
+  "base": "http://127.0.0.1:3391",
+  "viewports": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "adminText": "Surveys\nQuestions & Answers\nReporting\n⌘ K\nAU\nCards\nList\nNew survey\nMarketing / Surveys\n1-10 / 10\n‹\n›\nBurger Quiz\n\nMarc Demo\n\nCompleted\n0\nStatus\nDraft\nMyCompany Vendor Certification\n\nMitchell Admin\n\nCompleted\n4\nPublished at\n2026-09-01 09:00:00\nStatus\nPublished\nConditional Questions\n\nMitchell Admin\n\nCompleted\n0\nStatus\nDraft\nFeedback Form\n\nMitchell Admin\n\nCompl",
+      "publicText": "Image Choice Survey\nWhich service experience matches your visit?*\nExcellent\nGood\nQuestion 1 of 1\nSubmit",
+      "imageSrc": "/api/public/surveys/image-public-token-2026/question-image/4f08fca7-7b39-4e9c-b1dd-27d3ee7da083/question-image-service/answer-question-image-excellent",
+      "imageComplete": true,
+      "imageNaturalWidth": 267,
+      "assetStatus": 200,
+      "assetContentType": "image/svg+xml; charset=utf-8",
+      "overflow": false,
+      "question": "Which service experience matches your visit?*",
+      "requestFailures": [],
+      "pageErrors": []
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "adminText": "AU\nNew survey\nSurveys\n1-10 / 10\n‹\n›\nBurger Quiz\n\nMarc Demo\n\nCompleted\n0\nStatus\nDraft\nMyCompany Vendor Certification\n\nMitchell Admin\n\nCompleted\n4\nPublished at\n2026-09-01 09:00:00\nStatus\nPublished\nConditional Questions\n\nMitchell Admin\n\nCompleted\n0\nStatus\nDraft\nFeedback Form\n\nMitchell Admin\n\nCompleted\n6\nPublished at\n2026-09-01 09:00:00\nStatus\nPublished\nDelete C",
+      "publicText": "Image Choice Survey\nWhich service experience matches your visit?*\nExcellent\nGood\nQuestion 1 of 1\nSubmit",
+      "imageSrc": "/api/public/surveys/image-public-token-2026/question-image/071439dc-4568-434c-a479-c9b4c028f958/question-image-service/answer-question-image-excellent",
+      "imageComplete": true,
+      "imageNaturalWidth": 267,
+      "assetStatus": 200,
+      "assetContentType": "image/svg+xml; charset=utf-8",
+      "overflow": false,
+      "question": "Which service experience matches your visit?*",
+      "requestFailures": [],
+      "pageErrors": []
+    }
+  ],
+  "generatedAt": "2026-09-20T22:51:48.407Z"
+}

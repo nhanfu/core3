@@ -1,0 +1,30 @@
+{
+  "target": "http://127.0.0.1:8069/odoo/surveys",
+  "viewports": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "text": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "loginRequired": true,
+      "surveyRendered": false
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+      "text": "Skip to Content\nEmail\nPassword\nReset Password\nLog in\nDon't have an account?\n- or -\nUse a Passkey\nManage Databases Powered by Odoo",
+      "loginRequired": true,
+      "surveyRendered": false
+    }
+  ],
+  "blocker": "Both Odoo probes redirect to the login form. No authenticated Survey question-image fixture was available in this run; the local disposable proxy 127.0.0.1:8072 was connection-refused."
+}
