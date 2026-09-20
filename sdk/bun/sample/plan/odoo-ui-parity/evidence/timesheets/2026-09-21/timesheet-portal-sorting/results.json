@@ -1,0 +1,45 @@
+{
+  "feature_id": "TIMESHEET-PORTAL-SORTING",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "runtime": "blocked",
+    "error": "SyntaxError: YAML Parse error: Unexpected token",
+    "owner_boundary": "Ecommerce",
+    "focused_discovery_context": "components[1].search.lots is not allowed; components[1].search.or packages... is not allowed",
+    "route_capture": null
+  },
+  "odoo": {
+    "desktop": {
+      "url": "http://127.0.0.1:8069/my/timesheets",
+      "authenticated": true,
+      "route_rendered": true,
+      "viewport": "1440x900",
+      "body_width": 1440,
+      "document_width": 1440,
+      "sort_links": ["date desc", "employee_id", "project_id", "task_id", "name", "so_line", "timesheet_invoice_id"],
+      "sorted_url": "http://127.0.0.1:8069/my/timesheets?sortby=project_id",
+      "sorted_rendered": true,
+      "page_errors": [],
+      "aborted_requests": []
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:8069/my/timesheets",
+      "authenticated": true,
+      "route_rendered": true,
+      "viewport": "390x844",
+      "body_width": 390,
+      "document_width": 390,
+      "sort_links": ["date desc", "employee_id", "project_id", "task_id", "name", "so_line", "timesheet_invoice_id"],
+      "sorted_url": "http://127.0.0.1:8069/my/timesheets?sortby=project_id",
+      "sorted_rendered": true,
+      "page_errors": [],
+      "aborted_requests": ["/mail/data", "/mail/static/src/img/smiley/mailfailure.svg", "/sms/static/img/sms_failure.svg"]
+    }
+  },
+  "blockers": [
+    "Core3 authenticated browser capture is blocked by shared unowned Ecommerce discovery/YAML parsing.",
+    "Odoo mobile's dense portal table is visibly clipped at 390px.",
+    "Odoo Sales Order Item and Invoice sort keys have no owned persisted Core3 portal projection.",
+    "Broader Timesheets Print/PDF/action parity blockers remain open."
+  ]
+}

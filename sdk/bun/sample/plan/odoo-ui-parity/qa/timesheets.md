@@ -541,3 +541,27 @@ bounded feature does not claim Timesheets sign-off.
   `components[2].title is not allowed`, so no Core3 browser evidence is
   claimed. Odoo mobile visibly clips its dense table and records aborted
   background requests. Broader Timesheets Print/PDF/action gaps remain open.
+
+## 2026-09-21 `TIMESHEET-PORTAL-SORTING`
+
+- Source gate: Odoo `_get_searchbar_sortings` exposes Newest/date,
+  Employee, Project, Task, and Description sort links on authenticated
+  `/my/timesheets`; Sales Order Item and Invoice are also visible in the
+  installed reference.
+- Core3 contract gate: the portal page adds the supported sort filter choices;
+  the separate API query orders durable rows by the requested field and keeps
+  the `timesheets.read` employee/company guard.
+- Focused gate: the three portal suites pass 12 tests / 88 expectations.
+  ESLint and focused contract checks pass; final diff-check and audit are run
+  before commit.
+- Persistence/security gate: each sort order is deterministic, combines with
+  date filtering, survives a file-backed restart, and retains wrong
+  actor/company, empty fixture, permission, and `409 STALE_RECORD` guards.
+- Odoo evidence: authenticated desktop/mobile source controls and
+  `sortby=project_id` states are under
+  `evidence/timesheets/2026-09-21/timesheet-portal-sorting/`.
+- Blockers: Core3 route capture cannot start because shared discovery hits
+  `SyntaxError: YAML Parse error: Unexpected token` in an unowned Ecommerce
+  boundary (focused scan previously names `search.lots`/`search.or packages...`).
+  Odoo mobile visibly clips its dense table; Sales Order Item/Invoice sort
+  projection and broader Print/PDF/action parity remain open.

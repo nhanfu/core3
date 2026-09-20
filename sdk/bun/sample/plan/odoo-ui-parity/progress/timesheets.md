@@ -325,6 +325,27 @@ no visible Print/report action. That is the exact QWeb/PDF comparison blocker;
 missing Odoo Print/PDF/action surfaces, broader route/action comparison, and
 Timesheets module sign-off remain open.
 
+## 2026-09-21 `TIMESHEET-PORTAL-SORTING`
+
+Selected Odoo's portal sort menu as the smallest distinct behavior after the
+date-filter slice. Core3 adds Newest, Employee, Project, Task, and Description
+sort choices to the existing portal page and applies stable ordering in the
+durable API query. The page/API separation, actor/company scope, read
+permission, date filters, and detail stale-row guard remain intact.
+
+Verification passes 12 tests / 88 expectations across the sorting, date-filter,
+and existing portal suites. ESLint and focused source/contract tests pass;
+the focused tests no longer depend on global discovery, which is currently
+blocked by an unrelated Ecommerce YAML boundary.
+
+Evidence is in
+`evidence/timesheets/2026-09-21/timesheet-portal-sorting/`. Authenticated Odoo
+desktop/mobile exposes the source sort links and renders project sorting.
+Core3 startup is blocked by shared discovery's
+`SyntaxError: YAML Parse error: Unexpected token`; no Core3 browser result is
+claimed. Odoo Sales Order Item/Invoice sort keys lack an owned persisted portal
+projection and remain blockers, along with the prior Print/PDF/action gaps.
+
 ## 2026-09-21 `TIMESHEET-PORTAL-DATE-FILTERS`
 
 Selected the smallest remaining portal behavior after the authenticated portal

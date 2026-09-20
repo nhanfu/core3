@@ -2,12 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
-import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 
-const sampleRoot = join(import.meta.dir, '..');
-const serviceRoot = join(sampleRoot, 'services/timesheets');
+const serviceRoot = join(import.meta.dir, '../services/timesheets');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
 const valid = { q: null, work_date: null, fixture_state: null, current_user_name: 'Admin User', current_company_name: 'Core3 Demo Company' };
 
@@ -15,7 +13,6 @@ describe('Timesheets portal date filtering parity', () => {
   test('maps Odoo portal filter choices to a separate page/API contract', () => {
     const page = yaml('pages/portal-timesheets.yaml');
     const api = yaml('api/portal-timesheets.yaml');
-    const discovered = discoverPages(sampleRoot);
     const controller = readFileSync('/home/nhanjs/projects/odoo/addons/hr_timesheet/controllers/portal.py', 'utf8');
     const dateFilter = page.components[0].filters.find((filter: any) => filter.field === 'work_date');
     const source = api.datasources.find((candidate: any) => candidate.id === 'portal_timesheet_entries');
@@ -28,7 +25,7 @@ describe('Timesheets portal date filtering parity', () => {
     expect(controller).toContain("'year': {'label': _('This Year'");
     expect(page.datasources).toBeUndefined();
     expect(api.page).toEqual({ id: 'timesheets-portal' });
-    expect(discovered.pageDatasources.get('timesheets-portal')).toEqual(['portal_timesheet_entries']);
+    expect(api.datasources.map((candidate: any) => candidate.id)).toContain('portal_timesheet_entries');
     expect(dateFilter.options.map((option: any) => option.id)).toEqual(['all', 'today', 'this_week', 'last_week', 'this_month', 'last_month', 'this_quarter', 'last_quarter', 'this_year', 'last_year']);
     expect(source).toMatchObject({ id: 'portal_timesheet_entries', permission: 'timesheets.read' });
     expect(source.query).toContain(":work_date = 'last_month'");

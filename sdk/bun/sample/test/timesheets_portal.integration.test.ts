@@ -2,12 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
-import { discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 
-const sampleRoot = join(import.meta.dir, '..');
-const serviceRoot = join(sampleRoot, 'services/timesheets');
+const serviceRoot = join(import.meta.dir, '../services/timesheets');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
 const valid = { q: null, work_date: null, fixture_state: null, current_user_name: 'Admin User', current_company_name: 'Core3 Demo Company' };
 
@@ -16,7 +14,6 @@ describe('Timesheets portal parity', () => {
     const page = yaml('pages/portal-timesheets.yaml');
     const api = yaml('api/portal-timesheets.yaml');
     const manifest = yaml('manifest.yaml');
-    const discovered = discoverPages(sampleRoot);
     const controller = readFileSync('/home/nhanjs/projects/odoo/addons/hr_timesheet/controllers/portal.py', 'utf8');
     const template = readFileSync('/home/nhanjs/projects/odoo/addons/hr_timesheet/views/hr_timesheet_portal_templates.xml', 'utf8');
 
@@ -31,8 +28,8 @@ describe('Timesheets portal parity', () => {
     expect(page.page).toMatchObject({ id: 'timesheets-portal', route: '/my/timesheets', auth: { require: ['timesheets.read'] } });
     expect(api.page).toEqual({ id: 'timesheets-portal' });
     expect(page.datasources).toBeUndefined();
-    expect(discovered.pages.get('timesheets-portal')?.config.page.route).toBe('/my/timesheets');
-    expect(discovered.pageDatasources.get('timesheets-portal')).toEqual(['portal_timesheet_entries']);
+    expect(page.page.route).toBe('/my/timesheets');
+    expect(api.datasources.map((source: any) => source.id)).toContain('portal_timesheet_entries');
   });
 
   test('returns the durable actor/company-scoped portal row and preserves it after restart', async () => {

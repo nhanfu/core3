@@ -1087,6 +1087,40 @@ both viewports but no loaded row-to-project-timesheet action/form; that exact
 paired interaction blocker remains open. This bounded slice does not claim
 Timesheets module sign-off.
 
+## 2026-09-21 `TIMESHEET-PORTAL-SORTING`
+
+The next uncovered portal behavior after the date filters is Odoo's
+`_get_searchbar_sortings` contract in
+`addons/hr_timesheet/controllers/portal.py`: Newest/date, Employee, Project,
+Task, and Description are authenticated `/my/timesheets` sort actions.
+
+Core3 now keeps the portal page/API pair joined by `page.id: timesheets-portal`
+and exposes the supported sort choices through the page filter contract. The
+durable portal datasource applies deterministic CASE-based ordering for date,
+employee, project, task, and description while retaining the existing
+employee/company scope, `timesheets.read` permission, date filters, empty
+state, and detail concurrency guard. No migration or new fixture table was
+needed.
+
+The source also offers Sales Order Item and Invoice sort keys, but the current
+owned portal projection has no persisted invoice relation; those two source
+sorts remain explicit blockers rather than being faked. Focused coverage is
+the portal sorting, date-filter, and base portal suites: 12 tests / 88
+expectations pass, including source/page/API comparison, deterministic ordering
+combined with date filters, actor/company/empty guards, file-backed restart,
+stale draft edit rejection, permission, and no-moving-value checks.
+
+Authenticated Odoo desktop/mobile evidence is under
+`evidence/timesheets/2026-09-21/timesheet-portal-sorting/`; both viewports
+expose the source sort links and render
+`/my/timesheets?sortby=project_id`. Core3 browser capture is blocked before
+route startup by the shared unowned discovery boundary
+(`SyntaxError: YAML Parse error: Unexpected token`; the preceding focused
+scan identifies an Ecommerce `search.lots`/`search.or packages...` schema
+shape). No Core3 screenshot or parity sign-off is claimed. Odoo's dense mobile
+table clipping and aborted background asset requests are recorded as reference
+blockers.
+
 ## 2026-09-21 `TIMESHEET-PORTAL-DATE-FILTERS`
 
 The next smallest uncovered portal behavior is Odoo's authenticated date
