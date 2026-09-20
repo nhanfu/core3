@@ -763,6 +763,37 @@ visible Print/report-preview action. That is recorded as an exact paired
 reference blocker, not a parity pass. Full route/action comparison, actual
 QWeb/PDF equivalence, and module sign-off remain open.
 
+## Employee report preview slice — `TIMESHEET-EMPLOYEE-REPORT-PREVIEW` (2026-09-20)
+
+Odoo's `timesheet_action_from_employee` in
+`addons/hr_timesheet/views/hr_timesheet_views.xml:547-565` scopes the
+analytic-line action to the active employee. The shared
+`timesheet_report` binding in
+`addons/hr_timesheet/report/report_timesheet_templates.xml:173-182` supplies
+the source report contract. Core3 already had a durable guarded employee
+report run, but the employee Print action stopped at `window.print()` without
+an authenticated report document.
+
+Core3 now adds the page/API-separated `/timesheets/employee-report-preview`
+route. Its read-only YAML report document loads the latest
+company/employee-scoped durable run and persisted employee lines, with Print
+and Back actions. The existing employee report mutation remains the durable
+write boundary and retains actor, company, stale, missing-employee, and
+empty-employee guards; preview reads fail closed outside the active
+employee/company and support deterministic empty fixtures.
+
+Focused coverage is
+`test/timesheets_employee_report_preview.integration.test.ts` (4 tests / 23
+expectations), including source binding, page/API separation, migration replay,
+file-backed restart, persisted lines, and scope guards. Authenticated Core3
+desktop/mobile captures follow employee Print to the preview and render three
+persisted lines without page/request failures or horizontal overflow.
+Authenticated Odoo `/odoo/employees/3` has the known empty/new-entry-only
+Timesheets state and no visible Print/report action at either viewport, so the
+source report execution is recorded as an exact blocker rather than parity.
+Full route/action comparison, QWeb/PDF equivalence, and module sign-off remain
+open.
+
 ## Task report preview slice — `TIMESHEET-TASK-REPORT-PREVIEW` (2026-09-20)
 
 Odoo's `timesheet_report_task` is a `qweb-pdf` report bound to `project.task`

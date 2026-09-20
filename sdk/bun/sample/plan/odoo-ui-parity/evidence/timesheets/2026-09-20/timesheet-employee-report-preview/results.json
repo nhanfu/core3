@@ -1,0 +1,67 @@
+{
+  "feature_id": "TIMESHEET-EMPLOYEE-REPORT-PREVIEW",
+  "captured_at": "2026-09-20",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "employee": true,
+      "printVisible": true,
+      "reportRendered": true,
+      "reportRun": true,
+      "linesRendered": true,
+      "url": "http://127.0.0.1:4041/timesheets/employee-report-preview?id=employee-demo-002",
+      "bodyWidth": 1440,
+      "documentWidth": 1440,
+      "errors": [],
+      "failed": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "employee": true,
+      "printVisible": true,
+      "reportRendered": true,
+      "reportRun": true,
+      "linesRendered": true,
+      "url": "http://127.0.0.1:4041/timesheets/employee-report-preview?id=employee-demo-002",
+      "bodyWidth": 390,
+      "documentWidth": 390,
+      "errors": [],
+      "failed": []
+    }
+  },
+  "odoo": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "employee": true,
+      "timesheetsVisible": true,
+      "printVisible": false,
+      "reportRendered": false,
+      "exactBlocker": true,
+      "url": "http://127.0.0.1:8069/odoo/employees/3",
+      "bodyWidth": 1440,
+      "documentWidth": 1440,
+      "errors": [],
+      "failed": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "employee": true,
+      "timesheetsVisible": false,
+      "printVisible": false,
+      "reportRendered": false,
+      "exactBlocker": true,
+      "url": "http://127.0.0.1:8069/odoo/employees/3",
+      "bodyWidth": 390,
+      "documentWidth": 390,
+      "errors": [],
+      "failed": []
+    }
+  },
+  "blockers": [
+    "Authenticated Odoo employee route is empty/new-entry-only or exposes no visible Print/report action, so the employee report execution cannot be paired; Core3 preview evidence is recorded separately."
+  ]
+}

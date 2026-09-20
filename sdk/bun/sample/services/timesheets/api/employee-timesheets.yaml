@@ -28,7 +28,7 @@ actions:
           method: 'POST',
           body: { employee_id: context.employee_id, expected_entry_count: context.entry_count, requested_by: 'Admin User', company_name: context.company_name, current_user_name: 'Admin User', current_company_name: context.company_name },
         });
-        window.print();
+        window.location.assign(`/timesheets/employee-report-preview?id=${encodeURIComponent(String(context.employee_id))}`);
       }
   - id: record_employee_timesheets_report_run
     type: server

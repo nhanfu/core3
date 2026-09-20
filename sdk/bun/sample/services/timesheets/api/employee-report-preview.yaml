@@ -1,0 +1,66 @@
+page: { id: employee-timesheet-report-preview }
+datasources:
+  - id: employee_timesheet_report_preview
+    single: true
+    permission: timesheets.read
+    error_states:
+      missing_record: { status: 404, code: EMPLOYEE_TIMESHEET_REPORT_PREVIEW_NOT_FOUND, message: The employee Timesheets report is no longer available. }
+      transport_error: { status: 503, code: EMPLOYEE_TIMESHEET_REPORT_PREVIEW_UNAVAILABLE, message: The employee Timesheets report preview is temporarily unavailable. }
+    query: |
+      SELECT
+        r.id AS report_run_id,
+        r.report_name,
+        r.employee_id,
+        r.employee_name,
+        r.entry_count,
+        r.total_hours,
+        r.requested_by,
+        CAST(r.generated_at AS VARCHAR) AS generated_at,
+        r.company_name
+      FROM timesheet_employee_report_runs r
+      JOIN timesheet_employees e ON e.id = r.employee_id
+      WHERE r.employee_id = :id
+        AND r.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+        AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+      ORDER BY r.generated_at DESC, r.id DESC
+      LIMIT 1
+  - id: employee_timesheet_report_lines
+    permission: timesheets.read
+    pivot: { fields: [id, row_version, name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, time_spent_display, state] }
+    error_states:
+      transport_error: { status: 503, code: EMPLOYEE_TIMESHEET_REPORT_LINES_UNAVAILABLE, message: Employee Timesheets report lines are temporarily unavailable. }
+    query: |
+      SELECT
+        t.id,
+        t.row_version,
+        t.name,
+        t.employee_id,
+        t.employee_name,
+        t.project_id,
+        t.project_name,
+        t.task_id,
+        t.task_name,
+        CAST(t.work_date AS VARCHAR) AS work_date,
+        t.description,
+        t.hours,
+        printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display,
+        t.state
+      FROM timesheet_entries t
+      WHERE t.employee_id = :id
+        AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+      ORDER BY t.work_date DESC, t.id
+actions:
+  - id: print_employee_timesheet_report_preview
+    type: client
+    permission: timesheets.read
+    script: |
+      // js
+      async () => {
+        window.print();
+      }
+  - id: back_to_employee_timesheets
+    type: navigate
+    permission: timesheets.read
+    navigate_to: /employee-timesheets
+    params: { employee_id: '{state.employee_timesheet_report_preview.employee_id}' }

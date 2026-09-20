@@ -303,3 +303,31 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Disposition: **bounded Core3 task report preview verified; Odoo QWeb/PDF
   comparison, remaining route/action comparison, and module sign-off remain
   pending**.
+
+## 2026-09-20 `TIMESHEET-EMPLOYEE-REPORT-PREVIEW`
+
+- Source gate: Odoo `timesheet_action_from_employee`
+  (`hr_timesheet/views/hr_timesheet_views.xml:547-565`) scopes analytic lines
+  to `active_id`; the shared `timesheet_report` binding supplies the report
+  contract.
+- Core3 gate: `employee-timesheets` remains page/API-separated and its guarded
+  Print action now navigates to `/timesheets/employee-report-preview`; the new
+  API reads the durable employee report run and company-scoped persisted lines.
+- Focused gate: `bun test test/timesheets_employee_report_preview.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 23 expectations.
+- Persistence/security gate: migration replay and file-backed restart preserve
+  the report run and three employee lines; employee/company visibility and
+  deterministic empty fixtures are asserted; mutation actor/company/stale/
+  empty guards remain covered by the existing employee report binding test.
+- Core3 browser gate: authenticated Admin desktop `1440x900` and mobile
+  `390x844` click employee Print, land on the preview, render Morgan Taylor's
+  persisted summary and three lines, and report zero page/request failures with
+  no horizontal overflow.
+- Odoo browser gate: authenticated `codex@core3.local` reaches
+  `/odoo/employees/3` at both viewports with zero page/request failures; the
+  desktop Timesheets stat is empty/new-entry-only, mobile hides it, and neither
+  viewport exposes a visible Print/report action. This exact reference-data/
+  action blocker prevents paired report execution parity.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-employee-report-preview/`](../evidence/timesheets/2026-09-20/timesheet-employee-report-preview).
+- Disposition: **bounded Core3 employee report preview verified; Odoo report
+  comparison, remaining route/action comparison, and module sign-off remain
+  pending**.

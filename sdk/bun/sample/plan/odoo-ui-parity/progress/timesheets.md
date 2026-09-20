@@ -85,6 +85,34 @@ the full authenticated route/action comparison, Odoo QWeb/PDF renderer parity,
 and any remaining project-dashboard integration gaps.
 Update this file only with evidence from the matching module owner.
 
+## 2026-09-20 `TIMESHEET-EMPLOYEE-REPORT-PREVIEW`
+
+The smallest remaining browser-visible context interaction was the employee
+report renderer. Odoo's `timesheet_action_from_employee` in
+`addons/hr_timesheet/views/hr_timesheet_views.xml:547-565` scopes analytic
+lines to `active_id`, while the shared `timesheet_report` binding provides the
+source report contract. Core3 already persisted guarded employee report runs,
+but its employee Print action stopped at the generic browser print surface.
+
+Core3 now keeps the employee report layout and API separate by `page.id` at
+`/timesheets/employee-report-preview`. The preview reads the durable,
+company-scoped employee report run and its persisted entry lines, exposes a
+read-only summary plus line list, and retains Print/Back actions. The existing
+employee report mutation remains the durable write boundary for actor, company,
+stale, missing-employee, and empty-employee guards; preview reads fail closed
+outside the active employee/company and support deterministic empty fixtures.
+
+Focused coverage is
+`test/timesheets_employee_report_preview.integration.test.ts` (4 tests / 23
+expectations), including source binding, page/API separation, migration replay,
+file-backed restart, persisted lines, and scope guards. Authenticated Core3
+desktop/mobile captures follow employee Print to the preview and render three
+persisted lines without browser/request failures or horizontal overflow.
+Authenticated Odoo `/odoo/employees/3` shows the known empty/new-entry-only
+employee Timesheets state and no visible Print/report action, so the source
+report execution is recorded as an exact blocker rather than parity. Full
+route/action comparison, QWeb/PDF equivalence, and module sign-off remain open.
+
 ## 2026-09-20 `TIMESHEET-TASK-REPORT-PREVIEW`
 
 The smallest remaining browser-visible report interaction was Odoo's
