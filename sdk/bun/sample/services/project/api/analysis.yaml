@@ -1,0 +1,16 @@
+page: { id: project-analysis }
+
+datasources:
+  - id: project_analysis_totals
+    single: true
+    permission: project.read
+    error_states:
+      forbidden: { status: 403, code: PROJECT_ANALYSIS_FORBIDDEN, message: You do not have permission to view Project Analysis. }
+      transport_error: { status: 503, code: PROJECT_ANALYSIS_UNAVAILABLE, message: Project analysis is temporarily unavailable. }
+    query: "SELECT COUNT(*) AS project_count, COUNT(*) FILTER (WHERE state = 'Active') AS active_count, COUNT(*) FILTER (WHERE state = 'Completed') AS completed_count, COALESCE(SUM(planned_hours), 0) AS planned_hours, COALESCE(SUM(spent_hours), 0) AS spent_hours FROM projects WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+  - id: project_analysis_states
+    permission: project.read
+    error_states:
+      forbidden: { status: 403, code: PROJECT_ANALYSIS_FORBIDDEN, message: You do not have permission to view Project Analysis. }
+      transport_error: { status: 503, code: PROJECT_ANALYSIS_UNAVAILABLE, message: Project analysis is temporarily unavailable. }
+    query: "SELECT state AS category, COUNT(*) AS project_count FROM projects WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END GROUP BY state ORDER BY project_count DESC"

@@ -1,13 +1,5 @@
 title: Project Analysis
-page: { id: project-analysis, breadcrumb: [Services, Project, Analysis], auth: { require: [project.read] } }
-datasources:
-  - id: project_analysis_totals
-    single: true
-    permission: project.read
-    query: "SELECT COUNT(*) AS project_count, COUNT(*) FILTER (WHERE state = 'Active') AS active_count, COUNT(*) FILTER (WHERE state = 'Completed') AS completed_count, COALESCE(SUM(planned_hours), 0) AS planned_hours, COALESCE(SUM(spent_hours), 0) AS spent_hours FROM projects"
-  - id: project_analysis_states
-    permission: project.read
-    query: "SELECT state AS category, COUNT(*) AS project_count FROM projects GROUP BY state ORDER BY project_count DESC"
+page: { id: project-analysis, route: /project-analysis, breadcrumb: [Services, Project, Analysis], auth: { require: [project.read] } }
 components:
   - type: StatRow
     source: project_analysis_totals

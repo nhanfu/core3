@@ -2,6 +2,15 @@
 
 Status: in progress
 
+## 2026-09-20 Project Analysis contract and route repair
+
+- Restored the documented `/project-analysis` reporting route and menu entry,
+  moved its totals/status datasources into a page-ID-matched API fragment, and
+  declared permission, empty, and transport-error behavior.
+- Focused coverage verifies route discovery, reporting-menu ownership,
+  deterministic project aggregates, and the declared failure states. The full
+  Project module browser comparison gate remains open.
+
 This is an implementation gate for the Odoo 19 Project addon. The first
 bounded implementation batch covers the Projects collection, project detail
 with embedded task navigation, My Tasks, and task detail. The broader Project
