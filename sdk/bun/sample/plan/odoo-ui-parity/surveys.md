@@ -1864,3 +1864,27 @@ mobile both redirect to
 `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; port 8072 is unavailable, so no
 authenticated Odoo fixture or parity sign-off is claimed. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CHAR-QUESTION-001/`.
+
+## 2026-09-21 — `SURVEYS-PUBLIC-TEXT-QUESTION-001`
+
+Selected the next uncovered source-backed public question behavior after the
+completed Char slice: Odoo `text_box` multi-line free text. Odoo declares the
+type as “Multiple Lines Text Box”, renders a three-row textarea, stores the
+answer in `value_text_box`, and applies the mandatory answer guard before
+submission. Core3 migration `0.0.38` seeds a separate published Product
+Feedback Survey with a required Core3 `Text` question.
+
+The paired `page.id: surveys` API/page contract preserves `surveys.public`;
+the renderer binds `Text`/`Text Box` to a textarea and the module rejects
+array-shaped values before progress/submit. Focused coverage passes **2/2 with
+23 assertions**; the public/core Surveys regression passes **81/81 with 756
+assertions**. Audit passes with **718 pages, 727 routes, and 1382 datasources**;
+scoped ESLint and diff-check pass.
+
+The custom module's delegate runtime binding was repaired and its authenticated
+page API returned 200. The isolated browser topology then reported
+`Service host unavailable`, while anonymous public API access returned 401, so
+Core3 desktop/mobile visual sign-off is conditional. Odoo redirects both
+viewports to `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; port 8072 is unavailable.
+No Odoo fixture or parity sign-off is claimed. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TEXT-QUESTION-001/`.

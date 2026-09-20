@@ -69,6 +69,8 @@ actions:
   # operation and enforced before progress/submit mutates answer_data.
   # Odoo char_box email and length validation uses the same durable public
   # question metadata and remains enforced before progress/submit mutation.
+  # Odoo text_box answers are scalar multi-line values; the paired public
+  # route preserves them in answer_data before progress/submit mutation.
   # Module validation runs before progress or submit mutates rows.
   - id: public_survey_start
     type: server_form

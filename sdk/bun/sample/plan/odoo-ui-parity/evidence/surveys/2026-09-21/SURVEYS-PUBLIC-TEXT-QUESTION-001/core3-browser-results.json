@@ -1,0 +1,28 @@
+{
+  "feature": "SURVEYS-PUBLIC-TEXT-QUESTION-001",
+  "runtime": {
+    "backend": "http://127.0.0.1:3394",
+    "frontend": "http://127.0.0.1:3395",
+    "authenticatedPageApi": {
+      "route": "/api/pages/surveys",
+      "status": 200,
+      "note": "Surveys delegate runtime binding repaired before this probe."
+    },
+    "desktop": {
+      "viewport": [1440, 900],
+      "status": "blocked",
+      "blocker": "Isolated browser topology reported Service host unavailable before the authenticated page rendered."
+    },
+    "mobile": {
+      "viewport": [390, 844],
+      "status": "blocked",
+      "blocker": "Isolated browser topology reported Service host unavailable before the authenticated page rendered."
+    },
+    "publicApi": {
+      "anonymousStatus": 401,
+      "anonymousBody": { "error": "Unauthorized", "code": "UNAUTHORIZED" },
+      "note": "Public API remains behind the host bearer-auth boundary in this runtime probe."
+    },
+    "signoff": false
+  }
+}

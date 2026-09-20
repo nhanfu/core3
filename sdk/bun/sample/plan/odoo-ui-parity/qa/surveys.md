@@ -1108,3 +1108,28 @@ Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-NUMERI
   authenticated Char fixture or paired Odoo sign-off is claimed.
 
 Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CHAR-QUESTION-001/`.
+
+## Bounded QA run: Public Text question — `SURVEYS-PUBLIC-TEXT-QUESTION-001`
+
+- Source comparison: Odoo `text_box` is the Multiple Lines Text Box, rendered
+  as a three-row textarea and persisted as `value_text_box`; mandatory empty
+  answers are rejected before submission. Core3 migration `0.0.38` persists a
+  deterministic required `Text` fixture.
+- YAML/UI contract: `pages/surveys.yaml` and `api/surveys.yaml` remain separate
+  through `page.id: surveys`; the public mutation actions retain
+  `surveys.public`.
+- Focused verification: **2 passed / 23 assertions**; public/core Surveys
+  regression: **81 passed / 756 assertions**; audit **718 pages, 727 routes,
+  1382 datasources**; scoped ESLint and diff-check pass.
+- Persistence/guards: array-shaped and missing values return 422 without
+  mutation; newline text survives file-backed reopen; concurrent same-key
+  submit produces one response/count; a wrong token returns 404.
+- Core3 authenticated `/api/pages/surveys` returns 200 after the module runtime
+  binding repair, but the isolated browser topology reports `Service host
+  unavailable`; anonymous public API access returns 401. No visual sign-off is
+  claimed.
+- Odoo desktop/mobile redirect to
+  `/web/login?redirect=%2Fodoo%2Fsurveys%3F`; port 8072 is unavailable. No
+  authenticated Text fixture or paired Odoo sign-off is claimed.
+
+Evidence: `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TEXT-QUESTION-001/`.

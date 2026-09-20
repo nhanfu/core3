@@ -737,3 +737,22 @@ admin and public probes pass with no browser failures or overflow. Odoo remains
 conditional: both viewports redirect to the login shell and port 8072 refuses
 connections. Evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CHAR-QUESTION-001/`.
+
+## 2026-09-21 public Text question additions
+
+Feature ID: `SURVEYS-PUBLIC-TEXT-QUESTION-001`.
+
+Odoo `text_box` multi-line response semantics are implemented as a durable
+published Core3 `Text` fixture. The paired page/API contract remains separate;
+the renderer uses a three-row textarea, public progress/submit retain
+`surveys.public`, arrays are rejected before mutation, and required newline
+text persists across file-backed restart and idempotent concurrent submit.
+
+Focused coverage is **2 passed / 23 assertions** and the public/core Surveys
+regression is **81 passed / 756 assertions**. Audit is **718 pages, 727 routes,
+1382 datasources**; scoped ESLint and diff-check pass. Authenticated page API
+binding returns 200, but the isolated browser topology reports `Service host
+unavailable` before visual rendering and anonymous public API access returns
+401. Odoo remains conditional because both viewports redirect to login and port
+8072 refuses connections. Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TEXT-QUESTION-001/`.

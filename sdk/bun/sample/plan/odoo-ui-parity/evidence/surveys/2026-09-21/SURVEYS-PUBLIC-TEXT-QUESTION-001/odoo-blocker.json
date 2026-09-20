@@ -1,0 +1,19 @@
+{
+  "feature": "SURVEYS-PUBLIC-TEXT-QUESTION-001",
+  "target": "http://127.0.0.1:8069/odoo/surveys",
+  "desktop": {
+    "status": 200,
+    "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+    "bodyPrefix": "<!DOCTYPE html><html style=\"height: 100%;\" dir=\"ltr\">"
+  },
+  "mobile": {
+    "status": 200,
+    "url": "http://127.0.0.1:8069/web/login?redirect=%2Fodoo%2Fsurveys%3F",
+    "bodyPrefix": "<!DOCTYPE html><html style=\"height: 100%;\" dir=\"ltr\">"
+  },
+  "proxy8072": {
+    "status": "connection-refused-or-unavailable",
+    "error": "curl: (7) Failed to connect to 127.0.0.1 port 8072 after 0 ms: Could not connect to server"
+  },
+  "signoff": false
+}

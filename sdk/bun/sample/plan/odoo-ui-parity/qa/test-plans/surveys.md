@@ -471,3 +471,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-CHAR-QUESTION-001/`.
+
+## 2026-09-21 public Text question additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-043 | public question | Text Box metadata and renderer | Return a durable required Text question through the paired page/API contract and render a three-row textarea | `source-comparison.md`, focused test | pass |
+| SURVEYS-WF-040 | restart/idempotency | Invalid → missing → multiline text → reopen → concurrent submit | Reject non-scalar/missing values without mutation and converge on one durable submitted response after restart | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-042 | token/input guard | Wrong token and malformed Text input | Retain `surveys.public`, reject array-shaped input, and return 404 for a wrong answer token | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-041 | authenticated responsive/reference | Textarea desktop/mobile + Odoo comparison | Record authenticated page binding and exact Core3 service-host/Odoo login/proxy blockers; no sign-off until visual routes are available | `core3-browser-results.json`, `odoo-blocker.json` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-TEXT-QUESTION-001/`.

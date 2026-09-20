@@ -23,6 +23,8 @@ page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { 
 # in the same token-scoped renderer; the page remains layout-only.
 # Char questions consume validation_email and validation_length_min/max from
 # the paired API contract; no validation state is owned by this page fragment.
+# Text Box questions consume the paired question_type and render a three-row
+# textarea; answer persistence and mandatory guards remain API-owned.
 components:
   - type: ListView
     variant: odoo

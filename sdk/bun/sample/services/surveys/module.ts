@@ -18,6 +18,10 @@ export default class SurveysModule implements ModuleLifecycle {
     this.getDelegate(context).install(context);
   }
 
+  getRuntimeContext() {
+    return this.delegate?.getRuntimeContext() || null;
+  }
+
   async load(context: ModuleContext): Promise<void> {
     const delegate = this.getDelegate(context);
     await delegate.load(context);
@@ -639,6 +643,9 @@ export default class SurveysModule implements ModuleLifecycle {
         if (values.length !== 1 || invalidEmail || invalidLength) {
           invalid.push(String(question.question_text || question.id));
         }
+      }
+      if (['Text', 'Text Box'].includes(questionType) && Array.isArray(value)) {
+        invalid.push(String(question.question_text || question.id));
       }
       if (['Numerical', 'Number'].includes(questionType)) {
         const numericValue = Number(values[0]);
