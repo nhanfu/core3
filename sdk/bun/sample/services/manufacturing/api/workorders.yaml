@@ -22,6 +22,10 @@ datasources:
         AND (:state IS NULL OR w.state = :state)
         AND (:workcenter IS NULL OR w.workcenter = :workcenter)
         AND (:late IS NULL OR w.late = CAST(:late AS BOOLEAN))
+        AND ((COALESCE(:search_default_ready, FALSE) = FALSE AND COALESCE(:search_default_progress, FALSE) = FALSE AND COALESCE(:search_default_blocked, FALSE) = FALSE)
+          OR (w.state = 'Ready' AND COALESCE(:search_default_ready, FALSE) = TRUE)
+          OR (w.state = 'Progress' AND COALESCE(:search_default_progress, FALSE) = TRUE)
+          OR (w.state = 'Blocked' AND COALESCE(:search_default_blocked, FALSE) = TRUE))
       ORDER BY w.planned_date, w.sequence, w.id
 actions:
   - id: view_mrp_workorder

@@ -35,6 +35,7 @@ describe('Manufacturing Work Orders parity slice', () => {
     expect(listPage.page).toMatchObject({ id: 'manufacturing-workorders', route: '/workorders' });
     expect(detailPage.page).toMatchObject({ id: 'manufacturing-workorder-detail', route: '/workorders/detail' });
     expect(listPage.components[0]).toMatchObject({ source: 'mrp_workorders', row_open_action: 'view_mrp_workorder', default_group_by: 'workcenter' });
+    expect(listPage.components[0].default_filters).toEqual({ search_default_ready: true, search_default_progress: true, search_default_blocked: true });
     expect(listPage.components[0].views.map((view: any) => view.id)).toEqual(['list', 'kanban', 'form', 'calendar', 'pivot', 'graph']);
     expect(detailPage.components[0]).toMatchObject({ type: 'OdooFormView', source: 'mrp_workorder_detail' });
     expect(discovered.pageDatasources.get('manufacturing-workorders')).toEqual(['mrp_workorder_states', 'mrp_workorders']);
@@ -52,6 +53,7 @@ describe('Manufacturing Work Orders parity slice', () => {
     const params = { q: null, state: null, workcenter: null, late: null, fixture_state: null };
 
     expect((await repository.querySource(list, params, 0, 50)).data.map((row: any) => row.state).sort()).toEqual(['Blocked', 'Cancelled', 'Finished', 'Finished', 'Progress', 'Ready', 'Waiting']);
+    expect((await repository.querySource(list, { ...params, search_default_ready: true, search_default_progress: true, search_default_blocked: true }, 0, 50)).data.map((row: any) => row.state).sort()).toEqual(['Blocked', 'Progress', 'Ready']);
     expect((await repository.querySource(list, { ...params, q: 'Cut panels' }, 0, 50)).data).toMatchObject([{ id: 'wo-progress-001', production_name: 'MO/2026/0003' }]);
     expect((await repository.querySource(list, { ...params, state: 'Blocked' }, 0, 50)).data).toMatchObject([{ id: 'wo-blocked-001', late: true, blocked_reason: 'Material shortage' }]);
     expect((await repository.querySource(list, { ...params, fixture_state: 'empty' }, 0, 50)).data).toEqual([]);

@@ -2,6 +2,18 @@
 
 Status: in-progress (live reference addon is available; full parity remains incomplete)
 
+## 2026-09-20 Work Orders action-default repair
+
+- Added the Odoo action-649 default search flags to the Work Orders page:
+  Ready, In Progress, and Blocked are selected on first load through the
+  declarative `search_default_ready`, `search_default_progress`, and
+  `search_default_blocked` filters. The API applies those flags server-side;
+  an explicit empty flag set retains the complete state inventory for other
+  callers.
+- Focused Work Orders coverage now verifies the default result set alongside
+  the existing six-state fixtures and workflow/CAS tests. Browser comparison
+  evidence for this action remains an open gate.
+
 ## 2026-09-13 Work Orders Analysis transport-error UI repair
 
 - Traced the active route payload: `PageRoot` received the declared 503

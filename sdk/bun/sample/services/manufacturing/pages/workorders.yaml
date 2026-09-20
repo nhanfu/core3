@@ -8,6 +8,7 @@ components:
     filters:
       - { field: state, label: Status, options_source: mrp_workorder_states }
       - { field: late, label: Late, options: [{ id: 'true', label: Late }, { id: 'false', label: On schedule }] }
+    default_filters: { search_default_ready: true, search_default_progress: true, search_default_blocked: true }
     group_by: [{ field: workcenter, label: Work Center }, { field: production_name, label: Manufacturing Order }, { field: state, label: Status }]
     default_group_by: workcenter
     view_navigation: tabs
