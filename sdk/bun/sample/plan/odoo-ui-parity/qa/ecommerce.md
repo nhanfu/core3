@@ -1,5 +1,27 @@
 # ecommerce QA ledger
 
+## Wishlist Session Merge (`ECOM-CATALOG-WISHLIST-MERGE-001`, 2026-09-21)
+
+- Odoo source/login hook: pass. `product_wishlist.py` removes duplicate
+  session products, assigns remaining rows to the logged-in partner, and pops
+  `wishlist_ids`; `res_users.py` invokes the merge during login.
+- Core3 lifecycle: pass for this bounded contract. Migration 064 provides a
+  deterministic anonymous session fixture; the separate wishlist API action
+  validates permission, company/customer/session ownership, and optimistic
+  row-version state, transfers unique published items, consumes the session,
+  and safely replays after consumption. The action is the Ecommerce-owned
+  contract; shared auth event wiring remains open.
+- Focused verification: `bun test
+  ./test/ecommerce_wishlist_merge.integration.test.ts --timeout 20000` — **3
+  passed, 19 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Auth-event binding, broader actor/browser coverage, and paired Odoo rendering
+  remain gates.
+
 ## Wishlist Lifecycle (`ECOM-CATALOG-WISHLIST-001`, 2026-09-21)
 
 - Odoo source/menu: pass. The supplied `website_sale_wishlist` model enforces

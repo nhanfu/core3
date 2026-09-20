@@ -4,9 +4,29 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `084031b889b6ad3756dd1185dafd20cae3e47eb0` (Payment Token Lifecycle).
+Latest committed bounded slice before this wave: `03d08c26302db0c10d0b07fb73db603c3b8752a3` (Wishlist Lifecycle).
 
-## Current bounded task — `ECOM-CATALOG-WISHLIST-001`
+## Current bounded task — `ECOM-CATALOG-WISHLIST-MERGE-001`
+
+The smallest remaining source-backed wishlist behavior is the supplied Odoo
+login-session merge. Core3 migration 064 seeds a deterministic anonymous
+session containing one item already present in the customer wishlist and one
+unique item. The separate wishlist API now provides the Ecommerce-owned
+`ecommerce.wishlist.merge_session` action with customer/company/anonymous-owner
+guards, optimistic session-version validation, duplicate-safe transfer,
+session consumption, and replay idempotency. The existing wishlist page is
+unchanged and remains joined to the API by `page.id`.
+
+Focused verification: `bun test
+./test/ecommerce_wishlist_merge.integration.test.ts --timeout 20000` — **3
+passed, 19 assertions, 0 failures**. The UI audit, scoped lint, and diff-check
+are commit gates. Authenticated Core3 desktop/mobile capture is blocked by
+unavailable ports 3000/4312/4313; supplied Odoo `/shop` references return exact
+HTTP 404 on ports 8069 and 8073. The shared auth login-event binding, broader
+actor/browser coverage, paired Odoo rendering, and Ecommerce module sign-off
+remain open.
+
+## Completed bounded task — `ECOM-CATALOG-WISHLIST-001`
 
 The smallest remaining source-backed catalog behavior after payment tokens is
 the supplied `website_sale_wishlist` addon. Core3 now persists anonymous and

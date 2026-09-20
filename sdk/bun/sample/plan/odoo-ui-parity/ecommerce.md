@@ -1,6 +1,35 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded wishlist lifecycle slice; module sign-off remains open)
+Status: qa-in-progress (bounded wishlist session-merge slice; module sign-off remains open)
+
+## Bounded feature — Wishlist Session Merge (`ECOM-CATALOG-WISHLIST-MERGE-001`)
+
+Odoo source comparison: `website_sale_wishlist/models/product_wishlist.py`
+defines `_check_wishlist_from_session()`. The login hook in
+`website_sale_wishlist/models/res_users.py` calls it; duplicate session products
+are unlinked, remaining session products are assigned to the logged-in partner,
+and `request.session['wishlist_ids']` is popped.
+
+Core3 comparison: migration 064 adds deterministic anonymous session data with
+one duplicate and one unique published product. The separate wishlist API
+contract now exposes a permissioned `ecommerce.wishlist.merge_session` action
+joined to `page.id: ecommerce-wishlist`. It validates company/customer scope,
+the anonymous session owner, and an optimistic session row version; it creates
+the customer owner if absent, preserves one product/variant per customer
+wishlist, removes the consumed session rows, and replays safely after the
+session has already been consumed. The action is the Ecommerce-owned consumer
+contract; binding it to the shared auth login event remains an auth-boundary
+follow-up and is not claimed here.
+
+Focused tests cover Odoo login-hook tracing, page/API separation, migration
+replay, wrong-company and stale-session rejection, duplicate removal, unique
+item transfer, idempotent replay, and DuckDB restart persistence in
+`test/ecommerce_wishlist_merge.integration.test.ts`. Core3 authenticated
+desktop/mobile capture is blocked because ports 3000, 4312, and 4313 are not
+available; both supplied Odoo references return exact HTTP 404 for `/shop`.
+Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-wishlist-merge-001/`. This is a
+bounded verified slice; Ecommerce remains unsigned off.
 
 ## Bounded feature — Wishlist Lifecycle (`ECOM-CATALOG-WISHLIST-001`)
 

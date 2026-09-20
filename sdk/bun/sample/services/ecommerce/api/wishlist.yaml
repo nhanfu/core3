@@ -91,3 +91,35 @@ actions:
         - { query: "DELETE FROM ecommerce_wishlist_items WHERE id = :id AND wishlist_id = :wishlist_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PUBLIC_WISHLIST_STALE, message: This public wishlist item changed before removal. }
         - { query: "UPDATE ecommerce_wishlists SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :wishlist_id" }
       result: { query: "SELECT TRUE AS removed, :id AS id" }
+  - id: merge_ecommerce_wishlist_session
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.wishlist.merge_session
+    handler: yaml_mutation
+    operation: update
+    refresh: [ecommerce_wishlist_items]
+    mutation:
+      required: [session_wishlist_id, customer_wishlist_id, customer_id, company_name, expected_session_row_version]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR :company_name = :current_company_name", status: 403, code: ECOMMERCE_WISHLIST_COMPANY_SCOPE_REQUIRED, message: Wishlist belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE :session_wishlist_id <> :customer_wishlist_id", status: 422, code: ECOMMERCE_WISHLIST_MERGE_IDS_INVALID, message: Session and customer wishlists must be different. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM ecommerce_customers WHERE id = :customer_id AND active = TRUE AND company_name = :company_name)", status: 403, code: ECOMMERCE_WISHLIST_CUSTOMER_SCOPE_REQUIRED, message: Customer is not available in this company. }
+        - { query: "SELECT 1 AS ok WHERE (EXISTS (SELECT 1 FROM ecommerce_wishlists WHERE id = :session_wishlist_id AND active = TRUE AND owner_type = 'anonymous' AND session_key = :session_wishlist_id AND company_name = :company_name AND row_version = :expected_session_row_version) OR NOT EXISTS (SELECT 1 FROM ecommerce_wishlists WHERE id = :session_wishlist_id))", status: 409, code: ECOMMERCE_WISHLIST_MERGE_STALE, message: This session wishlist changed or was already consumed. Reload before merging. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_wishlists WHERE id = :customer_wishlist_id) OR EXISTS (SELECT 1 FROM ecommerce_wishlists WHERE id = :customer_wishlist_id AND active = TRUE AND owner_type = 'customer' AND customer_id = :customer_id AND company_name = :company_name)", status: 403, code: ECOMMERCE_WISHLIST_OWNERSHIP_REQUIRED, message: This customer wishlist belongs to another customer or company. }
+      steps:
+        - { query: "INSERT INTO ecommerce_wishlists(id, owner_type, customer_id, customer_name, customer_email, company_name, website_id, currency, active) VALUES(:customer_wishlist_id, 'customer', :customer_id, COALESCE(NULLIF(:customer_name, ''), 'Customer'), NULLIF(:customer_email, ''), :company_name, COALESCE(NULLIF(:website_id, ''), 'core3-main-website'), COALESCE(NULLIF(:currency, ''), 'USD'), TRUE) ON CONFLICT (id) DO NOTHING" }
+        - { query: "INSERT INTO ecommerce_wishlist_items(id, wishlist_id, product_id, variant_id, variant_key, product_name, variant_name, price, company_name, active) SELECT 'ecommerce-wishlist-merge-' || :customer_wishlist_id || '-' || i.product_id || CASE WHEN COALESCE(i.variant_key, '') = '' THEN '' ELSE '-' || i.variant_key END, :customer_wishlist_id, i.product_id, i.variant_id, COALESCE(i.variant_key, ''), i.product_name, i.variant_name, i.price, i.company_name, TRUE FROM ecommerce_wishlist_items i JOIN ecommerce_products p ON p.id = i.product_id WHERE i.wishlist_id = :session_wishlist_id AND i.active = TRUE AND p.active = TRUE AND p.is_published = TRUE AND p.company_name = :company_name ON CONFLICT (wishlist_id, product_id, variant_key) DO NOTHING" }
+        - { query: "UPDATE ecommerce_wishlists SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :customer_wishlist_id AND EXISTS (SELECT 1 FROM ecommerce_wishlists WHERE id = :session_wishlist_id)" }
+        - { query: "DELETE FROM ecommerce_wishlist_items WHERE wishlist_id = :session_wishlist_id" }
+        - { query: "DELETE FROM ecommerce_wishlists WHERE id = :session_wishlist_id" }
+      result: { query: "SELECT w.id, w.row_version, w.owner_type, w.customer_id, w.company_name, COUNT(i.id) AS item_count FROM ecommerce_wishlists w LEFT JOIN ecommerce_wishlist_items i ON i.wishlist_id = w.id AND i.active = TRUE WHERE w.id = :customer_wishlist_id GROUP BY w.id, w.row_version, w.owner_type, w.customer_id, w.company_name" }
+    fields:
+      - { field: session_wishlist_id, label: Session Wishlist, type: hidden, required: true }
+      - { field: customer_wishlist_id, label: Customer Wishlist, type: hidden, required: true }
+      - { field: customer_id, label: Customer, type: hidden, required: true }
+      - { field: customer_name, label: Customer Name, type: hidden }
+      - { field: customer_email, label: Customer Email, type: hidden }
+      - { field: company_name, label: Company, type: hidden, required: true }
+      - { field: expected_session_row_version, label: Session Version, type: hidden, required: true }
+      - { field: website_id, label: Website, type: hidden, default: core3-main-website }
+      - { field: currency, label: Currency, type: hidden, default: USD }

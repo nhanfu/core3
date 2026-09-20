@@ -1,0 +1,32 @@
+version: 0.0.64
+kind: data
+description: deterministic anonymous wishlist merge fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_wishlists (
+        id, row_version, owner_type, session_key, customer_name,
+        company_name, website_id, currency, active
+      ) VALUES (
+        'ecommerce-wishlist-anon-merge-demo', 1, 'anonymous',
+        'ecommerce-wishlist-anon-merge-demo', 'Guest Shopper',
+        'My Company', 'core3-main-website', 'USD', TRUE
+      ) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO ecommerce_wishlist_items (
+        id, row_version, wishlist_id, product_id, variant_id, variant_key,
+        product_name, variant_name, price, company_name, active
+      ) VALUES
+        ('ecommerce-wishlist-anon-merge-demo-mug', 1,
+         'ecommerce-wishlist-anon-merge-demo', 'ecommerce-product-mug', NULL, '',
+         'Core3 Ceramic Mug', NULL, 18, 'My Company', TRUE),
+        ('ecommerce-wishlist-anon-merge-demo-lamp', 1,
+         'ecommerce-wishlist-anon-merge-demo', 'ecommerce-product-lamp', NULL, '',
+         'Desk Lamp', NULL, 46.50, 'My Company', TRUE)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_wishlist_items WHERE wishlist_id = 'ecommerce-wishlist-anon-merge-demo';
+      DELETE FROM ecommerce_wishlists WHERE id = 'ecommerce-wishlist-anon-merge-demo';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
