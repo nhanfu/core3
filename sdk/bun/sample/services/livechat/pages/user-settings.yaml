@@ -1,0 +1,21 @@
+title: Live Chat User Settings
+page: { id: livechat-user-settings, route: /livechat/user-settings, breadcrumb: [Website, Live Chat, Configuration, User Settings], auth: { require: [livechat.read] } }
+
+components:
+  - type: SettingsView
+    id: livechat-user-settings-view
+    source: livechat_user_settings
+    title: Live Chat User Settings
+    save_action: save_livechat_user_settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: livechat
+        label: Live Chat
+        icon: message
+        sections:
+          - title: Operator profile
+            fields:
+              - { field: livechat_name, label: Livechat Name, description: Name shown to visitors when you answer a Live Chat conversation., type: text }
+              - { field: spoken_languages, label: Spoken Languages, description: Comma-separated languages you can use with visitors., type: text }
+              - { field: expertise_names, label: Expertise, description: Comma-separated expertise areas used for conversation routing., type: text }
+              - { field: livechat_enabled, label: Available for Live Chat, description: Allow Live Chat channels to assign conversations to you., type: checkbox }

@@ -1,0 +1,14 @@
+version: 0.0.26
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO livechat_user_settings(id, row_version, livechat_name, spoken_languages, expertise_names, livechat_enabled)
+      VALUES
+        ('user-admin', 1, 'Mitchell Admin', 'English, French', 'Livechat, Support', TRUE),
+        ('user-disp', 1, 'Demo Operator', 'English', 'Support', TRUE);
+    down: DELETE FROM livechat_user_settings WHERE id IN ('user-admin', 'user-disp');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,20 @@
+version: 0.0.25
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_user_settings (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        livechat_name VARCHAR NOT NULL,
+        spoken_languages VARCHAR NOT NULL DEFAULT '',
+        expertise_names VARCHAR NOT NULL DEFAULT '',
+        livechat_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    down: DROP TABLE IF EXISTS livechat_user_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

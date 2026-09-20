@@ -1,0 +1,30 @@
+page: { id: livechat-user-settings }
+
+datasources:
+  - id: livechat_user_settings
+    single: true
+    permission: livechat.read
+    error_states:
+      unauthorized: { status: 401, code: LIVECHAT_USER_SETTINGS_UNAUTHORIZED, message: Sign in to view Live Chat user settings. }
+      forbidden: { status: 403, code: LIVECHAT_USER_SETTINGS_FORBIDDEN, message: You do not have permission to view Live Chat user settings. }
+      transport_error: { status: 503, code: LIVECHAT_USER_SETTINGS_UNAVAILABLE, message: Live Chat user settings are temporarily unavailable. }
+    query: "SELECT id, row_version, livechat_name, spoken_languages, expertise_names, livechat_enabled FROM livechat_user_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND id = COALESCE(:current_user_id, 'user-admin')"
+
+actions:
+  - id: save_livechat_user_settings
+    type: server
+    permission: livechat.write
+    action: im_livechat.user_settings.update
+    handler: yaml_mutation
+    operation: update
+    mutation:
+      operation: update
+      table: livechat_user_settings
+      key_field: id
+      fields: [livechat_name, spoken_languages, expertise_names, livechat_enabled]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_user_settings WHERE id = :id", status: 404, code: LIVECHAT_USER_SETTINGS_NOT_FOUND, message: Live Chat user settings were not found. }
+        - { query: "SELECT id FROM livechat_user_settings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_USER_SETTINGS_STALE, message: Live Chat user settings changed elsewhere. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:livechat_name AS VARCHAR))) BETWEEN 1 AND 80 AND LENGTH(CAST(:spoken_languages AS VARCHAR)) <= 255 AND LENGTH(CAST(:expertise_names AS VARCHAR)) <= 255 AND TRY_CAST(:livechat_enabled AS BOOLEAN) IS NOT NULL", status: 422, code: LIVECHAT_USER_SETTINGS_VALUES_INVALID, message: Enter a Livechat Name and keep language and expertise lists within 255 characters. }
+      result: { query: "SELECT * FROM livechat_user_settings WHERE id = :id" }

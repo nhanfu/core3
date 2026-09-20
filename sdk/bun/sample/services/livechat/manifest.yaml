@@ -29,6 +29,7 @@ menu:
         - { path: /livechat/canned-responses, label: Canned Responses, icon: message, permission: livechat.read }
         - { path: /livechat/tags, label: Tags, icon: tag, permission: livechat.read }
         - { path: /livechat/expertise, label: Expertise, icon: users, permission: livechat.read }
+        - { path: /livechat/user-settings, label: User Settings, icon: settings, permission: livechat.read }
         - { path: /livechat/chatbots, label: Chatbots, icon: bot, permission: livechat.manage }
     - id: technical
       label: Technical
