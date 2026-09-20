@@ -205,3 +205,41 @@ verified repaired and now has a focused regression guard. Surveys remains
 conditional pending an installed Odoo visual reference and wider module
 acceptance/actor coverage; repository-wide red is attributable to other
 owners' concurrent CRM/Ecommerce changes.
+
+## Bounded QA run: Authenticated actor mutation matrix — `SURVEYS-ACTOR-MATRIX-001`
+
+- Core3 source/action trace: Odoo's Survey form Questions-tab mutation is
+  represented by the `survey-detail` page and its separate
+  `surveys.questions.create_inline` API action, guarded by `surveys.write`.
+- Fresh authenticated Core3 browser probes passed for Administrator desktop
+  1440x1000 and mobile 390x844. A question created on desktop persisted and
+  rendered at sequence 8; the mobile mutation persisted and rendered at
+  sequence 9. Both probes recorded zero page errors, failed requests, HTTP
+  errors, and horizontal overflow.
+- Fleet mobile `/surveys` returned HTTP 403 with
+  `Requires permission: surveys.read`; anonymous mobile navigation redirected
+  to `/auth/login?redirect=%2Fsurveys`. These boundaries disclosed no Survey
+  data.
+- Focused Surveys verification remains green: the current full Surveys glob
+  is **45 passed, 0 failed, 374 assertions** across 8 files, and the migration
+  rollback/replay subset is **4 passed, 15 assertions**. Scoped ESLint and
+  `git diff --check` are run for the owned changes below.
+- The full repository regression completed with **1,330 passed, 66 failed,
+  12,103 assertions** across 1,396 tests in 420 files. The failures are
+  dominated by concurrent page definitions failing discovery because filter
+  options use disallowed `value` fields and missing string `id`s, plus shared
+  Inventory migrations failing DuckDB with `Adding columns with constraints
+  not yet supported`; concurrent CRM fixture-order expectations also remain
+  red. `Surveys Delete action parity` appears in the full-run red list because
+  it encountered the shared discovery failure, but the isolated Surveys glob
+  is green and no Surveys-owned failure reproduced in the focused run.
+- Authenticated Odoo desktop/mobile probes reached the local server, but the
+  reference `core3_reference` database has Surveys uninstalled and
+  `/odoo/surveys` redirected to Discuss. `odoo-desktop-fallback.png` and
+  `odoo-mobile-fallback.png` are retained as exact blocker evidence; no paired
+  Odoo Survey visual sign-off is claimed.
+
+Disposition: Core3 actor mutation/read boundaries and responsive evidence pass
+for this bounded slice. Surveys remains **qa-in-progress / conditional** and
+unsigned-off pending an installed Odoo Survey reference plus broader public and
+participant acceptance coverage.

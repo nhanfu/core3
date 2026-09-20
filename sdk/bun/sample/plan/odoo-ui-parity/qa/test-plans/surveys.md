@@ -67,6 +67,7 @@ and the published public survey token.
 | SURVEYS-PERM-007 | Survey Manager/Survey User | Live-session results | Manager may open the host results action; result datasources remain `surveys.read` scoped | direct API permission probe and browser actor matrix | partial |
 | SURVEYS-PERM-008 | Survey User | Inline question create | `surveys.write` permits the server-form insert; read-only or absent permission is denied | action contract and mutation guard | pass at contract level |
 | SURVEYS-PERM-009 | Administrator/Fleet | Authenticated regression surface | Admin can read the seeded detail; Fleet receives 403 with no survey disclosure | browser actor matrix | pass |
+| SURVEYS-PERM-010 | Administrator/Fleet/anonymous | Question mutation and protected catalog | Admin mutation persists; Fleet is denied with 403; anonymous navigation redirects to login | `SURVEYS-ACTOR-MATRIX-001` evidence | pass for Core3; Odoo paired comparison blocked |
 
 ## Visual, responsive, and regression cases
 
@@ -80,9 +81,17 @@ and the published public survey token.
 | SURVEYS-UI-006 | Live-session current-question results | 1440x900, 390x844 | Host results page shows current-question cards/chart/lists without overflow | authenticated paired Odoo/Core3 capture | planned |
 | SURVEYS-UI-007 | Survey detail Questions grid | 1440x1000, 390x844 | Add-a-question control, inline row, appended question, and no overflow are visible | authenticated Core3 captures; Odoo fallback limitation recorded | partial |
 | SURVEYS-UI-008 | Migration repair smoke | 1440x1000, 390x844 | Existing authenticated Survey detail remains populated and responsive after migration replay | Core3 Admin captures; Odoo installed-reference blocker recorded | partial |
+| SURVEYS-UI-009 | Authenticated actor matrix | 1440x1000, 390x844 | Admin question mutation and Fleet/anonymous boundaries are visible without request errors or overflow | `SURVEYS-ACTOR-MATRIX-001` evidence; Odoo fallback | partial |
 
 ## Exit criteria
 
 - Every current Surveys route/action and public boundary has a planned case.
 - Full module sign-off still requires paired Odoo comparison, public-flow
   interaction evidence, mutation actor matrix, and persistence after restart.
+
+## 2026-09-20 actor-matrix execution
+
+`SURVEYS-ACTOR-MATRIX-001` completes the Core3 actor mutation/read boundary
+and fresh desktop/mobile probe for the current question workflow. It does not
+close the Odoo visual gate: the authenticated reference database redirects
+`/odoo/surveys` to Discuss because the Surveys addon is uninstalled.

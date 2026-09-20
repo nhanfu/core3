@@ -74,3 +74,17 @@ alongside authenticated Odoo desktop/mobile fallback evidence, is recorded in
 the feature evidence directory. The gate repair is complete; module status
 remains **qa-in-progress / conditional**, with no Odoo Surveys visual sign-off
 because the live reference database is uninstalled.
+
+## 2026-09-20 — `SURVEYS-ACTOR-MATRIX-001`
+
+Completed the next bounded lifecycle check after the rollback gate: the
+authenticated Administrator/Fleet/anonymous actor mutation matrix around
+Survey-detail inline question creation. Admin created and reloaded durable
+questions from fresh desktop and mobile browsers; Fleet was denied the
+catalog with 403 and anonymous navigation redirected to login. Service-level
+CRUD, permission, and restart coverage remains green. Full repository
+regression was rerun, with only concurrent invalid page-filter YAML and
+Inventory DuckDB migration failures outside Surveys. Odoo was authenticated
+but Surveys is uninstalled in `core3_reference`, so desktop/mobile fallback
+captures are recorded and no paired Odoo sign-off is claimed. Status remains
+**qa-in-progress / conditional**.

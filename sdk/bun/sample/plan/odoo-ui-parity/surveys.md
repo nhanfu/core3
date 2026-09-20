@@ -1030,3 +1030,34 @@ CRM/Ecommerce expectations caused by concurrent owner changes. The current
 Odoo reference database remains authenticated but has Surveys uninstalled;
 `/odoo/surveys` redirects to Discuss, so the Odoo captures are recorded as
 exact fallback blocker evidence and no paired visual sign-off is claimed.
+
+## Bounded slice: Authenticated actor mutation matrix (2026-09-20)
+
+The next unfinished acceptance slice was the authenticated actor matrix around
+the existing Survey-detail question mutation. This is a bounded source-backed
+workflow check, not a new service surface: Odoo's Survey form Questions tab is
+write-enabled for Survey users, while ordinary users must not read the
+Survey catalog and unauthenticated visitors must enter through the login
+boundary. Core3 keeps the page/API split in `survey-detail` and protects the
+inline mutation with `surveys.write`.
+
+Fresh authenticated Core3 probes completed the real browser mutation at
+1440x1000 and 390x844. Administrator creation persisted across reload (desktop
+sequence 8, mobile sequence 9), with no page/request/HTTP errors or overflow.
+Fleet received a 403 for `/surveys` with no survey disclosure, and anonymous
+mobile navigation redirected to `/auth/login?redirect=%2Fsurveys`. The browser
+captures and exact source comparison are in
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-ACTOR-MATRIX-001/`.
+
+The full Surveys suite and the migration rollback/replay gate remain green.
+The repository regression completed with 1,330 passed and 66 failed across
+1,396 tests; its red results are shared concurrent failures: invalid filter
+option fields in page YAML, Inventory migrations hitting DuckDB's unsupported
+constrained-column ALTER, and concurrent CRM fixture-order expectations. The
+Surveys Delete red entry is the shared page-discovery error and does not
+reproduce in the isolated Surveys glob. Exact counts and disposition are
+recorded in the QA ledger. Authenticated
+Odoo desktop/mobile probes reached the server but `/odoo/surveys` redirected
+to Discuss because Surveys is uninstalled in `core3_reference`; the fallback
+captures are blocker evidence, not paired visual sign-off. Surveys remains
+conditional and unsigned-off.
