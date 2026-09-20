@@ -591,6 +591,20 @@ No aggregate Employees sign-off is claimed.
 Evidence: evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/. No aggregate
 Employees sign-off is claimed.
 
+## EMP-DOCUMENTS-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-031 | Personal Documents presence/filename create/edit/read | pass; ID card and driving-license metadata persist through employee CRUD |
+| EMP-PERM-031 | `employees.write`, current company, row version, filename invariants | pass; invalid, stale, and out-of-company changes reject atomically |
+| EMP-DATA-031 | Migration replay and file-backed restart | pass; deterministic document metadata survives restart without duplicates |
+| EMP-UI-027 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo Documents group passes at both viewports, Core3 is blocked before authentication by concurrent Inventory discovery failure |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-DOCUMENTS-001/`. The bounded Core3
+contract does not claim binary upload; this is recorded alongside the exact
+runtime blocker. No aggregate Employees sign-off is claimed.
+
 ## EMP-BIRTH-IDENTITY-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

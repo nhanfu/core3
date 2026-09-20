@@ -1,0 +1,34 @@
+{
+  "feature": "EMP-DOCUMENTS-001",
+  "generated_at": "2026-09-21",
+  "odoo": [
+    {
+      "authenticated": true,
+      "viewport": { "width": 1440, "height": 900 },
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "visible_labels": ["DOCUMENTS", "ID Card Copy", "Driving License"],
+      "request_failures": [],
+      "page_errors": [],
+      "width": { "scrollWidth": 1440, "clientWidth": 1440 }
+    },
+    {
+      "authenticated": true,
+      "viewport": { "width": 390, "height": 844 },
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "visible_labels": ["DOCUMENTS", "ID Card Copy", "Driving License"],
+      "request_failures": [],
+      "page_errors": [],
+      "width": { "scrollWidth": 390, "clientWidth": 390 }
+    }
+  ],
+  "core3": {
+    "authenticated": false,
+    "blocker": "agent:module employees cannot boot because global page discovery rejects concurrent Inventory components[2].title is not allowed"
+  },
+  "blockers": [
+    "Core3 browser evidence is blocked before authentication by the unrelated Inventory YAML schema error; Employees did not modify Inventory.",
+    "The bounded Core3 representation stores document presence and filename metadata; Odoo binary upload remains an explicit follow-up boundary."
+  ]
+}

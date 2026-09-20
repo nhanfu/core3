@@ -347,6 +347,20 @@ Focused test: `test/employees_birthday_visibility.integration.test.ts` (4
 tests, 22 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-BIRTHDAY-VISIBILITY-001/`.
 
+## EMP-DOCUMENTS-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo Documents binary fields map to paired page/API presence and filename metadata | pass |
+| Employee CRUD | Create and edit ID card and driving-license metadata durably | pass |
+| Permission and scope | Employees write, current company, stale row version, and filename guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic metadata | pass |
+| Browser comparison | Authenticated Odoo desktop/mobile and Core3 attempt | conditional; Odoo passes, Core3 blocked by unrelated Inventory discovery error |
+
+Focused test: `test/employees_documents.integration.test.ts` (4 tests, 23
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-DOCUMENTS-001/`.
+
 ## EMP-LEGAL-NAME-001 test plan (2026-09-21)
 
 | Test | Expected evidence | Result |

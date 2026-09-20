@@ -115,6 +115,9 @@ components:
             - title: Education
               permission: employees.read
               fields: [{ field: certificate, label: Certificate Level }, { field: study_field, label: Field of Study }]
+            - title: Documents
+              permission: employees.read
+              fields: [{ field: id_card, label: ID Card Copy, type: checkbox }, { field: id_card_name, label: ID Card Filename, show_if: "!!state.employee_detail.id_card" }, { field: driving_license, label: Driving License, type: checkbox }, { field: driving_license_name, label: Driving License Filename, show_if: "!!state.employee_detail.driving_license" }]
           component:
             type: LineItemGrid
             source: employee_bank_accounts

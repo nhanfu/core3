@@ -52,8 +52,8 @@ actions:
     mutation:
       operation: insert
       table: employees
-      fields: [employee_number, name, legal_name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, private_email, private_phone, birthday, birthday_public_display]
-      boolean_fields: [birthday_public_display, has_work_permit]
+      fields: [employee_number, name, legal_name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, private_email, private_phone, birthday, birthday_public_display, id_card, id_card_name, driving_license, driving_license_name]
+      boolean_fields: [birthday_public_display, has_work_permit, id_card, driving_license]
       required: [employee_number, name, hire_date]
       defaults: { active: true, state: Draft, marital: single, children: 0, distance_home_work_unit: kilometers }
       generated: [id]
@@ -63,6 +63,8 @@ actions:
         - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employees WHERE LOWER(employee_number) = LOWER(TRIM(CAST(:employee_number AS VARCHAR))))", status: 409, code: EMPLOYEES_RECORD_NUMBER_EXISTS, message: An employee with this number already exists. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, :current_company_name) = :current_company_name", status: 403, code: EMPLOYEES_COMPANY_SCOPE_REQUIRED, message: Employee must belong to the current company. }
         - { query: "SELECT COALESCE(NULLIF(TRIM(CAST(:legal_name AS VARCHAR)), ''), TRIM(CAST(:name AS VARCHAR))) AS legal_name", assign: true }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:id_card AS BOOLEAN), false) = false OR NULLIF(TRIM(CAST(:id_card_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: EMPLOYEES_ID_CARD_DOCUMENT_INVALID, message: An ID card filename is required when a document is present. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:driving_license AS BOOLEAN), false) = false OR NULLIF(TRIM(CAST(:driving_license_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: EMPLOYEES_DRIVING_LICENSE_DOCUMENT_INVALID, message: A driving license filename is required when a document is present. }
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: employee_number, label: Employee number, type: text, required: true }
@@ -96,6 +98,10 @@ actions:
       - { field: work_permit_expiration_date, label: Work Permit Expiration, type: date }
       - { field: has_work_permit, label: Work Permit Document, type: checkbox }
       - { field: work_permit_name, label: Document Filename, type: text }
+      - { field: id_card, label: ID Card Copy, type: checkbox }
+      - { field: id_card_name, label: ID Card Filename, type: text }
+      - { field: driving_license, label: Driving License, type: checkbox }
+      - { field: driving_license_name, label: Driving License Filename, type: text }
       - { field: country_id, label: Nationality (Country), type: text }
       - { field: identification_id, label: Identification No, type: text }
       - { field: ssnid, label: SSN No, type: text }

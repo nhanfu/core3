@@ -483,6 +483,19 @@ Candidate commit: current working tree
   Core3 mobile hits the unrelated Inventory page-schema error. No aggregate
   Employees sign-off is claimed.
 
+## EMP-DOCUMENTS-001 (2026-09-21)
+
+- Selected Odoo's visible Personal → Documents group: `id_card` and
+  `driving_license`.
+- Added migration `20260921180000-048`, deterministic presence/filename
+  fixtures, paired page/API fields, and guarded employee create/edit support.
+  Binary attachment transport remains an explicit follow-up boundary.
+- Focused verification: **4 tests / 23 assertions**; scoped ESLint and
+  `git diff --check` pass. Core3 browser startup is blocked by concurrent
+  Inventory `components[2].title is not allowed` discovery failure.
+- Evidence: `evidence/employees/2026-09-21/EMP-DOCUMENTS-001/`; authenticated
+  Odoo desktop/mobile pass. No aggregate Employees sign-off is claimed.
+
 ## EMP-BIRTHDAY-VISIBILITY-001 (2026-09-21)
 
 - Selected the next uncovered source-backed Personal behavior: Odoo's

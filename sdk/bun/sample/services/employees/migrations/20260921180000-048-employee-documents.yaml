@@ -1,0 +1,34 @@
+version: 0.0.48
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS id_card BOOLEAN;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS id_card_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS driving_license BOOLEAN;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS driving_license_name VARCHAR;
+      UPDATE employees
+      SET id_card = COALESCE(id_card, CASE id
+        WHEN 'employee-demo-001' THEN true
+        WHEN 'employee-demo-002' THEN false
+        WHEN 'employee-demo-003' THEN true
+        ELSE false END),
+          id_card_name = COALESCE(NULLIF(id_card_name, ''), CASE id
+        WHEN 'employee-demo-001' THEN 'Admin User_id_card.pdf'
+        WHEN 'employee-demo-003' THEN 'Tran Bao Long_id_card.pdf'
+        ELSE NULL END),
+          driving_license = COALESCE(driving_license, CASE id
+        WHEN 'employee-demo-001' THEN true
+        ELSE false END),
+          driving_license_name = COALESCE(NULLIF(driving_license_name, ''), CASE id
+        WHEN 'employee-demo-001' THEN 'Admin User_driving_license.pdf'
+        ELSE NULL END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS id_card_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS id_card;
+      ALTER TABLE employees DROP COLUMN IF EXISTS driving_license_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS driving_license;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

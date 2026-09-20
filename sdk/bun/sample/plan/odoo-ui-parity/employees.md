@@ -1505,6 +1505,29 @@ unrelated app-icon 404s are recorded. Evidence is under
 `evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`. This is conditional
 feature evidence, not aggregate Employees sign-off.
 
+## EMP-DOCUMENTS-001: Employee identity documents (2026-09-21)
+
+Odoo's Personal-tab Documents group visibly exposes the binary
+`hr.employee.id_card` and `hr.employee.driving_license` fields. Core3 adds the
+paired page/API fields and durable migration
+`20260921180000-048-employee-documents.yaml`. Because this YAML-first sample
+does not yet have a binary attachment transport, the bounded representation
+stores document presence and filename metadata explicitly; binary upload is not
+claimed or invented.
+
+Create/edit require `employees.write`, current-company scope, optimistic
+row-version concurrency, and a filename invariant whenever either document is
+present. Focused coverage is **4 tests / 23 assertions**, including Odoo source
+mapping, page/API separation, CRUD, invalid/stale/company atomicity, migration
+replay, and file-backed restart.
+
+Authenticated Odoo desktop/mobile captures reach Abigail Peterson's Personal
+Documents group with ID Card Copy and Driving License visible, at 1440x900 and
+390x844 with no browser errors or overflow. Core3 cannot boot because global
+discovery stops on the unrelated Inventory error `components[2].title is not
+allowed`; no Core3 UI pass or aggregate Employees sign-off is claimed. Evidence
+is under `evidence/employees/2026-09-21/EMP-DOCUMENTS-001/`.
+
 ## EMP-CITIZENSHIP-001: Employee citizenship details (2026-09-21)
 
 Odoo's Personal-tab `Citizenship` group exposes nationality, national
