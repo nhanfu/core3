@@ -1576,3 +1576,29 @@ authenticated public API and HTTP 401 for the rendered public route. Odoo
 redirected the public token to `/web/login?redirect=%2Fodoo%3F` at both
 viewports, leaving no installed Survey completion fixture. No browser or
 paired Odoo sign-off is claimed; Surveys remains **qa-in-progress / conditional**.
+
+## Bounded slice: Public Date question (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-DATE-QUESTION-001`.
+
+Odoo's `survey.question.validate_question` dispatches `date` and `datetime`
+questions to `_validate_date`, which parses the submitted value before the
+response is accepted. Core3 implements the narrower `Date` variant: the
+deterministic certification fixture now includes an optional Date question,
+the public renderer uses a custom ISO `YYYY-MM-DD` text control, and the
+token-scoped public progress/submit workflow rejects impossible or malformed
+dates before mutating `survey_responses.answer_data`. The existing `surveys`
+page and `api/surveys.yaml` remain separate and joined through `page.id:
+surveys`; both public mutations retain `surveys.public`.
+
+Focused persistence, permission, invalid-input, concurrency/idempotency, and
+file-backed restart coverage is recorded in
+`test/surveys_public_date_question.integration.test.ts`; evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-DATE-QUESTION-001/`.
+Core3 authenticated login and `/api/auth/me` succeeded at desktop/mobile, but
+the shared frontend registry returned HTTP 404 `API route not found` for the
+authenticated public API and HTTP 200 `Unauthorized` for the rendered route.
+Odoo 8069 redirected the public token to
+`/web/login?redirect=%2Fodoo%3F` at both viewports, so no installed authenticated
+Survey Date fixture was available. No browser or paired Odoo sign-off is
+claimed; Surveys remains **qa-in-progress / conditional**.

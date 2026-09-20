@@ -76,7 +76,7 @@ describe('Surveys migration replay and rollback', () => {
     expect(await repository.query("SELECT table_name FROM information_schema.tables WHERE table_name IN ('surveys', 'survey_responses')")).toEqual([]);
 
     await migrateDatabase(repository, migrations, undefined, table, ['schema', 'data']);
-    expect(await repository.query(`SELECT COUNT(*) AS count FROM ${table}`)).toEqual([{ count: 22 }]);
+    expect(await repository.query(`SELECT COUNT(*) AS count FROM ${table}`)).toEqual([{ count: 23 }]);
     expect(await repository.query("SELECT COUNT(*) AS count FROM surveys WHERE id = 'survey-demo-feedback'")).toEqual([{ count: 1 }]);
     expect(await repository.query("SELECT index_name FROM duckdb_indexes() WHERE index_name IN ('surveys_state_idx', 'survey_questions_survey_idx', 'survey_responses_survey_idx', 'survey_responses_access_token_idx', 'survey_responses_idempotency_key_idx')")).toHaveLength(5);
 

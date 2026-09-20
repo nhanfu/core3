@@ -497,8 +497,20 @@ export default class SurveysModule implements ModuleLifecycle {
       if (['Numerical', 'Number'].includes(questionType) && (values.length !== 1 || !Number.isFinite(Number(values[0])))) {
         invalid.push(String(question.question_text || question.id));
       }
+      if (['Date', 'date'].includes(questionType) && (values.length !== 1 || !this.isIsoDate(values[0]))) {
+        invalid.push(String(question.question_text || question.id));
+      }
     }
     return invalid;
+  }
+
+  private isIsoDate(value: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const parsed = new Date(`${value}T00:00:00Z`);
+    return Number.isFinite(parsed.getTime())
+      && parsed.getUTCFullYear() === Number(value.slice(0, 4))
+      && parsed.getUTCMonth() + 1 === Number(value.slice(5, 7))
+      && parsed.getUTCDate() === Number(value.slice(8, 10));
   }
 
   private async publicScore(service: PublicService, surveyId: string, answers: Record<string, unknown>): Promise<{ score: number; quiz_passed: boolean }> {

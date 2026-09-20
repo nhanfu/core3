@@ -339,3 +339,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-END-MESSAGE-001/`.
+
+## 2026-09-21 public Date question additions
+
+| Test ID | Class | Scenario | Expected result | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-032 | public question | Valid Date answer | Persist an ISO `YYYY-MM-DD` answer through the token-scoped public API | `core3-browser-results.json`, focused test | pass |
+| SURVEYS-WF-029 | restart/idempotency | Date progress → reopen → concurrent submit/replay | Preserve the date across DuckDB reopen and create one submitted response row | `test-results.md`, focused test | pass |
+| SURVEYS-PERM-031 | token/input guard | Invalid date and wrong token | Return 422/404 before mutation while retaining `surveys.public` action boundaries | `source-comparison.md`, focused test | pass |
+| SURVEYS-UI-030 | authenticated responsive/reference | Date question desktop/mobile + Odoo comparison | Capture both viewports and exact shared-runtime/Odoo fixture blockers | `core3-{desktop,mobile}.png`, `odoo-{desktop,mobile}.png` | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-DATE-QUESTION-001/`.

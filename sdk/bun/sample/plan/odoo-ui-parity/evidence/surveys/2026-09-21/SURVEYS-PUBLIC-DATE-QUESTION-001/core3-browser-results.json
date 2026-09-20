@@ -1,0 +1,176 @@
+{
+  "feature": "SURVEYS-PUBLIC-DATE-QUESTION-001",
+  "runtime": "Core3",
+  "surveyToken": "4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+  "viewports": [
+    {
+      "viewport": "1440x900",
+      "login": {
+        "status": 200,
+        "body": {
+          "token": "eyJhbGciOiJFZERTQSIsImtpZCI6ImNsaWVudC0xMzYyNTI0MS0yOTdlLTQ1YjYtYTBjMy1kZTIyNzI5NWY0ZDgiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ1c2VyLWFkbWluIiwiaWQiOiJ1c2VyLWFkbWluIiwiZW1haWwiOiJhZG1pbkB0bXMubG9jYWwiLCJuYW1lIjoiQWRtaW4gVXNlciIsInByZWZlcnJlZF9sYW5nIjoiZW4iLCJicmFuY2hfaWQiOiJicmFuY2gtaGNtIiwidG9rZW5fdHlwZSI6ImNsaWVudF9hY2Nlc3MiLCJqdGkiOiI5YTE3OGEyOS1iZTdlLTRkY2QtOWMzZS1iZDYxM2YyYWZlZDAiLCJzaWQiOiJmMjQ3M2ZmZi0yNTNiLTQzYzItOTVhMS1jNzBhMjE0YjlmNjUiLCJkaWQiOiI0OGFjMDI4Ni01M2U1LTQ1NmEtYTUyMy1kNzVmNzdjYTVjZTgiLCJ1c2VyX3NlY3VyaXR5X3JldmlzaW9uIjowLCJzZXNzaW9uX3JldmlzaW9uIjowLCJpc3MiOiJhdXRoIiwiYXVkIjoiY29yZTMiLCJpYXQiOjE3ODk5MzQwMDQsImV4cCI6MTc4OTk2MjgwNH0.frhMabeYHu2pfDmEdCK_Dm-FNBX_tfnZB8TLWpmlUgQX4cgwYROg6NjKUmGQRuSLkKkj8BNrF7PtDriYf0KhBw",
+          "user": {
+            "sub": "user-admin",
+            "id": "user-admin",
+            "email": "admin@tms.local",
+            "name": "Admin User",
+            "avatar_url": null,
+            "preferred_lang": "en",
+            "branch_id": "branch-hcm",
+            "view_scope": "all",
+            "roles": [
+              "admin"
+            ],
+            "branches": [
+              "branch-hcm"
+            ],
+            "permissions": [],
+            "attributes": {
+              "department_id": "department-04"
+            },
+            "token_type": "client_access",
+            "jti": "9a178a29-be7e-4dcd-9c3e-bd613f2afed0",
+            "sid": "f2473fff-253b-43c2-95a1-c70a214b9f65",
+            "did": "48ac0286-53e5-456a-a523-d75f77ca5ce8",
+            "user_security_revision": 0,
+            "session_revision": 0,
+            "company_id": "company-demo",
+            "company": {
+              "id": "company-demo",
+              "name": "Core3 Demo Company",
+              "short_name": "Core3",
+              "address": "100 Main Street, San Francisco",
+              "currency_code": "USD"
+            },
+            "companies": [
+              {
+                "id": "company-demo",
+                "name": "Core3 Demo Company",
+                "short_name": "Core3",
+                "address": "100 Main Street, San Francisco",
+                "currency_code": "USD",
+                "is_default": true
+              },
+              {
+                "id": "company-vietnam",
+                "name": "Core3 Vietnam Branch",
+                "short_name": "Core3 VN",
+                "address": "1 Nguyen Hue, Ho Chi Minh City",
+                "currency_code": "VND",
+                "is_default": false
+              }
+            ]
+          },
+          "token_type": "Bearer",
+          "expires_in": 28800,
+          "refresh_token": "teec9-H76Fl3GyVrf7ZDpBDr6diRIp674ODsgr6wGnw"
+        },
+        "tokenStored": true
+      },
+      "me": {
+        "status": 200,
+        "body": "{\"sub\":\"user-admin\",\"id\":\"user-admin\",\"email\":\"admin@tms.local\",\"name\":\"Admin User\",\"preferred_lang\":\"en\",\"branch_id\":\"branch-hcm\",\"token_type\":\"client_access\",\"jti\":\"9a178a29-be7e-4dcd-9c3e-bd613f2afed0\",\"sid\":\"f2473fff-253b-43c2-95a1-c70a214b9f65\",\"did\":\"48ac0286-53e5-456a-a523-d75f77ca5ce8\",\"user_security_revision\":0,\"session_revision\":0,\"iss\":\"auth\",\"aud\":\"core3\",\"iat\":1789934004,\"exp\":1789962804,\"roles\":[\"admin\"],\"permissions\":[],\"view_scope\":\"all\",\"avatar_url\":null,\"company_id\":\"company-demo\",\"company\":{\"id\":\"company-demo\",\"name\":\"Core3 Demo Company\",\"short_name\":\"Core3\",\"address\":\"100 Main Street, San Francisco\",\"currency_code\":\"USD\"},\"authz_version\":0}"
+      },
+      "api": {
+        "status": 404,
+        "body": "{\"error\":\"API route not found\",\"message_key\":\"errors.http_404\"}"
+      },
+      "page": {
+        "status": 200,
+        "url": "http://127.0.0.1:4141/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+        "body": "Unauthorized"
+      },
+      "overflow": {
+        "documentWidth": 1440,
+        "viewportWidth": 1440,
+        "horizontalOverflow": false
+      },
+      "failedRequests": []
+    },
+    {
+      "viewport": "390x844",
+      "login": {
+        "status": 200,
+        "body": {
+          "token": "eyJhbGciOiJFZERTQSIsImtpZCI6ImNsaWVudC0xMzYyNTI0MS0yOTdlLTQ1YjYtYTBjMy1kZTIyNzI5NWY0ZDgiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJ1c2VyLWFkbWluIiwiaWQiOiJ1c2VyLWFkbWluIiwiZW1haWwiOiJhZG1pbkB0bXMubG9jYWwiLCJuYW1lIjoiQWRtaW4gVXNlciIsInByZWZlcnJlZF9sYW5nIjoiZW4iLCJicmFuY2hfaWQiOiJicmFuY2gtaGNtIiwidG9rZW5fdHlwZSI6ImNsaWVudF9hY2Nlc3MiLCJqdGkiOiJlNjQ3MDhiYy00NzdhLTQxZWQtOWU3MS0yMDhjOGUyOTBkMjgiLCJzaWQiOiJiMDMzZWQ1MC01ZDVjLTQ5NGMtYTVkMS02ZWI2OWZiOWUxMjUiLCJkaWQiOiIzNDJiMmY5Yi03N2U5LTRjNmQtYjMzZi0zMjJkZTRmZDE2MzciLCJ1c2VyX3NlY3VyaXR5X3JldmlzaW9uIjowLCJzZXNzaW9uX3JldmlzaW9uIjowLCJpc3MiOiJhdXRoIiwiYXVkIjoiY29yZTMiLCJpYXQiOjE3ODk5MzQwMDYsImV4cCI6MTc4OTk2MjgwNn0.KeHfLKkQG7RlTp31oowv-Q7qu9b3YUpKP48hyErhy5guNdrQu2vFM4_gkASGkT-Lwfrbi8zMFCrOChqfrOhWBw",
+          "user": {
+            "sub": "user-admin",
+            "id": "user-admin",
+            "email": "admin@tms.local",
+            "name": "Admin User",
+            "avatar_url": null,
+            "preferred_lang": "en",
+            "branch_id": "branch-hcm",
+            "view_scope": "all",
+            "roles": [
+              "admin"
+            ],
+            "branches": [
+              "branch-hcm"
+            ],
+            "permissions": [],
+            "attributes": {
+              "department_id": "department-04"
+            },
+            "token_type": "client_access",
+            "jti": "e64708bc-477a-41ed-9e71-208c8e290d28",
+            "sid": "b033ed50-5d5c-494c-a5d1-6eb69fb9e125",
+            "did": "342b2f9b-77e9-4c6d-b33f-322de4fd1637",
+            "user_security_revision": 0,
+            "session_revision": 0,
+            "company_id": "company-demo",
+            "company": {
+              "id": "company-demo",
+              "name": "Core3 Demo Company",
+              "short_name": "Core3",
+              "address": "100 Main Street, San Francisco",
+              "currency_code": "USD"
+            },
+            "companies": [
+              {
+                "id": "company-demo",
+                "name": "Core3 Demo Company",
+                "short_name": "Core3",
+                "address": "100 Main Street, San Francisco",
+                "currency_code": "USD",
+                "is_default": true
+              },
+              {
+                "id": "company-vietnam",
+                "name": "Core3 Vietnam Branch",
+                "short_name": "Core3 VN",
+                "address": "1 Nguyen Hue, Ho Chi Minh City",
+                "currency_code": "VND",
+                "is_default": false
+              }
+            ]
+          },
+          "token_type": "Bearer",
+          "expires_in": 28800,
+          "refresh_token": "7w_5Nb-lZTocU8BleKSX7m59ZmuAa8TZ0bkoJHwJwnA"
+        },
+        "tokenStored": true
+      },
+      "me": {
+        "status": 200,
+        "body": "{\"sub\":\"user-admin\",\"id\":\"user-admin\",\"email\":\"admin@tms.local\",\"name\":\"Admin User\",\"preferred_lang\":\"en\",\"branch_id\":\"branch-hcm\",\"token_type\":\"client_access\",\"jti\":\"e64708bc-477a-41ed-9e71-208c8e290d28\",\"sid\":\"b033ed50-5d5c-494c-a5d1-6eb69fb9e125\",\"did\":\"342b2f9b-77e9-4c6d-b33f-322de4fd1637\",\"user_security_revision\":0,\"session_revision\":0,\"iss\":\"auth\",\"aud\":\"core3\",\"iat\":1789934006,\"exp\":1789962806,\"roles\":[\"admin\"],\"permissions\":[],\"view_scope\":\"all\",\"avatar_url\":null,\"company_id\":\"company-demo\",\"company\":{\"id\":\"company-demo\",\"name\":\"Core3 Demo Company\",\"short_name\":\"Core3\",\"address\":\"100 Main Street, San Francisco\",\"currency_code\":\"USD\"},\"authz_version\":0}"
+      },
+      "api": {
+        "status": 404,
+        "body": "{\"error\":\"API route not found\",\"message_key\":\"errors.http_404\"}"
+      },
+      "page": {
+        "status": 200,
+        "url": "http://127.0.0.1:4141/survey/start/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac",
+        "body": "Unauthorized"
+      },
+      "overflow": {
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "horizontalOverflow": false
+      },
+      "failedRequests": []
+    }
+  ],
+  "source": "Odoo survey_question._validate_date requires parseable date values; Core3 contract uses YYYY-MM-DD."
+}

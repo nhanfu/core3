@@ -51,6 +51,8 @@ actions:
   # tokens before dispatching them. A public start may also resume the answer
   # token carried by the Odoo-compatible survey_<survey_token> cookie; the
   # page renderer remains bound to this API fragment through page.id: surveys.
+  # Date questions use the Odoo-compatible YYYY-MM-DD value inside answer_data;
+  # module validation runs before either progress or submit mutates the row.
   - id: public_survey_start
     type: server_form
     permission: surveys.public
@@ -68,7 +70,7 @@ actions:
     fields:
       - { field: survey_id, label: Survey ID, type: text, required: true }
       - { field: survey_name, label: Survey, type: text, required: true }
-      - { field: answer_data, label: Answers, type: text, required: true }
+      - { field: answer_data, label: 'Answers (Date: YYYY-MM-DD)', type: text, required: true }
       - { field: answer_token, label: Existing response token, type: text }
       - { field: idempotency_key, label: Idempotency key, type: text }
   - id: public_survey_begin
@@ -110,7 +112,7 @@ actions:
         - { query: "UPDATE surveys SET response_count = response_count + 1, row_version = row_version + 1 WHERE id = :survey_id" }
       result: { query: "SELECT r.id, r.access_token, r.survey_id, r.state, r.answer_data, r.score, r.quiz_passed, s.description_done, CAST(r.submitted_at AS VARCHAR) AS submitted_at FROM survey_responses r JOIN surveys s ON s.id = r.survey_id WHERE r.id = :id" }
     fields:
-      - { field: answer_data, label: Answers, type: text, required: true }
+      - { field: answer_data, label: 'Answers (Date: YYYY-MM-DD)', type: text, required: true }
       - { field: respondent_name, label: Respondent, type: text }
       - { field: respondent_email, label: Email, type: text }
       - { field: idempotency_key, label: Idempotency key, type: text }

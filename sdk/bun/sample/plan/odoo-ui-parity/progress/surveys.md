@@ -141,6 +141,28 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-DATE-QUESTION-001`
+
+Selected the smallest uncovered source-backed public question behavior after
+the completed begin, section, cookie-resume, scoring, completion-message,
+live-session, deadline, and answer-validation slices: Odoo's question-level
+date validation. Core3 adds deterministic optional Date question fixture
+`question-certification-date`, renders it with the custom ISO text control,
+and validates `YYYY-MM-DD` calendar dates in the token-scoped public
+progress/submit path before durable mutation. API/page YAML remain separate
+under `page.id: surveys`; both mutations remain guarded by `surveys.public`.
+
+Focused verification passes 2/2 tests with 21 assertions, including invalid
+date no-mutation, valid answer persistence, concurrent idempotent submit,
+wrong-token rejection, and file-backed DuckDB restart. Fresh authenticated
+Core3 desktop/mobile probes recorded login and `/api/auth/me` HTTP 200, public
+API HTTP 404 `API route not found`, rendered route HTTP 200 with body
+`Unauthorized`, and no horizontal overflow or failed browser requests. Odoo
+8069 returned HTTP 200 only after redirecting to its login page at both
+viewports; no installed authenticated Survey Date fixture was available.
+Evidence is under the feature directory. Status remains **qa-in-progress /
+conditional**; no module sign-off is claimed.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-END-MESSAGE-001`
 
 Selected the next uncovered source-backed public behavior after scoring:

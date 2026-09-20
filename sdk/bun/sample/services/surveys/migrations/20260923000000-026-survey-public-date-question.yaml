@@ -1,0 +1,15 @@
+version: 0.0.26
+description: Deterministic public date question fixture for the Feedback Form
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options)
+      VALUES ('question-certification-date', 'survey-demo-certification', 'When did you complete the vendor training?', 'Date', 15, false, '')
+      ON CONFLICT (id) DO UPDATE SET question_text = excluded.question_text, question_type = excluded.question_type, sequence = excluded.sequence, required = excluded.required;
+    down: |
+      DELETE FROM survey_questions WHERE id = 'question-certification-date';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -75,6 +75,15 @@ function answerValue(container: HTMLElement, question: SurveyQuestion): string |
     || '';
 }
 
+function isIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(parsed.getTime())
+    && parsed.getUTCFullYear() === Number(value.slice(0, 4))
+    && parsed.getUTCMonth() + 1 === Number(value.slice(5, 7))
+    && parsed.getUTCDate() === Number(value.slice(8, 10));
+}
+
 function renderQuestion(container: HTMLElement, question: SurveyQuestion, index: number, total: number, answer: string | string[] = '') {
   const options = String(question.answer_options || '').split(',').map((value) => value.trim()).filter(Boolean);
   const currentValues = Array.isArray(answer) ? answer : [answer];
@@ -86,7 +95,7 @@ function renderQuestion(container: HTMLElement, question: SurveyQuestion, index:
         const checked = currentValues.includes(option) ? ' checked' : '';
         return `<label class="core3-public-survey__option"><input type="${type}" name="question-${escapeHtml(question.id)}" value="${escapeHtml(option)}"${checked}><span>${escapeHtml(option)}</span></label>`;
       }).join('')}</div>`
-      : `<input class="core3-public-survey__input" data-answer type="${question.question_type === 'Numerical' ? 'number' : 'text'}" value="${escapeHtml(currentValues[0])}" placeholder="Your answer">`;
+      : `<input class="core3-public-survey__input" data-answer type="text" inputmode="${question.question_type === 'Numerical' ? 'decimal' : 'numeric'}"${['Date', 'date'].includes(question.question_type) ? ' pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" autocomplete="bday"' : ''} value="${escapeHtml(currentValues[0])}" placeholder="${['Date', 'date'].includes(question.question_type) ? 'YYYY-MM-DD' : 'Your answer'}">`;
   container.innerHTML = `
     <div class="core3-public-survey__question">${escapeHtml(question.question_text)}${question.required ? '<span class="core3-public-survey__required">*</span>' : ''}</div>
     ${input}
@@ -235,6 +244,14 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
         const error = document.createElement('div');
         error.className = 'core3-public-survey__error';
         error.textContent = 'Please answer this question before continuing.';
+        body.prepend(error);
+        return;
+      }
+      if (!empty && ['Date', 'date'].includes(question.question_type) && !isIsoDate(String(value))) {
+        actionButton.disabled = false;
+        const error = document.createElement('div');
+        error.className = 'core3-public-survey__error';
+        error.textContent = 'Enter a valid date in YYYY-MM-DD format.';
         body.prepend(error);
         return;
       }
