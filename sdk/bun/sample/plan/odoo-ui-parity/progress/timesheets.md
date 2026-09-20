@@ -724,3 +724,11 @@ sign-off is claimed.
 - Focused verification: `test/timesheets_all_employee_group.integration.test.ts` passed 4/4 with 23 expectations, including actor/company/empty guards, stale concurrency, and file-backed restart.
 - Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-employee-group/`; desktop applied Employee grouping and mobile rendered responsive Kanban.
 - Core3 browser capture is blocked before authentication by the shared `discoverPages` `actions[2].fields must be a non-empty array` schema failure; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.
+
+## 2026-09-21 — `TIMESHEET-ALL-CALENDAR-MULTI-CREATE-001`
+
+- Selected the next uncovered source-backed behavior: the All Timesheets calendar multi-create form bound by Odoo's `timesheet_action_view_all_calendar` and `view_calendar_account_analytic_line_multi_create`.
+- Added a manager-scoped All Timesheets page/API action pair joined by `page.id: all-timesheets`; the action selects an active employee and persists one batch plus one durable entry per day using the existing calendar table.
+- Focused verification: `test/timesheets_all_calendar_multi_create.integration.test.ts` passed 4/4 with 25 expectations, including selected employee/company/relation/range guards, no-partial-write behavior, migration replay, and file-backed restart.
+- Authenticated Odoo desktop/mobile evidence is under `evidence/timesheets/2026-09-21/timesheet-all-calendar-multi-create/`; desktop rendered calendar and mobile rendered responsive Kanban without page errors. The desktop runtime did not expose a standard multi-create toolbar button, so that dialog is not claimed.
+- Core3 browser capture is blocked before authentication by the shared `discoverPages` `components[1].title is not allowed` schema failure; exact output is in `core3-readiness.txt`. Odoo Print/PDF/action blockers remain open; no sign-off claimed.

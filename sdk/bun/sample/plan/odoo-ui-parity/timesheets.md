@@ -1550,3 +1550,13 @@ Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml
 Focused coverage is `test/timesheets_all_employee_group.integration.test.ts`: 4 tests / 23 expectations. It covers source comparison, page/API separation, deterministic employee relation data, actor/company/empty guards, stale row-version protection, and restart persistence.
 
 Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-employee-group/`. Desktop applies Employee grouping and renders 23 employee groups; mobile captures the responsive Kanban where the desktop search/group-by control is unavailable. Core3 desktop/mobile capture is blocked before authentication by the shared `discoverPages` error `actions[2].fields must be a non-empty array`, recorded in `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain open; no module sign-off is claimed.
+
+## Wave 14 All Timesheets calendar multi-create — `TIMESHEET-ALL-CALENDAR-MULTI-CREATE-001` (2026-09-21)
+
+The next uncovered source-backed behavior is the All Timesheets calendar multi-create action. Odoo binds `timesheet_action_all` to `timesheet_action_view_all_calendar`, whose calendar uses `multi_create_view="hr_timesheet.view_calendar_account_analytic_line_multi_create"`.
+
+Core3 keeps `pages/all-timesheets.yaml` layout-only and `api/all-timesheets.yaml` action/data-only, joined by `page.id: all-timesheets`. The manager-only action selects an active employee and writes the existing durable `timesheet_entry_batches` record plus one `timesheet_entries` row per selected day. The existing calendar migration is reused; no duplicate persistence model was added.
+
+Focused coverage is `test/timesheets_all_calendar_multi_create.integration.test.ts`: 4 tests / 25 expectations. It covers source comparison, paired contracts, selected-employee/company/relation/range guards, no-partial-write behavior, deterministic migration replay, and file-backed restart persistence.
+
+Authenticated Odoo evidence is under `evidence/timesheets/2026-09-21/timesheet-all-calendar-multi-create/`. Desktop renders the authenticated All Timesheets calendar and mobile renders responsive Kanban, both without page errors; the desktop runtime did not expose a standard New/Create toolbar button, so the multi-create dialog is not claimed. Core3 desktop/mobile capture is blocked before authentication by the shared `discoverPages` error `components[1].title is not allowed`, recorded in `core3-readiness.txt`. Odoo Print/PDF/action surfaces remain open; no module sign-off is claimed.

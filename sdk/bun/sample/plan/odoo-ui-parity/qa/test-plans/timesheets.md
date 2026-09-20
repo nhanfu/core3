@@ -108,3 +108,9 @@ remain a known blocker and no module sign-off is claimed.
 The All Timesheets Employee group-by source comparison and durable contract are covered by `test/timesheets_all_employee_group.integration.test.ts` (4 tests / 23 expectations). The test exercises page/API separation, durable employee relation reads, actor/company/empty guards, required optimistic concurrency, and file-backed restart.
 
 Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-all-employee-group/`: desktop exposes and applies Employee grouping; mobile exposes responsive Kanban but not the desktop search panel. Core3 desktop/mobile evidence is blocked by the shared `discoverPages` `actions[2].fields must be a non-empty array` schema failure, with exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces remain a known blocker and no module sign-off is claimed.
+
+## Wave 14 execution — `TIMESHEET-ALL-CALENDAR-MULTI-CREATE-001`
+
+The All Timesheets calendar multi-create source comparison and durable contract are covered by `test/timesheets_all_calendar_multi_create.integration.test.ts` (4 tests / 25 expectations). The test exercises page/API separation, manager permission declaration, active employee/company/relation/range guards, no-partial-write behavior, deterministic migration replay, and file-backed restart.
+
+Authenticated Odoo captures are in `../evidence/timesheets/2026-09-21/timesheet-all-calendar-multi-create/`: desktop renders the authenticated calendar and mobile renders responsive Kanban without page errors. The runtime did not expose a standard desktop New/Create toolbar button for the multi-create dialog, so that surface is not claimed. Core3 desktop/mobile evidence is blocked by the shared `discoverPages` `components[1].title is not allowed` schema failure, with exact output preserved in `core3-readiness.txt`. Print/PDF/action surfaces remain a known blocker and no module sign-off is claimed.

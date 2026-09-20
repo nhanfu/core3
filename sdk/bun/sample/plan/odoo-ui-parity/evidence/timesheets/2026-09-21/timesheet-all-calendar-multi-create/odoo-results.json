@@ -1,0 +1,61 @@
+[
+  {
+    "name": "odoo-desktop",
+    "url": "/odoo/all-timesheets?view_type=calendar",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "errors": [],
+    "title": "All Timesheets",
+    "body_excerpt": "Timesheets\nTimesheets\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nAll Timesheets\nToday\nSeptember 2026\nSUN\n\t\nMON\n\t\nTUE\n\t\nWED\n\t\nTHU\n\t\nFRI\n\t\nSAT\n\n\n36\n30\nOffice Design (1h)\nOffice Design (1h)\nOffice Design (1h)\nResearch & Development (1h)\n\t\n31\nAfter-Sales Services (1h)\nAfter-Sales Services (4h)\nAfter-Sales Services (4h)\nAGR - S00035 - Sales Order (1h)\n+25 more\n\t\n1\nACME - S00037 - Sales Order (4h)\nAfter-Sales Services (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\n+20 more\n\t\n2\nACME - S00037 - Sales Order (2h)\nAfter-Sales Services (3h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\n+23 more\n\t\n3\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\n+27 more\n\t\n4\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\n+18 more\n\t\n5\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\n+17 more\n\n\n37\n6\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\n+20 more\n\t\n7\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\n+31 more\n\t\n8\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\n+29 more\n\t\n9\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\nAGR - S00035 - Sales Order (1h)\n+32 more\n\t\n10\nACME - S00037 - Sales Order (1h)\nAGR - S00035 - Sales Order (10h)\nAGR - S00035 - Sales Order (10h)\nAGR - S00035 - Sales Order (5h)\n+13 more\n\t\n11\nResearch & Development (1h)\nResearch & Development (1h)\nResearch & Development (1h)\nResearch & Development (1h)\n+3 more\n\t\n12\nResearch & Development (1h)\nResearch & Development (1h)\nResearch & Development (1h)\nResearch & Development (2h)\nResearch & Development (3h)\n\n\n38\n13\n\t\n14\n\t\n15\n\t\n16\n\t\n17\n\t\n18\n\t\n19\n\n\n39\n20\nResearch & Development (0h)\n\t\n21\n\t\n22\n\t\n23\n\t\n24\n\t\n25\n\t\n26\n\n\n40\n27\n\t\n28\n\t\n29\n\t\n30\n\t\n1\n\t\n2\n\t\n3\nSeptember 2026\nS\nM\nT\nW\nT\nF\nS\n30\n31\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\nEmployee",
+    "buttons": [
+      "",
+      "Timesheets",
+      "Reporting",
+      "7",
+      "40",
+      "My Company (San Francisco)",
+      "Mitchell Admincore3_reference",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      " Today",
+      "",
+      "",
+      "",
+      "September 2026"
+    ],
+    "calendar_cells": 35,
+    "create_button_count": 0
+  },
+  {
+    "name": "odoo-mobile",
+    "url": "/odoo/all-timesheets?view_type=kanban",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "errors": [],
+    "title": "All Timesheets",
+    "body_excerpt": "All Timesheets\n7\n40\nNew\nResearch & Development\nSep 20 - Marc Demo\n/\n0h\nResearch & Development\nCreate new components\nSep 12 - Beth Evans\nTraining\n2h\nResearch & Development\nCreate new components\nSep 12 - Beth Evans\nOn Site Visit\n1h\nResearch & Development\nSocial network integration\nSep 12 - Walter Horton\nDelivery\n1h\nResearch & Development\nSocial network integration\nSep 12 - Eli Lambert\nPresentation\n1h\nResearch & Development\nSocial network integration\nSep 12 - Abigail Peterson\nDelivery\n3h\nResearch & Development\nCreate new components\nSep 11 - Marc Demo\nDesign\n1h\nResearch & Development\nCreate new components\nSep 11 - Beth Evans\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 11 - Abigail Peterson\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 11 - Paul Williams\nRequirements analysis\n3h\nResearch & Development\nSocial network integration\nSep 11 - Keith Byrd\nOn Site Visit\n1h\nResearch & Development\nSocial network integration\nSep 11 - Beth Evans\nOn Site Visit\n1h\nResearch & Development\nSocial network integration\nSep 11 - Keith Byrd\nTraining\n1h\nACME - S00037 - Sales Order\nSep 10 - Marc Demo\nImprove\n1h\nDPC - S00036 - Sales Order\nKitchen Assembly (Milestones)\nSep 10 - Marc Demo\nImprove\n1h\nDPC - S00036 - Sales Order\nJunior Architect (Invoice on Timesheets)\nSep 10 - Marc Demo\nRepair\n1h\nAGR - S00035 - Sales Order\nFurniture Delivery (Manual)\nSep 10 - Mitchell Admin\nShifting\n10h\nAGR - S00035 - Sales Order\nSenior Architect (Invoice on Timesheets)\nSep 10 - Toni Jimenez\nAssembling\n5h\nAGR - S00035 - Sales Order\nKitchen Assembly\nSep 10 - Mitchell Admin\nImprove\n10h\nInternal\nMeeting\nSep 10 - Mitchell Admin\nAnalysis\n0h\nInternal\nTraining\nSep 10 - Mitchell Admin\nAnalysis\n0h\nResearch & Development\nNew portal system\nSep 10 - Abigail Peterson\nDelivery\n2h\nResearch & Development\nNew portal system\nSep 10 - Doris Cole\nRequirements analysis\n1h\nResearch & Development\nCreate new components\nSep 10 - Randall Lewis\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 10 - Anita Oliver\nSprint\n1h\nResearch & Development\nCreate new components\nSep 10 - Ronnie Hart\nDelivery\n2h\nResearch & Development\nCreate new components\nSep 10 - Ernest Reed\nDelivery\n1h\nResearch & Development\nCreate new components\nSep 10 - Eli Lambert\nPresentation\n2h\nResearch & Development\nCreate new components\nSep 10 - Walter Horton\nSprint\n1h\nResearch & Development\nSocial network integration\nSep 10 - Ernest Reed\nTraining\n1h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 9 - Toni Jimenez\nOn Site Visit\n1h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 9 - Mitchell Admin\nQuality analysis\n2h\nAGR - S00035 - Sales Order\nFurniture Delivery\nSep 9 - Beth Evans\nCall\n1h\nAGR - S00035 - Sales Order\nFurniture\nSep 9 - Anita Oliver\nCall\n2h\nAGR - S00035 - Sales Order\nFurniture\nSep 9 - Walter Horton\nOn Site Visit\n3h\nAGR - S00035 - Sales Order\nFurniture\nSep 9 - Keith Byrd\nOn Site Visit\n2h\nAGR - S00035 - Sales Order\nPlanning\nSep 9 - Abigail Peterson\nDesign\n1h\nAGR - S00035 - Sales Order\nPlanning\nSep 9 - Ronnie Hart\nSprint\n2h\nAGR - S00035 - Sales Order\nPlanning\nSep 9 - Tina Williamson\nDelivery\n1h\nAGR - S00035 - Sales Order\nDecoration\nSep 9 - Paul Williams\nOn Site Visit\n1h\nAGR - S00035 - Sales Order\nDecoration\nSep 9 - Jennie Fletcher\nRequirements analysis\n2h\nAGR - S00035 - Sales Order\nDecoration\nSep 9 - Ernest Reed\nQuality analysis\n1h\nAGR - S00035 - Sales Order\nJunior Architect (Invoice on Timesheets)\nSep 9 - Walter Horton\nQuality Check\n2h\nAGR - S00035 - Sales Order\nJunior Architect (Invoice on Timesheets)\nSep 9 - Walter Horton\nResearch\n3h\nResearch & Development\nNew portal system\nSep 9 - Anita Oliver\nSprint\n1h\nResearch & Development\nNew portal system\nSep 9 - Marc Demo\nDelivery\n1h\nResearch & Development\nNew portal system\nSep 9 - Marc Demo\nCall\n1h\nResearch & Development\nNew portal system\nSep 9 - Walter Horton\nCall\n1h\nResearch & Development\nNew portal system\nSep 9 - Jennie Fletcher\nPresentation\n3h\nResearch & Development\nCreate new components\nSep 9 - Mitchell Admin\nQuality analysis\n1h\nResearch & Development\nCreate new components\nSep 9 - Keith Byrd\nDesign\n2h\nResearch & Development\nCreate new components\nSep 9 - Beth Evans\nRequirements analysis\n3h\nResearch & Development\nCreate new components\nSep 9 - Tina Williamson\nRequirements analysis\n1h\nResearch & Development\nSocial network integration\nSep 9 - Anita Oliver\nQuality analysis\n1h\nResearch & Development\nSocial network integration\nSep 9 - Ronnie Hart\nDelivery\n3h\nResearch & Development\nUser interface improvements\nSep 9 - Ronnie Hart\nCall\n3h\nResearch & Development\nUser interface improvements\nSep 9 - Eli Lambert\nDelivery\n2h\nResearch & Development\nUser interface improvements\nSep 9 - Marc Demo\nOn Site Visit\n1h\nOffice Design\nBlack Chairs for managers\nSep 9 - Ernest Reed\nSprint\n1h\nOffice Design\nOffice planning\nSep 9 - Eli Lambert\nDelivery\n1h\nOffice Design\nOffice planning\nSep 9 - Marc Demo\nRequirements analysis\n1h\nResearch & Development\nSep 9 - Mitchell Admin\nDelivery\n1h\nResearch & Development\nSep 9 - Mitchell Admin\nQuality analysis\n1h\nRes",
+    "buttons": [
+      "7",
+      "40",
+      "",
+      " New ",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "calendar_cells": 0
+  }
+]

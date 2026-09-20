@@ -1,0 +1,14 @@
+{
+  "feature_id": "TIMESHEET-ALL-CALENDAR-MULTI-CREATE-001",
+  "source": "hr_timesheet timesheet_action_all and view_calendar_account_analytic_line_multi_create",
+  "odoo": {
+    "desktop": "authenticated All Timesheets calendar rendered with 35 calendar cells and no page errors",
+    "mobile": "authenticated responsive All Timesheets Kanban rendered with no page errors",
+    "multi_create_dialog": "not exposed by a standard desktop New/Create toolbar button in this runtime; not claimed"
+  },
+  "core3": {
+    "desktop": "blocked before authentication by shared discoverPages components[1].title is not allowed",
+    "mobile": "blocked by the same shared startup schema failure"
+  },
+  "signoff": false
+}

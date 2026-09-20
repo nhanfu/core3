@@ -1,0 +1,9 @@
+Command: timeout 18s bun dev --db=ddb --memory
+Result: exit=1; /api/modules was unavailable on backend 127.0.0.1:3001 and frontend 127.0.0.1:3002 (HTTP 000).
+
+Startup reached Vite readiness, then shared page discovery failed with:
+PageSchemaError: Invalid page definition:
+- components[1].title is not allowed
+The stack identifies shared sample/server.ts discovery, outside Timesheets-owned files.
+Authenticated Core3 desktop/mobile evidence is therefore blocked before authentication;
+no Core3 sign-off is claimed.

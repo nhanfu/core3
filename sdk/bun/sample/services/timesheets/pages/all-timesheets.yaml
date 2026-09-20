@@ -15,6 +15,8 @@ components:
       - { field: state, label: Status }
       - { field: work_date, label: Date }
     view_navigation: tabs
+    header_actions:
+      - { id: create_all_timesheet_calendar_batch, label: Log multiple days, permission: timesheets.manage, variant: secondary }
     views:
       - { id: list, label: List, icon: table, mobile: false }
       - id: kanban
