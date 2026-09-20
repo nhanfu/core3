@@ -28,6 +28,22 @@ The Core3 browser selector is empty under the authenticated `Core3 Vietnam
 Branch` context because the supplied employee fixtures use `Core3 Vietnam`.
 This is recorded as a precise evidence blocker, not a sign-off claim.
 
+## EMP-ROUTE-CRUD-GATE-001 evidence ledger (2026-09-20)
+
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| Parameterized Core3 route matrix | pass: 28/28 desktop and 28/28 mobile after settled-route retry | `core3-route-matrix.json` |
+| Authenticated employee CRUD | pass: create, edit, archive, restore; no browser errors | `core3-desktop-crud-*.png` |
+| Actor matrix | pass: Admin allowed; Fleet 403; unauthenticated login redirect | `core3-actor-matrix.json` |
+| Core3 responsive comparison | pass: employee list/detail at desktop and mobile | `core3-*-employees-list.png`, `core3-*-employee-detail.png` |
+| Paired Odoo comparison | pass: authenticated Employees list/detail at desktop and mobile | `odoo-comparison.json`, `odoo-*-employees-*.png`, `odoo-*-employee-detail.png` |
+
+The shared checkout itself was not used for this browser run because another
+owner's uncommitted Timesheets YAML failed global page discovery. The clean
+runtime was the exact committed Employees HEAD; no other module was edited or
+staged. This gate has evidence but does not change aggregate full-module
+sign-off status.
+
 ## Current regression evidence
 
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.

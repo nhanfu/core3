@@ -89,3 +89,16 @@ versions.
 
 The route matrix is enumerated in
 `evidence/employees/2026-09-20/EMP-LAUNCH-PLAN-001/route-matrix.json`.
+
+## EMP-ROUTE-CRUD-GATE-001 execution (2026-09-20)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-MATRIX-001 | All 28 parameterized Employees routes, desktop/mobile, seeded detail IDs | pass 56/56 after settled-route retry |
+| EMP-CRUD-009 | Authenticated Admin create/edit/archive/restore employee | pass; persisted browser states captured |
+| EMP-ACTOR-009 | Admin, Fleet ordinary user, unauthenticated settings/detail boundary | pass; Admin allowed, Fleet 403, unauthenticated redirected |
+| EMP-OODOO-005 | Paired Odoo Employees list/detail desktop/mobile | pass; no failed requests or page errors |
+
+The browser artifacts are under
+`evidence/employees/2026-09-20/EMP-ROUTE-CRUD-GATE-001/`. No new source-backed
+feature was missing after the settled route/data/permission pass.

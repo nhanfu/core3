@@ -20,6 +20,22 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-ROUTE-CRUD-GATE-001 (2026-09-20)
+
+- Completed authenticated parameterized matrix: 28/28 routes at desktop and
+  28/28 at mobile on clean committed HEAD `cac5db24`; settled checks had no
+  page errors, failed requests, HTTP errors, blank states, or overflow.
+- CRUD smoke created `EMP-GATE-001`, edited it, archived it, restored it, and
+  captured created/edited/archived/restored desktop states.
+- Actor matrix: Admin allowed; Fleet received 403 for settings and employee
+  detail; unauthenticated settings redirected to login.
+- Paired Odoo Employees list/detail captured desktop/mobile with no failed
+  requests or page errors. Evidence is in
+  `evidence/employees/2026-09-20/EMP-ROUTE-CRUD-GATE-001/`.
+- Shared checkout runtime was schema-blocked by another owner's uncommitted
+  Timesheets page; verification used a temporary clean runtime of this
+  committed HEAD and did not alter or stage that owner.
+
 ## QA-4 candidate verification (2026-09-13)
 
 Exact candidate `3c28ad98` was tested in isolated worktree

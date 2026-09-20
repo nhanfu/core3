@@ -27,6 +27,30 @@ not full Employees sign-off.
 
 Status: ready
 
+## EMP-ROUTE-CRUD-GATE-001: complete route/CRUD/actor/Odoo gate (2026-09-20)
+
+The completed parameterized matrix covers all 28 registered Employees routes,
+including seeded detail IDs and the generated Employee Analysis route. A clean
+committed-HEAD runtime was used because the shared checkout contained an
+uncommitted Timesheets page that failed global page-schema discovery; no other
+module file was changed. Core3 authenticated desktop and mobile checks passed
+with no page errors, failed requests, HTTP errors, blank settled states, or
+horizontal overflow. The one mobile All activities sample required a 3.5s
+settle retry and then rendered successfully.
+
+The authenticated CRUD smoke created `EMP-GATE-001`, edited Job Title, archived
+and restored the employee, and captured each persisted state without browser
+errors. The actor matrix records Admin allowed on settings/detail/mutations,
+Fleet denied settings and employee detail with HTTP 403, and unauthenticated
+redirect to login. The paired Odoo `Employees` list and Abigail Peterson detail
+were captured at 1440x1000 and 390x844 with no failed requests or page errors.
+
+Evidence is under
+`plan/odoo-ui-parity/evidence/employees/2026-09-20/EMP-ROUTE-CRUD-GATE-001/`.
+No additional missing source-backed employee feature was exposed by the
+settled matrix; the remaining module status is conditional until aggregate
+parity review, not because this gate lacked runtime evidence.
+
 ## Reference gate
 
 - Odoo addon/version: `hr`, Odoo 19 Community (`19.0-2` in the live
