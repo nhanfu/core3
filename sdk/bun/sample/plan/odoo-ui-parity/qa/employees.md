@@ -684,6 +684,21 @@ session is `Core3 Demo Company` while deterministic employee fixtures are
 `Core3 Vietnam`; Odoo has seven unrelated app-icon 404s. No aggregate Employees
 sign-off is claimed.
 
+## EMP-CITIZENSHIP-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-026 | Personal Citizenship create/edit/read | pass; nationality, identification, SSN, passport, and expiry persist through employee CRUD |
+| EMP-PERM-026 | `employees.write`, current company, row version, passport date | pass; invalid, stale, and out-of-company changes reject atomically |
+| EMP-DATA-026 | Migration replay and file-backed restart | pass; deterministic citizenship fixtures survive restart without duplicates |
+| EMP-UI-022 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 labels/page 200 are company-blocked, Odoo source group is visible |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-CITIZENSHIP-001/`. Core3's authenticated
+session is `Core3 Demo Company` while deterministic employee fixtures are
+`Core3 Vietnam`; Odoo has seven unrelated app-icon 404s. No aggregate Employees
+sign-off is claimed.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

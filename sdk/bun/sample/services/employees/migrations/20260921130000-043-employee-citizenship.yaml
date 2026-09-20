@@ -1,0 +1,41 @@
+version: 0.0.43
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS country_id VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS identification_id VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS ssnid VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS passport_id VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS passport_expiration_date DATE;
+      UPDATE employees
+      SET country_id = COALESCE(country_id, CASE id
+        WHEN 'employee-demo-001' THEN 'Vietnam'
+        WHEN 'employee-demo-002' THEN 'Vietnam'
+        WHEN 'employee-demo-003' THEN 'Vietnam'
+        ELSE NULL END),
+          identification_id = COALESCE(identification_id, CASE id
+        WHEN 'employee-demo-001' THEN 'VN-ID-0001'
+        WHEN 'employee-demo-002' THEN 'VN-ID-0002'
+        ELSE NULL END),
+          ssnid = COALESCE(ssnid, CASE id
+        WHEN 'employee-demo-001' THEN 'VN-SSN-0001'
+        ELSE NULL END),
+          passport_id = COALESCE(passport_id, CASE id
+        WHEN 'employee-demo-001' THEN 'P-VN-0001'
+        WHEN 'employee-demo-002' THEN 'P-VN-0002'
+        ELSE NULL END),
+          passport_expiration_date = COALESCE(passport_expiration_date, CASE id
+        WHEN 'employee-demo-001' THEN DATE '2029-06-30'
+        WHEN 'employee-demo-002' THEN DATE '2028-03-31'
+        ELSE NULL END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS country_id;
+      ALTER TABLE employees DROP COLUMN IF EXISTS identification_id;
+      ALTER TABLE employees DROP COLUMN IF EXISTS ssnid;
+      ALTER TABLE employees DROP COLUMN IF EXISTS passport_id;
+      ALTER TABLE employees DROP COLUMN IF EXISTS passport_expiration_date;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

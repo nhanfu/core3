@@ -1504,3 +1504,27 @@ Peterson's Personal tab and shows the source Visa & Work Permit group; seven
 unrelated app-icon 404s are recorded. Evidence is under
 `evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`. This is conditional
 feature evidence, not aggregate Employees sign-off.
+
+## EMP-CITIZENSHIP-001: Employee citizenship details (2026-09-21)
+
+Odoo's Personal-tab `Citizenship` group exposes nationality, national
+identification, SSN, passport number, and passport expiration. Core3 adds the
+corresponding page-only group and projects the fields through the separate
+`employee-detail` API/action YAML. `country_id` is represented as a durable
+company-scoped country-name projection because this bounded sample service has
+no country catalog relation; the source field and label remain explicit.
+
+Migration `20260921130000-043-employee-citizenship.yaml` adds the durable
+columns and replay-safe fixtures. Employee create/edit uses `employees.write`,
+current-company, optimistic row-version, and ISO passport-expiration guards.
+Focused coverage is **4 tests / 21 assertions**, including source mapping,
+create/edit/read, invalid/stale/company guards, migration replay, and file-backed
+restart.
+
+Authenticated Core3 desktop/mobile captures show the new labels and HTTP 200
+page loads, but `Core3 Demo Company` does not expose the `Core3 Vietnam`
+deterministic employee. Authenticated Odoo desktop/mobile reaches Abigail
+Peterson's Personal tab and shows the source Citizenship group; seven unrelated
+app-icon 404s are recorded. Evidence is under
+`evidence/employees/2026-09-21/EMP-CITIZENSHIP-001/`. This is conditional
+feature evidence, not aggregate Employees sign-off.

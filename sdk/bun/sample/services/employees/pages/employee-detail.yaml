@@ -102,6 +102,9 @@ components:
             - title: Visa & Work Permit
               permission: employees.read
               fields: [{ field: visa_no, label: Visa No }, { field: visa_expire, label: Visa Expiration, type: date, show_if: "!!state.employee_detail.visa_no" }, { field: permit_no, label: Work Permit No }, { field: work_permit_expiration_date, label: Work Permit Expiration, type: date, show_if: "!!state.employee_detail.permit_no" }, { field: has_work_permit, label: Document, type: checkbox }, { field: work_permit_name, label: Document Filename, show_if: "!!state.employee_detail.has_work_permit" }]
+            - title: Citizenship
+              permission: employees.read
+              fields: [{ field: country_id, label: Nationality (Country) }, { field: identification_id, label: Identification No }, { field: ssnid, label: SSN No }, { field: passport_id, label: Passport No }, { field: passport_expiration_date, label: Passport Expiration, type: date, show_if: "!!state.employee_detail.passport_id" }]
             - title: Family
               permission: employees.read
               fields: [{ field: marital, label: Marital Status }, { field: spouse_complete_name, label: Spouse Legal Name, show_if: "['married', 'cohabitant'].includes(state.employee_detail.marital)" }, { field: spouse_birthdate, label: Spouse Birthdate, type: date, show_if: "['married', 'cohabitant'].includes(state.employee_detail.marital)" }, { field: children, label: Dependent Children, type: number }]

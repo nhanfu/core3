@@ -52,7 +52,7 @@ actions:
     mutation:
       operation: insert
       table: employees
-      fields: [employee_number, name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit]
+      fields: [employee_number, name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, passport_expiration_date]
       boolean_fields: [has_work_permit]
       required: [employee_number, name, hire_date]
       defaults: { active: true, state: Draft, marital: single, children: 0 }
@@ -90,6 +90,11 @@ actions:
       - { field: work_permit_expiration_date, label: Work Permit Expiration, type: date }
       - { field: has_work_permit, label: Work Permit Document, type: checkbox }
       - { field: work_permit_name, label: Document Filename, type: text }
+      - { field: country_id, label: Nationality (Country), type: text }
+      - { field: identification_id, label: Identification No, type: text }
+      - { field: ssnid, label: SSN No, type: text }
+      - { field: passport_id, label: Passport No, type: text }
+      - { field: passport_expiration_date, label: Passport Expiration, type: date }
   - id: archive_employee
     type: server
     permission: employees.write

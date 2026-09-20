@@ -290,3 +290,17 @@ Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-VERSION-DETAIL-001/`.
 Focused test: `test/employees_visa_work_permit.integration.test.ts` (4 tests,
 23 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`.
+
+## EMP-CITIZENSHIP-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo Personal Citizenship fields map to separate page/API contracts | pass |
+| Employee CRUD | Create, read, and edit nationality, identity, SSN, passport, and expiry durably | pass |
+| Permission and scope | Write permission, current company, stale row version, and ISO date guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic fixtures | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Personal desktop/mobile captures | conditional; Core3 fixture-company mismatch recorded |
+
+Focused test: `test/employees_citizenship.integration.test.ts` (4 tests,
+21 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-CITIZENSHIP-001/`.

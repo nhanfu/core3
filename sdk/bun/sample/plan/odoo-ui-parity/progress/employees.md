@@ -448,3 +448,22 @@ Candidate commit: current working tree
   (`Core3 Demo Company` session vs `Core3 Vietnam` fixtures); authenticated Odoo
   desktop/mobile show Abigail Peterson's source group. Seven Odoo shell icon
   404s are unrelated. Conditional evidence only; no aggregate sign-off.
+
+## EMP-CITIZENSHIP-001 (2026-09-21)
+
+- Selected the next uncovered source-backed Employee Personal behavior: Odoo's
+  Citizenship group for nationality, identification, SSN, passport, and
+  passport expiry.
+- Added page/API-separated fields and migration `20260921130000-043` with
+  idempotent deterministic fixtures. `country_id` is a durable country-name
+  projection because the sample service has no country catalog relation.
+- Employee create/edit is guarded by `employees.write`, current-company scope,
+  row-version concurrency, and ISO passport-expiration validation.
+- Focused verification: **4 tests / 21 assertions**; full Employees glob green;
+  UI audit **692 pages / 701 routes / 1,294 datasources**; scoped ESLint and
+  `git diff --check` pass.
+- Evidence: `evidence/employees/2026-09-21/EMP-CITIZENSHIP-001/`.
+  Authenticated Core3 desktop/mobile render the labels but are company-blocked;
+  authenticated Odoo desktop/mobile show Abigail Peterson's source group. Seven
+  Odoo shell icon 404s are unrelated. Conditional evidence only; no aggregate
+  sign-off.

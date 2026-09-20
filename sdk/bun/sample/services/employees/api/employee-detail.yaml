@@ -3,7 +3,7 @@ datasources:
   - id: employee_detail
     single: true
     permission: employees.read
-    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, contract_template_id, contract_template_name, timezone, barcode, presence, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, CAST(spouse_birthdate AS VARCHAR) AS spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, CAST(visa_expire AS VARCHAR) AS visa_expire, permit_no, CAST(work_permit_expiration_date AS VARCHAR) AS work_permit_expiration_date, work_permit_name, has_work_permit, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, contract_template_id, contract_template_name, timezone, barcode, presence, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, CAST(spouse_birthdate AS VARCHAR) AS spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, CAST(visa_expire AS VARCHAR) AS visa_expire, permit_no, CAST(work_permit_expiration_date AS VARCHAR) AS work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, CAST(passport_expiration_date AS VARCHAR) AS passport_expiration_date, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
   - id: employee_departure_wizard
     single: true
     permission: employees.read
@@ -662,7 +662,7 @@ actions:
     mutation:
       operation: update
       table: employees
-      fields: [name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, departure_date, additional_note, employment_type, hire_date, contract_start, contract_end, birthday, wage, working_schedule, timezone, barcode, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit]
+      fields: [name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, departure_date, additional_note, employment_type, hire_date, contract_start, contract_end, birthday, wage, working_schedule, timezone, barcode, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, passport_expiration_date]
       boolean_fields: [has_work_permit]
       required: [name]
       timestamps: true
@@ -679,6 +679,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE :visa_expire IS NULL OR regexp_matches(CAST(:visa_expire AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_VISA_EXPIRATION_INVALID, message: Visa expiration must use YYYY-MM-DD. }
         - { query: "SELECT 1 AS ok WHERE :work_permit_expiration_date IS NULL OR regexp_matches(CAST(:work_permit_expiration_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_WORK_PERMIT_EXPIRATION_INVALID, message: Work permit expiration must use YYYY-MM-DD. }
         - { query: "SELECT 1 AS ok WHERE COALESCE(CAST(:has_work_permit AS BOOLEAN), false) = false OR NULLIF(TRIM(CAST(:work_permit_name AS VARCHAR)), '') IS NOT NULL", status: 422, code: EMPLOYEES_WORK_PERMIT_DOCUMENT_INVALID, message: A work permit filename is required when a document is present. }
+        - { query: "SELECT 1 AS ok WHERE :passport_expiration_date IS NULL OR regexp_matches(CAST(:passport_expiration_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_PASSPORT_EXPIRATION_INVALID, message: Passport expiration must use YYYY-MM-DD. }
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: name, label: Employee Name, type: text, required: true }
@@ -726,6 +727,11 @@ actions:
       - { field: work_permit_expiration_date, label: Work Permit Expiration, type: date }
       - { field: has_work_permit, label: Work Permit Document, type: checkbox }
       - { field: work_permit_name, label: Document Filename, type: text }
+      - { field: country_id, label: Nationality (Country), type: text }
+      - { field: identification_id, label: Identification No, type: text }
+      - { field: ssnid, label: SSN No, type: text }
+      - { field: passport_id, label: Passport No, type: text }
+      - { field: passport_expiration_date, label: Passport Expiration, type: date }
   - id: register_employee_departure
     type: server_form
     permission: employees.write
