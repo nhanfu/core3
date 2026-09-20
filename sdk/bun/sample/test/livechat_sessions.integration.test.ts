@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
@@ -146,6 +147,29 @@ describe('Live Chat Conversations — Sessions parity', () => {
     expect((await repository.query('SELECT status, visitor_name, channel_id, operator_name, outcome, row_version FROM livechat_sessions WHERE id = ?', [sessionId]))[0]).toMatchObject({ status: 'Closed', visitor_name: 'Visitor B', channel_id: 'livechat-channel-demo-001', operator_name: 'Support Agent', outcome: 'Success', row_version: 6 });
     await expect(transition('sessions', 'close', 5)).rejects.toMatchObject({ status: 409, code: 'LIVECHAT_SESSION_INVALID_STATE' });
     database.close();
+  });
+
+  test('persists a session transition across a file-backed restart and rejects replay', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'core3-livechat-restart-'));
+    const path = join(directory, 'livechat.duckdb');
+    const discovered = discoverPages(sampleRoot);
+    const user = { sub: 'livechat-agent', email: 'agent@workspace.example', name: 'Live Chat Agent', permissions: ['livechat.read', 'livechat.write'] };
+    const first = await DuckDbDatabase.open(path);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, 'livechat_session_restart_test', ['schema', 'data']);
+    const firstApi = createLivechatApi(firstRepository, discovered, () => user);
+    await expect(postAction(firstApi, 'livechat.sessions.wait', { id: 'livechat-session-demo-002', expected_row_version: 1, values: {} })).resolves.toMatchObject({ status: 200 });
+    first.close();
+
+    const second = await DuckDbDatabase.open(path);
+    const secondRepository = new YamlRepository(second);
+    const secondApi = createLivechatApi(secondRepository, discovered, () => user);
+    expect((await secondRepository.query('SELECT status, row_version FROM livechat_sessions WHERE id = ?', ['livechat-session-demo-002']))[0]).toMatchObject({ status: 'Waiting for Customer', row_version: 2 });
+    await expect(postAction(secondApi, 'livechat.sessions.close', { id: 'livechat-session-demo-002', expected_row_version: 2, values: {} })).resolves.toMatchObject({ status: 200 });
+    expect((await secondRepository.query('SELECT status, row_version FROM livechat_sessions WHERE id = ?', ['livechat-session-demo-002']))[0].status).toBe('Closed');
+    await expect(postAction(secondApi, 'livechat.sessions.close', { id: 'livechat-session-demo-002', expected_row_version: 2, values: {} })).rejects.toMatchObject({ status: 409, code: 'LIVECHAT_SESSION_INVALID_STATE' });
+    second.close();
+    rmSync(directory, { recursive: true, force: true });
   });
 
   test('limits assigned operators to their sessions without changing another row', async () => {
