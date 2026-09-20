@@ -1224,3 +1224,27 @@ the action. Authenticated Odoo desktop/mobile captures show a healthy seeded
 company already has 24 employees. The exact comparison boundary and all
 artifacts are under
 `evidence/employees/2026-09-20/EMP-LOAD-SAMPLE-DATA-001/`.
+
+## EMP-BANK-ACCOUNT-001: Employee Personal bank accounts and salary allocation (2026-09-20)
+
+This slice maps Odoo hr.employee.bank_account_ids and salary_distribution from
+addons/hr/models/hr_employee.py, plus the hr.bank.account.allocation.wizard
+allocation-line workflow. Core3 keeps page YAML separate from API YAML: the
+Personal notebook tab uses a durable LineItemGrid over employee_bank_accounts,
+while the API provides guarded add/edit/delete server-form actions.
+
+Migration 20260920230000-034 adds deterministic bank-account rows and indexes.
+Mutations require an authenticated employees.write actor, enforce active employee
+and current-company scope, parent/line row versions, duplicate account
+protection, and allocation totals not exceeding 100 percent. Focused coverage
+is 4 tests / 32 assertions; the UI audit is 679 pages / 688 routes / 1,247
+datasources.
+
+Authenticated evidence is under
+evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/. Core3 login and company
+switching pass, but the authenticated company is Core3 Vietnam Branch while
+fixtures are Core3 Vietnam, so the detail is empty. Odoo desktop/mobile
+authentication passes, but all 24 reference employees have empty
+bank_account_ids, so a populated allocation comparison is unavailable. These
+are exact fixture/reference-data blockers; no aggregate Employees sign-off is
+claimed.

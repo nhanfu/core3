@@ -83,6 +83,22 @@ datasources:
         AND (t.company_name IS NULL OR t.company_name = e.company_name)
         AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
       ORDER BY t.name, t.id
+  - id: employee_bank_accounts
+    single: false
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_BANK_ACCOUNTS_UNAVAILABLE, message: Employee bank accounts are temporarily unavailable. } }
+    query: |
+      SELECT b.id, b.row_version, b.employee_id, b.company_name, b.acc_number,
+        b.bank_name, b.acc_holder_name, b.currency_code, b.amount, b.amount_type,
+        b.trusted, b.sequence, b.active,
+        CASE WHEN b.amount_type = 'percentage' THEN CAST(b.amount AS VARCHAR) || '%' ELSE printf('%.2f %s', b.amount, b.currency_code) END AS allocation_display,
+        CASE WHEN b.trusted THEN 'Trusted' ELSE 'Untrusted' END AS trust_status
+      FROM employee_bank_accounts b
+      JOIN employees e ON e.id = b.employee_id
+      WHERE b.employee_id = :employee_id
+        AND b.active = true
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+      ORDER BY b.sequence, b.id
 actions:
   - id: open_employee_timesheets
     type: navigate
@@ -254,6 +270,113 @@ actions:
       result: { query: "SELECT * FROM employees WHERE id = :employee_id" }
     fields:
       - { field: template_id, label: Contract Template, type: select, options_source: employee_contract_templates_for_employee, required: true }
+  - id: add_employee_bank_account
+    type: server_form
+    permission: employees.write
+    title: Add Bank Account
+    description: Add an employee bank account and its salary allocation line.
+    action: employees.records.bank_account.create
+    handler: line_item
+    operation: create
+    domain: employee_bank_account
+    params: { id: '{state.id}' }
+    refresh: [employee_detail, employee_bank_accounts]
+    mutation:
+      generated: [line_id]
+      before_steps: [{ query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM employee_bank_accounts WHERE employee_id = :id AND active = true", assign: true }]
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_BANK_ACCOUNT_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the bank account was added. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:acc_number AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:currency_code AS VARCHAR))) > 0 AND CAST(:amount AS DOUBLE) >= 0 AND ((CAST(:amount_type AS VARCHAR) = 'percentage' AND CAST(:amount AS DOUBLE) <= 100) OR CAST(:amount_type AS VARCHAR) = 'fixed') AND CAST(:amount_type AS VARCHAR) IN ('percentage', 'fixed')", status: 422, code: EMPLOYEES_BANK_ACCOUNT_VALUES_INVALID, message: Account number, currency, allocation, and allocation type are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_bank_accounts WHERE employee_id = :id AND LOWER(acc_number) = LOWER(TRIM(CAST(:acc_number AS VARCHAR))) AND active = true)", status: 409, code: EMPLOYEES_BANK_ACCOUNT_EXISTS, message: This account number is already linked to the employee. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:amount_type AS VARCHAR) <> 'percentage' OR COALESCE((SELECT SUM(amount) FROM employee_bank_accounts WHERE employee_id = :id AND active = true AND amount_type = 'percentage'), 0) + CAST(:amount AS DOUBLE) <= 100", status: 422, code: EMPLOYEES_BANK_ACCOUNT_ALLOCATION_INVALID, message: Percentage allocations cannot exceed 100%. }
+      steps:
+        - query: "INSERT INTO employee_bank_accounts(id, row_version, employee_id, company_name, acc_number, bank_name, acc_holder_name, currency_code, amount, amount_type, trusted, sequence, active) SELECT :line_id, 1, e.id, e.company_name, TRIM(CAST(:acc_number AS VARCHAR)), NULLIF(TRIM(CAST(:bank_name AS VARCHAR)), ''), NULLIF(TRIM(CAST(:acc_holder_name AS VARCHAR)), ''), UPPER(TRIM(CAST(:currency_code AS VARCHAR))), CAST(:amount AS DOUBLE), CAST(:amount_type AS VARCHAR), COALESCE(CAST(:trusted AS BOOLEAN), false), :next_sequence, true FROM employees e WHERE e.id = :id"
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the bank account was added. Reload and try again.
+      result: { query: "SELECT * FROM employee_bank_accounts WHERE id = :line_id" }
+    fields:
+      - { field: acc_number, label: Account Number, type: text, required: true }
+      - { field: bank_name, label: Bank, type: text }
+      - { field: acc_holder_name, label: Account Holder, type: text }
+      - { field: currency_code, label: Currency, type: text, required: true, default: VND }
+      - { field: amount, label: Allocation, type: number, required: true, min: 0 }
+      - { field: amount_type, label: Type, type: select, options: [{ value: percentage, label: Percentage }, { value: fixed, label: Fixed }] }
+      - { field: trusted, label: Trusted, type: checkbox }
+  - id: edit_employee_bank_account
+    type: server_form
+    permission: employees.write
+    title: Edit Bank Account Allocation
+    description: Update the account details, salary allocation, or trusted payout flag.
+    action: employees.records.bank_account.update
+    handler: line_item
+    operation: update
+    domain: employee_bank_account
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    prefill: row
+    refresh: [employee_detail, employee_bank_accounts]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_BANK_ACCOUNT_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the bank account was edited. Reload and try again. }
+        - { query: "SELECT id FROM employee_bank_accounts WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_BANK_ACCOUNT_STALE, message: This bank account changed before it was edited. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:acc_number AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:currency_code AS VARCHAR))) > 0 AND CAST(:amount AS DOUBLE) >= 0 AND ((CAST(:amount_type AS VARCHAR) = 'percentage' AND CAST(:amount AS DOUBLE) <= 100) OR CAST(:amount_type AS VARCHAR) = 'fixed') AND CAST(:amount_type AS VARCHAR) IN ('percentage', 'fixed')", status: 422, code: EMPLOYEES_BANK_ACCOUNT_VALUES_INVALID, message: Account number, currency, allocation, and allocation type are required. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_bank_accounts WHERE employee_id = :id AND LOWER(acc_number) = LOWER(TRIM(CAST(:acc_number AS VARCHAR))) AND active = true AND id <> :line_id)", status: 409, code: EMPLOYEES_BANK_ACCOUNT_EXISTS, message: This account number is already linked to the employee. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:amount_type AS VARCHAR) <> 'percentage' OR COALESCE((SELECT SUM(amount) FROM employee_bank_accounts WHERE employee_id = :id AND active = true AND amount_type = 'percentage' AND id <> :line_id), 0) + CAST(:amount AS DOUBLE) <= 100", status: 422, code: EMPLOYEES_BANK_ACCOUNT_ALLOCATION_INVALID, message: Percentage allocations cannot exceed 100%. }
+      steps:
+        - query: "UPDATE employee_bank_accounts SET row_version = row_version + 1, acc_number = TRIM(CAST(:acc_number AS VARCHAR)), bank_name = NULLIF(TRIM(CAST(:bank_name AS VARCHAR)), ''), acc_holder_name = NULLIF(TRIM(CAST(:acc_holder_name AS VARCHAR)), ''), currency_code = UPPER(TRIM(CAST(:currency_code AS VARCHAR))), amount = CAST(:amount AS DOUBLE), amount_type = CAST(:amount_type AS VARCHAR), trusted = COALESCE(CAST(:trusted AS BOOLEAN), false), updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_BANK_ACCOUNT_STALE
+          message: This bank account changed before it was edited. Reload and try again.
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the bank account was edited. Reload and try again.
+      result: { query: "SELECT * FROM employee_bank_accounts WHERE id = :line_id" }
+    fields:
+      - { field: acc_number, label: Account Number, type: text, required: true }
+      - { field: bank_name, label: Bank, type: text }
+      - { field: acc_holder_name, label: Account Holder, type: text }
+      - { field: currency_code, label: Currency, type: text, required: true }
+      - { field: amount, label: Allocation, type: number, required: true, min: 0 }
+      - { field: amount_type, label: Type, type: select, options: [{ value: percentage, label: Percentage }, { value: fixed, label: Fixed }] }
+      - { field: trusted, label: Trusted, type: checkbox }
+  - id: delete_employee_bank_account
+    type: server
+    permission: employees.write
+    action: employees.records.bank_account.delete
+    handler: line_item
+    operation: delete
+    domain: employee_bank_account
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    confirm: Delete this employee bank account?
+    refresh: [employee_detail, employee_bank_accounts]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:current_user_id AS VARCHAR)), '') IS NOT NULL", status: 403, code: EMPLOYEES_ACTOR_REQUIRED, message: An authenticated employee actor is required. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_BANK_ACCOUNT_EMPLOYEE_NOT_FOUND, message: Active employee not found in the current company. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :parent_expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before the bank account was deleted. Reload and try again. }
+        - { query: "SELECT id FROM employee_bank_accounts WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version", status: 409, code: EMPLOYEES_BANK_ACCOUNT_STALE, message: This bank account changed before it was deleted. Reload and try again. }
+      steps:
+        - query: "DELETE FROM employee_bank_accounts WHERE id = :line_id AND employee_id = :id AND active = true AND row_version = :expected_row_version"
+          expect_changed: true
+          status: 409
+          code: EMPLOYEES_BANK_ACCOUNT_STALE
+          message: This bank account changed before it was deleted. Reload and try again.
+        - query: "UPDATE employees SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :parent_expected_row_version AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+          expect_changed: true
+          status: 409
+          code: STALE_RECORD
+          message: The employee changed before the bank account was deleted. Reload and try again.
   - id: edit_employee
     type: server_form
     permission: employees.write

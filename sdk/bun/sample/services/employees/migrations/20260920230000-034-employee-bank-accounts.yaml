@@ -1,0 +1,42 @@
+id: employees_bank_accounts
+version: 0.0.34
+kind: data
+description: Persist employee bank accounts and salary allocation lines
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_bank_accounts (
+        id VARCHAR PRIMARY KEY NOT NULL,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        employee_id VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL,
+        acc_number VARCHAR NOT NULL,
+        bank_name VARCHAR,
+        acc_holder_name VARCHAR,
+        currency_code VARCHAR NOT NULL DEFAULT 'EUR',
+        amount DOUBLE NOT NULL DEFAULT 0,
+        amount_type VARCHAR NOT NULL DEFAULT 'percentage',
+        trusted BOOLEAN NOT NULL DEFAULT false,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00',
+        updated_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS employee_bank_accounts_employee_idx ON employee_bank_accounts(employee_id, active, sequence, id);
+      CREATE INDEX IF NOT EXISTS employee_bank_accounts_company_idx ON employee_bank_accounts(company_name, active);
+      INSERT OR IGNORE INTO employee_bank_accounts(
+        id, employee_id, company_name, acc_number, bank_name, acc_holder_name,
+        currency_code, amount, amount_type, trusted, sequence
+      ) VALUES
+        ('employee-bank-admin-primary', 'employee-demo-001', 'Core3 Vietnam', 'VN-001-0001', 'Vietcombank', 'Admin User', 'VND', 70, 'percentage', true, 10),
+        ('employee-bank-admin-secondary', 'employee-demo-001', 'Core3 Vietnam', 'VN-001-0002', 'ACB', 'Admin User', 'VND', 30, 'percentage', false, 20),
+        ('employee-bank-anh-primary', 'employee-demo-002', 'Core3 Vietnam', 'VN-002-0001', 'BIDV', 'Anh Nguyen', 'VND', 100, 'percentage', true, 10);
+      UPDATE employee_bank_accounts SET created_at = TIMESTAMP '2026-01-15 00:00:00', updated_at = TIMESTAMP '2026-01-15 00:00:00';
+    down: |
+      DROP INDEX IF EXISTS employee_bank_accounts_company_idx;
+      DROP INDEX IF EXISTS employee_bank_accounts_employee_idx;
+      DROP TABLE IF EXISTS employee_bank_accounts;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

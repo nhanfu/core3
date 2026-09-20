@@ -20,6 +20,21 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-BANK-ACCOUNT-001 (2026-09-20)
+
+- Selected the smallest remaining source-backed Personal-tab gap: employee
+  bank accounts and salary allocation.
+- Implemented migration 20260920230000-034, durable API line-item CRUD,
+  actor/company/active/row-version guards, deterministic fixtures, and the
+  Personal LineItemGrid page binding.
+- Focused verification: 4 tests / 32 assertions; audit 679 pages / 688
+  routes / 1,247 datasources.
+- Authenticated Core3 and Odoo desktop/mobile captures are under
+  evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/. Core3 fixture
+  company and authenticated company differ; Odoo's 24 reference employees
+  have no bank accounts. Both comparison boundaries are explicit blockers,
+  not sign-off.
+
 ## EMP-LOAD-SAMPLE-DATA-001 (2026-09-20)
 
 - Selected the smallest remaining source-backed behavior after Print Badge:

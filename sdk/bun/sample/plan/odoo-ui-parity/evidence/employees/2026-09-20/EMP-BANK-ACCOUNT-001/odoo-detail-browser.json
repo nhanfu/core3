@@ -1,0 +1,56 @@
+[
+  {
+    "viewport": "desktop",
+    "clicked": true,
+    "url": "http://127.0.0.1:8069/odoo/employees/6",
+    "before": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\n1-24 / 24\nCOMPANY\nAll\nMy Company (San Francisco)\n24\nDEPARTMENT\nAll\nManagement\n21\nAbigail Peterson\nConsultant\nabigail.peterson39@example.com\n(555)-233-3393\nAug 1 - Nov 10\nAmy Watson\nInterior Designer\n(535)-495-4222\nEmployee\nAnita Oliver\nExperienced Developer\nanita.oliver32@example.com\n(555)-497-4804\nJan 1\nEmployee\nAudrey Peterson\nConsultant\naudrey.peterson25@example.com\n(555)-276-7903\nJa",
+    "hasBankAccounts": false,
+    "hasSalaryAllocation": false,
+    "body": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\nAbigail Peterson\nTimesheets\n0\nEquipment\nHistory\n1\n1 / 24\nCreate User\nLaunch Plan\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nWORK\nCompany\nDepartment\nJob Position\nJob Title\nManager\nLOCATION\nWork Address\n8000 Marina Blvd, Suite 300\nBrisbane CA 94005\nUnited States\nWork Location\nUSUAL WORK LOCATION\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday\nNOTE\nORGANIZATION CHART\n FULL CHART\nMitchell Admin\nChief Technical Officer\n22\nJeffrey Kelly\nMarketing and Community Manager\n4\nAbigail Peterson\nConsultant\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+    ],
+    "http": [
+      "404 http://127.0.0.1:8069/hr_referral/static/description/icon.png",
+      "404 http://127.0.0.1:8069/hr_payroll/static/description/icon.png",
+      "404 http://127.0.0.1:8069/sign/static/description/icon.png",
+      "404 http://127.0.0.1:8069/ai/static/description/icon.png",
+      "404 http://127.0.0.1:8069/planning/static/description/icon.png",
+      "404 http://127.0.0.1:8069/hr_appraisal/static/description/icon.png",
+      "404 http://127.0.0.1:8069/documents/static/description/icon.png"
+    ]
+  },
+  {
+    "viewport": "mobile",
+    "clicked": true,
+    "url": "http://127.0.0.1:8069/odoo/employees/6",
+    "before": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\n1-24 / 24\nCOMPANY\nAll\nMy Company (San Francisco)\n24\nDEPARTMENT\nAll\nManagement\n21\nAbigail Peterson\nConsultant\nabigail.peterson39@example.com\n(555)-233-3393\nAug 1 - Nov 10\nAmy Watson\nInterior Designer\n(535)-495-4222\nEmployee\nAnita Oliver\nExperienced Developer\nanita.oliver32@example.com\n(555)-497-4804\nJan 1\nEmployee\nAudrey Peterson\nConsultant\naudrey.peterson25@example.com\n(555)-276-7903\nJa",
+    "hasBankAccounts": false,
+    "hasSalaryAllocation": false,
+    "body": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\nAbigail Peterson\nTimesheets\n0\nEquipment\nHistory\n1\n1 / 24\nCreate User\nLaunch Plan\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nWORK\nCompany\nDepartment\nJob Position\nJob Title\nManager\nLOCATION\nWork Address\n8000 Marina Blvd, Suite 300\nBrisbane CA 94005\nUnited States\nWork Location\nUSUAL WORK LOCATION\nMonday\nTuesday\nWednesday\nThursday\nFriday\nSaturday\nSunday\nNOTE\nORGANIZATION CHART\n FULL CHART\nMitchell Admin\nChief Technical Officer\n22\nJeffrey Kelly\nMarketing and Community Manager\n4\nAbigail Peterson\nConsultant\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+    ],
+    "http": [
+      "404 http://127.0.0.1:8069/sign/static/description/icon.png",
+      "404 http://127.0.0.1:8069/hr_referral/static/description/icon.png",
+      "404 http://127.0.0.1:8069/hr_payroll/static/description/icon.png",
+      "404 http://127.0.0.1:8069/ai/static/description/icon.png",
+      "404 http://127.0.0.1:8069/planning/static/description/icon.png",
+      "404 http://127.0.0.1:8069/hr_appraisal/static/description/icon.png",
+      "404 http://127.0.0.1:8069/documents/static/description/icon.png"
+    ]
+  }
+]

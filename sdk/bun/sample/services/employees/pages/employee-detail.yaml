@@ -50,6 +50,29 @@ components:
           groups:
             - title: Contact Information
               fields: [{ field: private_email, label: Private Email }, { field: phone, label: Phone }, { field: street, label: Private Address }, { field: birthday, label: Birthday }]
+          component:
+            type: LineItemGrid
+            source: employee_bank_accounts
+            parent_source: employee_detail
+            title: Bank Accounts
+            description: Allocate salary across the employee's bank accounts and mark trusted payout accounts.
+            variant: odoo_x2many
+            page_size: 20
+            row_key: id
+            actions: [{ id: add_employee_bank_account, label: Add a bank account, variant: primary, permission: employees.write }]
+            empty_state: { title: No bank accounts, description: Add an employee bank account before configuring salary allocation. }
+            children:
+              - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+              - { type: LineItemField, id: acc_number, field: acc_number, label: Account Number, readonly: true }
+              - { type: LineItemField, id: bank_name, field: bank_name, label: Bank, readonly: true }
+              - { type: LineItemField, id: amount, field: amount, label: Allocation, input_type: number, required: true }
+              - { type: LineItemField, id: amount_type, field: amount_type, label: Type, readonly: true }
+              - { type: LineItemField, id: trusted, field: trusted, label: Trusted, input_type: checkbox }
+              - type: LineItemActions
+                id: employee_bank_account_actions
+                actions:
+                  - { id: edit_employee_bank_account, label: Edit, icon: edit, variant: ghost, permission: employees.write }
+                  - { id: delete_employee_bank_account, label: Delete, icon: trash, variant: danger, permission: employees.write }
         - id: payroll
           label: Payroll
           groups:

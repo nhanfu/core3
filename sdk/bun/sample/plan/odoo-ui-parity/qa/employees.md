@@ -578,3 +578,15 @@ was **78 passed / 8 failed across 24 files** because the concurrent shared
 Inventory changes reference missing actions during global discovery; this is
 not an Employees failure. The repository audit has the same external blocker.
 No aggregate Employees sign-off is claimed.
+
+## EMP-BANK-ACCOUNT-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-014 | Personal bank-account add/edit/delete and allocation | Durable line-item CRUD with allocation guard | pass; 4 focused tests / 32 assertions |
+| EMP-PERM-014 | Actor, company, active, duplicate, and row-version boundaries | Unauthorized or stale mutations reject atomically | pass |
+| EMP-DATA-014 | Migration replay and file-backed restart | Seeded bank rows and mutations survive restart | pass |
+| EMP-UI-010 | Authenticated Core3/Odoo desktop and mobile | Populated grid/modal comparison | conditional; Core3 company mismatch and Odoo has no bank-account reference data |
+
+Evidence: evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/. No aggregate
+Employees sign-off is claimed.

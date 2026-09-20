@@ -149,3 +149,14 @@ green at 675 / 684 / 1,225 and Employees-scoped lint/diff-check pass.
 | EMP-UI-009 | Core3/Odoo desktop and mobile | Core3 Admin action/create/reload pass; Odoo seeded list pass, empty action not rendered because reference company is non-empty | conditional |
 
 Evidence: `evidence/employees/2026-09-20/EMP-LOAD-SAMPLE-DATA-001/`.
+
+## EMP-BANK-ACCOUNT-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-014 | Personal bank-account add/edit/delete and allocation | Durable line-item CRUD with allocation guard | pass |
+| EMP-PERM-014 | Actor/company/active/duplicate/stale boundaries | Invalid mutations reject atomically | pass |
+| EMP-DATA-014 | Migration replay and file-backed restart | Rows and mutations persist | pass |
+| EMP-UI-010 | Authenticated Core3/Odoo desktop and mobile | Populated comparison | conditional; exact fixture/reference-data blockers recorded |
+
+Evidence: `evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/`.
