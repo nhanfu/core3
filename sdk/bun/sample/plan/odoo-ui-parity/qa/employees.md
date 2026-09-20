@@ -669,6 +669,21 @@ Evidence is under
 `evidence/employees/2026-09-21/EMP-BANK-ALLOCATION-001/`. No aggregate
 Employees sign-off is claimed.
 
+## EMP-VISA-WORK-PERMIT-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-025 | Personal Visa & Work Permit create/edit/read | pass; visa/permit numbers, expiries, and document metadata persist through employee CRUD |
+| EMP-PERM-025 | `employees.write`, current company, row version, date, document metadata | pass; invalid, stale, and out-of-company changes reject atomically |
+| EMP-DATA-025 | Migration replay and file-backed restart | pass; deterministic visa/work permit fixtures survive restart without duplicates |
+| EMP-UI-021 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 labels/page 200 are company-blocked, Odoo source group is visible, binary upload is an explicit follow-up |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`. Core3's authenticated
+session is `Core3 Demo Company` while deterministic employee fixtures are
+`Core3 Vietnam`; Odoo has seven unrelated app-icon 404s. No aggregate Employees
+sign-off is claimed.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

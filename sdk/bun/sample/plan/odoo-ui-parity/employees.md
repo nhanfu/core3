@@ -1479,3 +1479,28 @@ Authenticated Odoo desktop/mobile reaches Abigail Peterson's Personal tab, but
 the reference employee has no bank-account rows. Evidence is under
 `evidence/employees/2026-09-21/EMP-BANK-ALLOCATION-001/`; no aggregate
 Employees sign-off is claimed.
+
+## EMP-VISA-WORK-PERMIT-001: Employee Visa & Work Permit details (2026-09-21)
+
+Odoo's Personal-tab `Visa & Work Permit` group exposes `visa_no`, `visa_expire`,
+`permit_no`, `work_permit_expiration_date`, and the `has_work_permit` binary
+document widget with its computed filename. Core3 adds the corresponding
+Personal group in the page YAML and projects the fields through the separate
+`employee-detail` API/action YAML. The bounded Core3 document contract stores
+deterministic document presence and filename metadata; binary attachment upload
+remains an explicit follow-up boundary rather than an invented implementation.
+
+Migration `20260921120000-042-employee-visa-work-permit.yaml` adds the durable
+columns and replay-safe fixtures. Employee create/edit uses `employees.write`,
+current-company, optimistic row-version, ISO-date, and document-metadata guards.
+Focused coverage is **4 tests / 23 assertions**, including source mapping,
+create/edit/read, invalid/stale/company guards, migration replay, and file-backed
+restart.
+
+Authenticated Core3 desktop/mobile captures show the new labels and HTTP 200
+page loads, but `Core3 Demo Company` does not expose the `Core3 Vietnam`
+deterministic employee. Authenticated Odoo desktop/mobile reaches Abigail
+Peterson's Personal tab and shows the source Visa & Work Permit group; seven
+unrelated app-icon 404s are recorded. Evidence is under
+`evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`. This is conditional
+feature evidence, not aggregate Employees sign-off.

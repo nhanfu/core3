@@ -1,0 +1,43 @@
+version: 0.0.42
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS visa_no VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS visa_expire DATE;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS permit_no VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_permit_expiration_date DATE;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_permit_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS has_work_permit BOOLEAN;
+      UPDATE employees
+      SET visa_no = COALESCE(visa_no, CASE id
+        WHEN 'employee-demo-001' THEN 'VN-VISA-001'
+        WHEN 'employee-demo-002' THEN 'VN-VISA-002'
+        ELSE NULL END),
+          visa_expire = COALESCE(visa_expire, CASE id
+        WHEN 'employee-demo-001' THEN DATE '2027-06-30'
+        WHEN 'employee-demo-002' THEN DATE '2027-03-31'
+        ELSE NULL END),
+          permit_no = COALESCE(permit_no, CASE id
+        WHEN 'employee-demo-001' THEN 'VN-WP-001'
+        ELSE NULL END),
+          work_permit_expiration_date = COALESCE(work_permit_expiration_date, CASE id
+        WHEN 'employee-demo-001' THEN DATE '2027-12-31'
+        ELSE NULL END),
+          has_work_permit = COALESCE(has_work_permit, CASE id
+        WHEN 'employee-demo-001' THEN true
+        ELSE false END),
+          work_permit_name = COALESCE(work_permit_name, CASE id
+        WHEN 'employee-demo-001' THEN 'Admin User_work_permit_VN-WP-001.pdf'
+        ELSE NULL END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS visa_no;
+      ALTER TABLE employees DROP COLUMN IF EXISTS visa_expire;
+      ALTER TABLE employees DROP COLUMN IF EXISTS permit_no;
+      ALTER TABLE employees DROP COLUMN IF EXISTS work_permit_expiration_date;
+      ALTER TABLE employees DROP COLUMN IF EXISTS work_permit_name;
+      ALTER TABLE employees DROP COLUMN IF EXISTS has_work_permit;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

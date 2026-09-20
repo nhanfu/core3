@@ -428,3 +428,23 @@ Candidate commit: current working tree
   has no reference bank-account rows. Evidence:
   `evidence/employees/2026-09-21/EMP-BANK-ALLOCATION-001/`.
 - Conditional feature evidence only; no aggregate Employees sign-off.
+
+## EMP-VISA-WORK-PERMIT-001 (2026-09-21)
+
+- Selected the next uncovered source-backed Employee Personal behavior:
+  Odoo's Visa & Work Permit group and its visa/work-permit expiry details.
+- Added page/API-separated fields for visa number and expiry, permit number and
+  expiry, and durable document presence/filename metadata. Added migration
+  `20260921120000-042` with idempotent deterministic fixtures for the supplied
+  Employees demo employees.
+- Employee create/edit is guarded by `employees.write`, current-company scope,
+  row-version concurrency, ISO date validation, and the work-permit document
+  metadata invariant. Binary upload is explicitly not claimed by this slice.
+- Focused verification: **4 tests / 23 assertions**; full Employees glob green;
+  UI audit **692 pages / 701 routes / 1,294 datasources**; scoped ESLint and
+  `git diff --check` pass.
+- Evidence: `evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`.
+  Authenticated Core3 desktop/mobile render the labels but are company-blocked
+  (`Core3 Demo Company` session vs `Core3 Vietnam` fixtures); authenticated Odoo
+  desktop/mobile show Abigail Peterson's source group. Seven Odoo shell icon
+  404s are unrelated. Conditional evidence only; no aggregate sign-off.

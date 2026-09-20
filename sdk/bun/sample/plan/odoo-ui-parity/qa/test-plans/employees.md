@@ -276,3 +276,17 @@ Evidence: `evidence/employees/2026-09-20/EMP-CREATE-USER-001/`.
 | EMP-UI-018 | Authenticated responsive comparison | Core3 exact fixture-company blocker; Odoo desktop list/detail and mobile authenticated detail evidence | conditional |
 
 Evidence: `evidence/employees/2026-09-21/EMP-EMPLOYEE-VERSION-DETAIL-001/`.
+
+## EMP-VISA-WORK-PERMIT-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo Personal Visa & Work Permit fields map to separate page/API contracts | pass |
+| Employee CRUD | Create, read, and edit visa/permit values and document metadata durably | pass |
+| Permission and scope | Write permission, current company, stale row version, ISO date, and document metadata guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic fixtures | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Personal desktop/mobile captures | conditional; Core3 fixture-company mismatch and binary upload boundary recorded |
+
+Focused test: `test/employees_visa_work_permit.integration.test.ts` (4 tests,
+23 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`.

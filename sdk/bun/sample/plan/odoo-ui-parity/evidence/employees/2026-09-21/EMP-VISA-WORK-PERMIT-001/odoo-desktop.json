@@ -1,0 +1,56 @@
+{
+  "feature": "EMP-VISA-WORK-PERMIT-001",
+  "authenticated": true,
+  "url": "http://127.0.0.1:8069/odoo/employees/6",
+  "title": "Abigail Peterson",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "personal_tab_found": true,
+  "visible_labels": [
+    "Visa No",
+    "Work Permit No",
+    "Document"
+  ],
+  "body_excerpt": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\nAbigail Peterson\nTimesheets\n0\nEquipment\nHistory\n1\n1 / 1\nCreate User\nLaunch Plan\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nPRIVATE CONTACT\nEmail\nPhone\nBank Accounts?\nPERSONAL INFORMATION\nLegal Name\nBirthday\nPlace of Birth\n─\nGender?\nEMERGENCY CONTACT\nContact\nPhone\nVISA & WORK PERMIT\nVisa No\nWork Permit No\nDocument\nUpload your file\nCITIZENSHIP\nNationality (Country)\nIdentification No?\nSSN No?\nPassport No\nLOCATION\nPrivate Address\nHome-Work Distance\nFAMILY\nMarital Status\nSpouse Legal Name\nSpouse Birthdate\nDependent Children\nEDUCATION\nCertificate Level\nField of Study\nDOCUMENTS\nID Card Copy\nUpload your file\nDriving License\nUpload your file\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+  "http_errors": [
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:8069/hr_referral/static/description/icon.png"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:8069/sign/static/description/icon.png"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:8069/hr_payroll/static/description/icon.png"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:8069/ai/static/description/icon.png"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:8069/planning/static/description/icon.png"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:8069/hr_appraisal/static/description/icon.png"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:8069/documents/static/description/icon.png"
+    }
+  ],
+  "console_or_page_errors": [
+    "console: Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console: Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console: Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console: Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console: Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console: Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "console: Failed to load resource: the server responded with a status of 404 (NOT FOUND)"
+  ]
+}
