@@ -211,6 +211,7 @@ describe('Base Contacts list/card/detail parity batch', () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
   test('enforces company visibility, duplicate/cycle/missing/stale guards atomically', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
