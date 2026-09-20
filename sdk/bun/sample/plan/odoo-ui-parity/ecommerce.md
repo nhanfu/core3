@@ -1,6 +1,35 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded payment-provider configuration slice; module sign-off remains open)
+Status: qa-in-progress (bounded payment-token lifecycle slice; module sign-off remains open)
+
+## Bounded feature — Payment Token Lifecycle (`ECOM-CHECKOUT-PAYMENT-TOKENS-001`)
+
+Odoo source comparison: `website_sale/views/website_sale_menus.xml` exposes the
+technical Website > Configuration > eCommerce > Payment Tokens menu through
+`payment.action_payment_token` with `base.group_no_one`. The supplied
+`payment/views/payment_token_views.xml` makes the list/form read-only (`create`
+and `edit` false), exposes masked payment details, payment method, partner,
+provider, provider reference, company, and archived filtering. Payment security
+rules scope normal users to their own partner tokens and companies; the Website
+Sale override excludes saved tokens from express checkout.
+
+Core3 comparison: migrations 059/060/061 add durable company/customer-scoped
+tokens, a deterministic masked card fixture, and tokenization compatibility for
+the existing demo card/provider. Separate Payment Tokens page/API contracts
+provide read filtering, an external-provider registration boundary that stores
+only masked details, idempotency-key replay, provider/method/customer/company
+validation, and optimistic archive/retirement. No raw payment secret, provider
+credential, gateway call, or unarchive action is implemented.
+
+Focused tests cover the Odoo menu/view trace, page/API separation, fixture
+replay, masked-value/provider/method/customer/company validation, idempotent
+registration, customer ownership filtering, optimistic retirement, and DuckDB
+restart persistence in `test/ecommerce_payment_tokens.integration.test.ts`.
+Core3 authenticated desktop/mobile capture was attempted but blocked because
+the local runtime ports were not listening; both supplied Odoo references
+return exact HTTP 404 for `/shop`. Evidence is under
+`evidence/ecommerce/2026-09-20/ecom-checkout-payment-tokens-001/`. This bounded
+feature is verified but Ecommerce remains unsigned off.
 
 ## Bounded feature — Payment Provider Configuration (`ECOM-CHECKOUT-PAYMENT-PROVIDERS-001`)
 

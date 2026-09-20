@@ -1,0 +1,22 @@
+version: 0.0.60
+kind: data
+description: deterministic eCommerce payment token fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_payment_tokens (
+        id, row_version, idempotency_key, provider_code, provider_name,
+        payment_method_code, payment_method_name, payment_details, provider_ref,
+        customer_id, customer_name, customer_email, company_name, active, verified
+      ) VALUES (
+        'ecommerce-payment-token-demo-card', 1, 'fixture:demo-card',
+        'demo_gateway', 'Demo Gateway', 'card', 'Card', 'Visa •••• 4242',
+        'demo-token-4242', 'ecommerce-customer-001', 'Acme Corporation',
+        'hello@workspace.example', 'My Company', TRUE, TRUE
+      ) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_payment_tokens WHERE id = 'ecommerce-payment-token-demo-card';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

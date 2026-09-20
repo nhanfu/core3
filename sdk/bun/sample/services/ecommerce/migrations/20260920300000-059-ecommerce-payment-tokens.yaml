@@ -1,0 +1,41 @@
+version: 0.0.59
+kind: schema
+description: durable eCommerce payment tokens
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_payment_tokens (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        idempotency_key VARCHAR NOT NULL UNIQUE,
+        provider_code VARCHAR NOT NULL,
+        provider_name VARCHAR NOT NULL,
+        payment_method_code VARCHAR NOT NULL,
+        payment_method_name VARCHAR NOT NULL,
+        payment_details VARCHAR NOT NULL,
+        provider_ref VARCHAR NOT NULL,
+        customer_id VARCHAR NOT NULL,
+        customer_name VARCHAR NOT NULL,
+        customer_email VARCHAR,
+        company_name VARCHAR NOT NULL DEFAULT 'My Company',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        verified BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        archived_at TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_payment_tokens_provider_ref_idx
+        ON ecommerce_payment_tokens(company_name, provider_code, provider_ref);
+      CREATE INDEX IF NOT EXISTS ecommerce_payment_tokens_customer_idx
+        ON ecommerce_payment_tokens(company_name, customer_id, active, created_at, id);
+      CREATE INDEX IF NOT EXISTS ecommerce_payment_tokens_provider_idx
+        ON ecommerce_payment_tokens(company_name, provider_code, active, created_at, id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_payment_tokens_provider_idx;
+      DROP INDEX IF EXISTS ecommerce_payment_tokens_customer_idx;
+      DROP INDEX IF EXISTS ecommerce_payment_tokens_provider_ref_idx;
+      DROP TABLE IF EXISTS ecommerce_payment_tokens;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

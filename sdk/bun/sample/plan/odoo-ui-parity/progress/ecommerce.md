@@ -4,7 +4,29 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `e754da1af3ef3731dfabf89592c232323b40f5d8` (Variant Configurator Cart Resolution).
+Latest committed bounded slice before this wave: `11e777b73d47b200e1c79780205ec0e7253599a7` (Payment Provider Configuration).
+
+## Current bounded task — `ECOM-CHECKOUT-PAYMENT-TOKENS-001`
+
+The smallest remaining source-backed checkout configuration surface after
+payment transactions/providers is Odoo's technical Payment Tokens action.
+Core3 now persists masked, company/customer-scoped token records with a
+provider-created registration boundary, deterministic fixture, idempotency-key
+replay, provider/method/customer/company validation, customer ownership
+filtering, and optimistic retirement. Page/API contracts are separate and
+joined by `page.id: ecommerce-payment-tokens`.
+
+Focused verification: `bun test ./test/ecommerce_payment_tokens.integration.test.ts`
+— **4 passed, 27 assertions, 0 failures**. The adjacent payment/checkout suite
+is rerun before commit. The UI audit passes at 688 pages, 697 routes, and 1282
+datasources; scoped ESLint and `git diff --check` are commit gates. Core3
+authenticated desktop/mobile capture is blocked because ports 3000, 4312, and
+4313 were not listening. Odoo `/shop` returns exact HTTP 404 on ports 8069 and
+8073. Evidence is under
+`evidence/ecommerce/2026-09-20/ecom-checkout-payment-tokens-001/`.
+Provider credentials/gateway execution, raw token creation, checkout token
+selection, broader actor browser coverage, and paired Odoo comparison remain
+open; no module sign-off is claimed.
 
 ## Current bounded task — `ECOM-CHECKOUT-PAYMENT-PROVIDERS-001`
 

@@ -1,5 +1,28 @@
 # ecommerce QA ledger
 
+## Payment Token Lifecycle (`ECOM-CHECKOUT-PAYMENT-TOKENS-001`, 2026-09-20)
+
+- Odoo source/menu: pass. `menu_ecommerce_payment_tokens` maps to
+  `payment.action_payment_token` and is technical-only; the supplied token
+  views are read-only and expose masked details, partner, method, provider,
+  reference, company, and archived filtering.
+- Core3 lifecycle: pass for this bounded contract. Migrations 059/060/061,
+  separate page/API YAML, deterministic masked fixture, idempotent provider
+  registration, provider/method/customer/company validation, ownership query,
+  and optimistic retirement are present.
+- Focused verification: `bun test ./test/ecommerce_payment_tokens.integration.test.ts`
+  — **4 passed, 27 assertions, 0 failures**.
+- UI audit: **pass** — 688 pages, 697 routes, 1282 datasources. Scoped ESLint
+  and `git diff --check` pass.
+- Browser: Core3 authenticated desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  External gateway token creation, credential installation, raw-secret safety,
+  checkout token selection, broader actor/company browser coverage, and paired
+  Odoo evidence remain gates.
+
 ## Payment Provider Configuration (`ECOM-CHECKOUT-PAYMENT-PROVIDERS-001`, 2026-09-20)
 
 - Odoo source comparison: `menu_ecommerce_payment_providers` opens

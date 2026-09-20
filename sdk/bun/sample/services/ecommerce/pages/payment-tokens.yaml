@@ -1,0 +1,23 @@
+title: Payment Tokens
+page: { id: ecommerce-payment-tokens, route: /ecommerce/payment-tokens, breadcrumb: [eCommerce, Configuration, Payment Tokens], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_payment_tokens
+    responsive_card: true
+    search: { label: Search payment tokens, placeholder: 'Search masked details, customer, provider, or method...' }
+    filters: [{ field: active, label: Status, options_source: ecommerce_payment_token_active }]
+    columns:
+      - { field: payment_details, label: Payment Details, type: PrimaryEntityCell }
+      - { field: customer_name, label: Customer }
+      - { field: payment_method_name, label: Payment Method }
+      - { field: provider_name, label: Provider }
+      - { field: provider_ref, label: Provider Reference }
+      - { field: company_name, label: Company }
+      - { field: active, label: Active, type: StatusChip }
+    row_actions: menu
+    actions:
+      - { id: archive_ecommerce_payment_token, label: Retire, permission: ecommerce.write, show_if: "row.active === true", variant: danger }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No payment tokens, description: Provider-created payment tokens appear here with masked details only. }

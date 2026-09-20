@@ -1,0 +1,17 @@
+version: 0.0.61
+kind: data
+description: enable deterministic tokenization fixtures
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_payment_methods
+      SET support_tokenization = TRUE, updated_at = CURRENT_TIMESTAMP
+      WHERE id = 'ecommerce-payment-method-card';
+    down: |
+      UPDATE ecommerce_payment_methods
+      SET support_tokenization = FALSE, updated_at = CURRENT_TIMESTAMP
+      WHERE id = 'ecommerce-payment-method-card';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

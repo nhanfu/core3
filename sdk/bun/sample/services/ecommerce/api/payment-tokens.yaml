@@ -1,0 +1,61 @@
+page: { id: ecommerce-payment-tokens }
+datasources:
+  - id: ecommerce_payment_tokens
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PAYMENT_TOKENS_UNAUTHENTICATED, message: Sign in to view payment tokens. }
+      forbidden: { status: 403, code: ECOMMERCE_PAYMENT_TOKENS_FORBIDDEN, message: You do not have permission to view payment tokens. }
+      transport_error: { status: 503, code: ECOMMERCE_PAYMENT_TOKENS_UNAVAILABLE, message: Payment tokens are temporarily unavailable. }
+    query: "SELECT id, row_version, provider_code, provider_name, payment_method_code, payment_method_name, payment_details, provider_ref, customer_id, customer_name, customer_email, company_name, active, verified, CAST(created_at AS VARCHAR) AS created_at, CAST(updated_at AS VARCHAR) AS updated_at, CAST(archived_at AS VARCHAR) AS archived_at FROM ecommerce_payment_tokens WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR payment_details ILIKE '%' || :q || '%' OR customer_name ILIKE '%' || :q || '%' OR provider_name ILIKE '%' || :q || '%' OR payment_method_name ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) AND (:company_name IS NULL OR company_name = :company_name) AND (COALESCE(:customer_scope, 'all') = 'all' OR lower(COALESCE(customer_email, '')) = lower(:current_user_email)) ORDER BY active DESC, created_at DESC, id"
+  - id: ecommerce_payment_token_active
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) states(value, label)"
+actions:
+  - id: register_ecommerce_payment_token
+    type: server_form
+    permission: ecommerce.write
+    title: Register Payment Token
+    action: ecommerce.payment_tokens.register
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      required: [id, idempotency_key, provider_code, payment_method_code, payment_details, provider_ref, customer_id, customer_name]
+      defaults: { company_name: 'My Company', active: true, verified: false, customer_email: '' }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:payment_details AS VARCHAR))) BETWEEN 1 AND 120 AND POSITION('•' IN CAST(:payment_details AS VARCHAR)) > 0", status: 422, code: ECOMMERCE_PAYMENT_TOKEN_DETAILS_INVALID, message: Store only masked payment details. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:provider_ref AS VARCHAR))) BETWEEN 1 AND 160", status: 422, code: ECOMMERCE_PAYMENT_TOKEN_REFERENCE_INVALID, message: Provider reference is required. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:current_company_name, '') = '' OR COALESCE(:company_name, 'My Company') = :current_company_name", status: 403, code: ECOMMERCE_PAYMENT_TOKEN_COMPANY_SCOPE_REQUIRED, message: Token belongs to another company. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_payment_providers WHERE code = :provider_code AND company_name = COALESCE(:company_name, 'My Company') AND state <> 'disabled' AND allow_tokenization = TRUE", status: 422, code: ECOMMERCE_PAYMENT_TOKEN_PROVIDER_INVALID, message: The provider is unavailable for tokenization. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_payment_methods WHERE code = :payment_method_code AND active = TRUE AND support_tokenization = TRUE", status: 422, code: ECOMMERCE_PAYMENT_TOKEN_METHOD_INVALID, message: The payment method is unavailable for tokenization. }
+        - { query: "SELECT 1 AS ok FROM ecommerce_customers WHERE id = :customer_id AND company_name = COALESCE(:company_name, 'My Company') AND active = TRUE", status: 403, code: ECOMMERCE_PAYMENT_TOKEN_CUSTOMER_INVALID, message: Token customer is not available in this company. }
+      steps:
+        - { query: "INSERT INTO ecommerce_payment_tokens (id, idempotency_key, provider_code, provider_name, payment_method_code, payment_method_name, payment_details, provider_ref, customer_id, customer_name, customer_email, company_name, active, verified) SELECT :id, :idempotency_key, p.code, p.name, m.code, m.name, :payment_details, :provider_ref, c.id, c.name, c.email, c.company_name, COALESCE(:active, TRUE), COALESCE(:verified, FALSE) FROM ecommerce_payment_providers p JOIN ecommerce_payment_methods m ON m.code = :payment_method_code JOIN ecommerce_customers c ON c.id = :customer_id WHERE p.code = :provider_code AND p.company_name = COALESCE(:company_name, 'My Company') ON CONFLICT (idempotency_key) DO NOTHING" }
+      result: { query: "SELECT * FROM ecommerce_payment_tokens WHERE idempotency_key = :idempotency_key" }
+    fields:
+      - { field: id, label: Token ID, type: hidden, required: true }
+      - { field: idempotency_key, label: Idempotency Key, type: hidden, required: true }
+      - { field: provider_code, label: Provider Code, type: text, required: true }
+      - { field: payment_method_code, label: Payment Method Code, type: text, required: true }
+      - { field: payment_details, label: Masked Details, type: text, required: true }
+      - { field: provider_ref, label: Provider Reference, type: text, required: true }
+      - { field: customer_id, label: Customer, type: text, required: true }
+      - { field: customer_name, label: Customer Name, type: text, required: true }
+      - { field: customer_email, label: Customer Email, type: text }
+      - { field: company_name, label: Company, type: text, default: 'My Company' }
+      - { field: verified, label: Verified, type: checkbox, default: false }
+  - id: archive_ecommerce_payment_token
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.payment_tokens.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    refresh: [ecommerce_payment_tokens]
+    mutation:
+      operation: update
+      table: ecommerce_payment_tokens
+      fields: [active]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_payment_tokens WHERE id = :id AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: ECOMMERCE_PAYMENT_TOKEN_STALE, message: This payment token changed or was deleted. Reload before retiring. }
+      result: { query: "SELECT * FROM ecommerce_payment_tokens WHERE id = :id" }

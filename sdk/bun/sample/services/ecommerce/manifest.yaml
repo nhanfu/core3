@@ -89,3 +89,7 @@ menu:
           label: Payment Providers
           icon: bank
           permission: ecommerce.read
+        - path: /ecommerce/payment-tokens
+          label: Payment Tokens
+          icon: credit-card
+          permission: ecommerce.read
