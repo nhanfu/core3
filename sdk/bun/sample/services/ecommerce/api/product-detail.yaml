@@ -12,6 +12,13 @@ datasources:
   - id: ecommerce_product_images
     permission: ecommerce.read
     query: "SELECT id, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE product_id = :id ORDER BY created_at DESC, id"
+  - id: ecommerce_product_documents
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_DOCUMENTS_UNAUTHENTICATED, message: Sign in to view product documents. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_DOCUMENTS_FORBIDDEN, message: You do not have permission to view product documents. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_DOCUMENTS_UNAVAILABLE, message: Product documents are temporarily unavailable. }
+    query: "SELECT d.id, d.row_version, d.product_id, d.name, d.file_name, d.mime_type, d.size_bytes, d.sequence, d.active, d.shown_on_product_page, d.company_name, d.uploaded_by, CAST(d.created_at AS VARCHAR) AS created_at FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.product_id = :id AND p.active = TRUE AND d.active = TRUE AND (:company_name IS NULL OR d.company_name = :company_name OR d.company_name IS NULL) ORDER BY d.sequence, d.id"
   - id: ecommerce_product_variants
     permission: ecommerce.read
     error_states:
@@ -52,6 +59,46 @@ datasources:
 actions:
   - { id: back_to_ecommerce_products, type: navigate, permission: ecommerce.read, navigate_to: /ecommerce/products, params: {} }
   - { id: add_ecommerce_product_to_cart, type: navigate, permission: ecommerce.write, navigate_to: /ecommerce/cart, params: { product_id: '{row.id}' } }
+  - id: view_ecommerce_product_document
+    type: navigate
+    permission: ecommerce.read
+    navigate_to: /ecommerce/products/documents/detail
+    params: { id: '{row.id}' }
+  - id: create_ecommerce_product_document
+    type: server_form
+    permission: ecommerce.write
+    title: New Product Document
+    action: ecommerce.products.documents.create
+    handler: yaml_mutation
+    operation: create
+    params: { product_id: '{state.ecommerce_product_detail.id}' }
+    refresh: [ecommerce_product_documents, ecommerce_product_detail]
+    mutation:
+      generated: [id]
+      required: [name]
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_DOCUMENT_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 255", status: 422, code: ECOMMERCE_PRODUCT_DOCUMENT_NAME_INVALID, message: Document name must be between 1 and 255 characters. }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_documents(id, row_version, product_id, name, file_name, mime_type, size_bytes, storage_key, sequence, active, shown_on_product_page, company_name) SELECT :id, 1, :product_id, :name, 'pending-upload', 'application/octet-stream', 0, 'pending/' || :id, COALESCE(:sequence, 10), FALSE, FALSE, company_name FROM ecommerce_products WHERE id = :product_id" }
+      result: { query: "SELECT * FROM ecommerce_product_documents WHERE id = :id" }
+    fields:
+      - { field: name, label: Document Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 0, default: 10 }
+  - id: delete_ecommerce_product_document_from_product
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.documents.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_documents, ecommerce_product_detail]
+    mutation:
+      guards:
+        - { query: "SELECT d.id FROM ecommerce_product_documents d WHERE d.id = :id AND d.row_version = :expected_row_version AND d.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR d.company_name = :current_company_name OR d.company_name IS NULL)", status: 409, code: ECOMMERCE_PRODUCT_DOCUMENT_STALE, message: This product document changed before deletion. Reload before retrying. }
+      steps:
+        - { query: "DELETE FROM ecommerce_product_documents WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_DOCUMENT_STALE, message: This product document changed before deletion. }
+      result: { query: "SELECT TRUE AS deleted, :id AS id" }
   - id: view_ecommerce_product_variant_detail
     type: navigate
     permission: ecommerce.read

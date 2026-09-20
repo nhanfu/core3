@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product website-description slice; module sign-off remains open)
+Status: qa-in-progress (bounded product-document slice; module sign-off remains open)
+
+## Bounded feature — Product Documents (`ECOM-CATALOG-PRODUCT-DOCUMENTS-001`)
+
+Odoo source comparison: `product/models/product_document.py` defines the
+durable `product.document` attachment-backed model with active/sequence
+lifecycle fields. Website Sale adds `shown_on_product_page`, exposes the
+publish toggle in `views/product_document_views.xml`, and serves only active,
+template-owned, published documents from the public product-document route in
+`controllers/main.py`.
+
+Core3 had product images but no product-document model. Migrations 082/083 add
+durable product-template document metadata and the deterministic `Mug Care
+Guide` fixture. Product Detail lists documents and navigates to a separate
+Product Document page/API pair. The document lifecycle supports metadata
+creation, multipart binary upload/replacement, authenticated download,
+publish/active/sequence edits, deletion, current-company scope, `ecommerce`
+permissions, validation, optimistic row versions, migration replay, and
+DuckDB restart persistence.
+
+Focused verification and schema/audit evidence are recorded in
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-documents-001/`. Core3
+authenticated desktop/mobile rendering is blocked by unavailable runtime
+ports and the missing persistent browser runtime. Odoo `/shop` returns exact
+HTTP 404 on ports 8069 and 8073, so paired comparison is blocked. This bounded
+slice is verified; Ecommerce remains unsigned off. URL documents,
+variant-specific publication, and the public Odoo document route remain open.
 
 ## Bounded feature — Product Website Description (`ECOM-CATALOG-PRODUCT-WEBSITE-DESCRIPTION-001`)
 

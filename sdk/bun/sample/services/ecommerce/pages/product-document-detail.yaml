@@ -1,0 +1,37 @@
+title: Product Document
+page: { id: ecommerce-product-document-detail, route: /ecommerce/products/documents/detail, breadcrumb: [eCommerce, Products, Products, Product Document], auth: { require: [ecommerce.read] } }
+components:
+  - type: OdooFormView
+    source: ecommerce_product_document_detail
+    editable: false
+    title_field: name
+    subtitle_field: product_name
+    attachment_source: ecommerce_product_document_attachment
+    attachment_panel_open: true
+    attachment_page_size: 1
+    attachment_label: Product document
+    add_attachment_label: Replace document
+    no_attachments_label: Upload the product document
+    uploading_label: Uploading document…
+    upload_failed_label: Document upload failed
+    download_label: Download document
+    attachment_accept: .pdf,.doc,.docx,.txt,application/pdf,text/plain
+    attachment_upload_action: upload_ecommerce_product_document
+    attachment_download_action: download_ecommerce_product_document
+    header_actions:
+      - { id: back_to_ecommerce_product_detail_from_document, label: Back to Product, variant: secondary }
+      - { id: edit_ecommerce_product_document, label: Edit, variant: secondary, permission: ecommerce.write }
+      - { id: delete_ecommerce_product_document, label: Delete, variant: danger, permission: ecommerce.write }
+    groups:
+      - title: Product Document
+        columns: 2
+        fields:
+          - { field: name, label: Document Name }
+          - { field: product_name, label: Product }
+          - { field: file_name, label: File }
+          - { field: mime_type, label: Type }
+          - { field: size_bytes, label: Size }
+          - { field: sequence, label: Sequence }
+          - { field: shown_on_product_page, label: Publish on Product Page, type: StatusChip }
+          - { field: active, label: Active, type: StatusChip }
+          - { field: company_name, label: Company }

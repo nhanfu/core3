@@ -1,0 +1,79 @@
+page: { id: ecommerce-product-document-detail }
+datasources:
+  - id: ecommerce_product_document_detail
+    single: true
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_DOCUMENT_UNAUTHENTICATED, message: Sign in to view this product document. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_DOCUMENT_FORBIDDEN, message: You do not have access to this product document. }
+      missing_record: { status: 404, code: ECOMMERCE_PRODUCT_DOCUMENT_NOT_FOUND, message: Product document not found. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_DOCUMENT_UNAVAILABLE, message: Product document details are temporarily unavailable. }
+    query: "SELECT d.id, d.row_version, d.product_id, d.name, d.file_name, d.mime_type, d.size_bytes, d.sequence, d.active, d.shown_on_product_page, d.company_name, d.uploaded_by, CAST(d.created_at AS VARCHAR) AS created_at, p.name AS product_name FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.id = :id AND p.active = TRUE AND (:company_name IS NULL OR d.company_name = :company_name OR d.company_name IS NULL)"
+  - id: ecommerce_product_document_attachment
+    permission: ecommerce.read
+    query: "SELECT d.id, d.product_id, d.name, d.file_name, d.mime_type, d.size_bytes, d.uploaded_by, CAST(d.created_at AS VARCHAR) AS created_at FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.id = :id AND d.active = TRUE AND p.active = TRUE AND (:company_name IS NULL OR d.company_name = :company_name OR d.company_name IS NULL)"
+actions:
+  - id: back_to_ecommerce_product_detail_from_document
+    type: navigate
+    permission: ecommerce.read
+    navigate_to: /ecommerce/products/detail
+    params: { id: '{state.ecommerce_product_document_detail.product_id}' }
+  - id: upload_ecommerce_product_document
+    type: upload
+    action: ecommerce.products.documents.upload
+    handler: attachment_metadata
+    permission: ecommerce.write
+    kind: ecommerce_product_document
+    params: { id: '{state.ecommerce_product_document_detail.id}', expected_row_version: '{state.ecommerce_product_document_detail.row_version}' }
+    refresh: [ecommerce_product_document_detail]
+    mutation:
+      guards:
+        - { query: "SELECT d.id FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.id = :id AND p.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR d.company_name = :current_company_name OR d.company_name IS NULL)", status: 404, code: ECOMMERCE_PRODUCT_DOCUMENT_NOT_FOUND, message: Product document not found. }
+        - { query: "SELECT d.id FROM ecommerce_product_documents d WHERE d.id = :id AND d.row_version = :expected_row_version", status: 409, code: ECOMMERCE_PRODUCT_DOCUMENT_STALE, message: This product document changed before upload. Reload it before retrying. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:fileName AS VARCHAR))) BETWEEN 1 AND 255 AND CAST(:sizeBytes AS BIGINT) > 0 AND CAST(:sizeBytes AS BIGINT) <= 5242880", status: 422, code: ECOMMERCE_PRODUCT_DOCUMENT_INVALID, message: Upload a non-empty document up to 5 MB. }
+      steps:
+        - { query: "UPDATE ecommerce_product_documents SET row_version = row_version + 1, name = CASE WHEN name LIKE 'New document%' THEN :fileName ELSE name END, file_name = :fileName, mime_type = :mimeType, size_bytes = CAST(:sizeBytes AS BIGINT), storage_key = :storageKey, active = TRUE, uploaded_by = :current_user_id, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_DOCUMENT_STALE, message: This product document changed before upload. }
+      result: { query: "SELECT d.id, d.row_version, d.product_id, d.name, d.file_name, d.mime_type, d.size_bytes, d.sequence, d.active, d.shown_on_product_page, d.company_name, d.uploaded_by, CAST(d.created_at AS VARCHAR) AS created_at, p.name AS product_name FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.id = :id" }
+  - id: download_ecommerce_product_document
+    type: download
+    permission: ecommerce.read
+    kind: ecommerce_product_document
+  - id: edit_ecommerce_product_document
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Product Document
+    action: ecommerce.products.documents.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { id: '{state.ecommerce_product_document_detail.id}', expected_row_version: '{state.ecommerce_product_document_detail.row_version}' }
+    refresh: [ecommerce_product_document_detail, ecommerce_product_documents]
+    mutation:
+      required: [id, expected_row_version, name]
+      guards:
+        - { query: "SELECT d.id FROM ecommerce_product_documents d WHERE d.id = :id AND d.row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR d.company_name = :current_company_name OR d.company_name IS NULL)", status: 409, code: ECOMMERCE_PRODUCT_DOCUMENT_STALE, message: This product document changed. Reload before saving. }
+        - { query: "SELECT d.id FROM ecommerce_product_documents d WHERE d.id = :id AND (COALESCE(:current_company_name, '') = '' OR d.company_name = :current_company_name OR d.company_name IS NULL)", status: 403, code: ECOMMERCE_PRODUCT_DOCUMENT_COMPANY_SCOPE_REQUIRED, message: This product document belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 255", status: 422, code: ECOMMERCE_PRODUCT_DOCUMENT_NAME_INVALID, message: Document name must be between 1 and 255 characters. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:sequence, 10) AS INTEGER) >= 0", status: 422, code: ECOMMERCE_PRODUCT_DOCUMENT_SEQUENCE_INVALID, message: Document sequence must be zero or greater. }
+      steps:
+        - { query: "UPDATE ecommerce_product_documents SET row_version = row_version + 1, name = :name, sequence = CAST(COALESCE(:sequence, 10) AS INTEGER), active = CAST(COALESCE(:active, TRUE) AS BOOLEAN), shown_on_product_page = CAST(COALESCE(:shown_on_product_page, FALSE) AS BOOLEAN), updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_DOCUMENT_STALE, message: This product document changed. Reload before saving. }
+      result: { query: "SELECT d.*, p.name AS product_name FROM ecommerce_product_documents d JOIN ecommerce_products p ON p.id = d.product_id WHERE d.id = :id" }
+    fields:
+      - { field: name, label: Document Name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 0, default: 10 }
+      - { field: shown_on_product_page, label: Publish on Product Page, type: checkbox }
+      - { field: active, label: Active, type: checkbox }
+  - id: delete_ecommerce_product_document
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.documents.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { id: '{state.ecommerce_product_document_detail.id}', expected_row_version: '{state.ecommerce_product_document_detail.row_version}' }
+    refresh: [ecommerce_product_documents]
+    mutation:
+      guards:
+        - { query: "SELECT d.id FROM ecommerce_product_documents d WHERE d.id = :id AND d.row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR d.company_name = :current_company_name OR d.company_name IS NULL)", status: 409, code: ECOMMERCE_PRODUCT_DOCUMENT_STALE, message: This product document changed before deletion. Reload before retrying. }
+      steps:
+        - { query: "DELETE FROM ecommerce_product_documents WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_DOCUMENT_STALE, message: This product document changed before deletion. }
+      result: { query: "SELECT TRUE AS deleted, :id AS id" }

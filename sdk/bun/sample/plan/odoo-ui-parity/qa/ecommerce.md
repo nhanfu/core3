@@ -1,5 +1,33 @@
 # ecommerce QA ledger
 
+## Product Documents (`ECOM-CATALOG-PRODUCT-DOCUMENTS-001`, 2026-09-21)
+
+- Odoo source/page: pass. `product/models/product_document.py` defines the
+  attachment-backed `product.document` model; Website Sale adds
+  `shown_on_product_page`, renders the Ecommerce publish toggle, and checks
+  active/template ownership before the public document download route.
+- Core3 lifecycle: pass for this bounded binary product-template contract.
+  Migrations 082/083 add durable metadata and a deterministic Mug Care Guide.
+  Product Detail and Product Document use separate page/API YAML contracts;
+  create, upload/replace, download, edit/publish, and delete enforce
+  `ecommerce.read`/`ecommerce.write`, company scope, validation, and
+  optimistic row versions. Restart preserves metadata and exact bytes.
+- Focused verification: `bun test
+  test/ecommerce_product_documents.integration.test.ts` — **3 passed, 33
+  assertions, 0 failures**. Adjacent Product Detail/Products regression —
+  **10 passed, 83 assertions, 0 failures**. Paired page/API schema validation
+  passed for 2 pairs; UI audit passed at 705 pages, 714 routes, and 1340
+  datasources; scoped ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable and no persistent `js_repl` browser
+  runtime is available. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Odoo URL documents, variant-specific publication, public route parity,
+  broader actor/browser coverage, and paired rendering remain open. Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-product-documents-001/`.
+
 ## Product Website Description (`ECOM-CATALOG-PRODUCT-WEBSITE-DESCRIPTION-001`, 2026-09-21)
 
 - Odoo source/page: pass. `website_sale/models/product_template.py` defines

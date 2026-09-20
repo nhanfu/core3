@@ -1,0 +1,27 @@
+version: 0.0.83
+kind: data
+description: deterministic Website Sale product document fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_documents
+        (id, row_version, product_id, name, file_name, mime_type, size_bytes, storage_key, sequence, active, shown_on_product_page, company_name, uploaded_by)
+      VALUES
+        ('ecommerce-product-document-mug-care', 1, 'ecommerce-product-mug', 'Mug Care Guide', 'mug-care-guide.pdf', 'application/pdf', 128, 'ecommerce/product-documents/mug-care-guide.pdf', 10, TRUE, TRUE, 'My Company', 'system-fixture')
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        file_name = EXCLUDED.file_name,
+        mime_type = EXCLUDED.mime_type,
+        size_bytes = EXCLUDED.size_bytes,
+        storage_key = EXCLUDED.storage_key,
+        sequence = EXCLUDED.sequence,
+        active = EXCLUDED.active,
+        shown_on_product_page = EXCLUDED.shown_on_product_page,
+        company_name = EXCLUDED.company_name,
+        uploaded_by = EXCLUDED.uploaded_by;
+    down: DELETE FROM ecommerce_product_documents WHERE id = 'ecommerce-product-document-mug-care';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

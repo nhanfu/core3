@@ -115,3 +115,26 @@ components:
         actions:
           - { id: add_ecommerce_product_optional_to_cart, label: Add to Cart, icon: cart, variant: primary, permission: ecommerce.write }
           - { id: remove_ecommerce_product_optional, label: Remove, icon: trash, variant: danger, permission: ecommerce.write }
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_documents
+    create_action: create_ecommerce_product_document
+    create_label: New Product Document
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No product documents, description: Upload a document and choose whether it is published on the product page. }
+    columns:
+      - { field: name, label: Document, type: PrimaryEntityCell }
+      - { field: file_name, label: File }
+      - { field: mime_type, label: Type }
+      - { field: size_bytes, label: Size, align: right }
+      - { field: sequence, label: Sequence, align: right }
+      - { field: shown_on_product_page, label: Published, type: StatusChip }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 150
+        actions:
+          - { id: view_ecommerce_product_document, label: View, icon: document, variant: secondary, permission: ecommerce.read }
+          - { id: delete_ecommerce_product_document_from_product, label: Delete, icon: trash, variant: danger, permission: ecommerce.write }

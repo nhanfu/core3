@@ -4,7 +4,32 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `73111dfc0b8e80305e9d3dfd043e1e45fc0d0741` (Product Compare-at Pricing).
+Latest committed bounded slice: `26a872c6ab326dd2b10b5aeb911a6095e52ae6e1`
+(`ECOM-CATALOG-PRODUCT-DOCUMENTS-001`, committed locally; not pushed).
+
+## Completed bounded task — `ECOM-CATALOG-PRODUCT-DOCUMENTS-001`
+
+The next uncovered source-backed catalog behavior is Website Sale's product
+document lifecycle. Odoo's `product.document` is an attachment-backed model;
+Website Sale adds `shown_on_product_page`, the product-document list/form
+toggle, and an active/template-owned public download route.
+
+Core3 migrations 082/083 add durable product-template document metadata and a
+deterministic Mug Care Guide. Product Detail and Product Document use separate
+page/API YAML contracts. Create, upload/replace, download, publish toggle,
+edit, and delete are guarded by Ecommerce permissions, current-company scope,
+validation, and optimistic row versions; restart coverage proves bytes and
+metadata survive DuckDB reopen.
+
+Verification is complete for the bounded service/API slice: 3 focused tests,
+33 assertions; adjacent Product Detail/Products regression is 10 tests, 83
+assertions; paired schema validation, UI audit, scoped lint, and diff-check
+pass. Core3 desktop/mobile browser capture is blocked by unavailable ports and
+no persistent `js_repl`; Odoo `/shop` is HTTP 404 on 8069/8073. Evidence is
+under `evidence/ecommerce/2026-09-21/ecom-catalog-product-documents-001/`.
+Bounded commit: `26a872c6ab326dd2b10b5aeb911a6095e52ae6e1` (local only, not
+pushed). Module sign-off, variant-specific documents, URL documents, and
+paired Odoo evidence remain open.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-WEBSITE-DESCRIPTION-001`
 
