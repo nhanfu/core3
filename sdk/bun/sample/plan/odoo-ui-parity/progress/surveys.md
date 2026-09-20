@@ -70,6 +70,22 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-20 — `SURVEYS-PUBLIC-NEXT-QUESTION-002`
+
+Closed the integration gap exposed by the previous cursor slice. Ownership
+tracing confirmed `public/app.ts` directly mounts the Surveys-history
+`public/components/PublicSurvey.ts`; the renderer now consumes
+`answer.current_question_id`, calls the durable next-question API after saving
+progress, uses a deterministic navigation key, renders the returned question,
+and restores it after reload. Focused verification is 3 tests / 24 assertions.
+
+Fresh authenticated Admin desktop/mobile probes at 1440x900 and 390x844 show
+Question 1 → Question 2, replay `replayed: true`, durable Question 2 after
+reload, zero failed requests, and no horizontal overflow. Odoo source
+comparison remains recorded, but the installed reference lacks a stable active
+answer-token fixture for a live paired mutation probe. Status remains
+**qa-in-progress / conditional**.
+
 ## 2026-09-20 — `SURVEYS-PUBLIC-NEXT-QUESTION-001`
 
 Selected the smallest unfinished source-backed public lifecycle after the

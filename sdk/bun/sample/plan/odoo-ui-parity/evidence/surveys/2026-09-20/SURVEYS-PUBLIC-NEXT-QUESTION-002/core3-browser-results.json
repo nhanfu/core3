@@ -1,0 +1,64 @@
+{
+  "feature_id": "SURVEYS-PUBLIC-NEXT-QUESTION-002",
+  "base": "http://127.0.0.1:4017",
+  "actor": "Admin User authenticated shell plus public answer token",
+  "failures": [],
+  "viewports": [
+    {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "before": {
+        "question": true,
+        "progress": true
+      },
+      "after": {
+        "status": 200,
+        "question": true,
+        "progress": true
+      },
+      "replay": {
+        "status": 200,
+        "replayed": true,
+        "questionId": "question-feedback-comment"
+      },
+      "restart": {
+        "question": true,
+        "progress": true
+      },
+      "metrics": {
+        "bodyWidth": 1440,
+        "documentWidth": 1440,
+        "viewportWidth": 1440
+      },
+      "failures": []
+    },
+    {
+      "viewport": "390x844",
+      "authenticated": true,
+      "before": {
+        "question": true,
+        "progress": true
+      },
+      "after": {
+        "status": 200,
+        "question": true,
+        "progress": true
+      },
+      "replay": {
+        "status": 200,
+        "replayed": true,
+        "questionId": "question-feedback-comment"
+      },
+      "restart": {
+        "question": true,
+        "progress": true
+      },
+      "metrics": {
+        "bodyWidth": 390,
+        "documentWidth": 390,
+        "viewportWidth": 390
+      },
+      "failures": []
+    }
+  ]
+}

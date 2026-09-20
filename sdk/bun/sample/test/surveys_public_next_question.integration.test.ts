@@ -38,11 +38,17 @@ describe('Surveys public next-question navigation', () => {
   test('keeps Odoo next-question route, page/API ownership, public permission, and guards explicit', () => {
     const api = yaml('api/surveys.yaml');
     const next = api.actions.find((action: any) => action.id === 'public_survey_next_question');
+    const renderer = readFileSync(join(import.meta.dir, '../public/components/PublicSurvey.ts'), 'utf8');
     expect(api.page).toEqual({ id: 'surveys' });
     expect(next).toMatchObject({ type: 'server_form', permission: 'surveys.public', action: 'surveys.public.next_question', handler: 'yaml_mutation' });
     expect(next.mutation).toMatchObject({ operation: 'update', table: 'survey_responses' });
     expect(next.mutation.guards.map((guard: any) => guard.code)).toEqual(['SURVEY_PUBLIC_NEXT_STALE', 'SURVEY_PUBLIC_NEXT_INVALID']);
     expect(yaml('operations.yaml').operations['survey.public.next_question'].query).toContain('next_question.sequence');
+    expect(renderer).toContain('current_question_id');
+    expect(renderer).toContain('/next_question');
+    expect(renderer).toContain('expected_question_id: question.id');
+    expect(renderer).toContain('navigation_key: navigationKey');
+    expect(renderer).not.toContain('questionIndex += 1');
   });
 
   test('advances one durable question cursor, replays safely, and survives restart', async () => {

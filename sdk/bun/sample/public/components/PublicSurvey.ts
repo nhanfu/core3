@@ -10,7 +10,14 @@ type SurveyQuestion = {
 type SurveyPayload = {
   survey: { id?: string; title: string; name: string; description?: string };
   questions: SurveyQuestion[];
-  answer?: { id: string; access_token: string; state: string; test_entry?: boolean; answer_data?: string };
+  answer?: {
+    id: string;
+    access_token: string;
+    state: string;
+    current_question_id?: string | null;
+    test_entry?: boolean;
+    answer_data?: string;
+  };
 };
 
 const STYLE_ID = 'core3-public-survey-style';
@@ -104,6 +111,7 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   const survey = payload.survey;
   const questions = [...payload.questions].sort((left, right) => Number(left.sequence) - Number(right.sequence));
   let answerToken = String(payload.answer?.access_token || initialAnswerToken || '');
+  let currentQuestionId = String(payload.answer?.current_question_id || '');
   let questionIndex = 0;
   const answers: Record<string, string | string[]> = {};
   try {
@@ -130,7 +138,10 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
   if (payload.answer?.state === 'Submitted') {
     renderDone();
   } else if (payload.answer && payload.answer.state !== 'New') {
-    questionIndex = Math.max(0, firstUnanswered() === -1 ? questions.length - 1 : firstUnanswered());
+    const cursorIndex = currentQuestionId ? questions.findIndex((question) => question.id === currentQuestionId) : -1;
+    questionIndex = cursorIndex >= 0
+      ? cursorIndex
+      : Math.max(0, firstUnanswered() === -1 ? questions.length - 1 : firstUnanswered());
     renderCurrentQuestion();
   } else {
     body.innerHTML = `<p class="core3-public-survey__description">${escapeHtml(survey.description || 'Please take a moment to complete this survey.')}</p><div class="core3-public-survey__footer"><button class="core3-public-survey__button" data-start type="button">${payload.answer?.test_entry ? 'Start Test' : 'Start Survey'}</button><span class="core3-public-survey__progress">or press Enter</span></div>`;
@@ -145,8 +156,9 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       const started = await response.json();
       answerToken = String(started.answer?.access_token || '');
       if (!answerToken) throw new Error('The survey did not return an answer token.');
+      currentQuestionId = String(started.answer?.current_question_id || questions[0]?.id || '');
       window.history.replaceState({}, '', `/survey/${encodeURIComponent(token)}/${encodeURIComponent(answerToken)}`);
-      questionIndex = 0;
+      questionIndex = Math.max(0, questions.findIndex((question) => question.id === currentQuestionId));
       renderCurrentQuestion();
     } catch (error) {
       button.disabled = false;
@@ -168,10 +180,13 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       renderCurrentQuestion();
     });
     body.querySelector<HTMLButtonElement>('[data-next]')!.addEventListener('click', async (event) => {
+      const actionButton = event.currentTarget as HTMLButtonElement;
+      actionButton.disabled = true;
       const question = questions[questionIndex];
       const value = answerValue(body, question);
       const empty = Array.isArray(value) ? value.length === 0 : !value.trim();
       if (question.required && empty) {
+        actionButton.disabled = false;
         const error = document.createElement('div');
         error.className = 'core3-public-survey__error';
         error.textContent = 'Please answer this question before continuing.';
@@ -182,24 +197,55 @@ export async function mount(outlet: HTMLElement, token: string, initialAnswerTok
       if (questionIndex < questions.length - 1) {
         const progressResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/progress`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
         if (!progressResponse.ok) {
+          actionButton.disabled = false;
           const message = document.createElement('div');
           message.className = 'core3-public-survey__error';
           message.textContent = `Survey progress could not be saved (${progressResponse.status}).`;
           body.prepend(message);
           return;
         }
-        questionIndex += 1;
+        await progressResponse.text();
+        const cursorIndex = currentQuestionId ? questions.findIndex((candidate) => candidate.id === currentQuestionId) : -1;
+        if (cursorIndex > questionIndex) {
+          questionIndex = cursorIndex;
+          renderCurrentQuestion();
+          return;
+        }
+        const navigationKey = `public-next:${answerToken}:${question.id}`;
+        const nextResponse = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/next_question`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer_token: answerToken, expected_question_id: question.id, navigation_key: navigationKey }),
+        });
+        if (!nextResponse.ok) {
+          actionButton.disabled = false;
+          const message = document.createElement('div');
+          message.className = 'core3-public-survey__error';
+          message.textContent = `The next survey question could not be loaded (${nextResponse.status}). Reload before continuing.`;
+          body.prepend(message);
+          return;
+        }
+        const nextPayload = await nextResponse.json() as { question?: { id?: string }; answer?: { current_question_id?: string | null } };
+        currentQuestionId = String(nextPayload.question?.id || nextPayload.answer?.current_question_id || '');
+        const nextIndex = questions.findIndex((candidate) => candidate.id === currentQuestionId);
+        if (nextIndex < 0) {
+          actionButton.disabled = false;
+          const message = document.createElement('div');
+          message.className = 'core3-public-survey__error';
+          message.textContent = 'The next survey question is unavailable. Reload before continuing.';
+          body.prepend(message);
+          return;
+        }
+        questionIndex = nextIndex;
         renderCurrentQuestion();
         return;
       }
-      const button = event.currentTarget as HTMLButtonElement;
-      button.disabled = true;
       try {
         const response = await fetch(`/api/public/surveys/${encodeURIComponent(token)}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers }) });
         if (!response.ok) throw new Error(`Survey could not be submitted (${response.status}).`);
         renderDone();
       } catch (error) {
-        button.disabled = false;
+        actionButton.disabled = false;
         const message = document.createElement('div');
         message.className = 'core3-public-survey__error';
         message.textContent = error instanceof Error ? error.message : String(error);

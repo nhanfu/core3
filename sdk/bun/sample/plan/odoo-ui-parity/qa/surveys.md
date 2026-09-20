@@ -524,6 +524,30 @@ restart coverage, and paired authenticated desktop/mobile evidence pass.
 Surveys remains **qa-in-progress / conditional** because module-wide exit
 criteria remain open; no full-module sign-off is claimed.
 
+## Bounded QA run: `SURVEYS-PUBLIC-NEXT-QUESTION-002` — 2026-09-20
+
+- Ownership/binding trace: `public/app.ts:312-325` mounts the
+  Surveys-history `public/components/PublicSurvey.ts`; this is an owned
+  Surveys binding path, not a generic page component.
+- Renderer workflow: required answer capture saves progress, then the
+  renderer calls `/next_question` with the expected cursor and deterministic
+  key. The returned question drives the next rendered state; reload reads the
+  durable cursor; in-flight button serialization prevents duplicate clicks.
+- Focused verification: **3 passed, 0 failed, 24 assertions** in
+  `surveys_public_next_question.integration.test.ts`.
+- Scoped ESLint and `git diff --check`: pass.
+- Authenticated Core3 evidence: Admin desktop/mobile both show Question 1 →
+  Question 2, replay the same key with HTTP 200/`replayed: true`, restore
+  Question 2 after reload, and report zero failed requests with equal body,
+  document, and viewport widths.
+- Odoo blocker: the installed reference at `127.0.0.1:8069` has no stable
+  active answer-token fixture accepted for a fresh mutation probe; no paired
+  Odoo visual/mutation sign-off is claimed.
+
+Disposition: the prior disconnected API is now rendered through the
+Surveys-owned binding. Core3 evidence passes; Odoo comparison remains
+conditional and Surveys remains **qa-in-progress / conditional**.
+
 ## Bounded QA run: `SURVEYS-PUBLIC-NEXT-QUESTION-001` — 2026-09-20
 
 - Source comparison: Odoo's `survey_next_question` controller validates the

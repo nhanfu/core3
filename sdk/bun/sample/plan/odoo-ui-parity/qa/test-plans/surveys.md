@@ -207,3 +207,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-NEXT-QUESTION-001/`.
+
+## 2026-09-20 public next-question renderer binding additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-021 | renderer/API binding | Public renderer → next-question action | The rendered Next control sends the expected cursor/key after saving progress and renders the returned ordered question | pass |
+| SURVEYS-WF-018 | restart/idempotency | Rendered next → replay → reload | One navigation key replays safely and a reload restores the durable next cursor | pass |
+| SURVEYS-PERM-020 | token/actor guard | Rendered public transition boundary | The renderer remains token-scoped; service stale/closed/wrong-token guards remain authoritative | pass |
+| SURVEYS-UI-019 | authenticated responsive/reference | Admin desktop/mobile rendered transition | Question 1 → Question 2, replay, reload, zero request failures, and no overflow at 1440x900/390x844; Odoo fixture blocker recorded | pass for Core3; Odoo conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-NEXT-QUESTION-002/`.

@@ -1323,3 +1323,23 @@ answer-token fixture for this mutation route. Evidence is under
 
 Surveys remains **qa-in-progress / conditional** and this slice does not sign
 off the module.
+
+## Bounded slice: Public next-question renderer binding (2026-09-20)
+
+Feature ID: `SURVEYS-PUBLIC-NEXT-QUESTION-002`.
+
+Ownership tracing showed that `public/app.ts` loads the Surveys-history
+`public/components/PublicSurvey.ts` renderer for `/survey/start/...`. Core3
+now binds that renderer to the durable `current_question_id` cursor and
+`POST /api/public/surveys/<token>/next_question`: it saves progress, sends the
+expected question plus deterministic navigation key, renders the server-
+returned next question, and restores that question after reload. The Next
+button is serialized while the transition is in flight, and local back-
+navigation cannot issue an invalid stale transition.
+
+Focused contract/API coverage and authenticated Core3 desktop/mobile evidence
+are recorded under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-20/SURVEYS-PUBLIC-NEXT-QUESTION-002/`.
+The installed Odoo reference still lacks a stable active answer-token fixture
+for a paired mutation probe, so no Odoo sign-off is claimed. Surveys remains
+**qa-in-progress / conditional**.
