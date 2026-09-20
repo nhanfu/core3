@@ -5,10 +5,57 @@
 | Module | `crm` |
 | QA owner | CRM QA |
 | Verification trigger | `merge-candidate` |
-| Candidate commit | `b70a3930c7ab0e3c8052f51a8d413ff50b0f8854` |
-| Runtime | Core3 full memory runtime, `http://127.0.0.1:4012`, authenticated `admin@tms.local` |
+| Candidate commit | `0d9e223b` (implementation `1824e718`) |
+| Runtime | Core3 full memory runtime, backend `http://127.0.0.1:3001`, frontend `http://127.0.0.1:3002`, authenticated `admin@tms.local` |
 | Odoo reference | not freshly authenticated in this slice |
 | Result | `bounded QA complete; not signed off` |
+
+## Current continuation evidence — 2026-09-20
+
+The selected source-backed gap was Odoo's `crm_case_form_view_salesteams_opportunity`
+action from `addons/crm/views/crm_team_views.xml`. Core3 implements it as the
+team-detail Opportunities stat action plus the joined page/API contracts at
+`services/crm/pages/team-opportunities.yaml` and
+`services/crm/api/team-opportunities.yaml`; it intentionally has no new
+manifest menu because the Odoo source action is a team-context drill-down.
+
+| Check | Evidence | Result |
+| --- | --- | --- |
+| Contract/discovery | `bun test test/crm_team_opportunities.integration.test.ts` — 2 pass, 17 assertions | pass |
+| Existing adjacent action | `bun test test/crm_team_opportunities.integration.test.ts test/crm_team_members.integration.test.ts` — 4 pass, 34 assertions | pass |
+| CRM regression | `bun test test/crm.integration.test.ts` — 46 pass, 222 assertions | pass |
+| Persistence/restart | File-backed DuckDB is migrated, created/edited/assigned, closed, reopened, migrated again, and queried for the same row/version/team | pass |
+| Static audit | `bun run audit` — 665 pages, 674 routes, 1,176 datasources; targeted ESLint passed; `git diff --check` passed | pass |
+| Implementation/hardening commits | `1824e718` implementation; `0d9e223b` restart-proof test and plan evidence | pass |
+
+Authenticated Core3 browser evidence used `admin@tms.local` on the memory
+runtime at `http://127.0.0.1:3002`:
+
+- Team detail `/crm/team-detail?id=crm-team-enterprise` exposed the
+  Opportunities stat and clicking it reached
+  `/crm/team-opportunities?team_id=crm-team-enterprise` with the expected
+  Enterprise-scoped cards.
+- Desktop `1440x900`: HTTP 200, zero console/page/request failures, body and
+  document width 1440. Capture:
+  `/tmp/core3-odoo-parity/team-opportunities-desktop-1440x900.png`, SHA-256
+  `6e4ce134ba352681ec642ea3067d447aa2e3483052a049d246bba485ff1f83c1`.
+- Mobile `390x844`: HTTP 200, zero console/page/request failures, body and
+  document width 390. Capture:
+  `/tmp/core3-odoo-parity/team-opportunities-mobile-390x844.png`, SHA-256
+  `734302699a7888c5a3e51ea1ed47157b1387fcfb35dcef90f5150e5a7ce87ec1`.
+- Mobile List view also rendered all three rows with zero failures and no
+  document overflow. Capture:
+  `/tmp/core3-odoo-parity/team-opportunities-list-mobile-390x844.png`, SHA-256
+  `3ecfff59590df733e1d01bfc827449ebd5a44f54f91ada81bab7a2fb7d68b26b`.
+
+The installed Odoo reference was not freshly authenticated in this run, so no
+paired Odoo visual claim is made. The session did not expose the requested
+interactive `js_repl`; equivalent local Playwright execution supplied the
+authenticated Core3 evidence above.
+
+Current disposition: the team-opportunity gap is a bounded pass, while the
+overall CRM ledger remains conditional and unsigned-off because the broader
+CRM actor matrix and paired Odoo comparison are still open.
 
 ## Functional test cases
 
