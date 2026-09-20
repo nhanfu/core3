@@ -1,0 +1,14 @@
+{
+  "base": "http://127.0.0.1:8069",
+  "requested": "/odoo/action-433",
+  "url": "http://127.0.0.1:8069/odoo/project",
+  "title": "Projects",
+  "bodyText": "Project\nProjects\nTasks\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nProjects\n1-8 / 8\nAGR - S00035 - Sales Order\nAcme Corporation\nAug 24\nOct 19\n11Tasks\n1/3\n-200:00\nHome Construction\nAcme Corporation\nJul 10\nSep 5\nArchitecture\nConstruction\nDesign\nInterior\n8Tasks\n1/3\nOffice Design\nYourCompany, Joel Willis\nJul 9\nSep 18\nExternal\n18Tasks\n1/3\nRenovations\nJul 10\nSep 5\nExperiment\nInternal\n3Tasks\nResearch & Development\nInternal\n5Tasks\nACME - S00037 - Sales Order\nAcme Corporation\nSep 14\nSep 28\n2Tasks\n16:00\nAfter-Sales Services\n3Services\nDPC - S00036 - Sales Order\nReady Mat\nAug 10\nOct 5\n9Tasks\n0/2\n05:00",
+  "bodyScrollWidth": 1440,
+  "documentScrollWidth": 1440,
+  "viewportWidth": 1440,
+  "failures": [],
+  "errors": [],
+  "badResponses": [],
+  "loginError": ""
+}

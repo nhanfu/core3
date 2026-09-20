@@ -39,7 +39,7 @@ describe('Inventory Reporting Stock Odoo parity', () => {
       'incoming_qty', 'outgoing_qty', 'forecasted', 'unit_name', 'actions',
     ]);
     expect(api.actions.map((action: any) => action.id)).toEqual([
-      'inventory_stock_at_date', 'view_inventory_stock_history', 'view_inventory_stock_replenishment', 'view_inventory_stock_locations', 'view_inventory_stock_forecast',
+      'inventory_stock_at_date', 'view_inventory_stock_history', 'view_inventory_stock_replenishment', 'replenish_inventory_stock_product', 'view_inventory_stock_locations', 'view_inventory_stock_forecast',
     ]);
     expect(api.actions.slice(1)).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: 'navigate', permission: 'inventory.read', navigate_to: '/moves' }),
@@ -81,7 +81,8 @@ describe('Inventory Reporting Stock Odoo parity', () => {
 
     expect(page.page.auth.require).toEqual(['inventory.read']);
     expect(api.datasources.every((candidate: any) => candidate.permission === 'inventory.read')).toBe(true);
-    expect(api.actions.every((candidate: any) => candidate.permission === 'inventory.read')).toBe(true);
+    expect(api.actions.filter((candidate: any) => candidate.id !== 'replenish_inventory_stock_product').every((candidate: any) => candidate.permission === 'inventory.read')).toBe(true);
+    expect(api.actions.find((candidate: any) => candidate.id === 'replenish_inventory_stock_product')).toMatchObject({ permission: 'inventory.manage' });
     expect(JSON.stringify([page, api])).not.toMatch(/operation: (create|update|delete)/);
     expect(migration.type.postgres.up).toContain("DATE '2026-01-15'");
     expect(migration.type.postgres.up).not.toMatch(/CURRENT_(DATE|TIMESTAMP)|gen_random_uuid\(\)/);

@@ -1,0 +1,17 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "url": "http://127.0.0.1:4327/inventory/stock-report/replenish?product_id=stock-report-cabinet&row_version=1&product_name=%5BE-COM07%5D%20Large%20Cabinet&forecasted_quantity=270&unit_name=Units",
+  "title": "Replenish Product",
+  "bodyScrollWidth": 390,
+  "documentScrollWidth": 390,
+  "viewportWidth": 390,
+  "bodyText": "AU\nLow on stock? Let's replenish.\n\nProduct\n\n[E-COM07] Large Cabinet\n\nOn Hand\n\n500\n\nForecasted\n\n270\n\nUnit\n\nUnits\n\nReplenish\nBack to Stock\nReplenish\n1-2 / 2\n‹\n›\nRequested At\n\tQuantity\n\tUnit\n\tScheduled Date\n\tWarehouse\n\tRoute\n\tRequested By\n\tStatus\n\n\n2026-01-15 08:00:00\n\t12\tUnits\t2026-01-22\tMain Warehouse\tManufacture\tAdmin User\tRequested\n\n2026-01-15 08:00:00\n\t10\tUnits\t2026-01-20\tMain Warehouse\tBuy\tSeeded Inventory\tRequested",
+  "failures": [],
+  "errors": [],
+  "badResponses": [],
+  "historyRows": 2,
+  "submitted": false
+}

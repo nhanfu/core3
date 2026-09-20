@@ -849,4 +849,33 @@ open.
   and 390x844, including the product location row, refresh history, no page/
   request errors, and no horizontal overflow. Odoo Stock rendered at both
   viewports, but its Locations button was group-gated for the supplied account;
-  exact blocker is recorded. No Odoo mutation or parity sign-off is claimed.
+exact blocker is recorded. No Odoo mutation or parity sign-off is claimed.
+
+## Product Replenish wizard QA — `INV-PRODUCT-REPLENISH-001` (2026-09-21)
+
+- Odoo source/menu/action: the product form binds
+  `action_product_replenishment` and `action_product_template_replenishment`
+  in `addons/stock/views/product_views.xml:39-85` to the `product.replenish`
+  modal. The source form and Confirm action are in
+  `addons/stock/wizard/product_replenish_views.xml:3-61`; defaults and
+  `launch_replenishment` are in `product_replenish.py:9-115`.
+- Core3: `pages/product-replenish.yaml` is layout-only and joins
+  `api/product-replenish.yaml` by `page.id`. The stock row opens product
+  context; the API owns context/catalog/history sources and the
+  `inventory.product.replenish` server form. Migration 0.0.41 provides the
+  durable request ledger and deterministic seed.
+- Focused test: `bun test
+  test/inventory_product_replenishment.integration.test.ts
+  test/inventory_stock_report.integration.test.ts` — PASS, 8 tests / 76
+  assertions. Coverage includes discovery, context/catalogs, request
+  persistence, permission, actor/company/date/quantity/route/warehouse
+  guards, row-version concurrency, replay, and restart.
+- Core3/Odoo evidence is under
+  `evidence/inventory/2026-09-21/INV-PRODUCT-REPLENISH-001/`. The supplied
+  Odoo account did not reach the product-form modal in the bounded capture;
+  the exact route/group blocker is recorded there. No Odoo mutation or full
+  Inventory sign-off is claimed.
+
+QA disposition: PASS for the bounded Core3 request lifecycle and permissions;
+PARTIAL for direct Odoo modal comparison and downstream procurement
+generation. Full Inventory sign-off remains open.

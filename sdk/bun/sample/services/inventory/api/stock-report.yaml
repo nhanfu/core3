@@ -62,6 +62,11 @@ actions:
     permission: inventory.read
     navigate_to: /replenishment
     params: { q: '{row.product_name}' }
+  - id: replenish_inventory_stock_product
+    type: navigate
+    permission: inventory.manage
+    navigate_to: /stock-report/replenish
+    params: { product_id: '{row.id}', row_version: '{row.row_version}', product_name: '{row.product_name}', forecasted_quantity: '{row.forecasted}', unit_name: '{row.unit_name}' }
   - id: view_inventory_stock_locations
     type: navigate
     permission: inventory.read

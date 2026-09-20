@@ -1,0 +1,31 @@
+title: Replenish Product
+page: { id: product-replenish, route: /stock-report/replenish, breadcrumb: [Supply Chain, Inventory, Reporting, Stock, Replenish], auth: { require: [inventory.read] } }
+components:
+  - type: StatRow
+    source: inventory_product_replenish_context
+    title: Low on stock? Let's replenish.
+    stats:
+      - { label: Product, field: product_name }
+      - { label: On Hand, field: on_hand }
+      - { label: Forecasted, field: forecasted_quantity }
+      - { label: Unit, field: unit_name }
+  - type: ListView
+    variant: odoo
+    source: inventory_product_replenishment_runs
+    header_actions:
+      - { id: launch_inventory_product_replenishment, label: Replenish, variant: primary, permission: inventory.manage }
+      - { id: back_to_inventory_product_stock_report, label: Back to Stock, variant: secondary, permission: inventory.read }
+    columns:
+      - { field: created_at, label: Requested At, type: PrimaryEntityCell, sortable: true }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_name, label: Unit }
+      - { field: date_planned, label: Scheduled Date }
+      - { field: warehouse_name, label: Warehouse }
+      - { field: route, label: Route }
+      - { field: requested_by, label: Requested By }
+      - { field: state, label: Status }
+    page_size: 20
+    row_key: id
+    selectable: false
+    row_actions: menu
+    empty_state: { title: No replenishment requests, description: Confirm a replenishment request to record the product supply action. }

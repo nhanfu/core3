@@ -1,0 +1,26 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "url": "http://127.0.0.1:4327/order/order/stock-report/replenish?product_id=stock-report-cabinet",
+  "title": "Sign in to your account",
+  "bodyScrollWidth": 390,
+  "documentScrollWidth": 390,
+  "viewportWidth": 390,
+  "bodyText": "AU\n⚠️\nFailed to load page\nAPI route not found\nHello, Admin User",
+  "failures": [],
+  "errors": [],
+  "badResponses": [
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:4327/api/pages/dashboard?lc=en&product_id=stock-report-cabinet"
+    },
+    {
+      "status": 404,
+      "url": "http://127.0.0.1:4327/api/pages/dashboard?lc=en&product_id=stock-report-cabinet"
+    }
+  ],
+  "replenishButton": 0,
+  "historyRows": 0
+}

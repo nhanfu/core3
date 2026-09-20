@@ -1,0 +1,71 @@
+page: { id: product-replenish }
+datasources:
+  - id: inventory_product_replenish_context
+    single: true
+    permission: inventory.read
+    error_states:
+      missing_record: { status: 404, code: INVENTORY_PRODUCT_REPLENISH_PRODUCT_NOT_FOUND, message: The selected product is not available in the current company. }
+      transport_error: { status: 503, code: INVENTORY_PRODUCT_REPLENISH_CONTEXT_UNAVAILABLE, message: Product replenishment context is temporarily unavailable. }
+    query: "SELECT r.id, r.id AS product_id, r.row_version, r.default_code, r.product_name, r.unit_name, CAST(r.forecasted AS DOUBLE) AS forecasted_quantity, CAST(r.on_hand AS DOUBLE) AS on_hand, CAST(r.incoming_qty AS DOUBLE) AS incoming_qty, CAST(r.outgoing_qty AS DOUBLE) AS outgoing_qty, 'Core3 Demo Company' AS company_name FROM inventory_stock_report r WHERE r.id = :product_id AND r.active = TRUE AND COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') = 'Core3 Demo Company'"
+  - id: inventory_product_replenish_warehouses
+    single: false
+    permission: inventory.manage
+    query: "SELECT name AS value, name AS label FROM inventory_warehouses WHERE state = 'Active' ORDER BY name"
+  - id: inventory_product_replenish_routes
+    single: false
+    permission: inventory.manage
+    query: "SELECT value, label FROM (VALUES ('Buy', 'Buy'), ('Manufacture', 'Manufacture'), ('MTO', 'Make To Order')) AS routes(value, label) ORDER BY label"
+  - id: inventory_product_replenishment_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_PRODUCT_REPLENISHMENT_HISTORY_UNAVAILABLE, message: Product replenishment history is temporarily unavailable. } }
+    query: "SELECT id, row_version, product_id, product_name, CAST(forecasted_quantity AS DOUBLE) AS forecasted_quantity, CAST(quantity AS DOUBLE) AS quantity, unit_name, CAST(date_planned AS VARCHAR) AS date_planned, warehouse_name, route, company_name, requested_by, state, CAST(created_at AS VARCHAR) AS created_at FROM inventory_product_replenishments WHERE product_id = :product_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') ORDER BY created_at DESC, id DESC"
+actions:
+  - id: launch_inventory_product_replenishment
+    type: server_form
+    permission: inventory.manage
+    title: Low on stock? Let's replenish.
+    action: inventory.product.replenish
+    handler: yaml_mutation
+    operation: create
+    prefill: { product_id: '{state.product_id}', expected_row_version: '{state.row_version}', product_name: '{state.product_name}', forecasted_quantity: '{state.forecasted_quantity}', unit_name: '{state.unit_name}', company_name: 'Core3 Demo Company' }
+    refresh: [inventory_product_replenish_context, inventory_product_replenishment_runs]
+    success_message: Replenishment request created.
+    submit_label: Confirm
+    mutation:
+      operation: insert
+      table: inventory_product_replenishments
+      generated: [id]
+      before_steps:
+        - query: "SELECT 'product-replenishment-' || CAST(:product_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM inventory_product_replenishments WHERE product_id = :product_id) AS VARCHAR) AS id, r.product_name, CAST(r.forecasted AS DOUBLE) AS forecasted_quantity, r.unit_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COALESCE(NULLIF(:company_name, ''), NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name FROM inventory_stock_report r WHERE r.id = :product_id GROUP BY r.id, r.product_name, r.forecasted, r.unit_name"
+          assign: true
+      fields: [product_id, product_name, forecasted_quantity, quantity, unit_name, date_planned, warehouse_name, route, company_name, requested_by, state, created_at]
+      defaults: { state: Requested, created_at: '2026-01-15 08:00:00' }
+      required: [product_id, quantity, date_planned, warehouse_name, route]
+      guards:
+        - { query: "SELECT id FROM inventory_stock_report WHERE id = :product_id AND active = TRUE AND COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') = 'Core3 Demo Company'", status: 404, code: INVENTORY_PRODUCT_REPLENISH_PRODUCT_NOT_FOUND, message: The selected product is not available in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_stock_report WHERE id = :product_id AND row_version = :expected_row_version", status: 409, code: INVENTORY_PRODUCT_REPLENISH_STALE, message: The product stock row changed before replenishment was requested. Reload and try again. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:current_user_id, '')), '') IS NOT NULL", status: 403, code: INVENTORY_PRODUCT_REPLENISH_ACTOR_REQUIRED, message: An authenticated inventory actor is required to request replenishment. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: INVENTORY_PRODUCT_REPLENISH_COMPANY, message: The replenishment company must match the current company. }
+        - query: "SELECT r.product_name, CAST(r.forecasted AS DOUBLE) AS forecasted_quantity, r.unit_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COALESCE(NULLIF(:company_name, ''), NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name FROM inventory_stock_report r WHERE r.id = :product_id"
+          assign: true
+        - { query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0 AND CAST(:quantity AS DECIMAL(18,3)) <= 100000", status: 422, code: INVENTORY_PRODUCT_REPLENISH_QUANTITY_INVALID, message: Enter a replenishment quantity greater than zero. }
+        - { query: "SELECT 1 AS ok WHERE TRY_CAST(:date_planned AS DATE) IS NOT NULL AND TRY_CAST(:date_planned AS DATE) BETWEEN DATE '2026-01-15' AND DATE '2100-12-31'", status: 422, code: INVENTORY_PRODUCT_REPLENISH_DATE_INVALID, message: Choose a scheduled date on or after the planning date. }
+        - { query: "SELECT 1 AS ok FROM inventory_warehouses WHERE name = :warehouse_name AND state = 'Active'", status: 422, code: INVENTORY_PRODUCT_REPLENISH_WAREHOUSE_INVALID, message: Choose an active warehouse. }
+        - { query: "SELECT 1 AS ok WHERE :route IN ('Buy', 'Manufacture', 'MTO')", status: 422, code: INVENTORY_PRODUCT_REPLENISH_ROUTE_INVALID, message: Choose a supported replenishment route. }
+      result: { query: "SELECT id, product_id, product_name, forecasted_quantity, quantity, unit_name, CAST(date_planned AS VARCHAR) AS date_planned, warehouse_name, route, company_name, requested_by, state, row_version FROM inventory_product_replenishments WHERE id = :id" }
+    fields:
+      - { field: product_id, label: Product ID, type: hidden }
+      - { field: expected_row_version, label: Product Row Version, type: hidden }
+      - { field: company_name, label: Company, type: hidden }
+      - { field: product_name, label: Product, type: text, default: Selected product }
+      - { field: forecasted_quantity, label: Forecasted Quantity, type: number, default: 0 }
+      - { field: quantity, label: Quantity, type: number, required: true, min: 0.001, default: 1 }
+      - { field: unit_name, label: Unit, type: text, default: Units }
+      - { field: date_planned, label: Scheduled Date, type: date, required: true, default: '2026-01-20' }
+      - { field: warehouse_name, label: Warehouse, type: select, options_source: inventory_product_replenish_warehouses, required: true, default: Main Warehouse }
+      - { field: route, label: Route, type: select, options_source: inventory_product_replenish_routes, required: true, default: Buy }
+  - id: back_to_inventory_product_stock_report
+    type: navigate
+    permission: inventory.read
+    navigate_to: /stock-report

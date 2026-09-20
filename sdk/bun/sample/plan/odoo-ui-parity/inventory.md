@@ -1461,3 +1461,30 @@ recorded under
 at both viewports, but the supplied account lacks the source multi-location
 group so the Locations button/detail could not be reached; the exact blocker
 is recorded and no Odoo mutation or full Inventory sign-off is claimed.
+
+## Reporting > Product Replenish wizard — `INV-PRODUCT-REPLENISH-001` (2026-09-21)
+
+This bounded slice covers the next uncovered product operation after the Stock
+Forecast and Locations actions: Odoo's product form `Replenish` server actions
+in `addons/stock/views/product_views.xml:39-85`. They open the
+`product.replenish` modal; the source form and `launch_replenishment` lifecycle
+are in `addons/stock/wizard/product_replenish_views.xml:3-61` and
+`product_replenish.py:9-115`. The source captures forecasted quantity,
+quantity/UoM, scheduled date, warehouse, route, and Confirm.
+
+Core3 keeps `pages/stock-report.yaml` separate from `api/stock-report.yaml`
+and adds a manager-gated Replenish row action to the paired
+`/stock-report/replenish` page/API (`page.id: product-replenish`). The API
+exposes product context, active warehouse and route choices, and durable
+request history. Migration
+`20260921150000-041-inventory-product-replenishment.yaml` adds deterministic
+request data. Confirm inserts a Requested request with actor/company context
+and guards product, company, actor, row version, quantity, date, warehouse,
+and route. Downstream procurement-rule/PO or manufacturing notification
+generation remains open.
+
+Focused verification passes 8 tests / 76 assertions across the product wizard
+and Stock report regression suites. Authenticated Core3 desktop/mobile and
+paired Odoo comparison/blocker evidence is under
+`evidence/inventory/2026-09-21/INV-PRODUCT-REPLENISH-001/`. Full Inventory
+sign-off remains open.

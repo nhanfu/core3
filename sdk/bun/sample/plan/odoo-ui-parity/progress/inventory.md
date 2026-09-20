@@ -660,3 +660,22 @@ Inventory sign-off remains open.
 - Odoo Stock desktop/mobile rendered with no failed requests, but the supplied
   account did not expose the source `stock.group_stock_multi_locations` button;
   exact paired evidence/blocker is recorded. Full module sign-off remains open.
+
+## `INV-PRODUCT-REPLENISH-001` — Product Replenish wizard (2026-09-21)
+
+- Selected the next uncovered source-backed product operation after Stock
+  Forecast and Stock Locations: Odoo's product form `Replenish` action opening
+  the `product.replenish` wizard.
+- Compared `addons/stock/views/product_views.xml:39-85` with
+  `addons/stock/wizard/product_replenish_views.xml:3-61` and
+  `product_replenish.py:9-115`. Core3 adds paired product-replenish page/API,
+  Stock row navigation, product/forecast context, warehouse/route catalogs,
+  and a durable Confirm request ledger.
+- Migration `20260921150000-041-inventory-product-replenishment.yaml` seeds
+  deterministic data. Guards cover product/company, authenticated actor,
+  expected product row version, positive quantity, scheduled date, active
+  warehouse, and route.
+- Focused verification passes 8 tests / 76 assertions across the new wizard
+  and Stock report regression. Evidence is under
+  `evidence/inventory/2026-09-21/INV-PRODUCT-REPLENISH-001/`; downstream Odoo
+  procurement remains open and full module sign-off is not claimed.

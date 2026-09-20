@@ -1,0 +1,17 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "url": "http://127.0.0.1:4327/inventory/stock-report/replenish?product_id=stock-report-cabinet&row_version=1&product_name=%5BE-COM07%5D+Large+Cabinet&forecasted_quantity=270&unit_name=Units",
+  "title": "Replenish Product",
+  "bodyScrollWidth": 1440,
+  "documentScrollWidth": 1440,
+  "viewportWidth": 1440,
+  "bodyText": "Transfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nLow on stock? Let's replenish.\n\nProduct\n\n[E-COM07] Large Cabinet\n\nOn Hand\n\n500\n\nForecasted\n\n270\n\nUnit\n\nUnits\n\nReplenish\nBack to Stock\nSupply Chain / Inventory / Reporting / Stock / Replenish\n1-2 / 2\n‹\n›\nRequested At\n\tQuantity\n\tUnit\n\tScheduled Date\n\tWarehouse\n\tRoute\n\tRequested By\n\tStatus\n\n\n2026-01-15 08:00:00\n\t12\tUnits\t2026-01-22\tMain Warehouse\tManufacture\tAdmin User\tRequested\n\n2026-01-15 08:00:00\n\t10\tUnits\t2026-01-20\tMain Warehouse\tBuy\tSeeded Inventory\tRequested\nSaved\nReplenishment request created.",
+  "failures": [],
+  "errors": [],
+  "badResponses": [],
+  "historyRows": 2,
+  "submitted": true
+}

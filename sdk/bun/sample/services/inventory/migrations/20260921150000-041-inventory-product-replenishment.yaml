@@ -1,0 +1,33 @@
+version: 0.0.41
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_product_replenishments (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        product_id VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        forecasted_quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+        quantity DECIMAL(18,3) NOT NULL, unit_name VARCHAR NOT NULL DEFAULT 'Units',
+        date_planned DATE NOT NULL, warehouse_name VARCHAR NOT NULL,
+        route VARCHAR NOT NULL DEFAULT 'Buy', company_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL, state VARCHAR NOT NULL DEFAULT 'Requested',
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(product_id, id)
+      );
+      CREATE INDEX IF NOT EXISTS inventory_product_replenishments_product_idx
+        ON inventory_product_replenishments(product_id, created_at, id);
+      INSERT INTO inventory_product_replenishments
+        (id, product_id, product_name, forecasted_quantity, quantity, unit_name,
+         date_planned, warehouse_name, route, company_name, requested_by, state)
+      VALUES
+        ('product-replenishment-cabinet-0001', 'stock-report-cabinet', '[E-COM07] Large Cabinet',
+         270, 10, 'Units', DATE '2026-01-20', 'Main Warehouse', 'Buy',
+         'Core3 Demo Company', 'Seeded Inventory', 'Requested')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_product_replenishments WHERE id = 'product-replenishment-cabinet-0001';
+      DROP TABLE IF EXISTS inventory_product_replenishments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
