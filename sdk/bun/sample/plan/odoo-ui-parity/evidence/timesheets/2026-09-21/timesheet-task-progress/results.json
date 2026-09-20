@@ -1,0 +1,86 @@
+{
+  "feature_id": "TIMESHEET-TASK-PROGRESS-001",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "url": "http://127.0.0.1:3001/timesheets/task-timesheets?task_id=task-demo-001",
+      "viewport": "1440x900",
+      "title": "Timesheets",
+      "route_rendered": true,
+      "progress_visible": true,
+      "body_excerpt": "Work\nPortal\nReporting\nConfiguration\n⌘ K\nAU\nNew\nPrint\nPrint lines\nProject / Task / Timesheets\n1-1 / 1\n‹\n›\nDate\n\tEmployee\n\tEntry\n\tDescription\n\tTime Spent\n\n2026-01-15\tAdmin User\tTS/2026/0001\tMigration work\t08:00\nTask progress\n\nAllocated time\n\n40\n\nTime spent\n\n8\n\nRemaining\n\n32\n\nProgress %\n\n20\n\nOvertime\n\n0",
+      "metrics": {
+        "innerWidth": 1440,
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      },
+      "page_errors": [],
+      "failed_requests": []
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:3001/timesheets/task-timesheets?task_id=task-demo-001",
+      "viewport": "390x844",
+      "title": "Timesheets",
+      "route_rendered": true,
+      "progress_visible": true,
+      "body_excerpt": "AU\nNew\nPrint\nPrint lines\nTimesheets\n1-1 / 1\n‹\n›\nDate\n\tEmployee\n\tEntry\n\tDescription\n\tTime Spent\n\n2026-01-15\tAdmin User\tTS/2026/0001\tMigration work\t08:00\nTask progress\n\nAllocated time\n\n40\n\nTime spent\n\n8\n\nRemaining\n\n32\n\nProgress %\n\n20\n\nOvertime\n\n0",
+      "metrics": {
+        "innerWidth": 390,
+        "bodyWidth": 390,
+        "documentWidth": 390
+      },
+      "page_errors": [],
+      "failed_requests": []
+    }
+  },
+  "odoo": {
+    "desktop": {
+      "url": "http://127.0.0.1:8069/odoo/all-tasks/100",
+      "viewport": "1440x900",
+      "title": "S00038 - Solar Panel Installation",
+      "route_rendered": true,
+      "progress_visible": true,
+      "timesheets_tab_visible": true,
+      "body_excerpt": "Project\nProjects\nTasks\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nAll Tasks\nS00038 - Solar Panel Installation\nSales Order\n1 / 1\n...\nDone\nIn Progress\n10d\nNew\nIn Progress\nProject\nMilestone?\nAssignees\nMarc Demo\nTags\nCustomer\nSales Order Item?\nDeadline\nAllocated Time\n (40%)\nDescription\nTimesheets\nSub-tasks\nDate\n\t\nEmployee\n\t\nDescription\n\t\nTime Spent\n\t\n\nAug 24\t\nJustin Smith\n\tSolar Panel Installation\t04:00\t\nAdd a line\n​\n​\n\t\nTime Spent\n04:00\nTime Remaining?\n06:00\nSend message\nLog note\nActivity\n2\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n\nThis task has been created from: S00038 (Solar Panel Installation)\n\nOdooBot\nSep 10, 12:28 PM\n\nTask Created",
+      "metrics": {
+        "innerWidth": 1440,
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      },
+      "timesheet_metrics": {
+        "innerWidth": 1440,
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      },
+      "page_errors": [],
+      "failed_requests": [
+        {
+          "url": "http://127.0.0.1:8069/mail/data",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:8069/odoo/all-tasks/100",
+      "viewport": "390x844",
+      "title": "S00038 - Solar Panel Installation",
+      "route_rendered": true,
+      "progress_visible": true,
+      "timesheets_tab_visible": true,
+      "body_excerpt": "S00038 - Solar Panel Installation\n7\n40\nNew\nIn Progress\nProject\nMilestone?\nAssignees\nMarc Demo\nTags\nCustomer\nSales Order Item?\nDeadline\nAllocated Time\n (40%)\nDescription\nTimesheets\nSub-tasks\nJustin Smith\nAug 24\nSolar Panel Installation\n04:00\nAdd Timesheets\nTime Spent\n04:00\nTime Remaining?\n06:00\nSend message\nLog note\nActivity\n2\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n\nThis task has been created from: S00038 (Solar Panel Installation)\n\nOdooBot\nSep 10, 12:28 PM\n\nTask Created",
+      "metrics": {
+        "innerWidth": 390,
+        "bodyWidth": 390,
+        "documentWidth": 390
+      },
+      "timesheet_metrics": {
+        "innerWidth": 390,
+        "bodyWidth": 390,
+        "documentWidth": 390
+      },
+      "page_errors": [],
+      "failed_requests": []
+    }
+  },
+  "blockers": []
+}

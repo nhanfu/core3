@@ -537,3 +537,33 @@ routes rendered; Odoo's aborted `/mail/data` prefetch is recorded. Core3 mobile
 still visibly clips the wide list, and visual company switching was unavailable
 in the single-company browser session. Print/PDF/action and broader route
 comparison blockers remain open.
+## 2026-09-21 `TIMESHEET-TASK-PROGRESS-001`
+
+Selected the smallest genuinely new source-backed behavior after the prior
+portal, personal analysis, all-company, billing/analysis/task report, and
+report preview slices: task Timesheets progress context.
+
+The Timesheets task relation now durably carries company, allocated-hours, and
+row-version state through migration
+`20260921100000-015-timesheets-task-progress.yaml`. The separate API contract
+adds `task_timesheet_progress`, guarded by `timesheets.read`, the active
+company, and deterministic empty/transport states. It derives effective,
+remaining, percentage progress, overtime, and display time from persisted
+task allocation and non-cancelled entries. The existing task page remains
+layout-only and binds the API through `page.id: task-timesheets` with a
+`Task progress` StatRow.
+
+Focused tests pass: `test/timesheets_task_progress.integration.test.ts` is
+4/4 (27 expectations), and the task/report regression selection is 19/19
+(107 expectations). Coverage includes source comparison, page/API separation,
+permission, company/empty/transport guards, allocation row-version change,
+deterministic migration replay, and file-backed restart persistence.
+
+Authenticated evidence is under
+`evidence/timesheets/2026-09-21/timesheet-task-progress/` for Core3 and Odoo
+desktop/mobile. Core3 visibly renders 40 allocated, 8 spent, 32 remaining,
+20% progress, and 0 overtime. Odoo visibly renders the task allocation and
+Timesheets tab's 04:00 spent / 06:00 remaining values. Odoo uses a different
+seeded task and native time encoding, so this is a field-level comparison.
+Existing module Print/PDF/action blockers remain documented; no sign-off is
+claimed.

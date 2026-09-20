@@ -1,0 +1,24 @@
+version: 0.0.15
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE timesheet_tasks ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE timesheet_tasks ADD COLUMN IF NOT EXISTS allocated_hours DECIMAL(18,3);
+      ALTER TABLE timesheet_tasks ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE timesheet_tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
+      UPDATE timesheet_tasks
+      SET company_name = CASE WHEN id = 'task-demo-closed' THEN 'Other Company' ELSE 'Core3 Demo Company' END,
+          allocated_hours = CASE id WHEN 'task-demo-001' THEN 40 WHEN 'task-demo-002' THEN 8 ELSE 0 END,
+          row_version = COALESCE(row_version, 1),
+          updated_at = TIMESTAMP '2026-01-15 00:00:00'
+      WHERE company_name IS NULL OR allocated_hours = 0 OR updated_at IS NULL;
+    down: |
+      ALTER TABLE timesheet_tasks DROP COLUMN IF EXISTS updated_at;
+      ALTER TABLE timesheet_tasks DROP COLUMN IF EXISTS row_version;
+      ALTER TABLE timesheet_tasks DROP COLUMN IF EXISTS allocated_hours;
+      ALTER TABLE timesheet_tasks DROP COLUMN IF EXISTS company_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

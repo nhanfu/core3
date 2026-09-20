@@ -1335,3 +1335,34 @@ Authenticated Odoo `/odoo/timesheets-by-task` shows aggregate report data at
 both viewports but no loaded row-to-task-timesheet action/form; that exact
 paired interaction blocker remains open. This bounded slice does not claim
 Timesheets module sign-off.
+## Fifth-wave task progress context — `TIMESHEET-TASK-PROGRESS-001` (2026-09-21)
+
+The next uncovered source-backed behavior after the portal, analysis, company
+scope, and report/drilldown slices was the task progress context in Odoo's
+`hr_timesheet` extension. `addons/hr_timesheet/models/project_task.py` exposes
+stored `effective_hours`, `remaining_hours`, `progress`, `overtime`, and
+`total_hours_spent` fields computed from the task allocation and persisted
+analytic lines. Core3's task Timesheets page previously exposed only the line
+list and report actions.
+
+Core3 adds the page/API-separated `task_timesheet_progress` datasource to the
+existing `task-timesheets` contract. A Timesheets-owned migration persists the
+task company, allocation, and row-version relation state; the API computes
+non-cancelled durable entry totals, remaining hours, percentage progress, and
+overtime with the active-company guard. The layout-only page binds those
+fields to a `Task progress` StatRow without moving the existing list/report
+actions. Empty, wrong-company, transport, allocation-change, and restart
+states are covered by the focused suite.
+
+Focused coverage is `test/timesheets_task_progress.integration.test.ts`:
+4 tests / 27 expectations, with the existing task/report suites rerun for 19
+tests / 107 expectations. Authenticated Core3 desktop/mobile and paired Odoo
+desktop/mobile captures are in
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-21/timesheet-task-progress/`.
+Core3 renders 40 allocated, 8 spent, 32 remaining, 20% progress, and 0
+overtime. Odoo's authenticated task form renders allocated time and its
+Timesheets tab renders 04:00 spent and 06:00 remaining; the reference uses a
+different seeded task and its native time widget, so the comparison is
+field-level rather than a fixture-identical screenshot claim. Existing Odoo
+Print/PDF/action surfaces remain blockers elsewhere in the module; no
+Timesheets sign-off is claimed.

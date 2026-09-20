@@ -19,6 +19,12 @@ datasources:
     permission: timesheets.read
     error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_LINES_REPORT_RUNS_UNAVAILABLE, message: Task timesheet line report history is temporarily unavailable. } }
     query: "SELECT id, task_id, task_name, project_id, project_name, report_name, requested_by, CAST(generated_at AS VARCHAR) AS generated_at, entry_count, total_hours, row_version FROM timesheet_task_lines_report_runs WHERE task_id = :task_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') ORDER BY generated_at DESC, id DESC"
+  - id: task_timesheet_progress
+    single: true
+    permission: timesheets.read
+    pivot: { fields: [task_id, task_name, project_id, allocated_hours, effective_hours, remaining_hours, progress_percent, overtime_hours, effective_time_display, row_version] }
+    error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_PROGRESS_UNAVAILABLE, message: Task progress is temporarily unavailable. } }
+    query: "SELECT t.id AS task_id, t.name AS task_name, t.project_id, t.allocated_hours, COALESCE(SUM(CASE WHEN e.state <> 'Cancelled' THEN e.hours ELSE 0 END), 0) AS effective_hours, CASE WHEN t.allocated_hours > 0 THEN t.allocated_hours - COALESCE(SUM(CASE WHEN e.state <> 'Cancelled' THEN e.hours ELSE 0 END), 0) ELSE 0 END AS remaining_hours, CASE WHEN t.allocated_hours > 0 THEN ROUND(COALESCE(SUM(CASE WHEN e.state <> 'Cancelled' THEN e.hours ELSE 0 END), 0) / t.allocated_hours * 100, 1) ELSE 0 END AS progress_percent, GREATEST(COALESCE(SUM(CASE WHEN e.state <> 'Cancelled' THEN e.hours ELSE 0 END), 0) - t.allocated_hours, 0) AS overtime_hours, printf('%02d:%02d', CAST(FLOOR(COALESCE(SUM(CASE WHEN e.state <> 'Cancelled' THEN e.hours ELSE 0 END), 0)) AS INTEGER), CAST(ROUND((COALESCE(SUM(CASE WHEN e.state <> 'Cancelled' THEN e.hours ELSE 0 END), 0) - FLOOR(COALESCE(SUM(CASE WHEN e.state <> 'Cancelled' THEN e.hours ELSE 0 END), 0))) * 60) AS INTEGER)) AS effective_time_display, t.row_version FROM timesheet_tasks t LEFT JOIN timesheet_entries e ON e.task_id = t.id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.id = :task_id AND t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') GROUP BY t.id, t.name, t.project_id, t.allocated_hours, t.row_version"
 actions:
   - id: print_task_timesheets_report
     type: client

@@ -586,3 +586,33 @@ bounded feature does not claim Timesheets sign-off.
   Core3 mobile visibly clips the wide list at 390px; existing Timesheets
   Print/PDF/action and broader route comparison gaps remain open. No module
   sign-off is claimed.
+## `TIMESHEET-TASK-PROGRESS-001` — task progress context (2026-09-21)
+
+- Source comparison: `hr_timesheet.models.project_task` computes effective
+  time from analytic lines and exposes allocated, remaining, progress, and
+  overtime fields. The captured Odoo task form/Timesheets tab confirms the
+  corresponding visible context.
+- Core3 contract: `api/task-timesheets.yaml` owns the guarded
+  `task_timesheet_progress` query; `pages/task-timesheets.yaml` owns only the
+  `Task progress` StatRow and remains joined by `page.id`.
+- Persistence: migration
+  `20260921100000-015-timesheets-task-progress.yaml` adds deterministic
+  company, allocation, row-version, and timestamp state to the Timesheets
+  task relation; replay is idempotent.
+- Guards: `timesheets.read`, active company, empty/not-found fixture, and
+  transport error; allocation row-version changes are reflected without
+  stale cached totals.
+- Focused verification: `bun test
+  test/timesheets_task_progress.integration.test.ts
+  test/timesheets_task.integration.test.ts
+  test/timesheets_task_report.integration.test.ts
+  test/timesheets_task_lines_report.integration.test.ts
+  test/timesheets_task_report_preview.integration.test.ts --timeout 30000`
+  — 19 passed, 0 failed, 107 expectations.
+- Browser evidence:
+  `evidence/timesheets/2026-09-21/timesheet-task-progress/`, authenticated
+  Core3 and Odoo desktop/mobile; Core3 page/request errors are empty and both
+  surfaces have 390px document width on mobile.
+- Blockers: the Odoo reference uses a different seeded task and native time
+  widget, so only field-level comparison is claimed. Existing Odoo
+  Print/PDF/action blockers remain open; no module sign-off is claimed.
