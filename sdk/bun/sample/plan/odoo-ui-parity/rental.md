@@ -1,6 +1,6 @@
 # Sale Rental UI parity
 
-Status: blocked
+Status: blocked (reference addon unavailable)
 
 This sub-plan records the source-availability gate for Odoo 19 `sale_renting`.
 It does not approve implementation or claim UI parity.
@@ -84,3 +84,42 @@ screenshots, or visual parity claims for `sale_renting`.
 - `bun run lint` from `sdk/bun` passed with no output.
 - No rental-specific integration test is present in `sdk/bun/sample/test`.
 - `git diff --check` passes for this documentation change.
+
+## Current live reference inventory (2026-09-20)
+
+The authenticated reference at `http://localhost:8069`, database
+`core3_reference`, was inspected once with the local QA account. The session
+landed at `/odoo/discuss` without page or 5xx errors. The inventory is
+authoritative for this wave:
+
+| Inventory item | Observed result |
+| --- | --- |
+| Installed addon | `sale_management` 19.0.1.0 and `sale` 19.0.1.2 are installed; `sale_renting` is absent from `ir.module.module` |
+| Sales > Rental menu | No Rental application/menu/action is present |
+| Rental actions | No rental action window, server action, or rental-specific view is reachable |
+| Rental models/fields | `product.template` and `sale.order` have no fields whose names contain `rent` |
+| Rental view modes/tabs | None observable because the addon/menu/action is absent |
+| Rental permissions/groups | No rental-specific groups or action visibility can be inventoried |
+| Official demo declaration | Not inspectable without the missing addon manifest |
+
+The observed Sales tree therefore stops at the installed Sales surface: Orders
+(Quotations, Orders, Sales Teams, Customers), Products (Products, Product
+Variants, Pricelists), Reporting (Sales, Salespersons, Products, Customers),
+and Configuration (Sales Orders, Products, Online Payments, Activities). None
+of those entries is a Rental substitute.
+
+## Gap matrix after live inspection
+
+| Stable ID | Odoo requirement | Current Core3 source | Gap/status | Bounded next action |
+| --- | --- | --- | --- | --- |
+| RENT-INV-001 | Sales > Rental menu/action tree | `services/sale_renting/manifest.yaml` | incompatible: `/events` collides with the Events module and no Odoo source route exists | retain the Core3-owned rental-events convention as `/rental-events`; do not call it Odoo-derived |
+| RENT-DATA-001 | Rental order persistence and deterministic records | `storage.yaml`, foundation/demo migrations | partial: rental/order/event tables and two fixtures exist, but no active/archive or CRUD test contract is declared | preserve stable fixture IDs and add only validated module-owned fields/contracts |
+| RENT-API-001 | Page datasource/API separation by page identity | page YAML files currently embed datasources/actions | incompatible with the YAML-first separation rule | move backend datasource/action declarations to `api/*.yaml`, joined by matching `page.id` |
+| RENT-WF-001 | Reserve, pickup, return, cancel lifecycle | `pages/rental-workflow.yaml` and embedded page actions | partial: transitions and overlap/stale guards exist; direct API and persistence evidence is missing | keep workflow contract and document executable permission/persistence cases |
+| RENT-CRUD-001 | Create/read/edit and management boundary | `pages/rentals.yaml`, `pages/rental-detail.yaml` | partial: create and quotation-only edit exist; delete/archive/import/export are not implemented | implement only the next coherent CRUD slice within `sale_renting`; do not imply full parity |
+| RENT-UI-001 | Odoo list/kanban/form/calendar/pivot/graph states | rental page YAML | unverified: reference has no Rental screen to compare | retain visible text tabs and capture Core3-only smoke evidence; no visual parity claim |
+| RENT-QA-001 | Authenticated desktop/mobile, permission, workflow and reload proof | `qa/sale-renting.md` | pending: prior smoke covered route rendering only | add focused cases and execute after the API/route change |
+
+This matrix deliberately distinguishes an internal Core3 implementation slice
+from Odoo parity. It must be revised if a later wave installs a matching
+`sale_renting` addon and exposes a real reference surface.
