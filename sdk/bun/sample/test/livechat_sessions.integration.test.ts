@@ -207,6 +207,8 @@ describe('Live Chat Conversations — Sessions parity', () => {
       'help_livechat_session_detail',
       'join_livechat_session_detail',
       'close_livechat_session_detail',
+      'add_livechat_session_tag',
+      'remove_livechat_session_tag',
     ]);
     const detailActions = new Map(detailPage.actions.map((candidate: any) => [candidate.id, candidate]));
     for (const [id, operation, actionName] of [

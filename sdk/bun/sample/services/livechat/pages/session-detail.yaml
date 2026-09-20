@@ -11,12 +11,15 @@ components:
       - { id: help_livechat_session_detail, label: Need Help, variant: secondary, show_if: "record.status === 'In Progress' || record.status === 'Waiting for Customer'" }
       - { id: join_livechat_session_detail, label: Join, variant: primary, show_if: "record.status === 'Looking for Help'" }
       - { id: close_livechat_session_detail, label: Close, variant: danger, show_if: "record.status === 'In Progress' || record.status === 'Waiting for Customer' || record.status === 'Looking for Help'" }
+      - { id: add_livechat_session_tag, label: Add Tag, variant: secondary }
+      - { id: remove_livechat_session_tag, label: Remove Tag, variant: secondary }
     fields:
       - { field: visitor_display, label: Visitor }
       - { field: channel_name, label: Channel }
       - { field: operator_name, label: Operator }
       - { field: status_label, label: Status, type: StatusChip }
       - { field: outcome, label: Outcome }
+      - { field: tag_names, label: Conversation Tags }
       - { field: duration_label, label: Duration }
       - { field: message_count, label: Messages }
       - { field: country_name, label: Country }

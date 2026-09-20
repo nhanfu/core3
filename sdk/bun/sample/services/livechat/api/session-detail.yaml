@@ -10,6 +10,10 @@ datasources:
         COALESCE(NULLIF(visitor_name, ''), 'Visitor') AS visitor_display,
         operator_name, status, outcome, duration_minutes, rating, COALESCE(message_count, 0) AS message_count,
         country_name, avatar_url,
+        COALESCE((SELECT string_agg(t.name, ', ' ORDER BY t.name)
+          FROM livechat_session_tag_rel rel
+          JOIN livechat_tags t ON t.id = rel.tag_id
+          WHERE rel.session_id = livechat_sessions.id), '') AS tag_names,
         CAST(started_at AS VARCHAR) AS started_label,
         CAST(duration_minutes AS VARCHAR) AS duration_label,
         CASE
@@ -23,6 +27,28 @@ datasources:
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END = TRUE
         AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)
         AND id = :id
+  - id: livechat_session_tag_options
+    single: false
+    permission: livechat.read
+    error_states:
+      transport_error: { status: 503, code: LIVECHAT_SESSION_TAGS_UNAVAILABLE, message: Conversation tags are temporarily unavailable. }
+    query: |
+      SELECT t.id AS value, t.id, t.name AS label, t.name, t.color,
+        CASE WHEN rel.tag_id IS NULL THEN FALSE ELSE TRUE END AS selected
+      FROM livechat_tags t
+      LEFT JOIN livechat_session_tag_rel rel ON rel.tag_id = t.id AND rel.session_id = :id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END = TRUE
+      ORDER BY t.name, t.id
+  - id: livechat_session_tags
+    single: false
+    permission: livechat.read
+    query: |
+      SELECT t.id, t.name, t.color,
+        CASE WHEN rel.tag_id IS NULL THEN FALSE ELSE TRUE END AS selected
+      FROM livechat_tags t
+      LEFT JOIN livechat_session_tag_rel rel ON rel.tag_id = t.id AND rel.session_id = :id
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found', 'no_results') THEN FALSE ELSE TRUE END = TRUE
+      ORDER BY t.name, t.id
   - id: livechat_session_messages
     single: false
     permission: livechat.read
@@ -56,3 +82,47 @@ actions:
         - { query: "INSERT INTO livechat_session_messages(id, session_id, author_id, author_name, author_type, body, action, action_label, created_at) VALUES(gen_random_uuid(), :id, :current_user_id, :current_user_name, 'operator', TRIM(CAST(:content AS VARCHAR)), 'message', 'Message', CURRENT_TIMESTAMP)" }
         - { query: "UPDATE livechat_sessions SET message_count = COALESCE(message_count, 0) + 1, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }
       result: { query: "SELECT id, session_id, author_name, author_type, body AS detail, action, action_label, CAST(created_at AS VARCHAR) AS created_at FROM livechat_session_messages WHERE session_id = :id ORDER BY created_at DESC, id DESC LIMIT 1" }
+  - id: add_livechat_session_tag
+    type: server_form
+    permission: livechat.write
+    title: Add conversation tag
+    action: /im_livechat/conversation/update_tags
+    handler: yaml_mutation
+    operation: tag
+    params: { id: '{state.id}', method: ADD }
+    refresh: [livechat_session_detail, livechat_session_tags, livechat_session_tag_options]
+    fields: [{ field: tag_id, label: Tag, type: select, options_source: livechat_session_tag_options, required: true }]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id", status: 404, code: LIVECHAT_SESSION_NOT_FOUND, message: Live Chat session was not found. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)", status: 403, code: LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE, message: This Live Chat session is assigned to another operator. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_SESSION_TAG_STALE, message: This conversation changed before its tags were updated. Reload before trying again. }
+        - { query: "SELECT id FROM livechat_tags WHERE id = :tag_id", status: 404, code: LIVECHAT_TAG_NOT_FOUND, message: Live Chat tag not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM livechat_session_tag_rel WHERE session_id = :id AND tag_id = :tag_id)", status: 409, code: LIVECHAT_SESSION_TAG_ALREADY_ADDED, message: This tag is already assigned to the conversation. }
+      steps:
+        - { query: "INSERT INTO livechat_session_tag_rel(session_id, tag_id) VALUES(:id, :tag_id)" }
+        - { query: "UPDATE livechat_sessions SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: LIVECHAT_SESSION_TAG_STALE, message: This conversation changed before its tags were updated. Reload before trying again. }
+      result: { query: "SELECT * FROM livechat_sessions WHERE id = :id" }
+  - id: remove_livechat_session_tag
+    type: server_form
+    permission: livechat.write
+    title: Remove conversation tag
+    action: /im_livechat/conversation/update_tags
+    handler: yaml_mutation
+    operation: tag
+    params: { id: '{state.id}', method: DELETE }
+    refresh: [livechat_session_detail, livechat_session_tags, livechat_session_tag_options]
+    fields: [{ field: tag_id, label: Tag, type: select, options_source: livechat_session_tag_options, required: true }]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id", status: 404, code: LIVECHAT_SESSION_NOT_FOUND, message: Live Chat session was not found. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND (COALESCE(:view_scope, 'all') = 'all' OR operator_id = :current_user_id)", status: 403, code: LIVECHAT_SESSION_OUTSIDE_OPERATOR_SCOPE, message: This Live Chat session is assigned to another operator. }
+        - { query: "SELECT id FROM livechat_sessions WHERE id = :id AND row_version = :expected_row_version", status: 409, code: LIVECHAT_SESSION_TAG_STALE, message: This conversation changed before its tags were updated. Reload before trying again. }
+        - { query: "SELECT id FROM livechat_tags WHERE id = :tag_id", status: 404, code: LIVECHAT_TAG_NOT_FOUND, message: Live Chat tag not found. }
+        - { query: "SELECT session_id FROM livechat_session_tag_rel WHERE session_id = :id AND tag_id = :tag_id", status: 409, code: LIVECHAT_SESSION_TAG_NOT_ASSIGNED, message: This tag is not assigned to the conversation. }
+      steps:
+        - { query: "DELETE FROM livechat_session_tag_rel WHERE session_id = :id AND tag_id = :tag_id" }
+        - { query: "UPDATE livechat_sessions SET row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: LIVECHAT_SESSION_TAG_STALE, message: This conversation changed before its tags were updated. Reload before trying again. }
+      result: { query: "SELECT * FROM livechat_sessions WHERE id = :id" }

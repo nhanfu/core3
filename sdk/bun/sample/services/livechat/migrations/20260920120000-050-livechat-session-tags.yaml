@@ -1,0 +1,37 @@
+version: 0.0.50
+kind: data
+description: Persist Odoo Live Chat conversation tag assignments
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_session_tag_rel (
+        session_id VARCHAR NOT NULL,
+        tag_id VARCHAR NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 09:00:00',
+        PRIMARY KEY (session_id, tag_id)
+      );
+      CREATE INDEX IF NOT EXISTS livechat_session_tag_rel_session_idx ON livechat_session_tag_rel(session_id);
+      INSERT INTO livechat_session_tag_rel(session_id, tag_id)
+      SELECT 'livechat-session-demo-001', 'livechat-tag-billing'
+      WHERE EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-001')
+        AND EXISTS (SELECT 1 FROM livechat_tags WHERE id = 'livechat-tag-billing')
+        AND NOT EXISTS (SELECT 1 FROM livechat_session_tag_rel WHERE session_id = 'livechat-session-demo-001' AND tag_id = 'livechat-tag-billing');
+      INSERT INTO livechat_session_tag_rel(session_id, tag_id)
+      SELECT 'livechat-session-demo-001', 'livechat-tag-urgent'
+      WHERE EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-001')
+        AND EXISTS (SELECT 1 FROM livechat_tags WHERE id = 'livechat-tag-urgent')
+        AND NOT EXISTS (SELECT 1 FROM livechat_session_tag_rel WHERE session_id = 'livechat-session-demo-001' AND tag_id = 'livechat-tag-urgent');
+      INSERT INTO livechat_session_tag_rel(session_id, tag_id)
+      SELECT 'livechat-help-001', 'livechat-tag-vip'
+      WHERE EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-help-001')
+        AND EXISTS (SELECT 1 FROM livechat_tags WHERE id = 'livechat-tag-vip')
+        AND NOT EXISTS (SELECT 1 FROM livechat_session_tag_rel WHERE session_id = 'livechat-help-001' AND tag_id = 'livechat-tag-vip');
+    down: |
+      DELETE FROM livechat_session_tag_rel
+      WHERE (session_id = 'livechat-session-demo-001' AND tag_id IN ('livechat-tag-billing', 'livechat-tag-urgent'))
+         OR (session_id = 'livechat-help-001' AND tag_id = 'livechat-tag-vip');
+      DROP TABLE IF EXISTS livechat_session_tag_rel;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

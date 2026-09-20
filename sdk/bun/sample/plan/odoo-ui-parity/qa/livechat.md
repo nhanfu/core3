@@ -22,7 +22,7 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
 - Live Chat formerly failing Looking for Help and partner-history cases now
   pass in focused reruns after deterministic fixture and contract repairs.
 - Focused Sessions suite: `bun test ./test/livechat_sessions.integration.test.ts` — 4 passed, 35 assertions; the lifecycle uses the Help Queue-owned `join` action and persists the session through close.
-- Full Live Chat-focused suite: `bun test ./test/livechat*.integration.test.ts --timeout 20000` — 58 passed, 632 assertions, 0 failed across 18 files.
+- Full Live Chat-focused suite (pre-tag baseline): `bun test ./test/livechat*.integration.test.ts --timeout 20000` — 58 passed, 632 assertions, 0 failed across 18 files.
 - Isolated runner `:4327` rendered Sessions at desktop 1440x900 and mobile
   390x844, and opening seeded Visitor A loaded the Session detail side panel;
   all requests and page errors were clean with no horizontal overflow. Captures:
@@ -107,3 +107,22 @@ Detailed execution matrix: [`test-plans/livechat.md`](test-plans/livechat.md). I
   composer/denial and visual evidence, durable restart persistence, and paired
   authenticated Odoo comparison remain blocked by unavailable Playwright/
   session, stopped Core3, and unauthenticated Odoo.
+
+## 2026-09-20 bounded review: operator conversation tags
+
+- Implemented only the Live Chat session-detail conversation tag workflow. The
+  allowed file surface is limited to `services/livechat/**`,
+  `test/livechat*.ts`, and Live Chat plan/QA files.
+- Focused validation: `bun test test/livechat_session_tags.integration.test.ts`
+  — 4 passed, 28 assertions; it covers idempotent migration, selected tag
+  projections, ADD/DELETE persistence, assigned-operator denial, stale and
+  missing guards, and file-backed restart replay.
+- Existing session regressions plus the new slice:
+  `bun test test/livechat_session_tags.integration.test.ts
+  test/livechat_session_messages.integration.test.ts
+  test/livechat_sessions.integration.test.ts --timeout 20000` — 17 passed,
+  127 assertions, 0 failed.
+- Full current Live Chat corpus: `bun test test/livechat*.integration.test.ts
+  --timeout 20000` — 73 passed, 0 failed across 21 files.
+- No authenticated browser or paired Odoo visual evidence is claimed for this
+  API-bound slice. Full Live Chat sign-off remains open.

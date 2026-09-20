@@ -48,13 +48,14 @@ technical queues must never expose unrelated company conversations.
 | LIVECHAT-WF-003 | Chatbot handoff | Script steps/answers progress deterministically and hand off to an operator without losing transcript | pass at contract level |
 | LIVECHAT-WF-004 | Help/escalation queues | Looking-for-help and technical escalation actions preserve queue state and manager scope | pass at contract level |
 | LIVECHAT-WF-005 | Durable/external boundary | Realtime reconnect, bot calls, notifications, transcript delivery and third-party callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
+| LIVECHAT-WF-006 | Conversation tag assignment | Operator Add Tag/Remove Tag persists the source-backed relation, preserves session versions, scopes assigned sessions, and rejects duplicate, stale, missing, and unassigned mutations | pass: `livechat_session_tags.integration.test.ts`; browser comparison remains planned |
 
 ## Permission and security cases
 
 | Case ID | Actor/scope | Expected result | Status |
 | --- | --- | --- | --- |
 | LIVECHAT-PERM-001 | Live Chat Manager | Channel, rule, bot, tag, expertise and canned-response mutations succeed | planned browser actor gate |
-| LIVECHAT-PERM-002 | Operator | Assigned conversation reads/actions work only within channel/company scope | planned |
+| LIVECHAT-PERM-002 | Operator | Assigned conversation reads/actions and tag mutations work only within channel/company scope | pass at contract level; browser actor gate planned |
 | LIVECHAT-PERM-003 | Visitor | Public session access exposes only its own transcript and allowed channel actions | planned |
 | LIVECHAT-PERM-004 | Ordinary user | Technical queues and manager configuration writes return 403 without row changes | pass at contract level |
 | LIVECHAT-PERM-005 | Wrong company | Sessions, partners, channels, transcripts and reports are not leaked or mutable | planned |

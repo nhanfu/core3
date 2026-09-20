@@ -1134,3 +1134,37 @@ runtime was not started. No screenshot or visual-parity claim is made, and no
 image was added. A follow-up must exercise an authenticated Contacts partner
 form at 1440x900 and 390x844, verify the conditional stat button, click it, and
 confirm the filtered All Conversations route without horizontal overflow.
+
+## Bounded implementation slice: Conversations — operator tag assignment (2026-09-20)
+
+The next source-backed operator conversation workflow is the Odoo
+`/im_livechat/conversation/update_tags` controller in
+`/home/nhanjs/projects/odoo/addons/im_livechat/controllers/channel.py`.
+Odoo maps the conversation’s `livechat_conversation_tag_ids` many-to-many field
+through `livechat_conversation_tag_rel` and accepts `ADD` and `DELETE` tag
+commands. Existing Core3 parity covered the Tags configuration CRUD action but
+did not persist tags on a conversation or expose that operator action.
+
+Core3 adds the bounded equivalent to the existing session detail conversation:
+the `livechat_session_detail` datasource returns deterministic `tag_names`,
+`livechat_session_tags` exposes selected tag rows, and
+`livechat_session_tag_options` supplies the add/remove selector. The matching
+API actions retain the Odoo route string and implement Add Tag and Remove Tag
+with `livechat.write`, assigned-operator scope, tag/session existence checks,
+duplicate/unassigned guards, optimistic session row-version checks, and a
+transactional relation plus session-version update. The page remains layout
+only and references the API-owned actions by id.
+
+Migration `20260920120000-050-livechat-session-tags.yaml` creates the durable
+session/tag relation and seeds Billing + Urgent on the demo conversation and
+VIP on a help-queue conversation. Replaying migrations is idempotent; the
+focused test also reopens a file-backed DuckDB database to verify the relation
+and session version survive restart.
+
+Focused validation is `test/livechat_session_tags.integration.test.ts`:
+4 tests and 28 assertions cover the page/API join, exact Odoo route and
+ADD/DELETE contract, selected options and detail projection, idempotent seed,
+operator scope, duplicate/unassigned/missing/stale guards, atomic versioning,
+and restart persistence. Existing session detail/message regressions remain
+covered. Authenticated Odoo/Core3 browser comparison was not claimed for this
+API-bound slice; captures, if produced later, remain outside Git.
