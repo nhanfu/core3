@@ -1,0 +1,15 @@
+{
+  "feature_id": "ECOM-CATALOG-PRODUCT-EXPORT-001",
+  "core3": {
+    "result": "blocked",
+    "blocker": "Shared Inventory page discovery fails before Ecommerce render: actions[0].title is not allowed.",
+    "temporary_runtime_removed": true
+  },
+  "odoo": {
+    "result": "blocked",
+    "routes": [
+      { "port": 8069, "route": "/shop", "status": 404 },
+      { "port": 8073, "route": "/shop", "status": 404 }
+    ]
+  }
+}

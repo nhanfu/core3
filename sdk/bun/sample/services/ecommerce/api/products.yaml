@@ -10,6 +10,19 @@ datasources:
     permission: ecommerce.read
     query: "SELECT value, label FROM (VALUES (true, 'Published'), (false, 'Unpublished')) statuses(value, label)"
 actions:
+  - id: export_ecommerce_products
+    type: client
+    permission: ecommerce.read
+    script: |
+      // js
+      ({ state }) => {
+        const rows = Array.isArray(state.ecommerce_products) ? state.ecommerce_products : [];
+        const columns = ['name', 'internal_reference', 'product_type', 'category', 'sales_price', 'website_sequence', 'is_published', 'active', 'company_name'];
+        const escape = (value) => JSON.stringify(String(value ?? ''));
+        const csv = [columns.join(','), ...rows.map((row) => columns.map((column) => escape(row[column])).join(','))].join('\\n');
+        const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+        const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'ecommerce-products.csv'; anchor.click(); URL.revokeObjectURL(url);
+      }
   - id: import_ecommerce_products
     type: server_form
     permission: ecommerce.write

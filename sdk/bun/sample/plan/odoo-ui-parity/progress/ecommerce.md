@@ -13,6 +13,21 @@ Core3 browser evidence. DEV-4 adds an eCommerce-owned, retry-safe outbox
 contract for handing checkout orders to the separate Sales service. Functional
 and ownership gates are still incomplete; no full parity claim is made here.
 
+## Completed bounded task — `ECOM-CATALOG-PRODUCT-EXPORT-001`
+
+The smallest remaining concrete catalog action was the Odoo Website Products
+list Export affordance. Core3 now has an `ecommerce.read` client CSV export
+joined by the Products `page.id`, with stable columns, JSON escaping, current
+company scope, durable product source rows, replay/restart coverage, and no
+mutation side effects. Focused tests are in
+`test/ecommerce_product_export.integration.test.ts`.
+
+Authenticated Core3 desktop/mobile capture is blocked by the unrelated shared
+Inventory discovery error `actions[0].title is not allowed`; the temporary
+runtime was removed. Odoo `/shop` returns exact HTTP 404 on both supplied
+references, so paired comparison is blocked. The bounded commit is recorded
+in the handoff; module sign-off remains open.
+
 ## Completed bounded task — `ECOM-CATALOG-PRODUCT-TAG-IMAGE-001`
 
 The smallest remaining explicit Product Tags gap is Odoo's optional

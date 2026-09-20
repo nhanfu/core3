@@ -183,6 +183,32 @@ Both Odoo references return exact HTTP 404 for `/shop`, so paired visual
 comparison is blocked. This is a bounded implementation; Ecommerce remains
 unsigned off.
 
+## Bounded feature — Product Export (`ECOM-CATALOG-PRODUCT-EXPORT-001`)
+
+Odoo source comparison: `website_sale/views/product_views.xml` defines the
+Website Products action `product_template_action_website` for the
+`product.template` kanban/list/form surface. Odoo's standard list view adds
+the read-protected Export affordance for visible product rows; the action
+defaults to website sequence ordering and published-product filtering.
+
+Core3 comparison: `services/ecommerce/pages/products.yaml` now exposes an
+Export header action while `services/ecommerce/api/products.yaml` owns the
+matching `page.id` client action and deterministic CSV contract. The action
+reads only the authenticated, company-scoped `ecommerce_products` datasource,
+uses stable columns and JSON CSV escaping, and has no mutation or duplicate
+side effects. Existing durable product migrations, row versions, company
+scope, replay-safe demo data, and restart persistence back the export.
+
+Focused tests cover page/API separation, `ecommerce.read` permission, stable
+columns/filename/content type, company isolation, row-version visibility under
+a concurrent edit, migration replay, and DuckDB restart persistence in
+`test/ecommerce_product_export.integration.test.ts`. Core3 browser capture is
+blocked by an unrelated shared Inventory YAML boundary
+(`actions[0].title is not allowed`); the temporary isolated runtime was
+removed without staging it. Both Odoo `/shop` endpoints return exact HTTP 404
+on ports 8069 and 8073, so paired visual comparison remains blocked. This is
+a bounded implementation, not Ecommerce sign-off.
+
 ## Bounded feature — Product Ribbons (`ECOM-CATALOG-RIBBONS-001`)
 
 Odoo source comparison: `website_sale/views/website_sale_menus.xml` places

@@ -1,5 +1,25 @@
 # ecommerce QA ledger
 
+## Product Export (`ECOM-CATALOG-PRODUCT-EXPORT-001`, 2026-09-20)
+
+- Odoo source comparison: `product_template_action_website` owns the Website
+  Products kanban/list/form action; the standard list surface supplies the
+  read-only Export affordance over visible product rows.
+- Core3 lifecycle: the Products page/API remain separated by `page.id`; the
+  new `ecommerce.read` client action exports stable, escaped CSV from the
+  company-scoped durable product datasource without mutating rows.
+- Focused verification: `bun test
+  test/ecommerce_product_export.integration.test.ts` — **2 passed, 16
+  assertions, 0 failures**. The test covers permission, company isolation,
+  deterministic replay, row-version visibility, migration reapply, and
+  restart persistence.
+- Browser verification is blocked by unrelated shared Inventory discovery
+  failure: `actions[0].title is not allowed`. The temporary runtime was
+  removed and no shared Inventory files were staged.
+- Odoo `/shop` returned exact HTTP 404 on ports 8069 and 8073; paired visual
+  comparison is blocked. QA disposition: **bounded implementation verified,
+  not signed off**.
+
 ## Product Tag Images (`ECOM-CATALOG-PRODUCT-TAG-IMAGE-001`, 2026-09-20)
 
 - Odoo source comparison: `product.tag.image` is a bounded image field with
