@@ -6,6 +6,8 @@ components:
     source: task_timesheet_entries
     create_action: create_task_timesheet_entry
     create_label: New
+    header_actions:
+      - { id: print_task_timesheets_report, label: Print, permission: timesheets.read, variant: secondary }
     search: { label: Search timesheets, placeholder: 'Search employee, entry, or description...' }
     filters:
       - { field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }

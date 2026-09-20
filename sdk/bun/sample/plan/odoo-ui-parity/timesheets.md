@@ -665,3 +665,36 @@ overflow. The mobile Odoo route resolves to its responsive kanban state, which
 is recorded as an observation rather than claimed as a calendar rendering.
 This slice does not sign off the full Timesheets module; remaining report,
 context, interaction, and integration gates remain open.
+
+## Task report binding slice — `TIMESHEET-TASK-REPORT-BINDING` (2026-09-20)
+
+The next source-backed context gap is Odoo's `timesheet_report_task` report
+binding from `addons/hr_timesheet/report/report_timesheet_templates.xml`
+lines 188-197. It is an `ir.actions.report` for `project.task`, restricted to
+`hr_timesheet.group_hr_timesheet_user`, with `qweb-pdf` report name
+`hr_timesheet.report_project_task_timesheet` and a `project.task` report
+binding. The action is reached from the task context, not the global
+Timesheets menu.
+
+Core3 now keeps the task page and service API separate through
+`page.id: task-timesheets`. The page declares a permissioned `Print` header
+action. The API derives task/project context from the task and its scoped
+entries, exposes durable report history, and records one deterministic report
+run through `timesheets.task_entries.print_report` before invoking the browser
+print surface. Migration `0.0.11` creates `timesheet_task_report_runs` and
+replay-safe fixed demo data. Missing task/empty task, stale entry-count,
+actor, company, and read-permission guards reject without a partial run;
+file-backed restart coverage proves the history remains available.
+
+Focused coverage is `test/timesheets_task_report.integration.test.ts` (4 tests,
+20 assertions). The full Timesheets suite passes 45 tests and 375 assertions;
+the UI audit, scoped ESLint, and `git diff --check` pass. Authenticated Core3
+desktop and mobile captures show the task context, one persisted entry, the
+Print action, and the POST report action with no page/request errors or
+horizontal overflow. Authenticated Odoo reaches `/odoo/all-tasks/100` for
+`S00038 - Solar Panel Installation` at both viewports, but its task Actions
+menu exposes no `Print` item and the installed reference does not execute the
+source report binding. This is recorded as an exact paired-reference blocker,
+not as a parity claim. Core3's browser print surface is not claimed to be an
+Odoo QWeb/PDF renderer. Project report binding and the full authenticated
+route/action comparison remain open.

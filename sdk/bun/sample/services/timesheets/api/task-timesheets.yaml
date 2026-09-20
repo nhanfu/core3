@@ -6,7 +6,50 @@ datasources:
     pivot: { fields: [id, row_version, name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, time_spent_display, billable, unit_amount, state] }
     error_states: { transport_error: { status: 503, code: TASK_TIMESHEETS_UNAVAILABLE, message: Task timesheets are temporarily unavailable. } }
     query: "SELECT t.id, t.row_version, t.name, t.employee_id, t.employee_name, t.project_id, t.project_name, t.task_id, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, printf('%02d:%02d', CAST(FLOOR(t.hours) AS INTEGER), CAST(ROUND((t.hours - FLOOR(t.hours)) * 60) AS INTEGER)) AS time_spent_display, t.billable, t.unit_amount, t.state FROM timesheet_entries t WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND t.task_id = :task_id AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.employee_name ILIKE '%' || :q || '%' OR t.description ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (COALESCE(:work_date, '') = '' OR (:work_date = 'today' AND t.work_date = DATE '2026-01-15') OR (:work_date = 'this_week' AND t.work_date BETWEEN DATE '2026-01-12' AND DATE '2026-01-18') OR (:work_date = 'last_week' AND t.work_date BETWEEN DATE '2026-01-05' AND DATE '2026-01-11')) ORDER BY t.work_date DESC, t.id"
+  - id: task_timesheet_context
+    single: true
+    permission: timesheets.read
+    error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_CONTEXT_UNAVAILABLE, message: Task report context is temporarily unavailable. } }
+    query: "SELECT t.id, t.name AS task_name, t.project_id, COALESCE(MIN(e.project_name), '') AS project_name, COUNT(e.id) AS entry_count, COALESCE(SUM(e.hours), 0) AS total_hours FROM timesheet_tasks t LEFT JOIN timesheet_entries e ON e.task_id = t.id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE t.id = :task_id GROUP BY t.id, t.name, t.project_id"
+  - id: timesheet_task_report_runs
+    permission: timesheets.read
+    error_states: { transport_error: { status: 503, code: TASK_TIMESHEET_REPORT_RUNS_UNAVAILABLE, message: Task timesheet report history is temporarily unavailable. } }
+    query: "SELECT id, task_id, task_name, project_id, project_name, requested_by, CAST(generated_at AS VARCHAR) AS generated_at, entry_count, total_hours, row_version FROM timesheet_task_report_runs WHERE task_id = :task_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') ORDER BY generated_at DESC, id DESC"
 actions:
+  - id: print_task_timesheets_report
+    type: client
+    permission: timesheets.read
+    script: |
+      // js
+      async ({ state, request }) => {
+        const context = state.task_timesheet_context;
+        if (!context?.id) throw new Error('Task report context is unavailable');
+        await request('/api/actions/timesheets.task_entries.print_report', {
+          method: 'POST',
+          body: { task_id: context.id, expected_entry_count: context.entry_count },
+        });
+        window.print();
+      }
+  - id: record_task_timesheets_report_run
+    type: server
+    permission: timesheets.read
+    action: timesheets.task_entries.print_report
+    handler: yaml_mutation
+    operation: report
+    refresh: [task_timesheet_context, task_timesheet_entries, timesheet_task_report_runs]
+    mutation:
+      before_steps:
+        - query: "SELECT 'timesheet-task-report-run-' || CAST(:task_id AS VARCHAR) || '-' || CAST((SELECT COUNT(*) + 1 FROM timesheet_task_report_runs WHERE task_id = :task_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) AS VARCHAR) AS id, t.name AS task_name, t.project_id, COALESCE(MIN(e.project_name), '') AS project_name, COALESCE(NULLIF(:current_user_name, ''), 'Admin User') AS requested_by, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') AS company_name, COUNT(e.id) AS entry_count, COALESCE(SUM(e.hours), 0) AS total_hours FROM timesheet_tasks t LEFT JOIN timesheet_entries e ON e.task_id = t.id AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') WHERE t.id = :task_id GROUP BY t.id, t.name, t.project_id"
+          assign: true
+      guards:
+        - { query: "SELECT id FROM timesheet_tasks WHERE id = :task_id", status: 404, code: TASK_TIMESHEET_REPORT_TASK_NOT_FOUND, message: Task was not found. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM timesheet_entries WHERE task_id = :task_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'))", status: 404, code: TASK_TIMESHEET_REPORT_EMPTY, message: This task has no timesheets to print. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:expected_entry_count AS INTEGER) = (SELECT COUNT(*) FROM timesheet_entries WHERE task_id = :task_id AND company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company'))", status: 409, code: TASK_TIMESHEET_REPORT_STALE, message: Task timesheets changed; reload before printing. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:requested_by, COALESCE(NULLIF(:current_user_name, ''), 'Admin User')) = COALESCE(NULLIF(:current_user_name, ''), 'Admin User')", status: 403, code: TASK_TIMESHEET_REPORT_ACTOR, message: The report actor must match the signed-in user. }
+        - { query: "SELECT 1 AS ok WHERE COALESCE(:company_name, COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')) = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')", status: 403, code: TASK_TIMESHEET_REPORT_COMPANY, message: The report company must match the signed-in company. }
+      steps:
+        - query: "INSERT INTO timesheet_task_report_runs(id, task_id, task_name, project_id, project_name, requested_by, company_name, entry_count, total_hours, generated_at, row_version) VALUES(:id, :task_id, :task_name, :project_id, :project_name, :requested_by, :company_name, :entry_count, :total_hours, TIMESTAMP '2026-01-15 00:00:00', 1)"
+      result: { query: "SELECT id, task_id, task_name, project_id, project_name, requested_by, company_name, entry_count, total_hours, CAST(generated_at AS VARCHAR) AS generated_at, row_version FROM timesheet_task_report_runs WHERE id = :id" }
   - id: create_task_timesheet_entry
     type: server_form
     permission: timesheets.write

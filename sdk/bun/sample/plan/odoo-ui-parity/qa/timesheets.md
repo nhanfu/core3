@@ -79,6 +79,17 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 
 ## Current regression evidence
 
+### 2026-09-20 `TIMESHEET-TASK-REPORT-BINDING`
+
+- Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml:188-197`, `timesheet_report_task`, binds a `qweb-pdf` report to `project.task` under the Timesheets user group.
+- Core3 contract: `task-timesheets` page/API are separate by `page.id`; the page owns `Print`, while the API derives scoped task/project context, exposes report history, and records `timesheets.task_entries.print_report` runs in migration `0.0.11`.
+- Focused gate: `bun test test/timesheets_task_report.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 20 assertions. Full suite: `bun test test/timesheets*.integration.test.ts --timeout 20000` — 45 passed, 0 failed, 375 assertions.
+- Persistence/security gate: migration replay, file-backed restart, missing/empty/stale/actor/company guards, and no-partial-write behavior pass. Scoped ESLint and `git diff --check` pass; audit reports 669 pages, 678 routes, and 1203 datasources.
+- Core3 browser gate: authenticated `admin@tms.local` desktop 1440x900 and mobile 390x844 captures show the task row and Print action; each interaction emitted one POST to `/api/actions/timesheets.task_entries.print_report`, with zero page/request errors and viewport-matched scroll widths.
+- Odoo browser gate: authenticated `codex@core3.local` reaches `/odoo/all-tasks/100` for `S00038 - Solar Panel Installation` at desktop and mobile. The task has a Timesheets tab, but the Actions menu contains `Timesheets`, `Edit Properties`, `Version History`, `Duplicate`, `Archive`, `Delete`, `Share Task`, `Send SMS`, `Convert to Task/Sub-Task`, `Convert to Template`, and `Actions`; it contains no `Print`. Mobile also reports two aborted `/mail/data` requests during route navigation. The paired report execution is therefore blocked by the current reference UI and is not claimed as a parity pass.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-task-report/`](../evidence/timesheets/2026-09-20/timesheet-task-report/).
+- Disposition: **bounded Core3 slice verified; paired Odoo report binding and full module sign-off remain pending**.
+
 ### 2026-09-20 bounded report-binding slice
 
 - Source contract: Odoo `hr_timesheet/report/report_timesheet_templates.xml`,

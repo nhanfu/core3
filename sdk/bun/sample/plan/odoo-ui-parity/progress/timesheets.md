@@ -8,7 +8,7 @@ Candidate commit: current working tree
 
 ## Current state
 
-The focused Timesheets suite passes 41 tests across 12 files with 355
+The focused Timesheets suite passes 45 tests across 13 files with 375
 assertions. The initial authenticated matrix covered 13 routes at desktop and
 mobile; an isolated fresh-page rerun now passes 26/26 route checks with valid
 detail IDs and no page/request errors or horizontal overflow. Timesheet Analysis
@@ -37,8 +37,17 @@ Full parameterized route coverage, role-specific permissions, broader CRUD
 persistence, and paired Odoo comparison remain open. No parity claim is made
 here.
 
+The current bounded feature `TIMESHEET-TASK-REPORT-BINDING` adds the
+source-backed project.task report context. It owns the task page/API Print
+contract, durable `timesheet_task_report_runs` persistence, deterministic
+replay data, read/company/actor/stale/empty guards, and authenticated Core3
+desktop/mobile evidence. The authenticated Odoo task route is reachable, but
+its Actions menu has no Print item, so the paired report execution is recorded
+as an exact reference blocker rather than a parity pass. This does not change
+the module status to signed off.
+
 ## Next bounded task
 
 Continue remaining report/context interaction and integration gates, including
-project/task report bindings and full authenticated route/action comparison.
+the project report binding and full authenticated route/action comparison.
 Update this file only with evidence from the matching module owner.
