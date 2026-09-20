@@ -1505,6 +1505,27 @@ unrelated app-icon 404s are recorded. Evidence is under
 `evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`. This is conditional
 feature evidence, not aggregate Employees sign-off.
 
+## EMP-WORK-MOBILE-001: Employee Work Mobile (2026-09-21)
+
+Odoo's employee form exposes `hr.employee.mobile_phone` as the visible Work
+Mobile phone field beside the work email and work phone. Core3 adds the field
+to the paired employee-detail page/API contracts and durable migration
+`20260921190000-049-employee-work-mobile.yaml`, with deterministic values for
+the supplied demo employees.
+
+Create and edit remain protected by `employees.write`, current-company scope,
+and optimistic row-version concurrency. Focused coverage is **4 tests / 16
+assertions**, including source mapping, CRUD, stale/company atomicity,
+migration replay, and file-backed restart.
+
+Authenticated Odoo desktop/mobile captures show the Work Mobile label at
+1440x900 and 390x844 without browser errors or overflow; Abigail Peterson's
+reference value is empty. Core3 cannot boot because global discovery stops on
+the unrelated Inventory errors `search.categories is not allowed` and
+`search.or locations... is not allowed`. No Core3 UI pass or aggregate Employees
+sign-off is claimed. Evidence is under
+`evidence/employees/2026-09-21/EMP-WORK-MOBILE-001/`.
+
 ## EMP-DOCUMENTS-001: Employee identity documents (2026-09-21)
 
 Odoo's Personal-tab Documents group visibly exposes the binary

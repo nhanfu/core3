@@ -30,7 +30,7 @@ components:
           label: Work
           groups:
             - title: Work
-              fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_position_name, label: Job Position }, { field: job_title, label: Job Title }, { field: manager_name, label: Manager }]
+              fields: [{ field: company_name, label: Company }, { field: department_name, label: Department }, { field: job_position_name, label: Job Position }, { field: job_title, label: Job Title }, { field: manager_name, label: Manager }, { field: mobile_phone, label: Work Mobile }]
             - title: Location
               fields: [{ field: address_name, label: Address }, { field: work_location, label: Work Location }]
             - title: Departure

@@ -1,0 +1,18 @@
+version: 0.0.49
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS mobile_phone VARCHAR;
+      UPDATE employees
+      SET mobile_phone = COALESCE(NULLIF(mobile_phone, ''), CASE id
+        WHEN 'employee-demo-001' THEN '+84 912 345 678'
+        WHEN 'employee-demo-002' THEN '+84 901 234 567'
+        WHEN 'employee-demo-003' THEN '+84 903 456 789'
+        ELSE NULL END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS mobile_phone;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

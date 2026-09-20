@@ -374,3 +374,17 @@ assertions). Evidence:
 Focused test: `test/employees_legal_name.integration.test.ts` (4 tests, 18
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-LEGAL-NAME-001/`.
+
+## EMP-WORK-MOBILE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `mobile_phone` Work Mobile maps to separate page/API contracts | pass |
+| Employee CRUD | Create and edit Work Mobile durably | pass |
+| Permission and scope | Employees write, current company, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic mobile values | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo desktop/mobile captures | conditional; Odoo label captured, Core3 blocked by unrelated Inventory discovery error |
+
+Focused test: `test/employees_work_mobile.integration.test.ts` (4 tests, 16
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-WORK-MOBILE-001/`.

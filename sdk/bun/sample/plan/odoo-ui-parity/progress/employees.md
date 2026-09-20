@@ -468,6 +468,20 @@ Candidate commit: current working tree
   Odoo shell icon 404s are unrelated. Conditional evidence only; no aggregate
   sign-off.
 
+## EMP-WORK-MOBILE-001 (2026-09-21)
+
+- Selected the next uncovered source-visible Employee behavior: Odoo's
+  `hr.employee.mobile_phone` / Work Mobile field.
+- Added migration `20260921190000-049`, deterministic mobile fixtures, paired
+  page/API fields, and existing employee write/company/optimistic-concurrency
+  guards.
+- Focused verification: **4 tests / 16 assertions**; scoped ESLint and
+  `git diff --check` pass. Core3 browser startup is blocked by concurrent
+  Inventory `search.categories` and `search.or locations...` schema errors.
+- Evidence: `evidence/employees/2026-09-21/EMP-WORK-MOBILE-001/`; authenticated
+  Odoo desktop/mobile pass conditionally with an empty reference value. No
+  aggregate Employees sign-off is claimed.
+
 ## EMP-LEGAL-NAME-001 (2026-09-21)
 
 - Selected Odoo's editable Personal Information `hr.employee.legal_name` as

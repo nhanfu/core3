@@ -591,6 +591,19 @@ No aggregate Employees sign-off is claimed.
 Evidence: evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/. No aggregate
 Employees sign-off is claimed.
 
+## EMP-WORK-MOBILE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-032 | Work Mobile create/edit/read | pass; mobile phone persists through employee CRUD |
+| EMP-PERM-032 | `employees.write`, current company, row version | pass; stale and out-of-company changes reject atomically |
+| EMP-DATA-032 | Migration replay and file-backed restart | pass; deterministic Work Mobile fixtures survive restart without duplicates |
+| EMP-UI-028 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo label passes at both viewports with empty reference value, Core3 is blocked before authentication by concurrent Inventory discovery failure |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-WORK-MOBILE-001/`. No aggregate
+Employees sign-off is claimed.
+
 ## EMP-DOCUMENTS-001 execution (2026-09-21)
 
 | Case ID | Scope | Result |

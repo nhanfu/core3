@@ -52,7 +52,7 @@ actions:
     mutation:
       operation: insert
       table: employees
-      fields: [employee_number, name, legal_name, work_email, work_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, private_email, private_phone, birthday, birthday_public_display, id_card, id_card_name, driving_license, driving_license_name]
+      fields: [employee_number, name, legal_name, work_email, work_phone, mobile_phone, company_name, department_name, job_title, employment_type, hire_date, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, visa_no, visa_expire, permit_no, work_permit_expiration_date, work_permit_name, has_work_permit, country_id, identification_id, ssnid, passport_id, passport_expiration_date, private_street, private_street2, private_city, private_state_id, private_zip, private_country_id, distance_home_work, distance_home_work_unit, private_email, private_phone, birthday, birthday_public_display, id_card, id_card_name, driving_license, driving_license_name]
       boolean_fields: [birthday_public_display, has_work_permit, id_card, driving_license]
       required: [employee_number, name, hire_date]
       defaults: { active: true, state: Draft, marital: single, children: 0, distance_home_work_unit: kilometers }
@@ -72,6 +72,7 @@ actions:
       - { field: legal_name, label: Legal Name, type: text }
       - { field: work_email, label: Work Email, type: text }
       - { field: work_phone, label: Work Phone, type: text }
+      - { field: mobile_phone, label: Work Mobile, type: text }
       - { field: private_email, label: Private Email, type: text }
       - { field: private_phone, label: Private Phone, type: text }
       - { field: birthday, label: Birthday, type: date }
