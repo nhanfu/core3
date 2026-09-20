@@ -487,3 +487,32 @@ route/action comparison and module sign-off remain pending.
   renders and opens the durable row without errors or overflow.
 - Blocker: Odoo's captured portal state has no row-to-detail action, so paired
   row-action parity remains open and no module sign-off is claimed.
+
+## 2026-09-21 `TIMESHEET-MY-ANALYSIS-VIEWS`
+
+Source gate: `hr_timesheet_views.xml:402-465` declares the personal action
+view family `list,form,kanban,pivot,graph`; the personal pivot uses weekly date
+rows with Time Spent and Timesheet Costs measures, and the personal graph uses
+date/project/time fields (`:74-113`).
+
+Core3 gate: `pages/entries.yaml` and `api/entries.yaml` remain separate and
+join through `page.id: timesheets`. The page adds desktop-only Pivot and Graph
+views; the API declares the pivot field set on the existing durable,
+`timesheets.read`-protected, employee/company-scoped source. Existing detail
+mutation concurrency remains required.
+
+Focused gate: `bun test
+test/timesheets_my_analysis_views.integration.test.ts
+test/timesheets_my.integration.test.ts --timeout 20000` passes 7 tests / 59
+expectations. ESLint, `git diff --check`, and `bun run audit` pass.
+
+Browser gate: authenticated Core3 and Odoo desktop/mobile captures are in
+`evidence/timesheets/2026-09-21/timesheet-my-analysis-views/`. Core3 desktop
+Pivot and Graph render seeded values; Core3 mobile has no Pivot/Graph tabs and
+fits 390px. Odoo desktop exposes and renders both controls; Odoo mobile loads
+the responsive Kanban action and hides those desktop-only controls.
+
+Blockers: the capture records only aborted navigation-prefetch/background
+requests, with no page errors; these did not prevent the rendered states. The
+broader Odoo Print/PDF/action gaps from the report slices remain open, so this
+bounded feature does not claim Timesheets sign-off.

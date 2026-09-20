@@ -325,6 +325,29 @@ no visible Print/report action. That is the exact QWeb/PDF comparison blocker;
 missing Odoo Print/PDF/action surfaces, broader route/action comparison, and
 Timesheets module sign-off remain open.
 
+## 2026-09-21 `TIMESHEET-MY-ANALYSIS-VIEWS`
+
+Selected the smallest remaining source-backed personal route gap: Odoo's
+Pivot/Graph analysis views on `act_hr_timesheet_line`. Added `pivot` and
+`graph` view contracts to the page YAML and a matching pivot field contract to
+the separate API YAML. The existing durable `timesheet_entries` query supplies
+week/date, project, hours, cost, employee, company, state, and concurrency
+fields, so no duplicate persistence or fixture was introduced.
+
+Verification: focused Timesheets tests pass 7/7 with 59 expectations;
+ESLint, `git diff --check`, and `bun run audit` pass. Restart, company/actor
+scope, empty fixture, read permission, stale row-version, source comparison,
+page/API separation, and no-moving-value checks pass.
+
+Evidence:
+`evidence/timesheets/2026-09-21/timesheet-my-analysis-views/`. Authenticated
+Core3 desktop renders Pivot and Graph; mobile hides both desktop-only tabs with
+390px document/body width. Authenticated Odoo desktop renders the paired
+Pivot/Graph controls and states; its mobile action is Kanban-only. Aborted
+navigation-prefetch requests are recorded in `results.json`; page errors were
+empty. Odoo Print/PDF/action gaps from prior slices remain blockers for the
+module and no sign-off is claimed.
+
 ## 2026-09-21 `TIMESHEET-PORTAL-MY-TIMESHEETS`
 
 - Source: Odoo authenticated `/my/timesheets` route and portal template provide

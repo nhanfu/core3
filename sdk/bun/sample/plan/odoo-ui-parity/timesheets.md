@@ -1087,6 +1087,37 @@ both viewports but no loaded row-to-project-timesheet action/form; that exact
 paired interaction blocker remains open. This bounded slice does not claim
 Timesheets module sign-off.
 
+## 2026-09-21 `TIMESHEET-MY-ANALYSIS-VIEWS`
+
+The next uncovered personal-action gap was Odoo's analysis view family. The
+`act_hr_timesheet_line` action in
+`addons/hr_timesheet/views/hr_timesheet_views.xml:402-465` declares
+`list,form,kanban,pivot,graph`; its personal pivot at `:74-84` groups `date`
+by week and measures `unit_amount` and `amount`, while the graph at `:100-113`
+uses weekly date categories, project series, and time/cost measures.
+
+Core3 now exposes the same Pivot and Graph views on the existing durable
+`/timesheets` page. The page contract remains separate from
+`api/entries.yaml`, joined by `page.id: timesheets`; the API declares the
+pivot-ready fields on the company and current-employee scoped
+`timesheet_entries` datasource. Existing `timesheets.read` permission,
+employee/company guards, durable migration/restart behavior, and the existing
+stale-row CRUD guard remain in force. No new fixture values or moving query
+values were introduced.
+
+Focused coverage is
+`test/timesheets_my_analysis_views.integration.test.ts` (4 tests / 27
+expectations) plus the updated personal view contract test; the bounded pair
+passes 7 tests / 59 expectations. Authenticated Core3 desktop/mobile and Odoo
+desktop/mobile captures are in
+`evidence/timesheets/2026-09-21/timesheet-my-analysis-views/`. Core3 desktop
+renders both analysis views; Core3 mobile hides the desktop-only tabs and fits
+the 390px viewport. Odoo desktop exposes and renders Pivot and Graph on
+`/odoo/timesheets`; its mobile action remains the responsive Kanban route and
+hides those desktop-only analysis tabs. This feature has no Odoo analysis-view
+blocker, but the broader missing Print/PDF/action surfaces recorded above
+remain open and this slice makes no module sign-off claim.
+
 ## Authenticated portal timesheet list — `TIMESHEET-PORTAL-MY-TIMESHEETS` (2026-09-21)
 
 The smallest remaining source-backed route was Odoo's authenticated portal

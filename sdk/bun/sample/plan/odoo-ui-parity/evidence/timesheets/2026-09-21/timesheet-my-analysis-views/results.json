@@ -1,0 +1,67 @@
+{
+  "feature_id": "TIMESHEET-MY-ANALYSIS-VIEWS",
+  "captured_at": "2026-09-21",
+  "core3": {
+    "desktop": {
+      "url": "http://127.0.0.1:4041/timesheets",
+      "authenticated": true,
+      "list_rendered": true,
+      "pivot_rendered": true,
+      "graph_rendered": true,
+      "viewport": "1440x900",
+      "body_width": 1440,
+      "document_width": 1440,
+      "page_errors": [],
+      "aborted_requests": ["/api/pages/all-timesheets-detail?id=timesheet-demo-001&lc=en"]
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:4041/timesheets",
+      "authenticated": true,
+      "default_responsive_view": "calendar",
+      "pivot_visible": false,
+      "graph_visible": false,
+      "viewport": "390x844",
+      "body_width": 390,
+      "document_width": 390,
+      "page_errors": [],
+      "aborted_requests": []
+    }
+  },
+  "odoo": {
+    "desktop": {
+      "url": "http://127.0.0.1:8069/odoo/timesheets",
+      "authenticated": true,
+      "route_rendered": true,
+      "pivot_visible": true,
+      "graph_visible": true,
+      "pivot_rendered": true,
+      "graph_rendered": true,
+      "viewport": "1440x900",
+      "body_width": 1440,
+      "document_width": 1440,
+      "page_errors": [],
+      "aborted_requests": ["/mail/data"]
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:8069/odoo/timesheets?view_type=kanban",
+      "authenticated": true,
+      "route_rendered": true,
+      "responsive_view": "kanban",
+      "pivot_visible": false,
+      "graph_visible": false,
+      "viewport": "390x844",
+      "body_width": 390,
+      "document_width": 390,
+      "page_errors": [],
+      "aborted_requests": [
+        "/web/action/load",
+        "/web/image?model=res.users&field=avatar_128&id=2",
+        "/web/image/res.partner/3/avatar_128?unique=1788992892000"
+      ]
+    }
+  },
+  "blockers": [
+    "Aborted prefetch/background requests were observed after successful rendered states; no page errors or overflow occurred.",
+    "Broader Timesheets Print/PDF/action parity blockers from earlier slices remain open; this feature does not claim module sign-off."
+  ]
+}

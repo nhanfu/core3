@@ -38,7 +38,7 @@ describe('Timesheets My Timesheets parity slice', () => {
     expect(routes.find((route) => route.page === 'timesheets')?.path).toBe('/timesheets');
     expect(page.title).toBe('My Timesheets');
     expect(list.create_label).toBe('New');
-    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'calendar', 'kanban', 'form']);
+    expect(list.views.map((view: any) => view.id)).toEqual(['list', 'calendar', 'kanban', 'form', 'pivot', 'graph']);
     expect(list.views.find((view: any) => view.id === 'calendar')).toMatchObject({ date_field: 'work_date' });
     expect(list.views.find((view: any) => view.id === 'list').mobile).toBe(false);
     expect(list.columns.map((column: any) => column.label)).toEqual(['Project', 'Task', 'Date', 'Description', 'Sales Order Item', 'Time Spent', ' ']);
