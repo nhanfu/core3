@@ -1,5 +1,26 @@
 # ecommerce QA ledger
 
+## Product Alternatives (`ECOM-CATALOG-PRODUCT-ALTERNATIVES-001`, 2026-09-21)
+
+- Odoo source/page: pass. `product_template.py` supplies
+  `alternative_product_ids` and `_get_website_alternative_product()`;
+  `templates.xml` renders the Alternative Products recommended section.
+- Core3 lifecycle: pass for this bounded contract. Migrations 066/067 add
+  durable ordered source/destination assignments and Mug → Chair/Lamp
+  fixtures. The separate Product Detail API/page exposes published
+  same-company recommendations plus `ecommerce.write` assign/remove actions
+  with company, self-target, publication, duplicate, and optimistic stale
+  guards.
+- Focused verification: `bun test
+  ./test/ecommerce_product_alternatives.integration.test.ts --timeout 20000` —
+  **3 passed, 22 assertions, 0 failures**.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Broader actor/browser coverage and paired Odoo rendering remain gates.
+
 ## Checkout Payment Token Selection (`ECOM-CHECKOUT-PAYMENT-TOKEN-SELECTION-001`, 2026-09-21)
 
 - Odoo source/payment flow: pass. The payment form exposes customer-owned

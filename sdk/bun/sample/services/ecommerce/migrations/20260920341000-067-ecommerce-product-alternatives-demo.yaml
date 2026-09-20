@@ -1,0 +1,20 @@
+version: 0.0.67
+kind: data
+description: deterministic eCommerce alternative product recommendations
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_alternatives (
+        id, row_version, source_product_id, destination_product_id,
+        sequence, company_name, active
+      ) VALUES
+        ('ecommerce-alternative-mug-chair', 1, 'ecommerce-product-mug', 'ecommerce-product-chair', 10, 'My Company', TRUE),
+        ('ecommerce-alternative-mug-lamp', 1, 'ecommerce-product-mug', 'ecommerce-product-lamp', 20, 'My Company', TRUE)
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_product_alternatives
+      WHERE id IN ('ecommerce-alternative-mug-chair', 'ecommerce-alternative-mug-lamp');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

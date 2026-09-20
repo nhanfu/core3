@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded checkout payment-token selection slice; module sign-off remains open)
+Status: qa-in-progress (bounded product alternatives slice; module sign-off remains open)
+
+## Bounded feature — Product Alternatives (`ECOM-CATALOG-PRODUCT-ALTERNATIVES-001`)
+
+Odoo source comparison: `website_sale/models/product_template.py` defines the
+company-aware `alternative_product_ids` relation and
+`_get_website_alternative_product()`. The supplied
+`website_sale/views/templates.xml` renders the `Alternative Products`
+recommended-products section on the product page when alternatives exist.
+
+Core3 comparison: the catalog had durable products, variants, tags, images,
+and pricing but no alternative-product relation or Product Detail recommendation
+surface. Migrations 066/067 add a durable source/destination relation with
+sequence, company, active state, unique assignment, deterministic Mug → Chair /
+Lamp fixtures, and row-version concurrency. The existing Product Detail page
+and API remain separate and joined by `page.id`; the API exposes published
+same-company alternatives and permissioned assign/remove actions with source,
+target, publication, company, duplicate, and stale guards.
+
+Focused tests cover Odoo source tracing, page/API separation, deterministic
+fixtures, publication/company/duplicate validation, permissioned CRUD, stale
+removal, migration replay, and DuckDB restart persistence in
+`test/ecommerce_product_alternatives.integration.test.ts`. Core3 authenticated
+desktop/mobile capture is blocked by unavailable runtime ports; both supplied
+Odoo references return exact HTTP 404 for `/shop`. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-alternatives-001/`. This
+bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Checkout Payment Token Selection (`ECOM-CHECKOUT-PAYMENT-TOKEN-SELECTION-001`)
 

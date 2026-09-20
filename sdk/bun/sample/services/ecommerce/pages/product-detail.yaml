@@ -49,3 +49,23 @@ components:
       - { id: edit_ecommerce_product_variant, label: Edit, permission: ecommerce.write, show_if: 'row.id != null' }
       - { id: add_ecommerce_product_variant_to_cart, label: Add to Cart, permission: ecommerce.write, show_if: 'row.id != null' }
       - { id: delete_ecommerce_product_variant, label: Delete, permission: ecommerce.write, variant: danger, show_if: 'row.id != null' }
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_alternatives
+    create_action: create_ecommerce_product_alternative
+    create_label: Add Alternative
+    page_size: 16
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No alternative products, description: Recommend other published products on this product page. }
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: internal_reference, label: Internal Reference }
+      - { field: sales_price, label: Sales Price, align: right }
+      - { field: sequence, label: Sequence }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 120
+        actions:
+          - { id: remove_ecommerce_product_alternative, label: Remove, icon: trash, variant: danger, permission: ecommerce.write }

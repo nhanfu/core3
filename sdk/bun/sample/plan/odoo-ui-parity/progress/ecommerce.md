@@ -4,7 +4,26 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `39945845e2b8cffdd3f0f45860d329628d1c39d5` (Wishlist Session Merge).
+Latest committed bounded slice before this wave: `f2f65926df28e689bf1252b56b32ed3b93bd0e5a` (Checkout Payment Token Selection).
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-ALTERNATIVES-001`
+
+The smallest remaining uncovered catalog behavior is Odoo Website Sale's
+alternative-product recommendation relation and product-page section. Core3
+migrations 066/067 add durable, company-scoped source/destination assignments
+with deterministic Mug → Chair/Lamp fixtures and row versions. Product Detail
+page/API YAML remains separated by `page.id`; the API lists only active
+published same-company targets and exposes `ecommerce.write` assign/remove
+actions with self-target, publication, company, duplicate, and stale guards.
+
+Focused verification: `bun test
+./test/ecommerce_product_alternatives.integration.test.ts --timeout 20000` —
+**3 passed, 22 assertions, 0 failures**. Adjacent Product Detail/Variant
+tests, UI audit, scoped ESLint, and diff-check are commit gates. Authenticated
+Core3 desktop/mobile capture is blocked by unavailable ports 3000/4312/4313;
+Odoo `/shop` returns exact HTTP 404 on ports 8069/8073. Provider/gateway,
+broader actor/browser coverage, paired Odoo rendering, and module sign-off
+remain open.
 
 ## Current bounded task — `ECOM-CHECKOUT-PAYMENT-TOKEN-SELECTION-001`
 
