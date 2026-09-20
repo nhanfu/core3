@@ -1,0 +1,32 @@
+version: 0.0.36
+kind: schema
+description: eCommerce product tag configuration and product assignments
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ecommerce_product_tags (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        color VARCHAR NOT NULL DEFAULT '#3C3C3C',
+        visible_to_customers BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS ecommerce_product_tags_name_idx ON ecommerce_product_tags(LOWER(name));
+      CREATE TABLE IF NOT EXISTS ecommerce_product_tag_products (
+        tag_id VARCHAR NOT NULL,
+        product_id VARCHAR NOT NULL,
+        PRIMARY KEY (tag_id, product_id)
+      );
+      CREATE INDEX IF NOT EXISTS ecommerce_product_tag_products_product_idx ON ecommerce_product_tag_products(product_id, tag_id);
+    down: |
+      DROP INDEX IF EXISTS ecommerce_product_tag_products_product_idx;
+      DROP TABLE IF EXISTS ecommerce_product_tag_products;
+      DROP INDEX IF EXISTS ecommerce_product_tags_name_idx;
+      DROP TABLE IF EXISTS ecommerce_product_tags;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

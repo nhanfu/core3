@@ -1,0 +1,54 @@
+{
+  "featureId": "ECOM-CATALOG-PRODUCT-TAGS-001",
+  "capturedAt": "2026-09-20T10:16:04.266Z",
+  "core3": {
+    "desktop": {
+      "url": "http://127.0.0.1:4312/ecommerce/product-tags",
+      "title": "Product Tags",
+      "listText": "Orders\nProducts\n⌘ K\nAU\nNew\neCommerce / Products / Product Tags\n1-4 / 4\n‹\n›\nSequence\n\tTag\n\tVisible to customers\n\tColor\n\tProducts\n\tAssigned products\n\n1\t\nFeatured\n\ttrue\t#875A7B\t2\tCore3 Ceramic Mug, Ergonomic Office Chair\n2\t\nNew arrival\n\ttrue\t#17A2B8\t1\tDesk Lamp\n3\t\nService\n\tfalse\t#6C757D\t1\tWorkspace Setup Service\n9\t\nBrowser Catalog Tag\n\tfalse\t#445566\t1\tCore3 Ceramic Mug",
+      "errors": []
+    },
+    "create": {
+      "created": true,
+      "assigned": true,
+      "listText": "Orders\nProducts\n⌘ K\nAU\nNew\neCommerce / Products / Product Tags\n1-5 / 5\n‹\n›\nSequence\n\tTag\n\tVisible to customers\n\tColor\n\tProducts\n\tAssigned products\n\n1\t\nFeatured\n\ttrue\t#875A7B\t2\tCore3 Ceramic Mug, Ergonomic Office Chair\n2\t\nNew arrival\n\ttrue\t#17A2B8\t1\tDesk Lamp\n3\t\nService\n\tfalse\t#6C757D\t1\tWorkspace Setup Service\n9\t\nBrowser Catalog Tag Verified\n\ttrue\t#445566\t1\tCore3 Ceramic Mug\n9\t\nBrowser Catalog Tag\n\tfalse\t#445566\t1\tCore3 Ceramic Mug",
+      "errors": []
+    },
+    "mobile": {
+      "url": "http://127.0.0.1:4312/ecommerce/product-tags",
+      "title": "Product Tags",
+      "listText": "AU\nNew\nProduct Tags\n1-5 / 5\n‹\n›\nSequence\n\tTag\n\tVisible to customers\n\tColor\n\tProducts\n\tAssigned products\n\n1\t\nFeatured\n\ttrue\t#875A7B\t2\tCore3 Ceramic Mug, Ergonomic Office Chair\n2\t\nNew arrival\n\ttrue\t#17A2B8\t1\tDesk Lamp\n3\t\nService\n\tfalse\t#6C757D\t1\tWorkspace Setup Service\n9\t\nBrowser Catalog Tag Verified\n\ttrue\t#445566\t1\tCore3 Ceramic Mug\n9\t\nBrowser Catalog Tag\n\tfalse\t#445566\t1\tCore3 Ceramic Mug",
+      "errors": []
+    }
+  },
+  "odoo": {
+    "odoo-8069": {
+      "desktop": {
+        "url": "http://127.0.0.1:8069/shop",
+        "title": "Odoo",
+        "authenticated": true,
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by "
+      },
+      "mobile": {
+        "url": "http://127.0.0.1:8069/shop",
+        "title": "Odoo",
+        "authenticated": true,
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by "
+      }
+    },
+    "odoo-8073": {
+      "desktop": {
+        "url": "http://127.0.0.1:8073/shop",
+        "title": "Odoo",
+        "authenticated": true,
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by "
+      },
+      "mobile": {
+        "url": "http://127.0.0.1:8073/shop",
+        "title": "Odoo",
+        "authenticated": true,
+        "text": "Mitchell Admin \nError 404\nWe couldn't find the page you're looking for!\n\nDon't panic. If you think it's our mistake, please send us a message on this page.\n\nMaybe you were looking for one of these popular pages?\n\nHome\nCopyright © My Company (San Francisco)\nPowered by "
+      }
+    }
+  }
+}

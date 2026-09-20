@@ -2,6 +2,37 @@
 
 Status: qa-in-progress (bounded catalog-ribbons slice; module sign-off remains open)
 
+## Bounded feature — Product Tags (`ECOM-CATALOG-PRODUCT-TAGS-001`)
+
+Odoo source comparison: `website_sale/views/website_sale_menus.xml` adds
+`product_catalog_product_tags` under Website > Configuration > eCommerce >
+Products and opens `product.product_tag_action`. The supplied
+`product/models/product_tag.py` defines ordered `product.tag` records with
+unique required `name`, `sequence`, `color`, `visible_to_customers`, product
+template/variant assignments, and an optional image. The list/form views in
+`product/views/product_tag_views.xml` expose tag visibility/color and the
+many-to-many product assignment surface.
+
+Core3 comparison: `services/ecommerce/pages/product-tags.yaml` owns
+`/ecommerce/product-tags` and joins `services/ecommerce/api/product-tags.yaml`
+through `page.id: ecommerce-product-tags`. Migrations 036/037 add durable tag
+and tag-product relation tables with deterministic Featured, New arrival, and
+Service fixtures. The page/API provide search, customer-visibility filtering,
+empty/transport errors, customer-facing color, product assignment, and
+permissioned create/edit/delete. Server guards enforce unique names, valid
+colors, optimistic row versions, and relation cleanup on edit/delete.
+This bounded Core3 slice maps the available product-template catalog; the
+optional Odoo tag image and variant-only assignment fields remain explicit
+follow-up gaps because the current Ecommerce catalog has no corresponding
+binary/variant model.
+
+Focused CRUD, permission, validation, assignment, migration-rerun, and DuckDB
+restart tests pass. Authenticated Core3 desktop/mobile evidence is under
+`evidence/ecommerce/2026-09-20/ecom-catalog-product-tags-001/`; the desktop
+create flow persisted `Browser Catalog Tag Verified` with Core3 Ceramic Mug assigned.
+Authenticated Odoo captures on ports 8069 and 8073 both show `/shop` 404, so
+the paired Product Tags comparison is blocked and Ecommerce remains unsigned.
+
 ## Bounded feature — Product Ribbons (`ECOM-CATALOG-RIBBONS-001`)
 
 Odoo source comparison: `website_sale/views/website_sale_menus.xml` places

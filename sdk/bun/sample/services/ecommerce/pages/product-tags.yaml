@@ -1,0 +1,24 @@
+title: Product Tags
+page: { id: ecommerce-product-tags, route: /ecommerce/product-tags, breadcrumb: [eCommerce, Products, Product Tags], auth: { require: [ecommerce.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_tags
+    create_action: create_ecommerce_product_tag
+    create_label: New
+    search: { label: Search tags, placeholder: Search product tag... }
+    filters: [{ field: visible_to_customers, label: Customer visibility, options_source: ecommerce_product_tag_visibility }]
+    columns:
+      - { field: sequence, label: Sequence, type: Handle }
+      - { field: name, label: Tag, type: PrimaryEntityCell }
+      - { field: visible_to_customers, label: Visible to customers, type: StatusChip }
+      - { field: color, label: Color, type: ColorSwatch }
+      - { field: product_count, label: Products, align: right }
+      - { field: product_names, label: Assigned products }
+    row_actions: menu
+    actions:
+      - { id: edit_ecommerce_product_tag, label: Edit, permission: ecommerce.write }
+      - { id: delete_ecommerce_product_tag, label: Delete, permission: ecommerce.write, variant: danger }
+    page_size: 50
+    row_key: id
+    empty_state: { title: Define a new tag, description: Create a tag to organize products and control customer-facing labels. }

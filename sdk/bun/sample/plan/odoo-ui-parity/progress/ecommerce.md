@@ -40,18 +40,18 @@ and ownership gates are still incomplete; no full parity claim is made here.
   browser matrix, and paired Odoo gates remain open; this is not module
   sign-off.
 
-## Current bounded task — `ECOM-CATALOG-RIBBONS-001`
+## Current bounded task — `ECOM-CATALOG-PRODUCT-TAGS-001`
 
-The Product Ribbons lifecycle is implemented and in QA review. Odoo source
-analysis covers the menu/action, `product.ribbon` fields/constraint, list/form
-views, and deterministic defaults. Core3 owns the durable migration, demo
-fixtures, page/API separation, manifest menu, permissioned CRUD, validation,
-concurrency, and restart tests. Authenticated Core3 desktop/mobile evidence
-and an authenticated Odoo desktop/mobile 404 blocker capture are recorded at
-`plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-catalog-ribbons-001/`.
+Product Ribbons is complete as its bounded slice. The next smallest missing
+catalog surface is Product Tags: Odoo menu/action/model/list-form analysis is
+complete, and Core3 now has durable tag and tag-product relation migrations,
+deterministic fixtures, page/API separation, customer-visibility filtering,
+permissioned CRUD, assignment validation, concurrency, relation cleanup, and
+restart coverage. Authenticated Core3 desktop/mobile evidence and an
+authenticated Odoo desktop/mobile `/shop` 404 blocker capture are recorded at
+`plan/odoo-ui-parity/evidence/ecommerce/2026-09-20/ecom-catalog-product-tags-001/`.
 
-Focused tests and the repository UI audit pass; the paired Odoo comparison is
+Focused tests and the repository UI audit pass. The paired Odoo comparison is
 blocked because both supplied authenticated reference instances return 404 for
-`/shop`, so neither this slice nor the full Ecommerce module is signed off.
-The next task remains the smallest unfinished Ecommerce gap after review of
-the current matrix; do not infer completion from this bounded feature.
+`/shop`; this feature and the full Ecommerce module remain unsigned off.
+Bounded commit: `08928189` (local only, not pushed).

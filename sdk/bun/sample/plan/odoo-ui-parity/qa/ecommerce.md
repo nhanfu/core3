@@ -1,5 +1,36 @@
 # ecommerce QA ledger
 
+## Product Tags (`ECOM-CATALOG-PRODUCT-TAGS-001`, 2026-09-20)
+
+- Odoo menu/action/source comparison: `product_catalog_product_tags` /
+  `product.product_tag_action`, model `product.tag`, ordered list/form fields,
+  unique tag name, customer visibility/color, and product-template/variant
+  assignment surface verified against the supplied source.
+- Core3 lifecycle: migrations 036/037 add durable tags and tag-product
+  relations with deterministic fixtures; page/API YAML is separated by
+  `page.id`; the manifest menu, search/filter/empty/error states, product
+  assignment, `ecommerce.read`, and `ecommerce.write` CRUD are implemented.
+  Guards cover duplicate names, invalid colors, stale row versions, and
+  relation cleanup.
+- Focused verification: `bun test
+  test/ecommerce_product_tags.integration.test.ts --timeout 20000` — **4
+  passed, 30 assertions, 0 failures**. `bun run audit` passed with 669 pages,
+  678 routes, and 1203 datasources. Targeted ESLint and `git diff --check`
+  passed.
+- Browser verification: authenticated Core3 desktop 1440x900 list/form/post-
+  create and mobile 390x844 list captures are in
+  `../evidence/ecommerce/2026-09-20/ecom-catalog-product-tags-001/`; the UI
+  created `Browser Catalog Tag Verified` and assigned Core3 Ceramic Mug. Core3 browser
+  page/request errors were empty.
+- Odoo authentication succeeded as `codex@core3.local` against
+  `core3_codex_demo` on ports 8069 and 8073 at both viewports. Authenticated
+  `/shop` returned 404 on both, so paired Product Tags comparison is blocked.
+- QA disposition: **bounded implementation verified, not signed off**. Full
+  Ecommerce sign-off remains open for the paired Odoo surface and existing
+  module-level actor/company and checkout gates. The optional Odoo tag image and
+  variant-only assignment fields are recorded as follow-up gaps in the module
+  plan. Bounded commit: `08928189` (local only, not pushed).
+
 ## Product Ribbons (`ECOM-CATALOG-RIBBONS-001`, 2026-09-20)
 
 - Odoo menu/action/source comparison: `product_catalog_product_ribbons` /

@@ -54,6 +54,10 @@ menu:
           label: Categories
           icon: folder
           permission: ecommerce.read
+        - path: /ecommerce/product-tags
+          label: Product Tags
+          icon: tag
+          permission: ecommerce.read
         - path: /ecommerce/product-ribbons
           label: Product Ribbons
           icon: tag

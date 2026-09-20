@@ -1,0 +1,96 @@
+page: { id: ecommerce-product-tags }
+datasources:
+  - id: ecommerce_product_tags
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_TAGS_UNAUTHENTICATED, message: Sign in to view product tags. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_TAGS_FORBIDDEN, message: You do not have permission to view product tags. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_TAGS_UNAVAILABLE, message: Product tags are temporarily unavailable. }
+    query: "SELECT t.id, t.row_version, t.name, t.sequence, t.color, t.visible_to_customers, COUNT(tp.product_id) AS product_count, COALESCE(STRING_AGG(p.name, ', ' ORDER BY p.name), '') AS product_names, COALESCE(ARRAY_AGG(tp.product_id) FILTER (WHERE tp.product_id IS NOT NULL), CAST([] AS VARCHAR[])) AS product_ids FROM ecommerce_product_tags t LEFT JOIN ecommerce_product_tag_products tp ON tp.tag_id = t.id LEFT JOIN ecommerce_products p ON p.id = tp.product_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR COALESCE(p.name, '') ILIKE '%' || :q || '%') AND (:visible_to_customers IS NULL OR t.visible_to_customers = :visible_to_customers) GROUP BY t.id, t.row_version, t.name, t.sequence, t.color, t.visible_to_customers ORDER BY t.sequence, t.id"
+  - id: ecommerce_product_tag_products
+    permission: ecommerce.read
+    query: "SELECT id AS value, name AS label FROM ecommerce_products WHERE active = TRUE ORDER BY website_sequence, name"
+  - id: ecommerce_product_tag_visibility
+    permission: ecommerce.read
+    query: "SELECT value, label FROM (VALUES (true, 'Visible to customers'), (false, 'Hidden from customers')) states(value, label)"
+actions:
+  - id: create_ecommerce_product_tag
+    type: server_form
+    permission: ecommerce.write
+    title: New Product Tag
+    action: ecommerce.product_tags.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_product_tags]
+    mutation:
+      operation: insert
+      table: ecommerce_product_tags
+      fields: [name, sequence, color, visible_to_customers]
+      required: [name]
+      boolean_fields: [visible_to_customers]
+      defaults: { sequence: 10, color: '#3C3C3C', visible_to_customers: true }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: ECOMMERCE_PRODUCT_TAG_NAME_INVALID, message: Tag name must be between 1 and 80 characters. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))))", status: 409, code: ECOMMERCE_PRODUCT_TAG_NAME_EXISTS, message: A product tag with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:color AS VARCHAR), '^#[0-9A-Fa-f]{6}$')", status: 422, code: ECOMMERCE_PRODUCT_TAG_COLOR_INVALID, message: Color must be a six-digit hexadecimal value. }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_tag_products(tag_id, product_id) SELECT :id, id FROM ecommerce_products WHERE id IN :product_ids ON CONFLICT (tag_id, product_id) DO NOTHING" }
+      result: { query: "SELECT * FROM ecommerce_product_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Tag, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 10, min: 0 }
+      - { field: visible_to_customers, label: Visible to customers, type: checkbox, default: true }
+      - { field: color, label: Color, type: color, default: '#3C3C3C', required: true }
+      - { field: product_ids, label: Products, type: multi-select, options_source: ecommerce_product_tag_products, multiple: true }
+  - id: edit_ecommerce_product_tag
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Product Tag
+    action: ecommerce.product_tags.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [ecommerce_product_tags]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      operation: update
+      table: ecommerce_product_tags
+      fields: [name, sequence, color, visible_to_customers]
+      required: [name]
+      boolean_fields: [visible_to_customers]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_tags WHERE id = :id", status: 404, code: ECOMMERCE_PRODUCT_TAG_NOT_FOUND, message: Product tag not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80", status: 422, code: ECOMMERCE_PRODUCT_TAG_NAME_INVALID, message: Tag name must be between 1 and 80 characters. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_tags WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND id <> :id)", status: 409, code: ECOMMERCE_PRODUCT_TAG_NAME_EXISTS, message: A product tag with this name already exists. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:color AS VARCHAR), '^#[0-9A-Fa-f]{6}$')", status: 422, code: ECOMMERCE_PRODUCT_TAG_COLOR_INVALID, message: Color must be a six-digit hexadecimal value. }
+      before_steps:
+        - { query: "DELETE FROM ecommerce_product_tag_products WHERE tag_id = :id" }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_tag_products(tag_id, product_id) SELECT :id, id FROM ecommerce_products WHERE id IN :product_ids ON CONFLICT (tag_id, product_id) DO NOTHING" }
+      result: { query: "SELECT * FROM ecommerce_product_tags WHERE id = :id" }
+    fields:
+      - { field: name, label: Tag, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 0 }
+      - { field: visible_to_customers, label: Visible to customers, type: checkbox }
+      - { field: color, label: Color, type: color, required: true }
+      - { field: product_ids, label: Products, type: multi-select, options_source: ecommerce_product_tag_products, multiple: true }
+  - id: delete_ecommerce_product_tag
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.product_tags.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete tag {{row.name}}?'
+    refresh: [ecommerce_product_tags]
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
+    mutation:
+      operation: delete
+      table: ecommerce_product_tags
+      permission: ecommerce.write
+      concurrency: { required: true }
+      before_steps:
+        - { query: "DELETE FROM ecommerce_product_tag_products WHERE tag_id = :id" }
+      guards:
+        - { query: "SELECT id FROM ecommerce_product_tags WHERE id = :id", status: 404, code: ECOMMERCE_PRODUCT_TAG_NOT_FOUND, message: Product tag not found. }
+      result: { query: "SELECT TRUE AS deleted" }

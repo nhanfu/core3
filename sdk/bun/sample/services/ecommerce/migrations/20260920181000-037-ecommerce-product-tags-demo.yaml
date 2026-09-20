@@ -1,0 +1,24 @@
+version: 0.0.37
+kind: data
+description: deterministic Odoo product tag fixtures and assignments
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_tags (id, name, sequence, color, visible_to_customers) VALUES
+        ('ecommerce-tag-featured', 'Featured', 1, '#875A7B', TRUE),
+        ('ecommerce-tag-new-arrival', 'New arrival', 2, '#17A2B8', TRUE),
+        ('ecommerce-tag-service', 'Service', 3, '#6C757D', FALSE)
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO ecommerce_product_tag_products (tag_id, product_id) VALUES
+        ('ecommerce-tag-featured', 'ecommerce-product-mug'),
+        ('ecommerce-tag-featured', 'ecommerce-product-chair'),
+        ('ecommerce-tag-new-arrival', 'ecommerce-product-lamp'),
+        ('ecommerce-tag-service', 'ecommerce-product-setup')
+      ON CONFLICT (tag_id, product_id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_product_tag_products WHERE tag_id IN ('ecommerce-tag-featured', 'ecommerce-tag-new-arrival', 'ecommerce-tag-service');
+      DELETE FROM ecommerce_product_tags WHERE id IN ('ecommerce-tag-featured', 'ecommerce-tag-new-arrival', 'ecommerce-tag-service');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
