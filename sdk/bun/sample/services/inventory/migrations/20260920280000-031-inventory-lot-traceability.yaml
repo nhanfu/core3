@@ -1,0 +1,32 @@
+version: 0.0.31
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_lot_traceability_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        lot_id VARCHAR NOT NULL, lot_name VARCHAR NOT NULL,
+        report_name VARCHAR NOT NULL, requested_by VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL, line_count BIGINT NOT NULL DEFAULT 0,
+        output_format VARCHAR NOT NULL DEFAULT 'PDF', generated_at TIMESTAMP NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_lot_traceability_runs_lot
+        ON inventory_lot_traceability_runs(lot_id, generated_at, id);
+      INSERT INTO inventory_lots(id, name, product_id, product_name, ref, location_id, product_qty, unit_name, tracking, company_name, partner_name, note, transfer_count, create_date)
+      VALUES ('lot-traceable-0001', 'TRACE-LOT-0001', 'product-storage-box', '[E-COM08] Storage Box', 'TRACE/0001', 'location-stock', 15, 'Units', 'lot', 'Core3 Demo Company', NULL, 'Deterministic traceability report fixture.', 1, TIMESTAMP '2026-01-15 08:20:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_move_lines(id, date, reference, product_id, product_name, product_category_name, lot_serial_number, source_package, result_package, source_location_id, destination_location_id, picking_partner_name, company_name, quantity, quantity_product_uom, unit_name, state, done_by, origin, movement_type, created_at)
+      VALUES ('trace-move-line-0001', TIMESTAMP '2026-01-15 08:25:00', 'WH/IN/TRACE/0001', 'product-storage-box', '[E-COM08] Storage Box', 'Office Supplies', 'TRACE-LOT-0001', NULL, 'PACK-TRACE-0001', 'location-supplier', 'location-stock', 'Wood Corner', 'Core3 Demo Company', 15, 15, 'Units', 'Done', 'Mitchell Admin', 'Traceability fixture receipt', 'incoming', TIMESTAMP '2026-01-15 08:25:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_lot_traceability_runs(id, lot_id, lot_name, report_name, requested_by, company_name, line_count, output_format, generated_at)
+      VALUES ('lot-traceability-lot-traceable-0001-1', 'lot-traceable-0001', 'TRACE-LOT-0001', 'Traceability Report', 'Mitchell Admin', 'Core3 Demo Company', 1, 'PDF', TIMESTAMP '2026-01-15 08:30:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_lot_traceability_runs WHERE id = 'lot-traceability-lot-traceable-0001-1';
+      DELETE FROM inventory_move_lines WHERE id = 'trace-move-line-0001';
+      DELETE FROM inventory_lots WHERE id = 'lot-traceable-0001';
+      DROP TABLE IF EXISTS inventory_lot_traceability_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

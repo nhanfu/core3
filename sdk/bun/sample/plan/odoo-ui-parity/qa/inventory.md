@@ -591,3 +591,32 @@ QA disposition: PASS for the bounded Core3 reset lifecycle, durable data,
 permissions, and evidence contract; PARTIAL for direct Odoo wizard comparison
 because of the exact manager-group blocker. Full Inventory sign-off remains
 open.
+
+## Lot Traceability QA — `INV-LOT-TRACEABILITY-001` (2026-09-20)
+
+- Odoo source/menu/action: lot form Traceability invokes
+  `stock.action_stock_report` (`stock_traceability_report_data.xml:4-8`) and
+  the authenticated `/stock/<output_format>/<report_name>` controller. The
+  report renders Reference, Product, Date, Lot/Serial #, From, To, and
+  Quantity.
+- Core3 implementation: lot detail adds a permissioned Traceability route;
+  `pages/lot-traceability.yaml` is presentation-only and binds to
+  `api/lot-traceability.yaml`. The API owns company-scoped lines/history,
+  fixed Print action, and durable report-run mutation. Migration `0.0.31`
+  adds deterministic fixture data.
+- Focused test: `bun test test/inventory_lot_traceability.integration.test.ts`
+  — PASS, 4 tests / 20 assertions. Coverage includes page/API/source
+  contract, report lines/run, actor/company/stale/empty guards, permission,
+  and file-backed restart.
+- Authenticated Core3 evidence is under
+  `evidence/inventory/2026-09-20/INV-LOT-TRACEABILITY-001/`; desktop/mobile
+  widths are 1440/1440 and 390/390 with empty final request/page-error arrays.
+  Paired Odoo `/odoo/lots` desktop/mobile evidence is also present. The
+  supplied user could not reach a selected lot form, so the Odoo Traceability
+  stat/PDF comparison is blocked; mobile recorded the exact web asset failures
+  in `odoo.json`. No Odoo mutation was performed.
+
+QA disposition: PASS for the bounded Core3 traceability lifecycle, durable
+report run, permissions, and evidence contract; PARTIAL for direct Odoo
+Traceability comparison because of the exact navigation/asset blocker. Full
+Inventory sign-off remains open.

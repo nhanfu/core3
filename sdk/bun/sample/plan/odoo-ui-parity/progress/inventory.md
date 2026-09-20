@@ -418,6 +418,28 @@ Inventory sign-off remains open.
 Status: bounded lifecycle complete for review; full Inventory sign-off remains
 open.
 
+## `INV-LOT-TRACEABILITY-001` — Lot Traceability report (2026-09-20)
+
+- Selected the smallest remaining source-backed report behavior: Odoo's lot
+  form Traceability stat action and fixed PDF report contract.
+- Compared `stock_lot_views.xml:8-28`,
+  `stock_traceability_report_data.xml:4-8`, the stock controller route, and
+  `report_stock_traceability.xml:20-38`. Core3 adds a lot-detail Traceability
+  route with separate page/API YAML, deterministic report lines, and a fixed
+  Print action that records a report run before invoking the browser print
+  surface.
+- Migration `20260920280000-031-inventory-lot-traceability.yaml` adds durable
+  report history and a Core3-company traceable lot/move fixture. Focused tests
+  pass 4 tests / 20 assertions, covering context/lines, report CRUD, actor,
+  company, stale/empty guards, permission, and restart persistence.
+- Authenticated Core3 desktop/mobile and Odoo comparison evidence is under
+  `evidence/inventory/2026-09-20/INV-LOT-TRACEABILITY-001/`. Odoo lot-list
+  comparison did not expose the selected form/stat action for the supplied
+  user; no Odoo mutation or sign-off is claimed.
+
+Status: bounded lifecycle complete for review; full Inventory sign-off remains
+open.
+
 ## `INV-PHYSICAL-REQUEST-COUNT-001` — Physical Inventory Request a Count (2026-09-20)
 
 - Selected the smallest remaining source-backed Physical Inventory wizard after

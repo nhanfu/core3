@@ -26,4 +26,6 @@ components:
       - title: Description
         wide: true
         fields: [{ field: note, label: Description, type: textarea, wide: true }]
-    header_actions: [{ id: save_inventory_lot, label: Edit, variant: primary, permission: inventory.manage }]
+    header_actions:
+      - { id: view_inventory_lot_traceability, label: Traceability, variant: secondary, permission: inventory.tracking }
+      - { id: save_inventory_lot, label: Edit, variant: primary, permission: inventory.manage }

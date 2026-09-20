@@ -1182,3 +1182,30 @@ reachable; this exact blocker is recorded and no Odoo mutation was made.
 Status: bounded Core3 lifecycle and evidence complete for review. Full
 Inventory sign-off remains open for the broader actor/company matrix and
 remaining report/export semantics.
+
+## Products > Lot Traceability report — `INV-LOT-TRACEABILITY-001` (2026-09-20)
+
+This bounded slice closes the smallest remaining source-backed report gap after
+the completed lot/serial CRUD surface. Odoo's lot form exposes the Traceability
+stat button (`stock.action_stock_report`), which loads the authenticated stock
+traceability report and its PDF route with Reference, Product, Date,
+Lot/Serial, From, To, and Quantity columns.
+
+Core3 keeps `pages/lot-detail.yaml` and the new
+`pages/lot-traceability.yaml` layout-only, joined to API fragments by page ID.
+The traceability API provides company-scoped deterministic context, completed
+move lines, report history, and a permissioned Print client action backed by a
+durable report-run mutation. Migration
+`20260920280000-031-inventory-lot-traceability.yaml` adds report runs and a
+stable traceable lot/move fixture. Actor, company, stale row-version, empty,
+permission, and restart guards are covered.
+
+Focused coverage passes 4 tests / 20 assertions. Authenticated Core3 desktop
+and mobile evidence plus paired authenticated Odoo lot-list comparison are
+under `evidence/inventory/2026-09-20/INV-LOT-TRACEABILITY-001/`. The supplied
+Odoo user could not reach the selected lot form/stat action; the exact mobile
+asset failures are recorded in `odoo.json`. No Odoo mutation was made.
+
+Status: bounded report lifecycle complete for review. Full Inventory sign-off
+remains open for the broader actor/company matrix and remaining report/export
+semantics.

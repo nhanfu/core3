@@ -104,6 +104,9 @@ transfer workflows must preserve row versions and move quantities.
 | INV-UI-013 | On Hand relocation wizard | 1440x900, 390x844 | Authenticated manager sees On Hand Relocate modal and completed location move on desktop; mobile On Hand remains usable without overflow; paired Odoo Locations/On Hand source surface is captured | pass Core3/Odoo evidence; no Odoo mutation |
 | INV-UI-014 | Physical Inventory Request a Count wizard | 1440x900, 390x844 | Authenticated Core3 manager selects a row, opens Request a Count, saves date/assignee, and sees the scheduled result on desktop/mobile; paired Odoo source list and group-gated blocker are recorded | pass Core3; Odoo wizard blocked by supplied user's manager group |
 | INV-UI-015 | Physical Inventory Clear/reset warning | 1440x900, 390x844 | Authenticated Core3 manager selects a row, exposes Clear, sees warning confirmation, and retains responsive no-overflow state; paired Odoo source list and exact group blocker are recorded | pass Core3 list/selection/confirmation; Odoo warning blocked by supplied user's manager group |
+| INV-FUNC-018 | Lot Traceability report | Lot detail opens company-scoped completed move lines with source columns, records a fixed Print/report run, and survives restart | pass: `INV-LOT-TRACEABILITY-001` focused lifecycle test |
+| INV-PERM-017 | Lot Traceability report boundary | `inventory.tracking`, current-company lot scope, authenticated actor, and row version are required; stale/empty requests do not create runs | pass: `INV-LOT-TRACEABILITY-001` focused runtime test |
+| INV-UI-016 | Lot Traceability report | 1440x900, 390x844 | Authenticated Core3 desktop/mobile report list and Print control render without overflow; paired Odoo lot list and exact selected-form/asset blocker are recorded | pass Core3; Odoo Traceability stat/PDF blocked by supplied route/account/asset boundary |
 
 ## Exit criteria
 

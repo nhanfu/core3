@@ -6,6 +6,11 @@ datasources:
     error_states: { transport_error: { status: 503, code: INVENTORY_LOT_DETAIL_UNAVAILABLE, message: Lot or serial number details are temporarily unavailable. } }
     query: "SELECT l.id, l.row_version, l.name, l.product_id, l.product_name, COALESCE(l.ref, '') AS ref, CAST(l.create_date AS VARCHAR) AS create_date, COALESCE(l.company_name, 'Visible to all companies') AS company_name, l.location_id, COALESCE(loc.name, 'No location') AS location_name, CAST(l.product_qty AS DOUBLE) AS product_qty, l.unit_name, l.tracking, COALESCE(l.partner_name, '') AS partner_name, COALESCE(l.note, '') AS note, COALESCE(l.transfer_count, 0) AS transfer_count FROM inventory_lots l LEFT JOIN inventory_locations loc ON loc.id = l.location_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND l.id = :id"
 actions:
+  - id: view_inventory_lot_traceability
+    type: navigate
+    permission: inventory.tracking
+    navigate_to: /lots/traceability
+    params: { id: '{row.id}', expected_row_version: '{row.row_version}' }
   - id: save_inventory_lot
     type: server_form
     permission: inventory.manage

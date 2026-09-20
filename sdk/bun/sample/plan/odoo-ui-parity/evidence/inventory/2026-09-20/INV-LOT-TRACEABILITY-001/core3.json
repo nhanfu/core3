@@ -1,0 +1,26 @@
+{
+  "desktop": {
+    "url": "http://127.0.0.1:4546/inventory/lots/traceability?id=lot-traceable-0001",
+    "authenticated": true,
+    "has_report": true,
+    "has_print": true,
+    "body_width": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440
+    },
+    "failed_requests": [],
+    "page_errors": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:4546/inventory/lots/traceability?id=lot-traceable-0001",
+    "authenticated": true,
+    "has_report": true,
+    "has_print": true,
+    "body_width": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "failed_requests": [],
+    "page_errors": []
+  }
+}

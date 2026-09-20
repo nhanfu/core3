@@ -1,0 +1,25 @@
+{
+  "desktop": {
+    "url": "http://127.0.0.1:8069/odoo/lots",
+    "has_traceability": false,
+    "body_width": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440
+    },
+    "failed_requests": [],
+    "page_errors": []
+  },
+  "mobile": {
+    "url": "http://127.0.0.1:8069/odoo/lots?view_type=kanban",
+    "has_traceability": false,
+    "body_width": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "failed_requests": [
+      "http://127.0.0.1:8069/web/assets/e35aa7d/web.assets_web.min.js",
+      "http://127.0.0.1:8069/web/assets/a6bfbbb/web.assets_web_print.min.css"
+    ],
+    "page_errors": []
+  }
+}
