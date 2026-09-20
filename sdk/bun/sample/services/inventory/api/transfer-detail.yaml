@@ -30,6 +30,11 @@ datasources:
     permission: inventory.read
     error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_BACKORDERS_UNAVAILABLE, message: Transfer backorders are temporarily unavailable. } }
     query: "SELECT b.id, b.source_picking_id, b.backorder_picking_id, bp.name AS backorder_name, b.company_name, b.decision, b.processed_by, CAST(b.processed_at AS VARCHAR) AS processed_at, b.state, b.row_version FROM inventory_transfer_backorders b JOIN inventory_pickings p ON p.id = b.source_picking_id LEFT JOIN inventory_pickings bp ON bp.id = b.backorder_picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND b.source_picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR b.company_name = :current_company_name) ORDER BY b.processed_at DESC, b.id"
+  - id: inventory_transfer_label_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_TRANSFER_LABELS_UNAVAILABLE, message: Transfer label history is temporarily unavailable. } }
+    query: "SELECT r.id, r.picking_id, r.company_name, r.label_type, r.output_format, CAST(r.label_count AS DOUBLE) AS label_count, r.requested_by, CAST(r.created_at AS VARCHAR) AS created_at, r.row_version FROM inventory_transfer_label_runs r JOIN inventory_pickings p ON p.id = r.picking_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.picking_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.created_at DESC, r.id DESC"
 
 actions:
   - id: upload_inventory_transfer_attachment
@@ -199,6 +204,38 @@ actions:
         - { query: "UPDATE inventory_pickings SET is_locked = NOT is_locked, row_version = row_version + 1 WHERE id = :id AND company_name = :current_company_name AND state <> 'Cancelled' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before its lock state could be updated. }
         - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) SELECT :message_id, id, :current_user_name, 'inventory.transfer.lock_toggled', CASE WHEN is_locked THEN 'Locked' ELSE 'Unlocked' END, CASE WHEN is_locked THEN 'Transfer locked for editing' ELSE 'Transfer unlocked for editing' END FROM inventory_pickings WHERE id = :id" }
       result: { query: "SELECT id, row_version, is_locked, state FROM inventory_pickings WHERE id = :id" }
+  - id: print_inventory_transfer_labels
+    type: server_form
+    permission: inventory.write
+    title: Print Labels
+    action: stock.picking.action_print_labels
+    handler: yaml_mutation
+    operation: print_labels
+    params: { id: '{state.inventory_transfer_detail.id}', expected_row_version: '{state.inventory_transfer_detail.row_version}' }
+    refresh: [inventory_transfer_detail, inventory_transfer_timeline, inventory_transfer_label_runs]
+    success_message: Product labels prepared for printing.
+    mutation:
+      generated: [label_run_id, message_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'transfer-labels-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS label_run_id, 'label-message-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS message_id FROM inventory_transfer_label_runs WHERE picking_id = :id"
+      guards:
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id", status: 404, code: INVENTORY_TRANSFER_NOT_FOUND, message: Transfer not found. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND company_name = :current_company_name", status: 403, code: INVENTORY_TRANSFER_COMPANY_SCOPE_REQUIRED, message: Transfer is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND state <> 'Cancelled' AND row_version = :expected_row_version", status: 409, code: INVENTORY_TRANSFER_LABELS_NOT_ALLOWED, message: Only a current non-cancelled transfer can print labels. }
+        - { query: "SELECT id FROM inventory_pickings WHERE id = :id AND length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_TRANSFER_ACTOR_REQUIRED, message: A signed-in inventory operator is required to print labels. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:label_type AS VARCHAR) = 'products'", status: 422, code: INVENTORY_TRANSFER_LABEL_TYPE_UNSUPPORTED, message: This bounded flow prints Product Labels; Lot/SN Labels remain a separate wizard. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:output_format AS VARCHAR) = 'PDF'", status: 422, code: INVENTORY_TRANSFER_LABEL_FORMAT_UNSUPPORTED, message: Product labels are currently prepared as PDF output. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM inventory_picking_moves WHERE picking_id = :id AND quantity > 0)", status: 422, code: INVENTORY_TRANSFER_LABELS_NO_LINES, message: Add a positive move quantity before printing labels. }
+      steps:
+        - { query: "INSERT INTO inventory_transfer_label_runs(id, picking_id, company_name, label_type, output_format, label_count, requested_by, created_at, row_version) SELECT :label_run_id, p.id, p.company_name, :label_type, :output_format, SUM(m.quantity), :current_user_name, TIMESTAMP '2026-01-15 08:00:00', 1 FROM inventory_pickings p JOIN inventory_picking_moves m ON m.picking_id = p.id WHERE p.id = :id AND p.row_version = :expected_row_version GROUP BY p.id, p.company_name", expect_changed: true, status: 409, code: INVENTORY_TRANSFER_LABELS_FAILED, message: Labels could not be prepared. }
+        - { query: "UPDATE inventory_pickings SET row_version = row_version + 1 WHERE id = :id AND company_name = :current_company_name AND state <> 'Cancelled' AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The transfer changed before labels could be prepared. }
+        - { query: "INSERT INTO inventory_transfer_messages(id, picking_id, actor_name, action, action_label, detail) VALUES(:message_id, :id, :current_user_name, 'inventory.transfer.labels_printed', 'Labels prepared', 'Product labels prepared for printing')" }
+      result: { query: "SELECT r.id, r.picking_id, r.company_name, r.label_type, r.output_format, r.label_count, r.requested_by, r.row_version FROM inventory_transfer_label_runs r WHERE r.id = :label_run_id" }
+    fields:
+      - { field: label_type, label: Labels to print, type: select, options: [{ value: products, label: Product Labels }], default: products, required: true }
+      - { field: output_format, label: Output, type: select, options: [{ value: PDF, label: PDF }], default: PDF, required: true }
   - id: mark_inventory_transfer_todo
     type: server
     permission: inventory.write

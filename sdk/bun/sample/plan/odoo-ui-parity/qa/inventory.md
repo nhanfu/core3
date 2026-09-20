@@ -743,3 +743,24 @@ QA disposition: PASS for the bounded Core3 lock lifecycle, durable data,
 permissions, and responsive evidence; PARTIAL for direct Odoo action parity
 because of the exact manager-group blocker. Full Inventory sign-off remains
 open.
+
+## INV-TRANSFER-LABELS-001 — Transfer Product Labels (2026-09-21)
+
+- Source/menu/action: PASS for the Odoo transfer-bound `Labels` server action;
+  exact source references and the wizard branch are in the paired comparison.
+- Core3 contract: PASS. Page/API separation, Product Labels/PDF form, durable
+  label-run history, actor/company/row-version/state guards, permission, and
+  deterministic fixture are present.
+- Focused verification: PASS — `bun test
+  test/inventory_transfer_labels.integration.test.ts` (4 tests, 20
+  assertions). Coverage includes migration replay, restart persistence, wrong
+  company, anonymous actor, stale/cancelled state, unsupported Lot/SN branch,
+  and `inventory.write` denial.
+- Browser/Odoo evidence: PARTIAL, not sign-off. Core3 isolated startup is
+  blocked by the unrelated Ecommerce page-schema error
+  (`services/ecommerce/api/wishlist.yaml`, `actions[4].fields`), and no Odoo
+  mutation was attempted during finalization. See
+  `evidence/inventory/2026-09-21/INV-TRANSFER-LABELS-001/`.
+- Open follow-up: Lot/SN label layout, product label layout options/ZPL, and
+  authenticated desktop/mobile captures once the shared discovery boundary is
+  repaired.

@@ -1269,6 +1269,28 @@ Odoo mutation was made.
 Status: bounded Core3 lifecycle complete for review. Full Inventory sign-off
 remains open.
 
+## Operations > Transfer Product Labels — `INV-TRANSFER-LABELS-001` (2026-09-21)
+
+This bounded slice covers Odoo's transfer-bound `Labels` action from
+`addons/stock/views/stock_picking_views.xml:477-487`, its
+`action_open_label_type` branch in `addons/stock/models/stock_picking.py:1984-1995`,
+and the `picking.label.type` wizard in
+`addons/stock/wizard/stock_label_type.py:7-29` and `.xml:3-18`.
+
+Core3 keeps the page/API split: the transfer page exposes `Labels` and report
+history, while the API prepares a Product Labels/PDF run with durable
+company/actor/row-version/state guards and timeline attribution. Migration
+`20260921100000-036-inventory-transfer-labels.yaml` adds deterministic fixture
+`delivery-labels-0001`. The focused suite passes 4 tests / 20 assertions,
+including restart, replay, permission, and no-partial-state guards.
+
+Evidence is under
+`evidence/inventory/2026-09-21/INV-TRANSFER-LABELS-001/`. Core3 authenticated
+desktop/mobile capture is blocked by the unrelated Ecommerce discovery error;
+Odoo visual capture and mutation remain open. Lot/SN labels and downstream
+layout/ZPL options are explicitly deferred. Full Inventory sign-off remains
+open.
+
 ## Operations > Transfer Lock/Unlock lifecycle — `INV-TRANSFER-LOCK-001` (2026-09-21)
 
 This bounded slice closes the smallest remaining non-duplicated transfer actor

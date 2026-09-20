@@ -1,0 +1,7 @@
+{
+  "feature_id": "INV-TRANSFER-LABELS-001",
+  "date": "2026-09-21",
+  "core3": { "focused_lifecycle": "pass", "desktop": "blocked", "mobile": "blocked", "blocker": "Shared discovery fails before listen on services/ecommerce/api/wishlist.yaml actions[4].fields." },
+  "odoo": { "source_comparison": "pass", "authenticated_desktop": "not captured", "authenticated_mobile": "not captured", "mutation": "not attempted", "blocker": "No reachable Product Labels fixture/modal was used during bounded finalization." },
+  "tests": { "command": "bun test test/inventory_transfer_labels.integration.test.ts", "result": "4 pass, 0 fail, 20 assertions" }
+}

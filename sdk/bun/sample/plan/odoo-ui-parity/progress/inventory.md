@@ -397,6 +397,30 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
 Status: bounded Core3 lifecycle and evidence complete for review; broader
 Inventory sign-off remains open.
 
+## `INV-TRANSFER-LABELS-001` — transfer Product Labels report run (2026-09-21)
+
+- Selected the smallest remaining source-backed transfer action after locks,
+  backorders, and returns: Odoo's transfer-bound `action_print_labels` report
+  action and its `picking.label.type` wizard. Source comparison covers
+  `stock_picking_views.xml:477-487`, `stock_picking.py:1984-1995`, and
+  `stock_label_type.py:7-29` / `.xml:3-18`.
+- Core3 keeps `pages/transfer-detail.yaml` presentation-only and
+  `api/transfer-detail.yaml` API/action-owned. The bounded Product Labels/PDF
+  form enforces current company, authenticated actor, non-cancelled state,
+  positive move lines, and row-version concurrency; it records a durable
+  report run, quantity, actor, and timeline event.
+- Migration `20260921100000-036-inventory-transfer-labels.yaml` adds the
+  durable ledger and deterministic `delivery-labels-0001` fixture. Replay and
+  file-backed restart persistence are covered.
+- Focused coverage passes 4 tests / 20 assertions in
+  `inventory_transfer_labels.integration.test.ts`. Core3 authenticated
+  desktop/mobile capture is blocked before listen by the unrelated
+  `services/ecommerce/api/wishlist.yaml` discovery error; Odoo visual capture
+  was not retried during finalization. Exact blockers and source comparison are
+  under `evidence/inventory/2026-09-21/INV-TRANSFER-LABELS-001/`.
+- Lot/SN Labels, product label layout options, and ZPL output remain open
+  follow-up scope. Full Inventory sign-off remains open.
+
 ## `INV-TRANSFER-LOCK-001` — transfer Lock/Unlock actor lifecycle (2026-09-21)
 
 - Selected the smallest remaining non-duplicated transfer behavior: Odoo's

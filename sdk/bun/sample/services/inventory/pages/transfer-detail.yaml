@@ -27,6 +27,7 @@ components:
       - { id: validate_inventory_transfer, label: Validate, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready'" }
       - { id: create_inventory_backorder, label: Create Backorder, variant: primary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Ready' && state.inventory_transfer_detail.has_partial === true" }
       - { id: toggle_inventory_transfer_lock, label: Lock / Unlock, variant: secondary, permission: inventory.manage, show_if: "state.inventory_transfer_detail.state !== 'Cancelled'" }
+      - { id: print_inventory_transfer_labels, label: Labels, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Cancelled'" }
       - { id: return_inventory_transfer, label: Return, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state === 'Done'" }
       - { id: cancel_inventory_transfer, label: Cancel, variant: secondary, permission: inventory.write, show_if: "state.inventory_transfer_detail.state !== 'Done' && state.inventory_transfer_detail.state !== 'Cancelled'" }
     message_source: inventory_transfer_timeline
@@ -50,6 +51,7 @@ components:
       inventory.transfer.backorder_created: Backorder created
       inventory.transfer.backorder_skipped: No backorder
       inventory.transfer.lock_toggled: Lock state changed
+      inventory.transfer.labels_printed: Labels prepared
     content_slot: true
     group_columns: 2
     groups:
@@ -86,3 +88,16 @@ components:
       - { field: reserved_quantity, label: Reserved, align: right, width: 120 }
       - { field: uom, label: Unit of Measure, width: 140 }
       - { field: availability, label: Availability, width: 150 }
+  - type: ListView
+    source: inventory_transfer_label_runs
+    variant: odoo
+    columns:
+      - { field: label_type, label: Labels }
+      - { field: output_format, label: Output }
+      - { field: label_count, label: Quantity, align: right }
+      - { field: requested_by, label: Requested by }
+      - { field: created_at, label: Created at }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No labels prepared, description: Use Labels to prepare Product Labels for this transfer. }

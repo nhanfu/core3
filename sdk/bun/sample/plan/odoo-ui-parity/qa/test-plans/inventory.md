@@ -122,6 +122,9 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-022 | Transfer Lock/Unlock lifecycle | Non-cancelled transfer | Manager toggles durable `is_locked`, records actor/timeline state, and preserves row-version across reload/restart | pass: `INV-TRANSFER-LOCK-001` focused suite |
 | INV-PERM-021 | Transfer Lock/Unlock permission boundary | inventory.read vs inventory.manage | ordinary readers cannot toggle; current company, actor, stale, and cancelled guards leave picking state unchanged | pass: `INV-TRANSFER-LOCK-001` focused runtime test |
 | INV-UI-020 | Transfer Lock/Unlock responsive action | 1440x1000, 390x844 | Authenticated Core3 manager sees the action and persisted timeline/state on desktop/mobile; paired Odoo result or exact manager-group blocker is recorded | pass Core3; Odoo action hidden for supplied account |
+| INV-FUNC-023 | Transfer Product Labels report run | Non-cancelled transfer with positive move lines | Product Labels/PDF request records a durable report run, quantity, actor/timeline, current company, and row-version update; migration replay and restart preserve history | pass: `INV-TRANSFER-LABELS-001` focused suite |
+| INV-PERM-022 | Transfer Product Labels permission/context boundary | inventory.read vs inventory.write | readers cannot prepare labels; wrong company, anonymous actor, stale/cancelled transfer, unsupported Lot/SN branch, and empty lines do not create a run | pass: `INV-TRANSFER-LABELS-001` focused suite |
+| INV-UI-021 | Transfer Product Labels wizard/history | 1440x1000, 390x844 | Labels action, Product Labels/PDF form, durable history, and responsive result require authenticated Core3 desktop/mobile proof; paired Odoo action/modal/PDF is required | blocked by shared Ecommerce discovery error; Odoo visual capture open |
 
 ## Exit criteria
 
