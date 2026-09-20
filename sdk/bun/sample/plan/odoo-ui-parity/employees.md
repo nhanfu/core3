@@ -1758,3 +1758,25 @@ uses `Core3 Demo Company` while deterministic Employees fixtures are in
 `Core3 Vietnam`, so the Core3 list is empty; Odoo's Coach column is optional
 and hidden in the default list view. This is conditional feature evidence,
 not aggregate Employees sign-off.
+
+## EMP-EMPLOYEE-PROPERTIES-001: Employee Properties (2026-09-21)
+
+Odoo's `hr.employee.employee_properties` is an HR-user-only dynamic Properties
+field rendered above the employee form notebook; the source search view also
+offers a Properties group-by. Core3 now stores the company-defined object as
+durable `employees.employee_properties` JSON text, displays it in a separate
+read-gated Properties group, and provides a guarded `Edit Properties` action.
+Migration `20260922000000-054` seeds deterministic object values.
+
+Create/edit uses `employees.write`, actor identity, active/current-company
+scope, optimistic row-version concurrency, and object-shape validation. Page
+YAML and API/action YAML remain separate and join by `page.id`. Focused
+coverage is **4 tests / 19 assertions**, including source mapping, CRUD,
+invalid/stale/company/actor guards, migration replay, and restart.
+
+Authenticated Odoo employee-detail captures are under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-PROPERTIES-001/`; the reference
+company has no configured Properties definition/value, so the source field is
+not visible in rendered text. Core3 backend startup was unavailable during the
+bounded browser window and is recorded precisely in the evidence. This is
+conditional feature evidence, not aggregate Employees sign-off.

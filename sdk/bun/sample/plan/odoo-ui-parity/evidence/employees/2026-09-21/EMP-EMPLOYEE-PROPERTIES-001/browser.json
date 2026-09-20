@@ -1,0 +1,42 @@
+{
+  "feature_id": "EMP-EMPLOYEE-PROPERTIES-001",
+  "signoff": "conditional_only",
+  "captures": [
+    {
+      "surface": "odoo",
+      "viewport": "desktop",
+      "path": "/odoo/employees/6",
+      "status": 200,
+      "width": 1440,
+      "height": 900,
+      "scroll_width": 1440,
+      "client_width": 1440,
+      "properties_label_visible": false,
+      "page_errors": [],
+      "failed_requests": ["POST /mail/data: net::ERR_ABORTED during detail load"],
+      "blocker": "Reference company has no configured employee Properties definition/value."
+    },
+    {
+      "surface": "odoo",
+      "viewport": "mobile",
+      "path": "/odoo/employees/6",
+      "status": 200,
+      "width": 390,
+      "height": 844,
+      "scroll_width": 390,
+      "client_width": 390,
+      "properties_label_visible": false,
+      "page_errors": [],
+      "failed_requests": [],
+      "blocker": "Reference company has no configured employee Properties definition/value."
+    },
+    {
+      "surface": "core3",
+      "viewport": "desktop_and_mobile",
+      "path": "/employees/detail",
+      "status": "unavailable",
+      "properties_label_visible": null,
+      "blocker": "Normal backend did not bind 127.0.0.1:3001 in the bounded startup window; isolated agent reported actions[2].fields schema failure."
+    }
+  ]
+}

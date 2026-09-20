@@ -650,3 +650,27 @@ Candidate commit: current working tree
   `evidence/employees/2026-09-21/EMP-COACH-001/`. Core3's fixture-company
   mismatch and Odoo's default-hidden optional Coach column are recorded there;
   no aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-PROPERTIES-001 (2026-09-21)
+
+- Selected the next uncovered visible HR-user employee behavior: Odoo's
+  dynamic `hr.employee.employee_properties` form field and Properties search
+  grouping. Employee Tags were deliberately excluded because Odoo keeps that
+  menu behind `base.group_no_one` in the current source.
+- Added migration `20260922000000-054` with durable `employee_properties` JSON
+  text and deterministic object fixtures. The employee detail page group is
+  read-gated; the paired API/action contract exposes guarded Edit Properties
+  and create/edit persistence.
+- Guards require `employees.write`, actor identity, active/current-company
+  scope, optimistic row version, and object-shaped input. Blank values
+  normalize to `{}`; invalid, stale, actor-missing, and cross-company writes
+  remain atomic.
+- Focused verification: `test/employees_properties.integration.test.ts`, **4
+  tests / 19 assertions**, plus coach regression **8 / 42**; UI audit passed at
+  **714 pages / 723 routes / 1,364 datasources**; scoped ESLint and diff-check
+  pass.
+- Evidence is under
+  `evidence/employees/2026-09-21/EMP-EMPLOYEE-PROPERTIES-001/`. Odoo detail
+  captures are authenticated desktop/mobile but the reference company has no
+  dynamic Properties definition; Core3 backend startup was unavailable. No
+  aggregate Employees sign-off is claimed.

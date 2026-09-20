@@ -892,3 +892,19 @@ assertions). Evidence is under
 `evidence/employees/2026-09-21/EMP-COACH-001/`. The focused UI audit passed
 with 712 pages, 721 routes, and 1,359 datasources; scoped ESLint and
 `git diff --check` passed. No aggregate Employees sign-off is claimed.
+
+## EMP-EMPLOYEE-PROPERTIES-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-035 | Employee Properties create/read/update | pass; opaque company-defined object persists through employee CRUD |
+| EMP-PERM-035 | `employees.write`, actor, active/current company, row version, object validation | pass; actor, stale, wrong-company, and invalid-object requests reject atomically |
+| EMP-DATA-035 | Migration replay and file-backed restart | pass; deterministic Properties fixtures survive replay and restart without duplicates |
+| EMP-UI-031 | Authenticated Core3/Odoo desktop and mobile | conditional; Odoo source definition is empty and Core3 backend startup was unavailable |
+
+Focused test: `test/employees_properties.integration.test.ts` (4 tests, 19
+assertions), with adjacent coach regression at 8 tests / 42 assertions.
+Evidence is under
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-PROPERTIES-001/`. UI audit passed
+with 714 pages, 723 routes, and 1,364 datasources; scoped ESLint and
+`git diff --check` passed. No aggregate Employees sign-off is claimed.

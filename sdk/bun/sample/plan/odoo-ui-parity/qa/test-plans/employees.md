@@ -444,3 +444,17 @@ Focused test: `test/employees_attendance_pin.integration.test.ts` (4 tests,
 Focused test: `test/employees_coach.integration.test.ts` (4 tests, 23
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-COACH-001/`.
+
+## EMP-EMPLOYEE-PROPERTIES-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `employee_properties` form field maps to separate employee-detail page/API contracts | pass |
+| Employee CRUD | Create, read, edit, and normalize an opaque Properties object durably | pass |
+| Permission and scope | Employees write, actor, active/current company, object-shape, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic Properties fixtures | pass |
+| Browser comparison | Authenticated Odoo employee detail desktop/mobile plus Core3 runtime attempt | conditional; Odoo definition empty and Core3 backend startup blocker recorded |
+
+Focused test: `test/employees_properties.integration.test.ts` (4 tests, 19
+assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-EMPLOYEE-PROPERTIES-001/`.

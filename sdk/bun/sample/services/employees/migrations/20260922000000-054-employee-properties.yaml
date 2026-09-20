@@ -1,0 +1,22 @@
+version: 0.0.54
+kind: data
+description: Persist Odoo employee Properties values as company-scoped JSON objects
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS employee_properties VARCHAR;
+      UPDATE employees
+      SET employee_properties = CASE id
+        WHEN 'employee-demo-001' THEN '{"office":"Hanoi","equipment":"Laptop"}'
+        WHEN 'employee-demo-002' THEN '{"office":"Da Nang","equipment":"Laptop"}'
+        WHEN 'employee-demo-003' THEN '{"office":"Ho Chi Minh City","equipment":"Monitor"}'
+        WHEN 'employee-demo-004' THEN '{"office":"Hanoi","equipment":"Laptop"}'
+        ELSE COALESCE(NULLIF(TRIM(employee_properties), ''), '{}')
+      END
+      WHERE NULLIF(TRIM(COALESCE(employee_properties, '')), '') IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS employee_properties;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
