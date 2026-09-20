@@ -147,6 +147,8 @@ actions:
       fields: [answer_data, respondent_name, respondent_email, idempotency_key]
       required: [answer_data]
       concurrency: false
+      guards:
+        - { query: "SELECT 1 AS ok FROM survey_responses WHERE id = :id AND survey_id = :survey_id AND access_token = :access_token AND state = 'In Progress'", status: 409, message: This survey response is no longer available for editing }
       steps:
         - { query: "UPDATE survey_responses SET state = 'Submitted', submitted_at = CURRENT_TIMESTAMP WHERE id = :id" }
         - { query: "UPDATE surveys SET response_count = response_count + 1, row_version = row_version + 1 WHERE id = :survey_id" }

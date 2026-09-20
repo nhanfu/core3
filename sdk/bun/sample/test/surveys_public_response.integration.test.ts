@@ -65,6 +65,10 @@ describe('Surveys public response workflow', () => {
     expect((await repository.query('SELECT response_count FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0].response_count).toBe(5);
     const duplicate = await route(`/api/public/surveys/${token}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken, answers: {} }) });
     expect(duplicate.status).toBe(409);
+    const submittedSnapshot = await repository.query('SELECT state, answer_data, respondent_name, respondent_email FROM survey_responses WHERE access_token = ?', [answerToken]);
+    const resumeSubmitted = await route(`/api/public/surveys/${token}/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer_token: answerToken }) });
+    expect(resumeSubmitted.status).toBe(409);
+    expect(await repository.query('SELECT state, answer_data, respondent_name, respondent_email FROM survey_responses WHERE access_token = ?', [answerToken])).toEqual(submittedSnapshot);
     database.close();
   });
 
@@ -105,6 +109,55 @@ describe('Surveys public response workflow', () => {
     expect(retrySubmit.status).toBe(200);
     expect((await repository.query('SELECT response_count FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0].response_count).toBe(initialSurvey.response_count + 1);
     expect((await repository.query("SELECT COUNT(*) AS count FROM survey_responses WHERE survey_id = ? AND state = 'Submitted'", ['survey-demo-feedback']))[0].count).toBe(initialResponses + 1);
+    database.close();
+  });
+
+  test('refuses invalid, expired, cross-survey, and stale tokens without disclosure or mutation', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'surveys_public_boundary_test', ['schema', 'data']);
+    const operations = yaml('operations.yaml').operations;
+    const surveyApi = yaml('pages/surveys.yaml');
+    const actions = Object.fromEntries(['public_survey_start', 'public_survey_progress', 'public_survey_submit'].map((id) => [id, surveyApi.actions.find((candidate: any) => candidate.id === id)]));
+    const service = {
+      async call(operation: string, request: any = {}) {
+        if (operations[operation]) {
+          const definition = operations[operation];
+          const bound = bindNamedParams(definition.query, request);
+          return { [definition.result_key]: await repository.query(bound.statement, bound.values) };
+        }
+        const action = operation === 'surveys.public.start' ? actions.public_survey_start : operation === 'surveys.public.progress' ? actions.public_survey_progress : actions.public_survey_submit;
+        return repository.executeMutation(action.mutation, request);
+      },
+    };
+    const module = new SurveysModule() as any;
+    const token = 'b135640d-14d4-4748-9ef6-344ca256531e';
+    const route = (path: string, init: RequestInit = {}) => module.handlePublicRoute(new Request(`http://survey.test${path}`, init), new URL(`http://survey.test${path}`), service);
+    const headers = { 'Content-Type': 'application/json' };
+    const initialCount = (await repository.query('SELECT response_count FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0].response_count;
+
+    const invalid = await route('/api/public/surveys/not-a-valid-survey-token');
+    expect(invalid.status).toBe(404);
+    expect(await invalid.json()).toEqual({ error: 'Survey is unavailable' });
+    const crossSurvey = await route('/api/public/surveys/4ead4bc8-b8f2-4760-a682-1fde8ddb95ac/start', { method: 'POST', headers, body: JSON.stringify({ answer_token: 'missing-feedback-answer-token-2026' }) });
+    expect(crossSurvey.status).toBe(404);
+    expect(await crossSurvey.json()).toEqual({ error: 'Survey response is unavailable' });
+
+    await repository.run("INSERT INTO survey_responses(id, survey_id, survey_name, answer_data, access_token, state) VALUES ('expired-public-response', 'survey-demo-feedback', 'Feedback Form', '{\"old\":\"answer\"}', 'expired-public-answer-token-2026', 'Expired')");
+    const expiredBefore = await repository.query("SELECT state, answer_data FROM survey_responses WHERE id = 'expired-public-response'");
+    const expiredProgress = await route(`/api/public/surveys/${token}/progress`, { method: 'POST', headers, body: JSON.stringify({ answer_token: 'expired-public-answer-token-2026', answers: { 'question-feedback-rating': '1' } }) });
+    expect(expiredProgress.status).toBe(409);
+    expect(await expiredProgress.json()).toEqual({ error: 'This survey response is no longer available for editing' });
+    const expiredSubmit = await route(`/api/public/surveys/${token}/submit`, { method: 'POST', headers, body: JSON.stringify({ answer_token: 'expired-public-answer-token-2026', answers: { 'question-feedback-rating': '1', 'question-feedback-service': 'Good', 'question-feedback-recommend': 'Yes' } }) });
+    expect(expiredSubmit.status).toBe(409);
+    expect(await repository.query("SELECT state, answer_data FROM survey_responses WHERE id = 'expired-public-response'")).toEqual(expiredBefore);
+    expect((await repository.query('SELECT response_count FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0].response_count).toBe(initialCount);
+
+    await repository.run("UPDATE surveys SET state = 'Closed' WHERE id = 'survey-demo-feedback'");
+    const closedStart = await route(`/api/public/surveys/${token}/start`, { method: 'POST', headers, body: '{}' });
+    expect(closedStart.status).toBe(404);
+    expect(await closedStart.json()).toEqual({ error: 'Survey is unavailable' });
+    expect((await repository.query('SELECT response_count FROM surveys WHERE id = ?', ['survey-demo-feedback']))[0].response_count).toBe(initialCount);
     database.close();
   });
 });

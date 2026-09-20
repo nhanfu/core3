@@ -57,7 +57,7 @@ export default class SurveysModule implements ModuleLifecycle {
         access_token: answerToken,
         survey_id: printDetail.id,
       }))?.response?.[0];
-      if (!answer) return this.json({ error: 'Survey response is unavailable' }, 404);
+      if (!answer || answer.state !== 'Submitted') return this.json({ error: 'Survey response is unavailable' }, 404);
       return this.json({ survey: printDetail, questions, answer, review: url.searchParams.get('review') === '1' });
     }
     if (!detail) return this.json({ error: 'Survey is unavailable' }, 404);
@@ -84,6 +84,8 @@ export default class SurveysModule implements ModuleLifecycle {
         if (!this.isToken(existingToken)) return this.json({ error: 'A valid answer token is required' }, 400);
         const answer = await readResponse(existingToken);
         if (!answer) return this.json({ error: 'Survey response is unavailable' }, 404);
+        if (answer.state === 'Submitted') return this.json({ error: 'This survey response is already submitted' }, 409);
+        if (answer.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
         return this.json({ survey: detail, answer });
       }
       const idempotencyKey = this.idempotencyKey(body.idempotency_key);
@@ -131,32 +133,50 @@ export default class SurveysModule implements ModuleLifecycle {
       }
       return this.json({ error: 'This survey response is already submitted' }, 409);
     }
+    if (response.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
     const answers = body.answers && typeof body.answers === 'object' ? body.answers : {};
     if (operation === 'progress') {
-      const result = await service.call('surveys.public.progress', {
-        id: response.id,
-        survey_id: detail.id,
-        access_token: answerToken,
-        values: { answer_data: JSON.stringify(answers) },
-      });
-      return this.json({ survey: detail, answer: result });
+      try {
+        const result = await service.call('surveys.public.progress', {
+          id: response.id,
+          survey_id: detail.id,
+          access_token: answerToken,
+          values: { answer_data: JSON.stringify(answers) },
+        });
+        return this.json({ survey: detail, answer: result });
+      } catch (error: any) {
+        return this.publicMutationError(error);
+      }
     }
     const questions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
     const missingRequired = questions
       .filter((question: any) => question.required && (answers[question.id] === undefined || answers[question.id] === null || String(answers[question.id]).trim() === ''))
       .map((question: any) => question.question_text || question.id);
     if (missingRequired.length) return this.json({ error: `Required answers are missing: ${missingRequired.join(', ')}` }, 422);
-    const result = await service.call('surveys.public.submit', {
-      id: response.id,
-      survey_id: response.survey_id,
-      values: {
-        answer_data: JSON.stringify(answers),
-        respondent_name: typeof body.respondent_name === 'string' ? body.respondent_name.trim() : undefined,
-        respondent_email: typeof body.respondent_email === 'string' ? body.respondent_email.trim() : undefined,
-        idempotency_key: idempotencyKey || undefined,
-      },
-    });
-    return this.json({ survey: detail, answer: result });
+    try {
+      const result = await service.call('surveys.public.submit', {
+        id: response.id,
+        survey_id: response.survey_id,
+        access_token: answerToken,
+        values: {
+          answer_data: JSON.stringify(answers),
+          respondent_name: typeof body.respondent_name === 'string' ? body.respondent_name.trim() : undefined,
+          respondent_email: typeof body.respondent_email === 'string' ? body.respondent_email.trim() : undefined,
+          idempotency_key: idempotencyKey || undefined,
+        },
+      });
+      return this.json({ survey: detail, answer: result });
+    } catch (error: any) {
+      return this.publicMutationError(error);
+    }
+  }
+
+  private publicMutationError(error: any): Response {
+    const status = Number(error?.status);
+    if (status >= 400 && status < 500) {
+      return this.json({ error: String(error?.message || 'This survey response is no longer available for editing'), ...(error?.code ? { code: error.code } : {}) }, status);
+    }
+    throw error;
   }
 
   private isToken(value: string): boolean {

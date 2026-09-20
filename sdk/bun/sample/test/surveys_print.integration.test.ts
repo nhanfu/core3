@@ -23,6 +23,8 @@ function serviceForPrint() {
       if (operation === 'survey.public.print.response') {
         return request.access_token === answerToken
           ? { response: [{ id: 'print-response', survey_id: 'survey-demo-feedback', state: 'Submitted', answer_data: '{"question-feedback-rating":"5"}' }] }
+          : request.access_token === 'expired-answer-token-2026'
+            ? { response: [{ id: 'expired-response', survey_id: 'survey-demo-feedback', state: 'Expired', answer_data: '{"secret":"must not print"}' }] }
           : { response: [] };
       }
       return {};
@@ -65,6 +67,10 @@ describe('Surveys public print contract', () => {
     const invalid = await printRequest(`/api/public/surveys/${surveyToken}/print?answer_token=bad`);
     expect(invalid.status).toBe(422);
     expect((await invalid.json()).error).toContain('valid answer token');
+
+    const expired = await printRequest(`/api/public/surveys/${surveyToken}/print?answer_token=expired-answer-token-2026`);
+    expect(expired.status).toBe(404);
+    expect((await expired.json()).error).toBe('Survey response is unavailable');
 
     const method = await printRequest(`/api/public/surveys/${surveyToken}/print`, { method: 'POST' });
     expect(method.status).toBe(405);
