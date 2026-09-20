@@ -778,3 +778,16 @@ Core3 fixture company is `Core3 Vietnam` versus session `Core3 Demo Company`;
 Odoo mobile uses the authenticated resolved detail route because the compact
 list rendered no `.o_data_row` nodes. No aggregate Employees sign-off is
 claimed.
+
+## EMP-BIRTHDAY-VISIBILITY-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-029 | Personal birthday visibility and public-directory projection | pass; opted-in day/month is projected and opt-out is hidden |
+| EMP-PERM-029 | `employees.write`, current company, row version | pass; stale and out-of-company changes reject atomically |
+| EMP-DATA-029 | Migration replay and file-backed restart | pass; deterministic birthday/visibility fixtures survive restart without duplicates |
+| EMP-UI-025 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 fixture-company mismatch, Odoo reference employee has no birthday so source checkbox is hidden |
+
+Evidence is under
+`evidence/employees/2026-09-21/EMP-BIRTHDAY-VISIBILITY-001/`. No aggregate
+Employees sign-off is claimed.

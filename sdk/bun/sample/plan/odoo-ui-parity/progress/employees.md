@@ -468,6 +468,24 @@ Candidate commit: current working tree
   Odoo shell icon 404s are unrelated. Conditional evidence only; no aggregate
   sign-off.
 
+## EMP-BIRTHDAY-VISIBILITY-001 (2026-09-21)
+
+- Selected the next uncovered source-backed Personal behavior: Odoo's
+  `birthday_public_display` / `Show to all employees` control and its safe
+  public-directory projection.
+- Added page/API-separated employee-detail and directory contracts plus
+  migration `20260921160000-046` with idempotent birthday and visibility
+  fixtures. Create/edit uses `employees.write`, current-company, and row-version
+  guards; hidden birthdays are not projected to the directory.
+- Focused verification: **4 tests / 22 assertions**; authenticated Core3 and
+  Odoo desktop/mobile captures; scoped ESLint, audit, and diff-check pending
+  finalization.
+- Evidence: `evidence/employees/2026-09-21/EMP-BIRTHDAY-VISIBILITY-001/`.
+  Core3 is company-blocked (`Core3 Demo Company` session versus `Core3
+  Vietnam` fixtures); Odoo Abigail Peterson has no birthday, so the source
+  checkbox is intentionally hidden. Conditional evidence only; no aggregate
+  sign-off.
+
 ## EMP-PRIVATE-LOCATION-001 (2026-09-21)
 
 - Selected the next uncovered source-backed Employee Personal behavior: Odoo's

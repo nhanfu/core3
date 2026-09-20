@@ -1574,3 +1574,26 @@ desktop/mobile reaches Abigail Peterson's Personal tab and shows the source
 Private Contact group; seven unrelated app-icon 404s are recorded. Evidence is
 under `evidence/employees/2026-09-21/EMP-PRIVATE-CONTACT-001/`. This is
 conditional feature evidence, not aggregate Employees sign-off.
+
+## EMP-BIRTHDAY-VISIBILITY-001: Employee birthday visibility (2026-09-21)
+
+Odoo's Personal Information group exposes `birthday_public_display` as the
+`Show to all employees` checkbox. The source computes
+`birthday_public_display_string` as the day and month only when a birthday is
+present and the employee opted in; the public directory hides it otherwise.
+
+Core3 adds migration `20260921160000-046` with replay-safe birthday and
+visibility fixtures, separate employee-detail page/API fields, and a
+directory-safe birthday projection. Employee create/edit remains guarded by
+`employees.write`, current-company scope, and optimistic row-version
+concurrency. Focused coverage is **4 tests / 22 assertions**, including source
+mapping, create/edit directory visibility, stale/company atomicity, migration
+replay, and file-backed restart.
+
+Authenticated Core3 desktop/mobile captures render the new label and return
+HTTP 200, but the deterministic `Core3 Vietnam` employee is hidden from the
+authenticated `Core3 Demo Company` session. Authenticated Odoo desktop/mobile
+reach Abigail Peterson's Personal tab, but that source employee has no
+birthday, so Odoo correctly hides the conditional checkbox. Evidence is under
+`evidence/employees/2026-09-21/EMP-BIRTHDAY-VISIBILITY-001/`. This is
+conditional feature evidence, not aggregate Employees sign-off.

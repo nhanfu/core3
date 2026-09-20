@@ -332,3 +332,17 @@ Focused test: `test/employees_private_location.integration.test.ts` (4 tests,
 Focused test: `test/employees_private_contact.integration.test.ts` (4 tests,
 18 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-PRIVATE-CONTACT-001/`.
+
+## EMP-BIRTHDAY-VISIBILITY-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo birthday visibility field/computed public value map to separate detail and directory contracts | pass |
+| Employee CRUD | Create and edit birthday plus visibility durably | pass |
+| Permission and scope | Employees write, current company, and stale row-version guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic fixtures | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Personal desktop/mobile captures | conditional; Core3 fixture-company mismatch and Odoo no-birthday reference state recorded |
+
+Focused test: `test/employees_birthday_visibility.integration.test.ts` (4
+tests, 22 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-BIRTHDAY-VISIBILITY-001/`.

@@ -30,6 +30,7 @@ components:
             - { field: department_name, label: Department }
             - { field: work_email, label: Work Email }
             - { field: work_phone, label: Work Phone }
+            - { field: birthday_public_display_string, label: Birthday }
       - id: list
         label: List
         icon: table
@@ -45,6 +46,7 @@ components:
             - { field: department_name, label: Department }
             - { field: work_email, label: Work Email }
             - { field: work_phone, label: Work Phone }
+            - { field: birthday_public_display_string, label: Birthday }
     columns:
       - { field: image_url, label: Avatar, type: Image }
       - { field: name, label: Name, type: PrimaryEntityCell }

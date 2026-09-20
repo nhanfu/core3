@@ -1,0 +1,23 @@
+version: 0.0.46
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS birthday_public_display BOOLEAN;
+      UPDATE employees
+      SET birthday = COALESCE(birthday, CASE id
+        WHEN 'employee-demo-001' THEN DATE '1990-05-20'
+        WHEN 'employee-demo-002' THEN DATE '1992-09-18'
+        WHEN 'employee-demo-003' THEN DATE '1995-11-03'
+        ELSE NULL END),
+          birthday_public_display = COALESCE(birthday_public_display, CASE id
+        WHEN 'employee-demo-001' THEN true
+        WHEN 'employee-demo-002' THEN false
+        WHEN 'employee-demo-003' THEN true
+        ELSE false END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS birthday_public_display;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
