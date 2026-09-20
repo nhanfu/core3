@@ -1208,3 +1208,30 @@ comparison. Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 transfer Scrap lifecycle and
 guards; PARTIAL/BLOCKED for live Odoo visual/mutation comparison when the
 authenticated route is unavailable. Full Inventory sign-off remains open.
+
+## Inventory Revert Adjustment QA — `INV-MOVE-REVERT-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/stock_move_line_views.xml:215-221` and
+  `addons/stock/models/stock_move_line.py:1181-1218`. The bound server action
+  is `action_revert_inventory_adjustment` on `stock.move.line` and calls
+  `action_revert_inventory()`.
+- Core3 contract: PASS. `pages/move-line-detail.yaml` owns the manager-only
+  header action and reversal history list; `api/move-line-detail.yaml` owns
+  the action/datasource, joined by `page.id: move-line-detail`. Migration 0.0.54
+  persists reversal history and reverse move lines.
+- Focused test: `bun test
+  test/inventory_move_revert.integration.test.ts` — PASS, 4 tests / 24
+  assertions. Coverage includes contract separation, reverse move CRUD,
+  company/actor/adjustment/stale/duplicate guards, write permission,
+  migration replay, and file-backed restart persistence.
+- Core3 browser evidence: authenticated desktop 1440x900 and mobile 390x844
+  move-line detail captures, source responses, page-error and overflow checks
+  are under `evidence/inventory/2026-09-21/INV-MOVE-REVERT-001/`.
+- Odoo comparison: source/menu/action comparison is PASS. The paired live
+  result records the exact authenticated route or login blocker; no Odoo
+  mutation is claimed when the route is unavailable.
+
+QA disposition: PASS for the bounded Core3 reversal lifecycle and guards;
+PARTIAL/BLOCKED for unavailable live Odoo visual/mutation comparison. Full
+Inventory sign-off remains open.

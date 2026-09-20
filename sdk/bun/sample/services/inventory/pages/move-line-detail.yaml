@@ -10,6 +10,7 @@ components:
     labels: { workflowStatus: Status }
     header_actions:
       - { id: back_to_inventory_move_history, label: Back to Moves History, variant: secondary, permission: inventory.read }
+      - { id: revert_inventory_adjustment, label: Revert Inventory Adjustment, variant: secondary, permission: inventory.manage, show_if: "state.inventory_move_line_detail.is_inventory_adjustment === true && state.inventory_move_line_detail.revert_count === 0" }
     statusbar: [{ value: Draft, label: Draft }, { value: Waiting, label: Waiting }, { value: Assigned, label: Assigned }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
     status_colors: { Draft: neutral, Waiting: amber, Assigned: blue, Done: green, Cancelled: red }
     group_columns: 2
@@ -31,3 +32,17 @@ components:
           - { field: result_package, label: Destination Package }
           - { field: done_by, label: Done By }
           - { field: company_name, label: Company }
+          - { field: is_inventory_adjustment, label: Inventory Adjustment }
+  - type: ListView
+    source: inventory_move_revert_runs
+    variant: odoo
+    columns:
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_name, label: Unit }
+      - { field: requested_by, label: Reverted by }
+      - { field: created_at, label: Created at }
+    page_size: 10
+    row_key: id
+    selectable: false
+    empty_state: { title: No reversals, description: Reverted inventory adjustments will appear here. }

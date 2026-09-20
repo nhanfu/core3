@@ -1,0 +1,21 @@
+{
+  "feature": "INV-MOVE-REVERT-001",
+  "odoo": {
+    "source": "addons/stock/views/stock_move_line_views.xml:215-221",
+    "server_action": "action_revert_inventory_adjustment",
+    "model": "stock.move.line",
+    "code": "action = records.action_revert_inventory()",
+    "implementation": "addons/stock/models/stock_move_line.py:1181-1218",
+    "semantics": "For non-zero inventory adjustments, create a completed reverse move with swapped locations, preserved quantity/tracking, and a reference suffixed [reverted]."
+  },
+  "core3": {
+    "page": "services/inventory/pages/move-line-detail.yaml",
+    "api": "services/inventory/api/move-line-detail.yaml",
+    "page_id": "move-line-detail",
+    "action_id": "revert_inventory_adjustment",
+    "migration": "services/inventory/migrations/20260922040000-054-inventory-move-revert.yaml",
+    "persistence": "inventory_move_revert_runs plus a reverse inventory_move_lines row",
+    "guards": ["inventory.manage", "current company", "signed-in actor", "completed Inventory adjustment origin", "expected row version", "one reversal per source move"]
+  },
+  "scope": "Bounded Moves History reversal action; the existing report list/detail remains read-only otherwise."
+}

@@ -914,3 +914,21 @@ Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-TRANSFER-SCRAP-001/`. Scoped audit,
   lint, and diff-check results are recorded with the evidence. Full Inventory
   sign-off remains open.
+
+## `INV-MOVE-REVERT-001` — Revert Inventory Adjustment (2026-09-21)
+
+- Selected the next uncovered source-backed behavior after transfer Scrap:
+  Odoo's `action_revert_inventory_adjustment` server action on Moves History
+  move lines, which calls `action_revert_inventory()`. This extends the
+  existing report without duplicating its list/detail lifecycle.
+- Added migration `20260922040000-054-inventory-move-revert.yaml`, durable
+  reversal history, and separate move-line detail page/API contracts joined by
+  `page.id`. The manager-only action creates a completed reverse move with
+  swapped locations and an `[reverted]` reference.
+- Guards require `inventory.manage`, current company, signed-in actor, a
+  current completed inventory adjustment, positive quantity, and no prior
+  reversal; source row versions and restart persistence are covered.
+- Focused verification: 4 tests / 24 assertions pass. Authenticated Core3
+  desktop/mobile evidence and the exact Odoo live blocker are under
+  `evidence/inventory/2026-09-21/INV-MOVE-REVERT-001/`. Full Inventory
+  sign-off remains open.

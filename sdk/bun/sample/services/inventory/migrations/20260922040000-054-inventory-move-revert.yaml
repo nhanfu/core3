@@ -1,0 +1,19 @@
+version: 0.0.54
+description: Inventory adjustment move reversal history and deterministic fixture
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_move_revert_runs (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        source_move_line_id VARCHAR NOT NULL, reversal_move_line_id VARCHAR NOT NULL UNIQUE,
+        company_name VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL, unit_name VARCHAR NOT NULL,
+        requested_by VARCHAR NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 15:00:00'
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_move_revert_source ON inventory_move_revert_runs(source_move_line_id, created_at);
+    down: |
+      DROP TABLE IF EXISTS inventory_move_revert_runs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

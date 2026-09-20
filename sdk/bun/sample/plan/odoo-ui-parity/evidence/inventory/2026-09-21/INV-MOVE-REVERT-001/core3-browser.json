@@ -1,0 +1,65 @@
+{
+  "feature": "INV-MOVE-REVERT-001",
+  "generated_at": "2026-09-20T23:36:11.790Z",
+  "authenticated": true,
+  "results": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:4333/inventory/moves/detail?id=move-line-0001",
+      "title": "Move Line",
+      "body_excerpt": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\nInventory\n›\nReporting\n›\nMoves History\n›\nMove Line\nBack to Moves History\nRevert Inventory Adjustment\nDraft\nWaiting\nAssigned\nDone\nCancelled\nProduct Quantity Updated\n\nCustomizable Desk (Black)\n\nMove Line\nDate\n2026-01-15 08:00:00\nReference\nProduct Quantity Updated\nSource\nInventory adjustment\nProduct\nCustomizable Desk (Black)\nFrom\nInventory Loss\nTo\nStock\nQuantity and tracking\nQuantity\n70\nUnit\nUnits\nLot/Serial Number\n—\nSource Package\n—\nDestination Package\n—\nDone By\nMitchell Admin\nCompany\nMy Company (San Francisco)\nInventory Adjustment\ntrue\nSupply Chain / Inventory / Reporting / Moves History / Move Line\n0-0 / 0\n‹\n›\nProduct\n\tQuantity\n\tUnit\n\tReverted by\n\tCreated at\n\n\nNo reversals\n\nReverted inventory adjustments will appear here.",
+      "has_action": true,
+      "has_history": true,
+      "overflow": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflow": false
+      },
+      "errors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:4333/api/modules",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4333/api/pages/move-line-detail?lc=en&id=move-line-0001",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:4333/inventory/moves/detail?id=move-line-0001",
+      "title": "Move Line",
+      "body_excerpt": "AU\nBack to Moves History\nRevert Inventory Adjustment\nDraft\nWaiting\nAssigned\nDone\nCancelled\nProduct Quantity Updated\n\nCustomizable Desk (Black)\n\nMove Line\nDate\n2026-01-15 08:00:00\nReference\nProduct Quantity Updated\nSource\nInventory adjustment\nProduct\nCustomizable Desk (Black)\nFrom\nInventory Loss\nTo\nStock\nQuantity and tracking\nQuantity\n70\nUnit\nUnits\nLot/Serial Number\n—\nSource Package\n—\nDestination Package\n—\nDone By\nMitchell Admin\nCompany\nMy Company (San Francisco)\nInventory Adjustment\ntrue\nMove Line\n0-0 / 0\n‹\n›\nProduct\n\tQuantity\n\tUnit\n\tReverted by\n\tCreated at\n\n\nNo reversals\n\nReverted inventory adjustments will appear here.",
+      "has_action": true,
+      "has_history": true,
+      "overflow": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": false
+      },
+      "errors": [],
+      "failed": [],
+      "responses": [
+        {
+          "url": "http://127.0.0.1:4333/api/modules",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4333/api/pages/move-line-detail?lc=en&id=move-line-0001",
+          "status": 200
+        }
+      ]
+    }
+  ]
+}

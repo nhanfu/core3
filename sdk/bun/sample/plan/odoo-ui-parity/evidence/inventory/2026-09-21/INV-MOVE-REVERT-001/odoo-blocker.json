@@ -1,0 +1,9 @@
+{
+  "feature": "INV-MOVE-REVERT-001",
+  "probe_url": "http://127.0.0.1:8069/web",
+  "http_status": 303,
+  "location": "/web/login?redirect=%2Fweb%3F",
+  "blocker": "The reachable Odoo instance redirected to /web/login and no authenticated Odoo session was supplied; Moves History move-line detail and Revert Inventory Adjustment mutation evidence could not be captured.",
+  "source_comparison": "PASS: action_revert_inventory_adjustment and action_revert_inventory() were inspected from the cited Odoo XML/Python sources.",
+  "mutation_attempted": false
+}

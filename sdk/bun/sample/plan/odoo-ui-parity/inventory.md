@@ -1774,6 +1774,31 @@ desktop/mobile list/detail evidence is under
 comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
+
+## Reporting > Revert Inventory Adjustment — `INV-MOVE-REVERT-001` (2026-09-21)
+
+This bounded Wave 17 slice covers the previously unimplemented Odoo server
+action `action_revert_inventory_adjustment`, bound to `stock.move.line` in
+`addons/stock/views/stock_move_line_views.xml:215-221`. Its code invokes
+`records.action_revert_inventory()`; the implementation at
+`addons/stock/models/stock_move_line.py:1181-1218` creates a done reverse move
+with swapped source/destination locations and an `[reverted]` reference.
+
+Core3 keeps the existing Moves History report read-only except for this
+manager-only inventory-adjustment action. The paired
+`pages/move-line-detail.yaml` and `api/move-line-detail.yaml` contracts share
+`page.id: move-line-detail`; the API adds the guarded action and reversal
+history datasource. Migration
+`20260922040000-054-inventory-move-revert.yaml` persists
+`inventory_move_revert_runs`, while the action creates a durable reverse move
+line, records actor/company/quantity history, and advances the source row
+version. Only completed rows with `origin = 'Inventory adjustment'` can be
+reverted once.
+
+Focused verification, authenticated Core3 desktop/mobile detail evidence, and
+the paired Odoo source/login result are recorded under
+`evidence/inventory/2026-09-21/INV-MOVE-REVERT-001/`. Full Inventory sign-off
+remains open.
 ## Products > Products — `INV-PRODUCT-TEMPLATES-001` (2026-09-21)
 
 This bounded Wave 15 slice covers the previously uncovered root Products action.

@@ -9,14 +9,46 @@ datasources:
         m.product_name, m.lot_serial_number, m.source_package, m.result_package,
         sl.name AS source_location, dl.name AS destination_location,
         CAST(m.quantity AS DOUBLE) AS quantity, m.unit_name, m.state, m.done_by,
-        m.origin, m.company_name
+        m.origin, m.company_name,
+        (m.origin = 'Inventory adjustment' AND m.state = 'Done') AS is_inventory_adjustment,
+        (SELECT COUNT(*) FROM inventory_move_revert_runs r WHERE r.source_move_line_id = m.id) AS revert_count
       FROM inventory_move_lines m
       LEFT JOIN inventory_locations sl ON sl.id = m.source_location_id
       LEFT JOIN inventory_locations dl ON dl.id = m.destination_location_id
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
         AND m.id = :id
+  - id: inventory_move_revert_runs
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_MOVE_REVERT_HISTORY_UNAVAILABLE, message: Reverted inventory history is temporarily unavailable. } }
+    query: "SELECT r.id, r.source_move_line_id, r.reversal_move_line_id, r.company_name, r.product_name, CAST(r.quantity AS DOUBLE) AS quantity, r.unit_name, r.requested_by, CAST(r.created_at AS VARCHAR) AS created_at, r.row_version FROM inventory_move_revert_runs r JOIN inventory_move_lines m ON m.id = r.source_move_line_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND r.source_move_line_id = :id AND (COALESCE(:current_company_name, '') = '' OR r.company_name = :current_company_name) ORDER BY r.created_at DESC, r.id DESC"
 actions:
   - id: back_to_inventory_move_history
     type: navigate
     permission: inventory.read
     navigate_to: /moves
+  - id: revert_inventory_adjustment
+    type: server
+    permission: inventory.manage
+    action: action_revert_inventory_adjustment
+    handler: yaml_mutation
+    operation: revert_inventory_adjustment
+    params: { id: '{state.inventory_move_line_detail.id}', expected_row_version: '{state.inventory_move_line_detail.row_version}' }
+    refresh: [inventory_move_line_detail, inventory_move_revert_runs]
+    mutation:
+      generated: [run_id, reversal_move_line_id]
+      concurrency: { required: true }
+      before_steps:
+        - assign: true
+          query: "SELECT 'inventory-revert-run-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS run_id, 'inventory-revert-line-' || :id || '-' || CAST(COUNT(*) + 1 AS VARCHAR) AS reversal_move_line_id FROM inventory_move_revert_runs WHERE source_move_line_id = :id"
+      guards:
+        - { query: "SELECT id FROM inventory_move_lines WHERE id = :id", status: 404, code: INVENTORY_MOVE_LINE_NOT_FOUND, message: Move line not found. }
+        - { query: "SELECT id FROM inventory_move_lines WHERE id = :id AND company_name = :current_company_name", status: 403, code: INVENTORY_MOVE_LINE_COMPANY_SCOPE_REQUIRED, message: Move line is outside the current company scope. }
+        - { query: "SELECT id FROM inventory_move_lines WHERE id = :id AND state = 'Done' AND origin = 'Inventory adjustment' AND row_version = :expected_row_version", status: 409, code: INVENTORY_MOVE_REVERT_NOT_ALLOWED, message: Only a current completed inventory adjustment can be reverted. }
+        - { query: "SELECT id FROM inventory_move_lines WHERE id = :id AND length(trim(COALESCE(:current_user_name, ''))) > 0", status: 403, code: INVENTORY_MOVE_REVERT_ACTOR_REQUIRED, message: A signed-in inventory manager is required to revert an adjustment. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_move_revert_runs WHERE source_move_line_id = :id)", status: 409, code: INVENTORY_MOVE_ALREADY_REVERTED, message: This inventory adjustment has already been reverted. }
+      steps:
+        - { query: "INSERT INTO inventory_move_lines(id, date, reference, product_id, product_name, product_category_name, lot_serial_number, source_package, result_package, source_location_id, destination_location_id, picking_partner_name, company_name, quantity, quantity_product_uom, unit_name, state, done_by, origin, movement_type, created_at) SELECT :reversal_move_line_id, TIMESTAMP '2026-01-15 15:00:00', m.reference || ' [reverted]', m.product_id, m.product_name, m.product_category_name, m.lot_serial_number, m.result_package, m.source_package, m.destination_location_id, m.source_location_id, m.picking_partner_name, m.company_name, m.quantity, m.quantity_product_uom, m.unit_name, 'Done', :current_user_name, 'Reversal of ' || m.reference, 'internal', TIMESTAMP '2026-01-15 15:00:00' FROM inventory_move_lines m WHERE m.id = :id AND m.row_version = :expected_row_version" }
+        - { query: "INSERT INTO inventory_move_revert_runs(id, source_move_line_id, reversal_move_line_id, company_name, product_name, quantity, unit_name, requested_by) SELECT :run_id, m.id, :reversal_move_line_id, m.company_name, m.product_name, m.quantity, m.unit_name, :current_user_name FROM inventory_move_lines m WHERE m.id = :id AND m.row_version = :expected_row_version" }
+        - { query: "UPDATE inventory_move_lines SET row_version = row_version + 1 WHERE id = :id AND company_name = :current_company_name AND row_version = :expected_row_version", expect_changed: true, status: 409, code: STALE_RECORD, message: The inventory adjustment changed before it could be reverted. }
+      result: { query: "SELECT id, source_move_line_id, reversal_move_line_id, company_name, product_name, quantity, unit_name, requested_by, row_version FROM inventory_move_revert_runs WHERE id = :run_id" }
