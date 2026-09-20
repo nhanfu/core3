@@ -4,7 +4,7 @@ Module owner: sale-subscription module owner
 QA assignment: module-owner verification in the current five-worker wave
 Status: Core3 slice verified; Odoo parity blocked
 Verification trigger: authenticated actor and responsive route QA; Odoo addon availability remains a separate gate
-Candidate commit: 56f07523
+Evidence commits: 56f07523 (implementation and route/actor evidence), 0027f1aa (QA evidence pin), 2e07002b (complete direct-action permission audit)
 
 ## Current state
 
@@ -45,7 +45,9 @@ with three authenticated permission sets. A read-capable actor can load the
 Subscriptions page; a reader cannot activate a subscription; a writer cannot
 create a plan; a manager can create a plan; and a writer can activate the
 deterministic quotation, advancing its row version and creating one activation
-invoice. The focused result was `1 pass`, `9 expect() calls`, `0 fail`.
+invoice. The focused result was `1 pass`, `33 expect() calls`, `0 fail`; the
+follow-up audits all 10 discovered direct mutation actions and denies them to
+the read-only actor before mutation.
 
 The live Core3 gateway was also checked with authenticated local QA accounts:
 the admin page request returned `200`, the dispatcher direct lifecycle request

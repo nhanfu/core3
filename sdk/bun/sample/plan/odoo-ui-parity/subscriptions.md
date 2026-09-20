@@ -158,7 +158,7 @@ the lifecycle mutations.
 | SS-CONTRACT-003 | No live view XML available | `pages/subscription-invoices.yaml` is layout-only; `api/subscription-invoices.yaml` owns backend behavior | implemented in `762d127d` | Isolated schema validation passed |
 | SS-DATA-001 | Odoo data cannot be seeded from the missing addon | migrations `001`–`003` provide deterministic Core3 rows | verified Core3 slice | Idempotent migration and row-count assertions passed |
 | SS-LIFECYCLE-001 | Odoo lifecycle cannot be observed | workflow transitions now guard state and `row_version`; activation creates one invoice | verified Core3 slice | Create/edit/confirm/pause/close, forbidden churn, generate, and post assertions passed |
-| SS-PERM-001 | Odoo groups are unavailable | `subscriptions.read/write/manage` are declared; focused authenticated actor test and live gateway checks enforce direct plan/lifecycle boundaries | verified Core3 slice | Keep paired Odoo group parity blocked until the addon is available |
+| SS-PERM-001 | Odoo groups are unavailable | `subscriptions.read/write/manage` are declared; `2e07002b` audits all 10 direct mutation actions and the live gateway checks enforce direct plan/lifecycle boundaries | verified Core3 slice | Keep paired Odoo group parity blocked until the addon is available |
 | SS-VISUAL-001 | No paired Odoo desktop/mobile screen exists | Core3 authenticated route evidence passes at 1440x900 and 390x844; captures are outside Git | blocked external dependency | Keep paired visual parity pending; treat Core3 captures as implementation evidence only |
 
 This inventory is the boundary for the current wave: the contract and
