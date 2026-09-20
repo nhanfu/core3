@@ -14,6 +14,20 @@ Module owner: employees module owner
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-LAUNCH-PLAN-001 evidence ledger (2026-09-20)
+
+| Surface | Result | Evidence |
+| --- | --- | --- |
+| YAML/API separation and source mapping | pass | `employees_launch_plan.integration.test.ts` |
+| Durable expansion, restart, stale/company/actor guards | pass | focused 4 tests / 33 assertions; full Employees 71 / 791 |
+| Core3 authenticated desktop/mobile detail and modal | pass with fixture blocker | `evidence/employees/2026-09-20/EMP-LAUNCH-PLAN-001/core3-*.png` |
+| Odoo authenticated desktop employee/detail/modal | pass | `evidence/employees/2026-09-20/EMP-LAUNCH-PLAN-001/odoo-desktop-*.png` |
+| Odoo authenticated mobile employee/detail | pass; action hidden at narrow viewport | `evidence/employees/2026-09-20/EMP-LAUNCH-PLAN-001/odoo-mobile-employee.png` |
+
+The Core3 browser selector is empty under the authenticated `Core3 Vietnam
+Branch` context because the supplied employee fixtures use `Core3 Vietnam`.
+This is recorded as a precise evidence blocker, not a sign-off claim.
+
 ## Current regression evidence
 
 - Repository suite: `bun test ./test --timeout 20000` — 1,045 passed, 0 failed.

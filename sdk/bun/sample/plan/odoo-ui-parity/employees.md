@@ -1,5 +1,30 @@
 # Employees UI parity
 
+## EMP-LAUNCH-PLAN-001: Launch Plan bounded workflow (2026-09-20)
+
+Odoo source comparison selected the unfinished employee-form
+`plan_wizard_action`: `hr_employee_views.xml` exposes `Launch Plan` for
+`hr.group_hr_user`, opening `mail.activity.schedule` in `plan_mode` with
+`active_model: hr.employee`; the wizard expands ordered activity-plan
+templates into dated activities and has no standalone Employees menu.
+
+Core3 implements this with separate YAML page/API contracts. The API provides
+the employee wizard and company/department-eligible plan datasource, while
+the page binds the permission-gated header action. Migration
+`20260920180000-029` persists plan/responsible provenance. The atomic
+mutation requires row version, company/actor scope, and active state; rejects
+duplicate, ineligible, invalid-date, and empty-plan requests; and creates
+deterministic ordered activity IDs/dates.
+
+Focused coverage includes source mapping, plan selection, durable expansion,
+stale/company/inactive/duplicate/invalid/empty guards, migration replay, and
+file-backed restart. Authenticated Core3 desktop/mobile and paired Odoo
+captures are under
+`plan/odoo-ui-parity/evidence/employees/2026-09-20/EMP-LAUNCH-PLAN-001/`.
+Evidence records the `Core3 Vietnam Branch` versus `Core3 Vietnam` fixture
+name mismatch and narrow Odoo action visibility; this is bounded evidence,
+not full Employees sign-off.
+
 Status: ready
 
 ## Reference gate

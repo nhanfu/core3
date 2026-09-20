@@ -3,6 +3,20 @@
 Module owner: employees module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
+
+## EMP-LAUNCH-PLAN-001 (2026-09-20)
+
+- Selected gap: Odoo employee-form `plan_wizard_action` / Launch Plan.
+- Implemented page/API-separated wizard and eligible-plan datasource, durable
+  plan/responsible provenance migration, atomic ordered activity expansion, and
+  row-version/company/actor guards.
+- Verification: focused `4 passed / 33 assertions`; full Employees
+  `71 passed / 791 assertions`; YAML parse, scoped ESLint, diff-check, and
+  audit `669 pages / 678 routes / 1,203 datasources` passed.
+- Authenticated Core3 desktop/mobile and paired Odoo captures are under
+  `evidence/employees/2026-09-20/EMP-LAUNCH-PLAN-001/`; the evidence records
+  the current company fixture-name mismatch and narrow Odoo action visibility.
+  Module status remains conditional pending broader parity review.
 Verification trigger: feature-complete
 Candidate commit: current working tree
 

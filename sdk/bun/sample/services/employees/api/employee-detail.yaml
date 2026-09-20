@@ -36,6 +36,30 @@ datasources:
       FROM employees e
       WHERE e.id = :id
         AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+  - id: employee_launch_plan_wizard
+    single: true
+    permission: employees.read
+    error_states:
+      missing_record: { status: 404, code: EMPLOYEES_PLAN_EMPLOYEE_NOT_FOUND, message: Active employee not found for plan launch. }
+      transport_error: { status: 503, code: EMPLOYEES_PLAN_WIZARD_UNAVAILABLE, message: Launch Plan is temporarily unavailable. }
+    query: |
+      SELECT e.id, e.row_version, e.name AS employee_name, e.job_title, e.department_name, e.company_name,
+        'hr.employee' AS res_model, '2026-01-15' AS plan_date
+      FROM employees e
+      WHERE e.id = :id AND e.active = true
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+  - id: employee_launch_plans
+    single: false
+    permission: employees.write
+    query: |
+      SELECT p.id AS value, p.name AS label
+      FROM employee_activity_plans p
+      JOIN employees e ON e.id = :employee_id
+      WHERE p.active = true AND p.res_model = 'hr.employee'
+        AND (p.company_name IS NULL OR p.company_name = e.company_name)
+        AND (p.department_name IS NULL OR p.department_name = e.department_name)
+        AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+      ORDER BY p.name, p.id
 actions:
   - id: open_employee_timesheets
     type: navigate
@@ -84,6 +108,56 @@ actions:
       - { field: name, label: Name, type: text, required: true }
       - { field: login, label: Login, type: text, required: true }
       - { field: phone, label: Phone, type: text }
+  - id: launch_employee_plan
+    type: server_form
+    permission: employees.write
+    title: Launch Plan
+    description: Schedule the selected employee activity plan using its ordered templates.
+    action: employees.records.launch_plan
+    handler: yaml_mutation
+    operation: launch_plan
+    params: { employee_id: '{state.id}' }
+    prefill: state.employee_launch_plan_wizard
+    refresh: [employee_detail, employee_activities]
+    mutation:
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 404, code: EMPLOYEES_PLAN_EMPLOYEE_NOT_FOUND, message: Active employee not found for plan launch. }
+        - { query: "SELECT id FROM employees WHERE id = :id AND active = true AND row_version = :expected_row_version AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 409, code: STALE_RECORD, message: The employee changed before Launch Plan. Reload the employee and try again. }
+        - { query: "SELECT p.id FROM employee_activity_plans p JOIN employees e ON e.id = :id WHERE p.id = :plan_id AND p.active = true AND p.res_model = 'hr.employee' AND (p.company_name IS NULL OR p.company_name = e.company_name) AND (p.department_name IS NULL OR p.department_name = e.department_name) AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)", status: 422, code: EMPLOYEES_PLAN_NOT_ELIGIBLE, message: Select an active plan available to this employee. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM employee_activities WHERE employee_id = :id AND plan_id = :plan_id)", status: 409, code: EMPLOYEES_PLAN_ALREADY_LAUNCHED, message: This plan has already been launched for the employee. }
+        - { query: "SELECT 1 AS ok WHERE regexp_matches(CAST(:plan_date AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_PLAN_DATE_INVALID, message: Plan date must use YYYY-MM-DD. }
+        - { query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM employee_activity_plan_steps WHERE plan_id = :plan_id)", status: 422, code: EMPLOYEES_PLAN_EMPTY, message: The selected plan has no activities to launch. }
+      steps:
+        - query: |
+            INSERT INTO employee_activities(
+              id, row_version, employee_id, employee_name, job_title, activity_type, activity_summary,
+              activity_date, activity_user, activity_state, activity_count, timing, is_primary,
+              plan_id, plan_name, responsible_type
+            )
+            SELECT
+              'employee-plan-activity-' || CAST(e.id AS VARCHAR) || '-' || CAST(p.id AS VARCHAR) || '-' || CAST(s.sequence AS VARCHAR),
+              1, e.id, e.name, e.job_title, s.activity_type, s.summary,
+              CAST(CAST(:plan_date AS DATE) + s.delay_count * INTERVAL '1 day' AS DATE),
+              CASE s.responsible_type
+                WHEN 'Employee' THEN e.name
+                WHEN 'Manager' THEN COALESCE(NULLIF(e.manager_name, ''), 'HR Manager')
+                WHEN 'HR Responsible' THEN 'HR Manager'
+                ELSE COALESCE(NULLIF(CAST(:current_user_name AS VARCHAR), ''), 'HR Manager')
+              END,
+              'planned', 1,
+              CASE WHEN s.delay_count = 0 THEN 'Today' ELSE 'Planned' END,
+              false, p.id, p.name, s.responsible_type
+            FROM employee_activity_plan_steps s
+            JOIN employee_activity_plans p ON p.id = s.plan_id
+            JOIN employees e ON e.id = :id
+            WHERE s.plan_id = :plan_id AND e.active = true
+              AND (COALESCE(:current_company_name, '') = '' OR e.company_name = :current_company_name)
+            ORDER BY s.sequence, s.id
+      result: { query: "SELECT * FROM employee_activities WHERE employee_id = :id AND plan_id = :plan_id ORDER BY activity_date, id" }
+    fields:
+      - { field: plan_id, label: Activity Plan, type: select, options_source: employee_launch_plans, required: true }
+      - { field: plan_date, label: Plan Date, type: text, required: true, placeholder: YYYY-MM-DD }
   - id: edit_employee
     type: server_form
     permission: employees.write

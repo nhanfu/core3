@@ -1,0 +1,19 @@
+version: 0.0.29
+kind: data
+description: Persist employee Launch Plan activity provenance and responsible labels
+type:
+  postgres:
+    up: |
+      ALTER TABLE employee_activities ADD COLUMN IF NOT EXISTS plan_id VARCHAR;
+      ALTER TABLE employee_activities ADD COLUMN IF NOT EXISTS plan_name VARCHAR;
+      ALTER TABLE employee_activities ADD COLUMN IF NOT EXISTS responsible_type VARCHAR;
+      CREATE INDEX IF NOT EXISTS employee_activities_plan_idx ON employee_activities(employee_id, plan_id);
+    down: |
+      DROP INDEX IF EXISTS employee_activities_plan_idx;
+      ALTER TABLE employee_activities DROP COLUMN IF EXISTS responsible_type;
+      ALTER TABLE employee_activities DROP COLUMN IF EXISTS plan_name;
+      ALTER TABLE employee_activities DROP COLUMN IF EXISTS plan_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

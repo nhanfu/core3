@@ -78,3 +78,14 @@ versions.
   persistence, responsive and visual cases.
 - Full sign-off requires paired Odoo comparison, actor mutation probes, and
   restart persistence in addition to the route matrix.
+
+## EMP-LAUNCH-PLAN-001 execution (2026-09-20)
+
+| Case | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-008 | Employee detail Launch Plan action, ordered expansion, retry | pass; 4 focused tests / 33 assertions |
+| EMP-PERM-009 | employees.write, row-version, active/company/eligible-plan guards | pass |
+| EMP-UI-005 | Authenticated Core3/Odoo desktop and mobile captures | captured; company fixture mismatch and narrow Odoo action visibility recorded as blockers |
+
+The route matrix is enumerated in
+`evidence/employees/2026-09-20/EMP-LAUNCH-PLAN-001/route-matrix.json`.
