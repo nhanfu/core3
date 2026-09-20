@@ -1086,3 +1086,30 @@ Authenticated Odoo `/odoo/timesheets-by-project` shows aggregate report data at
 both viewports but no loaded row-to-project-timesheet action/form; that exact
 paired interaction blocker remains open. This bounded slice does not claim
 Timesheets module sign-off.
+
+## By Task report drilldown — `TIMESHEET-REPORT-TASK-DRILLDOWN`
+
+Odoo's `timesheets_analysis_report_form` exposes project and task relation
+context for the `timesheets.analysis.report` model in
+`addons/hr_timesheet/report/hr_timesheet_report_view.xml:23-46`; the By Task
+window action is `timesheet_action_report_by_task` at lines 218-254. Core3's By
+Task report previously rendered aggregate rows without a concrete row context
+action.
+
+Core3 now keeps page/API separation and returns durable `project_id` and
+`task_id` relation fields from the company-scoped report source. The
+manager-only `view_task_report_entry` action is owned by the API and referenced
+by the page's row-open and double-click bindings. It navigates to the existing
+`/task-timesheets?task_id=...` durable context and renders the persisted task
+timesheet line; migration replay and restart preserve the context. Empty and
+wrong-company reads fail closed, and no moving/generated fixture values are
+used.
+
+Focused coverage is
+`test/timesheets_task_report_drilldown.integration.test.ts` (4 tests / 16
+expectations). Authenticated Core3 desktop/mobile evidence is recorded at
+`evidence/timesheets/2026-09-20/timesheet-task-report-drilldown/`.
+Authenticated Odoo `/odoo/timesheets-by-task` shows aggregate report data at
+both viewports but no loaded row-to-task-timesheet action/form; that exact
+paired interaction blocker remains open. This bounded slice does not claim
+Timesheets module sign-off.
