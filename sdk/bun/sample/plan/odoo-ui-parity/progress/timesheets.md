@@ -567,3 +567,29 @@ Timesheets tab's 04:00 spent / 06:00 remaining values. Odoo uses a different
 seeded task and native time encoding, so this is a field-level comparison.
 Existing module Print/PDF/action blockers remain documented; no sign-off is
 claimed.
+## 2026-09-21 `TIMESHEET-UOM-ENCODING-001`
+
+Selected the next uncovered source-backed Timesheets behavior: company-level
+Hours/Minutes versus Days/Half-Days encoding. This does not repeat portal
+filters/sorting, company scope, analysis views, report drilldowns, or task
+progress.
+
+`api/entries.yaml` now derives the visible `time_spent_display` from the
+active company's durable `timesheet_settings` row and returns
+`time_encoding_method`; the existing layout-only `pages/entries.yaml` remains
+joined by `page.id: timesheets`. Migration
+`20260921110000-016-timesheets-uom-company.yaml` forward-aligns the historical
+settings row to `Core3 Demo Company` with a fixed timestamp, preserving
+replay-safe upgrades for existing databases.
+
+Focused UoM verification passes 4/4 tests with 24 expectations; the combined
+UoM/settings/My Timesheets run passes 10/10 tests with 67 expectations. The full suite passed 132/132 tests with 864 expectations before
+the shared checkout's unrelated Inventory/other-owner discovery edits became
+visible. The UoM tests cover permissions, company filtering, hours/day output,
+stale settings, replay, and restart persistence.
+
+Authenticated Odoo desktop/mobile captures are under
+`evidence/timesheets/2026-09-21/timesheet-uom-encoding/`. Odoo's desktop list
+shows HH:MM and mobile shows compact h cards. Core3 evidence is blocked by the
+exact unrelated Inventory discovery/schema errors recorded in `results.json`;
+no other module was repaired or staged. No sign-off is claimed.

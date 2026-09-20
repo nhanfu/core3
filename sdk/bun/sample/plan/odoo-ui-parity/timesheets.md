@@ -1366,3 +1366,36 @@ different seeded task and its native time widget, so the comparison is
 field-level rather than a fixture-identical screenshot claim. Existing Odoo
 Print/PDF/action surfaces remain blockers elsewhere in the module; no
 Timesheets sign-off is claimed.
+## Sixth-wave UoM encoding slice — `TIMESHEET-UOM-ENCODING-001` (2026-09-21)
+
+The next genuinely uncovered source behavior after the portal, analysis,
+all-company, report, and task-progress slices was Odoo's company-specific
+Timesheet encoding. `hr_timesheet` exposes `Hours / Minutes` versus
+`Days / Half-Days` in `res.config.settings`, stores the selected UoM on the
+company, and formats `unit_amount` through the `timesheet_uom` widget and the
+calendar display helper.
+
+Core3 keeps the existing layout-only `/timesheets` page joined to
+`api/entries.yaml` by `page.id: timesheets`. The durable entry datasource now
+joins the active company's persisted `timesheet_settings` row and renders
+`time_spent_display` as `HH:MM` in hours mode or deterministic day values in
+days mode, while retaining raw hours and exposing `time_encoding_method`. A
+forward migration aligns the existing settings row to `Core3 Demo Company`
+without rewriting the historical seed migration. The existing settings
+permission and optimistic row-version mutation remain the source of truth for
+changing the mode.
+
+Focused coverage is `test/timesheets_uom_encoding.integration.test.ts`:
+4 tests / 24 expectations, with settings and My Timesheets regression tests
+included in the 10-test / 67-expectation focused run. It covers source
+comparison, page/API separation, read/settings permissions, active-company
+filtering, hours/day rendering, stale settings rejection, deterministic
+migration replay, and file-backed restart persistence.
+
+Authenticated Odoo desktop/mobile evidence is in
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-21/timesheet-uom-encoding/`.
+Odoo renders `HH:MM` on desktop and compact `h` values on mobile. Core3
+authenticated capture is blocked by unrelated shared Inventory discovery
+errors (`view_inventory_route_rules` unknown action; invalid `title` and
+`variant` on a ListView); no Inventory files were changed. Existing Odoo
+Print/PDF/action blockers remain open and no module sign-off is claimed.

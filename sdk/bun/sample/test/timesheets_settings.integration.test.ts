@@ -35,7 +35,7 @@ describe('Timesheets settings parity slice', () => {
     const initial = await repository.querySource(source, {}, 0, 1);
     expect(initial.data).toEqual(expect.objectContaining({
       id: 'timesheets-settings-demo',
-      company_name: 'My Company',
+      company_name: 'Core3 Demo Company',
       project_time_unit: 'hours',
       timesheet_encode_method: 'hours',
       time_off_available: false,

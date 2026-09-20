@@ -616,3 +616,29 @@ bounded feature does not claim Timesheets sign-off.
 - Blockers: the Odoo reference uses a different seeded task and native time
   widget, so only field-level comparison is claimed. Existing Odoo
   Print/PDF/action blockers remain open; no module sign-off is claimed.
+## `TIMESHEET-UOM-ENCODING-001` — company time encoding (2026-09-21)
+
+- Source comparison: Odoo `res_config_settings.py` defines Hours/Minutes and
+  Days/Half-Days and writes the company encoding UoM; `hr_timesheet.py` reads
+  the company UoM for line/calendar display; the list/form source uses the
+  `timesheet_uom` widget.
+- Core3 contract: `api/entries.yaml` owns company-aware display formatting and
+  raw/mode fields; `pages/entries.yaml` stays layout-only and exposes the
+  existing Time Spent column through `page.id: timesheets`.
+- Persistence: the new forward migration aligns the existing settings row to
+  the active demo company with a fixed timestamp; the settings mutation keeps
+  row-version concurrency.
+- Guards: `timesheets.read` controls entry reads, `timesheets.settings`
+  controls mode changes, the entry query is company-scoped, and stale settings
+  writes fail without changing displayed values.
+- Focused verification: UoM tests pass 4/4 with 24 expectations; the combined
+  UoM, settings, and My Timesheets run passes 10/10 with 67 expectations; full Timesheets suite before shared discovery drift
+  passed 132/132 with 864 expectations.
+- Browser evidence:
+  `evidence/timesheets/2026-09-21/timesheet-uom-encoding/` contains
+  authenticated Odoo desktop/mobile captures and `results.json`.
+- Blocker: Core3 browser capture cannot start because unrelated Inventory YAML
+  fails discovery with `view_inventory_route_rules` unknown action and invalid
+  ListView `title`/`variant` fields. Odoo is captured in Hours mode only; the
+  live reference did not expose an authenticated Days-mode configuration in
+  this run. Existing Print/PDF/action gaps remain open.

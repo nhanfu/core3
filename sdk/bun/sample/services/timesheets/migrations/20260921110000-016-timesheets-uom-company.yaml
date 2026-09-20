@@ -1,0 +1,16 @@
+version: 0.0.16
+kind: data
+type:
+  postgres:
+    up: |
+      UPDATE timesheet_settings
+      SET company_name = 'Core3 Demo Company', updated_at = TIMESTAMP '2026-01-15 00:00:00'
+      WHERE id = 'timesheets-settings-demo';
+    down: |
+      UPDATE timesheet_settings
+      SET company_name = 'My Company', updated_at = TIMESTAMP '2026-01-15 00:00:00'
+      WHERE id = 'timesheets-settings-demo';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
