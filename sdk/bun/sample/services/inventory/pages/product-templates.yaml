@@ -1,0 +1,38 @@
+title: Products
+page: { id: product-templates, route: /products, breadcrumb: [Supply Chain, Inventory, Products], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_product_templates
+    create_action: create_inventory_product_template
+    create_label: New
+    search: { label: Products, placeholder: 'Search products, references, or categories...' }
+    filters:
+      - { field: is_favorite, label: Favorites, options: [{ id: favorite, label: Favorites }] }
+      - { field: active, label: Status, options: [{ id: active, label: Active }, { id: archived, label: Archived }, { id: all, label: All }] }
+      - { field: product_type, label: Product Type, options_source: inventory_product_template_types }
+    group_by:
+      - { field: category_name, label: Category }
+      - { field: product_type, label: Product Type }
+    views:
+      - { id: kanban, label: Kanban, icon: grid, mobile: true, group_by: category_name, card: { title: name, subtitle: default_code, fields: [{ field: on_hand, label: On Hand }, { field: forecasted, label: Forecasted }, { field: variant_count, label: Variants }] } }
+      - { id: list, label: List, icon: table, mobile: false }
+    columns:
+      - { field: default_code, label: Internal Reference, sortable: true, optional: show }
+      - { field: name, label: Product, type: PrimaryEntityCell, sortable: true }
+      - { field: category_name, label: Category, optional: hide }
+      - { field: product_type, label: Product Type }
+      - { field: sales_price, label: Sales Price, align: right, sortable: true }
+      - { field: standard_price, label: Cost, align: right, optional: hide }
+      - { field: on_hand, label: On Hand, align: right, sortable: true }
+      - { field: forecasted, label: Forecasted, align: right, sortable: true }
+      - { field: variant_count, label: Variants, align: right }
+      - { field: active, label: Active, type: BooleanToggle, optional: hide }
+      - { field: company_name, label: Company, optional: hide }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_inventory_product_template
+    row_double_click_action: view_inventory_product_template
+    form_view: { page: apps/services/inventory/pages/product-template-detail.yaml, side_panel: false }
+    empty_state: { title: No products found, description: Create a product to track stock and variants. }

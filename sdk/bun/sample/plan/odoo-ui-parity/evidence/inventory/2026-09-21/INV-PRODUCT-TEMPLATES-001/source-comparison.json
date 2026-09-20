@@ -1,0 +1,28 @@
+{
+  "feature": "INV-PRODUCT-TEMPLATES-001",
+  "odoo": {
+    "menu_source": "addons/stock/views/product_views.xml:659-662",
+    "menu_id": "menu_product_variant_config_stock",
+    "action_source": "addons/stock/views/product_views.xml:637-650",
+    "action_id": "product_template_action_product",
+    "model": "product.template",
+    "view_modes": ["kanban", "list", "form"],
+    "stock_extensions": "addons/stock/views/product_views.xml:118-132,176-250",
+    "model_fields": "addons/product/models/product_template.py:44-179,246-251",
+    "source_behaviors": [
+      "default Goods/storable search context",
+      "template identity, category, unit, sales and cost fields",
+      "stock on hand and forecasted fields",
+      "active/archive state and product variant stat/drilldown"
+    ]
+  },
+  "core3": {
+    "page_ids": ["product-templates", "product-template-detail"],
+    "api_files": ["services/inventory/api/product-templates.yaml", "services/inventory/api/product-template-detail.yaml"],
+    "page_files": ["services/inventory/pages/product-templates.yaml", "services/inventory/pages/product-template-detail.yaml"],
+    "migration": "services/inventory/migrations/20260922020000-052-inventory-product-templates.yaml",
+    "contract_join": "page.id",
+    "implemented": ["durable template CRUD", "current-company/shared reads", "stock and variant aggregates", "variant drilldown", "permissions", "row-version guards", "restart persistence"]
+  },
+  "comparison": "Source/menu comparison is complete. The paired live Odoo HTTP probe is recorded separately; no Odoo mutation or visual parity is claimed when the supplied session is unavailable."
+}

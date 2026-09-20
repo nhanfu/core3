@@ -1,0 +1,60 @@
+title: Product
+page: { id: product-template-detail, route: /products/detail, breadcrumb: [Supply Chain, Inventory, Products, Product], auth: { require: [inventory.read] } }
+components:
+  - type: OdooFormView
+    source: inventory_product_template_detail
+    title_field: name
+    status_field: active
+    status_badges: [{ value: true, label: Active, tone: green }, { value: false, label: Archived, tone: neutral }]
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_inventory_product_templates, label: Back to Products, icon: arrow-left, permission: inventory.read }
+      - { id: edit_inventory_product_template, label: Edit, variant: primary, permission: inventory.manage }
+      - { id: archive_inventory_product_template, label: Archive, variant: secondary, permission: inventory.manage, show_if: "record.active === true" }
+      - { id: restore_inventory_product_template, label: Restore, variant: secondary, permission: inventory.manage, show_if: "record.active === false" }
+      - { id: delete_inventory_product_template, label: Delete, variant: danger, permission: inventory.manage, show_if: "record.variant_count === 0" }
+    group_columns: 2
+    groups:
+      - title: Product
+        wide: true
+        fields:
+          - { field: name, label: Product }
+          - { field: default_code, label: Internal Reference }
+          - { field: barcode, label: Barcode }
+          - { field: description, label: Internal Notes, type: textarea }
+          - { field: product_type, label: Product Type }
+          - { field: category_name, label: Category }
+          - { field: unit_name, label: Unit }
+          - { field: company_name, label: Company, readonly: true }
+      - title: Inventory
+        fields:
+          - { field: is_storable, label: Track Inventory, type: checkbox }
+          - { field: tracking, label: Tracking }
+          - { field: on_hand, label: On Hand, type: number, readonly: true }
+          - { field: forecasted, label: Forecasted, type: number, readonly: true }
+          - { field: weight, label: Weight, type: number }
+          - { field: volume, label: Volume, type: number }
+      - title: Sales and Purchase
+        fields:
+          - { field: sale_ok, label: Sales, type: checkbox }
+          - { field: purchase_ok, label: Purchase, type: checkbox }
+          - { field: sales_price, label: Sales Price, type: number }
+          - { field: standard_price, label: Cost, type: number }
+          - { field: variant_count, label: Product Variants, type: number, readonly: true }
+    stat_buttons: [{ id: view_inventory_product_template_variants, label: Variants, icon: boxes, value_field: variant_count, permission: inventory.read }]
+  - type: ListView
+    variant: odoo
+    source: inventory_product_template_variants
+    columns:
+      - { field: default_code, label: Internal Reference, type: PrimaryEntityCell }
+      - { field: name, label: Product Variant }
+      - { field: variant_values, label: Variant Values }
+      - { field: tracking, label: Tracking }
+      - { field: sales_price, label: Sales Price, align: right }
+      - { field: on_hand, label: On Hand, align: right }
+      - { field: forecasted, label: Forecasted, align: right }
+      - { field: active, label: Active, type: BooleanToggle }
+    row_key: id
+    page_size: 20
+    empty_state: { title: No product variants, description: Define attributes or create a variant for this product. }

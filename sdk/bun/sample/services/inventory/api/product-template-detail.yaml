@@ -1,0 +1,107 @@
+page: { id: product-template-detail }
+datasources:
+  - id: inventory_product_template_detail
+    single: true
+    permission: inventory.read
+    error_states: { missing_record: { status: 404, code: INVENTORY_PRODUCT_TEMPLATE_NOT_FOUND, message: Product not found. }, transport_error: { status: 503, code: INVENTORY_PRODUCT_TEMPLATE_DETAIL_UNAVAILABLE, message: Product details are temporarily unavailable. } }
+    query: "SELECT t.id, t.row_version, t.sequence, t.name, t.default_code, COALESCE(t.barcode, '') AS barcode, t.description, t.product_type, t.category_name, t.unit_name, t.company_name, t.active, t.is_favorite, t.sale_ok, t.purchase_ok, t.is_storable, t.tracking, CAST(t.sales_price AS DOUBLE) AS sales_price, CAST(t.standard_price AS DOUBLE) AS standard_price, CAST(t.weight AS DOUBLE) AS weight, CAST(t.volume AS DOUBLE) AS volume, COUNT(v.id) AS variant_count, COALESCE(SUM(v.on_hand), 0) AS on_hand, COALESCE(SUM(v.forecasted), 0) AS forecasted FROM inventory_product_templates t LEFT JOIN inventory_product_variants v ON v.template_name = t.name AND v.active = TRUE AND (v.company_name = t.company_name OR v.company_name = 'Shared' OR (t.company_name = 'Core3 Demo Company' AND v.company_name = 'My Company (San Francisco)')) WHERE t.id = :id AND (t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR t.company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND t.company_name = 'My Company (San Francisco)')) GROUP BY t.id, t.row_version, t.sequence, t.name, t.default_code, t.barcode, t.description, t.product_type, t.category_name, t.unit_name, t.company_name, t.active, t.is_favorite, t.sale_ok, t.purchase_ok, t.is_storable, t.tracking, t.sales_price, t.standard_price, t.weight, t.volume"
+  - id: inventory_product_template_variants
+    single: false
+    permission: inventory.read
+    query: "SELECT v.id, v.row_version, v.default_code, v.name, v.variant_values, v.company_name, v.tracking, CAST(v.sales_price AS DOUBLE) AS sales_price, CAST(v.on_hand AS DOUBLE) AS on_hand, CAST(v.forecasted AS DOUBLE) AS forecasted, v.active FROM inventory_product_variants v WHERE v.template_name = (SELECT name FROM inventory_product_templates WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))) AND (v.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR v.company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND v.company_name = 'My Company (San Francisco)')) ORDER BY v.default_code, v.id"
+actions:
+  - id: back_to_inventory_product_templates
+    type: navigate
+    permission: inventory.read
+    navigate_to: /products
+  - id: view_inventory_product_template_variants
+    type: navigate
+    permission: inventory.read
+    navigate_to: /product-variants
+    params: { q: '{state.inventory_product_template_detail.name}' }
+  - id: edit_inventory_product_template
+    type: server_form
+    permission: inventory.manage
+    title: Edit Product
+    action: inventory.product_templates.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_product_template_detail
+    refresh: [inventory_product_templates, inventory_product_template_detail, inventory_product_template_variants]
+    mutation:
+      operation: update
+      table: inventory_product_templates
+      fields: [sequence, name, default_code, barcode, description, product_type, category_name, unit_name, is_favorite, sale_ok, purchase_ok, is_storable, tracking, sales_price, standard_price, weight, volume]
+      required: [name, default_code, product_type]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_templates WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PRODUCT_TEMPLATE_NOT_FOUND, message: Product not found in the current company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:default_code AS VARCHAR))) > 0", status: 422, code: INVENTORY_PRODUCT_TEMPLATE_FIELDS_REQUIRED, message: Product name and internal reference are required. }
+        - { query: "SELECT 1 AS ok WHERE :product_type IN ('Goods', 'Consumable', 'Service', 'Combo') AND :tracking IN ('none', 'lot', 'serial')", status: 422, code: INVENTORY_PRODUCT_TEMPLATE_OPTIONS_INVALID, message: Select a valid product type and tracking policy. }
+        - { query: "SELECT 1 AS ok WHERE :product_type = 'Goods' OR :tracking = 'none'", status: 422, code: INVENTORY_PRODUCT_TEMPLATE_TRACKING_INVALID, message: Only goods can be tracked by lot or serial number. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:sales_price AS DECIMAL(18,2)) >= 0 AND CAST(:standard_price AS DECIMAL(18,2)) >= 0 AND CAST(:weight AS DECIMAL(18,3)) >= 0 AND CAST(:volume AS DECIMAL(18,3)) >= 0", status: 422, code: INVENTORY_PRODUCT_TEMPLATE_NUMBERS_INVALID, message: Prices, weight, and volume must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_templates WHERE LOWER(default_code) = LOWER(TRIM(CAST(:default_code AS VARCHAR))) AND company_name = (SELECT company_name FROM inventory_product_templates WHERE id = :id) AND id <> :id)", status: 409, code: INVENTORY_PRODUCT_TEMPLATE_CODE_EXISTS, message: A product with this internal reference already exists for the company. }
+      result: { query: "SELECT * FROM inventory_product_templates WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Product, type: text, required: true }
+      - { field: default_code, label: Internal Reference, type: text, required: true }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: description, label: Internal Notes, type: textarea }
+      - { field: product_type, label: Product Type, type: select, options_source: inventory_product_template_types }
+      - { field: category_name, label: Category, type: text }
+      - { field: unit_name, label: Unit, type: text }
+      - { field: is_storable, label: Track Inventory, type: checkbox }
+      - { field: tracking, label: Tracking, type: select, options: [{ value: none, label: No Tracking }, { value: lot, label: By Lots }, { value: serial, label: By Unique Serial Number }] }
+      - { field: sale_ok, label: Sales, type: checkbox }
+      - { field: purchase_ok, label: Purchase, type: checkbox }
+      - { field: sales_price, label: Sales Price, type: number, min: 0 }
+      - { field: standard_price, label: Cost, type: number, min: 0 }
+      - { field: weight, label: Weight, type: number, min: 0 }
+      - { field: volume, label: Volume, type: number, min: 0 }
+  - id: archive_inventory_product_template
+    type: server
+    permission: inventory.manage
+    action: inventory.product_templates.archive
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: false } }
+    refresh: [inventory_product_templates, inventory_product_template_detail]
+    mutation:
+      operation: update
+      table: inventory_product_templates
+      fields: [active]
+      defaults: { active: false }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_product_templates WHERE id = :id AND active = TRUE AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PRODUCT_TEMPLATE_NOT_FOUND, message: Active product not found in the current company. }]
+      result: { query: "SELECT * FROM inventory_product_templates WHERE id = :id" }
+  - id: restore_inventory_product_template
+    type: server
+    permission: inventory.manage
+    action: inventory.product_templates.restore
+    handler: yaml_mutation
+    operation: update
+    params: { values: { active: true } }
+    refresh: [inventory_product_templates, inventory_product_template_detail]
+    mutation:
+      operation: update
+      table: inventory_product_templates
+      fields: [active]
+      defaults: { active: true }
+      concurrency: { required: true }
+      guards: [{ query: "SELECT id FROM inventory_product_templates WHERE id = :id AND active = FALSE AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PRODUCT_TEMPLATE_NOT_FOUND, message: Archived product not found in the current company. }]
+      result: { query: "SELECT * FROM inventory_product_templates WHERE id = :id" }
+  - id: delete_inventory_product_template
+    type: server
+    permission: inventory.manage
+    action: inventory.product_templates.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_product_templates]
+    mutation:
+      operation: delete
+      table: inventory_product_templates
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_product_templates WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PRODUCT_TEMPLATE_NOT_FOUND, message: Product not found in the current company. }
+        - { query: "SELECT 1 AS ok FROM inventory_product_templates t WHERE t.id = :id AND NOT EXISTS (SELECT 1 FROM inventory_product_variants v WHERE v.template_name = t.name)", status: 409, code: INVENTORY_PRODUCT_TEMPLATE_HAS_VARIANTS, message: Delete product variants before deleting the product. }

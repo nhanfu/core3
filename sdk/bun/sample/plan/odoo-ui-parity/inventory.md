@@ -1774,3 +1774,33 @@ desktop/mobile list/detail evidence is under
 comparison is recorded; the live Odoo route is separately probed and any
 login or group blocker is recorded without claiming a paired mutation.
 Full Inventory sign-off remains open.
+## Products > Products — `INV-PRODUCT-TEMPLATES-001` (2026-09-21)
+
+This bounded Wave 15 slice covers the previously uncovered root Products action.
+`addons/stock/views/product_views.xml:637-650` defines
+`product_template_action_product` for `product.template`, with
+`kanban,list,form`, the default Goods search context, and storable-product
+help text. `addons/stock/views/product_views.xml:118-132,176-250` adds stock
+columns, inventory fields, traceability, routes, and receiving/delivery
+descriptions to the product template surface. The Inventory menu binding is
+at `addons/stock/views/product_views.xml:659-662`; core product fields and
+variant-count semantics are in `addons/product/models/product_template.py:44-179,246-251`.
+
+Core3 adds durable `inventory_product_templates` data in migration
+`20260922020000-052-inventory-product-templates.yaml`, with deterministic
+active/archived/shared templates and stock-facing values. Separate
+`pages/product-templates.yaml` and `pages/product-template-detail.yaml`
+contracts pair with `api/product-templates.yaml` and
+`api/product-template-detail.yaml` by `page.id`. The lifecycle includes
+manager create/edit/archive/restore/delete, current-company/shared reads,
+duplicate reference and product-type/tracking/number guards, optimistic row
+versions, variant and stock summaries from existing variant records, variant
+drilldown, migration replay, and file-backed restart persistence. Product
+variant CRUD remains owned by the completed Product Variants slice.
+
+Focused verification passes 4 tests / 42 assertions in
+`inventory_product_templates.integration.test.ts`. Authenticated Core3
+desktop/mobile list/detail evidence is under
+`evidence/inventory/2026-09-21/INV-PRODUCT-TEMPLATES-001/`. Odoo source/menu
+comparison and any exact live-route blocker are recorded in paired evidence;
+full Inventory sign-off remains open.

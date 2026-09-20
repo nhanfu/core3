@@ -69,6 +69,10 @@ menu:
     - id: products
       label: Products
       items:
+        - path: /products
+          label: Products
+          icon: boxes
+          permission: inventory.read
         - path: /product-variants
           label: Product Variants
           icon: boxes

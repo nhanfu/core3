@@ -1,0 +1,82 @@
+page: { id: product-templates }
+datasources:
+  - id: inventory_product_templates
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_PRODUCT_TEMPLATES_UNAVAILABLE, message: Products are temporarily unavailable. } }
+    query: |
+      SELECT t.id, t.row_version, t.sequence, t.name, t.default_code, t.barcode, t.description,
+        t.product_type, t.category_name, t.unit_name, t.company_name, t.active, t.is_favorite,
+        t.sale_ok, t.purchase_ok, t.is_storable, t.tracking,
+        CAST(t.sales_price AS DOUBLE) AS sales_price, CAST(t.standard_price AS DOUBLE) AS standard_price,
+        CAST(t.weight AS DOUBLE) AS weight, CAST(t.volume AS DOUBLE) AS volume,
+        COUNT(v.id) AS variant_count, COALESCE(SUM(v.on_hand), 0) AS on_hand,
+        COALESCE(SUM(v.forecasted), 0) AS forecasted
+      FROM inventory_product_templates t
+      LEFT JOIN inventory_product_variants v ON v.template_name = t.name AND v.active = TRUE
+        AND (v.company_name = t.company_name OR v.company_name = 'Shared'
+          OR (t.company_name = 'Core3 Demo Company' AND v.company_name = 'My Company (San Francisco)'))
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (COALESCE(:active, 'active') = 'all' OR (COALESCE(:active, 'active') = 'active' AND t.active = TRUE) OR (COALESCE(:active, 'active') = 'archived' AND t.active = FALSE))
+        AND (t.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR t.company_name = 'Shared'
+          OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND t.company_name = 'My Company (San Francisco)'))
+        AND (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.default_code ILIKE '%' || :q || '%' OR COALESCE(t.barcode, '') ILIKE '%' || :q || '%' OR t.category_name ILIKE '%' || :q || '%')
+        AND (:category_name IS NULL OR :category_name = '' OR t.category_name = :category_name)
+        AND (:product_type IS NULL OR :product_type = '' OR t.product_type = :product_type)
+      GROUP BY t.id, t.row_version, t.sequence, t.name, t.default_code, t.barcode, t.description, t.product_type, t.category_name, t.unit_name, t.company_name, t.active, t.is_favorite, t.sale_ok, t.purchase_ok, t.is_storable, t.tracking, t.sales_price, t.standard_price, t.weight, t.volume
+      ORDER BY t.is_favorite DESC, t.default_code, t.name, t.id
+  - id: inventory_product_template_categories
+    single: false
+    permission: inventory.read
+    query: "SELECT DISTINCT category_name AS value, category_name AS label FROM inventory_product_templates WHERE category_name <> '' ORDER BY category_name"
+  - id: inventory_product_template_types
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('Goods', 'Goods'), ('Consumable', 'Consumable'), ('Service', 'Service'), ('Combo', 'Combo')) AS options(value, label) ORDER BY value"
+actions:
+  - id: view_inventory_product_template
+    type: navigate
+    permission: inventory.read
+    navigate_to: /products/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_product_template
+    type: server_form
+    permission: inventory.manage
+    title: New Product
+    action: inventory.product_templates.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_product_templates]
+    mutation:
+      operation: insert
+      table: inventory_product_templates
+      generated: [id]
+      fields: [sequence, name, default_code, barcode, description, product_type, category_name, unit_name, company_name, active, is_favorite, sale_ok, purchase_ok, is_storable, tracking, sales_price, standard_price, weight, volume, row_version]
+      required: [name, default_code, product_type, company_name]
+      defaults: { sequence: 100, barcode: '', description: '', product_type: Goods, category_name: '', unit_name: Units, active: true, is_favorite: false, sale_ok: true, purchase_ok: true, is_storable: true, tracking: none, sales_price: 1, standard_price: 0, weight: 0, volume: 0, row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND LENGTH(TRIM(CAST(:default_code AS VARCHAR))) > 0", status: 422, code: INVENTORY_PRODUCT_TEMPLATE_FIELDS_REQUIRED, message: Product name and internal reference are required. }
+        - { query: "SELECT 1 AS ok WHERE :company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (:company_name = 'My Company (San Francisco)' AND COALESCE(:current_company_name, '') = 'Core3 Demo Company') OR :company_name = 'Shared'", status: 403, code: INVENTORY_PRODUCT_TEMPLATE_COMPANY_FORBIDDEN, message: The product company is outside the current company. }
+        - { query: "SELECT 1 AS ok WHERE :product_type IN ('Goods', 'Consumable', 'Service', 'Combo') AND :tracking IN ('none', 'lot', 'serial')", status: 422, code: INVENTORY_PRODUCT_TEMPLATE_OPTIONS_INVALID, message: Select a valid product type and tracking policy. }
+        - { query: "SELECT 1 AS ok WHERE :product_type = 'Goods' OR :tracking = 'none'", status: 422, code: INVENTORY_PRODUCT_TEMPLATE_TRACKING_INVALID, message: Only goods can be tracked by lot or serial number. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:sales_price AS DECIMAL(18,2)) >= 0 AND CAST(:standard_price AS DECIMAL(18,2)) >= 0 AND CAST(:weight AS DECIMAL(18,3)) >= 0 AND CAST(:volume AS DECIMAL(18,3)) >= 0", status: 422, code: INVENTORY_PRODUCT_TEMPLATE_NUMBERS_INVALID, message: Prices, weight, and volume must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_product_templates WHERE LOWER(default_code) = LOWER(TRIM(CAST(:default_code AS VARCHAR))) AND company_name = :company_name)", status: 409, code: INVENTORY_PRODUCT_TEMPLATE_CODE_EXISTS, message: A product with this internal reference already exists for the company. }
+      result: { query: "SELECT * FROM inventory_product_templates WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 100 }
+      - { field: name, label: Product, type: text, required: true }
+      - { field: default_code, label: Internal Reference, type: text, required: true }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: description, label: Internal Notes, type: textarea }
+      - { field: product_type, label: Product Type, type: select, options_source: inventory_product_template_types, required: true }
+      - { field: category_name, label: Category, type: text }
+      - { field: unit_name, label: Unit, type: text }
+      - { field: company_name, label: Company, type: text, required: true }
+      - { field: is_storable, label: Track Inventory, type: checkbox }
+      - { field: tracking, label: Tracking, type: select, options: [{ value: none, label: No Tracking }, { value: lot, label: By Lots }, { value: serial, label: By Unique Serial Number }] }
+      - { field: sale_ok, label: Sales, type: checkbox }
+      - { field: purchase_ok, label: Purchase, type: checkbox }
+      - { field: sales_price, label: Sales Price, type: number, min: 0 }
+      - { field: standard_price, label: Cost, type: number, min: 0 }
+      - { field: weight, label: Weight, type: number, min: 0 }
+      - { field: volume, label: Volume, type: number, min: 0 }

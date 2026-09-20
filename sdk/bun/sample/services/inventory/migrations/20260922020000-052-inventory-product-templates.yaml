@@ -1,0 +1,50 @@
+version: 0.0.52
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_product_templates (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        sequence INTEGER NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        default_code VARCHAR NOT NULL,
+        barcode VARCHAR,
+        description VARCHAR NOT NULL DEFAULT '',
+        product_type VARCHAR NOT NULL DEFAULT 'Goods',
+        category_name VARCHAR NOT NULL DEFAULT '',
+        unit_name VARCHAR NOT NULL DEFAULT 'Units',
+        company_name VARCHAR NOT NULL DEFAULT 'Core3 Demo Company',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
+        sale_ok BOOLEAN NOT NULL DEFAULT TRUE,
+        purchase_ok BOOLEAN NOT NULL DEFAULT TRUE,
+        is_storable BOOLEAN NOT NULL DEFAULT TRUE,
+        tracking VARCHAR NOT NULL DEFAULT 'none',
+        sales_price DECIMAL(18,2) NOT NULL DEFAULT 1,
+        standard_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        weight DECIMAL(18,3) NOT NULL DEFAULT 0,
+        volume DECIMAL(18,3) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 08:00:00',
+        UNIQUE(default_code, company_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_product_templates_name
+        ON inventory_product_templates(active, name, default_code, id);
+      INSERT INTO inventory_product_templates
+        (id, sequence, name, default_code, barcode, description, product_type, category_name, unit_name, company_name, active, is_favorite, sale_ok, purchase_ok, is_storable, tracking, sales_price, standard_price, weight, volume)
+      VALUES
+        ('inventory-template-customizable-desk', 10, 'Customizable Desk', 'DESK-TEMPLATE', '100000000005', 'Adjustable desk with configurable finish.', 'Goods', 'Furniture', 'Units', 'Core3 Demo Company', TRUE, TRUE, TRUE, TRUE, TRUE, 'none', 750, 500, 12.5, 0.42),
+        ('inventory-template-large-cabinet', 20, 'Large Cabinet', 'CAB-TEMPLATE', '100000000007', 'Large storage cabinet.', 'Goods', 'Furniture', 'Units', 'Core3 Demo Company', TRUE, FALSE, TRUE, TRUE, TRUE, 'lot', 1200, 800, 80, 1.80),
+        ('inventory-template-storage-box', 30, 'Storage Box', 'BOX-TEMPLATE', '100000000008', 'Stackable office storage box.', 'Goods', 'Office Supplies', 'Units', 'Core3 Demo Company', TRUE, FALSE, TRUE, TRUE, TRUE, 'none', 24, 14, 0.8, 0.03),
+        ('inventory-template-corner-desk', 40, 'Corner Desk', 'CORNER-TEMPLATE', '100000000006', 'Corner desk with side selection.', 'Goods', 'Furniture', 'Units', 'Core3 Demo Company', TRUE, FALSE, TRUE, TRUE, TRUE, 'serial', 900, 600, 22, 0.70),
+        ('inventory-template-legacy', 90, 'Legacy Demo Product', 'LEGACY-TEMPLATE', NULL, 'Archived product template.', 'Goods', 'Furniture', 'Units', 'Core3 Demo Company', FALSE, FALSE, TRUE, TRUE, TRUE, 'none', 10, 5, 1, 0.01),
+        ('inventory-template-shared-consumable', 100, 'Shared Consumable', 'SHARED-TEMPLATE', NULL, 'Shared consumable visible to all companies.', 'Consumable', 'Office Supplies', 'Units', 'Shared', TRUE, FALSE, TRUE, TRUE, FALSE, 'none', 5, 2, 0, 0)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_product_templates WHERE id IN ('inventory-template-customizable-desk', 'inventory-template-large-cabinet', 'inventory-template-storage-box', 'inventory-template-corner-desk', 'inventory-template-legacy', 'inventory-template-shared-consumable');
+      DROP TABLE IF EXISTS inventory_product_templates;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
+database: duckdb

@@ -1154,3 +1154,30 @@ Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 Product Attributes lifecycle and
 guards; PARTIAL/BLOCKED for any unavailable live Odoo visual or mutation
 comparison. Full Inventory sign-off remains open.
+## Inventory Product Templates QA — `INV-PRODUCT-TEMPLATES-001`
+
+- Odoo source/menu/action: PASS from
+  `addons/stock/views/product_views.xml:637-664`, stock template extensions at
+  `:118-132,176-250`, and product template fields at
+  `addons/product/models/product_template.py:44-179,246-251`. The source
+  action is Products > Products, model `product.template`, with
+  `kanban,list,form` and default Goods/storable context.
+- Core3 contract: PASS. Separate `pages/product-templates.yaml` and
+  `pages/product-template-detail.yaml` pair with
+  `api/product-templates.yaml` and `api/product-template-detail.yaml` by
+  `page.id`; migration 0.0.52 persists the source-shaped template lifecycle.
+- Focused test: `bun test test/inventory_product_templates.integration.test.ts`
+  — PASS, 4 tests / 42 assertions. Coverage includes direct contract
+  validation, deterministic variant/stock aggregates, manager CRUD, current
+  company/shared boundary, type/tracking/number guards, variant delete guard,
+  reader/manage permissions, row versions, migration replay, and restart.
+- Core3 browser evidence: authenticated desktop 1440x900 and mobile 390x844
+  list/detail captures with response, page-error, and overflow checks are in
+  `evidence/inventory/2026-09-21/INV-PRODUCT-TEMPLATES-001/`.
+- Odoo comparison: source/menu comparison is PASS; the bounded live result or
+  exact login/route blocker is recorded in paired evidence. No Odoo mutation is
+  claimed.
+
+QA disposition: PASS for the bounded Core3 Product Templates lifecycle and
+guards; PARTIAL/BLOCKED for any unavailable live Odoo visual or mutation
+comparison. Full Inventory sign-off remains open.

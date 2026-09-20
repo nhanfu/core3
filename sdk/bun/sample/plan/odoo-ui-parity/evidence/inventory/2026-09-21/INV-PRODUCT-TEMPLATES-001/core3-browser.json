@@ -1,0 +1,79 @@
+{
+  "feature": "INV-PRODUCT-TEMPLATES-001",
+  "authenticated_as": "admin@tms.local",
+  "refreshed_against": "final scoped implementation",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "captures": [
+    {
+      "label": "desktop",
+      "state": "list",
+      "url": "http://127.0.0.1:4333/inventory/products",
+      "title": "Products",
+      "bodyText": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nNew\nSupply Chain / Inventory / Products\n1-5 / 5\n‹\n›\nInternal Reference\n\tProduct\n\tProduct Type\n\tSales Price\n\tOn Hand\n\tForecasted\n\tVariants\n\nDESK-TEMPLATE\t\nCustomizable Desk\n\tGoods\t750\t65\t65\t1\nBOX-TEMPLATE\t\nStorage Box\n\tGoods\t24\t18\t18\t1\nCAB-TEMPLATE\t\nLarge Cabinet\n\tGoods\t1200\t500\t270\t1\nCORNER-TEMPLATE\t\nCorner Desk\n\tGoods\t900\t0\t-10\t1\nSHARED-TEMPLATE\t\nShared Consumable\n\tConsumable\t5\t0\t0\t1",
+      "overflow": {
+        "documentWidth": 1440,
+        "viewportWidth": 1440
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "badResponses": []
+    },
+    {
+      "label": "desktop",
+      "state": "detail",
+      "url": "http://127.0.0.1:4333/inventory/products/detail?id=inventory-template-large-cabinet",
+      "title": "Product",
+      "bodyText": "Overview\nTransfers\nAdjustments\nProcurement\nReporting\nProducts\nConfiguration\n⌘ K\nAU\nSupply Chain\nSupply Chain\n›\nInventory\n›\nProducts\n›\nProduct\nBack to Products\nEdit\nArchive\nLarge Cabinet\nACTIVE\n1\nVariants\nProduct\nProduct\nLarge Cabinet\nInternal Reference\nCAB-TEMPLATE\nBarcode\n100000000007\nInternal Notes\nLarge storage cabinet.\nProduct Type\nGoods\nCategory\nFurniture\nUnit\nUnits\nCompany\nCore3 Demo Company\nInventory\nTrack Inventory\ntrue\nTracking\nlot\nOn Hand\n500\nForecasted\n270\nWeight\n80\nVolume\n1.8\nSales and Purchase\nSales\ntrue\nPurchase\ntrue\nSales Price\n1200\nCost\n800\nProduct Variants\n1\nSupply Chain / Inventory / Products / Product\n1-1 / 1\n‹\n›\nInternal Reference\n\tProduct Variant\n\tVariant Values\n\tTracking\n\tSales Price\n\tOn Hand\n\tForecasted\n\tActive\n\n\nE-COM07\n\tLarge Cabinet\tOak, 2 Door\tlot\t1200\t500\t270\t",
+      "overflow": {
+        "documentWidth": 1440,
+        "viewportWidth": 1440
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "badResponses": []
+    },
+    {
+      "state": "list",
+      "url": "http://127.0.0.1:4333/inventory/products",
+      "title": "Products",
+      "bodyText": "AU\nNew\nProducts\n1-5 / 5\n‹\n›\nFurniture\n3\nCustomizable Desk\n\nDESK-TEMPLATE\n\nOn Hand\n65\nForecasted\n65\nVariants\n1\nLarge Cabinet\n\nCAB-TEMPLATE\n\nOn Hand\n500\nForecasted\n270\nVariants\n1\nCorner Desk\n\nCORNER-TEMPLATE\n\nOn Hand\n0\nForecasted\n-10\nVariants\n1\nOffice Supplies\n2\nStorage Box\n\nBOX-TEMPLATE\n\nOn Hand\n18\nForecasted\n18\nVariants\n1\nShared Consumable\n\nSHARED-TEMPLATE\n\nOn Hand\n0\nForecasted\n0\nVariants\n1",
+      "overflow": {
+        "documentWidth": 390,
+        "viewportWidth": 390
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "badResponses": [],
+      "label": "mobile"
+    },
+    {
+      "state": "detail",
+      "url": "http://127.0.0.1:4333/inventory/products/detail?id=inventory-template-large-cabinet",
+      "title": "Product",
+      "bodyText": "AU\nBack to Products\nEdit\nArchive\nLarge Cabinet\nACTIVE\n1\nVariants\nProduct\nProduct\nLarge Cabinet\nInternal Reference\nCAB-TEMPLATE\nBarcode\n100000000007\nInternal Notes\nLarge storage cabinet.\nProduct Type\nGoods\nCategory\nFurniture\nUnit\nUnits\nCompany\nCore3 Demo Company\nInventory\nTrack Inventory\ntrue\nTracking\nlot\nOn Hand\n500\nForecasted\n270\nWeight\n80\nVolume\n1.8\nSales and Purchase\nSales\ntrue\nPurchase\ntrue\nSales Price\n1200\nCost\n800\nProduct Variants\n1\nProduct\n1-1 / 1\n‹\n›\nInternal Reference\n\tProduct Variant\n\tVariant Values\n\tTracking\n\tSales Price\n\tOn Hand\n\tForecasted\n\tActive\n\n\nE-COM07\n\tLarge Cabinet\tOak, 2 Door\tlot\t1200\t500\t270\t",
+      "overflow": {
+        "documentWidth": 390,
+        "viewportWidth": 390
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "badResponses": [],
+      "label": "mobile"
+    }
+  ]
+}

@@ -874,3 +874,23 @@ Inventory sign-off remains open.
 - Odoo source/menu comparison is complete. The bounded live probe result and
   any exact login/group blocker are recorded in paired evidence; no Odoo
   mutation or full Inventory sign-off is claimed.
+## `INV-PRODUCT-TEMPLATES-001` — Inventory Products (2026-09-21)
+
+- Selected the next genuinely uncovered source-backed Inventory action after
+  Product Attributes: Odoo `product_template_action_product`, the root
+  Products `product.template` kanban/list/form. This is distinct from the
+  completed Product Variants slice and does not duplicate variant CRUD.
+- Added migration `20260922020000-052-inventory-product-templates.yaml`,
+  deterministic active/archived/shared product templates, and separate list/
+  detail page/API YAML contracts joined by `page.id`. The lifecycle includes
+  manager CRUD/archive/restore/delete, current-company/shared scope, duplicate
+  references, product type/tracking and numeric validation, variant-delete
+  guards, row versions, and stock/variant summaries from existing variants.
+- Focused verification passes 4 tests / 42 assertions, including contract
+  separation, deterministic aggregates, permission/company/type guards, CRUD,
+  migration replay, row versions, and file-backed restart persistence.
+  Authenticated Core3 desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-PRODUCT-TEMPLATES-001/`.
+- Odoo source/menu comparison is complete; paired live evidence records the
+  authenticated result or exact route/login blocker. No Odoo mutation or full
+  Inventory sign-off is claimed.
