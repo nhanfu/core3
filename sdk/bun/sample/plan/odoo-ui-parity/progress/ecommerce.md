@@ -4,8 +4,8 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `eefbbb87c88dc22cafbdf7be720902b56b55b66d`
-(`ECOM-CATALOG-PRODUCT-PUBLICATION-001`, committed locally; not pushed).
+Latest committed bounded slice: `099112b089627f3e008e3f30d70aae6f1a8cd9ae`
+(`ECOM-CATALOG-PRODUCT-REVIEWS-001`, committed locally; not pushed).
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-REVIEWS-001`
 
@@ -28,7 +28,7 @@ the UI audit (714 pages/723 routes/1364 datasources), scoped ESLint, and
 `js_repl` and unavailable ports 3000/4312/4313; Odoo `/shop` is exact HTTP 404
 on 8069/8073. Evidence is under
 `evidence/ecommerce/2026-09-21/ecom-catalog-product-reviews-001/`.
-Ready for an Ecommerce-only local commit; not pushed.
+Committed locally as `099112b089627f3e008e3f30d70aae6f1a8cd9ae`; not pushed.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-PUBLICATION-001`
 
