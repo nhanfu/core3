@@ -125,4 +125,54 @@ describe('Sales orders to invoice parity slice', () => {
     await database.close();
     await accountingDatabase.close();
   }, 30000);
+
+  test('persists draft invoice creation across restart and keeps retries idempotent', async () => {
+    const databasePath = `/tmp/core3-sales-invoice-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationTable = `sales_invoice_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const migrationRoot = join(root, 'migrations');
+    const api = yaml('api/sale-to-invoice.yaml');
+    const action = api.actions.find((candidate: any) => candidate.id === 'create_invoices_from_selected_orders');
+    const params = { view_scope: 'all', current_branch_id: 'branch-hcm', selectedIds: ['order-demo-06'] };
+
+    const firstDatabase = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(firstDatabase);
+    await migrateDatabase(firstRepository, migrationRoot, undefined, migrationTable, ['schema', 'data']);
+
+    const created = await firstRepository.executeMutation(action.mutation, params) as any;
+    expect(Number(created.created_count)).toBe(1);
+    expect(await firstRepository.query(
+      "SELECT order_id, invoice_number, state, amount FROM sale_invoices WHERE order_id = 'order-demo-06'",
+    )).toEqual([expect.objectContaining({
+      order_id: 'order-demo-06',
+      invoice_number: 'INV/DH-2026-0106',
+      state: 'Draft',
+      amount: 9200000,
+    })]);
+    await firstDatabase.close();
+
+    const secondDatabase = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(secondDatabase);
+    await migrateDatabase(secondRepository, migrationRoot, undefined, migrationTable, ['schema', 'data']);
+    await migrateDatabase(secondRepository, migrationRoot, undefined, migrationTable, ['schema', 'data']);
+
+    expect(await secondRepository.query(
+      "SELECT order_id, invoice_number, state, amount FROM sale_invoices WHERE order_id = 'order-demo-06'",
+    )).toEqual([expect.objectContaining({
+      order_id: 'order-demo-06',
+      invoice_number: 'INV/DH-2026-0106',
+      state: 'Draft',
+      amount: 9200000,
+    })]);
+    expect(await secondRepository.query(
+      "SELECT COUNT(*) AS count FROM sale_invoices WHERE order_id = 'order-demo-06'",
+    )).toEqual([{ count: 1 }]);
+    await expect(secondRepository.executeMutation(action.mutation, params)).rejects.toMatchObject({
+      status: 409,
+      code: 'SALES_INVOICE_SELECTION_INVALID',
+    });
+    expect(await secondRepository.query(
+      "SELECT COUNT(*) AS count FROM sale_invoices WHERE order_id = 'order-demo-06'",
+    )).toEqual([{ count: 1 }]);
+    await secondDatabase.close();
+  }, 30000);
 });
