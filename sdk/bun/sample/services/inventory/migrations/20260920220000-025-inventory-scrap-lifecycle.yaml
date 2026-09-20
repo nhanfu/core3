@@ -1,0 +1,25 @@
+version: 0.0.25
+description: Durable Scrap Order validation move side effects
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_scrap_moves (
+        id VARCHAR PRIMARY KEY, scrap_id VARCHAR NOT NULL, date TIMESTAMP NOT NULL,
+        reference VARCHAR NOT NULL, product_id VARCHAR, product_name VARCHAR NOT NULL,
+        lot_serial_number VARCHAR, source_location VARCHAR NOT NULL, destination_location VARCHAR NOT NULL,
+        company_name VARCHAR NOT NULL, quantity DECIMAL(18,3) NOT NULL, unit_name VARCHAR NOT NULL,
+        state VARCHAR NOT NULL, origin VARCHAR, created_at TIMESTAMP NOT NULL
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_scrap_moves_scrap ON inventory_scrap_moves(scrap_id);
+      INSERT INTO inventory_scrap_moves(id, scrap_id, date, reference, product_id, product_name, lot_serial_number, source_location, destination_location, company_name, quantity, unit_name, state, origin, created_at)
+      SELECT 'inventory-scrap-move-' || s.id, s.id, CAST(s.date_done AS TIMESTAMP), s.name, s.product_id, s.product_name, s.lot_name, s.source_location, s.scrap_location, s.company_name, s.scrap_qty, s.product_uom, 'Done', s.origin, TIMESTAMP '2026-01-21 09:00:00'
+      FROM inventory_scrap_orders s
+      WHERE s.state = 'Done'
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP INDEX IF EXISTS idx_inventory_scrap_moves_scrap;
+      DROP TABLE IF EXISTS inventory_scrap_moves;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

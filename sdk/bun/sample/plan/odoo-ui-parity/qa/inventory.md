@@ -423,3 +423,28 @@ Full Inventory sign-off remains open.
 QA disposition: PASS for the bounded Core3 lifecycle and permission/restart
 contract; PARTIAL for Odoo comparison because the supplied source action is
 runtime-blocked. Full Inventory sign-off remains open.
+
+## Scrap Orders validation QA — `INV-SCRAP-001` (2026-09-20)
+
+- Odoo source/menu/action: `stock.menu_stock_scrap` →
+  `stock.action_stock_scrap`; the form's `action_validate` creates and
+  completes a stock move/move line, sets Done/date_done, and exposes Product
+  Moves. Source references and exact fields are recorded in the feature
+  evidence.
+- Core3 implementation: migration `0.0.25` persists `inventory_scrap_moves`
+  and deterministic Done fixture relations. The separate Scrap API owns the
+  detail/move datasources and validation mutation; the page owns the form and
+  read-only Product Moves `LineItemGrid`.
+- Focused test: all 4 Scrap Orders tests pass (36 assertions), covering
+  page/API ownership, fixture/filter/error, CRUD/validation/relation/restart,
+  and runtime permission boundary. An earlier invocation saw a transient
+  unrelated shared-checkout discovery error; the subsequent full Inventory
+  suite and UI audit passed after that boundary was repaired by its owners.
+- Authenticated Core3 evidence: desktop/mobile list and detail captures show
+  Draft → Done, revision 1 → 2, and the persisted Product Move. Authenticated
+  Odoo evidence renders `/odoo/scraps` at desktop and mobile with the source
+  list and kanban surfaces. No Odoo mutation was made.
+
+QA disposition: PASS for the bounded Core3 Scrap lifecycle, persistence,
+permission, evidence contract, and final scoped verification. Full Inventory
+sign-off remains open for the residual source behaviors and full actor matrix.

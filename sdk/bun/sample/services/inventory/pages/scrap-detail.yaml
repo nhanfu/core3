@@ -22,4 +22,20 @@ components:
       - title: Locations
         fields: [{ field: source_location, label: Source Location }, { field: scrap_location, label: Scrap Location }, { field: package_name, label: Package }, { field: owner_name, label: Owner }, { field: company_name, label: Company }, { field: origin, label: Source Document }, { field: picking_name, label: Picking }]
     notebook: { active: details, tabs: [{ id: details, label: Additional Information, groups: [{ title: Notes, fields: [{ field: note, label: Notes }, { field: row_version, label: Revision }] }] }] }
-page: { id: inventory-scrap-detail }
+
+  - type: LineItemGrid
+    source: inventory_scrap_moves
+    parent_source: inventory_scrap_order_detail
+    title: Product Moves
+    variant: odoo_x2many
+    row_key: id
+    columns:
+      - { field: date, label: Date }
+      - { field: reference, label: Reference }
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_name, label: Unit }
+      - { field: source_location, label: Source Location }
+      - { field: destination_location, label: Destination }
+      - { field: state, label: Status }
+    empty_state: { title: No product moves, description: Validate the Scrap Order to create its product move. }

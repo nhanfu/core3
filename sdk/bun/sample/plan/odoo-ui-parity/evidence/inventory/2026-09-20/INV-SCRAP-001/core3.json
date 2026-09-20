@@ -1,0 +1,9 @@
+{
+  "baseUrl": "http://127.0.0.1:4541",
+  "authenticatedAs": "Admin User",
+  "desktop": { "viewport": "1440x1000", "list": "core3/desktop-list.png", "draftDetail": "core3/desktop-detail-draft.png", "doneDetail": "core3/desktop-detail-done.png" },
+  "mobile": { "viewport": "390x844", "list": "core3/mobile-list.png", "doneDetail": "core3/mobile-detail-done.png" },
+  "workflow": { "scrap": "SCRAP/2026/0002", "before": "Draft / revision 1", "after": "Done / revision 2 / Product Move persisted" },
+  "browserErrors": [],
+  "writePerformed": true
+}

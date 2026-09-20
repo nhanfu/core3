@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://127.0.0.1:8069",
+  "authenticatedAs": "codex@core3.local",
+  "route": "/odoo/scraps",
+  "desktop": { "viewport": "1440x1000", "capture": "odoo/desktop-scrap-action.png", "surface": "Scrap Orders list with source help text and list/form/kanban/pivot/graph action" },
+  "mobile": { "viewport": "390x844", "capture": "odoo/mobile-scrap-action.png", "surface": "Scrap Orders responsive kanban" },
+  "comparison": "Odoo renders the source Scrap Orders action and Core3 renders the bounded list/detail/Product Moves lifecycle.",
+  "writePerformed": false,
+  "blocker": null
+}

@@ -987,3 +987,35 @@ request/page failures. The authenticated Odoo user reaches `/odoo/action-426`
 but the source action renders Odoo's generic `Oops!` error at both 1440x900 and
 390x844; screenshots and JSON are retained as the exact blocker, so no Odoo
 visual or mutation sign-off is claimed.
+
+## Operations > Scrap Orders validation lifecycle slice (2026-09-20)
+
+Feature `INV-SCRAP-001` closes the smallest remaining source-backed Operations
+gap after Settings, Put in Pack, Package Transfers, Stock at Date, and
+Operations Types. Odoo `stock.menu_stock_scrap` opens
+`stock.action_stock_scrap` (`addons/stock/views/stock_scrap_views.xml:127-140`)
+with `list,form,kanban,pivot,graph` modes. Its form exposes the Draft/Done
+statusbar, `Validate` (`action_validate`), Stock Operation, and Product Moves
+stat affordances (`stock_scrap_views.xml:24-47`). The source model creates a
+stock move and move line, completes the move, writes Done/date_done, and may
+replenish (`stock_scrap.py:125-167`).
+
+Core3 keeps `pages/scraps.yaml` and `pages/scrap-detail.yaml` layout-only and
+binds the API fragments by `page.id`. Migration `0.0.25` adds durable
+`inventory_scrap_moves`, backfills deterministic moves for existing Done
+fixtures, and the Validate mutation writes the Done/date context and one
+durable Product Move. The detail page renders the read-only Product Moves line
+grid. Required fields, duplicate references, stale revisions, Draft-only
+validation/delete, duplicate move protection, and `inventory.read`/
+`inventory.write` runtime boundaries are covered.
+
+Focused Core3 coverage is in `test/inventory_scrap_orders.integration.test.ts`:
+fixture/filter/error, CRUD/workflow, permission, idempotent migration, and
+file-backed restart checks pass. An initial focused invocation encountered an
+unrelated shared-checkout discovery boundary; the subsequent full Inventory
+run passed after that boundary was repaired. Authenticated Core3 desktop/mobile evidence and paired
+authenticated Odoo desktop/mobile comparison are under
+`evidence/inventory/2026-09-20/INV-SCRAP-001/`. Odoo renders Scrap Orders and
+the same list/form/kanban surface at `/odoo/scraps`; no Odoo mutation was made.
+The final scoped audit and full Inventory suite passed; broader Inventory
+sign-off remains open for the residual source behaviors listed above.
