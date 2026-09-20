@@ -1,0 +1,16 @@
+version: 0.0.97
+kind: data
+description: deterministic Website Sale product public category assignments
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_category_assignments (id, row_version, product_id, category_id, sequence, active, company_name) VALUES
+        ('ecommerce-product-category-mug-accessories', 1, 'ecommerce-product-mug', 'ecommerce-category-accessories', 10, TRUE, 'My Company'),
+        ('ecommerce-product-category-mug-office', 1, 'ecommerce-product-mug', 'ecommerce-category-office', 20, TRUE, 'My Company'),
+        ('ecommerce-product-category-chair-office', 1, 'ecommerce-product-chair', 'ecommerce-category-office', 10, TRUE, 'My Company')
+      ON CONFLICT (id) DO UPDATE SET sequence = EXCLUDED.sequence, active = EXCLUDED.active, company_name = EXCLUDED.company_name;
+    down: DELETE FROM ecommerce_product_category_assignments WHERE id IN ('ecommerce-product-category-mug-accessories', 'ecommerce-product-category-mug-office', 'ecommerce-product-category-chair-office');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

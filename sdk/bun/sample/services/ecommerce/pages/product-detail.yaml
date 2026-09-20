@@ -29,6 +29,29 @@ components:
       - { title: SEO Metadata, columns: 2, fields: [{ field: website_meta_title, label: Website Meta Title }, { field: website_meta_description, label: Website Meta Description, wide: true }, { field: website_meta_keywords, label: Website Meta Keywords }, { field: website_meta_og_img, label: Website OpenGraph Image }, { field: is_seo_optimized, label: SEO Optimized, type: StatusChip }] }
   - type: ListView
     variant: odoo
+    source: ecommerce_product_categories
+    create_action: create_ecommerce_product_category
+    create_label: Add Category
+    page_size: 20
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No website categories, description: Assign this product to one or more eCommerce categories. }
+    columns:
+      - { field: category_name, label: Website Category, type: PrimaryEntityCell }
+      - { field: parent_name, label: Parent Category }
+      - { field: sequence, label: Sequence, align: right }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 150
+        actions:
+          - { id: edit_ecommerce_product_category, label: Edit, icon: edit, variant: secondary, permission: ecommerce.write }
+          - { id: delete_ecommerce_product_category, label: Remove, icon: trash, variant: danger, permission: ecommerce.write }
+    actions:
+      - { id: edit_ecommerce_product_category, label: Edit, permission: ecommerce.write, show_if: 'row.id != null' }
+      - { id: delete_ecommerce_product_category, label: Remove, permission: ecommerce.write, variant: danger, show_if: 'row.id != null' }
+  - type: ListView
+    variant: odoo
     source: ecommerce_product_variants
     create_action: create_ecommerce_product_variant
     create_label: New Variant

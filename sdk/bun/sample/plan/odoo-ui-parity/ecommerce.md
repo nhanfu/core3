@@ -1,6 +1,30 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product display dimensions slice; module sign-off remains open)
+Status: qa-in-progress (bounded product website category assignment slice; module sign-off remains open)
+
+## Bounded feature — Product Website Category Assignments (`ECOM-CATALOG-PRODUCT-CATEGORY-ASSIGNMENT-001`)
+
+Odoo source comparison: `website_sale/models/product_template.py` defines
+`public_categ_ids` as the product template's many-to-many Website Product
+Category relation. The Website Products menu opens
+`product_template_action_website`; its list view renders
+`public_categ_ids` as many-to-many tags, and the product search domain accepts
+category descendants through `child_of`.
+
+Core3 migrations 096/097 add a durable product/category assignment relation
+with row versions, ordering, active/company scope, and deterministic Mug/Chair
+fixtures. Product Detail keeps page/API YAML separate and exposes a category
+ListView plus permissioned assign/edit/remove actions. The lifecycle enforces
+active same-company categories, duplicate prevention, non-negative ordering,
+optimistic concurrency, and DuckDB restart persistence.
+
+Focused CRUD, permission, validation, concurrency, migration replay, paired
+schema, audit, scoped lint, and diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-category-assignment-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by the missing
+persistent browser runtime and unavailable local ports; supplied Odoo `/shop`
+probes are exact HTTP 404 on 8069 and 8073. This bounded slice is not module
+sign-off.
 
 ## Bounded feature — Product Display Dimensions (`ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`)
 

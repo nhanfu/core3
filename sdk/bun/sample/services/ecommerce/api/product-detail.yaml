@@ -12,6 +12,16 @@ datasources:
   - id: ecommerce_product_images
     permission: ecommerce.read
     query: "SELECT id, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE product_id = :id ORDER BY created_at DESC, id"
+  - id: ecommerce_product_categories
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_CATEGORIES_UNAUTHENTICATED, message: Sign in to view product categories. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_CATEGORIES_FORBIDDEN, message: You do not have permission to view product categories. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_CATEGORIES_UNAVAILABLE, message: Product categories are temporarily unavailable. }
+    query: "SELECT a.id, a.row_version, a.product_id, a.category_id, c.name AS category_name, c.parent_name, a.sequence, a.active, a.company_name FROM ecommerce_product_category_assignments a JOIN ecommerce_products p ON p.id = a.product_id JOIN ecommerce_categories c ON c.id = a.category_id WHERE a.product_id = :id AND p.active = TRUE AND a.active = TRUE AND c.active = TRUE AND (COALESCE(:company_name, '') = '' OR a.company_name = :company_name OR a.company_name IS NULL) ORDER BY a.sequence, c.sequence, c.name, a.id"
+  - id: ecommerce_product_category_options
+    permission: ecommerce.read
+    query: "SELECT c.id AS value, c.name AS label FROM ecommerce_categories c JOIN ecommerce_products p ON p.id = :product_id WHERE c.active = TRUE AND (c.company_name IS NULL OR c.company_name = p.company_name) AND NOT EXISTS (SELECT 1 FROM ecommerce_product_category_assignments a WHERE a.product_id = p.id AND a.category_id = c.id AND a.active = TRUE) ORDER BY c.sequence, c.name, c.id"
   - id: ecommerce_product_reviews
     permission: ecommerce.read
     error_states:
@@ -542,3 +552,60 @@ actions:
       steps:
         - { query: "DELETE FROM ecommerce_product_reviews WHERE id = :review_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_REVIEW_STALE, message: This review changed before deletion. }
       result: { query: "SELECT TRUE AS deleted, :review_id AS id" }
+  - id: create_ecommerce_product_category
+    type: server_form
+    permission: ecommerce.write
+    title: Add Product Category
+    action: ecommerce.products.categories.assign
+    handler: yaml_mutation
+    operation: create
+    params: { product_id: '{state.ecommerce_product_detail.id}' }
+    refresh: [ecommerce_product_categories, ecommerce_product_detail]
+    mutation:
+      generated: [id]
+      required: [product_id, category_id]
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_CATEGORY_PRODUCT_SCOPE_REQUIRED, message: This product belongs to another company or is inactive. }
+        - { query: "SELECT c.id FROM ecommerce_categories c JOIN ecommerce_products p ON p.id = :product_id WHERE c.id = :category_id AND c.active = TRUE AND (c.company_name IS NULL OR c.company_name = p.company_name)", status: 422, code: ECOMMERCE_PRODUCT_CATEGORY_CATEGORY_INVALID, message: Choose an active category in the product company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM ecommerce_product_category_assignments WHERE product_id = :product_id AND category_id = :category_id AND active = TRUE)", status: 409, code: ECOMMERCE_PRODUCT_CATEGORY_EXISTS, message: This product is already assigned to that category. }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_category_assignments(id, row_version, product_id, category_id, sequence, active, company_name) SELECT :id, 1, p.id, c.id, CAST(COALESCE(:sequence, 10) AS INTEGER), TRUE, p.company_name FROM ecommerce_products p JOIN ecommerce_categories c ON c.id = :category_id WHERE p.id = :product_id", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_CATEGORY_CREATE_FAILED, message: The product category assignment could not be created. }
+      result: { query: "SELECT a.*, c.name AS category_name, c.parent_name FROM ecommerce_product_category_assignments a JOIN ecommerce_categories c ON c.id = a.category_id WHERE a.id = :id" }
+    fields:
+      - { field: category_id, label: Website Category, type: select, options_source: ecommerce_product_category_options, required: true }
+      - { field: sequence, label: Sequence, type: number, min: 0, default: 10 }
+  - id: edit_ecommerce_product_category
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Product Category
+    action: ecommerce.products.categories.update
+    handler: yaml_mutation
+    operation: update
+    params: { product_id: '{state.ecommerce_product_detail.id}', id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_categories, ecommerce_product_detail]
+    mutation:
+      operation: update
+      table: ecommerce_product_category_assignments
+      fields: [sequence]
+      required: []
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT a.id FROM ecommerce_product_category_assignments a JOIN ecommerce_products p ON p.id = a.product_id WHERE a.id = :id AND a.product_id = :product_id AND a.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_CATEGORY_PRODUCT_SCOPE_REQUIRED, message: This product category belongs to another company or is inactive. }
+        - { query: "SELECT 1 AS ok WHERE CAST(COALESCE(:sequence, 10) AS INTEGER) >= 0", status: 422, code: ECOMMERCE_PRODUCT_CATEGORY_SEQUENCE_INVALID, message: Category sequence must be zero or greater. }
+      result: { query: "SELECT a.*, c.name AS category_name, c.parent_name FROM ecommerce_product_category_assignments a JOIN ecommerce_categories c ON c.id = a.category_id WHERE a.id = :id" }
+    fields: [{ field: sequence, label: Sequence, type: number, min: 0, required: true }]
+  - id: delete_ecommerce_product_category
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.categories.remove
+    handler: yaml_mutation
+    operation: delete
+    params: { product_id: '{state.ecommerce_product_detail.id}', id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_categories, ecommerce_product_detail]
+    mutation:
+      operation: delete
+      table: ecommerce_product_category_assignments
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT a.id FROM ecommerce_product_category_assignments a JOIN ecommerce_products p ON p.id = a.product_id WHERE a.id = :id AND a.product_id = :product_id AND a.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_CATEGORY_PRODUCT_SCOPE_REQUIRED, message: This product category belongs to another company or is inactive. }
+      result: { query: "SELECT TRUE AS deleted, :id AS id" }

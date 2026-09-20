@@ -4,8 +4,26 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice: `7b1eb6d2c9e48d204e41cd4c0506006c0fe74f15`
-(`ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`, committed locally; not pushed).
+Latest committed bounded slice: pending local commit
+(`ECOM-CATALOG-PRODUCT-CATEGORY-ASSIGNMENT-001`, not pushed).
+
+## Current bounded task — `ECOM-CATALOG-PRODUCT-CATEGORY-ASSIGNMENT-001`
+
+Wave 16 selected Odoo Website Sale's `product.template.public_categ_ids`
+many-to-many Website Product Category relation. The Website Products action
+renders and searches this relation; Core3 previously stored only one product
+category string. Migrations 096/097 add durable assignment rows and
+deterministic Mug/Chair fixtures. Product Detail uses separate page/API YAML
+with assign/edit/remove actions enforcing active same-company categories,
+duplicate and sequence validation, optimistic concurrency, and restart
+persistence.
+
+Focused verification passed **3 tests, 31 assertions, 0 failures**; the
+Product Detail/Products/Categories/Shop regression passed **15 tests, 113
+assertions, 0 failures**. Audit, scoped ESLint, and `git diff --check` passed.
+Core3 authenticated desktop/mobile capture is blocked by missing `js_repl`
+and unavailable local ports; Odoo `/shop` is exact HTTP 404 on 8069/8073.
+Ecommerce module sign-off remains open.
 
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`
 

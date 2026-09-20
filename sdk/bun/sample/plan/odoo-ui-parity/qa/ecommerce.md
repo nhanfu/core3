@@ -1,5 +1,30 @@
 # ecommerce QA ledger
 
+## Product Website Category Assignments (`ECOM-CATALOG-PRODUCT-CATEGORY-ASSIGNMENT-001`, 2026-09-21)
+
+- Odoo source/page: pass. `product.template.public_categ_ids` is a durable
+  many-to-many Website Product Category field; the Website Products action is
+  `product_template_action_website`, the list view renders category tags, and
+  catalog search supports descendant categories.
+- Core3 lifecycle: pass for this bounded contract. Migrations 096/097 add
+  durable assignments and deterministic Mug/Chair fixtures. Product Detail
+  uses separate page/API YAML; assign/edit/remove requires `ecommerce.write`,
+  enforces active same-company categories, duplicate and sequence validation,
+  optimistic concurrency, and restart persistence.
+- Focused verification: `bun test
+  test/ecommerce_product_category_assignments.integration.test.ts` — **3
+  passed, 31 assertions, 0 failures**. Product Detail/Products/Categories/
+  Shop regression — **15 passed, 113 assertions, 0 failures**.
+- Audit/lint/diff: `bun run audit` passed at 718 pages, 727 routes, and 1379
+  datasources; scoped ESLint and `git diff --check` passed.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 are
+  unavailable. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified; Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-category-assignment-001/`.
+
 ## Product Display Dimensions (`ECOM-CATALOG-PRODUCT-DISPLAY-DIMENSIONS-001`, 2026-09-21)
 
 - Odoo source/page: pass. `product.template` defines `website_size_x/y` with
