@@ -7,6 +7,7 @@ This date index contains bounded Inventory owner evidence:
 - [`INV-PACK-001`](INV-PACK-001/): Put in Pack lifecycle.
 - [`INV-PACK-TRANSFER-001`](INV-PACK-TRANSFER-001/): Package Transfers drill-down.
 - [`INV-OP-TYPES-001`](INV-OP-TYPES-001/): Operations Types lifecycle and parity gate.
+- [`INV-SCRAP-001`](INV-SCRAP-001/): Scrap Orders validation and Product Moves lifecycle.
 
 Each feature directory owns its source comparison, test result, browser captures,
 and QA disposition. This index is evidence navigation only; it is not full

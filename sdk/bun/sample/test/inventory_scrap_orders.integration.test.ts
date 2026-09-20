@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const root = join(import.meta.dir, '../services/inventory');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) as any;
@@ -39,6 +40,8 @@ describe('Inventory Scrap Orders Odoo action parity', () => {
     expect(list.columns.map((column: any) => column.label)).toEqual(['Reference', 'Date', 'Product', 'Quantity', 'Unit', 'Company', 'Status', ' ']);
     expect(list.form_view.page).toBe('apps/services/inventory/pages/scrap-detail.yaml');
     expect(yaml('pages/scrap-detail.yaml').components[0].statusbar.map((item: any) => item.label)).toEqual(['Draft', 'Done']);
+    expect(yaml('pages/scrap-detail.yaml').components[1]).toMatchObject({ type: 'LineItemGrid', source: 'inventory_scrap_moves', title: 'Product Moves' });
+    expect(detailApi.datasources.find((source: any) => source.id === 'inventory_scrap_moves').permission).toBe('inventory.read');
   });
 
   test('returns deterministic default, filter, empty, detail, and transport states', async () => {
@@ -54,6 +57,10 @@ describe('Inventory Scrap Orders Odoo action parity', () => {
     expect((await repository.querySource(detail, { id: 'inventory-scrap-0002', fixture_state: null }, 0, 1)).data).toMatchObject({ name: 'SCRAP/2026/0002', state: 'Draft' });
     expect((await repository.querySource(detail, { id: 'missing', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     await expect(repository.querySource(detail, { id: 'inventory-scrap-0002', fixture_state: 'transport_error' }, 0, 1)).rejects.toMatchObject({ status: 503, code: 'INVENTORY_SCRAP_DETAIL_UNAVAILABLE' });
+    const moves = detailApi.datasources.find((source: any) => source.id === 'inventory_scrap_moves');
+    expect((await repository.querySource(moves, { id: 'inventory-scrap-0001', fixture_state: null }, 0, 10)).data).toMatchObject([{ reference: 'SCRAP/2026/0001', state: 'Done', quantity: 1 }]);
+    expect((await repository.querySource(moves, { id: 'inventory-scrap-0002', fixture_state: null }, 0, 10)).data).toEqual([]);
+    await expect(repository.querySource(moves, { id: 'inventory-scrap-0001', fixture_state: 'transport_error' }, 0, 10)).rejects.toMatchObject({ status: 503, code: 'INVENTORY_SCRAP_MOVES_UNAVAILABLE' });
     database.close();
   });
 
@@ -68,8 +75,41 @@ describe('Inventory Scrap Orders Odoo action parity', () => {
     expect(edited).toMatchObject({ scrap_qty: 2, row_version: 2 });
     await expect(repository.executeMutation(action('edit_inventory_scrap').mutation, { id: created.id, expected_row_version: 1, values })).rejects.toMatchObject({ status: 409 });
     const done = await repository.executeMutation(action('validate_inventory_scrap').mutation, { id: 'inventory-scrap-0002', expected_row_version: 1, values: { state: 'Done' } });
-    expect(done).toMatchObject({ state: 'Done', row_version: 2 });
+    expect(done).toMatchObject({ state: 'Done', date_done: '2026-01-21T00:00:00.000Z', row_version: 2 });
+    expect(await repository.query('SELECT scrap_id, reference, state, quantity FROM inventory_scrap_moves WHERE scrap_id = ?', ['inventory-scrap-0002'])).toEqual([{ scrap_id: 'inventory-scrap-0002', reference: 'SCRAP/2026/0002', state: 'Done', quantity: 3 }]);
+    await expect(repository.executeMutation(action('validate_inventory_scrap').mutation, { id: 'inventory-scrap-0002', expected_row_version: 2, values: { state: 'Done' } })).rejects.toMatchObject({ status: 409, code: 'INVENTORY_SCRAP_NOT_DRAFT' });
     await expect(repository.executeMutation(action('delete_inventory_scrap').mutation, { id: 'inventory-scrap-0001', expected_row_version: 1 })).rejects.toMatchObject({ status: 409, code: 'INVENTORY_SCRAP_DONE_DELETE' });
+    const databasePath = `/tmp/core3-inventory-scraps-${crypto.randomUUID()}.duckdb`;
+    database.close();
+    const migrationName = `inventory_scrap_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const restartValues = { ...values, name: 'SCRAP/2026/0101' };
+    const restartCreated = await firstRepository.executeMutation(action('create_inventory_scrap').mutation, { values: restartValues });
+    await firstRepository.executeMutation(action('validate_inventory_scrap').mutation, { id: restartCreated.id, expected_row_version: 1, values: { state: 'Done' } });
+    first.close();
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(root, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    expect(await secondRepository.query('SELECT state, row_version FROM inventory_scrap_orders WHERE id = ?', [restartCreated.id])).toEqual([{ state: 'Done', row_version: 2 }]);
+    expect(await secondRepository.query('SELECT reference, state FROM inventory_scrap_moves WHERE scrap_id = ?', [restartCreated.id])).toEqual([{ reference: 'SCRAP/2026/0101', state: 'Done' }]);
+    second.close();
+    rmSync(databasePath, { force: true });
+  });
+
+  test('enforces read/write permission boundaries at the YAML API runtime', async () => {
+    const { database, repository } = await repositoryForTest('inventory_scrap_permission_test');
+    const page = yaml('pages/scraps.yaml');
+    const api = createYamlApi({
+      repository,
+      authProvider: { async getCurrentUser() { return { sub: 'inventory-reader', email: 'reader@core3.local', roles: ['user'], permissions: ['inventory.read'] }; }, hasPermission(user: any, permission: string) { return user.permissions.includes(permission); } },
+      sources: new Map(listApi.datasources.map((source: any) => [source.id, source])), pageSources: new Map([[page.page.id, listApi.datasources.map((source: any) => source.id)]]),
+      pages: new Map([[page.page.id, { ...page, actions: listApi.actions }]]), catalogs: new Map(), menus: new Map(), workflows: new Map(), workflowFiles: new Map(),
+      permissions: { permissions: ['inventory.read', 'inventory.write'], tables: {}, endpoints: {} }, uploadRoot: '/tmp/core3-inventory-scrap-test', eventStore: {}, topics: {},
+    });
+    await expect(api(new Request('http://inventory.test/api/pages/inventory-scraps'), new URL('http://inventory.test/api/pages/inventory-scraps'))).resolves.toBeDefined();
+    await expect(api(new Request('http://inventory.test/api/actions/inventory.scraps.create', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ values: {} }) }), new URL('http://inventory.test/api/actions/inventory.scraps.create'))).rejects.toMatchObject({ status: 403, message: 'Requires permission: inventory.write' });
     database.close();
   });
 });

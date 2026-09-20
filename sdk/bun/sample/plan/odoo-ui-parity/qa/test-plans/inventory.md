@@ -41,6 +41,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-FUNC-010 | Annual inventory settings | Day/month defaults 31/12, manager save, stale/missing guards, idempotent migration and restart persistence | pass: `INV-SETTINGS-001` focused suite |
 | INV-FUNC-011 | Stock report Inventory at Date | Date wizard persists company context, filters report rows, handles invalid dates, and survives restart | pass: `INV-STOCK-AT-DATE-001` focused suite |
 | INV-FUNC-012 | Operations Types lifecycle | Create/edit/archive/restore operation types with durable row versions, source/destination locations, validation, and restart persistence | pass: `INV-OP-TYPES-001` focused suite |
+| INV-FUNC-013 | Scrap validation Product Move | Draft Scrap validation sets Done/date, persists one Product Move relation, and exposes it on the detail page | pass: `INV-SCRAP-001` bounded suite; shared discovery boundary recorded |
 
 ## Workflow and integration cases
 
@@ -54,6 +55,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-WF-007 | Put in Pack | Ready/Waiting transfer opens the package form, persists package/type/content/relation, records timeline, and reloads without losing state | pass: `INV-PACK-001` Core3 desktop/mobile; Odoo action gated for reference user |
 | INV-WF-005 | Durable/external boundary | Carrier, barcode, accounting and cross-module callbacks use Temporal when durable; retry, replay, restart and compensation are tested | planned |
 | INV-WF-008 | Operation type configuration | Create/edit/archive/restore preserves operation-type settings and blocks archive while open transfers reference the type | pass: `INV-OP-TYPES-001` focused suite; Core3 browser lifecycle evidence |
+| INV-WF-009 | Scrap validation | Validate a current Draft Scrap Order, persist its stock move side effect, expose Product Moves, reject duplicate/stale/done transitions, and survive restart | pass: `INV-SCRAP-001` focused suite and authenticated evidence |
 
 ## Permission and security cases
 
@@ -69,6 +71,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-PERM-008 | Annual settings manager boundary | `inventory.manage` is required for the Settings page and mutation; read-only users receive 403 and rows remain unchanged | pass: `INV-SETTINGS-001` focused runtime test |
 | INV-PERM-009 | Stock report date context | `inventory.read` is required for the report/context; wrong-company date requests return 403 without a run | pass: `INV-STOCK-AT-DATE-001` focused runtime test |
 | INV-PERM-010 | Operations Types manager boundary | `inventory.manage` is required for list/detail and create/edit/archive/restore; read-only users receive 403 without mutation | pass: `INV-OP-TYPES-001` focused runtime test |
+| INV-PERM-011 | Scrap Orders operator boundary | `inventory.read` permits list/detail/moves; `inventory.write` is required for create/edit/validate/delete and read-only users receive 403 | pass: `INV-SCRAP-001` focused runtime test |
 
 ## Visual, responsive, and regression cases
 
@@ -83,6 +86,7 @@ transfer workflows must preserve row versions and move quantities.
 | INV-UI-007 | Annual Inventory Day and Month | 1440x900, 390x844 | Number/select controls, Save/reload persistence, no request errors or horizontal overflow; paired Odoo result is recorded | pass Core3; Odoo action RPC blocker captured |
 | INV-UI-008 | Stock report Inventory at Date | 1440x900, 390x844 | Date form opens, selected context is visible, report refreshes/reloads without overflow; paired Odoo wizard result is recorded | pass Core3; Odoo mobile control boundary captured |
 | INV-UI-009 | Operations Types list/detail | 1440x900, 390x844 | New modal, list/detail fields, edit/reload, source location labels, and responsive states render; paired Odoo result or exact blocker is recorded | pass Core3; Odoo action blocker captured |
+| INV-UI-010 | Scrap Orders list/detail/Product Moves | 1440x1000, 390x844 | Draft/Done form, Validate action, Product Moves relation, desktop/mobile list/detail, and paired Odoo list/kanban comparison are captured | pass Core3/Odoo evidence; repository discovery boundary remains partial |
 
 ## Exit criteria
 

@@ -308,3 +308,25 @@ diff-check. Odoo comparison and unrelated Website lint remain open.
   blocker at both viewports; no paired visual sign-off is claimed.
 - Status: bounded Core3 lifecycle complete for review; Odoo action blocker and
   broader Inventory module sign-off remain open.
+
+## `INV-SCRAP-001` — Scrap Orders validation and Product Moves (2026-09-20)
+
+- Selected the smallest remaining source-backed Operations gap. Odoo source
+  comparison covers `stock.menu_stock_scrap`, `stock.action_stock_scrap`, the
+  Validate action, Draft/Done state, and move/stat semantics.
+- Added migration `20260920220000-025-inventory-scrap-lifecycle.yaml`, durable
+  Done fixture move rows, API-owned validation side effects, and a page-owned
+  Product Moves line grid while preserving YAML page/API separation.
+- Focused fixture, CRUD, stale, permission, migration-idempotence, and
+  file-backed restart checks pass in the Scrap Orders integration test. The
+  full discovery assertion is blocked by unrelated shared-checkout
+  Ecommerce/Employees/Surveys API edits; those paths were not changed or
+  staged by Inventory.
+- Authenticated Core3 desktop/mobile and authenticated Odoo desktop/mobile
+  evidence is complete under
+  `evidence/inventory/2026-09-20/INV-SCRAP-001/`. Odoo renders its Scrap
+  Orders action with deterministic source comparison recorded; no Odoo write
+  was performed.
+- Status: bounded Core3 lifecycle and evidence complete for review; broader
+  Inventory sign-off remains open pending the shared discovery boundary and
+  full actor matrix.
