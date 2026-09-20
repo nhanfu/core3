@@ -1,0 +1,69 @@
+{
+  "featureId": "SURVEYS-PUBLIC-COOKIE-RESUME-001",
+  "base": "http://127.0.0.1:4021",
+  "surveyToken": "b135640d-14d4-4748-9ef6-344ca256531e",
+  "checks": [
+    {
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "login": {
+        "status": 200,
+        "url": "http://127.0.0.1:4021/survey/start/b135640d-14d4-4748-9ef6-344ca256531e"
+      },
+      "authenticated": {
+        "token": true,
+        "status": 200,
+        "actor": "admin@tms.local"
+      },
+      "initialBody": "⌘ K\nAU\nDashboard\nList\nAccounting Dashboard\n1-4 / 4\n‹\n›\nSales\nSummary\n13 Unpaid · $52,074.00\nDetail\n2 Late · $33,750.00\nPurchases\nSummary\n3 To Pay · $622.27\nBank\nSummary\nBalance · $6,793.93\nDetail\nLast Statement · $6,678.00\nPoint of Sale\nSummary\n3 Active Registers\nDetail\nToday Sales · $129.50\nHello, Admin User",
+      "start": {
+        "status": 401,
+        "answerToken": null
+      },
+      "resumedUrl": "http://127.0.0.1:4021/survey/start/b135640d-14d4-4748-9ef6-344ca256531e",
+      "resumedBody": "Unauthorized",
+      "surveyCookiePresent": false,
+      "cookieAttributes": null,
+      "consoleOrPageFailures": [
+        "console:Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "console:Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "bodyWidth": 1440,
+      "documentWidth": 1440
+    },
+    {
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "login": {
+        "status": 200,
+        "url": "http://127.0.0.1:4021/survey/start/b135640d-14d4-4748-9ef6-344ca256531e"
+      },
+      "authenticated": {
+        "token": true,
+        "status": 200,
+        "actor": "admin@tms.local"
+      },
+      "initialBody": "AU\nDashboard\nList\nAccounting Dashboard\n1-4 / 4\n‹\n›\nSales\nSummary\n13 Unpaid · $52,074.00\nDetail\n2 Late · $33,750.00\nPurchases\nSummary\n3 To Pay · $622.27\nBank\nSummary\nBalance · $6,793.93\nDetail\nLast Statement · $6,678.00\nPoint of Sale\nSummary\n3 Active Registers\nDetail\nToday Sales · $129.50\nHello, Admin User",
+      "start": {
+        "status": 401,
+        "answerToken": null
+      },
+      "resumedUrl": "http://127.0.0.1:4021/survey/start/b135640d-14d4-4748-9ef6-344ca256531e",
+      "resumedBody": "Unauthorized",
+      "surveyCookiePresent": false,
+      "cookieAttributes": null,
+      "consoleOrPageFailures": [
+        "console:Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "console:Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "bodyWidth": 390,
+      "documentWidth": 390
+    }
+  ]
+}

@@ -303,3 +303,15 @@ Execution evidence is under
 
 Execution evidence is under
 `plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-SECTIONS-001/`.
+
+## 2026-09-21 public response cookie resume additions
+
+| Test ID | Class | Scenario | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| SURVEYS-FUNC-029 | public workflow | Cookie-selected response GET/start | Read the Odoo-compatible `survey_<survey_token>` cookie and resume the durable token; explicit token wins | pass |
+| SURVEYS-WF-026 | concurrency/restart | Cookie start → concurrent replay → reopen | One response/cursor survives concurrent start and file-backed restart; Set-Cookie is deterministic | pass |
+| SURVEYS-PERM-028 | token boundary | Stale/malformed cookie and explicit stale token | Ignore stale cookies without disclosure while preserving explicit-token 404 and public permission declarations | pass |
+| SURVEYS-UI-027 | authenticated responsive/reference | Admin desktop/mobile plus Odoo comparison | Record exact Core3 route-registry and Odoo host-controlled-fixture blockers; no sign-off until both are available | conditional |
+
+Execution evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COOKIE-RESUME-001/`.

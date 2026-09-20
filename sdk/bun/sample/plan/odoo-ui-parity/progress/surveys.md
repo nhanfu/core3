@@ -141,6 +141,25 @@ JSON-RPC `{"error":"survey_wrong"}`. Exact screenshots and JSON are under
 Status remains **qa-in-progress / conditional**; no module sign-off is
 claimed.
 
+## 2026-09-21 — `SURVEYS-PUBLIC-COOKIE-RESUME-001`
+
+Selected the next source-backed public lifecycle after section filtering:
+Odoo's `survey_start` cookie resume. Core3 now sets and reads the durable
+`survey_<survey_token>` cookie, gives explicit answer tokens precedence,
+ignores malformed/stale cookies without disclosing response data, and refreshes
+the cookie on start/begin/replay paths. The separate API action declares the
+optional answer token and remains joined to the admin page through
+`page.id: surveys`.
+
+Focused verification is 3/3 for the new test and 24/24 across the adjacent
+public regression set, including concurrent replay and file-backed restart.
+Authenticated Core3 login succeeded at desktop/mobile, but the fresh runtime
+returned public API 404/anonymous 401 because its Surveys public route was not
+registered; exact JSON and screenshots are in the feature evidence directory.
+Odoo returned HTTP 200 at both viewports with the host-controlled Feedback Form
+waiting state, not a mutable participant response. No visual or paired Odoo
+sign-off is claimed. Status remains **qa-in-progress / conditional**.
+
 ## 2026-09-21 — `SURVEYS-PUBLIC-SECTIONS-001`
 
 Selected the next uncovered source-backed public question behavior after the

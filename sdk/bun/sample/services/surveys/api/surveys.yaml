@@ -48,7 +48,9 @@ actions:
 
   # Public-token actions are kept in the API fragment rather than the page
   # layout. The Surveys module controller authenticates the survey and answer
-  # tokens before dispatching them.
+  # tokens before dispatching them. A public start may also resume the answer
+  # token carried by the Odoo-compatible survey_<survey_token> cookie; the
+  # page renderer remains bound to this API fragment through page.id: surveys.
   - id: public_survey_start
     type: server_form
     permission: surveys.public
@@ -67,6 +69,7 @@ actions:
       - { field: survey_id, label: Survey ID, type: text, required: true }
       - { field: survey_name, label: Survey, type: text, required: true }
       - { field: answer_data, label: Answers, type: text, required: true }
+      - { field: answer_token, label: Existing response token, type: text }
       - { field: idempotency_key, label: Idempotency key, type: text }
   - id: public_survey_begin
     type: server_form

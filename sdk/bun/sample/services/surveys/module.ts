@@ -74,10 +74,12 @@ export default class SurveysModule implements ModuleLifecycle {
 
     if (request.method === 'GET' && !operation) {
       const questions = (await service.call('survey.public.questions', { survey_id: detail.id }))?.questions || [];
-      const answerToken = url.searchParams.get('answer_token') || '';
-      if (answerToken && !this.isToken(answerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
+      const explicitAnswerToken = url.searchParams.get('answer_token') || '';
+      const cookieAnswerToken = explicitAnswerToken ? '' : this.surveyCookie(request, token);
+      const answerToken = explicitAnswerToken || cookieAnswerToken;
+      if (explicitAnswerToken && !this.isToken(explicitAnswerToken)) return this.json({ error: 'A valid answer token is required' }, 400);
       const answer = answerToken ? await readResponse(answerToken) : undefined;
-      if (answerToken && !answer) return this.json({ error: 'Survey response is unavailable' }, 404);
+      if (explicitAnswerToken && !answer) return this.json({ error: 'Survey response is unavailable' }, 404);
       if (answer && this.publicResponseExpired(answer)) return this.expiredResponse();
       return this.json({ survey: detail, questions, ...(answer ? { answer } : {}) });
     }
@@ -85,14 +87,20 @@ export default class SurveysModule implements ModuleLifecycle {
 
     const body = await request.json().catch(() => ({})) as Record<string, any>;
     if (operation === 'start') {
-      const existingToken = String(body.answer_token || '');
+      const explicitAnswerToken = String(body.answer_token || '');
+      const cookieAnswerToken = explicitAnswerToken ? '' : this.surveyCookie(request, token);
+      let existingToken = explicitAnswerToken || cookieAnswerToken;
       if (existingToken) {
-        if (!this.isToken(existingToken)) return this.json({ error: 'A valid answer token is required' }, 400);
+        if (!this.isToken(existingToken)) {
+          if (explicitAnswerToken) return this.json({ error: 'A valid answer token is required' }, 400);
+          existingToken = '';
+        }
         const answer = await readResponse(existingToken);
-        if (!answer) return this.json({ error: 'Survey response is unavailable' }, 404);
-        if (this.publicResponseExpired(answer)) return this.expiredResponse();
-        if (answer.state === 'Submitted') return this.json({ error: 'This survey response is already submitted' }, 409);
-        if (answer.state === 'New') {
+        if (!answer && explicitAnswerToken) return this.json({ error: 'Survey response is unavailable' }, 404);
+        if (!answer) existingToken = '';
+        if (answer && this.publicResponseExpired(answer)) return this.expiredResponse();
+        if (answer?.state === 'Submitted') return this.withSurveyCookie(this.json({ error: 'This survey response is already submitted' }, 409), token, existingToken);
+        if (answer?.state === 'New') {
           const question = await firstQuestion();
           if (!question) return this.json({ error: 'The first survey question is unavailable', code: 'SURVEY_PUBLIC_BEGIN_QUESTION' }, 422);
           try {
@@ -103,7 +111,7 @@ export default class SurveysModule implements ModuleLifecycle {
               values: { state: 'In Progress', current_question_id: question.id },
               current_question_id: question.id,
             });
-            return this.json({ survey: detail, answer: begun });
+            return this.withSurveyCookie(this.json({ survey: detail, answer: begun }), token, existingToken);
           } catch (error: any) {
             // DuckDB can reject the losing writer before the winning
             // transaction is visible to the follow-up read. Retry the
@@ -111,7 +119,7 @@ export default class SurveysModule implements ModuleLifecycle {
             for (let attempt = 0; attempt < 3; attempt += 1) {
               await new Promise((resolve) => setTimeout(resolve, 10));
               const replay = await readResponse(existingToken);
-              if (replay?.state === 'In Progress') return this.json({ survey: detail, answer: replay, replayed: true });
+              if (replay?.state === 'In Progress') return this.withSurveyCookie(this.json({ survey: detail, answer: replay, replayed: true }), token, existingToken);
               if (replay?.state !== 'New' || attempt === 2) break;
               try {
                 const retried = await service.call('surveys.public.begin', {
@@ -121,7 +129,7 @@ export default class SurveysModule implements ModuleLifecycle {
                   values: { state: 'In Progress', current_question_id: question.id },
                   current_question_id: question.id,
                 });
-                return this.json({ survey: detail, answer: retried });
+                return this.withSurveyCookie(this.json({ survey: detail, answer: retried }), token, existingToken);
               } catch {
                 // Another concurrent begin may still be committing; observe
                 // it on the next iteration before surfacing the original error.
@@ -130,8 +138,8 @@ export default class SurveysModule implements ModuleLifecycle {
             throw error;
           }
         }
-        if (answer.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
-        return this.json({ survey: detail, answer });
+        if (answer && answer.state !== 'In Progress') return this.json({ error: 'This survey response is no longer available for editing' }, 409);
+        if (answer) return this.withSurveyCookie(this.json({ survey: detail, answer }), token, existingToken);
       }
       const idempotencyKey = this.idempotencyKey(body.idempotency_key);
       if (idempotencyKey) {
@@ -139,7 +147,7 @@ export default class SurveysModule implements ModuleLifecycle {
           idempotency_key: idempotencyKey,
           survey_id: detail.id,
         }))?.response?.[0];
-        if (existing) return this.publicResponseExpired(existing) ? this.expiredResponse() : this.json({ survey: detail, answer: existing });
+        if (existing) return this.publicResponseExpired(existing) ? this.expiredResponse() : this.withSurveyCookie(this.json({ survey: detail, answer: existing }), token, String(existing.access_token || ''));
       }
       let result;
       try {
@@ -166,7 +174,7 @@ export default class SurveysModule implements ModuleLifecycle {
         if (!existing) throw error;
         result = existing;
       }
-      return this.json({ survey: detail, answer: result });
+      return this.withSurveyCookie(this.json({ survey: detail, answer: result }), token, String(result.access_token || ''));
     }
 
     if (operation === 'next_question') {
@@ -485,6 +493,23 @@ export default class SurveysModule implements ModuleLifecycle {
   private idempotencyKey(value: unknown): string {
     const key = typeof value === 'string' ? value.trim() : '';
     return key && key.length <= 200 ? key : '';
+  }
+
+  private surveyCookie(request: Request, surveyToken: string): string {
+    const cookie = request.headers.get('cookie') || '';
+    const name = `survey_${surveyToken}`;
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const value = cookie.match(new RegExp(`(?:^|;\\s*)${escapedName}=([^;]+)`))?.[1] || '';
+    try {
+      return decodeURIComponent(value).trim();
+    } catch {
+      return value.trim();
+    }
+  }
+
+  private withSurveyCookie(response: Response, surveyToken: string, answerToken: string): Response {
+    if (this.isToken(answerToken)) response.headers.set('Set-Cookie', `survey_${surveyToken}=${encodeURIComponent(answerToken)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`);
+    return response;
   }
 
   private json(data: unknown, status = 200): Response {

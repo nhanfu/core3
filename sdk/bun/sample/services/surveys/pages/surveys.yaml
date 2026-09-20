@@ -1,4 +1,7 @@
 title: Surveys
+# The public /survey/start/<access_token> renderer is intentionally outside
+# this authenticated admin layout. Its API contract lives in api/surveys.yaml
+# and joins this page fragment through page.id: surveys.
 page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { require: [surveys.read] } }
 components:
   - type: ListView

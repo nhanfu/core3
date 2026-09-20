@@ -771,3 +771,30 @@ runtime/reference verification is conditional and Surveys remains
 Disposition: Core3 implementation and bounded tests pass; runtime/reference
 evidence remains conditional and Surveys remains **qa-in-progress /
 conditional**.
+
+## Bounded QA run: `SURVEYS-PUBLIC-COOKIE-RESUME-001` — 2026-09-21
+
+- Source: Odoo `survey_start` reads `survey_<survey_token>` for public resume,
+  ignores a wrong/deleted cookie, and resets the cookie for 24 hours after
+  resolving the durable answer.
+- Core3 contract: the existing `surveys` page/API pair remains joined by
+  `page.id: surveys`; `public_survey_start` declares optional `answer_token`
+  with `surveys.public`, while the module controller implements cookie
+  precedence, stale-cookie fall-through, and `Set-Cookie` refresh.
+- Focused verification: **3 passed / 19 assertions** for the new test; the
+  adjacent public regression set is **24 passed / 200 assertions**.
+- Persistence/concurrency: cookie start resumes one response, concurrent
+  cookie starts converge on one token, explicit-token precedence is preserved,
+  and file-backed reopen restores the cookie-selected response.
+- Core3 evidence: authenticated Admin login succeeded at 1440x900 and
+  390x844, but the fresh runtime returned HTTP 404 `API route not found` for
+  the authenticated public API and HTTP 401 for anonymous access. No visual
+  sign-off is claimed; the host/registry boundary is recorded exactly and was
+  not edited in this Surveys-only slice.
+- Odoo evidence: HTTP 200 at both viewports resolved to the host-controlled
+  Feedback Form waiting state. No mutable participant answer fixture was
+  available for a cookie-resumed question; no paired Odoo sign-off is claimed.
+
+Disposition: the durable cookie behavior and bounded tests pass; runtime and
+reference evidence remain conditional. Surveys remains
+**qa-in-progress / conditional**.

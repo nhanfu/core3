@@ -1345,6 +1345,35 @@ The installed Odoo reference has no stable active answer-token fixture for a
 fresh mutation probe, so paired Odoo mutation/visual sign-off remains blocked;
 Surveys remains **qa-in-progress / conditional**.
 
+## Bounded slice: Public response cookie resume (2026-09-21)
+
+Feature ID: `SURVEYS-PUBLIC-COOKIE-RESUME-001`.
+
+Odoo source: `addons/survey/controllers/main.py:survey_start` reads the
+`survey_<survey_token>` cookie when no explicit answer token is present,
+ignores a wrong-user/deleted answer cookie, and sets a 24-hour cookie for the
+resolved durable answer before redirecting to the survey page. Core3 now
+implements that precedence and stale-cookie boundary in the public controller;
+explicit tokens remain authoritative, while valid cookie responses resume
+through GET and POST start. Cookie refreshes use `Path=/; HttpOnly;
+SameSite=Lax; Max-Age=86400`.
+
+The optional `answer_token` is declared in the separate `api/surveys.yaml`
+public start action. The authenticated admin page remains in
+`pages/surveys.yaml`; both fragments retain `page.id: surveys` and the public
+renderer/controller binding is not duplicated in the admin layout.
+
+Focused durable, permission/precedence, concurrency, and file-backed restart
+coverage is in `test/surveys_public_cookie_resume.integration.test.ts`.
+Evidence is under
+`plan/odoo-ui-parity/evidence/surveys/2026-09-21/SURVEYS-PUBLIC-COOKIE-RESUME-001/`.
+The fresh Core3 runtime authenticated as Admin at desktop/mobile but returned
+HTTP 404 `API route not found` for the authenticated public API and HTTP 401
+for the anonymous request; this shared route-registry boundary was not edited.
+Odoo returned HTTP 200 at both viewports but only its host-controlled Feedback
+Form waiting state, with no mutable participant answer fixture. No visual or
+paired Odoo sign-off is claimed. Surveys remains **qa-in-progress / conditional**.
+
 ## Bounded slice: Authenticated live-session previous question (2026-09-21)
 
 Feature ID: `SURVEYS-LIVE-SESSION-PREVIOUS-001`.

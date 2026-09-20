@@ -1,0 +1,20 @@
+{
+  "featureId": "SURVEYS-PUBLIC-COOKIE-RESUME-001",
+  "core3": {
+    "base": "http://127.0.0.1:4020",
+    "authenticatedActor": "admin@tms.local",
+    "authenticatedApiStatus": 404,
+    "authenticatedApiBody": "{\"error\":\"API route not found\",\"message_key\":\"errors.http_404\"}",
+    "anonymousApiStatus": 401,
+    "anonymousApiBody": "{\"error\":\"Unauthorized\",\"code\":\"UNAUTHORIZED\",\"message_key\":\"errors.unauthorized\"}",
+    "blocker": "The fresh runtime authenticated successfully but did not register the Surveys public API route. The shared host/registry boundary is outside this Surveys-only slice; no host routing files were modified and no Core3 visual sign-off is claimed."
+  },
+  "odoo": {
+    "base": "http://127.0.0.1:8069",
+    "desktopStatus": 200,
+    "mobileStatus": 200,
+    "resolvedPath": "/survey/b135640d-14d4-4748-9ef6-344ca256531e",
+    "body": "Feedback Form / Pay attention to the host screen until the next question.",
+    "blocker": "The installed Odoo reference exposes only the host-controlled waiting state for the available token; no mutable participant answer fixture was available to prove cookie resume into a question."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "featureId": "SURVEYS-PUBLIC-COOKIE-RESUME-001",
+  "reference": "http://127.0.0.1:8069",
+  "surveyToken": "b135640d-14d4-4748-9ef6-344ca256531e",
+  "checks": [
+    {
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8069/survey/b135640d-14d4-4748-9ef6-344ca256531e",
+      "body": "Skip to Content\nFeedback Form\nPay attention to the host screen until the next question.\nPowered by   ",
+      "cookieName": "survey_b135640d-14d4-4748-9ef6-344ca256531e",
+      "consoleOrPageFailures": [],
+      "bodyWidth": 1440,
+      "documentWidth": 1440
+    },
+    {
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "http://127.0.0.1:8069/survey/b135640d-14d4-4748-9ef6-344ca256531e",
+      "body": "Skip to Content\nFeedback Form\nPay attention to the host screen until the next question.\nPowered by   ",
+      "cookieName": "survey_b135640d-14d4-4748-9ef6-344ca256531e",
+      "consoleOrPageFailures": [],
+      "bodyWidth": 390,
+      "documentWidth": 390
+    }
+  ]
+}
