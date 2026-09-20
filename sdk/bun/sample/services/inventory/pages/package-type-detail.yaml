@@ -1,0 +1,45 @@
+title: Package Type
+page: { id: package-type-detail, route: /package-types/detail, breadcrumb: [Supply Chain, Inventory, Configuration, Delivery, Package Types, Package Type], auth: { require: [inventory.read] } }
+components:
+  - type: OdooFormView
+    source: inventory_package_type_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit }
+    header_actions:
+      - { id: back_to_inventory_package_types, label: Back to Package Types, icon: arrow-left, permission: inventory.read }
+      - { id: edit_inventory_package_type, label: Edit, variant: primary, permission: inventory.manage }
+      - { id: delete_inventory_package_type, label: Delete, variant: danger, permission: inventory.manage, show_if: "record.has_quants === false && record.package_count === 0 && record.capacity_count === 0 && record.route_count === 0" }
+    group_columns: 2
+    groups:
+      - title: Package Type
+        wide: true
+        fields:
+          - { field: name, label: Package Type }
+          - { field: package_use, label: Package Use }
+          - { field: barcode, label: Barcode }
+          - { field: sequence, label: Sequence, type: number }
+          - { field: company_name, label: Company }
+      - title: Dimensions and Weight
+        fields:
+          - { field: packaging_length, label: Length, type: number }
+          - { field: width, label: Width, type: number }
+          - { field: height, label: Height, type: number }
+          - { field: base_weight, label: Weight, type: number }
+          - { field: max_weight, label: Max Weight, type: number }
+      - title: Usage
+        fields:
+          - { field: has_quants, label: Has Contents, type: checkbox, readonly: true }
+          - { field: package_count, label: Packages, type: number, readonly: true }
+          - { field: capacity_count, label: Capacity Rules, type: number, readonly: true }
+          - { field: route_count, label: Routes, type: number, readonly: true }
+  - type: ListView
+    variant: odoo
+    source: inventory_package_type_capacity_rules
+    columns:
+      - { field: storage_category_name, label: Storage Category, type: PrimaryEntityCell }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: unit_name, label: Unit }
+    row_key: id
+    page_size: 20
+    empty_state: { title: No capacity rules, description: Storage category capacity rules using this package type appear here. }

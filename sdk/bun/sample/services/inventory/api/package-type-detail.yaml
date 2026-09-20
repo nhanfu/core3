@@ -1,0 +1,75 @@
+page: { id: package-type-detail }
+datasources:
+  - id: inventory_package_type_detail
+    single: true
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_PACKAGE_TYPE_DETAIL_UNAVAILABLE, message: Package type details are temporarily unavailable. } }
+    query: |
+      SELECT p.id, p.row_version, p.sequence, p.name, p.package_use, p.barcode,
+        CAST(p.packaging_length AS DOUBLE) AS packaging_length, CAST(p.width AS DOUBLE) AS width,
+        CAST(p.height AS DOUBLE) AS height, CAST(p.base_weight AS DOUBLE) AS base_weight,
+        CAST(p.max_weight AS DOUBLE) AS max_weight, p.has_quants, p.route_count, p.company_name,
+        (SELECT COUNT(*) FROM inventory_packages pack WHERE pack.package_type_name = p.name) AS package_count,
+        (SELECT COUNT(*) FROM inventory_storage_category_capacities cap WHERE cap.kind = 'package' AND cap.package_type_name = p.name) AS capacity_count
+      FROM inventory_package_types p
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND p.id = :id
+        AND (p.company_name = COALESCE(NULLIF(:current_company_name, ''), p.company_name)
+          OR p.company_name = 'Shared'
+          OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND p.company_name = 'My Company (San Francisco)'))
+  - id: inventory_package_type_capacity_rules
+    single: false
+    permission: inventory.read
+    query: "SELECT cap.id, cap.storage_category_id, c.name AS storage_category_name, cap.quantity, cap.unit_name FROM inventory_storage_category_capacities cap JOIN inventory_storage_categories c ON c.id = cap.storage_category_id WHERE cap.kind = 'package' AND cap.package_type_name = (SELECT name FROM inventory_package_types WHERE id = :id) ORDER BY c.name, cap.id"
+actions:
+  - id: back_to_inventory_package_types
+    type: navigate
+    permission: inventory.read
+    navigate_to: /package-types
+  - id: edit_inventory_package_type
+    type: server_form
+    permission: inventory.manage
+    title: Edit Package Type
+    action: inventory.package_types.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.inventory_package_type_detail
+    refresh: [inventory_package_type_detail, inventory_package_types]
+    mutation:
+      operation: update
+      table: inventory_package_types
+      fields: [sequence, name, package_use, barcode, packaging_length, width, height, base_weight, max_weight, company_name]
+      required: [name, package_use, company_name]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_package_types WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) OR company_name = 'Shared' OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PACKAGE_TYPE_NOT_FOUND, message: Package type not found. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0 AND CAST(:package_use AS VARCHAR) IN ('disposable', 'reusable') AND CAST(:packaging_length AS DECIMAL(18,3)) >= 0 AND CAST(:width AS DECIMAL(18,3)) >= 0 AND CAST(:height AS DECIMAL(18,3)) >= 0 AND CAST(:base_weight AS DECIMAL(18,3)) >= 0 AND CAST(:max_weight AS DECIMAL(18,3)) >= 0", status: 422, code: INVENTORY_PACKAGE_TYPE_INVALID, message: Enter a valid name, package use, dimensions, and weights. }
+        - { query: "SELECT 1 AS ok WHERE :company_name = COALESCE(NULLIF(:current_company_name, ''), :company_name) OR (:company_name = 'My Company (San Francisco)' AND COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 403, code: INVENTORY_PACKAGE_TYPE_COMPANY_FORBIDDEN, message: The package type company is outside the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_package_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND company_name = :company_name AND id <> :id)", status: 409, code: INVENTORY_PACKAGE_TYPE_NAME_EXISTS, message: A package type with this name already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:barcode, '')), '') IS NULL OR NOT EXISTS (SELECT 1 FROM inventory_package_types WHERE barcode = :barcode AND id <> :id)", status: 409, code: INVENTORY_PACKAGE_TYPE_BARCODE_EXISTS, message: A barcode can only be assigned to one package type. }
+      result: { query: "SELECT * FROM inventory_package_types WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number }
+      - { field: name, label: Package Type, type: text, required: true }
+      - { field: package_use, label: Package Use, type: select, options: [{ value: disposable, label: Disposable Box }, { value: reusable, label: Reusable Box (totes) }], required: true }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: packaging_length, label: Length, type: number, min: 0 }
+      - { field: width, label: Width, type: number, min: 0 }
+      - { field: height, label: Height, type: number, min: 0 }
+      - { field: base_weight, label: Weight, type: number, min: 0 }
+      - { field: max_weight, label: Max Weight, type: number, min: 0 }
+      - { field: company_name, label: Company, type: text, required: true }
+  - id: delete_inventory_package_type
+    type: server
+    permission: inventory.manage
+    action: inventory.package_types.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [inventory_package_types]
+    mutation:
+      operation: delete
+      table: inventory_package_types
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM inventory_package_types WHERE id = :id AND (company_name = COALESCE(NULLIF(:current_company_name, ''), company_name) OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND company_name = 'My Company (San Francisco)'))", status: 404, code: INVENTORY_PACKAGE_TYPE_NOT_FOUND, message: Package type not found. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_packages WHERE package_type_name = (SELECT name FROM inventory_package_types WHERE id = :id)) AND NOT EXISTS (SELECT 1 FROM inventory_storage_category_capacities WHERE kind = 'package' AND package_type_name = (SELECT name FROM inventory_package_types WHERE id = :id)) AND NOT EXISTS (SELECT 1 FROM inventory_package_types WHERE id = :id AND (has_quants = TRUE OR route_count > 0))", status: 409, code: INVENTORY_PACKAGE_TYPE_IN_USE, message: Remove packages, capacity rules, routes, or contents before deleting this package type. }

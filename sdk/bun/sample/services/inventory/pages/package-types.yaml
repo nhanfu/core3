@@ -1,0 +1,36 @@
+title: Package Types
+page: { id: package-types, route: /package-types, breadcrumb: [Supply Chain, Inventory, Configuration, Delivery, Package Types], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_package_types
+    responsive_card: true
+    create_action: create_inventory_package_type
+    create_label: New
+    search: { label: Search package types, placeholder: 'Search package types or barcodes...' }
+    views:
+      - { id: list, label: List, icon: table, mobile: false }
+      - id: card
+        label: Cards
+        icon: grid
+        mobile: true
+        card:
+          title: name
+          subtitle: barcode
+          fields: [{ field: package_use, label: Package Use }, { field: max_weight, label: Max Weight }, { field: company_name, label: Company }]
+    columns:
+      - { field: sequence, label: ' ', type: HandleCell, mobile: false }
+      - { field: name, label: Package Type, type: PrimaryEntityCell, sortable: true }
+      - { field: height, label: Height, align: right }
+      - { field: width, label: Width, align: right }
+      - { field: packaging_length, label: Length, align: right }
+      - { field: max_weight, label: Max Weight, align: right }
+      - { field: has_quants, label: Has Contents, type: BooleanToggle, optional: show }
+      - { field: barcode, label: Barcode, optional: hide }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_inventory_package_type
+    row_double_click_action: view_inventory_package_type
+    form_view: { page: apps/services/inventory/pages/package-type-detail.yaml, side_panel: false }
+    empty_state: { title: No package types, description: Create a package type for reusable or disposable delivery packaging. }

@@ -1681,3 +1681,31 @@ desktop/mobile evidence are under
 `evidence/inventory/2026-09-21/INV-UNITS-PACKAGINGS-001/`. Core3 browser CRUD
 form opening remained unproven in this bounded capture; the focused suite
 covers CRUD and guards. Full Inventory sign-off remains open.
+
+## Configuration > Delivery > Package Types — `INV-PACKAGE-TYPES-001` (2026-09-21)
+
+This bounded eleventh-wave slice covers Odoo's `stock.package.type` list/form:
+`addons/stock/views/stock_package_type_view.xml:4-96` defines the Configuration
+and Dimensions/Capacity form, the sequence/name/dimensions/weight/contents list,
+`action_package_type_view`, and the `menu_packaging_types` Delivery menu gated by
+`stock.group_tracking_lot`. The model fields and barcode/nonnegative dimension
+constraints are in `addons/stock/models/stock_package_type.py:7-59`.
+
+Core3 adds separate presentation-only `pages/package-types.yaml` and
+`pages/package-type-detail.yaml`, paired with `api/package-types.yaml` and
+`api/package-type-detail.yaml` by matching `page.id`. Migration
+`20260921230000-049-inventory-package-types.yaml` provides durable source-shaped
+package use, barcode, dimensions, weights, company, contents, route/capacity
+usage, row versions, and deterministic reusable/disposable/shared fixtures.
+Manager CRUD enforces package use, nonnegative dimensions/weights, globally
+unique barcode, current-company writes, optimistic row versions, and safe
+deletion when packages, contents, capacity rules, routes, or quants use the
+type. Readers retain scoped list/detail access.
+
+Focused verification passes 4 tests / 33 assertions. Authenticated Core3
+desktop/mobile list/detail evidence, with HTTP 200 page/source requests, no
+page errors, and no horizontal overflow, is under
+`evidence/inventory/2026-09-21/INV-PACKAGE-TYPES-001/`. Odoo source/menu
+comparison is recorded, but the live probe returned HTTP 303 to `/web/login`
+without an authenticated session; no paired Odoo visual or CRUD result is
+claimed. Full Inventory sign-off remains open.

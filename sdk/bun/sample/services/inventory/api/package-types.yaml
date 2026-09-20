@@ -1,0 +1,62 @@
+page: { id: package-types }
+datasources:
+  - id: inventory_package_types
+    single: false
+    permission: inventory.read
+    error_states: { transport_error: { status: 503, code: INVENTORY_PACKAGE_TYPES_UNAVAILABLE, message: Package types are temporarily unavailable. } }
+    query: |
+      SELECT p.id, p.row_version, p.sequence, p.name, p.package_use, p.barcode,
+        CAST(p.packaging_length AS DOUBLE) AS packaging_length, CAST(p.width AS DOUBLE) AS width,
+        CAST(p.height AS DOUBLE) AS height, CAST(p.max_weight AS DOUBLE) AS max_weight,
+        p.has_quants, p.company_name
+      FROM inventory_package_types p
+      WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+        AND (p.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+          OR p.company_name = 'Shared'
+          OR (COALESCE(:current_company_name, '') = 'Core3 Demo Company' AND p.company_name = 'My Company (San Francisco)'))
+        AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR COALESCE(p.barcode, '') ILIKE '%' || :q || '%')
+      ORDER BY p.sequence, p.name, p.id
+  - id: inventory_package_type_uses
+    single: false
+    permission: inventory.read
+    query: "SELECT id AS value, name AS label FROM inventory_package_types WHERE company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR company_name = 'Shared' ORDER BY sequence, name, id"
+actions:
+  - id: view_inventory_package_type
+    type: navigate
+    permission: inventory.read
+    navigate_to: /package-types/detail
+    params: { id: '{row.id}' }
+  - id: create_inventory_package_type
+    type: server_form
+    permission: inventory.manage
+    title: New Package Type
+    action: inventory.package_types.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_package_types]
+    mutation:
+      operation: insert
+      table: inventory_package_types
+      generated: [id]
+      fields: [sequence, name, package_use, barcode, packaging_length, width, height, base_weight, max_weight, has_quants, route_count, company_name, row_version]
+      required: [name, package_use, company_name]
+      defaults: { sequence: 100, package_use: disposable, barcode: '', packaging_length: 0, width: 0, height: 0, base_weight: 0, max_weight: 0, has_quants: false, route_count: 0, company_name: 'Core3 Demo Company', row_version: 1 }
+      guards:
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:name AS VARCHAR))) > 0", status: 422, code: INVENTORY_PACKAGE_TYPE_NAME_REQUIRED, message: A package type name is required. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:package_use AS VARCHAR) IN ('disposable', 'reusable')", status: 422, code: INVENTORY_PACKAGE_TYPE_USE_INVALID, message: Choose disposable or reusable packaging. }
+        - { query: "SELECT 1 AS ok WHERE CAST(:packaging_length AS DECIMAL(18,3)) >= 0 AND CAST(:width AS DECIMAL(18,3)) >= 0 AND CAST(:height AS DECIMAL(18,3)) >= 0 AND CAST(:base_weight AS DECIMAL(18,3)) >= 0 AND CAST(:max_weight AS DECIMAL(18,3)) >= 0", status: 422, code: INVENTORY_PACKAGE_TYPE_DIMENSIONS_INVALID, message: Dimensions and weights must be zero or greater. }
+        - { query: "SELECT 1 AS ok WHERE :company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company') OR (:company_name = 'My Company (San Francisco)' AND COALESCE(:current_company_name, '') = 'Core3 Demo Company')", status: 403, code: INVENTORY_PACKAGE_TYPE_COMPANY_FORBIDDEN, message: The package type company is outside the current company. }
+        - { query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_package_types WHERE LOWER(name) = LOWER(TRIM(CAST(:name AS VARCHAR))) AND company_name = :company_name)", status: 409, code: INVENTORY_PACKAGE_TYPE_NAME_EXISTS, message: A package type with this name already exists for the company. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(COALESCE(:barcode, '')), '') IS NULL OR NOT EXISTS (SELECT 1 FROM inventory_package_types WHERE barcode = :barcode AND id <> COALESCE(:id, ''))", status: 409, code: INVENTORY_PACKAGE_TYPE_BARCODE_EXISTS, message: A barcode can only be assigned to one package type. }
+      result: { query: "SELECT * FROM inventory_package_types WHERE id = :id" }
+    fields:
+      - { field: sequence, label: Sequence, type: number, default: 100 }
+      - { field: name, label: Package Type, type: text, required: true }
+      - { field: package_use, label: Package Use, type: select, options: [{ value: disposable, label: Disposable Box }, { value: reusable, label: Reusable Box (totes) }], required: true }
+      - { field: barcode, label: Barcode, type: text }
+      - { field: packaging_length, label: Length, type: number, min: 0 }
+      - { field: width, label: Width, type: number, min: 0 }
+      - { field: height, label: Height, type: number, min: 0 }
+      - { field: base_weight, label: Weight, type: number, min: 0 }
+      - { field: max_weight, label: Max Weight, type: number, min: 0 }
+      - { field: company_name, label: Company, type: text, required: true }

@@ -116,6 +116,10 @@ menu:
           label: Units & Packagings
           icon: ruler
           permission: inventory.read
+        - path: /package-types
+          label: Package Types
+          icon: package
+          permission: inventory.read
         - path: /inventory-analysis
           label: Inventory Analysis
           icon: chart

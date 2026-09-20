@@ -806,3 +806,26 @@ Inventory sign-off remains open.
   `evidence/inventory/2026-09-21/INV-UNITS-PACKAGINGS-001/`. Core3 New-form
   rendering was not claimed; Odoo source list renders 21 rows. Full Inventory
   sign-off remains open.
+
+## `INV-PACKAGE-TYPES-001` — Inventory Package Types (2026-09-21)
+
+- Selected the next genuinely uncovered source-backed Inventory configuration
+  workflow after excluding product variants, units/packagings, transfers,
+  package relocation, forecast, locations, replenishment, routes, storage
+  categories, putaway, and overview: Odoo `menu_packaging_types` →
+  `action_package_type_view` for `stock.package.type`.
+- Added durable migration `20260921230000-049-inventory-package-types.yaml`,
+  deterministic reusable/disposable/shared fixtures, and separate list/detail
+  page/API YAML joined by `page.id`. Manager CRUD enforces package use,
+  dimension/weight and barcode constraints, company scope, row versions, and
+  in-use deletion guards across packages, capacities, routes, and contents.
+- Focused verification: 4 tests / 33 assertions pass. Authenticated Core3
+  desktop/mobile evidence is under
+  `evidence/inventory/2026-09-21/INV-PACKAGE-TYPES-001/`; both viewports have
+  HTTP 200 page/source requests, no page errors, and no horizontal overflow.
+- `bun run audit` passes at 712 pages, 721 routes, and 1,359 datasources;
+  scoped ESLint and `git diff --check` pass.
+- Odoo source/menu comparison is complete; live Odoo returned HTTP 303 to
+  `/web/login` without an available authenticated session, so paired Odoo
+  visual/CRUD evidence is blocked and not claimed. Full Inventory sign-off
+  remains open.

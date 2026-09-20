@@ -1,0 +1,96 @@
+{
+  "authenticated_as": "admin@tms.local",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "mobile": true,
+  "list_url": "http://127.0.0.1:4330/inventory/package-types",
+  "detail_url": "http://127.0.0.1:4330/inventory/package-types/detail?id=package-type-pallet",
+  "list_text": "AU\nNew\nPackage Types\n1-5 / 5\n‹\n›\nPallet\n\nPACK-PALLET\n\nPackage Use\nreusable\nMax Weight\n1000\nCompany\nCore3 Demo Company\nBox\n\nPACK-BOX\n\nPackage Use\nreusable\nMax Weight\n25\nCompany\nCore3 Demo Company\nShipping Box\n\nPACK-SHIP\n\nPackage Use\ndisposable\nMax Weight\n10\nCompany\nMy Company (San Francisco)\nShared Tote\n\nPACK-SHARED\n\nPackage Use\nreusable\nMax Weight\n80\nCompany\nShared\nQA Empty Package Type\n\nPACK-QA-EMPTY\n\nPackage Use\ndisposable\nMax Weight\n5\nCompany\nCore3 Demo Company",
+  "detail_text": "AU\nBack to Package Types\nEdit\nPallet\nPackage Type\nPackage Type\nPallet\nPackage Use\nreusable\nBarcode\nPACK-PALLET\nSequence\n10\nCompany\nCore3 Demo Company\nDimensions and Weight\nLength\n120\nWidth\n80\nHeight\n15\nWeight\n15\nMax Weight\n1000\nUsage\nHas Contents\ntrue\nPackages\n2\nCapacity Rules\n1\nRoutes\n1\nPackage Type\n1-1 / 1\n‹\n›\nStorage Category\n\tQuantity\n\tUnit\n\n\nBulk Storage\n\t12\tUnits",
+  "horizontal_overflow": false,
+  "api": [
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/modules"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/apps"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/auth/me"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/menu?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/v1/companies"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/v1/company"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/menu?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/v1/notifications"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/v1/notifications"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/pages/package-types?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/modules"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/apps"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/auth/me"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/menu?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/v1/companies"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/v1/company"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/menu?lc=en"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/v1/notifications"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/v1/notifications"
+    },
+    {
+      "status": 200,
+      "url": "http://127.0.0.1:4330/api/pages/package-type-detail?lc=en&id=package-type-pallet"
+    }
+  ],
+  "page_errors": []
+}

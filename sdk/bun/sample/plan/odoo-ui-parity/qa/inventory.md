@@ -14,6 +14,21 @@ Candidate commit: `HEAD` (`SettingsView mutation transport retest`)
 Runtime: `http://127.0.0.1:3316`, isolated Inventory runner
 Authenticated user: `admin@tms.local`
 
+## INV-PACKAGE-TYPES-001 QA (2026-09-21)
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Odoo source/menu/action/model comparison | PASS | `evidence/inventory/2026-09-21/INV-PACKAGE-TYPES-001/source-comparison.md` |
+| Page/API separation and discovery | PASS | `inventory_package_types.integration.test.ts`; matching `page.id` contracts |
+| Durable deterministic fixtures and company scope | PASS | focused integration test and migration `0.0.49` |
+| Manager CRUD, barcode/dimension guards, in-use delete, row version | PASS | focused integration test |
+| Reader list/detail vs manager mutation permission boundary | PASS | focused integration test |
+| File-backed restart persistence | PASS | focused integration test |
+| Authenticated Core3 desktop/mobile list/detail | PASS | `evidence/inventory/2026-09-21/INV-PACKAGE-TYPES-001/core3-{desktop,mobile}.*` |
+| Paired authenticated Odoo desktop/mobile | BLOCKED | Odoo probe returned HTTP 303 to `/web/login`; see `odoo-blocker.json` |
+
+This is a bounded feature result, not full Inventory sign-off.
+
 ## Settings acceptance matrix
 
 | ID | Check | Result | Evidence |
