@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
@@ -48,6 +48,45 @@ describe('Fleet vehicle create contract', () => {
     const reloaded = await repository.querySource(list, { q: 'QA Fleet Shuttle', state: null, vehicle_type: null, trailer_hook: null, archived: null }, 0, 50);
     expect(reloaded.data).toEqual([expect.objectContaining({ id: created.id, license_plate: 'QA-FLEET-001', contract_end_date: '2026-12-31' })]);
     database.close();
+  });
+
+  test('rejects a replayed create after a file-backed restart without duplicating the vehicle', async () => {
+    const databasePath = `/tmp/core3-fleet-create-restart-${crypto.randomUUID()}.duckdb`;
+    const migrationName = `fleet_create_restart_${crypto.randomUUID().replaceAll('-', '_')}`;
+    const create = yaml('api/vehicles.yaml').actions.find((entry: any) => entry.id === 'create_fleet_vehicle');
+    const values = {
+      name: 'Restart Durable Fleet Shuttle',
+      license_plate: 'RESTART-CREATE-001',
+      vehicle_type: 'Car',
+      odometer: 42,
+      company_name: 'Core3 Demo Company',
+    };
+
+    const first = await DuckDbDatabase.open(databasePath);
+    const firstRepository = new YamlRepository(first);
+    await migrateDatabase(firstRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    const created = await firstRepository.executeMutation(create.mutation, {
+      current_company_name: 'Core3 Demo Company',
+      values,
+    });
+    expect(created).toMatchObject({ name: values.name, license_plate: values.license_plate });
+    first.close();
+
+    const second = await DuckDbDatabase.open(databasePath);
+    const secondRepository = new YamlRepository(second);
+    await migrateDatabase(secondRepository, join(serviceRoot, 'migrations'), undefined, migrationName, ['schema', 'data']);
+    await expect(secondRepository.executeMutation(create.mutation, {
+      current_company_name: 'Core3 Demo Company',
+      values,
+    })).rejects.toMatchObject({ status: 409, code: 'FLEET_VEHICLE_NAME_EXISTS' });
+
+    const rows = await secondRepository.query<{ id: string; row_version: number }>(
+      'SELECT id, row_version FROM fleet_vehicles WHERE name = ? AND license_plate = ?',
+      [values.name, values.license_plate],
+    );
+    expect(rows).toEqual([{ id: created.id, row_version: 1 }]);
+    second.close();
+    rmSync(databasePath, { force: true });
   });
 
   test('returns stable validation and duplicate errors before insert', async () => {
