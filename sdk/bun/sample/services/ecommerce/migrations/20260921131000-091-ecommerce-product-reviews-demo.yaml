@@ -1,0 +1,32 @@
+version: 0.0.91
+kind: data
+description: deterministic Website Sale product review fixture
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_reviews (
+        id, row_version, product_id, reviewer_name, reviewer_email, rating,
+        title, review_body, state, company_name, active
+      ) VALUES (
+        'ecommerce-review-mug-001', 1, 'ecommerce-product-mug',
+        'Core3 QA Buyer', 'qa-buyer@example.test', 5,
+        'A great workspace mug',
+        'The ceramic mug is durable and fits the Core3 workspace setup.',
+        'published', 'My Company', TRUE
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        product_id = EXCLUDED.product_id,
+        reviewer_name = EXCLUDED.reviewer_name,
+        reviewer_email = EXCLUDED.reviewer_email,
+        rating = EXCLUDED.rating,
+        title = EXCLUDED.title,
+        review_body = EXCLUDED.review_body,
+        state = EXCLUDED.state,
+        company_name = EXCLUDED.company_name,
+        active = EXCLUDED.active;
+    down: |
+      DELETE FROM ecommerce_product_reviews WHERE id = 'ecommerce-review-mug-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

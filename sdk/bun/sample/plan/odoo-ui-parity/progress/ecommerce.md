@@ -7,6 +7,29 @@ Verification trigger: feature-complete
 Latest committed bounded slice: `eefbbb87c88dc22cafbdf7be720902b56b55b66d`
 (`ECOM-CATALOG-PRODUCT-PUBLICATION-001`, committed locally; not pushed).
 
+## Current bounded task — `ECOM-CATALOG-PRODUCT-REVIEWS-001`
+
+Wave 13 selected the next genuinely uncovered Website Sale behavior: product
+reviews and ratings. Odoo `product.template` inherits `rating.mixin`, exposes
+`rating_avg`/`rating_count`, and the product template renders Customer Reviews
+through the portal message thread. Core3 migrations 090/091 add durable,
+company-scoped review records and a deterministic published Mug fixture.
+Product Detail keeps page/API YAML separate and now exposes published review
+aggregates plus a permissioned create/edit/publish/reject/delete lifecycle.
+Validation, company scope, optimistic concurrency, moderation reset, and
+DuckDB restart persistence are covered.
+
+Focused review tests passed **3 tests, 29 assertions, 0 failures**. Product
+Detail/Shop/review focused regression passed **12 tests, 95 assertions**; the
+Products companion test has one unrelated shared schema failure
+(`actions[11].result is not allowed`). Product Detail paired schema validation,
+the UI audit (714 pages/723 routes/1364 datasources), scoped ESLint, and
+`git diff --check` pass. Core3 desktop/mobile capture is blocked by missing
+`js_repl` and unavailable ports 3000/4312/4313; Odoo `/shop` is exact HTTP 404
+on 8069/8073. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-reviews-001/`.
+Ready for an Ecommerce-only local commit; not pushed.
+
 ## Current bounded task — `ECOM-CATALOG-PRODUCT-PUBLICATION-001`
 
 The eleventh-wave source-backed gap is Website Sale product publication. Odoo

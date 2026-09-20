@@ -1,6 +1,29 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded product-seo-metadata slice; module sign-off remains open)
+Status: qa-in-progress (bounded product-reviews slice; module sign-off remains open)
+
+## Bounded feature — Product Reviews and Ratings (`ECOM-CATALOG-PRODUCT-REVIEWS-001`)
+
+Odoo source comparison: `website_sale/models/product_template.py` inherits
+`rating.mixin`; the product model exposes the computed `rating_avg` and
+`rating_count` values, while `views/templates.xml` renders the Customer
+Reviews portal message thread and static rating summary on the product page.
+
+Core3 had no durable product review model or Product Detail review contract.
+Migrations 090/091 add company-scoped review records and a deterministic
+published Mug review. The paired Product Detail page/API exposes published
+review aggregates and an authenticated review list. Permissioned create/edit,
+publish/reject, and delete actions enforce active product ownership,
+1-to-5/length validation, company scope, optimistic row versions, and
+DuckDB restart persistence. Editing returns a review to pending moderation;
+only published active reviews contribute to the product aggregate.
+
+Focused functional, regression, paired-schema, audit, scoped-lint, and
+diff-check evidence is recorded under
+`evidence/ecommerce/2026-09-21/ecom-catalog-product-reviews-001/`.
+Authenticated Core3 desktop/mobile capture is blocked by unavailable ports
+and the missing persistent browser runtime; supplied Odoo `/shop` probes are
+exact HTTP 404 on 8069 and 8073. This bounded slice is not module sign-off.
 
 ## Bounded feature — Product SEO Metadata (`ECOM-CATALOG-PRODUCT-SEO-METADATA-001`)
 

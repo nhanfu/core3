@@ -8,10 +8,17 @@ datasources:
       forbidden: { status: 403, code: ECOMMERCE_PRODUCT_FORBIDDEN, message: You do not have access to this product. }
       missing_record: { status: 404, code: ECOMMERCE_PRODUCT_NOT_FOUND, message: Product not found. }
       transport_error: { status: 503, code: ECOMMERCE_PRODUCT_UNAVAILABLE, message: Product details are temporarily unavailable. }
-    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, compare_list_price, CASE WHEN compare_list_price > sales_price THEN compare_list_price ELSE NULL END AS compare_at_price, website_description, website_meta_title, website_meta_description, website_meta_keywords, website_meta_og_img, (NULLIF(website_meta_title, '') IS NOT NULL AND NULLIF(website_meta_description, '') IS NOT NULL AND NULLIF(website_meta_keywords, '') IS NOT NULL) AS is_seo_optimized, website_sequence, is_published, CAST(publish_date AS VARCHAR) AS publish_date, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id AND (:company_name IS NULL OR company_name = :company_name)"
+    query: "SELECT id, row_version, name, internal_reference, product_type, category, sales_price, compare_list_price, CASE WHEN compare_list_price > sales_price THEN compare_list_price ELSE NULL END AS compare_at_price, website_description, website_meta_title, website_meta_description, website_meta_keywords, website_meta_og_img, (NULLIF(website_meta_title, '') IS NOT NULL AND NULLIF(website_meta_description, '') IS NOT NULL AND NULLIF(website_meta_keywords, '') IS NOT NULL) AS is_seo_optimized, (SELECT COUNT(*) FROM ecommerce_product_reviews r WHERE r.product_id = ecommerce_products.id AND r.state = 'published' AND r.active = TRUE) AS review_count, COALESCE((SELECT ROUND(AVG(r.rating), 2) FROM ecommerce_product_reviews r WHERE r.product_id = ecommerce_products.id AND r.state = 'published' AND r.active = TRUE), 0) AS rating_average, website_sequence, is_published, CAST(publish_date AS VARCHAR) AS publish_date, active, company_name FROM ecommerce_products WHERE CASE WHEN COALESCE(:fixture_state, '') = 'not_found' THEN FALSE ELSE TRUE END AND id = :id AND (:company_name IS NULL OR company_name = :company_name)"
   - id: ecommerce_product_images
     permission: ecommerce.read
     query: "SELECT id, product_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM ecommerce_product_images WHERE product_id = :id ORDER BY created_at DESC, id"
+  - id: ecommerce_product_reviews
+    permission: ecommerce.read
+    error_states:
+      unauthorized: { status: 401, code: ECOMMERCE_PRODUCT_REVIEWS_UNAUTHENTICATED, message: Sign in to view product reviews. }
+      forbidden: { status: 403, code: ECOMMERCE_PRODUCT_REVIEWS_FORBIDDEN, message: You do not have permission to view product reviews. }
+      transport_error: { status: 503, code: ECOMMERCE_PRODUCT_REVIEWS_UNAVAILABLE, message: Product reviews are temporarily unavailable. }
+    query: "SELECT r.id, r.row_version, r.product_id, r.reviewer_name, r.reviewer_email, r.rating, r.title, r.review_body, r.state, r.company_name, r.active, CAST(r.created_at AS VARCHAR) AS created_at, CAST(r.updated_at AS VARCHAR) AS updated_at FROM ecommerce_product_reviews r JOIN ecommerce_products p ON p.id = r.product_id WHERE r.product_id = :id AND p.active = TRUE AND r.active = TRUE AND (:company_name IS NULL OR r.company_name = :company_name OR r.company_name IS NULL) ORDER BY r.created_at DESC, r.id"
   - id: ecommerce_product_documents
     permission: ecommerce.read
     error_states:
@@ -439,3 +446,96 @@ actions:
       - { field: website_description, label: Website Description, type: richtext }
       - { field: website_sequence, label: Website Sequence, type: number }
       - { field: is_published, label: Published, type: checkbox }
+  - id: create_ecommerce_product_review
+    type: server_form
+    permission: ecommerce.write
+    title: New Product Review
+    action: ecommerce.products.reviews.create
+    handler: yaml_mutation
+    operation: create
+    params: { product_id: '{state.ecommerce_product_detail.id}' }
+    refresh: [ecommerce_product_reviews, ecommerce_product_detail]
+    mutation:
+      generated: [id]
+      required: [product_id, reviewer_name, rating, title, review_body]
+      guards:
+        - { query: "SELECT id FROM ecommerce_products WHERE id = :product_id AND active = TRUE AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)", status: 403, code: ECOMMERCE_PRODUCT_REVIEW_COMPANY_SCOPE_REQUIRED, message: This product belongs to another company. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:reviewer_name AS VARCHAR))) BETWEEN 1 AND 120 AND LENGTH(TRIM(CAST(:title AS VARCHAR))) BETWEEN 1 AND 160 AND LENGTH(TRIM(CAST(:review_body AS VARCHAR))) BETWEEN 1 AND 4000 AND CAST(:rating AS INTEGER) BETWEEN 1 AND 5", status: 422, code: ECOMMERCE_PRODUCT_REVIEW_INVALID, message: Review name, title, body, and rating are invalid. }
+      steps:
+        - { query: "INSERT INTO ecommerce_product_reviews(id, row_version, product_id, reviewer_name, reviewer_email, rating, title, review_body, state, company_name, active) SELECT :id, 1, p.id, TRIM(CAST(:reviewer_name AS VARCHAR)), NULLIF(TRIM(CAST(COALESCE(:reviewer_email, '') AS VARCHAR)), ''), CAST(:rating AS INTEGER), TRIM(CAST(:title AS VARCHAR)), TRIM(CAST(:review_body AS VARCHAR)), 'pending', p.company_name, TRUE FROM ecommerce_products p WHERE p.id = :product_id", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_REVIEW_CREATE_FAILED, message: The review could not be created. }
+      result: { query: "SELECT * FROM ecommerce_product_reviews WHERE id = :id" }
+    fields:
+      - { field: reviewer_name, label: Reviewer Name, type: text, required: true }
+      - { field: reviewer_email, label: Reviewer Email, type: email }
+      - { field: rating, label: Rating, type: number, min: 1, max: 5, required: true }
+      - { field: title, label: Review Title, type: text, required: true }
+      - { field: review_body, label: Review, type: textarea, required: true }
+  - id: edit_ecommerce_product_review
+    type: server_form
+    permission: ecommerce.write
+    title: Edit Product Review
+    action: ecommerce.products.reviews.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    params: { product_id: '{state.ecommerce_product_detail.id}', review_id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_reviews, ecommerce_product_detail]
+    mutation:
+      required: [product_id, review_id, expected_row_version, reviewer_name, rating, title, review_body]
+      guards:
+        - { query: "SELECT r.id FROM ecommerce_product_reviews r JOIN ecommerce_products p ON p.id = r.product_id WHERE r.id = :review_id AND r.product_id = :product_id AND r.row_version = :expected_row_version AND r.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_REVIEW_STALE, message: This review changed or was deleted. Reload before saving. }
+        - { query: "SELECT 1 AS ok WHERE LENGTH(TRIM(CAST(:reviewer_name AS VARCHAR))) BETWEEN 1 AND 120 AND LENGTH(TRIM(CAST(:title AS VARCHAR))) BETWEEN 1 AND 160 AND LENGTH(TRIM(CAST(:review_body AS VARCHAR))) BETWEEN 1 AND 4000 AND CAST(:rating AS INTEGER) BETWEEN 1 AND 5", status: 422, code: ECOMMERCE_PRODUCT_REVIEW_INVALID, message: Review name, title, body, and rating are invalid. }
+      steps:
+        - { query: "UPDATE ecommerce_product_reviews SET row_version = row_version + 1, reviewer_name = TRIM(CAST(:reviewer_name AS VARCHAR)), reviewer_email = NULLIF(TRIM(CAST(COALESCE(:reviewer_email, '') AS VARCHAR)), ''), rating = CAST(:rating AS INTEGER), title = TRIM(CAST(:title AS VARCHAR)), review_body = TRIM(CAST(:review_body AS VARCHAR)), state = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = :review_id AND row_version = :expected_row_version AND active = TRUE", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_REVIEW_STALE, message: This review changed before it could be saved. }
+      result: { query: "SELECT * FROM ecommerce_product_reviews WHERE id = :review_id" }
+    fields:
+      - { field: reviewer_name, label: Reviewer Name, type: text, required: true }
+      - { field: reviewer_email, label: Reviewer Email, type: email }
+      - { field: rating, label: Rating, type: number, min: 1, max: 5, required: true }
+      - { field: title, label: Review Title, type: text, required: true }
+      - { field: review_body, label: Review, type: textarea, required: true }
+  - id: publish_ecommerce_product_review
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.reviews.publish
+    handler: yaml_mutation
+    operation: update
+    params: { product_id: '{state.ecommerce_product_detail.id}', review_id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_reviews, ecommerce_product_detail]
+    mutation:
+      required: [product_id, review_id, expected_row_version]
+      guards:
+        - { query: "SELECT r.id FROM ecommerce_product_reviews r JOIN ecommerce_products p ON p.id = r.product_id WHERE r.id = :review_id AND r.product_id = :product_id AND r.row_version = :expected_row_version AND r.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_REVIEW_STALE, message: This review changed or was deleted. Reload before publishing. }
+      steps:
+        - { query: "UPDATE ecommerce_product_reviews SET state = 'published', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :review_id AND row_version = :expected_row_version AND active = TRUE", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_REVIEW_STALE, message: This review changed before it could be published. }
+      result: { query: "SELECT * FROM ecommerce_product_reviews WHERE id = :review_id" }
+  - id: reject_ecommerce_product_review
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.reviews.reject
+    handler: yaml_mutation
+    operation: update
+    params: { product_id: '{state.ecommerce_product_detail.id}', review_id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_reviews, ecommerce_product_detail]
+    mutation:
+      required: [product_id, review_id, expected_row_version]
+      guards:
+        - { query: "SELECT r.id FROM ecommerce_product_reviews r JOIN ecommerce_products p ON p.id = r.product_id WHERE r.id = :review_id AND r.product_id = :product_id AND r.row_version = :expected_row_version AND r.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_REVIEW_STALE, message: This review changed or was deleted. Reload before rejecting. }
+      steps:
+        - { query: "UPDATE ecommerce_product_reviews SET state = 'rejected', row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :review_id AND row_version = :expected_row_version AND active = TRUE", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_REVIEW_STALE, message: This review changed before it could be rejected. }
+      result: { query: "SELECT * FROM ecommerce_product_reviews WHERE id = :review_id" }
+  - id: delete_ecommerce_product_review
+    type: server
+    permission: ecommerce.write
+    action: ecommerce.products.reviews.delete
+    handler: yaml_mutation
+    operation: delete
+    params: { product_id: '{state.ecommerce_product_detail.id}', review_id: '{row.id}', expected_row_version: '{row.row_version}' }
+    refresh: [ecommerce_product_reviews, ecommerce_product_detail]
+    mutation:
+      required: [product_id, review_id, expected_row_version]
+      guards:
+        - { query: "SELECT r.id FROM ecommerce_product_reviews r JOIN ecommerce_products p ON p.id = r.product_id WHERE r.id = :review_id AND r.product_id = :product_id AND r.row_version = :expected_row_version AND r.active = TRUE AND (COALESCE(:current_company_name, '') = '' OR p.company_name = :current_company_name)", status: 409, code: ECOMMERCE_PRODUCT_REVIEW_STALE, message: This review changed or was deleted. Reload before deleting. }
+      steps:
+        - { query: "DELETE FROM ecommerce_product_reviews WHERE id = :review_id AND row_version = :expected_row_version", expect_changed: true, status: 409, code: ECOMMERCE_PRODUCT_REVIEW_STALE, message: This review changed before deletion. }
+      result: { query: "SELECT TRUE AS deleted, :review_id AS id" }

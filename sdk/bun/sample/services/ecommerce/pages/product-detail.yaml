@@ -23,7 +23,7 @@ components:
       - { id: unpublish_ecommerce_product, label: Unpublish, variant: secondary, permission: ecommerce.write, show_if: "state.ecommerce_product_detail.is_published === true" }
     groups:
       - { title: Product, columns: 2, fields: [{ field: name, label: Product Name }, { field: internal_reference, label: Internal Reference }, { field: product_type, label: Product Type }, { field: category, label: Category }] }
-      - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: compare_at_price, label: Compare to Price }, { field: website_sequence, label: Website Sequence }, { field: is_published, label: Published, type: StatusChip }, { field: publish_date, label: Published At }, { field: active, label: Active, type: StatusChip }] }
+      - { title: Website, columns: 2, fields: [{ field: sales_price, label: Sales Price }, { field: compare_at_price, label: Compare to Price }, { field: website_sequence, label: Website Sequence }, { field: is_published, label: Published, type: StatusChip }, { field: publish_date, label: Published At }, { field: review_count, label: Published Reviews }, { field: rating_average, label: Average Rating }, { field: active, label: Active, type: StatusChip }] }
       - { title: Website Description, columns: 1, fields: [{ field: website_description, label: Description, type: richtext, wide: true }] }
       - { title: SEO Metadata, columns: 2, fields: [{ field: website_meta_title, label: Website Meta Title }, { field: website_meta_description, label: Website Meta Description, wide: true }, { field: website_meta_keywords, label: Website Meta Keywords }, { field: website_meta_og_img, label: Website OpenGraph Image }, { field: is_seo_optimized, label: SEO Optimized, type: StatusChip }] }
   - type: ListView
@@ -142,3 +142,27 @@ components:
         actions:
           - { id: view_ecommerce_product_document, label: View, icon: document, variant: secondary, permission: ecommerce.read }
           - { id: delete_ecommerce_product_document_from_product, label: Delete, icon: trash, variant: danger, permission: ecommerce.write }
+  - type: ListView
+    variant: odoo
+    source: ecommerce_product_reviews
+    create_action: create_ecommerce_product_review
+    create_label: New Product Review
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    empty_state: { title: No product reviews, description: Customer ratings and discussion for this product will appear here. }
+    columns:
+      - { field: title, label: Review, type: PrimaryEntityCell }
+      - { field: reviewer_name, label: Reviewer }
+      - { field: rating, label: Rating, align: right }
+      - { field: state, label: State, type: StatusChip }
+      - { field: created_at, label: Submitted }
+      - field: actions
+        label: ''
+        sortable: false
+        width: 180
+        actions:
+          - { id: edit_ecommerce_product_review, label: Edit, icon: edit, variant: secondary, permission: ecommerce.write }
+          - { id: publish_ecommerce_product_review, label: Publish, icon: check, variant: primary, permission: ecommerce.write }
+          - { id: reject_ecommerce_product_review, label: Reject, icon: close, variant: secondary, permission: ecommerce.write }
+          - { id: delete_ecommerce_product_review, label: Delete, icon: trash, variant: danger, permission: ecommerce.write }

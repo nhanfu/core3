@@ -1,5 +1,34 @@
 # ecommerce QA ledger
 
+## Product Reviews and Ratings (`ECOM-CATALOG-PRODUCT-REVIEWS-001`, 2026-09-21)
+
+- Odoo source/page: pass. Website Sale product templates inherit
+  `rating.mixin`, expose `rating_avg`/`rating_count`, and render the Customer
+  Reviews portal message thread with the static rating summary.
+- Core3 lifecycle: pass for this bounded contract. Migrations 090/091 add
+  durable reviews and a deterministic published Mug fixture. Product Detail
+  keeps page/API YAML separate; review CRUD, moderation, company scope,
+  1-to-5/length validation, optimistic concurrency, and restart persistence
+  are implemented. Published active rows alone feed the aggregate.
+- Focused verification: `bun test
+  test/ecommerce_product_reviews.integration.test.ts --timeout 20000` — **3
+  passed, 29 assertions, 0 failures**. Product Detail/Products/Shop
+  regression — **12 passed, 95 assertions, 1 unrelated Products page-schema
+  failure**; Product Detail, Shop, and review tests all passed. The Products
+  failure reports a pre-existing shared action schema boundary
+  (`actions[11].result is not allowed`) and no non-Ecommerce file was changed.
+- Paired Product Detail schema validation passed with external companion
+  datasources allowed. `bun run audit` passed at 714 pages, 723 routes, and
+  1364 datasources. Scoped ESLint and `git diff --check` are recorded in the
+  evidence.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  no persistent `js_repl` runtime is available and ports 3000/4312/4313 were
+  unavailable. No rendered UI sign-off is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Evidence: `evidence/ecommerce/2026-09-21/ecom-catalog-product-reviews-001/`.
+
 ## Product SEO Metadata (`ECOM-CATALOG-PRODUCT-SEO-METADATA-001`, 2026-09-21)
 
 - Odoo source/page: pass. `website.seo.metadata` defines the four product SEO

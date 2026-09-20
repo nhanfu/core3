@@ -10,6 +10,18 @@ Last reviewed: 2026-09-12
 This plan follows [`ecommerce.md`](../../ecommerce.md); executed evidence is
 recorded in [`../ecommerce.md`](../ecommerce.md).
 
+## ECOM-CATALOG-PRODUCT-REVIEWS-001
+
+- ECOM-FUNC-042: trace Odoo rating mixin, aggregates, and Customer Reviews
+  template; verify Product Detail page/API separation.
+- ECOM-WF-053: create pending review, publish/reject moderation, edit back to
+  pending, and delete with aggregate refresh.
+- ECOM-PERM-049: require `ecommerce.read`/`ecommerce.write`; reject wrong
+  company, invalid rating/text, inactive product, and stale row writes.
+- ECOM-UI-035: Product Detail review aggregate and review ListView with CRUD
+  and moderation actions; desktop/mobile and Odoo comparison remain blocked by
+  runtime availability and `/shop` HTTP 404.
+
 ## Coverage inventory
 
 | Menu/action family | Core3 route families | Scope |
