@@ -1,0 +1,61 @@
+{
+  "feature_id": "TIMESHEET-PROJECT-DASHBOARD-SCOPE-GUARDS",
+  "captured_at": "2026-09-20",
+  "core3": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "project": true,
+      "timesheets": true,
+      "hoursLogged": true,
+      "entries": true,
+      "entryRows": 2,
+      "url": "http://127.0.0.1:4041/project/projects/detail/dashboard?id=project-demo-001",
+      "bodyWidth": 1424,
+      "documentWidth": 1440,
+      "errors": [],
+      "failed": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "project": false,
+      "timesheets": true,
+      "hoursLogged": true,
+      "entries": true,
+      "entryRows": 0,
+      "url": "http://127.0.0.1:4041/project/projects/detail/dashboard?id=project-demo-001",
+      "bodyWidth": 469,
+      "documentWidth": 477,
+      "errors": [],
+      "failed": []
+    }
+  },
+  "odoo": {
+    "desktop": {
+      "viewport": "1440x900",
+      "authenticated": true,
+      "project": true,
+      "timesheets": false,
+      "dashboardWords": true,
+      "url": "http://127.0.0.1:8069/odoo/project/5",
+      "bodyWidth": 1440,
+      "documentWidth": 1440,
+      "errors": [],
+      "failed": []
+    },
+    "mobile": {
+      "viewport": "390x844",
+      "authenticated": true,
+      "project": true,
+      "timesheets": false,
+      "dashboardWords": true,
+      "url": "http://127.0.0.1:8069/odoo/project/5",
+      "bodyWidth": 390,
+      "documentWidth": 390,
+      "errors": [],
+      "failed": []
+    }
+  },
+  "blockers": []
+}

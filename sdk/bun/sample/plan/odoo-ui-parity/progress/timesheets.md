@@ -179,3 +179,28 @@ Odoo renders the aggregate By Employee route but does not expose the loaded
 row-to-form interaction; that is an exact reference blocker. Timesheets module
 sign-off remains pending because the paired Odoo interaction and broader route/
 action comparison are still incomplete.
+
+## 2026-09-20 `TIMESHEET-PROJECT-DASHBOARD-SCOPE-GUARDS`
+
+The smallest remaining integration gap was the Odoo project dashboard embedded
+Timesheets action. Source `project_embedded_action_timesheets_dashboard` at
+`hr_timesheet/views/hr_timesheet_views.xml:600-610` requires the project to be
+timesheetable and uses the Timesheets user-group boundary. Core3's existing
+Project dashboard consumed Timesheets operations by project ID without applying
+those relation guards.
+
+Timesheets `by_project` and `project_summary` now join `timesheet_projects`
+and fail closed unless the project is active, timesheet-enabled, analytic-
+account-backed, and in the fixed active company. The existing Project page/API
+separation remains intact; the durable entry source is changed and read after
+a file-backed restart. Focused coverage passes 4 tests / 26 expectations and
+the shared Timesheets suite passes 72 tests / 516 expectations. ESLint,
+diff-check, and the current UI audit (679 pages, 688 routes, 1250 datasources)
+pass.
+
+Authenticated Core3 desktop evidence shows the dashboard Timesheets panel and
+rows. Mobile shows the same data but records an existing 477px-over-390px
+Project dashboard overflow, which remains a Project-owned blocker. Authenticated
+Odoo `/odoo/project/5` renders the project at both viewports but exposes no
+visible Timesheets embedded action; this is the exact paired-reference blocker.
+Module sign-off remains pending.

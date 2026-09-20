@@ -22,8 +22,14 @@ operations:
              t.project_id, t.project_name, t.task_id, t.task_name,
              t.billable, t.state
       FROM timesheet_entries t
+      JOIN timesheet_projects p ON p.id = t.project_id
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
-        AND t.project_id = :project_id
+        AND p.allow_timesheets = TRUE
+        AND p.has_analytic_account = TRUE
+        AND p.active = TRUE
+        AND p.company_name = 'Core3 Demo Company'
+        AND t.company_name = 'Core3 Demo Company'
+        AND p.id = :project_id
       ORDER BY t.work_date DESC, t.id
   timesheets.entries.project_summary:
     result_key: project_timesheet_summary
@@ -31,6 +37,13 @@ operations:
       SELECT :project_id AS project_id,
              COALESCE(SUM(t.hours), 0) AS timesheets,
              COUNT(t.id) AS timesheet_entry_count
-      FROM timesheet_entries t
+      FROM timesheet_projects p
+      LEFT JOIN timesheet_entries t ON t.project_id = p.id
+        AND t.company_name = 'Core3 Demo Company'
       WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
-        AND t.project_id = :project_id
+        AND p.allow_timesheets = TRUE
+        AND p.has_analytic_account = TRUE
+        AND p.active = TRUE
+        AND p.company_name = 'Core3 Demo Company'
+        AND p.id = :project_id
+      GROUP BY p.id

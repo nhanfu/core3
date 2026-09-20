@@ -911,3 +911,42 @@ requests. Browser capture used a temporary runtime workaround while concurrent
 Ecommerce page-schema repairs were still present in the shared checkout; the
 current shared Timesheets suite and UI audit now pass, and the workaround is
 outside the commit.
+
+## Project dashboard embedded Timesheets scope slice — `TIMESHEET-PROJECT-DASHBOARD-SCOPE-GUARDS` (2026-09-20)
+
+Odoo's `project_embedded_action_timesheets_dashboard` is declared in
+`addons/hr_timesheet/views/hr_timesheet_views.xml:600-610`. It hangs the
+Timesheets action from the project update dashboard, calls
+`action_project_timesheets`, applies the `allow_timesheets = True` domain,
+passes `from_embedded_action`, and requires the Timesheets user group. Core3
+already had the Project-owned dashboard page/API pair and Timesheets service
+operations, but the service reads filtered only by project ID.
+
+The Timesheets service now joins the durable `timesheet_projects` relation for
+both `timesheets.entries.by_project` and `timesheets.entries.project_summary`.
+Dashboard rows and totals require an active project, an analytic account, the
+Timesheets-enabled flag, and the fixed active company; closed, missing-account,
+wrong-company, and missing projects fail closed without changing persisted
+entries. The existing Project page remains layout-only and its API keeps the
+two dashboard datasources bound to `yaml.service.timesheets`; no Project-owned
+file was changed. The durable `timesheet_entries` source is updated and read
+again after a file-backed restart in the focused test; no moving or generated
+fixture values were introduced.
+
+Focused coverage is `test/timesheets_project_dashboard_scope.integration.test.ts`
+(4 tests, 26 expectations): Odoo source/action comparison, page/API separation,
+durable summary restart, relation/company guards, no-partial-read behavior, and
+deterministic query checks. The shared Timesheets suite passes 72 tests / 516
+expectations; scoped ESLint, diff-check, and the UI audit pass with 679 pages,
+688 routes, and 1250 datasources.
+
+Authenticated Core3 evidence is under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-project-dashboard-scope-guards/`.
+Desktop renders the project dashboard Timesheets hours, entries, and seeded
+rows with no browser/request errors. Mobile renders the Timesheets panel and
+rows with no browser/request errors but the existing Project dashboard layout
+overflows to 477px at a 390px viewport; this is an out-of-scope Project-owned
+responsive blocker, not a Timesheets pass. Authenticated Odoo desktop/mobile
+`/odoo/project/5` renders Home Construction with no browser/request errors and
+no horizontal overflow, but exposes no visible Timesheets embedded action on
+the loaded project dashboard/form. That is the exact paired Odoo blocker.
