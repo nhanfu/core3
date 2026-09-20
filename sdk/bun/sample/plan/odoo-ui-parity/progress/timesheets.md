@@ -85,6 +85,39 @@ the full authenticated route/action comparison, Odoo QWeb/PDF renderer parity,
 and any remaining project-dashboard integration gaps.
 Update this file only with evidence from the matching module owner.
 
+## 2026-09-20 `TIMESHEET-PROJECT-REPORT-PREVIEW`
+
+The smallest remaining source-backed renderer gap was Odoo's
+`timesheet_report_project` QWeb-PDF binding in
+`addons/hr_timesheet/report/report_timesheet_templates.xml:205-213`. Core3
+already persisted guarded project report runs, but the project Timesheets
+action stopped at the browser print surface and had no authenticated report
+document.
+
+Core3 now keeps the project report layout and API separate by `page.id` at
+`/timesheets/project-report-preview`. The preview reads the durable,
+company-scoped project report run and its persisted entry lines, exposes a
+read-only summary plus line list, and retains Print/Back actions. The existing
+project report mutation remains the write boundary for actor, company, stale,
+missing-project, and empty-project guards; the project preview API adds
+company/project visibility guards and deterministic empty behavior.
+
+Focused coverage is
+`test/timesheets_project_report_preview.integration.test.ts` (4 tests / 22
+expectations), including migration replay, file-backed restart, page/API
+separation, persisted lines, company/project scope, and fixed source contract
+checks. Authenticated Core3 desktop/mobile and paired authenticated Odoo
+desktop/mobile evidence is committed under
+`plan/odoo-ui-parity/evidence/timesheets/2026-09-20/timesheet-project-report-preview/`.
+Core3 follows the project Print action to the preview and renders eight lines
+without browser/request failures or horizontal overflow. Odoo `/odoo/project/5`
+has no visible Timesheets Print/report action at either viewport, so the source
+QWeb/PDF execution is recorded as an exact blocker rather than parity.
+
+This bounded slice does not sign off Timesheets; full route/action comparison,
+QWeb/PDF equivalence, other embedded interactions, and module sign-off remain
+open.
+
 ## 2026-09-20 `TIMESHEET-ALL-ENTRY-REPORT-ACTION`
 
 The next source-backed report/context gap was the approver All Timesheets

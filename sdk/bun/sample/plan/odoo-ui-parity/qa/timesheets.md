@@ -197,6 +197,31 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Desktop/mobile visual parity: partial; three representative routes paired, remaining enabled routes and interaction states open
 - Tester decision: not signed off
 
+## 2026-09-20 `TIMESHEET-PROJECT-REPORT-PREVIEW`
+
+- Source gate: Odoo `timesheet_report_project` is a `qweb-pdf` report bound to
+  `project.project` in `hr_timesheet/report/report_timesheet_templates.xml:205-213`.
+- Core3 gate: `project-timesheets` remains page/API-separated and its guarded
+  Print action now navigates to `/timesheets/project-report-preview`; the new
+  API reads the durable project report run and company-scoped persisted lines.
+- Focused gate: `bun test test/timesheets_project_report_preview.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 22 expectations.
+- Persistence/security gate: migration replay and file-backed restart preserve
+  the report run and eight lines; project/company visibility and deterministic
+  empty fixtures are asserted; mutation actor/company/stale/empty guards remain
+  covered by the existing project report binding test.
+- Core3 browser gate: authenticated Admin desktop `1440x900` and mobile
+  `390x844` click project Print, land on the preview, render the persisted
+  summary and eight lines, and report zero page/request failures with no
+  horizontal overflow.
+- Odoo browser gate: authenticated `codex@core3.local` reaches `/odoo/project/5`
+  at both viewports with zero page/request failures, but exposes no visible
+  Timesheets Print/report action. This exact reference blocker prevents paired
+  QWeb/PDF execution parity.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-project-report-preview/`](../evidence/timesheets/2026-09-20/timesheet-project-report-preview/).
+- Disposition: **bounded Core3 project report preview verified; Odoo QWeb/PDF
+  comparison, remaining route/action comparison, and module sign-off remain
+  pending**.
+
 ## 2026-09-13 coordinator dispatch: next bounded wave
 
 - Existing owner: `agent/odoo-ui-timesheets-next`, worktree

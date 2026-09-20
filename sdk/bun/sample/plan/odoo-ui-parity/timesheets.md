@@ -950,3 +950,30 @@ responsive blocker, not a Timesheets pass. Authenticated Odoo desktop/mobile
 `/odoo/project/5` renders Home Construction with no browser/request errors and
 no horizontal overflow, but exposes no visible Timesheets embedded action on
 the loaded project dashboard/form. That is the exact paired Odoo blocker.
+
+## Project report preview slice — `TIMESHEET-PROJECT-REPORT-PREVIEW` (2026-09-20)
+
+Odoo's `timesheet_report_project` is a `qweb-pdf` report bound to
+`project.project` in `addons/hr_timesheet/report/report_timesheet_templates.xml:205-213`.
+Core3 already had the project-context report binding and durable guarded run
+history, but the Print action stopped at `window.print()` without an
+authenticated report document.
+
+Core3 now adds the page/API-separated
+`/timesheets/project-report-preview` route. Its read-only YAML report document
+loads the latest company/project-scoped durable project run and the persisted
+timesheet lines, with Print and Back actions. The existing project report
+mutation remains the durable write boundary and retains actor, company, stale,
+missing-project, and empty-project guards; preview reads fail closed outside
+the active project/company and support deterministic empty fixtures.
+
+Focused coverage is
+`test/timesheets_project_report_preview.integration.test.ts` (4 tests / 22
+expectations), including source binding, page/API separation, migration replay,
+file-backed restart, persisted lines, and scope guards. Authenticated Core3
+desktop/mobile captures follow the project Print action to the preview and
+render eight lines without page/request failures or horizontal overflow.
+Authenticated Odoo `/odoo/project/5` renders the project at both viewports but
+has no visible Timesheets Print/report action, so the source QWeb/PDF execution
+is recorded as an exact blocker rather than parity. Full route/action
+comparison, QWeb/PDF equivalence, and module sign-off remain open.
