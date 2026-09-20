@@ -1,0 +1,148 @@
+{
+  "feature": "EMP-CONTRACT-TYPE-001",
+  "generated_at": "2026-09-20T21:03:33.486Z",
+  "core3": [
+    {
+      "authenticated": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:3320/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "visible_labels": [
+        "Payroll",
+        "Contract Type"
+      ],
+      "contract_type_visible_value": false,
+      "company_blocker": true,
+      "request_failures": [],
+      "http_errors": [],
+      "body_excerpt": "People\nReporting\nLearning\nConfiguration\n⌘ K\nAU\nHuman Resources\nHuman Resources\n›\nEmployees\n›\nEmployee\nEdit\nNew\nActive\nOn leave\nDeparted\n—\n0\nTimesheets\n0\nHistory\nEmployee Name\n—\nLegal Name\n—\nWork Email\n—\nWork Phone\n—\nWork Mobile\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Location\n—\nWork Address\n—\nDeparture Reason\n—\nDeparture Description\n—\nDeparture Date\n—\nNote\n—\nStart Date\n—\nContract Start\n—\nContract End\n—\nEmployment Type\n—\nPhone\n—\nPrivate Email\n—\nPrivate Phone\n—\nBirthday\n—\nShow to all employees\n—\nWage\n—\nWorking Schedule\n—\nTimezone\n—\nBadge ID\n—\nSkills\n—\nResume\n—\nPrivate Address\n—\nEmergency Contact\n—\nEmergency Phone\n—\nMarital Status\n—\nSpouse Legal Name\n—\nSpouse Birthdate\n—\nDependent Children\n—\nCertificate Level\n—\nField of Study\n—\nPlace of Birth\n—\nCountry of Birth\n—\nGender\n—\nVisa No\n—\nVisa Expiration\n—\nWork Permit No\n—\nWork Permit Expiration\n—\nWork Permit Document\n—\nDocument Filename\n—\nID Card Copy\n—\nID Card Filename\n—\nDriving License\n—\nDriving License Filename\n—\nNationality (Country)\n—\nIdentification No\n—\nSSN No\n—\nPassport No\n—\nPassport Expiration\n—\nPrivate Street\n—\nPrivate Street 2\n—\nPrivate City\n—\nPrivate State\n—\nPrivate ZIP\n—\nPrivate Country\n—\nHome-Work Distance\n—\nDistance Unit\n—\nWork\nResume\nPersonal\nPayroll\nSettings\nContract Overview\nContract Type\n—\nContract\nEmployment Type\n—\nContract Start\n—\nContract End\n—\nWage\n—\nWorking Schedule\n—\nContract Template\n—\nHello, Admin User",
+      "overflow": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "authenticated": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:3320/employees/detail?id=employee-demo-001",
+      "title": "Employee",
+      "visible_labels": [
+        "Payroll",
+        "Contract Type"
+      ],
+      "contract_type_visible_value": false,
+      "company_blocker": true,
+      "request_failures": [],
+      "http_errors": [],
+      "body_excerpt": "AU\nEdit\nNew\nActive\nOn leave\nDeparted\n—\n0\nTimesheets\n0\nHistory\nEmployee Name\n—\nLegal Name\n—\nWork Email\n—\nWork Phone\n—\nWork Mobile\n—\nDepartment\n—\nJob Position\n—\nJob Title\n—\nManager\n—\nCoach\n—\nWork Location\n—\nWork Address\n—\nDeparture Reason\n—\nDeparture Description\n—\nDeparture Date\n—\nNote\n—\nStart Date\n—\nContract Start\n—\nContract End\n—\nEmployment Type\n—\nPhone\n—\nPrivate Email\n—\nPrivate Phone\n—\nBirthday\n—\nShow to all employees\n—\nWage\n—\nWorking Schedule\n—\nTimezone\n—\nBadge ID\n—\nSkills\n—\nResume\n—\nPrivate Address\n—\nEmergency Contact\n—\nEmergency Phone\n—\nMarital Status\n—\nSpouse Legal Name\n—\nSpouse Birthdate\n—\nDependent Children\n—\nCertificate Level\n—\nField of Study\n—\nPlace of Birth\n—\nCountry of Birth\n—\nGender\n—\nVisa No\n—\nVisa Expiration\n—\nWork Permit No\n—\nWork Permit Expiration\n—\nWork Permit Document\n—\nDocument Filename\n—\nID Card Copy\n—\nID Card Filename\n—\nDriving License\n—\nDriving License Filename\n—\nNationality (Country)\n—\nIdentification No\n—\nSSN No\n—\nPassport No\n—\nPassport Expiration\n—\nPrivate Street\n—\nPrivate Street 2\n—\nPrivate City\n—\nPrivate State\n—\nPrivate ZIP\n—\nPrivate Country\n—\nHome-Work Distance\n—\nDistance Unit\n—\nWork\nResume\nPersonal\nPayroll\nSettings\nContract Overview\nContract Type\n—\nContract\nEmployment Type\n—\nContract Start\n—\nContract End\n—\nWage\n—\nWorking Schedule\n—\nContract Template\n—\nHello, Admin User",
+      "overflow": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    }
+  ],
+  "odoo": [
+    {
+      "authenticated": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "payroll_visible": true,
+      "contract_type_visible": true,
+      "contract_type_values": [],
+      "request_failures": [],
+      "http_errors": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/ai/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/hr_payroll/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/sign/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/hr_referral/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/planning/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/hr_appraisal/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/documents/static/description/icon.png"
+        }
+      ],
+      "body_excerpt": "Employees\nEmployees\nDepartments\nLearning\nReporting\nConfiguration\n7\n40\nMy Company (San Francisco)\nNew\nEmployees\nAbigail Peterson\nTimesheets\n0\nEquipment\nHistory\n1\n1 / 1\nCreate User\nLaunch Plan\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nCONTRACT OVERVIEW\nLoad a Template\nContract\nAug 1\nto\nNov 10\nNew Contract\nWage?\n$ \n6,500.00\n$ \nEmployee Type\nContract Type\nPay Category\nSCHEDULE\nWorking Hours?\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+      "overflow": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "authenticated": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "url": "http://127.0.0.1:8069/odoo/employees/6",
+      "title": "Abigail Peterson",
+      "payroll_visible": true,
+      "contract_type_visible": true,
+      "contract_type_values": [],
+      "request_failures": [],
+      "http_errors": [
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/hr_payroll/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/sign/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/ai/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/hr_referral/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/planning/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/hr_appraisal/static/description/icon.png"
+        },
+        {
+          "status": 404,
+          "url": "http://127.0.0.1:8069/documents/static/description/icon.png"
+        }
+      ],
+      "body_excerpt": "Abigail Peterson\n7\n40\nNew\nCreate User\nAug 1, 2026\nWork\nResume\nCertifications\nPersonal\nPayroll\nSettings\nCONTRACT OVERVIEW\nLoad a Template\nContract\nAug 1\nto\nNov 10\nNew Contract\nWage?\n$ \n6,500.00\n$ \nEmployee Type\nContract Type\nPay Category\nSCHEDULE\nWorking Hours?\nSend message\nLog note\nActivity\n0\nSep 10, 2026\nOdooBot\nSep 10, 12:28 PM\n$ 0.00$ 10.00(Hourly Cost)\nOdooBot\nSep 10, 12:12 PM\nCongratulations! May I recommend you to setup an onboarding plan?\nOdooBot\nSep 10, 12:12 PM\n\nEmployee created",
+      "overflow": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    }
+  ]
+}

@@ -1505,6 +1505,31 @@ unrelated app-icon 404s are recorded. Evidence is under
 `evidence/employees/2026-09-21/EMP-VISA-WORK-PERMIT-001/`. This is conditional
 feature evidence, not aggregate Employees sign-off.
 
+## EMP-CONTRACT-TYPE-001: Employee Payroll contract type (2026-09-21)
+
+Odoo's Payroll page exposes the manager-only `hr.version.contract_type_id`
+relation as `Contract Type`; the separate Contract Types configuration menu is
+inactive in the supplied source, so this slice stays bounded to the employee
+workflow. Core3 adds the durable `contract_type_name` projection and a
+dedicated `employees.manage` action that updates both the employee and its
+current active employee-version record.
+
+Migration `20260921200000-050-employee-contract-type.yaml` seeds stable
+Permanent, Temporary, and Contractor values and is replay-safe. The page
+Payroll Contract Overview is manager-gated; the API action has actor,
+active/current-company, supported-value, and optimistic row-version guards.
+Focused coverage is **4 tests / 20 assertions**, including source mapping,
+create/edit/read, current-version synchronization, invalid/stale/company and
+actor atomicity, migration replay, and file-backed restart.
+
+Authenticated Core3 desktop/mobile captures render the Payroll and Contract
+Type labels with no browser/request errors or overflow, but the session is
+`Core3 Demo Company` while the deterministic row is `Core3 Vietnam`. Odoo
+desktop/mobile render Abigail Peterson's source Contract Type label, but the
+reference value is blank. Evidence is under
+`evidence/employees/2026-09-21/EMP-CONTRACT-TYPE-001/`; this is conditional
+feature evidence, not aggregate Employees sign-off.
+
 ## EMP-WORK-MOBILE-001: Employee Work Mobile (2026-09-21)
 
 Odoo's employee form exposes `hr.employee.mobile_phone` as the visible Work

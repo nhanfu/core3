@@ -564,3 +564,27 @@ Candidate commit: current working tree
   authenticated Odoo desktop/mobile show Abigail Peterson's source group. Seven
   Odoo shell icon 404s are unrelated. Conditional evidence only; no aggregate
   sign-off.
+
+## EMP-CONTRACT-TYPE-001 (2026-09-21)
+
+- Selected the next uncovered source-backed Payroll behavior: Odoo's
+  manager-only `hr.version.contract_type_id` / Contract Type field.
+- Added migration `20260921200000-050` with durable employee projection and
+  deterministic Permanent/Temporary/Contractor fixtures. A dedicated
+  `employees.manage` action updates the employee and current active
+  `employee_versions` contract type under actor, active/current-company,
+  supported-value, and optimistic-concurrency guards.
+- Page/API contracts remain separate and join at `employee-detail`; the
+  Payroll Contract Overview is manager-only and the field is read-only in the
+  general employee form, with the dedicated manager action providing the CRUD
+  write path.
+- Focused verification: **4 tests / 20 assertions**; migration replay and
+  file-backed restart pass. UI audit **705 pages / 714 routes / 1340
+  datasources**, scoped ESLint, and diff-check pass.
+- Evidence: `evidence/employees/2026-09-21/EMP-CONTRACT-TYPE-001/`.
+  Authenticated Core3 desktop/mobile render Payroll and Contract Type with no
+  browser/request errors or overflow, but the `Core3 Vietnam` fixture is
+  hidden from the `Core3 Demo Company` session. Odoo desktop/mobile render
+  the source label, but Abigail Peterson has no populated value; seven app
+  icon 404s are unrelated shell noise. Conditional evidence only; no
+  aggregate Employees sign-off.

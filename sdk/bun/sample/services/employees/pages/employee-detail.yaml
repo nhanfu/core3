@@ -18,6 +18,7 @@ components:
       - { id: create_employee_user, label: Create User, variant: primary, permission: auth.users.manage, show_if: "state.employee_detail.id && !state.employee_detail.auth_user_id" }
       - { id: launch_employee_plan, label: Launch Plan, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
       - { id: load_employee_contract_template, label: Load a Template, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true" }
+      - { id: edit_employee_contract_type, label: Edit Contract Type, variant: secondary, permission: employees.manage, show_if: "state.employee_detail.active === true" }
       - { id: generate_employee_barcode, label: Generate Badge ID, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === true && !state.employee_detail.barcode" }
       - { id: print_employee_badge, label: Print Badge, variant: secondary, permission: employees.read, show_if: "state.employee_detail.active === true && !!state.employee_detail.barcode" }
       - { id: register_employee_departure, label: Register Departure, variant: danger, permission: employees.write, show_if: "state.employee_detail.active === true" }
@@ -147,6 +148,9 @@ components:
         - id: payroll
           label: Payroll
           groups:
+            - title: Contract Overview
+              permission: employees.manage
+              fields: [{ field: contract_type_name, label: Contract Type, readonly: true }]
             - title: Contract
               fields: [{ field: employment_type, label: Employment Type }, { field: contract_start, label: Contract Start }, { field: contract_end, label: Contract End }, { field: wage, label: Wage }, { field: working_schedule, label: Working Schedule }, { field: contract_template_name, label: Contract Template }]
         - id: settings

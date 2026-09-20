@@ -1,0 +1,27 @@
+version: 0.0.50
+kind: data
+description: Persist the Odoo Payroll contract type on employees and current records
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS contract_type_name VARCHAR;
+      UPDATE employees e
+      SET contract_type_name = COALESCE(
+        NULLIF((SELECT v.contract_type_name FROM employee_versions v
+          WHERE v.employee_id = e.id AND v.active = true
+            AND v.contract_date_start <= DATE '2026-01-15'
+          ORDER BY v.date_version DESC, v.id DESC LIMIT 1), ''),
+        CASE e.id
+          WHEN 'employee-demo-001' THEN 'Permanent'
+          WHEN 'employee-demo-002' THEN 'Temporary'
+          WHEN 'employee-demo-003' THEN 'Contractor'
+          ELSE NULL
+        END
+      )
+      WHERE NULLIF(contract_type_name, '') IS NULL;
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS contract_type_name;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -833,3 +833,18 @@ Evidence is under
 500 is recorded in `browser.json`; runtime logs identify unresolved Inventory
 route datasources/actions, not an Employees contract failure. No aggregate
 Employees sign-off is claimed.
+
+## EMP-CONTRACT-TYPE-001 execution (2026-09-21)
+
+| Case ID | Scope | Result |
+| --- | --- | --- |
+| EMP-WF-031 | Payroll Contract Type create/read/update | pass; employee projection and current active version persist the selected supported type |
+| EMP-PERM-031 | `employees.manage`, actor, active/current company, row version, supported values | pass; actor, stale, wrong-company, and invalid-type requests reject atomically |
+| EMP-DATA-031 | Migration replay and file-backed restart | pass; Permanent/Temporary/Contractor fixtures remain deterministic |
+| EMP-UI-027 | Authenticated Core3/Odoo desktop and mobile | conditional; Core3 fixture-company boundary and empty Odoo reference value are recorded |
+
+Focused test: `test/employees_contract_type.integration.test.ts` (4 tests,
+20 assertions). Evidence is under
+`evidence/employees/2026-09-21/EMP-CONTRACT-TYPE-001/`. Core3 returned 200
+without browser/request errors or overflow; Odoo's seven app-icon 404s are
+unrelated shell noise. No aggregate Employees sign-off is claimed.

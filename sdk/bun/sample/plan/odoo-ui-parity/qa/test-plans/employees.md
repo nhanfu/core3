@@ -388,3 +388,17 @@ assertions). Evidence:
 Focused test: `test/employees_work_mobile.integration.test.ts` (4 tests, 16
 assertions). Evidence:
 `evidence/employees/2026-09-21/EMP-WORK-MOBILE-001/`.
+
+## EMP-CONTRACT-TYPE-001 test plan (2026-09-21)
+
+| Test | Expected evidence | Result |
+| --- | --- | --- |
+| Source/action mapping | Odoo `hr.version.contract_type_id` and Payroll view map to paired employee-detail page/API contracts | pass |
+| Employee CRUD | Create persists a contract type; manager action updates the employee and current active version | pass |
+| Permission and scope | `employees.manage`, actor, active/current company, stale version, and supported-value guards reject atomically | pass |
+| Persistence | Migration replay and file-backed restart preserve deterministic contract types | pass |
+| Browser comparison | Authenticated Core3 desktop/mobile and Odoo Payroll desktop/mobile captures | conditional; Core3 fixture-company mismatch and empty Odoo reference value recorded |
+
+Focused test: `test/employees_contract_type.integration.test.ts` (4 tests,
+20 assertions). Evidence:
+`evidence/employees/2026-09-21/EMP-CONTRACT-TYPE-001/`.
