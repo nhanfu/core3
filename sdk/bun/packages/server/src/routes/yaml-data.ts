@@ -63,6 +63,7 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
           : currentCompanyName,
         current_company_name: currentCompanyName,
         current_branch_id: String(authUser.branch_id || ''),
+        current_company_id: String(authUser.company_id || ''),
         view_scope: String(authUser.view_scope || 'all'),
       }, vm.skip || 0, vm.top || 25, typeof vm.facetField === 'string' ? vm.facetField : undefined, vm.sort, vm.pivot));
     } catch (error: any) {

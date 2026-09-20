@@ -92,6 +92,7 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
         // company_name and let a cross-company value bypass its guard.
         ...(authUser.roles?.includes('admin') ? {} : { company_name: currentCompanyName }),
         current_branch_id: String(authUser.branch_id || ''),
+        current_company_id: String(authUser.company_id || ''),
         view_scope: String(authUser.view_scope || 'all'),
       });
       if (actionDefinition.event && typeof eventStore?.publish === 'function') await (eventStore as EventStore).publish({

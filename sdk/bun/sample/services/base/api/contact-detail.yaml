@@ -4,23 +4,23 @@ datasources:
     single: true
     permission: base.contacts.read
     error_states: { transport_error: { status: 503, code: BASE_CONTACT_DETAIL_UNAVAILABLE, message: Contact details are temporarily unavailable } }
-    query: "SELECT c.*, CASE WHEN c.active THEN 'Active' ELSE 'Archived' END AS active_label, (SELECT string_agg(r.category_name, ', ') FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS categories, CAST(NULL AS VARCHAR) AS avatar_url, upper(substr(c.name, 1, 1)) AS avatar_initials, parent.name AS parent_company_name, 0 AS opportunities_count, '$0.00' AS invoiced_amount_display, 0 AS meetings_count, 0 AS tasks_count, 0 AS purchases_count, 0 AS lots_count FROM base_contacts c LEFT JOIN base_contacts parent ON parent.id = c.parent_company_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND c.id = :id"
+    query: "SELECT c.*, CASE WHEN c.active THEN 'Active' ELSE 'Archived' END AS active_label, (SELECT string_agg(r.category_name, ', ') FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS categories, CAST(NULL AS VARCHAR) AS avatar_url, upper(substr(c.name, 1, 1)) AS avatar_initials, parent.name AS parent_company_name, 0 AS opportunities_count, '$0.00' AS invoiced_amount_display, 0 AS meetings_count, 0 AS tasks_count, 0 AS purchases_count, 0 AS lots_count FROM base_contacts c LEFT JOIN base_contacts parent ON parent.id = c.parent_company_id AND (COALESCE(:current_company_id, '') = '' OR parent.company_id = :current_company_id) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND c.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)"
   - id: contact_activities
     permission: base.activities.read
     error_states: { transport_error: { status: 503, code: BASE_CONTACT_DETAIL_UNAVAILABLE, message: Contact activities are temporarily unavailable } }
-    query: "SELECT id, summary, activity_type, state, CAST(due_date AS VARCHAR) AS due_date, assigned_user_name FROM base_activities WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND contact_id = :id ORDER BY due_date DESC"
+    query: "SELECT a.id, a.summary, a.activity_type, a.state, CAST(a.due_date AS VARCHAR) AS due_date, a.assigned_user_name FROM base_activities a JOIN base_contacts c ON c.id = a.contact_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND a.contact_id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) ORDER BY a.due_date DESC"
   - id: contact_messages
     permission: base.contacts.read
-    query: "SELECT id, contact_id, actor_name, action, action_label, detail, created_at FROM (SELECT 'contact-message-created-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.created' AS action, 'Contact created' AS action_label, 'Created from the deterministic Core3 demo fixture for ' || c.name AS detail, TIMESTAMP '2026-09-01 09:00:00' AS created_at FROM base_contacts c WHERE c.id = :id UNION ALL SELECT 'contact-message-note-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.note' AS action, 'Internal note' AS action_label, 'Confirm contact details before the next outreach' AS detail, TIMESTAMP '2026-09-03 14:30:00' AS created_at FROM base_contacts c WHERE c.id = :id AND c.id = 'contact-demo') messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
+    query: "SELECT id, contact_id, actor_name, action, action_label, detail, created_at FROM (SELECT 'contact-message-created-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.created' AS action, 'Contact created' AS action_label, 'Created from the deterministic Core3 demo fixture for ' || c.name AS detail, TIMESTAMP '2026-09-01 09:00:00' AS created_at FROM base_contacts c WHERE c.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) UNION ALL SELECT 'contact-message-note-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.note' AS action, 'Internal note' AS action_label, 'Confirm contact details before the next outreach' AS detail, TIMESTAMP '2026-09-03 14:30:00' AS created_at FROM base_contacts c WHERE c.id = :id AND c.id = 'contact-demo' AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)) messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
   - id: contact_followers
     permission: base.contacts.read
-    query: "SELECT id, name, email FROM (VALUES ('contact-follower-admin', 'Administrator', 'admin@tms.local')) followers(id, name, email) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+    query: "SELECT id, name, email FROM (VALUES ('contact-follower-admin', 'Administrator', 'admin@tms.local')) followers(id, name, email) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND EXISTS (SELECT 1 FROM base_contacts c WHERE c.id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id))"
   - id: contact_detail_parent_companies
     permission: base.contacts.read
-    query: "SELECT id AS value, name AS label FROM base_contacts WHERE is_company = true AND active = true ORDER BY name, id"
+    query: "SELECT id AS value, name AS label FROM base_contacts WHERE is_company = true AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id) ORDER BY name, id"
   - id: contact_attachments
     permission: base.contacts.read
-    query: "SELECT id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM (SELECT id, file_name, mime_type, size_bytes, uploaded_by, created_at FROM base_contact_attachments WHERE contact_id = :id UNION ALL SELECT 'contact-attachment-001', 'contact-brief.txt', 'text/plain', 128, 'Administrator', TIMESTAMP '2026-09-02 10:00:00' WHERE :id = 'contact-demo') attachments WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
+    query: "SELECT id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM (SELECT a.id, a.file_name, a.mime_type, a.size_bytes, a.uploaded_by, a.created_at FROM base_contact_attachments a JOIN base_contacts c ON c.id = a.contact_id WHERE a.contact_id = :id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id) UNION ALL SELECT 'contact-attachment-001', 'contact-brief.txt', 'text/plain', 128, 'Administrator', TIMESTAMP '2026-09-02 10:00:00' WHERE :id = 'contact-demo' AND (COALESCE(:current_company_id, '') = '' OR EXISTS (SELECT 1 FROM base_contacts c WHERE c.id = :id AND c.company_id = :current_company_id))) attachments WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
   - id: livechat_partner_capabilities
     single: true
     permission: livechat.read
@@ -28,7 +28,7 @@ datasources:
       unauthorized: { status: 401, code: LIVECHAT_PARTNER_HISTORY_UNAUTHORIZED, message: Sign in to view Live Chat history for this contact. }
       forbidden: { status: 403, code: LIVECHAT_PARTNER_HISTORY_FORBIDDEN, message: You do not have permission to view this contact's Live Chat history. }
       transport_error: { status: 503, code: LIVECHAT_PARTNER_HISTORY_UNAVAILABLE, message: Contact Live Chat history is temporarily unavailable. }
-    query: "SELECT id AS partner_id, COALESCE(livechat_channel_count, 0) AS livechat_channel_count, 0 AS livechat_session_count FROM base_contacts WHERE id = :id AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
+    query: "SELECT id AS partner_id, COALESCE(livechat_channel_count, 0) AS livechat_channel_count, 0 AS livechat_session_count FROM base_contacts WHERE id = :id AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id) AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN FALSE ELSE TRUE END"
 actions:
   - id: edit_contact_detail
     type: server_form
@@ -47,8 +47,12 @@ actions:
       timestamps: true
       concurrency: { field: row_version, input: expected_row_version }
       guards:
-        - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true", status: 409, message: Archived contacts cannot be edited }
-        - { query: "SELECT 1 WHERE :parent_company_id IS NULL OR (:parent_company_id <> :id AND EXISTS (SELECT 1 FROM base_contacts WHERE id = :parent_company_id AND is_company = true AND active = true))", status: 422, code: BASE_PARENT_COMPANY_INVALID, message: Parent must be an active company and cannot be the contact itself. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id", status: 404, code: BASE_CONTACT_NOT_FOUND, message: Contact not found. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 403, code: BASE_CONTACT_COMPANY_FORBIDDEN, message: Contact is outside the current company. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND active = true", status: 409, code: BASE_CONTACT_ARCHIVED, message: Archived contacts cannot be edited }
+        - { query: "SELECT 1 AS ok WHERE :email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND email IS NOT NULL AND lower(email) = lower(:email) AND id <> :id AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id))", status: 409, code: BASE_CONTACT_EMAIL_EXISTS, message: A contact with this email already exists }
+        - { query: "SELECT 1 WHERE :parent_company_id IS NULL OR (:parent_company_id <> :id AND EXISTS (SELECT 1 FROM base_contacts WHERE id = :parent_company_id AND is_company = true AND active = true AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)))", status: 422, code: BASE_PARENT_COMPANY_INVALID, message: Parent must be an active company in the current company. }
+        - { query: "WITH RECURSIVE ancestors(id, parent_company_id) AS (SELECT id, parent_company_id FROM base_contacts WHERE id = :parent_company_id UNION ALL SELECT c.id, c.parent_company_id FROM base_contacts c JOIN ancestors a ON c.id = a.parent_company_id WHERE a.parent_company_id IS NOT NULL) SELECT 1 WHERE :parent_company_id IS NULL OR NOT EXISTS (SELECT 1 FROM ancestors WHERE id = :id)", status: 422, code: BASE_PARENT_COMPANY_CYCLE, message: A contact cannot be assigned below one of its descendants. }
     fields:
       - { field: name, label: Name, type: text, required: true }
       - { field: company_type, label: Type, type: select, options: [{ value: person, label: Person }, { value: company, label: Company }, { value: other, label: Other }] }
@@ -96,8 +100,10 @@ actions:
     mutation:
       operation: delete
       table: base_contacts
+      concurrency: { field: row_version, input: expected_row_version }
       guards:
         - { query: "SELECT id FROM base_contacts WHERE id = :id", status: 404, code: BASE_CONTACT_NOT_FOUND, message: Contact not found. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :id AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 403, code: BASE_CONTACT_COMPANY_FORBIDDEN, message: Contact is outside the current company. }
         - { query: "SELECT 1 AS ok FROM base_contacts WHERE id = :id AND NOT EXISTS (SELECT 1 FROM base_contacts child WHERE child.parent_company_id = base_contacts.id)", status: 409, code: BASE_CONTACT_HAS_CHILDREN, message: Contacts with child contacts cannot be deleted. Archive the contact instead. }
       result: { query: "SELECT :id AS id, true AS deleted" }
   - id: upload_contact_attachment
@@ -112,6 +118,7 @@ actions:
       generated: [attachment_id]
       guards:
         - { query: "SELECT id FROM base_contacts WHERE id = :contact_id", status: 404, code: BASE_CONTACT_NOT_FOUND, message: Contact not found. }
+        - { query: "SELECT id FROM base_contacts WHERE id = :contact_id AND (COALESCE(:current_company_id, '') = '' OR company_id = :current_company_id)", status: 403, code: BASE_CONTACT_COMPANY_FORBIDDEN, message: Contact is outside the current company. }
       steps:
         - { query: "INSERT INTO base_contact_attachments(id, contact_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :contact_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)" }
       result: { query: "SELECT id, contact_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM base_contact_attachments WHERE id = :attachment_id" }

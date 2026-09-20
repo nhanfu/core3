@@ -6,6 +6,7 @@ import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
+import { createYamlApi } from '@core3/server/routes/yaml-api';
 
 const serviceRoot = join(import.meta.dir, '../services/base');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(serviceRoot, file), 'utf8')) as any;
@@ -210,5 +211,123 @@ describe('Base Contacts list/card/detail parity batch', () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  test('enforces company visibility, duplicate/cycle/missing/stale guards atomically', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'base_contacts_atomic_hierarchy_migrations', ['schema', 'data']);
+    const actions = yaml('api/contacts.yaml').actions;
+    const create = actions.find((candidate: any) => candidate.id === 'create_contact');
+    const edit = actions.find((candidate: any) => candidate.id === 'edit_contact');
+    const duplicate = actions.find((candidate: any) => candidate.id === 'duplicate_contact');
+
+    const scoped = await repository.executeMutation(create.mutation, {
+      current_company_id: 'company-demo',
+      values: { name: 'Scoped Hierarchy Contact', company_type: 'person', email: 'scoped-hierarchy@core3.local', parent_company_id: 'company-azure', is_company: false },
+    });
+    expect(scoped).toMatchObject({ company_id: 'company-demo', parent_company_id: 'company-azure', row_version: 1 });
+    const beforeScoped = (await repository.query('SELECT name, email, company_id, parent_company_id, row_version FROM base_contacts WHERE id = ?', [scoped.id]))[0];
+
+    await expect(repository.executeMutation(edit.mutation, {
+      id: scoped.id, current_company_id: 'company-vietnam', expected_row_version: 1,
+      values: { name: 'Should Not Cross Companies', company_type: 'person', email: 'cross-company@core3.local', parent_company_id: 'company-gemini', is_company: false },
+    })).rejects.toMatchObject({ status: 403, code: 'BASE_CONTACT_COMPANY_FORBIDDEN' });
+    expect((await repository.query('SELECT name, email, company_id, parent_company_id, row_version FROM base_contacts WHERE id = ?', [scoped.id]))[0]).toEqual(beforeScoped);
+
+    await expect(repository.executeMutation(create.mutation, {
+      current_company_id: 'company-demo',
+      values: { name: 'Duplicate Scoped Contact', company_type: 'person', email: 'scoped-hierarchy@core3.local', parent_company_id: 'company-azure', is_company: false },
+    })).rejects.toMatchObject({ status: 409, code: 'BASE_CONTACT_EMAIL_EXISTS' });
+    await expect(repository.executeMutation(duplicate.mutation, {
+      current_company_id: 'company-demo',
+      values: { name: 'Duplicate Action Contact', company_type: 'person', email: 'scoped-hierarchy@core3.local', parent_company_id: 'company-azure', is_company: false },
+    })).rejects.toMatchObject({ status: 409, code: 'BASE_CONTACT_EMAIL_EXISTS' });
+    expect((await repository.query("SELECT COUNT(*) AS count FROM base_contacts WHERE email = 'scoped-hierarchy@core3.local'"))[0].count).toBe(1);
+
+    for (const parentCompanyId of ['missing-company', 'company-archived', 'contact-berlin']) {
+      await expect(repository.executeMutation(edit.mutation, {
+        id: scoped.id, expected_row_version: 1,
+        values: { name: 'Rejected Parent', company_type: 'person', email: 'scoped-hierarchy@core3.local', parent_company_id: parentCompanyId, is_company: false },
+      })).rejects.toMatchObject({ status: 422, code: 'BASE_PARENT_COMPANY_INVALID' });
+      expect((await repository.query('SELECT name, email, company_id, parent_company_id, row_version FROM base_contacts WHERE id = ?', [scoped.id]))[0]).toEqual(beforeScoped);
+    }
+
+    await repository.executeMutation(edit.mutation, {
+      id: 'company-azure', expected_row_version: 1,
+      values: { name: 'Azure Interior', company_type: 'company', email: 'azure@core3.local', parent_company_id: 'company-northwind', is_company: true },
+    });
+    expect((await repository.query('SELECT id, parent_company_id, row_version FROM base_contacts WHERE id = ?', ['company-azure']))[0]).toMatchObject({ id: 'company-azure', parent_company_id: 'company-northwind', row_version: 2 });
+    const beforeCycle = (await repository.query('SELECT name, parent_company_id, row_version FROM base_contacts WHERE id = ?', ['company-northwind']))[0];
+    await expect(repository.executeMutation(edit.mutation, {
+      id: 'company-northwind', expected_row_version: beforeCycle.row_version,
+      values: { name: 'Northwind Traders', company_type: 'company', email: 'hello@northwind.core3.local', parent_company_id: 'company-azure', is_company: true },
+    })).rejects.toMatchObject({ status: 422, code: 'BASE_PARENT_COMPANY_CYCLE' });
+    expect((await repository.query('SELECT name, parent_company_id, row_version FROM base_contacts WHERE id = ?', ['company-northwind']))[0]).toEqual(beforeCycle);
+
+    await expect(repository.executeMutation(edit.mutation, {
+      id: scoped.id, expected_row_version: 0,
+      values: { name: 'Stale Scoped Contact', company_type: 'person', email: 'stale-scoped@core3.local', parent_company_id: 'company-azure', is_company: false },
+    })).rejects.toMatchObject({ status: 409, code: 'STALE_RECORD' });
+    expect((await repository.query('SELECT name, email, company_id, parent_company_id, row_version FROM base_contacts WHERE id = ?', [scoped.id]))[0]).toEqual(beforeScoped);
+    await expect(repository.executeMutation(edit.mutation, {
+      id: 'missing-contact', expected_row_version: 1,
+      values: { name: 'Missing Contact', company_type: 'person', email: 'missing@core3.local', parent_company_id: 'company-azure', is_company: false },
+    })).rejects.toMatchObject({ status: 404, code: 'BASE_CONTACT_NOT_FOUND' });
+    expect((await repository.query("SELECT COUNT(*) AS count FROM base_contacts WHERE email = 'missing@core3.local'"))[0].count).toBe(0);
+
+    const contacts = source('contacts.yaml', 'contacts');
+    const vietnamRows = (await repository.querySource(contacts, { q: null, active: null, company_type: null, country_name: null, fixture_state: null, current_company_id: 'company-vietnam' }, 0, 50)).data;
+    expect(vietnamRows.map((row: any) => row.id)).toEqual(expect.arrayContaining(['company-gemini', 'contact-gemini-edwin', 'contact-gemini-jesse']));
+    expect(vietnamRows.map((row: any) => row.id)).not.toContain('company-azure');
+    const vietnamParents = (await repository.querySource(source('contacts.yaml', 'contact_parent_companies'), { current_company_id: 'company-vietnam' }, 0, 50)).data;
+    expect(vietnamParents).toEqual(expect.arrayContaining([{ value: 'company-gemini', label: 'Gemini Furniture' }]));
+    expect(vietnamParents).not.toEqual(expect.arrayContaining([{ value: 'company-azure', label: 'Azure Interior' }]));
+    database.close();
+  });
+
+  test('keeps contact action role and HTTP authentication boundaries explicit', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, join(serviceRoot, 'migrations'), undefined, 'base_contacts_http_boundary_migrations', ['schema', 'data']);
+    const apiDefinition = yaml('api/contacts.yaml');
+    const page = { page: { id: 'contacts' }, actions: apiDefinition.actions };
+    let actor: any = { sub: 'user-admin', name: 'Admin User', roles: ['admin'], permissions: ['base.contacts.read', 'base.contacts.write'], company_id: 'company-demo', view_scope: 'all' };
+    const api = createYamlApi({
+      repository,
+      authProvider: {
+        async getCurrentUser() {
+          if (actor === null) throw { status: 401, code: 'UNAUTHORIZED', message: 'Unauthorized' };
+          return actor;
+        },
+        hasPermission(user: any, permission: string) { return user.permissions.includes(permission); },
+      },
+      sources: new Map(),
+      pageSources: new Map(),
+      pages: new Map([['contacts', page]]),
+      catalogs: new Map(),
+      menus: new Map(),
+      workflows: new Map(),
+      workflowFiles: new Map(),
+      permissions: { permissions: ['base.contacts.read', 'base.contacts.write', 'base.contacts.manage'] },
+      uploadRoot: '/tmp/core3-base-contact-boundary-test',
+      eventStore: { publish: async () => {} },
+      topics: { request: async () => ({}) },
+    });
+    const request = async (body: any) => {
+      try {
+        return await api(new Request('http://localhost/api/actions/base.contacts.update', { method: 'POST', body: JSON.stringify(body) }), new URL('http://localhost/api/actions/base.contacts.update'));
+      } catch (error: any) {
+        return new Response(JSON.stringify(error), { status: error.status || 500 });
+      }
+    };
+    actor = { sub: 'user-ordinary', name: 'Ordinary User', roles: ['ordinary'], permissions: ['base.contacts.read'], company_id: 'company-demo', view_scope: 'all' };
+    expect((await request({ id: 'contact-demo', expected_row_version: 1, values: { name: 'Denied', email: 'denied@core3.local' } })).status).toBe(403);
+    actor = null;
+    expect((await request({ id: 'contact-demo', expected_row_version: 1, values: { name: 'Anonymous', email: 'anonymous@core3.local' } })).status).toBe(401);
+    actor = { sub: 'user-vietnam', name: 'Vietnam User', roles: ['contacts_user'], permissions: ['base.contacts.read', 'base.contacts.write'], company_id: 'company-vietnam', view_scope: 'all' };
+    const wrongCompany = await request({ id: 'contact-demo', expected_row_version: 1, values: { name: 'Wrong Company', email: 'wrong-company@core3.local' } });
+    expect(wrongCompany.status).toBe(403);
+    expect(await wrongCompany.json()).toMatchObject({ code: 'BASE_CONTACT_COMPANY_FORBIDDEN' });
+    expect((await repository.query('SELECT name, row_version FROM base_contacts WHERE id = ?', ['contact-demo']))[0]).toMatchObject({ name: 'Demo Contact', row_version: 1 });
+    database.close();
   });
 });

@@ -199,10 +199,14 @@ async function enrichSourceResult(this: any, result: any, definition: any, param
 }
 
 function serviceRequest(mapping: Record<string, unknown>, params: Record<string, any>): Record<string, any> {
-  return Object.fromEntries(Object.entries(mapping).map(([key, value]) => [
+  const request = Object.fromEntries(Object.entries(mapping).map(([key, value]) => [
     key,
     typeof value === 'string' ? (Object.prototype.hasOwnProperty.call(params, value) ? params[value] : null) : value,
   ]));
+  for (const key of ['current_company_id', 'current_user_id', 'current_user_name', 'current_branch_id', 'view_scope']) {
+    if (!Object.prototype.hasOwnProperty.call(request, key) && Object.prototype.hasOwnProperty.call(params, key)) request[key] = params[key];
+  }
+  return request;
 }
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;

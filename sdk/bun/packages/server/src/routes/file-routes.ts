@@ -85,7 +85,12 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
     if (!id) return apiError(404, 'Attachment not found');
     if (!rule?.query) return null;
     requirePerm(String(rule.permission || ''));
-    const bound = bindNamedParams(String(rule.query), { attachment_id: id, user_id: String(authUser.sub || ''), current_company_name: authenticatedCompanyName(authUser) });
+    const bound = bindNamedParams(String(rule.query), {
+      attachment_id: id,
+      user_id: String(authUser.sub || ''),
+      current_company_name: authenticatedCompanyName(authUser),
+      current_company_id: String(authUser.company_id || ''),
+    });
     const [fileRecord] = await repository.query(bound.statement, bound.values);
     if (!fileRecord) return apiError(404, 'Attachment not found');
     if (rule.scope && !(await recordInCurrentBranch(String(rule.scope.table || ''), String(fileRecord[rule.scope.resource_id || 'order_id'] || fileRecord.order_id)))) return apiError(403, 'Record is outside the current view scope');

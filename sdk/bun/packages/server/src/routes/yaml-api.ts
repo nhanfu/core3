@@ -152,6 +152,7 @@ export function createYamlApi(ctx: YamlApiContext) {
       // dedicated current_company_name parameter for tenant scoping.
       current_company_name: currentCompanyName,
       current_branch_id: String(user.branch_id || ''),
+      current_company_id: String(user.company_id || ''),
       view_scope: String(user.view_scope || 'all'),
     };
     const lang = requestLanguage(url, user.preferred_lang || 'en');

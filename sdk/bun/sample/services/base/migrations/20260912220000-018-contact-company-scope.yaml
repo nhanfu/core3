@@ -1,0 +1,21 @@
+version: 0.0.18
+kind: schema
+description: Add company ownership for contact visibility and hierarchy writes
+type:
+  postgres:
+    up: |
+      ALTER TABLE base_contacts ADD COLUMN IF NOT EXISTS company_id VARCHAR;
+      UPDATE base_contacts
+      SET company_id = CASE
+        WHEN id IN ('company-vietnam', 'company-gemini', 'contact-gemini-edwin', 'contact-gemini-jesse') THEN 'company-vietnam'
+        ELSE 'company-demo'
+      END
+      WHERE company_id IS NULL;
+      CREATE INDEX IF NOT EXISTS base_contacts_company_idx ON base_contacts(company_id, active, name);
+    down: |
+      DROP INDEX IF EXISTS base_contacts_company_idx;
+      ALTER TABLE base_contacts DROP COLUMN IF EXISTS company_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

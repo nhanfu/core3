@@ -12,4 +12,4 @@ attachments:
     download:
       route: /api/base/contacts/attachments
       permission: base.contacts.read
-      query: SELECT id, contact_id, file_name, mime_type, size_bytes, storage_key, CAST(NULL AS VARCHAR) AS content_base64 FROM base_contact_attachments WHERE id = :attachment_id
+      query: SELECT a.id, a.contact_id, a.file_name, a.mime_type, a.size_bytes, a.storage_key, CAST(NULL AS VARCHAR) AS content_base64 FROM base_contact_attachments a JOIN base_contacts c ON c.id = a.contact_id WHERE a.id = :attachment_id AND (COALESCE(:current_company_id, '') = '' OR c.company_id = :current_company_id)
