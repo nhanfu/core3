@@ -32,7 +32,7 @@ actions:
           method: 'POST',
           body: { task_id: context.id, expected_entry_count: context.entry_count },
         });
-        window.print();
+        window.location.assign(`/timesheets/task-report-preview?id=${encodeURIComponent(String(context.id))}`);
       }
   - id: print_task_timesheet_lines_report
     type: client

@@ -763,6 +763,32 @@ visible Print/report-preview action. That is recorded as an exact paired
 reference blocker, not a parity pass. Full route/action comparison, actual
 QWeb/PDF equivalence, and module sign-off remain open.
 
+## Task report preview slice — `TIMESHEET-TASK-REPORT-PREVIEW` (2026-09-20)
+
+Odoo's `timesheet_report_task` is a `qweb-pdf` report bound to `project.task`
+in `addons/hr_timesheet/report/report_timesheet_templates.xml:188-197`.
+Core3 already had the task-context report binding and durable guarded run
+history, but the Print action stopped at `window.print()` without an
+authenticated report document.
+
+Core3 now adds the page/API-separated `/timesheets/task-report-preview` route.
+Its read-only YAML report document loads the latest company/task-scoped durable
+task run and persisted timesheet lines, with Print and Back actions. The
+existing task report mutation remains the durable write boundary and retains
+actor, company, stale, missing-task, and empty-task guards; preview reads fail
+closed outside the active task/company and support deterministic empty fixtures.
+
+Focused coverage is
+`test/timesheets_task_report_preview.integration.test.ts` (4 tests / 23
+expectations), including source binding, page/API separation, migration replay,
+file-backed restart, persisted lines, and scope guards. Authenticated Core3
+desktop/mobile captures follow task Print to the preview and render the task
+summary plus persisted line without page/request failures or horizontal
+overflow. Authenticated Odoo `/odoo/all-tasks/100` has no visible Timesheets
+Print/report action at either viewport, so the source QWeb/PDF execution is
+recorded as an exact blocker rather than parity. Full route/action comparison,
+QWeb/PDF equivalence, and module sign-off remain open.
+
 ## Employee-context report action slice — `TIMESHEET-EMPLOYEE-REPORT-ACTION` (2026-09-20)
 
 Odoo's `timesheet_action_from_employee` in

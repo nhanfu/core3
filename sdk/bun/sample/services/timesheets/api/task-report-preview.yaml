@@ -1,0 +1,70 @@
+page: { id: task-timesheet-report-preview }
+datasources:
+  - id: task_timesheet_report_preview
+    single: true
+    permission: timesheets.read
+    error_states:
+      missing_record: { status: 404, code: TASK_TIMESHEET_REPORT_PREVIEW_NOT_FOUND, message: The task Timesheets report is no longer available. }
+      transport_error: { status: 503, code: TASK_TIMESHEET_REPORT_PREVIEW_UNAVAILABLE, message: The task Timesheets report preview is temporarily unavailable. }
+    query: |
+      SELECT
+        r.id AS report_run_id,
+        'Timesheets' AS report_name,
+        r.task_id,
+        r.task_name,
+        r.project_id,
+        r.project_name,
+        r.entry_count,
+        r.total_hours,
+        r.requested_by,
+        CAST(r.generated_at AS VARCHAR) AS generated_at
+      FROM timesheet_task_report_runs r
+      JOIN timesheet_tasks t ON t.id = r.task_id
+      WHERE r.task_id = :id
+        AND r.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+        AND EXISTS (
+          SELECT 1 FROM timesheet_entries e
+          WHERE e.task_id = r.task_id
+            AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+        )
+      ORDER BY r.generated_at DESC, r.id DESC
+      LIMIT 1
+  - id: task_timesheet_report_lines
+    permission: timesheets.read
+    pivot: { fields: [id, row_version, name, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, time_spent_display, state] }
+    error_states:
+      transport_error: { status: 503, code: TASK_TIMESHEET_REPORT_LINES_UNAVAILABLE, message: Task Timesheets report lines are temporarily unavailable. }
+    query: |
+      SELECT
+        e.id,
+        e.row_version,
+        e.name,
+        e.employee_name,
+        e.project_id,
+        e.project_name,
+        e.task_id,
+        e.task_name,
+        CAST(e.work_date AS VARCHAR) AS work_date,
+        e.description,
+        e.hours,
+        printf('%02d:%02d', CAST(FLOOR(e.hours) AS INTEGER), CAST(ROUND((e.hours - FLOOR(e.hours)) * 60) AS INTEGER)) AS time_spent_display,
+        e.state
+      FROM timesheet_entries e
+      WHERE e.task_id = :id
+        AND e.company_name = COALESCE(NULLIF(:current_company_name, ''), 'Core3 Demo Company')
+        AND CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1
+      ORDER BY e.work_date DESC, e.id
+actions:
+  - id: print_task_timesheet_report_preview
+    type: client
+    permission: timesheets.read
+    script: |
+      // js
+      async () => {
+        window.print();
+      }
+  - id: back_to_task_timesheets
+    type: navigate
+    permission: timesheets.read
+    navigate_to: /task-timesheets
+    params: { task_id: '{state.task_timesheet_report_preview.task_id}' }

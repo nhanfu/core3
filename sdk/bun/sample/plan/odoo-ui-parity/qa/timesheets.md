@@ -279,3 +279,27 @@ Detailed execution matrix: [`test-plans/timesheets.md`](test-plans/timesheets.md
 - Runtime boundary: browser capture used a temporary runtime containing the owned Timesheets operation change; the shared checkout's unrelated Project discovery boundary (`components[0].row_action`) was not repaired or staged.
 - Evidence: [`evidence/timesheets/2026-09-20/timesheet-project-dashboard-scope-guards/`](../evidence/timesheets/2026-09-20/timesheet-project-dashboard-scope-guards/).
 - Disposition: **bounded Timesheets dashboard scope guards verified; Core3 mobile Project overflow, Odoo embedded-action comparison, broader route/action comparison, and module sign-off remain pending**.
+
+## 2026-09-20 `TIMESHEET-TASK-REPORT-PREVIEW`
+
+- Source gate: Odoo `timesheet_report_task` is a `qweb-pdf` report bound to
+  `project.task` in `hr_timesheet/report/report_timesheet_templates.xml:188-197`.
+- Core3 gate: `task-timesheets` remains page/API-separated and its guarded
+  Print action now navigates to `/timesheets/task-report-preview`; the new API
+  reads the durable task report run and company-scoped persisted lines.
+- Focused gate: `bun test test/timesheets_task_report_preview.integration.test.ts --timeout 20000` — 4 passed, 0 failed, 23 expectations.
+- Persistence/security gate: migration replay and file-backed restart preserve
+  the report run and task line; task/company visibility and deterministic empty
+  fixtures are asserted; mutation actor/company/stale/empty guards remain
+  covered by the existing task report binding test.
+- Core3 browser gate: authenticated Admin desktop `1440x900` and mobile
+  `390x844` click task Print, land on the preview, render the persisted summary
+  and line, and report zero page/request failures with no horizontal overflow.
+- Odoo browser gate: authenticated `codex@core3.local` reaches
+  `/odoo/all-tasks/100` at both viewports with zero page/request failures, but
+  exposes no visible Timesheets Print/report action. This exact reference
+  blocker prevents paired QWeb/PDF execution parity.
+- Evidence: [`evidence/timesheets/2026-09-20/timesheet-task-report-preview/`](../evidence/timesheets/2026-09-20/timesheet-task-report-preview).
+- Disposition: **bounded Core3 task report preview verified; Odoo QWeb/PDF
+  comparison, remaining route/action comparison, and module sign-off remain
+  pending**.

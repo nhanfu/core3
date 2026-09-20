@@ -85,6 +85,33 @@ the full authenticated route/action comparison, Odoo QWeb/PDF renderer parity,
 and any remaining project-dashboard integration gaps.
 Update this file only with evidence from the matching module owner.
 
+## 2026-09-20 `TIMESHEET-TASK-REPORT-PREVIEW`
+
+The smallest remaining browser-visible report interaction was Odoo's
+`timesheet_report_task` QWeb-PDF binding in
+`addons/hr_timesheet/report/report_timesheet_templates.xml:188-197`. Core3
+already persisted guarded task report runs, but the task Print action still
+stopped at the generic browser print surface without a report document.
+
+Core3 now keeps the task report layout and API separate by `page.id` at
+`/timesheets/task-report-preview`. The preview reads the durable,
+company-scoped task report run and its persisted entry lines, exposes a
+read-only summary plus line list, and retains Print/Back actions. The existing
+task report mutation remains the durable write boundary for actor, company,
+stale, missing-task, and empty-task guards; preview reads fail closed outside
+the active task/company and support deterministic empty fixtures.
+
+Focused coverage is
+`test/timesheets_task_report_preview.integration.test.ts` (4 tests / 23
+expectations), including source binding, page/API separation, migration replay,
+file-backed restart, persisted lines, and scope guards. Authenticated Core3
+desktop/mobile captures follow the task Print action to the preview and render
+the persisted line without browser/request failures or horizontal overflow.
+Authenticated Odoo `/odoo/all-tasks/100` renders the task at both viewports but
+has no visible Timesheets Print/report action, so the source QWeb/PDF execution
+is recorded as an exact blocker rather than parity. Full route/action
+comparison, QWeb/PDF equivalence, and module sign-off remain open.
+
 ## 2026-09-20 `TIMESHEET-PROJECT-REPORT-PREVIEW`
 
 The smallest remaining source-backed renderer gap was Odoo's
