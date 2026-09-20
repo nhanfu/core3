@@ -1,0 +1,19 @@
+version: 0.0.35
+kind: schema
+description: Persist Fleet vehicle service activity state
+type:
+  postgres:
+    up: |
+      ALTER TABLE fleet_vehicles ADD COLUMN IF NOT EXISTS service_activity VARCHAR;
+      UPDATE fleet_vehicles v
+      SET service_activity = CASE
+        WHEN EXISTS (SELECT 1 FROM fleet_vehicle_services s WHERE s.vehicle_id = v.id AND s.active = (NOT COALESCE(v.archived, FALSE)) AND s.date = DATE '2026-08-25') THEN 'today'
+        WHEN EXISTS (SELECT 1 FROM fleet_vehicle_services s WHERE s.vehicle_id = v.id AND s.active = (NOT COALESCE(v.archived, FALSE)) AND s.date < DATE '2026-08-25') THEN 'overdue'
+        ELSE 'none'
+      END;
+    down: |
+      ALTER TABLE fleet_vehicles DROP COLUMN IF EXISTS service_activity;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

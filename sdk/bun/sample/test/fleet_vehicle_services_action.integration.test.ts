@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { migrateDatabase } from '@core3/server/migrations';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
@@ -24,19 +25,44 @@ describe('Fleet vehicle Services stat action parity', () => {
     expect(model).toContain("('overdue', 'Overdue')");
     expect(model).toContain("('today', 'Today')");
     expect(page.components[0].stat_buttons.filter((entry: any) => entry.label === 'Services')).toHaveLength(3);
+    expect(page.components[0].stat_buttons.filter((entry: any) => entry.label === 'Services').map((entry: any) => entry.show_if)).toEqual([
+      "state.service_activity === 'none'",
+      "state.service_activity === 'overdue'",
+      "state.service_activity === 'today'",
+    ]);
     for (const id of ['open_fleet_vehicle_services', 'open_fleet_vehicle_services_overdue', 'open_fleet_vehicle_services_today']) {
       expect(action(api, id)).toMatchObject({ type: 'navigate', permission: 'fleet.read', navigate_to: '/fleet/services', params: { vehicle_id: '{state.id}', search_default_inactive: '{state.archived}' } });
     }
     expect(yaml('api/services.yaml').page.id).toBe('fleet-services');
   });
 
-  test('returns a deterministic active-service count and explicit activity state', async () => {
-    const database = await DuckDbDatabase.open(':memory:');
+  test('derives persisted activity states from service dates and active/archive state', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'core3-fleet-service-activity-'));
+    const path = join(directory, 'fleet.duckdb');
+    const database = await DuckDbDatabase.open(path);
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(root, 'migrations'), undefined, 'fleet_vehicle_services_action', ['schema', 'data']);
+    await migrateDatabase(repository, join(root, 'migrations'), undefined, 'fleet_vehicle_services_action', ['schema', 'data']);
     const source = yaml('api/vehicle-detail.yaml').datasources[0];
-    const row = await repository.querySource(source, { id: 'fleet-demo-001', fixture_state: null }, 0, 1);
-    expect(row.data).toMatchObject({ service_count: 4, service_activity: 'none' });
+    const overdue = await repository.querySource(source, { id: 'fleet-demo-001', fixture_state: null }, 0, 1);
+    const today = await repository.querySource(source, { id: 'fleet-demo-002', fixture_state: null }, 0, 1);
+    const none = await repository.querySource(source, { id: 'fleet-demo-003', fixture_state: null }, 0, 1);
+    expect(overdue.data).toMatchObject({ service_count: 4, service_activity: 'overdue' });
+    expect(today.data).toMatchObject({ service_count: 2, service_activity: 'today' });
+    expect(none.data).toMatchObject({ service_count: 0, service_activity: 'none' });
+    expect(await repository.query('SELECT id, service_activity FROM fleet_vehicles WHERE id IN (?, ?, ?) ORDER BY id', ['fleet-demo-001', 'fleet-demo-002', 'fleet-demo-003'])).toEqual([
+      { id: 'fleet-demo-001', service_activity: 'overdue' },
+      { id: 'fleet-demo-002', service_activity: 'today' },
+      { id: 'fleet-demo-003', service_activity: 'none' },
+    ]);
+    expect((await repository.querySource(source, { id: 'fleet-demo-001', fixture_state: 'empty' }, 0, 1)).data).toEqual({});
+    expect((await repository.querySource(source, { id: 'missing-fleet-vehicle', fixture_state: 'not_found' }, 0, 1)).data).toEqual({});
     database.close();
+    const reopened = await DuckDbDatabase.open(path);
+    const reopenedRepository = new YamlRepository(reopened);
+    const reopenedRow = await reopenedRepository.querySource(source, { id: 'fleet-demo-002', fixture_state: null }, 0, 1);
+    expect(reopenedRow.data).toMatchObject({ service_count: 2, service_activity: 'today' });
+    reopened.close();
+    rmSync(directory, { recursive: true, force: true });
   });
 });
