@@ -591,6 +591,19 @@ No aggregate Employees sign-off is claimed.
 Evidence: evidence/employees/2026-09-20/EMP-BANK-ACCOUNT-001/. No aggregate
 Employees sign-off is claimed.
 
+## EMP-BIRTH-IDENTITY-001 execution (2026-09-20)
+
+| Case ID | Workflow/action | Expected result | Status |
+| --- | --- | --- | --- |
+| EMP-WF-018 | Personal birth identity create/edit/read | Place, country, and gender persist through CRUD | pass; 4 tests / 21 assertions |
+| EMP-PERM-018 | Gender, company, stale, and write guards | Invalid, cross-company, or stale mutations reject atomically | pass |
+| EMP-DATA-018 | Migration replay and file-backed restart | Deterministic birth fields survive restart | pass |
+| EMP-UI-014 | Authenticated Core3/Odoo Personal desktop/mobile | Responsive comparison | conditional; Core3 values are company-scoped out, Odoo exact Country of Birth label absent |
+
+Evidence: `evidence/employees/2026-09-20/EMP-BIRTH-IDENTITY-001/`. No
+aggregate Employees sign-off is claimed; full-repository regression was not
+run for this bounded checkpoint.
+
 ## EMP-EMERGENCY-CONTACT-001 execution (2026-09-20)
 
 | Case ID | Workflow/action | Expected result | Status |

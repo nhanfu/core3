@@ -193,3 +193,14 @@ Evidence: `evidence/employees/2026-09-20/EMP-FAMILY-INFO-001/`.
 | EMP-UI-013 | visual/responsive | Authenticated Core3/Odoo Personal tab | Education visible desktop/mobile | conditional; exact Core3 blocker recorded |
 
 Evidence: `evidence/employees/2026-09-20/EMP-EDUCATION-001/`.
+
+## EMP-BIRTH-IDENTITY-001 execution (2026-09-20)
+
+| Case ID | Class | Route/action | Expected result | Status |
+| --- | --- | --- | --- | --- |
+| EMP-WF-018 | workflow | Employee detail Personal / birth identity | Durable place, country, and gender CRUD | pass |
+| EMP-PERM-018 | permission/security | Employee detail API edit | Write, company, stale, and gender guards | pass |
+| EMP-DATA-018 | data/regression | Migration replay/restart | Fixtures persist without duplicates | pass |
+| EMP-UI-014 | visual/responsive | Authenticated Core3/Odoo Personal tab | Desktop/mobile comparison | conditional; exact blockers recorded |
+
+Evidence: `evidence/employees/2026-09-20/EMP-BIRTH-IDENTITY-001/`.

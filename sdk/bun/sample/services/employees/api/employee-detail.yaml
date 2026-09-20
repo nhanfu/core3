@@ -3,7 +3,7 @@ datasources:
   - id: employee_detail
     single: true
     permission: employees.read
-    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, contract_template_id, contract_template_name, timezone, barcode, presence, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, CAST(spouse_birthdate AS VARCHAR) AS spouse_birthdate, children, certificate, study_field, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
+    query: "SELECT id, row_version, employee_number, name, image_url, auth_user_id, user_name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, CAST(departure_date AS VARCHAR) AS departure_date, additional_note, org_parent_name, org_direct_reports, employment_type, state, active, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date, CAST(contract_start AS VARCHAR) AS contract_start, CAST(contract_end AS VARCHAR) AS contract_end, CAST(birthday AS VARCHAR) AS birthday, wage, working_schedule, contract_template_id, contract_template_name, timezone, barcode, presence, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, CAST(spouse_birthdate AS VARCHAR) AS spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex, CAST((SELECT COUNT(*) FROM employee_versions v WHERE v.employee_id = employees.id) AS INTEGER) AS version_count FROM employees WHERE id = :id AND (COALESCE(:current_company_name, '') = '' OR company_name = :current_company_name)"
   - id: employee_departure_wizard
     single: true
     permission: employees.read
@@ -389,7 +389,7 @@ actions:
     mutation:
       operation: update
       table: employees
-      fields: [name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, departure_date, additional_note, employment_type, hire_date, contract_start, contract_end, birthday, wage, working_schedule, timezone, barcode, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field]
+      fields: [name, work_email, work_phone, phone, private_email, company_name, department_name, job_position_name, job_title, manager_name, coach_name, work_location, address_name, departure_reason_name, departure_description, departure_date, additional_note, employment_type, hire_date, contract_start, contract_end, birthday, wage, working_schedule, timezone, barcode, skills, resume_summary, street, emergency_contact, emergency_phone, marital, spouse_complete_name, spouse_birthdate, children, certificate, study_field, place_of_birth, country_of_birth, sex]
       required: [name]
       timestamps: true
       concurrency: { required: true }
@@ -401,6 +401,7 @@ actions:
         - { query: "SELECT 1 AS ok WHERE :children IS NULL OR CAST(:children AS INTEGER) >= 0", status: 422, code: EMPLOYEES_FAMILY_CHILDREN_INVALID, message: Dependent children cannot be negative. }
         - { query: "SELECT 1 AS ok WHERE :spouse_birthdate IS NULL OR regexp_matches(CAST(:spouse_birthdate AS VARCHAR), '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')", status: 422, code: EMPLOYEES_FAMILY_BIRTHDATE_INVALID, message: Spouse birthdate must use YYYY-MM-DD. }
         - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:certificate AS VARCHAR)), '') IS NULL OR CAST(:certificate AS VARCHAR) IN ('graduate', 'bachelor', 'master', 'doctor', 'other')", status: 422, code: EMPLOYEES_EDUCATION_CERTIFICATE_INVALID, message: Select a valid certificate level. }
+        - { query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(:sex AS VARCHAR)), '') IS NULL OR CAST(:sex AS VARCHAR) IN ('male', 'female', 'other')", status: 422, code: EMPLOYEES_BIRTH_IDENTITY_GENDER_INVALID, message: Select a valid gender. }
       result: { query: "SELECT * FROM employees WHERE id = :id" }
     fields:
       - { field: name, label: Employee Name, type: text, required: true }
@@ -439,6 +440,9 @@ actions:
       - { field: children, label: Dependent Children, type: number, min: 0 }
       - { field: certificate, label: Certificate Level, type: select, options: [{ value: graduate, label: Graduate }, { value: bachelor, label: Bachelor }, { value: master, label: Master }, { value: doctor, label: Doctor }, { value: other, label: Other }] }
       - { field: study_field, label: Field of Study, type: text }
+      - { field: place_of_birth, label: Place of Birth, type: text }
+      - { field: country_of_birth, label: Country of Birth, type: text }
+      - { field: sex, label: Gender, type: select, options: [{ value: male, label: Male }, { value: female, label: Female }, { value: other, label: Other }] }
   - id: register_employee_departure
     type: server_form
     permission: employees.write

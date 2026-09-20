@@ -1,0 +1,32 @@
+version: 0.0.38
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS place_of_birth VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS country_of_birth VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS sex VARCHAR;
+      UPDATE employees
+      SET place_of_birth = COALESCE(place_of_birth, CASE id
+        WHEN 'employee-demo-001' THEN 'Hanoi'
+        WHEN 'employee-demo-002' THEN 'Ho Chi Minh City'
+        WHEN 'employee-demo-003' THEN 'Da Nang'
+        ELSE NULL END),
+          country_of_birth = COALESCE(country_of_birth, CASE id
+        WHEN 'employee-demo-001' THEN 'Vietnam'
+        WHEN 'employee-demo-002' THEN 'Vietnam'
+        WHEN 'employee-demo-003' THEN 'Vietnam'
+        ELSE NULL END),
+          sex = COALESCE(sex, CASE id
+        WHEN 'employee-demo-001' THEN 'male'
+        WHEN 'employee-demo-002' THEN 'female'
+        WHEN 'employee-demo-003' THEN 'male'
+        ELSE NULL END);
+    down: |
+      ALTER TABLE employees DROP COLUMN IF EXISTS place_of_birth;
+      ALTER TABLE employees DROP COLUMN IF EXISTS country_of_birth;
+      ALTER TABLE employees DROP COLUMN IF EXISTS sex;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

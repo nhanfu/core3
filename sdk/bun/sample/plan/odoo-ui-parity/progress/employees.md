@@ -20,6 +20,21 @@ Status: qa-in-progress
 Verification trigger: feature-complete
 Candidate commit: current working tree
 
+## EMP-BIRTH-IDENTITY-001 (2026-09-20)
+
+- Implemented Odoo Personal birth identity parity: place of birth, country of
+  birth, and gender, with migration `20260920280000-038`, deterministic
+  fixtures, page/API-separated CRUD, and male/female/other validation.
+- Verification: focused **4 tests / 21 assertions**, audit **684 / 693 /
+  1,264**, scoped ESLint and diff-check pass.
+- Authenticated Core3 desktop/mobile labels render without page/HTTP errors;
+  values are blocked by the Vietnam fixture versus Vietnam Branch session
+  company. Authenticated Odoo Personal desktop/mobile renders Place of Birth
+  and Gender; exact Country of Birth is not visible and is recorded as a
+  comparison blocker.
+- Evidence: `evidence/employees/2026-09-20/EMP-BIRTH-IDENTITY-001/`.
+- Conditional evidence only; no aggregate module sign-off.
+
 ## EMP-FAMILY-INFO-001 (2026-09-20)
 
 - Selected the smallest remaining source-backed Personal behavior: Odoo

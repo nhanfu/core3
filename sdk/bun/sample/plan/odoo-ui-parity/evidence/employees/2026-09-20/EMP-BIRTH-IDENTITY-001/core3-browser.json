@@ -1,0 +1,4 @@
+[
+  {"viewport":"desktop","url":"http://127.0.0.1:3310/employees/detail?id=employee-demo-001","authenticated":true,"viewport_size":"1440x900","labels":["Place of Birth","Country of Birth","Gender"],"labels_rendered":true,"page_errors":[],"http_errors":[],"fixture_blocker":"Core3 Vietnam fixture versus authenticated Core3 Vietnam Branch company"},
+  {"viewport":"mobile","url":"http://127.0.0.1:3310/employees/detail?id=employee-demo-001","authenticated":true,"viewport_size":"390x844","labels":["Place of Birth","Country of Birth","Gender"],"labels_rendered":true,"page_errors":[],"http_errors":[],"fixture_blocker":"Core3 Vietnam fixture versus authenticated Core3 Vietnam Branch company"}
+]

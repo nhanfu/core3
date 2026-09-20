@@ -1313,3 +1313,27 @@ Branch`. Authenticated Odoo Education labels are verified in the linked Family
 capture. No aggregate Employees sign-off is claimed.
 
 Evidence: `evidence/employees/2026-09-20/EMP-EDUCATION-001/`.
+
+## EMP-BIRTH-IDENTITY-001: Employee Personal birth identity (2026-09-20)
+
+The next smallest source-backed Personal Information behavior is Odoo's
+`place_of_birth` and `country_of_birth` on `hr.employee`, plus `sex` on
+`hr.version`; the source view exposes these in Personal Information and
+Gender choices are male, female, and other.
+
+Core3 adds migration `20260920280000-038`, deterministic company-scoped
+fixtures, page/API-separated create/edit/read fields, and a gender guard.
+Focused CRUD, invalid selection, stale row-version, cross-company atomicity,
+migration replay, and file-backed restart coverage passes **4 tests / 21
+assertions**. Audit is **684 pages / 693 routes / 1,264 datasources**;
+scoped ESLint and diff-check pass.
+
+Authenticated Core3 desktop/mobile renders all three labels with no page or
+HTTP errors, but fixture values are withheld because the session is `Core3
+Vietnam Branch` while the deterministic fixture row is `Core3 Vietnam`.
+Authenticated Odoo desktop/mobile reaches Abigail Peterson's Personal tab and
+renders Place of Birth and Gender, but not the exact Country of Birth label;
+the reference presents Nationality (Country) elsewhere. No aggregate
+Employees sign-off is claimed.
+
+Evidence: `evidence/employees/2026-09-20/EMP-BIRTH-IDENTITY-001/`.

@@ -1,0 +1,4 @@
+[
+  {"viewport":"desktop","url":"http://127.0.0.1:8069/odoo/employees/6","database":"core3_reference","actor":"codex@core3.local","authenticated":true,"viewport_size":"1440x1000","personal_tab_clicked":true,"rendered_labels":["Place of Birth","Gender?","Nationality (Country)"],"country_of_birth_exact_label_rendered":false,"page_errors":[],"known_shell_http_404s":7},
+  {"viewport":"mobile","url":"http://127.0.0.1:8069/odoo/employees/6","database":"core3_reference","actor":"codex@core3.local","authenticated":true,"viewport_size":"390x844","personal_tab_clicked":true,"rendered_labels":["Place of Birth","Gender?","Nationality (Country)"],"country_of_birth_exact_label_rendered":false,"page_errors":[],"known_shell_http_404s":7}
+]
