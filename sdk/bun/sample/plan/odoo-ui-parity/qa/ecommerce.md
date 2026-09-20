@@ -1,5 +1,33 @@
 # ecommerce QA ledger
 
+## Product Variant Base-Unit Pricing (`ECOM-CATALOG-VARIANT-BASE-UNIT-PRICING-001`, 2026-09-21)
+
+- Odoo source/page: pass. `website_sale/models/product_product.py` and
+  `product_template.py` define base-unit count, custom unit, derived unit
+  price, and unit name; the combination response returns `base_unit_price`; and
+  `product_views.xml` renders the fields and Price Per Unit in the variant
+  form. A zero count hides the derived price.
+- Core3 lifecycle: pass for this bounded contract. Migrations 076/077 add
+  durable variant base-unit count/name metadata and a deterministic Mug Blue
+  fixture. Separate Product Detail and Product Variant API/page YAML expose
+  the derived price and a permissioned configuration action with company,
+  non-negative count, unit-name length, and optimistic concurrency guards.
+- Focused verification: `bun test
+  ./test/ecommerce_variant_base_units.integration.test.ts --timeout 20000` —
+  **3 passed, 27 assertions, 0 failures**. Adjacent Product Variant, Product
+  Detail, and Cart tests added **11 passed, 71 assertions**; combined **14
+  passed, 98 assertions, 0 failures**.
+- UI audit: **pass** — 699 pages, 708 routes, 1321 datasources. Scoped ESLint
+  and `git diff --check`: **pass**.
+- Browser: authenticated Core3 desktop/mobile capture is **blocked** because
+  ports 3000/4312/4313 were unavailable; no rendered UI pass is claimed.
+- Odoo: exact `/shop` probes on ports 8069 and 8073 returned HTTP 404, so the
+  authenticated paired desktop/mobile comparison is **blocked**.
+- QA decision: bounded slice verified, Ecommerce module sign-off remains open.
+  Browser actor coverage, paired Odoo rendering, currency/UoM integration,
+  and broader module gates remain open. Evidence:
+  `evidence/ecommerce/2026-09-21/ecom-catalog-variant-base-unit-pricing-001/`.
+
 ## Product Variant Extra Media (`ECOM-CATALOG-VARIANT-EXTRA-MEDIA-001`, 2026-09-21)
 
 - Odoo source/page: pass. `website_sale/models/product_image.py` defines

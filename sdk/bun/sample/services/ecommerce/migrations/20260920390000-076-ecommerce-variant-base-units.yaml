@@ -1,0 +1,16 @@
+version: 0.0.76
+kind: schema
+description: durable Website Sale variant base-unit pricing metadata
+type:
+  postgres:
+    up: |
+      ALTER TABLE ecommerce_product_variants ADD COLUMN base_unit_count DECIMAL(20,8);
+      ALTER TABLE ecommerce_product_variants ADD COLUMN base_unit_name VARCHAR;
+      UPDATE ecommerce_product_variants SET base_unit_count = 0 WHERE base_unit_count IS NULL;
+    down: |
+      ALTER TABLE ecommerce_product_variants DROP COLUMN IF EXISTS base_unit_name;
+      ALTER TABLE ecommerce_product_variants DROP COLUMN IF EXISTS base_unit_count;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

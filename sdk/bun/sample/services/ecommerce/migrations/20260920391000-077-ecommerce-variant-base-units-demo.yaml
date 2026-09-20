@@ -1,0 +1,17 @@
+version: 0.0.77
+kind: data
+description: deterministic Website Sale variant base-unit pricing fixture
+type:
+  postgres:
+    up: |
+      UPDATE ecommerce_product_variants
+      SET base_unit_count = 2, base_unit_name = 'piece'
+      WHERE id = 'ecommerce-variant-mug-blue';
+    down: |
+      UPDATE ecommerce_product_variants
+      SET base_unit_count = 0, base_unit_name = NULL
+      WHERE id = 'ecommerce-variant-mug-blue';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

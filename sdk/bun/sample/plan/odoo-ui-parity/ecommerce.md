@@ -1,6 +1,32 @@
 # eCommerce parity — Products and order workflows
 
-Status: qa-in-progress (bounded variant extra-media slice; module sign-off remains open)
+Status: qa-in-progress (bounded variant base-unit pricing slice; module sign-off remains open)
+
+## Bounded feature — Product Variant Base-Unit Pricing (`ECOM-CATALOG-VARIANT-BASE-UNIT-PRICING-001`)
+
+Odoo source comparison: `website_sale/models/product_product.py` and
+`product_template.py` define `base_unit_count`, `base_unit_id`,
+`base_unit_price`, and `base_unit_name`; the combination response includes the
+derived unit price; and `product_views.xml` renders the base-unit fields and
+“Price Per Unit” in the Website Sale variant form. A zero count hides the
+derived price.
+
+Core3 comparison: variants had durable sales prices and variant-specific cart
+resolution but no base-unit metadata or derived unit-price surface. Migrations
+076/077 add durable count/name columns and a deterministic Mug Blue fixture.
+The existing Product Detail and dedicated Product Variant page/API contracts
+remain separate and expose the unit metadata and derived price; permissioned
+configuration validates company scope, non-negative count, unit-name length,
+and optimistic row versions. Zero count persists and hides the unit price.
+
+Focused tests cover Odoo source tracing, page/API separation, deterministic
+fixture replay, company/validation/zero-count boundaries, optimistic updates,
+and DuckDB restart persistence in
+`test/ecommerce_variant_base_units.integration.test.ts`. Authenticated Core3
+desktop/mobile capture is blocked by unavailable runtime ports; supplied Odoo
+references return exact HTTP 404 for `/shop`. Evidence is under
+`evidence/ecommerce/2026-09-21/ecom-catalog-variant-base-unit-pricing-001/`.
+This bounded slice is verified; Ecommerce remains unsigned off.
 
 ## Bounded feature — Product Variant Extra Media (`ECOM-CATALOG-VARIANT-EXTRA-MEDIA-001`)
 

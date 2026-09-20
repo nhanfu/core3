@@ -4,9 +4,35 @@ Module owner: ecommerce module owner
 QA assignment: dispatchable QA slot (wave assignment pending)
 Status: qa-in-progress
 Verification trigger: feature-complete
-Latest committed bounded slice before this wave: `f6186d5730aa8598d8f46818169f59e66a00e95d` (Product Optional Recommendations).
+Latest committed bounded slice before this wave: `bfe57a4a5f68bb630a6e68d7a491ee5fda976a9d` (Product Variant Extra Media).
 
-## Current bounded task — `ECOM-CATALOG-VARIANT-EXTRA-MEDIA-001`
+## Current bounded task — `ECOM-CATALOG-VARIANT-BASE-UNIT-PRICING-001`
+
+The next uncovered source-backed catalog behavior is Website Sale base-unit
+pricing for variants. Odoo defines `base_unit_count`, custom `base_unit_id`,
+derived `base_unit_price`, and `base_unit_name`; its combination response sends
+the unit price, and the variant form exposes these fields. A zero count hides
+the derived price.
+
+Core3 migrations 076/077 add durable variant count/name metadata with a
+deterministic Mug Blue fixture. Product Detail and Product Variant page/API
+YAML remain separate; variant rows and the variant detail expose the derived
+price, while a permissioned configuration action validates current company,
+non-negative count, unit-name length, and optimistic row versions. The zero
+count boundary is persisted and hides the calculated price.
+
+Focused verification: `bun test
+./test/ecommerce_variant_base_units.integration.test.ts --timeout 20000` —
+**3 passed, 27 assertions, 0 failures**. Adjacent Product Variant, Product
+Detail, and Cart tests passed **11 tests, 71 assertions, 0 failures**; the
+bounded set passed **14 tests, 98 assertions, 0 failures**. The UI audit passed
+at 699 pages, 708 routes, and 1321 datasources; scoped ESLint and
+`git diff --check` passed. Authenticated Core3 desktop/mobile capture is
+blocked by unavailable ports 3000/4312/4313; Odoo `/shop` returns exact HTTP
+404 on ports 8069/8073. Browser actor coverage, paired Odoo rendering, and
+module sign-off remain open.
+
+## Completed bounded task — `ECOM-CATALOG-VARIANT-EXTRA-MEDIA-001`
 
 The next uncovered source-backed catalog behavior is Website Sale's
 variant-specific extra media. Odoo's `product.image` model accepts a
