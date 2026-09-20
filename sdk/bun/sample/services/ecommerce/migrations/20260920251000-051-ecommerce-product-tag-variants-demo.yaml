@@ -1,0 +1,16 @@
+version: 0.0.51
+kind: data
+description: deterministic product tag variant assignments
+type:
+  postgres:
+    up: |
+      INSERT INTO ecommerce_product_tag_variants (tag_id, variant_id) VALUES
+        ('ecommerce-tag-featured', 'ecommerce-variant-mug-blue'),
+        ('ecommerce-tag-new-arrival', 'ecommerce-variant-chair-black')
+      ON CONFLICT (tag_id, variant_id) DO NOTHING;
+    down: |
+      DELETE FROM ecommerce_product_tag_variants WHERE tag_id IN ('ecommerce-tag-featured', 'ecommerce-tag-new-arrival');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,22 @@
+{
+  "feature_id": "ECOM-CATALOG-PRODUCT-TAG-VARIANT-ASSIGNMENT-001",
+  "authenticated_user": "admin@tms.local",
+  "core3": {
+    "route": "/ecommerce/product-tags",
+    "desktop_viewport": "1440x900",
+    "mobile_viewport": "390x844",
+    "variant_assignments_visible": true,
+    "variant_assignment_form_visible": true,
+    "post_navigation_page_errors": [],
+    "post_navigation_request_errors": []
+  },
+  "odoo": {
+    "user": "codex@core3.local",
+    "database": "core3_codex_demo",
+    "shop_blockers": [
+      { "port": 8069, "path": "/shop", "status": 404, "authenticated": true, "desktop": true, "mobile": true },
+      { "port": 8073, "path": "/shop", "status": 404, "authenticated": true, "desktop": true, "mobile": true }
+    ],
+    "paired_comparison": "blocked"
+  }
+}

@@ -8,3 +8,4 @@
 - [Delivery Methods](ecom-checkout-delivery-methods-001/README.md)
 - [Pricelist Rules](ecom-catalog-pricelist-rules-001/README.md)
 - [Product Variants](ecom-catalog-product-variants-001/README.md)
+- [Product Tag Variant Assignments](ecom-catalog-product-tag-variant-assignment-001/README.md)
